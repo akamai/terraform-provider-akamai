@@ -2,6 +2,7 @@ package iam
 
 import (
 	"fmt"
+	"regexp"
 	"strconv"
 	"testing"
 
@@ -17,8 +18,11 @@ func TestResourceIAMRole(t *testing.T) {
 	}
 
 	var (
+		updateAPIError = "{\n       \"type\": \"/useradmin-api/error-types/1301\",\n       \"title\": \"Validation Exception\",\n       \"detail\": \"There is a role already with this name\",\n       \"statusCode\": 400,\n       \"httpStatus\": 400\n }\n"
+		readAPIError   = "{\n    \"instance\": \"\",\n    \"httpStatus\": 404,\n    \"detail\": \"Role ID not found\",\n    \"title\": \"Role ID not found\",\n    \"type\": \"/useradmin-api/error-types/1311\"\n}"
+
 		expectCreateRole = func(t *testing.T, client *mockiam, name, description string, rolesIDs []int) *iam.Role {
-			rolesIDsToGrant := getSortedGrantedRolesIDs(rolesIDs)
+			rolesIDsToGrant := getRolesIDsToGrant(rolesIDs)
 
 			roleCreateReq := iam.CreateRoleRequest{
 				Name:         name,
@@ -39,7 +43,7 @@ func TestResourceIAMRole(t *testing.T) {
 		}
 
 		expectUpdateRole = func(t *testing.T, client *mockiam, id int64, name, description string, rolesIDs []int) *iam.Role {
-			rolesIDsToGrant := getSortedGrantedRolesIDs(rolesIDs)
+			rolesIDsToGrant := getRolesIDsToGrant(rolesIDs)
 
 			roleUpdateReq := iam.UpdateRoleRequest{
 				ID: id,
@@ -62,6 +66,23 @@ func TestResourceIAMRole(t *testing.T) {
 			return &updatedRole
 		}
 
+		expectAPIErrorWithUpdateRole = func(t *testing.T, client *mockiam, id int64, name, description string, rolesIDs []int) {
+			rolesIDsToGrant := getRolesIDsToGrant(rolesIDs)
+
+			roleUpdateReq := iam.UpdateRoleRequest{
+				ID: id,
+				RoleRequest: iam.RoleRequest{
+					Name:         name,
+					Description:  description,
+					GrantedRoles: rolesIDsToGrant,
+				},
+			}
+
+			err := fmt.Errorf(updateAPIError)
+
+			client.On("UpdateRole", mock.Anything, roleUpdateReq).Return(nil, err).Once()
+		}
+
 		expectReadRole = func(t *testing.T, client *mockiam, roleID int64, name, description string, grantedRoles []iam.RoleGrantedRole, numberOfExecutions int) {
 			roleGetReq := iam.GetRoleRequest{
 				ID:           roleID,
@@ -75,6 +96,16 @@ func TestResourceIAMRole(t *testing.T) {
 				GrantedRoles:    grantedRoles,
 			}
 			client.On("GetRole", mock.Anything, roleGetReq).Return(&createdRole, nil).Times(numberOfExecutions)
+		}
+
+		expectReadRoleAPIError = func(t *testing.T, client *mockiam, roleID int64) {
+			roleGetReq := iam.GetRoleRequest{
+				ID:           roleID,
+				GrantedRoles: true,
+			}
+			err := fmt.Errorf(readAPIError)
+
+			client.On("GetRole", mock.Anything, roleGetReq).Return(nil, err).Once()
 		}
 
 		expectDeleteRole = func(t *testing.T, client *mockiam, roleID int64) {
@@ -156,6 +187,106 @@ func TestResourceIAMRole(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 
+	t.Run("role update is not expected if granted roles are reordered lifecycle", func(t *testing.T) {
+		testDir := "testdata/TestResourceRoleLifecycle"
+		client := new(mockiam)
+		role := expectCreateRole(t, client, "role name", "role description", []int{12345, 54321, 67890})
+		expectReadRole(t, client, role.RoleID, role.RoleName, role.RoleDescription, role.GrantedRoles, 4)
+
+		expectDeleteRole(t, client, role.RoleID)
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString(fmt.Sprintf("%s/role_create.tf", testDir)),
+						Check: checkAttributes(roleAttributes{
+							name:         "role name",
+							description:  "role description",
+							grantedRoles: []int{12345, 54321, 6789},
+						}),
+					},
+					{
+						Config: loadFixtureString(fmt.Sprintf("%s/role_with_reordered_granted_roles.tf", testDir)),
+						Check: checkAttributes(roleAttributes{
+							name:         "role name",
+							description:  "role description",
+							grantedRoles: []int{12345, 67890, 54321},
+						}),
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
+
+	t.Run("update a role returns an API error lifecycle", func(t *testing.T) {
+		testDir := "testdata/TestResourceRoleLifecycle"
+		client := new(mockiam)
+		role := expectCreateRole(t, client, "role name", "role description", []int{12345, 54321, 67890})
+		expectReadRole(t, client, role.RoleID, role.RoleName, role.RoleDescription, role.GrantedRoles, 3)
+
+		expectAPIErrorWithUpdateRole(t, client, role.RoleID, "role name update", "role description update", []int{12345, 54321, 67890, 1000})
+		expectReadRole(t, client, role.RoleID, role.RoleName, role.RoleDescription, role.GrantedRoles, 1)
+
+		expectDeleteRole(t, client, role.RoleID)
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString(fmt.Sprintf("%s/role_create.tf", testDir)),
+						Check: checkAttributes(roleAttributes{
+							name:         "role name",
+							description:  "role description",
+							grantedRoles: []int{12345, 54321, 67890},
+						}),
+					},
+					{
+						Config:      loadFixtureString(fmt.Sprintf("%s/role_update.tf", testDir)),
+						ExpectError: regexp.MustCompile(updateAPIError),
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
+
+	t.Run("update a role returns an API error lifecycle with error in Read", func(t *testing.T) {
+		testDir := "testdata/TestResourceRoleLifecycle"
+		client := new(mockiam)
+		role := expectCreateRole(t, client, "role name", "role description", []int{12345, 54321, 67890})
+		expectReadRole(t, client, role.RoleID, role.RoleName, role.RoleDescription, role.GrantedRoles, 3)
+
+		expectAPIErrorWithUpdateRole(t, client, role.RoleID, "role name update", "role description update", []int{12345, 54321, 67890, 1000})
+		expectReadRoleAPIError(t, client, role.RoleID)
+
+		expectDeleteRole(t, client, role.RoleID)
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString(fmt.Sprintf("%s/role_create.tf", testDir)),
+						Check: checkAttributes(roleAttributes{
+							name:         "role name",
+							description:  "role description",
+							grantedRoles: []int{12345, 54321, 67890},
+						}),
+					},
+					{
+						Config:      loadFixtureString(fmt.Sprintf("%s/role_update.tf", testDir)),
+						ExpectError: regexp.MustCompile(readAPIError),
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
+
 	t.Run("import", func(t *testing.T) {
 		testDir := "testdata/TestResourceRoleLifecycle"
 		client := new(mockiam)
@@ -182,6 +313,14 @@ func TestResourceIAMRole(t *testing.T) {
 		})
 		client.AssertExpectations(t)
 	})
+}
+
+func getRolesIDsToGrant(rolesIDs []int) []iam.GrantedRoleID {
+	rolesIDsToGrant := make([]iam.GrantedRoleID, 0, len(rolesIDs))
+	for _, id := range rolesIDs {
+		rolesIDsToGrant = append(rolesIDsToGrant, iam.GrantedRoleID{ID: int64(id)})
+	}
+	return rolesIDsToGrant
 }
 
 func getGrantedRoles(rolesIDsToGrant []iam.GrantedRoleID) []iam.RoleGrantedRole {
