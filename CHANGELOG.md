@@ -1,5 +1,13 @@
 # RELEASE NOTES
 
+## 2.x.x (June XX, 2022)
+
+#### BUG FIXES:
+
+* APPSEC
+  * Fix drift in `EffectiveTimePeriod`, `SamplingRate`, `LoggingOptions`, and `Operation` fields of custom rule resource.
+  * Fix crash when eval rule API returns an error.
+
 ## 2.1.1 (Jun 9, 2022)
 
 #### BUG FIXES:
