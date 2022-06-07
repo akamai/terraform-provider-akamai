@@ -191,7 +191,7 @@ func resourceIAMUserCreate(ctx context.Context, d *schema.ResourceData, m interf
 
 	authGrantsJSON := []byte(d.Get("auth_grants_json").(string))
 
-	var authGrants []iam.AuthGrant
+	var authGrants []iam.AuthGrantRequest
 	if len(authGrantsJSON) > 0 {
 		if err := json.Unmarshal(authGrantsJSON, &authGrants); err != nil {
 			logger.WithError(err).Errorf("auth_grants is not valid")
@@ -225,9 +225,9 @@ func resourceIAMUserCreate(ctx context.Context, d *schema.ResourceData, m interf
 	}
 
 	user, err := client.CreateUser(ctx, iam.CreateUserRequest{
-		User:       basicUser,
-		AuthGrants: authGrants,
-		SendEmail:  true,
+		UserBasicInfo: basicUser,
+		AuthGrants:    authGrants,
+		SendEmail:     true,
 		Notifications: iam.UserNotifications{
 			Options: iam.UserNotificationOptions{
 				Proactive: []string{},
@@ -401,7 +401,7 @@ func resourceIAMUserUpdate(ctx context.Context, d *schema.ResourceData, m interf
 
 	// AuthGrants
 	if d.HasChange("auth_grants_json") {
-		var authGrants []iam.AuthGrant
+		var authGrants []iam.AuthGrantRequest
 
 		authGrantsJSON := []byte(d.Get("auth_grants_json").(string))
 		if len(authGrantsJSON) > 0 {
@@ -503,7 +503,7 @@ func validateAuthGrantsJS(v interface{}, _ cty.Path) diag.Diagnostics {
 		return nil
 	}
 
-	var authGrants []iam.AuthGrant
+	var authGrants []iam.AuthGrantRequest
 	if err := json.Unmarshal(js, &authGrants); err != nil {
 		return diag.Errorf("auth_grants_json is not valid: %s", err)
 	}
@@ -531,7 +531,7 @@ func stateAuthGrantsJS(v interface{}) string {
 		return ""
 	}
 
-	var authGrants []iam.AuthGrant
+	var authGrants []iam.AuthGrantRequest
 	if err := json.Unmarshal(js, &authGrants); err != nil {
 		panic(fmt.Sprintf(`"auth_grants": %q is not valid: %s`, v.(string), err))
 	}
@@ -550,14 +550,14 @@ func suppressAuthGrantsJS(k, old, new string, _ *schema.ResourceData) bool {
 		return false
 	}
 
-	var oldAuthGrants []iam.AuthGrant
+	var oldAuthGrants []iam.AuthGrantRequest
 	if len(old) > 0 {
 		if err := json.Unmarshal([]byte(old), &oldAuthGrants); err != nil {
 			panic(fmt.Sprintf("previous value for %q: %q is not valid: %s", k, old, err))
 		}
 	}
 
-	var newAuthGrants []iam.AuthGrant
+	var newAuthGrants []iam.AuthGrantRequest
 	if len(new) > 0 {
 		if err := json.Unmarshal([]byte(new), &newAuthGrants); err != nil {
 			panic(fmt.Sprintf("new value for %q: %q is not valid: %s", k, new, err))

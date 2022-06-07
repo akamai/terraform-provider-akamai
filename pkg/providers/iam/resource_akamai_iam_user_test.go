@@ -50,10 +50,22 @@ func TestResourceUser(t *testing.T) {
 			GroupName: "group",
 		},
 	}
+
+	authGrantsCreateRequest := []iam.AuthGrantRequest{
+		{
+			GroupID: 0,
+		},
+	}
 	authGrantsUpdate := []iam.AuthGrant{
 		{
 			GroupID:   1,
 			GroupName: "other_group",
+		},
+	}
+
+	authGrantsUpdateRequest := []iam.AuthGrantRequest{
+		{
+			GroupID: 1,
 		},
 	}
 
@@ -121,6 +133,12 @@ func TestResourceUser(t *testing.T) {
 		Notifications:      notifications,
 	}
 
+	userCreateRequest := iam.CreateUserRequest{
+		UserBasicInfo: basicUserInfo,
+		AuthGrants:    authGrantsCreateRequest,
+		Notifications: notifications,
+	}
+
 	userCreateLocked := iam.User{
 		UserBasicInfo:      basicUserInfo,
 		IdentityID:         id,
@@ -131,6 +149,12 @@ func TestResourceUser(t *testing.T) {
 		EmailUpdatePending: true,
 		AuthGrants:         authGrantsCreate,
 		Notifications:      notifications,
+	}
+
+	userCreateLockedRequest := iam.CreateUserRequest{
+		UserBasicInfo: basicUserInfo,
+		AuthGrants:    authGrantsCreateRequest,
+		Notifications: notifications,
 	}
 
 	userUpdateInfo := iam.User{
@@ -156,6 +180,35 @@ func TestResourceUser(t *testing.T) {
 		Notifications:      notifications,
 	}
 
+	userUpdateGrantsRequest := iam.CreateUserRequest{
+		UserBasicInfo: basicUserInfo,
+		AuthGrants:    authGrantsUpdateRequest,
+		Notifications: notifications,
+	}
+	authGrantsCreateWithIgnoredFields := []iam.AuthGrantRequest{
+		{
+			GroupID:   1,
+			IsBlocked: false,
+		},
+	}
+	authGrantsCreateWithIgnoredFieldsResponse := []iam.AuthGrant{
+		{
+			GroupID:         1,
+			GroupName:       "group",
+			IsBlocked:       false,
+			RoleDescription: "desc from server",
+			RoleID:          nil,
+			RoleName:        "role name from server",
+			Subgroups:       nil,
+		},
+	}
+
+	userCreateWithIgnoredFields := userCreate
+	userCreateWithIgnoredFieldsRequest := userCreateRequest
+	userCreateWithIgnoredFieldsRequest.AuthGrants = authGrantsCreateWithIgnoredFields
+	userCreateWithIgnoredFieldsResponse := userCreate
+	userCreateWithIgnoredFieldsResponse.AuthGrants = authGrantsCreateWithIgnoredFieldsResponse
+
 	tests := map[string]struct {
 		init  func(*mockiam)
 		steps []resource.TestStep
@@ -163,7 +216,7 @@ func TestResourceUser(t *testing.T) {
 		"basic": {
 			init: func(m *mockiam) {
 				// create
-				expectResourceIAMUserCreatePhase(m, userCreate, false, nil, nil)
+				expectResourceIAMUserCreatePhase(m, userCreateRequest, userCreate, false, nil, nil)
 				expectResourceIAMUserReadPhase(m, userCreate, nil).Times(2)
 
 				// delete
@@ -179,7 +232,7 @@ func TestResourceUser(t *testing.T) {
 		"basic lock": {
 			init: func(m *mockiam) {
 				// create
-				expectResourceIAMUserCreatePhase(m, userCreateLocked, true, nil, nil)
+				expectResourceIAMUserCreatePhase(m, userCreateLockedRequest, userCreateLocked, true, nil, nil)
 				expectResourceIAMUserReadPhase(m, userCreateLocked, nil).Times(2)
 
 				// delete
@@ -195,7 +248,7 @@ func TestResourceUser(t *testing.T) {
 		"basic error create": {
 			init: func(m *mockiam) {
 				// create
-				expectResourceIAMUserCreatePhase(m, userCreate, false, fmt.Errorf("error create"), nil)
+				expectResourceIAMUserCreatePhase(m, userCreateRequest, userCreate, false, fmt.Errorf("error create"), nil)
 			},
 			steps: []resource.TestStep{
 				{
@@ -207,7 +260,7 @@ func TestResourceUser(t *testing.T) {
 		"basic no diff no update": {
 			init: func(m *mockiam) {
 				// create
-				expectResourceIAMUserCreatePhase(m, userCreate, false, nil, nil)
+				expectResourceIAMUserCreatePhase(m, userCreateRequest, userCreate, false, nil, nil)
 				expectResourceIAMUserReadPhase(m, userCreate, nil).Times(2)
 
 				// plan
@@ -230,7 +283,7 @@ func TestResourceUser(t *testing.T) {
 		"update user info": {
 			init: func(m *mockiam) {
 				// create
-				expectResourceIAMUserCreatePhase(m, userCreate, false, nil, nil)
+				expectResourceIAMUserCreatePhase(m, userCreateRequest, userCreate, false, nil, nil)
 				expectResourceIAMUserReadPhase(m, userCreate, nil).Times(2)
 
 				// plan
@@ -256,7 +309,7 @@ func TestResourceUser(t *testing.T) {
 		"update user info - lock - unlock": {
 			init: func(m *mockiam) {
 				// create
-				expectResourceIAMUserCreatePhase(m, userCreate, false, nil, nil)
+				expectResourceIAMUserCreatePhase(m, userCreateRequest, userCreate, false, nil, nil)
 				expectResourceIAMUserReadPhase(m, userCreate, nil).Once()
 
 				// plan
@@ -290,7 +343,7 @@ func TestResourceUser(t *testing.T) {
 		"update user info - error": {
 			init: func(m *mockiam) {
 				// create
-				expectResourceIAMUserCreatePhase(m, userCreate, false, nil, nil)
+				expectResourceIAMUserCreatePhase(m, userCreateRequest, userCreate, false, nil, nil)
 				expectResourceIAMUserReadPhase(m, userCreate, nil).Times(2)
 
 				// plan
@@ -315,13 +368,13 @@ func TestResourceUser(t *testing.T) {
 		"update user auth grants": {
 			init: func(m *mockiam) {
 				// create
-				expectResourceIAMUserCreatePhase(m, userCreate, false, nil, nil)
+				expectResourceIAMUserCreatePhase(m, userCreateRequest, userCreate, false, nil, nil)
 				expectResourceIAMUserReadPhase(m, userCreate, nil).Times(2)
 
 				// plan
 				expectResourceIAMUserReadPhase(m, userCreate, nil).Once()
 				// update basic info
-				expectResourceIAMUserAuthGrantsUpdatePhase(m, userUpdateGrants.IdentityID, userUpdateGrants.AuthGrants, nil).Once()
+				expectResourceIAMUserAuthGrantsUpdatePhase(m, userUpdateGrants.IdentityID, userUpdateGrantsRequest.AuthGrants, userUpdateGrants.AuthGrants, nil).Once()
 				expectResourceIAMUserReadPhase(m, userUpdateGrants, nil).Times(2)
 
 				// delete
@@ -338,16 +391,41 @@ func TestResourceUser(t *testing.T) {
 				},
 			},
 		},
+		"update user auth grants with redundant fields": {
+			init: func(m *mockiam) {
+				// create
+				expectResourceIAMUserCreatePhase(m, userCreateWithIgnoredFieldsRequest, userCreateWithIgnoredFields, false, nil, nil)
+				expectResourceIAMUserReadPhase(m, userCreateWithIgnoredFieldsResponse, nil).Once()
+				expectResourceIAMUserReadPhase(m, userCreateWithIgnoredFieldsResponse, nil).Once()
+
+				// plan
+				expectResourceIAMUserReadPhase(m, userCreateWithIgnoredFieldsResponse, nil).Once()
+				expectResourceIAMUserReadPhase(m, userCreateWithIgnoredFieldsResponse, nil).Once()
+
+				// delete
+				expectResourceIAMUserDeletePhase(m, userCreateWithIgnoredFieldsResponse, nil).Once()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: loadFixtureString("./testdata/TestResourceUserLifecycle/create_auth_grants.tf"),
+					Check:  checkUserAttributes(userCreateWithIgnoredFieldsResponse),
+				},
+				{
+					Config: loadFixtureString("./testdata/TestResourceUserLifecycle/create_auth_grants.tf"),
+					Check:  checkUserAttributes(userCreateWithIgnoredFieldsResponse),
+				},
+			},
+		},
 		"update user auth grants - an error": {
 			init: func(m *mockiam) {
 				// create
-				expectResourceIAMUserCreatePhase(m, userCreate, false, nil, nil)
+				expectResourceIAMUserCreatePhase(m, userCreateRequest, userCreate, false, nil, nil)
 				expectResourceIAMUserReadPhase(m, userCreate, nil).Times(2)
 
 				// plan
 				expectResourceIAMUserReadPhase(m, userCreate, nil).Once()
 				// update basic info
-				expectResourceIAMUserAuthGrantsUpdatePhase(m, userUpdateGrants.IdentityID, userUpdateGrants.AuthGrants, fmt.Errorf("error update user auth grants")).Once()
+				expectResourceIAMUserAuthGrantsUpdatePhase(m, userUpdateGrants.IdentityID, userUpdateGrantsRequest.AuthGrants, userUpdateGrants.AuthGrants, fmt.Errorf("error update user auth grants")).Once()
 
 				// delete
 				expectResourceIAMUserDeletePhase(m, userUpdateGrants, nil).Once()
@@ -366,7 +444,7 @@ func TestResourceUser(t *testing.T) {
 		"basic import": {
 			init: func(m *mockiam) {
 				// create
-				expectResourceIAMUserCreatePhase(m, userCreate, false, nil, nil)
+				expectResourceIAMUserCreatePhase(m, userCreateRequest, userCreate, false, nil, nil)
 				expectResourceIAMUserReadPhase(m, userCreate, nil).Times(2)
 
 				// import
@@ -402,7 +480,7 @@ func TestResourceUser(t *testing.T) {
 		"error updating email": {
 			init: func(m *mockiam) {
 				// create
-				expectResourceIAMUserCreatePhase(m, userCreate, false, nil, nil)
+				expectResourceIAMUserCreatePhase(m, userCreateRequest, userCreate, false, nil, nil)
 				expectResourceIAMUserReadPhase(m, userCreate, nil).Times(2)
 
 				// plan
@@ -449,21 +527,21 @@ func TestResourceUser(t *testing.T) {
 }
 
 // create
-func expectResourceIAMUserCreatePhase(m *mockiam, user iam.User, lock bool, creationError, lockError error) {
+func expectResourceIAMUserCreatePhase(m *mockiam, request iam.CreateUserRequest, response iam.User, lock bool, creationError, lockError error) {
 	onCreation := m.On("CreateUser", mock.Anything, iam.CreateUserRequest{
-		User:          user.UserBasicInfo,
-		AuthGrants:    user.AuthGrants,
+		UserBasicInfo: request.UserBasicInfo,
+		AuthGrants:    request.AuthGrants,
 		SendEmail:     true,
-		Notifications: user.Notifications,
+		Notifications: request.Notifications,
 	})
 	if creationError != nil {
 		onCreation.Return(nil, creationError).Once()
 		return
 	}
-	onCreation.Return(&user, nil).Once()
+	onCreation.Return(&response, nil).Once()
 
 	if lock {
-		expectToggleLock(m, user.IdentityID, true, lockError).Once()
+		expectToggleLock(m, response.IdentityID, true, lockError).Once()
 		if lockError != nil {
 			return
 		}
@@ -502,10 +580,10 @@ func expectResourceIAMUserInfoUpdatePhase(m *mockiam, id string, basicUserInfo i
 }
 
 // update auth grants
-func expectResourceIAMUserAuthGrantsUpdatePhase(m *mockiam, id string, authGrants []iam.AuthGrant, anError error) *mock.Call {
+func expectResourceIAMUserAuthGrantsUpdatePhase(m *mockiam, id string, authGrantsReqest []iam.AuthGrantRequest, authGrants []iam.AuthGrant, anError error) *mock.Call {
 	on := m.On("UpdateUserAuthGrants", mock.Anything, iam.UpdateUserAuthGrantsRequest{
 		IdentityID: id,
-		AuthGrants: authGrants,
+		AuthGrants: authGrantsReqest,
 	})
 	if anError != nil {
 		return on.Return(nil, anError).Once()
