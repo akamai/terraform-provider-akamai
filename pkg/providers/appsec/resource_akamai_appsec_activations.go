@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-
 	"strconv"
 	"time"
 
@@ -13,7 +12,6 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	// "github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -30,6 +28,9 @@ func resourceActivations() *schema.Resource {
 		CustomizeDiff: customdiff.All(
 			VerifyIDUnchanged,
 		),
+		Importer: &schema.ResourceImporter{
+			StateContext: resourceImporter,
+		},
 		Schema: map[string]*schema.Schema{
 			"config_id": {
 				Type:        schema.TypeInt,
@@ -71,6 +72,9 @@ func resourceActivations() *schema.Resource {
 				Required:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "A list of email addresses to be notified with the results of the activation",
+				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+					return true
+				},
 			},
 			"status": {
 				Type:        schema.TypeString,
@@ -398,6 +402,55 @@ func resourceActivationsDelete(ctx context.Context, d *schema.ResourceData, m in
 	d.SetId("")
 
 	return nil
+}
+
+func resourceImporter(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceActivationsImport")
+	logger.Debug("in resourceActivationsCreate")
+
+	iDParts, err := splitID(d.Id(), 3, "configID:version:network")
+	if err != nil {
+		return nil, err
+	}
+	configID, err := strconv.Atoi(iDParts[0])
+	if err != nil {
+		return nil, err
+	}
+	version, err := strconv.Atoi(iDParts[1])
+	if err != nil {
+		return nil, err
+	}
+	network := iDParts[2]
+	if !(network == "STAGING" || network == "PRODUCTION") {
+		return nil, fmt.Errorf("bad network value %s; must be either STAGING or PRODUCTION", network)
+
+	}
+
+	request := appsec.GetActivationHistoryRequest{
+		ConfigID: configID,
+	}
+	response, err := client.GetActivationHistory(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, activation := range response.ActivationHistory {
+		if activation.Version == version && activation.Network == network {
+			d.SetId(strconv.Itoa(activation.ActivationID))
+			d.Set("activate", true)
+			d.Set("config_id", configID)
+			d.Set("network", network)
+			d.Set("note", activation.Notes)
+			d.Set("version", version)
+
+			return []*schema.ResourceData{d}, nil
+		}
+	}
+
+	return nil, fmt.Errorf("no activation found for configId %d, version %d, network %s", configID, version, network)
+
 }
 
 func lookupActivation(ctx context.Context, client appsec.APPSEC, query appsec.GetActivationsRequest) (*appsec.GetActivationsResponse, error) {
