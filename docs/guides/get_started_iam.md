@@ -32,11 +32,11 @@ To set up the Identity and Access Management module, you need to:
 
 ## Retrieve supported countries
 
-To fetch a list of supported countries, use the [`iam_akamai_countries` data source](../data-sources/iam_supported_countries.md). Attributes aren't needed to fetch the default contract ID.
+To fetch a list of supported countries, use the [`iam_akamai_countries` data source](../data-sources/iam_countries.md). Attributes aren't needed to fetch the default contract ID.
 
 ## Create a user
 
-The [`iam_akamai_user` resource](../resources/user.md) represents the user.
+The [`iam_akamai_user` resource](../resources/iam_user.md) represents the user.
 
 To define the entire configuration, open the resource block and give it a name. For this case, you're going to use the name "example".
 

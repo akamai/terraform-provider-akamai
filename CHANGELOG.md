@@ -1,5 +1,11 @@
 # RELEASE NOTES
 
+## 2.1.1 (Jun 9, 2022)
+
+#### BUG FIXES:
+
+* Fix vulnerability for HashiCorp go-getter
+
 ## 2.1.0 (Jun 2, 2022)
 
 #### FEATURES/ENHANCEMENTS:
