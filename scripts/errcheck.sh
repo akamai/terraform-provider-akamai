@@ -5,7 +5,7 @@ echo "==> Checking for unchecked errors..."
 
 if ! which errcheck > /dev/null; then
     echo "==> Installing errcheck..."
-    go install github.com/kisielk/errcheck
+    go install github.com/kisielk/errcheck@latest
 fi
 
 # Don't run errcheck on appsec package until
