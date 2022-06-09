@@ -53,6 +53,7 @@ func Provider() *schema.Provider {
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"akamai_iam_blocked_user_properties": resourceIAMBlockedUserProperties(),
+			"akamai_iam_group":                   resourceIAMGroup(),
 			"akamai_iam_role":                    resourceIAMRole(),
 			"akamai_iam_user":                    resourceIAMUser(),
 		},
