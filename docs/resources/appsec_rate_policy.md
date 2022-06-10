@@ -52,7 +52,6 @@ This resource supports the following arguments:
 
 - `config_id` (Required). Unique identifier of the security configuration associated with the rate policy being modified.
 - `rate_policy` (Required). Path to a JSON file containing a rate policy definition. You can view a sample rate policy JSON file in the [RatePolicy](https://developer.akamai.com/api/cloud_security/application_security/v1.html#ratepolicy) section of the Application Security API documentation.
-- `rate_policy_id` (Optional). Unique identifier of an existing rate policy.
 
 ## Output Options
 
