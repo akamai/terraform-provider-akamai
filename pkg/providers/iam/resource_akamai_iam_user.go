@@ -150,6 +150,7 @@ func resourceIAMUser() *schema.Resource {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "The user's lock status",
+				Deprecated:  fmt.Sprintf("The setting %q has been deprecated. Please use %q setting instead", "is_locked", "lock"),
 			},
 			"last_login": {
 				Type:        schema.TypeString,
