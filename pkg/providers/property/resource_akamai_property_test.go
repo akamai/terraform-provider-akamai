@@ -246,7 +246,7 @@ func TestResProperty(t *testing.T) {
 			resource.TestCheckResourceAttr("akamai_property.test", "group", "grp_0"),
 			resource.TestCheckResourceAttr("akamai_property.test", "product", "prd_0"),
 			resource.TestCheckResourceAttr("akamai_property.test", "product_id", "prd_0"),
-			resource.TestCheckNoResourceAttr("akamai_property.test", "rule_warnings"),
+			resource.TestCheckResourceAttr("akamai_property.test", "rule_warnings.#", "0"),
 			resource.TestCheckResourceAttr("akamai_property.test", "rules", rules),
 		)
 	}
