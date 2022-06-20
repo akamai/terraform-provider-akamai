@@ -72,9 +72,6 @@ func resourceActivations() *schema.Resource {
 				Required:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "A list of email addresses to be notified with the results of the activation",
-				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
-					return true
-				},
 			},
 			"status": {
 				Type:        schema.TypeString,
