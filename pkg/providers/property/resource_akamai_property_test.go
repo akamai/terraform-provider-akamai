@@ -629,7 +629,7 @@ func TestResProperty(t *testing.T) {
 			client := &mockpapi{}
 			client.Test(T{t})
 
-			useClient(client, func() {
+			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
 					Providers: testAccProviders,
 					Steps: []resource.TestStep{{
@@ -656,7 +656,7 @@ func TestResProperty(t *testing.T) {
 			State := &TestState{Client: client}
 			kase.ClientSetup(State)
 
-			useClient(client, func() {
+			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
 					Providers:  testAccProviders,
 					IsUnitTest: true,
@@ -745,7 +745,7 @@ func TestResProperty(t *testing.T) {
 			}
 			State := &TestState{Client: client}
 			kase.ClientSetup(State)
-			useClient(client, func() {
+			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
 					Providers: testAccProviders,
 					Steps:     kase.Steps(State, ""),
@@ -863,7 +863,7 @@ func TestResProperty(t *testing.T) {
 			)
 			setup(&TestState{Client: client})
 
-			useClient(client, func() {
+			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
 					Providers: testAccProviders,
 					Steps: []resource.TestStep{
@@ -912,7 +912,7 @@ func TestResProperty(t *testing.T) {
 			// Second call will be successful (TF test case requires last state to be empty or it's a failed test)
 			ExpectRemoveProperty(client, "prp_0", "ctr_0", "grp_0").Once()
 
-			useClient(client, func() {
+			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
 					Providers: testAccProviders,
 					Steps: []resource.TestStep{
@@ -963,7 +963,7 @@ func TestResProperty(t *testing.T) {
 			client.On("UpdateRuleTree", AnyCTX, req).Return(nil, err).Once()
 
 			ExpectRemoveProperty(client, "prp_1", "", "")
-			useClient(client, func() {
+			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
 					Providers: testAccProviders,
 					Steps: []resource.TestStep{
@@ -1044,7 +1044,7 @@ func TestResProperty(t *testing.T) {
 				&[]papi.Hostname{},
 			).Twice()
 
-			useClient(client, func() {
+			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
 					Providers: testAccProviders,
 					Steps: []resource.TestStep{
@@ -1100,7 +1100,7 @@ func TestResProperty(t *testing.T) {
 
 			ExpectRemoveProperty(client, "prp_0", "ctr_0", "grp_0")
 
-			useClient(client, func() {
+			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
 					Providers: testAccProviders,
 					Steps: []resource.TestStep{
@@ -1148,7 +1148,7 @@ func TestResProperty(t *testing.T) {
 
 			ExpectRemoveProperty(client, "prp_0", "ctr_0", "grp_0")
 
-			useClient(client, func() {
+			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
 					Providers: testAccProviders,
 					Steps: []resource.TestStep{
@@ -1191,7 +1191,7 @@ func TestResProperty(t *testing.T) {
 			var Groups []*papi.Group
 			ExpectGetGroups(client, &Groups).Once()
 
-			useClient(client, func() {
+			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
 					Providers: testAccProviders,
 					Steps: []resource.TestStep{{
@@ -1218,7 +1218,7 @@ func TestResProperty(t *testing.T) {
 			}
 
 			client.On("CreateProperty", AnyCTX, req).Return(nil, fmt.Errorf("given property name is not unique"))
-			useClient(client, func() {
+			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
 					Providers: testAccProviders,
 					Steps: []resource.TestStep{

@@ -45,7 +45,7 @@ func TestDataPropertyHostnames(t *testing.T) {
 			Hostnames:       hostnames,
 		}, nil)
 
-		useClient(client, func() {
+		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{{
@@ -92,7 +92,7 @@ func TestDataPropertyHostnames(t *testing.T) {
 			Hostnames:       hostnames,
 		}, nil)
 
-		useClient(client, func() {
+		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{{
@@ -139,7 +139,7 @@ func TestDataPropertyHostnames(t *testing.T) {
 			Hostnames:       hostnames,
 		}, nil)
 
-		useClient(client, func() {
+		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{{
@@ -186,7 +186,7 @@ func TestDataPropertyHostnames(t *testing.T) {
 			Hostnames:       hostnames,
 		}, nil)
 
-		useClient(client, func() {
+		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{{

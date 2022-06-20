@@ -15,7 +15,7 @@ import (
 func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 	t.Run("valid nested template with vars map", func(t *testing.T) {
 		client := mockpapi{}
-		useClient(&client, func() {
+		useClient(&client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{
@@ -37,7 +37,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 	})
 	t.Run("valid nested template with vars files", func(t *testing.T) {
 		client := mockpapi{}
-		useClient(&client, func() {
+		useClient(&client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{
@@ -59,7 +59,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 	})
 	t.Run("null values do not overwrite defaults", func(t *testing.T) {
 		client := mockpapi{}
-		useClient(&client, func() {
+		useClient(&client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{
@@ -81,7 +81,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 	})
 	t.Run("error conflicts in template_file and template", func(t *testing.T) {
 		client := mockpapi{}
-		useClient(&client, func() {
+		useClient(&client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{
@@ -99,7 +99,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 	})
 	t.Run("error missing values in template", func(t *testing.T) {
 		client := mockpapi{}
-		useClient(&client, func() {
+		useClient(&client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{
@@ -117,7 +117,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 	})
 	t.Run("error setting both ,ap and file variables", func(t *testing.T) {
 		client := mockpapi{}
-		useClient(&client, func() {
+		useClient(&client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{
@@ -131,7 +131,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 	})
 	t.Run("variable has invalid type", func(t *testing.T) {
 		client := mockpapi{}
-		useClient(&client, func() {
+		useClient(&client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{
@@ -145,7 +145,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 	})
 	t.Run("variable not found in template", func(t *testing.T) {
 		client := mockpapi{}
-		useClient(&client, func() {
+		useClient(&client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{
@@ -159,7 +159,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 	})
 	t.Run("invalid variable in map", func(t *testing.T) {
 		client := mockpapi{}
-		useClient(&client, func() {
+		useClient(&client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{
@@ -173,7 +173,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 	})
 	t.Run("error fetching vars from map - file not found", func(t *testing.T) {
 		client := mockpapi{}
-		useClient(&client, func() {
+		useClient(&client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{
@@ -187,7 +187,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 	})
 	t.Run("invalid json result", func(t *testing.T) {
 		client := mockpapi{}
-		useClient(&client, func() {
+		useClient(&client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{
@@ -201,7 +201,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 	})
 	t.Run("template file not found", func(t *testing.T) {
 		client := mockpapi{}
-		useClient(&client, func() {
+		useClient(&client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{
@@ -216,7 +216,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 
 	t.Run("snippets files are under incorrect folder deeply nested", func(t *testing.T) {
 		client := mockpapi{}
-		useClient(&client, func() {
+		useClient(&client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{
@@ -231,7 +231,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 
 	t.Run("snippets files are under incorrect folder e.g. property-snippets/rules.json", func(t *testing.T) {
 		client := mockpapi{}
-		useClient(&client, func() {
+		useClient(&client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{

@@ -21,7 +21,7 @@ func TestDataProperties(t *testing.T) {
 			papi.GetPropertiesRequest{GroupID: "grp_test", ContractID: "ctr_test"},
 		).Return(&papi.GetPropertiesResponse{Properties: props}, nil)
 
-		useClient(client, func() {
+		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{{
@@ -44,7 +44,7 @@ func TestDataProperties(t *testing.T) {
 			papi.GetPropertiesRequest{GroupID: "grp_test", ContractID: "ctr_test"},
 		).Return(&papi.GetPropertiesResponse{Properties: props}, nil)
 
-		useClient(client, func() {
+		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{{
@@ -67,7 +67,7 @@ func TestDataProperties(t *testing.T) {
 			papi.GetPropertiesRequest{GroupID: "grp_test", ContractID: "ctr_test"},
 		).Return(&papi.GetPropertiesResponse{Properties: props}, nil)
 
-		useClient(client, func() {
+		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{{

@@ -29,7 +29,7 @@ func Test_DSReadContract(t *testing.T) {
 					ContractIDs:   []string{"ctr_1234"},
 				},
 			}}}, nil)
-		useClient(client, func() {
+		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{{
@@ -63,7 +63,7 @@ func Test_DSReadContract(t *testing.T) {
 					ContractIDs:   []string{"ctr_1234"},
 				},
 			}}}, nil)
-		useClient(client, func() {
+		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{{
@@ -97,7 +97,7 @@ func Test_DSReadContract(t *testing.T) {
 					ContractIDs:   []string{"ctr_1234"},
 				},
 			}}}, nil)
-		useClient(client, func() {
+		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{{
@@ -131,7 +131,7 @@ func Test_DSReadContract(t *testing.T) {
 					ContractIDs:   []string{"ctr_1234"},
 				},
 			}}}, nil)
-		useClient(client, func() {
+		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{{
@@ -161,7 +161,7 @@ func Test_DSReadContract(t *testing.T) {
 					ContractIDs:   []string{"ctr_1234"},
 				},
 			}}}, nil)
-		useClient(client, func() {
+		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{{
@@ -195,7 +195,7 @@ func Test_DSReadContract(t *testing.T) {
 					ContractIDs:   []string{"ctr_1234"},
 				},
 			}}}, nil)
-		useClient(client, func() {
+		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{{
@@ -229,7 +229,7 @@ func Test_DSReadContract(t *testing.T) {
 					ContractIDs:   []string{"ctr_1234"},
 				},
 			}}}, nil)
-		useClient(client, func() {
+		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{{

@@ -154,7 +154,7 @@ func TestResCPCode(t *testing.T) {
 
 		// No mock behavior for delete because there is no delete operation for CP Codes
 
-		useClient(client, func() {
+		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{{
@@ -188,7 +188,7 @@ func TestResCPCode(t *testing.T) {
 
 		// No mock behavior for delete because there is no delete operation for CP Codes
 
-		useClient(client, func() {
+		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{{
@@ -226,7 +226,7 @@ func TestResCPCode(t *testing.T) {
 
 		// No mock behavior for delete because there is no delete operation for CP Codes
 
-		useClient(client, func() {
+		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{{
@@ -265,7 +265,7 @@ func TestResCPCode(t *testing.T) {
 
 		// No mock behavior for delete because there is no delete operation for CP Codes
 
-		useClient(client, func() {
+		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{{
@@ -304,7 +304,7 @@ func TestResCPCode(t *testing.T) {
 
 		// No mock behavior for delete because there is no delete operation for CP Codes
 
-		useClient(client, func() {
+		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{{
@@ -335,7 +335,7 @@ func TestResCPCode(t *testing.T) {
 
 		// No mock behavior for delete because there is no delete operation for CP Codes
 
-		useClient(client, func() {
+		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{
@@ -365,7 +365,7 @@ func TestResCPCode(t *testing.T) {
 		CPCodes := []papi.CPCode{{ID: "cpc_0", Name: "test cpcode", ProductIDs: []string{"prd_Web_Accel"}}}
 		expectGetCPCodes(client, "ctr_1", "grp_2", &CPCodes)
 		expectGetCPCode(client, "ctr_1", "grp_2", 0, &CPCodes, nil).Times(4)
-		useClient(client, func() {
+		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{
@@ -401,7 +401,7 @@ func TestResCPCode(t *testing.T) {
 		client := &mockpapi{}
 		id := "123"
 
-		useClient(client, func() {
+		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{
@@ -422,7 +422,7 @@ func TestResCPCode(t *testing.T) {
 		client := &mockpapi{}
 		id := ",ctr_1-1NC95D,grp_194665"
 
-		useClient(client, func() {
+		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{
@@ -453,7 +453,7 @@ func TestResCPCode(t *testing.T) {
 
 		// No mock behavior for delete because there is no delete operation for CP Codes
 
-		useClient(client, func() {
+		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{
@@ -497,7 +497,7 @@ func TestResCPCode(t *testing.T) {
 
 		// No mock behavior for delete because there is no delete operation for CP Codes
 
-		useClient(client, func() {
+		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{
@@ -534,7 +534,7 @@ func TestResCPCode(t *testing.T) {
 
 		// No mock behavior for delete because there is no delete operation for CP Codes
 
-		useClient(client, func() {
+		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{
@@ -578,7 +578,7 @@ func TestResCPCode(t *testing.T) {
 
 		// No mock behavior for delete because there is no delete operation for CP Codes
 
-		useClient(client, func() {
+		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{

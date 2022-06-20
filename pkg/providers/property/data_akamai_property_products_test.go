@@ -36,7 +36,7 @@ func TestOutputProductsDataSource(t *testing.T) {
 			},
 		}, nil)
 
-		useClient(client, func() {
+		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers:  testAccProviders,
 				IsUnitTest: true,

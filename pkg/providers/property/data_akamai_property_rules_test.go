@@ -48,7 +48,7 @@ func TestDSPropertyRulesRead(t *testing.T) {
 			}, nil)
 		}
 		mockImpl(client)
-		useClient(client, func() {
+		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{
@@ -124,7 +124,7 @@ func TestDSPropertyRulesRead(t *testing.T) {
 				client := &mockpapi{}
 				mockImpl(client, test.expectedRuleFormat)
 
-				useClient(client, func() {
+				useClient(client, nil, func() {
 					resource.UnitTest(t, resource.TestCase{
 						Providers: testAccProviders,
 						Steps: []resource.TestStep{
@@ -154,7 +154,7 @@ func TestDSPropertyRulesRead(t *testing.T) {
 			}, nil)
 		}
 		mockImpl(client)
-		useClient(client, func() {
+		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{
@@ -173,7 +173,7 @@ func TestDSPropertyRulesRead(t *testing.T) {
 			m.On("GetRuleFormats", mock.Anything).Return(nil, fmt.Errorf("oops"))
 		}
 		mockImpl(client)
-		useClient(client, func() {
+		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{
@@ -188,7 +188,7 @@ func TestDSPropertyRulesRead(t *testing.T) {
 	})
 	t.Run("group_id is required with contract_id", func(t *testing.T) {
 		client := &mockpapi{}
-		useClient(client, func() {
+		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{
@@ -203,7 +203,7 @@ func TestDSPropertyRulesRead(t *testing.T) {
 	})
 	t.Run("contract_id is required with group_id", func(t *testing.T) {
 		client := &mockpapi{}
-		useClient(client, func() {
+		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{
@@ -218,7 +218,7 @@ func TestDSPropertyRulesRead(t *testing.T) {
 	})
 	t.Run("contract_id cannot be empty", func(t *testing.T) {
 		client := &mockpapi{}
-		useClient(client, func() {
+		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{
@@ -233,7 +233,7 @@ func TestDSPropertyRulesRead(t *testing.T) {
 	})
 	t.Run("group_id cannot be empty", func(t *testing.T) {
 		client := &mockpapi{}
-		useClient(client, func() {
+		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{
@@ -256,7 +256,7 @@ func TestDSPropertyRulesRead(t *testing.T) {
 			}).Return(nil, fmt.Errorf("fetching latest version")).Once()
 		}
 		mockImpl(client)
-		useClient(client, func() {
+		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{
@@ -293,7 +293,7 @@ func TestDSPropertyRulesRead(t *testing.T) {
 			}).Return(nil, fmt.Errorf("fetching rule tree")).Once()
 		}
 		mockImpl(client)
-		useClient(client, func() {
+		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{

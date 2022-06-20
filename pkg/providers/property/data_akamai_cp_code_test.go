@@ -25,7 +25,7 @@ func TestDSCPCode(t *testing.T) {
 			papi.GetCPCodesRequest{ContractID: "ctr_test", GroupID: "grp_test"},
 		).Return(&papi.GetCPCodesResponse{CPCodes: cpc}, nil)
 
-		useClient(client, func() {
+		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{{
@@ -57,7 +57,7 @@ func TestDSCPCode(t *testing.T) {
 			papi.GetCPCodesRequest{ContractID: "ctr_test", GroupID: "grp_test"},
 		).Return(&papi.GetCPCodesResponse{CPCodes: cpc}, nil)
 
-		useClient(client, func() {
+		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{{
@@ -91,7 +91,7 @@ func TestDSCPCode(t *testing.T) {
 			papi.GetCPCodesRequest{ContractID: "ctr_test", GroupID: "grp_test"},
 		).Return(&papi.GetCPCodesResponse{CPCodes: cpc}, nil)
 
-		useClient(client, func() {
+		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{{
@@ -123,7 +123,7 @@ func TestDSCPCode(t *testing.T) {
 			papi.GetCPCodesRequest{ContractID: "ctr_test", GroupID: "grp_test"},
 		).Return(&papi.GetCPCodesResponse{CPCodes: cpc}, nil)
 
-		useClient(client, func() {
+		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{{
@@ -152,7 +152,7 @@ func TestDSCPCode(t *testing.T) {
 			papi.GetCPCodesRequest{ContractID: "ctr_test", GroupID: "grp_test"},
 		).Return(&papi.GetCPCodesResponse{CPCodes: cpc}, nil)
 
-		useClient(client, func() {
+		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{{
@@ -178,7 +178,7 @@ func TestDSCPCode(t *testing.T) {
 
 	t.Run("group collides with group ID", func(t *testing.T) {
 		client := &mockpapi{}
-		useClient(client, func() {
+		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers:  testAccProviders,
 				IsUnitTest: true,
@@ -201,7 +201,7 @@ func TestDSCPCode(t *testing.T) {
 		client.On("GetCPCode", AnyCTX, mock.Anything).Return(&papi.GetCPCodesResponse{CPCode: papi.CPCode{
 			ID: "cpc_test-ft-cp-code", Name: "test-ft-cp-code", CreatedDate: "", ProductIDs: []string{"prd_prod1"},
 		}}, nil).Times(3)
-		useClient(client, func() {
+		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers:  testAccProviders,
 				IsUnitTest: true,

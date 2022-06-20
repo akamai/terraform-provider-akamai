@@ -214,7 +214,7 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 			if test.init != nil {
 				test.init(client)
 			}
-			useClient(client, func() {
+			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
 					Providers:  testAccProviders,
 					IsUnitTest: true,

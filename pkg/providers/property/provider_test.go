@@ -11,6 +11,7 @@ import (
 
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/hapi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -45,13 +46,17 @@ func TestProvider(t *testing.T) {
 var clientLock sync.Mutex
 
 // useClient swaps out the client on the global instance for the duration of the given func
-func useClient(client papi.PAPI, f func()) {
+func useClient(client papi.PAPI, hapiClient hapi.HAPI, f func()) {
 	clientLock.Lock()
 	orig := inst.client
 	inst.client = client
 
+	origHapi := inst.hapiClient
+	inst.hapiClient = hapiClient
+
 	defer func() {
 		inst.client = orig
+		inst.hapiClient = origHapi
 		clientLock.Unlock()
 	}()
 

@@ -23,7 +23,7 @@ func Test_DSReadGroup(t *testing.T) {
 					ContractIDs:   []string{"ctr_1234"},
 				},
 			}}}, nil)
-		useClient(client, func() {
+		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers:  testAccProviders,
 				IsUnitTest: true,
@@ -54,7 +54,7 @@ func Test_DSReadGroup(t *testing.T) {
 					ContractIDs:   []string{"ctr_1234"},
 				},
 			}}}, nil)
-		useClient(client, func() {
+		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers:  testAccProviders,
 				IsUnitTest: true,
@@ -85,7 +85,7 @@ func Test_DSReadGroup(t *testing.T) {
 					ContractIDs:   []string{"ctr_1234"},
 				},
 			}}}, nil)
-		useClient(client, func() {
+		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers:  testAccProviders,
 				IsUnitTest: true,
@@ -116,7 +116,7 @@ func Test_DSReadGroup(t *testing.T) {
 					ContractIDs:   []string{"ctr_1234"},
 				},
 			}}}, nil)
-		useClient(client, func() {
+		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers:  testAccProviders,
 				IsUnitTest: true,
@@ -147,7 +147,7 @@ func Test_DSReadGroup(t *testing.T) {
 					ContractIDs:   []string{"ctr_1234"},
 				},
 			}}}, nil)
-		useClient(client, func() {
+		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers:  testAccProviders,
 				IsUnitTest: true,
@@ -172,7 +172,7 @@ func Test_DSReadGroup(t *testing.T) {
 					ContractIDs:   []string{"ctr_1234"},
 				},
 			}}}, nil)
-		useClient(client, func() {
+		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers:  testAccProviders,
 				IsUnitTest: true,

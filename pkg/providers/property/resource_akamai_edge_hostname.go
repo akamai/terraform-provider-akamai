@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/hapi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
@@ -21,6 +22,7 @@ func resourceSecureEdgeHostName() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceSecureEdgeHostNameCreate,
 		ReadContext:   resourceSecureEdgeHostNameRead,
+		UpdateContext: resourceSecureEdgeHostNameUpdate,
 		DeleteContext: resourceSecureEdgeHostNameDelete,
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceSecureEdgeHostNameImport,
@@ -83,7 +85,6 @@ var akamaiSecureEdgeHostNameSchema = map[string]*schema.Schema{
 	"ip_behavior": {
 		Type:     schema.TypeString,
 		Required: true,
-		ForceNew: true,
 		ValidateDiagFunc: func(val interface{}, path cty.Path) diag.Diagnostics {
 			v := val.(string)
 			key := path[len(path)-1].(cty.GetAttrStep).Name
@@ -93,6 +94,12 @@ var akamaiSecureEdgeHostNameSchema = map[string]*schema.Schema{
 			}
 			return nil
 		},
+	},
+	"status_update_email": {
+		Type:        schema.TypeList,
+		Optional:    true,
+		Elem:        &schema.Schema{Type: schema.TypeString},
+		Description: "Email address that should receive updates on the IP behavior update request. Required for update operation.",
 	},
 	"certificate": {
 		Type:     schema.TypeInt,
@@ -177,19 +184,9 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 	}
 	newHostname := papi.EdgeHostnameCreate{}
 	newHostname.ProductID = productID
-	newHostname.DomainSuffix = "edgesuite.net"
 
-	switch {
-	case strings.HasSuffix(edgeHostname, ".edgesuite.net"):
-		newHostname.DomainSuffix = "edgesuite.net"
-		newHostname.SecureNetwork = papi.EHSecureNetworkStandardTLS
-	case strings.HasSuffix(edgeHostname, ".edgekey.net"):
-		newHostname.DomainSuffix = "edgekey.net"
-		newHostname.SecureNetwork = papi.EHSecureNetworkEnhancedTLS
-	case strings.HasSuffix(edgeHostname, ".akamaized.net"):
-		newHostname.DomainSuffix = "akamaized.net"
-		newHostname.SecureNetwork = papi.EHSecureNetworkSharedCert
-	}
+	newHostname.DomainSuffix, newHostname.SecureNetwork = parseEdgeHostname(edgeHostname)
+
 	newHostname.DomainPrefix = strings.TrimSuffix(edgeHostname, "."+newHostname.DomainSuffix)
 
 	// ip_behavior is required value in schema.
@@ -241,72 +238,6 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 	}
 	logger.Debugf("Resulting EHN Id: %s ", ehnID)
 	return resourceSecureEdgeHostNameRead(ctx, d, meta)
-}
-
-func resourceSecureEdgeHostNameDelete(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
-	logger := meta.Log("PAPI", "resourceSecureEdgeHostNameDelete")
-	logger.Debug("DELETING")
-	logger.Info("PAPI does not support edge hostname deletion - resource will only be removed from state")
-	d.SetId("")
-	logger.Debugf("DONE")
-	return nil
-}
-
-func resourceSecureEdgeHostNameImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
-	meta := akamai.Meta(m)
-	client := inst.Client(meta)
-
-	parts := strings.Split(d.Id(), ",")
-	if len(parts) < 3 {
-		return nil, fmt.Errorf("comma-separated list of EdgehostNameID, contractID and groupID has to be supplied in import: %s", d.Id())
-	}
-
-	edgehostID := parts[0]
-	contractID := tools.AddPrefix(parts[1], "ctr_")
-	groupID := tools.AddPrefix(parts[2], "grp_")
-
-	edgehostnameDetails, err := client.GetEdgeHostname(ctx, papi.GetEdgeHostnameRequest{
-		EdgeHostnameID: edgehostID,
-		ContractID:     contractID,
-		GroupID:        groupID,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	if err := d.Set("contract", edgehostnameDetails.ContractID); err != nil {
-		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
-	}
-	if err := d.Set("contract_id", edgehostnameDetails.ContractID); err != nil {
-		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
-	}
-	if err := d.Set("group", edgehostnameDetails.GroupID); err != nil {
-		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
-	}
-	if err := d.Set("group_id", edgehostnameDetails.GroupID); err != nil {
-		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
-	}
-	productID := edgehostnameDetails.EdgeHostname.ProductID
-	if err := d.Set("product", productID); err != nil {
-		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
-	}
-	if err := d.Set("product_id", productID); err != nil {
-		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
-	}
-	useCasesJSON, err := useCases2JSON(edgehostnameDetails.EdgeHostname.UseCases)
-	if err != nil {
-		return nil, err
-	}
-	if err := d.Set("use_cases", string(useCasesJSON)); err != nil {
-		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
-	}
-	if err := d.Set("edge_hostname", edgehostnameDetails.EdgeHostname.Domain); err != nil {
-		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
-	}
-	d.SetId(edgehostID)
-
-	return []*schema.ResourceData{d}, nil
 }
 
 func resourceSecureEdgeHostNameRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -400,6 +331,120 @@ func resourceSecureEdgeHostNameRead(ctx context.Context, d *schema.ResourceData,
 	return nil
 }
 
+func resourceSecureEdgeHostNameUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	logger := meta.Log("PAPI", "resourceSecureEdgeHostNameUpdate")
+
+	if d.HasChange("ip_behavior") {
+		edgeHostname, err := tools.GetStringValue("edge_hostname", d)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		dnsZone, _ := parseEdgeHostname(edgeHostname)
+		ipBehavior, err := tools.GetStringValue("ip_behavior", d)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		emails, err := tools.GetListValue("status_update_email", d)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		if len(emails) == 0 {
+			diag.Errorf(`"status_update_email" is a required parameter to update an edge hostname`)
+		}
+		statusUpdateEmails := make([]string, len(emails))
+		for i, email := range emails {
+			statusUpdateEmails[i] = email.(string)
+		}
+
+		logger.Debugf("Proceeding to update /ipVersionBehavior for %s", edgeHostname)
+
+		if _, err = inst.HapiClient(meta).UpdateEdgeHostname(ctx, hapi.UpdateEdgeHostnameRequest{
+			DNSZone:           dnsZone,
+			RecordName:        edgeHostname,
+			Comments:          fmt.Sprintf("change /ipVersionBehavior to %s", ipBehavior),
+			StatusUpdateEmail: statusUpdateEmails,
+			Body: []hapi.UpdateEdgeHostnameRequestBody{
+				{
+					Op:    "replace",
+					Path:  "/ipVersionBehavior",
+					Value: ipBehavior,
+				},
+			},
+		}); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
+	return resourceSecureEdgeHostNameRead(ctx, d, m)
+}
+
+func resourceSecureEdgeHostNameDelete(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	logger := meta.Log("PAPI", "resourceSecureEdgeHostNameDelete")
+	logger.Debug("DELETING")
+	logger.Info("PAPI does not support edge hostname deletion - resource will only be removed from state")
+	d.SetId("")
+	logger.Debugf("DONE")
+	return nil
+}
+
+func resourceSecureEdgeHostNameImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+
+	parts := strings.Split(d.Id(), ",")
+	if len(parts) < 3 {
+		return nil, fmt.Errorf("comma-separated list of EdgehostNameID, contractID and groupID has to be supplied in import: %s", d.Id())
+	}
+
+	edgehostID := parts[0]
+	contractID := tools.AddPrefix(parts[1], "ctr_")
+	groupID := tools.AddPrefix(parts[2], "grp_")
+
+	edgehostnameDetails, err := client.GetEdgeHostname(ctx, papi.GetEdgeHostnameRequest{
+		EdgeHostnameID: edgehostID,
+		ContractID:     contractID,
+		GroupID:        groupID,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if err := d.Set("contract", edgehostnameDetails.ContractID); err != nil {
+		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+	}
+	if err := d.Set("contract_id", edgehostnameDetails.ContractID); err != nil {
+		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+	}
+	if err := d.Set("group", edgehostnameDetails.GroupID); err != nil {
+		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+	}
+	if err := d.Set("group_id", edgehostnameDetails.GroupID); err != nil {
+		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+	}
+	productID := edgehostnameDetails.EdgeHostname.ProductID
+	if err := d.Set("product", productID); err != nil {
+		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+	}
+	if err := d.Set("product_id", productID); err != nil {
+		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+	}
+	useCasesJSON, err := useCases2JSON(edgehostnameDetails.EdgeHostname.UseCases)
+	if err != nil {
+		return nil, err
+	}
+	if err := d.Set("use_cases", string(useCasesJSON)); err != nil {
+		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+	}
+	if err := d.Set("edge_hostname", edgehostnameDetails.EdgeHostname.Domain); err != nil {
+		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+	}
+	d.SetId(edgehostID)
+
+	return []*schema.ResourceData{d}, nil
+}
+
 func suppressEdgeHostnameDomain(_, old, new string, _ *schema.ResourceData) bool {
 	if old == new {
 		return true
@@ -480,4 +525,16 @@ func useCases2JSON(useCases []papi.UseCase) ([]byte, error) {
 		return []byte{}, nil
 	}
 	return json.MarshalIndent(useCases, "", "  ")
+}
+
+func parseEdgeHostname(hostname string) (string, string) {
+	switch {
+	case strings.HasSuffix(hostname, ".edgesuite.net"):
+		return "edgesuite.net", papi.EHSecureNetworkStandardTLS
+	case strings.HasSuffix(hostname, ".edgekey.net"):
+		return "edgekey.net", papi.EHSecureNetworkEnhancedTLS
+	case strings.HasSuffix(hostname, ".akamaized.net"):
+		return "akamaized.net", papi.EHSecureNetworkSharedCert
+	}
+	return "edgesuite.net", ""
 }
