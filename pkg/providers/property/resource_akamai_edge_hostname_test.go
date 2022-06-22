@@ -472,7 +472,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 				// update
 				mh.On("UpdateEdgeHostname", mock.Anything, hapi.UpdateEdgeHostnameRequest{
 					DNSZone:           "akamaized.net",
-					RecordName:        "test.akamaized.net",
+					RecordName:        "test",
 					Comments:          "change /ipVersionBehavior to IPV6_PERFORMANCE",
 					StatusUpdateEmail: []string{"hello@akamai.com"},
 					Body: []hapi.UpdateEdgeHostnameRequestBody{
@@ -543,15 +543,6 @@ func TestResourceEdgeHostname(t *testing.T) {
 				{
 					Config:      loadFixtureString(fmt.Sprintf("%s/%s", testDir, "new_akamaized_net.tf")),
 					ExpectError: regexp.MustCompile("oops"),
-				},
-			},
-		},
-		"invalid IP version behavior": {
-			init: func(mp *mockpapi, mh *mockhapi) {},
-			steps: []resource.TestStep{
-				{
-					Config:      loadFixtureString(fmt.Sprintf("%s/%s", testDir, "invalid_ip.tf")),
-					ExpectError: regexp.MustCompile("ip_behavior must be one of IPV4, IPV6_PERFORMANCE, IPV6_COMPLIANCE"),
 				},
 			},
 		},

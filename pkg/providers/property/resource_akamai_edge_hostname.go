@@ -7,8 +7,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/hashicorp/go-cty/cty"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
@@ -85,15 +83,6 @@ var akamaiSecureEdgeHostNameSchema = map[string]*schema.Schema{
 	"ip_behavior": {
 		Type:     schema.TypeString,
 		Required: true,
-		ValidateDiagFunc: func(val interface{}, path cty.Path) diag.Diagnostics {
-			v := val.(string)
-			key := path[len(path)-1].(cty.GetAttrStep).Name
-
-			if !strings.EqualFold(papi.EHIPVersionV4, v) && !strings.EqualFold(papi.EHIPVersionV6Performance, v) && !strings.EqualFold(papi.EHIPVersionV6Compliance, v) {
-				return diag.Errorf("%v must be one of %v, %v, %v, got: %v", key, papi.EHIPVersionV4, papi.EHIPVersionV6Performance, papi.EHIPVersionV6Compliance, v)
-			}
-			return nil
-		},
 	},
 	"status_update_email": {
 		Type:        schema.TypeList,
@@ -361,7 +350,7 @@ func resourceSecureEdgeHostNameUpdate(ctx context.Context, d *schema.ResourceDat
 
 		if _, err = inst.HapiClient(meta).UpdateEdgeHostname(ctx, hapi.UpdateEdgeHostnameRequest{
 			DNSZone:           dnsZone,
-			RecordName:        edgeHostname,
+			RecordName:        strings.ReplaceAll(edgeHostname, "."+dnsZone, ""),
 			Comments:          fmt.Sprintf("change /ipVersionBehavior to %s", ipBehavior),
 			StatusUpdateEmail: statusUpdateEmails,
 			Body: []hapi.UpdateEdgeHostnameRequestBody{
@@ -372,6 +361,13 @@ func resourceSecureEdgeHostNameUpdate(ctx context.Context, d *schema.ResourceDat
 				},
 			},
 		}); err != nil {
+			if err2 := tools.RestoreOldValues(d, []string{"ip_behavior"}); err2 != nil {
+				return diag.Errorf(`%s failed. No changes were written to server:
+%s
+
+Failed to restore previous local schema values. The schema will remain in tainted state:
+%s`, hapi.ErrUpdateEdgeHostname, err.Error(), err2.Error())
+			}
 			return diag.FromErr(err)
 		}
 	}
