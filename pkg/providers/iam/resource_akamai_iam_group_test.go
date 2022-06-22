@@ -68,7 +68,7 @@ func TestResourceGroup(t *testing.T) {
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_iam_group.test", "parent_group_id", strconv.FormatInt(groupCreate.ParentGroupID, 10)),
 						resource.TestCheckResourceAttr("akamai_iam_group.test", "id", strconv.FormatInt(groupCreate.GroupID, 10)),
-						resource.TestCheckResourceAttr("akamai_iam_group.test", "group_name", groupCreate.GroupName),
+						resource.TestCheckResourceAttr("akamai_iam_group.test", "name", groupCreate.GroupName),
 						resource.TestCheckResourceAttr("akamai_iam_group.test", "sub_groups.#", strconv.Itoa(len(groupCreate.SubGroups))),
 						resource.TestCheckResourceAttr("akamai_iam_group.test", "sub_groups.0", strconv.FormatInt(groupCreate.SubGroups[0].GroupID, 10)),
 						resource.TestCheckResourceAttr("akamai_iam_group.test", "sub_groups.1", strconv.FormatInt(groupCreate.SubGroups[1].GroupID, 10)),
@@ -96,7 +96,7 @@ func TestResourceGroup(t *testing.T) {
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_iam_group.test", "parent_group_id", strconv.FormatInt(groupCreate.ParentGroupID, 10)),
 						resource.TestCheckResourceAttr("akamai_iam_group.test", "id", strconv.FormatInt(groupCreate.GroupID, 10)),
-						resource.TestCheckResourceAttr("akamai_iam_group.test", "group_name", groupCreate.GroupName),
+						resource.TestCheckResourceAttr("akamai_iam_group.test", "name", groupCreate.GroupName),
 						resource.TestCheckResourceAttr("akamai_iam_group.test", "sub_groups.#", strconv.Itoa(len(groupCreate.SubGroups))),
 						resource.TestCheckResourceAttr("akamai_iam_group.test", "sub_groups.0", strconv.FormatInt(groupCreate.SubGroups[0].GroupID, 10)),
 						resource.TestCheckResourceAttr("akamai_iam_group.test", "sub_groups.1", strconv.FormatInt(groupCreate.SubGroups[1].GroupID, 10)),
@@ -108,7 +108,7 @@ func TestResourceGroup(t *testing.T) {
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_iam_group.test", "parent_group_id", strconv.FormatInt(groupUpdate.ParentGroupID, 10)),
 						resource.TestCheckResourceAttr("akamai_iam_group.test", "id", strconv.FormatInt(groupUpdate.GroupID, 10)),
-						resource.TestCheckResourceAttr("akamai_iam_group.test", "group_name", groupUpdate.GroupName),
+						resource.TestCheckResourceAttr("akamai_iam_group.test", "name", groupUpdate.GroupName),
 						resource.TestCheckResourceAttr("akamai_iam_group.test", "sub_groups.#", strconv.Itoa(len(groupUpdate.SubGroups))),
 						resource.TestCheckResourceAttr("akamai_iam_group.test", "sub_groups.0", strconv.FormatInt(groupUpdate.SubGroups[0].GroupID, 10)),
 					),

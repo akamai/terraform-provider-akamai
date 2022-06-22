@@ -28,7 +28,7 @@ func resourceIAMGroup() *schema.Resource {
 				Required:    true,
 				Description: "Unique identifier for the parent group",
 			},
-			"group_name": {
+			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Human readable name for a group",
@@ -56,7 +56,7 @@ func resourceIAMGroupCreate(ctx context.Context, rd *schema.ResourceData, m inte
 		return diag.FromErr(err)
 	}
 
-	groupName, err := tools.GetStringValue("group_name", rd)
+	groupName, err := tools.GetStringValue("name", rd)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -94,7 +94,7 @@ func resourceIAMGroupRead(ctx context.Context, rd *schema.ResourceData, m interf
 
 	data := map[string]interface{}{
 		"parent_group_id": group.ParentGroupID,
-		"group_name":      group.GroupName,
+		"name":            group.GroupName,
 		"sub_groups":      subGroups,
 	}
 	if err = tools.SetAttrs(rd, data); err != nil {
@@ -119,8 +119,8 @@ func resourceIAMGroupUpdate(ctx context.Context, rd *schema.ResourceData, m inte
 		return diag.FromErr(err)
 	}
 
-	if rd.HasChange("group_name") {
-		groupName, err := tools.GetStringValue("group_name", rd)
+	if rd.HasChange("name") {
+		groupName, err := tools.GetStringValue("name", rd)
 		if err != nil {
 			return diag.FromErr(err)
 		}
