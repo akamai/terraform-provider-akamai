@@ -11,7 +11,7 @@
 * APPSEC
   * Fix drift in `EffectiveTimePeriod`, `SamplingRate`, `LoggingOptions`, and `Operation` fields of custom rule resource.
   * Fix crash when eval rule API returns an error.
-
+  * Fix incorrect error report when activation API returns an error.
 
 ## 2.1.1 (Jun 9, 2022)
 
