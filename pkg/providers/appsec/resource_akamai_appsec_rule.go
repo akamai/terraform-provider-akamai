@@ -423,6 +423,5 @@ func resourceRuleDelete(ctx context.Context, d *schema.ResourceData, m interface
 			return diag.FromErr(err)
 		}
 	}
-	d.SetId("")
 	return nil
 }

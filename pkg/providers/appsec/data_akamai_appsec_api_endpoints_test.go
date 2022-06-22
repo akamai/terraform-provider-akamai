@@ -14,20 +14,20 @@ func TestAccAkamaiApiEndpoints_data_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&config, nil)
 
-		cv := appsec.GetApiEndpointsResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSApiEndpoints/ApiEndpoints.json")), &cv)
+		getAPIEndpointsResponse := appsec.GetApiEndpointsResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestDSApiEndpoints/ApiEndpoints.json"), &getAPIEndpointsResponse)
 
 		client.On("GetApiEndpoints",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetApiEndpointsRequest{ConfigID: 43253, Version: 7},
-		).Return(&cv, nil)
+		).Return(&getAPIEndpointsResponse, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{

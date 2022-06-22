@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -77,7 +76,9 @@ func dataSourceAdvancedSettingsEvasivePathMatchRead(ctx context.Context, d *sche
 
 	outputtext, err := RenderTemplates(ots, "advancedSettingsEvasivePathMatchDS", advancedsettingsevasivepathmatch)
 	if err == nil {
-		d.Set("output_text", outputtext)
+		if err := d.Set("output_text", outputtext); err != nil {
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		}
 	}
 
 	jsonBody, err := json.Marshal(advancedsettingsevasivepathmatch)
@@ -86,7 +87,7 @@ func dataSourceAdvancedSettingsEvasivePathMatchRead(ctx context.Context, d *sche
 	}
 
 	if err := d.Set("json", string(jsonBody)); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	d.SetId(strconv.Itoa(getAdvancedSettingsEvasivePathMatch.ConfigID))

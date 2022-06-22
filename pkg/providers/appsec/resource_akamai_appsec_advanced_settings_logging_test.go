@@ -14,16 +14,16 @@ func TestAccAkamaiAdvancedSettingsLogging_res_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		configResponse := appsec.GetConfigurationResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &configResponse)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &configResponse)
 
 		getResponse := appsec.GetAdvancedSettingsLoggingResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResAdvancedSettingsLogging/AdvancedSettingsLogging.json")), &getResponse)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResAdvancedSettingsLogging/AdvancedSettingsLogging.json"), &getResponse)
 
 		updateResponse := appsec.UpdateAdvancedSettingsLoggingResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResAdvancedSettingsLogging/AdvancedSettingsLogging.json")), &updateResponse)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResAdvancedSettingsLogging/AdvancedSettingsLogging.json"), &updateResponse)
 
 		removeResponse := appsec.RemoveAdvancedSettingsLoggingResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResAdvancedSettingsLogging/AdvancedSettingsLogging.json")), &removeResponse)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResAdvancedSettingsLogging/AdvancedSettingsLogging.json"), &removeResponse)
 
 		client.On("GetConfiguration",
 			mock.Anything,

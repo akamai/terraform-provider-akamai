@@ -14,20 +14,20 @@ func TestAccAkamaiSiemSettings_data_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&config, nil)
 
-		cv := appsec.GetSiemSettingsResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSSiemSettings/SiemSettings.json")), &cv)
+		getSiemSettingsResponse := appsec.GetSiemSettingsResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestDSSiemSettings/SiemSettings.json"), &getSiemSettingsResponse)
 
 		client.On("GetSiemSettings",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetSiemSettingsRequest{ConfigID: 43253, Version: 7},
-		).Return(&cv, nil)
+		).Return(&getSiemSettingsResponse, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{

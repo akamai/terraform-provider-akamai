@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"strconv"
 	"strings"
 
@@ -81,12 +80,11 @@ func resourceAdvancedSettingsLoggingCreate(ctx context.Context, d *schema.Resour
 		JsonPayloadRaw: rawJSON,
 	}
 
-	updateResponse, err := client.UpdateAdvancedSettingsLogging(ctx, createAdvancedSettingsLogging)
+	_, err = client.UpdateAdvancedSettingsLogging(ctx, createAdvancedSettingsLogging)
 	if err != nil {
-		logger.Errorf("calling 'createAdvancedSettingsLogging': %s", err.Error())
+		logger.Errorf("calling 'UpdateAdvancedSettingsLogging': %s", err.Error())
 		return diag.FromErr(err)
 	}
-	log.Printf("updateResponse: %v", updateResponse)
 
 	if len(createAdvancedSettingsLogging.PolicyID) > 0 {
 		d.SetId(fmt.Sprintf("%d:%s", createAdvancedSettingsLogging.ConfigID, createAdvancedSettingsLogging.PolicyID))
@@ -101,7 +99,7 @@ func resourceAdvancedSettingsLoggingRead(ctx context.Context, d *schema.Resource
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsLoggingRead")
-	logger.Debugf("resourceAdvancedSettingsLoggingRead")
+	logger.Debugf("in resourceAdvancedSettingsLoggingRead")
 
 	getAdvancedSettingsLogging := appsec.GetAdvancedSettingsLoggingRequest{}
 	if d.Id() != "" && strings.Contains(d.Id(), ":") {
@@ -163,7 +161,7 @@ func resourceAdvancedSettingsLoggingUpdate(ctx context.Context, d *schema.Resour
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsLoggingUpdate")
-	logger.Debugf("resourceAdvancedSettingsLoggingUpdate")
+	logger.Debugf("in resourceAdvancedSettingsLoggingUpdate")
 
 	updateAdvancedSettingsLogging := appsec.UpdateAdvancedSettingsLoggingRequest{}
 	if d.Id() != "" && strings.Contains(d.Id(), ":") {
@@ -203,12 +201,11 @@ func resourceAdvancedSettingsLoggingUpdate(ctx context.Context, d *schema.Resour
 	rawJSON := (json.RawMessage)(jsonPayloadRaw)
 
 	updateAdvancedSettingsLogging.JsonPayloadRaw = rawJSON
-	updateResponse, err := client.UpdateAdvancedSettingsLogging(ctx, updateAdvancedSettingsLogging)
+	_, err := client.UpdateAdvancedSettingsLogging(ctx, updateAdvancedSettingsLogging)
 	if err != nil {
 		logger.Errorf("calling 'updateAdvancedSettingsLogging': %s", err.Error())
 		return diag.FromErr(err)
 	}
-	log.Printf("updateResponse: %v", updateResponse)
 
 	return resourceAdvancedSettingsLoggingRead(ctx, d, m)
 }
@@ -217,7 +214,7 @@ func resourceAdvancedSettingsLoggingDelete(ctx context.Context, d *schema.Resour
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsLoggingDelete")
-	logger.Debugf("resourceAdvancedSettingsLoggingDelete")
+	logger.Debugf("in resourceAdvancedSettingsLoggingDelete")
 
 	removeAdvancedSettingsLogging := appsec.RemoveAdvancedSettingsLoggingRequest{}
 	if d.Id() != "" && strings.Contains(d.Id(), ":") {
@@ -254,12 +251,10 @@ func resourceAdvancedSettingsLoggingDelete(ctx context.Context, d *schema.Resour
 		removeAdvancedSettingsLogging.AllowSampling = false
 	}
 
-	removeResponse, err := client.RemoveAdvancedSettingsLogging(ctx, removeAdvancedSettingsLogging)
+	_, err := client.RemoveAdvancedSettingsLogging(ctx, removeAdvancedSettingsLogging)
 	if err != nil {
 		logger.Errorf("calling 'removeAdvancedSettingsLogging': %s", err.Error())
 		return diag.FromErr(err)
 	}
-	log.Printf("removeResponse: %v", removeResponse)
-	d.SetId("")
 	return nil
 }

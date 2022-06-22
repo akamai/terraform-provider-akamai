@@ -13,13 +13,13 @@ func TestAccAkamaiSiemDefinitions_data_basic(t *testing.T) {
 	t.Run("match by SiemDefinitions ID", func(t *testing.T) {
 		client := &mockappsec{}
 
-		cv := appsec.GetSiemDefinitionsResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSSiemDefinitions/SiemDefinitions.json")), &cv)
+		getSiemDefinitionsResponse := appsec.GetSiemDefinitionsResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestDSSiemDefinitions/SiemDefinitions.json"), &getSiemDefinitionsResponse)
 
 		client.On("GetSiemDefinitions",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetSiemDefinitionsRequest{ID: 0, SiemDefinitionName: "SIEM Version 01"},
-		).Return(&cv, nil)
+		).Return(&getSiemDefinitionsResponse, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{

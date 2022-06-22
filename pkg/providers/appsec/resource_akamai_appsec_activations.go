@@ -174,7 +174,7 @@ func resourceActivationsCreate(ctx context.Context, d *schema.ResourceData, m in
 			activation = act
 
 		case <-ctx.Done():
-			return diag.FromErr(fmt.Errorf("activation context terminated: %w", ctx.Err()))
+			return diag.Errorf("activation context terminated: %s", ctx.Err())
 		}
 	}
 
@@ -292,7 +292,7 @@ func resourceActivationsUpdate(ctx context.Context, d *schema.ResourceData, m in
 			activation = act
 
 		case <-ctx.Done():
-			return diag.FromErr(fmt.Errorf("activation context terminated: %w", ctx.Err()))
+			return diag.Errorf("activation context terminated: %s", ctx.Err())
 		}
 	}
 
@@ -388,16 +388,13 @@ func resourceActivationsDelete(ctx context.Context, d *schema.ResourceData, m in
 			activation = act
 
 		case <-ctx.Done():
-			return diag.FromErr(fmt.Errorf("activation context terminated: %w", ctx.Err()))
+			return diag.Errorf("activation context terminated: %s", ctx.Err())
 		}
 	}
 
 	if err := d.Set("status", activation.Status); err != nil {
 		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
-
-	d.SetId("")
-
 	return nil
 }
 
@@ -436,11 +433,21 @@ func resourceImporter(ctx context.Context, d *schema.ResourceData, m interface{}
 	for _, activation := range response.ActivationHistory {
 		if activation.Version == version && activation.Network == network {
 			d.SetId(strconv.Itoa(activation.ActivationID))
-			d.Set("activate", true)
-			d.Set("config_id", configID)
-			d.Set("network", network)
-			d.Set("note", activation.Notes)
-			d.Set("version", version)
+			if err = d.Set("activate", true); err != nil {
+				return nil, err
+			}
+			if err = d.Set("config_id", configID); err != nil {
+				return nil, err
+			}
+			if err = d.Set("network", network); err != nil {
+				return nil, err
+			}
+			if err = d.Set("note", activation.Notes); err != nil {
+				return nil, err
+			}
+			if err = d.Set("version", version); err != nil {
+				return nil, err
+			}
 
 			return []*schema.ResourceData{d}, nil
 		}

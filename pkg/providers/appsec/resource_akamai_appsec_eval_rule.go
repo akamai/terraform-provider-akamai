@@ -270,8 +270,5 @@ func resourceEvalRuleDelete(ctx context.Context, d *schema.ResourceData, m inter
 	if err != nil {
 		return diag.FromErr(err)
 	}
-
-	d.SetId("")
-
 	return nil
 }

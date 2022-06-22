@@ -13,16 +13,16 @@ func TestAccAkamaiEvalRules_data_basic(t *testing.T) {
 	t.Run("match by Rules ID", func(t *testing.T) {
 		client := &mockappsec{}
 
-		cv := appsec.GetEvalRulesResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSEvalRules/EvalRules.json")), &cv)
+		getEvalRulesResponse := appsec.GetEvalRulesResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestDSEvalRules/EvalRules.json"), &getEvalRulesResponse)
 
 		configs := appsec.GetConfigurationResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &configs)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &configs)
 
 		client.On("GetEvalRules",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetEvalRulesRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
-		).Return(&cv, nil)
+		).Return(&getEvalRulesResponse, nil)
 
 		client.On("GetConfiguration",
 			mock.Anything,

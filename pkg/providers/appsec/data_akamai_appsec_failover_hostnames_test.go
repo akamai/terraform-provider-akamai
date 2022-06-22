@@ -13,13 +13,13 @@ func TestAccAkamaiFailoverHostnames_data_basic(t *testing.T) {
 	t.Run("match by FailoverHostnames ID", func(t *testing.T) {
 		client := &mockappsec{}
 
-		cv := appsec.GetFailoverHostnamesResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSFailoverHostnames/FailoverHostnames.json")), &cv)
+		getFailoverHostnamesResponse := appsec.GetFailoverHostnamesResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestDSFailoverHostnames/FailoverHostnames.json"), &getFailoverHostnamesResponse)
 
 		client.On("GetFailoverHostnames",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetFailoverHostnamesRequest{ConfigID: 43253},
-		).Return(&cv, nil)
+		).Return(&getFailoverHostnamesResponse, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{

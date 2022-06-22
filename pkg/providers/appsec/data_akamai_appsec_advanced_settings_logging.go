@@ -72,7 +72,9 @@ func dataSourceAdvancedSettingsLoggingRead(ctx context.Context, d *schema.Resour
 
 	outputtext, err := RenderTemplates(ots, "advancedSettingsLoggingDS", advancedsettingslogging)
 	if err == nil {
-		d.Set("output_text", outputtext)
+		if err := d.Set("output_text", outputtext); err != nil {
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		}
 	}
 
 	jsonBody, err := json.Marshal(advancedsettingslogging)

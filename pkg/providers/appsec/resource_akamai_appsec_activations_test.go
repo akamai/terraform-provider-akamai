@@ -13,19 +13,19 @@ func TestAccAkamaiActivations_res_basic(t *testing.T) {
 	t.Run("match by Activations ID", func(t *testing.T) {
 		client := &mockappsec{}
 
-		cu := appsec.RemoveActivationsResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResActivations/ActivationsDelete.json")), &cu)
+		removeActivationsResponse := appsec.RemoveActivationsResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResActivations/ActivationsDelete.json"), &removeActivationsResponse)
 
-		ga := appsec.GetActivationsResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResActivations/Activations.json")), &ga)
+		getActivationsResponse := appsec.GetActivationsResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResActivations/Activations.json"), &getActivationsResponse)
 
-		cr := appsec.CreateActivationsResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResActivations/Activations.json")), &cr)
+		createActivationsResponse := appsec.CreateActivationsResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResActivations/Activations.json"), &createActivationsResponse)
 
 		client.On("GetActivations",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetActivationsRequest{ActivationID: 547694},
-		).Return(&ga, nil)
+		).Return(&getActivationsResponse, nil)
 
 		client.On("CreateActivations",
 			mock.Anything,
@@ -38,7 +38,7 @@ func TestAccAkamaiActivations_res_basic(t *testing.T) {
 					ConfigID      int `json:"configId"`
 					ConfigVersion int `json:"configVersion"`
 				}{{ConfigID: 43253, ConfigVersion: 7}}},
-		).Return(&cr, nil)
+		).Return(&createActivationsResponse, nil)
 
 		client.On("RemoveActivations",
 			mock.Anything,
@@ -52,7 +52,7 @@ func TestAccAkamaiActivations_res_basic(t *testing.T) {
 					ConfigID      int `json:"configId"`
 					ConfigVersion int `json:"configVersion"`
 				}{{ConfigID: 43253, ConfigVersion: 7}}},
-		).Return(&cu, nil)
+		).Return(&removeActivationsResponse, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{

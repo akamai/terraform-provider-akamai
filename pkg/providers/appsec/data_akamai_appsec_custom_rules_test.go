@@ -13,13 +13,13 @@ func TestAccAkamaiCustomRules_data_basic(t *testing.T) {
 	t.Run("match by CustomRules ID", func(t *testing.T) {
 		client := &mockappsec{}
 
-		cv := appsec.GetCustomRulesResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSCustomRules/CustomRules.json")), &cv)
+		getCustomRulesResponse := appsec.GetCustomRulesResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestDSCustomRules/CustomRules.json"), &getCustomRulesResponse)
 
 		client.On("GetCustomRules",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetCustomRulesRequest{ConfigID: 43253},
-		).Return(&cv, nil)
+		).Return(&getCustomRulesResponse, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{

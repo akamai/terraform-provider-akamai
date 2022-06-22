@@ -1,6 +1,7 @@
 package appsec
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/apex/log"
@@ -182,7 +183,9 @@ func getAPPSECV1Service(d *schema.ResourceData) (interface{}, error) {
 	}
 
 	if section != "" {
-		d.Set("config_section", section)
+		if err := d.Set("config_section", section); err != nil {
+			return nil, fmt.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		}
 	}
 
 	return nil, nil

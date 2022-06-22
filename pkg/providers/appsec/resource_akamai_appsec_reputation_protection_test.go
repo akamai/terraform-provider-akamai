@@ -14,21 +14,19 @@ func TestAccAkamaiReputationProtection_res_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 
-		updateResponseAllProtectionsFalseJSON := loadFixtureBytes("testdata/TestResReputationProtection/PolicyProtections.json")
 		updateResponseAllProtectionsFalse := appsec.UpdateReputationProtectionResponse{}
-		json.Unmarshal([]byte(updateResponseAllProtectionsFalseJSON), &updateResponseAllProtectionsFalse)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResReputationProtection/PolicyProtections.json"), &updateResponseAllProtectionsFalse)
 
 		getResponseAllProtectionsFalse := appsec.GetReputationProtectionResponse{}
-		json.Unmarshal([]byte(updateResponseAllProtectionsFalseJSON), &getResponseAllProtectionsFalse)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResReputationProtection/PolicyProtections.json"), &getResponseAllProtectionsFalse)
 
-		updateResponseOneProtectionTrueJSON := loadFixtureBytes("testdata/TestResReputationProtection/UpdatedPolicyProtections.json")
 		updateResponseOneProtectionTrue := appsec.UpdateReputationProtectionResponse{}
-		json.Unmarshal([]byte(updateResponseOneProtectionTrueJSON), &updateResponseOneProtectionTrue)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResReputationProtection/UpdatedPolicyProtections.json"), &updateResponseOneProtectionTrue)
 
 		getResponseOneProtectionTrue := appsec.GetReputationProtectionResponse{}
-		json.Unmarshal([]byte(updateResponseOneProtectionTrueJSON), &getResponseOneProtectionTrue)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResReputationProtection/UpdatedPolicyProtections.json"), &getResponseOneProtectionTrue)
 
 		// Mock each call to the EdgeGrid library. With the exception of GetConfiguration, each call
 		// is mocked individually because calls with the same parameters may have different return values.

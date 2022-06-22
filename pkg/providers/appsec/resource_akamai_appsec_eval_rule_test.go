@@ -13,17 +13,17 @@ func TestAccAkamaiEvalRule_res_basic(t *testing.T) {
 	t.Run("match by EvalRule ID", func(t *testing.T) {
 		client := &mockappsec{}
 
-		cu := appsec.UpdateEvalRuleResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResEvalRule/EvalRuleUpdated.json")), &cu)
+		updateEvalRuleResponse := appsec.UpdateEvalRuleResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResEvalRule/EvalRuleUpdated.json"), &updateEvalRuleResponse)
 
-		cr := appsec.GetEvalRuleResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResEvalRule/EvalRule.json")), &cr)
+		getEvalRuleResponse := appsec.GetEvalRuleResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResEvalRule/EvalRule.json"), &getEvalRuleResponse)
 
-		cd := appsec.UpdateEvalRuleResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResEvalRule/EvalRule.json")), &cd)
+		removeEvalRuleActionResponse := appsec.UpdateEvalRuleResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResEvalRule/EvalRule.json"), &removeEvalRuleActionResponse)
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,
@@ -31,19 +31,19 @@ func TestAccAkamaiEvalRule_res_basic(t *testing.T) {
 		).Return(&config, nil)
 
 		client.On("GetEvalRule",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetEvalRuleRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", RuleID: 12345},
-		).Return(&cr, nil)
+		).Return(&getEvalRuleResponse, nil)
 
 		conditionExceptionJSON := loadFixtureBytes("testdata/TestResEvalRule/ConditionException.json")
-		client.On("UpdateEvalRule", mock.Anything, // ctx is irrelevant for this test
+		client.On("UpdateEvalRule", mock.Anything,
 			appsec.UpdateEvalRuleRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", Action: "alert", RuleID: 12345, JsonPayloadRaw: conditionExceptionJSON},
-		).Return(&cu, nil)
+		).Return(&updateEvalRuleResponse, nil)
 
 		client.On("UpdateEvalRule",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.UpdateEvalRuleRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", RuleID: 12345, Action: "none"},
-		).Return(&cd, nil)
+		).Return(&removeEvalRuleActionResponse, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{

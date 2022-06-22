@@ -214,7 +214,5 @@ func resourceBypassNetworkListsDelete(ctx context.Context, d *schema.ResourceDat
 		logger.Errorf("calling 'RemoveWAPBypassNetworkLists': %s", err.Error())
 		return diag.FromErr(err)
 	}
-
-	d.SetId("")
 	return nil
 }

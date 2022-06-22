@@ -16,10 +16,10 @@ func TestAccAkamaiEvalGroups_data_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		configs := appsec.GetConfigurationResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &configs)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &configs)
 
 		client.On("GetEvalGroups",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetAttackGroupsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", Group: "SQL"},
 		).Return(nil, fmt.Errorf("GetEvalGroups failed"))
 
@@ -53,7 +53,7 @@ func TestAccAkamaiEvalGroups_data_error_retrieving_eval_groups(t *testing.T) {
 		client := &mockappsec{}
 
 		configs := appsec.GetConfigurationResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &configs)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &configs)
 
 		client.On("GetEvalGroups",
 			mock.Anything,

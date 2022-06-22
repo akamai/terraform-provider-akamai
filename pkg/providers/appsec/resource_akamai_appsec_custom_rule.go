@@ -221,7 +221,6 @@ func resourceCustomRuleDelete(ctx context.Context, d *schema.ResourceData, m int
 			logger.Errorf("calling 'removeCustomRule': %s", err.Error())
 			return diag.FromErr(err)
 		}
-		d.SetId("")
 	} else {
 		return diag.Errorf("custom rule %d cannot be deleted, it is either active or in use", customRuleID)
 	}

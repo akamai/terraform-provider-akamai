@@ -13,11 +13,11 @@ func TestAccAkamaiSecurityPolicy_data_basic(t *testing.T) {
 	t.Run("match by SecurityPolicy ID", func(t *testing.T) {
 		client := &mockappsec{}
 
-		cv := appsec.GetSecurityPoliciesResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSSecurityPolicy/SecurityPolicy.json")), &cv)
+		getSecurityPoliciesResponse := appsec.GetSecurityPoliciesResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestDSSecurityPolicy/SecurityPolicy.json"), &getSecurityPoliciesResponse)
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,
@@ -25,9 +25,9 @@ func TestAccAkamaiSecurityPolicy_data_basic(t *testing.T) {
 		).Return(&config, nil)
 
 		client.On("GetSecurityPolicies",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetSecurityPoliciesRequest{ConfigID: 43253, Version: 7},
-		).Return(&cv, nil)
+		).Return(&getSecurityPoliciesResponse, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{

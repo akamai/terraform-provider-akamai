@@ -126,12 +126,6 @@ func resourceCustomDenyRead(ctx context.Context, d *schema.ResourceData, m inter
 		logger.Errorf("calling 'getCustomDeny': %s", err.Error())
 		return diag.FromErr(err)
 	}
-	for _, p := range getCustomDenyResponse.Parameters {
-		name := p.Name
-		val := p.Value
-		log.Printf("%s = %s", string(name), string(val))
-	}
-
 	if err := d.Set("config_id", configID); err != nil {
 		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
@@ -222,8 +216,5 @@ func resourceCustomDenyDelete(ctx context.Context, d *schema.ResourceData, m int
 		logger.Errorf("calling 'removeCustomDeny': %s", err.Error())
 		return diag.FromErr(err)
 	}
-
-	d.SetId("")
-
 	return nil
 }

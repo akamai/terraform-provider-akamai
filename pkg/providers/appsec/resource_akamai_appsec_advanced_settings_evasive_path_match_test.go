@@ -14,16 +14,16 @@ func TestAccAkamaiAdvancedSettingsEvasivePathMatch_res_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		configResponse := appsec.GetConfigurationResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &configResponse)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &configResponse)
 
 		getResponse := appsec.GetAdvancedSettingsEvasivePathMatchResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResAdvancedSettingsEvasivePathMatch/EvasivePathMatch.json")), &getResponse)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResAdvancedSettingsEvasivePathMatch/EvasivePathMatch.json"), &getResponse)
 
 		updateResponse := appsec.UpdateAdvancedSettingsEvasivePathMatchResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResAdvancedSettingsEvasivePathMatch/EvasivePathMatch.json")), &updateResponse)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResAdvancedSettingsEvasivePathMatch/EvasivePathMatch.json"), &updateResponse)
 
 		removeResponse := appsec.RemoveAdvancedSettingsEvasivePathMatchResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResAdvancedSettingsEvasivePathMatch/EvasivePathMatch.json")), &removeResponse)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResAdvancedSettingsEvasivePathMatch/EvasivePathMatch.json"), &removeResponse)
 
 		client.On("GetConfiguration",
 			mock.Anything,
@@ -31,17 +31,17 @@ func TestAccAkamaiAdvancedSettingsEvasivePathMatch_res_basic(t *testing.T) {
 		).Return(&configResponse, nil)
 
 		client.On("UpdateAdvancedSettingsEvasivePathMatch",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.UpdateAdvancedSettingsEvasivePathMatchRequest{ConfigID: 43253, Version: 7, PolicyID: "", EnablePathMatch: true},
 		).Return(&updateResponse, nil)
 
 		client.On("GetAdvancedSettingsEvasivePathMatch",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetAdvancedSettingsEvasivePathMatchRequest{ConfigID: 43253, Version: 7},
 		).Return(&getResponse, nil)
 
 		client.On("RemoveAdvancedSettingsEvasivePathMatch",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.RemoveAdvancedSettingsEvasivePathMatchRequest{ConfigID: 43253, Version: 7, PolicyID: ""},
 		).Return(&removeResponse, nil)
 

@@ -13,11 +13,11 @@ func TestAccAkamaiApiHostnameCoverageOverlapping_data_basic(t *testing.T) {
 	t.Run("match by ApiHostnameCoverageOverlapping ID", func(t *testing.T) {
 		client := &mockappsec{}
 
-		cv := appsec.GetApiHostnameCoverageOverlappingResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSApiHostnameCoverageOverlapping/ApiHostnameCoverageOverlapping.json")), &cv)
+		getOverlapResponse := appsec.GetApiHostnameCoverageOverlappingResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestDSApiHostnameCoverageOverlapping/ApiHostnameCoverageOverlapping.json"), &getOverlapResponse)
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,
@@ -25,9 +25,9 @@ func TestAccAkamaiApiHostnameCoverageOverlapping_data_basic(t *testing.T) {
 		).Return(&config, nil)
 
 		client.On("GetApiHostnameCoverageOverlapping",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetApiHostnameCoverageOverlappingRequest{ConfigID: 43253, Version: 7, Hostname: "example.com"},
-		).Return(&cv, nil)
+		).Return(&getOverlapResponse, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{

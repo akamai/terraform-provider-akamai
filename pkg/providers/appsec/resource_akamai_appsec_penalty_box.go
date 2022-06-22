@@ -228,7 +228,5 @@ func resourcePenaltyBoxDelete(ctx context.Context, d *schema.ResourceData, m int
 		logger.Errorf("calling 'removePenaltyBox': %s", err.Error())
 		return diag.FromErr(err)
 	}
-	d.SetId("")
-
 	return nil
 }

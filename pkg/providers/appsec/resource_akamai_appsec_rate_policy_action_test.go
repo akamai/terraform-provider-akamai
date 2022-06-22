@@ -13,21 +13,21 @@ func TestAccAkamaiRatePolicyAction_res_basic(t *testing.T) {
 	t.Run("match by RatePolicyAction ID", func(t *testing.T) {
 		client := &mockappsec{}
 
-		cu := appsec.UpdateRatePolicyActionResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResRatePolicyAction/RatePolicyUpdateResponse.json")), &cu)
+		updateRatePolicyActionResponse := appsec.UpdateRatePolicyActionResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResRatePolicyAction/RatePolicyUpdateResponse.json"), &updateRatePolicyActionResponse)
 
-		cr := appsec.GetRatePolicyActionsResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResRatePolicyAction/RatePolicyActions.json")), &cr)
+		getRatePolicyActionsResponse := appsec.GetRatePolicyActionsResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResRatePolicyAction/RatePolicyActions.json"), &getRatePolicyActionsResponse)
 
 		client.On("GetRatePolicyActions",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetRatePolicyActionsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", RatePolicyID: 135355},
-		).Return(&cr, nil)
+		).Return(&getRatePolicyActionsResponse, nil)
 
 		client.On("UpdateRatePolicyAction",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.UpdateRatePolicyActionRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", RatePolicyID: 135355, Ipv4Action: "none", Ipv6Action: "none"},
-		).Return(&cu, nil)
+		).Return(&updateRatePolicyActionResponse, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{

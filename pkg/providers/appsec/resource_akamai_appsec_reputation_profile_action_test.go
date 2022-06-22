@@ -13,14 +13,14 @@ func TestAccAkamaiReputationProfileAction_res_basic(t *testing.T) {
 	t.Run("match by ReputationProfileAction ID", func(t *testing.T) {
 		client := &mockappsec{}
 
-		cu := appsec.UpdateReputationProfileActionResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResReputationProfileAction/ReputationProfileAction.json")), &cu)
+		updateReputationProfileActionResponse := appsec.UpdateReputationProfileActionResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResReputationProfileAction/ReputationProfileAction.json"), &updateReputationProfileActionResponse)
 
-		cr := appsec.GetReputationProfileActionResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResReputationProfileAction/ReputationProfileAction.json")), &cr)
+		getReputationProfileActionResponse := appsec.GetReputationProfileActionResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResReputationProfileAction/ReputationProfileAction.json"), &getReputationProfileActionResponse)
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,
@@ -28,14 +28,14 @@ func TestAccAkamaiReputationProfileAction_res_basic(t *testing.T) {
 		).Return(&config, nil)
 
 		client.On("GetReputationProfileAction",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetReputationProfileActionRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", ReputationProfileID: 1685099},
-		).Return(&cr, nil)
+		).Return(&getReputationProfileActionResponse, nil)
 
 		client.On("UpdateReputationProfileAction",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.UpdateReputationProfileActionRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", ReputationProfileID: 1685099, Action: "none"},
-		).Return(&cu, nil)
+		).Return(&updateReputationProfileActionResponse, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{

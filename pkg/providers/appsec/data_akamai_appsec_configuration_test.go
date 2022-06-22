@@ -13,13 +13,13 @@ func TestAccAkamaiConfiguration_data_basic(t *testing.T) {
 	t.Run("match by Configuration ID", func(t *testing.T) {
 		client := &mockappsec{}
 
-		cv := appsec.GetConfigurationsResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSConfiguration/Configuration.json")), &cv)
+		getConfigurationsResponse := appsec.GetConfigurationsResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestDSConfiguration/Configuration.json"), &getConfigurationsResponse)
 
 		client.On("GetConfigurations",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetConfigurationsRequest{},
-		).Return(&cv, nil)
+		).Return(&getConfigurationsResponse, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{

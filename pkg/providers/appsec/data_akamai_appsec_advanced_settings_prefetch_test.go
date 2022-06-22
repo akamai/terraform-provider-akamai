@@ -13,16 +13,16 @@ func TestAccAkamaiAdvancedSettingsPrefetch_data_basic(t *testing.T) {
 	t.Run("match by AdvancedSettingsPrefetch ID", func(t *testing.T) {
 		client := &mockappsec{}
 
-		cv := appsec.GetAdvancedSettingsPrefetchResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSAdvancedSettingsPrefetch/AdvancedSettingsPrefetch.json")), &cv)
+		getPrefetchResponse := appsec.GetAdvancedSettingsPrefetchResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestDSAdvancedSettingsPrefetch/AdvancedSettingsPrefetch.json"), &getPrefetchResponse)
 
 		client.On("GetAdvancedSettingsPrefetch",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetAdvancedSettingsPrefetchRequest{ConfigID: 43253, Version: 7},
-		).Return(&cv, nil)
+		).Return(&getPrefetchResponse, nil)
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,

@@ -111,7 +111,7 @@ func getLatestConfigVersion(ctx context.Context, configID int, m interface{}) (i
 	cacheKey := fmt.Sprintf("%s:%d", "getLatestConfigVersion", configID)
 	configuration := &appsec.GetConfigurationResponse{}
 	if err := meta.CacheGet(inst, cacheKey, configuration); err == nil {
-		logger.Debugf("Found config %w, returning %d as its latest version", configuration.ID, configuration.LatestVersion)
+		logger.Debugf("Found config %d, returning %d as its latest version", configuration.ID, configuration.LatestVersion)
 		return configuration.LatestVersion, nil
 	}
 
@@ -124,7 +124,7 @@ func getLatestConfigVersion(ctx context.Context, configID int, m interface{}) (i
 
 	err := meta.CacheGet(inst, cacheKey, configuration)
 	if err == nil {
-		logger.Debugf("Found config %w, returning %d as its latest version", configuration.ID, configuration.LatestVersion)
+		logger.Debugf("Found config %d, returning %d as its latest version", configuration.ID, configuration.LatestVersion)
 		return configuration.LatestVersion, nil
 	}
 	// Any error response other than 'not found' or 'cache disabled' is a problem.
@@ -163,7 +163,7 @@ func getActiveConfigVersions(ctx context.Context, configID int, m interface{}) (
 		return 0, 0, err
 	}
 
-	logger.Debugf("Found config %w, returning %d, %d as staging & production versions",
+	logger.Debugf("Found config %d, returning %d, %d as staging & production versions",
 		configuration.ID, configuration.StagingVersion, configuration.ProductionVersion)
 
 	return configuration.StagingVersion, configuration.ProductionVersion, nil

@@ -141,13 +141,13 @@ func resourceAdvancedSettingsEvasivePathMatchRead(ctx context.Context, d *schema
 	}
 
 	if err := d.Set("config_id", getAdvancedSettingsEvasivePathMatch.ConfigID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("security_policy_id", getAdvancedSettingsEvasivePathMatch.PolicyID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("enable_path_match", advancedsettingsevasivepathmatch.EnablePathMatch); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	return nil
@@ -252,6 +252,5 @@ func resourceAdvancedSettingsEvasivePathMatchDelete(ctx context.Context, d *sche
 		logger.Errorf("calling 'removeAdvancedSettingsEvasivePathMatch': %s", err.Error())
 		return diag.FromErr(err)
 	}
-	d.SetId("")
 	return nil
 }

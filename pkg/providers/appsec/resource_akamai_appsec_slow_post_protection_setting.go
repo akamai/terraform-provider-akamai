@@ -265,8 +265,6 @@ func resourceSlowPostProtectionSettingDelete(ctx context.Context, d *schema.Reso
 		logger.Errorf("calling UpdateSlowPostProtection: %s", err.Error())
 		return diag.FromErr(err)
 	}
-
-	d.SetId("")
 	return nil
 }
 

@@ -13,17 +13,17 @@ func TestAccAkamaiAdvancedSettingsPragma_res_basic(t *testing.T) {
 	t.Run("match by AdvancedSettingsPragma ID", func(t *testing.T) {
 		client := &mockappsec{}
 
-		cu := appsec.UpdateAdvancedSettingsPragmaResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResAdvancedSettingsPragma/AdvancedSettingsPragma.json")), &cu)
+		updateResponse := appsec.UpdateAdvancedSettingsPragmaResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResAdvancedSettingsPragma/AdvancedSettingsPragma.json"), &updateResponse)
 
-		cd := appsec.UpdateAdvancedSettingsPragmaResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResAdvancedSettingsPragma/AdvancedSettingsPragma.json")), &cd)
+		deleteResponse := appsec.UpdateAdvancedSettingsPragmaResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResAdvancedSettingsPragma/AdvancedSettingsPragma.json"), &deleteResponse)
 
-		cr := appsec.GetAdvancedSettingsPragmaResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResAdvancedSettingsPragma/AdvancedSettingsPragma.json")), &cr)
+		getResponse := appsec.GetAdvancedSettingsPragmaResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResAdvancedSettingsPragma/AdvancedSettingsPragma.json"), &getResponse)
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,
@@ -31,19 +31,19 @@ func TestAccAkamaiAdvancedSettingsPragma_res_basic(t *testing.T) {
 		).Return(&config, nil)
 
 		client.On("GetAdvancedSettingsPragma",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetAdvancedSettingsPragmaRequest{ConfigID: 43253, Version: 7},
-		).Return(&cr, nil)
+		).Return(&getResponse, nil)
 
 		client.On("UpdateAdvancedSettingsPragma",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.UpdateAdvancedSettingsPragmaRequest{ConfigID: 43253, Version: 7, PolicyID: "", JsonPayloadRaw: json.RawMessage("{\"action\":\"REMOVE\"}\n")},
-		).Return(&cu, nil)
+		).Return(&updateResponse, nil)
 
 		client.On("UpdateAdvancedSettingsPragma",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.UpdateAdvancedSettingsPragmaRequest{ConfigID: 43253, Version: 7, PolicyID: "", JsonPayloadRaw: json.RawMessage("{}")},
-		).Return(&cu, nil)
+		).Return(&updateResponse, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{

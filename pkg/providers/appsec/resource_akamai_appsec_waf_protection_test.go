@@ -14,21 +14,19 @@ func TestAccAkamaiWAFProtection_res_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 
-		updateResponseAllProtectionsFalseJSON := loadFixtureBytes("testdata/TestResWAFProtection/PolicyProtections.json")
 		updateResponseAllProtectionsFalse := appsec.UpdateWAFProtectionResponse{}
-		json.Unmarshal([]byte(updateResponseAllProtectionsFalseJSON), &updateResponseAllProtectionsFalse)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResWAFProtection/PolicyProtections.json"), &updateResponseAllProtectionsFalse)
 
 		getResponseAllProtectionsFalse := appsec.GetWAFProtectionResponse{}
-		json.Unmarshal([]byte(updateResponseAllProtectionsFalseJSON), &getResponseAllProtectionsFalse)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResWAFProtection/PolicyProtections.json"), &getResponseAllProtectionsFalse)
 
-		updateResponseOneProtectionTrupJSON := loadFixtureBytes("testdata/TestResWAFProtection/UpdatedPolicyProtections.json")
 		updateResponseOneProtectionTrue := appsec.UpdateWAFProtectionResponse{}
-		json.Unmarshal([]byte(updateResponseOneProtectionTrupJSON), &updateResponseOneProtectionTrue)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResWAFProtection/UpdatedPolicyProtections.json"), &updateResponseOneProtectionTrue)
 
 		getResponseOneProtectionTrue := appsec.GetWAFProtectionResponse{}
-		json.Unmarshal([]byte(updateResponseOneProtectionTrupJSON), &getResponseOneProtectionTrue)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResWAFProtection/UpdatedPolicyProtections.json"), &getResponseOneProtectionTrue)
 
 		// Mock each call to the EdgeGrid library. With the exception of GetConfiguration, each call
 		// is mocked individually because calls with the same parameters may have different return values.

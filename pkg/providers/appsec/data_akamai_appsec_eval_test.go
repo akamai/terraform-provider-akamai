@@ -13,11 +13,11 @@ func TestAccAkamaiEval_data_basic(t *testing.T) {
 	t.Run("match by Eval ID", func(t *testing.T) {
 		client := &mockappsec{}
 
-		cv := appsec.GetEvalResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSEval/Eval.json")), &cv)
+		getEvalResponse := appsec.GetEvalResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestDSEval/Eval.json"), &getEvalResponse)
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,
@@ -25,9 +25,9 @@ func TestAccAkamaiEval_data_basic(t *testing.T) {
 		).Return(&config, nil)
 
 		client.On("GetEval",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetEvalRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
-		).Return(&cv, nil)
+		).Return(&getEvalResponse, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{

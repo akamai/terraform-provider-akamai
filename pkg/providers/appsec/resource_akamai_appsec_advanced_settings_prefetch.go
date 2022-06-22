@@ -116,7 +116,7 @@ func resourceAdvancedSettingsPrefetchRead(ctx context.Context, d *schema.Resourc
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsPrefetchRead")
-	logger.Debugf("resourceAdvancedSettingsPrefetchRead")
+	logger.Debugf("in resourceAdvancedSettingsPrefetchRead")
 
 	configID, err := strconv.Atoi(d.Id())
 	if err != nil {
@@ -161,7 +161,7 @@ func resourceAdvancedSettingsPrefetchUpdate(ctx context.Context, d *schema.Resou
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsPrefetchUpdate")
-	logger.Debugf("resourceAdvancedSettingsPrefetchUpdate")
+	logger.Debugf("in resourceAdvancedSettingsPrefetchUpdate")
 
 	configID, err := strconv.Atoi(d.Id())
 	if err != nil {
@@ -215,7 +215,7 @@ func resourceAdvancedSettingsPrefetchDelete(ctx context.Context, d *schema.Resou
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsPrefetchDelete")
-	logger.Debugf("resourceAdvancedSettingsPrefetchDelete")
+	logger.Debugf("in resourceAdvancedSettingsPrefetchDelete")
 
 	configID, err := strconv.Atoi(d.Id())
 	if err != nil {
@@ -237,7 +237,5 @@ func resourceAdvancedSettingsPrefetchDelete(ctx context.Context, d *schema.Resou
 		logger.Errorf("calling 'removeAdvancedSettingsPrefetch': %s", err.Error())
 		return diag.FromErr(err)
 	}
-
-	d.SetId("")
 	return nil
 }

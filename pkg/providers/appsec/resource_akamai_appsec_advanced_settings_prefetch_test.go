@@ -13,17 +13,17 @@ func TestAccAkamaiAdvancedSettingsPrefetch_res_basic(t *testing.T) {
 	t.Run("match by AdvancedSettingsPrefetch ID", func(t *testing.T) {
 		client := &mockappsec{}
 
-		cu := appsec.UpdateAdvancedSettingsPrefetchResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResAdvancedSettingsPrefetch/AdvancedSettingsPrefetch.json")), &cu)
+		updateResponse := appsec.UpdateAdvancedSettingsPrefetchResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResAdvancedSettingsPrefetch/AdvancedSettingsPrefetch.json"), &updateResponse)
 
-		cd := appsec.UpdateAdvancedSettingsPrefetchResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResAdvancedSettingsPrefetch/AdvancedSettingsPrefetch.json")), &cd)
+		deleteResopnse := appsec.UpdateAdvancedSettingsPrefetchResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResAdvancedSettingsPrefetch/AdvancedSettingsPrefetch.json"), &deleteResopnse)
 
-		cr := appsec.GetAdvancedSettingsPrefetchResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResAdvancedSettingsPrefetch/AdvancedSettingsPrefetch.json")), &cr)
+		getResponse := appsec.GetAdvancedSettingsPrefetchResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResAdvancedSettingsPrefetch/AdvancedSettingsPrefetch.json"), &getResponse)
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,
@@ -31,19 +31,19 @@ func TestAccAkamaiAdvancedSettingsPrefetch_res_basic(t *testing.T) {
 		).Return(&config, nil)
 
 		client.On("GetAdvancedSettingsPrefetch",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetAdvancedSettingsPrefetchRequest{ConfigID: 43253, Version: 7},
-		).Return(&cr, nil)
+		).Return(&getResponse, nil)
 
 		client.On("UpdateAdvancedSettingsPrefetch",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.UpdateAdvancedSettingsPrefetchRequest{ConfigID: 43253, Version: 7, AllExtensions: false, EnableAppLayer: true, EnableRateControls: false, Extensions: []string{"cgi", "asp", "php", "jsp", "EMPTY_STRING", "py", "aspx"}},
-		).Return(&cu, nil)
+		).Return(&updateResponse, nil)
 
 		client.On("UpdateAdvancedSettingsPrefetch",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.UpdateAdvancedSettingsPrefetchRequest{ConfigID: 43253, Version: 7, AllExtensions: false, EnableAppLayer: false, EnableRateControls: false, Extensions: []string(nil)},
-		).Return(&cu, nil)
+		).Return(&updateResponse, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{

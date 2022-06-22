@@ -66,7 +66,9 @@ func dataSourceFailoverHostnamesRead(ctx context.Context, d *schema.ResourceData
 
 	outputtext, err := RenderTemplates(ots, "failoverHostnamesDS", failoverhostnames)
 	if err == nil {
-		d.Set("output_text", outputtext)
+		if err := d.Set("output_text", outputtext); err != nil {
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		}
 	}
 
 	jsonBody, err := json.Marshal(failoverhostnames)

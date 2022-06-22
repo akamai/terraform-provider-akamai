@@ -283,8 +283,6 @@ func resourceSecurityPolicyDelete(ctx context.Context, d *schema.ResourceData, m
 			logger.Errorf("calling 'removeSecurityPolicy': %s", err.Error())
 			return diag.FromErr(err)
 		}
-
-		d.SetId("")
 	}
 
 	return nil

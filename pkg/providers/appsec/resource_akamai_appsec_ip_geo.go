@@ -260,8 +260,6 @@ func resourceIPGeoDelete(ctx context.Context, d *schema.ResourceData, m interfac
 		logger.Errorf("calling UpdateIPGeoProtection: %s", err.Error())
 		return diag.FromErr(err)
 	}
-
-	d.SetId("")
 	return nil
 }
 

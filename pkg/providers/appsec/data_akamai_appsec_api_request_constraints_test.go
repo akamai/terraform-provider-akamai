@@ -14,20 +14,20 @@ func TestAccAkamaiApiRequestConstraints_data_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&config, nil)
 
-		cv := appsec.GetApiRequestConstraintsResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSApiRequestConstraints/ApiRequestConstraints.json")), &cv)
+		getAPIRequestConstraintsResponse := appsec.GetApiRequestConstraintsResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestDSApiRequestConstraints/ApiRequestConstraints.json"), &getAPIRequestConstraintsResponse)
 
 		client.On("GetApiRequestConstraints",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetApiRequestConstraintsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", ApiID: 1},
-		).Return(&cv, nil)
+		).Return(&getAPIRequestConstraintsResponse, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{

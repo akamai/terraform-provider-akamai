@@ -13,14 +13,14 @@ func TestAccAkamaiMatchTargetSequence_res_basic(t *testing.T) {
 	t.Run("match by MatchTargetSequence ID", func(t *testing.T) {
 		client := &mockappsec{}
 
-		cu := appsec.UpdateMatchTargetSequenceResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResMatchTargetSequence/MatchTargetSequenceResp.json")), &cu)
+		updateSequenceResponse := appsec.UpdateMatchTargetSequenceResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResMatchTargetSequence/MatchTargetSequenceResp.json"), &updateSequenceResponse)
 
-		cr := appsec.GetMatchTargetSequenceResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResMatchTargetSequence/MatchTargetSequence.json")), &cr)
+		getSequenceResponse := appsec.GetMatchTargetSequenceResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResMatchTargetSequence/MatchTargetSequence.json"), &getSequenceResponse)
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,
@@ -28,14 +28,14 @@ func TestAccAkamaiMatchTargetSequence_res_basic(t *testing.T) {
 		).Return(&config, nil)
 
 		client.On("GetMatchTargetSequence",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetMatchTargetSequenceRequest{ConfigID: 43253, ConfigVersion: 7, Type: "website"},
-		).Return(&cr, nil)
+		).Return(&getSequenceResponse, nil)
 
 		client.On("UpdateMatchTargetSequence",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.UpdateMatchTargetSequenceRequest{ConfigID: 43253, ConfigVersion: 7, Type: "website", TargetSequence: []appsec.MatchTargetItem{{Sequence: 1, TargetID: 2052813}, {Sequence: 2, TargetID: 2971336}}},
-		).Return(&cu, nil)
+		).Return(&updateSequenceResponse, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{

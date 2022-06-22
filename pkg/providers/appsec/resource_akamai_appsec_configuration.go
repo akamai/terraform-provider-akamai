@@ -168,9 +168,15 @@ func resourceConfigurationRead(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(err)
 	}
 
-	d.Set("name", configuration.Name)
-	d.Set("description", configuration.Description)
-	d.Set("config_id", configuration.ID)
+	if err = d.Set("name", configuration.Name); err != nil {
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+	}
+	if err = d.Set("description", configuration.Description); err != nil {
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+	}
+	if err = d.Set("config_id", configuration.ID); err != nil {
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+	}
 
 	version, err := getLatestConfigVersion(ctx, configID, m)
 	if err != nil {
@@ -191,7 +197,9 @@ func resourceConfigurationRead(ctx context.Context, d *schema.ResourceData, m in
 		selectedhostnameset.Add(hostname.Hostname)
 	}
 
-	d.Set("host_names", selectedhostnameset.List())
+	if err = d.Set("host_names", selectedhostnameset.List()); err != nil {
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+	}
 
 	return nil
 }
@@ -222,10 +230,9 @@ func resourceConfigurationUpdate(ctx context.Context, d *schema.ResourceData, m 
 		Description: description,
 	}
 
-	resp, err := client.UpdateConfiguration(ctx, updateConfiguration)
+	_, err = client.UpdateConfiguration(ctx, updateConfiguration)
 	if err != nil {
 		logger.Errorf("calling 'updateConfiguration': %s", err.Error())
-		logger.Debugf("response is %w", resp)
 		return diag.FromErr(err)
 	}
 
@@ -297,7 +304,5 @@ func resourceConfigurationDelete(ctx context.Context, d *schema.ResourceData, m 
 		logger.Errorf("calling 'removeConfiguration': %s", err.Error())
 		return diag.FromErr(err)
 	}
-
-	d.SetId("")
 	return nil
 }

@@ -14,16 +14,16 @@ func TestAccAkamaiSlowPostProtectionSetting_res_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		getConfigurationResponse := appsec.GetConfigurationResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &getConfigurationResponse)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &getConfigurationResponse)
 		client.On("GetConfiguration",
 			mock.Anything,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&getConfigurationResponse, nil)
 
 		updateSlowPostProtectionSettingResponse := appsec.UpdateSlowPostProtectionSettingResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResSlowPostProtectionSetting/SlowPostProtectionSetting.json")), &updateSlowPostProtectionSettingResponse)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResSlowPostProtectionSetting/SlowPostProtectionSetting.json"), &updateSlowPostProtectionSettingResponse)
 		client.On("UpdateSlowPostProtectionSetting",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.UpdateSlowPostProtectionSettingRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", Action: "alert", SlowRateThreshold: struct {
 				Rate   int "json:\"rate\""
 				Period int "json:\"period\""
@@ -33,14 +33,14 @@ func TestAccAkamaiSlowPostProtectionSetting_res_basic(t *testing.T) {
 		).Return(&updateSlowPostProtectionSettingResponse, nil)
 
 		getSlowPostProtectionSettingsResponse := appsec.GetSlowPostProtectionSettingsResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResSlowPostProtectionSetting/SlowPostProtectionSetting.json")), &getSlowPostProtectionSettingsResponse)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResSlowPostProtectionSetting/SlowPostProtectionSetting.json"), &getSlowPostProtectionSettingsResponse)
 		client.On("GetSlowPostProtectionSettings",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetSlowPostProtectionSettingsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
 		).Return(&getSlowPostProtectionSettingsResponse, nil).Twice()
 
 		updateSlowPostProtectionResponse := appsec.UpdateSlowPostProtectionResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResSlowPostProtectionSetting/SlowPostProtection.json")), &updateSlowPostProtectionResponse)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResSlowPostProtectionSetting/SlowPostProtection.json"), &updateSlowPostProtectionResponse)
 		client.On("UpdateSlowPostProtection",
 			mock.Anything,
 			appsec.UpdateSlowPostProtectionRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},

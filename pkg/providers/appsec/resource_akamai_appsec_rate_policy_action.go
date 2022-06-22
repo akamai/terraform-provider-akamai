@@ -255,7 +255,5 @@ func resourceRatePolicyActionDelete(ctx context.Context, d *schema.ResourceData,
 		logger.Errorf("calling 'removeRatePolicyAction': %s", err.Error())
 		return diag.FromErr(err)
 	}
-	d.SetId("")
-
 	return nil
 }

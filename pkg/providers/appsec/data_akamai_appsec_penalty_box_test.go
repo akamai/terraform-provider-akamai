@@ -14,20 +14,20 @@ func TestAccAkamaiPenaltyBox_data_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&config, nil)
 
-		cv := appsec.GetPenaltyBoxResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSPenaltyBox/PenaltyBox.json")), &cv)
+		getPenaltyBoxResponse := appsec.GetPenaltyBoxResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestDSPenaltyBox/PenaltyBox.json"), &getPenaltyBoxResponse)
 
 		client.On("GetPenaltyBox",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetPenaltyBoxRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
-		).Return(&cv, nil)
+		).Return(&getPenaltyBoxResponse, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{

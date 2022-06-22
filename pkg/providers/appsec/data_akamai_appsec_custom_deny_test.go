@@ -14,20 +14,20 @@ func TestAccAkamaiCustomDeny_data_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&config, nil)
 
-		cv := appsec.GetCustomDenyListResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSCustomDeny/CustomDenyList.json")), &cv)
+		getCustomDenyListResponse := appsec.GetCustomDenyListResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestDSCustomDeny/CustomDenyList.json"), &getCustomDenyListResponse)
 
 		client.On("GetCustomDenyList",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetCustomDenyListRequest{ConfigID: 43253, Version: 7, ID: "deny_custom_54994"},
-		).Return(&cv, nil)
+		).Return(&getCustomDenyListResponse, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{

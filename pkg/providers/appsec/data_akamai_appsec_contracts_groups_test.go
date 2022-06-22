@@ -13,13 +13,13 @@ func TestAccAkamaiContractsGroups_data_basic(t *testing.T) {
 	t.Run("match by ContractsGroups ID", func(t *testing.T) {
 		client := &mockappsec{}
 
-		cv := appsec.GetContractsGroupsResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSContractsGroups/ContractsGroups.json")), &cv)
+		getContractsGroupsResponse := appsec.GetContractsGroupsResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestDSContractsGroups/ContractsGroups.json"), &getContractsGroupsResponse)
 
 		client.On("GetContractsGroups",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetContractsGroupsRequest{},
-		).Return(&cv, nil)
+		).Return(&getContractsGroupsResponse, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{

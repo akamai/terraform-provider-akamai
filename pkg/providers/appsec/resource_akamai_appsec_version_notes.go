@@ -87,7 +87,7 @@ func resourceVersionNotesRead(ctx context.Context, d *schema.ResourceData, m int
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceVersionNotesRead")
-	logger.Debugf("resourceVersionNotesRead")
+	logger.Debugf("in resourceVersionNotesRead")
 
 	configID, err := strconv.Atoi(d.Id())
 	if err != nil {
@@ -119,7 +119,9 @@ func resourceVersionNotesRead(ctx context.Context, d *schema.ResourceData, m int
 	InitTemplates(ots)
 	outputtext, err := RenderTemplates(ots, "versionNotesDS", versionnotes)
 	if err == nil {
-		d.Set("output_text", outputtext)
+		if err = d.Set("output_text", outputtext); err != nil {
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		}
 	}
 
 	return nil
@@ -129,7 +131,7 @@ func resourceVersionNotesUpdate(ctx context.Context, d *schema.ResourceData, m i
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceVersionNotesUpdate")
-	logger.Debugf("resourceVersionNotesUpdate")
+	logger.Debugf("in resourceVersionNotesUpdate")
 
 	configID, err := strconv.Atoi(d.Id())
 	if err != nil {

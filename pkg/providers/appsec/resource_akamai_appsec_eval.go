@@ -256,8 +256,6 @@ func resourceEvalDelete(ctx context.Context, d *schema.ResourceData, m interface
 		logger.Errorf("calling 'removeEval': %s", err.Error())
 		return diag.FromErr(err)
 	}
-
-	d.SetId("")
 	return nil
 }
 

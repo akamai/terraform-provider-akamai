@@ -13,13 +13,13 @@ func TestAccAkamaiApiHostnameCoverage_data_basic(t *testing.T) {
 	t.Run("match by ApiHostnameCoverage ID", func(t *testing.T) {
 		client := &mockappsec{}
 
-		cv := appsec.GetApiHostnameCoverageResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSApiHostnameCoverage/ApiHostnameCoverage.json")), &cv)
+		getCoverageResponse := appsec.GetApiHostnameCoverageResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestDSApiHostnameCoverage/ApiHostnameCoverage.json"), &getCoverageResponse)
 
 		client.On("GetApiHostnameCoverage",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetApiHostnameCoverageRequest{ConfigID: 0, Version: 0},
-		).Return(&cv, nil)
+		).Return(&getCoverageResponse, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
