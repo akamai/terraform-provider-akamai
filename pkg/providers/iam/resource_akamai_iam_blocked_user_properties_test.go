@@ -13,6 +13,7 @@ import (
 func TestResourceIAMBlockedUserProperties(t *testing.T) {
 	identityID := "test_identity_id"
 	groupID := int64(12345)
+	groupIDNew := int64(23456)
 
 	propertiesCreate := []int64{1, 2, 3}
 	propertiesUpdate := []int64{1, 2, 3, 4, 5}
@@ -20,9 +21,18 @@ func TestResourceIAMBlockedUserProperties(t *testing.T) {
 		IdentityID: identityID,
 		GroupID:    groupID,
 	}
+	listRequestNew := iam.ListBlockedPropertiesRequest{
+		IdentityID: identityID,
+		GroupID:    groupIDNew,
+	}
 	createRequest := iam.UpdateBlockedPropertiesRequest{
 		IdentityID: identityID,
 		GroupID:    groupID,
+		Properties: propertiesCreate,
+	}
+	createRequestNew := iam.UpdateBlockedPropertiesRequest{
+		IdentityID: identityID,
+		GroupID:    groupIDNew,
 		Properties: propertiesCreate,
 	}
 	updateRequest := iam.UpdateBlockedPropertiesRequest{
@@ -68,6 +78,41 @@ func TestResourceIAMBlockedUserProperties(t *testing.T) {
 				{
 					Config: loadFixtureString("./testdata/TestResourceIAMBlockedUserProperties/update.tf"),
 					Check:  checkAttributes(propertiesUpdate),
+				},
+			},
+		},
+		"update group id - new resource": {
+			init: func(m *mockiam) {
+				// create
+				expectListBlockedProperties(m, listRequest, []int64{}, nil).Once()
+				expectListBlockedProperties(m, listRequest, propertiesCreate, nil).Once()
+				expectUpdateBlockedProperties(m, createRequest, propertiesCreate, nil).Once()
+				expectListBlockedProperties(m, listRequest, propertiesCreate, nil).Once()
+
+				// read
+				expectListBlockedProperties(m, listRequest, propertiesCreate, nil).Once()
+				// create due to update on group_id
+				expectListBlockedProperties(m, listRequestNew, []int64{}, nil).Once()
+				expectUpdateBlockedProperties(m, createRequestNew, propertiesCreate, nil).Once()
+				// read
+				expectListBlockedProperties(m, listRequestNew, propertiesCreate, nil).Once()
+				expectListBlockedProperties(m, listRequestNew, propertiesCreate, nil).Once()
+
+				// delete
+			},
+			steps: []resource.TestStep{
+				{
+					Config: loadFixtureString("./testdata/TestResourceIAMBlockedUserProperties/create.tf"),
+					Check:  checkAttributes(propertiesCreate),
+				},
+				{
+					Config: loadFixtureString("./testdata/TestResourceIAMBlockedUserProperties/update-group-id.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_iam_blocked_user_properties.test", "id", "test_identity_id:23456"),
+						resource.TestCheckResourceAttr("akamai_iam_blocked_user_properties.test", "identity_id", identityID),
+						resource.TestCheckResourceAttr("akamai_iam_blocked_user_properties.test", "group_id", strconv.FormatInt(groupIDNew, 10)),
+						resource.TestCheckResourceAttr("akamai_iam_blocked_user_properties.test", "blocked_properties.#", strconv.Itoa(len(propertiesCreate))),
+					),
 				},
 			},
 		},

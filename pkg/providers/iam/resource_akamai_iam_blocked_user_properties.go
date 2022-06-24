@@ -32,6 +32,7 @@ func resourceIAMBlockedUserProperties() *schema.Resource {
 			},
 			"group_id": {
 				Type:        schema.TypeInt,
+				ForceNew:    true,
 				Required:    true,
 				Description: "A unique identifier for a group",
 			},
