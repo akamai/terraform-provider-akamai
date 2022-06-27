@@ -1722,3 +1722,47 @@ func (p *mockappsec) UpdateThreatIntel(ctx context.Context, params appsec.Update
 
 	return args.Get(0).(*appsec.UpdateThreatIntelResponse), args.Error(1)
 }
+
+func (p *mockappsec) CreateMalwarePolicy(ctx context.Context, params appsec.CreateMalwarePolicyRequest) (*appsec.MalwarePolicyResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.MalwarePolicyResponse), args.Error(1)
+}
+
+func (p *mockappsec) GetMalwarePolicy(ctx context.Context, params appsec.GetMalwarePolicyRequest) (*appsec.MalwarePolicyResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.MalwarePolicyResponse), args.Error(1)
+}
+
+func (p *mockappsec) GetMalwarePolicies(ctx context.Context, params appsec.GetMalwarePoliciesRequest) (*appsec.MalwarePoliciesResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.MalwarePoliciesResponse), args.Error(1)
+}
+
+func (p *mockappsec) UpdateMalwarePolicy(ctx context.Context, params appsec.UpdateMalwarePolicyRequest) (*appsec.MalwarePolicyResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.MalwarePolicyResponse), args.Error(1)
+}
+
+func (p *mockappsec) RemoveMalwarePolicy(ctx context.Context, params appsec.RemoveMalwarePolicyRequest) error {
+	return nil
+}
