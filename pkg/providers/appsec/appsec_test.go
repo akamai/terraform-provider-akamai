@@ -1533,6 +1533,36 @@ func (p *mockappsec) UpdateSlowPostProtection(ctx context.Context, params appsec
 	return args.Get(0).(*appsec.UpdateSlowPostProtectionResponse), args.Error(1)
 }
 
+func (p *mockappsec) GetMalwareProtection(ctx context.Context, params appsec.GetMalwareProtectionRequest) (*appsec.GetMalwareProtectionResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetMalwareProtectionResponse), args.Error(1)
+}
+
+func (p *mockappsec) GetMalwareProtections(ctx context.Context, params appsec.GetMalwareProtectionsRequest) (*appsec.GetMalwareProtectionsResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetMalwareProtectionsResponse), args.Error(1)
+}
+
+func (p *mockappsec) UpdateMalwareProtection(ctx context.Context, params appsec.UpdateMalwareProtectionRequest) (*appsec.UpdateMalwareProtectionResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.UpdateMalwareProtectionResponse), args.Error(1)
+}
+
 func (p *mockappsec) GetEvalRule(ctx context.Context, params appsec.GetEvalRuleRequest) (*appsec.GetEvalRuleResponse, error) {
 	args := p.Called(ctx, params)
 
