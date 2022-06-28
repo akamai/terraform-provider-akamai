@@ -77,47 +77,56 @@ func TestResourceUser(t *testing.T) {
 	}
 	id := "test_identity_id"
 
-	checkUserAttributes := func(User iam.User) resource.TestCheckFunc {
-		if User.SessionTimeOut == nil {
-			User.SessionTimeOut = tools.IntPtr(0)
+	checkUserAttributes := func(user iam.User) resource.TestCheckFunc {
+		if user.SessionTimeOut == nil {
+			user.SessionTimeOut = tools.IntPtr(0)
 		}
 
 		var authGrantsJSON string
-		if len(User.AuthGrants) > 0 {
-			asd, err := json.Marshal(User.AuthGrants)
+		if len(user.AuthGrants) > 0 {
+			marshalledAuthGrants, err := json.Marshal(user.AuthGrants)
 			if err != nil {
 				assert.NoError(t, err)
 			}
-			authGrantsJSON = string(asd)
+			authGrantRequest := make([]iam.AuthGrantRequest, 0)
+			err = json.Unmarshal(marshalledAuthGrants, &authGrantRequest)
+			if err != nil {
+				assert.NoError(t, err)
+			}
+			marshalledAuthGrants, err = json.Marshal(authGrantRequest)
+			if err != nil {
+				assert.NoError(t, err)
+			}
+			authGrantsJSON = string(marshalledAuthGrants)
 		}
 
 		return resource.ComposeAggregateTestCheckFunc(
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "id", "test_identity_id"),
-			resource.TestCheckResourceAttr("akamai_iam_user.test", "first_name", User.FirstName),
-			resource.TestCheckResourceAttr("akamai_iam_user.test", "last_name", User.LastName),
-			resource.TestCheckResourceAttr("akamai_iam_user.test", "email", strings.ToLower(User.Email)),
-			resource.TestCheckResourceAttr("akamai_iam_user.test", "country", User.Country),
-			resource.TestCheckResourceAttr("akamai_iam_user.test", "phone", canonicalPhone(User.Phone)),
-			resource.TestCheckResourceAttr("akamai_iam_user.test", "enable_tfa", fmt.Sprintf("%t", User.TFAEnabled)),
-			resource.TestCheckResourceAttr("akamai_iam_user.test", "contact_type", User.ContactType),
-			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_name", User.UserName),
-			resource.TestCheckResourceAttr("akamai_iam_user.test", "job_title", User.JobTitle),
-			resource.TestCheckResourceAttr("akamai_iam_user.test", "time_zone", User.TimeZone),
-			resource.TestCheckResourceAttr("akamai_iam_user.test", "secondary_email", strings.ToLower(User.SecondaryEmail)),
-			resource.TestCheckResourceAttr("akamai_iam_user.test", "mobile_phone", canonicalPhone(User.MobilePhone)),
-			resource.TestCheckResourceAttr("akamai_iam_user.test", "address", User.Address),
-			resource.TestCheckResourceAttr("akamai_iam_user.test", "city", User.City),
-			resource.TestCheckResourceAttr("akamai_iam_user.test", "state", User.State),
-			resource.TestCheckResourceAttr("akamai_iam_user.test", "zip_code", User.ZipCode),
-			resource.TestCheckResourceAttr("akamai_iam_user.test", "preferred_language", User.PreferredLanguage),
-			resource.TestCheckResourceAttr("akamai_iam_user.test", "is_locked", fmt.Sprintf("%t", User.IsLocked)),
-			resource.TestCheckResourceAttr("akamai_iam_user.test", "last_login", User.LastLoginDate),
-			resource.TestCheckResourceAttr("akamai_iam_user.test", "password_expired_after", User.PasswordExpiryDate),
-			resource.TestCheckResourceAttr("akamai_iam_user.test", "tfa_configured", fmt.Sprintf("%t", User.TFAConfigured)),
-			resource.TestCheckResourceAttr("akamai_iam_user.test", "email_update_pending", fmt.Sprintf("%t", User.EmailUpdatePending)),
-			resource.TestCheckResourceAttr("akamai_iam_user.test", "session_timeout", fmt.Sprintf("%d", *User.SessionTimeOut)),
+			resource.TestCheckResourceAttr("akamai_iam_user.test", "first_name", user.FirstName),
+			resource.TestCheckResourceAttr("akamai_iam_user.test", "last_name", user.LastName),
+			resource.TestCheckResourceAttr("akamai_iam_user.test", "email", strings.ToLower(user.Email)),
+			resource.TestCheckResourceAttr("akamai_iam_user.test", "country", user.Country),
+			resource.TestCheckResourceAttr("akamai_iam_user.test", "phone", canonicalPhone(user.Phone)),
+			resource.TestCheckResourceAttr("akamai_iam_user.test", "enable_tfa", fmt.Sprintf("%t", user.TFAEnabled)),
+			resource.TestCheckResourceAttr("akamai_iam_user.test", "contact_type", user.ContactType),
+			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_name", user.UserName),
+			resource.TestCheckResourceAttr("akamai_iam_user.test", "job_title", user.JobTitle),
+			resource.TestCheckResourceAttr("akamai_iam_user.test", "time_zone", user.TimeZone),
+			resource.TestCheckResourceAttr("akamai_iam_user.test", "secondary_email", strings.ToLower(user.SecondaryEmail)),
+			resource.TestCheckResourceAttr("akamai_iam_user.test", "mobile_phone", canonicalPhone(user.MobilePhone)),
+			resource.TestCheckResourceAttr("akamai_iam_user.test", "address", user.Address),
+			resource.TestCheckResourceAttr("akamai_iam_user.test", "city", user.City),
+			resource.TestCheckResourceAttr("akamai_iam_user.test", "state", user.State),
+			resource.TestCheckResourceAttr("akamai_iam_user.test", "zip_code", user.ZipCode),
+			resource.TestCheckResourceAttr("akamai_iam_user.test", "preferred_language", user.PreferredLanguage),
+			resource.TestCheckResourceAttr("akamai_iam_user.test", "is_locked", fmt.Sprintf("%t", user.IsLocked)),
+			resource.TestCheckResourceAttr("akamai_iam_user.test", "last_login", user.LastLoginDate),
+			resource.TestCheckResourceAttr("akamai_iam_user.test", "password_expired_after", user.PasswordExpiryDate),
+			resource.TestCheckResourceAttr("akamai_iam_user.test", "tfa_configured", fmt.Sprintf("%t", user.TFAConfigured)),
+			resource.TestCheckResourceAttr("akamai_iam_user.test", "email_update_pending", fmt.Sprintf("%t", user.EmailUpdatePending)),
+			resource.TestCheckResourceAttr("akamai_iam_user.test", "session_timeout", fmt.Sprintf("%d", *user.SessionTimeOut)),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "auth_grants_json", authGrantsJSON),
-			resource.TestCheckResourceAttr("akamai_iam_user.test", "lock", fmt.Sprintf("%t", User.IsLocked)),
+			resource.TestCheckResourceAttr("akamai_iam_user.test", "lock", fmt.Sprintf("%t", user.IsLocked)),
 		)
 	}
 

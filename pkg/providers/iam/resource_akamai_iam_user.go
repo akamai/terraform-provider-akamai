@@ -314,7 +314,7 @@ func resourceIAMUserRead(ctx context.Context, d *schema.ResourceData, m interfac
 		"tfa_configured":         user.TFAConfigured,
 		"email_update_pending":   user.EmailUpdatePending,
 		"session_timeout":        *user.SessionTimeOut,
-		"auth_grants_json":       string(authGrantsJSON),
+		"auth_grants_json":       stateAuthGrantsJS(string(authGrantsJSON)),
 		"lock":                   user.IsLocked,
 	})
 	if err != nil {
