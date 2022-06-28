@@ -1,10 +1,22 @@
 # RELEASE NOTES
 
-## 2.x.x (June XX, 2022)
+## 2.2.0 (June 30, 2022)
 
 #### FEATURES/ENHANCEMENTS:
+
 * APPSEC
-  * Added penalty box support for security policy in evaluation mode 
+  * Added penalty box support for security policy in evaluation mode
+
+* IAM
+  * Extended `akamai_iam_user`:
+    * `is_locked` field has been deprecated in favor of `lock`
+  * Added resources allowing management of:
+    * `akamai_iam_blocked_user_properties` - create, read, update and import
+    * `akamai_iam_group` - create, read, update, delete and import
+    * `akamai_iam_role` - create, read, update, delete and import
+  * Added data sources:
+    * `akamai_iam_grantable_roles` - list grantable roles
+    * `akamai_iam_timezones` - list supported timezones
 
 #### BUG FIXES:
 
