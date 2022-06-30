@@ -7,34 +7,34 @@ description: |-
 
 # Identity and Access Management Module Guide
 
-The Identity and Access Management module lets you automate the creation and management of users and user grants.
+The Identity and Access Management module lets you automate the creation and management of users, groups, and roles.
 
-To get more information about Identity and Access Management, see:
-
-* [API and developer docs](https://developer.akamai.com/api/core_features/identity_management_user_admin/v2.html)
-* [Product docs and resources](https://learn.akamai.com/en-us/products/core_features/identity_management.html)
+To get more information about Identity and Access Management, see the [product documentation](https://techdocs.akamai.com/iam/docs).
 
 ## Prerequisites
 
-Before you can create a user, you need:
+Before you can create a user, you need to:
 
-* The user's country
-* To complete the tasks in the 
+1. Complete the tasks in the 
 [Get Started with the Akamai Provider](../guides/get_started_provider.md) 
-guide
+guide.
+1. Set up your API client for [Identity and Access Management](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/akamai_provider_auth).
+1. Retrieve supported countries and timezones using the [`iam_akamai_countries`](../data-sources/iam_countries.md) and [`akamai_iam_timezones`](../data-sources/iam_timezones.md) data sources. 
 
-## Identity and Access Management workflow
-To set up the Identity and Access Management module, you need to:
+## Identity and Access Management workflows
 
-* [Retrieve supported countries](#retrieve-supported-countries)
-* [Create a user](#create-a-user)
-* [Initialize the user](#initialize-the-user)
+Use Identity and Access Management to manage access privileges and users. When combined, users, groups, and roles grant access to Akamai applications, services, and objects. 
 
-## Retrieve supported countries
+~> For more information about these concepts, see [API concepts](https://techdocs.akamai.com/iam-user-admin/reference/api-concepts) in the API documentation. 
 
-To fetch a list of supported countries, use the [`iam_akamai_countries` data source](../data-sources/iam_countries.md). Attributes aren't needed to fetch the default contract ID.
+For Identity and Access Management, there are three objects to create:
 
-## Create a user
+* [Users](#create-users) 
+* [Roles](#create-roles)
+* [Groups](#create-groups)
+
+## Create users
+To set up users, you need to:
 
 The [`iam_akamai_user` resource](../resources/iam_user.md) represents the user.
 
@@ -59,12 +59,14 @@ resource "iam_akamai_user" "example" {
 }
 ```
 
-## Initialize the user
+## Create roles 
 
-After your configuration completes, save the file, then switch to the terminal to initialize Terraform using this command:
+Use [`akamai_iam_roles` resource](../resources/iam_roles.md) to set up the roles. 
 
-```bash
-$ terraform init
-```
+To see if there are existing roles, start with the [`akamai_iam_grantable_roles` data source](../data-sources/iam_grantable_roles.md).
 
-This command installs the latest version of the Akamai Provider and any other providers necessary, such as the local provider. To update the Akamai Provider version after a new release, simply run `terraform init` again.
+## Create groups
+
+Use [`akamai_iam_group` resource](../resources/iam_group.md) to create a group. 
+
+To see if there are existing groups, start with the [`akamai_iam_group` data source](../data-sources/iam_group.md). 
