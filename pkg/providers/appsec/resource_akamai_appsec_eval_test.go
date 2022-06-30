@@ -13,17 +13,17 @@ func TestAccAkamaiEval_res_basic(t *testing.T) {
 	t.Run("match by Eval ID", func(t *testing.T) {
 		client := &mockappsec{}
 
-		cu := appsec.UpdateEvalResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResEval/EvalStart.json")), &cu)
+		updateEvalResponse := appsec.UpdateEvalResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResEval/EvalStart.json"), &updateEvalResponse)
 
-		cr := appsec.GetEvalResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResEval/EvalStart.json")), &cr)
+		getEvalResponse := appsec.GetEvalResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResEval/EvalStart.json"), &getEvalResponse)
 
-		crd := appsec.RemoveEvalResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResEval/EvalStop.json")), &crd)
+		removeEvalResponse := appsec.RemoveEvalResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResEval/EvalStop.json"), &removeEvalResponse)
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,
@@ -31,19 +31,19 @@ func TestAccAkamaiEval_res_basic(t *testing.T) {
 		).Return(&config, nil)
 
 		client.On("GetEval",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetEvalRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", Current: "", Eval: ""},
-		).Return(&cr, nil)
+		).Return(&getEvalResponse, nil)
 
 		client.On("UpdateEval",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.UpdateEvalRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", Current: "", Eval: "START"},
-		).Return(&cu, nil)
+		).Return(&updateEvalResponse, nil)
 
 		client.On("RemoveEval",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.RemoveEvalRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", Current: "", Eval: "STOP"},
-		).Return(&crd, nil)
+		).Return(&removeEvalResponse, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{

@@ -13,17 +13,17 @@ func TestAccAkamaiReputationAnalysis_res_basic(t *testing.T) {
 	t.Run("match by ReputationAnalysis ID", func(t *testing.T) {
 		client := &mockappsec{}
 
-		cu := appsec.UpdateReputationAnalysisResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResReputationAnalysis/ReputationAnalysisUpdated.json")), &cu)
+		updateReputationAnalysisResponse := appsec.UpdateReputationAnalysisResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResReputationAnalysis/ReputationAnalysisUpdated.json"), &updateReputationAnalysisResponse)
 
-		cr := appsec.GetReputationAnalysisResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResReputationAnalysis/ReputationAnalysis.json")), &cr)
+		getReputationAnalysisResponse := appsec.GetReputationAnalysisResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResReputationAnalysis/ReputationAnalysis.json"), &getReputationAnalysisResponse)
 
-		cd := appsec.RemoveReputationAnalysisResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResReputationAnalysis/ReputationAnalysisDelete.json")), &cd)
+		removeReputationAnalysisResponse := appsec.RemoveReputationAnalysisResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResReputationAnalysis/ReputationAnalysisDelete.json"), &removeReputationAnalysisResponse)
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,
@@ -31,19 +31,19 @@ func TestAccAkamaiReputationAnalysis_res_basic(t *testing.T) {
 		).Return(&config, nil)
 
 		client.On("GetReputationAnalysis",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetReputationAnalysisRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
-		).Return(&cr, nil)
+		).Return(&getReputationAnalysisResponse, nil)
 
 		client.On("UpdateReputationAnalysis",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.UpdateReputationAnalysisRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", ForwardToHTTPHeader: true, ForwardSharedIPToHTTPHeaderAndSIEM: true},
-		).Return(&cu, nil)
+		).Return(&updateReputationAnalysisResponse, nil)
 
 		client.On("RemoveReputationAnalysis",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.RemoveReputationAnalysisRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", ForwardToHTTPHeader: false, ForwardSharedIPToHTTPHeaderAndSIEM: false},
-		).Return(&cd, nil)
+		).Return(&removeReputationAnalysisResponse, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{

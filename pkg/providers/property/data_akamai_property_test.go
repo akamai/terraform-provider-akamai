@@ -241,7 +241,7 @@ func TestDataProperty(t *testing.T) {
 			for k, v := range test.expectedAttributes {
 				checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("data.akamai_property.prop", k, v))
 			}
-			useClient(client, func() {
+			useClient(client, nil, func() {
 				resource.Test(t, resource.TestCase{
 					IsUnitTest: true,
 					Providers:  testAccProviders,

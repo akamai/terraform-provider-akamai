@@ -52,7 +52,7 @@ func resourceAdvancedSettingsPragmaHeaderCreate(ctx context.Context, d *schema.R
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsPragmaHeaderCreate")
-	logger.Debug("in resourceAdvancedSettingsPragmaHeaderCreate")
+	logger.Debugf("in resourceAdvancedSettingsPragmaHeaderCreate")
 
 	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -96,7 +96,7 @@ func resourceAdvancedSettingsPragmaHeaderRead(ctx context.Context, d *schema.Res
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsPragmaHeaderRead")
-	logger.Debug("resourceAdvancedSettingsPragmaHeaderRead")
+	logger.Debug("in resourceAdvancedSettingsPragmaHeaderRead")
 
 	getAdvancedSettingsPragma := appsec.GetAdvancedSettingsPragmaRequest{}
 	if d.Id() != "" && strings.Contains(d.Id(), ":") {
@@ -159,7 +159,7 @@ func resourceAdvancedSettingsPragmaHeaderDelete(ctx context.Context, d *schema.R
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsPragmaHeaderDelete")
-	logger.Debug("resourceAdvancedSettingsPragmaHeaderDelete")
+	logger.Debugf("in resourceAdvancedSettingsPragmaHeaderDelete")
 
 	jsonPayloadRaw := []byte("{}")
 	rawJSON := (json.RawMessage)(jsonPayloadRaw)
@@ -206,7 +206,6 @@ func resourceAdvancedSettingsPragmaHeaderDelete(ctx context.Context, d *schema.R
 		logger.Errorf("calling 'removeAdvancedSettingsLogging': %s", err.Error())
 		return diag.FromErr(err)
 	}
-	d.SetId("")
 	return nil
 }
 
@@ -214,7 +213,7 @@ func resourceAdvancedSettingsPragmaHeaderUpdate(ctx context.Context, d *schema.R
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsPragmaHeaderUpdate")
-	logger.Debugf("resourceAdvancedSettingsPragmaHeaderUpdate")
+	logger.Debugf("in resourceAdvancedSettingsPragmaHeaderUpdate")
 
 	updateAdvancedSettingsPragma := appsec.UpdateAdvancedSettingsPragmaRequest{}
 	if d.Id() != "" && strings.Contains(d.Id(), ":") {

@@ -1,6 +1,7 @@
 package appsec
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/apex/log"
@@ -80,6 +81,7 @@ func Provider() *schema.Provider {
 			"akamai_appsec_export_configuration":                 dataSourceExportConfiguration(),
 			"akamai_appsec_eval":                                 dataSourceEval(),
 			"akamai_appsec_eval_groups":                          dataSourceEvalGroups(),
+			"akamai_appsec_eval_penalty_box":                     dataSourceEvalPenaltyBox(),
 			"akamai_appsec_eval_rules":                           dataSourceEvalRules(),
 			"akamai_appsec_failover_hostnames":                   dataSourceFailoverHostnames(),
 			"akamai_appsec_ip_geo":                               dataSourceIPGeo(),
@@ -119,6 +121,7 @@ func Provider() *schema.Provider {
 			"akamai_appsec_selected_hostnames":                   resourceSelectedHostname(),
 			"akamai_appsec_eval":                                 resourceEval(),
 			"akamai_appsec_eval_group":                           resourceEvalGroup(),
+			"akamai_appsec_eval_penalty_box":                     resourceEvalPenaltyBox(),
 			"akamai_appsec_eval_rule":                            resourceEvalRule(),
 			"akamai_appsec_ip_geo_protection":                    resourceIPGeoProtection(),
 			"akamai_appsec_ip_geo":                               resourceIPGeo(),
@@ -180,7 +183,9 @@ func getAPPSECV1Service(d *schema.ResourceData) (interface{}, error) {
 	}
 
 	if section != "" {
-		d.Set("config_section", section)
+		if err := d.Set("config_section", section); err != nil {
+			return nil, fmt.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		}
 	}
 
 	return nil, nil

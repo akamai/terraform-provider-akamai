@@ -13,14 +13,14 @@ func TestAccAkamaiSecurityPolicyRename_res_basic(t *testing.T) {
 	t.Run("match by SecurityPolicy ID", func(t *testing.T) {
 		client := &mockappsec{}
 
-		cu := appsec.UpdateSecurityPolicyResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResSecurityPolicyRename/SecurityPolicyUpdate.json")), &cu)
+		updateSecurityPolicyResponse := appsec.UpdateSecurityPolicyResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResSecurityPolicyRename/SecurityPolicyUpdate.json"), &updateSecurityPolicyResponse)
 
-		cr := appsec.GetSecurityPolicyResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResSecurityPolicyRename/SecurityPolicy.json")), &cr)
+		getSecurityPolicyResponse := appsec.GetSecurityPolicyResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResSecurityPolicyRename/SecurityPolicy.json"), &getSecurityPolicyResponse)
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,
@@ -28,14 +28,14 @@ func TestAccAkamaiSecurityPolicyRename_res_basic(t *testing.T) {
 		).Return(&config, nil)
 
 		client.On("GetSecurityPolicy",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetSecurityPolicyRequest{ConfigID: 43253, Version: 7, PolicyID: "PLE_114049"},
-		).Return(&cr, nil)
+		).Return(&getSecurityPolicyResponse, nil)
 
 		client.On("UpdateSecurityPolicy",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.UpdateSecurityPolicyRequest{ConfigID: 43253, Version: 7, PolicyID: "PLE_114049", PolicyName: "Cloned Test for Launchpad 15"},
-		).Return(&cu, nil)
+		).Return(&updateSecurityPolicyResponse, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{

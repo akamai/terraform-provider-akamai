@@ -14,36 +14,36 @@ func TestAccAkamaiBypassNetworkLists_res_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&config, nil)
 
-		cu := appsec.UpdateWAPBypassNetworkListsResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResBypassNetworkLists/BypassNetworkLists.json")), &cu)
+		updateWAPBypassNetworkListsResponse := appsec.UpdateWAPBypassNetworkListsResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResBypassNetworkLists/BypassNetworkLists.json"), &updateWAPBypassNetworkListsResponse)
 
-		cr := appsec.GetWAPBypassNetworkListsResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResBypassNetworkLists/BypassNetworkLists.json")), &cr)
+		getWAPBypassNetworkListsResponse := appsec.GetWAPBypassNetworkListsResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResBypassNetworkLists/BypassNetworkLists.json"), &getWAPBypassNetworkListsResponse)
 
-		crd := appsec.RemoveWAPBypassNetworkListsResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResBypassNetworkLists/BypassNetworkLists.json")), &crd)
+		removeWAPBypassNetworkListsResponse := appsec.RemoveWAPBypassNetworkListsResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResBypassNetworkLists/BypassNetworkLists.json"), &removeWAPBypassNetworkListsResponse)
 
 		client.On("GetWAPBypassNetworkLists",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetWAPBypassNetworkListsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
-		).Return(&cr, nil)
+		).Return(&getWAPBypassNetworkListsResponse, nil)
 
 		client.On("UpdateWAPBypassNetworkLists",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.UpdateWAPBypassNetworkListsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", NetworkLists: []string{"1304427_AAXXBBLIST", "888518_ACDDCKERS"}},
-		).Return(&cu, nil)
+		).Return(&updateWAPBypassNetworkListsResponse, nil)
 
 		client.On("RemoveWAPBypassNetworkLists",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.RemoveWAPBypassNetworkListsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", NetworkLists: []string{}},
-		).Return(&crd, nil)
+		).Return(&removeWAPBypassNetworkListsResponse, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{

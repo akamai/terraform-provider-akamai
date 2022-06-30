@@ -13,11 +13,11 @@ func TestAccAkamaiCustomRuleActions_data_basic(t *testing.T) {
 	t.Run("match by CustomRuleActions ID", func(t *testing.T) {
 		client := &mockappsec{}
 
-		cv := appsec.GetCustomRuleActionsResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSCustomRuleActions/CustomRuleActions.json")), &cv)
+		getCustomRuleActionsResponse := appsec.GetCustomRuleActionsResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestDSCustomRuleActions/CustomRuleActions.json"), &getCustomRuleActionsResponse)
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,
@@ -25,9 +25,9 @@ func TestAccAkamaiCustomRuleActions_data_basic(t *testing.T) {
 		).Return(&config, nil)
 
 		client.On("GetCustomRuleActions",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetCustomRuleActionsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
-		).Return(&cv, nil)
+		).Return(&getCustomRuleActionsResponse, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{

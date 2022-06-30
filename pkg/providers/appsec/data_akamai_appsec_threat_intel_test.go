@@ -16,20 +16,20 @@ func TestAccAkamaiThreatIntel_data_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&config, nil)
 
-		getThrInt := appsec.GetThreatIntelResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSThreatIntel/ThreatIntel.json")), &getThrInt)
+		getThreatIntelResponse := appsec.GetThreatIntelResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestDSThreatIntel/ThreatIntel.json"), &getThreatIntelResponse)
 
 		client.On("GetThreatIntel",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetThreatIntelRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
-		).Return(&getThrInt, nil)
+		).Return(&getThreatIntelResponse, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
@@ -56,18 +56,18 @@ func TestAccAkamaiThreatIntel_data_error_retrieving_threat_intel(t *testing.T) {
 		client := &mockappsec{}
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&config, nil)
 
-		getThrInt := appsec.GetThreatIntelResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSThreatIntel/ThreatIntel.json")), &getThrInt)
+		threatIntelResponse := appsec.GetThreatIntelResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestDSThreatIntel/ThreatIntel.json"), &threatIntelResponse)
 
 		client.On("GetThreatIntel",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetThreatIntelRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
 		).Return(nil, fmt.Errorf("GetThreatIntel failed"))
 

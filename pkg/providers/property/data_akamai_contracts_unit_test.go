@@ -27,7 +27,7 @@ func TestDataContracts(t *testing.T) {
 			mock.Anything,
 		).Return(&papi.GetContractsResponse{Contracts: ctrs, AccountID: "act_test"}, nil)
 
-		useClient(client, func() {
+		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{{

@@ -12,60 +12,60 @@ import (
 )
 
 func TestAccAkamaiCustomRule_res_basic(t *testing.T) {
-	t.Run("match by CustomRule ID", func(t *testing.T) {
+	t.Run("CustomRule_basic", func(t *testing.T) {
 		client := &mockappsec{}
 
-		cu := appsec.UpdateCustomRuleResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResCustomRule/CustomRuleUpdated.json")), &cu)
+		createCustomRuleResponse := appsec.CreateCustomRuleResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResCustomRule/CustomRule.json"), &createCustomRuleResponse)
 
-		cc := appsec.CreateCustomRuleResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResCustomRule/CustomRule.json")), &cc)
+		getCustomRuleResponse := appsec.GetCustomRuleResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResCustomRule/CustomRule.json"), &getCustomRuleResponse)
 
-		cr := appsec.GetCustomRuleResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResCustomRule/CustomRule.json")), &cr)
+		updateCustomRuleResponse := appsec.UpdateCustomRuleResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResCustomRule/CustomRuleUpdated.json"), &updateCustomRuleResponse)
 
-		crau := appsec.GetCustomRuleResponse{} // custom rule after update
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResCustomRule/CustomRuleUpdated.json")), &crau)
+		getCustomRuleAfterUpdate := appsec.GetCustomRuleResponse{} // custom rule after update
+		json.Unmarshal(loadFixtureBytes("testdata/TestResCustomRule/CustomRuleUpdated.json"), &getCustomRuleAfterUpdate)
 
-		crr := appsec.RemoveCustomRuleResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResCustomRule/CustomRulesDeleted.json")), &crr)
+		removeCustomRuleResponse := appsec.RemoveCustomRuleResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResCustomRule/CustomRulesDeleted.json"), &removeCustomRuleResponse)
 
-		cv := appsec.GetCustomRulesResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResCustomRule/CustomRulesForDelete.json")), &cv)
+		getCustomRulesAfterDelete := appsec.GetCustomRulesResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResCustomRule/CustomRulesForDelete.json"), &getCustomRulesAfterDelete)
 
 		client.On("GetCustomRules",
 			mock.Anything,
 			appsec.GetCustomRulesRequest{ConfigID: 43253, ID: 661699},
-		).Return(&cv, nil)
+		).Return(&getCustomRulesAfterDelete, nil)
 
 		// mock 3 calls to GetCustomRule: 1) after create; 2) via TestCheckResourceAttr 3) pre-update
 		client.On("GetCustomRule",
 			mock.Anything,
 			appsec.GetCustomRuleRequest{ConfigID: 43253, ID: 661699},
-		).Return(&cr, nil).Times(3)
+		).Return(&getCustomRuleResponse, nil).Times(3)
 
 		// mock the GetCustomRule call that follows UpdateCustomRule
 		client.On("GetCustomRule",
 			mock.Anything,
 			appsec.GetCustomRuleRequest{ConfigID: 43253, ID: 661699},
-		).Return(&crau, nil)
+		).Return(&getCustomRuleAfterUpdate, nil)
 
 		updateCustomRuleJSON := loadFixtureBytes("testdata/TestResCustomRule/UpdateCustomRule.json")
 		client.On("UpdateCustomRule",
 			mock.Anything,
 			appsec.UpdateCustomRuleRequest{ConfigID: 43253, ID: 661699, Version: 0, JsonPayloadRaw: updateCustomRuleJSON},
-		).Return(&cu, nil)
+		).Return(&updateCustomRuleResponse, nil)
 
 		createCustomRuleJSON := loadFixtureBytes("testdata/TestResCustomRule/CreateCustomRule.json")
 		client.On("CreateCustomRule",
 			mock.Anything,
 			appsec.CreateCustomRuleRequest{ConfigID: 43253, Version: 0, JsonPayloadRaw: createCustomRuleJSON},
-		).Return(&cc, nil)
+		).Return(&createCustomRuleResponse, nil)
 
 		client.On("RemoveCustomRule",
 			mock.Anything,
 			appsec.RemoveCustomRuleRequest{ConfigID: 43253, ID: 661699},
-		).Return(&crr, nil)
+		).Return(&removeCustomRuleResponse, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
@@ -94,43 +94,43 @@ func TestAccAkamaiCustomRule_res_basic(t *testing.T) {
 }
 
 func TestAccAkamaiCustomRule_res_error_removing_active_rule(t *testing.T) {
-	t.Run("match by CustomRule ID", func(t *testing.T) {
+	t.Run("CustomRule_removing_active_rule", func(t *testing.T) {
 		client := &mockappsec{}
 
-		cu := appsec.UpdateCustomRuleResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResCustomRule/CustomRuleUpdated.json")), &cu)
+		updateCustomRuleResponse := appsec.UpdateCustomRuleResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResCustomRule/CustomRuleUpdated.json"), &updateCustomRuleResponse)
 
-		cc := appsec.CreateCustomRuleResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResCustomRule/CustomRule.json")), &cc)
+		createCustomRuleResponse := appsec.CreateCustomRuleResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResCustomRule/CustomRule.json"), &createCustomRuleResponse)
 
-		cr := appsec.GetCustomRuleResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResCustomRule/CustomRule.json")), &cr)
+		getCustomRuleResponse := appsec.GetCustomRuleResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResCustomRule/CustomRule.json"), &getCustomRuleResponse)
 
-		crau := appsec.GetCustomRuleResponse{} // custom rule after update
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResCustomRule/CustomRuleUpdated.json")), &crau)
+		getCustomRuleResponseAfterUpdate := appsec.GetCustomRuleResponse{} // custom rule after update
+		json.Unmarshal(loadFixtureBytes("testdata/TestResCustomRule/CustomRuleUpdated.json"), &getCustomRuleResponseAfterUpdate)
 
-		crr := appsec.RemoveCustomRuleResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResCustomRule/CustomRulesDeleted.json")), &crr)
+		removeCustomRuleResponse := appsec.RemoveCustomRuleResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResCustomRule/CustomRulesDeleted.json"), &removeCustomRuleResponse)
 
-		cv := appsec.GetCustomRulesResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResCustomRule/CustomRulesForDelete.json")), &cv)
+		getCustomRulesAfterDelete := appsec.GetCustomRulesResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResCustomRule/CustomRulesForDelete.json"), &getCustomRulesAfterDelete)
 
 		client.On("GetCustomRules",
 			mock.Anything,
 			appsec.GetCustomRulesRequest{ConfigID: 43253, ID: 661699},
-		).Return(&cv, nil)
+		).Return(&getCustomRulesAfterDelete, nil)
 
 		// mock 3 calls to GetCustomRule: 1) after create; 2) via TestCheckResourceAttr 3) pre-update
 		client.On("GetCustomRule",
 			mock.Anything,
 			appsec.GetCustomRuleRequest{ConfigID: 43253, ID: 661699},
-		).Return(&cr, nil).Times(3)
+		).Return(&getCustomRuleResponse, nil).Times(3)
 
 		// mock the GetCustomRule call that follows UpdateCustomRule
 		client.On("GetCustomRule",
 			mock.Anything,
 			appsec.GetCustomRuleRequest{ConfigID: 43253, ID: 661699},
-		).Return(&crau, nil)
+		).Return(&getCustomRuleResponseAfterUpdate, nil)
 
 		updateCustomRuleJSON := loadFixtureBytes("testdata/TestResCustomRule/UpdateCustomRule.json")
 		client.On("UpdateCustomRule",
@@ -142,12 +142,12 @@ func TestAccAkamaiCustomRule_res_error_removing_active_rule(t *testing.T) {
 		client.On("CreateCustomRule",
 			mock.Anything,
 			appsec.CreateCustomRuleRequest{ConfigID: 43253, Version: 0, JsonPayloadRaw: createCustomRuleJSON},
-		).Return(&cc, nil)
+		).Return(&createCustomRuleResponse, nil)
 
 		client.On("RemoveCustomRule",
 			mock.Anything,
 			appsec.RemoveCustomRuleRequest{ConfigID: 43253, ID: 661699},
-		).Return(&crr, nil)
+		).Return(&removeCustomRuleResponse, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{

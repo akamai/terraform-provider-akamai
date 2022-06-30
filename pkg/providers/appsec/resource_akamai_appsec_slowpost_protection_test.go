@@ -14,21 +14,19 @@ func TestAccAkamaiSlowPostProtection_res_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 
-		updateResponseAllProtectionsFalseJSON := loadFixtureBytes("testdata/TestResSlowPostProtection/PolicyProtections.json")
 		updateResponseAllProtectionsFalse := appsec.UpdateSlowPostProtectionResponse{}
-		json.Unmarshal([]byte(updateResponseAllProtectionsFalseJSON), &updateResponseAllProtectionsFalse)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResSlowPostProtection/PolicyProtections.json"), &updateResponseAllProtectionsFalse)
 
 		getResponseAllProtectionsFalse := appsec.GetSlowPostProtectionResponse{}
-		json.Unmarshal([]byte(updateResponseAllProtectionsFalseJSON), &getResponseAllProtectionsFalse)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResSlowPostProtection/PolicyProtections.json"), &getResponseAllProtectionsFalse)
 
-		updateResponseOneProtectionTrueJSON := loadFixtureBytes("testdata/TestResSlowPostProtection/UpdatedPolicyProtections.json")
 		updateResponseOneProtectionTrue := appsec.UpdateSlowPostProtectionResponse{}
-		json.Unmarshal([]byte(updateResponseOneProtectionTrueJSON), &updateResponseOneProtectionTrue)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResSlowPostProtection/UpdatedPolicyProtections.json"), &updateResponseOneProtectionTrue)
 
 		getResponseOneProtectionTrue := appsec.GetSlowPostProtectionResponse{}
-		json.Unmarshal([]byte(updateResponseOneProtectionTrueJSON), &getResponseOneProtectionTrue)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResSlowPostProtection/UpdatedPolicyProtections.json"), &getResponseOneProtectionTrue)
 
 		// Mock each call to the EdgeGrid library. With the exception of GetConfiguration, each call
 		// is mocked individually because calls with the same parameters may have different return values.

@@ -124,7 +124,7 @@ func resourceSiemSettingsRead(ctx context.Context, d *schema.ResourceData, m int
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceSiemSettingsRead")
-	logger.Debugf("resourceSiemSettingsRead")
+	logger.Debugf("in resourceSiemSettingsRead")
 
 	configID, err := strconv.Atoi(d.Id())
 	if err != nil {
@@ -172,7 +172,7 @@ func resourceSiemSettingsUpdate(ctx context.Context, d *schema.ResourceData, m i
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceSiemSettingsUpdate")
-	logger.Debugf("resourceSiemSettingsUpdate")
+	logger.Debugf("in resourceSiemSettingsUpdate")
 
 	configID, err := strconv.Atoi(d.Id())
 	if err != nil {
@@ -231,7 +231,7 @@ func resourceSiemSettingsDelete(ctx context.Context, d *schema.ResourceData, m i
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceSiemSettingsDelete")
-	logger.Debugf("resourceSiemSettingsDelete")
+	logger.Debugf("in resourceSiemSettingsDelete")
 
 	configID, err := strconv.Atoi(d.Id())
 	if err != nil {
@@ -253,7 +253,5 @@ func resourceSiemSettingsDelete(ctx context.Context, d *schema.ResourceData, m i
 		logger.Errorf("calling 'updateSiemSettings': %s", err.Error())
 		return diag.FromErr(err)
 	}
-
-	d.SetId("")
 	return nil
 }

@@ -14,20 +14,20 @@ func TestAccAkamaiAdvancedSettingsPragma_data_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&config, nil)
 
-		cv := appsec.GetAdvancedSettingsPragmaResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSAdvancedSettingsPragma/AdvancedSettingsPragma.json")), &cv)
+		getPragmaResponse := appsec.GetAdvancedSettingsPragmaResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestDSAdvancedSettingsPragma/AdvancedSettingsPragma.json"), &getPragmaResponse)
 
 		client.On("GetAdvancedSettingsPragma",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetAdvancedSettingsPragmaRequest{ConfigID: 43253, Version: 7},
-		).Return(&cv, nil)
+		).Return(&getPragmaResponse, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{

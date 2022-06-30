@@ -14,20 +14,20 @@ func TestAccAkamaiReputationProfiles_data_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&config, nil)
 
-		cv := appsec.GetReputationProfilesResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSReputationProfiles/ReputationProfiles.json")), &cv)
+		getReputationProfilesResponse := appsec.GetReputationProfilesResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestDSReputationProfiles/ReputationProfiles.json"), &getReputationProfilesResponse)
 
 		client.On("GetReputationProfiles",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetReputationProfilesRequest{ConfigID: 43253, ConfigVersion: 7, ReputationProfileId: 12345},
-		).Return(&cv, nil)
+		).Return(&getReputationProfilesResponse, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{

@@ -263,8 +263,5 @@ func resourceAttackGroupDelete(ctx context.Context, d *schema.ResourceData, m in
 		logger.Errorf("calling 'RemoveAttackGroup': %s", err.Error())
 		return diag.FromErr(err)
 	}
-
-	d.SetId("")
-
 	return nil
 }

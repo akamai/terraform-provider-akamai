@@ -14,21 +14,21 @@ func TestAccAkamaiCustomRuleAction_res_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		getConfigResponse := appsec.GetConfigurationResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &getConfigResponse)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &getConfigResponse)
 		client.On("GetConfiguration",
 			mock.Anything,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&getConfigResponse, nil)
 
 		updateResponse := appsec.UpdateCustomRuleActionResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResCustomRuleAction/CustomRuleActionUpdated.json")), &updateResponse)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResCustomRuleAction/CustomRuleActionUpdated.json"), &updateResponse)
 		client.On("UpdateCustomRuleAction",
 			mock.Anything,
 			appsec.UpdateCustomRuleActionRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", RuleID: 60036362, Action: "none"},
 		).Return(&updateResponse, nil)
 
 		getResponse := appsec.GetCustomRuleActionResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResCustomRuleAction/CustomRuleAction.json")), &getResponse)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResCustomRuleAction/CustomRuleAction.json"), &getResponse)
 		client.On("GetCustomRuleAction",
 			mock.Anything,
 			appsec.GetCustomRuleActionRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", RuleID: 60036362},

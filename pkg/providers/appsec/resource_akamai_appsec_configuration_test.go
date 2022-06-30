@@ -16,42 +16,42 @@ func TestAccAkamaiConfiguration_res_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		createConfigResponse := appsec.CreateConfigurationResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/ConfigurationCreate.json")), &createConfigResponse)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/ConfigurationCreate.json"), &createConfigResponse)
 
 		readConfigResponse := appsec.GetConfigurationResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/Configuration.json")), &readConfigResponse)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/Configuration.json"), &readConfigResponse)
 
 		deleteConfigResponse := appsec.RemoveConfigurationResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/Configuration.json")), &deleteConfigResponse)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/Configuration.json"), &deleteConfigResponse)
 
 		getConfigurationVersionsResponse := appsec.GetConfigurationVersionsResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/ConfigurationVersions.json")), &getConfigurationVersionsResponse)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/ConfigurationVersions.json"), &getConfigurationVersionsResponse)
 
-		hns := appsec.GetSelectedHostnamesResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResSelectedHostname/SelectedHostname.json")), &hns)
+		getSelectedHostnamesResponse := appsec.GetSelectedHostnamesResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResSelectedHostname/SelectedHostname.json"), &getSelectedHostnamesResponse)
 
 		client.On("GetSelectedHostnames",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetSelectedHostnamesRequest{ConfigID: 43253, Version: 7},
-		).Return(&hns, nil)
+		).Return(&getSelectedHostnamesResponse, nil)
 
 		client.On("CreateConfiguration",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.CreateConfigurationRequest{Name: "Akamai Tools", Description: "Akamai Tools", ContractID: "C-1FRYVV3", GroupID: 64867, Hostnames: []string{"rinaldi.sandbox.akamaideveloper.com", "sujala.sandbox.akamaideveloper.com"}},
 		).Return(&createConfigResponse, nil)
 
 		client.On("GetConfiguration",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&readConfigResponse, nil)
 
 		client.On("RemoveConfiguration",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.RemoveConfigurationRequest{ConfigID: 43253},
 		).Return(&deleteConfigResponse, nil)
 
 		client.On("GetConfigurationVersions",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetConfigurationVersionsRequest{ConfigID: 43253},
 		).Return(&getConfigurationVersionsResponse, nil)
 
@@ -79,19 +79,19 @@ func TestAccAkamaiConfiguration_res_error_updating_configuration(t *testing.T) {
 		client := &mockappsec{}
 
 		createConfigResponse := appsec.CreateConfigurationResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/ConfigurationCreate.json")), &createConfigResponse)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/ConfigurationCreate.json"), &createConfigResponse)
 
 		readConfigResponse := appsec.GetConfigurationResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/Configuration.json")), &readConfigResponse)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/Configuration.json"), &readConfigResponse)
 
 		deleteConfigResponse := appsec.RemoveConfigurationResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/Configuration.json")), &deleteConfigResponse)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/Configuration.json"), &deleteConfigResponse)
 
 		getConfigurationVersionsResponse := appsec.GetConfigurationVersionsResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/ConfigurationVersions.json")), &getConfigurationVersionsResponse)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/ConfigurationVersions.json"), &getConfigurationVersionsResponse)
 
 		hns := appsec.GetSelectedHostnamesResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResSelectedHostname/SelectedHostname.json")), &hns)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResSelectedHostname/SelectedHostname.json"), &hns)
 
 		client.On("GetSelectedHostnames",
 			mock.Anything,
@@ -114,7 +114,7 @@ func TestAccAkamaiConfiguration_res_error_updating_configuration(t *testing.T) {
 		).Return(nil, fmt.Errorf("UpdateConfiguration failed"))
 
 		client.On("RemoveConfiguration",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.RemoveConfigurationRequest{ConfigID: 43253},
 		).Return(&deleteConfigResponse, nil)
 

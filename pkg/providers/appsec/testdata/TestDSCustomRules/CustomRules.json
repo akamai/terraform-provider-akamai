@@ -6,7 +6,125 @@
                 "link": "/appsec/v1/configs/43253/custom-rules/60036360",
                 "name": "Existing Test Rule 1",
                 "status": "published",
-                "version": 1
+                "version": 1,
+                "samplingRate": 5,
+                "effectiveTimePeriod": {
+                    "endDate":"2022-06-02T18:19:55Z",
+                    "startDate":"2022-05-03T18:19:55Z",
+                    "status":"ACTIVE"
+                },
+                "operation": "AND",
+                "conditions": [
+                    {
+                        "positiveMatch": true,
+                        "type": "hostMatch",
+                        "value": [
+                            "www.g.com"
+                        ]
+                    },
+                    {
+                        "positiveMatch": true,
+                        "type": "requestMethodMatch",
+                        "value": [
+                            "GET"
+                        ]
+                    },
+                    {
+                        "positiveMatch": true,
+                        "type": "pathMatch",
+                        "value": [
+                            "/path"
+                        ]
+                    },
+                    {
+                        "positiveMatch": true,
+                        "type": "extensionMatch",
+                        "value": [
+                            "et"
+                        ],
+                        "valueCase": false,
+                        "valueWildcard": false
+                    },
+                    {
+                        "positiveMatch": true,
+                        "type": "filenameMatch",
+                        "value": [
+                            "filename"
+                        ],
+                        "valueCase": false,
+                        "valueWildcard": false
+                    },
+                    {
+                        "positiveMatch": true,
+                        "type": "requestProtocolVersionMatch",
+                        "value": "HTTP/0.9"
+                    },
+                    {
+                        "name": [
+                            "header"
+                        ],
+                        "nameWildcard": true,
+                        "positiveMatch": true,
+                        "type": "requestHeaderMatch",
+                        "value": [
+                            "value1"
+                        ],
+                        "valueCase": false,
+                        "valueWildcard": true
+                    },
+                    {
+                        "positiveMatch": true,
+                        "type": "headerOrderMatch",
+                        "value": "1"
+                    },
+                    {
+                        "name": "cookie",
+                        "nameCase": false,
+                        "nameWildcard": false,
+                        "positiveMatch": true,
+                        "type": "cookieMatch",
+                        "value": [
+                            "cookie"
+                        ],
+                        "valueCase": false,
+                        "valueWildcard": false
+                    },
+                    {
+                        "name": "query",
+                        "nameCase": false,
+                        "nameWildcard": false,
+                        "positiveMatch": true,
+                        "type": "uriQueryMatch",
+                        "value": [
+                            "string"
+                        ],
+                        "valueCase": false,
+                        "valueWildcard": false
+                    },
+                    {
+                        "name": "param",
+                        "positiveMatch": true,
+                        "type": "argsPostMatch",
+                        "value": [
+                            "body"
+                        ]
+                    },
+                    {
+                        "positiveMatch": true,
+                        "type": "clientCertValidMatch"
+                    },
+                    {
+                        "positiveMatch": true,
+                        "type": "clientCertPresentMatch"
+                    },
+                    {
+                        "positiveMatch": true,
+                        "type": "clientTlsFingerprintMatch",
+                        "value": [
+                            "tls"
+                        ]
+                    }
+                ]
             },
             {
                 "id": 60038316,

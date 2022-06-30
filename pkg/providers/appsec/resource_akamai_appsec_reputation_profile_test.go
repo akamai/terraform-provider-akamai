@@ -13,37 +13,37 @@ func TestAccAkamaiReputationProfile_res_basic(t *testing.T) {
 	t.Run("match by ReputationProfile ID", func(t *testing.T) {
 		client := &mockappsec{}
 
-		cu := appsec.UpdateReputationProfileResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResReputationProfile/ReputationProfileUpdated.json")), &cu)
+		updateReputationProfileResponse := appsec.UpdateReputationProfileResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResReputationProfile/ReputationProfileUpdated.json"), &updateReputationProfileResponse)
 
-		cr := appsec.GetReputationProfileResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResReputationProfile/ReputationProfiles.json")), &cr)
+		getReputationProfileResponse := appsec.GetReputationProfileResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResReputationProfile/ReputationProfiles.json"), &getReputationProfileResponse)
 
-		crp := appsec.CreateReputationProfileResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResReputationProfile/ReputationProfileCreated.json")), &crp)
+		createReputationProfileResponse := appsec.CreateReputationProfileResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResReputationProfile/ReputationProfileCreated.json"), &createReputationProfileResponse)
 
-		crd := appsec.RemoveReputationProfileResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResReputationProfile/ReputationProfileCreated.json")), &crd)
+		removeReputationProfileResponse := appsec.RemoveReputationProfileResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResReputationProfile/ReputationProfileCreated.json"), &removeReputationProfileResponse)
 
 		client.On("GetReputationProfile",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetReputationProfileRequest{ConfigID: 43253, ConfigVersion: 7, ReputationProfileId: 12345},
-		).Return(&cr, nil)
+		).Return(&getReputationProfileResponse, nil)
 
 		client.On("RemoveReputationProfile",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.RemoveReputationProfileRequest{ConfigID: 43253, ConfigVersion: 7, ReputationProfileId: 12345},
-		).Return(&crd, nil)
+		).Return(&removeReputationProfileResponse, nil)
 
 		client.On("CreateReputationProfile",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.CreateReputationProfileRequest{ConfigID: 43253, ConfigVersion: 7},
-		).Return(&crp, nil)
+		).Return(&createReputationProfileResponse, nil)
 
 		client.On("UpdateReputationProfile",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.UpdateReputationProfileRequest{ConfigID: 43253, ConfigVersion: 7, ReputationProfileId: 12345},
-		).Return(&cu, nil)
+		).Return(&updateReputationProfileResponse, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{

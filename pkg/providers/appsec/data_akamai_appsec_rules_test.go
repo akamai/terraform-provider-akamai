@@ -13,24 +13,24 @@ func TestAccAkamaiRules_data_basic(t *testing.T) {
 	t.Run("match by Rules ID", func(t *testing.T) {
 		client := &mockappsec{}
 
-		cv := appsec.GetRulesResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSRules/Rules.json")), &cv)
+		getRulesResponse := appsec.GetRulesResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestDSRules/Rules.json"), &getRulesResponse)
 
 		configs := appsec.GetConfigurationResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &configs)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &configs)
 
 		client.On("GetRules",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetRulesRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
-		).Return(&cv, nil)
+		).Return(&getRulesResponse, nil)
 
 		client.On("GetConfiguration",
 			mock.Anything,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&configs, nil)
 
-		wm := appsec.GetWAFModeResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResWAFMode/WAFMode.json")), &wm)
+		getWAFModeResponse := appsec.GetWAFModeResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResWAFMode/WAFMode.json"), &getWAFModeResponse)
 
 		client.On("GetWAFMode",
 			mock.Anything,
@@ -38,7 +38,7 @@ func TestAccAkamaiRules_data_basic(t *testing.T) {
 				ConfigID: 43253,
 				Version:  7,
 				PolicyID: "AAAA_81230",
-			}).Return(&wm, nil)
+			}).Return(&getWAFModeResponse, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{

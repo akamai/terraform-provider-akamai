@@ -214,7 +214,5 @@ func resourceReputationProtectionDelete(ctx context.Context, d *schema.ResourceD
 		logger.Errorf("calling UpdateReputationProtection: %s", err.Error())
 		return diag.FromErr(err)
 	}
-
-	d.SetId("")
 	return nil
 }

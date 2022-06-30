@@ -424,6 +424,7 @@ For the most part, this is a typical Terraform configuration—we declare the Ak
 ```
 resource "akamai_appsec_activations" "activation" {
  config_id           = data.akamai_appsec_configuration.configuration.config_id
+ version             = 10
  network             = "STAGING"
  notes               = "This is a test configuration used by the documentation team."
  notification_emails = ["gstemp@akamai.com"]
@@ -435,6 +436,7 @@ Inside this block we include these arguments and argument values:
 | **Argument**          | **Description**                                              |
 | --------------------- | ------------------------------------------------------------ |
 | `config_id`           | Unique identifier of the configuration being activated.     |
+| `version`             | Version of the configuration being activated.     |
 | `network`             | Name of the network the configuration is being activated for. Allowed values are:     <br />*  **staging**  <br />*  **production** |
 | `notes`               | Information about the configuration and the reason for its activation. |
 | `notification_emails` | JSON array of email addresses of people to be notified when activation is complete. To send notification emails to multiple people, separate the individual email addresses by using commas:     <br /><br />`notification_emails = ["gstemp@akamai.com", "karim.nafir@mail.com"]` |
@@ -653,6 +655,7 @@ data "akamai_appsec_configuration" "configuration" {
 
 resource "akamai_appsec_activations" "activation" {
  config_id           = data.akamai_appsec_configuration.configuration.config_id
+ version             = 10
  network             = "STAGING"
  activate            = true
  notes               = "This is a test configuration used by the documentation team."
@@ -665,6 +668,7 @@ For the most part, this is a typical Terraform configuration—we declare the Ak
 ```
 resource "akamai_appsec_activations" "activation" {
  config_id           = data.akamai_appsec_configuration.configuration.config_id
+ version             = 10
  network             = "STAGING"
  activate            = true
  notes               = "This is a test configuration used by the documentation team."
@@ -677,6 +681,7 @@ Inside this block we include the following arguments and argument values:
 | **Argument**          | **Description**                                              |
 | --------------------- | ------------------------------------------------------------ |
 | `config_id`           | Unique identifier of the configuration being activated.     |
+| `version`             | Version of the configuration being activated.     |
 | `network`             | Name of the network the configuration is being activated on. Allowed values are:     <br />*  **staging**  <br />*  **production** |
 | `activate`            | If **true** (the default value), the security configuration will be activated; if  **false**, the security configuration will be *deactivated*. Note that this argument is optional—if it's not included the security configuration will be activated. |
 | `notes`               | Information about the configuration and its activation.     |
@@ -2641,6 +2646,7 @@ resource "akamai_appsec_penalty_box" "penalty_box" {
 // Step 17: Activate the Security Configuration
 resource "akamai_appsec_activations" "new_activation" {
   config_id           = akamai_appsec_configuration.create_config.config_id
+  version             = 10
   network             = "STAGING"
   notes               = "Activates the Documentation AAG Test Configuration on the staging network."
   activate            = true
@@ -3143,6 +3149,7 @@ Note that the 10-minute timeout period is not configurable.
 ```
 resource "akamai_appsec_activations" "new_activation" {
   config_id           = akamai_appsec_configuration.create_config.config_id
+  version             = 10
   network             = "STAGING"
   notes               = "Activates the Documentation AAG Test Configuration on the staging network."
   activate            = true
@@ -3160,6 +3167,7 @@ Without going into too much detail, we activate our security configuration by us
 | **Argument**          | **Description**                                              |
 | --------------------- | ------------------------------------------------------------ |
 | `config_id`           | Unique identifier of the configuration being activated.     |
+| `version`             | Version of the configuration being activated.     |
 | `network`             | Specifies which network the security configuration is being activated on. Allowed values are:     <br />* **staging**  <br />* **production** |
 | `notes`               | Arbitrary notes regarding the network and its activation status. |
 | `activate`            | If **true**, the specified network is activated; if **false**, the specified network is deactivated. Note that this property is optional: if omitted, `activate` is set to **true** and the network is activated. |

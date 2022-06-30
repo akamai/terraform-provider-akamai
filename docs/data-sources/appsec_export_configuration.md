@@ -49,13 +49,13 @@ resource "akamai_appsec_attack_group" "akamai_appsec_attack_group_gms1_134637" {
     }
 ```
 
-To get this type of output, add **.tf** to end of your search term. For example, instead of searching for attackGroups, add **.tf** and search for **AttackGroups.tf**:
+To get this type of output, add **.tf** to end of your search term. For example, instead of searching for attackGroups, add **.tf** and search for **AttackGroup.tf**:
 
 ```
 search = ["AttackGroup.tf"]
 ```
 
-Note that even though you seem to be specifying the name of a Terraform configuration file (e.g., `activeGroups.tf`) this data source does not save the exported data to a text file. In other words, running the command shown above won’t create a file named `activeGroups.tf` that contains all the exported data.
+Note that even though you seem to be specifying the name of a Terraform configuration file (e.g., `AttackGroup.tf`) this data source does not save the exported data to a text file. In other words, running the command shown above won’t create a file named `activeGroups.tf` that contains all the exported data.
 
 
 **Related API Endpoint**: [/appsec/v1/export/configs/{configId}/versions/{versionNumber}](https://techdocs.akamai.com/application-security/reference/get-export-config-version)
@@ -127,6 +127,7 @@ To return data that can be easily imported back into Terraform, use one or more 
     - CustomRuleAction.tf
     - MatchTarget.tf
     - PenaltyBox.tf
+    - EvalPenaltyBox.tf
     - RatePolicy.tf
     - RatePolicyAction.tf
     - ReputationProfile.tf

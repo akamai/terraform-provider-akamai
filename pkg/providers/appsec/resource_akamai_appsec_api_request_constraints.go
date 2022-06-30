@@ -263,7 +263,5 @@ func resourceAPIRequestConstraintsDelete(ctx context.Context, d *schema.Resource
 			return diag.FromErr(err)
 		}
 	}
-
-	d.SetId("")
 	return nil
 }

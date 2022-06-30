@@ -13,14 +13,14 @@ func TestAccAkamaiPenaltyBox_res_basic(t *testing.T) {
 	t.Run("match by PenaltyBox ID", func(t *testing.T) {
 		client := &mockappsec{}
 
-		cu := appsec.UpdatePenaltyBoxResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResPenaltyBox/PenaltyBox.json")), &cu)
+		updatePenaltyBoxResponse := appsec.UpdatePenaltyBoxResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResPenaltyBox/PenaltyBox.json"), &updatePenaltyBoxResponse)
 
-		cr := appsec.GetPenaltyBoxResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResPenaltyBox/PenaltyBox.json")), &cr)
+		getPenaltyBoxResponse := appsec.GetPenaltyBoxResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResPenaltyBox/PenaltyBox.json"), &getPenaltyBoxResponse)
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,
@@ -28,14 +28,14 @@ func TestAccAkamaiPenaltyBox_res_basic(t *testing.T) {
 		).Return(&config, nil)
 
 		client.On("GetPenaltyBox",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetPenaltyBoxRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
-		).Return(&cr, nil)
+		).Return(&getPenaltyBoxResponse, nil)
 
 		client.On("UpdatePenaltyBox",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.UpdatePenaltyBoxRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", Action: "none", PenaltyBoxProtection: false},
-		).Return(&cu, nil)
+		).Return(&updatePenaltyBoxResponse, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{

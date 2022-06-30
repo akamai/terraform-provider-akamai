@@ -11,8 +11,8 @@ description: |-
 **Scopes**: Security policy
 
 Modifies the penalty box settings for a security policy.
-When using automated attack groups, and when the penalty box is enabled, clients that trigger an attack group  are placed in the “penalty box”.
-That means that, for the next 10 minutes, all requests from that client are ignored.
+When the penalty box is enabled for a policy, clients that trigger a WAF Deny action are placed in the “penalty box”.
+There, the action you select for penalty box (either Alert or Deny ) continues to apply to any requests from that client for the next 10 minutes.
 
 **Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/match-targets/sequence](https://techdocs.akamai.com/application-security/reference/put-policy-penalty-box)
 

@@ -13,6 +13,7 @@ description: |-
 Activates or deactivates a security configuration.
 Security configurations activated on the staging network can be used for testing and fine-tuning; security configurations activated on the production network are used to protect your actual websites.
 Note that activation fails if the security configuration includes one or more invalid hostnames. You can find these names in the resulting activation error message. To activate the configuration, remove the invalid hosts and try again.
+Note also that the `notification_emails` attribute is currently ignored when an activation is updated and it is the only modified attribute.
 
 ### Important information if you upgrade to the 2.0.0 version of the Akamai Terraform provider
 

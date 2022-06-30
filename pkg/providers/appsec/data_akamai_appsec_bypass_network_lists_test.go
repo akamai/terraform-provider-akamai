@@ -14,20 +14,20 @@ func TestAccAkamaiBypassNetworkLists_data_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&config, nil)
 
-		cv := appsec.GetWAPBypassNetworkListsResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSBypassNetworkLists/BypassNetworkLists.json")), &cv)
+		getBypassNetworkListsResponse := appsec.GetWAPBypassNetworkListsResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestDSBypassNetworkLists/BypassNetworkLists.json"), &getBypassNetworkListsResponse)
 
 		client.On("GetWAPBypassNetworkLists",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetWAPBypassNetworkListsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
-		).Return(&cv, nil)
+		).Return(&getBypassNetworkListsResponse, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{

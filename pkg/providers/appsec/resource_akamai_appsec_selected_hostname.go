@@ -56,7 +56,7 @@ func resourceSelectedHostnameCreate(ctx context.Context, d *schema.ResourceData,
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceSelectedHostnameCreate")
-	logger.Debugf("resourceSelectedHostnameCreate")
+	logger.Debugf("in resourceSelectedHostnameCreate")
 
 	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil {
@@ -144,7 +144,7 @@ func resourceSelectedHostnameRead(ctx context.Context, d *schema.ResourceData, m
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceSelectedHostnameRead")
-	logger.Debugf("resourceSelectedHostnameRead")
+	logger.Debugf("in resourceSelectedHostnameRead")
 
 	configID, err := strconv.Atoi(d.Id())
 	if err != nil {
@@ -189,7 +189,7 @@ func resourceSelectedHostnameUpdate(ctx context.Context, d *schema.ResourceData,
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceSelectedHostnameUpdate")
-	logger.Debugf("resourceSelectedHostnameUpdate")
+	logger.Debugf("in resourceSelectedHostnameUpdate")
 
 	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil {

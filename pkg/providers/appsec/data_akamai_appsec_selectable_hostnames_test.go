@@ -14,20 +14,20 @@ func TestAccAkamaiSelectableHostnames_data_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&config, nil)
 
-		cv := appsec.GetSelectableHostnamesResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSSelectableHostnames/SelectableHostnames.json")), &cv)
+		getSelectableHostnamesResponse := appsec.GetSelectableHostnamesResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestDSSelectableHostnames/SelectableHostnames.json"), &getSelectableHostnamesResponse)
 
 		client.On("GetSelectableHostnames",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetSelectableHostnamesRequest{ConfigID: 43253, Version: 7},
-		).Return(&cv, nil)
+		).Return(&getSelectableHostnamesResponse, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{

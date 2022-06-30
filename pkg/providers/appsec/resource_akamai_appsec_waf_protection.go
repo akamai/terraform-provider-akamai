@@ -214,7 +214,5 @@ func resourceWAFProtectionDelete(ctx context.Context, d *schema.ResourceData, m 
 		logger.Errorf("calling UpdateWAFProtection: %s", err.Error())
 		return diag.FromErr(err)
 	}
-
-	d.SetId("")
 	return nil
 }

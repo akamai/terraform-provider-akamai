@@ -13,14 +13,14 @@ func TestAccAkamaiRuleUpgrade_res_basic(t *testing.T) {
 	t.Run("match by RuleUpgrade ID", func(t *testing.T) {
 		client := &mockappsec{}
 
-		cu := appsec.UpdateRuleUpgradeResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResRuleUpgrade/RuleUpgrade.json")), &cu)
+		updateRuleUpgradeResponse := appsec.UpdateRuleUpgradeResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResRuleUpgrade/RuleUpgrade.json"), &updateRuleUpgradeResponse)
 
-		wafModeRead := appsec.GetWAFModeResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResRuleUpgrade/WAFMode.json")), &wafModeRead)
+		getWAFModeResponse := appsec.GetWAFModeResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResRuleUpgrade/WAFMode.json"), &getWAFModeResponse)
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,
@@ -28,14 +28,14 @@ func TestAccAkamaiRuleUpgrade_res_basic(t *testing.T) {
 		).Return(&config, nil)
 
 		client.On("GetWAFMode",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetWAFModeRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
-		).Return(&wafModeRead, nil)
+		).Return(&getWAFModeResponse, nil)
 
 		client.On("UpdateRuleUpgrade",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.UpdateRuleUpgradeRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", Upgrade: true},
-		).Return(&cu, nil)
+		).Return(&updateRuleUpgradeResponse, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{

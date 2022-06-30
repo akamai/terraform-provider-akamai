@@ -80,7 +80,6 @@ func resourceAPIConstraintsProtectionCreate(ctx context.Context, d *schema.Resou
 		PolicyID:            policyID,
 		ApplyAPIConstraints: enabled,
 	}
-	logger.Debugf("provider passing this: %+v", request)
 	_, err = client.UpdateAPIConstraintsProtection(ctx, request)
 	if err != nil {
 		logger.Errorf("calling UpdateAPIConstraints: %s", err.Error())
@@ -215,7 +214,5 @@ func resourceAPIConstraintsProtectionDelete(ctx context.Context, d *schema.Resou
 		logger.Errorf("calling UpdateAPIConstraintsProtection: %s", err.Error())
 		return diag.FromErr(err)
 	}
-
-	d.SetId("")
 	return nil
 }

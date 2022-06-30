@@ -13,23 +13,23 @@ func TestAccAkamaiMatchTarget_res_basic(t *testing.T) {
 	t.Run("match by MatchTarget ID", func(t *testing.T) {
 		client := &mockappsec{}
 
-		cu := appsec.UpdateMatchTargetResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResMatchTarget/MatchTargetUpdated.json")), &cu)
+		updateMatchTargetResponse := appsec.UpdateMatchTargetResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResMatchTarget/MatchTargetUpdated.json"), &updateMatchTargetResponse)
 
-		cr := appsec.GetMatchTargetResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResMatchTarget/MatchTarget.json")), &cr)
+		getMatchTargetResponse := appsec.GetMatchTargetResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResMatchTarget/MatchTarget.json"), &getMatchTargetResponse)
 
-		cru := appsec.GetMatchTargetResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResMatchTarget/MatchTargetUpdated.json")), &cru)
+		getMatchTargetResponseAfterUpdate := appsec.GetMatchTargetResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResMatchTarget/MatchTargetUpdated.json"), &getMatchTargetResponseAfterUpdate)
 
-		crmt := appsec.CreateMatchTargetResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResMatchTarget/MatchTargetCreated.json")), &crmt)
+		createMatchTargetResponse := appsec.CreateMatchTargetResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResMatchTarget/MatchTargetCreated.json"), &createMatchTargetResponse)
 
-		rmmt := appsec.RemoveMatchTargetResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResMatchTarget/MatchTargetCreated.json")), &rmmt)
+		removeMatchTargetResponse := appsec.RemoveMatchTargetResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResMatchTarget/MatchTargetCreated.json"), &removeMatchTargetResponse)
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,
@@ -37,31 +37,31 @@ func TestAccAkamaiMatchTarget_res_basic(t *testing.T) {
 		).Return(&config, nil)
 
 		client.On("GetMatchTarget",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetMatchTargetRequest{ConfigID: 43253, ConfigVersion: 7, TargetID: 3008967},
-		).Return(&cr, nil).Times(3)
+		).Return(&getMatchTargetResponse, nil).Times(3)
 
 		client.On("GetMatchTarget",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetMatchTargetRequest{ConfigID: 43253, ConfigVersion: 7, TargetID: 3008967},
-		).Return(&cru, nil)
+		).Return(&getMatchTargetResponseAfterUpdate, nil)
 
 		createMatchTargetJSON := loadFixtureBytes("testdata/TestResMatchTarget/CreateMatchTarget.json")
 		client.On("CreateMatchTarget",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.CreateMatchTargetRequest{Type: "", ConfigID: 43253, ConfigVersion: 7, JsonPayloadRaw: createMatchTargetJSON},
-		).Return(&crmt, nil)
+		).Return(&createMatchTargetResponse, nil)
 
 		updateMatchTargetJSON := loadFixtureBytes("testdata/TestResMatchTarget/UpdateMatchTarget.json")
 		client.On("UpdateMatchTarget",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.UpdateMatchTargetRequest{ConfigID: 43253, ConfigVersion: 7, TargetID: 3008967, JsonPayloadRaw: updateMatchTargetJSON},
-		).Return(&cu, nil)
+		).Return(&updateMatchTargetResponse, nil)
 
 		client.On("RemoveMatchTarget",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.RemoveMatchTargetRequest{ConfigID: 43253, ConfigVersion: 7, TargetID: 3008967},
-		).Return(&rmmt, nil)
+		).Return(&removeMatchTargetResponse, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{

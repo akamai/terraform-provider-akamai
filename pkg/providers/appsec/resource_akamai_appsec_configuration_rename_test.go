@@ -13,21 +13,21 @@ func TestAccAkamaiConfigurationRename_res_basic(t *testing.T) {
 	t.Run("match by Configuration ID", func(t *testing.T) {
 		client := &mockappsec{}
 
-		cu := appsec.UpdateConfigurationResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfigurationRename/ConfigurationUpdate.json")), &cu)
+		updateConfigurationResponse := appsec.UpdateConfigurationResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResConfigurationRename/ConfigurationUpdate.json"), &updateConfigurationResponse)
 
-		cr := appsec.GetConfigurationResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfigurationRename/Configuration.json")), &cr)
+		getConfigurationResponse := appsec.GetConfigurationResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResConfigurationRename/Configuration.json"), &getConfigurationResponse)
 
 		client.On("GetConfiguration",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetConfigurationRequest{ConfigID: 432531},
-		).Return(&cr, nil)
+		).Return(&getConfigurationResponse, nil)
 
 		client.On("UpdateConfiguration",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.UpdateConfigurationRequest{ConfigID: 432531, Name: "Akamai Tools New", Description: "TF Tools"},
-		).Return(&cu, nil)
+		).Return(&updateConfigurationResponse, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{

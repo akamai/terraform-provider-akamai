@@ -19,13 +19,13 @@ func TestAccAkamaiEvalGroup_res_basic(t *testing.T) {
 		conditionExceptionRawMessage := json.RawMessage(conditionExceptionJSON)
 
 		updateResponse := appsec.UpdateAttackGroupResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResEvalGroup/AttackGroup.json")), &updateResponse)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResEvalGroup/AttackGroup.json"), &updateResponse)
 
 		getResponse := appsec.GetAttackGroupResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResEvalGroup/AttackGroup.json")), &getResponse)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResEvalGroup/AttackGroup.json"), &getResponse)
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,
@@ -75,13 +75,13 @@ func TestAccAkamaiEvalGroup_res_error_updating_eval_group(t *testing.T) {
 		conditionExceptionRawMessage := json.RawMessage(conditionExceptionJSON)
 
 		updateResponse := appsec.UpdateAttackGroupResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResEvalGroup/AttackGroup.json")), &updateResponse)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResEvalGroup/AttackGroup.json"), &updateResponse)
 
 		getResponse := appsec.GetAttackGroupResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResEvalGroup/AttackGroup.json")), &getResponse)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResEvalGroup/AttackGroup.json"), &getResponse)
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,

@@ -13,11 +13,11 @@ func TestAccAkamaiIPGeo_data_basic(t *testing.T) {
 	t.Run("match by IPGeo ID", func(t *testing.T) {
 		client := &mockappsec{}
 
-		cv := appsec.GetIPGeoResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSIPGeo/IPGeo.json")), &cv)
+		getIPGeoResponse := appsec.GetIPGeoResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestDSIPGeo/IPGeo.json"), &getIPGeoResponse)
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,
@@ -25,9 +25,9 @@ func TestAccAkamaiIPGeo_data_basic(t *testing.T) {
 		).Return(&config, nil)
 
 		client.On("GetIPGeo",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetIPGeoRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
-		).Return(&cv, nil)
+		).Return(&getIPGeoResponse, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{

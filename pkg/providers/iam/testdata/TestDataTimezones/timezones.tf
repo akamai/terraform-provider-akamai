@@ -1,0 +1,1 @@
+data "akamai_iam_timezones" "test" {}

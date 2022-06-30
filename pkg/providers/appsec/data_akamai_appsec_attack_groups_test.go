@@ -13,16 +13,16 @@ func TestAccAkamaiAttackGroups_data_basic(t *testing.T) {
 	t.Run("match by AttackGroups ID", func(t *testing.T) {
 		client := &mockappsec{}
 
-		cv := appsec.GetAttackGroupsResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSAttackGroups/AttackGroups.json")), &cv)
+		getAttackGroupsResponse := appsec.GetAttackGroupsResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestDSAttackGroups/AttackGroups.json"), &getAttackGroupsResponse)
 
 		configs := appsec.GetConfigurationResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &configs)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &configs)
 
 		client.On("GetAttackGroups",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetAttackGroupsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", Group: "SQL"},
-		).Return(&cv, nil)
+		).Return(&getAttackGroupsResponse, nil)
 
 		client.On("GetConfiguration",
 			mock.Anything,

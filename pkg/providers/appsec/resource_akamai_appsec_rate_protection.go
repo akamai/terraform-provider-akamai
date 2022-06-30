@@ -214,7 +214,5 @@ func resourceRateProtectionDelete(ctx context.Context, d *schema.ResourceData, m
 		logger.Errorf("calling UpdateRateProtection: %s", err.Error())
 		return diag.FromErr(err)
 	}
-
-	d.SetId("")
 	return nil
 }

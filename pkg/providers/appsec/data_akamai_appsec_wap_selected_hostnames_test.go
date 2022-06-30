@@ -16,20 +16,20 @@ func TestAccAkamaiWAPSelectedHostnames_data_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfigurationWAP.json")), &config)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfigurationWAP.json"), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&config, nil)
 
-		cv := appsec.GetWAPSelectedHostnamesResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSWAPSelectedHostnames/WAPSelectedHostnames.json")), &cv)
+		getWAPSelectedHostnamesResponse := appsec.GetWAPSelectedHostnamesResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestDSWAPSelectedHostnames/WAPSelectedHostnames.json"), &getWAPSelectedHostnamesResponse)
 
 		client.On("GetWAPSelectedHostnames",
 			mock.Anything,
 			appsec.GetWAPSelectedHostnamesRequest{ConfigID: 43253, Version: 7, SecurityPolicyID: "AAAA_81230"},
-		).Return(&cv, nil)
+		).Return(&getWAPSelectedHostnamesResponse, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
@@ -56,15 +56,15 @@ func TestAccAkamaiWAPSelectedHostnames_data_error_retrieving_hostnames(t *testin
 		client := &mockappsec{}
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfigurationWAP.json")), &config)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfigurationWAP.json"), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&config, nil)
 
-		cv := appsec.GetWAPSelectedHostnamesResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSWAPSelectedHostnames/WAPSelectedHostnames.json")), &cv)
+		getWAPSelectedHostnamesResponse := appsec.GetWAPSelectedHostnamesResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestDSWAPSelectedHostnames/WAPSelectedHostnames.json"), &getWAPSelectedHostnamesResponse)
 
 		client.On("GetWAPSelectedHostnames",
 			mock.Anything,
@@ -97,7 +97,7 @@ func TestAccAkamaiWAPSelectedHostnames_NonWAP_data_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,
@@ -105,18 +105,18 @@ func TestAccAkamaiWAPSelectedHostnames_NonWAP_data_basic(t *testing.T) {
 		).Return(&config, nil)
 
 		getSelectedHostnamesResponse := appsec.GetSelectedHostnamesResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSSelectedHostnames/SelectedHostnames.json")), &getSelectedHostnamesResponse)
+		json.Unmarshal(loadFixtureBytes("testdata/TestDSSelectedHostnames/SelectedHostnames.json"), &getSelectedHostnamesResponse)
 
 		getMatchTargetsResponse := appsec.GetMatchTargetsResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSMatchTargets/MatchTargets.json")), &getMatchTargetsResponse)
+		json.Unmarshal(loadFixtureBytes("testdata/TestDSMatchTargets/MatchTargets.json"), &getMatchTargetsResponse)
 
 		client.On("GetSelectedHostnames",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetSelectedHostnamesRequest{ConfigID: 43253, Version: 7},
 		).Return(&getSelectedHostnamesResponse, nil)
 
 		client.On("GetMatchTargets",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetMatchTargetsRequest{ConfigID: 43253, ConfigVersion: 7},
 		).Return(&getMatchTargetsResponse, nil)
 

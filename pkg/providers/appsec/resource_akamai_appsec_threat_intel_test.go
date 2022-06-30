@@ -13,14 +13,14 @@ func TestAccAkamaiThreatIntel_res_basic(t *testing.T) {
 	t.Run("match by Threat Intel ID", func(t *testing.T) {
 		client := &mockappsec{}
 
-		updThrInt := appsec.UpdateThreatIntelResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResThreatIntel/ThreatIntel.json")), &updThrInt)
+		updateThreatIntelResponse := appsec.UpdateThreatIntelResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResThreatIntel/ThreatIntel.json"), &updateThreatIntelResponse)
 
-		getThrInt := appsec.GetThreatIntelResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResThreatIntel/ThreatIntel.json")), &getThrInt)
+		getThreatIntelResponse := appsec.GetThreatIntelResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResThreatIntel/ThreatIntel.json"), &getThreatIntelResponse)
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,
@@ -28,14 +28,14 @@ func TestAccAkamaiThreatIntel_res_basic(t *testing.T) {
 		).Return(&config, nil)
 
 		client.On("GetThreatIntel",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetThreatIntelRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
-		).Return(&getThrInt, nil)
+		).Return(&getThreatIntelResponse, nil)
 
 		client.On("UpdateThreatIntel",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.UpdateThreatIntelRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", ThreatIntel: "off"},
-		).Return(&updThrInt, nil)
+		).Return(&updateThreatIntelResponse, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{

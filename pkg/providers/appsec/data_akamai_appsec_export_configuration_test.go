@@ -13,13 +13,13 @@ func TestAccAkamaiExportConfiguration_data_basic(t *testing.T) {
 	t.Run("Configuration Export Tests", func(t *testing.T) {
 		client := &mockappsec{}
 
-		resp := appsec.GetExportConfigurationResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSExportConfiguration/ExportConfiguration.json")), &resp)
+		getExportConfigurationResponse := appsec.GetExportConfigurationResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestDSExportConfiguration/ExportConfiguration.json"), &getExportConfigurationResponse)
 
 		client.On("GetExportConfiguration",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetExportConfigurationRequest{ConfigID: 43253, Version: 7},
-		).Return(&resp, nil)
+		).Return(&getExportConfigurationResponse, nil)
 
 		expectedEvalGroups := "\n \n// terraform import akamai_appsec_eval_group.akamai_appsec_eval_group_AAAA_81230 43253:AAAA_81230:POLICY\nresource \"akamai_appsec_eval_group\" \"akamai_appsec_eval_group_AAAA_81230\" { \n  config_id = 43253\n  security_policy_id = \"AAAA_81230\" \n  attack_group = \"POLICY\" \n  attack_group_action = \"alert\"\n  condition_exception = <<-EOF\n {\"exception\":{\"specificHeaderCookieParamXmlOrJsonNames\":[{\"names\":[\"ASE-Manual-Active-COOKIES\"],\"selector\":\"REQUEST_COOKIES\",\"wildcard\":true}]}}  \n \n EOF \n \n}\n"
 

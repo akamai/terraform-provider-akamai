@@ -52,7 +52,7 @@ func TestDSPropertiesSearch(t *testing.T) {
 			papi.SearchRequest{Key: "hostname", Value: "www.example.com"},
 		).Return(&papi.SearchResponse{Versions: search}, nil)
 
-		useClient(client, func() {
+		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{{
@@ -93,7 +93,7 @@ func TestDSPropertiesSearch(t *testing.T) {
 			papi.SearchRequest{Key: "hostname", Value: "www.example.com"},
 		).Return(nil, papi.ErrSearchProperties)
 
-		useClient(client, func() {
+		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{{

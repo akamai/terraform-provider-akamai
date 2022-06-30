@@ -72,7 +72,9 @@ func dataSourceCustomDenyRead(ctx context.Context, d *schema.ResourceData, m int
 
 	outputtext, err := RenderTemplates(ots, "customDenyDS", customdeny)
 	if err == nil {
-		d.Set("output_text", outputtext)
+		if err := d.Set("output_text", outputtext); err != nil {
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		}
 	}
 
 	jsonBody, err := json.Marshal(customdeny)

@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/hapi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/config"
@@ -22,6 +23,8 @@ type (
 		*schema.Provider
 
 		client papi.PAPI
+
+		hapiClient hapi.HAPI
 	}
 
 	// Option is a papi provider option
@@ -110,6 +113,14 @@ func (p *provider) Client(meta akamai.OperationMeta) papi.PAPI {
 		return p.client
 	}
 	return papi.Client(meta.Session())
+}
+
+// HapiClient returns the HAPI interface
+func (p *provider) HapiClient(meta akamai.OperationMeta) hapi.HAPI {
+	if p.hapiClient != nil {
+		return p.hapiClient
+	}
+	return hapi.Client(meta.Session())
 }
 
 func getPAPIV1Service(d *schema.ResourceData) error {

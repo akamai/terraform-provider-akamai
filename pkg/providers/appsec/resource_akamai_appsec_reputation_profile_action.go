@@ -233,8 +233,5 @@ func resourceReputationProfileActionDelete(ctx context.Context, d *schema.Resour
 		logger.Errorf("calling 'removeReputationProfileAction': %s", err.Error())
 		return diag.FromErr(err)
 	}
-
-	d.SetId("")
-
 	return nil
 }

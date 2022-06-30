@@ -106,12 +106,11 @@ func resourceEvalGroupCreate(ctx context.Context, d *schema.ResourceData, m inte
 		JsonPayloadRaw: rawJSON,
 	}
 
-	updateEvalGroupResponse, err := client.UpdateEvalGroup(ctx, createAttackGroup)
+	_, err = client.UpdateEvalGroup(ctx, createAttackGroup)
 	if err != nil {
 		logger.Errorf("calling 'createEvalGroup': %s", err.Error())
 		return diag.FromErr(err)
 	}
-	logger.Debugf("updateEvalGroupResponse: %v", updateEvalGroupResponse)
 
 	d.SetId(fmt.Sprintf("%d:%s:%s", createAttackGroup.ConfigID, createAttackGroup.PolicyID, createAttackGroup.Group))
 
@@ -265,8 +264,5 @@ func resourceEvalGroupDelete(ctx context.Context, d *schema.ResourceData, m inte
 		logger.Errorf("calling 'RemoveEvalGroup': %s", err.Error())
 		return diag.FromErr(err)
 	}
-
-	d.SetId("")
-
 	return nil
 }

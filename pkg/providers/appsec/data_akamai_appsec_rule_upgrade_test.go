@@ -13,11 +13,11 @@ func TestAccAkamaiRuleUpgrade_data_basic(t *testing.T) {
 	t.Run("match by RuleUpgrade ID", func(t *testing.T) {
 		client := &mockappsec{}
 
-		cv := appsec.GetRuleUpgradeResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSRuleUpgrade/RuleUpgrade.json")), &cv)
+		getRuleUpgradeResponse := appsec.GetRuleUpgradeResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestDSRuleUpgrade/RuleUpgrade.json"), &getRuleUpgradeResponse)
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,
@@ -25,9 +25,9 @@ func TestAccAkamaiRuleUpgrade_data_basic(t *testing.T) {
 		).Return(&config, nil)
 
 		client.On("GetRuleUpgrade",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetRuleUpgradeRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
-		).Return(&cv, nil)
+		).Return(&getRuleUpgradeResponse, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{

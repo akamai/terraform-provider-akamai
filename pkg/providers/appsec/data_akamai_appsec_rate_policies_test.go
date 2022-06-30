@@ -14,20 +14,20 @@ func TestAccAkamaiRatePolicies_data_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&config, nil)
 
-		cv := appsec.GetRatePoliciesResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSRatePolicies/RatePolicies.json")), &cv)
+		getRatePoliciesResponse := appsec.GetRatePoliciesResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestDSRatePolicies/RatePolicies.json"), &getRatePoliciesResponse)
 
 		client.On("GetRatePolicies",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetRatePoliciesRequest{ConfigID: 43253, ConfigVersion: 7},
-		).Return(&cv, nil)
+		).Return(&getRatePoliciesResponse, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{

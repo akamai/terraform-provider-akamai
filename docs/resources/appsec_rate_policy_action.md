@@ -55,6 +55,7 @@ resource "akamai_appsec_rate_policy_action" "appsec_rate_policy_action" {
 This resource supports the following arguments:
 
 - `config_id` (Required). Unique identifier of the security configuration associated with the rate policy action being modified.
+- `security_policy_id` (Required). Unique identifier of the security policy associated with the rate policy whose action is being modified.
 - `rate_policy_id` (Required). Unique identifier of the rate policy whose action is being modified.
 - `ipv4_action` (Required). Rate policy action for requests coming from an IPv4 IP address. Allowed actions are:
   - **alert**. Record the event.

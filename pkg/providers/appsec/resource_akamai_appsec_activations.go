@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-
 	"strconv"
 	"time"
 
@@ -13,7 +12,6 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	// "github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -30,6 +28,9 @@ func resourceActivations() *schema.Resource {
 		CustomizeDiff: customdiff.All(
 			VerifyIDUnchanged,
 		),
+		Importer: &schema.ResourceImporter{
+			StateContext: resourceImporter,
+		},
 		Schema: map[string]*schema.Schema{
 			"config_id": {
 				Type:        schema.TypeInt,
@@ -173,7 +174,7 @@ func resourceActivationsCreate(ctx context.Context, d *schema.ResourceData, m in
 			activation = act
 
 		case <-ctx.Done():
-			return diag.FromErr(fmt.Errorf("activation context terminated: %w", ctx.Err()))
+			return diag.Errorf("activation context terminated: %s", ctx.Err())
 		}
 	}
 
@@ -291,7 +292,7 @@ func resourceActivationsUpdate(ctx context.Context, d *schema.ResourceData, m in
 			activation = act
 
 		case <-ctx.Done():
-			return diag.FromErr(fmt.Errorf("activation context terminated: %w", ctx.Err()))
+			return diag.Errorf("activation context terminated: %s", ctx.Err())
 		}
 	}
 
@@ -387,17 +388,73 @@ func resourceActivationsDelete(ctx context.Context, d *schema.ResourceData, m in
 			activation = act
 
 		case <-ctx.Done():
-			return diag.FromErr(fmt.Errorf("activation context terminated: %w", ctx.Err()))
+			return diag.Errorf("activation context terminated: %s", ctx.Err())
 		}
 	}
 
 	if err := d.Set("status", activation.Status); err != nil {
 		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
-
-	d.SetId("")
-
 	return nil
+}
+
+func resourceImporter(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceActivationsImport")
+	logger.Debug("in resourceActivationsCreate")
+
+	iDParts, err := splitID(d.Id(), 3, "configID:version:network")
+	if err != nil {
+		return nil, err
+	}
+	configID, err := strconv.Atoi(iDParts[0])
+	if err != nil {
+		return nil, err
+	}
+	version, err := strconv.Atoi(iDParts[1])
+	if err != nil {
+		return nil, err
+	}
+	network := iDParts[2]
+	if !(network == "STAGING" || network == "PRODUCTION") {
+		return nil, fmt.Errorf("bad network value %s; must be either STAGING or PRODUCTION", network)
+
+	}
+
+	request := appsec.GetActivationHistoryRequest{
+		ConfigID: configID,
+	}
+	response, err := client.GetActivationHistory(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, activation := range response.ActivationHistory {
+		if activation.Version == version && activation.Network == network {
+			d.SetId(strconv.Itoa(activation.ActivationID))
+			if err = d.Set("activate", true); err != nil {
+				return nil, err
+			}
+			if err = d.Set("config_id", configID); err != nil {
+				return nil, err
+			}
+			if err = d.Set("network", network); err != nil {
+				return nil, err
+			}
+			if err = d.Set("note", activation.Notes); err != nil {
+				return nil, err
+			}
+			if err = d.Set("version", version); err != nil {
+				return nil, err
+			}
+
+			return []*schema.ResourceData{d}, nil
+		}
+	}
+
+	return nil, fmt.Errorf("no activation found for configId %d, version %d, network %s", configID, version, network)
+
 }
 
 func lookupActivation(ctx context.Context, client appsec.APPSEC, query appsec.GetActivationsRequest) (*appsec.GetActivationsResponse, error) {

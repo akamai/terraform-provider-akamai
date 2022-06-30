@@ -13,11 +13,11 @@ func TestAccAkamaiWAFMode_data_basic(t *testing.T) {
 	t.Run("match by WAFMode ID", func(t *testing.T) {
 		client := &mockappsec{}
 
-		cv := appsec.GetWAFModeResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSWAFMode/WAFMode.json")), &cv)
+		getWAFModeResponse := appsec.GetWAFModeResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestDSWAFMode/WAFMode.json"), &getWAFModeResponse)
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,
@@ -25,9 +25,9 @@ func TestAccAkamaiWAFMode_data_basic(t *testing.T) {
 		).Return(&config, nil)
 
 		client.On("GetWAFMode",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetWAFModeRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
-		).Return(&cv, nil)
+		).Return(&getWAFModeResponse, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{

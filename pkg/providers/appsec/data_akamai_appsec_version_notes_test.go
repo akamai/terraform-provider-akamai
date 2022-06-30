@@ -14,20 +14,20 @@ func TestAccAkamaiVersionNotes_data_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&config, nil)
 
-		cv := appsec.GetVersionNotesResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSVersionNotes/VersionNotes.json")), &cv)
+		getVersionNotesResponse := appsec.GetVersionNotesResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestDSVersionNotes/VersionNotes.json"), &getVersionNotesResponse)
 
 		client.On("GetVersionNotes",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetVersionNotesRequest{ConfigID: 43253, Version: 7},
-		).Return(&cv, nil)
+		).Return(&getVersionNotesResponse, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{

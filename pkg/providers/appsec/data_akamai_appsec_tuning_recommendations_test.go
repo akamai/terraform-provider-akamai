@@ -16,7 +16,7 @@ func TestAccAkamaiTuningRecommendationsDataBasic(t *testing.T) {
 		client := &mockappsec{}
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,
@@ -24,18 +24,18 @@ func TestAccAkamaiTuningRecommendationsDataBasic(t *testing.T) {
 		).Return(&config, nil)
 
 		getRecs := appsec.GetTuningRecommendationsResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSTuningRecommendations/Recommendations.json")), &getRecs)
+		json.Unmarshal(loadFixtureBytes("testdata/TestDSTuningRecommendations/Recommendations.json"), &getRecs)
 
 		getGroupRecs := appsec.GetAttackGroupRecommendationsResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSTuningRecommendations/AttackGroupRecommendations.json")), &getGroupRecs)
+		json.Unmarshal(loadFixtureBytes("testdata/TestDSTuningRecommendations/AttackGroupRecommendations.json"), &getGroupRecs)
 
 		client.On("GetTuningRecommendations",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetTuningRecommendationsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", RulesetType: "active"},
 		).Return(&getRecs, nil)
 
 		client.On("GetAttackGroupRecommendations",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetAttackGroupRecommendationsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", Group: "XSS", RulesetType: "evaluation"},
 		).Return(&getGroupRecs, nil)
 
@@ -64,7 +64,7 @@ func TestAccAkamaiTuningRecommenadationsDataErrorRetrievingTuningRecommenadation
 		client := &mockappsec{}
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,
@@ -72,18 +72,18 @@ func TestAccAkamaiTuningRecommenadationsDataErrorRetrievingTuningRecommenadation
 		).Return(&config, nil)
 
 		getRecs := appsec.GetTuningRecommendationsResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSTuningRecommendations/Recommendations.json")), &getRecs)
+		json.Unmarshal(loadFixtureBytes("testdata/TestDSTuningRecommendations/Recommendations.json"), &getRecs)
 
 		getGroupRecs := appsec.GetAttackGroupRecommendationsResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSTuningRecommendations/AttackGroupRecommendations.json")), &getGroupRecs)
+		json.Unmarshal(loadFixtureBytes("testdata/TestDSTuningRecommendations/AttackGroupRecommendations.json"), &getGroupRecs)
 
 		client.On("GetTuningRecommendations",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetTuningRecommendationsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", RulesetType: "active"},
 		).Return(nil, fmt.Errorf("GetTuningRecommendations failed"))
 
 		client.On("GetAttackGroupRecommendations",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetAttackGroupRecommendationsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", Group: "XSS", RulesetType: "evaluation"},
 		).Return(nil, fmt.Errorf("GetAttackGroupRecommendations failed"))
 

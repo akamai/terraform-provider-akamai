@@ -20,7 +20,7 @@ func Test_readPropertyRuleFormats(t *testing.T) {
 		client.On("GetRuleFormats",
 			mock.Anything,
 		).Return(&papi.GetRuleFormatsResponse{RuleFormats: ruleFormats}, nil)
-		useClient(client, func() {
+		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{{

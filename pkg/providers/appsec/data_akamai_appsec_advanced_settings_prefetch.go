@@ -63,7 +63,9 @@ func dataSourceAdvancedSettingsPrefetchRead(ctx context.Context, d *schema.Resou
 
 	outputtext, err := RenderTemplates(ots, "advancedSettingsPrefetchDS", advancedsettingsprefetch)
 	if err == nil {
-		d.Set("output_text", outputtext)
+		if err := d.Set("output_text", outputtext); err != nil {
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		}
 	}
 
 	jsonBody, err := json.Marshal(advancedsettingsprefetch)

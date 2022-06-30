@@ -47,9 +47,9 @@ func resourcePenaltyBox() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{
-					Deny,
-					Alert,
-					None,
+					string(appsec.ActionTypeDeny),
+					string(appsec.ActionTypeAlert),
+					string(appsec.ActionTypeNone),
 				}, false)),
 			},
 		},
@@ -220,7 +220,7 @@ func resourcePenaltyBoxDelete(ctx context.Context, d *schema.ResourceData, m int
 		Version:              version,
 		PolicyID:             policyID,
 		PenaltyBoxProtection: false,
-		Action:               "none",
+		Action:               string(appsec.ActionTypeNone),
 	}
 
 	_, err = client.UpdatePenaltyBox(ctx, removePenaltyBox)
@@ -228,7 +228,5 @@ func resourcePenaltyBoxDelete(ctx context.Context, d *schema.ResourceData, m int
 		logger.Errorf("calling 'removePenaltyBox': %s", err.Error())
 		return diag.FromErr(err)
 	}
-	d.SetId("")
-
 	return nil
 }

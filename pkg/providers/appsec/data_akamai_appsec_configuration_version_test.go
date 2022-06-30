@@ -13,13 +13,13 @@ func TestAccAkamaiConfigurationVersion_data_basic(t *testing.T) {
 	t.Run("match by ConfigurationVersion ID", func(t *testing.T) {
 		client := &mockappsec{}
 
-		cv := appsec.GetConfigurationVersionsResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSConfigurationVersion/ConfigurationVersion.json")), &cv)
+		getConfigurationVersionsResponse := appsec.GetConfigurationVersionsResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestDSConfigurationVersion/ConfigurationVersion.json"), &getConfigurationVersionsResponse)
 
 		client.On("GetConfigurationVersions",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetConfigurationVersionsRequest{ConfigID: 43253, ConfigVersion: 7},
-		).Return(&cv, nil)
+		).Return(&getConfigurationVersionsResponse, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{

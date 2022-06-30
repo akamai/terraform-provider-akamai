@@ -13,11 +13,11 @@ func TestAccAkamaiMatchTargets_data_basic(t *testing.T) {
 	t.Run("match by MatchTargets ID", func(t *testing.T) {
 		client := &mockappsec{}
 
-		cv := appsec.GetMatchTargetsResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSMatchTargets/MatchTargets.json")), &cv)
+		getMatchTargetsResponse := appsec.GetMatchTargetsResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestDSMatchTargets/MatchTargets.json"), &getMatchTargetsResponse)
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,
@@ -25,9 +25,9 @@ func TestAccAkamaiMatchTargets_data_basic(t *testing.T) {
 		).Return(&config, nil)
 
 		client.On("GetMatchTargets",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetMatchTargetsRequest{ConfigID: 43253, ConfigVersion: 7},
-		).Return(&cv, nil)
+		).Return(&getMatchTargetsResponse, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{

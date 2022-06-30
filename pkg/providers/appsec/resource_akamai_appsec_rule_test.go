@@ -13,20 +13,20 @@ func TestAccAkamaiRule_res_basic(t *testing.T) {
 	t.Run("match by Rule ID", func(t *testing.T) {
 		client := &mockappsec{}
 
-		updResp := appsec.UpdateRuleResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResRule/Rule.json")), &updResp)
+		updateRuleResponse := appsec.UpdateRuleResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResRule/Rule.json"), &updateRuleResponse)
 
-		getResp := appsec.GetRuleResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResRule/Rule.json")), &getResp)
+		getRuleResponse := appsec.GetRuleResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResRule/Rule.json"), &getRuleResponse)
 
-		delResp := appsec.UpdateRuleResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResRule/Rule.json")), &delResp)
+		deleteRuleResponse := appsec.UpdateRuleResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResRule/Rule.json"), &deleteRuleResponse)
 
-		wm := appsec.GetWAFModeResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResWAFMode/WAFMode.json")), &wm)
+		getWAFModeResponse := appsec.GetWAFModeResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResWAFMode/WAFMode.json"), &getWAFModeResponse)
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,
@@ -34,29 +34,25 @@ func TestAccAkamaiRule_res_basic(t *testing.T) {
 		).Return(&config, nil)
 
 		client.On("GetRule",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetRuleRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", RuleID: 12345},
-		).Return(&getResp, nil)
+		).Return(&getRuleResponse, nil)
 
 		client.On("GetWAFMode",
 			mock.Anything,
 			appsec.GetWAFModeRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
-		).Return(&wm, nil)
+		).Return(&getWAFModeResponse, nil)
 
 		conditionExceptionJSON := loadFixtureBytes("testdata/TestResRule/ConditionException.json")
 		client.On("UpdateRule",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.UpdateRuleRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", Action: "alert", RuleID: 12345, JsonPayloadRaw: conditionExceptionJSON},
-		).Return(&updResp, nil)
-
-		/*client.On("UpdateRule",
-		mock.Anything, // ctx is irrelevant for this test
-		appsec.UpdateRuleRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", RuleID: 12345}).Return(&updateRuleResponse, nil)*/
+		).Return(&updateRuleResponse, nil)
 
 		client.On("UpdateRule",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.UpdateRuleRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", RuleID: 12345, Action: "none"},
-		).Return(&delResp, nil)
+		).Return(&deleteRuleResponse, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
@@ -82,20 +78,20 @@ func TestAccAkamaiRule_res_AseAuto(t *testing.T) {
 	t.Run("match by Rule ID", func(t *testing.T) {
 		client := &mockappsec{}
 
-		updResp := appsec.UpdateConditionExceptionResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResRule/RuleAseAuto.json")), &updResp)
+		updateConditionExceptionResponse := appsec.UpdateConditionExceptionResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResRule/RuleAseAuto.json"), &updateConditionExceptionResponse)
 
-		getResp := appsec.GetRuleResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResRule/RuleAseAuto.json")), &getResp)
+		getRuleResponse := appsec.GetRuleResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResRule/RuleAseAuto.json"), &getRuleResponse)
 
-		delResp := appsec.UpdateConditionExceptionResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResRule/RuleAseAuto.json")), &delResp)
+		deleteConditionExceptionResponse := appsec.UpdateConditionExceptionResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResRule/RuleAseAuto.json"), &deleteConditionExceptionResponse)
 
-		wm := appsec.GetWAFModeResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResWAFMode/WAFModeAseAuto.json")), &wm)
+		getWAFModeResponse := appsec.GetWAFModeResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResWAFMode/WAFModeAseAuto.json"), &getWAFModeResponse)
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,
@@ -103,14 +99,14 @@ func TestAccAkamaiRule_res_AseAuto(t *testing.T) {
 		).Return(&config, nil)
 
 		client.On("GetRule",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetRuleRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", RuleID: 12345},
-		).Return(&getResp, nil)
+		).Return(&getRuleResponse, nil)
 
 		client.On("GetWAFMode",
 			mock.Anything,
 			appsec.GetWAFModeRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
-		).Return(&wm, nil)
+		).Return(&getWAFModeResponse, nil)
 
 		conditions := appsec.RuleConditions{
 			{
@@ -124,18 +120,14 @@ func TestAccAkamaiRule_res_AseAuto(t *testing.T) {
 		}
 
 		client.On("UpdateRuleConditionException",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.UpdateConditionExceptionRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", RuleID: 12345, Conditions: &conditions, Exception: &exception},
-		).Return(&updResp, nil)
-
-		/*client.On("UpdateRule",
-		mock.Anything, // ctx is irrelevant for this test
-		appsec.UpdateRuleRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", RuleID: 12345}).Return(&updateRuleResponse, nil)*/
+		).Return(&updateConditionExceptionResponse, nil)
 
 		client.On("UpdateRuleConditionException",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.UpdateConditionExceptionRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", RuleID: 12345},
-		).Return(&updResp, nil)
+		).Return(&updateConditionExceptionResponse, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{

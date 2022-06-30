@@ -73,7 +73,9 @@ func dataSourceAdvancedSettingsPragmaHeaderRead(ctx context.Context, d *schema.R
 
 	outputtext, err := RenderTemplates(ots, "advancedSettingsPragmaHeaderDS", advancedsettingspragma)
 	if err == nil {
-		d.Set("output_text", outputtext)
+		if err := d.Set("output_text", outputtext); err != nil {
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		}
 	}
 
 	jsonBody, err := json.Marshal(advancedsettingspragma)

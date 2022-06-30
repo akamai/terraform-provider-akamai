@@ -14,21 +14,19 @@ func TestAccAkamaiAPICoProtection_res_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 
-		updateResponseAllProtectionsFalseJSON := loadFixtureBytes("testdata/TestResAPIConstraintsProtection/PolicyProtections.json")
 		updateResponseAllProtectionsFalse := appsec.UpdateAPIConstraintsProtectionResponse{}
-		json.Unmarshal([]byte(updateResponseAllProtectionsFalseJSON), &updateResponseAllProtectionsFalse)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResAPIConstraintsProtection/PolicyProtections.json"), &updateResponseAllProtectionsFalse)
 
 		getResponseAllProtectionsFalse := appsec.GetAPIConstraintsProtectionResponse{}
-		json.Unmarshal([]byte(updateResponseAllProtectionsFalseJSON), &getResponseAllProtectionsFalse)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResAPIConstraintsProtection/PolicyProtections.json"), &getResponseAllProtectionsFalse)
 
-		updateResponseOneProtectionTrueJSON := loadFixtureBytes("testdata/TestResAPIConstraintsProtection/UpdatedPolicyProtections.json")
 		updateResponseOneProtectionTrue := appsec.UpdateAPIConstraintsProtectionResponse{}
-		json.Unmarshal([]byte(updateResponseOneProtectionTrueJSON), &updateResponseOneProtectionTrue)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResAPIConstraintsProtection/UpdatedPolicyProtections.json"), &updateResponseOneProtectionTrue)
 
 		getResponseOneProtectionTrue := appsec.GetAPIConstraintsProtectionResponse{}
-		json.Unmarshal([]byte(updateResponseOneProtectionTrueJSON), &getResponseOneProtectionTrue)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResAPIConstraintsProtection/UpdatedPolicyProtections.json"), &getResponseOneProtectionTrue)
 
 		// Mock each call to the EdgeGrid library. With the exception of GetConfiguration, each call
 		// is mocked individually because calls with the same parameters may have different return values.

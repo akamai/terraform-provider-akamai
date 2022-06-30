@@ -46,7 +46,12 @@ resource "akamai_appsec_custom_rule" "test" {
                 "H"
             ]
         }
-    ]
+    ],
+    "samplingRate": 5,
+    "effectiveTimePeriod": {
+        "endDate":"2022-06-02T18:19:55Z",
+        "startDate":"2022-05-03T18:19:55Z"
+    }
 }
 EOF
 }

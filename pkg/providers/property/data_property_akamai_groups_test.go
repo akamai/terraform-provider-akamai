@@ -28,7 +28,7 @@ func TestDataSourceMultipleGroups_basic(t *testing.T) {
 				ParentGroupID: groups[0]["parent_group_id"].(string),
 				ContractIDs:   contractIDs,
 			}}}}, nil)
-		useClient(client, func() {
+		useClient(client, nil, func() {
 			resource.ParallelTest(t, resource.TestCase{
 				Providers:    testAccProviders,
 				CheckDestroy: testAccCheckAkamaiMultipleGroupsDestroy,
@@ -67,7 +67,7 @@ func TestGroup_ContractNotFoundInState(t *testing.T) {
 				ParentGroupID: groups[0]["parent_group_id"].(string),
 				ContractIDs:   contractIDs,
 			}}}}, nil)
-		useClient(client, func() {
+		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers:  testAccProviders,
 				IsUnitTest: true,

@@ -13,17 +13,17 @@ func TestAccAkamaiApiRequestConstraints_res_basic(t *testing.T) {
 	t.Run("match by ApiRequestConstraints ID", func(t *testing.T) {
 		client := &mockappsec{}
 
-		cu := appsec.UpdateApiRequestConstraintsResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResApiRequestConstraints/ApiRequestConstraints.json")), &cu)
+		updateResponse := appsec.UpdateApiRequestConstraintsResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResApiRequestConstraints/ApiRequestConstraints.json"), &updateResponse)
 
-		cr := appsec.GetApiRequestConstraintsResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResApiRequestConstraints/ApiRequestConstraints.json")), &cr)
+		getResponse := appsec.GetApiRequestConstraintsResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResApiRequestConstraints/ApiRequestConstraints.json"), &getResponse)
 
-		crd := appsec.RemoveApiRequestConstraintsResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResApiRequestConstraints/ApiRequestConstraints.json")), &crd)
+		deleteResponse := appsec.RemoveApiRequestConstraintsResponse{}
+		json.Unmarshal(loadFixtureBytes("testdata/TestResApiRequestConstraints/ApiRequestConstraints.json"), &deleteResponse)
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 
 		client.On("GetConfiguration",
 			mock.Anything,
@@ -31,19 +31,19 @@ func TestAccAkamaiApiRequestConstraints_res_basic(t *testing.T) {
 		).Return(&config, nil)
 
 		client.On("GetApiRequestConstraints",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.GetApiRequestConstraintsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", ApiID: 1},
-		).Return(&cr, nil)
+		).Return(&getResponse, nil)
 
 		client.On("UpdateApiRequestConstraints",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.UpdateApiRequestConstraintsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", ApiID: 1, Action: "alert"},
-		).Return(&cu, nil)
+		).Return(&updateResponse, nil)
 
 		client.On("RemoveApiRequestConstraints",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			appsec.RemoveApiRequestConstraintsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", ApiID: 1, Action: "none"},
-		).Return(&crd, nil)
+		).Return(&deleteResponse, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
