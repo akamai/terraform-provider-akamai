@@ -1796,3 +1796,24 @@ func (p *mockappsec) UpdateMalwarePolicy(ctx context.Context, params appsec.Upda
 func (p *mockappsec) RemoveMalwarePolicy(ctx context.Context, params appsec.RemoveMalwarePolicyRequest) error {
 	return nil
 }
+
+func (p *mockappsec) GetMalwarePolicyActions(ctx context.Context, params appsec.GetMalwarePolicyActionsRequest) (*appsec.GetMalwarePolicyActionsResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetMalwarePolicyActionsResponse), args.Error(1)
+}
+
+func (p *mockappsec) UpdateMalwarePolicyAction(ctx context.Context, params appsec.UpdateMalwarePolicyActionRequest) (*appsec.UpdateMalwarePolicyActionResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.UpdateMalwarePolicyActionResponse), args.Error(1)
+}
+
