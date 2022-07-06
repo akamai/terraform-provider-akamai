@@ -1753,6 +1753,16 @@ func (p *mockappsec) UpdateThreatIntel(ctx context.Context, params appsec.Update
 	return args.Get(0).(*appsec.UpdateThreatIntelResponse), args.Error(1)
 }
 
+func (p *mockappsec) GetMalwareContentTypes(ctx context.Context, params appsec.GetMalwareContentTypesRequest) (*appsec.GetMalwareContentTypesResponse, error) {
+	args := p.Called(ctx, params)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*appsec.GetMalwareContentTypesResponse), args.Error(1)
+}
+
 func (p *mockappsec) CreateMalwarePolicy(ctx context.Context, params appsec.CreateMalwarePolicyRequest) (*appsec.MalwarePolicyResponse, error) {
 	args := p.Called(ctx, params)
 
@@ -1816,4 +1826,3 @@ func (p *mockappsec) UpdateMalwarePolicyAction(ctx context.Context, params appse
 
 	return args.Get(0).(*appsec.UpdateMalwarePolicyActionResponse), args.Error(1)
 }
-

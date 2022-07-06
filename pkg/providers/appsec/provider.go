@@ -86,6 +86,7 @@ func Provider() *schema.Provider {
 			"akamai_appsec_failover_hostnames":                   dataSourceFailoverHostnames(),
 			"akamai_appsec_ip_geo":                               dataSourceIPGeo(),
 			"akamai_appsec_rules":                                dataSourceRules(),
+			"akamai_appsec_malware_content_types":                dataSourceMalwareContentTypes(),
 			"akamai_appsec_match_targets":                        dataSourceMatchTargets(),
 			"akamai_appsec_penalty_box":                          dataSourcePenaltyBox(),
 			"akamai_appsec_security_policy_protections":          dataSourcePolicyProtections(),
