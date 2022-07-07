@@ -9,36 +9,7 @@ import (
 )
 
 var resourceSchema = map[string]*schema.Schema{
-	"sumologic_connector": {
-		Type:     schema.TypeSet,
-		MaxItems: 1,
-		Optional: true,
-		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
-				"collector_code": {
-					Type:     schema.TypeString,
-					Required: true,
-				},
-				"compress_logs": {
-					Type:     schema.TypeBool,
-					Default:  true,
-					Optional: true,
-				},
-				"connector_id": {
-					Type:     schema.TypeInt,
-					Computed: true,
-				},
-				"connector_name": {
-					Type:     schema.TypeString,
-					Required: true,
-				},
-				"endpoint": {
-					Type:     schema.TypeString,
-					Required: true,
-				},
-			},
-		},
-	},
+	"sumologic_connector": datastreamResourceSchema["sumologic_connector"],
 	"invalid_connector": {
 		Type:     schema.TypeSet,
 		MaxItems: 1,
@@ -103,53 +74,68 @@ func TestConnectorToMap(t *testing.T) {
 		"no connector in local resource": {
 			connectorDetails: []datastream.ConnectorDetails{
 				{
-					ConnectorID:   1337,
-					CompressLogs:  true,
-					ConnectorName: "sumologic connector",
-					ConnectorType: datastream.ConnectorTypeSumoLogic,
-					URL:           "sumologic endpoint",
+					ConnectorID:       1337,
+					CompressLogs:      true,
+					ConnectorName:     "sumologic connector",
+					ConnectorType:     datastream.ConnectorTypeSumoLogic,
+					URL:               "sumologic endpoint",
+					ContentType:       "application/json",
+					CustomHeaderName:  "custom_header_name",
+					CustomHeaderValue: "custom_header_value",
 				},
 			},
 			resourceMap: nil,
 			expectedResult: expectedResult{
 				key: "sumologic_connector",
 				props: map[string]interface{}{
-					"collector_code": "",
-					"compress_logs":  true,
-					"connector_id":   1337,
-					"connector_name": "sumologic connector",
-					"endpoint":       "sumologic endpoint",
+					"collector_code":      "",
+					"compress_logs":       true,
+					"connector_id":        1337,
+					"connector_name":      "sumologic connector",
+					"endpoint":            "sumologic endpoint",
+					"content_type":        "application/json",
+					"custom_header_name":  "custom_header_name",
+					"custom_header_value": "custom_header_value",
 				},
 			},
 		},
 		"proper configuration": {
 			connectorDetails: []datastream.ConnectorDetails{
 				{
-					ConnectorID:   1337,
-					CompressLogs:  true,
-					ConnectorName: "sumologic connector",
-					ConnectorType: datastream.ConnectorTypeSumoLogic,
-					URL:           "sumologic endpoint",
+					ConnectorID:       1337,
+					CompressLogs:      true,
+					ConnectorName:     "sumologic connector",
+					ConnectorType:     datastream.ConnectorTypeSumoLogic,
+					URL:               "sumologic endpoint",
+					ContentType:       "application/json",
+					CustomHeaderName:  "custom_header_name",
+					CustomHeaderValue: "custom_header_value",
 				},
 			},
 			resourceMap: map[string]interface{}{
 				"sumologic_connector": []interface{}{
 					map[string]interface{}{
-						"collector_code": "sumologic_collector_code",
-						"compress_logs":  true,
-						"connector_name": "sumologic connector",
-						"endpoint":       "sumologic endpoint",
+						"collector_code":      "sumologic_collector_code",
+						"compress_logs":       true,
+						"connector_name":      "sumologic connector",
+						"endpoint":            "sumologic endpoint",
+						"content_type":        "application/json",
+						"custom_header_name":  "custom_header_name",
+						"custom_header_value": "custom_header_value",
 					},
 				},
 			},
 			expectedResult: expectedResult{
 				key: "sumologic_connector",
 				props: map[string]interface{}{
-					"collector_code": "sumologic_collector_code",
-					"compress_logs":  true,
-					"connector_id":   1337,
-					"connector_name": "sumologic connector",
-					"endpoint":       "sumologic endpoint",
+					"collector_code":      "sumologic_collector_code",
+					"compress_logs":       true,
+					"connector_id":        1337,
+					"connector_name":      "sumologic connector",
+					"endpoint":            "sumologic endpoint",
+					"content_type":        "application/json",
+					"custom_header_name":  "custom_header_name",
+					"custom_header_value": "custom_header_value",
 				},
 			},
 		},
@@ -186,19 +172,25 @@ func TestGetConnectors(t *testing.T) {
 			resourceMap: map[string]interface{}{
 				"sumologic_connector": []interface{}{
 					map[string]interface{}{
-						"collector_code": "sumologic_collector_code",
-						"compress_logs":  true,
-						"connector_name": "sumologic connector",
-						"endpoint":       "sumologic endpoint",
+						"collector_code":      "sumologic_collector_code",
+						"compress_logs":       true,
+						"connector_name":      "sumologic connector",
+						"endpoint":            "sumologic endpoint",
+						"content_type":        "application/json",
+						"custom_header_name":  "custom_header_name",
+						"custom_header_value": "custom_header_value",
 					},
 				},
 			},
 			expectedResult: []datastream.AbstractConnector{
 				&datastream.SumoLogicConnector{
-					CollectorCode: "sumologic_collector_code",
-					CompressLogs:  true,
-					ConnectorName: "sumologic connector",
-					Endpoint:      "sumologic endpoint",
+					CollectorCode:     "sumologic_collector_code",
+					CompressLogs:      true,
+					ConnectorName:     "sumologic connector",
+					Endpoint:          "sumologic endpoint",
+					ContentType:       "application/json",
+					CustomHeaderName:  "custom_header_name",
+					CustomHeaderValue: "custom_header_value",
 				},
 			},
 		},

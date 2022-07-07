@@ -16,6 +16,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 var (
@@ -353,6 +354,16 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 					Required:    true,
 					Description: "The name of the connector",
 				},
+				"custom_header_name": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "The name of custom header passed with the request to the destination",
+				},
+				"custom_header_value": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "The custom header's contents passed with the request to the destination",
+				},
 				"event_collector_token": {
 					Type:        schema.TypeString,
 					Required:    true,
@@ -429,6 +440,10 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 					Type:        schema.TypeString,
 					Required:    true,
 					Description: "Either NONE for no authentication, or BASIC for username and password authentication",
+					ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{
+						string(datastream.AuthenticationTypeNone),
+						string(datastream.AuthenticationTypeBasic),
+					}, false)),
 				},
 				"compress_logs": {
 					Type:        schema.TypeBool,
@@ -445,6 +460,21 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 					Type:        schema.TypeString,
 					Required:    true,
 					Description: "The name of the connector",
+				},
+				"content_type": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "Content type to pass in the log file header",
+				},
+				"custom_header_name": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "The name of custom header passed with the request to the destination",
+				},
+				"custom_header_value": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "The custom header's contents passed with the request to the destination",
 				},
 				"password": {
 					Type:        schema.TypeString,
@@ -491,6 +521,21 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 					Type:        schema.TypeInt,
 					Computed:    true,
 					Description: "Identifies the connector associated with the stream",
+				},
+				"content_type": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "Content type to pass in the log file header",
+				},
+				"custom_header_name": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "The name of custom header passed with the request to the destination",
+				},
+				"custom_header_value": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "The custom header's contents passed with the request to the destination",
 				},
 				"connector_name": {
 					Type:        schema.TypeString,

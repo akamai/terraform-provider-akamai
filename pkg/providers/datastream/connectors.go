@@ -204,6 +204,8 @@ func GetSplunkConnector(props map[string]interface{}) datastream.AbstractConnect
 	return &datastream.SplunkConnector{
 		CompressLogs:        props["compress_logs"].(bool),
 		ConnectorName:       props["connector_name"].(string),
+		CustomHeaderName:    props["custom_header_name"].(string),
+		CustomHeaderValue:   props["custom_header_value"].(string),
 		EventCollectorToken: props["event_collector_token"].(string),
 		URL:                 props["url"].(string),
 	}
@@ -215,6 +217,8 @@ func MapSplunkConnector(c datastream.ConnectorDetails, s map[string]interface{})
 		"compress_logs":         c.CompressLogs,
 		"connector_id":          c.ConnectorID,
 		"connector_name":        c.ConnectorName,
+		"custom_header_name":    c.CustomHeaderName,
+		"custom_header_value":   c.CustomHeaderValue,
 		"event_collector_token": "",
 		"url":                   c.URL,
 	}
@@ -260,6 +264,9 @@ func GetHTTPSConnector(props map[string]interface{}) datastream.AbstractConnecto
 		AuthenticationType: datastream.AuthenticationType(props["authentication_type"].(string)),
 		CompressLogs:       props["compress_logs"].(bool),
 		ConnectorName:      props["connector_name"].(string),
+		ContentType:        props["content_type"].(string),
+		CustomHeaderName:   props["custom_header_name"].(string),
+		CustomHeaderValue:  props["custom_header_value"].(string),
 		Password:           props["password"].(string),
 		URL:                props["url"].(string),
 		UserName:           props["user_name"].(string),
@@ -273,6 +280,9 @@ func MapHTTPSConnector(c datastream.ConnectorDetails, s map[string]interface{}) 
 		"compress_logs":       c.CompressLogs,
 		"connector_id":        c.ConnectorID,
 		"connector_name":      c.ConnectorName,
+		"content_type":        c.ContentType,
+		"custom_header_name":  c.CustomHeaderName,
+		"custom_header_value": c.CustomHeaderValue,
 		"password":            "",
 		"url":                 c.URL,
 		"user_name":           "",
@@ -287,10 +297,13 @@ func MapHTTPSConnector(c datastream.ConnectorDetails, s map[string]interface{}) 
 // GetSumoLogicConnector builds SumoLogicConnector structure
 func GetSumoLogicConnector(props map[string]interface{}) datastream.AbstractConnector {
 	return &datastream.SumoLogicConnector{
-		CollectorCode: props["collector_code"].(string),
-		CompressLogs:  props["compress_logs"].(bool),
-		ConnectorName: props["connector_name"].(string),
-		Endpoint:      props["endpoint"].(string),
+		CollectorCode:     props["collector_code"].(string),
+		CompressLogs:      props["compress_logs"].(bool),
+		ConnectorName:     props["connector_name"].(string),
+		ContentType:       props["content_type"].(string),
+		CustomHeaderName:  props["custom_header_name"].(string),
+		CustomHeaderValue: props["custom_header_value"].(string),
+		Endpoint:          props["endpoint"].(string),
 	}
 }
 
@@ -299,11 +312,14 @@ func MapSumoLogicConnector(c datastream.ConnectorDetails, s map[string]interface
 	endpoint := tools.GetFirstNotEmpty(c.Endpoint, c.URL)
 
 	rv := map[string]interface{}{
-		"collector_code": "",
-		"compress_logs":  c.CompressLogs,
-		"connector_id":   c.ConnectorID,
-		"connector_name": c.ConnectorName,
-		"endpoint":       endpoint,
+		"collector_code":      "",
+		"compress_logs":       c.CompressLogs,
+		"connector_id":        c.ConnectorID,
+		"connector_name":      c.ConnectorName,
+		"content_type":        c.ContentType,
+		"custom_header_name":  c.CustomHeaderName,
+		"custom_header_value": c.CustomHeaderValue,
+		"endpoint":            endpoint,
 	}
 	if s["collector_code"] != nil {
 		rv["collector_code"] = s["collector_code"]

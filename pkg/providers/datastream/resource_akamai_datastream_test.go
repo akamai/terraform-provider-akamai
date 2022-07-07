@@ -872,3 +872,215 @@ func TestDatasetIDsDiff(t *testing.T) {
 
 	}
 }
+
+func TestCustomHeaders(t *testing.T) {
+	streamID := int64(12321)
+
+	streamConfiguration := datastream.StreamConfiguration{
+		ActivateNow: false,
+		Config: datastream.Config{
+			Format: datastream.FormatTypeJson,
+			Frequency: datastream.Frequency{
+				TimeInSec: datastream.TimeInSec30,
+			},
+			UploadFilePrefix: DefaultUploadFilePrefix,
+			UploadFileSuffix: DefaultUploadFileSuffix,
+		},
+		ContractID:      "test_contract",
+		DatasetFieldIDs: []int{1001},
+		GroupID:         tools.IntPtr(1337),
+		PropertyIDs:     []int{1},
+		StreamName:      "test_stream",
+		StreamType:      datastream.StreamTypeRawLogs,
+		TemplateName:    datastream.TemplateNameEdgeLogs,
+	}
+
+	createStreamRequestFactory := func(connector datastream.AbstractConnector) datastream.CreateStreamRequest {
+		streamConfigurationWithConnector := streamConfiguration
+		streamConfigurationWithConnector.Connectors = []datastream.AbstractConnector{
+			connector,
+		}
+		return datastream.CreateStreamRequest{
+			StreamConfiguration: streamConfigurationWithConnector,
+		}
+	}
+
+	responseFactory := func(connector datastream.ConnectorDetails) *datastream.DetailedStreamVersion {
+		return &datastream.DetailedStreamVersion{
+			ActivationStatus: datastream.ActivationStatusInactive,
+			Config:           streamConfiguration.Config,
+			Connectors: []datastream.ConnectorDetails{
+				connector,
+			},
+			ContractID: streamConfiguration.ContractID,
+			Datasets: []datastream.DataSets{
+				{
+					DatasetFields: []datastream.DatasetFields{
+						{
+							DatasetFieldID: 1001,
+							Order:          0,
+						},
+					},
+				},
+			},
+			GroupID: *streamConfiguration.GroupID,
+			Properties: []datastream.Property{
+				{
+					PropertyID:   1,
+					PropertyName: "property_1",
+				},
+			},
+			StreamID:        streamID,
+			StreamName:      streamConfiguration.StreamName,
+			StreamType:      streamConfiguration.StreamType,
+			StreamVersionID: 2,
+			TemplateName:    streamConfiguration.TemplateName,
+		}
+	}
+
+	getStreamRequest := datastream.GetStreamRequest{
+		StreamID: streamID,
+	}
+
+	updateStreamResponse := &datastream.StreamUpdate{
+		StreamVersionKey: datastream.StreamVersionKey{
+			StreamID:        streamID,
+			StreamVersionID: 1,
+		},
+	}
+
+	tests := map[string]struct {
+		Filename   string
+		Response   datastream.ConnectorDetails
+		Connector  datastream.AbstractConnector
+		TestChecks []resource.TestCheckFunc
+	}{
+		"splunk": {
+			Filename: "custom_headers_splunk.tf",
+			Connector: &datastream.SplunkConnector{
+				CompressLogs:        false,
+				ConnectorName:       "splunk_test_connector_name",
+				EventCollectorToken: "splunk_event_collector_token",
+				URL:                 "splunk_url",
+				CustomHeaderName:    "custom_header_name",
+				CustomHeaderValue:   "custom_header_value",
+			},
+			Response: datastream.ConnectorDetails{
+				ConnectorType:     datastream.ConnectorTypeSplunk,
+				CompressLogs:      false,
+				ConnectorName:     "splunk_test_connector_name",
+				URL:               "splunk_url",
+				CustomHeaderName:  "custom_header_name",
+				CustomHeaderValue: "custom_header_value",
+			},
+			TestChecks: []resource.TestCheckFunc{
+				resource.TestCheckResourceAttr("akamai_datastream.s", "splunk_connector.#", "1"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "splunk_connector.0.compress_logs", "false"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "splunk_connector.0.connector_name", "splunk_test_connector_name"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "splunk_connector.0.event_collector_token", "splunk_event_collector_token"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "splunk_connector.0.url", "splunk_url"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "splunk_connector.0.custom_header_name", "custom_header_name"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "splunk_connector.0.custom_header_value", "custom_header_value"),
+			},
+		},
+		"https": {
+			Filename: "custom_headers_https.tf",
+			Connector: &datastream.CustomHTTPSConnector{
+				AuthenticationType: datastream.AuthenticationTypeBasic,
+				CompressLogs:       true,
+				ConnectorName:      "HTTPS connector name",
+				Password:           "password",
+				URL:                "https_connector_url",
+				UserName:           "username",
+				ContentType:        "content_type",
+				CustomHeaderName:   "custom_header_name",
+				CustomHeaderValue:  "custom_header_value",
+			},
+			Response: datastream.ConnectorDetails{
+				ConnectorType:      datastream.ConnectorTypeHTTPS,
+				AuthenticationType: datastream.AuthenticationTypeBasic,
+				CompressLogs:       true,
+				ConnectorName:      "HTTPS connector name",
+				URL:                "https_connector_url",
+				ContentType:        "content_type",
+				CustomHeaderName:   "custom_header_name",
+				CustomHeaderValue:  "custom_header_value",
+			},
+			TestChecks: []resource.TestCheckFunc{
+				resource.TestCheckResourceAttr("akamai_datastream.s", "https_connector.#", "1"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "https_connector.0.authentication_type", "BASIC"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "https_connector.0.connector_name", "HTTPS connector name"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "https_connector.0.compress_logs", "true"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "https_connector.0.content_type", "content_type"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "https_connector.0.custom_header_name", "custom_header_name"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "https_connector.0.custom_header_value", "custom_header_value"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "https_connector.0.url", "https_connector_url"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "https_connector.0.user_name", "username"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "https_connector.0.password", "password"),
+			},
+		},
+		"sumologic": {
+			Filename: "custom_headers_sumologic.tf",
+			Connector: &datastream.SumoLogicConnector{
+				CollectorCode:     "collector_code",
+				CompressLogs:      true,
+				ConnectorName:     "Sumologic connector name",
+				Endpoint:          "endpoint",
+				ContentType:       "content_type",
+				CustomHeaderName:  "custom_header_name",
+				CustomHeaderValue: "custom_header_value",
+			},
+			Response: datastream.ConnectorDetails{
+				ConnectorType:     datastream.ConnectorTypeSumoLogic,
+				CompressLogs:      true,
+				ConnectorName:     "Sumologic connector name",
+				Endpoint:          "endpoint",
+				ContentType:       "content_type",
+				CustomHeaderName:  "custom_header_name",
+				CustomHeaderValue: "custom_header_value",
+			},
+			TestChecks: []resource.TestCheckFunc{
+				resource.TestCheckResourceAttr("akamai_datastream.s", "sumologic_connector.#", "1"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "sumologic_connector.0.collector_code", "collector_code"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "sumologic_connector.0.connector_name", "Sumologic connector name"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "sumologic_connector.0.compress_logs", "true"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "sumologic_connector.0.content_type", "content_type"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "sumologic_connector.0.custom_header_name", "custom_header_name"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "sumologic_connector.0.custom_header_value", "custom_header_value"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "sumologic_connector.0.endpoint", "endpoint"),
+			},
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			client := &mockdatastream{}
+
+			createStreamRequest := createStreamRequestFactory(test.Connector)
+			client.On("CreateStream", mock.Anything, createStreamRequest).
+				Return(updateStreamResponse, nil)
+
+			getStreamResponse := responseFactory(test.Response)
+			client.On("GetStream", mock.Anything, getStreamRequest).
+				Return(getStreamResponse, nil)
+
+			client.On("DeleteStream", mock.Anything, datastream.DeleteStreamRequest{
+				StreamID: streamID,
+			}).Return(&datastream.DeleteStreamResponse{Message: "Success"}, nil)
+
+			useClient(client, func() {
+				resource.UnitTest(t, resource.TestCase{
+					Providers: testAccProviders,
+					Steps: []resource.TestStep{
+						{
+							Config: loadFixtureString(fmt.Sprintf("testdata/TestResourceStream/custom_headers/%s", test.Filename)),
+							Check:  resource.ComposeTestCheckFunc(test.TestChecks...),
+						},
+					},
+				})
+
+				client.AssertExpectations(t)
+			})
+		})
+	}
+}
