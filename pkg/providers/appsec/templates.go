@@ -316,6 +316,7 @@ func InitTemplates(otm map[string]*OutputTemplate) {
 	otm["threatIntelDS"] = &OutputTemplate{TemplateName: "threatIntelDS", TableTitle: "Threat Intelligence", TemplateType: "TABULAR", TemplateString: "{{.ThreatIntel}}"}
 	otm["EvalDS"] = &OutputTemplate{TemplateName: "evalDS", TableTitle: "Current|Eval Status|Evaluation Mode|Mode", TemplateType: "TABULAR", TemplateString: "{{.Current}}|{{.Eval}}|{{.Evaluating}}|{{.Mode}}"}
 	otm["malwareContentTypesDS"] = &OutputTemplate{TemplateName: "malwareContentTypesDS", TableTitle: "Malware Content Types", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .ContentTypes}}{{if $index}},{{end}}{{.}}{{end}}"}
+	otm["malwarePolicies"] = &OutputTemplate{TemplateName: "malwarePolicies", TableTitle: "MalwarePolicyID|Name", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .MalwarePolicies}}{{if $index}},{{end}}{{.MalwarePolicyID}}|{{.Name}}{{end}}"}
 
 	// TABULAR templates output used in data_akamai_appsec_export_configuration
 	otm["attackGroups"] = &OutputTemplate{TemplateName: "attackGroups", TableTitle: "ID|Name|Type|Ruleset Version ID", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .Rulesets}}{{$type := .Type}}{{$rulesetVersionID := .RulesetVersionID}}{{with .AttackGroups}}{{if $index}},{{end}}{{range $index, $element := .}}{{if $index}},{{end}}{{.Group}}|{{.GroupName}}|{{$type}}|{{$rulesetVersionID}}{{end}}{{end}}{{end}}"}
