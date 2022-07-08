@@ -22,10 +22,10 @@ import (
 
 var (
 	bundlePathForCreate = "testdata/TestResEdgeWorkersEdgeWorker/bundles/bundleForCreate.tgz"
-	bundleHashForCreate = "38cbdfcef3c8024064bdda3b71e27d7b6c8d746da49ee131b1c85c6ea17e14cc"
+	bundleHashForCreate = "ba1ca447bdfebf06dee5be85eb17745b9f5dd6c718a3020409a5848f341d510f"
 	bundlePathForUpdate = "testdata/TestResEdgeWorkersEdgeWorker/bundles/bundleForUpdate.tgz"
-	bundleHashForUpdate = "cc34f28adb32ac91f94ec36eee107e5400cd565f99161af5621ddae85eaf9804"
-	defaultBundleHash   = "38cbdfcef3c8024064bdda3b71e27d7b6c8d746da49ee131b1c85c6ea17e14cc"
+	bundleHashForUpdate = "ec177aef45a71354febdc58d0130af48c087a735e022fa53afa9b8f1e7afc245"
+	defaultBundleHash   = "ba1ca447bdfebf06dee5be85eb17745b9f5dd6c718a3020409a5848f341d510f"
 )
 
 func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
@@ -717,48 +717,6 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 }
-
-func TestGetSHA256FromBundle(t *testing.T) {
-	tests := map[string]struct {
-		firstBundlePath  string
-		secondBundlePath string
-		expectDiff       bool
-	}{
-		"no diff in bundles first test": {
-			firstBundlePath:  bundlePathForCreate,
-			secondBundlePath: bundlePathForCreate,
-			expectDiff:       false,
-		},
-		"no diff in bundles second test": {
-			firstBundlePath:  bundlePathForUpdate,
-			secondBundlePath: bundlePathForUpdate,
-			expectDiff:       false,
-		},
-		"compare two diff bundles": {
-			firstBundlePath:  bundlePathForCreate,
-			secondBundlePath: bundlePathForUpdate,
-			expectDiff:       true,
-		},
-	}
-	for testName, test := range tests {
-		t.Run(testName, func(t *testing.T) {
-			firstArrayOfBytes, err := convertLocalBundleFileIntoBytes(test.firstBundlePath)
-			require.NoError(t, err)
-			secondArrayOfBytes, err := convertLocalBundleFileIntoBytes(test.secondBundlePath)
-			require.NoError(t, err)
-			firstBundleShaHash, err := getSHAFromBundle(&edgeworkers.Bundle{Reader: bytes.NewBuffer(firstArrayOfBytes)})
-			require.NoError(t, err)
-			secondBundleShaHash, err := getSHAFromBundle(&edgeworkers.Bundle{Reader: bytes.NewBuffer(secondArrayOfBytes)})
-			require.NoError(t, err)
-			if test.expectDiff {
-				assert.NotEqual(t, firstBundleShaHash, secondBundleShaHash)
-			} else {
-				assert.Equal(t, firstBundleShaHash, secondBundleShaHash)
-			}
-		})
-	}
-}
-
 func TestGetLatestEdgeWorkerIDBundleVersion(t *testing.T) {
 	firstVersionTimeCreation := time.Now().Format(time.RFC3339)
 	secondVersionTimeCreation := time.Now().Add(time.Hour * 24).Format(time.RFC3339)
