@@ -156,7 +156,6 @@ func resourceCPCodeRead(ctx context.Context, d *schema.ResourceData, m interface
 	if err := d.Set("contract", contractID); err != nil {
 		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
-
 	cpCodeResp, err := client.GetCPCode(ctx, papi.GetCPCodeRequest{
 		CPCodeID:   d.Id(),
 		ContractID: contractID,
@@ -193,6 +192,7 @@ func resourceCPCodeUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 	logger.Debugf("Update CP Code")
 
 	if diags := checkImmutableChanged(d); diags != nil {
+		d.Partial(true)
 		return diags
 	}
 
