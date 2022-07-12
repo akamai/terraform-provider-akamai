@@ -88,6 +88,7 @@ func Provider() *schema.Provider {
 			"akamai_appsec_rules":                                dataSourceRules(),
 			"akamai_appsec_malware_content_types":                dataSourceMalwareContentTypes(),
 			"akamai_appsec_malware_policies":                     dataSourceMalwarePolicies(),
+			"akamai_appsec_malware_policy_actions":               dataSourceMalwarePolicyActions(),
 			"akamai_appsec_match_targets":                        dataSourceMatchTargets(),
 			"akamai_appsec_penalty_box":                          dataSourcePenaltyBox(),
 			"akamai_appsec_security_policy_protections":          dataSourcePolicyProtections(),
