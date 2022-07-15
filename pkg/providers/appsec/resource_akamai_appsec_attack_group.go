@@ -67,7 +67,7 @@ func resourceAttackGroupCreate(ctx context.Context, d *schema.ResourceData, m in
 	logger.Debugf(" in resourceAttackGroupCreate")
 
 	configID, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	version, err := getModifiableConfigVersion(ctx, configID, "atackGroup", m)
@@ -75,11 +75,11 @@ func resourceAttackGroupCreate(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(err)
 	}
 	policyID, err := tools.GetStringValue("security_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	attackgroup, err := tools.GetStringValue("attack_group", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	action, err := tools.GetStringValue("attack_group_action", d)

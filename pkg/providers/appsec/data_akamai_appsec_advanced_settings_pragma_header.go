@@ -47,7 +47,7 @@ func dataSourceAdvancedSettingsPragmaHeaderRead(ctx context.Context, d *schema.R
 	getAdvancedSettingsPragma := appsec.GetAdvancedSettingsPragmaRequest{}
 
 	configID, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	getAdvancedSettingsPragma.ConfigID = configID

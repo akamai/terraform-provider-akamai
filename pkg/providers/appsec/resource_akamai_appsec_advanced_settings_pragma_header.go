@@ -55,7 +55,7 @@ func resourceAdvancedSettingsPragmaHeaderCreate(ctx context.Context, d *schema.R
 	logger.Debugf("in resourceAdvancedSettingsPragmaHeaderCreate")
 
 	configID, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	version, err := getModifiableConfigVersion(ctx, configID, "pragmaSetting", m)

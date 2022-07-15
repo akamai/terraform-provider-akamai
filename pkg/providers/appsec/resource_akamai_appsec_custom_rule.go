@@ -3,7 +3,6 @@ package appsec
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -37,15 +36,15 @@ func resourceCustomRule() *schema.Resource {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
-			"custom_rule_id": {
-				Type:     schema.TypeInt,
-				Computed: true,
-			},
 			"custom_rule": {
 				Type:             schema.TypeString,
 				Required:         true,
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsJSON),
 				DiffSuppressFunc: suppressEquivalentJSONDiffsGeneric,
+			},
+			"custom_rule_id": {
+				Type:     schema.TypeInt,
+				Computed: true,
 			},
 		},
 	}
@@ -58,11 +57,14 @@ func resourceCustomRuleCreate(ctx context.Context, d *schema.ResourceData, m int
 	logger.Debugf("in resourceCustomRuleCreate")
 
 	configID, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	jsonpostpayload := d.Get("custom_rule")
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	jsonPayloadRaw := []byte(jsonpostpayload.(string))
 	rawJSON := (json.RawMessage)(jsonPayloadRaw)
 

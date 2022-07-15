@@ -58,7 +58,7 @@ func dataSourceRulesRead(ctx context.Context, d *schema.ResourceData, m interfac
 	getRules := appsec.GetRulesRequest{}
 
 	configID, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	getRules.ConfigID = configID
@@ -68,7 +68,7 @@ func dataSourceRulesRead(ctx context.Context, d *schema.ResourceData, m interfac
 	}
 
 	policyID, err := tools.GetStringValue("security_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	getRules.PolicyID = policyID

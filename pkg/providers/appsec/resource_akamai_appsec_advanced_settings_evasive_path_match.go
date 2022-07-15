@@ -57,7 +57,7 @@ func resourceAdvancedSettingsEvasivePathMatchCreate(ctx context.Context, d *sche
 	logger.Debugf("in resourceAdvancedSettingsEvasivePathMatchCreate")
 
 	configID, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	version, err := getModifiableConfigVersion(ctx, configID, "evasivePathMatchSetting", m)

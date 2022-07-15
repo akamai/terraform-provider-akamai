@@ -53,7 +53,7 @@ func dataSourceConfigurationVersionRead(ctx context.Context, d *schema.ResourceD
 	getConfigurationVersion := appsec.GetConfigurationVersionsRequest{}
 
 	configID, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	getConfigurationVersion.ConfigID = configID

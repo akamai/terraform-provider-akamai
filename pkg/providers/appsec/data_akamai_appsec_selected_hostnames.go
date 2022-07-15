@@ -3,7 +3,6 @@ package appsec
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -49,7 +48,7 @@ func dataSourceSelectedHostnamesRead(ctx context.Context, d *schema.ResourceData
 	getSelectedHostnames := appsec.GetSelectedHostnamesRequest{}
 
 	configID, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	getSelectedHostnames.ConfigID = configID

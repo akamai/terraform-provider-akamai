@@ -2,7 +2,6 @@ package appsec
 
 import (
 	"context"
-	"errors"
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -51,7 +50,7 @@ func dataSourcePenaltyBoxRead(ctx context.Context, d *schema.ResourceData, m int
 	getPenaltyBox := appsec.GetPenaltyBoxRequest{}
 
 	configID, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	getPenaltyBox.ConfigID = configID
@@ -61,7 +60,7 @@ func dataSourcePenaltyBoxRead(ctx context.Context, d *schema.ResourceData, m int
 	}
 
 	policyID, err := tools.GetStringValue("security_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	getPenaltyBox.PolicyID = policyID

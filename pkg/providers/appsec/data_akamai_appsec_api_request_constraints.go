@@ -51,7 +51,7 @@ func dataSourceAPIRequestConstraintsRead(ctx context.Context, d *schema.Resource
 	getAPIiRequestConstraints := v2.GetApiRequestConstraintsRequest{}
 
 	configID, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	getAPIiRequestConstraints.ConfigID = configID
@@ -61,7 +61,7 @@ func dataSourceAPIRequestConstraintsRead(ctx context.Context, d *schema.Resource
 	}
 
 	policyID, err := tools.GetStringValue("security_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	getAPIiRequestConstraints.PolicyID = policyID

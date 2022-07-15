@@ -84,12 +84,21 @@ func resourceIPGeoCreate(ctx context.Context, d *schema.ResourceData, m interfac
 		return diag.FromErr(err)
 	}
 	mode, err := tools.GetStringValue("mode", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
-	blockedgeolists := tools.SetToStringSlice(d.Get("geo_network_lists").(*schema.Set))
-	blockediplists := tools.SetToStringSlice(d.Get("ip_network_lists").(*schema.Set))
-	exceptioniplists := tools.SetToStringSlice(d.Get("exception_ip_network_lists").(*schema.Set))
+	blockedGeoListsSet, err := tools.GetSetValue("geo_network_lists", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	blockedIPListsSet, err := tools.GetSetValue("ip_network_lists", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	exceptionIPListsSet, err := tools.GetSetValue("exception_ip_network_lists", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	createIPGeo := appsec.UpdateIPGeoRequest{
 		ConfigID: configID,
@@ -102,9 +111,9 @@ func resourceIPGeoCreate(ctx context.Context, d *schema.ResourceData, m interfac
 	if mode == Block {
 		createIPGeo.Block = "blockSpecificIPGeo"
 	}
-	createIPGeo.GeoControls.BlockedIPNetworkLists.NetworkList = blockedgeolists
-	createIPGeo.IPControls.BlockedIPNetworkLists.NetworkList = blockediplists
-	createIPGeo.IPControls.AllowedIPNetworkLists.NetworkList = exceptioniplists
+	createIPGeo.GeoControls.BlockedIPNetworkLists.NetworkList = tools.SetToStringSlice(blockedGeoListsSet)
+	createIPGeo.IPControls.BlockedIPNetworkLists.NetworkList = tools.SetToStringSlice(blockedIPListsSet)
+	createIPGeo.IPControls.AllowedIPNetworkLists.NetworkList = tools.SetToStringSlice(exceptionIPListsSet)
 
 	_, err = client.UpdateIPGeo(ctx, createIPGeo)
 	if err != nil {

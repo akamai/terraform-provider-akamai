@@ -3,7 +3,6 @@ package appsec
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -66,7 +65,7 @@ func dataSourceWAFModeRead(ctx context.Context, d *schema.ResourceData, m interf
 	getWAFMode := appsec.GetWAFModeRequest{}
 
 	configID, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	getWAFMode.ConfigID = configID
@@ -76,7 +75,7 @@ func dataSourceWAFModeRead(ctx context.Context, d *schema.ResourceData, m interf
 	}
 
 	policyID, err := tools.GetStringValue("security_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	getWAFMode.PolicyID = policyID

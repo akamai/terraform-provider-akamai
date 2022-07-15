@@ -46,7 +46,7 @@ func dataSourceCustomDenyRead(ctx context.Context, d *schema.ResourceData, m int
 	getCustomDeny := appsec.GetCustomDenyListRequest{}
 
 	configID, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	getCustomDeny.ConfigID = configID

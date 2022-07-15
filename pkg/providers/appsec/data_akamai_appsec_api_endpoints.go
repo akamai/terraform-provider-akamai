@@ -57,7 +57,7 @@ func dataSourceAPIEndpointsRead(ctx context.Context, d *schema.ResourceData, m i
 	getAPIEndpoints := appsec.GetApiEndpointsRequest{}
 
 	configID, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	getAPIEndpoints.ConfigID = configID

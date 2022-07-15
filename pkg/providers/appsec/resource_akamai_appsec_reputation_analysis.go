@@ -57,7 +57,7 @@ func resourceReputationAnalysisCreate(ctx context.Context, d *schema.ResourceDat
 	logger.Debugf("in resourceReputationAnalysisCreate")
 
 	configID, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	version, err := getModifiableConfigVersion(ctx, configID, "reputationProfileAnalysis", m)
@@ -65,15 +65,15 @@ func resourceReputationAnalysisCreate(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 	policyID, err := tools.GetStringValue("security_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	forwardToHTTPHeader, err := tools.GetBoolValue("forward_to_http_header", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	forwardSharedIPToHTTPHeaderSiem, err := tools.GetBoolValue("forward_shared_ip_to_http_header_siem", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 

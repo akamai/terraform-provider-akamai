@@ -54,7 +54,7 @@ func resourceVersionNotesCreate(ctx context.Context, d *schema.ResourceData, m i
 	logger.Debugf("in resourceVersionNotesCreate")
 
 	configID, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	version, err := getModifiableConfigVersion(ctx, configID, "editVersionNotes", m)
@@ -62,7 +62,7 @@ func resourceVersionNotesCreate(ctx context.Context, d *schema.ResourceData, m i
 		return diag.FromErr(err)
 	}
 	notes, err := tools.GetStringValue("version_notes", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 

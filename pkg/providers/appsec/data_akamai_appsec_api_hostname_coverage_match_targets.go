@@ -3,7 +3,6 @@ package appsec
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -47,7 +46,7 @@ func dataSourceAPIHostnameCoverageMatchTargetsRead(ctx context.Context, d *schem
 	getAPIHostnameCoverageMatchTargets := appsec.GetApiHostnameCoverageMatchTargetsRequest{}
 
 	configID, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	getAPIHostnameCoverageMatchTargets.ConfigID = configID
@@ -57,7 +56,7 @@ func dataSourceAPIHostnameCoverageMatchTargetsRead(ctx context.Context, d *schem
 	}
 
 	hostname, err := tools.GetStringValue("hostname", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	getAPIHostnameCoverageMatchTargets.Hostname = hostname

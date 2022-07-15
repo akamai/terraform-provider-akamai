@@ -58,11 +58,11 @@ func resourceSecurityPolicyRenameCreate(ctx context.Context, d *schema.ResourceD
 		return diag.FromErr(err)
 	}
 	policyID, err := tools.GetStringValue("security_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	policyname, err := tools.GetStringValue("security_policy_name", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 

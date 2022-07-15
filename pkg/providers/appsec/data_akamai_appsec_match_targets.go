@@ -60,7 +60,7 @@ func dataSourceMatchTargetsRead(ctx context.Context, d *schema.ResourceData, m i
 	getMatchTargets := appsec.GetMatchTargetsRequest{}
 
 	configID, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	getMatchTargets.ConfigID = configID

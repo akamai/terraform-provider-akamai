@@ -58,7 +58,7 @@ func dataSourceAttackGroupsRead(ctx context.Context, d *schema.ResourceData, m i
 	getAttackGroups := appsec.GetAttackGroupsRequest{}
 
 	configID, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	getAttackGroups.ConfigID = configID
@@ -68,7 +68,7 @@ func dataSourceAttackGroupsRead(ctx context.Context, d *schema.ResourceData, m i
 	}
 
 	policyID, err := tools.GetStringValue("security_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	getAttackGroups.PolicyID = policyID

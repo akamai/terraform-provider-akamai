@@ -3,7 +3,6 @@ package appsec
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -46,7 +45,7 @@ func dataSourceRuleUpgradeRead(ctx context.Context, d *schema.ResourceData, m in
 	getRuleUpgrade := appsec.GetRuleUpgradeRequest{}
 
 	configID, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	getRuleUpgrade.ConfigID = configID
@@ -56,7 +55,7 @@ func dataSourceRuleUpgradeRead(ctx context.Context, d *schema.ResourceData, m in
 	}
 
 	policyID, err := tools.GetStringValue("security_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	getRuleUpgrade.PolicyID = policyID

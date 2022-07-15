@@ -54,7 +54,7 @@ func dataSourceReputationProfileActionsRead(ctx context.Context, d *schema.Resou
 	getReputationProfileActions := appsec.GetReputationProfileActionsRequest{}
 
 	configID, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	getReputationProfileActions.ConfigID = configID
@@ -64,7 +64,7 @@ func dataSourceReputationProfileActionsRead(ctx context.Context, d *schema.Resou
 	}
 
 	policyID, err := tools.GetStringValue("security_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	getReputationProfileActions.PolicyID = policyID

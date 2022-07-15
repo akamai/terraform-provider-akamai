@@ -52,15 +52,15 @@ func resourceConfigurationRenameCreate(ctx context.Context, d *schema.ResourceDa
 	logger.Debugf("in resourceConfigurationRenameCreate")
 
 	configID, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	name, err := tools.GetStringValue("name", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	description, err := tools.GetStringValue("description", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 

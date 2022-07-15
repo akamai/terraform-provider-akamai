@@ -58,7 +58,7 @@ func dataSourceEvalRulesRead(ctx context.Context, d *schema.ResourceData, m inte
 	getEvalRules := appsec.GetEvalRulesRequest{}
 
 	configID, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	getEvalRules.ConfigID = configID
@@ -68,7 +68,7 @@ func dataSourceEvalRulesRead(ctx context.Context, d *schema.ResourceData, m inte
 	}
 
 	policyID, err := tools.GetStringValue("security_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	getEvalRules.PolicyID = policyID

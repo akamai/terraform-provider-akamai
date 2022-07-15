@@ -47,7 +47,7 @@ func dataSourceAdvancedSettingsLoggingRead(ctx context.Context, d *schema.Resour
 	getAdvancedSettingsLogging := appsec.GetAdvancedSettingsLoggingRequest{}
 
 	configID, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	getAdvancedSettingsLogging.ConfigID = configID

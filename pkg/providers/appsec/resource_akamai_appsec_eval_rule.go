@@ -67,7 +67,7 @@ func resourceEvalRuleCreate(ctx context.Context, d *schema.ResourceData, m inter
 	logger.Debugf("in resourceEvalRuleCreate")
 
 	configID, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	version, err := getModifiableConfigVersion(ctx, configID, "evalRule", m)
@@ -75,11 +75,11 @@ func resourceEvalRuleCreate(ctx context.Context, d *schema.ResourceData, m inter
 		return diag.FromErr(err)
 	}
 	policyID, err := tools.GetStringValue("security_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	ruleID, err := tools.GetIntValue("rule_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	action, err := tools.GetStringValue("rule_action", d)

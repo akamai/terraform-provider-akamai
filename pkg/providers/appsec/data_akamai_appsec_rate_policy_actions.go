@@ -45,7 +45,7 @@ func dataSourceRatePolicyActionsRead(ctx context.Context, d *schema.ResourceData
 	getRatePolicyActions := appsec.GetRatePolicyActionsRequest{}
 
 	configID, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	getRatePolicyActions.ConfigID = configID
@@ -55,7 +55,7 @@ func dataSourceRatePolicyActionsRead(ctx context.Context, d *schema.ResourceData
 	}
 
 	policyID, err := tools.GetStringValue("security_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	getRatePolicyActions.PolicyID = policyID

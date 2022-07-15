@@ -3,7 +3,6 @@ package appsec
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -47,7 +46,7 @@ func dataSourceReputationAnalysisRead(ctx context.Context, d *schema.ResourceDat
 	getReputationAnalysis := appsec.GetReputationAnalysisRequest{}
 
 	configID, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	getReputationAnalysis.ConfigID = configID
@@ -57,7 +56,7 @@ func dataSourceReputationAnalysisRead(ctx context.Context, d *schema.ResourceDat
 	}
 
 	policyID, err := tools.GetStringValue("security_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	getReputationAnalysis.PolicyID = policyID

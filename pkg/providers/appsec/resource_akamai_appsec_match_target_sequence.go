@@ -3,7 +3,6 @@ package appsec
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strconv"
 
@@ -50,7 +49,7 @@ func resourceMatchTargetSequenceCreate(ctx context.Context, d *schema.ResourceDa
 	logger.Debugf("in resourceMatchTargetSequenceCreate")
 
 	configID, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	version, err := getModifiableConfigVersion(ctx, configID, "matchTargetSequence", m)

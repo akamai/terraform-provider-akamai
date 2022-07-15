@@ -2,7 +2,6 @@ package appsec
 
 import (
 	"context"
-	"errors"
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -41,7 +40,7 @@ func dataSourceEvalRead(ctx context.Context, d *schema.ResourceData, m interface
 	getEval := appsec.GetEvalRequest{}
 
 	configID, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	getEval.ConfigID = configID
@@ -51,7 +50,7 @@ func dataSourceEvalRead(ctx context.Context, d *schema.ResourceData, m interface
 	}
 
 	policyID, err := tools.GetStringValue("security_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	getEval.PolicyID = policyID

@@ -53,13 +53,15 @@ func dataSourceExportConfigurationRead(ctx context.Context, d *schema.ResourceDa
 	getExportConfiguration := appsec.GetExportConfigurationRequest{}
 
 	configID, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	getExportConfiguration.ConfigID = configID
-
-	version, err := tools.GetIntValue("version", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	version, err := tools.GetIntValue("version", d)
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	getExportConfiguration.Version = version

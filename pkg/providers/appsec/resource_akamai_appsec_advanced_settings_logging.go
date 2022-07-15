@@ -58,7 +58,7 @@ func resourceAdvancedSettingsLoggingCreate(ctx context.Context, d *schema.Resour
 	logger.Debugf("in resourceAdvancedSettingsLoggingCreate")
 
 	configID, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	version, err := getModifiableConfigVersion(ctx, configID, "loggingSetting", m)

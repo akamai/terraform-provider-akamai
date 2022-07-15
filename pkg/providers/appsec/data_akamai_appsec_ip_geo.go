@@ -2,7 +2,6 @@ package appsec
 
 import (
 	"context"
-	"errors"
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -61,7 +60,7 @@ func dataSourceIPGeoRead(ctx context.Context, d *schema.ResourceData, m interfac
 	getIPGeo := appsec.GetIPGeoRequest{}
 
 	configID, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	getIPGeo.ConfigID = configID
@@ -71,7 +70,7 @@ func dataSourceIPGeoRead(ctx context.Context, d *schema.ResourceData, m interfac
 	}
 
 	policyID, err := tools.GetStringValue("security_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	getIPGeo.PolicyID = policyID

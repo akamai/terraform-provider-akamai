@@ -132,6 +132,7 @@ func Provider() *schema.Provider {
 			"akamai_appsec_ip_geo_protection":                    resourceIPGeoProtection(),
 			"akamai_appsec_malware_policy":                       resourceMalwarePolicy(),
 			"akamai_appsec_malware_policy_action":                resourceMalwarePolicyAction(),
+			"akamai_appsec_malware_policy_actions":               resourceMalwarePolicyActions(),
 			"akamai_appsec_malware_protection":                   resourceMalwareProtection(),
 			"akamai_appsec_match_target":                         resourceMatchTarget(),
 			"akamai_appsec_match_target_sequence":                resourceMatchTargetSequence(),

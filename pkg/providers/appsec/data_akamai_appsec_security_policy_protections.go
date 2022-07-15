@@ -3,7 +3,6 @@ package appsec
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -74,7 +73,7 @@ func dataSourcePolicyProtectionsRead(ctx context.Context, d *schema.ResourceData
 	getPolicyProtections := appsec.GetPolicyProtectionsRequest{}
 
 	configID, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	getPolicyProtections.ConfigID = configID
@@ -84,7 +83,7 @@ func dataSourcePolicyProtectionsRead(ctx context.Context, d *schema.ResourceData
 	}
 
 	policyID, err := tools.GetStringValue("security_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	getPolicyProtections.PolicyID = policyID
@@ -98,7 +97,7 @@ func dataSourcePolicyProtectionsRead(ctx context.Context, d *schema.ResourceData
 	ots := OutputTemplates{}
 	InitTemplates(ots)
 
-	outputtext, err := RenderTemplates(ots, "wafProtectionDS", policyprotections)
+	outputtext, err := RenderTemplates(ots, "protections", policyprotections)
 	if err == nil {
 		if err := d.Set("output_text", outputtext); err != nil {
 			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())

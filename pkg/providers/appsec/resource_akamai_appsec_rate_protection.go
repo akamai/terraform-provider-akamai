@@ -58,7 +58,7 @@ func resourceRateProtectionCreate(ctx context.Context, d *schema.ResourceData, m
 	logger.Debugf("in resourceRateProtectionCreate")
 
 	configID, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	version, err := getModifiableConfigVersion(ctx, configID, "rateProtection", m)
@@ -66,11 +66,11 @@ func resourceRateProtectionCreate(ctx context.Context, d *schema.ResourceData, m
 		return diag.FromErr(err)
 	}
 	policyID, err := tools.GetStringValue("security_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	enabled, err := tools.GetBoolValue("enabled", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -134,7 +134,7 @@ func resourceRateProtectionRead(ctx context.Context, d *schema.ResourceData, m i
 	}
 	ots := OutputTemplates{}
 	InitTemplates(ots)
-	outputtext, err := RenderTemplates(ots, "rateProtectionDS", response)
+	outputtext, err := RenderTemplates(ots, "protections", response)
 	if err == nil {
 		if err := d.Set("output_text", outputtext); err != nil {
 			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())

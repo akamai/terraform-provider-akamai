@@ -3,7 +3,6 @@ package appsec
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"strconv"
 
 	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -42,7 +41,7 @@ func dataSourceSiemSettingsRead(ctx context.Context, d *schema.ResourceData, m i
 	getSiemSettings := v2.GetSiemSettingsRequest{}
 
 	configID, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	getSiemSettings.ConfigID = configID

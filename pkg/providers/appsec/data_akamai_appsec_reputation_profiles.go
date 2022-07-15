@@ -46,7 +46,7 @@ func dataSourceReputationProfilesRead(ctx context.Context, d *schema.ResourceDat
 	getReputationProfiles := appsec.GetReputationProfilesRequest{}
 
 	configID, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	getReputationProfiles.ConfigID = configID

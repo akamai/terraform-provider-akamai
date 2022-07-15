@@ -50,7 +50,7 @@ func dataSourceAdvancedSettingsEvasivePathMatchRead(ctx context.Context, d *sche
 	getAdvancedSettingsEvasivePathMatch := appsec.GetAdvancedSettingsEvasivePathMatchRequest{}
 
 	configID, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	getAdvancedSettingsEvasivePathMatch.ConfigID = configID

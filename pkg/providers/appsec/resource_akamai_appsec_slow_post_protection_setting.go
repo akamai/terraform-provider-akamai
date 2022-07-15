@@ -73,7 +73,7 @@ func resourceSlowPostProtectionSettingCreate(ctx context.Context, d *schema.Reso
 	logger.Debugf("in resourceSlowPostProtectionSettingCreate")
 
 	configID, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	version, err := getModifiableConfigVersion(ctx, configID, "slowpostSettings", m)
@@ -81,11 +81,11 @@ func resourceSlowPostProtectionSettingCreate(ctx context.Context, d *schema.Reso
 		return diag.FromErr(err)
 	}
 	policyID, err := tools.GetStringValue("security_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	slowrateaction, err := tools.GetStringValue("slow_rate_action", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	slowratethresholdrate, err := tools.GetIntValue("slow_rate_threshold_rate", d)

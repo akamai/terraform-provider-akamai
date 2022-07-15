@@ -66,7 +66,7 @@ func resourceSiemSettingsCreate(ctx context.Context, d *schema.ResourceData, m i
 	logger.Debugf("in resourceSiemSettingsCreate")
 
 	configID, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	version, err := getModifiableConfigVersion(ctx, configID, "siemSetting", m)
@@ -74,11 +74,11 @@ func resourceSiemSettingsCreate(ctx context.Context, d *schema.ResourceData, m i
 		return diag.FromErr(err)
 	}
 	enableSiem, err := tools.GetBoolValue("enable_siem", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	enableForAllPolicies, err := tools.GetBoolValue("enable_for_all_policies", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	securityPolicyIDs, err := tools.GetSetValue("security_policy_ids", d)
@@ -91,11 +91,11 @@ func resourceSiemSettingsCreate(ctx context.Context, d *schema.ResourceData, m i
 
 	}
 	enableBotmanSiem, err := tools.GetBoolValue("enable_botman_siem", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	siemID, err := tools.GetIntValue("siem_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 

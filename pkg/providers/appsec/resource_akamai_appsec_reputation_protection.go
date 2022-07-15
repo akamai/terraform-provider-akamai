@@ -135,7 +135,7 @@ func resourceReputationProtectionRead(ctx context.Context, d *schema.ResourceDat
 
 	ots := OutputTemplates{}
 	InitTemplates(ots)
-	outputtext, err := RenderTemplates(ots, "reputationProtectionDS", response)
+	outputtext, err := RenderTemplates(ots, "protections", response)
 	if err == nil {
 		if err := d.Set("output_text", outputtext); err != nil {
 			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())

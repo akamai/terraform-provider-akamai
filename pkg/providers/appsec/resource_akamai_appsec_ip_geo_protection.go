@@ -58,7 +58,7 @@ func resourceIPGeoProtectionCreate(ctx context.Context, d *schema.ResourceData, 
 	logger.Debugf("in resourceIPGeoProtectionCreate")
 
 	configID, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	version, err := getModifiableConfigVersion(ctx, configID, "ipgeoProtection", m)
@@ -66,11 +66,11 @@ func resourceIPGeoProtectionCreate(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 	policyID, err := tools.GetStringValue("security_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	enabled, err := tools.GetBoolValue("enabled", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -132,7 +132,7 @@ func resourceIPGeoProtectionRead(ctx context.Context, d *schema.ResourceData, m 
 
 	ots := OutputTemplates{}
 	InitTemplates(ots)
-	outputtext, err := RenderTemplates(ots, "networkProtectionDS", response)
+	outputtext, err := RenderTemplates(ots, "protections", response)
 	if err == nil {
 		if err := d.Set("output_text", outputtext); err != nil {
 			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())

@@ -58,7 +58,7 @@ func resourceReputationProfileActionCreate(ctx context.Context, d *schema.Resour
 	logger.Debugf("in resourceReputationProfileActionCreate")
 
 	configID, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	version, err := getModifiableConfigVersion(ctx, configID, "reputationProfileAction", m)
@@ -66,15 +66,15 @@ func resourceReputationProfileActionCreate(ctx context.Context, d *schema.Resour
 		return diag.FromErr(err)
 	}
 	policyID, err := tools.GetStringValue("security_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	reputationProfileID, err := tools.GetIntValue("reputation_profile_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	action, err := tools.GetStringValue("action", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 

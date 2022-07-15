@@ -75,11 +75,11 @@ func resourcePenaltyBoxCreate(ctx context.Context, d *schema.ResourceData, m int
 		return diag.FromErr(err)
 	}
 	penaltyboxprotection, err := tools.GetBoolValue("penalty_box_protection", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	penaltyboxaction, err := tools.GetStringValue("penalty_box_action", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 
