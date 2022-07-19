@@ -1,6 +1,7 @@
 package gtm
 
 import (
+	"fmt"
 	"net/http"
 	"regexp"
 	"testing"
@@ -189,6 +190,77 @@ func TestResGtmAsmap(t *testing.T) {
 					{
 						Config:      loadFixtureString("testdata/TestResGtmAsmap/create_basic.tf"),
 						ExpectError: regexp.MustCompile("Request could not be completed. Invalid credentials."),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
+	t.Run("import asmap", func(t *testing.T) {
+		client := &mockgtm{}
+
+		resp := gtm.AsMapResponse{}
+		resp.Resource = &asmap
+		resp.Status = &pendingResponseStatus
+
+		client.On("NewAsMap",
+			mock.Anything,
+			mock.AnythingOfType("string"),
+		).Return(&asmap, nil)
+
+		client.On("GetDatacenter",
+			mock.Anything,
+			mock.AnythingOfType("int"),
+			mock.AnythingOfType("string"),
+		).Return(&dc, nil)
+
+		client.On("CreateAsMap",
+			mock.Anything,
+			mock.AnythingOfType("*gtm.AsMap"),
+			mock.AnythingOfType("string"),
+		).Return(&gtm.AsMapResponse{
+			Resource: &asmap,
+			Status:   &gtm.ResponseStatus{},
+		}, nil)
+
+		client.On("GetDomainStatus",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("string"),
+		).Return(&completeResponseStatus, nil)
+
+		client.On("GetAsMap",
+			mock.Anything,
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
+		).Return(&asmap, nil)
+
+		client.On("DeleteAsMap",
+			mock.Anything,
+			mock.AnythingOfType("*gtm.AsMap"),
+			mock.AnythingOfType("string"),
+		).Return(&completeResponseStatus, nil)
+
+		dataSourceName := "akamai_gtm_asmap.tfexample_as_1"
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				PreCheck:  func() { testAccPreCheck(t) },
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString("testdata/TestResGtmAsmap/import_basic.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr(dataSourceName, "name", "tfexample_as_1"),
+						),
+					},
+					{
+						Config:            loadFixtureString("testdata/TestResGtmAsmap/create_basic.tf"),
+						ImportState:       true,
+						ImportStateVerify: true,
+						ImportStateId:     fmt.Sprintf("%s:%s", gtmTestDomain, "tfexample_as_1"),
+						ResourceName:      dataSourceName,
 					},
 				},
 			})

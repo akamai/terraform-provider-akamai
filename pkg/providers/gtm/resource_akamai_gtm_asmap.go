@@ -21,7 +21,7 @@ func resourceGTMv1ASmap() *schema.Resource {
 		UpdateContext: resourceGTMv1ASmapUpdate,
 		DeleteContext: resourceGTMv1ASmapDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourceGTMv1ASmapImport,
+			StateContext: resourceGTMv1ASmapImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"domain": {
@@ -312,11 +312,10 @@ func resourceGTMv1ASmapUpdate(ctx context.Context, d *schema.ResourceData, m int
 }
 
 // Import GTM ASmap.
-func resourceGTMv1ASmapImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+func resourceGTMv1ASmapImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	meta := akamai.Meta(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1ASmapImport")
 	// create a context with logging for api calls
-	ctx := context.Background()
 	ctx = session.ContextWithOptions(
 		ctx,
 		session.WithContextLog(logger),
@@ -484,48 +483,22 @@ func populateAsAssignmentsObject(d *schema.ResourceData, as *gtm.AsMap, m interf
 }
 
 // create and populate Terraform asMap assignments schema
-func populateTerraformAsAssignmentsState(d *schema.ResourceData, as *gtm.AsMap, m interface{}) {
+func populateTerraformAsAssignmentsState(d *schema.ResourceData, asm *gtm.AsMap, m interface{}) {
 	meta := akamai.Meta(m)
 	logger := meta.Log("Akamai GTM", "populateTerraformAsAssignmentsState")
 
-	objectInventory := make(map[int]*gtm.AsAssignment, len(as.Assignments))
-	if len(as.Assignments) > 0 {
-		for _, aObj := range as.Assignments {
-			objectInventory[aObj.DatacenterId] = aObj
+	var asStateList []map[string]interface{}
+	for _, as := range asm.Assignments {
+		asNew := map[string]interface{}{
+			"datacenter_id": as.DatacenterId,
+			"nickname":      as.Nickname,
+			"as_numbers":    as.AsNumbers,
 		}
+		asStateList = append(asStateList, asNew)
 	}
-	if aStateList, err := tools.GetInterfaceArrayValue("assignment", d); err != nil {
-		logger.Errorf("Assignment not set: %s", err.Error())
-	} else {
-		for _, aMap := range aStateList {
-			a := aMap.(map[string]interface{})
-			objIndex := a["datacenter_id"].(int)
-			aObject, ok := objectInventory[objIndex]
-			if !ok {
-				logger.Warnf("As Assignment %d NOT FOUND in returned GTM Object", a["datacenter_id"])
-				continue
-			}
-			a["datacenter_id"] = aObject.DatacenterId
-			a["nickname"] = aObject.Nickname
-			a["as_numbers"] = reconcileTerraformLists(a["as_numbers"].([]interface{}), convertInt64ToInterfaceList(aObject.AsNumbers, m), m)
-			// remove object
-			delete(objectInventory, objIndex)
-		}
-		if len(objectInventory) > 0 {
-			logger.Debugf("As Assignment objects left...")
-			// Objects not in the state yet. Add. Unfortunately, they not align with instance indices in the config
-			for _, maObj := range objectInventory {
-				aNew := map[string]interface{}{
-					"datacenter_id": maObj.DatacenterId,
-					"nickname":      maObj.Nickname,
-					"as_numbers":    maObj.AsNumbers,
-				}
-				aStateList = append(aStateList, aNew)
-			}
-		}
-		if err := d.Set("assignment", aStateList); err != nil {
-			logger.Errorf("populateTerraformAsAssignmentsState failed: %s", err.Error())
-		}
+
+	if err := d.Set("assignment", asStateList); err != nil {
+		logger.Errorf("populateTerraformAsAssignmentsState failed: %s", err.Error())
 	}
 }
 
