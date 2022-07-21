@@ -40,10 +40,10 @@ func resourceActivations() *schema.Resource {
 				Default:  "STAGING",
 			},
 			"sync_point": {
-                Type:     schema.TypeInt,
+				Type:     schema.TypeInt,
 				Optional: true,
 				Default:  0,
-                ForceNew: true,
+				ForceNew: true,
             },
 			"notes": {
 				Type:     schema.TypeString,
