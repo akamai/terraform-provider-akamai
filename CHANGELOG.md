@@ -1,5 +1,12 @@
 # RELEASE NOTES
 
+## 2.2.1 (TBD)
+
+#### FEATURES/ENHANCEMENTS:
+
+* NETWORK LISTS
+  * Include sync_point in akamai_networklist_network_lists resource
+
 ## 2.2.0 (June 30, 2022)
 
 #### FEATURES/ENHANCEMENTS:

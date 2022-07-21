@@ -27,6 +27,7 @@ data "akamai_networklist_network_lists" "network_lists_filter" {
 resource "akamai_networklist_activations" "activation" {
   network_list_id = data.akamai_networklist_network_lists.network_lists_filter.list[0]
   network = "STAGING"
+  sync_point = data.akamai_networklist_network_lists.network_lists_filter.list[0].sync_point
   notes  = "TEST Notes"
   notification_emails = ["user@example.com"]
 }
@@ -40,7 +41,10 @@ The following arguments are supported:
 
 * `network` - (Optional) The network to be used, either `STAGING` or `PRODUCTION`. If not supplied, defaults to
   `STAGING`.
-
+  
+* `network` - (Optional) The sync_point allows for automatic activation of a network list. If not supplied, defaults to
+  `0`. Forces a new activation request if changed.
+  
 * `notes` - (Optional) A comment describing the activation.
 
 * `notification_emails` - (Required) A bracketed, comma-separated list of email addresses that will be notified when the
