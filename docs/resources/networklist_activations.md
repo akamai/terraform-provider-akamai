@@ -42,7 +42,7 @@ The following arguments are supported:
 * `network` - (Optional) The network to be used, either `STAGING` or `PRODUCTION`. If not supplied, defaults to
   `STAGING`.
   
-* `network` - (Optional) The sync_point allows for automatic activation of a network list. If not supplied, defaults to
+* `sync_point` - (Optional) The sync_point allows for automatic activation of a network list. If not supplied, defaults to
   `0`. Forces a new activation request if changed.
   
 * `notes` - (Optional) A comment describing the activation.
