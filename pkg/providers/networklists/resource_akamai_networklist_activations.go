@@ -44,7 +44,7 @@ func resourceActivations() *schema.Resource {
 				Optional: true,
 				Default:  0,
 				ForceNew: true,
-            },
+			},
 			"notes": {
 				Type:     schema.TypeString,
 				Optional: true,
