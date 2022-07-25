@@ -45,6 +45,11 @@ func resourceCPSDVEnrollment() *schema.Resource {
 				Required: true,
 				ForceNew: true,
 			},
+			"allow_duplicate_common_name": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  false,
+			},
 			"sans": {
 				Type:     schema.TypeSet,
 				Elem:     &schema.Schema{Type: schema.TypeString},
@@ -444,10 +449,15 @@ func resourceCPSDVEnrollmentCreate(ctx context.Context, d *schema.ResourceData, 
 	if err != nil {
 		return diag.FromErr(err)
 	}
+	allowDuplicateCN, err := tools.GetBoolValue("allow_duplicate_common_name", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	req := cps.CreateEnrollmentRequest{
-		Enrollment: enrollment,
-		ContractID: strings.TrimPrefix(contractID, "ctr_"),
+		Enrollment:       enrollment,
+		ContractID:       strings.TrimPrefix(contractID, "ctr_"),
+		AllowDuplicateCN: allowDuplicateCN,
 	}
 	res, err := client.CreateEnrollment(ctx, req)
 	if err != nil {
@@ -842,6 +852,9 @@ func resourceCPSDVEnrollmentImport(ctx context.Context, d *schema.ResourceData, 
 		return nil, fmt.Errorf("unable to import: wrong validation type: expected 'dv', got '%s'", enrollment.ValidationType)
 	}
 
+	if err := d.Set("allow_duplicate_common_name", false); err != nil {
+		return nil, fmt.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+	}
 	if err := d.Set("contract_id", contractID); err != nil {
 		return nil, fmt.Errorf("%v: %s", tools.ErrValueSet, err.Error())
 	}
