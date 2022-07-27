@@ -82,7 +82,7 @@ func resourceGTMv1Resource() *schema.Resource {
 				Optional: true,
 			},
 			"resource_instance": {
-				Type:     schema.TypeList,
+				Type:     schema.TypeSet,
 				Optional: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -556,10 +556,10 @@ func populateTerraformResourceState(d *schema.ResourceData, rsrc *gtm.Resource, 
 func populateResourceInstancesObject(ctx context.Context, meta akamai.OperationMeta, d *schema.ResourceData, rsrc *gtm.Resource) {
 
 	// pull apart List
-	rsrcInstanceList, err := tools.GetInterfaceArrayValue("resource_instance", d)
+	rsrcInstances, err := tools.GetSetValue("resource_instance", d)
 	if err == nil {
-		rsrcInstanceObjList := make([]*gtm.ResourceInstance, len(rsrcInstanceList)) // create new object list
-		for i, v := range rsrcInstanceList {
+		rsrcInstanceObjList := make([]*gtm.ResourceInstance, rsrcInstances.Len()) // create new object list
+		for i, v := range rsrcInstances.List() {
 			riMap := v.(map[string]interface{})
 			rsrcInstance := inst.Client(meta).NewResourceInstance(ctx, rsrc, riMap["datacenter_id"].(int)) // create new object
 			rsrcInstance.UseDefaultLoadObject = riMap["use_default_load_object"].(bool)
