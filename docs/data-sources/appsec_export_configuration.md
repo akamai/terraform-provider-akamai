@@ -55,7 +55,7 @@ To get this type of output, add **.tf** to end of your search term. For example,
 search = ["AttackGroup.tf"]
 ```
 
-Note that even though you seem to be specifying the name of a Terraform configuration file (e.g., `AttackGroup.tf`) this data source does not save the exported data to a text file. In other words, running the command shown above won’t create a file named `activeGroups.tf` that contains all the exported data.
+Note that even though you seem to be specifying the name of a Terraform configuration file (e.g., `AttackGroup.tf`) this data source does not save the exported data to a text file. In other words, running the command shown above won’t create a file named `activeGroups.tf` that contains all the exported data. **Important.** this import functionality (generating data to be used with the `terraform import` command by specifying one or more .tf files along with the akamai_appsec_export_configuration data source) is deprecated and will be removed in a future release. Use the `cli-terraform` tool's `export-appsec` command instead. 
 
 
 **Related API Endpoint**: [/appsec/v1/export/configs/{configId}/versions/{versionNumber}](https://techdocs.akamai.com/application-security/reference/get-export-config-version)
@@ -115,7 +115,7 @@ This data source supports the following arguments:
    - selectableHosts
    - selectedHosts
 
-To return data that can be easily imported back into Terraform, use one or more of these terms:
+To return data that can be easily imported back into Terraform, use one or more of the terms below. **Important.** This functionality is deprecated and will be removed in a future release. Use the `cli-terraform` tool's `export-appsec` command instead.
 
     - AdvancedSettingsLogging.tf
     - AdvancedSettingsEvasivePathMatch.tf
