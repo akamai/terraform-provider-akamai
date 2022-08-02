@@ -44,8 +44,11 @@ func Subprovider(opts ...Option) akamai.Subprovider {
 // Provider returns the Akamai terraform.Resource provider.
 func Provider() *schema.Provider {
 	provider := &schema.Provider{
-		Schema:         map[string]*schema.Schema{},
-		DataSourcesMap: map[string]*schema.Resource{},
+		Schema: map[string]*schema.Schema{},
+		DataSourcesMap: map[string]*schema.Resource{
+			"akamai_cps_enrollment":  dataSourceCPSEnrollment(),
+			"akamai_cps_enrollments": dataSourceCPSEnrollments(),
+		},
 		ResourcesMap: map[string]*schema.Resource{
 			"akamai_cps_dv_enrollment": resourceCPSDVEnrollment(),
 			"akamai_cps_dv_validation": resourceCPSDVValidation(),

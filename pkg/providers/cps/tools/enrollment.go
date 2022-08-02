@@ -291,3 +291,18 @@ func GetChangeIDFromPendingChanges(pendingChanges []string) (int, error) {
 	}
 	return changeID, nil
 }
+
+// GetEnrollmentID returns EnrollmentID from enrollment location
+func GetEnrollmentID(location string) (int, error) {
+	locationURL, err := url.Parse(location)
+	if err != nil {
+		return 0, err
+	}
+	pathSplit := strings.Split(locationURL.Path, "/")
+	enrollmentIDStr := pathSplit[len(pathSplit)-1]
+	enrollmentID, err := strconv.Atoi(enrollmentIDStr)
+	if err != nil {
+		return 0, err
+	}
+	return enrollmentID, nil
+}

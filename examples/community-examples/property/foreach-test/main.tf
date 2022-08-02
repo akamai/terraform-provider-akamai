@@ -65,7 +65,7 @@ resource "akamai_property" "property" {
   rule_format = "v2018-02-27"
 
   hostnames = {
-    "${each.key}" = akamai_edge_hostname.edge_hostname.edge_hostname
+    each.key = akamai_edge_hostname.edge_hostname.edge_hostname
   }
   rules     = data.template_file.rules[each.key].rendered
   is_secure = true
