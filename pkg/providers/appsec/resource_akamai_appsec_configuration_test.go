@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestAccAkamaiConfiguration_res_basic(t *testing.T) {
+func TestAkamaiConfiguration_res_basic(t *testing.T) {
 	t.Run("match by Configuration ID", func(t *testing.T) {
 		client := &mockappsec{}
 
@@ -74,7 +74,7 @@ func TestAccAkamaiConfiguration_res_basic(t *testing.T) {
 	})
 }
 
-func TestAccAkamaiConfiguration_res_error_updating_configuration(t *testing.T) {
+func TestAkamaiConfiguration_res_error_updating_configuration(t *testing.T) {
 	t.Run("match by Configuration ID", func(t *testing.T) {
 		client := &mockappsec{}
 

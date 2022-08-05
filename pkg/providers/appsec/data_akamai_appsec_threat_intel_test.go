@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestAccAkamaiThreatIntel_data_basic(t *testing.T) {
+func TestAkamaiThreatIntel_data_basic(t *testing.T) {
 	t.Run("match by ThreatIntel ID", func(t *testing.T) {
 		client := &mockappsec{}
 
@@ -51,7 +51,7 @@ func TestAccAkamaiThreatIntel_data_basic(t *testing.T) {
 
 }
 
-func TestAccAkamaiThreatIntel_data_error_retrieving_threat_intel(t *testing.T) {
+func TestAkamaiThreatIntel_data_error_retrieving_threat_intel(t *testing.T) {
 	t.Run("match by ThreatIntel ID", func(t *testing.T) {
 		client := &mockappsec{}
 

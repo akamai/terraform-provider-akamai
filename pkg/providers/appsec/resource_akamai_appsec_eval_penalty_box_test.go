@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestAccAkamaiEvalPenaltyBox_res_basic(t *testing.T) {
+func TestAkamaiEvalPenaltyBox_res_basic(t *testing.T) {
 	t.Run("match by EvalPenaltyBox ID", func(t *testing.T) {
 		client := &mockappsec{}
 

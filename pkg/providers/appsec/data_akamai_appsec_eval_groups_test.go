@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestAccAkamaiEvalGroups_data_basic(t *testing.T) {
+func TestAkamaiEvalGroups_data_basic(t *testing.T) {
 	t.Run("match by Eval Attack Group ID", func(t *testing.T) {
 		client := &mockappsec{}
 
@@ -48,7 +48,7 @@ func TestAccAkamaiEvalGroups_data_basic(t *testing.T) {
 	})
 }
 
-func TestAccAkamaiEvalGroups_data_error_retrieving_eval_groups(t *testing.T) {
+func TestAkamaiEvalGroups_data_error_retrieving_eval_groups(t *testing.T) {
 	t.Run("match by Eval Attack Group ID", func(t *testing.T) {
 		client := &mockappsec{}
 

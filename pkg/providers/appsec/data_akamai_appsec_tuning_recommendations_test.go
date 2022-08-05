@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestAccAkamaiTuningRecommendationsDataBasic(t *testing.T) {
+func TestAkamaiTuningRecommendationsDataBasic(t *testing.T) {
 	t.Run(" Recommendations basic", func(t *testing.T) {
 		client := &mockappsec{}
 
@@ -59,7 +59,7 @@ func TestAccAkamaiTuningRecommendationsDataBasic(t *testing.T) {
 
 }
 
-func TestAccAkamaiTuningRecommenadationsDataErrorRetrievingTuningRecommenadations(t *testing.T) {
+func TestAkamaiTuningRecommenadationsDataErrorRetrievingTuningRecommenadations(t *testing.T) {
 	t.Run("Tuning Recommendations Error", func(t *testing.T) {
 		client := &mockappsec{}
 

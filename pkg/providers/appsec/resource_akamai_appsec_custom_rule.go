@@ -61,11 +61,11 @@ func resourceCustomRuleCreate(ctx context.Context, d *schema.ResourceData, m int
 		return diag.FromErr(err)
 	}
 
-	jsonpostpayload := d.Get("custom_rule")
+	jsonpostpayload, err := tools.GetStringValue("custom_rule", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	jsonPayloadRaw := []byte(jsonpostpayload.(string))
+	jsonPayloadRaw := []byte(jsonpostpayload)
 	rawJSON := (json.RawMessage)(jsonPayloadRaw)
 
 	createCustomRule := appsec.CreateCustomRuleRequest{

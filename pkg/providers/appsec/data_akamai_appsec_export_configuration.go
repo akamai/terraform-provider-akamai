@@ -3,7 +3,6 @@ package appsec
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -50,23 +49,16 @@ func dataSourceExportConfigurationRead(ctx context.Context, d *schema.ResourceDa
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "dataSourceExportConfigurationRead")
 
-	getExportConfiguration := appsec.GetExportConfigurationRequest{}
-
 	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil {
-		return diag.FromErr(err)
-	}
-	getExportConfiguration.ConfigID = configID
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 	version, err := tools.GetIntValue("version", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	getExportConfiguration.Version = version
 
-	exportconfiguration, err := client.GetExportConfiguration(ctx, getExportConfiguration)
+	exportconfiguration, err := client.GetExportConfiguration(ctx, appsec.GetExportConfigurationRequest{ConfigID: configID, Version: version})
 	if err != nil {
 		logger.Errorf("calling 'getExportConfiguration': %s", err.Error())
 		return diag.FromErr(err)

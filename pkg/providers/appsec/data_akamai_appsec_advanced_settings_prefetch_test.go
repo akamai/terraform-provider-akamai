@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestAccAkamaiAdvancedSettingsPrefetch_data_basic(t *testing.T) {
+func TestAkamaiAdvancedSettingsPrefetch_data_basic(t *testing.T) {
 	t.Run("match by AdvancedSettingsPrefetch ID", func(t *testing.T) {
 		client := &mockappsec{}
 

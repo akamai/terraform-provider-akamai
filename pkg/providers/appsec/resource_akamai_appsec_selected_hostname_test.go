@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestAccAkamaiSelectedHostname_res_basic(t *testing.T) {
+func TestAkamaiSelectedHostname_res_basic(t *testing.T) {
 	t.Run("match by SelectedHostname ID", func(t *testing.T) {
 		client := &mockappsec{}
 

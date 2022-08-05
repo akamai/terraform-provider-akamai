@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestAccAkamaiSiemDefinitions_data_basic(t *testing.T) {
+func TestAkamaiSiemDefinitions_data_basic(t *testing.T) {
 	t.Run("match by SiemDefinitions ID", func(t *testing.T) {
 		client := &mockappsec{}
 

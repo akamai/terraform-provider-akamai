@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestAccAkamaiSlowPostProtectionSetting_res_basic(t *testing.T) {
+func TestAkamaiSlowPostProtectionSetting_res_basic(t *testing.T) {
 	t.Run("match by SlowPostProtectionSetting ID", func(t *testing.T) {
 		client := &mockappsec{}
 

@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestAccAkamaiAdvancedSettingsPragma_res_basic(t *testing.T) {
+func TestAkamaiAdvancedSettingsPragma_res_basic(t *testing.T) {
 	t.Run("match by AdvancedSettingsPragma ID", func(t *testing.T) {
 		client := &mockappsec{}
 

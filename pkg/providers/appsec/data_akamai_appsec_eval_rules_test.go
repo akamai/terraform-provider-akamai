@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestAccAkamaiEvalRules_data_basic(t *testing.T) {
+func TestAkamaiEvalRules_data_basic(t *testing.T) {
 	t.Run("match by Rules ID", func(t *testing.T) {
 		client := &mockappsec{}
 

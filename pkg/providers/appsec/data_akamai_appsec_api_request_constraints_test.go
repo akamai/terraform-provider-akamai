@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestAccAkamaiApiRequestConstraints_data_basic(t *testing.T) {
+func TestAkamaiApiRequestConstraints_data_basic(t *testing.T) {
 	t.Run("match by ApiRequestConstraints ID", func(t *testing.T) {
 		client := &mockappsec{}
 

@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestAccAkamaiCustomRule_res_basic(t *testing.T) {
+func TestAkamaiCustomRule_res_basic(t *testing.T) {
 	t.Run("CustomRule_basic", func(t *testing.T) {
 		client := &mockappsec{}
 
@@ -93,7 +93,7 @@ func TestAccAkamaiCustomRule_res_basic(t *testing.T) {
 
 }
 
-func TestAccAkamaiCustomRule_res_error_removing_active_rule(t *testing.T) {
+func TestAkamaiCustomRule_res_error_removing_active_rule(t *testing.T) {
 	t.Run("CustomRule_removing_active_rule", func(t *testing.T) {
 		client := &mockappsec{}
 

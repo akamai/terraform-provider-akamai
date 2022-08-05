@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestAccAkamaiApiHostnameCoverage_data_basic(t *testing.T) {
+func TestAkamaiApiHostnameCoverage_data_basic(t *testing.T) {
 	t.Run("match by ApiHostnameCoverage ID", func(t *testing.T) {
 		client := &mockappsec{}
 

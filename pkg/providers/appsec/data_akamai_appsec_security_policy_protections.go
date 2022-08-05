@@ -24,7 +24,19 @@ func dataSourcePolicyProtections() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
+			"apply_api_constraints": {
+				Type:     schema.TypeBool,
+				Computed: true,
+			},
 			"apply_application_layer_controls": {
+				Type:     schema.TypeBool,
+				Computed: true,
+			},
+			"apply_botman_controls": {
+				Type:     schema.TypeBool,
+				Computed: true,
+			},
+			"apply_malware_controls": {
 				Type:     schema.TypeBool,
 				Computed: true,
 			},
@@ -37,14 +49,6 @@ func dataSourcePolicyProtections() *schema.Resource {
 				Computed: true,
 			},
 			"apply_reputation_controls": {
-				Type:     schema.TypeBool,
-				Computed: true,
-			},
-			"apply_botman_controls": {
-				Type:     schema.TypeBool,
-				Computed: true,
-			},
-			"apply_api_constraints": {
 				Type:     schema.TypeBool,
 				Computed: true,
 			},
@@ -113,15 +117,23 @@ func dataSourcePolicyProtectionsRead(ctx context.Context, d *schema.ResourceData
 		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
+	if err := d.Set("apply_api_constraints", policyprotections.ApplyAPIConstraints); err != nil {
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+	}
+
+	if err := d.Set("apply_botman_controls", policyprotections.ApplyBotmanControls); err != nil {
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+	}
+
 	if err := d.Set("apply_application_layer_controls", policyprotections.ApplyApplicationLayerControls); err != nil {
 		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
-	if err := d.Set("apply_network_layer_controls", policyprotections.ApplyNetworkLayerControls); err != nil {
+	if err := d.Set("apply_malware_controls", policyprotections.ApplyMalwareControls); err != nil {
 		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
-	if err := d.Set("apply_api_constraints", policyprotections.ApplyAPIConstraints); err != nil {
+	if err := d.Set("apply_network_layer_controls", policyprotections.ApplyNetworkLayerControls); err != nil {
 		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
@@ -130,10 +142,6 @@ func dataSourcePolicyProtectionsRead(ctx context.Context, d *schema.ResourceData
 	}
 
 	if err := d.Set("apply_reputation_controls", policyprotections.ApplyReputationControls); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
-	}
-
-	if err := d.Set("apply_botman_controls", policyprotections.ApplyBotmanControls); err != nil {
 		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 

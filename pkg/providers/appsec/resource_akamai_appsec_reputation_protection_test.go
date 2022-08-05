@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestAccAkamaiReputationProtection_res_basic(t *testing.T) {
+func TestAkamaiReputationProtection_res_basic(t *testing.T) {
 	t.Run("match by ReputationProtection ID", func(t *testing.T) {
 		client := &mockappsec{}
 

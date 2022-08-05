@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestAccAkamaiMatchTargetSequence_res_basic(t *testing.T) {
+func TestAkamaiMatchTargetSequence_res_basic(t *testing.T) {
 	t.Run("match by MatchTargetSequence ID", func(t *testing.T) {
 		client := &mockappsec{}
 

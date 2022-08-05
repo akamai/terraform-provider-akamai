@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestAccAkamaiCustomDeny_res_basic(t *testing.T) {
+func TestAkamaiCustomDeny_res_basic(t *testing.T) {
 	t.Run("match by CustomDeny ID", func(t *testing.T) {
 		client := &mockappsec{}
 

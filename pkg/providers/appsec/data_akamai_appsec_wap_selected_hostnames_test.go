@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestAccAkamaiWAPSelectedHostnames_data_basic(t *testing.T) {
+func TestAkamaiWAPSelectedHostnames_data_basic(t *testing.T) {
 	t.Run("match by WAPSelectedHostnames ID", func(t *testing.T) {
 		client := &mockappsec{}
 
@@ -51,7 +51,7 @@ func TestAccAkamaiWAPSelectedHostnames_data_basic(t *testing.T) {
 
 }
 
-func TestAccAkamaiWAPSelectedHostnames_data_error_retrieving_hostnames(t *testing.T) {
+func TestAkamaiWAPSelectedHostnames_data_error_retrieving_hostnames(t *testing.T) {
 	t.Run("match by WAPSelectedHostnames ID", func(t *testing.T) {
 		client := &mockappsec{}
 
@@ -92,7 +92,7 @@ func TestAccAkamaiWAPSelectedHostnames_data_error_retrieving_hostnames(t *testin
 
 }
 
-func TestAccAkamaiWAPSelectedHostnames_NonWAP_data_basic(t *testing.T) {
+func TestAkamaiWAPSelectedHostnames_NonWAP_data_basic(t *testing.T) {
 	t.Run("match by WAPSelectedHostnames ID", func(t *testing.T) {
 		client := &mockappsec{}
 

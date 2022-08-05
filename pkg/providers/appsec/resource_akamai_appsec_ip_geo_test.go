@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestAccAkamaiIPGeo_res_basic(t *testing.T) {
+func TestAkamaiIPGeo_res_basic(t *testing.T) {
 	t.Run("match by IPGeo ID", func(t *testing.T) {
 		client := &mockappsec{}
 

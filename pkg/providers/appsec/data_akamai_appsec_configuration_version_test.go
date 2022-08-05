@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestAccAkamaiConfigurationVersion_data_basic(t *testing.T) {
+func TestAkamaiConfigurationVersion_data_basic(t *testing.T) {
 	t.Run("match by ConfigurationVersion ID", func(t *testing.T) {
 		client := &mockappsec{}
 

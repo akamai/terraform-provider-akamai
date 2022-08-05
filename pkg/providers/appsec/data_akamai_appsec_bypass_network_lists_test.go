@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestAccAkamaiBypassNetworkLists_data_basic(t *testing.T) {
+func TestAkamaiBypassNetworkLists_data_basic(t *testing.T) {
 	t.Run("match by BypassNetworkLists ID", func(t *testing.T) {
 		client := &mockappsec{}
 

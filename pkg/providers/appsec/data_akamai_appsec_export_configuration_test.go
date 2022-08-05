@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestAccAkamaiExportConfiguration_data_basic(t *testing.T) {
+func TestAkamaiExportConfiguration_data_basic(t *testing.T) {
 	t.Run("Configuration Export Tests", func(t *testing.T) {
 		client := &mockappsec{}
 

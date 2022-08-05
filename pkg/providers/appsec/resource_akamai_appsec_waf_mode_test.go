@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestAccAkamaiWAFMode_res_basic(t *testing.T) {
+func TestAkamaiWAFMode_res_basic(t *testing.T) {
 	t.Run("match by WAFMode ID", func(t *testing.T) {
 		client := &mockappsec{}
 

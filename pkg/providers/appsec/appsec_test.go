@@ -1803,8 +1803,10 @@ func (p *mockappsec) UpdateMalwarePolicy(ctx context.Context, params appsec.Upda
 	return args.Get(0).(*appsec.MalwarePolicyResponse), args.Error(1)
 }
 
-func (p *mockappsec) RemoveMalwarePolicy(_ context.Context, _ appsec.RemoveMalwarePolicyRequest) error {
-	return nil
+func (p *mockappsec) RemoveMalwarePolicy(ctx context.Context, params appsec.RemoveMalwarePolicyRequest) error {
+	args := p.Called(ctx, params)
+
+	return args.Error(0)
 }
 
 func (p *mockappsec) GetMalwarePolicyActions(ctx context.Context, params appsec.GetMalwarePolicyActionsRequest) (*appsec.GetMalwarePolicyActionsResponse, error) {

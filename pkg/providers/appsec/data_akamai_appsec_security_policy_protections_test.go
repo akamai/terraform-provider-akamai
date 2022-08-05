@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestAccAkamaiPolicyProtections_data_basic(t *testing.T) {
+func TestAkamaiPolicyProtections_data_basic(t *testing.T) {
 	t.Run("match by PolicyProtections ID", func(t *testing.T) {
 		client := &mockappsec{}
 

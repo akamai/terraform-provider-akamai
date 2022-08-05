@@ -132,10 +132,9 @@ func resourceRatePolicyActionRead(ctx context.Context, d *schema.ResourceData, m
 	}
 
 	getRatePolicyActionsRequest := appsec.GetRatePolicyActionsRequest{
-		ConfigID:     configID,
-		Version:      version,
-		PolicyID:     securityPolicyID,
-		RatePolicyID: ratePolicyID,
+		ConfigID: configID,
+		Version:  version,
+		PolicyID: securityPolicyID,
 	}
 
 	ratepolicyactions, err := client.GetRatePolicyActions(ctx, getRatePolicyActionsRequest)
@@ -161,6 +160,7 @@ func resourceRatePolicyActionRead(ctx context.Context, d *schema.ResourceData, m
 			if err := d.Set("ipv6_action", action.Ipv6Action); err != nil {
 				return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 			}
+			break
 		}
 	}
 

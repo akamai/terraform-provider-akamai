@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestAccAkamaiThreatIntel_res_basic(t *testing.T) {
+func TestAkamaiThreatIntel_res_basic(t *testing.T) {
 	t.Run("match by Threat Intel ID", func(t *testing.T) {
 		client := &mockappsec{}
 
