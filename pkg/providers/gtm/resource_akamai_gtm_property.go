@@ -905,7 +905,7 @@ func populateTerraformPropertyState(d *schema.ResourceData, prop *gtm.Property, 
 // create and populate GTM Property TrafficTargets object
 func populateTrafficTargetObject(ctx context.Context, d *schema.ResourceData, prop *gtm.Property, m interface{}) {
 	meta := akamai.Meta(m)
-	logger := meta.Log("Akamai GTM", "resourceGTMv1PropertyExists")
+	logger := meta.Log("Akamai GTM", "populateTrafficTargetObject")
 
 	// pull apart List
 	traffTargs, err := tools.GetSetValue("traffic_target", d)

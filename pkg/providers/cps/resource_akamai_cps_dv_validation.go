@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"strconv"
 	"time"
 
@@ -50,9 +49,8 @@ func resourceCPSDVValidation() *schema.Resource {
 }
 
 func resourceCPSDVValidationCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	log.Print("DEBUG: enter resourceCPSDVValidationCreate")
 	meta := akamai.Meta(m)
-	logger := meta.Log("CPS", "resourceDVEnrollment")
+	logger := meta.Log("CPS", "resourceCPSDVValidationCreate")
 	ctx = session.ContextWithOptions(
 		ctx,
 		session.WithContextLog(logger),
@@ -140,9 +138,8 @@ func resourceCPSDVValidationCreate(ctx context.Context, d *schema.ResourceData, 
 }
 
 func resourceCPSDVValidationRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	log.Print("DEBUG: enter resourceCPSDVValidationCreate")
 	meta := akamai.Meta(m)
-	logger := meta.Log("CPS", "resourceDVEnrollment")
+	logger := meta.Log("CPS", "resourceCPSDVValidationRead")
 	ctx = session.ContextWithOptions(
 		ctx,
 		session.WithContextLog(logger),
