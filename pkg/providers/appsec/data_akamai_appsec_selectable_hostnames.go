@@ -20,25 +20,30 @@ func dataSourceSelectableHostnames() *schema.Resource {
 			"config_id": {
 				Type:          schema.TypeInt,
 				Optional:      true,
+				Description:   "Unique identifier of the security configuration",
 				ConflictsWith: []string{"contractid", "groupid"},
 			},
 			"contractid": {
 				Type:          schema.TypeString,
 				Optional:      true,
+				Description:   "Unique identifier of an Akamai contract",
 				ConflictsWith: []string{"config_id"},
 			},
 			"groupid": {
 				Type:          schema.TypeInt,
 				Optional:      true,
+				Description:   "Unique identifier of a contract group",
 				ConflictsWith: []string{"config_id"},
 			},
 			"active_in_staging": {
-				Type:     schema.TypeBool,
-				Optional: true,
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Description: "Whether to return names of hosts selected in staging",
 			},
 			"active_in_production": {
-				Type:     schema.TypeBool,
-				Optional: true,
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Description: "Whether to return names of hosts selected in production",
 			},
 			"hostnames": {
 				Type:        schema.TypeList,
@@ -49,12 +54,12 @@ func dataSourceSelectableHostnames() *schema.Resource {
 			"hostnames_json": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "JSON List of hostnames",
+				Description: "JSON representation of hostnames",
 			},
 			"output_text": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Text Export representation",
+				Description: "Text representation of hostnames",
 			},
 		},
 	}

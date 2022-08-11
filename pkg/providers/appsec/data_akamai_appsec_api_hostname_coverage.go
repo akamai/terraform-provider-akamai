@@ -18,13 +18,14 @@ func dataSourceAPIHostnameCoverage() *schema.Resource {
 		ReadContext: dataSourceAPIHostnameCoverageRead,
 		Schema: map[string]*schema.Schema{
 			"json": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "JSON representation",
 			},
 			"output_text": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Text Export representation",
+				Description: "Text representation",
 			},
 		},
 	}

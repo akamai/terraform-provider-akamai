@@ -31,20 +31,24 @@ func resourceReputationAnalysis() *schema.Resource {
 		},
 		Schema: map[string]*schema.Schema{
 			"config_id": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "Unique identifier of the security configuration",
 			},
 			"security_policy_id": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Unique identifier of the security policy",
 			},
 			"forward_to_http_header": {
-				Type:     schema.TypeBool,
-				Required: true,
+				Type:        schema.TypeBool,
+				Required:    true,
+				Description: "Whether to add client reputation details to requests forwarded to the origin server",
 			},
 			"forward_shared_ip_to_http_header_siem": {
-				Type:     schema.TypeBool,
-				Required: true,
+				Type:        schema.TypeBool,
+				Required:    true,
+				Description: "Whether to add a value indicating that shared IPs are included in HTTP header and SIEM integration",
 			},
 		},
 	}

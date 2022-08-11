@@ -18,21 +18,24 @@ func dataSourceCustomDeny() *schema.Resource {
 		ReadContext: dataSourceCustomDenyRead,
 		Schema: map[string]*schema.Schema{
 			"config_id": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "Unique identifier of the security configuration",
 			},
 			"custom_deny_id": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Unique identifier of the custom deny for which to return information",
 			},
 			"json": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "JSON representation",
 			},
 			"output_text": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Text Export representation",
+				Description: "Text representation",
 			},
 		},
 	}

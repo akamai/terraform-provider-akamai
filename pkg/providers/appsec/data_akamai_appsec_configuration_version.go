@@ -16,30 +16,35 @@ func dataSourceConfigurationVersion() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataSourceConfigurationVersionRead,
 		Schema: map[string]*schema.Schema{
-			"version": {
-				Type:     schema.TypeInt,
-				Optional: true,
-			},
 			"config_id": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "Unique identifier of the security configuration",
+			},
+			"version": {
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Description: "Version of the security configuration for which to return information",
 			},
 			"latest_version": {
-				Type:     schema.TypeInt,
-				Computed: true,
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Latest version of the security configuration",
 			},
 			"staging_status": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Status of the specified version in staging",
 			},
 			"production_status": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Status of the specified version in production",
 			},
 			"output_text": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Text Export representation",
+				Description: "Text representation",
 			},
 		},
 	}

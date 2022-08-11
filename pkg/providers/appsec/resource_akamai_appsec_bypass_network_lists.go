@@ -28,18 +28,20 @@ func resourceBypassNetworkLists() *schema.Resource {
 		),
 		Schema: map[string]*schema.Schema{
 			"config_id": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "Unique identifier of the security configuration",
 			},
 			"security_policy_id": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "The ID of the security policy governing the bypass network lists",
+				Description: "The unique identifier of the security policy governing the bypass network lists",
 			},
 			"bypass_network_list": {
-				Type:     schema.TypeSet,
-				Required: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Type:        schema.TypeSet,
+				Required:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "List of network list IDs that compose the bypass list",
 			},
 		},
 	}

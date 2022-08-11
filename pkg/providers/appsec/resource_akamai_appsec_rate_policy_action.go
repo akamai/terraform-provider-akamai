@@ -31,26 +31,32 @@ func resourceRatePolicyAction() *schema.Resource {
 		),
 		Schema: map[string]*schema.Schema{
 			"config_id": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "Unique identifier of the security configuration",
 			},
 			"security_policy_id": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Unique identifier of the security policy",
 			},
 			"rate_policy_id": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "Unique identifier of the rate policy",
 			},
 			"ipv4_action": {
 				Type:             schema.TypeString,
 				Required:         true,
 				ValidateDiagFunc: ValidateActions,
+				Description:      "Action to be taken for requests coming from an IPv4 address",
 			},
 			"ipv6_action": {
 				Type:             schema.TypeString,
 				Required:         true,
-				ValidateDiagFunc: ValidateActions},
+				ValidateDiagFunc: ValidateActions,
+				Description:      "Action to be taken for requests coming from an IPv6 address",
+			},
 		},
 	}
 }

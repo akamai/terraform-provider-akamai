@@ -32,12 +32,14 @@ func resourceIPGeo() *schema.Resource {
 		},
 		Schema: map[string]*schema.Schema{
 			"config_id": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "Unique identifier of the security configuration",
 			},
 			"security_policy_id": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Unique identifier of the security policy",
 			},
 			"mode": {
 				Type:     schema.TypeString,
@@ -46,21 +48,25 @@ func resourceIPGeo() *schema.Resource {
 					Allow,
 					Block,
 				}, false)),
+				Description: "Protection mode (block or allow)",
 			},
 			"geo_network_lists": {
-				Type:     schema.TypeSet,
-				Optional: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "List of IDs of geographic network list to be blocked or allowed",
 			},
 			"ip_network_lists": {
-				Type:     schema.TypeSet,
-				Optional: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "List of IDs of IP network list to be blocked or allowed",
 			},
 			"exception_ip_network_lists": {
-				Type:     schema.TypeSet,
-				Optional: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "List of IDs of network list that are always allowed",
 			},
 		},
 	}

@@ -33,16 +33,19 @@ func resourceSecurityPolicy() *schema.Resource {
 		),
 		Schema: map[string]*schema.Schema{
 			"config_id": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "Unique identifier of the security configuration",
 			},
 			"security_policy_name": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Name of the new security policy",
 			},
 			"security_policy_prefix": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Four-character alphanumeric string prefix used in creating the security policy ID",
 			},
 			"default_settings": {
 				Type:     schema.TypeBool,
@@ -51,15 +54,17 @@ func resourceSecurityPolicy() *schema.Resource {
 				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
 					return old != "" // read & use this setting on policy creation, otherwise ignore it
 				},
+				Description: "Whether to assign default settings to the new security policy",
 			},
 			"create_from_security_policy_id": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Unique identifier of the existing security policy being cloned",
 			},
 			"security_policy_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Policy ID for new policy",
+				Description: "Unique identifier of the new security policy",
 			},
 		},
 	}

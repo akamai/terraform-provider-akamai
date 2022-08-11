@@ -17,25 +17,29 @@ func dataSourceThreatIntel() *schema.Resource {
 		ReadContext: dataSourceThreatIntelRead,
 		Schema: map[string]*schema.Schema{
 			"config_id": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "Unique identifier of the security configuration",
 			},
 			"security_policy_id": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Unique identifier of the security policy",
 			},
 			"threat_intel": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Reports the threat Intelligence setting, either \"on\" or \"off\"",
 			},
 			"json": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "JSON representation",
 			},
 			"output_text": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Text Export representation",
+				Description: "Text representation",
 			},
 		},
 	}

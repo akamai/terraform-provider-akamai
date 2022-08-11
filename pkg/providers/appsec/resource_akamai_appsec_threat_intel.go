@@ -32,12 +32,14 @@ func resourceThreatIntel() *schema.Resource {
 		},
 		Schema: map[string]*schema.Schema{
 			"config_id": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "Unique identifier of the security configuration",
 			},
 			"security_policy_id": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Unique identifier of the security policy",
 			},
 			"threat_intel": {
 				Type:     schema.TypeString,
@@ -46,6 +48,7 @@ func resourceThreatIntel() *schema.Resource {
 					"on",
 					"off",
 				}, false),
+				Description: "Whether threat intelligence protection should be on or off",
 			},
 		},
 	}

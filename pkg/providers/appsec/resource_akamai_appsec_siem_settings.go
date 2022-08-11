@@ -31,29 +31,35 @@ func resourceSiemSettings() *schema.Resource {
 		},
 		Schema: map[string]*schema.Schema{
 			"config_id": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "Unique identifier of the security configuration",
 			},
 			"enable_siem": {
-				Type:     schema.TypeBool,
-				Required: true,
+				Type:        schema.TypeBool,
+				Required:    true,
+				Description: "Whether to enable SIEM",
 			},
 			"enable_for_all_policies": {
-				Type:     schema.TypeBool,
-				Required: true,
+				Type:        schema.TypeBool,
+				Required:    true,
+				Description: "Whether to enable SIEM on all security policies in the security configuration",
 			},
 			"security_policy_ids": {
-				Type:     schema.TypeSet,
-				Optional: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Description: "List of IDs of security policy for which SIEM integration is to be enabled",
+				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 			"enable_botman_siem": {
-				Type:     schema.TypeBool,
-				Required: true,
+				Type:        schema.TypeBool,
+				Required:    true,
+				Description: "Whether Bot Manager events should be included in SIEM events",
 			},
 			"siem_id": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "Unique identifier of the SIEM settings being modified",
 			},
 		},
 	}

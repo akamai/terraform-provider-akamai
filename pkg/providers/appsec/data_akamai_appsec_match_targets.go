@@ -31,22 +31,24 @@ func dataSourceMatchTargets() *schema.Resource {
 		ReadContext: dataSourceMatchTargetsRead,
 		Schema: map[string]*schema.Schema{
 			"config_id": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "Unique identifier of the security configuration",
 			},
 			"match_target_id": {
-				Type:     schema.TypeInt,
-				Optional: true,
-			},
-			"output_text": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Text Export representation",
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Description: "Unique identifier of a specific match target for which to retrieve information",
 			},
 			"json": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "JSON Export representation",
+			},
+			"output_text": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Text representation",
 			},
 		},
 	}

@@ -27,7 +27,7 @@ func dataSourceTuningRecommendations() *schema.Resource {
 			"security_policy_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Unique identifier of the security policy for which to return tuning recommendations.",
+				Description: "Unique identifier of the security policy for which to return tuning recommendations",
 			},
 			"ruleset_type": {
 				Type:     schema.TypeString,
@@ -37,17 +37,17 @@ func dataSourceTuningRecommendations() *schema.Resource {
 					string(appsec.RulesetTypeActive),
 					string(appsec.RulesetTypeEvaluation),
 				}, false),
-				Description: "Type of the ruleset of the security configuration for which to return tuning recommendations.",
+				Description: "Type of the ruleset of the security configuration for which to return tuning recommendations",
 			},
 			"attack_group": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Unique name of a specific attack group for which to return tuning recommendations.",
+				Description: "Unique name of a specific attack group for which to return tuning recommendations",
 			},
 			"json": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "JSON-formatted list of the tuning recommendations for the security policy or attack group.",
+				Description: "JSON-formatted list of the tuning recommendations for the security policy or attack group",
 			},
 		},
 	}

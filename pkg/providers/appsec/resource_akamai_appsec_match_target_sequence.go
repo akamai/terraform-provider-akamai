@@ -29,14 +29,16 @@ func resourceMatchTargetSequence() *schema.Resource {
 		),
 		Schema: map[string]*schema.Schema{
 			"config_id": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "Unique identifier of the security configuration",
 			},
 			"match_target_sequence": {
 				Type:             schema.TypeString,
 				Optional:         true,
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsJSON),
 				DiffSuppressFunc: suppressEquivalentJSONDiffsGeneric,
+				Description:      "JSON-formatted definition of the processing sequence for all defined match targets ",
 			},
 		},
 	}

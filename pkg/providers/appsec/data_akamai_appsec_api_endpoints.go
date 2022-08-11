@@ -19,16 +19,19 @@ func dataSourceAPIEndpoints() *schema.Resource {
 		ReadContext: dataSourceAPIEndpointsRead,
 		Schema: map[string]*schema.Schema{
 			"config_id": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "Unique identifier of the security configuration",
 			},
 			"security_policy_id": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Unique identifier of the security policy",
 			},
 			"api_name": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Name of the API endpoint",
 			},
 			"id_list": {
 				Type:        schema.TypeList,
@@ -37,13 +40,14 @@ func dataSourceAPIEndpoints() *schema.Resource {
 				Description: "List of endpoint IDs",
 			},
 			"json": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "JSON representation",
 			},
 			"output_text": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Text Export representation",
+				Description: "Text representation",
 			},
 		},
 	}

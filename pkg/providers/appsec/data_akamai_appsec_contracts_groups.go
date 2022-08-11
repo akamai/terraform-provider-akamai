@@ -18,29 +18,34 @@ func dataSourceContractsGroups() *schema.Resource {
 		ReadContext: dataSourceContractsGroupsRead,
 		Schema: map[string]*schema.Schema{
 			"contractid": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Unique identifier of an Akamai contract",
 			},
 			"groupid": {
-				Type:     schema.TypeInt,
-				Optional: true,
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Description: "Unique identifier of a contract group",
 			},
 			"json": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "JSON representation",
 			},
 			"output_text": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Text Export representation",
+				Description: "Text representation",
 			},
 			"default_contractid": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Default contract ID for the specified contract and group",
 			},
 			"default_groupid": {
-				Type:     schema.TypeInt,
-				Computed: true,
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Default group ID for the specified contract and group",
 			},
 		},
 	}

@@ -16,9 +16,12 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
+<<<<<<< HEAD
 // appsec v1
 //
 // https://techdocs.akamai.com/application-security/reference/api
+=======
+>>>>>>> SECKSD-14197 Incorporate review comments
 func resourceActivations() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceActivationsCreate,
@@ -35,35 +38,36 @@ func resourceActivations() *schema.Resource {
 			"config_id": {
 				Type:        schema.TypeInt,
 				Required:    true,
-				Description: "The ID of the security configuration to be activated",
+				Description: "Unique identifier of the security configuration to be activated",
 			},
 			"version": {
 				Type:        schema.TypeInt,
 				Required:    true,
-				Description: "The version of the security configuration to be activated",
+				Description: "Version of the security configuration to be activated",
 			},
 			"network": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Default:     "STAGING",
-				Description: "The network on which to activate the configuration version",
+				Description: "Network on which to activate the configuration version (STAGING or PRODUCTION)",
 			},
 			"activate": {
-				Type:       schema.TypeBool,
-				Optional:   true,
-				Default:    true,
-				Deprecated: `The setting activate has been deprecated; "terraform apply" will always perform activation. (Use "terraform destroy" for deactivation.)`,
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     true,
+				Description: "Whether to activate or deactivate the specified security configuration and version",
+				Deprecated:  `The setting activate has been deprecated; "terraform apply" will always perform activation. (Use "terraform destroy" for deactivation.)`,
 			},
 			"note": {
 				Type:          schema.TypeString,
 				Optional:      true,
-				Description:   "A note describing the activation. Will use timestamp if omitted.",
+				Description:   "Note describing the activation. Will use timestamp if omitted.",
 				ConflictsWith: []string{"notes"},
 			},
 			"notes": {
 				Type:          schema.TypeString,
 				Optional:      true,
-				Description:   "A note describing the activation",
+				Description:   "Note describing the activation",
 				Deprecated:    `The setting notes has been deprecated. Use "note" instead.`,
 				ConflictsWith: []string{"note"},
 			},
@@ -71,9 +75,8 @@ func resourceActivations() *schema.Resource {
 				Type:        schema.TypeSet,
 				Required:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
-				Description: "A list of email addresses to be notified with the results of the activation",
-			},
-			"status": {
+				Description: "List of email addresses to be notified with the results of the activation",
+			}, "status": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The results of the activation",

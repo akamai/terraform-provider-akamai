@@ -32,12 +32,14 @@ func resourceSlowPostProtectionSetting() *schema.Resource {
 		},
 		Schema: map[string]*schema.Schema{
 			"config_id": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "Unique identifier of the security configuration",
 			},
 			"security_policy_id": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Unique identifier of the security policy",
 			},
 			"slow_rate_action": {
 				Type:     schema.TypeString,
@@ -46,21 +48,25 @@ func resourceSlowPostProtectionSetting() *schema.Resource {
 					Alert,
 					Abort,
 				}, false)),
+				Description: "Action to be taken when slow POST protection is triggered",
 			},
 			"slow_rate_threshold_rate": {
-				Type:     schema.TypeInt,
-				Optional: true,
-				Default:  0,
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Default:     0,
+				Description: "Average rate (in bytes per second over the specified time period) allowed before the specified action is triggered",
 			},
 			"slow_rate_threshold_period": {
-				Type:     schema.TypeInt,
-				Optional: true,
-				Default:  0,
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Default:     0,
+				Description: "Amount of time (in seconds) that the server should allow a request before marking the request as being too slow",
 			},
 			"duration_threshold_timeout": {
-				Type:     schema.TypeInt,
-				Optional: true,
-				Default:  0,
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Default:     0,
+				Description: "Maximum amount of time (in seconds) within which the first 8KB of the POST body must be received to avoid triggering the specified action",
 			},
 		},
 	}

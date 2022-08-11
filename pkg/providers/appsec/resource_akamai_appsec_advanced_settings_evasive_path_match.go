@@ -34,12 +34,12 @@ func resourceAdvancedSettingsEvasivePathMatch() *schema.Resource {
 			"config_id": {
 				Type:        schema.TypeInt,
 				Required:    true,
-				Description: "Security configuration ID",
+				Description: "Unique identifier of the security configuration",
 			},
 			"security_policy_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Security policy ID",
+				Description: "Unique identifier of the security policy",
 			},
 			"enable_path_match": {
 				Type:        schema.TypeBool,

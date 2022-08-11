@@ -31,26 +31,30 @@ func resourceAdvancedSettingsPrefetch() *schema.Resource {
 		},
 		Schema: map[string]*schema.Schema{
 			"config_id": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "Unique identifier of the security configuration",
 			},
 			"enable_app_layer": {
-				Type:     schema.TypeBool,
-				Required: true,
+				Type:        schema.TypeBool,
+				Required:    true,
+				Description: "Whether to enable or disable prefetch requests",
 			},
 			"all_extensions": {
-				Type:     schema.TypeBool,
-				Required: true,
+				Type:        schema.TypeBool,
+				Required:    true,
+				Description: "Whether to enable prefetch requests for all file extensions",
 			},
 			"extensions": {
 				Type:        schema.TypeSet,
 				Required:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
-				Description: "List of extensions",
+				Description: "List of file extensions",
 			},
 			"enable_rate_controls": {
-				Type:     schema.TypeBool,
-				Required: true,
+				Type:        schema.TypeBool,
+				Required:    true,
+				Description: "Whether to enable prefetch requests for rate controls",
 			},
 		},
 	}

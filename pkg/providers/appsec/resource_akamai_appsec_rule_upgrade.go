@@ -33,12 +33,14 @@ func resourceRuleUpgrade() *schema.Resource {
 		},
 		Schema: map[string]*schema.Schema{
 			"config_id": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "Unique identifier of the security configuration",
 			},
 			"security_policy_id": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Unique identifier of the security policy",
 			},
 			"upgrade_mode": {
 				Type:     schema.TypeString,
@@ -47,18 +49,22 @@ func resourceRuleUpgrade() *schema.Resource {
 					"ASE_MANUAL",
 					"ASE_AUTO",
 				}, false),
+				Description: "Modifies the upgrade type for organizations running the ASE beta (ASE_AUTO or ASE_MANUAL)",
 			},
 			"mode": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Upgrade mode (KRS, AAG, ASE_MANUAL or ASE_AUTO)",
 			},
 			"current_ruleset": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Versioning information for the current KRS rule set",
 			},
 			"eval_status": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Whether an evaluation is currently in progress",
 			},
 		},
 	}

@@ -32,12 +32,14 @@ func resourceEval() *schema.Resource {
 		},
 		Schema: map[string]*schema.Schema{
 			"config_id": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "Unique identifier of the security configuration",
 			},
 			"security_policy_id": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Unique identifier of the security policy",
 			},
 			"eval_operation": {
 				Type:     schema.TypeString,
@@ -49,6 +51,7 @@ func resourceEval() *schema.Resource {
 					Update,
 					Complete,
 				}, false)),
+				Description: "Evaluation mode operation (START, STOP, RESTART, UPDATE or COMPLETE)",
 			},
 			"eval_mode": {
 				Type:     schema.TypeString,
@@ -57,22 +60,27 @@ func resourceEval() *schema.Resource {
 					"ASE_MANUAL",
 					"ASE_AUTO",
 				}, false),
+				Description: "Evaluation mode (ASE_AUTO or ASE_MANUAL)",
 			},
 			"current_ruleset": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Versioning information for the Kona Rule Set currently in use in production",
 			},
 			"evaluating_ruleset": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Versioning information for the Kona Rule Set being evaluated",
 			},
 			"eval_status": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Whether an evaluation is currently in progress",
 			},
 			"expiration_date": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Date when the evaluation period ends",
 			},
 		},
 	}

@@ -16,12 +16,14 @@ func dataSourcePenaltyBox() *schema.Resource {
 		ReadContext: dataSourcePenaltyBoxRead,
 		Schema: map[string]*schema.Schema{
 			"config_id": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "Unique identifier of the security configuration",
 			},
 			"security_policy_id": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Unique identifier of the security policy",
 			},
 			"action": {
 				Type:        schema.TypeString,
@@ -36,7 +38,7 @@ func dataSourcePenaltyBox() *schema.Resource {
 			"output_text": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Text Export representation",
+				Description: "Text representation",
 			},
 		},
 	}

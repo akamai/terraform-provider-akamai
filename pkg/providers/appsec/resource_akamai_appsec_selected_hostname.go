@@ -31,13 +31,15 @@ func resourceSelectedHostname() *schema.Resource {
 		),
 		Schema: map[string]*schema.Schema{
 			"config_id": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "Unique identifier of the security configuration",
 			},
 			"hostnames": {
-				Type:     schema.TypeSet,
-				Required: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Type:        schema.TypeSet,
+				Required:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "List of hostnames to be added or removed from the protected hosts list",
 			},
 			"mode": {
 				Type:     schema.TypeString,
@@ -47,6 +49,7 @@ func resourceSelectedHostname() *schema.Resource {
 					Replace,
 					Remove,
 				}, false)),
+				Description: "How the hostnames are to be applied (APPEND, REMOVE or REPLACE)",
 			},
 		},
 	}

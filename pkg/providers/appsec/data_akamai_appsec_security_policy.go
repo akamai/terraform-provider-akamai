@@ -16,29 +16,31 @@ func dataSourceSecurityPolicy() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataSourceSecurityPolicyRead,
 		Schema: map[string]*schema.Schema{
-			"security_policy_name": {
-				Type:     schema.TypeString,
-				Optional: true,
-			},
 			"config_id": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "Unique identifier of the security configuration",
+			},
+			"security_policy_name": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "The name to be given to the security policy",
 			},
 			"security_policy_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Policy ID",
+				Description: "Unique identifier of the security policy",
 			},
 			"security_policy_id_list": {
 				Type:        schema.TypeList,
 				Computed:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
-				Description: "Policy ID List",
+				Description: "List of security policy IDs",
 			},
 			"output_text": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Text Export representation",
+				Description: "Text representation",
 			},
 		},
 	}

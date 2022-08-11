@@ -32,18 +32,21 @@ func resourceMatchTarget() *schema.Resource {
 		},
 		Schema: map[string]*schema.Schema{
 			"config_id": {
-				Type:     schema.TypeInt,
-				Required: true,
-			},
-			"match_target_id": {
-				Type:     schema.TypeInt,
-				Computed: true,
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "Unique identifier of the security configuration",
 			},
 			"match_target": {
 				Type:             schema.TypeString,
 				Required:         true,
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsJSON),
 				DiffSuppressFunc: suppressEquivalentMatchTargetDiffs,
+				Description:      "JSON-formatted definition of the match target",
+			},
+			"match_target_id": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Unique identifier of the match target",
 			},
 		},
 	}

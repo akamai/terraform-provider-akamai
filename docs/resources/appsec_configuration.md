@@ -74,7 +74,7 @@ This resource supports the following arguments:
 - `description` (Required). Brief description of the new configuration.
 - `create_from_config_id` (Optional). Unique identifier of the existing configuration being cloned in order to create the new configuration.
 - `create_from_version` (Optional). Version number of the security configuration being cloned.
-- `contract_id` (Required). Unique identifier of the Akamai contract t associated with the new configuration.
+- `contract_id` (Required). Unique identifier of the Akamai contract associated with the new configuration.
 - `group_id` (Required). Unique identifier of the contract group associated with the new configuration.
 - `host_names` (Required). JSON array containing the hostnames to be protected by the new configuration. You must specify at least one hostname in order to create a new configuration.
 

@@ -18,22 +18,22 @@ func dataSourceEvalPenaltyBox() *schema.Resource {
 			"config_id": {
 				Type:        schema.TypeInt,
 				Required:    true,
-				Description: "Unique identifier of the security configuration.",
+				Description: "Unique identifier of the security configuration",
 			},
 			"security_policy_id": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Unique identifier of the security policy.",
+				Description: "Unique identifier of the security policy",
 			},
 			"action": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Penalty box action applied to requests from clients in the penalty box",
+				Description: "Action to be applied to requests from clients in the penalty box",
 			},
 			"enabled": {
 				Type:        schema.TypeBool,
 				Computed:    true,
-				Description: "Penalty box enabled flag",
+				Description: "Whether the penalty box is enabled for the specified security policy",
 			},
 			"output_text": {
 				Type:        schema.TypeString,

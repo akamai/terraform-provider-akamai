@@ -21,12 +21,12 @@ func dataSourceAdvancedSettingsEvasivePathMatch() *schema.Resource {
 			"config_id": {
 				Type:        schema.TypeInt,
 				Required:    true,
-				Description: "config ID",
+				Description: "Unique identifier of the security configuration",
 			},
 			"security_policy_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "security policy ID",
+				Description: "Unique identifier of the security policy",
 			},
 			"json": {
 				Type:        schema.TypeString,
@@ -36,7 +36,7 @@ func dataSourceAdvancedSettingsEvasivePathMatch() *schema.Resource {
 			"output_text": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Text Export representation",
+				Description: "Text representation",
 			},
 		},
 	}

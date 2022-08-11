@@ -17,8 +17,9 @@ func dataSourceSelectedHostnames() *schema.Resource {
 		ReadContext: dataSourceSelectedHostnamesRead,
 		Schema: map[string]*schema.Schema{
 			"config_id": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "Unique identifier of the security configuration",
 			},
 			"hostnames": {
 				Type:        schema.TypeList,
@@ -34,7 +35,7 @@ func dataSourceSelectedHostnames() *schema.Resource {
 			"output_text": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Text Export representation",
+				Description: "Text representation",
 			},
 		},
 	}
