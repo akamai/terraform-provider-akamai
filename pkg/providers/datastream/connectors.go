@@ -132,11 +132,7 @@ func MapS3Connector(c datastream.ConnectorDetails, s map[string]interface{}) map
 		"region":            c.Region,
 		"secret_access_key": "",
 	}
-
-	if s["access_key"] != nil && s["secret_access_key"] != nil {
-		rv["access_key"] = s["access_key"]
-		rv["secret_access_key"] = s["secret_access_key"]
-	}
+	setNonNilItemsFromState(s, []string{"access_key", "secret_access_key"}, rv)
 	return rv
 }
 
@@ -162,9 +158,7 @@ func MapAzureConnector(c datastream.ConnectorDetails, s map[string]interface{}) 
 		"container_name": c.ContainerName,
 		"path":           c.Path,
 	}
-	if s["access_key"] != nil {
-		rv["access_key"] = s["access_key"]
-	}
+	setNonNilItemsFromState(s, []string{"access_key"}, rv)
 	return rv
 }
 
@@ -193,9 +187,7 @@ func MapDatadogConnector(c datastream.ConnectorDetails, s map[string]interface{}
 		"tags":           c.Tags,
 		"url":            c.URL,
 	}
-	if s["auth_token"] != nil {
-		rv["auth_token"] = s["auth_token"]
-	}
+	setNonNilItemsFromState(s, []string{"auth_token"}, rv)
 	return rv
 }
 
@@ -208,6 +200,10 @@ func GetSplunkConnector(props map[string]interface{}) datastream.AbstractConnect
 		CustomHeaderValue:   props["custom_header_value"].(string),
 		EventCollectorToken: props["event_collector_token"].(string),
 		URL:                 props["url"].(string),
+		TLSHostname:         props["tls_hostname"].(string),
+		CACert:              props["ca_cert"].(string),
+		ClientCert:          props["client_cert"].(string),
+		ClientKey:           props["client_key"].(string),
 	}
 }
 
@@ -221,10 +217,16 @@ func MapSplunkConnector(c datastream.ConnectorDetails, s map[string]interface{})
 		"custom_header_value":   c.CustomHeaderValue,
 		"event_collector_token": "",
 		"url":                   c.URL,
+		"tls_hostname":          c.TLSHostname,
+		"ca_cert":               "",
+		"client_cert":           "",
+		"client_key":            "",
+		"m_tls":                 false,
 	}
-	if s["event_collector_token"] != nil {
-		rv["event_collector_token"] = s["event_collector_token"]
+	if c.MTLS == "Enabled" {
+		rv["m_tls"] = true
 	}
+	setNonNilItemsFromState(s, []string{"event_collector_token", "ca_cert", "client_cert", "client_key"}, rv)
 	return rv
 }
 
@@ -252,9 +254,7 @@ func MapGCSConnector(c datastream.ConnectorDetails, s map[string]interface{}) ma
 		"project_id":           c.ProjectID,
 		"service_account_name": c.ServiceAccountName,
 	}
-	if s["private_key"] != nil {
-		rv["private_key"] = s["private_key"]
-	}
+	setNonNilItemsFromState(s, []string{"private_key"}, rv)
 	return rv
 }
 
@@ -270,6 +270,10 @@ func GetHTTPSConnector(props map[string]interface{}) datastream.AbstractConnecto
 		Password:           props["password"].(string),
 		URL:                props["url"].(string),
 		UserName:           props["user_name"].(string),
+		TLSHostname:        props["tls_hostname"].(string),
+		CACert:             props["ca_cert"].(string),
+		ClientCert:         props["client_cert"].(string),
+		ClientKey:          props["client_key"].(string),
 	}
 }
 
@@ -286,11 +290,16 @@ func MapHTTPSConnector(c datastream.ConnectorDetails, s map[string]interface{}) 
 		"password":            "",
 		"url":                 c.URL,
 		"user_name":           "",
+		"tls_hostname":        c.TLSHostname,
+		"ca_cert":             "",
+		"client_cert":         "",
+		"client_key":          "",
+		"m_tls":               false,
 	}
-	if s["password"] != nil && s["user_name"] != nil {
-		rv["password"] = s["password"]
-		rv["user_name"] = s["user_name"]
+	if c.MTLS == "Enabled" {
+		rv["m_tls"] = true
 	}
+	setNonNilItemsFromState(s, []string{"password", "user_name", "ca_cert", "client_cert", "client_key"}, rv)
 	return rv
 }
 
@@ -321,9 +330,7 @@ func MapSumoLogicConnector(c datastream.ConnectorDetails, s map[string]interface
 		"custom_header_value": c.CustomHeaderValue,
 		"endpoint":            endpoint,
 	}
-	if s["collector_code"] != nil {
-		rv["collector_code"] = s["collector_code"]
-	}
+	setNonNilItemsFromState(s, []string{"collector_code"}, rv)
 	return rv
 }
 
@@ -353,9 +360,14 @@ func MapOracleConnector(c datastream.ConnectorDetails, s map[string]interface{})
 		"region":            c.Region,
 		"secret_access_key": "",
 	}
-	if s["access_key"] != nil && s["secret_access_key"] != nil {
-		rv["access_key"] = s["access_key"]
-		rv["secret_access_key"] = s["secret_access_key"]
-	}
+	setNonNilItemsFromState(s, []string{"access_key", "secret_access_key"}, rv)
 	return rv
+}
+
+func setNonNilItemsFromState(state map[string]interface{}, fields []string, target map[string]interface{}) {
+	for _, f := range fields {
+		if state[f] != nil {
+			target[f] = state[f]
+		}
+	}
 }
