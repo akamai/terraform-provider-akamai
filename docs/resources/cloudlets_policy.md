@@ -31,23 +31,23 @@ resource "akamai_cloudlets_policy" "example" {
     "redirectURL": "https://www.example.com",
     "matchURL": "example.com",
     "useIncomingQueryString": false,
-    "useIncomingSchemeAndHost": true
+    "useIncomingSchemeAndHost": false
   },
   {
     "name": "rule2",
     "type": "erMatchRule",
     "matches": [
       {
-        "matchType": "hostname",
-        "matchValue": "3333.dom",
+        "matchType": "path",
+        "matchValue": "/example/website.html",
         "matchOperator": "equals",
-        "caseSensitive": true,
+        "caseSensitive": false,
         "negate": false
       }
     ],
-    "useRelativeUrl": "none",
+    "useRelativeUrl": "copy_scheme_hostname",
     "statusCode": 301,
-    "redirectURL": "https://www.example.com",
+    "redirectURL": "/website.html",
     "useIncomingQueryString": false,
     "useIncomingSchemeAndHost": true
   }
@@ -65,7 +65,7 @@ The following arguments are supported:
 * `description` - (Optional) The description of this specific policy.
 * `group_id` - (Required) Defines the group association for the policy. You must have edit privileges for the group.
 * `match_rule_format` - (Optional) The version of the Cloudlet-specific `match_rules`.
-* `match_rules` - (Optional) A JSON structure that defines the rules for this policy. See the [Terrfaform syntax documentation](https://www.terraform.io/docs/configuration-0-11/syntax.html) for more information on embedding multiline strings.
+* `match_rules` - (Optional) A JSON structure that defines the rules for this policy. See the [Terraform syntax documentation](https://www.terraform.io/docs/configuration-0-11/syntax.html) for more information on embedding multiline strings.
 
 ## Attribute reference
 
