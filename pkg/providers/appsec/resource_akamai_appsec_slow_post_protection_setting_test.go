@@ -25,10 +25,10 @@ func TestAkamaiSlowPostProtectionSetting_res_basic(t *testing.T) {
 		client.On("UpdateSlowPostProtectionSetting",
 			mock.Anything,
 			appsec.UpdateSlowPostProtectionSettingRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", Action: "alert", SlowRateThreshold: struct {
-				Rate   int "json:\"rate\""
-				Period int "json:\"period\""
+				Rate   int `json:"rate"`
+				Period int `json:"period"`
 			}{Rate: 10, Period: 30}, DurationThreshold: struct {
-				Timeout int "json:\"timeout\""
+				Timeout int `json:"timeout"`
 			}{Timeout: 20}},
 		).Return(&updateSlowPostProtectionSettingResponse, nil)
 

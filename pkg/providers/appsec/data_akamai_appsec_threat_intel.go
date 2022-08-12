@@ -29,7 +29,7 @@ func dataSourceThreatIntel() *schema.Resource {
 			"threat_intel": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Reports the threat Intelligence setting, either \"on\" or \"off\"",
+				Description: `Reports the threat Intelligence setting, either "on" or "off"`,
 			},
 			"json": {
 				Type:        schema.TypeString,

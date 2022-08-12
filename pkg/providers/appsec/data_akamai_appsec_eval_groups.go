@@ -39,7 +39,7 @@ func dataSourceEvalGroups() *schema.Resource {
 			"condition_exception": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "JSON_formatted condition and exception information for the evaluation group if one was specified",
+				Description: "JSON-formatted condition and exception information for the evaluation group if one was specified",
 			},
 			"json": {
 				Type:        schema.TypeString,

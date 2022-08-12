@@ -26,21 +26,21 @@ func TestAkamaiIPGeo_res_basic(t *testing.T) {
 			mock.Anything,
 			appsec.UpdateIPGeoRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", Block: "blockSpecificIPGeo", GeoControls: struct {
 				BlockedIPNetworkLists struct {
-					NetworkList []string "json:\"networkList\""
-				} "json:\"blockedIPNetworkLists\""
+					NetworkList []string `json:"networkList"`
+				} `json:"blockedIPNetworkLists"`
 			}{BlockedIPNetworkLists: struct {
-				NetworkList []string "json:\"networkList\""
+				NetworkList []string `json:"networkList"`
 			}{NetworkList: []string{"40731_BMROLLOUTGEO", "44831_ECSCGEOBLACKLIST"}}}, IPControls: struct {
 				AllowedIPNetworkLists struct {
-					NetworkList []string "json:\"networkList\""
-				} "json:\"allowedIPNetworkLists\""
+					NetworkList []string `json:"networkList"`
+				} `json:"allowedIPNetworkLists"`
 				BlockedIPNetworkLists struct {
-					NetworkList []string "json:\"networkList\""
-				} "json:\"blockedIPNetworkLists\""
+					NetworkList []string `json:"networkList"`
+				} `json:"blockedIPNetworkLists"`
 			}{AllowedIPNetworkLists: struct {
-				NetworkList []string "json:\"networkList\""
+				NetworkList []string `json:"networkList"`
 			}{NetworkList: []string{"69601_ADYENPRODWHITELIST", "68762_ADYEN"}}, BlockedIPNetworkLists: struct {
-				NetworkList []string "json:\"networkList\""
+				NetworkList []string `json:"networkList"`
 			}{NetworkList: []string{"49185_ADTWAFBYPASSLIST", "49181_ADTIPBLACKLIST"}}}},
 		).Return(&updateIPGeoResponse, nil)
 

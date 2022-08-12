@@ -42,6 +42,7 @@ func resourceCustomRule() *schema.Resource {
 				Required:         true,
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsJSON),
 				DiffSuppressFunc: suppressEquivalentJSONDiffsGeneric,
+				Description:      "JSON-formatted definition of the custom rule",
 			},
 			"custom_rule_id": {
 				Type:     schema.TypeInt,
