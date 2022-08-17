@@ -1,5 +1,13 @@
 # RELEASE NOTES
 
+## 2.3.0 (August XX, 2022)
+
+#### FEATURES/ENHANCEMENTS:
+
+* APPSEC
+  * Add notification_emails to activations resource
+  * Deprecate existing import functionality; use `cli-terraform export-appsec` instead.
+
 ## 2.2.0 (June 30, 2022)
 
 #### FEATURES/ENHANCEMENTS:
