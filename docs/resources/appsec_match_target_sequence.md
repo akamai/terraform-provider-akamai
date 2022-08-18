@@ -46,4 +46,4 @@ resource "akamai_appsec_match_target_sequence" "match_target_sequence" {
 This resource supports the following arguments:
 
 - `config_id` (Required). Unique identifier of the security configuration associated with the match target sequence being modified.
-- `match_target_sequence` (Required). Path to a JSON file containing the processing sequence for all the match targets defined for the security configuration. You can find a sample match target sequence JSON file in the [Modify match target order](https://developer.akamai.com/api/cloud_security/application_security/v1.html#matchtargetorder) section of the Application Security API documentation.
+- `match_target_sequence` (Required). Path to a JSON file containing the processing sequence for all the match targets defined for the security configuration. You can find a sample match target sequence JSON file in the [Modify match target order](https://techdocs.akamai.com/application-security/reference/put-match-targets-sequence) section of the Application Security API documentation.

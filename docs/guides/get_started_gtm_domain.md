@@ -11,8 +11,8 @@ The Akamai Provider for Terraform provides you the ability to automate the creat
 
 To get more information about Global Traffic Management (GTM), see:
 
-* Developer - [API documentation](https://developer.akamai.com/api/web_performance/global_traffic_management/v1.html)
-* User Guide - [Official Documentation](https://learn.akamai.com/en-us/products/web_performance/global_traffic_management.html)
+* Developer - [API documentation](https://techdocs.akamai.com/gtm/reference/api)
+* User Guide - [Official Documentation](https://techdocs.akamai.com/gtm/docs)
 
 ## Prerequisites 
 
@@ -38,7 +38,7 @@ You can migrate an existing GTM domain into your Terraform configuration using e
 
 Before using this CLI, keep the following in mind:
 
-* Download the existing GTM domain configuration to have as a backup and reference during an import. You can download these by using the [Global Traffic Management API](https://developer.akamai.com/api/web_performance/global_traffic_management/v1.html) or the GTM app on [Control Center](https://control.akamai.com).  
+* Download the existing GTM domain configuration to have as a backup and reference during an import. You can download these by using the [Global Traffic Management API](https://techdocs.akamai.com/gtm/reference/api) or the GTM app on [Control Center](https://control.akamai.com).  
 * Terraform limits the characters that can be part of its resource names. During construction of the resource configurations, invalid characters are replaced with underscore , '_'.
 * Terraform doesn't provide any state information during import. When you run `plan` and `apply` after an import, Terraform lists discrepencies and reconciles configurations and state. Any discrepencies clear following the first `apply`. 
 * After first time you run `plan` or `apply`, the `contract`, `group`, and `wait_on_complete` attributes are updated.
@@ -49,7 +49,7 @@ Before using this CLI, keep the following in mind:
 To import using step-by-step construction, complete these tasks:
 
 1. Determine how you want to test your Terraform import. For example, you may want to set up your zone and recordset imports in a test environment to familiarize yourself with the provider operation and mitigate any risks to your existing DNS zone configuration.
-1. Download the existing domain configuration and master file to have as a backup and reference during an import. You can download these from the [Global Traffic Management API](https://developer.akamai.com/api/web_performance/global_traffic_management/v1.html) or from the GTM app on [Control Center](https://control.akamai.com) .  
+1. Download the existing domain configuration and master file to have as a backup and reference during an import. You can download these from the [Global Traffic Management API](https://techdocs.akamai.com/gtm/reference/api) or from the GTM app on [Control Center](https://control.akamai.com) .  
 1. Using the domain download as a reference, create a Terraform configuration representing the existing domain and all contained GTM objects. 
 1. Verify that your Terraform configuration addresses all required attributes and any optional and computed attributes you need.
 1. Run `terraform import`. This command imports the existing domain and contained objects one at a time based on the order in the configuration.

@@ -27,7 +27,7 @@ data "akamai_gtm_default_datacenter" "default_datacenter" {
 // an underscore before any uppercase letter and chnaging case to lower,
 // e.g. defaultHealthMax -> default_health_max
 //
-// Reference https://developer.akamai.com/api/web_performance/global_traffic_management/v1.html for descriptions of
+// Reference https://techdocs.akamai.com/gtm/reference/api for descriptions of
 // configurable GTM objects, elements and valid values.
 
 resource "akamai_gtm_domain" "tfexample_domain" {

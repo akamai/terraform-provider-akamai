@@ -102,7 +102,7 @@ You can now refer to the contract ID using the `id` attribute: `data.akamai_cont
 
 Akamai groups control access to your Akamai configurations and help consolidate reporting functions. Each account features a hierarchy of groups, which typically map to an organizational hierarchy.
 
-Your account admins can use Control Center or the [Identity Management: User Administration API](https://developer.akamai.com/en-us/api/core_features/identity_management_user_admin/v2.html)
+Your account admins can use Control Center or the [Identity Management: User Administration API](https://techdocs.akamai.com/iam-api/reference/api)
 to set up groups, each with their own set of users and roles.
 
 You can get your group ID automatically using the [`akamai_group` data source](../data-sources/property_group.md). To retrieve the default group ID you need to enter a contract ID:

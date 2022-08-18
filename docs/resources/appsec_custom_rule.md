@@ -54,7 +54,7 @@ output "custom_rule_rule_id" {
 This resource supports the following arguments:
 
 - `config_id` (Required). Unique identifier of the security configuration associated with the custom rule being modified.
-- `custom_rule` (Required). Path to a JSON file containing the custom rule definition. To view a sample JSON file, see the [Create a custom rule](https://developer.akamai.com/api/cloud_security/application_security/v1.html#postcustomrules) section of the Application Security API documentation.
+- `custom_rule` (Required). Path to a JSON file containing the custom rule definition. To view a sample JSON file, see the [Create a custom rule](https://techdocs.akamai.com/application-security/reference/post-config-custom-rules) section of the Application Security API documentation.
 
 ## Attribute Reference
 

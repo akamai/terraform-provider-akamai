@@ -11,7 +11,7 @@ You can use the Property Provisioning module resources and data sources to creat
 deploy, activate, and manage properties, edge hostnames, and content
 provider (CP) codes.
 
-For more information about properties, see the [Property Manager documentation](https://learn.akamai.com/en-us/products/core_features/property_manager.html).
+For more information about properties, see the [Property Manager documentation](https://techdocs.akamai.com/property-mgr/docs).
 
 ## Prerequisites
 
@@ -36,7 +36,7 @@ To set up the Property Provisioning module, you need to:
 When setting up properties, you need to retrieve the ID for the specific
 Akamai product you are using. See the [Akamai Product ID](../guides/appendix.md#common-product-ids) section for a list of common IDs.
 
--> **Note** If you're currently using prefixes with your IDs, you might have to remove the `prd_` prefix from your entry. For more information about prefixes, see the [ID prefixes](https://developer.akamai.com/api/core_features/property_manager/v1.html#prefixes) section of the Property Manager API (PAPI) documentation.
+-> **Note** If you're currently using prefixes with your IDs, you might have to remove the `prd_` prefix from your entry. For more information about prefixes, see the [ID prefixes](https://techdocs.akamai.com/property-mgr/reference/id-prefixes) section of the Property Manager API (PAPI) documentation.
 
 ## Add an edge hostname
 

@@ -33,4 +33,4 @@ These attributes are returned:
 
 * `policies` — A map of session timeout policy names to their value in seconds.
 
-[API Reference](https://developer.akamai.com/api/core_features/identity_management_user_admin/v2.html#getadmintimeoutpolicies)
+[API Reference](https://techdocs.akamai.com/iam-api/reference/get-common-timeout-policies)

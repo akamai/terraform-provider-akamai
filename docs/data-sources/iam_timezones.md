@@ -41,4 +41,4 @@ These attributes are returned:
   * `offset` - The time zone offset from GMT.
   * `posix` - The time zone posix.
 
-[API Reference](https://developer.akamai.com/api/core_features/identity_management_user_admin/v2.html#getadmintimezones)
+[API Reference](https://techdocs.akamai.com/iam-api/reference/get-common-timezones)

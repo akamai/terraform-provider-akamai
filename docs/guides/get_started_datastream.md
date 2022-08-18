@@ -21,7 +21,7 @@ You can configure your data stream to bundle and push logs to a destination for 
 
 ## Prerequisites
 
-DataStream collects performance logs against selected delivery properties and streams them to configured destinations. To create a stream, you need to have at least one existing property within the group and contract you want the stream to collect logs for. A stream can start collecting logs only if the referenced properties have the [`datastream`](https://developer.akamai.com/api/core_features/property_manager/vlatest.html#datastream) behavior enabled in their rule tree and are active on the production network.
+DataStream collects performance logs against selected delivery properties and streams them to configured destinations. To create a stream, you need to have at least one existing property within the group and contract you want the stream to collect logs for. A stream can start collecting logs only if the referenced properties have the [`datastream`](https://techdocs.akamai.com/property-mgr/reference/latest-datastream) behavior enabled in their rule tree and are active on the production network.
 
 Use the [akamai_property](../resources/property.md) and [akamai_property_activation](../resources/property_activation.md) resources to create and activate or import delivery properties.
 
@@ -40,7 +40,7 @@ Use the [akamai_property](../resources/property.md) and [akamai_property_activat
 
 When setting up streams, you need to get the Akamai [`group_id`](../data-sources/group.md).
 
--> **Note** The DataStream module supports both ID formats, either with or without the `grp_` prefix. For more information about prefixes, see the [ID prefixes](https://developer.akamai.com/api/core_features/property_manager/v1.html#prefixes) section of the Property Manager API (PAPI) documentation.
+-> **Note** The DataStream module supports both ID formats, either with or without the `grp_` prefix. For more information about prefixes, see the [ID prefixes](https://techdocs.akamai.com/property-mgr/reference/id-prefixes) section of the Property Manager API (PAPI) documentation.
 
 ## Get the data set fields
 
@@ -89,7 +89,7 @@ An example of the JSON-encoded rule for DataStream:
 
 Copy this snippet to the rule tree files in properties you created the stream for. You can also create a new `.json` file with the snippet and insert it to the property rule tree by adding `"#include:example-file.json"` under the `children` array. See [Referencing sub-files from a template](../data-sources/property_rules_template.md#referencing-sub-files-from-a-template) for more information.
 
-If you wish to customize how your data stream is handled, see the [`datastream` behavior in the PAPI Catalog Reference](https://developer.akamai.com/api/core_features/property_manager/vlatest.html#datastream).
+If you wish to customize how your data stream is handled, see the [`datastream` behavior in the PAPI documentation](https://techdocs.akamai.com/property-mgr/reference/latest-datastream).
 
 ## Activate the property version
 

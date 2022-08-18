@@ -84,8 +84,8 @@ The following arguments are supported:
 The following attributes are returned:
 
 * `id` - The unique identifier for this activation.
-* `warnings` - The contents of `warnings` field returned by the API. For more information see [Errors](https://developer.akamai.com/api/core_features/property_manager/v1.html#errors) in the PAPI documentation.
-* `errors` - The contents of `errors` field returned by the API. For more information see [Errors](https://developer.akamai.com/api/core_features/property_manager/v1.html#errors) in the PAPI documentation.
+* `warnings` - The contents of `warnings` field returned by the API. For more information see [Errors](https://techdocs.akamai.com/property-mgr/reference/api-errors) in the PAPI documentation.
+* `errors` - The contents of `errors` field returned by the API. For more information see [Errors](https://techdocs.akamai.com/property-mgr/reference/api-errors) in the PAPI documentation.
 * `activation_id` - The ID given to the activation event while it's in progress.
 * `status` - The property version's activation status on the selected network.
 

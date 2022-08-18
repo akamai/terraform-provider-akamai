@@ -54,7 +54,7 @@ This resource supports the following arguments:
 
 - `security_policy_id` (Optional). Unique identifier of the security policy associated with the pragma header settings being modified. If not included, pragma header settings are modified at the configuration scope and, as a result, apply to all the security policies associated with the configuration.
 
-- `pragma_header` (Required). Path to a JSON file containing information about the conditions to exclude from the default remove action. By default, the Pragma header debugging information is stripped from an operation's response except in cases where you set `excludeCondition`. You can view a sample JSON file in the [Modify pragma settings for a security setting](https://developer.akamai.com/api/cloud_security/application_security/v1.html#putpragmaheaderconfiguration) section of the Application Security API documentation.
+- `pragma_header` (Required). Path to a JSON file containing information about the conditions to exclude from the default remove action. By default, the Pragma header debugging information is stripped from an operation's response except in cases where you set `excludeCondition`. 
 
   To remove existing settings, submit your request with an empty payload ( **{}** ) at the top-level of an object. For example, use the following JSON snippet in the request body to remove the **REQUEST_HEADER_VALUE_MATCH** from the excluded conditions:
 

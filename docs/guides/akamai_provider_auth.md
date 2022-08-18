@@ -50,7 +50,7 @@ supporting API service names:
 | **Property Provisioning** (Includes Common functions) | Property Manager (PAPI) |
 
 
--> **Note:** If you're using the Edge DNS or GTM module, you may also need the Property Manager API service. Whether you need this additional service depends on your contract and group. See [PAPI concepts](https://developer.akamai.com/api/core_features/property_manager/v1.html#papiconcepts) for more information.
+-> **Note:** If you're using the Edge DNS or GTM module, you may also need the Property Manager API service. Whether you need this additional service depends on your contract and group. See [Key concepts and terms](https://techdocs.akamai.com/property-mgr/docs/key-concepts-terms) for more information.
 
 ## Default authentication settings
 
@@ -134,10 +134,10 @@ Arguments supported in the `provider` block:
 
 #### Deprecated arguments
 
-* `property_section` - (Deprecated) The credential section to use for the [Property Manager API](https://developer.akamai.com/api/core_features/property_manager/v1.html).
+* `property_section` - (Deprecated) The credential section to use for the [Property Manager API](https://techdocs.akamai.com/property-mgr/reference/api).
 If you don't use `property_section`, the Akamai Provider uses the credentials in the `default` section of the `.edgerc` file.
-* `dns_section` - (Deprecated) The credential section to use for the [Edge DNS Zone Management API](https://developer.akamai.com/api/cloud_security/edge_dns_zone_management/v2.html). If you don't use `dns_section`, the Akamai Provider uses the credentials in the `default` section of the `.edgerc` file.
-* `gtm_section` - (Deprecated) The credential section to use for the [Global Traffic Management API](https://developer.akamai.com/api/web_performance/global_traffic_management/v1.html). If you don't use `gtm_section`, the Akamai Provider uses the credentials in the `default` section of the `.edgerc` file.
+* `dns_section` - (Deprecated) The credential section to use for the [Edge DNS Zone Management API](https://techdocs.akamai.com/edge-dns/reference/edge-dns-api). If you don't use `dns_section`, the Akamai Provider uses the credentials in the `default` section of the `.edgerc` file.
+* `gtm_section` - (Deprecated) The credential section to use for the [Global Traffic Management API](https://techdocs.akamai.com/gtm/reference/api). If you don't use `gtm_section`, the Akamai Provider uses the credentials in the `default` section of the `.edgerc` file.
 
 ## Authenticate using inline credentials
 

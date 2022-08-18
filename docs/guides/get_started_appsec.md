@@ -1620,8 +1620,8 @@ When you create a match target, the properties and property values for that targ
   "isNegativeFileExtensionMatch": false,
    "hostnames": [
     "akamai.com",
-    "learn.akamai.com",
-    "developer.akamai.com"
+    "techdocs.akamai.com",
+    "training.akamai.com"
   ],
   "fileExtensions": ["sfx", "py", "js", "jar", "html", "exe", "dll", "bat"],
   "securityPolicy": {
@@ -1787,7 +1787,7 @@ For better or worse, Terraform doesn't return information about match target seq
 +---------+-------------+---------+
 ```
 
-However, you can use the [Application Security API](https://developer.akamai.com/api/cloud_security/application_security/v1.html#putsequence) to return information about your match targets that includes a target's sequence number:
+However, you can use the [Application Security API](https://techdocs.akamai.com/application-security/reference/put-match-targets-sequence) to return information about your match targets that includes a target's sequence number:
 
 ```
 "securityPolicy": {

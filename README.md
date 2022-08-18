@@ -1,9 +1,8 @@
 Akamai Provider for Terraform
 ==================
 
-## Maintainers
+Use the Akamai Provider to manage and provision your Akamai configurations in Terraform. You can use the Akamai Provider for many Akamai products.
 
-This provider plugin is maintained by the Akamai Developer team at [Akamai](https://developer.akamai.com/).
 
 ## Requirements
 
@@ -11,8 +10,8 @@ This provider plugin is maintained by the Akamai Developer team at [Akamai](http
 
 ## Installation
 
-This provider is automatically installed when you run `terraform init` on a configuration using the provider.
+To automatically install the Akamai Provider, run `terraform init` on a configuration.
 
 ## Documentation
 
-Documentation can be found on the [Terraform Website](https://registry.terraform.io/providers/akamai/akamai/latest/docs).
+You can find documentation for the Akamai Provider on the [Terraform Website](https://registry.terraform.io/providers/akamai/akamai/latest/docs).

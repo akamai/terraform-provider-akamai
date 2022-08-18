@@ -11,7 +11,7 @@ description: |-
 
 **Scopes**: Security configuration; custom deny
 
-Returns information about custom deny actions: the returned information is described in the [CustomDeny members](https://developer.akamai.com/api/cloud_security/application_security/v1.html#63df3de3) section of the Application Security API. Custom denies allow you to craft your own error messages or redirect pages to use when HTTP requests are denied.
+Returns information about custom deny actions. Custom denies allow you to craft your own error messages or redirect pages to use when HTTP requests are denied.
 
 **Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/custom-deny](https://techdocs.akamai.com/application-security/reference/get-custom-deny-actions)
 

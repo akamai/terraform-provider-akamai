@@ -43,8 +43,3 @@ This resource supports these arguments:
   * `datacenter_id` - (Optional) A unique identifier for an existing data center in the domain.
   * `nickname` - (Optional) A descriptive label for the CIDR zone group, up to 256 characters.
   * `blocks` - (Optional, list) Specifies an array of CIDR blocks.
-
-## Schema reference
-
-You can download the GTM CIDR Map backing schema from the [Global Traffic Management API](https://developer.akamai.com/api/web_performance/global_traffic_management/v1.html#cidrmap) page.
-

@@ -18,14 +18,13 @@ import (
 
 // PAPI CP Code
 //
-// https://developer.akamai.com/api/luna/papi/data.html#cpcode
-// https://developer.akamai.com/api/luna/papi/resources.html#cpcodesapi
+// https://techdocs.akamai.com/property-mgr/reference/post-cpcodes
 func resourceCPCode() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceCPCodeCreate,
 		ReadContext:   resourceCPCodeRead,
 		UpdateContext: resourceCPCodeUpdate,
-		// NB: CP Codes cannot be deleted https://developer.akamai.com/api/luna/papi/resources.html#cpcodesapi
+		// NB: CP Codes cannot be deleted https://techdocs.akamai.com/property-mgr/reference/post-cpcodes
 		DeleteContext: schema.NoopContext,
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceCPCodeImport,

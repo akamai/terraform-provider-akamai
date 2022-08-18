@@ -107,7 +107,3 @@ This resource returns these computed attributes in the `terraform.tfstate` file:
 
 * `weighted_hash_bits_for_ipv4`
 * `weighted_hash_bits_for_ipv6`
-
-## Schema reference
-
-You can download the GTM Property backing schema from the [Global Traffic Management API](https://developer.akamai.com/api/web_performance/global_traffic_management/v1.html#property) page.

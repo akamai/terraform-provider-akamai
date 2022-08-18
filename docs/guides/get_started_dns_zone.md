@@ -12,8 +12,8 @@ importing existing zones and recordsets.
 
 To get more information about Edge DNS, see:
 
-* Developer - [API documentation](https://developer.akamai.com/api/cloud_security/edge_dns_zone_management/v2.html).
-* User Guide - [Official Documentation](https://learn.akamai.com/en-us/products/cloud_security/edge_dns.html).
+* Developer - [API documentation](https://techdocs.akamai.com/edge-dns/reference/edge-dns-api).
+* User Guide - [Official Documentation](https://techdocs.akamai.com/edge-dns/docs).
 
 
 ## Prerequisites 
@@ -40,7 +40,7 @@ You can use the [Akamai Terraform Provider CLI](https://github.com/akamai/cli-te
 
 Before using this CLI, keep the following in mind:
 
-* Download the existing zone configuration and master file to have as a backup and reference during an import. You can download these by using the [Edge DNS Zone Management API](https://developer.akamai.com/api/cloud_security/edge_dns_zone_management/v2.html) or the Edge DNS app on [Control Center](https://control.akamai.com).  
+* Download the existing zone configuration and master file to have as a backup and reference during an import. You can download these by using the [Edge DNS Zone Management API](https://techdocs.akamai.com/edge-dns/reference/edge-dns-api) or the Edge DNS app on [Control Center](https://control.akamai.com).  
 * Terraform limits the characters that can be part of its resource names. During construction of the resource configurations, invalid characters are replaced with underscore , '_'.
 * Terraform doesn't provide any state information during import. When you run `plan` and `apply` after an import, Terraform lists discrepencies and reconciles configurations and state. Any discrepencies clear following the first `apply`. 
 * After first time you run `plan` or `apply`, the `contract` and `group` attributes are updated.
@@ -51,7 +51,7 @@ Before using this CLI, keep the following in mind:
 To import using step-by-step construction, complete these tasks:
 
 1. Determine how you want to test your Terraform import. For example, you may want to set up your zone and recordset imports in a test environment to familiarize yourself with the provider operation and mitigate any risks to your existing DNS zone configuration.
-1. Download the existing zone configuration and master file to have as a backup and reference during an import. You can download these from the [Edge DNS Zone Management API](https://developer.akamai.com/api/cloud_security/edge_dns_zone_management/v2.html) or from the Edge DNS app on [Control Center](https://control.akamai.com) .  
+1. Download the existing zone configuration and master file to have as a backup and reference during an import. You can download these from the [Edge DNS Zone Management API](https://techdocs.akamai.com/edge-dns/reference/edge-dns-api) or from the Edge DNS app on [Control Center](https://control.akamai.com) .  
 1. Using the zone master file as a reference, create a Terraform configuration representing the existing zone and all contained recordsets. 
 1. Verify that your Terraform configuration addresses all required attributes and any optional and computed attributes you need.
 1. Run `terraform import`. This command imports the existing zone and contained recordsets. The import happens in serial order.
@@ -114,7 +114,7 @@ $ terraform plan
 
 ### Primary Zones
 
-Unlike creating secondary zone types, creating primary zone types is best by following a multi-step process as follows. To complete these steps, you need to download and install the [Akamai CLI](https://developer.akamai.com/cli) and [CLI-Terraform package](https://github.com/akamai/cli-terraform). 
+Unlike creating secondary zone types, creating primary zone types is best by following a multi-step process as follows. To complete these steps, you need to download and install the [Akamai CLI](https://github.com/akamai/cli) and [CLI-Terraform package](https://github.com/akamai/cli-terraform). 
 
 #### Configure Zone
 

@@ -44,8 +44,3 @@ This resource supports these arguments:
   * `datacenter_id` - A unique identifier for an existing data center in the domain.
   * `nickname` - A descriptive label for the group.
   * `as_numbers` - Specifies an array of AS numbers.
-
-## Schema reference
-
-You can download the GTM AS Map backing schema from the [Global Traffic Management API](https://developer.akamai.com/api/web_performance/global_traffic_management/v1.html#asmap) page.
-

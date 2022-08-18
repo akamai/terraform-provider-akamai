@@ -70,7 +70,3 @@ This resource returns these computed attributes in the `terraform.tfstate` file:
 * `default_health_threshold`
 * `min_test_interval`
 * `ping_packet_size`
-
-## Schema reference
-
-You can download the GTM Domain backing schema from the [Global Traffic Management API](https://developer.akamai.com/api/web_performance/global_traffic_management/v1.html#domain) page.

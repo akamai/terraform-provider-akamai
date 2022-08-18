@@ -59,4 +59,4 @@ This resource supports the following arguments:
   - **deny**. Block the request.
   - **deny_custom_{custom_deny_id}**. Take the action specified by the custom deny.
   - **none**. Take no action.
-- `condition_exception` (Optional). Path to a JSON file containing the conditions and exceptions to be applied to the evaluation rule. To view a sample JSON file, see the [Modify the conditions and exceptions for an evaluation rule](https://developer.akamai.com/api/cloud_security/application_security/v1.html#putevalconditionsexceptions) section of the Application Security API documentation.
+- `condition_exception` (Optional). Path to a JSON file containing the conditions and exceptions to be applied to the evaluation rule. 

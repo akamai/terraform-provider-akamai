@@ -71,8 +71,8 @@ When you create a match target, the properties and property values for that targ
     "isNegativeFileExtensionMatch": false,
      "hostnames": [
         "akamai.com",
-        "learn.akamai.com",
-        "developer.akamai.com"
+        "techdocs.akamai.com",
+        "training.akamai.com"
     ],
     "fileExtensions": ["sfx", "py", "js", "jar", "html", "exe", "dll", "bat"],
     "securityPolicy": {

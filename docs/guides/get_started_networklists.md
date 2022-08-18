@@ -20,7 +20,7 @@ description: |-
 
 With the Akamai Network Lists provider for Terraform you can automate the creation, deployment, and management of network lists (shared sets of IP addresses, CIDR blocks, or broad geographic areas) used in various Akamai security products such as Kona Site Defender, Web App Protector, and Bot Manager. Along with managing your own lists, you can also access read-only lists that Akamai dynamically updates for you.
 
-For more information about network lists, see the [API documentation](https://developer.akamai.com/api/cloud_security/network_lists/v2.html).
+For more information about network lists, see the [API documentation](https://techdocs.akamai.com/network-lists/reference/api).
 
 
 ## Before you begin

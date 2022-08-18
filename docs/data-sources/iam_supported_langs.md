@@ -33,4 +33,4 @@ These attributes are returned:
 
 * `languages` — Languages supported by Akamai
 
-[API Reference](https://developer.akamai.com/api/core_features/identity_management_user_admin/v2.html#getadminsupportedlanguages)
+[API Reference](https://techdocs.akamai.com/iam-api/reference/get-user-languages)

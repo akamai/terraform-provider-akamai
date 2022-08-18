@@ -43,7 +43,3 @@ This resource supports these arguments:
   * `datacenter_id` - (Required) A unique identifier for an existing data center in the domain.
   * `nickname` - (Optional) A descriptive label for the group.
   * `countries` - (Optional) Specifies an array of two-letter ISO 3166 country codes, or for finer subdivisions, the two-letter country code and the two-letter stateOrProvince code separated by a forward slash.
-
-## Schema reference
-
-You can download the GTM Geographic Map backing schema from the [Global Traffic Management API](https://developer.akamai.com/api/web_performance/global_traffic_management/v1.html#geographicmap) page.

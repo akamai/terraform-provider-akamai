@@ -50,7 +50,3 @@ This resource supports these arguments:
 * `load_imbalance_percent` - (Optional) Indicates the percent of load imbalance factor (LIF) for the property.
 * `max_u_multiplicative_increment` - (Optional) For Akamai internal use only. You can omit the value or set it to `null`.
 * `decay_rate` - (Optional) For Akamai internal use only. You can omit the value or set it to `null`.
-
-## Schema reference
-
-You can download the GTM Resource backing schema from the [Global Traffic Management API](https://developer.akamai.com/api/web_performance/global_traffic_management/v1.html#resource) page.

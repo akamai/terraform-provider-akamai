@@ -33,4 +33,4 @@ These attributes are returned:
 
 * `countries` — A list of countries.
 
-[API Reference](https://developer.akamai.com/api/core_features/identity_management_user_admin/v2.html#getadmincountries)
+[API Reference](https://techdocs.akamai.com/iam-api/reference/get-common-countries)

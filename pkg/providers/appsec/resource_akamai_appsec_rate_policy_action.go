@@ -16,7 +16,7 @@ import (
 
 // appsec v1
 //
-// https://developer.akamai.com/api/cloud_security/application_security/v1.html
+// https://techdocs.akamai.com/application-security/reference/api
 func resourceRatePolicyAction() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceRatePolicyActionCreate,

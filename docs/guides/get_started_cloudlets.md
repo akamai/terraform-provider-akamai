@@ -32,7 +32,7 @@ To add this type of origin to your property, you need to set up Conditional Orig
 
 Follow these steps to add Conditional Origins to your Terraform configuration:
 
-1. In the JSON rule tree file for the property that you want to use with your Cloudlet, set the mandatory [`origin` behavior](https://developer.akamai.com/api/core_features/property_manager/vlatest.html#origin)  to support Conditional Origins. 
+1. In the JSON rule tree file for the property that you want to use with your Cloudlet, set the mandatory [`origin` behavior](https://techdocs.akamai.com/property-mgr/reference/latest-origin)  to support Conditional Origins. 
 
     ~> **Note** Application Load Balancer uses Conditional Origins to represent data centers that are part of the load balancing and failover scheme. You should have a separate Conditional Origin for each data center included in your Application Load Balancing configuration.
 
@@ -91,7 +91,7 @@ Optionally, to simplify the process, you can use the [`akamai_cloudlets_edge_red
 
 When setting up Cloudlets, you need to get the Akamai [`group_id`](../data-sources/group.md).
 
--> **Note** The Cloudlets module supports both ID formats, either with or without the `grp_` prefix. For more information about prefixes, see the ID prefixes section of the [Property Manager API (PAPI)](https://developer.akamai.com/api/core_features/property_manager/v1.html#prefixes) documentation.
+-> **Note** The Cloudlets module supports both ID formats, either with or without the `grp_` prefix. For more information about prefixes, see the ID prefixes section of the [Property Manager API (PAPI)](https://techdocs.akamai.com/property-mgr/reference/id-prefixes) documentation.
 
 ## Import or create a policy
 

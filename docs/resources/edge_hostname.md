@@ -28,7 +28,7 @@ for your edge hostname type:
 | Standard TLS | edgesuite.net |
 | Shared Cert | akamaized.net |
 
-For example, if you use Standard TLS and have `www.example.com` as a hostname, your edge hostname would be `www.example.com.edgesuite.net`. If you wanted to use Enhanced TLS with the same hostname, your edge hostname would be `www.example.com.edgekey.net`. See the [Property Manager API (PAPI)](https://developer.akamai.com/api/core_features/property_manager/v1.html#createedgehostnames) for more information.
+For example, if you use Standard TLS and have `www.example.com` as a hostname, your edge hostname would be `www.example.com.edgesuite.net`. If you wanted to use Enhanced TLS with the same hostname, your edge hostname would be `www.example.com.edgekey.net`. See  [Create a new edge hostname](https://techdocs.akamai.com/property-mgr/reference/post-edgehostnames) in the Property Manager API (PAPI) for more information. 
 
 ## Example usage
 

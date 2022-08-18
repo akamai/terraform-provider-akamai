@@ -36,4 +36,4 @@ This data source returns this attribute:
   * `parent_group_id` - For nested groups, identifies the parent group to which the current group belongs.
   * `sub_groups` - Set of nested Group objects.
 
-[API Reference](https://developer.akamai.com/api/core_features/identity_management_user_admin/v2.html#getgroups)
+[API Reference](https://techdocs.akamai.com/iam-api/reference/get-groups)

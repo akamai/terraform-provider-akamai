@@ -36,4 +36,4 @@ These attributes are returned:
 
 * `states` — A list of states.
 
-[API Reference](https://developer.akamai.com/api/core_features/identity_management_user_admin/v2.html#getadmincountrystates)
+[API Reference](https://techdocs.akamai.com/iam-api/reference/get-common-states)

@@ -14,7 +14,7 @@ description: |-
 
 **Scopes**: Security configuration
 
-Returns information about the network lists assigned to the bypass network list; networks on this list are not subject to firewall checking. The returned information is described in the [BypassNetworkList members](https://developer.akamai.com/api/cloud_security/application_security/v1.html#bypassnetworklist) section of the Application Security API.
+Returns information about the network lists assigned to the bypass network list; networks on this list are not subject to firewall checking. 
 
 Note that this data source is only applicable to WAP (Web Application Protector) configurations.
 
