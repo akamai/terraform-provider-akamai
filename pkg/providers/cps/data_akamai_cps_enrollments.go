@@ -195,10 +195,6 @@ func dataSourceCPSEnrollments() *schema.Resource {
 								},
 							},
 						},
-						"contract_id": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
 						"certificate_type": {
 							Type:     schema.TypeString,
 							Computed: true,
