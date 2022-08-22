@@ -45,12 +45,11 @@ This guide assumes that you have a basic understanding of Terraform and how it w
 
 ## <a id="create"></a>Create a security configuration
 
-[Back to table of contents](#contents)
-
-[Create a blank security configuration](#blank)
-[Create a security configuration that uses the recommended presets](#presets)
-[Clone a security configuration](#clone)
-[Activate a security configuration](#activateconfig)
+Topics in this section:
+- [Create a blank security configuration](#blank)
+- [Create a security configuration that uses the recommended presets](#presets)
+- [Clone a security configuration](#clone)
+- [Activate a security configuration](#activateconfig)
 
 In the Akamai world, a security configuration primarily functions as a container for other application security objects: security policies, rate policies, reputation profiles, Kona Site Defender rules, etc. Depending on your needs, you might have multiple security configurations; for example, many organizations have different security configurations for their different business units, their different domains, their different geographic units, and so on. If you need multiple configurations then you're in luck: as shown above, Terraform provides three different ways for you to create new security configurations.
 
@@ -451,10 +450,9 @@ From here we can run `terraform plan` to verify our syntax, then run `terraform 
 
 ## <a id="hostname"></a>Add a hostname to a security configuration
 
-[Back to table of contents](#contents)
-
-[Return a collection of selectable hostnames](#return)
-[Add a hostname to a security configuration](#addhost)
+Topics in this section:
+- [Return a collection of selectable hostnames](#return)
+- [Add a hostname to a security configuration](#addhost)
 
 Security configurations are not designed to automatically protect every server in your organization. Instead, each security configuration protects only those servers (that is, only those hosts) designated for this protection. Do you have different servers that require different levels or different types of protection? That's fine: put one set of servers in Configuration A, another set in Configuration B, and so on. Doing this gives you the ability to fine-tune your websites and to strike a balance between security and efficiency.
 
@@ -626,9 +624,8 @@ By comparison, if we set `mode` to **REPLACE**, the existing set of hostnames ar
 
 ## <a id="activate"></a>Activate a security configuration
 
-[Back to table of contents](#contents)
-
-[Reactivate a security configuration](#reactivate)
+Topics in this section:
+- [Reactivate a security configuration](#reactivate)
 
 > **Important**. The release of Akamai Terraform provider version 2.0.0 includes changes to the **akamai_appsec_activations** resource. The examples used in this article assume you’re using a version of the provider released prior to 2.0.0. If you’re using provider version 2.0.0 or later see the updated [akamai_appsec_activations](https://registry.terraform.io/providers/akamai/akamai/latest/docs/resources/appsec_activations) resource documentation for more information.
 
@@ -732,13 +729,12 @@ Now you can reactivate the configuration. If you need to run activation again, j
 
 ## <a id="policy"></a>Create security policies by using Terraform
 
-[Back to table of contents](#contents)
-
-[A note about using multiple security policies](#multiple)
-[Security policy default settings](#defaultsettings)
-[Create a security policy that uses the default settings](#createdefault)
-[Clone a security policy](#clonepolicy)
-[Add custom setting values when you create a security policy](#customvalues)
+Topics in this section:
+- [A note about using multiple security policies](#multiple)
+- [Security policy default settings](#defaultsettings)
+- [Create a security policy that uses the default settings](#createdefault)
+- [Clone a security policy](#clonepolicy)
+- [Add custom setting values when you create a security policy](#customvalues)
 
 At heart, websites are all about handling user requests: this user would like to download a file; that user would like to stream a video; a third user would like to visit one of your web pages. The vast majority of these requests are legitimate, and harmless; in fact, they're the very reason you published your website in the first place. However, other requests (either maliciously or inadvertently) might not be so harmless. To safely and securely manage your website, you need to be able to identify suspect requests and quickly and efficiently deal with those requests.
 
@@ -1191,10 +1187,10 @@ security_policy_create = "gms4_135620"
 
 ## <a id="rate"></a>Create a rate policy
 
-[Back to table of contents](#contents)
 
-[Configure rate policy actions](#actions)
-[The rate policy JSON file](#ratejson)
+Topics in this section:
+- [Configure rate policy actions](#actions)
+- [The rate policy JSON file](#ratejson)
 
 A “classic” way to take down a website is to overwhelm the site with requests, transmitting so many requests that the site exhausts itself trying to keep up. This might be done maliciously (with the intent of crashing your web servers) or it might be done inadvertently: for example, if you announce a special offer to anyone who visits your site in the next hour you might get so many visitors that this legitimate traffic ends up bringing the site down.
 
@@ -1357,6 +1353,7 @@ A JSON file used to define rate policy properties and property values looks simi
 ```
 
 Although the rate policies you create will use a JSON file *similar* to the one shown above, there will be differences depending on such things as your `matchType`, your `, etc. Rate policy properties available to you are briefly discussed in the following sections of the documentation.
+
 
 #### Required properties
 
@@ -1546,16 +1543,13 @@ Properties of the `queryParameters` object are described in the following table:
 
 ## <a id="match"></a>Create a match target
 
-[Back to table of contents](#contents)
+Topics in this section:
+- [The match target JSON file](#matchjson)
+- [Match target sequencing](#sequence)
+- [Determining the correct match target sequence](#correct)
+- [The match target sequence JSON file](#sequencejson)
 
-[The match target JSON file](#matchjson)
-[Match target sequencing](#sequence)
-[Determining the correct match target sequence](#correct)
-[The match target sequence JSON file](#sequencejson)
-
-Suppose you hire a clown to perform at your child's birthday party, and the performer promises to come to your office and collect his fee. Because you've just been called into a meeting, you ask a co-worker to give the performer the check when he arrives. Does that mean that your co-worker hands out a check to everyone who walks into the office? Of course not. Instead, you give the assistant very specific instructions: give the check to a man, in his late 40s, who's dressed in a clown suit, and who identifies himself as Mr. Freckles. That's the “match target” for the payment.
-
-Match targets in application security might be a little less colorful, but they serve a somewhat similar purpose. Your website might get millions of requests each day, and you might have any number of security policies that help you handle those requests and help protect your site from potentially malicious requests. Do you apply every single security policy to every single request? No. Instead, you use match targets to define which security policy (if any) should apply to a specific API, hostname, or path. Should a request come in that triggers a match target (for example, you might have a match target that scans for a specific set of file extensions), the security policy associated with the target goes into action, using protections such as rate controls, slow POST protections, and reputation controls to determine whether the request should be honored.
+Your website might get millions of requests each day, and you might have any number of security policies that help you handle those requests and help protect your site from potentially malicious requests. Do you apply every single security policy to every single request? No. Instead, you use match targets to define which security policy (if any) should apply to a specific API, hostname, or path. Should a request come in that triggers a match target (for example, you might have a match target that scans for a specific set of file extensions), the security policy associated with the target goes into action, using protections such as rate controls, slow POST protections, and reputation controls to determine whether the request should be honored.
 
 You can create match targets in Terraform by using a configuration similar to this:
 
@@ -1857,11 +1851,10 @@ Continue in this fashion until you've configured all your match targets in the d
 
 ## <a id="kona"></a>Modify a Kona rule set rule action
 
-[Back to table of contents](#contents)
-
-[View the actions currently assigned to a KRS rule](#view)
-[Modify a rule action](#modify)
-[Work with custom denies](#denies)
+Topics in this section:
+- [View the actions currently assigned to a KRS rule](#view)
+- [Modify a rule action](#modify)
+- [Work with custom denies](#denies)
 
 Kona Site Defender uses a vast collection of common vulnerability and exposure (CVE) rules to help protect your website from specific attacks. Each of these rules (collectively referred to as the Kona Rule Set or KRS) is designed to look for a specific exploit and to take action (issue an alert, deny the request, take a custom course of action, or do nothing at all) anytime the rule is triggered. These rule actions are predefined by Akamai, but you can use Terraform to change the action assigned to any of your KRS rules. Do you feel that issuing an alert is not sufficient for a given set of circumstances? Would you prefer that requests be denied any time a specific rule is triggered? Then use Terraform to change the rule action from alert to deny.
 
@@ -2062,9 +2055,9 @@ If we now run `terraform plan` that should tell us everything we want to know ab
          name = "response_body_content"
          value = <<-EOT
             %(AK_REFERENCE_ID)
-            <h1>
+            <h4>
             This is my custom Error Message
-            </h1>
+            </h4>
           EOT
         },
        {
@@ -2099,12 +2092,11 @@ resource "akamai_appsec_rule" "rule" {
 
 ## <a id="import"></a>Import a Terraform resource from one security configuration to another
 
-[Back to table of contents](#contents)
-
-[Before we begin](#before)
-[Export data from a security configuration](#export)
-[Modify the export file](#modifyexport)
-[Import the exported settings](#import)
+Topics in this section:
+- [Before we begin](#before)
+- [Export data from a security configuration](#export)
+- [Modify the export file](#modifyexport)
+- [Import the exported settings](#import)
 
 If you have multiple security configurations, it's possible that you have elements (security policies, configuration settings, rate policies, etc.) in configuration A that you'd also like to have in configuration B. For example, you might want the same set of custom rules in both configurations. So how can you replicate items found in configuration A to configuration B? Well, obviously you can simply recreate those items, from scratch, in configuration B: create new security policies with the same exact values, create new configuration settings with the same exact values, create new rate policies with the same exact values. That works, but that process can also be slow, tedious, and prone to errors.
 
@@ -2437,12 +2429,9 @@ Depending on the editor you used to create your Terraform configurations, you'll
 To restore functionality, remove the two comment markers (**/*** and ***/**).
 
 
-
 ------
 
 ## <a id="aag"></a>Create an automated attack groups (AAG) security configuration
-
-[Back to table of contents](#contents)
 
 When Akamai released automated attack groups (AAG) in October 2018, the technology represented a revolutionary development in protecting websites against Internet attacks. Prior to AAG, attack management primarily revolved around rule management: downloading rules to protect websites from common vulnerabilities and exposures (CVE), configuring rules, updating rules, deleting obsolete – you get the idea. And this approach worked: websites were better protected. The downside? At times, management if these rules could be a little difficult and a little time-consuming.
 
