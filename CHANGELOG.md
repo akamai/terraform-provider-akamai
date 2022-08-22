@@ -1,12 +1,37 @@
 # RELEASE NOTES
 
-## 2.3.0 (August XX, 2022)
+## 2.3.0 (August 25, 2022)
 
 #### FEATURES/ENHANCEMENTS:
 
 * APPSEC
   * Add notification_emails to activations resource
   * Deprecate existing import functionality; use `cli-terraform export-appsec` instead.
+
+* CPS
+  * Extend `akamai_cps_dv_enrollment` with `allow_duplicate_common_name` field
+  * New data sources:
+    * [akamai_cps_enrollment](docs/data-sources/cps_enrollment.md) - returns data for specific enrollment
+    * [akamai_cps_enrollments](docs/data-sources/cps_enrollments.md) - returns data for all of a specific contract's enrollments
+
+#### BUG FIXES:
+
+* Cloudlets
+  * Add missing cloudlet codes in Cloudlets documentation ([#323](https://github.com/akamai/terraform-provider-akamai/issues/323))
+
+* EdgeWorker
+  * Fix EdgeWorker bundle hash calculation ([#321](https://github.com/akamai/terraform-provider-akamai/issues/321))
+
+* GTM
+  * Fix diff for traffic_targets in `akamai_gtm_property` resource
+  * Fix `akamai_gtm_domain` shows diff after import
+  * Fix `akamai_gtm_resource` shows diff after import
+  * Fix terraform import of `akamai_gtm_asmap` does not import assignments
+
+* PAPI
+  * Fix error when using uppercase for `edge_hostname` ([#330](https://github.com/akamai/terraform-provider-akamai/issues/330))
+  * Fix problematic state file when attempting to change `akamai_cp_code` `group_id`([#322](https://github.com/akamai/terraform-provider-akamai/issues/322))
+  * Fix panic on `akamai_property_rules_template` on empty property_snippets file ([#332](https://github.com/akamai/terraform-provider-akamai/issues/332)) 
 
 ## 2.2.0 (June 30, 2022)
 
