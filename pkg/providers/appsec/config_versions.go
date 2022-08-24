@@ -16,6 +16,17 @@ import (
 var (
 	configCloneMutex   sync.Mutex
 	latestVersionMutex sync.Mutex
+	// GetModifiableConfigVersion returns the number of the latest editable version
+	// of the given security configuration. If the most recent version is not editable
+	// (because it is active in staging or production) a new version is cloned and the
+	// new version's number is returned. API calls are made using the supplied context
+	// and the API client obtained from m. Log messages are written to m's logger. A
+	// mutex prevents calls made by multiple resources from creating unnecessary clones.
+	GetModifiableConfigVersion = getModifiableConfigVersion
+	// GetLatestConfigVersion returns the latest version number of the given security
+	// configuration. API calls are made using the supplied context and the API client
+	// obtained from m. Log messages are written to m's logger.
+	GetLatestConfigVersion = getLatestConfigVersion
 )
 
 // getModifiableConfigVersion returns the number of the latest editable version
