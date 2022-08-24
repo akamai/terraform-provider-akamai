@@ -20,6 +20,7 @@ var (
 		datastream.ConnectorTypeS3:        "s3_connector",
 		datastream.ConnectorTypeSplunk:    "splunk_connector",
 		datastream.ConnectorTypeSumoLogic: "sumologic_connector",
+		datastream.ConnectorTypeLoggly:    "loggly_connector",
 	}
 
 	connectorMappers = map[datastream.ConnectorType]func(datastream.ConnectorDetails, map[string]interface{}) map[string]interface{}{
@@ -31,6 +32,7 @@ var (
 		datastream.ConnectorTypeS3:        MapS3Connector,
 		datastream.ConnectorTypeSplunk:    MapSplunkConnector,
 		datastream.ConnectorTypeSumoLogic: MapSumoLogicConnector,
+		datastream.ConnectorTypeLoggly:    MapLogglyConnector,
 	}
 
 	connectorGetters = map[string]func(map[string]interface{}) datastream.AbstractConnector{
@@ -42,6 +44,7 @@ var (
 		"s3_connector":        GetS3Connector,
 		"splunk_connector":    GetSplunkConnector,
 		"sumologic_connector": GetSumoLogicConnector,
+		"loggly_connector":    GetLogglyConnector,
 	}
 )
 
@@ -361,6 +364,34 @@ func MapOracleConnector(c datastream.ConnectorDetails, s map[string]interface{})
 		"secret_access_key": "",
 	}
 	setNonNilItemsFromState(s, []string{"access_key", "secret_access_key"}, rv)
+	return rv
+}
+
+// GetLogglyConnector builds LogglyConnector structure
+func GetLogglyConnector(props map[string]interface{}) datastream.AbstractConnector {
+	return &datastream.LogglyConnector{
+		ConnectorName:     props["connector_name"].(string),
+		Endpoint:          props["endpoint"].(string),
+		AuthToken:         props["auth_token"].(string),
+		Tags:              props["tags"].(string),
+		ContentType:       props["content_type"].(string),
+		CustomHeaderName:  props["custom_header_name"].(string),
+		CustomHeaderValue: props["custom_header_value"].(string),
+	}
+}
+
+// MapLogglyConnector selects fields needed for LogglyConnector
+func MapLogglyConnector(c datastream.ConnectorDetails, s map[string]interface{}) map[string]interface{} {
+	rv := map[string]interface{}{
+		"auth_token":          "",
+		"connector_name":      c.ConnectorName,
+		"endpoint":            c.Endpoint,
+		"tags":                c.Tags,
+		"content_type":        c.ContentType,
+		"custom_header_name":  c.CustomHeaderName,
+		"custom_header_value": c.CustomHeaderValue,
+	}
+	setNonNilItemsFromState(s, []string{"auth_token"}, rv)
 	return rv
 }
 

@@ -1050,6 +1050,37 @@ func TestCustomHeaders(t *testing.T) {
 				resource.TestCheckResourceAttr("akamai_datastream.s", "sumologic_connector.0.endpoint", "endpoint"),
 			},
 		},
+		"loggly": {
+			Filename: "custom_headers_loggly.tf",
+			Connector: &datastream.LogglyConnector{
+				ConnectorName:     "loggly_connector_name",
+				Endpoint:          "endpoint",
+				AuthToken:         "auth_token",
+				Tags:              "tag1,tag2,tag3",
+				ContentType:       "content_type",
+				CustomHeaderName:  "custom_header_name",
+				CustomHeaderValue: "custom_header_value",
+			},
+			Response: datastream.ConnectorDetails{
+				ConnectorType:     datastream.ConnectorTypeLoggly,
+				ConnectorName:     "loggly_connector_name",
+				Endpoint:          "endpoint",
+				Tags:              "tag1,tag2,tag3",
+				ContentType:       "content_type",
+				CustomHeaderName:  "custom_header_name",
+				CustomHeaderValue: "custom_header_value",
+			},
+			TestChecks: []resource.TestCheckFunc{
+				resource.TestCheckResourceAttr("akamai_datastream.s", "loggly_connector.#", "1"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "loggly_connector.0.connector_name", "loggly_connector_name"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "loggly_connector.0.endpoint", "endpoint"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "loggly_connector.0.auth_token", "auth_token"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "loggly_connector.0.tags", "tag1,tag2,tag3"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "loggly_connector.0.content_type", "content_type"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "loggly_connector.0.custom_header_name", "custom_header_name"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "loggly_connector.0.custom_header_value", "custom_header_value"),
+			},
+		},
 	}
 
 	for name, test := range tests {
