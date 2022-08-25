@@ -903,7 +903,7 @@ func TestFindEdgeHostname(t *testing.T) {
 	}
 }
 
-func TestSuppressEdgeHostnameDomain(t *testing.T) {
+func TestDiffSuppressEdgeHostname(t *testing.T) {
 	tests := map[string]struct {
 		old, new string
 		expected bool
@@ -923,10 +923,15 @@ func TestSuppressEdgeHostnameDomain(t *testing.T) {
 			new:      "test1.com.akamaized.net",
 			expected: false,
 		},
+		"case insensitive domains": {
+			old:      "test.com.akamaized.net",
+			new:      "Test.com.akamaized.net",
+			expected: true,
+		},
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			assert.Equal(t, test.expected, suppressEdgeHostnameDomain("", test.old, test.new, nil))
+			assert.Equal(t, test.expected, diffSuppressEdgeHostname("", test.old, test.new, nil))
 		})
 	}
 }

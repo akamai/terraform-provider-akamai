@@ -423,7 +423,7 @@ func populateTerraformGeoMapState(d *schema.ResourceData, geo *gtm.GeoMap, m int
 // create and populate GTM GeoMap Assignments object
 func populateGeoAssignmentsObject(d *schema.ResourceData, geo *gtm.GeoMap, m interface{}) {
 	meta := akamai.Meta(m)
-	logger := meta.Log("Akamai GTM", "resourceGTMv1GeomapExists")
+	logger := meta.Log("Akamai GTM", "populateGeoAssignmentsObject")
 
 	// pull apart List
 	geoAssignmentsList, err := tools.GetInterfaceArrayValue("assignment", d)

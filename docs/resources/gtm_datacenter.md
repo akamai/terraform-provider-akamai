@@ -58,7 +58,3 @@ This resource returns these computed attributes in the `terraform.tfstate` file:
 * `servermonitor_load_count`
 * `servermonitor_pool`
 * `virtual` - A boolean indicating whether the data center is virtual or physical, the latter meaning the data center has an Akamai Network Agent installed, and its physical location (`latitude`, `longitude`) is fixed. Either `true` if virtual or `false` if physical.
-
-## Schema reference
-
-You can download the GTM Data Center backing schema from the [Global Traffic Management API](https://developer.akamai.com/api/web_performance/global_traffic_management/v1.html#datacenter) page.

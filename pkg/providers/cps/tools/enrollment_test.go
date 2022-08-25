@@ -642,3 +642,32 @@ func TestGetChangeIDFromPendingChanges(t *testing.T) {
 		})
 	}
 }
+
+func TestGetEnrollmentID(t *testing.T) {
+	tests := map[string]struct {
+		givenLocation string
+		expected      int
+		withError     bool
+	}{
+		"basic test": {
+			givenLocation: "/cps/v2/enrollments/5555",
+			expected:      5555,
+		},
+		"invalid enrollment ID": {
+			givenLocation: "/cps/v2/enrollments/abc",
+			withError:     true,
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			res, err := GetEnrollmentID(test.givenLocation)
+			if test.withError {
+				assert.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, test.expected, res)
+		})
+	}
+}

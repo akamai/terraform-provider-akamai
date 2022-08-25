@@ -462,19 +462,43 @@ func TestResCPCode(t *testing.T) {
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "cpc_0"),
 							resource.TestCheckResourceAttr("akamai_cp_code.test", "name", "test cpcode"),
+							resource.TestCheckResourceAttr("akamai_cp_code.test", "group_id", "grp_1"),
+							resource.TestCheckResourceAttr("akamai_cp_code.test", "contract", "ctr_1"),
+							resource.TestCheckResourceAttr("akamai_cp_code.test", "product", "prd_1"),
 						),
 					},
 					{
 						Config:      loadFixtureString("testdata/TestResCPCode/change_immutable.tf"),
 						ExpectError: regexp.MustCompile(`cp code attribute 'contract' cannot be changed after creation \(immutable\)`),
+						Check: resource.ComposeAggregateTestCheckFunc(
+							resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "cpc_0"),
+							resource.TestCheckResourceAttr("akamai_cp_code.test", "name", "test cpcode"),
+							resource.TestCheckResourceAttr("akamai_cp_code.test", "group_id", "grp_1"),
+							resource.TestCheckResourceAttr("akamai_cp_code.test", "contract", "ctr_1"),
+							resource.TestCheckResourceAttr("akamai_cp_code.test", "product", "prd_1"),
+						),
 					},
 					{
 						Config:      loadFixtureString("testdata/TestResCPCode/change_immutable.tf"),
 						ExpectError: regexp.MustCompile(`cp code attribute 'product' cannot be changed after creation \(immutable\)`),
+						Check: resource.ComposeAggregateTestCheckFunc(
+							resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "cpc_0"),
+							resource.TestCheckResourceAttr("akamai_cp_code.test", "name", "test cpcode"),
+							resource.TestCheckResourceAttr("akamai_cp_code.test", "group_id", "grp_1"),
+							resource.TestCheckResourceAttr("akamai_cp_code.test", "contract", "ctr_1"),
+							resource.TestCheckResourceAttr("akamai_cp_code.test", "product", "prd_1"),
+						),
 					},
 					{
 						Config:      loadFixtureString("testdata/TestResCPCode/change_immutable.tf"),
-						ExpectError: regexp.MustCompile(`cp code attribute 'group' cannot be changed after creation \(immutable\)`),
+						ExpectError: regexp.MustCompile(`cp code attribute 'group_id' cannot be changed after creation \(immutable\)`),
+						Check: resource.ComposeAggregateTestCheckFunc(
+							resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "cpc_0"),
+							resource.TestCheckResourceAttr("akamai_cp_code.test", "name", "test cpcode"),
+							resource.TestCheckResourceAttr("akamai_cp_code.test", "group_id", "grp_1"),
+							resource.TestCheckResourceAttr("akamai_cp_code.test", "contract", "ctr_1"),
+							resource.TestCheckResourceAttr("akamai_cp_code.test", "product", "prd_1"),
+						),
 					},
 				},
 			})

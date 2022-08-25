@@ -14,7 +14,7 @@ import (
 
 // network_lists v2
 //
-// https://developer.akamai.com/api/cloud_security/network_lists/v2.html
+// https://techdocs.akamai.com/network-lists/reference/api
 func resourceNetworkListSubscription() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceNetworkListSubscriptionUpdate,

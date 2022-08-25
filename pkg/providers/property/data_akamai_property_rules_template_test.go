@@ -193,7 +193,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 				Steps: []resource.TestStep{
 					{
 						Config:      loadFixtureString("testdata/TestDSRulesTemplate/template_invalid_json.tf"),
-						ExpectError: regexp.MustCompile(`invalid JSON result:`),
+						ExpectError: regexp.MustCompile(`snippets file should be under 'property-snippets' folder with .json extension and valid json data. Invalid file: testdata/TestDSRulesTemplate/property-snippets/template_invalid_json.json`),
 					},
 				},
 			})
@@ -214,6 +214,21 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 		})
 	})
 
+	t.Run("template file is empty", func(t *testing.T) {
+		client := mockpapi{}
+		useClient(&client, nil, func() {
+			resource.UnitTest(t, resource.TestCase{
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config:      loadFixtureString("testdata/TestDSRulesTemplate/template_file_is_empty.tf"),
+						ExpectError: regexp.MustCompile(`Error: snippets file should be under 'property-snippets' folder with .json extension and valid json data. Invalid file: testdata/TestDSRulesTemplate/property-snippets/empty_json.json`),
+					},
+				},
+			})
+		})
+	})
+
 	t.Run("snippets files are under incorrect folder deeply nested", func(t *testing.T) {
 		client := mockpapi{}
 		useClient(&client, nil, func() {
@@ -222,7 +237,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 				Steps: []resource.TestStep{
 					{
 						Config:      loadFixtureString("testdata/TestDSRulesTemplate/template_invalid_snippets_folder_json.tf"),
-						ExpectError: regexp.MustCompile(`Error: snippets file should be under 'property-snippets' folder with .json extension. Invalid file: testdata/TestDSRulesTemplate/output/template_invalid_json.json`),
+						ExpectError: regexp.MustCompile(`Error: snippets file should be under 'property-snippets' folder with .json extension and valid json data. Invalid file: testdata/TestDSRulesTemplate/output/template_invalid_json.json`),
 					},
 				},
 			})
@@ -237,7 +252,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 				Steps: []resource.TestStep{
 					{
 						Config:      loadFixtureString("testdata/TestDSRulesTemplate/template_invalid_snippets_only_one_folder_json.tf"),
-						ExpectError: regexp.MustCompile(`Error: snippets file should be under 'property-snippets' folder with .json extension. Invalid file: property-snippet/template_invalid_json.json`),
+						ExpectError: regexp.MustCompile(`Error: snippets file should be under 'property-snippets' folder with .json extension and valid json data. Invalid file: property-snippet/template_invalid_json.json`),
 					},
 				},
 			})

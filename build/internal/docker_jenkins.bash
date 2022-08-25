@@ -7,9 +7,8 @@
 set -e
 
 PROVIDER_BRANCH_NAME="${1:-develop}"
-EDGEGRID_BRANCH_NAME_V2="${2:-v2}"
-EDGEGRID_BRANCH_NAME_V1="${3:-develop}"
-RELOAD_DOCKER_IMAGE="${4:-false}"
+EDGEGRID_BRANCH_NAME="${2:-v2}"
+RELOAD_DOCKER_IMAGE="${3:-false}"
 
 # Recalculate DOCKER_IMAGE_SIZE if any changes to dockerfile.
 TIMEOUT="20m"
@@ -64,8 +63,7 @@ docker run -d -it --name akatf-container --entrypoint "/usr/bin/tail" \
         -e TF_LOG=DEBUG \
         -e TF_LOG_PATH="provider.log" \
         -e COVERMODE="atomic" \
-        -e EDGEGRID_BRANCH_NAME_V1="$EDGEGRID_BRANCH_NAME_V1" \
-        -e EDGEGRID_BRANCH_NAME_V2="$EDGEGRID_BRANCH_NAME_V2" \
+        -e EDGEGRID_BRANCH_NAME="$EDGEGRID_BRANCH_NAME" \
         -e PROVIDER_BRANCH_NAME="$PROVIDER_BRANCH_NAME" \
         -e SSH_PUB_KEY="${SSH_PUB_KEY}" \
         -e SSH_PRV_KEY="${SSH_PRV_KEY}" \
@@ -89,15 +87,12 @@ docker exec akatf-container sh -c 'echo "$SSH_KNOWN_HOSTS" > /root/.ssh/known_ho
 
 echo "Cloning repos"
 docker exec akatf-container sh -c 'git clone ssh://git@git.source.akamai.com:7999/devexp/terraform-provider-akamai.git;
-                                   git clone ssh://git@git.source.akamai.com:7999/devexp/akamaiopen-edgegrid-golang.git edgegrid-v1;
-                                   git clone ssh://git@git.source.akamai.com:7999/devexp/akamaiopen-edgegrid-golang.git edgegrid-v2'
+                                   git clone ssh://git@git.source.akamai.com:7999/devexp/akamaiopen-edgegrid-golang.git edgegrid'
 
 echo "Checkout branches"
-docker exec akatf-container sh -c 'cd edgegrid-v1; git checkout ${EDGEGRID_BRANCH_NAME_V1};
-                                   cd ../edgegrid-v2; git checkout ${EDGEGRID_BRANCH_NAME_V2};
+docker exec akatf-container sh -c 'cd edgegrid; git checkout ${EDGEGRID_BRANCH_NAME};
                                    cd ../terraform-provider-akamai; git checkout ${PROVIDER_BRANCH_NAME};
-                                   go mod edit -replace github.com/akamai/AkamaiOPEN-edgegrid-golang=../edgegrid-v1;
-                                   go mod edit -replace github.com/akamai/AkamaiOPEN-edgegrid-golang/v2=../edgegrid-v2;
+                                   go mod edit -replace github.com/akamai/AkamaiOPEN-edgegrid-golang/v2=../edgegrid;
                                    go mod tidy -compat=1.17'
 
 echo "Running tests with xUnit output"

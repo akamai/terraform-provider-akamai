@@ -178,7 +178,7 @@ func resourceProperty() *schema.Resource {
 					}
 
 					if !regexp.MustCompile(`^v[0-9]{4}-[0-9]{2}-[0-9]{2}$`).MatchString(format) {
-						url := "https://developer.akamai.com/api/core_features/property_manager/vlatest.html#behaviors"
+						url := "https://techdocs.akamai.com/property-mgr/reference/latest-behaviors"
 						return diag.Errorf(`"rule_format" must be of the form vYYYY-MM-DD (with a leading "v") see %s`, url)
 					}
 

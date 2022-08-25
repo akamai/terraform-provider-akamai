@@ -43,7 +43,7 @@ Create a new enrollment and prove that you control the domain you want to secure
 
 When setting up enrollments, you need to retrieve the Akamai [`contract ID`](../data-sources/contract.md).
 
--> **Note** If you're currently using prefixes with your IDs, you might have to remove the `ctr_` prefix from your entry. For more information about prefixes, see the [ID prefixes](https://developer.akamai.com/api/core_features/property_manager/v1.html#prefixes) section of the Property Manager API (PAPI) documentation.
+-> **Note** If you're currently using prefixes with your IDs, you might have to remove the `ctr_` prefix from your entry. For more information about prefixes, see the [ID prefixes](https://techdocs.akamai.com/property-mgr/reference/id-prefixes) section of the Property Manager API (PAPI) documentation.
 
 ## Create a DV enrollment
 

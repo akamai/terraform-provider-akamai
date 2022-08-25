@@ -18,7 +18,7 @@ import (
 
 // appsec v1
 //
-// https://developer.akamai.com/api/cloud_security/application_security/v1.html
+// https://techdocs.akamai.com/application-security/reference/api
 func resourceActivations() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceActivationsCreate,
@@ -402,7 +402,7 @@ func resourceImporter(ctx context.Context, d *schema.ResourceData, m interface{}
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceActivationsImport")
-	logger.Debug("in resourceActivationsCreate")
+	logger.Debug("in appsec_activation resource's resourceImporter")
 
 	iDParts, err := splitID(d.Id(), 3, "configID:version:network")
 	if err != nil {
@@ -446,6 +446,9 @@ func resourceImporter(ctx context.Context, d *schema.ResourceData, m interface{}
 				return nil, err
 			}
 			if err = d.Set("version", version); err != nil {
+				return nil, err
+			}
+			if err = d.Set("notification_emails", activation.NotificationEmails); err != nil {
 				return nil, err
 			}
 

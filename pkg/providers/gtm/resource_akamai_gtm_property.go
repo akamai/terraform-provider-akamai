@@ -176,7 +176,7 @@ func resourceGTMv1Property() *schema.Resource {
 				Computed: true,
 			},
 			"traffic_target": {
-				Type:     schema.TypeList,
+				Type:     schema.TypeSet,
 				Optional: true,
 				MinItems: 1,
 				Elem: &schema.Resource{
@@ -339,7 +339,7 @@ func parseResourceStringID(id string) (string, string, error) {
 
 	parts := strings.SplitN(id, ":", 2)
 	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
-		return "", "", fmt.Errorf("Invalid resource ID: %s", id)
+		return "", "", fmt.Errorf("invalid resource ID: %s", id)
 	}
 
 	return parts[0], parts[1], nil
@@ -357,7 +357,7 @@ func validateTTL(v interface{}, path cty.Path) diag.Diagnostics {
 		return diag.Diagnostics{
 			diag.Diagnostic{
 				Severity: diag.Warning,
-				Summary:  fmt.Sprintf("static_ttl is deprecated and will be ignored. Use static_rr_sets to apply static ttls to records"),
+				Summary:  "static_ttl is deprecated and will be ignored. Use static_rr_sets to apply static ttls to records",
 			},
 		}
 	}
@@ -396,14 +396,14 @@ func resourceGTMv1PropertyCreate(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 	// Static properties cannot have traffic_targets. Non Static properties must
-	traffTargList, err := tools.GetInterfaceArrayValue("traffic_target", d)
-	if strings.ToUpper(propertyType) == "STATIC" && err == nil && (traffTargList != nil && len(traffTargList) > 0) {
+	traffTargs, err := tools.GetSetValue("traffic_target", d)
+	if strings.ToUpper(propertyType) == "STATIC" && err == nil && (traffTargs != nil && traffTargs.Len() > 0) {
 		logger.Errorf("Property %s Create failed. Static property cannot have traffic targets", propertyName)
-		return diag.FromErr(fmt.Errorf("Property Create failed. Static property cannot have traffic targets"))
+		return diag.Errorf("property Create failed. Static property cannot have traffic targets")
 	}
-	if strings.ToUpper(propertyType) != "STATIC" && (err != nil || (traffTargList == nil || len(traffTargList) < 1)) {
+	if strings.ToUpper(propertyType) != "STATIC" && (err != nil || (traffTargs == nil || traffTargs.Len() < 1)) {
 		logger.Errorf("Property %s Create failed. Property must have one or more traffic targets", propertyName)
-		return diag.FromErr(fmt.Errorf("Property Create failed. Property must have one or more traffic targets"))
+		return diag.Errorf("property Create failed. Property must have one or more traffic targets")
 	}
 
 	logger.Infof("Creating property [%s] in domain [%s]", propertyName, domain)
@@ -415,7 +415,7 @@ func resourceGTMv1PropertyCreate(ctx context.Context, d *schema.ResourceData, m 
 	cStatus, err := inst.Client(meta).CreateProperty(ctx, newProp, domain)
 	if err != nil {
 		logger.Errorf("Property Create failed: %s", err.Error())
-		return diag.FromErr(fmt.Errorf("Property Create failed: %s", err.Error()))
+		return diag.Errorf("property Create failed: %s", err.Error())
 	}
 	logger.Debugf("Property Create status: %v", cStatus.Status)
 
@@ -438,7 +438,7 @@ func resourceGTMv1PropertyCreate(ctx context.Context, d *schema.ResourceData, m 
 				logger.Infof("Property Create pending")
 			} else {
 				logger.Errorf("Property Create failed [%s]", err.Error())
-				return diag.FromErr(fmt.Errorf("Property Create failed [%s]", err.Error()))
+				return diag.Errorf("property Create failed [%s]", err.Error())
 			}
 		}
 	}
@@ -471,7 +471,7 @@ func resourceGTMv1PropertyRead(ctx context.Context, d *schema.ResourceData, m in
 	prop, err := inst.Client(meta).GetProperty(ctx, property, domain)
 	if err != nil {
 		logger.Errorf("Property Read failed: %s", err.Error())
-		return diag.FromErr(fmt.Errorf("Property Read failed: %s", err.Error()))
+		return diag.Errorf("property Read failed: %s", err.Error())
 	}
 	populateTerraformPropertyState(d, prop, m)
 	logger.Debugf("READ %v", prop)
@@ -509,7 +509,7 @@ func resourceGTMv1PropertyUpdate(ctx context.Context, d *schema.ResourceData, m 
 	uStat, err := inst.Client(meta).UpdateProperty(ctx, existProp, domain)
 	if err != nil {
 		logger.Errorf("Property Update failed: %s", err.Error())
-		return diag.FromErr(fmt.Errorf("Property Update failed: %s", err.Error()))
+		return diag.Errorf("property Update failed: %s", err.Error())
 	}
 	logger.Debugf("Property Update  status: %v", uStat)
 	if uStat.PropagationStatus == "DENIED" {
@@ -531,7 +531,7 @@ func resourceGTMv1PropertyUpdate(ctx context.Context, d *schema.ResourceData, m 
 				logger.Infof("Property Update pending")
 			} else {
 				logger.Errorf("Property Update failed [%s]", err.Error())
-				return diag.FromErr(fmt.Errorf("Property Update failed [%s]", err.Error()))
+				return diag.Errorf("property Update failed [%s]", err.Error())
 			}
 		}
 	}
@@ -591,13 +591,13 @@ func resourceGTMv1PropertyDelete(ctx context.Context, d *schema.ResourceData, m 
 	existProp, err := inst.Client(meta).GetProperty(ctx, property, domain)
 	if err != nil {
 		logger.Errorf("Property Delete failed: %s", err.Error())
-		return diag.FromErr(fmt.Errorf("Property Delete failed: %s", err.Error()))
+		return diag.Errorf("property Delete failed: %s", err.Error())
 	}
 	logger.Debugf("Deleting Property: %v", existProp)
 	uStat, err := inst.Client(meta).DeleteProperty(ctx, existProp, domain)
 	if err != nil {
 		logger.Errorf("Property Delete failed: %s", err.Error())
-		return diag.FromErr(fmt.Errorf("Property Delete failed: %s", err.Error()))
+		return diag.Errorf("property Delete failed: %s", err.Error())
 	}
 	logger.Debugf("Property Delete status: %v", uStat)
 	if uStat.PropagationStatus == "DENIED" {
@@ -619,7 +619,7 @@ func resourceGTMv1PropertyDelete(ctx context.Context, d *schema.ResourceData, m 
 				logger.Infof("Property Delete pending")
 			} else {
 				logger.Errorf("Property Delete failed [%s]", err.Error())
-				return diag.FromErr(fmt.Errorf("Property Delete failed [%s]", err.Error()))
+				return diag.Errorf("property Delete failed [%s]", err.Error())
 			}
 		}
 	}
@@ -652,7 +652,7 @@ func populatePropertyObject(ctx context.Context, d *schema.ResourceData, prop *g
 	}
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		logger.Errorf("populateResourceObject() stickiness_bonus_percentage failed: %v", err.Error())
-		return fmt.Errorf("Property Object could not be populated: %v", err.Error())
+		return fmt.Errorf("property Object could not be populated: %v", err.Error())
 	}
 
 	vint, err = tools.GetIntValue("stickiness_bonus_constant", d)
@@ -661,7 +661,7 @@ func populatePropertyObject(ctx context.Context, d *schema.ResourceData, prop *g
 	}
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		logger.Errorf("populateResourceObject() stickiness_bonus_constant failed: %v", err.Error())
-		return fmt.Errorf("Property Object could not be populated: %v", err.Error())
+		return fmt.Errorf("property Object could not be populated: %v", err.Error())
 	}
 
 	vfloat, err := tools.GetFloat64Value("health_threshold", d)
@@ -670,7 +670,7 @@ func populatePropertyObject(ctx context.Context, d *schema.ResourceData, prop *g
 	}
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		logger.Errorf("populateResourceObject() health_threshold failed: %v", err.Error())
-		return fmt.Errorf("Property Object could not be populated: %v", err.Error())
+		return fmt.Errorf("property Object could not be populated: %v", err.Error())
 	}
 
 	if ipv6, err := tools.GetBoolValue("ipv6", d); err == nil {
@@ -686,7 +686,7 @@ func populatePropertyObject(ctx context.Context, d *schema.ResourceData, prop *g
 	}
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		logger.Errorf("populateResourceObject() backup_ip failed: %v", err.Error())
-		return fmt.Errorf("Property Object could not be populated: %v", err.Error())
+		return fmt.Errorf("property Object could not be populated: %v", err.Error())
 	}
 
 	if bbds, err := tools.GetBoolValue("balance_by_download_score", d); err == nil {
@@ -699,7 +699,7 @@ func populatePropertyObject(ctx context.Context, d *schema.ResourceData, prop *g
 	}
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		logger.Errorf("populateResourceObject() unreachable_threshold failed: %v", err.Error())
-		return fmt.Errorf("Property Object could not be populated: %v", err.Error())
+		return fmt.Errorf("property Object could not be populated: %v", err.Error())
 	}
 
 	vfloat, err = tools.GetFloat64Value("min_live_fraction", d)
@@ -708,7 +708,7 @@ func populatePropertyObject(ctx context.Context, d *schema.ResourceData, prop *g
 	}
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		logger.Errorf("populateResourceObject() min_live_fraction failed: %v", err.Error())
-		return fmt.Errorf("Property Object could not be populated: %v", err.Error())
+		return fmt.Errorf("property Object could not be populated: %v", err.Error())
 	}
 
 	vfloat, err = tools.GetFloat64Value("health_multiplier", d)
@@ -717,7 +717,7 @@ func populatePropertyObject(ctx context.Context, d *schema.ResourceData, prop *g
 	}
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		logger.Errorf("populateResourceObject() health_multiplier failed: %v", err.Error())
-		return fmt.Errorf("Property Object could not be populated: %v", err.Error())
+		return fmt.Errorf("property Object could not be populated: %v", err.Error())
 	}
 
 	vint, err = tools.GetIntValue("dynamic_ttl", d)
@@ -726,7 +726,7 @@ func populatePropertyObject(ctx context.Context, d *schema.ResourceData, prop *g
 	}
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		logger.Errorf("populateResourceObject() dynamic_ttl failed: %v", err.Error())
-		return fmt.Errorf("Property Object could not be populated: %v", err.Error())
+		return fmt.Errorf("property Object could not be populated: %v", err.Error())
 	}
 
 	vint, err = tools.GetIntValue("max_unreachable_penalty", d)
@@ -735,7 +735,7 @@ func populatePropertyObject(ctx context.Context, d *schema.ResourceData, prop *g
 	}
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		logger.Errorf("populateResourceObject() max_unreachable_penalty failed: %v", err.Error())
-		return fmt.Errorf("Property Object could not be populated: %v", err.Error())
+		return fmt.Errorf("property Object could not be populated: %v", err.Error())
 	}
 
 	vstr, err = tools.GetStringValue("map_name", d)
@@ -744,7 +744,7 @@ func populatePropertyObject(ctx context.Context, d *schema.ResourceData, prop *g
 	}
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		logger.Errorf("populateResourceObject() map_name failed: %v", err.Error())
-		return fmt.Errorf("Property Object could not be populated: %v", err.Error())
+		return fmt.Errorf("property Object could not be populated: %v", err.Error())
 	}
 
 	if vint, err = tools.GetIntValue("handout_limit", d); err == nil || d.HasChange("handout_limit") {
@@ -760,7 +760,7 @@ func populatePropertyObject(ctx context.Context, d *schema.ResourceData, prop *g
 	}
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		logger.Errorf("populateResourceObject() load_imbalance_percentage failed: %v", err.Error())
-		return fmt.Errorf("Property Object could not be populated: %v", err.Error())
+		return fmt.Errorf("property Object could not be populated: %v", err.Error())
 	}
 
 	vint, err = tools.GetIntValue("failover_delay", d)
@@ -769,7 +769,7 @@ func populatePropertyObject(ctx context.Context, d *schema.ResourceData, prop *g
 	}
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		logger.Errorf("populateResourceObject() failover_delay failed: %v", err.Error())
-		return fmt.Errorf("Property Object could not be populated: %v", err.Error())
+		return fmt.Errorf("property Object could not be populated: %v", err.Error())
 	}
 
 	vstr, err = tools.GetStringValue("backup_cname", d)
@@ -778,7 +778,7 @@ func populatePropertyObject(ctx context.Context, d *schema.ResourceData, prop *g
 	}
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		logger.Errorf("populateResourceObject() backup_cname failed: %v", err.Error())
-		return fmt.Errorf("Property Object could not be populated: %v", err.Error())
+		return fmt.Errorf("property Object could not be populated: %v", err.Error())
 	}
 
 	vint, err = tools.GetIntValue("failback_delay", d)
@@ -787,7 +787,7 @@ func populatePropertyObject(ctx context.Context, d *schema.ResourceData, prop *g
 	}
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		logger.Errorf("populateResourceObject() failback_delay failed: %v", err.Error())
-		return fmt.Errorf("Property Object could not be populated: %v", err.Error())
+		return fmt.Errorf("property Object could not be populated: %v", err.Error())
 	}
 
 	vfloat, err = tools.GetFloat64Value("health_max", d)
@@ -796,7 +796,7 @@ func populatePropertyObject(ctx context.Context, d *schema.ResourceData, prop *g
 	}
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		logger.Errorf("populateResourceObject() health_max failed: %v", err.Error())
-		return fmt.Errorf("Property Object could not be populated: %v", err.Error())
+		return fmt.Errorf("property Object could not be populated: %v", err.Error())
 	}
 
 	if gdr, err := tools.GetBoolValue("ghost_demand_reporting", d); err == nil {
@@ -815,7 +815,7 @@ func populatePropertyObject(ctx context.Context, d *schema.ResourceData, prop *g
 	}
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		logger.Errorf("populateResourceObject() cname failed: %v", err.Error())
-		return fmt.Errorf("Property Object could not be populated: %v", err.Error())
+		return fmt.Errorf("property Object could not be populated: %v", err.Error())
 	}
 
 	vstr, err = tools.GetStringValue("comments", d)
@@ -824,7 +824,7 @@ func populatePropertyObject(ctx context.Context, d *schema.ResourceData, prop *g
 	}
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		logger.Errorf("populateResourceObject() comments failed: %v", err.Error())
-		return fmt.Errorf("Property Object could not be populated: %v", err.Error())
+		return fmt.Errorf("property Object could not be populated: %v", err.Error())
 	}
 
 	if strings.ToUpper(ptype) != "STATIC" {
@@ -905,13 +905,13 @@ func populateTerraformPropertyState(d *schema.ResourceData, prop *gtm.Property, 
 // create and populate GTM Property TrafficTargets object
 func populateTrafficTargetObject(ctx context.Context, d *schema.ResourceData, prop *gtm.Property, m interface{}) {
 	meta := akamai.Meta(m)
-	logger := meta.Log("Akamai GTM", "resourceGTMv1PropertyExists")
+	logger := meta.Log("Akamai GTM", "populateTrafficTargetObject")
 
 	// pull apart List
-	traffTargList, err := tools.GetInterfaceArrayValue("traffic_target", d)
+	traffTargs, err := tools.GetSetValue("traffic_target", d)
 	if err == nil {
-		trafficObjList := make([]*gtm.TrafficTarget, len(traffTargList)) // create new object list
-		for i, v := range traffTargList {
+		trafficObjList := make([]*gtm.TrafficTarget, traffTargs.Len()) // create new object list
+		for i, v := range traffTargs.List() {
 			ttMap := v.(map[string]interface{})
 			trafficTarget := inst.Client(meta).NewTrafficTarget(ctx) // create new object
 			trafficTarget.DatacenterId = ttMap["datacenter_id"].(int)

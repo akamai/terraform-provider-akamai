@@ -57,4 +57,4 @@ This resource supports the following arguments:
   - **deny**. Block the request.
   - **deny_custom_{custom_deny_id}**. Take the action specified by the custom deny.
   - **none**. Take no action.
-- `condition_exception` (Optional). Path to a JSON file containing properties and property values for the attack group. For more information, the [Modify the exceptions of an attack group](https://developer.akamai.com/api/cloud_security/application_security/v1.html#putattackgroupconditionexception) section of the Application Security API documentation.
+- `condition_exception` (Optional). Path to a JSON file containing properties and property values for the attack group. 

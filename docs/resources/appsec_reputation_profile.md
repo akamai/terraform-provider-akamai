@@ -53,7 +53,7 @@ output "reputation_profile_id" {
 This resource supports the following arguments:
 
 - `config_id` (Required). Unique identifier of the security configuration associated with the reputation profile being modified.
-- `reputation_profile` (Required). Path to a JSON file containing a definition of the reputation profile. You can view a sample JSON file in the [Create a reputation profile](https://developer.akamai.com/api/cloud_security/application_security/v1.html#postreputationprofiles) section of the Application Security API documentation.
+- `reputation_profile` (Required). Path to a JSON file containing a definition of the reputation profile. 
 
 ## Output Options
 

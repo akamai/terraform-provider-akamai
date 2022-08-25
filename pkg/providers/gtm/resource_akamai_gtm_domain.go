@@ -30,7 +30,7 @@ func resourceGTMv1Domain() *schema.Resource {
 		UpdateContext: resourceGTMv1DomainUpdate,
 		DeleteContext: resourceGTMv1DomainDelete,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: resourceGTMv1DomainImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"contract": {
@@ -508,6 +508,19 @@ func resourceGTMv1DomainDelete(ctx context.Context, d *schema.ResourceData, m in
 	d.SetId("")
 	return nil
 
+}
+
+func resourceGTMv1DomainImport(_ context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	meta := akamai.Meta(m)
+	logger := meta.Log("Akamai GTM", "resourceGTMv1DomainImport")
+
+	logger.Debugf("Importing GTM Domain: %s", d.Id())
+
+	if err := d.Set("wait_on_complete", true); err != nil {
+		return nil, err
+	}
+
+	return []*schema.ResourceData{d}, nil
 }
 
 // validateDomainType is a SchemaValidateFunc to validate the Domain type.

@@ -35,8 +35,8 @@ This data source returns these attributes:
 * `group_id` - Defines the group association for the policy. You must have edit privileges for the group.
 * `name` - The unique name of the policy.
 * `api_version` - The specific version of the Cloudlets API.
-* `cloudlet_id` - A unique identifier that corresponds to a Cloudlets policy type. Enter `0` for Edge Redirector, `1` for Visitor Prioritization, `3` for Forward Rewrite, `5` for API Prioritization, `7` for Phased Release, or `9` for Application Load Balancer.
-* `cloudlet_code` - The two- or three- character code for the type of Cloudlet, `ALB` for Application Load Balancer, `AP` for API Prioritization, `CD` for Phased Release, `ER` for Edge Redirector, `FR` for Forward Rewrite, and `VP` for Visitor Prioritization.
+* `cloudlet_id` - A unique identifier that corresponds to a Cloudlets policy type. Enter `0` for Edge Redirector, `1` for Visitor Prioritization, `3` for Forward Rewrite, `4` for Request Control, `5` for API Prioritization, `6` for Audience Segmentation, `7` for Phased Release, `8` for Input Validation, or `9` for Application Load Balancer.
+* `cloudlet_code` - The two- or three- character code for the type of Cloudlet. Enter `ALB` for Application Load Balancer, `AP` for API Prioritization, `AS` for Audience Segmentation, `CD` for Phased Release, `ER` for Edge Redirector, `FR` for Forward Rewrite, `IG` for Request Control, `IV` for Input Validation, or `VP` for Visitor Prioritization.
 * `revision_id` - A unique identifier given to every policy version update.
 * `description` - The description of this specific policy.
 * `version_description` - The description of this specific policy version.

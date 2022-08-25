@@ -63,4 +63,4 @@ This resource supports the following arguments:
 
  __ASE Beta__. if policy is in `ASE_AUTO` mode, only condition_exception can be modified, "ASE" (Adaptive Security Engine) is currently in beta. Please contact your Akamai representative to learn more.
 
-- `condition_exception` (Optional). Path to a JSON file containing a description of the conditions and exceptions to be associated with a rule. You can view a sample JSON file in the [Modify the conditions and exceptions of a rule](https://developer.akamai.com/api/cloud_security/application_security/v1.html#putruleconditionexception) section of the Application Security API documentation.
+- `condition_exception` (Optional). Path to a JSON file containing a description of the conditions and exceptions to be associated with a rule. 

@@ -123,13 +123,18 @@ func dataAkamaiPropertyRulesRead(_ context.Context, d *schema.ResourceData, m in
 
 	var dir string
 	if err == nil {
-		if _, err := os.Stat(file); err != nil {
+		if _, err = os.Stat(file); err != nil {
 			return diag.FromErr(err)
 		}
+		fileData, err := ioutil.ReadFile(file)
+		if err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", ErrReadFile, err))
+		}
+
 		dir = filepath.Dir(file)
-		if filepath.Base(dir) != "property-snippets" || filepath.Ext(file) != ".json" {
-			logger.Errorf("snippets file should be under 'property-snippets' folder with .json extension: %s", file)
-			return diag.FromErr(fmt.Errorf("snippets file should be under 'property-snippets' folder with .json extension. Invalid file: %s ", file))
+		if filepath.Base(dir) != "property-snippets" || filepath.Ext(file) != ".json" || !json.Valid(fileData) {
+			logger.Errorf("snippets file should be under 'property-snippets' folder with .json extension and valid json data: %s", file)
+			return diag.FromErr(fmt.Errorf("snippets file should be under 'property-snippets' folder with .json extension and valid json data. Invalid file: %s ", file))
 		}
 	}
 
@@ -204,9 +209,17 @@ func dataAkamaiPropertyRulesRead(_ context.Context, d *schema.ResourceData, m in
 			if err != nil {
 				return err
 			}
+
 			if !info.IsDir() && path != file {
-				logger.Debugf("Template snippet found: %s", path)
-				templateFiles[strings.TrimPrefix(filepath.ToSlash(path), fmt.Sprintf("%s/", filepath.ToSlash(dir)))] = path
+				pathData, err := ioutil.ReadFile(path)
+				if err != nil {
+					return fmt.Errorf("%w: %s", ErrReadFile, err)
+				}
+
+				if json.Valid(pathData) {
+					logger.Debugf("Template snippet found: %s", path)
+					templateFiles[strings.TrimPrefix(filepath.ToSlash(path), fmt.Sprintf("%s/", filepath.ToSlash(dir)))] = path
+				}
 			}
 			return nil
 		})

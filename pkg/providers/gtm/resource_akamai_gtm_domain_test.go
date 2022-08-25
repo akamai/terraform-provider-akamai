@@ -345,6 +345,73 @@ func TestResGtmDomain(t *testing.T) {
 
 		client.AssertExpectations(t)
 	})
+
+	t.Run("import domain", func(t *testing.T) {
+		client := &mockgtm{}
+
+		getCall := client.On("GetDomain",
+			mock.Anything,
+			gtmTestDomain,
+		).Return(nil, &gtm.Error{
+			StatusCode: http.StatusNotFound,
+		})
+
+		dr := gtm.DomainResponse{}
+		dr.Resource = &dom
+		dr.Status = &pendingResponseStatus
+		client.On("CreateDomain",
+			mock.Anything,
+			mock.AnythingOfType("*gtm.Domain"),
+			mock.AnythingOfType("map[string]string"),
+		).Return(&dr, nil).Run(func(args mock.Arguments) {
+			getCall.ReturnArguments = mock.Arguments{args.Get(1).(*gtm.Domain), nil}
+		})
+
+		client.On("NewDomain",
+			mock.Anything,
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
+		).Return(&dom)
+
+		client.On("GetDomainStatus",
+			mock.Anything,
+			mock.AnythingOfType("string"),
+		).Return(&completeResponseStatus, nil).Times(2)
+
+		client.On("DeleteDomain",
+			mock.Anything,
+			mock.AnythingOfType("*gtm.Domain"),
+		).Return(&completeResponseStatus, nil)
+
+		dataSourceName := "akamai_gtm_domain.testdomain"
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				PreCheck:  func() { testAccPreCheck(t) },
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString("testdata/TestResGtmDomain/create_basic.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr(dataSourceName, "name", gtmTestDomain),
+							resource.TestCheckResourceAttr(dataSourceName, "type", "weighted"),
+							resource.TestCheckResourceAttr(dataSourceName, "load_imbalance_percentage", "10"),
+						),
+					},
+					{
+						Config:                  loadFixtureString("testdata/TestResGtmDomain/create_basic.tf"),
+						ImportState:             true,
+						ImportStateId:           gtmTestDomain,
+						ResourceName:            dataSourceName,
+						ImportStateVerify:       true,
+						ImportStateVerifyIgnore: []string{"contract", "group"},
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
 }
 
 // Sets a Hack flag so cn work with existing Domains (only Admin can Delete)

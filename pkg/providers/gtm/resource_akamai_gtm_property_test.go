@@ -236,7 +236,7 @@ func TestResGtmProperty(t *testing.T) {
 				Steps: []resource.TestStep{
 					{
 						Config:      loadFixtureString("testdata/TestResGtmProperty/create_basic.tf"),
-						ExpectError: regexp.MustCompile("Property Create failed"),
+						ExpectError: regexp.MustCompile("property Create failed"),
 					},
 				},
 			})
@@ -300,6 +300,60 @@ func TestResGtmProperty(t *testing.T) {
 					{
 						Config:      loadFixtureString("testdata/TestResGtmProperty/create_basic.tf"),
 						ExpectError: regexp.MustCompile("Request could not be completed. Invalid credentials."),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
+	t.Run("traffic targets order changed should show no diff", func(t *testing.T) {
+		client := &mockgtm{}
+
+		// read
+		getPropertyCall := client.On("GetProperty", mock.Anything, "tfexample_prop_1", mock.AnythingOfType("string")).Return(nil, &gtm.Error{StatusCode: http.StatusNotFound})
+
+		// create
+		client.On("NewProperty", mock.Anything, "tfexample_prop_1").Return(&gtm.Property{
+			Name: "tfexample_prop_1",
+		}).Once()
+
+		client.On("NewTrafficTarget", mock.Anything).Return(&gtm.TrafficTarget{}).Times(1)
+		client.On("NewTrafficTarget", mock.Anything).Return(&gtm.TrafficTarget{}).Times(1)
+		client.On("NewTrafficTarget", mock.Anything).Return(&gtm.TrafficTarget{}).Times(1)
+
+		client.On("NewLivenessTest", mock.Anything, "lt5", "HTTP", 40, float32(30.0)).Return(&gtm.LivenessTest{
+			Name:               "lt5",
+			TestObjectProtocol: "HTTP",
+			TestInterval:       40,
+			TestTimeout:        30.0,
+		}).Once()
+
+		client.On("CreateProperty", mock.Anything, mock.AnythingOfType("*gtm.Property"), mock.AnythingOfType("string")).Return(&gtm.PropertyResponse{
+			Resource: &prop,
+			Status:   &pendingResponseStatus,
+		}, nil).Run(func(args mock.Arguments) {
+			getPropertyCall.ReturnArguments = mock.Arguments{args.Get(1).(*gtm.Property), nil}
+		})
+
+		// delete
+		client.On("DeleteProperty",
+			mock.Anything,
+			mock.AnythingOfType("*gtm.Property"),
+			mock.AnythingOfType("string"),
+		).Return(&completeResponseStatus, nil)
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString("testdata/TestResGtmProperty/create_multiple_traffic_targets.tf"),
+					},
+					{
+						Config:   loadFixtureString("testdata/TestResGtmProperty/create_multiple_traffic_targets.tf"),
+						PlanOnly: true,
 					},
 				},
 			})

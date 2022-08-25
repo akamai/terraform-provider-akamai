@@ -76,7 +76,7 @@ var akamaiSecureEdgeHostNameSchema = map[string]*schema.Schema{
 		Type:             schema.TypeString,
 		Required:         true,
 		ForceNew:         true,
-		DiffSuppressFunc: suppressEdgeHostnameDomain,
+		DiffSuppressFunc: diffSuppressEdgeHostname,
 		ValidateDiagFunc: tools.IsNotBlank,
 		StateFunc:        appendDefaultSuffixToEdgeHostname,
 	},
@@ -441,10 +441,14 @@ func resourceSecureEdgeHostNameImport(ctx context.Context, d *schema.ResourceDat
 	return []*schema.ResourceData{d}, nil
 }
 
-func suppressEdgeHostnameDomain(_, old, new string, _ *schema.ResourceData) bool {
+func diffSuppressEdgeHostname(_, old, new string, _ *schema.ResourceData) bool {
+	old = strings.ToLower(old)
+	new = strings.ToLower(new)
+
 	if old == new {
 		return true
 	}
+
 	if !(strings.HasSuffix(new, "edgekey.net") || strings.HasSuffix(new, "edgesuite.net") || strings.HasSuffix(new, "akamaized.net")) {
 		return old == fmt.Sprintf("%s.edgesuite.net", new)
 	}
@@ -488,7 +492,7 @@ func suppressEdgeHostnameUseCases(_, old, new string, _ *schema.ResourceData) bo
 // appendDefaultSuffixToEdgeHostname is a StateFunc which appends ".edgesuite.net" to an edge hostname if none of the supported prefixes were provided
 // It is used in order to retain idempotency when "edge_hostname" value is used as output
 func appendDefaultSuffixToEdgeHostname(i interface{}) string {
-	name := i.(string)
+	name := strings.ToLower(i.(string))
 	if !(strings.HasSuffix(name, "edgekey.net") || strings.HasSuffix(name, "edgesuite.net") || strings.HasSuffix(name, "akamaized.net")) {
 		name = fmt.Sprintf("%s.edgesuite.net", name)
 	}
@@ -497,6 +501,7 @@ func appendDefaultSuffixToEdgeHostname(i interface{}) string {
 
 func findEdgeHostname(edgeHostnames papi.EdgeHostnameItems, domain string) (*papi.EdgeHostnameGetItem, error) {
 	suffix := "edgesuite.net"
+	domain = strings.ToLower(domain)
 	if domain != "" {
 		if strings.HasSuffix(domain, "edgekey.net") {
 			suffix = "edgekey.net"

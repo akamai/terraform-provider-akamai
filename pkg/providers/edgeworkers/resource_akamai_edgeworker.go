@@ -3,8 +3,6 @@ package edgeworkers
 import (
 	"bytes"
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -367,18 +365,6 @@ func getLatestEdgeWorkerIDBundleVersion(versions *edgeworkers.ListEdgeWorkerVers
 	return version, nil
 }
 
-func getSHAFromBundle(bundleContent *edgeworkers.Bundle) (string, error) {
-	buffer := new(bytes.Buffer)
-	_, err := buffer.ReadFrom(bundleContent)
-	if err != nil {
-		return "", err
-	}
-	h := sha256.New()
-	h.Write(buffer.Bytes())
-	shaHash := hex.EncodeToString(h.Sum(nil))
-	return shaHash, nil
-}
-
 func convertLocalBundleFileIntoBytes(localBundlePath string) ([]byte, error) {
 	var filePath string
 	if localBundlePath == defaultBundleURL {
@@ -481,32 +467,15 @@ func bundleHashCustomDiff(_ context.Context, diff *schema.ResourceDiff, m interf
 		return fmt.Errorf("cannot get 'local_bundle' value: %s", err)
 	}
 
-	var f io.ReadCloser
-	if localBundleFileName == defaultBundleURL {
-		resp, err := http.Get(defaultBundleURL)
-		if err != nil {
-			return fmt.Errorf("cannot dowload default bundle: %s", err)
-		}
-		f = resp.Body
-		defer func() {
-			err := f.Close()
-			if err != nil {
-				logger.Debugf("error closing body in defer: %s", err)
-			}
-		}()
-
-	} else {
-		f, err = os.Open(localBundleFileName)
-		if err != nil {
-			return fmt.Errorf("cannot open bundle file (%s): %s", localBundleFileName, err)
-		}
-		defer func() {
-			err := f.Close()
-			if err != nil {
-				logger.Debugf("error closing file in defer: %s", err)
-			}
-		}()
+	f, err := openBundleFile(localBundleFileName)
+	if err != nil {
+		return err
 	}
+	defer func() {
+		if err := f.Close(); err != nil {
+			logger.Debugf("error closing bundle file in defer: %s", err)
+		}
+	}()
 
 	hash, err := getSHAFromBundle(&edgeworkers.Bundle{Reader: f})
 	if err != nil {
@@ -518,6 +487,22 @@ func bundleHashCustomDiff(_ context.Context, diff *schema.ResourceDiff, m interf
 	}
 
 	return nil
+}
+
+func openBundleFile(localBundleFileName string) (io.ReadCloser, error) {
+	if localBundleFileName == defaultBundleURL {
+		resp, err := http.Get(defaultBundleURL)
+		if err != nil {
+			return nil, fmt.Errorf("cannot dowload default bundle: %s", err)
+		}
+		return resp.Body, nil
+	}
+
+	f, err := os.Open(localBundleFileName)
+	if err != nil {
+		return nil, fmt.Errorf("cannot open bundle file (%s): %s", localBundleFileName, err)
+	}
+	return f, nil
 }
 
 // downloadFile downloads a file from the given URL and saves it under the given path

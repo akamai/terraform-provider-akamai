@@ -18,14 +18,13 @@ import (
 
 // PAPI CP Code
 //
-// https://developer.akamai.com/api/luna/papi/data.html#cpcode
-// https://developer.akamai.com/api/luna/papi/resources.html#cpcodesapi
+// https://techdocs.akamai.com/property-mgr/reference/post-cpcodes
 func resourceCPCode() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceCPCodeCreate,
 		ReadContext:   resourceCPCodeRead,
 		UpdateContext: resourceCPCodeUpdate,
-		// NB: CP Codes cannot be deleted https://developer.akamai.com/api/luna/papi/resources.html#cpcodesapi
+		// NB: CP Codes cannot be deleted https://techdocs.akamai.com/property-mgr/reference/post-cpcodes
 		DeleteContext: schema.NoopContext,
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceCPCodeImport,
@@ -156,7 +155,6 @@ func resourceCPCodeRead(ctx context.Context, d *schema.ResourceData, m interface
 	if err := d.Set("contract", contractID); err != nil {
 		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
-
 	cpCodeResp, err := client.GetCPCode(ctx, papi.GetCPCodeRequest{
 		CPCodeID:   d.Id(),
 		ContractID: contractID,
@@ -193,6 +191,7 @@ func resourceCPCodeUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 	logger.Debugf("Update CP Code")
 
 	if diags := checkImmutableChanged(d); diags != nil {
+		d.Partial(true)
 		return diags
 	}
 

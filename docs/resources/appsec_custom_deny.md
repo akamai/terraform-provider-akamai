@@ -51,7 +51,7 @@ output "custom_deny_id" {
 This resource supports the following arguments:
 
 - `config_id` (Required). Unique identifier of the security configuration associated with the custom deny.
-- `custom_deny` (Required). Path to a JSON file containing properties and property values for the custom deny. For more information, see the [CustomDeny members](https://developer.akamai.com/api/cloud_security/application_security/v1.html#63df3de3) section of the Application Security API documentation.
+- `custom_deny` (Required). Path to a JSON file containing properties and property values for the custom deny. 
 
 ## Output Options
 

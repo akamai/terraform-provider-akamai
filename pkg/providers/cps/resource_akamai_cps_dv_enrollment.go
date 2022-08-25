@@ -45,6 +45,11 @@ func resourceCPSDVEnrollment() *schema.Resource {
 				Required: true,
 				ForceNew: true,
 			},
+			"allow_duplicate_common_name": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  false,
+			},
 			"sans": {
 				Type:     schema.TypeSet,
 				Elem:     &schema.Schema{Type: schema.TypeString},
@@ -363,7 +368,7 @@ var contact = &schema.Resource{
 
 func resourceCPSDVEnrollmentCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
-	logger := meta.Log("CPS", "resourceDVEnrollment")
+	logger := meta.Log("CPS", "resourceCPSDVEnrollmentCreate")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
 		ctx,
@@ -444,10 +449,15 @@ func resourceCPSDVEnrollmentCreate(ctx context.Context, d *schema.ResourceData, 
 	if err != nil {
 		return diag.FromErr(err)
 	}
+	allowDuplicateCN, err := tools.GetBoolValue("allow_duplicate_common_name", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	req := cps.CreateEnrollmentRequest{
-		Enrollment: enrollment,
-		ContractID: strings.TrimPrefix(contractID, "ctr_"),
+		Enrollment:       enrollment,
+		ContractID:       strings.TrimPrefix(contractID, "ctr_"),
+		AllowDuplicateCN: allowDuplicateCN,
 	}
 	res, err := client.CreateEnrollment(ctx, req)
 	if err != nil {
@@ -468,7 +478,7 @@ func resourceCPSDVEnrollmentCreate(ctx context.Context, d *schema.ResourceData, 
 
 func resourceCPSDVEnrollmentRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
-	logger := meta.Log("CPS", "resourceDVEnrollment")
+	logger := meta.Log("CPS", "resourceCPSDVEnrollmentRead")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
 		ctx,
@@ -598,7 +608,7 @@ func resourceCPSDVEnrollmentRead(ctx context.Context, d *schema.ResourceData, m 
 
 func resourceCPSDVEnrollmentUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
-	logger := meta.Log("CPS", "resourceDVEnrollment")
+	logger := meta.Log("CPS", "resourceCPSDVEnrollmentUpdate")
 	ctx = session.ContextWithOptions(
 		ctx,
 		session.WithContextLog(logger),
@@ -720,7 +730,7 @@ func resourceCPSDVEnrollmentUpdate(ctx context.Context, d *schema.ResourceData, 
 
 func resourceCPSDVEnrollmentDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
-	logger := meta.Log("CPS", "resourceDVEnrollment")
+	logger := meta.Log("CPS", "resourceCPSDVEnrollmentDelete")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
 		ctx,
@@ -811,7 +821,7 @@ func waitForVerification(ctx context.Context, logger log.Interface, client cps.C
 
 func resourceCPSDVEnrollmentImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	meta := akamai.Meta(m)
-	logger := meta.Log("CPS", "resourceDVEnrollment")
+	logger := meta.Log("CPS", "resourceCPSDVEnrollmentImport")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
 		ctx,
@@ -842,6 +852,9 @@ func resourceCPSDVEnrollmentImport(ctx context.Context, d *schema.ResourceData, 
 		return nil, fmt.Errorf("unable to import: wrong validation type: expected 'dv', got '%s'", enrollment.ValidationType)
 	}
 
+	if err := d.Set("allow_duplicate_common_name", false); err != nil {
+		return nil, fmt.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+	}
 	if err := d.Set("contract_id", contractID); err != nil {
 		return nil, fmt.Errorf("%v: %s", tools.ErrValueSet, err.Error())
 	}

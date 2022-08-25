@@ -10,7 +10,7 @@ description: |-
 
 **Scopes**: Security configuration
 
-Returns information about your prefetch request settings. By default, Web Application Firewall inspects only external requests — requests originating outside of your firewall or Akamai's edge servers. When prefetch is enabled, requests between your origin servers and Akamai's edge servers can also be inspected by the firewall. The returned information is described in the [PrefetchRequest members](https://developer.akamai.com/api/cloud_security/application_security/v1.html#deb7220d) section of the Application Security API.
+Returns information about your prefetch request settings. By default, Web Application Firewall inspects only external requests — requests originating outside of your firewall or Akamai's edge servers. When prefetch is enabled, requests between your origin servers and Akamai's edge servers can also be inspected by the firewall.
 
 **Related** **API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/advanced-settings/prefetch](https://techdocs.akamai.com/application-security/reference/get-advanced-settings-prefetch)
 

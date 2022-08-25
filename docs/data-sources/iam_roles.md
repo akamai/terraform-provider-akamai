@@ -32,4 +32,4 @@ These attributes are returned:
 
 * `roles` — A list of roles.
 
-[API Reference](https://developer.akamai.com/api/core_features/identity_management_user_admin/v2.html#getroles)
+[API Reference](https://techdocs.akamai.com/iam-api/reference/get-roles)

@@ -15,8 +15,6 @@ Returns information about the following two reputation analysis settings:
 - `forwardToHTTPHeader`. When enabled, client reputation information associated with a request is forwarded to origin servers by using an HTTP header.
 - `forwardSharedIPToHTTPHeaderAndSIEM`. When enabled, both the HTTP header and SIEM integration events include a value indicating that the IP addresses is shared address.
 
-The returned information is described in the [ReputationAnalysis members](https://developer.akamai.com/api/cloud_security/application_security/v1.html#f06bb20c) section of the Application Security API.
-
 **Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/security-policies/{policyId}/reputation-analysis](https://techdocs.akamai.com/application-security/reference/get-reputation-analysis)
 
 ## Example Usage

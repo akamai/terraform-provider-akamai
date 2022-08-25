@@ -46,7 +46,7 @@ resource "akamai_appsec_match_target" "match_target" {
 This resource supports the following arguments:
 
 - `config_id` (Required). Unique identifier of the security configuration associated with the match target being modified.
-- `match_target` (Required). Path to a JSON file containing one or more match target definitions. You can find a sample match target JSON file in the [Create a match target section](https://developer.akamai.com/api/cloud_security/application_security/v1.html#postmatchtargets) of the Application Security API documentation.
+- `match_target` (Required). Path to a JSON file containing one or more match target definitions. 
 
 ## Output Options
 

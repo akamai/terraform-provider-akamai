@@ -58,5 +58,5 @@ resource "akamai_appsec_advanced_settings_logging" "policy_logging" {
 This resource supports the following arguments:
 
 - `config_id` (Required). Unique identifier of the security configuration containing the logging settings being modified.
-- `logging` (Required). Path to a JSON file containing the logging settings to be configured. A sample JSON file can be found in the [Modify HTTP header log settings for a configuration](https://developer.akamai.com/api/cloud_security/application_security/v1.html#puthttpheaderloggingforaconfiguration) section of the Application Security API documentation.
+- `logging` (Required). Path to a JSON file containing the logging settings to be configured. 
 - `security_policy_id` (Optional). Unique identifier of the security policies whose settings are being modified. If not included, the logging settings are modified at the configuration scope and, as a result, apply to all the security policies associated with the configuration.
