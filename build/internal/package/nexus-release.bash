@@ -37,11 +37,18 @@ find_branch() {
     EDGEGRID_BRANCH="v2"
   else
     # find parent branch from which this branch was created, iterate over the list of branches from the history of commits
-    branches=($(git log --pretty=format:'%D' | sed 's@HEAD -> @@' | grep . | sed 's@origin/@@g' | sed -e $'s@, @\\\n@g' | grep -v HEAD ))
+    branches=($(git log --pretty=format:'%D' | sed 's@HEAD -> @@' | grep . | sed 's@origin/@@g' | sed 's@release/.*@@g' | sed -e $'s@, @\\\n@g' | grep -v HEAD ))
     for branch in ${branches[*]}
     do
       echo "Checking branch '${branch}'"
       EDGEGRID_BRANCH=$branch
+
+      if [[ "$index" -eq "5" ]]; then
+        echo "Exceeding limit of checks, fallback to default branch 'v2'"
+        EDGEGRID_BRANCH="v2"
+        break
+      fi
+      index=$((index + 1))
 
       if [[ "$branch" == "master" ]]; then
         echo "Ignoring '${branch}'"
