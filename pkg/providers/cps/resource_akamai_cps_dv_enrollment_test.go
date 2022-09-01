@@ -157,7 +157,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			ChangeID:     2,
 		}).Return(&cps.DVArray{DV: []cps.DV{
 			{
-				Challenges: []cps.Challenges{
+				Challenges: []cps.Challenge{
 					{FullPath: "_acme-challenge.test.akamai.com", ResponseBody: "abc123", Type: "http-01", Status: "pending"},
 					{FullPath: "_acme-challenge.test.akamai.com", ResponseBody: "abc123", Type: "dns-01", Status: "pending"},
 				},
@@ -165,7 +165,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 				ValidationStatus: "IN_PROGRESS",
 			},
 			{
-				Challenges: []cps.Challenges{
+				Challenges: []cps.Challenge{
 					{FullPath: "_acme-challenge.san.test.akamai.com", ResponseBody: "abc123", Type: "http-01", Status: "pending"},
 					{FullPath: "_acme-challenge.san.test.akamai.com", ResponseBody: "abc123", Type: "dns-01", Status: "pending"},
 				},
@@ -228,7 +228,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			ChangeID:     2,
 		}).Return(&cps.DVArray{DV: []cps.DV{
 			{
-				Challenges: []cps.Challenges{
+				Challenges: []cps.Challenge{
 					{FullPath: "_acme-challenge.test.akamai.com", ResponseBody: "abc123", Type: "http-01", Status: "pending"},
 					{FullPath: "_acme-challenge.test.akamai.com", ResponseBody: "abc123", Type: "dns-01", Status: "pending"},
 					{FullPath: "_acme-challenge.test.akamai.com", ResponseBody: "abc123", Type: "dns-01", Status: "pending"},
@@ -237,7 +237,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 				ValidationStatus: "IN_PROGRESS",
 			},
 			{
-				Challenges: []cps.Challenges{
+				Challenges: []cps.Challenge{
 					{FullPath: "_acme-challenge.san.test.akamai.com", ResponseBody: "abc123", Type: "http-01", Status: "pending"},
 					{FullPath: "_acme-challenge.san.test.akamai.com", ResponseBody: "abc123", Type: "dns-01", Status: "pending"},
 				},
@@ -245,7 +245,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 				ValidationStatus: "IN_PROGRESS",
 			},
 			{
-				Challenges: []cps.Challenges{
+				Challenges: []cps.Challenge{
 					{FullPath: "_acme-challenge.san2.test.akamai.com", ResponseBody: "abc123", Type: "http-01", Status: "pending"},
 					{FullPath: "_acme-challenge.san2.test.akamai.com", ResponseBody: "abc123", Type: "dns-01", Status: "pending"},
 				},
@@ -438,7 +438,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			ChangeID:     2,
 		}).Return(&cps.DVArray{DV: []cps.DV{
 			{
-				Challenges: []cps.Challenges{
+				Challenges: []cps.Challenge{
 					{FullPath: "_acme-challenge.test.akamai.com", ResponseBody: "abc123", Type: "http-01", Status: "pending"},
 					{FullPath: "_acme-challenge.test.akamai.com", ResponseBody: "abc123", Type: "dns-01", Status: "pending"},
 				},
@@ -621,7 +621,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			ChangeID:     2,
 		}).Return(&cps.DVArray{DV: []cps.DV{
 			{
-				Challenges: []cps.Challenges{
+				Challenges: []cps.Challenge{
 					{FullPath: "_acme-challenge.test.akamai.com", ResponseBody: "abc123", Type: "http-01", Status: "pending"},
 					{FullPath: "_acme-challenge.test.akamai.com", ResponseBody: "abc123", Type: "dns-01", Status: "pending"},
 				},
@@ -629,7 +629,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 				ValidationStatus: "IN_PROGRESS",
 			},
 			{
-				Challenges: []cps.Challenges{
+				Challenges: []cps.Challenge{
 					{FullPath: "_acme-challenge.san.test.akamai.com", ResponseBody: "abc123", Type: "http-01", Status: "pending"},
 					{FullPath: "_acme-challenge.san.test.akamai.com", ResponseBody: "abc123", Type: "dns-01", Status: "pending"},
 				},
@@ -927,7 +927,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			ChangeID:     2,
 		}).Return(&cps.DVArray{DV: []cps.DV{
 			{
-				Challenges: []cps.Challenges{
+				Challenges: []cps.Challenge{
 					{FullPath: "_acme-challenge.test.akamai.com", ResponseBody: "abc123", Type: "http-01", Status: "pending"},
 					{FullPath: "_acme-challenge.test.akamai.com", ResponseBody: "abc123", Type: "dns-01", Status: "pending"},
 				},
@@ -935,7 +935,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 				ValidationStatus: "IN_PROGRESS",
 			},
 			{
-				Challenges: []cps.Challenges{
+				Challenges: []cps.Challenge{
 					{FullPath: "_acme-challenge.san.test.akamai.com", ResponseBody: "abc123", Type: "http-01", Status: "pending"},
 					{FullPath: "_acme-challenge.san.test.akamai.com", ResponseBody: "abc123", Type: "dns-01", Status: "pending"},
 				},
@@ -973,7 +973,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			ChangeID:     2,
 		}).Return(&cps.DVArray{DV: []cps.DV{
 			{
-				Challenges: []cps.Challenges{
+				Challenges: []cps.Challenge{
 					{FullPath: "_acme-challenge.test.akamai.com", ResponseBody: "abc123", Type: "http-01", Status: "pending"},
 					{FullPath: "_acme-challenge.test.akamai.com", ResponseBody: "abc123", Type: "dns-01", Status: "pending"},
 					{FullPath: "_acme-challenge.test.akamai.com", ResponseBody: "abc123", Type: "dns-01", Status: "pending"},
@@ -982,7 +982,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 				ValidationStatus: "IN_PROGRESS",
 			},
 			{
-				Challenges: []cps.Challenges{
+				Challenges: []cps.Challenge{
 					{FullPath: "_acme-challenge.san.test.akamai.com", ResponseBody: "abc123", Type: "http-01", Status: "pending"},
 					{FullPath: "_acme-challenge.san.test.akamai.com", ResponseBody: "abc123", Type: "dns-01", Status: "pending"},
 				},
@@ -990,7 +990,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 				ValidationStatus: "IN_PROGRESS",
 			},
 			{
-				Challenges: []cps.Challenges{
+				Challenges: []cps.Challenge{
 					{FullPath: "_acme-challenge.san2.test.akamai.com", ResponseBody: "abc123", Type: "http-01", Status: "pending"},
 					{FullPath: "_acme-challenge.san2.test.akamai.com", ResponseBody: "abc123", Type: "dns-01", Status: "pending"},
 				},
@@ -1174,7 +1174,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			ChangeID:     2,
 		}).Return(&cps.DVArray{DV: []cps.DV{
 			{
-				Challenges: []cps.Challenges{
+				Challenges: []cps.Challenge{
 					{FullPath: "_acme-challenge.test.akamai.com", ResponseBody: "abc123", Type: "http-01", Status: "pending"},
 					{FullPath: "_acme-challenge.test.akamai.com", ResponseBody: "abc123", Type: "dns-01", Status: "pending"},
 				},
@@ -1355,7 +1355,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			ChangeID:     2,
 		}).Return(&cps.DVArray{DV: []cps.DV{
 			{
-				Challenges: []cps.Challenges{
+				Challenges: []cps.Challenge{
 					{FullPath: "_acme-challenge.test.akamai.com", ResponseBody: "http", Type: "http-01", Status: "pending"},
 					{FullPath: "_acme-challenge.test.akamai.com", ResponseBody: "dns", Type: "dns-01", Status: "pending"},
 				},
@@ -1711,7 +1711,7 @@ func TestResourceDVEnrollmentImport(t *testing.T) {
 			ChangeID:     2,
 		}).Return(&cps.DVArray{DV: []cps.DV{
 			{
-				Challenges: []cps.Challenges{
+				Challenges: []cps.Challenge{
 					{FullPath: "_acme-challenge.test.akamai.com", ResponseBody: "abc123", Type: "http-01", Status: "pending"},
 					{FullPath: "_acme-challenge.test.akamai.com", ResponseBody: "abc123", Type: "dns-01", Status: "pending"},
 				},
@@ -1719,7 +1719,7 @@ func TestResourceDVEnrollmentImport(t *testing.T) {
 				ValidationStatus: "IN_PROGRESS",
 			},
 			{
-				Challenges: []cps.Challenges{
+				Challenges: []cps.Challenge{
 					{FullPath: "_acme-challenge.san.test.akamai.com", ResponseBody: "abc123", Type: "http-01", Status: "pending"},
 					{FullPath: "_acme-challenge.san.test.akamai.com", ResponseBody: "abc123", Type: "dns-01", Status: "pending"},
 				},

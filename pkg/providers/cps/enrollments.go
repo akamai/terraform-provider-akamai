@@ -104,7 +104,7 @@ func splitChallenges(challenges *cps.DVArray) ([]challengeHTTP, []challengeDNS) 
 	return httpChallenges, dnsChallenges
 }
 
-func newChallenge(c *cps.Challenges, dv *cps.DV) challenge {
+func newChallenge(c *cps.Challenge, dv *cps.DV) challenge {
 	return challenge{
 		"full_path":     c.FullPath,
 		"response_body": c.ResponseBody,

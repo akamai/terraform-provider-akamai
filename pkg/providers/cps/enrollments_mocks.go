@@ -76,7 +76,7 @@ func mockEmptyChanges() *cps.Change {
 }
 
 func mockDVArray() *cps.DVArray {
-	challenges0 := cps.Challenges{
+	challenges0 := cps.Challenge{
 		Error:             "",
 		FullPath:          "http://TestFullPath",
 		RedirectFullPath:  "http://TestRedirectFullPath.com",
@@ -86,7 +86,7 @@ func mockDVArray() *cps.DVArray {
 		Type:              "http-01",
 		ValidationRecords: nil,
 	}
-	challenges1 := cps.Challenges{
+	challenges1 := cps.Challenge{
 		Error:             "",
 		FullPath:          "TestFullPath",
 		RedirectFullPath:  "",
@@ -97,7 +97,7 @@ func mockDVArray() *cps.DVArray {
 		ValidationRecords: nil,
 	}
 	dv := cps.DV{
-		Challenges:         []cps.Challenges{challenges0, challenges1},
+		Challenges:         []cps.Challenge{challenges0, challenges1},
 		Domain:             "TestDomain",
 		Error:              "The domain TestDomain is not ready for HTTP validation.",
 		Expires:            "2022-07-25T10:17:44Z",
@@ -111,7 +111,7 @@ func mockDVArray() *cps.DVArray {
 }
 
 func mockThirdPartyCSRDVArray() *cps.DVArray {
-	challenges0 := cps.Challenges{
+	challenges0 := cps.Challenge{
 		Error:             "",
 		FullPath:          "http://testFullPath.com",
 		RedirectFullPath:  "http://testRedirectFullPath.com",
@@ -122,7 +122,7 @@ func mockThirdPartyCSRDVArray() *cps.DVArray {
 		ValidationRecords: nil,
 	}
 	dv := cps.DV{
-		Challenges:         []cps.Challenges{challenges0},
+		Challenges:         []cps.Challenge{challenges0},
 		Domain:             "test.com",
 		Error:              "2022-07-25T10:17:44Z",
 		Expires:            "2022-07-25T10:17:44Z",
@@ -136,7 +136,7 @@ func mockThirdPartyCSRDVArray() *cps.DVArray {
 }
 
 func mockEVDVArray() *cps.DVArray {
-	challenges0 := cps.Challenges{
+	challenges0 := cps.Challenge{
 		Error:             "",
 		FullPath:          "http://testFullPath.com",
 		RedirectFullPath:  "http://testRedirectFullPath.com",
@@ -147,7 +147,7 @@ func mockEVDVArray() *cps.DVArray {
 		ValidationRecords: nil,
 	}
 	dv := cps.DV{
-		Challenges:         []cps.Challenges{challenges0},
+		Challenges:         []cps.Challenge{challenges0},
 		Domain:             "test.com",
 		Error:              "2022-07-25T10:17:44Z",
 		Expires:            "2022-07-25T10:17:44Z",
@@ -162,7 +162,7 @@ func mockEVDVArray() *cps.DVArray {
 
 func mockEmptyDVArray() *cps.DVArray {
 	dv := cps.DV{
-		Challenges:         []cps.Challenges{},
+		Challenges:         []cps.Challenge{},
 		Domain:             "",
 		Error:              "",
 		Expires:            "",

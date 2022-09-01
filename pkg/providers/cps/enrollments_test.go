@@ -40,7 +40,7 @@ func TestSplitChallenges(t *testing.T) {
 }
 
 func TestNewChallenge(t *testing.T) {
-	challenge1 := cps.Challenges{
+	challenge1 := cps.Challenge{
 		Error:             "",
 		FullPath:          "http://TestFullPath",
 		RedirectFullPath:  "http://TestRedirectFullPath.com",
@@ -51,7 +51,7 @@ func TestNewChallenge(t *testing.T) {
 		ValidationRecords: nil,
 	}
 	dv := cps.DV{
-		Challenges:         []cps.Challenges{challenge1},
+		Challenges:         []cps.Challenge{challenge1},
 		Domain:             "TestDomain",
 		Error:              "The domain TestDomain is not ready for HTTP validation.",
 		Expires:            "2022-07-25T10:17:44Z",
