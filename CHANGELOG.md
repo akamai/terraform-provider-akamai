@@ -1,5 +1,14 @@
 # RELEASE NOTES
 
+## x.x.x (x xx, xxxx)
+
+#### FEATURES/ENHANCEMENTS:
+
+* CPS
+  * New data sources:
+    * [akamai_edgeworker](xxx.md) - returns data for specific edgeworker, corresponding version and bundle information
+    * [akamai_edgeworker_activation](xxx.md) - returns the latest activation in provided network
+
 ## 2.3.0 (August 25, 2022)
 
 #### FEATURES/ENHANCEMENTS:
