@@ -335,11 +335,11 @@ func resourceSecureEdgeHostNameUpdate(ctx context.Context, d *schema.ResourceDat
 			return diag.FromErr(err)
 		}
 		emails, err := tools.GetListValue("status_update_email", d)
-		if err != nil {
+		if err != nil && !errors.Is(err, tools.ErrNotFound) {
 			return diag.FromErr(err)
 		}
 		if len(emails) == 0 {
-			diag.Errorf(`"status_update_email" is a required parameter to update an edge hostname`)
+			return diag.Errorf(`"status_update_email" is a required parameter to update an edge hostname`)
 		}
 		statusUpdateEmails := make([]string, len(emails))
 		for i, email := range emails {
@@ -434,6 +434,9 @@ func resourceSecureEdgeHostNameImport(ctx context.Context, d *schema.ResourceDat
 		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("edge_hostname", edgehostnameDetails.EdgeHostname.Domain); err != nil {
+		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+	}
+	if err := d.Set("ip_behavior", edgehostnameDetails.EdgeHostname.IPVersionBehavior); err != nil {
 		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
 	}
 	d.SetId(edgehostID)
