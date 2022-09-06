@@ -21,6 +21,7 @@ var (
 		datastream.ConnectorTypeSplunk:    "splunk_connector",
 		datastream.ConnectorTypeSumoLogic: "sumologic_connector",
 		datastream.ConnectorTypeLoggly:    "loggly_connector",
+		datastream.ConnectorTypeNewRelic:  "new_relic_connector",
 	}
 
 	connectorMappers = map[datastream.ConnectorType]func(datastream.ConnectorDetails, map[string]interface{}) map[string]interface{}{
@@ -33,6 +34,7 @@ var (
 		datastream.ConnectorTypeSplunk:    MapSplunkConnector,
 		datastream.ConnectorTypeSumoLogic: MapSumoLogicConnector,
 		datastream.ConnectorTypeLoggly:    MapLogglyConnector,
+		datastream.ConnectorTypeNewRelic:  MapNewRelicConnector,
 	}
 
 	connectorGetters = map[string]func(map[string]interface{}) datastream.AbstractConnector{
@@ -45,6 +47,7 @@ var (
 		"splunk_connector":    GetSplunkConnector,
 		"sumologic_connector": GetSumoLogicConnector,
 		"loggly_connector":    GetLogglyConnector,
+		"new_relic_connector": GetNewRelicConnector,
 	}
 )
 
@@ -387,6 +390,32 @@ func MapLogglyConnector(c datastream.ConnectorDetails, s map[string]interface{})
 		"connector_name":      c.ConnectorName,
 		"endpoint":            c.Endpoint,
 		"tags":                c.Tags,
+		"content_type":        c.ContentType,
+		"custom_header_name":  c.CustomHeaderName,
+		"custom_header_value": c.CustomHeaderValue,
+	}
+	setNonNilItemsFromState(s, []string{"auth_token"}, rv)
+	return rv
+}
+
+// GetNewRelicConnector builds NewRelicConnector structure
+func GetNewRelicConnector(props map[string]interface{}) datastream.AbstractConnector {
+	return &datastream.NewRelicConnector{
+		ConnectorName:     props["connector_name"].(string),
+		Endpoint:          props["endpoint"].(string),
+		AuthToken:         props["auth_token"].(string),
+		ContentType:       props["content_type"].(string),
+		CustomHeaderName:  props["custom_header_name"].(string),
+		CustomHeaderValue: props["custom_header_value"].(string),
+	}
+}
+
+// MapNewRelicConnector selects fields needed for NewRelicConnector
+func MapNewRelicConnector(c datastream.ConnectorDetails, s map[string]interface{}) map[string]interface{} {
+	rv := map[string]interface{}{
+		"auth_token":          "",
+		"connector_name":      c.ConnectorName,
+		"endpoint":            c.Endpoint,
 		"content_type":        c.ContentType,
 		"custom_header_name":  c.CustomHeaderName,
 		"custom_header_value": c.CustomHeaderValue,

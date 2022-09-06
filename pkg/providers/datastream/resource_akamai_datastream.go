@@ -26,12 +26,12 @@ var (
 	// ExactlyOneConnectorRule defines connector fields names
 	ExactlyOneConnectorRule = []string{
 		"s3_connector", "azure_connector", "gcs_connector", "https_connector",
-		"splunk_connector", "datadog_connector", "oracle_connector", "sumologic_connector", "loggly_connector",
+		"splunk_connector", "datadog_connector", "oracle_connector", "sumologic_connector", "loggly_connector", "new_relic_connector",
 	}
 
 	// ConnectorsWithoutFilenameOptionsConfig defines connectors without option to configure prefix and suffix
 	ConnectorsWithoutFilenameOptionsConfig = []string{
-		"https_connector", "datadog_connector", "splunk_connector", "sumologic_connector", "loggly_connector",
+		"https_connector", "datadog_connector", "splunk_connector", "sumologic_connector", "loggly_connector", "new_relic_connector",
 	}
 
 	// DatastreamResourceTimeout is the default timeout for the resource operations (max activation time + polling interval)
@@ -696,6 +696,46 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 					Type:        schema.TypeString,
 					Optional:    true,
 					Description: "The tags you can use to segment and filter log events in Loggly. See Tags in the Loggly documentation.",
+				},
+				"content_type": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "The type of the resource passed in the request's custom header. For details, see Additional options in the DataStream user guide.",
+				},
+				"custom_header_name": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "A human-readable name for the request's custom header, containing only alphanumeric, dash, and underscore characters. For details, see Additional options in the DataStream user guide.",
+				},
+				"custom_header_value": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "The custom header's contents passed with the request that contains information about the client connection. For details, see Additional options in the DataStream user guide.",
+				},
+			},
+		},
+	},
+	"new_relic_connector": {
+		Type:     schema.TypeSet,
+		MaxItems: 1,
+		Optional: true,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"connector_name": {
+					Type:        schema.TypeString,
+					Required:    true,
+					Description: "The name of the connector.",
+				},
+				"endpoint": {
+					Type:        schema.TypeString,
+					Required:    true,
+					Description: "A New Relic endpoint URL you want to send your logs to. The endpoint URL should follow the https://<newrelic.com>/log/v1/ format format. See Introduction to the Log API https://docs.newrelic.com/docs/logs/log-api/introduction-log-api/ if you want to retrieve your New Relic endpoint URL.",
+				},
+				"auth_token": {
+					Type:        schema.TypeString,
+					Required:    true,
+					Sensitive:   true,
+					Description: "Your Log API token for your account in New Relic.",
 				},
 				"content_type": {
 					Type:        schema.TypeString,

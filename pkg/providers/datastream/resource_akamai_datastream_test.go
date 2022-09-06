@@ -1081,6 +1081,34 @@ func TestCustomHeaders(t *testing.T) {
 				resource.TestCheckResourceAttr("akamai_datastream.s", "loggly_connector.0.custom_header_value", "custom_header_value"),
 			},
 		},
+		"new_relic": {
+			Filename: "custom_headers_new_relic.tf",
+			Connector: &datastream.NewRelicConnector{
+				ConnectorName:     "new_relic_connector_name",
+				Endpoint:          "endpoint",
+				AuthToken:         "auth_token",
+				ContentType:       "content_type",
+				CustomHeaderName:  "custom_header_name",
+				CustomHeaderValue: "custom_header_value",
+			},
+			Response: datastream.ConnectorDetails{
+				ConnectorType:     datastream.ConnectorTypeNewRelic,
+				ConnectorName:     "new_relic_connector_name",
+				Endpoint:          "endpoint",
+				ContentType:       "content_type",
+				CustomHeaderName:  "custom_header_name",
+				CustomHeaderValue: "custom_header_value",
+			},
+			TestChecks: []resource.TestCheckFunc{
+				resource.TestCheckResourceAttr("akamai_datastream.s", "new_relic_connector.#", "1"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "new_relic_connector.0.connector_name", "new_relic_connector_name"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "new_relic_connector.0.endpoint", "endpoint"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "new_relic_connector.0.auth_token", "auth_token"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "new_relic_connector.0.content_type", "content_type"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "new_relic_connector.0.custom_header_name", "custom_header_name"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "new_relic_connector.0.custom_header_value", "custom_header_value"),
+			},
+		},
 	}
 
 	for name, test := range tests {
