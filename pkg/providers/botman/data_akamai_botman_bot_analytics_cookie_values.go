@@ -10,9 +10,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func dataSourceBotAnalyticsCookieValue() *schema.Resource {
+func dataSourceBotAnalyticsCookieValues() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: dataSourceBotAnalyticsCookieValueRead,
+		ReadContext: dataSourceBotAnalyticsCookieValuesRead,
 		Schema: map[string]*schema.Schema{
 			"json": {
 				Type:     schema.TypeString,
@@ -22,10 +22,10 @@ func dataSourceBotAnalyticsCookieValue() *schema.Resource {
 	}
 }
 
-func dataSourceBotAnalyticsCookieValueRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataSourceBotAnalyticsCookieValuesRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("botman", "dataSourceBotAnalyticsCookieValueRead")
+	logger := meta.Log("botman", "dataSourceBotAnalyticsCookieValuesRead")
 
 	response, err := client.GetBotAnalyticsCookieValues(ctx)
 	if err != nil {

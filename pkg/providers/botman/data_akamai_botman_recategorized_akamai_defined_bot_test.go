@@ -24,7 +24,7 @@ func TestDataRecategorizedAkamaiDefinedBot(t *testing.T) {
 		}
 		expectedJSON := `
 {
-	"bots": [
+	"recategorizedBots": [
 		{"botId":"b85e3eaa-d334-466d-857e-33308ce416be", "customBotCategoryId":"39cbadc6-c5ef-42d1-9290-7895f24316ad"},
 		{"botId":"69acad64-7459-4c1d-9bad-672600150127", "customBotCategoryId":"5eb700c8-275d-4866-a271-b6fa25e1fdc5"},
 		{"botId":"cc9c3f89-e179-4892-89cf-d5e623ba9dc7", "customBotCategoryId":"0d38d0fe-b05d-42f6-a58f-bc98c821793e"},
@@ -64,7 +64,7 @@ func TestDataRecategorizedAkamaiDefinedBot(t *testing.T) {
 		}
 		expectedJSON := `
 {
-	"bots": [
+	"recategorizedBots": [
 		{"botId":"cc9c3f89-e179-4892-89cf-d5e623ba9dc7", "customBotCategoryId":"0d38d0fe-b05d-42f6-a58f-bc98c821793e"}
 	]
 }`

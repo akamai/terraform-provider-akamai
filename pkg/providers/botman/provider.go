@@ -57,7 +57,7 @@ func Provider() *schema.Provider {
 			"akamai_botman_akamai_bot_category_action":        dataSourceAkamaiBotCategoryAction(),
 			"akamai_botman_akamai_defined_bot":                dataSourceAkamaiDefinedBot(),
 			"akamai_botman_bot_analytics_cookie":              dataSourceBotAnalyticsCookie(),
-			"akamai_botman_bot_analytics_cookie_value":        dataSourceBotAnalyticsCookieValue(),
+			"akamai_botman_bot_analytics_cookie_values":       dataSourceBotAnalyticsCookieValues(),
 			"akamai_botman_bot_category_exception":            dataSourceBotCategoryException(),
 			"akamai_botman_bot_detection":                     dataSourceBotDetection(),
 			"akamai_botman_bot_detection_action":              dataSourceBotDetectionAction(),

@@ -3,5 +3,5 @@ provider "akamai" {
   cache_enabled = false
 }
 
-data "akamai_botman_bot_analytics_cookie_value" "test" {
+data "akamai_botman_bot_analytics_cookie_values" "test" {
 }

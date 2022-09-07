@@ -9,7 +9,7 @@ import (
 )
 
 func TestDataBotAnalyticsCookieValue(t *testing.T) {
-	t.Run("DataBotAnalyticsCookieValue", func(t *testing.T) {
+	t.Run("DataBotAnalyticsCookieValues", func(t *testing.T) {
 		mockedBotmanClient := &mockbotman{}
 
 		response := map[string]interface{}{
@@ -40,9 +40,9 @@ func TestDataBotAnalyticsCookieValue(t *testing.T) {
 				Providers:  testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: test.Fixture("testdata/TestDataBotAnalyticsCookieValue/basic.tf"),
+						Config: test.Fixture("testdata/TestDataBotAnalyticsCookieValues/basic.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("data.akamai_botman_bot_analytics_cookie_value.test", "json", compactJSON(expectedJSON))),
+							resource.TestCheckResourceAttr("data.akamai_botman_bot_analytics_cookie_values.test", "json", compactJSON(expectedJSON))),
 					},
 				},
 			})
