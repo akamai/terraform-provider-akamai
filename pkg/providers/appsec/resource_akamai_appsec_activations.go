@@ -16,12 +16,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-<<<<<<< HEAD
 // appsec v1
 //
 // https://techdocs.akamai.com/application-security/reference/api
-=======
->>>>>>> SECKSD-14197 Incorporate review comments
 func resourceActivations() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceActivationsCreate,
