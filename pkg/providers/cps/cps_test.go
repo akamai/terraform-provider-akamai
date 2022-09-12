@@ -242,3 +242,21 @@ func (m *mockcps) GetChangeThirdPartyCSR(ctx context.Context, r cps.GetChangeReq
 
 	return args.Get(0).(*cps.ThirdPartyCSRResponse), args.Error(1)
 }
+
+func (m *mockcps) AcknowledgeChangeManagement(ctx context.Context, r cps.AcknowledgementRequest) error {
+	args := m.Called(ctx, r)
+
+	return args.Error(0)
+}
+
+func (m *mockcps) AcknowledgePostVerificationWarnings(ctx context.Context, r cps.AcknowledgementRequest) error {
+	args := m.Called(ctx, r)
+
+	return args.Error(0)
+}
+
+func (m *mockcps) UploadThirdPartyCertAndTrustChain(ctx context.Context, r cps.UploadThirdPartyCertAndTrustChainRequest) error {
+	args := m.Called(ctx, r)
+
+	return args.Error(0)
+}

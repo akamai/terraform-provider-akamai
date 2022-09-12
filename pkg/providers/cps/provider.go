@@ -48,6 +48,7 @@ func Provider() *schema.Provider {
 		DataSourcesMap: map[string]*schema.Resource{
 			"akamai_cps_enrollment":  dataSourceCPSEnrollment(),
 			"akamai_cps_enrollments": dataSourceCPSEnrollments(),
+			"akamai_cps_warnings":    dataSourceCPSWarnings(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"akamai_cps_dv_enrollment": resourceCPSDVEnrollment(),
