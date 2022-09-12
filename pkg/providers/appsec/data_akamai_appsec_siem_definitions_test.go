@@ -7,6 +7,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAkamaiSiemDefinitions_data_basic(t *testing.T) {
@@ -14,7 +15,8 @@ func TestAkamaiSiemDefinitions_data_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		getSiemDefinitionsResponse := appsec.GetSiemDefinitionsResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestDSSiemDefinitions/SiemDefinitions.json"), &getSiemDefinitionsResponse)
+		err := json.Unmarshal(loadFixtureBytes("testdata/TestDSSiemDefinitions/SiemDefinitions.json"), &getSiemDefinitionsResponse)
+		require.NoError(t, err)
 
 		client.On("GetSiemDefinitions",
 			mock.Anything,

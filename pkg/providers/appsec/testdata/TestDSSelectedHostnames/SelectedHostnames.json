@@ -1,12 +1,10 @@
-[
-    {
-        "hostnameList": [
-            {
-                "hostname": "rinaldi.sandbox.akamaideveloper.com"
-            },
-            {
-                "hostname": "sujala.sandbox.akamaideveloper.com"
-            }
-        ]
-    }
-]
+{
+    "hostnameList": [
+        {
+            "hostname": "rinaldi.sandbox.akamaideveloper.com"
+        },
+        {
+            "hostname": "sujala.sandbox.akamaideveloper.com"
+        }
+    ]
+}

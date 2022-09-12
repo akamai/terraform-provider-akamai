@@ -75,10 +75,11 @@ func dataSourceAdvancedSettingsEvasivePathMatchRead(ctx context.Context, d *sche
 	InitTemplates(ots)
 
 	outputtext, err := RenderTemplates(ots, "advancedSettingsEvasivePathMatchDS", advancedsettingsevasivepathmatch)
-	if err == nil {
-		if err := d.Set("output_text", outputtext); err != nil {
-			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
-		}
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if err := d.Set("output_text", outputtext); err != nil {
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	jsonBody, err := json.Marshal(advancedsettingsevasivepathmatch)

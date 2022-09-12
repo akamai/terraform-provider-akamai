@@ -7,6 +7,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAkamaiReputationProfile_res_basic(t *testing.T) {
@@ -14,16 +15,20 @@ func TestAkamaiReputationProfile_res_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		updateReputationProfileResponse := appsec.UpdateReputationProfileResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResReputationProfile/ReputationProfileUpdated.json"), &updateReputationProfileResponse)
+		err := json.Unmarshal(loadFixtureBytes("testdata/TestResReputationProfile/ReputationProfileUpdated.json"), &updateReputationProfileResponse)
+		require.NoError(t, err)
 
 		getReputationProfileResponse := appsec.GetReputationProfileResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResReputationProfile/ReputationProfiles.json"), &getReputationProfileResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResReputationProfile/ReputationProfiles.json"), &getReputationProfileResponse)
+		require.NoError(t, err)
 
 		createReputationProfileResponse := appsec.CreateReputationProfileResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResReputationProfile/ReputationProfileCreated.json"), &createReputationProfileResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResReputationProfile/ReputationProfileCreated.json"), &createReputationProfileResponse)
+		require.NoError(t, err)
 
 		removeReputationProfileResponse := appsec.RemoveReputationProfileResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResReputationProfile/ReputationProfileCreated.json"), &removeReputationProfileResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResReputationProfile/ReputationProfileCreated.json"), &removeReputationProfileResponse)
+		require.NoError(t, err)
 
 		client.On("GetReputationProfile",
 			mock.Anything,

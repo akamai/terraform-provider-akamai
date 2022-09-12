@@ -7,6 +7,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAkamaiBypassNetworkLists_data_basic(t *testing.T) {
@@ -14,7 +15,8 @@ func TestAkamaiBypassNetworkLists_data_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		err := json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		require.NoError(t, err)
 
 		client.On("GetConfiguration",
 			mock.Anything,
@@ -22,7 +24,8 @@ func TestAkamaiBypassNetworkLists_data_basic(t *testing.T) {
 		).Return(&config, nil)
 
 		getBypassNetworkListsResponse := appsec.GetWAPBypassNetworkListsResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestDSBypassNetworkLists/BypassNetworkLists.json"), &getBypassNetworkListsResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestDSBypassNetworkLists/BypassNetworkLists.json"), &getBypassNetworkListsResponse)
+		require.NoError(t, err)
 
 		client.On("GetWAPBypassNetworkLists",
 			mock.Anything,

@@ -7,6 +7,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAkamaiEvalRule_res_basic(t *testing.T) {
@@ -14,16 +15,20 @@ func TestAkamaiEvalRule_res_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		updateEvalRuleResponse := appsec.UpdateEvalRuleResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResEvalRule/EvalRuleUpdated.json"), &updateEvalRuleResponse)
+		err := json.Unmarshal(loadFixtureBytes("testdata/TestResEvalRule/EvalRuleUpdated.json"), &updateEvalRuleResponse)
+		require.NoError(t, err)
 
 		getEvalRuleResponse := appsec.GetEvalRuleResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResEvalRule/EvalRule.json"), &getEvalRuleResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResEvalRule/EvalRule.json"), &getEvalRuleResponse)
+		require.NoError(t, err)
 
 		removeEvalRuleActionResponse := appsec.UpdateEvalRuleResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResEvalRule/EvalRule.json"), &removeEvalRuleActionResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResEvalRule/EvalRule.json"), &removeEvalRuleActionResponse)
+		require.NoError(t, err)
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		require.NoError(t, err)
 
 		client.On("GetConfiguration",
 			mock.Anything,

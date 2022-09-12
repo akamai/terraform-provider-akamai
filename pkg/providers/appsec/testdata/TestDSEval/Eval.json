@@ -1,9 +1,7 @@
-[
-    {
-        "type": "https://problems.luna.akamaiapis.net/appsec/error-types/INVALID-INPUT-ERROR",
-        "status": 405,
-        "title": "Invalid Input Error",
-        "detail": "HTTP 405 Method Not Allowed",
-        "instance": "https://problems.luna.akamaiapis.net/appsec/error-instances/f0aa22a9-6e73-4a25-b580-87937dae6361"
-    }
-]
+{
+    "type": "https://problems.luna.akamaiapis.net/appsec/error-types/INVALID-INPUT-ERROR",
+    "status": 405,
+    "title": "Invalid Input Error",
+    "detail": "HTTP 405 Method Not Allowed",
+    "instance": "https://problems.luna.akamaiapis.net/appsec/error-instances/f0aa22a9-6e73-4a25-b580-87937dae6361"
+}

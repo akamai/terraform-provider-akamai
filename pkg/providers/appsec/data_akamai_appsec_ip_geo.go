@@ -90,10 +90,11 @@ func dataSourceIPGeoRead(ctx context.Context, d *schema.ResourceData, m interfac
 	InitTemplates(ots)
 
 	outputtext, err := RenderTemplates(ots, "IPGeoDS", ipgeo)
-	if err == nil {
-		if err := d.Set("output_text", outputtext); err != nil {
-			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
-		}
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if err := d.Set("output_text", outputtext); err != nil {
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	if ipgeo.Block == "blockAllTrafficExceptAllowedIPs" {

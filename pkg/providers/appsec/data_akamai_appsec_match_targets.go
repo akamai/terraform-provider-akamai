@@ -104,10 +104,11 @@ func dataSourceMatchTargetsRead(ctx context.Context, d *schema.ResourceData, m i
 		matchtargetsOutputText = append(matchtargetsOutputText, MatchTargetOutputText{value.TargetID, value.SecurityPolicy.PolicyID, APITarget})
 	}
 	websiteMatchTargetsText, err := RenderTemplates(ots, "matchTargetDS", matchtargetsOutputText)
-	if err == nil {
-		if err := d.Set("output_text", websiteMatchTargetsText); err != nil {
-			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
-		}
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if err := d.Set("output_text", websiteMatchTargetsText); err != nil {
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	d.SetId(strconv.Itoa(getMatchTargets.ConfigID))

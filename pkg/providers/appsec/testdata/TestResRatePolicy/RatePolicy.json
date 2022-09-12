@@ -34,9 +34,10 @@
             "cab"
         ]
     },
-    "hostnames": ["www.ludin.org"],
+    "hostnames": [
+        "www.ludin.org"
+    ],
     "id": 134644,
-    "policyId": "AAAA_81230",
     "configId": 43253,
     "configVersion": 7,
     "matchType": "path",

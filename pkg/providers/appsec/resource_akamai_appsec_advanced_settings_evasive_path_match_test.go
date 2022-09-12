@@ -7,6 +7,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAkamaiAdvancedSettingsEvasivePathMatch_res_basic(t *testing.T) {
@@ -14,16 +15,20 @@ func TestAkamaiAdvancedSettingsEvasivePathMatch_res_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		configResponse := appsec.GetConfigurationResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &configResponse)
+		err := json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &configResponse)
+		require.NoError(t, err)
 
 		getResponse := appsec.GetAdvancedSettingsEvasivePathMatchResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResAdvancedSettingsEvasivePathMatch/EvasivePathMatch.json"), &getResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResAdvancedSettingsEvasivePathMatch/EvasivePathMatch.json"), &getResponse)
+		require.NoError(t, err)
 
 		updateResponse := appsec.UpdateAdvancedSettingsEvasivePathMatchResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResAdvancedSettingsEvasivePathMatch/EvasivePathMatch.json"), &updateResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResAdvancedSettingsEvasivePathMatch/EvasivePathMatch.json"), &updateResponse)
+		require.NoError(t, err)
 
 		removeResponse := appsec.RemoveAdvancedSettingsEvasivePathMatchResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResAdvancedSettingsEvasivePathMatch/EvasivePathMatch.json"), &removeResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResAdvancedSettingsEvasivePathMatch/EvasivePathMatch.json"), &removeResponse)
+		require.NoError(t, err)
 
 		client.On("GetConfiguration",
 			mock.Anything,

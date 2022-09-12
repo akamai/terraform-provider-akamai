@@ -7,6 +7,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAkamaiRatePolicyAction_res_basic(t *testing.T) {
@@ -14,22 +15,28 @@ func TestAkamaiRatePolicyAction_res_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		err := json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		require.NoError(t, err)
 
 		actionAfterCreate := appsec.UpdateRatePolicyActionResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResRatePolicyAction/ActionAfterCreate.json"), &actionAfterCreate)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResRatePolicyAction/ActionAfterCreate.json"), &actionAfterCreate)
+		require.NoError(t, err)
 
 		allActionsAfterCreate := appsec.GetRatePolicyActionsResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResRatePolicyAction/AllActionsAfterCreate.json"), &allActionsAfterCreate)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResRatePolicyAction/AllActionsAfterCreate.json"), &allActionsAfterCreate)
+		require.NoError(t, err)
 
 		actionAfterUpdate := appsec.UpdateRatePolicyActionResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResRatePolicyAction/ActionAfterUpdate.json"), &actionAfterUpdate)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResRatePolicyAction/ActionAfterUpdate.json"), &actionAfterUpdate)
+		require.NoError(t, err)
 
 		allActionsAfterUpdate := appsec.GetRatePolicyActionsResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResRatePolicyAction/AllActionsAfterUpdate.json"), &allActionsAfterUpdate)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResRatePolicyAction/AllActionsAfterUpdate.json"), &allActionsAfterUpdate)
+		require.NoError(t, err)
 
 		actionAfterDelete := appsec.UpdateRatePolicyActionResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResRatePolicyAction/ActionAfterDelete.json"), &actionAfterDelete)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResRatePolicyAction/ActionAfterDelete.json"), &actionAfterDelete)
+		require.NoError(t, err)
 
 		client.On("GetConfiguration",
 			mock.Anything,

@@ -7,6 +7,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAkamaiActivations_res_basic(t *testing.T) {
@@ -14,13 +15,16 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		removeActivationsResponse := appsec.RemoveActivationsResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResActivations/ActivationsDelete.json"), &removeActivationsResponse)
+		err := json.Unmarshal(loadFixtureBytes("testdata/TestResActivations/ActivationsDelete.json"), &removeActivationsResponse)
+		require.NoError(t, err)
 
 		getActivationsResponse := appsec.GetActivationsResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResActivations/Activations.json"), &getActivationsResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResActivations/Activations.json"), &getActivationsResponse)
+		require.NoError(t, err)
 
 		createActivationsResponse := appsec.CreateActivationsResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResActivations/Activations.json"), &createActivationsResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResActivations/Activations.json"), &createActivationsResponse)
+		require.NoError(t, err)
 
 		client.On("GetActivations",
 			mock.Anything,

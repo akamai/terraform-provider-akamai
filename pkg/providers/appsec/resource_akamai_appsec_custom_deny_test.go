@@ -7,6 +7,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAkamaiCustomDeny_res_basic(t *testing.T) {
@@ -14,14 +15,16 @@ func TestAkamaiCustomDeny_res_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		configResponse := appsec.GetConfigurationResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &configResponse)
+		err := json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &configResponse)
+		require.NoError(t, err)
 		client.On("GetConfiguration",
 			mock.Anything,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&configResponse, nil)
 
 		createResponse := appsec.CreateCustomDenyResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResCustomDeny/CustomDenyCreateResponse.json"), &createResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResCustomDeny/CustomDenyCreateResponse.json"), &createResponse)
+		require.NoError(t, err)
 		createRequestJSON := loadFixtureBytes("testdata/TestResCustomDeny/CustomDenyWithPreventBrowserCacheTrue.json")
 		client.On("CreateCustomDeny",
 			mock.Anything,
@@ -29,7 +32,8 @@ func TestAkamaiCustomDeny_res_basic(t *testing.T) {
 		).Return(&createResponse, nil)
 
 		getResponse := appsec.GetCustomDenyResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResCustomDeny/CustomDenyGetResponse.json"), &getResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResCustomDeny/CustomDenyGetResponse.json"), &getResponse)
+		require.NoError(t, err)
 		client.On("GetCustomDeny",
 			mock.Anything,
 			appsec.GetCustomDenyRequest{ConfigID: 43253, Version: 7, ID: "deny_custom_622918"},
@@ -37,21 +41,24 @@ func TestAkamaiCustomDeny_res_basic(t *testing.T) {
 
 		updateRequestJSON := loadFixtureBytes("testdata/TestResCustomDeny/CustomDenyWithPreventBrowserCacheFalse.json")
 		updateResponse := appsec.UpdateCustomDenyResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResCustomDeny/CustomDenyUpdateResponse.json"), &updateResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResCustomDeny/CustomDenyUpdateResponse.json"), &updateResponse)
+		require.NoError(t, err)
 		client.On("UpdateCustomDeny",
 			mock.Anything,
 			appsec.UpdateCustomDenyRequest{ConfigID: 43253, Version: 7, ID: "deny_custom_622918", JsonPayloadRaw: updateRequestJSON},
 		).Return(&updateResponse, nil)
 
 		getResponseAfterUpdate := appsec.GetCustomDenyResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResCustomDeny/CustomDenyGetResponseAfterUpdate.json"), &getResponseAfterUpdate)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResCustomDeny/CustomDenyGetResponseAfterUpdate.json"), &getResponseAfterUpdate)
+		require.NoError(t, err)
 		client.On("GetCustomDeny",
 			mock.Anything,
 			appsec.GetCustomDenyRequest{ConfigID: 43253, Version: 7, ID: "deny_custom_622918"},
 		).Return(&getResponseAfterUpdate, nil).Twice()
 
 		removeResponse := appsec.RemoveCustomDenyResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResCustomDeny/CustomDeny.json"), &removeResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResCustomDeny/CustomDeny.json"), &removeResponse)
+		require.NoError(t, err)
 		client.On("RemoveCustomDeny",
 			mock.Anything,
 			appsec.RemoveCustomDenyRequest{ConfigID: 43253, Version: 7, ID: "deny_custom_622918"},

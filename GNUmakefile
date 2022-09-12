@@ -41,8 +41,7 @@ testacc:
 .PHONY: vet
 vet:
 	@echo "==> Checking source code against vet"
-	# Appsec package excluded until https://track.akamai.com/jira/browse/SECKSD-12824 is done
-	@go vet $$(go list ./... | grep -v appsec); if [ $$? -ne 0 ]; then \
+	@go vet $$(go list ./...); if [ $$? -ne 0 ]; then \
 		echo ""; \
 		echo "Vet found suspicious constructs. Please check the reported constructs"; \
 		echo "and fix them if necessary before submitting the code for review."; \

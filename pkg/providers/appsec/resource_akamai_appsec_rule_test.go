@@ -7,6 +7,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAkamaiRule_res_basic(t *testing.T) {
@@ -14,19 +15,24 @@ func TestAkamaiRule_res_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		updateRuleResponse := appsec.UpdateRuleResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResRule/Rule.json"), &updateRuleResponse)
+		err := json.Unmarshal(loadFixtureBytes("testdata/TestResRule/Rule.json"), &updateRuleResponse)
+		require.NoError(t, err)
 
 		getRuleResponse := appsec.GetRuleResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResRule/Rule.json"), &getRuleResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResRule/Rule.json"), &getRuleResponse)
+		require.NoError(t, err)
 
 		deleteRuleResponse := appsec.UpdateRuleResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResRule/Rule.json"), &deleteRuleResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResRule/Rule.json"), &deleteRuleResponse)
+		require.NoError(t, err)
 
 		getWAFModeResponse := appsec.GetWAFModeResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResWAFMode/WAFMode.json"), &getWAFModeResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResWAFMode/WAFMode.json"), &getWAFModeResponse)
+		require.NoError(t, err)
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		require.NoError(t, err)
 
 		client.On("GetConfiguration",
 			mock.Anything,
@@ -79,19 +85,24 @@ func TestAkamaiRule_res_AseAuto(t *testing.T) {
 		client := &mockappsec{}
 
 		updateConditionExceptionResponse := appsec.UpdateConditionExceptionResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResRule/RuleAseAuto.json"), &updateConditionExceptionResponse)
+		err := json.Unmarshal(loadFixtureBytes("testdata/TestResRule/RuleAseAuto.json"), &updateConditionExceptionResponse)
+		require.NoError(t, err)
 
 		getRuleResponse := appsec.GetRuleResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResRule/RuleAseAuto.json"), &getRuleResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResRule/RuleAseAuto.json"), &getRuleResponse)
+		require.NoError(t, err)
 
 		deleteConditionExceptionResponse := appsec.UpdateConditionExceptionResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResRule/RuleAseAuto.json"), &deleteConditionExceptionResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResRule/RuleAseAuto.json"), &deleteConditionExceptionResponse)
+		require.NoError(t, err)
 
 		getWAFModeResponse := appsec.GetWAFModeResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResWAFMode/WAFModeAseAuto.json"), &getWAFModeResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResWAFMode/WAFModeAseAuto.json"), &getWAFModeResponse)
+		require.NoError(t, err)
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		require.NoError(t, err)
 
 		client.On("GetConfiguration",
 			mock.Anything,

@@ -1,12 +1,10 @@
-[
-    {
-        "configId": 43253,
-        "policies": [
-            {
-                "policyId": "AAAA_81230",
-                "policyName": "akamaitools"
-            }
-        ],
-        "version": 7
-    }
-]
+{
+    "configId": 43253,
+    "policies": [
+        {
+            "policyId": "AAAA_81230",
+            "policyName": "akamaitools"
+        }
+    ],
+    "version": 7
+}

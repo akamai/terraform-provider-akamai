@@ -94,10 +94,11 @@ func dataSourceEvalGroupsRead(ctx context.Context, d *schema.ResourceData, m int
 	InitTemplates(ots)
 
 	outputtext, err := RenderTemplates(ots, "EvalGroupDS", attackgroups)
-	if err == nil {
-		if err := d.Set("output_text", outputtext); err != nil {
-			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
-		}
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if err := d.Set("output_text", outputtext); err != nil {
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	if len(attackgroups.AttackGroups) == 1 {

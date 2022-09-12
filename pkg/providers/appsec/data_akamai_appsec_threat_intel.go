@@ -78,7 +78,6 @@ func dataSourceThreatIntelRead(ctx context.Context, d *schema.ResourceData, m in
 	InitTemplates(ots)
 
 	outputtext, err := RenderTemplates(ots, "threatIntelDS", threatintel)
-
 	if err != nil {
 		return diag.FromErr(err)
 	}

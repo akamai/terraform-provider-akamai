@@ -7,6 +7,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAkamaiBypassNetworkLists_res_basic(t *testing.T) {
@@ -14,7 +15,8 @@ func TestAkamaiBypassNetworkLists_res_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		err := json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		require.NoError(t, err)
 
 		client.On("GetConfiguration",
 			mock.Anything,
@@ -22,13 +24,16 @@ func TestAkamaiBypassNetworkLists_res_basic(t *testing.T) {
 		).Return(&config, nil)
 
 		updateWAPBypassNetworkListsResponse := appsec.UpdateWAPBypassNetworkListsResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResBypassNetworkLists/BypassNetworkLists.json"), &updateWAPBypassNetworkListsResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResBypassNetworkLists/BypassNetworkLists.json"), &updateWAPBypassNetworkListsResponse)
+		require.NoError(t, err)
 
 		getWAPBypassNetworkListsResponse := appsec.GetWAPBypassNetworkListsResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResBypassNetworkLists/BypassNetworkLists.json"), &getWAPBypassNetworkListsResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResBypassNetworkLists/BypassNetworkLists.json"), &getWAPBypassNetworkListsResponse)
+		require.NoError(t, err)
 
 		removeWAPBypassNetworkListsResponse := appsec.RemoveWAPBypassNetworkListsResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResBypassNetworkLists/BypassNetworkLists.json"), &removeWAPBypassNetworkListsResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResBypassNetworkLists/RemoveNetworkLists.json"), &removeWAPBypassNetworkListsResponse)
+		require.NoError(t, err)
 
 		client.On("GetWAPBypassNetworkLists",
 			mock.Anything,

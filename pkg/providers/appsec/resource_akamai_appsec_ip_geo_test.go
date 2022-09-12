@@ -7,6 +7,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAkamaiIPGeo_res_basic(t *testing.T) {
@@ -14,14 +15,16 @@ func TestAkamaiIPGeo_res_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		getConfigurationResponse := appsec.GetConfigurationResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &getConfigurationResponse)
+		err := json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &getConfigurationResponse)
+		require.NoError(t, err)
 		client.On("GetConfiguration",
 			mock.Anything,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&getConfigurationResponse, nil)
 
 		updateIPGeoResponse := appsec.UpdateIPGeoResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResIPGeo/IPGeo.json"), &updateIPGeoResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResIPGeo/IPGeo.json"), &updateIPGeoResponse)
+		require.NoError(t, err)
 		client.On("UpdateIPGeo",
 			mock.Anything,
 			appsec.UpdateIPGeoRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", Block: "blockSpecificIPGeo", GeoControls: struct {
@@ -45,7 +48,8 @@ func TestAkamaiIPGeo_res_basic(t *testing.T) {
 		).Return(&updateIPGeoResponse, nil)
 
 		getIPGeoResponse := appsec.GetIPGeoResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResIPGeo/IPGeo.json"), &getIPGeoResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResIPGeo/IPGeo.json"), &getIPGeoResponse)
+		require.NoError(t, err)
 		client.On("GetIPGeo",
 			mock.Anything,
 			appsec.GetIPGeoRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
@@ -57,7 +61,8 @@ func TestAkamaiIPGeo_res_basic(t *testing.T) {
 		).Return(&getIPGeoResponse, nil)
 
 		updateIPGeoProtectionResponseAllProtectionsFalse := appsec.UpdateIPGeoProtectionResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResIPGeoProtection/PolicyProtections.json"), &updateIPGeoProtectionResponseAllProtectionsFalse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResIPGeoProtection/PolicyProtections.json"), &updateIPGeoProtectionResponseAllProtectionsFalse)
+		require.NoError(t, err)
 		client.On("UpdateIPGeoProtection",
 			mock.Anything,
 			appsec.UpdateIPGeoProtectionRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},

@@ -9,6 +9,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAkamaiEvalGroups_data_basic(t *testing.T) {
@@ -16,7 +17,8 @@ func TestAkamaiEvalGroups_data_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		configs := appsec.GetConfigurationResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &configs)
+		err := json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &configs)
+		require.NoError(t, err)
 
 		client.On("GetEvalGroups",
 			mock.Anything,
@@ -53,7 +55,8 @@ func TestAkamaiEvalGroups_data_error_retrieving_eval_groups(t *testing.T) {
 		client := &mockappsec{}
 
 		configs := appsec.GetConfigurationResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &configs)
+		err := json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &configs)
+		require.NoError(t, err)
 
 		client.On("GetEvalGroups",
 			mock.Anything,

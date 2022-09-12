@@ -85,9 +85,10 @@ func dataSourceExportConfigurationRead(ctx context.Context, d *schema.ResourceDa
 
 		for _, h := range searchlist.([]interface{}) {
 			outputtext, err := RenderTemplates(ots, h.(string), exportconfiguration)
-			if err == nil {
-				outputtextresult = outputtextresult + outputtext
+			if err != nil {
+				return diag.FromErr(err)
 			}
+			outputtextresult = outputtextresult + outputtext
 		}
 
 		if len(outputtextresult) > 0 {

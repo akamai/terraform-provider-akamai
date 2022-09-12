@@ -7,6 +7,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAkamaiRules_data_basic(t *testing.T) {
@@ -14,10 +15,12 @@ func TestAkamaiRules_data_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		getRulesResponse := appsec.GetRulesResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestDSRules/Rules.json"), &getRulesResponse)
+		err := json.Unmarshal(loadFixtureBytes("testdata/TestDSRules/Rules.json"), &getRulesResponse)
+		require.NoError(t, err)
 
 		configs := appsec.GetConfigurationResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &configs)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &configs)
+		require.NoError(t, err)
 
 		client.On("GetRules",
 			mock.Anything,
@@ -30,7 +33,8 @@ func TestAkamaiRules_data_basic(t *testing.T) {
 		).Return(&configs, nil)
 
 		getWAFModeResponse := appsec.GetWAFModeResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResWAFMode/WAFMode.json"), &getWAFModeResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResWAFMode/WAFMode.json"), &getWAFModeResponse)
+		require.NoError(t, err)
 
 		client.On("GetWAFMode",
 			mock.Anything,

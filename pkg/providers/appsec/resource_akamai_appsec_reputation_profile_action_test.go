@@ -7,6 +7,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAkamaiReputationProfileAction_res_basic(t *testing.T) {
@@ -14,13 +15,16 @@ func TestAkamaiReputationProfileAction_res_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		updateReputationProfileActionResponse := appsec.UpdateReputationProfileActionResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResReputationProfileAction/ReputationProfileAction.json"), &updateReputationProfileActionResponse)
+		err := json.Unmarshal(loadFixtureBytes("testdata/TestResReputationProfileAction/ReputationProfileAction.json"), &updateReputationProfileActionResponse)
+		require.NoError(t, err)
 
 		getReputationProfileActionResponse := appsec.GetReputationProfileActionResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResReputationProfileAction/ReputationProfileAction.json"), &getReputationProfileActionResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResReputationProfileAction/ReputationProfileAction.json"), &getReputationProfileActionResponse)
+		require.NoError(t, err)
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		require.NoError(t, err)
 
 		client.On("GetConfiguration",
 			mock.Anything,

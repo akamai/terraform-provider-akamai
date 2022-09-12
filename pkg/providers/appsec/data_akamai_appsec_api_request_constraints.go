@@ -86,10 +86,11 @@ func dataSourceAPIRequestConstraintsRead(ctx context.Context, d *schema.Resource
 	InitTemplates(ots)
 
 	outputtext, err := RenderTemplates(ots, "apiRequestConstraintsDS", apirequestconstraints)
-	if err == nil {
-		if err = d.Set("output_text", outputtext); err != nil {
-			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
-		}
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if err = d.Set("output_text", outputtext); err != nil {
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	jsonBody, err := json.Marshal(apirequestconstraints)

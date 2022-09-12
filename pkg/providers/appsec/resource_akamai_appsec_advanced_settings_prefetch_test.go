@@ -7,6 +7,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAkamaiAdvancedSettingsPrefetch_res_basic(t *testing.T) {
@@ -14,16 +15,20 @@ func TestAkamaiAdvancedSettingsPrefetch_res_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		updateResponse := appsec.UpdateAdvancedSettingsPrefetchResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResAdvancedSettingsPrefetch/AdvancedSettingsPrefetch.json"), &updateResponse)
+		err := json.Unmarshal(loadFixtureBytes("testdata/TestResAdvancedSettingsPrefetch/AdvancedSettingsPrefetch.json"), &updateResponse)
+		require.NoError(t, err)
 
 		deleteResopnse := appsec.UpdateAdvancedSettingsPrefetchResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResAdvancedSettingsPrefetch/AdvancedSettingsPrefetch.json"), &deleteResopnse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResAdvancedSettingsPrefetch/AdvancedSettingsPrefetch.json"), &deleteResopnse)
+		require.NoError(t, err)
 
 		getResponse := appsec.GetAdvancedSettingsPrefetchResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResAdvancedSettingsPrefetch/AdvancedSettingsPrefetch.json"), &getResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResAdvancedSettingsPrefetch/AdvancedSettingsPrefetch.json"), &getResponse)
+		require.NoError(t, err)
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		require.NoError(t, err)
 
 		client.On("GetConfiguration",
 			mock.Anything,

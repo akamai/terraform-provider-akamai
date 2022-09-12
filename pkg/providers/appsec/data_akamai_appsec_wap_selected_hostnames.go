@@ -146,10 +146,11 @@ func dataSourceWAPSelectedHostnamesRead(ctx context.Context, d *schema.ResourceD
 			matchtargetsOutputText = append(matchtargetsOutputText, MatchTargetOutputText{value.TargetID, value.SecurityPolicy.PolicyID, APITarget})
 		}
 		websiteMatchTargetsText, err := RenderTemplates(ots, "matchTargetDS", matchtargetsOutputText)
-		if err == nil {
-			if err := d.Set("output_text", websiteMatchTargetsText); err != nil {
-				return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
-			}
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		if err := d.Set("output_text", websiteMatchTargetsText); err != nil {
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 		}
 	} else { // WAP_AAG and WAP_PLUS accounts
 		getWAPSelectedHostnamesRequest := appsec.GetWAPSelectedHostnamesRequest{
@@ -193,11 +194,10 @@ func dataSourceWAPSelectedHostnamesRead(ctx context.Context, d *schema.ResourceD
 			textOutputEntries = append(textOutputEntries, entry)
 		}
 		outputtext, err := RenderTemplates(ots, "WAPSelectedHostsDS", textOutputEntries)
-		if err == nil {
-			if err := d.Set("output_text", outputtext); err != nil {
-				return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
-			}
-		} else {
+		if err != nil {
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		}
+		if err := d.Set("output_text", outputtext); err != nil {
 			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 		}
 	}

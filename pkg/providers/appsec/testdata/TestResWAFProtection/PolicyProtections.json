@@ -1,11 +1,9 @@
-[
-    {
-        "applyApiConstraints": false,
-        "applyApplicationLayerControls": false,
-        "applyBotmanControls": false,
-        "applyNetworkLayerControls": false,
-        "applyRateControls": false,
-        "applyReputationControls": false,
-        "applySlowPostControls": false
-    }
-]
+{
+    "applyApiConstraints": false,
+    "applyApplicationLayerControls": false,
+    "applyBotmanControls": false,
+    "applyNetworkLayerControls": false,
+    "applyRateControls": false,
+    "applyReputationControls": false,
+    "applySlowPostControls": false
+}

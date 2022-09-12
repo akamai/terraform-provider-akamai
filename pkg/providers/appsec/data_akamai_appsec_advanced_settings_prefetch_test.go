@@ -7,6 +7,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAkamaiAdvancedSettingsPrefetch_data_basic(t *testing.T) {
@@ -14,7 +15,8 @@ func TestAkamaiAdvancedSettingsPrefetch_data_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		getPrefetchResponse := appsec.GetAdvancedSettingsPrefetchResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestDSAdvancedSettingsPrefetch/AdvancedSettingsPrefetch.json"), &getPrefetchResponse)
+		err := json.Unmarshal(loadFixtureBytes("testdata/TestDSAdvancedSettingsPrefetch/AdvancedSettingsPrefetch.json"), &getPrefetchResponse)
+		require.NoError(t, err)
 
 		client.On("GetAdvancedSettingsPrefetch",
 			mock.Anything,
@@ -22,7 +24,8 @@ func TestAkamaiAdvancedSettingsPrefetch_data_basic(t *testing.T) {
 		).Return(&getPrefetchResponse, nil)
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		require.NoError(t, err)
 
 		client.On("GetConfiguration",
 			mock.Anything,

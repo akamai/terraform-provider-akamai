@@ -74,10 +74,11 @@ func dataSourceReputationAnalysisRead(ctx context.Context, d *schema.ResourceDat
 	InitTemplates(ots)
 
 	outputtext, err := RenderTemplates(ots, "reputationAnalysisDS", reputationanalysis)
-	if err == nil {
-		if err := d.Set("output_text", outputtext); err != nil {
-			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
-		}
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if err := d.Set("output_text", outputtext); err != nil {
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	jsonBody, err := json.Marshal(reputationanalysis)

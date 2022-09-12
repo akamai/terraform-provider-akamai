@@ -9,6 +9,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAkamaiCustomRule_res_basic(t *testing.T) {
@@ -16,22 +17,28 @@ func TestAkamaiCustomRule_res_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		createCustomRuleResponse := appsec.CreateCustomRuleResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResCustomRule/CustomRule.json"), &createCustomRuleResponse)
+		err := json.Unmarshal(loadFixtureBytes("testdata/TestResCustomRule/CustomRule.json"), &createCustomRuleResponse)
+		require.NoError(t, err)
 
 		getCustomRuleResponse := appsec.GetCustomRuleResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResCustomRule/CustomRule.json"), &getCustomRuleResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResCustomRule/CustomRule.json"), &getCustomRuleResponse)
+		require.NoError(t, err)
 
 		updateCustomRuleResponse := appsec.UpdateCustomRuleResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResCustomRule/CustomRuleUpdated.json"), &updateCustomRuleResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResCustomRule/CustomRuleUpdated.json"), &updateCustomRuleResponse)
+		require.NoError(t, err)
 
 		getCustomRuleAfterUpdate := appsec.GetCustomRuleResponse{} // custom rule after update
-		json.Unmarshal(loadFixtureBytes("testdata/TestResCustomRule/CustomRuleUpdated.json"), &getCustomRuleAfterUpdate)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResCustomRule/CustomRuleUpdated.json"), &getCustomRuleAfterUpdate)
+		require.NoError(t, err)
 
 		removeCustomRuleResponse := appsec.RemoveCustomRuleResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResCustomRule/CustomRulesDeleted.json"), &removeCustomRuleResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResCustomRule/CustomRulesDeleted.json"), &removeCustomRuleResponse)
+		require.NoError(t, err)
 
 		getCustomRulesAfterDelete := appsec.GetCustomRulesResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResCustomRule/CustomRulesForDelete.json"), &getCustomRulesAfterDelete)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResCustomRule/CustomRulesForDelete.json"), &getCustomRulesAfterDelete)
+		require.NoError(t, err)
 
 		client.On("GetCustomRules",
 			mock.Anything,
@@ -98,22 +105,28 @@ func TestAkamaiCustomRule_res_error_removing_active_rule(t *testing.T) {
 		client := &mockappsec{}
 
 		updateCustomRuleResponse := appsec.UpdateCustomRuleResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResCustomRule/CustomRuleUpdated.json"), &updateCustomRuleResponse)
+		err := json.Unmarshal(loadFixtureBytes("testdata/TestResCustomRule/CustomRuleUpdated.json"), &updateCustomRuleResponse)
+		require.NoError(t, err)
 
 		createCustomRuleResponse := appsec.CreateCustomRuleResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResCustomRule/CustomRule.json"), &createCustomRuleResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResCustomRule/CustomRule.json"), &createCustomRuleResponse)
+		require.NoError(t, err)
 
 		getCustomRuleResponse := appsec.GetCustomRuleResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResCustomRule/CustomRule.json"), &getCustomRuleResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResCustomRule/CustomRule.json"), &getCustomRuleResponse)
+		require.NoError(t, err)
 
 		getCustomRuleResponseAfterUpdate := appsec.GetCustomRuleResponse{} // custom rule after update
-		json.Unmarshal(loadFixtureBytes("testdata/TestResCustomRule/CustomRuleUpdated.json"), &getCustomRuleResponseAfterUpdate)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResCustomRule/CustomRuleUpdated.json"), &getCustomRuleResponseAfterUpdate)
+		require.NoError(t, err)
 
 		removeCustomRuleResponse := appsec.RemoveCustomRuleResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResCustomRule/CustomRulesDeleted.json"), &removeCustomRuleResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResCustomRule/CustomRulesDeleted.json"), &removeCustomRuleResponse)
+		require.NoError(t, err)
 
 		getCustomRulesAfterDelete := appsec.GetCustomRulesResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResCustomRule/CustomRulesForDelete.json"), &getCustomRulesAfterDelete)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResCustomRule/CustomRulesForDelete.json"), &getCustomRulesAfterDelete)
+		require.NoError(t, err)
 
 		client.On("GetCustomRules",
 			mock.Anything,

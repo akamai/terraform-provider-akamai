@@ -7,6 +7,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAkamaiEvalRules_data_basic(t *testing.T) {
@@ -14,10 +15,12 @@ func TestAkamaiEvalRules_data_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		getEvalRulesResponse := appsec.GetEvalRulesResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestDSEvalRules/EvalRules.json"), &getEvalRulesResponse)
+		err := json.Unmarshal(loadFixtureBytes("testdata/TestDSEvalRules/EvalRules.json"), &getEvalRulesResponse)
+		require.NoError(t, err)
 
 		configs := appsec.GetConfigurationResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &configs)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &configs)
+		require.NoError(t, err)
 
 		client.On("GetEvalRules",
 			mock.Anything,

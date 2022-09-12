@@ -7,6 +7,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAkamaiVersionNotes_res_basic(t *testing.T) {
@@ -14,13 +15,16 @@ func TestAkamaiVersionNotes_res_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		updateVersionNotesResponse := appsec.UpdateVersionNotesResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResVersionNotes/VersionNotes.json"), &updateVersionNotesResponse)
+		err := json.Unmarshal(loadFixtureBytes("testdata/TestResVersionNotes/VersionNotes.json"), &updateVersionNotesResponse)
+		require.NoError(t, err)
 
 		getVersionNotesResponse := appsec.GetVersionNotesResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResVersionNotes/VersionNotes.json"), &getVersionNotesResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResVersionNotes/VersionNotes.json"), &getVersionNotesResponse)
+		require.NoError(t, err)
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		require.NoError(t, err)
 
 		client.On("GetConfiguration",
 			mock.Anything,

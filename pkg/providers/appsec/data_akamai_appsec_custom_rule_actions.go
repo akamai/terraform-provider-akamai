@@ -79,10 +79,11 @@ func dataSourceCustomRuleActionsRead(ctx context.Context, d *schema.ResourceData
 	InitTemplates(ots)
 
 	outputtext, err := RenderTemplates(ots, "customRuleAction", customruleactions)
-	if err == nil {
-		if err := d.Set("output_text", outputtext); err != nil {
-			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
-		}
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if err := d.Set("output_text", outputtext); err != nil {
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	d.SetId(strconv.Itoa(getCustomRuleActions.ConfigID))

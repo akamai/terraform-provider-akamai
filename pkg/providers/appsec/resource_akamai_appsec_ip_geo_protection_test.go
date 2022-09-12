@@ -7,6 +7,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAkamaiIPGeoProtection_res_basic(t *testing.T) {
@@ -14,19 +15,24 @@ func TestAkamaiIPGeoProtection_res_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		err := json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		require.NoError(t, err)
 
 		updateResponseAllProtectionsFalse := appsec.UpdateIPGeoProtectionResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResIPGeoProtection/PolicyProtections.json"), &updateResponseAllProtectionsFalse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResIPGeoProtection/PolicyProtections.json"), &updateResponseAllProtectionsFalse)
+		require.NoError(t, err)
 
 		getResponseAllProtectionsFalse := appsec.GetIPGeoProtectionResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResIPGeoProtection/PolicyProtections.json"), &getResponseAllProtectionsFalse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResIPGeoProtection/PolicyProtections.json"), &getResponseAllProtectionsFalse)
+		require.NoError(t, err)
 
 		updateResponseOneProtectionTrue := appsec.UpdateIPGeoProtectionResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResIPGeoProtection/UpdatedPolicyProtections.json"), &updateResponseOneProtectionTrue)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResIPGeoProtection/UpdatedPolicyProtections.json"), &updateResponseOneProtectionTrue)
+		require.NoError(t, err)
 
 		getResponseOneProtectionTrue := appsec.GetIPGeoProtectionResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResIPGeoProtection/UpdatedPolicyProtections.json"), &getResponseOneProtectionTrue)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResIPGeoProtection/UpdatedPolicyProtections.json"), &getResponseOneProtectionTrue)
+		require.NoError(t, err)
 
 		// Mock each call to the EdgeGrid library. With the exception of GetConfiguration, each call
 		// is mocked individually because calls with the same parameters may have different return values.

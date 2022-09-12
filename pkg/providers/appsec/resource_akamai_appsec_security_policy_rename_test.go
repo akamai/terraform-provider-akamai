@@ -7,6 +7,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAkamaiSecurityPolicyRename_res_basic(t *testing.T) {
@@ -14,13 +15,16 @@ func TestAkamaiSecurityPolicyRename_res_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		updateSecurityPolicyResponse := appsec.UpdateSecurityPolicyResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResSecurityPolicyRename/SecurityPolicyUpdate.json"), &updateSecurityPolicyResponse)
+		err := json.Unmarshal(loadFixtureBytes("testdata/TestResSecurityPolicyRename/SecurityPolicyUpdate.json"), &updateSecurityPolicyResponse)
+		require.NoError(t, err)
 
 		getSecurityPolicyResponse := appsec.GetSecurityPolicyResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResSecurityPolicyRename/SecurityPolicy.json"), &getSecurityPolicyResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResSecurityPolicyRename/SecurityPolicy.json"), &getSecurityPolicyResponse)
+		require.NoError(t, err)
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		require.NoError(t, err)
 
 		client.On("GetConfiguration",
 			mock.Anything,

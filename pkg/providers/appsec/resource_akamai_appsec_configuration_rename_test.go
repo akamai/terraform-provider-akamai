@@ -7,6 +7,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAkamaiConfigurationRename_res_basic(t *testing.T) {
@@ -14,10 +15,12 @@ func TestAkamaiConfigurationRename_res_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		updateConfigurationResponse := appsec.UpdateConfigurationResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResConfigurationRename/ConfigurationUpdate.json"), &updateConfigurationResponse)
+		err := json.Unmarshal(loadFixtureBytes("testdata/TestResConfigurationRename/ConfigurationUpdate.json"), &updateConfigurationResponse)
+		require.NoError(t, err)
 
 		getConfigurationResponse := appsec.GetConfigurationResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResConfigurationRename/Configuration.json"), &getConfigurationResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResConfigurationRename/Configuration.json"), &getConfigurationResponse)
+		require.NoError(t, err)
 
 		client.On("GetConfiguration",
 			mock.Anything,

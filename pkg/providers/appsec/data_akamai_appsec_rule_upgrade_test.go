@@ -7,6 +7,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAkamaiRuleUpgrade_data_basic(t *testing.T) {
@@ -14,10 +15,12 @@ func TestAkamaiRuleUpgrade_data_basic(t *testing.T) {
 		client := &mockappsec{}
 
 		getRuleUpgradeResponse := appsec.GetRuleUpgradeResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestDSRuleUpgrade/RuleUpgrade.json"), &getRuleUpgradeResponse)
+		err := json.Unmarshal(loadFixtureBytes("testdata/TestDSRuleUpgrade/RuleUpgrade.json"), &getRuleUpgradeResponse)
+		require.NoError(t, err)
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		require.NoError(t, err)
 
 		client.On("GetConfiguration",
 			mock.Anything,
