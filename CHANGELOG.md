@@ -2,6 +2,12 @@
 
 ## x.x.x (x xx, xxxx)
 
+#### FEATURES/ENHANCEMENTS:
+
+* CPS
+  * New data source:
+    * [akamai_cps_csr](xxx.md) - returns latest Certificate Signing Request for given enrollment
+
 #### BUG FIXES:
 
 * PAPI
