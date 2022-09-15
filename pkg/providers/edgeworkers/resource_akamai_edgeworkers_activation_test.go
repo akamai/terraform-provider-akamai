@@ -698,6 +698,39 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				},
 			},
 		},
+		"import activation on staging": {
+			init: func(m *mockedgeworkers) {
+				net := edgeworkers.ActivationNetworkStaging
+				version := "test"
+				activationID := 1
+
+				// version verification
+				expectListEdgeWorkerVersions(m, edgeworkerID, []edgeworkers.EdgeWorkerVersion{
+					*createStubEdgeworkerVersion(edgeworkerID, version),
+				}, nil).Once()
+
+				// create
+				expectFullActivation(m, edgeworkerID, activationID, net, version)
+
+				expectFullRead(m, edgeworkerID, version, []edgeworkers.Activation{
+					*createStubActivation(edgeworkerID, activationID, net, version, activationStatusComplete, ""),
+				}, []edgeworkers.Deactivation{}, 3)
+
+				// test cleanup - destroy
+				expectFullDeactivation(m, edgeworkerID, 1, net, version)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: loadFixtureString(fmt.Sprintf("%s/edgeworkers_activation_import.tf", workdir)),
+				},
+				{
+					ImportState:       true,
+					ImportStateId:     fmt.Sprintf("%d:STAGING", edgeworkerID),
+					ResourceName:      "akamai_edgeworkers_activation.test",
+					ImportStateVerify: true,
+				},
+			},
+		},
 		"error on create - missing required arguments": {
 			init: func(m *mockedgeworkers) {},
 			steps: []resource.TestStep{
@@ -1021,6 +1054,72 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				},
 			},
 			omitDefaultMock: true,
+		},
+		"error on import - edgeworker id not a number": {
+			init: func(m *mockedgeworkers) {
+				net := edgeworkers.ActivationNetworkStaging
+				version := "test"
+				activationID := 1
+
+				// version verification
+				expectListEdgeWorkerVersions(m, edgeworkerID, []edgeworkers.EdgeWorkerVersion{
+					*createStubEdgeworkerVersion(edgeworkerID, version),
+				}, nil).Once()
+
+				// create
+				expectFullActivation(m, edgeworkerID, activationID, net, version)
+
+				expectFullRead(m, edgeworkerID, version, []edgeworkers.Activation{
+					*createStubActivation(edgeworkerID, activationID, net, version, activationStatusComplete, ""),
+				}, []edgeworkers.Deactivation{}, 2)
+
+				// test cleanup - destroy
+				expectFullDeactivation(m, edgeworkerID, 1, net, version)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: loadFixtureString(fmt.Sprintf("%s/edgeworkers_activation_import.tf", workdir)),
+				},
+				{
+					ImportState:   true,
+					ImportStateId: "123abc:STAGING",
+					ResourceName:  "akamai_edgeworkers_activation.test",
+					ExpectError:   regexp.MustCompile(`edgeworker activation import: edgeworker id must be an integer, got '123abc'`),
+				},
+			},
+		},
+		"error on import - invalid network": {
+			init: func(m *mockedgeworkers) {
+				net := edgeworkers.ActivationNetworkStaging
+				version := "test"
+				activationID := 1
+
+				// version verification
+				expectListEdgeWorkerVersions(m, edgeworkerID, []edgeworkers.EdgeWorkerVersion{
+					*createStubEdgeworkerVersion(edgeworkerID, version),
+				}, nil).Once()
+
+				// create
+				expectFullActivation(m, edgeworkerID, activationID, net, version)
+
+				expectFullRead(m, edgeworkerID, version, []edgeworkers.Activation{
+					*createStubActivation(edgeworkerID, activationID, net, version, activationStatusComplete, ""),
+				}, []edgeworkers.Deactivation{}, 2)
+
+				// test cleanup - destroy
+				expectFullDeactivation(m, edgeworkerID, 1, net, version)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: loadFixtureString(fmt.Sprintf("%s/edgeworkers_activation_import.tf", workdir)),
+				},
+				{
+					ImportState:   true,
+					ImportStateId: fmt.Sprintf("%d:INVALID_NETWORK", edgeworkerID),
+					ResourceName:  "akamai_edgeworkers_activation.test",
+					ExpectError:   regexp.MustCompile(`edgeworker activation import: network must be 'STAGING' or 'PRODUCTION', got 'INVALID_NETWORK'`),
+				},
+			},
 		},
 	}
 
