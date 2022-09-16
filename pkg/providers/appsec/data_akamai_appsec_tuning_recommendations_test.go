@@ -33,6 +33,10 @@ func TestAkamaiTuningRecommendationsDataBasic(t *testing.T) {
 		err = json.Unmarshal(loadFixtureBytes("testdata/TestDSTuningRecommendations/AttackGroupRecommendations.json"), &getGroupRecs)
 		require.NoError(t, err)
 
+		getRuleRecs := appsec.GetRuleRecommendationsResponse{}
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestDSTuningRecommendations/RuleRecommendations.json"), &getRuleRecs)
+		require.NoError(t, err)
+
 		client.On("GetTuningRecommendations",
 			mock.Anything,
 			appsec.GetTuningRecommendationsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", RulesetType: "active"},
@@ -42,6 +46,11 @@ func TestAkamaiTuningRecommendationsDataBasic(t *testing.T) {
 			mock.Anything,
 			appsec.GetAttackGroupRecommendationsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", Group: "XSS", RulesetType: "evaluation"},
 		).Return(&getGroupRecs, nil)
+
+		client.On("GetRuleRecommendations",
+			mock.Anything,
+			appsec.GetRuleRecommendationsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", RuleID: 958008, RulesetType: "active"},
+		).Return(&getRuleRecs, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
@@ -84,6 +93,10 @@ func TestAkamaiTuningRecommenadationsDataErrorRetrievingTuningRecommenadations(t
 		err = json.Unmarshal(loadFixtureBytes("testdata/TestDSTuningRecommendations/AttackGroupRecommendations.json"), &getGroupRecs)
 		require.NoError(t, err)
 
+		getRuleRecs := appsec.GetAttackGroupRecommendationsResponse{}
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestDSTuningRecommendations/RuleRecommendations.json"), &getRuleRecs)
+		require.NoError(t, err)
+
 		client.On("GetTuningRecommendations",
 			mock.Anything,
 			appsec.GetTuningRecommendationsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", RulesetType: "active"},
@@ -93,6 +106,11 @@ func TestAkamaiTuningRecommenadationsDataErrorRetrievingTuningRecommenadations(t
 			mock.Anything,
 			appsec.GetAttackGroupRecommendationsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", Group: "XSS", RulesetType: "evaluation"},
 		).Return(nil, fmt.Errorf("GetAttackGroupRecommendations failed"))
+
+		client.On("GetRuleRecommendations",
+			mock.Anything,
+			appsec.GetRuleRecommendationsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", RuleID: 958008, RulesetType: "active"},
+		).Return(nil, fmt.Errorf("GetRuleRecommendations failed"))
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{

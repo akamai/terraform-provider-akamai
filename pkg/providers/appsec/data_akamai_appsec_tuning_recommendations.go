@@ -44,10 +44,15 @@ func dataSourceTuningRecommendations() *schema.Resource {
 				Optional:    true,
 				Description: "Unique name of a specific attack group for which to return tuning recommendations",
 			},
+			"rule_id": {
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Description: "Unique name of a specific rule id for which to return tuning recommendations",
+			},
 			"json": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "JSON-formatted list of the tuning recommendations for the security policy or attack group",
+				Description: "JSON-formatted list of the tuning recommendations for the security policy, attack group or rule",
 			},
 		},
 	}
@@ -71,6 +76,22 @@ func dataSourceTuningRecommendationsRead(ctx context.Context, d *schema.Resource
 	group, err := tools.GetStringValue("attack_group", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
+	}
+
+	ruleID, err := tools.GetIntValue("rule_id", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+
+	if group != "" && ruleID != 0 {
+		var diags diag.Diagnostics
+		diag := diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "wrong field values specified",
+			Detail:   "attack_group and rule_id fields can not be used together",
+		}
+		diags = append(diags, diag)
+		return diags
 	}
 
 	rulesetType, err := tools.GetStringValue("ruleset_type", d)
@@ -104,6 +125,25 @@ func dataSourceTuningRecommendationsRead(ctx context.Context, d *schema.Resource
 		if err != nil {
 			return diag.FromErr(err)
 		}
+	} else if ruleID != 0 {
+		getRuleRecommendationsRequest := appsec.GetRuleRecommendationsRequest{
+			ConfigID:    configID,
+			Version:     version,
+			PolicyID:    policyID,
+			RuleID:      ruleID,
+			RulesetType: appsec.RulesetType(rulesetType),
+		}
+		response, err := client.GetRuleRecommendations(ctx, getRuleRecommendationsRequest)
+		if err != nil {
+			logger.Errorf("calling 'GetRuleRecommendations': %s", err.Error())
+			return diag.FromErr(err)
+		}
+
+		jsonBody, err = json.Marshal(response)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
 	} else {
 		getTuningRecommendationsRequest := appsec.GetTuningRecommendationsRequest{
 			ConfigID:    configID,
