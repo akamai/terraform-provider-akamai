@@ -15,8 +15,8 @@ func TestDataWarnings(t *testing.T) {
 				{
 					Config: loadFixtureString("testdata/TestDataWarnings/warnings.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("data.akamai_cps_warnings.test", "warnings.%", "109"),
-						resource.TestCheckResourceAttr("data.akamai_cps_warnings.test", "warnings.CERTIFICATE_NULL_OR_EMPTY", "Null or empty certificate."),
+						resource.TestCheckResourceAttr("data.akamai_cps_warnings.test", "warnings.%", "112"),
+						resource.TestCheckResourceAttr("data.akamai_cps_warnings.test", "warnings.CERTIFICATE_NULL_OR_EMPTY", "Null or empty [<certificateDescription>] Certificate."),
 						resource.TestCheckNoResourceAttr("data.akamai_cps_warnings.test", "warnings.a"),
 					),
 				},
