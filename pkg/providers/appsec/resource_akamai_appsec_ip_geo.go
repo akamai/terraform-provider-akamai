@@ -94,15 +94,15 @@ func resourceIPGeoCreate(ctx context.Context, d *schema.ResourceData, m interfac
 		return diag.FromErr(err)
 	}
 	blockedGeoListsSet, err := tools.GetSetValue("geo_network_lists", d)
-	if err != nil {
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 	blockedIPListsSet, err := tools.GetSetValue("ip_network_lists", d)
-	if err != nil {
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 	exceptionIPListsSet, err := tools.GetSetValue("exception_ip_network_lists", d)
-	if err != nil {
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 
