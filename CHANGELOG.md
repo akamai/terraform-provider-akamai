@@ -4,6 +4,17 @@
 
 #### FEATURES/ENHANCEMENTS:
 
+* APPSEC
+  * New data sources:
+    * akamai_appsec_malware_content_types
+    * akamai_appsec_malware_policies
+    * akamai_appsec_malware_policy_actions
+  * New resources:
+    * akamai_appsec_malware_policy
+    * akamai_appsec_malware_policy_action
+    * akamai_appsec_malware_policy_actions
+    * akamai_appsec_malware_protection
+
 * CPS
   * New data sources:
     * [akamai_edgeworker](xxx.md) - returns data for specific edgeworker, corresponding version and bundle information
