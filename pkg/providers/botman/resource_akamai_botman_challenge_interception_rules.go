@@ -53,7 +53,7 @@ func resourceChallengeInterceptionRulesCreate(ctx context.Context, d *schema.Res
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "clientSideSecurity", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "challengeInterceptionRules", m)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -134,7 +134,7 @@ func resourceChallengeInterceptionRulesUpdate(ctx context.Context, d *schema.Res
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "clientSideSecurity", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "challengeInterceptionRules", m)
 	if err != nil {
 		return diag.FromErr(err)
 	}

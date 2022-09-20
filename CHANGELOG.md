@@ -15,6 +15,56 @@
     * akamai_appsec_malware_policy_actions
     * akamai_appsec_malware_protection
 
+* [IMPORTANT] Added Bot Management API Support
+  * Added resources allowing management of:
+    * `akamai_bot_category_action` - read, update and import
+    * `bot_analytics_cookie` - read, update and import
+    * `bot_category_exception` - read, update and import
+    * `bot_detection_action` - read, update and import
+    * `bot_management_settings` - read, update and import
+    * `challenge_action` - create, read, update, delete and import
+    * `challenge_interception_rules` - read, update and import
+    * `client_side_security` - read, update and import
+    * `conditional_action` - create, read, update, delete and import
+    * `custom_bot_cateogry` - create, read, update, delete and import
+    * `custom_bot_category_action` - read, update and import
+    * `custom_bot_category_sequence` - read, update and import
+    * `custom_client` - create, read, update, delete and import
+    * `custom_defined_bot` - create, read, update, delete and import
+    * `custom_deny_action` - create, read, update, delete and import
+    * `javascript_injection` - read, update and import
+    * `recategorized_akamai_defined_bot` - create, read, update, delete and import
+    * `serve_alternate_action` - create, read, update, delete and import
+    * `transactional_endpoint_protection` - read, update and import
+    * `transactional_endpoint` - create, read, update, delete and import
+  * Added data sources:
+    * `akamai_bot_category` - list akamai bot categories
+    * `akamai_bot_category_action` - list akamai bot category actions
+    * `akamai_defined_bot` - list akamai defined bots
+    * `bot_analytics_cookie` - get bot analytics cookie
+    * `bot_analytics_cookie_values` - list bot analytics cookie values
+    * `bot_category_exception` - list bot category exceptions
+    * `bot_detection` - list bot detections
+    * `bot_detection_action` - list bot detection actions
+    * `bot_endpoint_coverage_report` - get bot endpoint coverage report
+    * `bot_management_settings` - list bot management settings
+    * `challenge_action` - list challenge actions
+    * `challenge_interception_rules` - list challenge interception rules
+    * `client_side_security` - get client side security
+    * `conditional_action` - list conditional actions
+    * `custom_bot_cateogry` - list custom bot categories
+    * `custom_bot_category_action` - list custom bot category actions
+    * `custom_bot_category_sequence` - get custom bot category sequence
+    * `custom_client` - list custom clients
+    * `custom_defined_bot` - list custom defined bots
+    * `custom_deny_action` - list custom deny actions
+    * `javascript_injection` - get javascript injection
+    * `recategorized_akamai_defined_bot` - list recategorized akamai defined bots
+    * `response_action` - list response actions
+    * `serve_alternate_action` - list serve alternate actions
+    * `transactional_endpoint` - list transactional endpoints
+    * `transactional_endpoint_protection` - read, update and import
+
 * CPS
   * New data sources:
     * [akamai_edgeworker](xxx.md) - returns data for specific edgeworker, corresponding version and bundle information

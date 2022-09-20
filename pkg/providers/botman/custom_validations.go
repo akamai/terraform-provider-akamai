@@ -50,7 +50,7 @@ func verifyCategoryIDUnchanged(c context.Context, d *schema.ResourceDiff, m inte
 }
 
 func verifyDetectionIDUnchanged(c context.Context, d *schema.ResourceDiff, m interface{}) error {
-	return verifyIDUnchanged(c, d, m, "category_id")
+	return verifyIDUnchanged(c, d, m, "detection_id")
 }
 
 func verifyBotIDUnchanged(c context.Context, d *schema.ResourceDiff, m interface{}) error {
