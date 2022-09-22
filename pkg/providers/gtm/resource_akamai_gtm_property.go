@@ -194,8 +194,10 @@ func resourceGTMv1Property() *schema.Resource {
 							Optional: true,
 						},
 						"servers": {
-							Type:     schema.TypeList,
-							Elem:     &schema.Schema{Type: schema.TypeString},
+							Type: schema.TypeSet,
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
 							Optional: true,
 						},
 						"name": {
@@ -918,8 +920,8 @@ func populateTrafficTargetObject(ctx context.Context, d *schema.ResourceData, pr
 			trafficTarget.Enabled = ttMap["enabled"].(bool)
 			trafficTarget.Weight = ttMap["weight"].(float64)
 			if ttMap["servers"] != nil {
-				ls := make([]string, len(ttMap["servers"].([]interface{})))
-				for i, sl := range ttMap["servers"].([]interface{}) {
+				ls := make([]string, ttMap["servers"].(*schema.Set).Len())
+				for i, sl := range ttMap["servers"].(*schema.Set).List() {
 					ls[i] = sl.(string)
 				}
 				trafficTarget.Servers = ls
@@ -979,7 +981,6 @@ func populateTerraformTrafficTargetState(d *schema.ResourceData, prop *gtm.Prope
 		}
 	}
 	_ = d.Set("traffic_target", ttStateList)
-
 }
 
 // Populate existing static_rr_sets object from resource data
@@ -1205,20 +1206,6 @@ func convertStringToInterfaceList(stringList []string, m interface{}) []interfac
 	logger.Debugf("String List: %v", stringList)
 	retList := make([]interface{}, 0, len(stringList))
 	for _, v := range stringList {
-		retList = append(retList, v)
-	}
-
-	return retList
-
-}
-
-func convertInt64ToInterfaceList(intList []int64, m interface{}) []interface{} {
-	meta := akamai.Meta(m)
-	logger := meta.Log("Akamai GTMv1", "convertInt64ToInterfaceList")
-
-	logger.Debugf("Int List: %v", intList)
-	retList := make([]interface{}, 0, len(intList))
-	for _, v := range intList {
 		retList = append(retList, v)
 	}
 

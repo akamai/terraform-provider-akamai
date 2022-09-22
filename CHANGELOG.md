@@ -9,6 +9,11 @@
     * [akamai_edgeworker](xxx.md) - returns data for specific edgeworker, corresponding version and bundle information
     * [akamai_edgeworker_activation](xxx.md) - returns the latest activation in provided network
 
+#### BUG FIXES:
+
+* GTM
+  * Fix diff for traffic_targets servers in `akamai_gtm_property` resource
+
 ## 2.3.0 (August 25, 2022)
 
 #### FEATURES/ENHANCEMENTS:
