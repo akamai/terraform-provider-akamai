@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: DataStream"
-subcategory: "DataStream"
-description: |-
-  DataStream
+layout: akamai
+subcategory: DataStream
 ---
 
 # akamai_datastream
@@ -142,8 +139,8 @@ This resource returns these attributes:
 * `group_name` - The name of the user group that you created the stream for.
 * `modified_by` - The user who modified the stream.
 * `modified_date` - The date and time when the stream was modified.
-* `papi_json` - The JSON-encoded rule you need to include in the property rule tree to enable the DataStream behavior. See the [DataStream workflow](../guides/get_started_datastream.md#add-a-datastream-rule-to-a-property) for more information.
-* `product_id` - The ID of the product that you created stream for. See [Common Product IDs](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/appendix#common-product-ids) for more information.
+* `papi_json` - The JSON-encoded rule you need to include in the property rule tree to enable the DataStream behavior. See the [DataStream workflow](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/datastream#add-a-datastream-rule-to-a-property) for more information.
+* `product_id` - The ID of the product that you created stream for. See [Common Product IDs](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/shared-resources#common-product-ids) for more information.
 * `product_name` - The name of the product that you created this stream for.
 * `stream_version_id` - Identifies the configuration version of the stream.
 * `compress_logs` - Whether the GZIP compression for a log file was sent to a destination.

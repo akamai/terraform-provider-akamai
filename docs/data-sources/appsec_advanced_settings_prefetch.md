@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: AdvancedSettingsPrefetch"
-subcategory: "Application Security"
-description: |-
- AdvancedSettingsPrefetch
+layout: akamai
+subcategory: Application Security
 ---
 
 # akamai_appsec_advanced_settings_prefetch

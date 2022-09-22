@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: AdvancedSettingsLogging"
-subcategory: "Application Security"
-description: |-
-  AdvancedSettingsLogging
+layout: akamai
+subcategory: Application Security
 ---
 
 # akamai_appsec_advanced_settings_logging

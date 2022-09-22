@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: Eval Rule"
-subcategory: "Application Security"
-description: |-
- Eval Rule
+layout: akamai
+subcategory: Application Security
 ---
 
 # akamai_appsec_eval_rule

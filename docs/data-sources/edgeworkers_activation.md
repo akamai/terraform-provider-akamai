@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: akamai_edgeworker_activation"
-subcategory: "EdgeWorkers"
-description: |-
- EdgeWorkers activation 
+layout: akamai
+subcategory: EdgeWorkers
 ---
 
 # akamai_edgeworker_activation
@@ -29,7 +26,7 @@ data "akamai_edgeworker_activation" "test" {
 
 The data source supports these arguments:
 
-* `edgeworker_id` - (Required) The unique identifier of the EdgeWorker. 
+* `edgeworker_id` - (Required) The unique identifier of the EdgeWorker.
 * `network` - (Required) The network from where the activation information will be fetched.
 
 ## Attributes reference

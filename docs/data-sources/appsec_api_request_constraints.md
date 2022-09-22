@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: ApiRequestConstraints"
-subcategory: "Application Security"
-description: |-
- ApiRequestConstraints
+layout: akamai
+subcategory: Application Security
 ---
 
 # akamai_appsec_api_request_constraints

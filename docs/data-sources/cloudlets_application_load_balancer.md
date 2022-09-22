@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: akamai_cloudlets_application_load_balancer"
-subcategory: "Cloudlets"
-description: |-
- Application Load Balancer
+layout: akamai
+subcategory: Cloudlets
 ---
 
 # akamai_cloudlets_application_load_balancer
@@ -25,7 +22,7 @@ data "akamai_cloudlets_application_load_balancer" "example" {
 
 This data source supports these arguments:
 
-* `origin_id` - (Required) A unique identifier for the Conditional Origin that supports the load balancing configuration. The Conditional Origin type must be set to `APPLICATION_LOAD_BALANCER` in the `origin` behavior. See [property rules](../data-sources/property-rules.md) for more information.
+* `origin_id` - (Required) A unique identifier for the Conditional Origin that supports the load balancing configuration. The Conditional Origin type must be set to `APPLICATION_LOAD_BALANCER` in the `origin` behavior. See [property rules](../data-sources/property_rules.md) for more information.
 * `version` - (Optional) The version number of the load balancing configuration.
 
 ## Attributes reference
@@ -52,7 +49,7 @@ This data source returns these attributes:
   * `latitude` - The latitude value for the data center. This member supports six decimal places of precision.
   * `liveness_hosts` - A list of the origin servers used to poll the data centers in an Application Load Balancer configuration. These servers support basic HTTP polling.
   * `longitude` - The longitude value for the data center. This member supports six decimal places of precision.
-  * `origin_id` - The ID of an origin that represents the data center. The Conditional Origin, which is defined in Property Manager, must have an origin type of either `CUSTOMER` or `NET_STORAGE` set in the `origin` behavior. See [property rules](../data-sources/property-rules.md) for more information.
+  * `origin_id` - The ID of an origin that represents the data center. The Conditional Origin, which is defined in Property Manager, must have an origin type of either `CUSTOMER` or `NET_STORAGE` set in the `origin` behavior. See [property rules](../data-sources/property_rules.md) for more information.
   * `percent` - The percent of traffic that is sent to the data center. The total for all data centers must equal 100%.
   * `state_or_province` - The state, province, or region where the data center is located.
 * `liveness_settings` - Specifies the health of each load balanced data center defined in the data center list.

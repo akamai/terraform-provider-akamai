@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: WAF Mode"
-subcategory: "Application Security"
-description: |-
- WAF Mode
+layout: akamai
+subcategory: Application Security
 ---
 
 # akamai_appsec_waf_mode

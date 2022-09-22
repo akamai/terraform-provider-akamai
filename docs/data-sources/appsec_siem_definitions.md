@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: SiemDefinitions"
-subcategory: "Application Security"
-description: |-
- SiemDefinitions
+layout: akamai
+subcategory: Application Security
 ---
 
 # akamai_appsec_siem_definitions

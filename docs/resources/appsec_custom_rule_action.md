@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: CustomRuleAction"
-subcategory: "Application Security"
-description: |-
-  Custom Rule Action
+layout: akamai
+subcategory: Application Security
 ---
 
 # akamai_appsec_custom_rule_action

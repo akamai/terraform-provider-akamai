@@ -1,14 +1,9 @@
 ---
-layout: "akamai"
-page_title: "Akamai: property activation"
-subcategory: "Property Provisioning"
-description: |-
-  Property Activation
+layout: akamai
+subcategory: Property Provisioning
 ---
 
 # akamai_property_activation
-
-~> **Note** Version 1.0.0 of the Akamai Terraform Provider is now available for the Property Provisioning module. To upgrade to this version, you have to update this resource. See [Upgrade to Version 1.0.0](../guides/1.0_migration.md) for details.
 
 The `akamai_property_activation` resource lets you activate a property version. An activation deploys the version to either the Akamai staging or production network. You can activate a specific version multiple times if you need to.  
 

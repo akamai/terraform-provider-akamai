@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: authorities_set"
-subcategory: "Edge DNS"
-description: |-
- DNS Authorities Set
+layout: akamai
+subcategory: Edge DNS
 ---
 
 # akamai_authorities_set

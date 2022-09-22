@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: akamai_iam_countries"
-subcategory: "Identity and Access Management"
-description: |-
- IAM Countries
+layout: akamai
+subcategory: Identity and Access Management
 ---
 
 # akamai_iam_countries

@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: akamai_imaging_policy_image"
-subcategory: "Image and Video Manager"
-description: |-
- Image and Video Manager image policy
+layout: akamai
+subcategory: Image and Video Manager
 ---
 
 # akamai_imaging_policy_image (Beta)

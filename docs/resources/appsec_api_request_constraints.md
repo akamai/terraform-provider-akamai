@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: ApiRequestConstraints"
-subcategory: "Application Security"
-description: |-
-  ApiRequestConstraints
+layout: akamai
+subcategory: Application Security
 ---
 
 # akamai_appsec_api_request_constraints
@@ -11,6 +8,7 @@ description: |-
 **Scopes**: API endpoint
 
 Modifies the action taken when an API request constraint triggers.
+
 To use this operation, call the [akamai_appsec_api_endpoints](https://registry.terraform.io/providers/akamai/akamai/latest/docs/resources/appsec_attack_group) data source to list the names of your API endpoints, then apply a constraint (and an accompanying action) to one of those endpoints.
 
 **Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/security-policies/{policyId}/api-request-constraints/{apiId}](https://techdocs.akamai.com/application-security/reference/put-api-request-constraints-api)

@@ -40,7 +40,7 @@ Akamai product you are using. See the [Akamai Product ID](../guides/appendix.md#
 
 ## Add an edge hostname
 
-You use the [akamai_edge_hostname](../resources/property_edge_hostname.md) resource to
+You use the [akamai_edge_hostname](https://registry.terraform.io/providers/akamai/akamai/latest/docs/resources/edge_hostname) resource to
 reuse an existing edge hostname or create a new one.
 
 To create different hostname types, you need to change the domain suffix
@@ -181,7 +181,7 @@ but the same version can be activated separately more than once.
 ### Create your property activation resource
 
 To activate your property you need to create a new
-[akamai_property_activation resource](../resources/property_activation.md).
+[akamai_property_activation resource](https://registry.terraform.io/providers/akamai/akamai/latest/docs/resources/property_activation).
 This resource manages property activations, letting you specify the
 property version to activate and the network to activate it on.
 
@@ -207,7 +207,7 @@ resource "akamai_property_activation" "example" {
 ### Test and deploy your property activation
 
 Like you did with the `akamai_property` resource, you should first verify the
-[akamai_property_activation](https://registry.terraform.io/docs/providers/akamai/r/property_activation)
+[akamai_property_activation](https://registry.terraform.io/providers/akamai/akamai/latest/docs/resources/property_activation)
 resource by running the `terraform plan` command.
 
 The `plan` command adds the activation to the property. It doesn't change any other property settings.

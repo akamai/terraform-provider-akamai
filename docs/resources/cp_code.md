@@ -1,14 +1,9 @@
 ---
-layout: "akamai"
-page_title: "Akamai: CP Code"
-subcategory: "Property Provisioning"
-description: |-
-  CP Code
+layout: akamai
+subcategory: Property Provisioning
 ---
 
 # akamai_cp_code
-
-~> **Note** Version 1.0.0 of the Akamai Terraform Provider is now available for the Property Provisioning module. To upgrade to the new version, you have to update this resource. See [Upgrade to Version 1.0.0](../guides/1.0_migration.md) for details.
 
 The `akamai_cp_code` resource lets you create or reuse content provider (CP) codes.  CP codes track web traffic handled by Akamai servers. Akamai gives you a CP code when you purchase a product. You need this code when you activate associated properties.
 
@@ -60,7 +55,7 @@ The following arguments are supported:
 * `name` - (Required) A descriptive label for the CP code. If you're creating a new CP code, the name can't include commas, underscores, quotes, or any of these special characters: ^ # %.
 * `contract_id` - (Required) A contract's unique ID, including the `ctr_` prefix.
 * `group_id` - (Required) A group's unique ID, including the `grp_` prefix.
-* `product_id` - (Required) A product's unique ID, including the `prd_` prefix. See [Common Product IDs](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/appendix#common-product-ids) for more information.
+* `product_id` - (Required) A product's unique ID, including the `prd_` prefix. See [Common Product IDs](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/shared-resources#common-product-ids) for more information.
 
 ### Deprecated arguments
 

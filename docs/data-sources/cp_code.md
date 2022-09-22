@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: cp_code"
-subcategory: "Property Provisioning"
-description: |-
- CP Code
+layout: akamai
+subcategory: Property Provisioning
 ---
 
 # akamai_cp_code
@@ -64,4 +61,4 @@ This data source supports these arguments:
 This data source returns these attributes:
 
 * `id` - The ID of the CP code, including the `cpc_` prefix.
-* `product_ids` - An array of product IDs associated with this CP code. Each ID returned includes the `prd_` prefix. See [Common Product IDs](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/appendix#common-product-ids) for more information.
+* `product_ids` - An array of product IDs associated with this CP code. Each ID returned includes the `prd_` prefix. See [Common Product IDs](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/shared-resources#common-product-ids) for more information.

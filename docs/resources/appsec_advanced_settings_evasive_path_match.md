@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: AdvancedSettingsEvasivePathMatch"
-subcategory: "Application Security"
-description: |-
-  AdvancedSettingsEvasivePathMatch
+layout: akamai
+subcategory: Application Security
 ---
 
 # resource_akamai_appsec_advanced_settings_evasive_path_match

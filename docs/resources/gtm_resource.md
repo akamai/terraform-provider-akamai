@@ -1,14 +1,11 @@
 ---
-layout: "akamai"
-page_title: "Akamai: gtm resource"
-subcategory: "Global Traffic Management"  
-description: |-
-  GTM Resource
+layout: akamai
+subcategory: Global Traffic Management  
 ---
 
 # akamai_gtm_resource
 
-The `akamai_gtm_resource` lets you create, configure, and import a GTM resource. In GTM, a resource is anything you can measure whose scarcity affects load balancing. Examples of resources include bandwidth, CPU load average, database queries per second, or disk operations per second. 
+The `akamai_gtm_resource` lets you create, configure, and import a GTM resource. In GTM, a resource is anything you can measure whose scarcity affects load balancing. Examples of resources include bandwidth, CPU load average, database queries per second, or disk operations per second.
 
 ~> **Note** Import requires an ID with this format: `existing_domain_name`:
 `existing_resource_name`.
@@ -35,7 +32,7 @@ This resource supports these arguments:
 * `aggregation_type` - (Required) Specifies how GTM handles different load numbers when multiple load servers are used for a data center or property.
 * `type` - (Required) Indicates the kind of `load_object` format used to determine the load on the resource.
 * `wait_on_complete` - (Optional) A boolean indicating whether to wait for transaction to complete. Set to `true` by default.
-* `resource_instance`  - (Optional) (multiple allowed) Contains information about the resources that constrain the properties within the data center. You can have multiple `resource_instance` entries. Requires these arguments: 
+* `resource_instance`  - (Optional) (multiple allowed) Contains information about the resources that constrain the properties within the data center. You can have multiple `resource_instance` entries. Requires these arguments:
   * `datacenter_id` - (Optional) A unique identifier for an existing data center in the domain.
   * `load_object` - (Optional) Identifies the load object file used to report real-time information about the current load, maximum allowable load, and target load on each resource.
   * `load_object_port` - (Optional) Specifies the TCP port of the `load_object`.

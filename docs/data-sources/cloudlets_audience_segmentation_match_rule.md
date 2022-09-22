@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: akamai_cloudlets_audience_segmentation_match_rule"
-subcategory: "Cloudlets"
-description: |-
- Audience Segmentation match rule
+layout: akamai
+subcategory: Cloudlets
 ---
 
 # akamai_cloudlets_audience_segmentation_match_rule

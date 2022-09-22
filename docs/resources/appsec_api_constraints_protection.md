@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: API Constraints Protection"
-subcategory: "Application Security"
-description: |-
- API Constraints Protection
+layout: akamai
+subcategory: Application Security
 ---
 
 # akamai_appsec_api_constraints_protection

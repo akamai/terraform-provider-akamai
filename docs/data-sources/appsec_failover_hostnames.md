@@ -1,11 +1,7 @@
 ---
-layout: "akamai"
-page_title: "Akamai: FailoverHostnames"
-subcategory: "Application Security"
-description: |-
- FailoverHostnames
+layout: akamai
+subcategory: Application Security
 ---
-
 
 # akamai_appsec_failover_hostnames
 

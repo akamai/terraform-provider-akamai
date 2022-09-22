@@ -22,10 +22,10 @@ Each type of edge hostname has its own domain suffix. Knowing which one to use i
 
 ## Secure Hostnames
 
-For secure hostnames you must include the certificate enrollment ID in your [`akamai_edge_hostname` resource](../resources/property_edge_hostname.md).
+For secure hostnames you must include the certificate enrollment ID in your [`akamai_edge_hostname` resource](../resources/edge_hostname.md).
 
-1. Retrieve the `enrollment-id` from the [Certificate Provisioning Service CLI](https://github.com/akamai/cli-cps). 
-2. Enter the ID as the certificate attribute. 
+1. Retrieve the `enrollment-id` from the [Certificate Provisioning Service CLI](https://github.com/akamai/cli-cps).
+2. Enter the ID as the certificate attribute.
 
 ## Common Product IDs
 

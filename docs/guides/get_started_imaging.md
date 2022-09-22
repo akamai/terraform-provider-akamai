@@ -41,7 +41,7 @@ By default, when you save a policy set, it's automatically activated on both sta
 Nothing happens to the policy set until you link it to a property.
 
 When you save a policy, it's automatically activated on staging.
-To activate a policy on production, you have to set the `activate_on_production` flag to `true` in either the [akamai_imaging_policy_image](../resources/akamai_imaging_policy_image.md) or [akamai_imaging_policy_video](../resources/akamai_imaging_video.md) resource, and save your change.
+To activate a policy on production, you have to set the `activate_on_production` flag to `true` in either the [imaging_policy_image](../resources/imaging_policy_image.md) or [akamai_imaging_policy_video](../resources/imaging_policy_video.md) resource, and save your change.
 
 ### Variables
 
@@ -109,8 +109,8 @@ You can't delete the `.auto` policy without deleting the policy set.
 
 Use these policy resources to add policies to your Akamai Provider configuration:
 
-* **Image policies:** See the [akamai_imaging_policy_image](../resources/akamai_imaging_policy_image.md) resource.
-* **Video policies:** See the [akamai_imaging_policy_video](../resources/akamai_imaging_video.md) resource.
+* **Image policies:** See the [imaging_policy_image](../resources/imaging_policy_image.md) resource.
+* **Video policies:** See the [akamai_imaging_policy_video](../resources/imaging_policy_video.md) resource.
 
 To set up these resources, you need the policy and policy set IDs found in the policy's JSON file.
 This is one of the files created during the [export process](#export-policy-sets).
@@ -127,8 +127,8 @@ When adding these behaviors make sure that you use the correct policy set ID fro
 
 If you wish to customize the behavior settings, see the Property Manager API (PAPI) behavior for the type of policy you're adding:
 
-* **Image policies:** See the [`imageManager`](https://techdocs.akamai.com/property-mgr/reference/latest-imagemanager) behavior.
-* **Video policies:**  See the [`imageManagerVideo`](https://techdocs.akamai.com/property-mgr/reference/latest-imagemanagervideo) behavior.
+* **Image policies:** See the [`imageManager`](https://techdocs.akamai.com/property-mgr/reference/latest-image-manager) behavior.
+* **Video policies:**  See the [`imageManagerVideo`](https://techdocs.akamai.com/property-mgr/reference/latest-image-manager-video) behavior.
 
 ### Example behaviors
 
@@ -175,7 +175,7 @@ If you wish to customize the behavior settings, see the Property Manager API (PA
 ## Activate the property on staging
 
 To activate the property containing your newly added imaging policies, deploy the property to staging first.
-In the [akamai_property_activation](/..resources/property_activation) resource, set the `network` argument to `staging` and deploy the change.
+In the [akamai_property_activation](https://registry.terraform.io/providers/akamai/akamai/latest/docs/resources/property_activation) resource, set the `network` argument to `staging` and deploy the change.
 
 ~> **Note:** By default, Image and Video Manager policies and policy sets are automatically available on staging once you save them.
 
@@ -206,7 +206,7 @@ Changing this value doesn't remove the policy in production, but lets you safely
 ## Activate the property on production
 
 Once the policy is on production, you can then deploy your updated property to production.
-Update the [akamai_property_activation](/..resources/property_activation) resource again, this time by setting the `network` argument to `production` and deploying the change.
+Update the [akamai_property_activation](https://registry.terraform.io/providers/akamai/akamai/latest/docs/resources/property_activation) resource again, this time by setting the `network` argument to `production` and deploying the change.
 
 ## Maintenance
 

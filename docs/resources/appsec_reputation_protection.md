@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: Reputation Protection"
-subcategory: "Application Security"
-description: |-
- Reputation Protection
+layout: akamai
+subcategory: Application Security
 ---
 
 # akamai_appsec_reputation_protection

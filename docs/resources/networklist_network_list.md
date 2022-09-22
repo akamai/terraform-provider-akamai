@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: NetworkList Network List"
-subcategory: "Network Lists"
-description: |-
- NetworkList Network List
+layout: akamai
+subcategory: Network Lists
 ---
 
 # akamai_networklist_network_list
@@ -62,5 +59,5 @@ In addition to the arguments above, the following attributes are exported:
 * `network_list_id` - The ID of the network list.
 
 * `sync_point` - An integer that identifies the current version of the network list; this value is incremented each time
-  the list is modified. 
+  the list is modified.
 

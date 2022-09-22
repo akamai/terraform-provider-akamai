@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: akamai_iam_timeout_policies"
-subcategory: "Identity and Access Management"
-description: |-
- IAM Timeout Policies
+layout: akamai
+subcategory: Identity and Access Management
 ---
 
 # akamai_iam_timeout_policies

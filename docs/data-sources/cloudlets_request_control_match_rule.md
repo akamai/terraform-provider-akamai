@@ -1,16 +1,13 @@
 ---
-layout: "akamai"
-page_title: "Akamai: akamai_cloudlets_request_control_match_rule"
-subcategory: "Cloudlets"
-description: |-
- Request Control match rule
+layout: akamai
+subcategory: Cloudlets
 ---
 
 # akamai_cloudlets_request_control_match_rule
 
 Every policy version specifies the match rules that govern how the Cloudlet is used. Matches specify conditions that need to be met in the incoming request.
 
-Use the `akamai_cloudlets_request_control_match_rule` data source to build a match rule JSON object for the Request Control Cloudlet. 
+Use the `akamai_cloudlets_request_control_match_rule` data source to build a match rule JSON object for the Request Control Cloudlet.
 
 ## Basic usage
 
@@ -102,7 +99,7 @@ This data source supports these arguments:
           * `value` - (Optional) If you set the `type` argument to `simple`, specify the values in the incoming request to match on.
 * `allow_deny` - (Required) If set to `allow`, the request is sent to origin when all conditions are true. If set to `deny`, the request is denied when all conditions are true. If set to `denybranded`, the request is denied and rerouted according to the Request Control behavior settings.
 * `matches_always` - (Optional) Match on all incoming requests.
-* `disabled` - (Optional) Whether to disable a rule. When a rule is disabled it's not evaluated against incoming requests. 
+* `disabled` - (Optional) Whether to disable a rule. When a rule is disabled it's not evaluated against incoming requests.
 
 ## Attributes reference
 

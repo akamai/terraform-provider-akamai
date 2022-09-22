@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: Slowpost Protection"
-subcategory: "Application Security"
-description: |-
- Slowpost Protection
+layout: akamai
+subcategory: Application Security
 ---
 
 # akamai_appsec_slowpost_protection

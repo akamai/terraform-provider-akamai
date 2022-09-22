@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: Configuration"
-subcategory: "Application Security"
-description: |-
-  Configuration
+layout: akamai
+subcategory: Application Security
 ---
 
 # akamai_appsec_configuration

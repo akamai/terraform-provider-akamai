@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: WAF Protection"
-subcategory: "Application Security"
-description: |-
- WAF Protection
+layout: akamai
+subcategory: Application Security
 ---
 
 # akamai_appsec_waf_protection

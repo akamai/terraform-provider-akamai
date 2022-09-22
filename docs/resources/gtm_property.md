@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: gtm property"
-subcategory: "Global Traffic Management"
-description: |-
-  GTM Property
+layout: akamai
+subcategory: Global Traffic Management
 ---
 
 # akamai_gtm_property

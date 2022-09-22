@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: akamai_cloudlets_api_prioritization_match_rule"
-subcategory: "Cloudlets"
-description: |-
- API Prioritization match rule
+layout: akamai
+subcategory: Cloudlets
 ---
 
 # akamai_cloudlets_api_prioritization_match_rule
@@ -67,8 +64,8 @@ This data source supports these arguments:
               * `value_escaped` - (Optional) Whether the `value` argument should be compared in an escaped form.
           * `value` - (Optional) If you set the `type` argument to `simple`, specify the values in the incoming request to match on.
 * `match_url` - (Optional) If you're using a URL match, this specifies the URL that the Cloudlet uses to match the incoming request.
-* `pass_through_percent`- (Required) Entering a value in the range of `0.0` to `99.0` specifies the percent of requests that pass through to the origin. Enter `100` to always have the request pass through to the origin. 
-* `disabled` - (Optional) Whether to disable a rule so it is not evaluated against incoming requests. 
+* `pass_through_percent`- (Required) Entering a value in the range of `0.0` to `99.0` specifies the percent of requests that pass through to the origin. Enter `100` to always have the request pass through to the origin.
+* `disabled` - (Optional) Whether to disable a rule so it is not evaluated against incoming requests.
 
 ## Attributes reference
 

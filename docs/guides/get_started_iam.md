@@ -15,21 +15,21 @@ To get more information about Identity and Access Management, see the [product d
 
 Before you can create a user, you need to:
 
-1. Complete the tasks in the 
-[Get Started with the Akamai Provider](../guides/get_started_provider.md) 
+1. Complete the tasks in the
+[Get Started with the Akamai Provider](../guides/get_started_provider.md)
 guide.
 1. Set up your API client for [Identity and Access Management](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/akamai_provider_auth).
-1. Retrieve supported countries and timezones using the [`iam_akamai_countries`](../data-sources/iam_countries.md) and [`akamai_iam_timezones`](../data-sources/iam_timezones.md) data sources. 
+1. Retrieve supported countries and timezones using the [`iam_akamai_countries`](../data-sources/iam_countries.md) and [`akamai_iam_timezones`](../data-sources/iam_timezones.md) data sources.
 
 ## Identity and Access Management workflows
 
-Use Identity and Access Management to manage access privileges and users. When combined, users, groups, and roles grant access to Akamai applications, services, and objects. 
+Use Identity and Access Management to manage access privileges and users. When combined, users, groups, and roles grant access to Akamai applications, services, and objects.
 
-~> For more information about these concepts, see [API concepts](https://techdocs.akamai.com/iam-user-admin/reference/api-concepts) in the API documentation. 
+~> For more information about these concepts, see [API concepts](https://techdocs.akamai.com/iam-user-admin/reference/api-concepts) in the API documentation.
 
 For Identity and Access Management, there are three objects to create:
 
-* [Users](#create-users) 
+* [Users](#create-users)
 * [Roles](#create-roles)
 * [Groups](#create-groups)
 
@@ -59,14 +59,14 @@ resource "iam_akamai_user" "example" {
 }
 ```
 
-## Create roles 
+## Create roles
 
-Use [`akamai_iam_roles` resource](../resources/iam_roles.md) to set up the roles. 
+Use the [`akamai_iam_role` resource](../resources/iam_role.md) to set up the roles.
 
 To see if there are existing roles, start with the [`akamai_iam_grantable_roles` data source](../data-sources/iam_grantable_roles.md).
 
 ## Create groups
 
-Use [`akamai_iam_group` resource](../resources/iam_group.md) to create a group. 
+Use [`akamai_iam_group` resource](https://registry.terraform.io/providers/akamai/akamai/latest/docs/resources/iam_group) to create a group.
 
-To see if there are existing groups, start with the [`akamai_iam_group` data source](../data-sources/iam_group.md). 
+To see if there are existing groups, start with the [`akamai_iam_group` data source](https://registry.terraform.io/providers/akamai/akamai/latest/docs/data-sources/iam_groups).

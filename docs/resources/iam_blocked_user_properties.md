@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: akamai_iam_blocked_user_properties"
-subcategory: "Identity and Access Management"
-description: |-
- Identity and Access Management blocked user properties
+layout: akamai
+subcategory: Identity and Access Management
 ---
 
 # akamai_iam_blocked_user_properties (Beta)
@@ -28,7 +25,7 @@ This resource supports these arguments:
 
 * `identity_id` - (Required) A unique identifier that corresponds to a user's actual profile or client ID. Each identifier must be a string.
 * `group_id` - (Required) A unique identifier for a group. Each identifier must be an integer.
-* `blocked_properties` - (Required) List of properties to block for a user. The property IDs must be an integer. 
+* `blocked_properties` - (Required) List of properties to block for a user. The property IDs must be an integer.
 
 
 ## Attributes reference

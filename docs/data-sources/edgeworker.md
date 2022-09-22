@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: akamai_edgeworker"
-subcategory: "EdgeWorkers"
-description: |-
- EdgeWorker
+layout: akamai
+subcategory: EdgeWorkers
 ---
 
 # akamai_edgeworker
@@ -29,7 +26,7 @@ data "akamai_edgeworker" "test" {
 
 The data source supports these arguments:
 
-* `edgeworker_id` - (Required) The unique identifier of the EdgeWorker. 
+* `edgeworker_id` - (Required) The unique identifier of the EdgeWorker.
 * `local_bundle` - (Optional) The path where the EdgeWorkers `.tgz` code bundle will be stored.
 
 ## Attributes reference

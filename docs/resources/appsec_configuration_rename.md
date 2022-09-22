@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: ConfigurationRename"
-subcategory: "Application Security"
-description: |-
-  ConfigurationRename
+layout: akamai
+subcategory: Application Security
 ---
 
 # akamai_appsec_configuration_rename

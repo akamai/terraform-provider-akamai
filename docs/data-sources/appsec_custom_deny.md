@@ -1,11 +1,7 @@
 ---
-layout: "akamai"
-page_title: "Akamai: CustomDeny"
-subcategory: "Application Security"
-description: |-
- CustomDeny
+layout: akamai
+subcategory: Application Security
 ---
-
 
 # akamai_appsec_custom_deny
 

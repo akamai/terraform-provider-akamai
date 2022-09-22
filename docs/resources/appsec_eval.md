@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: Evaluation"
-subcategory: "Application Security"
-description: |-
- Evaluation
+layout: akamai
+subcategory: Application Security
 ---
 
 # akamai_appsec_eval

@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: Attack Group"
-subcategory: "Application Security"
-description: |-
- Attack Group
+layout: akamai
+subcategory: Application Security
 ---
 
 # akamai_appsec_attack_group

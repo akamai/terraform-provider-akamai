@@ -1,11 +1,7 @@
 ---
-layout: "akamai"
-page_title: "Akamai: ContractsGroups"
-subcategory: "Application Security"
-description: |-
- ContractsGroups
+layout: akamai
+subcategory: Application Security
 ---
-
 
 # akamai_appsec_contracts_groups
 

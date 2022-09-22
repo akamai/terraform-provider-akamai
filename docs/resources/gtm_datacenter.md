@@ -1,16 +1,13 @@
 ---
-layout: "akamai"
-page_title: "Akamai: gtm datacenter"
-subcategory: "Global Traffic Management"
-description: |-
-  GTM Datacenter
+layout: akamai
+subcategory: Global Traffic Management
 ---
 
 # akamai_gtm_datacenter
 
-Use the `akamai_gtm_datacenter` resource to create, configure, and import a GTM data center. A GTM data center represents a customer data center and is also known as a traffic target, a location containing many servers GTM can direct traffic to. 
+Use the `akamai_gtm_datacenter` resource to create, configure, and import a GTM data center. A GTM data center represents a customer data center and is also known as a traffic target, a location containing many servers GTM can direct traffic to.
 
-GTM uses data centers to scale load balancing. For example, you might have data centers in both New York and Amsterdam and want to balance load between them. You can configure GTM to send US users to the New York data center and European users to the data center in Amsterdam. 
+GTM uses data centers to scale load balancing. For example, you might have data centers in both New York and Amsterdam and want to balance load between them. You can configure GTM to send US users to the New York data center and European users to the data center in Amsterdam.
 
 ~> **Note** Import requires an ID with this format: `existing_domain_name`:`existing_datacenter_id`.
 

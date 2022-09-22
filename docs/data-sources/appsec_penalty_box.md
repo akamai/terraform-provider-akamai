@@ -1,17 +1,13 @@
 ---
-layout: "akamai"
-page_title: "Akamai: Penalty Box Settings"
-subcategory: "Application Security"
-description: |-
- Penalty Box
+layout: akamai
+subcategory: Application Security
 ---
-
 
 # akamai_appsec_penalty_box
 
 **Scopes**: Security policy
 
-Returns penalty box settings for the specified security policy. 
+Returns penalty box settings for the specified security policy.
 When the penalty box is enabled for a policy, clients that trigger a WAF Deny action are placed in the “penalty box”.
 There, the action you select for penalty box (either Alert or Deny ) continues to apply to any requests from that client for the next 10 minutes.
 

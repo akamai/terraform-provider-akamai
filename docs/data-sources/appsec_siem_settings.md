@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: SiemSettings"
-subcategory: "Application Security"
-description: |-
- SiemSettings
+layout: akamai
+subcategory: Application Security
 ---
 
 # akamai_appsec_siem_settings

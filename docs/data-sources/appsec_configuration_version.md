@@ -1,11 +1,7 @@
 ---
-layout: "akamai"
-page_title: "Akamai: ConfigurationVersion"
-subcategory: "Application Security"
-description: |-
- ConfigurationVersion
+layout: akamai
+subcategory: Application Security
 ---
-
 
 # akamai_appsec_configuration_version
 

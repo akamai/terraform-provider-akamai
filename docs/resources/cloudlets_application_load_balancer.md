@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: akamai_cloudlets_application_load_balancer"
-subcategory: "Cloudlets"
-description: |-
-  Application Load Balancer
+layout: akamai
+subcategory: Cloudlets
 ---
 
 # akamai_cloudlets_application_load_balancer
@@ -53,7 +50,7 @@ resource "akamai_cloudlets_application_load_balancer" "example" {
 
 The following arguments are supported:
 
-* `origin_id` - (Required) A unique identifier for the Conditional Origin that supports the load balancing configuration. The Conditional Origin type must be set to `APPLICATION_LOAD_BALANCER` in the `origin` behavior. See [property rules](../data-sources/property-rules.md) for more information.
+* `origin_id` - (Required) A unique identifier for the Conditional Origin that supports the load balancing configuration. The Conditional Origin type must be set to `APPLICATION_LOAD_BALANCER` in the `origin` behavior. See [property rules](../data-sources/property_rules.md) for more information.
 * `description` - (Optional) The description of the load balancing configuration.
 * `balancing_type` - (Optional) The type of load balancing being performed, either `WEIGHTED` or `PERFORMANCE`.
 * `data_centers` - (Required) Specifies the Conditional Origins being used as data centers for an Application Load Balancer implementation. Only Conditional Origins with an origin type of `CUSTOMER` or `NETSTORAGE` can be used as data centers in an Application Load Balancer configuration.
@@ -61,7 +58,7 @@ The following arguments are supported:
   * `longitude` - (Required) The longitude value for the data center. This member supports six decimal places of precision.
   * `continent` - (Required) The code of the continent on which the data center is located. See [Continent Codes](https://control.akamai.com/dl/edgescape/continentCodes.csv) for a list of valid codes.
   * `country` - (Required) The country in which the data center is located. See [Country Codes](https://control.akamai.com/dl/edgescape/cc2continent.csv) for a list of valid codes.
-  * `origin_id` - (Required) The identifier of an origin that represents the data center. The Conditional Origin, which is defined in Property Manager, must have an origin type of either `CUSTOMER` or `NET_STORAGE` set in the `origin` behavior. See [property rules](../data-sources/property-rules.md) for more information.
+  * `origin_id` - (Required) The identifier of an origin that represents the data center. The Conditional Origin, which is defined in Property Manager, must have an origin type of either `CUSTOMER` or `NET_STORAGE` set in the `origin` behavior. See [property rules](../data-sources/property_rules.md) for more information.
   * `percent`  - (Required) The percent of traffic that is sent to the data center. The total for all data centers must equal 100%.
   * `cloud_service` - (Optional) Whether this datacenter is a cloud service.
   * `liveness_hosts` - (Optional) A list of the origin servers used to poll the data centers in an Application Load Balancer configuration. These servers support basic HTTP polling.

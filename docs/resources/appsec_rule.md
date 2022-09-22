@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: Rule"
-subcategory: "Application Security"
-description: |-
- Rule
+layout: akamai
+subcategory: Application Security
 ---
 
 # akamai_appsec_rule

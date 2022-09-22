@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: akamai_cloudlets_forward_rewrite_match_rule"
-subcategory: "Cloudlets"
-description: |-
- Forward Rewrite match rule
+layout: akamai
+subcategory: Cloudlets
 ---
 
 # akamai_cloudlets_forward_rewrite_match_rule

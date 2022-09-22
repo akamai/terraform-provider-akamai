@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: akamai_property_products"
-subcategory: "Property Provisioning"
-description: |-
- Property products
+layout: akamai
+subcategory: Property Provisioning
 ---
 
 # akamai_property_products

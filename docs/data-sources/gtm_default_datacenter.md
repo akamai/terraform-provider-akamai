@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: gtm_default_datacenter"
-subcategory: "Global Traffic Management"
-description: |-
- Default data center
+layout: akamai
+subcategory: Global Traffic Management
 ---
 
 # akamai_gtm_default_datacenter

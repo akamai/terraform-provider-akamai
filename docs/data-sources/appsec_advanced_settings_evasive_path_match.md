@@ -1,18 +1,15 @@
 ---
-layout: "akamai"
-page_title: "Akamai: AdvancedSettingsEvasivePathMatch"
-subcategory: "Application Security"
-description: |-
- AdvancedSettingsEvasivePathMatch
+layout: akamai
+subcategory: Application Security
 ---
 
 # akamai_appsec_advanced_settings_evasive_path_match
 
-**Scopes**: Security configuration; security policy 
+**Scopes**: Security configuration; security policy
 
-Use the `akamai_appsec_advanced_settings_evasive_path_match` data source to retrieve information about the evasive path match for a configuration. This operation applies at the configuration level, and therefore applies to all policies within a configuration. You may retrieve these settings for a particular policy by specifying the policy using the security_policy_id parameter. 
+Use the `akamai_appsec_advanced_settings_evasive_path_match` data source to retrieve information about the evasive path match for a configuration. This operation applies at the configuration level, and therefore applies to all policies within a configuration. You may retrieve these settings for a particular policy by specifying the policy using the `security_policy_id` parameter. For more information, see [Get evasive path match setting](https://techdocs.akamai.com/application-security/reference/get-evasive-path-match).
 
-**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/security-policies/{policyId}/advanced-settings/evasive-path-match](https://techdocs.akamai.com/application-security/reference/put-evasive-path-match)
+**Related API Endpoint**: [/appsec/v1/configs/{configId}/versions/{versionNumber}/security-policies/{policyId}/advanced-settings/evasive-path-match](https://techdocs.akamai.com/application-security/reference/get-evasive-path-match)
 
 ## Example Usage
 

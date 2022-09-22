@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: DV Enrollment"
-subcategory: "Certificate Provisioning System"
-description: |-
-  DV Enrollment
+layout: akamai
+subcategory: Certificate Provisioning System
 ---
 
 # akamai_cps_dv_enrollment

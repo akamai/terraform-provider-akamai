@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: cloudlets_policy_activation"
-subcategory: "Cloudlets"
-description: |-
-  Cloudlets Policy activation
+layout: akamai
+subcategory: Cloudlets
 ---
 
 # akamai_cloudlets_policy_activation

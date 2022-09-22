@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: Evaluation Attack Group"
-subcategory: "Application Security"
-description: |-
- Eval Group
+layout: akamai
+subcategory: Application Security
 ---
 
 # akamai_appsec_eval_group

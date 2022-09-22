@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: EdgeWorkers Property Rules"
-subcategory: "EdgeWorkers"
-description: |-
- EdgeWorkers Property Rules
+layout: akamai
+subcategory: EdgeWorkers
 ---
 
 # akamai_edgeworkers_property_rules

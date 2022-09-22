@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: gtm geomap"
-subcategory: "Global Traffic Management"  
-description: |-
-  GTM Geographic Map
+layout: akamai
+subcategory: Global Traffic Management  
 ---
 
 # akamai_gtm_geomap

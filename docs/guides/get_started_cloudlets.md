@@ -28,11 +28,11 @@ For these Cloudlets, you can set up a separate origin to forward incoming reques
 * Forward Rewrite
 * Phased Release
 
-To add this type of origin to your property, you need to set up Conditional Origin rules and activate the property version containing these new rules. Once the activation is complete, then you can set up your Cloudlet-specific rules and behaviors. 
+To add this type of origin to your property, you need to set up Conditional Origin rules and activate the property version containing these new rules. Once the activation is complete, then you can set up your Cloudlet-specific rules and behaviors.
 
 Follow these steps to add Conditional Origins to your Terraform configuration:
 
-1. In the JSON rule tree file for the property that you want to use with your Cloudlet, set the mandatory [`origin` behavior](https://techdocs.akamai.com/property-mgr/reference/latest-origin)  to support Conditional Origins. 
+1. In the JSON rule tree file for the property that you want to use with your Cloudlet, set the mandatory [`origin` behavior](https://techdocs.akamai.com/property-mgr/reference/latest-origin)  to support Conditional Origins.
 
     ~> **Note** Application Load Balancer uses Conditional Origins to represent data centers that are part of the load balancing and failover scheme. You should have a separate Conditional Origin for each data center included in your Application Load Balancing configuration.
 
@@ -117,18 +117,18 @@ Run `terraform apply`. Terraform shows an overview of changes, so you can still 
 
 To implement an activated Cloudlet on the edge, you need to add the Cloudlet's behavior for your Cloudlet to the JSON rule tree file in each property associated with your policy. See the [Property Provisioning Module Guide](../guides/get_started_property.md) for detailed instructions.
 
-If you wish to customize the settings, see the behavior for your Cloudlet in the Property Manager API (PAPI) documentation: 
+If you wish to customize the settings, see the behavior for your Cloudlet in the Property Manager API (PAPI) documentation:
 
 | Cloudlet      | Behavior |
 | ----------- | ----------- |
-| API Prioritization | [`apiPrioritization`](https://techdocs.akamai.com/property-mgr/reference/latest-apiprioritization) |
-| Application Load Balancer   | [`applicationLoadBalancer`](https://techdocs.akamai.com/property-mgr/reference/latest-applicationloadbalancer) |
-| Audience Segmentation | [`audienceSegmentation`](https://techdocs.akamai.com/property-mgr/reference/latest-audiencesegmentation) |
-| Edge Redirector | [`edgeRedirector`](https://techdocs.akamai.com/property-mgr/reference/latest-edgeredirector) |
-| Forward Rewrite | [`forwardRewrite`](https://techdocs.akamai.com/property-mgr/reference/latest-forwardrewrite) |
-| Phased Release | [`phasedRelease`](https://techdocs.akamai.com/property-mgr/reference/latest-phasedrelease) |
-| Request Control | [`requestControl`](https://techdocs.akamai.com/property-mgr/reference/latest-requestcontrol) |
-| Visitor Prioritization | [`visitorPrioritization`](https://techdocs.akamai.com/property-mgr/reference/latest-visitorprioritization) |
+| API Prioritization | [`apiPrioritization`](https://techdocs.akamai.com/property-mgr/reference/latest-api-prioritization) |
+| Application Load Balancer   | [`applicationLoadBalancer`](https://techdocs.akamai.com/property-mgr/reference/latest-application-load-balancer) |
+| Audience Segmentation | [`audienceSegmentation`](https://techdocs.akamai.com/property-mgr/reference/latest-audience-segmentation) |
+| Edge Redirector | [`edgeRedirector`](https://techdocs.akamai.com/property-mgr/reference/latest-edge-redirector) |
+| Forward Rewrite | [`forwardRewrite`](https://techdocs.akamai.com/property-mgr/reference/latest-forward-rewrite) |
+| Phased Release | [`phasedRelease`](https://techdocs.akamai.com/property-mgr/reference/latest-phased-release) |
+| Request Control | [`requestControl`](https://techdocs.akamai.com/property-mgr/reference/latest-request-control) |
+| Visitor Prioritization | [`visitorPrioritization`](https://techdocs.akamai.com/property-mgr/reference/latest-visitor-prioritization) |
 
 ## Activate the property version
 

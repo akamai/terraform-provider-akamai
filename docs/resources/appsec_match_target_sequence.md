@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: MatchTargetSequence"
-subcategory: "Application Security"
-description: |-
-  MatchTargetSequence
+layout: akamai
+subcategory: Application Security
 ---
 
 # akamai_appsec_match_target_sequence

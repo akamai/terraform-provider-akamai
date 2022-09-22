@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: akamai_cloudlets_application_load_balancer_activation"
-subcategory: "Cloudlets"
-description: |-
-  Application Load Balancer activation
+layout: akamai
+subcategory: Cloudlets
 ---
 
 # akamai_cloudlets_application_load_balancer_activation
@@ -31,7 +28,7 @@ output "status" {
 
 The following arguments are supported:
 
-* `origin_id` - (Required) The identifier of an origin that represents the data center. The Conditional Origin, which is defined in Property Manager, must have an origin type of either `CUSTOMER` or `NET_STORAGE` set in the `origin` behavior. See [property rules](../data-sources/property-rules.md) for more information.
+* `origin_id` - (Required) The identifier of an origin that represents the data center. The Conditional Origin, which is defined in Property Manager, must have an origin type of either `CUSTOMER` or `NET_STORAGE` set in the `origin` behavior. See [property rules](../data-sources/property_rules.md) for more information.
 * `network` - (Required) The network you want to activate the policy version on, either `staging`, `stag`,  and `s` for the Staging network, or `production`, `prod`, and `p` for the Production network. All values are case insensitive.
 * `version` - (Required) The Application Load Balancer Cloudlet configuration version you want to activate.
 
