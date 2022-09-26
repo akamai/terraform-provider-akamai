@@ -1,19 +1,8 @@
 # RELEASE NOTES
 
-## x.x.x (x xx, xxxx)
+## 2.4.0 (September 29, 2022)
 
 #### FEATURES/ENHANCEMENTS:
-
-* APPSEC
-  * New data sources:
-    * akamai_appsec_malware_content_types
-    * akamai_appsec_malware_policies
-    * akamai_appsec_malware_policy_actions
-  * New resources:
-    * akamai_appsec_malware_policy
-    * akamai_appsec_malware_policy_action
-    * akamai_appsec_malware_policy_actions
-    * akamai_appsec_malware_protection
 
 * [IMPORTANT] Added Bot Management API Support
   * Added resources allowing management of:
@@ -65,10 +54,23 @@
     * `transactional_endpoint` - list transactional endpoints
     * `transactional_endpoint_protection` - read, update and import
 
-* CPS
+* APPSEC
   * New data sources:
-    * [akamai_edgeworker](xxx.md) - returns data for specific edgeworker, corresponding version and bundle information
-    * [akamai_edgeworker_activation](xxx.md) - returns the latest activation in provided network
+    * `akamai_appsec_malware_content_types` - list available content types for malware protection
+    * `akamai_appsec_malware_policies` - list malware policies
+    * `akamai_appsec_malware_policy_actions` - list malware policy actions
+  * New resources:
+    * `akamai_appsec_malware_policy` - create, modify, or delete malware policies
+    * `akamai_appsec_malware_policy_action` - create, modify, or delete the actions associated with a malware policy
+    * `akamai_appsec_malware_policy_actions` - create, modify, or delete the actions associated with one or more policies within a given security policy
+    * `akamai_appsec_malware_protection` - enable or disable malware protection for a security policy
+
+* EdgeWorkers
+  * New data sources ([#331](https://github.com/akamai/terraform-provider-akamai/issues/331)):
+    * [akamai_edgeworker](docs/data-sources/edgeworker.md) - returns data for specific edgeworker, corresponding version and bundle information
+    * [akamai_edgeworker_activation](docs/data-sources/edgeworkers_activation.md) - returns the latest activation in provided network
+  * Resources:
+    * `akamai_edgeworker_activation` - import
 
 #### BUG FIXES:
 
