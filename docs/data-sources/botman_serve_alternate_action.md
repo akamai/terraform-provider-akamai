@@ -3,11 +3,11 @@ layout: akamai
 subcategory: Bot Manager
 ---
 
-# akamai_botman_serve_alternate_action
+# akamai_botman_serve_alternate_action (Beta)
 
 **Scopes**: Security configuration; serve alternate action
 
-Returns information about your serve alternate actions. 
+Returns information about your serve alternate actions.
 
 Use the [akamai_botman_serve_alternate_action](../resources/akamai_botman_serve_alternate_action) resource to create or modify a serve alternate action.
 

@@ -3,11 +3,11 @@ layout: akamai
 subcategory: Bot Manager
 ---
 
-# akamai_botman_custom_bot_category
+# akamai_botman_custom_bot_category (Beta)
 
 **Scopes**: Security configuration; custom bot category
 
-Creates or modifies a bot category that you can use in addition to the Akamai-defined bot categories. 
+Creates or modifies a bot category that you can use in addition to the Akamai-defined bot categories.
 
 To configure a custom category you need to create a JSON array containing the desired settings and values. That array is then used as the value of the `custom category` argument. For information about constructing this JSON file see the links listed in the **Related API Endpoints** section.
 

@@ -3,11 +3,11 @@ layout: akamai
 subcategory: Bot Manager
 ---
 
-# akamai_botman_custom_deny_action
+# akamai_botman_custom_deny_action (Beta)
 
 **Scopes**: Security configuration; custom deny action
 
-Creates or modifies a custom deny action. 
+Creates or modifies a custom deny action.
 
 To configure a custom deny action you need to create a JSON array containing the desired settings and values. That array is then used as the value of the `custom_deny_action` argument. For information about constructing this JSON file see the links listed in the **Related API Endpoints** section.
 

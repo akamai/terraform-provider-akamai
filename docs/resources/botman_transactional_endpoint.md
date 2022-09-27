@@ -3,7 +3,7 @@ layout: akamai
 subcategory: Bot Manager
 ---
 
-# akamai_botman_transactional_endpoint
+# akamai_botman_transactional_endpoint (Beta)
 
 **Scopes**: Security policy; API operation
 
@@ -63,5 +63,5 @@ This resource supports the following arguments:
 
 - `config_id` (Required). Unique identifier of the security configuration associated with the transactional endpoint.
 - `security_policy_id` (Required). Unique identifier of the security policy associated with the transactional endpoint.
-- `operation_id` (Required). Unique identifier of the API operation being created or updated. 
+- `operation_id` (Required). Unique identifier of the API operation being created or updated.
 - `transactional_endpoint` (Required). JSON collection of transactional endpoint settings and setting values. In the preceding sample code, the syntax `file("${path.module}/transactional_endpoint.json")` points to the location of a JSON file containing the transactional endpoint settings and values.

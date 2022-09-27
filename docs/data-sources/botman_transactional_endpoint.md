@@ -3,11 +3,11 @@ layout: akamai
 subcategory: Bot Manager
 ---
 
-# akamai_botman_transactional_endpoint
+# akamai_botman_transactional_endpoint (Beta)
 
 **Scopes**: Security policy; operation
 
-Returns information about your transactional endpoints. 
+Returns information about your transactional endpoints.
 
 To create or modify a transactional endpoint, use the [akamai_botman_transactional_endpoint](../resources/akamai_botman_transactional_endpoint) resource.
 

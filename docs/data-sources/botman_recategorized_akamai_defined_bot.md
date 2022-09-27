@@ -3,11 +3,11 @@ layout: akamai
 subcategory: Bot Manager
 ---
 
-# akamai_botman_recategorized_akamai_defined_bot
+# akamai_botman_recategorized_akamai_defined_bot (Beta)
 
 **Scopes**: Security configuration; bot
 
-Returns information about your recategorized bots. A recategorized bot is an Akamai-defined bot that’s been moved from an Akamai-defined category to a custom category. 
+Returns information about your recategorized bots. A recategorized bot is an Akamai-defined bot that’s been moved from an Akamai-defined category to a custom category.
 
 Use the [akamai_botman_recategorized_akamai_defined_bot](../resources/akamai_botman_recategorized_akamai_defined_bot) resource to recategorize a bot.
 

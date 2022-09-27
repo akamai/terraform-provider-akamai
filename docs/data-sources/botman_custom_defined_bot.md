@@ -3,7 +3,7 @@ layout: akamai
 subcategory: Bot Manager
 ---
 
-# akamai_botman_custom_defined_bot
+# akamai_botman_custom_defined_bot (Beta)
 
 **Scopes**: Security configuration; custom bot
 

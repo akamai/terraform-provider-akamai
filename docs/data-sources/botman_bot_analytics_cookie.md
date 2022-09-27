@@ -3,7 +3,7 @@ layout: akamai
 subcategory: Bot Manager
 ---
 
-# akamai_botman_bot_analytics_cookie
+# akamai_botman_bot_analytics_cookie (Beta)
 
 **Scopes**: Security configuration
 

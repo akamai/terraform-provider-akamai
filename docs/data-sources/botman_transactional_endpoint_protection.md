@@ -3,7 +3,7 @@ layout: akamai
 subcategory: Bot Manager
 ---
 
-# akamai_botman_transactional_endpoint_protection
+# akamai_botman_transactional_endpoint_protection (Beta)
 
 **Scopes**: Security configuration
 

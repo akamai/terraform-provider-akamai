@@ -3,13 +3,13 @@ layout: akamai
 subcategory: Bot Manager
 ---
 
-# akamai_botman_bot_endpoint_coverage_report
+# akamai_botman_bot_endpoint_coverage_report (Beta)
 
 **Scopes**: Universal (all endpoint coverage reports); operation
 
 Returns your bot transactional endpoint coverage reports. These reports relay information about the Bot Manager protections applied to your API resources.
 
-Use the `operation_id` argument to limit the returned data to information about a specified API operation. 
+Use the `operation_id` argument to limit the returned data to information about a specified API operation.
 
 **Related API Endpoints**:
 

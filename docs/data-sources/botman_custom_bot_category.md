@@ -3,11 +3,11 @@ layout: akamai
 subcategory: Bot Manager
 ---
 
-# akamai_botman_custom_bot_category
+# akamai_botman_custom_bot_category (Beta)
 
 **Scopes**: Security configuration; custom bot category
 
-Returns information about the custom bot categories you’ve created. 
+Returns information about the custom bot categories you’ve created.
 
 By including the `category_id` argument you can limit the returned data to a single category.
 

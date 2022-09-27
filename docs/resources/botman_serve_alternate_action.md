@@ -3,11 +3,11 @@ layout: akamai
 subcategory: Bot Manager
 ---
 
-# akamai_botman_serve_alternate_action
+# akamai_botman_serve_alternate_action (Beta)
 
 **Scopes**: Security configuration; serve alternate action
 
-Creates or updates a serve alternate action. 
+Creates or updates a serve alternate action.
 
 To configure a serve alternate action you need to create a JSON array containing the desired settings and values. That array is then used as the value of the `serve_alternate_action` argument. For information about constructing this JSON file see the links listed in the **Related API Endpoints** section.
 

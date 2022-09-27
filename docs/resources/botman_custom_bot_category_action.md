@@ -3,11 +3,11 @@ layout: akamai
 subcategory: Bot Manager
 ---
 
-# akamai_botman_custom_bot_category_action
+# akamai_botman_custom_bot_category_action (Beta)
 
 **Scopes**: Custom bot category
 
-Modifies the action taken when a custom bot category is triggered. 
+Modifies the action taken when a custom bot category is triggered.
 
 To review your existing custom bot category actions, use the [akamai_botman_custom_bot_category_action](../data-sources/akamai_botman_custom_bot_category_action) data source.
 

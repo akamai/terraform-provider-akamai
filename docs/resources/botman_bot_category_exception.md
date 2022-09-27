@@ -3,11 +3,11 @@ layout: akamai
 subcategory: Bot Manager
 ---
 
-# akamai_botman_bot_category_exception
+# akamai_botman_bot_category_exception (Beta)
 
 **Scopes**: Security configuration
 
-Updates the bot categories on the category exceptions list. 
+Updates the bot categories on the category exceptions list.
 
 The exceptions list is  formatted by using JSON and configured as the value for the `bot_category_exception` argument. For information about constructing this JSON file see the links listed in the **Related API Endpoints** section.
 

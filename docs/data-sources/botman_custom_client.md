@@ -3,11 +3,11 @@ layout: akamai
 subcategory: Bot Manager
 ---
 
-# akamai_botman_custom_client
+# akamai_botman_custom_client (Beta)
 
 **Scopes**: Security configuration; custom client
 
-Returns information about your custom clients. 
+Returns information about your custom clients.
 
 Use the `custom_client_id` argument to limit returned data to the specified custom client.
 

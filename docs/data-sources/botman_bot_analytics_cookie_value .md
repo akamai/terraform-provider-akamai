@@ -3,11 +3,11 @@ layout: akamai
 subcategory: Bot Manager
 ---
 
-# akamai_botman_bot_analytics_cookie_value
+# akamai_botman_bot_analytics_cookie_value (Beta)
 
 **Scopes**: Universal (all bot analytic cookie values)
 
-Returns information about the bots assigned to your bot analytics cookie value. 
+Returns information about the bots assigned to your bot analytics cookie value.
 
 **Related API Endpoints**:
 

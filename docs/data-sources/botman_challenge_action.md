@@ -3,7 +3,7 @@ layout: akamai
 subcategory: Bot Manager
 ---
 
-# akamai_botman_challenge_action
+# akamai_botman_challenge_action (Beta)
 
 Scopes: Security configuration; challenge action
 

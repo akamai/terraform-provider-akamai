@@ -3,11 +3,11 @@ layout: akamai
 subcategory: Bot Manager
 ---
 
-# akamai_botman_akamai_bot_category
+# akamai_botman_akamai_bot_category (Beta)
 
 **Scopes**: Universal (all bot categories defined by Akamai); bot category
 
-Returns information about the bot categories [predefined by Akamai](https://techdocs.akamai.com/bot-manager/docs/akamai-categorized-bots). 
+Returns information about the bot categories [predefined by Akamai](https://techdocs.akamai.com/bot-manager/docs/akamai-categorized-bots).
 
 By including the `category_name` argument you can limit the returned data to a single category.
 

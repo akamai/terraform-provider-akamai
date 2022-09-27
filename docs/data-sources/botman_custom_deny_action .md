@@ -3,11 +3,11 @@ layout: akamai
 subcategory: Bot Manager
 ---
 
-# akamai_botman_custom_deny_action
+# akamai_botman_custom_deny_action (Beta)
 
 **Scopes**: Security configuration; custom deny action
 
-Returns information about your custom deny actions. 
+Returns information about your custom deny actions.
 
 > **Note**. Custom deny actions aren’t available for Akamai’s ChinaCDN.
 

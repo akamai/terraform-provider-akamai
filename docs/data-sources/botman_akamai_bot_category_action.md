@@ -3,11 +3,11 @@ layout: akamai
 subcategory: Bot Manager
 ---
 
-# akamai_botman_akamai_bot_category_action
+# akamai_botman_akamai_bot_category_action (Beta)
 
 **Scopes**: Security policy; bot category
 
-Returns information about the action taken when a bot category is triggered. 
+Returns information about the action taken when a bot category is triggered.
 
 Use the `category_id` argument to return the action for a specified category. By default, information is returned for all Akamai-defined categories. And use the [akamai_botman_akamai_bot_category_action](../resources/akamai_botman_akamai_bot_category_action) resource to change the action assigned to an Akamai-defined bot category.
 

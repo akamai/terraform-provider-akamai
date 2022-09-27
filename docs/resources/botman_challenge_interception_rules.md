@@ -3,11 +3,11 @@ layout: akamai
 subcategory: Bot Manager
 ---
 
-# akamai_botman_challenge_interception_rules
+# akamai_botman_challenge_interception_rules (Beta)
 
 **Scopes**: Security configuration
 
-Modifies a challenge interception rule. 
+Modifies a challenge interception rule.
 
 To configure challenge interception rules you need to create a JSON array containing the desired settings and values. That array is then used as the value of the `challenge_interception_rules` argument. For information about constructing this JSON file see the links listed in the **Related API Endpoints** section.
 

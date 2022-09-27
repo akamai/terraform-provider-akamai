@@ -3,11 +3,11 @@ layout: akamai
 subcategory: Bot Manager
 ---
 
-# akamai_botman_bot_detection
+# akamai_botman_bot_detection (Beta)
 
 **Scopes**: Universal (all bot detection methods); bot detection method
 
-Returns information about all available bot detection methods. Bot detection methods are used to help determine whether a request came from a bot or from a human being. 
+Returns information about all available bot detection methods. Bot detection methods are used to help determine whether a request came from a bot or from a human being.
 
 Use the `detection_name` argument to return data only for the specified detection method.
 

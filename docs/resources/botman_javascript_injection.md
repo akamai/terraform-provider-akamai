@@ -3,7 +3,7 @@ layout: akamai
 subcategory: Bot Manager
 ---
 
-# akamai_botman_javascript_injection
+# akamai_botman_javascript_injection (Beta)
 
 **Scopes**: Security policy
 

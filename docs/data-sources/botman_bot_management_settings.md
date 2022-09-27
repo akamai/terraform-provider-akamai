@@ -3,7 +3,7 @@ layout: akamai
 subcategory: Bot Manager
 ---
 
-# akamai_botman_bot_management_settings
+# akamai_botman_bot_management_settings (Beta)
 
 **Scopes**: Security policy
 

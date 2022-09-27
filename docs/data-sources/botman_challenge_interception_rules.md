@@ -3,11 +3,11 @@ layout: akamai
 subcategory: Bot Manager
 ---
 
-# akamai_botman_challenge_interception_rules
+# akamai_botman_challenge_interception_rules (Beta)
 
 **Scopes**: Security configuration
 
-Returns information about the challenge interception rules available in the specified security configuration. Challenge interception rules help ensure that challenge actions work with AJAX (Asynchronous JavaScript and XML) requests. 
+Returns information about the challenge interception rules available in the specified security configuration. Challenge interception rules help ensure that challenge actions work with AJAX (Asynchronous JavaScript and XML) requests.
 
 To modify an existing challenge interception rule, use the [akamai_botman_challenge_interception_rules](../resources/akamai_botman_challenge_interception_rules) resource.
 

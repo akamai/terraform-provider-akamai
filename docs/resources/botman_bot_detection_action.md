@@ -3,11 +3,11 @@ layout: akamai
 subcategory: Bot Manager
 ---
 
-# akamai_botman_bot_detection_action
+# akamai_botman_bot_detection_action (Beta)
 
 **Scopes**: Bot detection method
 
-Modifies the action assigned to a bot detection method. 
+Modifies the action assigned to a bot detection method.
 
 To review your current bot detection actions, use the [akamai_botman_bot_detection_action](../data-sources/akamai_botman_bot_detection_action) data source.
 

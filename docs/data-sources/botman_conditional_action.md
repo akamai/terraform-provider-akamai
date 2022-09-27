@@ -3,11 +3,11 @@ layout: akamai
 subcategory: Bot Manager
 ---
 
-# akamai_botman_conditional_action
+# akamai_botman_conditional_action (Beta)
 
 **Scopes**: Security configuration; conditional action
 
-Returns information for your conditional actions. Conditional actions are actions typically designed to trigger in highly-specific situations. 
+Returns information for your conditional actions. Conditional actions are actions typically designed to trigger in highly-specific situations.
 
 Use the `action_id` argument to limit the returned data to information about the specified action.
 

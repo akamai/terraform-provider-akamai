@@ -3,11 +3,11 @@ layout: akamai
 subcategory: Bot Manager
 ---
 
-# akamai_botman_bot_category_exception
+# akamai_botman_bot_category_exception (Beta)
 
 **Scopes**: Security policy
 
-Returns information about all the bots that have been excluded from transactional endpoint bot protection. 
+Returns information about all the bots that have been excluded from transactional endpoint bot protection.
 
 Use the [akamai_botman_bot_category_exception](../resources/akamai_botman_bot_category_exception) resource to update your bot category exception list.
 

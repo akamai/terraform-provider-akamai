@@ -3,11 +3,11 @@ layout: akamai
 subcategory: Bot Manager
 ---
 
-# akamai_botman_javascript_injection
+# akamai_botman_javascript_injection (Beta)
 
 **Scopes**: Security policy
 
-Returns information about the JavaScript injection rules assigned to a security policy. 
+Returns information about the JavaScript injection rules assigned to a security policy.
 
 Use the [akamai_botman_javascript_injection](../resources/akamai_botman_javascript_injection) resource to modify your existing JavaScript injection rules.
 

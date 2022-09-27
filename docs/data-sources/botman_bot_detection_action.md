@@ -3,11 +3,11 @@ layout: akamai
 subcategory: Bot Manager
 ---
 
-# akamai_botman_bot_detection_action
+# akamai_botman_bot_detection_action (Beta)
 
 **Scopes**: Security policy; bot detection action
 
-Returns information about the action taken when a bot detection method is triggered. 
+Returns information about the action taken when a bot detection method is triggered.
 
 Use the `detection_id` argument to return the action for a specified detection method. By default, information is returned for all the detection methods associated with a specific security policy. And use the [akamai_botman_bot_detection_action](../resources/akamai_botman_bot_detection_action) resource to modify an existing bot detection action.
 

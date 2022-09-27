@@ -3,11 +3,11 @@ layout: akamai
 subcategory: Bot Manager
 ---
 
-# akamai_botman_recategorized_akamai_defined_bot
+# akamai_botman_recategorized_akamai_defined_bot (Beta)
 
 **Scopes**: Security configuration
 
-Moves an Akamai-defined bot to a custom bot category. 
+Moves an Akamai-defined bot to a custom bot category.
 
 To review your current set of recategorized bots, use the [akamai_botman_recategorized_akamai_defined_bot](../data-sources/akamai_botman_recategorized_akamai_defined_bot) data source.
 

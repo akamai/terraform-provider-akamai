@@ -3,11 +3,11 @@ layout: akamai
 subcategory: Bot Manager
 ---
 
-# akamai_botman_challenge_action
+# akamai_botman_challenge_action (Beta)
 
 **Scopes**: Security configuration; challenge action
 
-Creates or updates a challenge action. 
+Creates or updates a challenge action.
 
 To configure a challenge action you need to create a JSON array containing the desired settings and values. That array is then used as the value of the `challenge_action` argument. For information about constructing this JSON file see the links listed in the **Related API Endpoints** section.
 

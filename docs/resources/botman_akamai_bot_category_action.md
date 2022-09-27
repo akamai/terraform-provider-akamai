@@ -3,11 +3,11 @@ layout: akamai
 subcategory: Bot Manager
 ---
 
-# akamai_botman_akamai_bot_category_action
+# akamai_botman_akamai_bot_category_action (Beta)
 
 **Scopes**: Akamai-defined bot category
 
-Modifies the action taken when an Akamai-defined bot category is triggered. 
+Modifies the action taken when an Akamai-defined bot category is triggered.
 
 To review your current bot category actions, use the [data-sources/akamai_botman_akamai_bot_category_action](../data-sources/akamai_botman_akamai_bot_category_action) data source.
 

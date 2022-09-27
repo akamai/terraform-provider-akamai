@@ -3,11 +3,11 @@ layout: akamai
 subcategory: Bot Manager
 ---
 
-# akamai_botman_response_action
+# akamai_botman_response_action (Beta)
 
 **Scopes**: Security configuration; response action
 
-Returns information about the actions that can be taken when a bot detection method is triggered. 
+Returns information about the actions that can be taken when a bot detection method is triggered.
 
 **Related API Endpoints**:
 

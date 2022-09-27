@@ -3,14 +3,14 @@ layout: akamai
 subcategory: Bot Manager
 ---
 
-# Bot Manager
+# Bot Manager (Beta)
 
 Use our Bot Manager subprovider to identify, track, and respond to bot activity on your domain or in your app.
 
 ### Before you begin
 
 * Understand the [basics of Terraform](https://learn.hashicorp.com/terraform?utm_source=terraform_io).
-* Complete the steps in [Get started](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_provider) and [Set up your authentication](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/akamai_provider_auth). 
+* Complete the steps in [Get started](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/get_started_provider) and [Set up your authentication](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/akamai_provider_auth).
 * Subscribe to Bot Manager.
 * Use ≥v2.3.1 of our Terraform provider.
 * Be familiar with [Bot Manager](https://techdocs.akamai.com/bot-manager/docs) terms and concepts.
@@ -79,7 +79,7 @@ Bot Manager has a number capabilities, and some of those capabilities depend on 
 
 Custom categories serve at least two purposes in Bot Manager. First,  custom-defined bots you create need to be placed in a custom category. You can’t add bots to an Akamai-defined category. Before you can create a custom-defined bot you need to create a custom category you can assign that bot to.
 
-In addition to that, you can move an Akamai-defined bot out of its Akamai-defined category, but _only_ if you move that bot to a customer category. An Akamai-defined bot can’t be moved into a different Akamai-defined category. 
+In addition to that, you can move an Akamai-defined bot out of its Akamai-defined category, but _only_ if you move that bot to a customer category. An Akamai-defined bot can’t be moved into a different Akamai-defined category.
 
 To create a custom category, use a Terraform configuration similar to this:
 

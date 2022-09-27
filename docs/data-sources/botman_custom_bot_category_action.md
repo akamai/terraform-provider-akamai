@@ -3,11 +3,11 @@ layout: akamai
 subcategory: Bot Manager
 ---
 
-# akamai_botman_custom_bot_category_action
+# akamai_botman_custom_bot_category_action (Beta)
 
 **Scopes**: Security policy; custom category action
 
-Returns information about the action taken when a custom bot category is triggered. 
+Returns information about the action taken when a custom bot category is triggered.
 
 Use the `category_id` argument to return the category action for a specified category. By default, information is returned for all the category actions associated with a specific security policy.
 

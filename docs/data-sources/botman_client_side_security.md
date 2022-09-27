@@ -3,11 +3,11 @@ layout: akamai
 subcategory: Bot Manager
 ---
 
-# akamai_botman_client_side_security
+# akamai_botman_client_side_security (Beta)
 
 **Scopes**: Security configuration
 
-Returns the client-side security settings for a security configuration. These settings configure Bot Manager to work in different situations. 
+Returns the client-side security settings for a security configuration. These settings configure Bot Manager to work in different situations.
 
 To modify your existing client-side security settings, use the [akamai_botman_client_side_security](../resources/akamai_botman_client_side_security) resource.
 
