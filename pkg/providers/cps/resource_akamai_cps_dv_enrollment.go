@@ -13,7 +13,6 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
 	cpstools "github.com/akamai/terraform-provider-akamai/v3/pkg/providers/cps/tools"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
-	"github.com/apex/log"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -22,12 +21,6 @@ import (
 var (
 	// PollForChangeStatusInterval defines retry interval for getting status of a pending change
 	PollForChangeStatusInterval = 10 * time.Second
-)
-
-const (
-	statusCoordinateDomainValidation    = "coodinate-domain-validation"
-	statusVerificationWarnings          = "wait-review-pre-verification-safety-checks"
-	inputTypePreVerificationWarningsAck = "pre-verification-warnings-acknowledgement"
 )
 
 func resourceCPSDVEnrollment() *schema.Resource {
@@ -52,8 +45,8 @@ func resourceCPSDVEnrollment() *schema.Resource {
 			},
 			"sans": {
 				Type:     schema.TypeSet,
-				Elem:     &schema.Schema{Type: schema.TypeString},
 				Optional: true,
+				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
 			"secure_network": {
 				Type:     schema.TypeString,
@@ -86,30 +79,7 @@ func resourceCPSDVEnrollment() *schema.Resource {
 				Required: true,
 				MinItems: 1,
 				MaxItems: 1,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"country_code": {
-							Type:     schema.TypeString,
-							Required: true,
-						},
-						"city": {
-							Type:     schema.TypeString,
-							Required: true,
-						},
-						"organization": {
-							Type:     schema.TypeString,
-							Required: true,
-						},
-						"organizational_unit": {
-							Type:     schema.TypeString,
-							Required: true,
-						},
-						"state": {
-							Type:     schema.TypeString,
-							Required: true,
-						},
-					},
-				},
+				Elem:     csr,
 			},
 			"enable_multi_stacked_certificates": {
 				Type:     schema.TypeBool,
@@ -120,61 +90,7 @@ func resourceCPSDVEnrollment() *schema.Resource {
 				Required: true,
 				MinItems: 1,
 				MaxItems: 1,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"client_mutual_authentication": {
-							Type:     schema.TypeSet,
-							Optional: true,
-							MinItems: 1,
-							MaxItems: 1,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"send_ca_list_to_client": {
-										Type:     schema.TypeBool,
-										Optional: true,
-									},
-									"ocsp_enabled": {
-										Type:     schema.TypeBool,
-										Optional: true,
-									},
-									"set_id": {
-										Type:     schema.TypeString,
-										Optional: true,
-									},
-								},
-							},
-						},
-						"disallowed_tls_versions": {
-							Type:     schema.TypeSet,
-							Optional: true,
-							Elem:     &schema.Schema{Type: schema.TypeString},
-						},
-						"clone_dns_names": {
-							Type:     schema.TypeBool,
-							Optional: true,
-						},
-						"geography": {
-							Type:     schema.TypeString,
-							Required: true,
-						},
-						"must_have_ciphers": {
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-						"ocsp_stapling": {
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-						"preferred_ciphers": {
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-						"quic_enabled": {
-							Type:     schema.TypeBool,
-							Optional: true,
-						},
-					},
-				},
+				Elem:     networkConfiguration,
 			},
 			"signature_algorithm": {
 				Type:     schema.TypeString,
@@ -192,42 +108,7 @@ func resourceCPSDVEnrollment() *schema.Resource {
 				Required: true,
 				MinItems: 1,
 				MaxItems: 1,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"name": {
-							Type:     schema.TypeString,
-							Required: true,
-						},
-						"phone": {
-							Type:     schema.TypeString,
-							Required: true,
-						},
-						"address_line_one": {
-							Type:     schema.TypeString,
-							Required: true,
-						},
-						"address_line_two": {
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-						"city": {
-							Type:     schema.TypeString,
-							Required: true,
-						},
-						"region": {
-							Type:     schema.TypeString,
-							Required: true,
-						},
-						"postal_code": {
-							Type:     schema.TypeString,
-							Required: true,
-						},
-						"country_code": {
-							Type:     schema.TypeString,
-							Required: true,
-						},
-					},
-				},
+				Elem:     organization,
 			},
 			"contract_id": {
 				Type:             schema.TypeString,
@@ -289,6 +170,11 @@ func resourceCPSDVEnrollment() *schema.Resource {
 				},
 				Set: cpstools.HashFromChallengesMap,
 			},
+			"change_management": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Description: "When set to false, the certificate will be deployed to both staging and production networks",
+			},
 		},
 		CustomizeDiff: customdiff.Sequence(
 			func(ctx context.Context, diff *schema.ResourceDiff, i interface{}) error {
@@ -311,59 +197,6 @@ func resourceCPSDVEnrollment() *schema.Resource {
 				return nil
 			}),
 	}
-}
-
-var contact = &schema.Resource{
-	Schema: map[string]*schema.Schema{
-		"first_name": {
-			Type:     schema.TypeString,
-			Required: true,
-		},
-		"last_name": {
-			Type:     schema.TypeString,
-			Required: true,
-		},
-		"title": {
-			Type:     schema.TypeString,
-			Optional: true,
-		},
-		"organization": {
-			Type:     schema.TypeString,
-			Required: true,
-		},
-		"email": {
-			Type:     schema.TypeString,
-			Required: true,
-		},
-		"phone": {
-			Type:     schema.TypeString,
-			Required: true,
-		},
-		"address_line_one": {
-			Type:     schema.TypeString,
-			Required: true,
-		},
-		"address_line_two": {
-			Type:     schema.TypeString,
-			Optional: true,
-		},
-		"city": {
-			Type:     schema.TypeString,
-			Required: true,
-		},
-		"region": {
-			Type:     schema.TypeString,
-			Required: true,
-		},
-		"postal_code": {
-			Type:     schema.TypeString,
-			Required: true,
-		},
-		"country_code": {
-			Type:     schema.TypeString,
-			Required: true,
-		},
-	},
 }
 
 func resourceCPSDVEnrollmentCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -397,7 +230,7 @@ func resourceCPSDVEnrollmentCreate(ctx context.Context, d *schema.ResourceData, 
 	}
 	adminContact, err := cpstools.GetContactInfo(adminContactSet)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("'admin_contact' - %s", err))
+		return diag.Errorf("'admin_contact' - %s", err)
 	}
 	enrollment.AdminContact = adminContact
 	techContactSet, err := tools.GetSetValue("tech_contact", d)
@@ -406,7 +239,7 @@ func resourceCPSDVEnrollmentCreate(ctx context.Context, d *schema.ResourceData, 
 	}
 	techContact, err := cpstools.GetContactInfo(techContactSet)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("'tech_contact' - %s", err))
+		return diag.Errorf("'tech_contact' - %s", err)
 	}
 	enrollment.TechContact = techContact
 
@@ -453,6 +286,11 @@ func resourceCPSDVEnrollmentCreate(ctx context.Context, d *schema.ResourceData, 
 	if err != nil {
 		return diag.FromErr(err)
 	}
+	changeManagement, err := tools.GetBoolValue("change_management", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	enrollment.ChangeManagement = changeManagement
 
 	req := cps.CreateEnrollmentRequest{
 		Enrollment:       enrollment,
@@ -469,7 +307,9 @@ func resourceCPSDVEnrollmentCreate(ctx context.Context, d *schema.ResourceData, 
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	err = waitForVerification(ctx, logger, client, res.ID, acknowledgeWarnings)
+	if err = waitForVerification(ctx, logger, client, res.ID, acknowledgeWarnings, nil); err != nil {
+		return diag.FromErr(err)
+	}
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -495,35 +335,10 @@ func resourceCPSDVEnrollmentRead(ctx context.Context, d *schema.ResourceData, m 
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	attrs := make(map[string]interface{})
-	adminContact := cpstools.ContactInfoToMap(*enrollment.AdminContact)
-	attrs["common_name"] = enrollment.CSR.CN
-	sans := make([]string, 0)
-	sansFromSchema, err := tools.GetSetValue("sans", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	attrs, err := readAttrs(enrollment, d)
+	if err != nil {
 		return diag.FromErr(err)
 	}
-	for _, san := range enrollment.CSR.SANS {
-		if (sansFromSchema.Len() == 0 || !sansFromSchema.Contains(enrollment.CSR.CN)) && san == enrollment.CSR.CN {
-			continue
-		}
-		sans = append(sans, san)
-	}
-	attrs["sans"] = sans
-	attrs["sni_only"] = enrollment.NetworkConfiguration.SNIOnly
-	attrs["secure_network"] = enrollment.NetworkConfiguration.SecureNetwork
-	attrs["admin_contact"] = []interface{}{adminContact}
-	techContact := cpstools.ContactInfoToMap(*enrollment.TechContact)
-	attrs["tech_contact"] = []interface{}{techContact}
-	attrs["certificate_chain_type"] = enrollment.CertificateChainType
-	csr := cpstools.CSRToMap(*enrollment.CSR)
-	attrs["csr"] = []interface{}{csr}
-	attrs["enable_multi_stacked_certificates"] = enrollment.EnableMultiStackedCertificates
-	networkConfig := cpstools.NetworkConfigToMap(*enrollment.NetworkConfiguration)
-	attrs["network_configuration"] = []interface{}{networkConfig}
-	attrs["signature_algorithm"] = enrollment.SignatureAlgorithm
-	org := cpstools.OrgToMap(*enrollment.Org)
-	attrs["organization"] = []interface{}{org}
 	attrs["certificate_type"] = enrollment.CertificateType
 	attrs["validation_type"] = enrollment.ValidationType
 	attrs["registration_authority"] = enrollment.RA
@@ -636,7 +451,7 @@ func resourceCPSDVEnrollmentUpdate(ctx context.Context, d *schema.ResourceData, 
 		"organization",
 	) {
 		logger.Debug("Enrollment does not have to be updated. Verifying status.")
-		if err = waitForVerification(ctx, logger, client, enrollmentID, acknowledgeWarnings); err != nil {
+		if err = waitForVerification(ctx, logger, client, enrollmentID, acknowledgeWarnings, nil); err != nil {
 			return diag.FromErr(err)
 		}
 		return resourceCPSDVEnrollmentRead(ctx, d, m)
@@ -662,7 +477,7 @@ func resourceCPSDVEnrollmentUpdate(ctx context.Context, d *schema.ResourceData, 
 	}
 	adminContact, err := cpstools.GetContactInfo(adminContactSet)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("'admin_contact' - %s", err))
+		return diag.Errorf("'admin_contact' - %s", err)
 	}
 	enrollment.AdminContact = adminContact
 	techContactSet, err := tools.GetSetValue("tech_contact", d)
@@ -671,7 +486,7 @@ func resourceCPSDVEnrollmentUpdate(ctx context.Context, d *schema.ResourceData, 
 	}
 	techContact, err := cpstools.GetContactInfo(techContactSet)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("'tech_contact' - %s", err))
+		return diag.Errorf("'tech_contact' - %s", err)
 	}
 	enrollment.TechContact = techContact
 
@@ -710,6 +525,12 @@ func resourceCPSDVEnrollmentUpdate(ctx context.Context, d *schema.ResourceData, 
 	}
 	enrollment.Org = organization
 
+	changeManagement, err := tools.GetBoolValue("change_management", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	enrollment.ChangeManagement = changeManagement
+
 	allowCancel := true
 	req := cps.UpdateEnrollmentRequest{
 		Enrollment:                enrollment,
@@ -722,101 +543,14 @@ func resourceCPSDVEnrollmentUpdate(ctx context.Context, d *schema.ResourceData, 
 	}
 	d.SetId(strconv.Itoa(enrollmentID))
 
-	if err = waitForVerification(ctx, logger, client, enrollmentID, acknowledgeWarnings); err != nil {
+	if err = waitForVerification(ctx, logger, client, enrollmentID, acknowledgeWarnings, nil); err != nil {
 		return diag.FromErr(err)
 	}
 	return resourceCPSDVEnrollmentRead(ctx, d, m)
 }
 
 func resourceCPSDVEnrollmentDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
-	logger := meta.Log("CPS", "resourceCPSDVEnrollmentDelete")
-	// create a context with logging for api calls
-	ctx = session.ContextWithOptions(
-		ctx,
-		session.WithContextLog(logger),
-	)
-	client := inst.Client(meta)
-	logger.Debug("Deleting enrollment")
-	enrollmentID, err := strconv.Atoi(d.Id())
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	req := cps.RemoveEnrollmentRequest{
-		EnrollmentID:              enrollmentID,
-		AllowCancelPendingChanges: tools.BoolPtr(true),
-	}
-	if _, err = client.RemoveEnrollment(ctx, req); err != nil {
-		return diag.FromErr(err)
-	}
-	d.SetId("")
-	return nil
-}
-
-func waitForVerification(ctx context.Context, logger log.Interface, client cps.CPS, enrollmentID int, acknowledgeWarnings bool) error {
-	getEnrollmentReq := cps.GetEnrollmentRequest{EnrollmentID: enrollmentID}
-	enrollmentGet, err := client.GetEnrollment(ctx, getEnrollmentReq)
-	if err != nil {
-		return err
-	}
-	changeID, err := cpstools.GetChangeIDFromPendingChanges(enrollmentGet.PendingChanges)
-	if err != nil {
-		if errors.Is(err, cpstools.ErrNoPendingChanges) {
-			logger.Debug("No pending changes found on the enrollment")
-			return nil
-		}
-		return err
-	}
-
-	changeStatusReq := cps.GetChangeStatusRequest{
-		EnrollmentID: enrollmentID,
-		ChangeID:     changeID,
-	}
-	status, err := client.GetChangeStatus(ctx, changeStatusReq)
-	if err != nil {
-		return err
-	}
-	for (status.StatusInfo.Status != statusCoordinateDomainValidation || len(status.AllowedInput) == 0) && status.StatusInfo.Status != "complete" {
-		select {
-		case <-time.After(PollForChangeStatusInterval):
-			status, err = client.GetChangeStatus(ctx, changeStatusReq)
-			if err != nil {
-				return err
-			}
-			if status.StatusInfo != nil && status.StatusInfo.Status == statusVerificationWarnings &&
-				len(status.AllowedInput) > 0 && status.AllowedInput[0].Type == inputTypePreVerificationWarningsAck {
-
-				warnings, err := client.GetChangePreVerificationWarnings(ctx, cps.GetChangeRequest{
-					EnrollmentID: enrollmentID,
-					ChangeID:     changeID,
-				})
-				if err != nil {
-					return err
-				}
-				logger.Debugf("Pre-verification warnings: %s", warnings.Warnings)
-				if acknowledgeWarnings {
-					err = client.AcknowledgePreVerificationWarnings(ctx, cps.AcknowledgementRequest{
-						Acknowledgement: cps.Acknowledgement{Acknowledgement: cps.AcknowledgementAcknowledge},
-						EnrollmentID:    enrollmentID,
-						ChangeID:        changeID,
-					})
-					if err != nil {
-						return err
-					}
-					continue
-				}
-				return fmt.Errorf("enrollment pre-verification returned warnings and the enrollment cannot be validated. Please fix the issues or set acknowledge_pre_validation_warnings flag to true then run 'terraform apply' again: %s",
-					warnings.Warnings)
-			}
-			log.Debugf("Change status: %s", status.StatusInfo.Status)
-			if status.StatusInfo != nil && status.StatusInfo.Error != nil && status.StatusInfo.Error.Description != "" {
-				return fmt.Errorf(status.StatusInfo.Error.Description)
-			}
-		case <-ctx.Done():
-			return fmt.Errorf("change status context terminated: %w", ctx.Err())
-		}
-	}
-	return nil
+	return enrollmentDelete(ctx, d, m, "resourceCPSDVEnrollmentDelete")
 }
 
 func resourceCPSDVEnrollmentImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {

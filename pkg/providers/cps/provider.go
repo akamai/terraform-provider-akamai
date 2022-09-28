@@ -52,8 +52,9 @@ func Provider() *schema.Provider {
 			"akamai_cps_warnings":    dataSourceCPSWarnings(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
-			"akamai_cps_dv_enrollment": resourceCPSDVEnrollment(),
-			"akamai_cps_dv_validation": resourceCPSDVValidation(),
+			"akamai_cps_dv_enrollment":          resourceCPSDVEnrollment(),
+			"akamai_cps_dv_validation":          resourceCPSDVValidation(),
+			"akamai_cps_third_party_enrollment": resourceCPSThirdPartyEnrollment(),
 		},
 	}
 	return provider
