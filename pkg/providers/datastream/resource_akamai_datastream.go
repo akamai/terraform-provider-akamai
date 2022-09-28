@@ -25,13 +25,28 @@ var (
 
 	// ExactlyOneConnectorRule defines connector fields names
 	ExactlyOneConnectorRule = []string{
-		"s3_connector", "azure_connector", "gcs_connector", "https_connector",
-		"splunk_connector", "datadog_connector", "oracle_connector", "sumologic_connector", "loggly_connector", "new_relic_connector",
+		"azure_connector",
+		"datadog_connector",
+		"elasticsearch_connector",
+		"gcs_connector",
+		"https_connector",
+		"loggly_connector",
+		"new_relic_connector",
+		"oracle_connector",
+		"s3_connector",
+		"splunk_connector",
+		"sumologic_connector",
 	}
 
 	// ConnectorsWithoutFilenameOptionsConfig defines connectors without option to configure prefix and suffix
 	ConnectorsWithoutFilenameOptionsConfig = []string{
-		"https_connector", "datadog_connector", "splunk_connector", "sumologic_connector", "loggly_connector", "new_relic_connector",
+		"datadog_connector",
+		"elasticsearch_connector",
+		"https_connector",
+		"loggly_connector",
+		"new_relic_connector",
+		"splunk_connector",
+		"sumologic_connector",
 	}
 
 	// DatastreamResourceTimeout is the default timeout for the resource operations (max activation time + polling interval)
@@ -751,6 +766,90 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 					Type:        schema.TypeString,
 					Optional:    true,
 					Description: "The custom header's contents passed with the request that contains information about the client connection. For details, see Additional options in the DataStream user guide.",
+				},
+			},
+		},
+	},
+	"elasticsearch_connector": {
+		Type:     schema.TypeSet,
+		MaxItems: 1,
+		Optional: true,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"connector_name": {
+					Type:        schema.TypeString,
+					Required:    true,
+					Description: "The name of the connector.",
+				},
+				"endpoint": {
+					Type:        schema.TypeString,
+					Required:    true,
+					Description: "The Elasticsearch bulk endpoint URL in the https://hostname.elastic-cloud.com:9243/_bulk/ format. Set indexName in the appropriate field instead of providing it in the URL. You can use Akamaized property hostnames as endpoint URLs. See Stream logs to Elasticsearch.",
+				},
+				"user_name": {
+					Type:        schema.TypeString,
+					Required:    true,
+					Sensitive:   true,
+					Description: "The Elasticsearch basic access authentication username.",
+				},
+				"password": {
+					Type:        schema.TypeString,
+					Required:    true,
+					Sensitive:   true,
+					Description: "The Elasticsearch basic access authentication password.",
+				},
+				"index_name": {
+					Type:        schema.TypeString,
+					Required:    true,
+					Sensitive:   true,
+					Description: "The index name of the Elastic cloud where you want to store log files.",
+				},
+				"content_type": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "The type of the resource passed in the request's custom header. For details, see Additional options in the DataStream user guide.",
+				},
+				"custom_header_name": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "A human-readable name for the request's custom header, containing only alphanumeric, dash, and underscore characters. For details, see Additional options in the DataStream user guide.",
+				},
+				"custom_header_value": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "The custom header's contents passed with the request that contains information about the client connection. For details, see Additional options in the DataStream user guide.",
+				},
+				"tls_hostname": {
+					Type:        schema.TypeString,
+					Required:    false,
+					Optional:    true,
+					Description: "The hostname that verifies the server's certificate and matches the Subject Alternative Names (SANs) in the certificate. If not provided, DataStream fetches the hostname from the endpoint URL.",
+				},
+				"ca_cert": {
+					Type:        schema.TypeString,
+					Required:    false,
+					Optional:    true,
+					Sensitive:   true,
+					Description: "The certification authority (CA) certificate used to verify the origin server's certificate. If the certificate is not signed by a well-known certification authority, enter the CA certificate in the PEM format for verification.",
+				},
+				"client_cert": {
+					Type:        schema.TypeString,
+					Required:    false,
+					Optional:    true,
+					Sensitive:   true,
+					Description: "The PEM-formatted digital certificate you want to authenticate requests to your destination with. If you want to use mutual authentication, you need to provide both the client certificate and the client key.",
+				},
+				"client_key": {
+					Type:        schema.TypeString,
+					Required:    false,
+					Optional:    true,
+					Sensitive:   true,
+					Description: "The private key in the non-encrypted PKCS8 format you want to use to authenticate with the backend server. If you want to use mutual authentication, you need to provide both the client certificate and the client key.",
+				},
+				"m_tls": {
+					Type:        schema.TypeBool,
+					Computed:    true,
+					Description: "Indicates whether mTLS is enabled or not.",
 				},
 			},
 		},
