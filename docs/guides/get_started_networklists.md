@@ -289,7 +289,7 @@ the state of your actual infrastructure. To do this, use the `terraform import` 
 file that includes a description of the existing resource. The `import` command requires that you specify
 both the `address` and `ID` of the resource. The `address` indicates the destination to which the resource
 should be imported. This is formed by combining the resource type and local name of the resource as described
-in the local configuration file, joining them with a period ("."). For example, suppose a nework list has
+in the local configuration file, joining them with a period ("."). For example, suppose a network list has
 been created outside of Terraform. You can use the information available in the Control Center to create a
 matching description of this policy in your local configuration file. Here is an example, using sample values
 for the resource's parameters:

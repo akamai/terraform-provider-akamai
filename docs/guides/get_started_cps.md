@@ -37,7 +37,7 @@ Create a new enrollment and prove that you control the domain you want to secure
 * [Get the contract ID](#get-the-contract-ID). You need your contract ID to create an enrollment.
 * [Create a DV enrollment](#create-an-enrollment). An enrollment is a core container for all the operations you perform within CPS. Currently, you can create DV certificates with this module.
 * [Validate control over your domains](#validate-control-over-your-domains). Complete the HTTP or DNS challenge to prove that you control the domain names you requested the certificate for.
-* [Send the validation acknlowledgement](#send-the-validation-acknowledgement).
+* [Send the validation acknowledgement](#send-the-validation-acknowledgement).
 
 ## Get the contract ID
 

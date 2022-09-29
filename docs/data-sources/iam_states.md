@@ -25,7 +25,7 @@ output "supported_states" {
 
 These attributes are supported:
 
-* `country` — (required, string) Sepcifies USA or Canada.
+* `country` — (required, string) Specifies USA or Canada.
 
 ## Attributes reference
 

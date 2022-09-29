@@ -42,7 +42,7 @@ Before using this CLI, keep the following in mind:
 
 * Download the existing zone configuration and master file to have as a backup and reference during an import. You can download these by using the [Edge DNS Zone Management API](https://techdocs.akamai.com/edge-dns/reference/edge-dns-api) or the Edge DNS app on [Control Center](https://control.akamai.com).  
 * Terraform limits the characters that can be part of its resource names. During construction of the resource configurations, invalid characters are replaced with underscore , '_'.
-* Terraform doesn't provide any state information during import. When you run `plan` and `apply` after an import, Terraform lists discrepencies and reconciles configurations and state. Any discrepencies clear following the first `apply`. 
+* Terraform doesn't provide any state information during import. When you run `plan` and `apply` after an import, Terraform lists discrepancies and reconciles configurations and state. Any discrepancies clear following the first `apply`. 
 * After first time you run `plan` or `apply`, the `contract` and `group` attributes are updated.
 * Run `terraform plan` after importing to validate the generated `tfstate` file.
 

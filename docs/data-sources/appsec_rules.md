@@ -70,5 +70,5 @@ The following options can be used to determine the information returned, and how
   - **deny_custom_{custom_deny_id}**. The action defined by the custom deny is taken.
   - **none**. No action is taken.
 - `condition_exception`. Conditions and exceptions associated with the rule.
-- `json`. JSON-formatted list of the action and the condition-exception information for the rule. This option is only available if the `rule_id` argument is included in yur Terraform configuration file.
+- `json`. JSON-formatted list of the action and the condition-exception information for the rule. This option is only available if the `rule_id` argument is included in your Terraform configuration file.
 - `output_text`. Tabular report showing the rule action as well as Boolean values indicating whether conditions and exceptions are configured.

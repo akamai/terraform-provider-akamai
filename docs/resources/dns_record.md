@@ -129,7 +129,7 @@ A DS record requires these arguments:
 * `keytag` - The key tag of the DNSKEY record that the DS record refers to, in network byte order.
 * `algorithm` - The algorithm number of the DNSKEY resource record referred to by the DS record.
 * `digest_type` - Identifies the algorithm used to construct the digest.
-* `digest` - A base 16 encoded DS record includes a digest of the DNSKEY record it refers to. The digest is conifgured the canonical form of the DNSKEY record's fully qualified owner name with the DNSKEY RDATA, and then applying the digest algorithm.
+* `digest` - A base 16 encoded DS record includes a digest of the DNSKEY record it refers to. The digest is configured the canonical form of the DNSKEY record's fully qualified owner name with the DNSKEY RDATA, and then applying the digest algorithm.
 
 ### HINFO record
 
@@ -142,7 +142,7 @@ A HINFO record requires these arguments:
 
 The following fields are required:
 
-* `svc_priority` - Service priority associated with endpoint. Value mist be between 0 and 65535. A piority of 0 enables alias mode.
+* `svc_priority` - Service priority associated with endpoint. Value mist be between 0 and 65535. A priority of 0 enables alias mode.
 * `svc_params` - Space separated list of endpoint parameters. Not allowed if service priority is 0.
 * `target_name` - Domain name of the service endpoint.
 
@@ -265,7 +265,7 @@ An SOA record requires these arguments:
 
 An SVCB record requires these arguments:
 
-* `svc_priority` - Service priority associated with endpoint. Value mist be between 0 and 65535. A piority of 0 enables alias mode.
+* `svc_priority` - Service priority associated with endpoint. Value mist be between 0 and 65535. A priority of 0 enables alias mode.
 * `svc_params` - Space separated list of endpoint parameters. Not allowed if service priority is 0.
 * `target_name` - Domain name of the service endpoint.
 

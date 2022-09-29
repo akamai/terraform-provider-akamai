@@ -38,7 +38,7 @@ This data source returns these attributes:
 * `immutable` - Whether you can edit the load balancing version. The default setting for this member is false. It automatically becomes true when the load balancing version is activated for the first time.
 * `last_modified_by` - The user who last modified the load balancing configuration.
 * `last_modified_date` - The date, in ISO 8601 format, when the initial load balancing configuration was last modified.
-* `warnings` - A list of warnings that occured during the activation of the load balancing configuration.
+* `warnings` - A list of warnings that occurred during the activation of the load balancing configuration.
 * `data_centers` - Specifies the Conditional Origins being used as data centers for an Application Load Balancer implementation. Only Conditional Origins with an origin type of `CUSTOMER` or `NETSTORAGE` can be used as data centers in an Application Load Balancer configuration.
   * `city` - The city in which the data center is located.
   * `cloud_server_host_header_override` - Whether the cloud server host header is overridden.

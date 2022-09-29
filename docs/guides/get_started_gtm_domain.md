@@ -14,7 +14,7 @@ To get more information about Global Traffic Management (GTM), see:
 * Developer - [API documentation](https://techdocs.akamai.com/gtm/reference/api)
 * User Guide - [Official Documentation](https://techdocs.akamai.com/gtm/docs)
 
-## Prerequisites 
+## Prerequisites
 
 Before starting with the DNS module, you need to:
 
@@ -40,7 +40,7 @@ Before using this CLI, keep the following in mind:
 
 * Download the existing GTM domain configuration to have as a backup and reference during an import. You can download these by using the [Global Traffic Management API](https://techdocs.akamai.com/gtm/reference/api) or the GTM app on [Control Center](https://control.akamai.com).  
 * Terraform limits the characters that can be part of its resource names. During construction of the resource configurations, invalid characters are replaced with underscore , '_'.
-* Terraform doesn't provide any state information during import. When you run `plan` and `apply` after an import, Terraform lists discrepencies and reconciles configurations and state. Any discrepencies clear following the first `apply`. 
+* Terraform doesn't provide any state information during import. When you run `plan` and `apply` after an import, Terraform lists discrepancies and reconciles configurations and state. Any discrepancies clear following the first `apply`.
 * After first time you run `plan` or `apply`, the `contract`, `group`, and `wait_on_complete` attributes are updated.
 * Run `terraform plan` after importing to validate the generated `tfstate` file.
 
@@ -50,7 +50,7 @@ To import using step-by-step construction, complete these tasks:
 
 1. Determine how you want to test your Terraform import. For example, you may want to set up your zone and recordset imports in a test environment to familiarize yourself with the provider operation and mitigate any risks to your existing DNS zone configuration.
 1. Download the existing domain configuration and master file to have as a backup and reference during an import. You can download these from the [Global Traffic Management API](https://techdocs.akamai.com/gtm/reference/api) or from the GTM app on [Control Center](https://control.akamai.com) .  
-1. Using the domain download as a reference, create a Terraform configuration representing the existing domain and all contained GTM objects. 
+1. Using the domain download as a reference, create a Terraform configuration representing the existing domain and all contained GTM objects.
 1. Verify that your Terraform configuration addresses all required attributes and any optional and computed attributes you need.
 1. Run `terraform import`. This command imports the existing domain and contained objects one at a time based on the order in the configuration.
 1. Compare the downloaded domain file with the `terraform.tfstate` file to confirm that the domain and all objects are represented correctly.
@@ -115,7 +115,7 @@ resource "akamai_gtm_property" "example_prop" {
 	score_aggregation_type = "median"
 	handout_limit = 5
 	handout_mode = "normal"
-	failover_delay = 0 
+	failover_delay = 0
 	failback_delay = 0
 	traffic_target = {
 		datacenter_id = akamai_gtm_datacenter.example_dc.datacenter_id
@@ -194,7 +194,7 @@ Existing GTM resources may be imported using the following formats:
 
 ```
 $ terraform import akamai_gtm_domain.{{domain resource name}} {{gtm domain name}}
-$ terraform import akamai_gtm_datacenter.{{datacenter resource name}} {{gtm domain name}}:{{gtm datacener id}}
+$ terraform import akamai_gtm_datacenter.{{datacenter resource name}} {{gtm domain name}}:{{gtm datacenter id}}
 $ terraform import akamai_gtm_property.{{property resource name}} {{gtm domain name}}:{{gtm property name}}
 $ terraform import akamai_gtm_resource.{{resource resource name}} {{gtm domain name}}:{{gtm resource name}}
 $ terraform import akamai_gtm_cidrmap.{{cidrmap resource name}} {{gtm domain name}}:{{gtm cidrmap name}}

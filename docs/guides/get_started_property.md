@@ -84,7 +84,7 @@ resource "akamai_edge_hostname" "example" {
 
 ## Set up property rules
 
-A property contains the delivery configuration, or rule tree, that determines how Akamai handles requests. This rule tree is usually represented using JSON, and is often refered to as `rules.json`.
+A property contains the delivery configuration, or rule tree, that determines how Akamai handles requests. This rule tree is usually represented using JSON, and is often referred to as `rules.json`.
 
 You can specify the rule tree as a JSON string, using the [`rules` argument of the `akamai_property` resource](../resources/property.md).
 
