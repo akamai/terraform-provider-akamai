@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: SecurityPolicyRename"
-subcategory: "Application Security"
-description: |-
-  SecurityPolicyRename
+layout: akamai
+subcategory: Application Security
 ---
 
 # akamai_appsec_security_policy_rename

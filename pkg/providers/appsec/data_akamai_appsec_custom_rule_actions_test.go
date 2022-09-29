@@ -7,17 +7,20 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
-func TestAccAkamaiCustomRuleActions_data_basic(t *testing.T) {
+func TestAkamaiCustomRuleActions_data_basic(t *testing.T) {
 	t.Run("match by CustomRuleActions ID", func(t *testing.T) {
 		client := &mockappsec{}
 
 		getCustomRuleActionsResponse := appsec.GetCustomRuleActionsResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestDSCustomRuleActions/CustomRuleActions.json"), &getCustomRuleActionsResponse)
+		err := json.Unmarshal(loadFixtureBytes("testdata/TestDSCustomRuleActions/CustomRuleActions.json"), &getCustomRuleActionsResponse)
+		require.NoError(t, err)
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		require.NoError(t, err)
 
 		client.On("GetConfiguration",
 			mock.Anything,

@@ -7,23 +7,28 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
-func TestAccAkamaiReputationAnalysis_res_basic(t *testing.T) {
+func TestAkamaiReputationAnalysis_res_basic(t *testing.T) {
 	t.Run("match by ReputationAnalysis ID", func(t *testing.T) {
 		client := &mockappsec{}
 
 		updateReputationAnalysisResponse := appsec.UpdateReputationAnalysisResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResReputationAnalysis/ReputationAnalysisUpdated.json"), &updateReputationAnalysisResponse)
+		err := json.Unmarshal(loadFixtureBytes("testdata/TestResReputationAnalysis/ReputationAnalysisUpdated.json"), &updateReputationAnalysisResponse)
+		require.NoError(t, err)
 
 		getReputationAnalysisResponse := appsec.GetReputationAnalysisResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResReputationAnalysis/ReputationAnalysis.json"), &getReputationAnalysisResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResReputationAnalysis/ReputationAnalysis.json"), &getReputationAnalysisResponse)
+		require.NoError(t, err)
 
 		removeReputationAnalysisResponse := appsec.RemoveReputationAnalysisResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResReputationAnalysis/ReputationAnalysisDelete.json"), &removeReputationAnalysisResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResReputationAnalysis/ReputationAnalysisDelete.json"), &removeReputationAnalysisResponse)
+		require.NoError(t, err)
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		require.NoError(t, err)
 
 		client.On("GetConfiguration",
 			mock.Anything,

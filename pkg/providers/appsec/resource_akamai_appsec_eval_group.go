@@ -33,21 +33,25 @@ func resourceEvalGroup() *schema.Resource {
 		},
 		Schema: map[string]*schema.Schema{
 			"config_id": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "Unique identifier of the security configuration",
 			},
 			"security_policy_id": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Unique identifier of the security policy",
 			},
 			"attack_group": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Unique identifier of the evaluation attack group being modified",
 			},
 			"attack_group_action": {
 				Type:             schema.TypeString,
 				Required:         true,
 				ValidateDiagFunc: ValidateActions,
+				Description:      "Action to be taken when the attack group is triggered",
 			},
 			"condition_exception": {
 				Type:             schema.TypeString,
@@ -55,6 +59,7 @@ func resourceEvalGroup() *schema.Resource {
 				Default:          "",
 				ValidateFunc:     validation.StringIsJSON,
 				DiffSuppressFunc: suppressEquivalentJSONDiffsGeneric,
+				Description:      "JSON-formatted condition and exception information for the evaluation attack group",
 			},
 		},
 	}

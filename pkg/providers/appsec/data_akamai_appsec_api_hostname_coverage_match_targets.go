@@ -3,7 +3,6 @@ package appsec
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -19,21 +18,24 @@ func dataSourceAPIHostnameCoverageMatchTargets() *schema.Resource {
 		ReadContext: dataSourceAPIHostnameCoverageMatchTargetsRead,
 		Schema: map[string]*schema.Schema{
 			"config_id": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "Unique identifier of the security configuration",
 			},
 			"hostname": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Hostname for which to return match target information",
 			},
 			"json": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "JSON representation",
 			},
 			"output_text": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Text Export representation",
+				Description: "Text representation",
 			},
 		},
 	}
@@ -47,7 +49,7 @@ func dataSourceAPIHostnameCoverageMatchTargetsRead(ctx context.Context, d *schem
 	getAPIHostnameCoverageMatchTargets := appsec.GetApiHostnameCoverageMatchTargetsRequest{}
 
 	configID, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	getAPIHostnameCoverageMatchTargets.ConfigID = configID
@@ -57,7 +59,7 @@ func dataSourceAPIHostnameCoverageMatchTargetsRead(ctx context.Context, d *schem
 	}
 
 	hostname, err := tools.GetStringValue("hostname", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	getAPIHostnameCoverageMatchTargets.Hostname = hostname
@@ -72,10 +74,11 @@ func dataSourceAPIHostnameCoverageMatchTargetsRead(ctx context.Context, d *schem
 	InitTemplates(ots)
 
 	outputtext, err := RenderTemplates(ots, "apiHostnameCoverageMatchTargetsDS", apihostnamecoveragematchtargets)
-	if err == nil {
-		if err := d.Set("output_text", outputtext); err != nil {
-			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
-		}
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if err := d.Set("output_text", outputtext); err != nil {
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	jsonBody, err := json.Marshal(apihostnamecoveragematchtargets)

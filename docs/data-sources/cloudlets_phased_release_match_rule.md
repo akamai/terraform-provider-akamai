@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: akamai_cloudlets_phased_release_match_rule"
-subcategory: "Cloudlets"
-description: |-
- Phased Release match rule
+layout: akamai
+subcategory: Cloudlets
 ---
 
 # akamai_cloudlets_phased_release_match_rule
@@ -74,8 +71,8 @@ This data source supports these arguments:
 * `match_url` - (Optional) If you're using a URL match, this specifies the URL that the Cloudlet uses to match the incoming request.
 * `forward_settings` -  (Required) The data used to construct a new request URL if all match conditions are met. If all conditions are met, the edge server returns an HTTP response from the rewritten URL.
      * `origin_id` - (Required) The ID of the new origin requests are forwarded to. This type of origin is known as a Conditional Origin. See [Property requirements for Cloudlets that forward requests](#property-requirements-for-cloudlets-that-forward-requests) to learn more.
-     * `percent` - (Required) 
-* `disabled` - (Optional) Whether to disable a rule so it is not evaluated against incoming requests. 
+     * `percent` - (Required)
+* `disabled` - (Optional) Whether to disable a rule so it is not evaluated against incoming requests.
 * `matches_always` - (Optional) Whether the match supports default rules that apply to all requests.
 
 ## Attributes reference

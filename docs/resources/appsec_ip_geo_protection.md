@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: IP GEO Protection"
-subcategory: "Application Security"
-description: |-
- IP GEO Protection
+layout: akamai
+subcategory: Application Security
 ---
 
 # akamai_appsec_ip_geo_protection

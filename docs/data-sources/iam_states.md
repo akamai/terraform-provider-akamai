@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: akamai_iam_states"
-subcategory: "Identity and Access Management"
-description: |-
- IAM States
+layout: akamai
+subcategory: Identity and Access Management
 ---
 
 # akamai_iam_states
@@ -28,7 +25,7 @@ output "supported_states" {
 
 These attributes are supported:
 
-* `country` — (required, string) Sepcifies USA or Canada.
+* `country` — (required, string) Specifies USA or Canada.
 
 ## Attributes reference
 

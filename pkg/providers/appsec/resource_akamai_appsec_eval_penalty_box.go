@@ -33,22 +33,22 @@ func resourceEvalPenaltyBox() *schema.Resource {
 			"config_id": {
 				Type:        schema.TypeInt,
 				Required:    true,
-				Description: "Unique identifier of the security configuration.",
+				Description: "Unique identifier of the security configuration",
 			},
 			"security_policy_id": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Unique identifier of the security policy.",
+				Description: "Unique identifier of the security policy",
 			},
 			"penalty_box_protection": {
 				Type:        schema.TypeBool,
 				Required:    true,
-				Description: "Enables or disables penalty box.",
+				Description: "Whether to enable the penalty box for the specified security policy",
 			},
 			"penalty_box_action": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Penalty box action applied to requests from clients in the penalty box.",
+				Description: "Action applied to requests from clients in the penalty box",
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{
 					string(appsec.ActionTypeDeny),
 					string(appsec.ActionTypeAlert),

@@ -3,7 +3,6 @@ package appsec
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -19,17 +18,19 @@ func dataSourceAdvancedSettingsPrefetch() *schema.Resource {
 		ReadContext: dataSourceAdvancedSettingsPrefetchRead,
 		Schema: map[string]*schema.Schema{
 			"config_id": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "Unique identifier of the security configuration",
 			},
 			"json": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "JSON representation",
 			},
 			"output_text": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Text Export representation",
+				Description: "Text representation",
 			},
 		},
 	}
@@ -43,7 +44,7 @@ func dataSourceAdvancedSettingsPrefetchRead(ctx context.Context, d *schema.Resou
 	getAdvancedSettingsPrefetch := appsec.GetAdvancedSettingsPrefetchRequest{}
 
 	configID, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	getAdvancedSettingsPrefetch.ConfigID = configID
@@ -62,10 +63,11 @@ func dataSourceAdvancedSettingsPrefetchRead(ctx context.Context, d *schema.Resou
 	InitTemplates(ots)
 
 	outputtext, err := RenderTemplates(ots, "advancedSettingsPrefetchDS", advancedsettingsprefetch)
-	if err == nil {
-		if err := d.Set("output_text", outputtext); err != nil {
-			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
-		}
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if err := d.Set("output_text", outputtext); err != nil {
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	jsonBody, err := json.Marshal(advancedsettingsprefetch)

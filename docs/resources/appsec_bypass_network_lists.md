@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: BypassNetworkLists"
-subcategory: "Application Security"
-description: |-
- BypassNetworkLists
+layout: akamai
+subcategory: Application Security
 ---
 
 # akamai_appsec_bypass_network_lists

@@ -9,14 +9,16 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
-func TestAccAkamaiThreatIntel_data_basic(t *testing.T) {
+func TestAkamaiThreatIntel_data_basic(t *testing.T) {
 	t.Run("match by ThreatIntel ID", func(t *testing.T) {
 		client := &mockappsec{}
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		err := json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		require.NoError(t, err)
 
 		client.On("GetConfiguration",
 			mock.Anything,
@@ -24,7 +26,8 @@ func TestAccAkamaiThreatIntel_data_basic(t *testing.T) {
 		).Return(&config, nil)
 
 		getThreatIntelResponse := appsec.GetThreatIntelResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestDSThreatIntel/ThreatIntel.json"), &getThreatIntelResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestDSThreatIntel/ThreatIntel.json"), &getThreatIntelResponse)
+		require.NoError(t, err)
 
 		client.On("GetThreatIntel",
 			mock.Anything,
@@ -51,12 +54,13 @@ func TestAccAkamaiThreatIntel_data_basic(t *testing.T) {
 
 }
 
-func TestAccAkamaiThreatIntel_data_error_retrieving_threat_intel(t *testing.T) {
+func TestAkamaiThreatIntel_data_error_retrieving_threat_intel(t *testing.T) {
 	t.Run("match by ThreatIntel ID", func(t *testing.T) {
 		client := &mockappsec{}
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		err := json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		require.NoError(t, err)
 
 		client.On("GetConfiguration",
 			mock.Anything,
@@ -64,7 +68,8 @@ func TestAccAkamaiThreatIntel_data_error_retrieving_threat_intel(t *testing.T) {
 		).Return(&config, nil)
 
 		threatIntelResponse := appsec.GetThreatIntelResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestDSThreatIntel/ThreatIntel.json"), &threatIntelResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestDSThreatIntel/ThreatIntel.json"), &threatIntelResponse)
+		require.NoError(t, err)
 
 		client.On("GetThreatIntel",
 			mock.Anything,

@@ -1,5 +1,82 @@
 # RELEASE NOTES
 
+## 2.4.0 (September 29, 2022)
+
+#### FEATURES/ENHANCEMENTS:
+
+* [IMPORTANT] Added Bot Management API Support
+  * Added resources allowing management of:
+    * `akamai_bot_category_action` - read, update and import
+    * `bot_analytics_cookie` - read, update and import
+    * `bot_category_exception` - read, update and import
+    * `bot_detection_action` - read, update and import
+    * `bot_management_settings` - read, update and import
+    * `challenge_action` - create, read, update, delete and import
+    * `challenge_interception_rules` - read, update and import
+    * `client_side_security` - read, update and import
+    * `conditional_action` - create, read, update, delete and import
+    * `custom_bot_cateogry` - create, read, update, delete and import
+    * `custom_bot_category_action` - read, update and import
+    * `custom_bot_category_sequence` - read, update and import
+    * `custom_client` - create, read, update, delete and import
+    * `custom_defined_bot` - create, read, update, delete and import
+    * `custom_deny_action` - create, read, update, delete and import
+    * `javascript_injection` - read, update and import
+    * `recategorized_akamai_defined_bot` - create, read, update, delete and import
+    * `serve_alternate_action` - create, read, update, delete and import
+    * `transactional_endpoint_protection` - read, update and import
+    * `transactional_endpoint` - create, read, update, delete and import
+  * Added data sources:
+    * `akamai_bot_category` - list akamai bot categories
+    * `akamai_bot_category_action` - list akamai bot category actions
+    * `akamai_defined_bot` - list akamai defined bots
+    * `bot_analytics_cookie` - get bot analytics cookie
+    * `bot_analytics_cookie_values` - list bot analytics cookie values
+    * `bot_category_exception` - list bot category exceptions
+    * `bot_detection` - list bot detections
+    * `bot_detection_action` - list bot detection actions
+    * `bot_endpoint_coverage_report` - get bot endpoint coverage report
+    * `bot_management_settings` - list bot management settings
+    * `challenge_action` - list challenge actions
+    * `challenge_interception_rules` - list challenge interception rules
+    * `client_side_security` - get client side security
+    * `conditional_action` - list conditional actions
+    * `custom_bot_cateogry` - list custom bot categories
+    * `custom_bot_category_action` - list custom bot category actions
+    * `custom_bot_category_sequence` - get custom bot category sequence
+    * `custom_client` - list custom clients
+    * `custom_defined_bot` - list custom defined bots
+    * `custom_deny_action` - list custom deny actions
+    * `javascript_injection` - get javascript injection
+    * `recategorized_akamai_defined_bot` - list recategorized akamai defined bots
+    * `response_action` - list response actions
+    * `serve_alternate_action` - list serve alternate actions
+    * `transactional_endpoint` - list transactional endpoints
+    * `transactional_endpoint_protection` - read, update and import
+
+* APPSEC
+  * New data sources:
+    * `akamai_appsec_malware_content_types` - list available content types for malware protection
+    * `akamai_appsec_malware_policies` - list malware policies
+    * `akamai_appsec_malware_policy_actions` - list malware policy actions
+  * New resources:
+    * `akamai_appsec_malware_policy` - create, modify, or delete malware policies
+    * `akamai_appsec_malware_policy_action` - create, modify, or delete the actions associated with a malware policy
+    * `akamai_appsec_malware_policy_actions` - create, modify, or delete the actions associated with one or more policies within a given security policy
+    * `akamai_appsec_malware_protection` - enable or disable malware protection for a security policy
+
+* EdgeWorkers
+  * New data sources ([#331](https://github.com/akamai/terraform-provider-akamai/issues/331)):
+    * [akamai_edgeworker](docs/data-sources/edgeworker.md) - returns data for specific edgeworker, corresponding version and bundle information
+    * [akamai_edgeworker_activation](docs/data-sources/edgeworkers_activation.md) - returns the latest activation in provided network
+  * Resources:
+    * `akamai_edgeworker_activation` - import
+
+#### BUG FIXES:
+
+* GTM
+  * Fix diff for traffic_targets servers in `akamai_gtm_property` resource
+
 ## 2.3.0 (August 25, 2022)
 
 #### FEATURES/ENHANCEMENTS:
@@ -31,7 +108,7 @@
 * PAPI
   * Fix error when using uppercase for `edge_hostname` ([#330](https://github.com/akamai/terraform-provider-akamai/issues/330))
   * Fix problematic state file when attempting to change `akamai_cp_code` `group_id`([#322](https://github.com/akamai/terraform-provider-akamai/issues/322))
-  * Fix panic on `akamai_property_rules_template` on empty property_snippets file ([#332](https://github.com/akamai/terraform-provider-akamai/issues/332)) 
+  * Fix panic on `akamai_property_rules_template` on empty property_snippets file ([#332](https://github.com/akamai/terraform-provider-akamai/issues/332))
 
 ## 2.2.0 (June 30, 2022)
 
@@ -121,7 +198,7 @@
     * `akamai_imaging_policy_image` - create, read, update, delete and import
     * `akamai_imaging_policy_set` - create, read, update, delete and import
     * `akamai_imaging_policy_video` - create, read, update, delete and import
-    
+
 * CLOUDLETS
   * Support for RC cloudlet type (Request Control)
 
@@ -203,7 +280,7 @@
 
 * APPSEC
   * Remove WAP-only datasource and resources
-  * Add support for Evasive Path Match feature 
+  * Add support for Evasive Path Match feature
 
 * NETWORK LISTS
   * Include contract_id & group_id in akamai_networklist_network_lists datasource
@@ -229,7 +306,7 @@
     * `akamai_cloudlets_application_load_balancer_activation` - create, read, update and delete application load balancer activations
   * Added data sources:
     * `akamai_cloudlets_policy` - lists information about policy
-    * `akamai_cloudlets_application_load_balancer` - lists information about application load balancer configuration 
+    * `akamai_cloudlets_application_load_balancer` - lists information about application load balancer configuration
     * `akamai_cloudlets_application_load_balancer_match_rule` - lists information about application load balancer match rules
     * `akamai_cloudlets_edge_redirector_match_rule` - lists information about edge redirector match rules
 * APPSEC
@@ -318,7 +395,7 @@
   * Fixed idempotency issue on `akamai_property` resource ([#226](https://github.com/akamai/terraform-provider-akamai/issues/226))
   * Fixed issue with terraform showing misleading diff on `rules` field in `akamai_property` ([#234](https://github.com/akamai/terraform-provider-akamai/issues/234))
 * CPS
-  * Added `sans` field on `akamai_cps_dv_validation` to enable resending acknowledgement on after SANS are updated 
+  * Added `sans` field on `akamai_cps_dv_validation` to enable resending acknowledgement on after SANS are updated
 
 #### FEATURES/ENHANCEMENTS:
 * CPS
@@ -347,9 +424,9 @@
     * akamai_appsec_rule_condition_exception
     * akamai_appsec_security_policy_clone
     * akamai_appsec_security_policy_protections
-	
+
 #### BUG FIXES:
-* PAPI 
+* PAPI
    * Fixed issue causing edgehostnames not being set properly in state intermittently
 
 #### FEATURES/ENHANCEMENTS:
@@ -357,7 +434,7 @@
   * Added resources allowing management of DV enrollments:
     * akamai_cps_dv_enrollment - create, read, update and delete DV enrollments
     * akamai_cps_dv_validation - inform CPS of finished validation, track change status
-    
+
 * APPSEC
   * The provider now determines automatically the version number to use for data source and resource operations.
     The most recent version of the specified configuration will be used if it is not currently active in either
@@ -398,8 +475,8 @@
     * akamai_appsec_rule
 
 * PAPI
-  * New optional parameter, which allows to import a specific property version. 
-    Additional information in [Property resource](https://registry.terraform.io/providers/akamai/akamai/latest/docs/resources/property#import) 
+  * New optional parameter, which allows to import a specific property version.
+    Additional information in [Property resource](https://registry.terraform.io/providers/akamai/akamai/latest/docs/resources/property#import)
 
 ## 1.5.1 (Apr 21, 2021)
 
@@ -415,11 +492,11 @@
   * Set network_list_id on network list import
   * Add comments to simplify importing resources using "terraform import"
 
-* PAPI 
+* PAPI
    * Fixed issue causing inconsistent state when activation has rule errors ([#219](https://github.com/akamai/terraform-provider-akamai/issues/219))
    * Fixed issue with `resource_akamai_property` not setting product_id during import ([#224](https://github.com/akamai/terraform-provider-akamai/issues/224))
    * Rule warnings are not set in state anymore in `resource_akamai_property` and `resource_akamai_property_activation` to address size concerns of state file. Users will still be able to see them in logs as warnings
-   
+
 * DNS - Fix panic when zone already exists on create
 * GTM - Deprecate and ignore Property field static_ttl. Add warning if present in property resource config
 
@@ -436,7 +513,7 @@ Existing terraform users with hostnames defined in older syntax need to manually
 
 #### BUG FIXES:
 
-* PAPI 
+* PAPI
    * Fixed issue with version attributes not being set properly ([#208](https://github.com/akamai/terraform-provider-akamai/issues/208))
    * Fixed issue with `data_akamai_property_rules_template` not interpolating `#include` files properly
    * Fixed issue with `data_akamai_property_rules_template` not merging nested files properly
@@ -445,7 +522,7 @@ Existing terraform users with hostnames defined in older syntax need to manually
 * PAPI
    * New [Hostnames Datasource](docs/data-sources/property_hostnames.md) to query hostnames and poll certificate status
    * Improved error handling and error messages in `property` and `property_activation` resources
-   
+
 ## 1.4.0 (Mar 17, 2021) Network Lists
 
 These are the operations supported in the Network Lists API v2:
@@ -495,7 +572,7 @@ These are the operations supported in the Network Lists API v2:
 * DNS
     * Suppress NS Record target diff if old and new equal without trailing 'period' ([#189](https://github.com/akamai/terraform-provider-akamai/issues/189))
     * Fail on attempted Zone deletion. Not supported.
-    
+
 ## 1.2.1 (Feb 4, 2021)
 
 #### BUG FIXES:
@@ -565,7 +642,7 @@ These are the operations supported in the Identity Management: User Administrati
 #### NOTES:
 * provider: Added support for application security API
 #### BUG FIXES:
-* provider: Updated edgegrid library to version 2.0.2. Ths should include the following fixes:
+* provider: Updated edgegrid library to version 2.0.2. This should include the following fixes:
     * Re-enabled global account switch key support in edgerc files for reseller accounts.
     * PAPI - edgehostname updated returns - The System could not find cnameTo value
     * PAPI - property update return error - You provided an Etag that does not represent the last edit. Another edit has occurred, so check your request again before retrying.
@@ -611,7 +688,7 @@ These are the operations supported in the Identity Management: User Administrati
 * resources/akamai_group: contract field (previously optional) now required to ensure contract and group agreement.
 
 #### NOTES:
-* [CHANGE] Individual edgerc file sections for different Akamai APIs (i.e., `property_section`, `dns_section`) has been deprecated in favor a common `config_section` used in conjuction with provider aliases ([See: Multiple Provider Configurations](https://www.terraform.io/docs/configuration/providers.html#alias-multiple-provider-configurations))
+* [CHANGE] Individual edgerc file sections for different Akamai APIs (i.e., `property_section`, `dns_section`) has been deprecated in favor a common `config_section` used in conjunction with provider aliases ([See: Multiple Provider Configurations](https://www.terraform.io/docs/configuration/providers.html#alias-multiple-provider-configurations))
 
 #### KNOWN BUGS:
 * provider: provider configuration validation requires an edgerc file configured and present even when one should not be needed.
@@ -664,7 +741,7 @@ These are the operations supported in the Identity Management: User Administrati
 * [FIX] Release edgehostnames and products caching edge library v0.9.10 (`akamai_property`)
 
 ## 0.4.0 (March 03, 2020)
-* [FIX] Release contract group and cpcode caching edge library v0.9.9 (`akamai_property`) 
+* [FIX] Release contract group and cpcode caching edge library v0.9.9 (`akamai_property`)
 
 ## 0.3.0 (March 02, 2020)
 * [FIX] Provider produced inconsistent final plan #88 add contract group and cpcode caching edge library v0.9.9 (`akamai_property`) ([#88](https://github.com/terraform-providers/terraform-provider-template/issues/88))

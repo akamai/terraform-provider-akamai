@@ -18,13 +18,14 @@ func dataSourceAPIHostnameCoverage() *schema.Resource {
 		ReadContext: dataSourceAPIHostnameCoverageRead,
 		Schema: map[string]*schema.Schema{
 			"json": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "JSON representation",
 			},
 			"output_text": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Text Export representation",
+				Description: "Text representation",
 			},
 		},
 	}
@@ -47,10 +48,11 @@ func dataSourceAPIHostnameCoverageRead(ctx context.Context, d *schema.ResourceDa
 	InitTemplates(ots)
 
 	outputtext, err := RenderTemplates(ots, "apiHostnameCoverageDS", apihostnamecoverage)
-	if err == nil {
-		if err := d.Set("output_text", outputtext); err != nil {
-			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
-		}
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if err := d.Set("output_text", outputtext); err != nil {
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	jsonBody, err := json.Marshal(apihostnamecoverage)

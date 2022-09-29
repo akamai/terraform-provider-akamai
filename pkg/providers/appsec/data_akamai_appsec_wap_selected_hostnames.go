@@ -23,12 +23,14 @@ func dataSourceWAPSelectedHostnames() *schema.Resource {
 		ReadContext: dataSourceWAPSelectedHostnamesRead,
 		Schema: map[string]*schema.Schema{
 			"config_id": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "Unique identifier of the security configuration",
 			},
 			"security_policy_id": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Unique identifier of the security policy",
 			},
 			"protected_hosts": {
 				Type:        schema.TypeSet,
@@ -54,13 +56,14 @@ func dataSourceWAPSelectedHostnames() *schema.Resource {
 				Description: "Match target information (for non-WAP accounts)",
 			},
 			"json": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "JSON representation",
 			},
 			"output_text": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Text Export representation",
+				Description: "Text representation",
 			},
 		},
 	}
@@ -143,10 +146,11 @@ func dataSourceWAPSelectedHostnamesRead(ctx context.Context, d *schema.ResourceD
 			matchtargetsOutputText = append(matchtargetsOutputText, MatchTargetOutputText{value.TargetID, value.SecurityPolicy.PolicyID, APITarget})
 		}
 		websiteMatchTargetsText, err := RenderTemplates(ots, "matchTargetDS", matchtargetsOutputText)
-		if err == nil {
-			if err := d.Set("output_text", websiteMatchTargetsText); err != nil {
-				return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
-			}
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		if err := d.Set("output_text", websiteMatchTargetsText); err != nil {
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 		}
 	} else { // WAP_AAG and WAP_PLUS accounts
 		getWAPSelectedHostnamesRequest := appsec.GetWAPSelectedHostnamesRequest{
@@ -190,11 +194,10 @@ func dataSourceWAPSelectedHostnamesRead(ctx context.Context, d *schema.ResourceD
 			textOutputEntries = append(textOutputEntries, entry)
 		}
 		outputtext, err := RenderTemplates(ots, "WAPSelectedHostsDS", textOutputEntries)
-		if err == nil {
-			if err := d.Set("output_text", outputtext); err != nil {
-				return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
-			}
-		} else {
+		if err != nil {
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		}
+		if err := d.Set("output_text", outputtext); err != nil {
 			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 		}
 	}

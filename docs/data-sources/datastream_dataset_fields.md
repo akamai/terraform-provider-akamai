@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: DataStream Data Set Fields"
-subcategory: "DataStream"
-description: |-
- Data Set Fields
+layout: akamai
+subcategory: DataStream
 ---
 
 # akamai_datastream_dataset_fields

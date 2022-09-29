@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: akamai_property_rule_formats"
-subcategory: "Property Provisioning"
-description: |-
- Properties rule formats
+layout: akamai
+subcategory: Property Provisioning
 ---
 
 # akamai_property_rule_formats

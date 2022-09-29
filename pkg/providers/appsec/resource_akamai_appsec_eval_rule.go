@@ -33,21 +33,25 @@ func resourceEvalRule() *schema.Resource {
 		},
 		Schema: map[string]*schema.Schema{
 			"config_id": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "Unique identifier of the security configuration",
 			},
 			"security_policy_id": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Unique identifier of the security policy",
 			},
 			"rule_id": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "Unique identifier of the evaluation rule being modified",
 			},
 			"rule_action": {
 				Type:             schema.TypeString,
 				Required:         true,
 				ValidateDiagFunc: ValidateActions,
+				Description:      "Action to be taken when the evaluation rule is triggered",
 			},
 			"condition_exception": {
 				Type:             schema.TypeString,
@@ -55,6 +59,7 @@ func resourceEvalRule() *schema.Resource {
 				Default:          "",
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsJSON),
 				DiffSuppressFunc: suppressEquivalentJSONDiffsConditionException,
+				Description:      "JSON-formatted condition and exception information for the evaluation rule",
 			},
 		},
 	}
@@ -67,7 +72,7 @@ func resourceEvalRuleCreate(ctx context.Context, d *schema.ResourceData, m inter
 	logger.Debugf("in resourceEvalRuleCreate")
 
 	configID, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	version, err := getModifiableConfigVersion(ctx, configID, "evalRule", m)
@@ -75,11 +80,11 @@ func resourceEvalRuleCreate(ctx context.Context, d *schema.ResourceData, m inter
 		return diag.FromErr(err)
 	}
 	policyID, err := tools.GetStringValue("security_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	ruleID, err := tools.GetIntValue("rule_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	action, err := tools.GetStringValue("rule_action", d)

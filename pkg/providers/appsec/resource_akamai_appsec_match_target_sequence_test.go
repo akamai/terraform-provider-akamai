@@ -7,20 +7,24 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
-func TestAccAkamaiMatchTargetSequence_res_basic(t *testing.T) {
+func TestAkamaiMatchTargetSequence_res_basic(t *testing.T) {
 	t.Run("match by MatchTargetSequence ID", func(t *testing.T) {
 		client := &mockappsec{}
 
 		updateSequenceResponse := appsec.UpdateMatchTargetSequenceResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResMatchTargetSequence/MatchTargetSequenceResp.json"), &updateSequenceResponse)
+		err := json.Unmarshal(loadFixtureBytes("testdata/TestResMatchTargetSequence/MatchTargetSequenceResp.json"), &updateSequenceResponse)
+		require.NoError(t, err)
 
 		getSequenceResponse := appsec.GetMatchTargetSequenceResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResMatchTargetSequence/MatchTargetSequence.json"), &getSequenceResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResMatchTargetSequence/MatchTargetSequence.json"), &getSequenceResponse)
+		require.NoError(t, err)
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		require.NoError(t, err)
 
 		client.On("GetConfiguration",
 			mock.Anything,

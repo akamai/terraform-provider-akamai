@@ -7,29 +7,36 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
-func TestAccAkamaiMatchTarget_res_basic(t *testing.T) {
+func TestAkamaiMatchTarget_res_basic(t *testing.T) {
 	t.Run("match by MatchTarget ID", func(t *testing.T) {
 		client := &mockappsec{}
 
 		updateMatchTargetResponse := appsec.UpdateMatchTargetResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResMatchTarget/MatchTargetUpdated.json"), &updateMatchTargetResponse)
+		err := json.Unmarshal(loadFixtureBytes("testdata/TestResMatchTarget/MatchTargetUpdated.json"), &updateMatchTargetResponse)
+		require.NoError(t, err)
 
 		getMatchTargetResponse := appsec.GetMatchTargetResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResMatchTarget/MatchTarget.json"), &getMatchTargetResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResMatchTarget/MatchTarget.json"), &getMatchTargetResponse)
+		require.NoError(t, err)
 
 		getMatchTargetResponseAfterUpdate := appsec.GetMatchTargetResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResMatchTarget/MatchTargetUpdated.json"), &getMatchTargetResponseAfterUpdate)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResMatchTarget/MatchTargetUpdated.json"), &getMatchTargetResponseAfterUpdate)
+		require.NoError(t, err)
 
 		createMatchTargetResponse := appsec.CreateMatchTargetResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResMatchTarget/MatchTargetCreated.json"), &createMatchTargetResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResMatchTarget/MatchTargetCreated.json"), &createMatchTargetResponse)
+		require.NoError(t, err)
 
 		removeMatchTargetResponse := appsec.RemoveMatchTargetResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResMatchTarget/MatchTargetCreated.json"), &removeMatchTargetResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResMatchTarget/MatchTargetCreated.json"), &removeMatchTargetResponse)
+		require.NoError(t, err)
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		require.NoError(t, err)
 
 		client.On("GetConfiguration",
 			mock.Anything,

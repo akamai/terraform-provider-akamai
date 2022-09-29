@@ -7,14 +7,16 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
-func TestAccAkamaiContractsGroups_data_basic(t *testing.T) {
+func TestAkamaiContractsGroups_data_basic(t *testing.T) {
 	t.Run("match by ContractsGroups ID", func(t *testing.T) {
 		client := &mockappsec{}
 
 		getContractsGroupsResponse := appsec.GetContractsGroupsResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestDSContractsGroups/ContractsGroups.json"), &getContractsGroupsResponse)
+		err := json.Unmarshal(loadFixtureBytes("testdata/TestDSContractsGroups/ContractsGroups.json"), &getContractsGroupsResponse)
+		require.NoError(t, err)
 
 		client.On("GetContractsGroups",
 			mock.Anything,

@@ -1,9 +1,7 @@
-[
-    {
-        "type": "https://problems.luna.akamaiapis.net/appsec/error-types/INVALID-INPUT-ERROR",
-        "status": 400,
-        "title": "Invalid Input Error",
-        "detail": "Hostname should not be null or empty.",
-        "instance": "https://problems.luna.akamaiapis.net/appsec/error-instances/bed82d19-4bb8-48ea-a9e8-8f89979bf63e"
-    }
-]
+{
+    "type": "https://problems.luna.akamaiapis.net/appsec/error-types/INVALID-INPUT-ERROR",
+    "status": 400,
+    "title": "Invalid Input Error",
+    "detail": "Hostname should not be null or empty.",
+    "instance": "https://problems.luna.akamaiapis.net/appsec/error-instances/bed82d19-4bb8-48ea-a9e8-8f89979bf63e"
+}

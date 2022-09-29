@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: Security Policy Protections"
-subcategory: "Application Security"
-description: |-
- Security Policy Protections
+layout: akamai
+subcategory: Application Security
 ---
 
 # akamai_appsec_security_policy_protections
@@ -57,6 +54,10 @@ output "protections_applyBotmanControls" {
   value = data.akamai_appsec_security_policy_protections.protections.apply_botman_controls
 }
 
+output "protections_applyMalwareControls" {
+  value = data.akamai_appsec_security_policy_protections.protections.apply_malware_controls
+}
+
 output "protections_applyNetworkLayerControls" {
   value = data.akamai_appsec_security_policy_protections.protections.apply_network_layer_controls
 }
@@ -86,11 +87,12 @@ This data source supports the following arguments:
 The following options can be used to determine the information returned and how that returned information is formatted:
 
 - `apply_application_layer_controls`. Returns **true** if application layer controls are enabled; returns **false** if they are not.
+- `apply_api_constraints`. Returns **true** if API constraints are enabled; returns **false** if they are not.
+- `apply_botman_controls`. Returns **true** if Bot Manager controls are enabled; returns **false** if they are not.
+- `apply_malware_controls`. Returns **true** if malware controls are enabled; returns **false** if they are not.
 - `apply_network_layer_controls`. Returns **true** if network layer controls are enabled; returns **false** if they are not.
 - `apply_rate_controls`. Returns **true** if rate controls are enabled; returns **false** if they are not.
 - `apply_reputation_controls`. Returns **true** if reputation controls are enabled; returns **false** if they are not.
-- `apply_botman_controls`. Returns **true** if Bot Manager controls are enabled; returns **false** if they are not.
-- `apply_api_constraints`. Returns **true** if API constraints are enabled; returns **false** if they are not.
 - `apply_slow_post_controls`. Returns **true** if slow POST controls are enabled; returns **false** if they are not.
 - `json`. JSON-formatted list showing the status of the protection settings.
 - `output_text`. Tabular report showing the status of the protection settings.

@@ -18,33 +18,39 @@ func dataSourceEvalRules() *schema.Resource {
 		ReadContext: dataSourceEvalRulesRead,
 		Schema: map[string]*schema.Schema{
 			"config_id": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "Unique identifier of the security configuration",
 			},
 			"security_policy_id": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Unique identifier of the security policy",
 			},
 			"rule_id": {
-				Type:     schema.TypeInt,
-				Optional: true,
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Description: "Unique identifier of the evaluation rule for which to retrieve information",
 			},
 			"eval_rule_action": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Action to be taken for the evaluation rule if one was specified",
 			},
 			"condition_exception": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "JSON-formatted condition and exception information for the rule if one was specified",
 			},
 			"json": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "JSON representation",
 			},
 			"output_text": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Text Export representation",
+				Description: "Text representation",
 			},
 		},
 	}
@@ -58,7 +64,7 @@ func dataSourceEvalRulesRead(ctx context.Context, d *schema.ResourceData, m inte
 	getEvalRules := appsec.GetEvalRulesRequest{}
 
 	configID, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	getEvalRules.ConfigID = configID
@@ -68,7 +74,7 @@ func dataSourceEvalRulesRead(ctx context.Context, d *schema.ResourceData, m inte
 	}
 
 	policyID, err := tools.GetStringValue("security_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	getEvalRules.PolicyID = policyID
@@ -89,10 +95,11 @@ func dataSourceEvalRulesRead(ctx context.Context, d *schema.ResourceData, m inte
 	InitTemplates(ots)
 
 	outputtext, err := RenderTemplates(ots, "RulesWithConditionExceptionDS", evalrules)
-	if err == nil {
-		if err := d.Set("output_text", outputtext); err != nil {
-			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
-		}
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if err := d.Set("output_text", outputtext); err != nil {
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	if len(evalrules.Rules) == 1 {

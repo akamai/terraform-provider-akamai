@@ -31,26 +31,30 @@ func resourceAdvancedSettingsPrefetch() *schema.Resource {
 		},
 		Schema: map[string]*schema.Schema{
 			"config_id": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "Unique identifier of the security configuration",
 			},
 			"enable_app_layer": {
-				Type:     schema.TypeBool,
-				Required: true,
+				Type:        schema.TypeBool,
+				Required:    true,
+				Description: "Whether to enable or disable prefetch requests",
 			},
 			"all_extensions": {
-				Type:     schema.TypeBool,
-				Required: true,
+				Type:        schema.TypeBool,
+				Required:    true,
+				Description: "Whether to enable prefetch requests for all file extensions",
 			},
 			"extensions": {
 				Type:        schema.TypeSet,
 				Required:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
-				Description: "List of extensions",
+				Description: "List of file extensions",
 			},
 			"enable_rate_controls": {
-				Type:     schema.TypeBool,
-				Required: true,
+				Type:        schema.TypeBool,
+				Required:    true,
+				Description: "Whether to enable prefetch requests for rate controls",
 			},
 		},
 	}
@@ -63,7 +67,7 @@ func resourceAdvancedSettingsPrefetchCreate(ctx context.Context, d *schema.Resou
 	logger.Debugf("in resourceAdvancedSettingsPrefetchCreate")
 
 	configID, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	version, err := getModifiableConfigVersion(ctx, configID, "prefetchSetting", m)
@@ -71,15 +75,15 @@ func resourceAdvancedSettingsPrefetchCreate(ctx context.Context, d *schema.Resou
 		return diag.FromErr(err)
 	}
 	enableAppLayer, err := tools.GetBoolValue("enable_app_layer", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	allExtensions, err := tools.GetBoolValue("all_extensions", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	extensions := d.Get("extensions").(*schema.Set)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	exts := make([]string, 0, len(extensions.List()))
@@ -88,7 +92,7 @@ func resourceAdvancedSettingsPrefetchCreate(ctx context.Context, d *schema.Resou
 
 	}
 	enableRateControls, err := tools.GetBoolValue("enable_rate_controls", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 

@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: Rule Upgrade Details"
-subcategory: "Application Security"
-description: |-
- Rule Upgrade Details
+layout: akamai
+subcategory: Application Security
 ---
 
 # akamai_appsec_rule_upgrade_details

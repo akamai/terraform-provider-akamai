@@ -9,26 +9,32 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
-func TestAccAkamaiConfiguration_res_basic(t *testing.T) {
+func TestAkamaiConfiguration_res_basic(t *testing.T) {
 	t.Run("match by Configuration ID", func(t *testing.T) {
 		client := &mockappsec{}
 
 		createConfigResponse := appsec.CreateConfigurationResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/ConfigurationCreate.json"), &createConfigResponse)
+		err := json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/ConfigurationCreate.json"), &createConfigResponse)
+		require.NoError(t, err)
 
 		readConfigResponse := appsec.GetConfigurationResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/Configuration.json"), &readConfigResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/Configuration.json"), &readConfigResponse)
+		require.NoError(t, err)
 
 		deleteConfigResponse := appsec.RemoveConfigurationResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/Configuration.json"), &deleteConfigResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/Configuration.json"), &deleteConfigResponse)
+		require.NoError(t, err)
 
 		getConfigurationVersionsResponse := appsec.GetConfigurationVersionsResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/ConfigurationVersions.json"), &getConfigurationVersionsResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/ConfigurationVersions.json"), &getConfigurationVersionsResponse)
+		require.NoError(t, err)
 
 		getSelectedHostnamesResponse := appsec.GetSelectedHostnamesResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResSelectedHostname/SelectedHostname.json"), &getSelectedHostnamesResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResSelectedHostname/SelectedHostname.json"), &getSelectedHostnamesResponse)
+		require.NoError(t, err)
 
 		client.On("GetSelectedHostnames",
 			mock.Anything,
@@ -74,24 +80,29 @@ func TestAccAkamaiConfiguration_res_basic(t *testing.T) {
 	})
 }
 
-func TestAccAkamaiConfiguration_res_error_updating_configuration(t *testing.T) {
+func TestAkamaiConfiguration_res_error_updating_configuration(t *testing.T) {
 	t.Run("match by Configuration ID", func(t *testing.T) {
 		client := &mockappsec{}
 
 		createConfigResponse := appsec.CreateConfigurationResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/ConfigurationCreate.json"), &createConfigResponse)
+		err := json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/ConfigurationCreate.json"), &createConfigResponse)
+		require.NoError(t, err)
 
 		readConfigResponse := appsec.GetConfigurationResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/Configuration.json"), &readConfigResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/Configuration.json"), &readConfigResponse)
+		require.NoError(t, err)
 
 		deleteConfigResponse := appsec.RemoveConfigurationResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/Configuration.json"), &deleteConfigResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/Configuration.json"), &deleteConfigResponse)
+		require.NoError(t, err)
 
 		getConfigurationVersionsResponse := appsec.GetConfigurationVersionsResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/ConfigurationVersions.json"), &getConfigurationVersionsResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/ConfigurationVersions.json"), &getConfigurationVersionsResponse)
+		require.NoError(t, err)
 
 		hns := appsec.GetSelectedHostnamesResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResSelectedHostname/SelectedHostname.json"), &hns)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResSelectedHostname/SelectedHostname.json"), &hns)
+		require.NoError(t, err)
 
 		client.On("GetSelectedHostnames",
 			mock.Anything,

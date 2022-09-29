@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: dns zone"
-subcategory: "Edge DNS"
-description: |-
-  DNS Zone
+layout: akamai
+subcategory: Edge DNS
 ---
 
 # akamai_dns_zone
@@ -23,7 +20,7 @@ resource "akamai_dns_zone" "demozone" {
     masters = [
       "1.2.3.4",
       "1.2.3.5"
-    ] 
+    ]
     comment =  "some comment"
     sign_and_serve = false
 }

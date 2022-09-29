@@ -33,21 +33,25 @@ func resourceAttackGroup() *schema.Resource {
 		},
 		Schema: map[string]*schema.Schema{
 			"config_id": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "Unique identifier of the security configuration",
 			},
 			"security_policy_id": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Unique identifier of the security policy",
 			},
 			"attack_group": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Unique name of the attack group to be modified",
 			},
 			"attack_group_action": {
 				Type:             schema.TypeString,
 				Required:         true,
 				ValidateDiagFunc: ValidateActions,
+				Description:      "Action to be taken when the attack group is triggered",
 			},
 			"condition_exception": {
 				Type:             schema.TypeString,
@@ -55,6 +59,7 @@ func resourceAttackGroup() *schema.Resource {
 				Default:          "",
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsJSON),
 				DiffSuppressFunc: suppressEquivalentJSONDiffsGeneric,
+				Description:      "JSON-formatted condition and exception information for the attack group",
 			},
 		},
 	}
@@ -67,7 +72,7 @@ func resourceAttackGroupCreate(ctx context.Context, d *schema.ResourceData, m in
 	logger.Debugf(" in resourceAttackGroupCreate")
 
 	configID, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	version, err := getModifiableConfigVersion(ctx, configID, "atackGroup", m)
@@ -75,11 +80,11 @@ func resourceAttackGroupCreate(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(err)
 	}
 	policyID, err := tools.GetStringValue("security_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	attackgroup, err := tools.GetStringValue("attack_group", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	action, err := tools.GetStringValue("attack_group_action", d)

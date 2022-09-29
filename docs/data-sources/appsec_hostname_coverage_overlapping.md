@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: ApiHostnameCoverageOverlapping"
-subcategory: "Application Security"
-description: |-
- ApiHostnameCoverageOverlapping
+layout: akamai
+subcategory: Application Security
 ---
 
 # akamai_appsec_hostname_coverage_overlapping

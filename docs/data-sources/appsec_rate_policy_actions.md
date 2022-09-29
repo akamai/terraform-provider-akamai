@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: Rate Policy Actions"
-subcategory: "Application Security"
-description: |-
- Rate Policy Actions
+layout: akamai
+subcategory: Application Security
 ---
 
 # akamai_appsec_rate_policy_actions

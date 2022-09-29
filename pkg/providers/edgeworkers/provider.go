@@ -47,6 +47,8 @@ func Provider() *schema.Provider {
 		DataSourcesMap: map[string]*schema.Resource{
 			"akamai_edgeworkers_resource_tier":  dataSourceEdgeworkersResourceTier(),
 			"akamai_edgeworkers_property_rules": dataSourceEdgeworkersPropertyRules(),
+			"akamai_edgeworker":                 dataSourceEdgeWorker(),
+			"akamai_edgeworker_activation":      dataSourceEdgeWorkerActivation(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"akamai_edgekv":                 resourceEdgeKV(),

@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: EdgeKV"
-subcategory: "EdgeWorkers"
-description: |-
-  EdgeKV
+layout: akamai
+subcategory: EdgeWorkers
 ---
 
 # akamai_edgekv

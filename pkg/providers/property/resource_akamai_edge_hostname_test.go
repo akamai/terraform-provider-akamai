@@ -532,6 +532,148 @@ func TestResourceEdgeHostname(t *testing.T) {
 				},
 			},
 		},
+		"error - status_update_email is required to update": {
+			init: func(mp *mockpapi, mh *mockhapi) {
+				// 1st step
+				// 1. call from create method
+				// 2. and 3. call from read method
+				mp.On("GetEdgeHostnames", mock.Anything, papi.GetEdgeHostnamesRequest{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+				}).Return(&papi.GetEdgeHostnamesResponse{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+					EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
+						{
+							ID:           "eh_123",
+							Domain:       "test.akamaized.net",
+							ProductID:    "prd_2",
+							DomainPrefix: "test",
+							DomainSuffix: "akamaized.net",
+						},
+						{
+							ID:           "eh_2",
+							Domain:       "test.akamaized.net",
+							ProductID:    "prd_2",
+							DomainPrefix: "test",
+							DomainSuffix: "akamaized.net",
+						},
+					}},
+				}, nil).Times(3)
+
+				// refresh
+				mp.On("GetEdgeHostnames", mock.Anything, papi.GetEdgeHostnamesRequest{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+				}).Return(&papi.GetEdgeHostnamesResponse{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+					EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
+						{
+							ID:           "eh_123",
+							Domain:       "test.akamaized.net",
+							ProductID:    "prd_2",
+							DomainPrefix: "test",
+							DomainSuffix: "akamaized.net",
+						},
+						{
+							ID:           "eh_2",
+							Domain:       "test.akamaized.net",
+							ProductID:    "prd_2",
+							DomainPrefix: "test",
+							DomainSuffix: "akamaized.net",
+						},
+					}},
+				}, nil).Once()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: loadFixtureString(fmt.Sprintf("%s/%s", testDir, "new_akamaized_net.tf")),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "id", "eh_123"),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "contract", "ctr_2"),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "group", "grp_2"),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "edge_hostname", "test.akamaized.net"),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "ip_behavior", "IPV6_COMPLIANCE"),
+					),
+				},
+				{
+					Config:      loadFixtureString(fmt.Sprintf("%s/%s", testDir, "new_akamaized_update_ip_behavior_no_email.tf")),
+					ExpectError: regexp.MustCompile("\"status_update_email\" is a required parameter to update an edge hostname"),
+				},
+			},
+		},
+		"error on empty status_update_email - status_update_email is required to update": {
+			init: func(mp *mockpapi, mh *mockhapi) {
+				// 1st step
+				// 1. call from create method
+				// 2. and 3. call from read method
+				mp.On("GetEdgeHostnames", mock.Anything, papi.GetEdgeHostnamesRequest{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+				}).Return(&papi.GetEdgeHostnamesResponse{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+					EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
+						{
+							ID:           "eh_123",
+							Domain:       "test.akamaized.net",
+							ProductID:    "prd_2",
+							DomainPrefix: "test",
+							DomainSuffix: "akamaized.net",
+						},
+						{
+							ID:           "eh_2",
+							Domain:       "test.akamaized.net",
+							ProductID:    "prd_2",
+							DomainPrefix: "test",
+							DomainSuffix: "akamaized.net",
+						},
+					}},
+				}, nil).Times(3)
+
+				// refresh
+				mp.On("GetEdgeHostnames", mock.Anything, papi.GetEdgeHostnamesRequest{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+				}).Return(&papi.GetEdgeHostnamesResponse{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+					EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
+						{
+							ID:           "eh_123",
+							Domain:       "test.akamaized.net",
+							ProductID:    "prd_2",
+							DomainPrefix: "test",
+							DomainSuffix: "akamaized.net",
+						},
+						{
+							ID:           "eh_2",
+							Domain:       "test.akamaized.net",
+							ProductID:    "prd_2",
+							DomainPrefix: "test",
+							DomainSuffix: "akamaized.net",
+						},
+					}},
+				}, nil).Once()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: loadFixtureString(fmt.Sprintf("%s/%s", testDir, "new_akamaized_net.tf")),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "id", "eh_123"),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "contract", "ctr_2"),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "group", "grp_2"),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "edge_hostname", "test.akamaized.net"),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "ip_behavior", "IPV6_COMPLIANCE"),
+					),
+				},
+				{
+					Config:      loadFixtureString(fmt.Sprintf("%s/%s", testDir, "new_akamaized_update_ip_behavior_empty_email.tf")),
+					ExpectError: regexp.MustCompile("\"status_update_email\" is a required parameter to update an edge hostname"),
+				},
+			},
+		},
 		"error fetching edge hostnames": {
 			init: func(mp *mockpapi, mh *mockhapi) {
 				mp.On("GetEdgeHostnames", mock.Anything, papi.GetEdgeHostnamesRequest{

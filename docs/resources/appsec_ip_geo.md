@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: IP/Geo Firewall"
-subcategory: "Application Security"
-description: |-
- IP/Geo Firewall
+layout: akamai
+subcategory: Application Security
 ---
 
 # akamai_appsec_ip_geo

@@ -17,21 +17,24 @@ func dataSourceRatePolicyActions() *schema.Resource {
 		ReadContext: dataSourceRatePolicyActionsRead,
 		Schema: map[string]*schema.Schema{
 			"config_id": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "Unique identifier of the security configuration",
 			},
 			"security_policy_id": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Unique identifier of the security policy",
 			},
 			"rate_policy_id": {
-				Type:     schema.TypeInt,
-				Optional: true,
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Description: "Unique identifier of a specific rate policy for which to retrieve information",
 			},
 			"output_text": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Text Export representation",
+				Description: "Text representation",
 			},
 		},
 	}
@@ -45,7 +48,7 @@ func dataSourceRatePolicyActionsRead(ctx context.Context, d *schema.ResourceData
 	getRatePolicyActions := appsec.GetRatePolicyActionsRequest{}
 
 	configID, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	getRatePolicyActions.ConfigID = configID
@@ -55,7 +58,7 @@ func dataSourceRatePolicyActionsRead(ctx context.Context, d *schema.ResourceData
 	}
 
 	policyID, err := tools.GetStringValue("security_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	getRatePolicyActions.PolicyID = policyID
@@ -80,10 +83,11 @@ func dataSourceRatePolicyActionsRead(ctx context.Context, d *schema.ResourceData
 	InitTemplates(ots)
 
 	outputtext, err := RenderTemplates(ots, "ratePolicyActions", ratepolicyactions)
-	if err == nil {
-		if err := d.Set("output_text", outputtext); err != nil {
-			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
-		}
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if err := d.Set("output_text", outputtext); err != nil {
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	return nil

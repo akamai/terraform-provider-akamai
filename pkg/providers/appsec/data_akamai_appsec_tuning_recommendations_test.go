@@ -9,14 +9,16 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
-func TestAccAkamaiTuningRecommendationsDataBasic(t *testing.T) {
+func TestAkamaiTuningRecommendationsDataBasic(t *testing.T) {
 	t.Run(" Recommendations basic", func(t *testing.T) {
 		client := &mockappsec{}
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		err := json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		require.NoError(t, err)
 
 		client.On("GetConfiguration",
 			mock.Anything,
@@ -24,10 +26,16 @@ func TestAccAkamaiTuningRecommendationsDataBasic(t *testing.T) {
 		).Return(&config, nil)
 
 		getRecs := appsec.GetTuningRecommendationsResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestDSTuningRecommendations/Recommendations.json"), &getRecs)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestDSTuningRecommendations/Recommendations.json"), &getRecs)
+		require.NoError(t, err)
 
 		getGroupRecs := appsec.GetAttackGroupRecommendationsResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestDSTuningRecommendations/AttackGroupRecommendations.json"), &getGroupRecs)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestDSTuningRecommendations/AttackGroupRecommendations.json"), &getGroupRecs)
+		require.NoError(t, err)
+
+		getRuleRecs := appsec.GetRuleRecommendationsResponse{}
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestDSTuningRecommendations/RuleRecommendations.json"), &getRuleRecs)
+		require.NoError(t, err)
 
 		client.On("GetTuningRecommendations",
 			mock.Anything,
@@ -38,6 +46,11 @@ func TestAccAkamaiTuningRecommendationsDataBasic(t *testing.T) {
 			mock.Anything,
 			appsec.GetAttackGroupRecommendationsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", Group: "XSS", RulesetType: "evaluation"},
 		).Return(&getGroupRecs, nil)
+
+		client.On("GetRuleRecommendations",
+			mock.Anything,
+			appsec.GetRuleRecommendationsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", RuleID: 958008, RulesetType: "active"},
+		).Return(&getRuleRecs, nil)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
@@ -59,12 +72,13 @@ func TestAccAkamaiTuningRecommendationsDataBasic(t *testing.T) {
 
 }
 
-func TestAccAkamaiTuningRecommenadationsDataErrorRetrievingTuningRecommenadations(t *testing.T) {
+func TestAkamaiTuningRecommenadationsDataErrorRetrievingTuningRecommenadations(t *testing.T) {
 	t.Run("Tuning Recommendations Error", func(t *testing.T) {
 		client := &mockappsec{}
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		err := json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		require.NoError(t, err)
 
 		client.On("GetConfiguration",
 			mock.Anything,
@@ -72,10 +86,16 @@ func TestAccAkamaiTuningRecommenadationsDataErrorRetrievingTuningRecommenadation
 		).Return(&config, nil)
 
 		getRecs := appsec.GetTuningRecommendationsResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestDSTuningRecommendations/Recommendations.json"), &getRecs)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestDSTuningRecommendations/Recommendations.json"), &getRecs)
+		require.NoError(t, err)
 
 		getGroupRecs := appsec.GetAttackGroupRecommendationsResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestDSTuningRecommendations/AttackGroupRecommendations.json"), &getGroupRecs)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestDSTuningRecommendations/AttackGroupRecommendations.json"), &getGroupRecs)
+		require.NoError(t, err)
+
+		getRuleRecs := appsec.GetAttackGroupRecommendationsResponse{}
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestDSTuningRecommendations/RuleRecommendations.json"), &getRuleRecs)
+		require.NoError(t, err)
 
 		client.On("GetTuningRecommendations",
 			mock.Anything,
@@ -86,6 +106,11 @@ func TestAccAkamaiTuningRecommenadationsDataErrorRetrievingTuningRecommenadation
 			mock.Anything,
 			appsec.GetAttackGroupRecommendationsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", Group: "XSS", RulesetType: "evaluation"},
 		).Return(nil, fmt.Errorf("GetAttackGroupRecommendations failed"))
+
+		client.On("GetRuleRecommendations",
+			mock.Anything,
+			appsec.GetRuleRecommendationsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", RuleID: 958008, RulesetType: "active"},
+		).Return(nil, fmt.Errorf("GetRuleRecommendations failed"))
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{

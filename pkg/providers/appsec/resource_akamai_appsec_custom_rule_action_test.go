@@ -7,28 +7,32 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
-func TestAccAkamaiCustomRuleAction_res_basic(t *testing.T) {
+func TestAkamaiCustomRuleAction_res_basic(t *testing.T) {
 	t.Run("match by CustomRuleAction ID", func(t *testing.T) {
 		client := &mockappsec{}
 
 		getConfigResponse := appsec.GetConfigurationResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &getConfigResponse)
+		err := json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &getConfigResponse)
+		require.NoError(t, err)
 		client.On("GetConfiguration",
 			mock.Anything,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&getConfigResponse, nil)
 
 		updateResponse := appsec.UpdateCustomRuleActionResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResCustomRuleAction/CustomRuleActionUpdated.json"), &updateResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResCustomRuleAction/CustomRuleActionUpdated.json"), &updateResponse)
+		require.NoError(t, err)
 		client.On("UpdateCustomRuleAction",
 			mock.Anything,
 			appsec.UpdateCustomRuleActionRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", RuleID: 60036362, Action: "none"},
 		).Return(&updateResponse, nil)
 
 		getResponse := appsec.GetCustomRuleActionResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResCustomRuleAction/CustomRuleAction.json"), &getResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResCustomRuleAction/CustomRuleAction.json"), &getResponse)
+		require.NoError(t, err)
 		client.On("GetCustomRuleAction",
 			mock.Anything,
 			appsec.GetCustomRuleActionRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", RuleID: 60036362},

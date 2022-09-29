@@ -131,10 +131,11 @@ func dataSourceNetworkListRead(ctx context.Context, d *schema.ResourceData, m in
 		ots := OutputTemplates{}
 		InitTemplates(ots)
 		outputText, err := RenderTemplates(ots, "networkListsDS", getNetworkListsResponse)
-		if err == nil {
-			if err := d.Set("output_text", outputText); err != nil {
-				return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-			}
+		if err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		}
+		if err := d.Set("output_text", outputText); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 		}
 	} else {
 		networkLists, err := client.GetNetworkLists(ctx, network.GetNetworkListsRequest{
@@ -168,10 +169,11 @@ func dataSourceNetworkListRead(ctx context.Context, d *schema.ResourceData, m in
 		InitTemplates(ots)
 
 		outputText, err := RenderTemplates(ots, "networkListsDS", networkLists)
-		if err == nil {
-			if err := d.Set("output_text", outputText); err != nil {
-				return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-			}
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		if err := d.Set("output_text", outputText); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 		}
 	}
 

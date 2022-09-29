@@ -1,16 +1,13 @@
 ---
-layout: "akamai"
-page_title: "Akamai: NetworkLists"
-subcategory: "Network Lists"
-description: |-
- NetworkLists
+layout: akamai
+subcategory: Network Lists
 ---
 
 # akamai_networklist_network_lists
 
 Use the `akamai_networklist_network_lists` data source to retrieve information about the available network lists,
 optionally filtered by list type or based on a search string. The information available is described in
-[List network lists](https://techdocs.akamai.com/network-lists/reference/get-network-lists). 
+[List network lists](https://techdocs.akamai.com/network-lists/reference/get-network-lists).
 
 ## Example Usage
 

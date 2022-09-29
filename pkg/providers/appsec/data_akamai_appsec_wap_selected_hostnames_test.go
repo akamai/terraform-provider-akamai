@@ -9,14 +9,16 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
-func TestAccAkamaiWAPSelectedHostnames_data_basic(t *testing.T) {
+func TestAkamaiWAPSelectedHostnames_data_basic(t *testing.T) {
 	t.Run("match by WAPSelectedHostnames ID", func(t *testing.T) {
 		client := &mockappsec{}
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfigurationWAP.json"), &config)
+		err := json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfigurationWAP.json"), &config)
+		require.NoError(t, err)
 
 		client.On("GetConfiguration",
 			mock.Anything,
@@ -24,7 +26,8 @@ func TestAccAkamaiWAPSelectedHostnames_data_basic(t *testing.T) {
 		).Return(&config, nil)
 
 		getWAPSelectedHostnamesResponse := appsec.GetWAPSelectedHostnamesResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestDSWAPSelectedHostnames/WAPSelectedHostnames.json"), &getWAPSelectedHostnamesResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestDSWAPSelectedHostnames/WAPSelectedHostnames.json"), &getWAPSelectedHostnamesResponse)
+		require.NoError(t, err)
 
 		client.On("GetWAPSelectedHostnames",
 			mock.Anything,
@@ -51,12 +54,13 @@ func TestAccAkamaiWAPSelectedHostnames_data_basic(t *testing.T) {
 
 }
 
-func TestAccAkamaiWAPSelectedHostnames_data_error_retrieving_hostnames(t *testing.T) {
+func TestAkamaiWAPSelectedHostnames_data_error_retrieving_hostnames(t *testing.T) {
 	t.Run("match by WAPSelectedHostnames ID", func(t *testing.T) {
 		client := &mockappsec{}
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfigurationWAP.json"), &config)
+		err := json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfigurationWAP.json"), &config)
+		require.NoError(t, err)
 
 		client.On("GetConfiguration",
 			mock.Anything,
@@ -64,7 +68,8 @@ func TestAccAkamaiWAPSelectedHostnames_data_error_retrieving_hostnames(t *testin
 		).Return(&config, nil)
 
 		getWAPSelectedHostnamesResponse := appsec.GetWAPSelectedHostnamesResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestDSWAPSelectedHostnames/WAPSelectedHostnames.json"), &getWAPSelectedHostnamesResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestDSWAPSelectedHostnames/WAPSelectedHostnames.json"), &getWAPSelectedHostnamesResponse)
+		require.NoError(t, err)
 
 		client.On("GetWAPSelectedHostnames",
 			mock.Anything,
@@ -92,12 +97,13 @@ func TestAccAkamaiWAPSelectedHostnames_data_error_retrieving_hostnames(t *testin
 
 }
 
-func TestAccAkamaiWAPSelectedHostnames_NonWAP_data_basic(t *testing.T) {
+func TestAkamaiWAPSelectedHostnames_NonWAP_data_basic(t *testing.T) {
 	t.Run("match by WAPSelectedHostnames ID", func(t *testing.T) {
 		client := &mockappsec{}
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		err := json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		require.NoError(t, err)
 
 		client.On("GetConfiguration",
 			mock.Anything,
@@ -105,10 +111,12 @@ func TestAccAkamaiWAPSelectedHostnames_NonWAP_data_basic(t *testing.T) {
 		).Return(&config, nil)
 
 		getSelectedHostnamesResponse := appsec.GetSelectedHostnamesResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestDSSelectedHostnames/SelectedHostnames.json"), &getSelectedHostnamesResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestDSSelectedHostnames/SelectedHostnames.json"), &getSelectedHostnamesResponse)
+		require.NoError(t, err)
 
 		getMatchTargetsResponse := appsec.GetMatchTargetsResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestDSMatchTargets/MatchTargets.json"), &getMatchTargetsResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestDSMatchTargets/MatchTargets.json"), &getMatchTargetsResponse)
+		require.NoError(t, err)
 
 		client.On("GetSelectedHostnames",
 			mock.Anything,

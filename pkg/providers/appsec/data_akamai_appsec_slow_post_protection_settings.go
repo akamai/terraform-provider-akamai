@@ -3,7 +3,6 @@ package appsec
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -18,21 +17,24 @@ func dataSourceSlowPostProtectionSettings() *schema.Resource {
 		ReadContext: dataSourceSlowPostProtectionSettingsRead,
 		Schema: map[string]*schema.Schema{
 			"config_id": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "Unique identifier of the security configuration",
 			},
 			"security_policy_id": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Unique identifier of the security policy",
 			},
 			"json": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "JSON representation",
 			},
 			"output_text": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Text Export representation",
+				Description: "Text representation",
 			},
 		},
 	}
@@ -46,7 +48,7 @@ func dataSourceSlowPostProtectionSettingsRead(ctx context.Context, d *schema.Res
 	getSlowPostProtectionSettings := appsec.GetSlowPostProtectionSettingsRequest{}
 
 	configID, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	getSlowPostProtectionSettings.ConfigID = configID
@@ -56,7 +58,7 @@ func dataSourceSlowPostProtectionSettingsRead(ctx context.Context, d *schema.Res
 	}
 
 	policyID, err := tools.GetStringValue("security_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	getSlowPostProtectionSettings.PolicyID = policyID
@@ -71,10 +73,11 @@ func dataSourceSlowPostProtectionSettingsRead(ctx context.Context, d *schema.Res
 	InitTemplates(ots)
 
 	outputtext, err := RenderTemplates(ots, "slowPostDS", slowpostprotectionsettings)
-	if err == nil {
-		if err := d.Set("output_text", outputtext); err != nil {
-			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
-		}
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if err := d.Set("output_text", outputtext); err != nil {
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	jsonBody, err := json.Marshal(slowpostprotectionsettings)

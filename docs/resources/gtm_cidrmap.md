@@ -1,17 +1,14 @@
 ---
-layout: "akamai"
-page_title: "Akamai: gtm cidrmap"
-subcategory: "Global Traffic Management"  
-description: |-
-  GTM Cidr Map
+layout: akamai
+subcategory: Global Traffic Management  
 ---
 
 # akamai_gtm_cidrmap
 
 Use the `akamai_gtm_cidrmap` resource to create, configure, and import a GTM Classless Inter-Domain Routing (CIDR) map. CIDR mapping uses the IP addresses of the requesting name server to provide IP-specific CNAME entries. CNAMEs let you direct internal users to a specific environment or direct them to the origin. This lets you provide different responses to an internal corporate DNS infrastructure, such as internal test environments and another answer for all other name servers (`default_datacenter`).
 
- CIDR maps split the Internet into multiple CIDR block zones. Properties that use a map can specify a handout CNAME for each zone on the property's editing page. To configure a property for CIDR mapping, your domain needs at least one CIDR map defined. 
- 
+ CIDR maps split the Internet into multiple CIDR block zones. Properties that use a map can specify a handout CNAME for each zone on the property's editing page. To configure a property for CIDR mapping, your domain needs at least one CIDR map defined.
+
 ~> **Note** Import requires an ID with this format: `existing_domain_name`:`existing_map_name`.
 
 ## Example usage

@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: akamai_cloudlets_edge_redirector_match_rule"
-subcategory: "Cloudlets"
-description: |-
- Edge Redirector match rule
+layout: akamai
+subcategory: Cloudlets
 ---
 
 # akamai_cloudlets_edge_redirector_match_rule
@@ -73,7 +70,7 @@ This data source supports these arguments:
 * `redirect_url` - (Required) The URL Edge Redirector redirects the request to. If you're using `use_relative_url`, you can enter a path for the value.
 * `match_url` - (Optional) If you're using a URL match, this specifies the URL that the Cloudlet uses to match the incoming request.
 * `use_incoming_query_string` - (Optional) Whether the Cloudlet should include the query string from the request in the rewritten or forwarded URL.
-* `disabled` - (Optional) Whether to disable a rule so it is not evaluated against incoming requests. 
+* `disabled` - (Optional) Whether to disable a rule so it is not evaluated against incoming requests.
 
 ## Attributes reference
 

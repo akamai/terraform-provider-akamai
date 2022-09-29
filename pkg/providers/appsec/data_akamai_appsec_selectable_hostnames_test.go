@@ -7,14 +7,16 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
-func TestAccAkamaiSelectableHostnames_data_basic(t *testing.T) {
+func TestAkamaiSelectableHostnames_data_basic(t *testing.T) {
 	t.Run("match by SelectableHostnames ID", func(t *testing.T) {
 		client := &mockappsec{}
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		err := json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		require.NoError(t, err)
 
 		client.On("GetConfiguration",
 			mock.Anything,
@@ -22,7 +24,8 @@ func TestAccAkamaiSelectableHostnames_data_basic(t *testing.T) {
 		).Return(&config, nil)
 
 		getSelectableHostnamesResponse := appsec.GetSelectableHostnamesResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestDSSelectableHostnames/SelectableHostnames.json"), &getSelectableHostnamesResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestDSSelectableHostnames/SelectableHostnames.json"), &getSelectableHostnamesResponse)
+		require.NoError(t, err)
 
 		client.On("GetSelectableHostnames",
 			mock.Anything,
@@ -37,7 +40,7 @@ func TestAccAkamaiSelectableHostnames_data_basic(t *testing.T) {
 					{
 						Config: loadFixtureString("testdata/TestDSSelectableHostnames/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("data.akamai_appsec_selectable_hostnames.test", "id", "0"),
+							resource.TestCheckResourceAttr("data.akamai_appsec_selectable_hostnames.test", "id", "43253"),
 						),
 					},
 				},

@@ -5,7 +5,8 @@ ENV PROVIDER_VERSION="1.0.0" \
     CGO_ENABLED=0 \
     GOOS="linux" \
     GOARCH="amd64" \
-    PATH=$PATH:/usr/local/go/bin:/root/go/bin
+    PATH=$PATH:/usr/local/go/bin:/root/go/bin \
+    TFLINT_VERSION="v0.39.3"
 
 ARG SSH_PRV_KEY
 ARG SSH_PUB_KEY

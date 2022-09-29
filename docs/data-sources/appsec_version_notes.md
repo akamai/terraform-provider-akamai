@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: VersionNotes"
-subcategory: "Application Security"
-description: |-
- VersionNotes
+layout: akamai
+subcategory: Application Security
 ---
 
 # akamai_appsec_version_notes

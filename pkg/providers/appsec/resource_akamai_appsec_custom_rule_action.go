@@ -31,21 +31,25 @@ func resourceCustomRuleAction() *schema.Resource {
 		},
 		Schema: map[string]*schema.Schema{
 			"config_id": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "Unique identifier of the security configuration",
 			},
 			"security_policy_id": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Unique identifier of the security policy",
 			},
 			"custom_rule_id": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "Unique identifier of the custom rule whose action is being modified",
 			},
 			"custom_rule_action": {
 				Type:             schema.TypeString,
 				Required:         true,
 				ValidateDiagFunc: ValidateActions,
+				Description:      "Action to be taken when the custom rule is invoked",
 			},
 		},
 	}
@@ -58,7 +62,7 @@ func resourceCustomRuleActionCreate(ctx context.Context, d *schema.ResourceData,
 	logger.Debugf("in resourceCustomRuleActionCreate")
 
 	configID, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	version, err := getModifiableConfigVersion(ctx, configID, "customRuleAction", m)
@@ -66,11 +70,11 @@ func resourceCustomRuleActionCreate(ctx context.Context, d *schema.ResourceData,
 		return diag.FromErr(err)
 	}
 	policyID, err := tools.GetStringValue("security_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	ruleID, err := tools.GetIntValue("custom_rule_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	customruleaction, err := tools.GetStringValue("custom_rule_action", d)

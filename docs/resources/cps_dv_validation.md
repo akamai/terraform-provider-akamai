@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: Certificate Domain Validation"
-subcategory: "Certificate Provisioning System"
-description: |-
-  Domain Validation
+layout: akamai
+subcategory: Certificate Provisioning System
 ---
 
 # akamai_cps_dv_validation

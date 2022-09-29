@@ -7,14 +7,16 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
-func TestAccAkamaiExportConfiguration_data_basic(t *testing.T) {
+func TestAkamaiExportConfiguration_data_basic(t *testing.T) {
 	t.Run("Configuration Export Tests", func(t *testing.T) {
 		client := &mockappsec{}
 
 		getExportConfigurationResponse := appsec.GetExportConfigurationResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestDSExportConfiguration/ExportConfiguration.json"), &getExportConfigurationResponse)
+		err := json.Unmarshal(loadFixtureBytes("testdata/TestDSExportConfiguration/ExportConfiguration.json"), &getExportConfigurationResponse)
+		require.NoError(t, err)
 
 		client.On("GetExportConfiguration",
 			mock.Anything,

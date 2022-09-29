@@ -3,7 +3,6 @@ package appsec
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"strconv"
 
 	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -18,17 +17,19 @@ func dataSourceSiemSettings() *schema.Resource {
 		ReadContext: dataSourceSiemSettingsRead,
 		Schema: map[string]*schema.Schema{
 			"config_id": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "Unique identifier of the security configuration",
 			},
 			"json": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "JSON representation",
 			},
 			"output_text": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Text Export representation",
+				Description: "Text representation",
 			},
 		},
 	}
@@ -42,7 +43,7 @@ func dataSourceSiemSettingsRead(ctx context.Context, d *schema.ResourceData, m i
 	getSiemSettings := v2.GetSiemSettingsRequest{}
 
 	configID, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	getSiemSettings.ConfigID = configID
@@ -62,13 +63,15 @@ func dataSourceSiemSettingsRead(ctx context.Context, d *schema.ResourceData, m i
 
 	outputtext := ""
 	settingstext, err := RenderTemplates(ots, "siemsettingsDS", siemsettings)
-	if err == nil {
-		outputtext = outputtext + settingstext
+	if err != nil {
+		return diag.FromErr(err)
 	}
+	outputtext = outputtext + settingstext
 	policiestext, err := RenderTemplates(ots, "siempoliciesDS", siemsettings)
-	if err == nil {
-		outputtext = outputtext + policiestext
+	if err != nil {
+		return diag.FromErr(err)
 	}
+	outputtext = outputtext + policiestext
 	if err := d.Set("output_text", outputtext); err != nil {
 		return diag.FromErr(err)
 	}

@@ -34,9 +34,9 @@ func resourceCustomDeny() *schema.Resource {
 		),
 		Schema: map[string]*schema.Schema{
 			"config_id": {
-				Type:     schema.TypeInt,
-				Required: true,
-				//ValidateFunc: ValidateConfigID,
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "Unique identifier of the security configuration",
 			},
 			"custom_deny_id": {
 				Type:        schema.TypeString,
@@ -48,6 +48,7 @@ func resourceCustomDeny() *schema.Resource {
 				Required:         true,
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsJSON),
 				DiffSuppressFunc: suppressCustomDenyJSONDiffs,
+				Description:      "JSON-formatted information about the properties and property values for the custom deny",
 			},
 		},
 	}

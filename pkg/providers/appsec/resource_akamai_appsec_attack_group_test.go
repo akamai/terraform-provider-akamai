@@ -9,9 +9,10 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
-func TestAccAkamaiAttackGroup_res_basic(t *testing.T) {
+func TestAkamaiAttackGroup_res_basic(t *testing.T) {
 	t.Run("match by AttackGroup ID", func(t *testing.T) {
 		client := &mockappsec{}
 
@@ -19,13 +20,16 @@ func TestAccAkamaiAttackGroup_res_basic(t *testing.T) {
 		conditionExceptionRawMessage := json.RawMessage(conditionExceptionJSON)
 
 		updateResponse := appsec.UpdateAttackGroupResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResAttackGroup/AttackGroup.json"), &updateResponse)
+		err := json.Unmarshal(loadFixtureBytes("testdata/TestResAttackGroup/AttackGroup.json"), &updateResponse)
+		require.NoError(t, err)
 
 		getResponse := appsec.GetAttackGroupResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResAttackGroup/AttackGroup.json"), &getResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResAttackGroup/AttackGroup.json"), &getResponse)
+		require.NoError(t, err)
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		require.NoError(t, err)
 
 		client.On("GetConfiguration",
 			mock.Anything,
@@ -67,7 +71,7 @@ func TestAccAkamaiAttackGroup_res_basic(t *testing.T) {
 
 }
 
-func TestAccAkamaiAttackGroup_res_error_updating_attack_group(t *testing.T) {
+func TestAkamaiAttackGroup_res_error_updating_attack_group(t *testing.T) {
 	t.Run("match by AttackGroup ID", func(t *testing.T) {
 		client := &mockappsec{}
 
@@ -75,13 +79,16 @@ func TestAccAkamaiAttackGroup_res_error_updating_attack_group(t *testing.T) {
 		conditionExceptionRawMessage := json.RawMessage(conditionExceptionJSON)
 
 		updateResponse := appsec.UpdateAttackGroupResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResAttackGroup/AttackGroup.json"), &updateResponse)
+		err := json.Unmarshal(loadFixtureBytes("testdata/TestResAttackGroup/AttackGroup.json"), &updateResponse)
+		require.NoError(t, err)
 
 		getResponse := appsec.GetAttackGroupResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResAttackGroup/AttackGroup.json"), &getResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResAttackGroup/AttackGroup.json"), &getResponse)
+		require.NoError(t, err)
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		require.NoError(t, err)
 
 		client.On("GetConfiguration",
 			mock.Anything,

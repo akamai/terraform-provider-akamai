@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: DNS Record"
-subcategory: "Edge DNS"
-description: |-
-  DNS record
+layout: akamai
+subcategory: Edge DNS
 ---
 
 # akamai_dns_record
@@ -35,7 +32,7 @@ resource "akamai_dns_record" "www" {
     name = "www.example.com"
     recordtype =  "CNAME"
     active = true
-    ttl =  600 
+    ttl =  600
     target = "origin.example.org.edgesuite.net"
 }
 ```
@@ -44,7 +41,7 @@ resource "akamai_dns_record" "www" {
 
 This resource supports these arguments for all record types:
 
-* `name` - (Required) The DNS record name. This is the node this DNS record is associated with. Also known as an owner name. 
+* `name` - (Required) The DNS record name. This is the node this DNS record is associated with. Also known as an owner name.
 * `zone` - (Required) The domain zone, including any nested subdomains.  
 * `recordType` - (Required) The DNS record type.  
 * `ttl` - (Required) The time to live (TTL) is a 32-bit signed integer for the time the resource record is cached. <br /> A value of `0` means that the resource record is not cached. It's only used for the transaction in progress and may be useful for extremely volatile data.  
@@ -132,7 +129,7 @@ A DS record requires these arguments:
 * `keytag` - The key tag of the DNSKEY record that the DS record refers to, in network byte order.
 * `algorithm` - The algorithm number of the DNSKEY resource record referred to by the DS record.
 * `digest_type` - Identifies the algorithm used to construct the digest.
-* `digest` - A base 16 encoded DS record includes a digest of the DNSKEY record it refers to. The digest is conifgured the canonical form of the DNSKEY record's fully qualified owner name with the DNSKEY RDATA, and then applying the digest algorithm.
+* `digest` - A base 16 encoded DS record includes a digest of the DNSKEY record it refers to. The digest is configured the canonical form of the DNSKEY record's fully qualified owner name with the DNSKEY RDATA, and then applying the digest algorithm.
 
 ### HINFO record
 
@@ -145,7 +142,7 @@ A HINFO record requires these arguments:
 
 The following fields are required:
 
-* `svc_priority` - Service priority associated with endpoint. Value mist be between 0 and 65535. A piority of 0 enables alias mode. 
+* `svc_priority` - Service priority associated with endpoint. Value mist be between 0 and 65535. A priority of 0 enables alias mode.
 * `svc_params` - Space separated list of endpoint parameters. Not allowed if service priority is 0.
 * `target_name` - Domain name of the service endpoint.
 
@@ -163,7 +160,7 @@ An MX record supports these arguments:
 * `priority` - (Optional) The preference value given to this MX record in relation to all other MX records. When a mailer needs to send mail to a certain DNS domain, it first contacts a DNS server for that domain and retrieves all the MX records. It then contacts the mailer with the lowest preference value. This value is ignored if an embedded priority exists in the target.
 * `priority_increment` - (Optional) An auto priority increment when multiple targets are provided with no embedded priority.
 
-See [Working with MX records](../guides/get_started_dns_zone#working-with-mx-records) in the [DNS Getting Started Guide](../guides/get_started_dns_zone) for more information.
+See [Working with MX records](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/edge-dns#working-with-mx-records) in the [DNS Getting Started Guide](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/edge-dns) for more information.
 
 ### NAPTR record
 
@@ -171,7 +168,7 @@ An NAPTR record requires these arguments:
 
 * `order` - A 16-bit unsigned integer specifying the order in which the NAPTR records need to be processed to ensure the correct ordering of rules. Low numbers are processed before high numbers. Once a NAPTR is found whose rule matches the target, the client shouldn't consider any NAPTRs with a higher value for order (except as noted below for the flagsnapter field).
 * `preference` - A 16-bit unsigned integer that specifies the order in which NAPTR records with equal order values are processed. Low numbers are processed before high numbers.
-* `flagsnaptr` - A character string containing flags that control how fields in the record are rewritten and interpreted. Flags are single alphanumeric characters. 
+* `flagsnaptr` - A character string containing flags that control how fields in the record are rewritten and interpreted. Flags are single alphanumeric characters.
 * `service` - Specifies the services available down this rewrite path.
 * `regexp` - A regular expression string containing a substitution expression. This substitution expression is applied to the original client string in order to construct the next domain name to lookup.
 * `replacement` - Depending on the value of the `flags` attribute, the next NAME to query for NAPTR, SRV, or address records. Enter a fully qualified domain name as the value.
@@ -268,7 +265,7 @@ An SOA record requires these arguments:
 
 An SVCB record requires these arguments:
 
-* `svc_priority` - Service priority associated with endpoint. Value mist be between 0 and 65535. A piority of 0 enables alias mode.
+* `svc_priority` - Service priority associated with endpoint. Value mist be between 0 and 65535. A priority of 0 enables alias mode.
 * `svc_params` - Space separated list of endpoint parameters. Not allowed if service priority is 0.
 * `target_name` - Domain name of the service endpoint.
 
@@ -277,7 +274,7 @@ An SVCB record requires these arguments:
 A TLSA record requires these arguments:
 
 * `usage` - Specifies the association used to match the certificate presented in the TLS handshake.
-* `selector` - Specifies the part of the TLS certificate presented by the server that is matched against the association data. 
+* `selector` - Specifies the part of the TLS certificate presented by the server that is matched against the association data.
 * `match_type` - Specifies how the certificate association is presented.
 * `certificate` - Specifies the certificate association data to be matched.
 

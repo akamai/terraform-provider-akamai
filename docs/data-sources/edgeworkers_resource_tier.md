@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: EdgeWorkers resource tier"
-subcategory: "EdgeWorkers"
-description: |-
- EdgeWorkers resource tier
+layout: akamai
+subcategory: EdgeWorkers
 ---
 
 # akamai_edgeworkers_resource_tier

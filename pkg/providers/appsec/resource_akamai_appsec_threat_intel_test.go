@@ -7,20 +7,24 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
-func TestAccAkamaiThreatIntel_res_basic(t *testing.T) {
+func TestAkamaiThreatIntel_res_basic(t *testing.T) {
 	t.Run("match by Threat Intel ID", func(t *testing.T) {
 		client := &mockappsec{}
 
 		updateThreatIntelResponse := appsec.UpdateThreatIntelResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResThreatIntel/ThreatIntel.json"), &updateThreatIntelResponse)
+		err := json.Unmarshal(loadFixtureBytes("testdata/TestResThreatIntel/ThreatIntel.json"), &updateThreatIntelResponse)
+		require.NoError(t, err)
 
 		getThreatIntelResponse := appsec.GetThreatIntelResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResThreatIntel/ThreatIntel.json"), &getThreatIntelResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResThreatIntel/ThreatIntel.json"), &getThreatIntelResponse)
+		require.NoError(t, err)
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		require.NoError(t, err)
 
 		client.On("GetConfiguration",
 			mock.Anything,

@@ -1,14 +1,11 @@
 ---
-layout: "akamai"
-page_title: "Akamai: Enrollments"
-subcategory: "Certificate Provisioning System"
-description: |-
-  Certificate Provisioning System enrollments policies.
+layout: akamai
+subcategory: Certificate Provisioning System
 ---
 
 # akamai_cps_enrollments
 
-Use the `akamai_cps_enrollments` data source to return data for all of a specific contract's enrollments. 
+Use the `akamai_cps_enrollments` data source to return data for all of a specific contract's enrollments.
 
 ## Basic usage
 
@@ -48,9 +45,9 @@ This data source supports this argument:
 
 This data source returns these attributes:
 
-* `enrollments` 
-  * `enrollment_id` 
-  * `common_name` - The fully qualified domain name (FQDN) used for the certificate. 
+* `enrollments`
+  * `enrollment_id`
+  * `common_name` - The fully qualified domain name (FQDN) used for the certificate.
   * `sans` - Additional common names in a Subject Alternative Names (SAN) list.
   * `secure_network` - The type of deployment network used. `standard-tls` deploys your certificate to Akamai's standard secure network, but it isn't PCI compliant. `enhanced-tls` deploys your certificate to Akamai's more secure network with PCI compliance capability.
   * `sni_only` - Whether you enabled SNI-only extension for the enrollment. Server Name Indication (SNI) is an extension of the Transport Layer Security (TLS) networking protocol. It allows a server to present multiple certificates on the same IP address. All modern web browsers support the SNI extension. If you have the same SAN on two or more certificates with the SNI-only option set, Akamai may serve traffic using any certificate which matches the requested SNI hostname.
@@ -62,7 +59,7 @@ This data source returns these attributes:
     * `organization` - The name of your company or organization.
     * `organizational_unit` - Your organizational unit.
     * `state` - Your state or province.
-  * `enable_multi_stacked_certificates` - If present, an ECDSA certificate is enabled in addition to an RSA certificate. CPS automatically performs all certificate operations on both certificates, and uses the best certificate for each client connection to your secure properties. 
+  * `enable_multi_stacked_certificates` - If present, an ECDSA certificate is enabled in addition to an RSA certificate. CPS automatically performs all certificate operations on both certificates, and uses the best certificate for each client connection to your secure properties.
   * `network_configuration` - The network information and TLS Metadata you want CPS to use to push the completed certificate to the network.
     * `client_mutual_authentication` - If present, shows the configuration for client mutual authentication. Specifies the trust chain that is used to verify client certificates and some configuration options.
       * `send_ca_list_to_client` - If present, the server is enabled to send the certificate authority (CA) list to the client.
@@ -70,7 +67,7 @@ This data source returns these attributes:
       * `set_id` - The identifier of the set of trust chains, created in [Trust Chain Manager](https://techdocs.akamai.com/trust-chain-mgr/docs/welcome-trust-chain-manager).
     * `disallowed_tls_versions` - The TLS protocol version that is not trusted. CPS uses the TLS protocols that Akamai currently supports as a best practice.
     * `clone_dns_names` - If present, CPS directs traffic using all the SANs listed in the SANs parameter when the enrollment was created.
-    * `geography` - A list of where you can deploy the certificate. Either `core` to specify worldwide deployment (including China and Russia), `china+core` to specify worldwide deployment and China, or `russia+core` to specify worldwide deployment and Russia. 
+    * `geography` - A list of where you can deploy the certificate. Either `core` to specify worldwide deployment (including China and Russia), `china+core` to specify worldwide deployment and China, or `russia+core` to specify worldwide deployment and Russia.
     * `must_have_ciphers` - If present, shows ciphers included for enrollment when deployed on the network. The default is `ak-akamai-default` when it is not set. For more information on cipher profiles, see [Akamai community](https://community.akamai.com/customers/s/article/SSL-TLS-Cipher-Profiles-for-Akamai-Secure-CDNrxdxm).
     * `ocsp_stapling` - If present, the enrollment is using OCSP stapling. OCSP stapling improves performance by including a valid OCSP response in every TLS handshake. This option allows the visitors on your site to query the Online Certificate Status Protocol (OCSP) server at regular intervals to obtain a signed time-stamped OCSP response. Possible values are `on`, `off`, or `not-set`.
     * `preferred_ciphers` - If present, shows the ciphers that you prefer to include for the enrollment while deploying it on the network. The default is `ak-akamai-default` when its not set. For more information on cipher profiles, see [Akamai community](https://community.akamai.com/customers/s/article/SSL-TLS-Cipher-Profiles-for-Akamai-Secure-CDNrxdxm).

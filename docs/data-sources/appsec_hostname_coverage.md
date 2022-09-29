@@ -1,15 +1,7 @@
 ---
-layout: "akamai"
-page_title: "Akamai: HostnameCoverage"
-subcategory: "Application Security"
-description: |-
- HostnameCoverage
+layout: akamai
+subcategory: Application Security
 ---
-
-
-
-
-
 
 # akamai_appsec_hostname_coverage
 

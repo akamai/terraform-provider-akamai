@@ -31,17 +31,19 @@ func resourceVersionNotes() *schema.Resource {
 		},
 		Schema: map[string]*schema.Schema{
 			"config_id": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "Unique identifier of the security configuration",
 			},
 			"version_notes": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Brief description of the security configuration version",
 			},
 			"output_text": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Text Export representation",
+				Description: "Text representation",
 			},
 		},
 	}
@@ -54,7 +56,7 @@ func resourceVersionNotesCreate(ctx context.Context, d *schema.ResourceData, m i
 	logger.Debugf("in resourceVersionNotesCreate")
 
 	configID, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	version, err := getModifiableConfigVersion(ctx, configID, "editVersionNotes", m)
@@ -62,7 +64,7 @@ func resourceVersionNotesCreate(ctx context.Context, d *schema.ResourceData, m i
 		return diag.FromErr(err)
 	}
 	notes, err := tools.GetStringValue("version_notes", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -118,10 +120,11 @@ func resourceVersionNotesRead(ctx context.Context, d *schema.ResourceData, m int
 	ots := OutputTemplates{}
 	InitTemplates(ots)
 	outputtext, err := RenderTemplates(ots, "versionNotesDS", versionnotes)
-	if err == nil {
-		if err = d.Set("output_text", outputtext); err != nil {
-			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
-		}
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if err = d.Set("output_text", outputtext); err != nil {
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	return nil

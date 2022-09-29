@@ -18,7 +18,7 @@ import (
 )
 
 var (
-	changeAckDeadline      = 1 * time.Minute
+	changeAckDeadline      = 5 * time.Minute
 	changeAckRetryInterval = 10 * time.Second
 )
 

@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: ApiEndpoints"
-subcategory: "Application Security"
-description: |-
- ApiEndpoints
+layout: akamai
+subcategory: Application Security
 ---
 
 # akamai_appsec_api_endpoints

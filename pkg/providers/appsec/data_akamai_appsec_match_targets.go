@@ -31,22 +31,24 @@ func dataSourceMatchTargets() *schema.Resource {
 		ReadContext: dataSourceMatchTargetsRead,
 		Schema: map[string]*schema.Schema{
 			"config_id": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "Unique identifier of the security configuration",
 			},
 			"match_target_id": {
-				Type:     schema.TypeInt,
-				Optional: true,
-			},
-			"output_text": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Text Export representation",
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Description: "Unique identifier of a specific match target for which to retrieve information",
 			},
 			"json": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "JSON Export representation",
+			},
+			"output_text": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Text representation",
 			},
 		},
 	}
@@ -60,7 +62,7 @@ func dataSourceMatchTargetsRead(ctx context.Context, d *schema.ResourceData, m i
 	getMatchTargets := appsec.GetMatchTargetsRequest{}
 
 	configID, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	getMatchTargets.ConfigID = configID
@@ -102,10 +104,11 @@ func dataSourceMatchTargetsRead(ctx context.Context, d *schema.ResourceData, m i
 		matchtargetsOutputText = append(matchtargetsOutputText, MatchTargetOutputText{value.TargetID, value.SecurityPolicy.PolicyID, APITarget})
 	}
 	websiteMatchTargetsText, err := RenderTemplates(ots, "matchTargetDS", matchtargetsOutputText)
-	if err == nil {
-		if err := d.Set("output_text", websiteMatchTargetsText); err != nil {
-			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
-		}
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if err := d.Set("output_text", websiteMatchTargetsText); err != nil {
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	d.SetId(strconv.Itoa(getMatchTargets.ConfigID))

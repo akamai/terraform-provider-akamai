@@ -1,16 +1,13 @@
 ---
-layout: "akamai"
-page_title: "Akamai: gtm asmap"
-subcategory: "Global Traffic Management"  
-description: |-
-  GTM AS Map
+layout: akamai
+subcategory: Global Traffic Management  
 ---
 
 # akamai_gtm_asmap
 
-Use the `akamai_gtm_asmap` resource to create, configure, and import a GTM Autonomous System (AS) map. AS mapping lets you configure a GTM property that returns a CNAME based on the AS number associated with the requester's IP address. 
+Use the `akamai_gtm_asmap` resource to create, configure, and import a GTM Autonomous System (AS) map. AS mapping lets you configure a GTM property that returns a CNAME based on the AS number associated with the requester's IP address.
 
-You can reuse maps for multiple properties or create new ones. AS maps split the Internet into multiple AS block zones. Properties that use AS maps can specify handout integers for each zone. AS mapping lets you configure a property that directs users to a specific environment or to the origin. 
+You can reuse maps for multiple properties or create new ones. AS maps split the Internet into multiple AS block zones. Properties that use AS maps can specify handout integers for each zone. AS mapping lets you configure a property that directs users to a specific environment or to the origin.
 
 ~> **Note** Import requires an ID with this format: `existing_domain_name`:`existing_map_name`.
 
@@ -22,7 +19,7 @@ Basic usage:
 resource "akamai_gtm_asmap" "demo_asmap" {
     domain = "demo_domain.akadns.net"
     name = "demo_as"
-    default_datacenter { 
+    default_datacenter {
         datacenter_id = 5400
         nickname = "All Other AS numbers"
     }

@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: cloudlets_policy"
-subcategory: "Cloudlets"
-description: |-
-  Cloudlets Policy
+layout: akamai
+subcategory: Cloudlets
 ---
 
 # akamai_cloudlets_policy

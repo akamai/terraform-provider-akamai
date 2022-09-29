@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: ApiHostnameCoverageMatchTargets"
-subcategory: "Application Security"
-description: |-
- ApiHostnameCoverageMatchTargets
+layout: akamai
+subcategory: Application Security
 ---
 
 # akamai_appsec_hostname_coverage_match_targets

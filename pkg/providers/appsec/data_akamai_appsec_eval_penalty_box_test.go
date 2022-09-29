@@ -7,14 +7,16 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
-func TestAccAkamaiEvalPenaltyBox_data_basic(t *testing.T) {
+func TestAkamaiEvalPenaltyBox_data_basic(t *testing.T) {
 	t.Run("match by EvalPenaltyBox ID", func(t *testing.T) {
 		client := &mockappsec{}
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json")), &config)
+		err := json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		require.NoError(t, err)
 
 		client.On("GetConfiguration",
 			mock.Anything,
@@ -22,7 +24,8 @@ func TestAccAkamaiEvalPenaltyBox_data_basic(t *testing.T) {
 		).Return(&config, nil)
 
 		penaltyBox := appsec.GetPenaltyBoxResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSEvalPenaltyBox/PenaltyBox.json")), &penaltyBox)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestDSEvalPenaltyBox/PenaltyBox.json"), &penaltyBox)
+		require.NoError(t, err)
 
 		client.On("GetEvalPenaltyBox",
 			mock.Anything, // ctx is irrelevant for this test

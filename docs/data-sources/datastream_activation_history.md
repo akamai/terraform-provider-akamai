@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: DataStream Activation History"
-subcategory: "DataStream"
-description: |-
- Activation History
+layout: akamai
+subcategory: DataStream
 ---
 
 # akamai_datastream_activation_history

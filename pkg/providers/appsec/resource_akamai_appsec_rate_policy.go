@@ -33,18 +33,21 @@ func resourceRatePolicy() *schema.Resource {
 		),
 		Schema: map[string]*schema.Schema{
 			"config_id": {
-				Type:     schema.TypeInt,
-				Required: true,
-			},
-			"rate_policy_id": {
-				Type:     schema.TypeInt,
-				Computed: true,
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "Unique identifier of the security configuration",
 			},
 			"rate_policy": {
 				Type:             schema.TypeString,
 				Required:         true,
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsJSON),
 				DiffSuppressFunc: suppressEquivalentJSONDiffsGeneric,
+				Description:      "JSON-formatted definition of the rate policy",
+			},
+			"rate_policy_id": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Unique identifier of the rate policy",
 			},
 		},
 	}

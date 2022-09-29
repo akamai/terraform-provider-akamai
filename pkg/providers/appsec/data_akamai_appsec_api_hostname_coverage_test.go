@@ -7,14 +7,16 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
-func TestAccAkamaiApiHostnameCoverage_data_basic(t *testing.T) {
+func TestAkamaiApiHostnameCoverage_data_basic(t *testing.T) {
 	t.Run("match by ApiHostnameCoverage ID", func(t *testing.T) {
 		client := &mockappsec{}
 
 		getCoverageResponse := appsec.GetApiHostnameCoverageResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestDSApiHostnameCoverage/ApiHostnameCoverage.json"), &getCoverageResponse)
+		err := json.Unmarshal(loadFixtureBytes("testdata/TestDSApiHostnameCoverage/ApiHostnameCoverage.json"), &getCoverageResponse)
+		require.NoError(t, err)
 
 		client.On("GetApiHostnameCoverage",
 			mock.Anything,

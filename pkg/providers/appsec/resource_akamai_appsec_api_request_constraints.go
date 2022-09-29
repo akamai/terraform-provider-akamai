@@ -33,21 +33,25 @@ func resourceAPIRequestConstraints() *schema.Resource {
 		},
 		Schema: map[string]*schema.Schema{
 			"config_id": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "Unique identifier of the security configuration",
 			},
 			"security_policy_id": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Unique identifier of the security policy",
 			},
 			"api_endpoint_id": {
-				Type:     schema.TypeInt,
-				Optional: true,
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Description: "Unique identifier of the API endpoint to which the constraint will be assigned",
 			},
 			"action": {
 				Type:             schema.TypeString,
 				Required:         true,
 				ValidateDiagFunc: ValidateActions,
+				Description:      "Action to be taken when the API request constraint is triggered",
 			},
 		},
 	}
@@ -60,7 +64,7 @@ func resourceAPIRequestConstraintsCreate(ctx context.Context, d *schema.Resource
 	logger.Debugf("in resourceAPIRequestConstraintsCreate")
 
 	configID, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	version, err := getModifiableConfigVersion(ctx, configID, "apirequestconstraints", m)
@@ -68,7 +72,7 @@ func resourceAPIRequestConstraintsCreate(ctx context.Context, d *schema.Resource
 		return diag.FromErr(err)
 	}
 	policyID, err := tools.GetStringValue("security_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	apiEndpointID, err := tools.GetIntValue("api_endpoint_id", d)
@@ -76,7 +80,7 @@ func resourceAPIRequestConstraintsCreate(ctx context.Context, d *schema.Resource
 		return diag.FromErr(err)
 	}
 	action, err := tools.GetStringValue("action", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 

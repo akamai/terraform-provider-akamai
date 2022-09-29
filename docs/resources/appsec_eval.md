@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: Evaluation"
-subcategory: "Application Security"
-description: |-
- Evaluation
+layout: akamai
+subcategory: Application Security
 ---
 
 # akamai_appsec_eval
@@ -75,7 +72,7 @@ This resource supports the following arguments:
 
 The following options can be used to determine the information returned, and how that returned information is formatted:
 
-- `evaluation_ruleset`. Versioning information for the Kona Rule Set being evaluated.
+- `evaluating_ruleset`. Versioning information for the Kona Rule Set being evaluated.
 - `expiration_date`. Date when the evaluation period ends.
 - `current_ruleset`. Versioning information for the Kona Rule Set currently in use on the production network.
 - `eval_status`. If **true**, an evaluation is currently in progress; if **false**, evaluation is either paused or is not running.

@@ -7,17 +7,20 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
-func TestAccAkamaiIPGeo_data_basic(t *testing.T) {
+func TestAkamaiIPGeo_data_basic(t *testing.T) {
 	t.Run("match by IPGeo ID", func(t *testing.T) {
 		client := &mockappsec{}
 
 		getIPGeoResponse := appsec.GetIPGeoResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestDSIPGeo/IPGeo.json"), &getIPGeoResponse)
+		err := json.Unmarshal(loadFixtureBytes("testdata/TestDSIPGeo/IPGeo.json"), &getIPGeoResponse)
+		require.NoError(t, err)
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		require.NoError(t, err)
 
 		client.On("GetConfiguration",
 			mock.Anything,

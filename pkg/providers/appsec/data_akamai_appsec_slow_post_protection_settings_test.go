@@ -7,14 +7,16 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
-func TestAccAkamaiSlowPostProtectionSettings_data_basic(t *testing.T) {
+func TestAkamaiSlowPostProtectionSettings_data_basic(t *testing.T) {
 	t.Run("match by SlowPostProtectionSettings ID", func(t *testing.T) {
 		client := &mockappsec{}
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		err := json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		require.NoError(t, err)
 
 		client.On("GetConfiguration",
 			mock.Anything,
@@ -22,7 +24,8 @@ func TestAccAkamaiSlowPostProtectionSettings_data_basic(t *testing.T) {
 		).Return(&config, nil)
 
 		getSlowPostProtectionSettingsResponse := appsec.GetSlowPostProtectionSettingsResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestDSSlowPostProtectionSettings/SlowPostProtectionSettings.json"), &getSlowPostProtectionSettingsResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestDSSlowPostProtectionSettings/SlowPostProtectionSettings.json"), &getSlowPostProtectionSettingsResponse)
+		require.NoError(t, err)
 
 		client.On("GetSlowPostProtectionSettings",
 			mock.Anything,

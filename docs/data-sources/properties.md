@@ -1,13 +1,9 @@
 ---
-layout: "akamai"
-page_title: "Akamai: akamai_properties"
-subcategory: "Property Provisioning"
-description: |-
- Properties
+layout: akamai
+subcategory: Property Provisioning
 ---
 
 # akamai_properties
-
 
 Use the `akamai_properties` data source to query and retrieve the list of properties for a group and contract
 based on the [EdgeGrid API client token](https://techdocs.akamai.com/developer/docs/authenticate-with-edgegrid) you're using.

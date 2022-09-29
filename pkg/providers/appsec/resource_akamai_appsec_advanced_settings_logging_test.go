@@ -7,23 +7,28 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
-func TestAccAkamaiAdvancedSettingsLogging_res_basic(t *testing.T) {
+func TestAkamaiAdvancedSettingsLogging_res_basic(t *testing.T) {
 	t.Run("match by AdvancedSettingsLogging ID", func(t *testing.T) {
 		client := &mockappsec{}
 
 		configResponse := appsec.GetConfigurationResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &configResponse)
+		err := json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &configResponse)
+		require.NoError(t, err)
 
 		getResponse := appsec.GetAdvancedSettingsLoggingResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResAdvancedSettingsLogging/AdvancedSettingsLogging.json"), &getResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResAdvancedSettingsLogging/AdvancedSettingsLogging.json"), &getResponse)
+		require.NoError(t, err)
 
 		updateResponse := appsec.UpdateAdvancedSettingsLoggingResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResAdvancedSettingsLogging/AdvancedSettingsLogging.json"), &updateResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResAdvancedSettingsLogging/AdvancedSettingsLogging.json"), &updateResponse)
+		require.NoError(t, err)
 
 		removeResponse := appsec.RemoveAdvancedSettingsLoggingResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResAdvancedSettingsLogging/AdvancedSettingsLogging.json"), &removeResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResAdvancedSettingsLogging/AdvancedSettingsLogging.json"), &removeResponse)
+		require.NoError(t, err)
 
 		client.On("GetConfiguration",
 			mock.Anything,

@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: cloudlets_application_load_balancer_match_rule"
-subcategory: "Cloudlets"
-description: |-
- Application Load Balancer match rule
+layout: akamai
+subcategory: Cloudlets
 ---
 
 # akamai_cloudlets_application_load_balancer_match_rule

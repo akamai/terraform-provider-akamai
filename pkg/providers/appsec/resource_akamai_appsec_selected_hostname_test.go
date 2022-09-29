@@ -7,23 +7,28 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
-func TestAccAkamaiSelectedHostname_res_basic(t *testing.T) {
+func TestAkamaiSelectedHostname_res_basic(t *testing.T) {
 	t.Run("match by SelectedHostname ID", func(t *testing.T) {
 		client := &mockappsec{}
 
 		updateSelectedHostnamesResponse := appsec.UpdateSelectedHostnamesResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResSelectedHostname/SelectedHostname.json"), &updateSelectedHostnamesResponse)
+		err := json.Unmarshal(loadFixtureBytes("testdata/TestResSelectedHostname/SelectedHostname.json"), &updateSelectedHostnamesResponse)
+		require.NoError(t, err)
 
 		getSelectedHostnamesResponse := appsec.GetSelectedHostnamesResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResSelectedHostname/SelectedHostname.json"), &getSelectedHostnamesResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResSelectedHostname/SelectedHostname.json"), &getSelectedHostnamesResponse)
+		require.NoError(t, err)
 
 		getSelectedHostnamesResponseAfterUpdate := appsec.GetSelectedHostnamesResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResSelectedHostname/SelectedHostname.json"), &getSelectedHostnamesResponseAfterUpdate)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResSelectedHostname/SelectedHostname.json"), &getSelectedHostnamesResponseAfterUpdate)
+		require.NoError(t, err)
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		require.NoError(t, err)
 
 		client.On("GetConfiguration",
 			mock.Anything,

@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: Slow Post"
-subcategory: "Application Security"
-description: |-
- Slow Post
+layout: akamai
+subcategory: Application Security
 ---
 
 # akamai_appsec_slow_post

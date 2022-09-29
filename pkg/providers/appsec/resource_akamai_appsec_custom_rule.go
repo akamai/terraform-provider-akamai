@@ -3,7 +3,6 @@ package appsec
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -34,18 +33,20 @@ func resourceCustomRule() *schema.Resource {
 		},
 		Schema: map[string]*schema.Schema{
 			"config_id": {
-				Type:     schema.TypeInt,
-				Required: true,
-			},
-			"custom_rule_id": {
-				Type:     schema.TypeInt,
-				Computed: true,
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "Unique identifier of the security configuration",
 			},
 			"custom_rule": {
 				Type:             schema.TypeString,
 				Required:         true,
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsJSON),
 				DiffSuppressFunc: suppressEquivalentJSONDiffsGeneric,
+				Description:      "JSON-formatted definition of the custom rule",
+			},
+			"custom_rule_id": {
+				Type:     schema.TypeInt,
+				Computed: true,
 			},
 		},
 	}
@@ -58,12 +59,15 @@ func resourceCustomRuleCreate(ctx context.Context, d *schema.ResourceData, m int
 	logger.Debugf("in resourceCustomRuleCreate")
 
 	configID, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	jsonpostpayload := d.Get("custom_rule")
-	jsonPayloadRaw := []byte(jsonpostpayload.(string))
+	jsonpostpayload, err := tools.GetStringValue("custom_rule", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	jsonPayloadRaw := []byte(jsonpostpayload)
 	rawJSON := (json.RawMessage)(jsonPayloadRaw)
 
 	createCustomRule := appsec.CreateCustomRuleRequest{

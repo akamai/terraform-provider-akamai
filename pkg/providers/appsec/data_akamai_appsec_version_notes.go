@@ -3,7 +3,6 @@ package appsec
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -18,8 +17,9 @@ func dataSourceVersionNotes() *schema.Resource {
 		ReadContext: dataSourceVersionNotesRead,
 		Schema: map[string]*schema.Schema{
 			"config_id": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "Unique identifier of the security configuration",
 			},
 			"json": {
 				Type:        schema.TypeString,
@@ -29,7 +29,7 @@ func dataSourceVersionNotes() *schema.Resource {
 			"output_text": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Text Export representation",
+				Description: "Text representation",
 			},
 		},
 	}
@@ -43,7 +43,7 @@ func dataSourceVersionNotesRead(ctx context.Context, d *schema.ResourceData, m i
 	getVersionNotes := appsec.GetVersionNotesRequest{}
 
 	configID, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	getVersionNotes.ConfigID = configID
@@ -62,10 +62,11 @@ func dataSourceVersionNotesRead(ctx context.Context, d *schema.ResourceData, m i
 	InitTemplates(ots)
 
 	outputtext, err := RenderTemplates(ots, "versionNotesDS", versionnotes)
-	if err == nil {
-		if err := d.Set("output_text", outputtext); err != nil {
-			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
-		}
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if err := d.Set("output_text", outputtext); err != nil {
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	jsonBody, err := json.Marshal(versionnotes)

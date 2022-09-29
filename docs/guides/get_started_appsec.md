@@ -243,7 +243,7 @@ resource "akamai_appsec_security_policy" "security_policy_create" {
 
 After we have a new configuration and a new security policy, all that's left is to specify the WAF mode. To do that, we need two things: the configuration ID and the security policy ID. We already have the configuration ID—we just used it to create the security policy. But what about the security policy ID?
 
-As it turns out, any time you create a security policy an attribute named **security_policy_id** is made available to you. If you look at the first line of our security policy block, you'll see both a resource name (akamai_appsec_security_policy) and an attribute that represents the new policy (`security_policy_creat`e). How do we know the ID of our new security policy? Once again, we use dot notation to string together our individual elements:
+As it turns out, any time you create a security policy an attribute named `security_policy_id` is made available to you. If you look at the first line of our security policy block, you'll see both a resource name (`akamai_appsec_security_policy`) and an attribute that represents the new policy (`security_policy_create`). How do we know the ID of our new security policy? Once again, we use dot notation to string together our individual elements:
 
 ```
 akamai_appsec_security_policy.security_policy_create.security_policy_id
@@ -386,10 +386,7 @@ In this example, the new configuration has been assigned the ID **76982**.
 
 
 
-### <a id="activateconfig"></a>Activate a security configuration
-
-> **Important**. The release of Akamai Terraform provider version 2.0.0 includes changes to the **akamai_appsec_activations** resource. The examples used in this article assume you’re using a version of the provider released prior to 2.0.0. If you’re using provider version 2.0.0 or later see the updated [akamai_appsec_activations](https://registry.terraform.io/providers/akamai/akamai/latest/docs/resources/appsec_activations) resource documentation for more information.
-
+### Activate a security configuration
 
 You can use Terraform to activate a configuration on either the staging network or the production network. A Terraform configuration for doing this looks similar to the following:
 
@@ -440,17 +437,16 @@ Inside this block we include these arguments and argument values:
 | `notes`               | Information about the configuration and the reason for its activation. |
 | `notification_emails` | JSON array of email addresses of people to be notified when activation is complete. To send notification emails to multiple people, separate the individual email addresses by using commas:     <br /><br />`notification_emails = ["gstemp@akamai.com", "karim.nafir@mail.com"]` |
 
-> **Note**. If you’re running Akamai Terraform provider version 2.0.0 or later, the arguments available to you have changed. See the [akamai_appsec_activations](https://registry.terraform.io/providers/akamai/akamai/latest/docs/resources/appsec_activations) resource documentation for details.
-
 From here we can run `terraform plan` to verify our syntax, then run `terraform apply` to activate the security configuration.
 
 
 
 ------
 
-## <a id="hostname"></a>Add a hostname to a security configuration
+## Add a hostname to a security configuration
 
 Topics in this section:
+
 - [Return a collection of selectable hostnames](#return)
 - [Add a hostname to a security configuration](#addhost)
 
@@ -553,7 +549,7 @@ Incidentally, if you try adding a hostname that *isn't* on the list of selectabl
 
 
 
-### <a id="addhost">Add a hostname to a security configuration
+### Add a hostname to a security configuration
 
 After you've chosen a hostname (or set of hostnames), you can add these hosts to a security configuration by using the [akamai_appsec_selected_hostnames](https://registry.terraform.io/providers/akamai/akamai/latest/docs/resources/appsec_selected_hostnames) resource and a Terraform configuration like this one:
 
@@ -622,12 +618,10 @@ By comparison, if we set `mode` to **REPLACE**, the existing set of hostnames ar
 
 ------
 
-## <a id="activate"></a>Activate a security configuration
+## Activate a security configuration
 
 Topics in this section:
 - [Reactivate a security configuration](#reactivate)
-
-> **Important**. The release of Akamai Terraform provider version 2.0.0 includes changes to the **akamai_appsec_activations** resource. The examples used in this article assume you’re using a version of the provider released prior to 2.0.0. If you’re using provider version 2.0.0 or later see the updated [akamai_appsec_activations](https://registry.terraform.io/providers/akamai/akamai/latest/docs/resources/appsec_activations) resource documentation for more information.
 
 Security configurations must be activated before they can begin analyzing and responding to user requests. Typically, activation is a two-step process: first the configuration is activated on the staging network and then, after testing and fine-tuning, the configuration is activated on the production network. At that point, the configuration is fully deployed, and is analyzing and responding to requests.
 
@@ -683,8 +677,6 @@ Inside this block we include the following arguments and argument values:
 | `activate`            | If **true** (the default value), the security configuration will be activated; if  **false**, the security configuration will be *deactivated*. Note that this argument is optional—if it's not included the security configuration will be activated. |
 | `notes`               | Information about the configuration and its activation.     |
 | `notification_emails` | JSON array of email addresses of the people to be notified when activation is complete. To send notification emails to multiple people, separate the individual email addresses by using commas:<br /><br />`notification_emails = ["gstemp@akamai.com", "karim.nafir@mail.com"]` |
-
-> **Note**. If you’re running Akamai Terraform provider version 2.0.0 or later, the arguments available to you have changed. See the [akamai_appsec_activationss](https://registry.terraform.io/providers/akamai/akamai/latest/docs/resources/appsec_activations) resource documentation for details.
 
 From here we can run `terraform plan` to verify our syntax, then run `terraform apply` to activate the security configuration. If everything goes as expected, you'll see output similar to the following:
 
@@ -2028,7 +2020,7 @@ Again, there's nothing very complicated here: we connect to the **Documentation*
 +-------------------+-----------------+
 ```
 
-If we'd like detailed information about any one of these custom denies, we can essentiaslly rerun this same configuration; the only thing we do different is reference the ID of the custom deny of interest (in this example, **deny_custom_64386**):
+If we'd like detailed information about any one of these custom denies, we can essentially rerun this same configuration; the only thing we do different is reference the ID of the custom deny of interest (in this example, **deny_custom_64386**):
 
 ```
 data "akamai_appsec_custom_deny" "custom_deny_list" {
@@ -2690,7 +2682,7 @@ After a network list has been created your firewall can’t block (or allow) cli
 
 | **Argument**          | **Description**                                              |
 | --------------------- | ------------------------------------------------------------ |
-| `network_list_id`     | Unique  identifier of the network list being activated. In our AAG Terraform configuration we refer to the network list ID like this:     <br /><br />`akamai_networklist_network_list.network_list.uniqueid`     <br /><br />That, as you might recall, is the ID assigned to the network list created in the  previous step. (It probably goes without saying that we can't hardcode a network list ID in our configuration: after all, the ID won't exist until after we've called `terraform apply` and the network list has been created.) |
+| `network_list_id`     | Unique  identifier of the network list being activated. In our AAG Terraform configuration we refer to the network list ID like this:     <br /><br />`akamai_networklist_network_list.network_list.uniqueid`     <br /><br />That, as you might recall, is the ID assigned to the network list created in the  previous step. (It probably goes without saying that we can't hard-code a network list ID in our configuration: after all, the ID won't exist until after we've called `terraform apply` and the network list has been created.) |
 | `network`             | Specifies the network that the network list is being activated for. Allowed values are:     <br />*  **staging**. “Sandbox” network used for testing and fine-tuning. The staging network includes a small subset of Akamai edge servers but is not used to protect your actual website.  <br />*  **production**. Network lists activated on the production network help protect your actual website.     <br /><br />If this argument is omitted, the network list is automatically activated on the staging network |
 | `notes`               | Arbitrary information about the network list and its activation. |
 | `notification_emails` | JSON array of email addresses of the people to be notified when the activation process finishes. |
@@ -2742,7 +2734,7 @@ Because of that, as soon as we create our security configuration we add a securi
 
 | **Argument**           | **Description**                                              |
 | ---------------------- | ------------------------------------------------------------ |
-| config_id              | Unique identifier of the security configuration to be associated with the new  policy. Note that, in our AAG Terraform configuration example we always refer to the security configuration ID like this: <br />`akamai_appsec_configuration.create_config.config_id`     <br /><br />That value represents the ID of the security configuration we just created. Needless to say, we can't hardcode the security configuration ID because that ID doesn’t exist until we run terraform apply and create the configuration. |
+| config_id              | Unique identifier of the security configuration to be associated with the new  policy. Note that, in our AAG Terraform configuration example we always refer to the security configuration ID like this: <br />`akamai_appsec_configuration.create_config.config_id`     <br /><br />That value represents the ID of the security configuration we just created. Needless to say, we can't hard-code the security configuration ID because that ID doesn’t exist until we run terraform apply and create the configuration. |
 | security_policy_name   | Unique name to be assigned to the new policy.               |
 | security_policy_prefix | Four-character prefix used to construct the security policy ID. For example, a policy with the ID **gms1_134637** is composed of three parts:     <br /><br />*  The security policy prefix (**gms1**)  <br />*  An underscore **(_**)  <br />*  A random value supplied when the policy is created (**134637**) |
 | default_settings       | If **true**, the policy is created using the default settings for a new security policy. If **false**, a “blank” security policy is created instead. In our sample configuration we'll set this value to **false**. |
@@ -3105,7 +3097,7 @@ The first two lines simply specify the IDs of the security configuration and the
 attack_group = each.value
 ```
 
-In this line we specify the ID of the attack group being configured. However, we don't hardcode the ID; instead we use the syntax **each.value**. When we use a **for_each** loop, the first time through the loop the **each.value** property represents the first value in the loop; for us, that's **SQL**. That means that, the first time through the loop, we configure the SQL attack group. When that's done, we loop around, and **each value** now represents **XSS**, the second value in the **for_each** loop. That means we now configure the XSS attack group. This continues until we've looped through all the values included in the **for_each** loop.
+In this line we specify the ID of the attack group being configured. However, we don't hard-code the ID; instead we use the syntax **each.value**. When we use a **for_each** loop, the first time through the loop the **each.value** property represents the first value in the loop; for us, that's **SQL**. That means that, the first time through the loop, we configure the SQL attack group. When that's done, we loop around, and **each value** now represents **XSS**, the second value in the **for_each** loop. That means we now configure the XSS attack group. This continues until we've looped through all the values included in the **for_each** loop.
 
 And what exactly are we configuring? We're simply setting the `attack_group_action` for each attack group to **deny**. In other words, any request that triggers any attack group is denied.
 
@@ -3150,7 +3142,7 @@ resource "akamai_appsec_activations" "new_activation" {
 
 When you create a security configuration, that configuration is automatically set to **inactive**; that means that the security configuration isn't actually analyzing and taking action on requests sent to your website. For that to happen, you employ the [akamai_appsec_activations](https://registry.terraform.io/providers/akamai/akamai/latest/docs/resources/appsec_activations) resource to activate the configuration. We won't go into the hows and whys of activating a security configuration in this documentation; for those details, see the **Activating a Security Configuration** article instead. Here we'll simply note that, when activating a configuration, you must specify the network where the configuration will be active. The akamai_appsec_activations resource gives you two choices when picking a network:
 
-- **STAGING**. Typically, you start by activating a configuration on the staging network (as in the sample block shown above). The staging network consists of a small number of Akamai edge servers and provides a sandbox environment for testing and fine-tuning your configuration. Note that a configuration on the staging network idoesn't with your actual website and your actual website requests. Again, this network is for testing and fine-tuning, not for protecting your site.
+- **STAGING**. Typically, you start by activating a configuration on the staging network (as in the sample block shown above). The staging network consists of a small number of Akamai edge servers and provides a sandbox environment for testing and fine-tuning your configuration. Note that a configuration on the staging network doesn't work with your actual website and your actual website requests. Again, this network is for testing and fine-tuning, not for protecting your site.
 - **PRODUCTION**. After you're satisfied with the performance of your security configuration, you can activate that configuration on the production network. Once activated there the configuration works with your actual website and your actual website requests.
 
 Without going into too much detail, we activate our security configuration by using the akamai_appsec_activations resource and the following arguments:

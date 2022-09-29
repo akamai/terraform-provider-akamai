@@ -18,21 +18,24 @@ func dataSourceCustomDeny() *schema.Resource {
 		ReadContext: dataSourceCustomDenyRead,
 		Schema: map[string]*schema.Schema{
 			"config_id": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "Unique identifier of the security configuration",
 			},
 			"custom_deny_id": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Unique identifier of the custom deny for which to return information",
 			},
 			"json": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "JSON representation",
 			},
 			"output_text": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Text Export representation",
+				Description: "Text representation",
 			},
 		},
 	}
@@ -46,7 +49,7 @@ func dataSourceCustomDenyRead(ctx context.Context, d *schema.ResourceData, m int
 	getCustomDeny := appsec.GetCustomDenyListRequest{}
 
 	configID, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	getCustomDeny.ConfigID = configID
@@ -71,10 +74,11 @@ func dataSourceCustomDenyRead(ctx context.Context, d *schema.ResourceData, m int
 	InitTemplates(ots)
 
 	outputtext, err := RenderTemplates(ots, "customDenyDS", customdeny)
-	if err == nil {
-		if err := d.Set("output_text", outputtext); err != nil {
-			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
-		}
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if err := d.Set("output_text", outputtext); err != nil {
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	jsonBody, err := json.Marshal(customdeny)

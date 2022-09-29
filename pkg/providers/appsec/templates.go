@@ -45,6 +45,7 @@ func RenderTemplates(ots map[string]*OutputTemplate, key string, str interface{}
 	templ, err := GetTemplate(ots, key)
 
 	if err == nil {
+		templateName := templ.TemplateName
 		var (
 			funcs = template.FuncMap{
 				"join":  strings.Join,
@@ -204,7 +205,7 @@ func RenderTemplates(ots map[string]*OutputTemplate, key string, str interface{}
 		if temptype == "TABULAR" {
 			tbl := table.NewWriter()
 			tbl.SetOutputMirror(&ostr)
-			tbl.SetTitle(key)
+			tbl.SetTitle(templateName)
 
 			columnnames := strings.Split(templ.TableTitle, "|")
 			columnwidths := make([]int, 0)
@@ -304,17 +305,17 @@ func InitTemplates(otm map[string]*OutputTemplate) {
 	otm["slowPost"] = &OutputTemplate{TemplateName: "slowPost", TableTitle: "Action|SLOW_RATE_THRESHOLD RATE|SLOW_RATE_THRESHOLD PERIOD|DURATION_THRESHOLD TIMEOUT", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .SecurityPolicies}}{{if $index}},{{end}}{{.SlowPost.Action}}|{{.SlowPost.DurationThreshold.Timeout}}|{{.SlowPost.SlowRateThreshold.Rate}}|{{.SlowPost.SlowRateThreshold.Period}}{{end}}"}
 	otm["wafModesDS"] = &OutputTemplate{TemplateName: "wafMode", TableTitle: "Current|Mode|Eval", TemplateType: "TABULAR", TemplateString: "{{.Current}}|{{.Mode}}|{{.Eval}}"}
 	otm["versionNotesDS"] = &OutputTemplate{TemplateName: "versionNotesDS", TableTitle: "Version Notes", TemplateType: "TABULAR", TemplateString: "{{.Notes}}"}
-	otm["wafProtectionDS"] = &OutputTemplate{TemplateName: "wafProtection", TableTitle: "APIConstraints|ApplicationLayerControls|BotmanControls|NetworkLayerControls|RateControls|ReputationControls|SlowPostControls", TemplateType: "TABULAR", TemplateString: "{{.ApplyAPIConstraints}}|{{.ApplyApplicationLayerControls}}|{{.ApplyBotmanControls}}|{{.ApplyNetworkLayerControls}}|{{.ApplyRateControls}}|{{.ApplyReputationControls}}|{{.ApplySlowPostControls}}"}
 	otm["AttackGroupDS"] = &OutputTemplate{TemplateName: "AttackGroup", TableTitle: "GroupID|Action|Exceptions|Advanced Exceptions", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .AttackGroups}}{{if $index}},{{end}}{{.Group}}|{{.Action}}|{{with .ConditionException}}{{if .Exception}}True{{else}}False{{end}}{{else}}False{{end}}|{{with .ConditionException}}{{if .AdvancedExceptionsList}}True{{else}}False{{end}}{{else}}False{{end}}{{end}}"}
 	otm["EvalGroupDS"] = &OutputTemplate{TemplateName: "EvalGroup", TableTitle: "GroupID|Action|Exceptions|Advanced Exceptions", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .AttackGroups}}{{if $index}},{{end}}{{.Group}}|{{.Action}}|{{with .ConditionException}}{{if .Exception}}True{{else}}False{{end}}{{else}}False{{end}}|{{with .ConditionException}}{{if .AdvancedExceptionsList}}True{{else}}False{{end}}{{else}}False{{end}}{{end}}"}
-	otm["rateProtectionDS"] = &OutputTemplate{TemplateName: "rateProtection", TableTitle: "APIConstraints|ApplicationLayerControls|BotmanControls|NetworkLayerControls|RateControls|ReputationControls|SlowPostControls", TemplateType: "TABULAR", TemplateString: "{{.ApplyAPIConstraints}}|{{.ApplyApplicationLayerControls}}|{{.ApplyBotmanControls}}|{{.ApplyNetworkLayerControls}}|{{.ApplyRateControls}}|{{.ApplyReputationControls}}|{{.ApplySlowPostControls}}"}
-	otm["reputationProtectionDS"] = &OutputTemplate{TemplateName: "reputationProtection", TableTitle: "APIConstraints|ApplicationLayerControls|BotmanControls|NetworkLayerControls|RateControls|ReputationControls|SlowPostControls", TemplateType: "TABULAR", TemplateString: "{{.ApplyAPIConstraints}}|{{.ApplyApplicationLayerControls}}|{{.ApplyBotmanControls}}|{{.ApplyNetworkLayerControls}}|{{.ApplyRateControls}}|{{.ApplyReputationControls}}|{{.ApplySlowPostControls}}"}
-	otm["slowpostProtectionDS"] = &OutputTemplate{TemplateName: "slowpostProtection", TableTitle: "APIConstraints|ApplicationLayerControls|BotmanControls|NetworkLayerControls|RateControls|ReputationControls|SlowPostControls", TemplateType: "TABULAR", TemplateString: "{{.ApplyAPIConstraints}}|{{.ApplyApplicationLayerControls}}|{{.ApplyBotmanControls}}|{{.ApplyNetworkLayerControls}}|{{.ApplyRateControls}}|{{.ApplyReputationControls}}|{{.ApplySlowPostControls}}"}
-	otm["networkProtectionDS"] = &OutputTemplate{TemplateName: "networkProtection", TableTitle: "APIConstraints|ApplicationLayerControls|BotmanControls|NetworkLayerControls|RateControls|ReputationControls|SlowPostControls", TemplateType: "TABULAR", TemplateString: "{{.ApplyAPIConstraints}}|{{.ApplyApplicationLayerControls}}|{{.ApplyBotmanControls}}|{{.ApplyNetworkLayerControls}}|{{.ApplyRateControls}}|{{.ApplyReputationControls}}|{{.ApplySlowPostControls}}"}
+	otm["protections"] = &OutputTemplate{TemplateName: "Security Policy Protections", TableTitle: "APIConstraints|ApplicationLayerControls|BotmanControls|MalwareControls|NetworkLayerControls|RateControls|ReputationControls|SlowPostControls", TemplateType: "TABULAR", TemplateString: "{{.ApplyAPIConstraints}}|{{.ApplyApplicationLayerControls}}|{{.ApplyBotmanControls}}|{{.ApplyMalwareControls}}|{{.ApplyNetworkLayerControls}}|{{.ApplyRateControls}}|{{.ApplyReputationControls}}|{{.ApplySlowPostControls}}"}
 	otm["RuleUpgradeDetails"] = &OutputTemplate{TemplateName: "RuleUpgradeDetails", TableTitle: "KRSToEvalUpdates|EvalToEvalUpdates|KRSToLatestUpdates", TemplateType: "TABULAR", TemplateString: "{{marshalruleupgradedetails .}}"}
 	otm["WAPSelectedHostsDS"] = &OutputTemplate{TemplateName: "WAPSelectedHostsDS", TableTitle: "SecurityPolicyID|Hostname|Status", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .}}{{if $index}},{{end}}{{.PolicyID}}|{{.Hostname}}|{{.Status}}{{end}}"}
 	otm["threatIntelDS"] = &OutputTemplate{TemplateName: "threatIntelDS", TableTitle: "Threat Intelligence", TemplateType: "TABULAR", TemplateString: "{{.ThreatIntel}}"}
 	otm["EvalDS"] = &OutputTemplate{TemplateName: "evalDS", TableTitle: "Current|Eval Status|Evaluation Mode|Mode", TemplateType: "TABULAR", TemplateString: "{{.Current}}|{{.Eval}}|{{.Evaluating}}|{{.Mode}}"}
+	otm["malwareContentTypesDS"] = &OutputTemplate{TemplateName: "malwareContentTypesDS", TableTitle: "Malware Content Types", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .ContentTypes}}{{if $index}},{{end}}{{.}}{{end}}"}
+	otm["malwarePolicies"] = &OutputTemplate{TemplateName: "malwarePolicies", TableTitle: "MalwarePolicyID|Name", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .MalwarePolicies}}{{if $index}},{{end}}{{.MalwarePolicyID}}|{{.Name}}{{end}}"}
+	otm["malwarePolicyActions"] = &OutputTemplate{TemplateName: "malwarePolicyActions", TableTitle: "ID|Action|UnscannedAction", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .MalwarePolicyActions}}{{if $index}},{{end}}{{.MalwarePolicyID}}| {{.Action}}|{{.UnscannedAction}}{{end}}"}
+	otm["IPGeoDS"] = &OutputTemplate{TemplateName: "IP/Geo Firewall", TableTitle: "Block", TemplateType: "TABULAR", TemplateString: "{{.Block}}"}
 
 	// TABULAR templates output used in data_akamai_appsec_export_configuration
 	otm["attackGroups"] = &OutputTemplate{TemplateName: "attackGroups", TableTitle: "ID|Name|Type|Ruleset Version ID", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .Rulesets}}{{$type := .Type}}{{$rulesetVersionID := .RulesetVersionID}}{{with .AttackGroups}}{{if $index}},{{end}}{{range $index, $element := .}}{{if $index}},{{end}}{{.Group}}|{{.GroupName}}|{{$type}}|{{$rulesetVersionID}}{{end}}{{end}}{{end}}"}

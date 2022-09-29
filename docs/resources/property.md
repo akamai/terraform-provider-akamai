@@ -1,14 +1,9 @@
 ---
-layout: "akamai"
-page_title: "Akamai: property"
-subcategory: "Property Provisioning"
-description: |-
-  Create and update Akamai properties.
+layout: akamai
+subcategory: Property Provisioning
 ---
 
 # akamai_property
-
-~> **Note** Version 1.0.0 of the Akamai Terraform Provider is now available for the Property Provisioning module. To upgrade to this version, you have to update this resource. See [Upgrade to Version 1.0.0](../guides/1.0_migration.md) for details.
 
 The `akamai_property` resource represents an Akamai property configuration.
 This resource lets you to create, update, and activate properties on the
@@ -56,7 +51,7 @@ This resource supports these arguments:
 * `name` - (Required) The property name.
 * `contract_id` - (Required) A contract's unique ID, including the `ctr_` prefix.
 * `group_id` - (Required) A group's unique ID, including the `grp_` prefix.
-* `product_id` - (Required to create, otherwise optional) A product's unique ID, including the `prd_` prefix. See [Common Product IDs](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/appendix#common-product-ids) for more information.
+* `product_id` - (Required to create, otherwise optional) A product's unique ID, including the `prd_` prefix. See [Common Product IDs](https://registry.terraform.io/providers/akamai/akamai/latest/docs/guides/shared-resources#common-product-ids) for more information.
 * `hostnames` - (Optional) A mapping of public hostnames to edge hostnames. See the [`akamai_property_hostnames`](../data-sources/property_hostnames.md) data source for details on the necessary DNS configuration.
 
     ~> **Note** Starting from version 1.5.0, the `hostnames` argument supports a new block type. If you created your code and state in version 1.4 or earlier, you need to manually update your configuration and replace the previous input for `hostnames` with the new syntax. This error indicates that the state is outdated: `Error: missing expected [`. To fix it, remove `akamai_property` from the state and import it again.

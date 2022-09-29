@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: contract"
-subcategory: "Common"
-description: |-
- Contract
+layout: akamai
+subcategory: Common
 ---
 
 # akamai_contract
@@ -27,8 +24,8 @@ resource "akamai_property" "example" {
 
 ## Argument reference
 
-This data source requires one of these group arguments to return contract information: 
-  * `group_name` - The name of the group containing the contract. 
+This data source requires one of these group arguments to return contract information:
+  * `group_name` - The name of the group containing the contract.
   * `group_id` - The unique ID of the group containing the contract, including the  `grp_` prefix.
 
 ### Deprecated arguments

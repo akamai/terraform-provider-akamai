@@ -1,14 +1,11 @@
 ---
-layout: "akamai"
-page_title: "Akamai: akamai_iam_role"
-subcategory: "Identity and Access Management"
-description: |-
- Identity and Access Management role
+layout: akamai
+subcategory: Identity and Access Management
 ---
 
 # akamai_iam_role (Beta)
 
-Use the `akamai_iam_role` resource to list and create roles for users. Roles are lists of permissions that are explicitly tied to both a user and a group. Users need roles to act on objects in a group. 
+Use the `akamai_iam_role` resource to list and create roles for users. Roles are lists of permissions that are explicitly tied to both a user and a group. Users need roles to act on objects in a group.
 
 ## Basic usage
 
@@ -29,7 +26,7 @@ This resource supports these arguments:
 
 * `name` - (Required) The name you supply for a role.
 * `description` - (Required) The description for a role.
-* `granted_roles` - (Required) The list of existing unique identifiers for the granted roles. Each identifier must be a unique integer. 
+* `granted_roles` - (Required) The list of existing unique identifiers for the granted roles. Each identifier must be a unique integer.
 
 ## Attributes reference
 

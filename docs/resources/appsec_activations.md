@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: Activations"
-subcategory: "Application Security"
-description: |-
-  Activations
+layout: akamai
+subcategory: Application Security
 ---
 
 # akamai_appsec_activations

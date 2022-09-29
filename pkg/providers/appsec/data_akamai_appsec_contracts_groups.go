@@ -18,29 +18,34 @@ func dataSourceContractsGroups() *schema.Resource {
 		ReadContext: dataSourceContractsGroupsRead,
 		Schema: map[string]*schema.Schema{
 			"contractid": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Unique identifier of an Akamai contract",
 			},
 			"groupid": {
-				Type:     schema.TypeInt,
-				Optional: true,
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Description: "Unique identifier of a contract group",
 			},
 			"json": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "JSON representation",
 			},
 			"output_text": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Text Export representation",
+				Description: "Text representation",
 			},
 			"default_contractid": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Default contract ID for the specified contract and group",
 			},
 			"default_groupid": {
-				Type:     schema.TypeInt,
-				Computed: true,
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Default group ID for the specified contract and group",
 			},
 		},
 	}
@@ -75,10 +80,11 @@ func dataSourceContractsGroupsRead(ctx context.Context, d *schema.ResourceData, 
 	InitTemplates(ots)
 
 	outputtext, err := RenderTemplates(ots, "contractsgroupsDS", contractsgroups)
-	if err == nil {
-		if err := d.Set("output_text", outputtext); err != nil {
-			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
-		}
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if err := d.Set("output_text", outputtext); err != nil {
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	jsonBody, err := json.Marshal(contractsgroups)

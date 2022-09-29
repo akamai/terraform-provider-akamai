@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: Penalty Box"
-subcategory: "Application Security"
-description: |-
- Penalty Box
+layout: akamai
+subcategory: Application Security
 ---
 
 # akamai_appsec_penalty_box

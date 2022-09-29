@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: DV Enrollment"
-subcategory: "Certificate Provisioning System"
-description: |-
-  DV Enrollment
+layout: akamai
+subcategory: Certificate Provisioning System
 ---
 
 # akamai_cps_dv_enrollment
@@ -117,7 +114,7 @@ The following arguments are supported:
       * `city` - (Required) The city where your organization resides.
       * `region` - (Required) The region of your organization, typically a state or province.
       * `postal_code` - (Required) The postal code of your organization.
-      * `country_code` - (Required) The code for the counrty where your organization resides.
+      * `country_code` - (Required) The code for the country where your organization resides.
 * `certificate_chain_type` - (Optional) Certificate trust chain type.
 * `csr` - (Required) 	When you create an enrollment, you also generate a certificate signing request (CSR) using CPS. CPS signs the CSR with the private key. The CSR contains all the information the CA needs to issue your certificate.
 

@@ -18,29 +18,34 @@ func dataSourceReputationProfileActions() *schema.Resource {
 		ReadContext: dataSourceReputationProfileActionsRead,
 		Schema: map[string]*schema.Schema{
 			"config_id": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "Unique identifier of the security configuration",
 			},
 			"security_policy_id": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Unique identifier of the security policy",
 			},
 			"reputation_profile_id": {
-				Type:     schema.TypeInt,
-				Optional: true,
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Description: "Unique identifier of a specific reputation profile for which to retrieve information",
 			},
 			"action": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Action to be taken when the specified reputation profile is triggered",
 			},
 			"json": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "JSON representation",
 			},
 			"output_text": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Text Export representation",
+				Description: "Text representation",
 			},
 		},
 	}
@@ -54,7 +59,7 @@ func dataSourceReputationProfileActionsRead(ctx context.Context, d *schema.Resou
 	getReputationProfileActions := appsec.GetReputationProfileActionsRequest{}
 
 	configID, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	getReputationProfileActions.ConfigID = configID
@@ -64,7 +69,7 @@ func dataSourceReputationProfileActionsRead(ctx context.Context, d *schema.Resou
 	}
 
 	policyID, err := tools.GetStringValue("security_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	getReputationProfileActions.PolicyID = policyID
@@ -85,10 +90,11 @@ func dataSourceReputationProfileActionsRead(ctx context.Context, d *schema.Resou
 	InitTemplates(ots)
 
 	outputtext, err := RenderTemplates(ots, "reputationProfilesActions", reputationprofileactions)
-	if err == nil {
-		if err := d.Set("output_text", outputtext); err != nil {
-			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
-		}
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if err := d.Set("output_text", outputtext); err != nil {
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	jsonBody, err := json.Marshal(reputationprofileactions)

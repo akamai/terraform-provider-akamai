@@ -18,33 +18,39 @@ func dataSourceAttackGroups() *schema.Resource {
 		ReadContext: dataSourceAttackGroupsRead,
 		Schema: map[string]*schema.Schema{
 			"config_id": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "Unique identifier of the security configuration",
 			},
 			"security_policy_id": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Unique identifier of the security policy",
 			},
 			"attack_group": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Unique identifier of the attack group for which to retrieve information",
 			},
 			"attack_group_action": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The action to be taken for the attack group if one was specified",
 			},
 			"condition_exception": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The condition and exception information for the attack group if one was specified",
 			},
 			"json": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "JSON representation",
 			},
 			"output_text": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Text Export representation",
+				Description: "Text representation",
 			},
 		},
 	}
@@ -58,7 +64,7 @@ func dataSourceAttackGroupsRead(ctx context.Context, d *schema.ResourceData, m i
 	getAttackGroups := appsec.GetAttackGroupsRequest{}
 
 	configID, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	getAttackGroups.ConfigID = configID
@@ -68,7 +74,7 @@ func dataSourceAttackGroupsRead(ctx context.Context, d *schema.ResourceData, m i
 	}
 
 	policyID, err := tools.GetStringValue("security_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	getAttackGroups.PolicyID = policyID
@@ -89,10 +95,20 @@ func dataSourceAttackGroupsRead(ctx context.Context, d *schema.ResourceData, m i
 	InitTemplates(ots)
 
 	outputtext, err := RenderTemplates(ots, "AttackGroupDS", attackgroups)
-	if err == nil {
-		if err := d.Set("output_text", outputtext); err != nil {
-			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
-		}
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if err := d.Set("output_text", outputtext); err != nil {
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+	}
+
+	jsonBody, err := json.Marshal(attackgroups)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("json", string(jsonBody)); err != nil {
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	if len(attackgroups.AttackGroups) == 1 {
@@ -106,15 +122,6 @@ func dataSourceAttackGroupsRead(ctx context.Context, d *schema.ResourceData, m i
 		}
 
 		if err := d.Set("condition_exception", string(conditionException)); err != nil {
-			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
-		}
-
-		jsonBody, err := json.Marshal(attackgroups)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-
-		if err := d.Set("json", string(jsonBody)); err != nil {
 			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 		}
 	}

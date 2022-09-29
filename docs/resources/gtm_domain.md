@@ -1,14 +1,11 @@
 ---
-layout: "akamai"
-page_title: "Akamai: gtm domain"
-subcategory: "Global Traffic Management"
-description: |-
-  GTM Domain
+layout: akamai
+subcategory: Global Traffic Management
 ---
 
 # akamai_gtm_domain
 
-Use the `akamai_gtm_domain` resource to create, configure, and import a GTM Domain, which is a basic building block of a traffic management configuration. 
+Use the `akamai_gtm_domain` resource to create, configure, and import a GTM Domain, which is a basic building block of a traffic management configuration.
 
 ~> **Note** Import requires an ID with this format: `existing_domain_name`.
 
@@ -33,7 +30,7 @@ This resource supports these arguments:
 * `contract` - (Required) If creating a domain, the contract ID.
 * `group` - (Required) If creating a domain, the currently selected group ID.
 * `name` - (Required) The DNS name for a collection of GTM Properties.
-* `type` - (Required) Th type of GTM domain. Options include `failover-only`, `static`, `weighted`, `basic`, or `full`. 
+* `type` - (Required) Th type of GTM domain. Options include `failover-only`, `static`, `weighted`, `basic`, or `full`.
 * `wait_on_complete` - (Optional) A boolean that, if set to `true`, waits for transaction to complete.
 * `comment` - (Optional) A descriptive note about changes to the domain. The maximum is 4000 characters.
 * `email_notification_list` - (Optional) A list of email addresses to notify when a change is made to the domain.

@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: akamai_iam_groups"
-subcategory: "Identity and Access Management"
-description: |-
- IAM Groups
+layout: akamai
+subcategory: Identity and Access Management
 ---
 
 # akamai_iam_groups

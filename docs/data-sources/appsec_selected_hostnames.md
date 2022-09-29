@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: SelectedHostnames"
-subcategory: "Application Security"
-description: |-
- SelectedHostnames
+layout: akamai
+subcategory: Application Security
 ---
 
 # akamai_appsec_selected_hostnames

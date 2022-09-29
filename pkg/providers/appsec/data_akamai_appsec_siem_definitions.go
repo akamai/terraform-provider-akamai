@@ -18,18 +18,19 @@ func dataSourceSiemDefinitions() *schema.Resource {
 		ReadContext: dataSourceSiemDefinitionsRead,
 		Schema: map[string]*schema.Schema{
 			"siem_definition_name": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "The name of a specific SIEM definition for which to retrieve information",
 			},
 			"json": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "JSON Siem Definition",
+				Description: "JSON representation",
 			},
 			"output_text": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Text Export representation",
+				Description: "Text representation",
 			},
 		},
 	}
@@ -58,10 +59,11 @@ func dataSourceSiemDefinitionsRead(ctx context.Context, d *schema.ResourceData, 
 	InitTemplates(ots)
 
 	outputtext, err := RenderTemplates(ots, "siemDefinitionsDS", siemdefinitions)
-	if err == nil {
-		if err := d.Set("output_text", outputtext); err != nil {
-			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
-		}
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if err := d.Set("output_text", outputtext); err != nil {
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	jsonBody, err := json.Marshal(siemdefinitions)

@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: Threat Intelligence"
-subcategory: "Application Security"
-description: |-
- Threat Intelligence
+layout: akamai
+subcategory: Application Security
 ---
 
 # akamai_appsec_threat_intel

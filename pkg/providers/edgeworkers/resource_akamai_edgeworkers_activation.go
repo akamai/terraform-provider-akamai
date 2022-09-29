@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"sort"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/edgeworkers"
@@ -13,7 +15,6 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 func resourceEdgeworkersActivation() *schema.Resource {
@@ -22,7 +23,10 @@ func resourceEdgeworkersActivation() *schema.Resource {
 		ReadContext:   resourceEdgeworkersActivationRead,
 		UpdateContext: resourceEdgeworkersActivationUpdate,
 		DeleteContext: resourceEdgeworkersActivationDelete,
-		Schema:        resourceEdgeworkersActivationSchema(),
+		Importer: &schema.ResourceImporter{
+			StateContext: resourceEdgeworkersActivationImport,
+		},
+		Schema: resourceEdgeworkersActivationSchema(),
 		Timeouts: &schema.ResourceTimeout{
 			Delete:  &edgeworkersActivationResourceDeleteTimeout,
 			Default: &edgeworkersActivationResourceDefaultTimeout,
@@ -45,13 +49,10 @@ func resourceEdgeworkersActivationSchema() map[string]*schema.Schema {
 			Description: "The version of EdgeWorker to activate",
 		},
 		"network": {
-			Type:     schema.TypeString,
-			Required: true,
-			ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{
-				string(edgeworkers.ActivationNetworkStaging),
-				string(edgeworkers.ActivationNetworkProduction),
-			}, false)),
-			Description: "The network on which the version will be activated",
+			Type:             schema.TypeString,
+			Required:         true,
+			ValidateDiagFunc: tools.ValidateStringInSlice(validEdgeworkerActivationNetworks),
+			Description:      "The network on which the version will be activated",
 		},
 		"activation_id": {
 			Type:        schema.TypeInt,
@@ -72,6 +73,7 @@ var (
 	activationPollInterval                      = activationPollMinimum
 	edgeworkersActivationResourceDefaultTimeout = time.Minute * 30
 	edgeworkersActivationResourceDeleteTimeout  = time.Minute * 60
+	validEdgeworkerActivationNetworks           = []string{"STAGING", "PRODUCTION"}
 )
 
 func resourceEdgeworkersActivationCreate(ctx context.Context, rd *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -196,6 +198,38 @@ func resourceEdgeworkersActivationDelete(ctx context.Context, rd *schema.Resourc
 
 	rd.SetId("")
 	return nil
+}
+
+func resourceEdgeworkersActivationImport(_ context.Context, rd *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	meta := akamai.Meta(m)
+	logger := meta.Log("Edgeworkers", "resourceEdgeworkersActivationImport")
+
+	logger.Debug("Importing edgeworker")
+
+	parts := strings.Split(rd.Id(), ":")
+	if len(parts) != 2 {
+		return nil, fmt.Errorf("%s import: invalid import id '%s' - colon-separated list of edgeworker ID and network has to be supplied", ErrEdgeworkerActivation, rd.Id())
+	}
+
+	edgeworkerID, err := strconv.Atoi(parts[0])
+	if err != nil {
+		return nil, fmt.Errorf("%s import: edgeworker id must be an integer, got '%s'", ErrEdgeworkerActivation, parts[0])
+	}
+
+	network := parts[1]
+	if !tools.ContainsString(validEdgeworkerActivationNetworks, network) {
+		return nil, fmt.Errorf("%s import: network must be 'STAGING' or 'PRODUCTION', got '%s'", ErrEdgeworkerActivation, network)
+	}
+
+	if err := rd.Set("edgeworker_id", edgeworkerID); err != nil {
+		return nil, fmt.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+	}
+
+	if err := rd.Set("network", network); err != nil {
+		return nil, fmt.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+	}
+
+	return []*schema.ResourceData{rd}, nil
 }
 
 func upsertActivation(ctx context.Context, rd *schema.ResourceData, m interface{}, client edgeworkers.Edgeworkers) diag.Diagnostics {

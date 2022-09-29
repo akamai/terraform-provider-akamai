@@ -21,12 +21,12 @@ func dataSourceAdvancedSettingsEvasivePathMatch() *schema.Resource {
 			"config_id": {
 				Type:        schema.TypeInt,
 				Required:    true,
-				Description: "config ID",
+				Description: "Unique identifier of the security configuration",
 			},
 			"security_policy_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "security policy ID",
+				Description: "Unique identifier of the security policy",
 			},
 			"json": {
 				Type:        schema.TypeString,
@@ -36,7 +36,7 @@ func dataSourceAdvancedSettingsEvasivePathMatch() *schema.Resource {
 			"output_text": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Text Export representation",
+				Description: "Text representation",
 			},
 		},
 	}
@@ -50,7 +50,7 @@ func dataSourceAdvancedSettingsEvasivePathMatchRead(ctx context.Context, d *sche
 	getAdvancedSettingsEvasivePathMatch := appsec.GetAdvancedSettingsEvasivePathMatchRequest{}
 
 	configID, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	getAdvancedSettingsEvasivePathMatch.ConfigID = configID
@@ -75,10 +75,11 @@ func dataSourceAdvancedSettingsEvasivePathMatchRead(ctx context.Context, d *sche
 	InitTemplates(ots)
 
 	outputtext, err := RenderTemplates(ots, "advancedSettingsEvasivePathMatchDS", advancedsettingsevasivepathmatch)
-	if err == nil {
-		if err := d.Set("output_text", outputtext); err != nil {
-			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
-		}
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if err := d.Set("output_text", outputtext); err != nil {
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	jsonBody, err := json.Marshal(advancedsettingsevasivepathmatch)

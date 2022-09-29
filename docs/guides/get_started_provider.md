@@ -80,13 +80,13 @@ for details on creating API clients and available authentication methods. Once y
 
 You'll need contract and group IDs to use most Akamai Provider modules.
 
-You can retrieve these IDs through the [`akamai_contract`](../data-sources/property_contract.md) and
-[`akamai_group`](../data-sources/property_group.md) data sources, which require read access to the Property Manager API. You can also get this information from the Contracts app in Akamai
+You can retrieve these IDs through the [`akamai_contract`](../data-sources/contract.md) and
+[`akamai_group`](../data-sources/group.md) data sources, which require read access to the Property Manager API. You can also get this information from the Contracts app in Akamai
 Control Center, or by using other Akamai APIs or CLIs.
 
 ### Retrieve contract IDs with akamai_contract
 
-You can get your contract ID automatically using the [`akamai_contract` data source](../data-sources/property_contract.md). This data source requires access to the Property Manager (PAPI) API service. See [Set up your API clients](../guides/akamai_provider_auth.md#set-up-your-api-clients).
+You can get your contract ID automatically using the [`akamai_contract` data source](../data-sources/contract.md). This data source requires access to the Property Manager (PAPI) API service. See [Set up your API clients](../guides/akamai_provider_auth.md#set-up-your-api-clients).
 
 To retrieve the default contract, you need to enter a group name or ID. No attributes need to be set:
 
@@ -105,7 +105,7 @@ Akamai groups control access to your Akamai configurations and help consolidate 
 Your account admins can use Control Center or the [Identity Management: User Administration API](https://techdocs.akamai.com/iam-api/reference/api)
 to set up groups, each with their own set of users and roles.
 
-You can get your group ID automatically using the [`akamai_group` data source](../data-sources/property_group.md). To retrieve the default group ID you need to enter a contract ID:
+You can get your group ID automatically using the [`akamai_group` data source](../data-sources/group.md). To retrieve the default group ID you need to enter a contract ID:
 
 
 ```hcl
@@ -151,8 +151,8 @@ sections here to initialize Akamai Provider, test the configuration, and apply t
 
 Once your configuration is complete, run Terraform commands to add it to your larger Terraform configuration:
 
-1. Save the `.tf` files. 
-1. In your terminal, initialize Terraform using the command: `terraform init`. <br>This command installs the latest version of the Akamai Provider, as well as any other providers you're using. 
+1. Save the `.tf` files.
+1. In your terminal, initialize Terraform using the command: `terraform init`. <br>This command installs the latest version of the Akamai Provider, as well as any other providers you're using.
 1. Test your configuration: `terraform plan`.
 1. You can execute all the actions you set in the configuration by running: `terraform apply`.
 

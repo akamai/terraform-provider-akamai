@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: Rate Protection"
-subcategory: "Application Security"
-description: |-
- Rate Protection
+layout: akamai
+subcategory: Application Security
 ---
 
 # akamai_appsec_rate_protection

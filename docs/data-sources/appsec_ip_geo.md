@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: IP/Geo"
-subcategory: "Application Security"
-description: |-
- IP/Geo
+layout: akamai
+subcategory: Application Security
 ---
 
 

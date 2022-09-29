@@ -32,12 +32,14 @@ func resourceIPGeo() *schema.Resource {
 		},
 		Schema: map[string]*schema.Schema{
 			"config_id": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "Unique identifier of the security configuration",
 			},
 			"security_policy_id": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Unique identifier of the security policy",
 			},
 			"mode": {
 				Type:     schema.TypeString,
@@ -46,21 +48,25 @@ func resourceIPGeo() *schema.Resource {
 					Allow,
 					Block,
 				}, false)),
+				Description: "Protection mode (block or allow)",
 			},
 			"geo_network_lists": {
-				Type:     schema.TypeSet,
-				Optional: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "List of IDs of geographic network list to be blocked or allowed",
 			},
 			"ip_network_lists": {
-				Type:     schema.TypeSet,
-				Optional: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "List of IDs of IP network list to be blocked or allowed",
 			},
 			"exception_ip_network_lists": {
-				Type:     schema.TypeSet,
-				Optional: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "List of IDs of network list that are always allowed",
 			},
 		},
 	}
@@ -84,12 +90,21 @@ func resourceIPGeoCreate(ctx context.Context, d *schema.ResourceData, m interfac
 		return diag.FromErr(err)
 	}
 	mode, err := tools.GetStringValue("mode", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	blockedGeoListsSet, err := tools.GetSetValue("geo_network_lists", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	blockedgeolists := tools.SetToStringSlice(d.Get("geo_network_lists").(*schema.Set))
-	blockediplists := tools.SetToStringSlice(d.Get("ip_network_lists").(*schema.Set))
-	exceptioniplists := tools.SetToStringSlice(d.Get("exception_ip_network_lists").(*schema.Set))
+	blockedIPListsSet, err := tools.GetSetValue("ip_network_lists", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	exceptionIPListsSet, err := tools.GetSetValue("exception_ip_network_lists", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
 
 	createIPGeo := appsec.UpdateIPGeoRequest{
 		ConfigID: configID,
@@ -102,9 +117,9 @@ func resourceIPGeoCreate(ctx context.Context, d *schema.ResourceData, m interfac
 	if mode == Block {
 		createIPGeo.Block = "blockSpecificIPGeo"
 	}
-	createIPGeo.GeoControls.BlockedIPNetworkLists.NetworkList = blockedgeolists
-	createIPGeo.IPControls.BlockedIPNetworkLists.NetworkList = blockediplists
-	createIPGeo.IPControls.AllowedIPNetworkLists.NetworkList = exceptioniplists
+	createIPGeo.GeoControls.BlockedIPNetworkLists.NetworkList = tools.SetToStringSlice(blockedGeoListsSet)
+	createIPGeo.IPControls.BlockedIPNetworkLists.NetworkList = tools.SetToStringSlice(blockedIPListsSet)
+	createIPGeo.IPControls.AllowedIPNetworkLists.NetworkList = tools.SetToStringSlice(exceptionIPListsSet)
 
 	_, err = client.UpdateIPGeo(ctx, createIPGeo)
 	if err != nil {

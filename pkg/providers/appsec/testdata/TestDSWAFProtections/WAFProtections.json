@@ -3,6 +3,7 @@
         "applyApiConstraints": true,
         "applyApplicationLayerControls": false,
         "applyBotmanControls": true,
+        "applyMalwareControls": true,
         "applyNetworkLayerControls": true,
         "applyRateControls": true,
         "applyReputationControls": true,

@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: group"
-subcategory: "Common"
-description: |-
- Group
+layout: akamai
+subcategory: Common
 ---
 
 # akamai_group

@@ -19,21 +19,24 @@ func dataSourceAdvancedSettingsLogging() *schema.Resource {
 		ReadContext: dataSourceAdvancedSettingsLoggingRead,
 		Schema: map[string]*schema.Schema{
 			"config_id": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "Unique identifier of the security configuration",
 			},
 			"security_policy_id": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Unique identifier of the security policy",
 			},
 			"json": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "JSON representation",
 			},
 			"output_text": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Text Export representation",
+				Description: "Text representation",
 			},
 		},
 	}
@@ -47,7 +50,7 @@ func dataSourceAdvancedSettingsLoggingRead(ctx context.Context, d *schema.Resour
 	getAdvancedSettingsLogging := appsec.GetAdvancedSettingsLoggingRequest{}
 
 	configID, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	getAdvancedSettingsLogging.ConfigID = configID
@@ -71,10 +74,11 @@ func dataSourceAdvancedSettingsLoggingRead(ctx context.Context, d *schema.Resour
 	InitTemplates(ots)
 
 	outputtext, err := RenderTemplates(ots, "advancedSettingsLoggingDS", advancedsettingslogging)
-	if err == nil {
-		if err := d.Set("output_text", outputtext); err != nil {
-			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
-		}
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if err := d.Set("output_text", outputtext); err != nil {
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	jsonBody, err := json.Marshal(advancedsettingslogging)

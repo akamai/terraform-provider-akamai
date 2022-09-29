@@ -16,29 +16,34 @@ func dataSourceConfiguration() *schema.Resource {
 		ReadContext: dataSourceConfigurationRead,
 		Schema: map[string]*schema.Schema{
 			"name": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Name of a specific security information for which to retrieve information",
 			},
 			"config_id": {
-				Type:     schema.TypeInt,
-				Computed: true,
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Unique identifier of the security configuration",
 			},
 			"latest_version": {
-				Type:     schema.TypeInt,
-				Computed: true,
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Latest version of the security configuration",
 			},
 			"staging_version": {
-				Type:     schema.TypeInt,
-				Computed: true,
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Version of the security configuration currently deployed in staging",
 			},
 			"production_version": {
-				Type:     schema.TypeInt,
-				Computed: true,
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Version of the security configuration currently deployed in production",
 			},
 			"output_text": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Text Export representation",
+				Description: "Text representation",
 			},
 		},
 	}
@@ -87,10 +92,11 @@ func dataSourceConfigurationRead(ctx context.Context, d *schema.ResourceData, m 
 	InitTemplates(ots)
 
 	outputtext, err := RenderTemplates(ots, "configuration", configuration)
-	if err == nil {
-		if err := d.Set("output_text", outputtext); err != nil {
-			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
-		}
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if err := d.Set("output_text", outputtext); err != nil {
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	d.SetId(strconv.Itoa(configID))

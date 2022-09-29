@@ -18,21 +18,24 @@ func dataSourceReputationProfiles() *schema.Resource {
 		ReadContext: dataSourceReputationProfilesRead,
 		Schema: map[string]*schema.Schema{
 			"config_id": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "Unique identifier of the security configuration",
 			},
 			"reputation_profile_id": {
-				Type:     schema.TypeInt,
-				Optional: true,
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Description: "Unique identifier of a specific reputation profile for which to retrieve information",
 			},
 			"json": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "JSON representation",
 			},
 			"output_text": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Text Export representation",
+				Description: "Text representation",
 			},
 		},
 	}
@@ -46,7 +49,7 @@ func dataSourceReputationProfilesRead(ctx context.Context, d *schema.ResourceDat
 	getReputationProfiles := appsec.GetReputationProfilesRequest{}
 
 	configID, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	getReputationProfiles.ConfigID = configID
@@ -71,10 +74,11 @@ func dataSourceReputationProfilesRead(ctx context.Context, d *schema.ResourceDat
 	InitTemplates(ots)
 
 	outputtext, err := RenderTemplates(ots, "reputationProfilesDS", reputationprofiles)
-	if err == nil {
-		if err := d.Set("output_text", outputtext); err != nil {
-			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
-		}
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if err := d.Set("output_text", outputtext); err != nil {
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	jsonBody, err := json.Marshal(reputationprofiles)

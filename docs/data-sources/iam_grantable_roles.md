@@ -1,14 +1,11 @@
 ---
-layout: "akamai"
-page_title: "Akamai: akamai_iam_grantable_roles"
-subcategory: "Identity and Access Management"
-description: |-
- Identity and Access Management grantable roles
+layout: akamai
+subcategory: Identity and Access Management
 ---
 
 # akamai_iam_grantable_roles (Beta)
 
-List which grantable roles you can include in a new custom role or add to an existing custom role. 
+List which grantable roles you can include in a new custom role or add to an existing custom role.
 
 ## Basic usage
 
@@ -34,7 +31,7 @@ There are no arguments for this data source.
 
 This resource returns this attribute:
 
-* `grantable_roles` - Lists which grantable roles you can include in a new custom role or add to an existing custom role. 
+* `grantable_roles` - Lists which grantable roles you can include in a new custom role or add to an existing custom role.
   * `granted_role_id` - Granted role ID.
   * `name` - Granted role name.
   * `description` - Granted role description.

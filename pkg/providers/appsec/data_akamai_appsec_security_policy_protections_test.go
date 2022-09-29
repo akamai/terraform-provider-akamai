@@ -7,17 +7,20 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
-func TestAccAkamaiPolicyProtections_data_basic(t *testing.T) {
+func TestAkamaiPolicyProtections_data_basic(t *testing.T) {
 	t.Run("match by PolicyProtections ID", func(t *testing.T) {
 		client := &mockappsec{}
 
 		policyProtectionsResponse := appsec.PolicyProtectionsResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestDSPolicyProtections/PolicyProtections.json"), &policyProtectionsResponse)
+		err := json.Unmarshal(loadFixtureBytes("testdata/TestDSPolicyProtections/PolicyProtections.json"), &policyProtectionsResponse)
+		require.NoError(t, err)
 
 		config := appsec.GetConfigurationResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		require.NoError(t, err)
 
 		client.On("GetConfiguration",
 			mock.Anything,

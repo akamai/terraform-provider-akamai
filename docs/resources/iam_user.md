@@ -1,14 +1,11 @@
 ---
-layout: "akamai"
-page_title: "Akamai: akamai_iam_user"
-subcategory: "Identity and Access Management"
-description: |-
-  Create user resources.
+layout: akamai
+subcategory: Identity and Access Management
 ---
 
 # akamai_iam_user
 
-The `akamai_iam_user` resource represents a user on the Akamai platform. 
+The `akamai_iam_user` resource represents a user on the Akamai platform.
 
 ## Basic usage
 
@@ -49,7 +46,7 @@ This resource supports these arguments:
 * `preferred_language` - (Optional) The value can be any that are available from the [view-languages operation](../data-sources/iam_supported_langs.md)
 
 ### Deprecated arguments
-* `is_locked` - (Deprecated) The user's lock status. 
+* `is_locked` - (Deprecated) The user's lock status.
 
 ## Attributes reference
 

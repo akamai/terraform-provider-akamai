@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: ConfigurationRename"
-subcategory: "Application Security"
-description: |-
-  ConfigurationRename
+layout: akamai
+subcategory: Application Security
 ---
 
 # akamai_appsec_configuration_rename
@@ -49,6 +46,6 @@ resource "akamai_appsec_configuration_rename" "configuration" {
 
 This resource supports the following arguments:
 
-- `config_id` (Required). Unique identifier of the security configurating being renamed.
+- `config_id` (Required). Unique identifier of the security configuring being renamed.
 - `name` (Required). New name for the security configuration.
 - `description` (Required). Brief description of the security configuration.

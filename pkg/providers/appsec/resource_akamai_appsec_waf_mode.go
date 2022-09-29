@@ -32,12 +32,14 @@ func resourceWAFMode() *schema.Resource {
 		},
 		Schema: map[string]*schema.Schema{
 			"config_id": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "Unique identifier of the security configuration",
 			},
 			"security_policy_id": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Unique identifier of the security policy",
 			},
 			"mode": {
 				Type:     schema.TypeString,
@@ -48,27 +50,32 @@ func resourceWAFMode() *schema.Resource {
 					AseAuto,
 					AseManual,
 				}, false)),
+				Description: "How Kona Rule Set rules should be upgraded (KRS, AAG, ASE_MANUAL or ASE_AUTO)",
 			},
 			"current_ruleset": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Versioning information for the current Kona Rule Set",
 			},
 			"eval_status": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Whether an evaluation is currently in progress",
 			},
 			"eval_ruleset": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Versioning information for the Kona Rule Set being evaluated, if applicable",
 			},
 			"eval_expiration_date": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Date on which the evaluation period ends, if applicable",
 			},
 			"output_text": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Text Export representation",
+				Description: "Text representation",
 			},
 		},
 	}
@@ -81,7 +88,7 @@ func resourceWAFModeCreate(ctx context.Context, d *schema.ResourceData, m interf
 	logger.Debugf(" in resourceWAFModeCreate")
 
 	configID, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	version, err := getModifiableConfigVersion(ctx, configID, "wafMode", m)
@@ -89,11 +96,11 @@ func resourceWAFModeCreate(ctx context.Context, d *schema.ResourceData, m interf
 		return diag.FromErr(err)
 	}
 	policyID, err := tools.GetStringValue("security_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	mode, err := tools.GetStringValue("mode", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -171,10 +178,11 @@ func resourceWAFModeRead(ctx context.Context, d *schema.ResourceData, m interfac
 	ots := OutputTemplates{}
 	InitTemplates(ots)
 	outputtext, err := RenderTemplates(ots, "wafModesDS", wafMode)
-	if err == nil {
-		if err := d.Set("output_text", outputtext); err != nil {
-			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
-		}
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if err := d.Set("output_text", outputtext); err != nil {
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	return nil

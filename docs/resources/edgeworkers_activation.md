@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: edgeworkers_activation"
-subcategory: "EdgeWorkers"
-description: |-
-  EdgeWorkers activation
+layout: akamai
+subcategory: EdgeWorkers
 ---
 
 # akamai_edgeworkers_activation

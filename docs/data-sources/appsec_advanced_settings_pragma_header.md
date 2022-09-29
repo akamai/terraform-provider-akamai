@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: AdvancedSettingsPragmaHeader"
-subcategory: "Application Security"
-description: |-
- AdvancedSettingsPragmaHeader
+layout: akamai
+subcategory: Application Security
 ---
 
 # akamai_appsec_advanced_settings_pragma_header

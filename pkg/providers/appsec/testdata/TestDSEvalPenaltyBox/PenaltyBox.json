@@ -1,6 +1,4 @@
-[
-    {
-        "action": "alert",
-        "penaltyBoxProtection": true
-    }
-]
+{
+    "action": "alert",
+    "penaltyBoxProtection": true
+}

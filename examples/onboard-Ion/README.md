@@ -7,7 +7,7 @@ Get Started with [Ion](https://techdocs.akamai.com/ion/reference/apis-and-ion)
 
 ## Basic Site Delivery
 
-This template can be used to onboard a basic Ion confiugration, but there are also example snippets included that can be leveraged to contruct a more advanced configuration
+This template can be used to onboard a basic Ion configuration, but there are also example snippets included that can be leveraged to construct a more advanced configuration
 The following links provide more information about both the included snippets and help with constructing new code:
 
   [Snippet Generator Tool](https://protected-sands-33849.herokuapp.com/json-snippets.html): Build free Property Manager behaviors

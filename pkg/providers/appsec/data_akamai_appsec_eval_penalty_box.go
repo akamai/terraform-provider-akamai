@@ -2,7 +2,6 @@ package appsec
 
 import (
 	"context"
-	"errors"
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
@@ -19,22 +18,22 @@ func dataSourceEvalPenaltyBox() *schema.Resource {
 			"config_id": {
 				Type:        schema.TypeInt,
 				Required:    true,
-				Description: "Unique identifier of the security configuration.",
+				Description: "Unique identifier of the security configuration",
 			},
 			"security_policy_id": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Unique identifier of the security policy.",
+				Description: "Unique identifier of the security policy",
 			},
 			"action": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Penalty box action applied to requests from clients in the penalty box",
+				Description: "Action to be applied to requests from clients in the penalty box",
 			},
 			"enabled": {
 				Type:        schema.TypeBool,
 				Computed:    true,
-				Description: "Penalty box enabled flag",
+				Description: "Whether the penalty box is enabled for the specified security policy",
 			},
 			"output_text": {
 				Type:        schema.TypeString,
@@ -53,7 +52,7 @@ func dataSourceEvalPenaltyBoxRead(ctx context.Context, d *schema.ResourceData, m
 	getPenaltyBox := appsec.GetPenaltyBoxRequest{}
 
 	configID, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	getPenaltyBox.ConfigID = configID
@@ -63,7 +62,7 @@ func dataSourceEvalPenaltyBoxRead(ctx context.Context, d *schema.ResourceData, m
 	}
 
 	policyID, err := tools.GetStringValue("security_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	getPenaltyBox.PolicyID = policyID
@@ -78,10 +77,11 @@ func dataSourceEvalPenaltyBoxRead(ctx context.Context, d *schema.ResourceData, m
 	InitTemplates(ots)
 
 	outputtext, err := RenderTemplates(ots, "evalPenaltyBoxDS", penaltybox)
-	if err == nil {
-		if err := d.Set("output_text", outputtext); err != nil {
-			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
-		}
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if err := d.Set("output_text", outputtext); err != nil {
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 	}
 
 	if err := d.Set("action", penaltybox.Action); err != nil {

@@ -7,14 +7,16 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
-func TestAccAkamaiFailoverHostnames_data_basic(t *testing.T) {
+func TestAkamaiFailoverHostnames_data_basic(t *testing.T) {
 	t.Run("match by FailoverHostnames ID", func(t *testing.T) {
 		client := &mockappsec{}
 
 		getFailoverHostnamesResponse := appsec.GetFailoverHostnamesResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestDSFailoverHostnames/FailoverHostnames.json"), &getFailoverHostnamesResponse)
+		err := json.Unmarshal(loadFixtureBytes("testdata/TestDSFailoverHostnames/FailoverHostnames.json"), &getFailoverHostnamesResponse)
+		require.NoError(t, err)
 
 		client.On("GetFailoverHostnames",
 			mock.Anything,

@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: WAPSelectedHostnames"
-subcategory: "Application Security"
-description: |-
-  WAPSelectedHostnames
+layout: akamai
+subcategory: Application Security
 ---
 
 # akamai_appsec_wap_selected_hostnames

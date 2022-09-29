@@ -32,16 +32,19 @@ func resourcePenaltyBox() *schema.Resource {
 		},
 		Schema: map[string]*schema.Schema{
 			"config_id": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "Unique identifier of the security configuration",
 			},
 			"security_policy_id": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Unique identifier of the security policy",
 			},
 			"penalty_box_protection": {
-				Type:     schema.TypeBool,
-				Required: true,
+				Type:        schema.TypeBool,
+				Required:    true,
+				Description: "Whether to enable the penalty box for the specified security policy",
 			},
 			"penalty_box_action": {
 				Type:     schema.TypeString,
@@ -51,6 +54,7 @@ func resourcePenaltyBox() *schema.Resource {
 					string(appsec.ActionTypeAlert),
 					string(appsec.ActionTypeNone),
 				}, false)),
+				Description: "The action to be taken when the penalty box is triggered",
 			},
 		},
 	}
@@ -75,11 +79,11 @@ func resourcePenaltyBoxCreate(ctx context.Context, d *schema.ResourceData, m int
 		return diag.FromErr(err)
 	}
 	penaltyboxprotection, err := tools.GetBoolValue("penalty_box_protection", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	penaltyboxaction, err := tools.GetStringValue("penalty_box_action", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 

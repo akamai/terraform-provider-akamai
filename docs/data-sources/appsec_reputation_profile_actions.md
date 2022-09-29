@@ -1,9 +1,6 @@
 ---
-layout: "akamai"
-page_title: "Akamai: Reputation Profile Actions"
-subcategory: "Application Security"
-description: |-
- Reputation Profile Actions
+layout: akamai
+subcategory: Application Security
 ---
 
 ## akamai_appsec_reputation_profile_actions
