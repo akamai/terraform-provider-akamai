@@ -1,6 +1,6 @@
 # RELEASE NOTES
 
-## 2.4.0 (September 29, 2022)
+## 2.4.1 (September 29, 2022)
 
 #### FEATURES/ENHANCEMENTS:
 
