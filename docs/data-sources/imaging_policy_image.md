@@ -3,7 +3,7 @@ layout: akamai
 subcategory: Image and Video Manager
 ---
 
-# akamai_imaging_policy_image (Beta)
+# akamai_imaging_policy_image
 
 Specifies details for an image policy, such as transformations to apply and variations in image size and formats.
 

@@ -3,7 +3,7 @@ layout: akamai
 subcategory: Identity and Access Management
 ---
 
-# akamai_iam_role (Beta)
+# akamai_iam_role
 
 Use the `akamai_iam_role` resource to list and create roles for users. Roles are lists of permissions that are explicitly tied to both a user and a group. Users need roles to act on objects in a group.
 

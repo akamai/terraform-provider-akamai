@@ -3,7 +3,7 @@ layout: akamai
 subcategory: Identity and Access Management
 ---
 
-# akamai_iam_blocked_user_properties (Beta)
+# akamai_iam_blocked_user_properties
 
 Use the `akamai_iam_blocked_user_properties` resource to remove or grant access to properties. Administrators can block a user's access to any property, overriding any available role already assigned to that user.
 

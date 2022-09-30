@@ -5,7 +5,7 @@ description: |-
   Learn about image transformation arguments for Image and Video Manager.
 ---
 
-# Transform Images (Beta)
+# Transform Images
 
 Add transformations to your Image and Video manager image policy to automate processes like cropping, rotating, and resizing, or to apply visual effects to your images. Multiple transformations can be nested to achieve the desired result.
 
