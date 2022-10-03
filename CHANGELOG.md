@@ -7,6 +7,7 @@
 * CPS
   * New data source:
     * [akamai_cps_csr](xxx.md) - returns latest Certificate Signing Request for given enrollment
+    * [akamai_cps_deployments](xxx.md) - returns deployed certificates for given enrollment
 
 #### BUG FIXES:
 
