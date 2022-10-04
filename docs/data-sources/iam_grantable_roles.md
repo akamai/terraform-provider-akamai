@@ -3,7 +3,7 @@ layout: akamai
 subcategory: Identity and Access Management
 ---
 
-# akamai_iam_grantable_roles (Beta)
+# akamai_iam_grantable_roles
 
 List which grantable roles you can include in a new custom role or add to an existing custom role.
 

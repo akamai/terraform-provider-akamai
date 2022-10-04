@@ -5,12 +5,10 @@ description: |-
   Image and Video Manager module for the Akamai Terraform Provider
 ---
 
-# Image and Video Manager Guide (Beta)
+# Image and Video Manager Guide
 
 The Image and Video Manager module lets you manage, optimize, and modify your images and short-form videos.
 With Image and Video Manager, you can deliver a smooth, efficient, visually engaging customer experience that can also save you time and money.
-
-~> Note: This functionality is currently in beta.
 
 ## About policies and policy sets
 

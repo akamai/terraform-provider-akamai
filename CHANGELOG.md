@@ -1,5 +1,24 @@
 # RELEASE NOTES
 
+## 2.4.2 (October 4, 2022)
+
+#### FEATURES/ENHANCEMENTS:
+
+* IAM
+  * Update docs for following resources and datasources as they are no longer in Beta
+    * `akamai_iam_grantable_roles`
+    * `akamai_iam_blocked_user_properties`
+    * `akamai_iam_group`
+    * `akamai_iam_role`
+
+* Image and Video Manager
+  * Update docs for the sub-provider as it's no longer in Beta
+
+#### BUG FIXES:
+
+* Botman
+  * Fix page header for the Botman Getting Started Guide.
+
 ## 2.4.1 (September 29, 2022)
 
 #### FEATURES/ENHANCEMENTS:

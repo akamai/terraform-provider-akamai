@@ -3,7 +3,7 @@ layout: akamai
 subcategory: Image and Video Manager
 ---
 
-# akamai_imaging_policy_video (Beta)
+# akamai_imaging_policy_video
 
 Use the `akamai_imaging_policy_set` resource to define a policy set.
 

@@ -1,6 +1,8 @@
 ---
-layout: akamai
-subcategory: Bot Manager
+layout: "akamai"
+page_title: "Module: Bot Manager"
+description: |-
+   Bot Manager module for the Akamai Terraform Provider
 ---
 
 # Bot Manager (Beta)

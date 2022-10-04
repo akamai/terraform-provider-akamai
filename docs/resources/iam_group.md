@@ -3,7 +3,7 @@ layout: akamai
 subcategory: Identity and Access Management
 ---
 
-# akamai_iam_group (Beta)
+# akamai_iam_group
 
 Use the `akamai_iam_group` resource to list details about groups. Groups are organizational containers for the objects you use.  Groups can contain other groups, primary objects like properties, and secondary objects like [edge hostnames](../resources/edge_hostname.md) or [content provider (CP) codes](../resources/cp_code.md).
 
