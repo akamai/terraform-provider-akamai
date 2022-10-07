@@ -127,9 +127,6 @@ func resourceIPGeoCreate(ctx context.Context, d *schema.ResourceData, m interfac
 			},
 		}
 		request.IPControls = &appsec.IPGeoIPControls{
-			AllowedIPNetworkLists: &appsec.IPGeoNetworkLists{
-				NetworkList: tools.SetToStringSlice(exceptionIPListsSet),
-			},
 			BlockedIPNetworkLists: &appsec.IPGeoNetworkLists{
 				NetworkList: tools.SetToStringSlice(blockedIPListsSet),
 			},
@@ -189,20 +186,20 @@ func resourceIPGeoRead(ctx context.Context, d *schema.ResourceData, m interface{
 		if err := d.Set("mode", Allow); err != nil {
 			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 		}
+		if err := d.Set("exception_ip_network_lists", ipgeo.IPControls.AllowedIPNetworkLists.NetworkList); err != nil {
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		}
 	}
 	if ipgeo.Block == "blockSpecificIPGeo" {
 		if err := d.Set("mode", Block); err != nil {
 			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 		}
-	}
-	if err := d.Set("geo_network_lists", ipgeo.GeoControls.BlockedIPNetworkLists.NetworkList); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
-	}
-	if err := d.Set("ip_network_lists", ipgeo.IPControls.BlockedIPNetworkLists.NetworkList); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
-	}
-	if err := d.Set("exception_ip_network_lists", ipgeo.IPControls.AllowedIPNetworkLists.NetworkList); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		if err := d.Set("geo_network_lists", ipgeo.GeoControls.BlockedIPNetworkLists.NetworkList); err != nil {
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		}
+		if err := d.Set("ip_network_lists", ipgeo.IPControls.BlockedIPNetworkLists.NetworkList); err != nil {
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		}
 	}
 
 	return nil
@@ -265,9 +262,6 @@ func resourceIPGeoUpdate(ctx context.Context, d *schema.ResourceData, m interfac
 			},
 		}
 		request.IPControls = &appsec.IPGeoIPControls{
-			AllowedIPNetworkLists: &appsec.IPGeoNetworkLists{
-				NetworkList: tools.SetToStringSlice(exceptionIPListsSet),
-			},
 			BlockedIPNetworkLists: &appsec.IPGeoNetworkLists{
 				NetworkList: tools.SetToStringSlice(blockedIPListsSet),
 			},
