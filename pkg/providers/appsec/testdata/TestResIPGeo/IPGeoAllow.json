@@ -1,0 +1,11 @@
+{
+    "block": "blockAllTrafficExceptAllowedIPs",
+    "ipControls": {
+        "allowedIPNetworkLists": {
+            "networkList": [
+                "68762_ADYEN",
+                "69601_ADYENPRODWHITELIST"
+            ]
+        }
+    }
+}
