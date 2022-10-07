@@ -8,6 +8,9 @@
   * New data source:
     * [akamai_cps_csr](xxx.md) - returns latest Certificate Signing Request for given enrollment
     * [akamai_cps_deployments](xxx.md) - returns deployed certificates for given enrollment
+  * Added resources allowing management of third-party enrollments:
+    * [akamai_cps_third_party_enrollment](xxx.md) - create, read, update, delete and import third-party enrollments
+    * [akamai_cps_upload_certificate](xxx.md) - create, read, update and delete
 
 #### BUG FIXES:
 

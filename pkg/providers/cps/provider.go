@@ -56,6 +56,7 @@ func Provider() *schema.Provider {
 			"akamai_cps_dv_enrollment":          resourceCPSDVEnrollment(),
 			"akamai_cps_dv_validation":          resourceCPSDVValidation(),
 			"akamai_cps_third_party_enrollment": resourceCPSThirdPartyEnrollment(),
+			"akamai_cps_upload_certificate":     resourceCPSUploadCertificate(),
 		},
 	}
 	return provider

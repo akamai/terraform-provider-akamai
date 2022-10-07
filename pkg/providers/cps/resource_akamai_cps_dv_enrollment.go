@@ -170,11 +170,6 @@ func resourceCPSDVEnrollment() *schema.Resource {
 				},
 				Set: cpstools.HashFromChallengesMap,
 			},
-			"change_management": {
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Description: "When set to false, the certificate will be deployed to both staging and production networks",
-			},
 		},
 		CustomizeDiff: customdiff.Sequence(
 			func(ctx context.Context, diff *schema.ResourceDiff, i interface{}) error {
@@ -286,11 +281,6 @@ func resourceCPSDVEnrollmentCreate(ctx context.Context, d *schema.ResourceData, 
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	changeManagement, err := tools.GetBoolValue("change_management", d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	enrollment.ChangeManagement = changeManagement
 
 	req := cps.CreateEnrollmentRequest{
 		Enrollment:       enrollment,
@@ -524,12 +514,6 @@ func resourceCPSDVEnrollmentUpdate(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 	enrollment.Org = organization
-
-	changeManagement, err := tools.GetBoolValue("change_management", d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	enrollment.ChangeManagement = changeManagement
 
 	allowCancel := true
 	req := cps.UpdateEnrollmentRequest{

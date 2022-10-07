@@ -357,7 +357,6 @@ func readAttrs(enrollment *cps.Enrollment, d *schema.ResourceData) (map[string]i
 	attrs["signature_algorithm"] = enrollment.SignatureAlgorithm
 	org := cpstools.OrgToMap(*enrollment.Org)
 	attrs["organization"] = []interface{}{org}
-	attrs["change_management"] = enrollment.ChangeManagement
 	return attrs, nil
 }
 

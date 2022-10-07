@@ -34,7 +34,6 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 			CertificateChainType: "default",
 			CertificateType:      "san",
-			ChangeManagement:     false,
 			CSR: &cps.CSR{
 				C:    "US",
 				CN:   "test.akamai.com",
@@ -314,7 +313,6 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 			CertificateChainType: "default",
 			CertificateType:      "san",
-			ChangeManagement:     false,
 			CSR: &cps.CSR{
 				C:  "US",
 				CN: "test.akamai.com",
@@ -498,7 +496,6 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 			CertificateChainType: "default",
 			CertificateType:      "san",
-			ChangeManagement:     false,
 			CSR: &cps.CSR{
 				C:    "US",
 				CN:   commonName,
@@ -698,7 +695,6 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 			CertificateChainType: "default",
 			CertificateType:      "san",
-			ChangeManagement:     false,
 			CSR: &cps.CSR{
 				C:    "US",
 				CN:   "test.akamai.com",
@@ -1230,7 +1226,6 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 			CertificateChainType: "default",
 			CertificateType:      "san",
-			ChangeManagement:     false,
 			CSR: &cps.CSR{
 				C:  "US",
 				CN: "test.akamai.com",

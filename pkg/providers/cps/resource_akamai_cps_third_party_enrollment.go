@@ -230,6 +230,7 @@ func resourceCPSThirdPartyEnrollmentRead(ctx context.Context, d *schema.Resource
 		excludeSANS = enrollment.ThirdParty.ExcludeSANS
 	}
 	attrs["exclude_sans"] = excludeSANS
+	attrs["change_management"] = enrollment.ChangeManagement
 
 	if err = tools.SetAttrs(d, attrs); err != nil {
 		return diag.FromErr(err)
