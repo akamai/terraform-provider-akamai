@@ -78,7 +78,7 @@ func TestConnectorToMap(t *testing.T) {
 					CompressLogs:      true,
 					ConnectorName:     "sumologic connector",
 					ConnectorType:     datastream.ConnectorTypeSumoLogic,
-					URL:               "sumologic endpoint",
+					Endpoint:          "sumologic endpoint",
 					ContentType:       "application/json",
 					CustomHeaderName:  "custom_header_name",
 					CustomHeaderValue: "custom_header_value",
@@ -106,7 +106,7 @@ func TestConnectorToMap(t *testing.T) {
 					CompressLogs:      true,
 					ConnectorName:     "sumologic connector",
 					ConnectorType:     datastream.ConnectorTypeSumoLogic,
-					URL:               "sumologic endpoint",
+					Endpoint:          "sumologic endpoint",
 					ContentType:       "application/json",
 					CustomHeaderName:  "custom_header_name",
 					CustomHeaderValue: "custom_header_value",
@@ -206,6 +206,53 @@ func TestGetConnectors(t *testing.T) {
 			} else {
 				assert.Equal(t, test.expectedResult, connectors)
 			}
+		})
+	}
+}
+
+func TestSetNonNilItemsFromState(t *testing.T) {
+	defaultStateValues := map[string]interface{}{
+		"a": 1,
+		"b": 2,
+		"c": nil,
+		"d": 4,
+		"e": nil,
+	}
+	tests := map[string]struct {
+		expectedState map[string]interface{}
+		stateValues   map[string]interface{}
+		fields        []string
+	}{
+		"extract all existing": {
+			expectedState: map[string]interface{}{
+				"a": 1,
+				"b": 2,
+			},
+			stateValues: defaultStateValues,
+			fields:      []string{"a", "b"},
+		},
+		"extract not existing": {
+			expectedState: map[string]interface{}{},
+			stateValues:   defaultStateValues,
+			fields:        []string{"aa", "bb"},
+		},
+		"empty fields to extract": {
+			expectedState: map[string]interface{}{},
+			stateValues:   defaultStateValues,
+			fields:        []string{},
+		},
+		"empty state": {
+			expectedState: map[string]interface{}{},
+			stateValues:   map[string]interface{}{},
+			fields:        []string{"a", "b"},
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			state := map[string]interface{}{}
+			setNonNilItemsFromState(test.stateValues, state, test.fields...)
+			assert.Equal(t, test.expectedState, state)
 		})
 	}
 }

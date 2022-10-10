@@ -193,7 +193,6 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 		Required:    true,
 		Description: "The name of the template associated with the stream",
 	},
-
 	"s3_connector": {
 		Type:         schema.TypeSet,
 		MaxItems:     1,
@@ -292,10 +291,9 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 		},
 	},
 	"datadog_connector": {
-		Type:             schema.TypeSet,
-		MaxItems:         1,
-		Optional:         true,
-		DiffSuppressFunc: urlSuppressor("url"),
+		Type:     schema.TypeSet,
+		MaxItems: 1,
+		Optional: true,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				"auth_token": {
@@ -347,10 +345,9 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 		},
 	},
 	"splunk_connector": {
-		Type:             schema.TypeSet,
-		MaxItems:         1,
-		Optional:         true,
-		DiffSuppressFunc: urlSuppressor("url"),
+		Type:     schema.TypeSet,
+		MaxItems: 1,
+		Optional: true,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				"compress_logs": {
@@ -477,10 +474,9 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 		},
 	},
 	"https_connector": {
-		Type:             schema.TypeSet,
-		MaxItems:         1,
-		Optional:         true,
-		DiffSuppressFunc: urlSuppressor("url"),
+		Type:     schema.TypeSet,
+		MaxItems: 1,
+		Optional: true,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				"authentication_type": {
@@ -1430,30 +1426,67 @@ func waitForStreamStatusChange(ctx context.Context, client datastream.DS, stream
 	return &streamDetails.ActivationStatus, nil
 }
 
-func urlSuppressor(key string) schema.SchemaDiffSuppressFunc {
-	return func(k string, _ string, _ string, d *schema.ResourceData) bool {
-		connectorName := strings.Split(k, ".")[0]
+func urlSuppressor(keyToSuppress string) schema.SchemaDiffSuppressFunc {
+	return func(resourceKey string, _, _ string, d *schema.ResourceData) bool {
+		logger := akamai.Log("DataStream", "urlSuppressor")
+
+		// do not suppress when creating the resource
+		if d.Id() == "" {
+			logger.Infof("%s creating resource", resourceKey)
+			return false
+		}
+
+		resourceKeyTokens := strings.Split(resourceKey, ".") // connector_name.ID.propertyName
+		connectorName := resourceKeyTokens[0]
 		if !d.HasChange(connectorName) {
+			logger.Infof("%s hasn't changed", connectorName)
 			return false
 		}
 
-		o, n := d.GetChange(connectorName)
-		oSet, nSet := o.(*schema.Set), n.(*schema.Set)
-
-		if oSet.Len() != 1 || nSet.Len() != 1 {
+		oldConnectorObj, newConnectorObj := d.GetChange(connectorName)
+		oldSet, newSet := oldConnectorObj.(*schema.Set), newConnectorObj.(*schema.Set)
+		if oldSet.Len() != 1 || newSet.Len() != 1 {
 			return false
 		}
 
-		oElem := oSet.List()[0].(map[string]interface{})
-		nElem := nSet.List()[0].(map[string]interface{})
-
-		oItem, oOk := oElem[key]
-		nItem, nOk := nElem[key]
-		if !oOk || !nOk {
+		oldElem, oldOk := oldSet.List()[0].(map[string]interface{})
+		newElem, newOk := newSet.List()[0].(map[string]interface{})
+		if !newOk || !oldOk {
 			return false
 		}
 
-		return strings.TrimSuffix(oItem.(string), "/") == strings.TrimSuffix(nItem.(string), "/")
+		// trim url
+		newElem[keyToSuppress] = strings.TrimRight(newElem[keyToSuppress].(string), "/?")
+
+		// skip computed properties because they cannot be set
+		propertiesToSkip := map[string]bool{
+			"connector_id": true,
+		}
+
+		// do the comparison
+		for propertyName, oldVal := range oldElem {
+			if _, ok := propertiesToSkip[propertyName]; ok {
+				continue
+			}
+			newVal, ok := newElem[propertyName]
+			// if property does not exist in old element, do not suppress change
+			if !ok {
+				logger.Debugf("Change detected")
+				return false
+			}
+
+			logger.Debugf("Comparing %s - [%v] and [%v]", propertyName, newVal, oldVal)
+
+			// if values are different, do not suppress change
+			if newVal != oldVal {
+				logger.Debugf("Change detected")
+				return false
+			}
+		}
+
+		// all values are the same, suppress the change
+		logger.Debug("No change detected")
+		return true
 	}
 }
 

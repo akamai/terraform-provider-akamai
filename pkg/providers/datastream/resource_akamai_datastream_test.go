@@ -280,7 +280,8 @@ func TestResourceStream(t *testing.T) {
 			Times(4)
 
 		client.On("UpdateStream", mock.Anything, updateStreamRequest).
-			Return(updateStreamResponse, nil)
+			Return(updateStreamResponse, nil).
+			Once()
 
 		// for waitForStreamStatusChange
 		client.On("GetStream", mock.Anything, getStreamRequest).
@@ -296,7 +297,7 @@ func TestResourceStream(t *testing.T) {
 
 		client.On("DeleteStream", mock.Anything, datastream.DeleteStreamRequest{
 			StreamID: streamID,
-		}).Return(&datastream.DeleteStreamResponse{Message: "Success"}, nil)
+		}).Return(&datastream.DeleteStreamResponse{Message: "Success"}, nil).Once()
 
 		client.On("DeactivateStream", mock.Anything, datastream.DeactivateStreamRequest{
 			StreamID: 12321,
@@ -305,7 +306,7 @@ func TestResourceStream(t *testing.T) {
 				StreamID:        streamID,
 				StreamVersionID: 1,
 			},
-		}, nil)
+		}, nil).Once()
 
 		// for waitForStreamStatusChange
 		client.On("GetStream", mock.Anything, getStreamRequest).
@@ -1399,6 +1400,324 @@ func TestMTLS(t *testing.T) {
 				})
 
 				client.AssertExpectations(t)
+			})
+		})
+	}
+}
+
+func TestUrlSuppressor(t *testing.T) {
+	PollForActivationStatusChangeInterval = 1 * time.Millisecond
+	streamID := int64(12321)
+
+	streamConfigurationFactory := func(connector datastream.AbstractConnector) datastream.StreamConfiguration {
+		return datastream.StreamConfiguration{
+			ActivateNow: false,
+			Config: datastream.Config{
+				Delimiter: datastream.DelimiterTypePtr(datastream.DelimiterTypeSpace),
+				Format:    datastream.FormatTypeStructured,
+				Frequency: datastream.Frequency{
+					TimeInSec: datastream.TimeInSec30,
+				},
+				UploadFilePrefix: "ak",
+				UploadFileSuffix: "ds",
+			},
+			Connectors: []datastream.AbstractConnector{
+				connector,
+			},
+			ContractID:      "test_contract",
+			DatasetFieldIDs: []int{1001},
+			GroupID:         tools.IntPtr(1337),
+			PropertyIDs:     []int{1},
+			StreamName:      "test_stream",
+			StreamType:      datastream.StreamTypeRawLogs,
+			TemplateName:    datastream.TemplateNameEdgeLogs,
+		}
+	}
+
+	createStreamRequestFactory := func(connector datastream.AbstractConnector) datastream.CreateStreamRequest {
+		return datastream.CreateStreamRequest{
+			StreamConfiguration: streamConfigurationFactory(connector),
+		}
+	}
+
+	updateStreamRequestFactory := func(connector datastream.AbstractConnector) datastream.UpdateStreamRequest {
+		req := datastream.UpdateStreamRequest{
+			StreamID:            streamID,
+			StreamConfiguration: streamConfigurationFactory(connector),
+		}
+		req.StreamConfiguration.GroupID = nil
+		return req
+	}
+
+	updateStreamResponse := &datastream.StreamUpdate{
+		StreamVersionKey: datastream.StreamVersionKey{
+			StreamID:        streamID,
+			StreamVersionID: 1,
+		},
+	}
+
+	responseFactory := func(connector datastream.ConnectorDetails) *datastream.DetailedStreamVersion {
+		return &datastream.DetailedStreamVersion{
+			ActivationStatus: datastream.ActivationStatusInactive,
+			Config: datastream.Config{
+				Delimiter: datastream.DelimiterTypePtr(datastream.DelimiterTypeSpace),
+				Format:    datastream.FormatTypeStructured,
+				Frequency: datastream.Frequency{
+					TimeInSec: datastream.TimeInSec30,
+				},
+			},
+			Connectors: []datastream.ConnectorDetails{
+				connector,
+			},
+			ContractID: "test_contract",
+			Datasets: []datastream.DataSets{
+				{
+					DatasetGroupName:        "group_name_1",
+					DatasetGroupDescription: "group_desc_1",
+					DatasetFields: []datastream.DatasetFields{
+						{
+							DatasetFieldID:          1001,
+							DatasetFieldName:        "dataset_field_name_1",
+							DatasetFieldDescription: "dataset_field_desc_1",
+							Order:                   0,
+						},
+					},
+				},
+			},
+			GroupID: 1337,
+			Properties: []datastream.Property{
+				{
+					PropertyID:   1,
+					PropertyName: "property_1",
+				},
+			},
+			StreamID:        streamID,
+			StreamName:      "test_stream",
+			StreamType:      datastream.StreamTypeRawLogs,
+			StreamVersionID: 1,
+			TemplateName:    datastream.TemplateNameEdgeLogs,
+		}
+	}
+
+	tests := map[string]struct {
+		Init  func(m *mockdatastream)
+		Steps []resource.TestStep
+	}{
+		"idempotent when endpoint is stripped by api": {
+			Init: func(m *mockdatastream) {
+				m.On("CreateStream", mock.Anything, createStreamRequestFactory(&datastream.SumoLogicConnector{
+					CollectorCode: "collector_code",
+					CompressLogs:  true,
+					ConnectorName: "connector_name",
+					Endpoint:      "endpoint/?/?",
+				})).Return(updateStreamResponse, nil)
+
+				m.On("GetStream", mock.Anything, mock.Anything).
+					Return(responseFactory(datastream.ConnectorDetails{
+						ConnectorType: datastream.ConnectorTypeSumoLogic,
+						CompressLogs:  true,
+						ConnectorName: "connector_name",
+						Endpoint:      "endpoint", //api returns stripped url
+					}), nil)
+			},
+			Steps: []resource.TestStep{
+				{
+					Config: loadFixtureString("testdata/TestResourceStream/urlSuppressor/idempotency/create_stream.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_datastream.s", "sumologic_connector.0.collector_code", "collector_code"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "sumologic_connector.0.connector_name", "connector_name"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "sumologic_connector.0.endpoint", "endpoint"),
+					),
+				},
+				{
+					Config:   loadFixtureString("testdata/TestResourceStream/urlSuppressor/idempotency/create_stream.tf"),
+					PlanOnly: true,
+				},
+			},
+		},
+		"update endpoint field": {
+			Init: func(m *mockdatastream) {
+				m.On("CreateStream", mock.Anything, createStreamRequestFactory(&datastream.SumoLogicConnector{
+					CollectorCode: "collector_code",
+					CompressLogs:  true,
+					ConnectorName: "connector_name",
+					Endpoint:      "endpoint",
+				})).Return(updateStreamResponse, nil)
+
+				m.On("GetStream", mock.Anything, mock.Anything).
+					Return(responseFactory(datastream.ConnectorDetails{
+						ConnectorType: datastream.ConnectorTypeSumoLogic,
+						CompressLogs:  true,
+						ConnectorName: "connector_name",
+						Endpoint:      "endpoint",
+					}), nil).Times(3)
+
+				m.On("UpdateStream", mock.Anything, updateStreamRequestFactory(&datastream.SumoLogicConnector{
+					CollectorCode: "collector_code",
+					CompressLogs:  true,
+					ConnectorName: "connector_name",
+					Endpoint:      "endpoint_updated",
+				})).Return(updateStreamResponse, nil)
+
+				m.On("GetStream", mock.Anything, mock.Anything).
+					Return(responseFactory(datastream.ConnectorDetails{
+						ConnectorType: datastream.ConnectorTypeSumoLogic,
+						CompressLogs:  true,
+						ConnectorName: "connector_name",
+						Endpoint:      "endpoint_updated",
+					}), nil)
+			},
+			Steps: []resource.TestStep{
+				{
+					Config: loadFixtureString("testdata/TestResourceStream/urlSuppressor/update_endpoint_field/create_stream.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_datastream.s", "sumologic_connector.0.collector_code", "collector_code"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "sumologic_connector.0.connector_name", "connector_name"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "sumologic_connector.0.endpoint", "endpoint"),
+					),
+				},
+				{
+					Config: loadFixtureString("testdata/TestResourceStream/urlSuppressor/update_endpoint_field/update_stream.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_datastream.s", "sumologic_connector.0.collector_code", "collector_code"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "sumologic_connector.0.connector_name", "connector_name"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "sumologic_connector.0.endpoint", "endpoint_updated"),
+					),
+				},
+			},
+		},
+		"adding new fields": {
+			Init: func(m *mockdatastream) {
+				m.On("CreateStream", mock.Anything, createStreamRequestFactory(&datastream.SumoLogicConnector{
+					CollectorCode: "collector_code",
+					CompressLogs:  true,
+					ConnectorName: "connector_name",
+					Endpoint:      "endpoint",
+				})).Return(updateStreamResponse, nil)
+
+				m.On("GetStream", mock.Anything, mock.Anything).
+					Return(responseFactory(datastream.ConnectorDetails{
+						ConnectorType: datastream.ConnectorTypeSumoLogic,
+						CompressLogs:  true,
+						ConnectorName: "connector_name",
+						Endpoint:      "endpoint",
+					}), nil).Times(3)
+
+				m.On("UpdateStream", mock.Anything, updateStreamRequestFactory(&datastream.SumoLogicConnector{
+					CollectorCode:     "collector_code",
+					CompressLogs:      true,
+					ConnectorName:     "connector_name",
+					Endpoint:          "endpoint",
+					CustomHeaderName:  "custom_header_name",
+					CustomHeaderValue: "custom_header_value",
+				})).Return(updateStreamResponse, nil)
+
+				m.On("GetStream", mock.Anything, mock.Anything).
+					Return(responseFactory(datastream.ConnectorDetails{
+						ConnectorType:     datastream.ConnectorTypeSumoLogic,
+						CompressLogs:      true,
+						ConnectorName:     "connector_name",
+						Endpoint:          "endpoint",
+						CustomHeaderName:  "custom_header_name",
+						CustomHeaderValue: "custom_header_value",
+					}), nil)
+			},
+			Steps: []resource.TestStep{
+				{
+					Config: loadFixtureString("testdata/TestResourceStream/urlSuppressor/adding_fields/create_stream.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_datastream.s", "sumologic_connector.0.collector_code", "collector_code"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "sumologic_connector.0.connector_name", "connector_name"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "sumologic_connector.0.endpoint", "endpoint"),
+					),
+				},
+				{
+					Config: loadFixtureString("testdata/TestResourceStream/urlSuppressor/adding_fields/update_stream.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_datastream.s", "sumologic_connector.0.collector_code", "collector_code"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "sumologic_connector.0.connector_name", "connector_name"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "sumologic_connector.0.endpoint", "endpoint"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "sumologic_connector.0.custom_header_name", "custom_header_name"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "sumologic_connector.0.custom_header_value", "custom_header_value"),
+					),
+				},
+				{
+					Config:   loadFixtureString("testdata/TestResourceStream/urlSuppressor/adding_fields/update_stream.tf"),
+					PlanOnly: true,
+				},
+			},
+		},
+		"change connector": {
+			Init: func(m *mockdatastream) {
+				m.On("CreateStream", mock.Anything, createStreamRequestFactory(&datastream.SumoLogicConnector{
+					CollectorCode: "collector_code",
+					CompressLogs:  true,
+					ConnectorName: "connector_name",
+					Endpoint:      "endpoint",
+				})).Return(updateStreamResponse, nil)
+
+				m.On("GetStream", mock.Anything, mock.Anything).
+					Return(responseFactory(datastream.ConnectorDetails{
+						ConnectorType: datastream.ConnectorTypeSumoLogic,
+						CompressLogs:  true,
+						ConnectorName: "connector_name",
+						Endpoint:      "endpoint",
+					}), nil).Times(3)
+
+				m.On("UpdateStream", mock.Anything, updateStreamRequestFactory(&datastream.DatadogConnector{
+					AuthToken:     "auth_token",
+					ConnectorName: "connector_name",
+					URL:           "url",
+				})).Return(updateStreamResponse, nil)
+
+				m.On("GetStream", mock.Anything, mock.Anything).
+					Return(responseFactory(datastream.ConnectorDetails{
+						ConnectorType: datastream.ConnectorTypeDataDog,
+						ConnectorName: "connector_name",
+						URL:           "url",
+					}), nil)
+			},
+			Steps: []resource.TestStep{
+				{
+					Config: loadFixtureString("testdata/TestResourceStream/urlSuppressor/change_connector/create_stream.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_datastream.s", "sumologic_connector.0.collector_code", "collector_code"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "sumologic_connector.0.connector_name", "connector_name"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "sumologic_connector.0.endpoint", "endpoint"),
+					),
+				},
+				{
+					Config: loadFixtureString("testdata/TestResourceStream/urlSuppressor/change_connector/update_stream.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_datastream.s", "datadog_connector.0.connector_name", "connector_name"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "datadog_connector.0.auth_token", "auth_token"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "datadog_connector.0.url", "url"),
+					),
+				},
+				{
+					Config:   loadFixtureString("testdata/TestResourceStream/urlSuppressor/change_connector/update_stream.tf"),
+					PlanOnly: true,
+				},
+			},
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			m := &mockdatastream{}
+			test.Init(m)
+
+			m.On("DeleteStream", mock.Anything, datastream.DeleteStreamRequest{
+				StreamID: streamID,
+			}).Return(&datastream.DeleteStreamResponse{Message: "Success"}, nil)
+
+			useClient(m, func() {
+				resource.UnitTest(t, resource.TestCase{
+					Providers: testAccProviders,
+					Steps:     test.Steps,
+				})
+
+				m.AssertExpectations(t)
 			})
 		})
 	}

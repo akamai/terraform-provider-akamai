@@ -130,7 +130,7 @@ func GetS3Connector(props map[string]interface{}) datastream.AbstractConnector {
 }
 
 // MapS3Connector selects fields needed for S3Connector
-func MapS3Connector(c datastream.ConnectorDetails, s map[string]interface{}) map[string]interface{} {
+func MapS3Connector(c datastream.ConnectorDetails, state map[string]interface{}) map[string]interface{} {
 	rv := map[string]interface{}{
 		"access_key":        "",
 		"bucket":            c.Bucket,
@@ -141,7 +141,7 @@ func MapS3Connector(c datastream.ConnectorDetails, s map[string]interface{}) map
 		"region":            c.Region,
 		"secret_access_key": "",
 	}
-	setNonNilItemsFromState(s, []string{"access_key", "secret_access_key"}, rv)
+	setNonNilItemsFromState(state, rv, "access_key", "secret_access_key")
 	return rv
 }
 
@@ -157,7 +157,7 @@ func GetAzureConnector(props map[string]interface{}) datastream.AbstractConnecto
 }
 
 // MapAzureConnector selects fields needed for AzureConnector
-func MapAzureConnector(c datastream.ConnectorDetails, s map[string]interface{}) map[string]interface{} {
+func MapAzureConnector(c datastream.ConnectorDetails, state map[string]interface{}) map[string]interface{} {
 	rv := map[string]interface{}{
 		"access_key":     "",
 		"account_name":   c.AccountName,
@@ -167,7 +167,7 @@ func MapAzureConnector(c datastream.ConnectorDetails, s map[string]interface{}) 
 		"container_name": c.ContainerName,
 		"path":           c.Path,
 	}
-	setNonNilItemsFromState(s, []string{"access_key"}, rv)
+	setNonNilItemsFromState(state, rv, "access_key")
 	return rv
 }
 
@@ -185,7 +185,7 @@ func GetDatadogConnector(props map[string]interface{}) datastream.AbstractConnec
 }
 
 // MapDatadogConnector selects fields needed for DatadogConnector
-func MapDatadogConnector(c datastream.ConnectorDetails, s map[string]interface{}) map[string]interface{} {
+func MapDatadogConnector(c datastream.ConnectorDetails, state map[string]interface{}) map[string]interface{} {
 	rv := map[string]interface{}{
 		"auth_token":     "",
 		"compress_logs":  c.CompressLogs,
@@ -196,7 +196,7 @@ func MapDatadogConnector(c datastream.ConnectorDetails, s map[string]interface{}
 		"tags":           c.Tags,
 		"url":            c.URL,
 	}
-	setNonNilItemsFromState(s, []string{"auth_token"}, rv)
+	setNonNilItemsFromState(state, rv, "auth_token")
 	return rv
 }
 
@@ -217,7 +217,7 @@ func GetSplunkConnector(props map[string]interface{}) datastream.AbstractConnect
 }
 
 // MapSplunkConnector selects fields needed for SplunkConnector
-func MapSplunkConnector(c datastream.ConnectorDetails, s map[string]interface{}) map[string]interface{} {
+func MapSplunkConnector(c datastream.ConnectorDetails, state map[string]interface{}) map[string]interface{} {
 	rv := map[string]interface{}{
 		"compress_logs":         c.CompressLogs,
 		"connector_id":          c.ConnectorID,
@@ -235,7 +235,7 @@ func MapSplunkConnector(c datastream.ConnectorDetails, s map[string]interface{})
 	if c.MTLS == "Enabled" {
 		rv["m_tls"] = true
 	}
-	setNonNilItemsFromState(s, []string{"event_collector_token", "ca_cert", "client_cert", "client_key"}, rv)
+	setNonNilItemsFromState(state, rv, "event_collector_token", "ca_cert", "client_cert", "client_key")
 	return rv
 }
 
@@ -252,7 +252,7 @@ func GetGCSConnector(props map[string]interface{}) datastream.AbstractConnector 
 }
 
 // MapGCSConnector selects fields needed for GCSConnector
-func MapGCSConnector(c datastream.ConnectorDetails, s map[string]interface{}) map[string]interface{} {
+func MapGCSConnector(c datastream.ConnectorDetails, state map[string]interface{}) map[string]interface{} {
 	rv := map[string]interface{}{
 		"bucket":               c.Bucket,
 		"compress_logs":        c.CompressLogs,
@@ -263,7 +263,7 @@ func MapGCSConnector(c datastream.ConnectorDetails, s map[string]interface{}) ma
 		"project_id":           c.ProjectID,
 		"service_account_name": c.ServiceAccountName,
 	}
-	setNonNilItemsFromState(s, []string{"private_key"}, rv)
+	setNonNilItemsFromState(state, rv, "private_key")
 	return rv
 }
 
@@ -287,7 +287,7 @@ func GetHTTPSConnector(props map[string]interface{}) datastream.AbstractConnecto
 }
 
 // MapHTTPSConnector selects fields needed for CustomHTTPSConnector
-func MapHTTPSConnector(c datastream.ConnectorDetails, s map[string]interface{}) map[string]interface{} {
+func MapHTTPSConnector(c datastream.ConnectorDetails, state map[string]interface{}) map[string]interface{} {
 	rv := map[string]interface{}{
 		"authentication_type": c.AuthenticationType,
 		"compress_logs":       c.CompressLogs,
@@ -308,7 +308,7 @@ func MapHTTPSConnector(c datastream.ConnectorDetails, s map[string]interface{}) 
 	if c.MTLS == "Enabled" {
 		rv["m_tls"] = true
 	}
-	setNonNilItemsFromState(s, []string{"password", "user_name", "ca_cert", "client_cert", "client_key"}, rv)
+	setNonNilItemsFromState(state, rv, "password", "user_name", "ca_cert", "client_cert", "client_key")
 	return rv
 }
 
@@ -326,9 +326,7 @@ func GetSumoLogicConnector(props map[string]interface{}) datastream.AbstractConn
 }
 
 // MapSumoLogicConnector selects fields needed for SumoLogicConnector
-func MapSumoLogicConnector(c datastream.ConnectorDetails, s map[string]interface{}) map[string]interface{} {
-	endpoint := tools.GetFirstNotEmpty(c.Endpoint, c.URL)
-
+func MapSumoLogicConnector(c datastream.ConnectorDetails, state map[string]interface{}) map[string]interface{} {
 	rv := map[string]interface{}{
 		"collector_code":      "",
 		"compress_logs":       c.CompressLogs,
@@ -337,9 +335,9 @@ func MapSumoLogicConnector(c datastream.ConnectorDetails, s map[string]interface
 		"content_type":        c.ContentType,
 		"custom_header_name":  c.CustomHeaderName,
 		"custom_header_value": c.CustomHeaderValue,
-		"endpoint":            endpoint,
+		"endpoint":            c.Endpoint,
 	}
-	setNonNilItemsFromState(s, []string{"collector_code"}, rv)
+	setNonNilItemsFromState(state, rv, "collector_code")
 	return rv
 }
 
@@ -357,7 +355,7 @@ func GetOracleConnector(props map[string]interface{}) datastream.AbstractConnect
 }
 
 // MapOracleConnector selects fields needed for OracleCloudStorageConnector
-func MapOracleConnector(c datastream.ConnectorDetails, s map[string]interface{}) map[string]interface{} {
+func MapOracleConnector(c datastream.ConnectorDetails, state map[string]interface{}) map[string]interface{} {
 	rv := map[string]interface{}{
 		"access_key":        "",
 		"bucket":            c.Bucket,
@@ -369,16 +367,16 @@ func MapOracleConnector(c datastream.ConnectorDetails, s map[string]interface{})
 		"region":            c.Region,
 		"secret_access_key": "",
 	}
-	setNonNilItemsFromState(s, []string{"access_key", "secret_access_key"}, rv)
+	setNonNilItemsFromState(state, rv, "access_key", "secret_access_key")
 	return rv
 }
 
 // GetLogglyConnector builds LogglyConnector structure
 func GetLogglyConnector(props map[string]interface{}) datastream.AbstractConnector {
 	return &datastream.LogglyConnector{
+		AuthToken:         props["auth_token"].(string),
 		ConnectorName:     props["connector_name"].(string),
 		Endpoint:          props["endpoint"].(string),
-		AuthToken:         props["auth_token"].(string),
 		Tags:              props["tags"].(string),
 		ContentType:       props["content_type"].(string),
 		CustomHeaderName:  props["custom_header_name"].(string),
@@ -387,7 +385,7 @@ func GetLogglyConnector(props map[string]interface{}) datastream.AbstractConnect
 }
 
 // MapLogglyConnector selects fields needed for LogglyConnector
-func MapLogglyConnector(c datastream.ConnectorDetails, s map[string]interface{}) map[string]interface{} {
+func MapLogglyConnector(c datastream.ConnectorDetails, state map[string]interface{}) map[string]interface{} {
 	rv := map[string]interface{}{
 		"auth_token":          "",
 		"connector_name":      c.ConnectorName,
@@ -397,16 +395,16 @@ func MapLogglyConnector(c datastream.ConnectorDetails, s map[string]interface{})
 		"custom_header_name":  c.CustomHeaderName,
 		"custom_header_value": c.CustomHeaderValue,
 	}
-	setNonNilItemsFromState(s, []string{"auth_token"}, rv)
+	setNonNilItemsFromState(state, rv, "auth_token")
 	return rv
 }
 
 // GetNewRelicConnector builds NewRelicConnector structure
 func GetNewRelicConnector(props map[string]interface{}) datastream.AbstractConnector {
 	return &datastream.NewRelicConnector{
+		AuthToken:         props["auth_token"].(string),
 		ConnectorName:     props["connector_name"].(string),
 		Endpoint:          props["endpoint"].(string),
-		AuthToken:         props["auth_token"].(string),
 		ContentType:       props["content_type"].(string),
 		CustomHeaderName:  props["custom_header_name"].(string),
 		CustomHeaderValue: props["custom_header_value"].(string),
@@ -414,7 +412,7 @@ func GetNewRelicConnector(props map[string]interface{}) datastream.AbstractConne
 }
 
 // MapNewRelicConnector selects fields needed for NewRelicConnector
-func MapNewRelicConnector(c datastream.ConnectorDetails, s map[string]interface{}) map[string]interface{} {
+func MapNewRelicConnector(c datastream.ConnectorDetails, state map[string]interface{}) map[string]interface{} {
 	rv := map[string]interface{}{
 		"auth_token":          "",
 		"connector_name":      c.ConnectorName,
@@ -423,7 +421,7 @@ func MapNewRelicConnector(c datastream.ConnectorDetails, s map[string]interface{
 		"custom_header_name":  c.CustomHeaderName,
 		"custom_header_value": c.CustomHeaderValue,
 	}
-	setNonNilItemsFromState(s, []string{"auth_token"}, rv)
+	setNonNilItemsFromState(state, rv, "auth_token")
 	return rv
 }
 
@@ -446,7 +444,7 @@ func GetElasticsearchConnector(props map[string]interface{}) datastream.Abstract
 }
 
 // MapElasticsearchConnector selects fields needed for ElasticsearchConnector
-func MapElasticsearchConnector(c datastream.ConnectorDetails, s map[string]interface{}) map[string]interface{} {
+func MapElasticsearchConnector(c datastream.ConnectorDetails, state map[string]interface{}) map[string]interface{} {
 	rv := map[string]interface{}{
 		"connector_name":      c.ConnectorName,
 		"endpoint":            c.Endpoint,
@@ -465,11 +463,11 @@ func MapElasticsearchConnector(c datastream.ConnectorDetails, s map[string]inter
 	if c.MTLS == "Enabled" {
 		rv["m_tls"] = true
 	}
-	setNonNilItemsFromState(s, []string{"user_name", "password", "ca_cert", "client_cert", "client_key"}, rv)
+	setNonNilItemsFromState(state, rv, "user_name", "password", "ca_cert", "client_cert", "client_key")
 	return rv
 }
 
-func setNonNilItemsFromState(state map[string]interface{}, fields []string, target map[string]interface{}) {
+func setNonNilItemsFromState(state map[string]interface{}, target map[string]interface{}, fields ...string) {
 	for _, f := range fields {
 		if state[f] != nil {
 			target[f] = state[f]
