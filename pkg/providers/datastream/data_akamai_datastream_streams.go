@@ -105,7 +105,7 @@ func dataAkamaiDatastreamStreams() *schema.Resource {
 						"properties": {
 							Type:        schema.TypeList,
 							Computed:    true,
-							Description: "List of properties associated with stream.",
+							Description: "List of properties associated with the stream.",
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"property_id": {
@@ -159,13 +159,13 @@ func dataDatastreamStreamsRead(ctx context.Context, d *schema.ResourceData, m in
 
 	client := inst.Client(meta)
 
-	req := datastream.ListStreamsRequest{}
-	resID := "akamai_datastreams"
 	groupIDStr, err := tools.GetStringValue("group_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 
+	req := datastream.ListStreamsRequest{}
+	resID := "akamai_datastreams"
 	if groupIDStr != "" {
 		groupID, err := strconv.Atoi(strings.TrimPrefix(groupIDStr, "grp_"))
 		if err != nil {

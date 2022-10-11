@@ -1471,7 +1471,7 @@ func urlSuppressor(keyToSuppress string) schema.SchemaDiffSuppressFunc {
 			newVal, ok := newElem[propertyName]
 			// if property does not exist in old element, do not suppress change
 			if !ok {
-				logger.Debugf("Change detected")
+				logger.Debug("Change detected")
 				return false
 			}
 
@@ -1479,7 +1479,7 @@ func urlSuppressor(keyToSuppress string) schema.SchemaDiffSuppressFunc {
 
 			// if values are different, do not suppress change
 			if newVal != oldVal {
-				logger.Debugf("Change detected")
+				logger.Debug("Change detected")
 				return false
 			}
 		}
