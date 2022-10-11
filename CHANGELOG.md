@@ -1,5 +1,21 @@
 # RELEASE NOTES
 
+## xxxx (xxx, 2022)
+
+#### FEATURES/ENHANCEMENTS:
+
+* Datastream
+  * Added `akamai_datastreams` data source ([#327](https://github.com/akamai/terraform-provider-akamai/issues/327))
+  * Added new features to `akamai_datastream` resource
+    * new connectors: Elasticsearch, NewRelic and Loggly
+    * Splunk and Custom HTTPS connectors were extended with ability to provide mTLS certificates configuration
+    * SumoLogic, Splunk and Custom HTTPS connectors were extended with ability to specify custom HTTP headers
+
+#### BUG FIXES:
+
+* Datastream
+  * Fixed probem with updating the configuration of the following connectors: Splunk, SumoLogic, Custom HTTPS, Datadog
+
 ## 2.4.2 (October 4, 2022)
 
 #### FEATURES/ENHANCEMENTS:
