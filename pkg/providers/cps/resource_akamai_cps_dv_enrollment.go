@@ -262,7 +262,7 @@ func resourceCPSDVEnrollmentCreate(ctx context.Context, d *schema.ResourceData, 
 	}
 	enrollment.NetworkConfiguration = networkConfig
 	signatureAlgorithm, err := tools.GetStringValue("signature_algorithm", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	enrollment.SignatureAlgorithm = signatureAlgorithm

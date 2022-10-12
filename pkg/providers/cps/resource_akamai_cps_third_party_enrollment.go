@@ -99,8 +99,10 @@ func resourceCPSThirdPartyEnrollment() *schema.Resource {
 				Elem:     networkConfiguration,
 			},
 			"signature_algorithm": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:             schema.TypeString,
+				Optional:         true,
+				DiffSuppressFunc: supressSignatureAlgorithm,
+				Description:      "The SHA function. Changing this value may require running terraform destroy, terraform apply",
 			},
 			"tech_contact": {
 				Type:     schema.TypeSet,
@@ -148,6 +150,13 @@ func resourceCPSThirdPartyEnrollment() *schema.Resource {
 				return nil
 			}),
 	}
+}
+
+func supressSignatureAlgorithm(_ string, oldValue, newValue string, d *schema.ResourceData) bool {
+	if oldValue == "" && d != nil && d.Id() != "" {
+		return true
+	}
+	return oldValue == newValue
 }
 
 func resourceCPSThirdPartyEnrollmentCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -355,7 +364,7 @@ func prepareThirdPartyEnrollment(d *schema.ResourceData) (*cps.Enrollment, error
 	}
 	enrollment.NetworkConfiguration = networkConfig
 	signatureAlgorithm, err := tools.GetStringValue("signature_algorithm", d)
-	if err != nil {
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return nil, err
 	}
 	enrollment.SignatureAlgorithm = signatureAlgorithm

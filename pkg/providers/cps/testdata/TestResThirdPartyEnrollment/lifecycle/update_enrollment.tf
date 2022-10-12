@@ -56,7 +56,7 @@ resource "akamai_cps_third_party_enrollment" "third_party" {
     must_have_ciphers = "ak-akamai-default"
     quic_enabled      = false
   }
-  signature_algorithm = "SHA-256"
+  signature_algorithm = "SHA-1"
   organization {
     name             = "Akamai"
     phone            = "321321321"
