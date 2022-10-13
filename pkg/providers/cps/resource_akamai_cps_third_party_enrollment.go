@@ -65,7 +65,6 @@ func resourceCPSThirdPartyEnrollment() *schema.Resource {
 			"auto_approve_warnings": {
 				Type:     schema.TypeSet,
 				Optional: true,
-				MinItems: 1,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
 			"admin_contact": {
