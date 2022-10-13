@@ -337,7 +337,7 @@ func readAttrs(enrollment *cps.Enrollment, d *schema.ResourceData) (map[string]i
 		return nil, err
 	}
 	for _, san := range enrollment.CSR.SANS {
-		if (sansFromSchema.Len() == 0 || !sansFromSchema.Contains(enrollment.CSR.CN)) && san == enrollment.CSR.CN {
+		if enrollment.ValidationType == "dv" && (sansFromSchema.Len() == 0 || !sansFromSchema.Contains(enrollment.CSR.CN)) && san == enrollment.CSR.CN {
 			continue
 		}
 		sans = append(sans, san)

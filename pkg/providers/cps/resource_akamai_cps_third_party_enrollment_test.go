@@ -233,7 +233,6 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		enrollment.PendingChanges = []string{"/cps/v2/enrollments/1/changes/2"}
 		var enrollmentGet cps.Enrollment
 		require.NoError(t, copier.CopyWithOption(&enrollmentGet, enrollment, copier.Option{DeepCopy: true}))
-		enrollmentGet.CSR.SANS = []string{enrollment.CSR.CN}
 		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollmentGet, nil).Once()
 
@@ -899,7 +898,6 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		enrollment.PendingChanges = []string{"/cps/v2/enrollments/1/changes/2"}
 		var enrollmentGet cps.Enrollment
 		require.NoError(t, copier.CopyWithOption(&enrollmentGet, enrollment, copier.Option{DeepCopy: true}))
-		enrollmentGet.CSR.SANS = []string{enrollment.CSR.CN}
 		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollmentGet, nil).Once()
 
