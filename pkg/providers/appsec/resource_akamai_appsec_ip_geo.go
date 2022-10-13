@@ -51,19 +51,19 @@ func resourceIPGeo() *schema.Resource {
 				Description: "Protection mode (block or allow)",
 			},
 			"geo_network_lists": {
-				Type:        schema.TypeSet,
+				Type:        schema.TypeList,
 				Optional:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "List of IDs of geographic network list to be blocked",
 			},
 			"ip_network_lists": {
-				Type:        schema.TypeSet,
+				Type:        schema.TypeList,
 				Optional:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "List of IDs of IP network list to be blocked",
 			},
 			"exception_ip_network_lists": {
-				Type:        schema.TypeSet,
+				Type:        schema.TypeList,
 				Optional:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "List of IDs of network list that are always allowed",
@@ -93,15 +93,15 @@ func resourceIPGeoCreate(ctx context.Context, d *schema.ResourceData, m interfac
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	blockedGeoListsSet, err := tools.GetSetValue("geo_network_lists", d)
+	blockedGeoLists, err := tools.GetListValue("geo_network_lists", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	blockedIPListsSet, err := tools.GetSetValue("ip_network_lists", d)
+	blockedIPLists, err := tools.GetListValue("ip_network_lists", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	exceptionIPListsSet, err := tools.GetSetValue("exception_ip_network_lists", d)
+	exceptionIPLists, err := tools.GetListValue("exception_ip_network_lists", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
@@ -113,23 +113,44 @@ func resourceIPGeoCreate(ctx context.Context, d *schema.ResourceData, m interfac
 	}
 	if mode == Allow {
 		request.Block = "blockAllTrafficExceptAllowedIPs"
-		request.IPControls = &appsec.IPGeoIPControls{
-			AllowedIPNetworkLists: &appsec.IPGeoNetworkLists{
-				NetworkList: tools.SetToStringSlice(exceptionIPListsSet),
-			},
+		count := len(exceptionIPLists)
+		if count > 0 {
+			items := make([]string, 0, count)
+			for _, item := range exceptionIPLists {
+				items = append(items, item.(string))
+			}
+			request.IPControls = &appsec.IPGeoIPControls{
+				AllowedIPNetworkLists: &appsec.IPGeoNetworkLists{
+					NetworkList: items,
+				},
+			}
 		}
 	}
 	if mode == Block {
 		request.Block = "blockSpecificIPGeo"
-		request.GeoControls = &appsec.IPGeoGeoControls{
-			BlockedIPNetworkLists: &appsec.IPGeoNetworkLists{
-				NetworkList: tools.SetToStringSlice(blockedGeoListsSet),
-			},
+		count := len(blockedGeoLists)
+		if count > 0 {
+			items := make([]string, 0, count)
+			for _, item := range blockedGeoLists {
+				items = append(items, item.(string))
+			}
+			request.GeoControls = &appsec.IPGeoGeoControls{
+				BlockedIPNetworkLists: &appsec.IPGeoNetworkLists{
+					NetworkList: items,
+				},
+			}
 		}
-		request.IPControls = &appsec.IPGeoIPControls{
-			BlockedIPNetworkLists: &appsec.IPGeoNetworkLists{
-				NetworkList: tools.SetToStringSlice(blockedIPListsSet),
-			},
+		count = len(blockedIPLists)
+		if count > 0 {
+			items := make([]string, 0, count)
+			for _, item := range blockedIPLists {
+				items = append(items, item.(string))
+			}
+			request.IPControls = &appsec.IPGeoIPControls{
+				BlockedIPNetworkLists: &appsec.IPGeoNetworkLists{
+					NetworkList: items,
+				},
+			}
 		}
 	}
 
@@ -186,19 +207,37 @@ func resourceIPGeoRead(ctx context.Context, d *schema.ResourceData, m interface{
 		if err := d.Set("mode", Allow); err != nil {
 			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 		}
-		if err := d.Set("exception_ip_network_lists", ipgeo.IPControls.AllowedIPNetworkLists.NetworkList); err != nil {
-			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		if ipgeo.IPControls != nil && ipgeo.IPControls.AllowedIPNetworkLists != nil {
+			if err := d.Set("exception_ip_network_lists", ipgeo.IPControls.AllowedIPNetworkLists.NetworkList); err != nil {
+				return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+			}
+		} else {
+			if err := d.Set("exception_ip_network_lists", []string{}); err != nil {
+				return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+			}
 		}
 	}
 	if ipgeo.Block == "blockSpecificIPGeo" {
 		if err := d.Set("mode", Block); err != nil {
 			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
 		}
-		if err := d.Set("geo_network_lists", ipgeo.GeoControls.BlockedIPNetworkLists.NetworkList); err != nil {
-			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		if ipgeo.GeoControls != nil && ipgeo.GeoControls.BlockedIPNetworkLists != nil {
+			if err := d.Set("geo_network_lists", ipgeo.GeoControls.BlockedIPNetworkLists.NetworkList); err != nil {
+				return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+			}
+		} else {
+			if err := d.Set("geo_network_lists", []string{}); err != nil {
+				return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+			}
 		}
-		if err := d.Set("ip_network_lists", ipgeo.IPControls.BlockedIPNetworkLists.NetworkList); err != nil {
-			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		if ipgeo.IPControls != nil && ipgeo.IPControls.BlockedIPNetworkLists != nil {
+			if err := d.Set("ip_network_lists", ipgeo.IPControls.BlockedIPNetworkLists.NetworkList); err != nil {
+				return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+			}
+		} else {
+			if err := d.Set("ip_network_lists", []string{}); err != nil {
+				return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+			}
 		}
 	}
 
@@ -228,15 +267,15 @@ func resourceIPGeoUpdate(ctx context.Context, d *schema.ResourceData, m interfac
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	blockedGeoListsSet, err := tools.GetSetValue("geo_network_lists", d)
+	blockedGeoLists, err := tools.GetListValue("geo_network_lists", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	blockedIPListsSet, err := tools.GetSetValue("ip_network_lists", d)
+	blockedIPLists, err := tools.GetListValue("ip_network_lists", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	exceptionIPListsSet, err := tools.GetSetValue("exception_ip_network_lists", d)
+	exceptionIPLists, err := tools.GetListValue("exception_ip_network_lists", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
@@ -248,23 +287,44 @@ func resourceIPGeoUpdate(ctx context.Context, d *schema.ResourceData, m interfac
 	}
 	if mode == Allow {
 		request.Block = "blockAllTrafficExceptAllowedIPs"
-		request.IPControls = &appsec.IPGeoIPControls{
-			AllowedIPNetworkLists: &appsec.IPGeoNetworkLists{
-				NetworkList: tools.SetToStringSlice(exceptionIPListsSet),
-			},
+		count := len(exceptionIPLists)
+		if count > 0 {
+			items := make([]string, 0, count)
+			for _, item := range exceptionIPLists {
+				items = append(items, item.(string))
+			}
+			request.IPControls = &appsec.IPGeoIPControls{
+				AllowedIPNetworkLists: &appsec.IPGeoNetworkLists{
+					NetworkList: items,
+				},
+			}
 		}
 	}
 	if mode == Block {
 		request.Block = "blockSpecificIPGeo"
-		request.GeoControls = &appsec.IPGeoGeoControls{
-			BlockedIPNetworkLists: &appsec.IPGeoNetworkLists{
-				NetworkList: tools.SetToStringSlice(blockedGeoListsSet),
-			},
+		count := len(blockedGeoLists)
+		if count > 0 {
+			items := make([]string, 0, count)
+			for _, item := range blockedGeoLists {
+				items = append(items, item.(string))
+			}
+			request.GeoControls = &appsec.IPGeoGeoControls{
+				BlockedIPNetworkLists: &appsec.IPGeoNetworkLists{
+					NetworkList: items,
+				},
+			}
 		}
-		request.IPControls = &appsec.IPGeoIPControls{
-			BlockedIPNetworkLists: &appsec.IPGeoNetworkLists{
-				NetworkList: tools.SetToStringSlice(blockedIPListsSet),
-			},
+		count = len(blockedIPLists)
+		if count > 0 {
+			items := make([]string, 0, count)
+			for _, item := range blockedIPLists {
+				items = append(items, item.(string))
+			}
+			request.IPControls = &appsec.IPGeoIPControls{
+				BlockedIPNetworkLists: &appsec.IPGeoNetworkLists{
+					NetworkList: items,
+				},
+			}
 		}
 	}
 

@@ -9,6 +9,6 @@ resource "akamai_appsec_ip_geo" "test" {
   mode                       = "allow"
   geo_network_lists          = ["40731_BMROLLOUTGEO", "44831_ECSCGEOBLACKLIST"]
   ip_network_lists           = ["49181_ADTIPBLACKLIST", "49185_ADTWAFBYPASSLIST"]
-  exception_ip_network_lists = ["69601_ADYENPRODWHITELIST", "68762_ADYEN"]
+  exception_ip_network_lists = ["68762_ADYEN", "69601_ADYENPRODWHITELIST"]
 }
 
