@@ -61,6 +61,7 @@ func resourceCPSDVEnrollment() *schema.Resource {
 			"acknowledge_pre_verification_warnings": {
 				Type:     schema.TypeBool,
 				Optional: true,
+				Default:  false,
 			},
 			"admin_contact": {
 				Type:     schema.TypeSet,
@@ -565,6 +566,9 @@ func resourceCPSDVEnrollmentImport(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	if err := d.Set("allow_duplicate_common_name", false); err != nil {
+		return nil, fmt.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+	}
+	if err := d.Set("acknowledge_pre_verification_warnings", false); err != nil {
 		return nil, fmt.Errorf("%v: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("contract_id", contractID); err != nil {
