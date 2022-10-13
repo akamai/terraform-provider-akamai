@@ -351,7 +351,6 @@ func readAttrs(enrollment *cps.Enrollment, d *schema.ResourceData) (map[string]i
 	attrs["certificate_chain_type"] = enrollment.CertificateChainType
 	csr := cpstools.CSRToMap(*enrollment.CSR)
 	attrs["csr"] = []interface{}{csr}
-	attrs["enable_multi_stacked_certificates"] = enrollment.EnableMultiStackedCertificates
 	networkConfig := cpstools.NetworkConfigToMap(*enrollment.NetworkConfiguration)
 	attrs["network_configuration"] = []interface{}{networkConfig}
 	attrs["signature_algorithm"] = enrollment.SignatureAlgorithm

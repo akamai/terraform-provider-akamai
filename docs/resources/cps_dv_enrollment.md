@@ -55,7 +55,6 @@ resource "akamai_cps_dv_enrollment" "example" {
     organizational_unit = "Dev"
     state = "MA"
   }
-  enable_multi_stacked_certificates = false
   network_configuration {
     disallowed_tls_versions = ["TLSv1", "TLSv1_1"]
     clone_dns_names = false
@@ -125,7 +124,6 @@ The following arguments are supported:
       * `organization` - (Required The name of your company or organization. Enter the name as it appears in all legal documents and as it appears in the legal entity filing.
       * `organizational_unit` - (Required) Your organizational unit.
       * `state` - (Required) 	Your state or province.
-* `enable_multi_stacked_certificates` - (Optional) Whether to enable an ECDSA certificate in addition to an RSA certificate. CPS automatically performs all certificate operations on both certificates, and uses the best certificate for each client connection to your secure properties. If you are pinning the certificates, you need to pin both the RSA and the ECDSA certificate.
 * `network_configuration` - (Required) The network information and TLS Metadata you want CPS to use to push the completed certificate to the network.
 
     Requires these additional arguments:
@@ -173,6 +171,9 @@ The following arguments are supported:
       * `region` - (Required) The region of your organization, typically a state or province.
       * `postal_code` - (Required) The postal code of your organization.
       * `country_code` - (Required) The code for the country where your organization resides.
+
+### Deprecated arguments
+* `enable_multi_stacked_certificates` - (Deprecated) Whether to enable an ECDSA certificate in addition to an RSA certificate. CPS automatically performs all certificate operations on both certificates, and uses the best certificate for each client connection to your secure properties. If you are pinning the certificates, you need to pin both the RSA and the ECDSA certificate.
 
 ## Attributes reference
 

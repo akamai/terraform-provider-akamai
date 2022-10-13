@@ -39,7 +39,6 @@ resource "akamai_cps_third_party_enrollment" "third_party" {
     organizational_unit = "WebEx"
     state               = "MA"
   }
-  enable_multi_stacked_certificates = false
   network_configuration {
     disallowed_tls_versions = [
       "TLSv1",

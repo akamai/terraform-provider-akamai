@@ -86,10 +86,6 @@ func resourceCPSThirdPartyEnrollment() *schema.Resource {
 				MaxItems: 1,
 				Elem:     csr,
 			},
-			"enable_multi_stacked_certificates": {
-				Type:     schema.TypeBool,
-				Optional: true,
-			},
 			"network_configuration": {
 				Type:     schema.TypeSet,
 				Required: true,
@@ -279,7 +275,6 @@ func resourceCPSThirdPartyEnrollmentUpdate(ctx context.Context, d *schema.Resour
 		"tech_contact",
 		"certificate_chain_type",
 		"csr",
-		"enable_multi_stacked_certificates",
 		"network_configuration",
 		"signature_algorithm",
 		"organization",
@@ -351,11 +346,8 @@ func prepareThirdPartyEnrollment(d *schema.ResourceData) (*cps.Enrollment, error
 	}
 	enrollment.CSR = csr
 
-	enableMultiStacked, err := tools.GetBoolValue("enable_multi_stacked_certificates", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return nil, err
-	}
-	enrollment.EnableMultiStackedCertificates = enableMultiStacked
+	// for third-party certificates, multi-stack it is always enabled
+	enrollment.EnableMultiStackedCertificates = true
 
 	networkConfig, err := cpstools.GetNetworkConfig(d)
 	if err != nil {

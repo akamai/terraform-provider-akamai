@@ -11,6 +11,8 @@
   * Added resources allowing management of third-party enrollments:
     * [akamai_cps_third_party_enrollment](xxx.md) - create, read, update, delete and import third-party enrollments
     * [akamai_cps_upload_certificate](xxx.md) - create, read, update and delete
+  * Resource cps_dv_enrollment
+    * Deprecate `enable_multi_stacked_certificates` field. Now its value is always `false`.
 
 #### BUG FIXES:
 

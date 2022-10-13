@@ -82,8 +82,9 @@ func resourceCPSDVEnrollment() *schema.Resource {
 				Elem:     csr,
 			},
 			"enable_multi_stacked_certificates": {
-				Type:     schema.TypeBool,
-				Optional: true,
+				Type:       schema.TypeBool,
+				Optional:   true,
+				Deprecated: "Deprecated, don't use; always false",
 			},
 			"network_configuration": {
 				Type:     schema.TypeSet,
@@ -250,11 +251,8 @@ func resourceCPSDVEnrollmentCreate(ctx context.Context, d *schema.ResourceData, 
 	}
 	enrollment.CSR = csr
 
-	enableMultiStacked, err := tools.GetBoolValue("enable_multi_stacked_certificates", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	enrollment.EnableMultiStackedCertificates = enableMultiStacked
+	// DV does not support multi stack certificates
+	enrollment.EnableMultiStackedCertificates = false
 
 	networkConfig, err := cpstools.GetNetworkConfig(d)
 	if err != nil {
@@ -435,7 +433,6 @@ func resourceCPSDVEnrollmentUpdate(ctx context.Context, d *schema.ResourceData, 
 		"tech_contact",
 		"certificate_chain_type",
 		"csr",
-		"enable_multi_stacked_certificates",
 		"network_configuration",
 		"signature_algorithm",
 		"organization",
@@ -492,11 +489,8 @@ func resourceCPSDVEnrollmentUpdate(ctx context.Context, d *schema.ResourceData, 
 	}
 	enrollment.CSR = csr
 
-	enableMultiStacked, err := tools.GetBoolValue("enable_multi_stacked_certificates", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	enrollment.EnableMultiStackedCertificates = enableMultiStacked
+	// DV does not support multi stack certificates
+	enrollment.EnableMultiStackedCertificates = false
 
 	networkConfig, err := cpstools.GetNetworkConfig(d)
 	if err != nil {

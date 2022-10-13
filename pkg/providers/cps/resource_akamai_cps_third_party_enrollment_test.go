@@ -174,7 +174,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 				OU: "WebEx",
 				ST: "MA",
 			},
-			EnableMultiStackedCertificates: false,
+			EnableMultiStackedCertificates: true,
 			NetworkConfiguration: &cps.NetworkConfiguration{
 				DisallowedTLSVersions: []string{"TLSv1", "TLSv1_1"},
 				DNSNameSettings: &cps.DNSNameSettings{
@@ -331,7 +331,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 				SANS: []string{commonName, "san.test.akamai.com"},
 				ST:   "MA",
 			},
-			EnableMultiStackedCertificates: false,
+			EnableMultiStackedCertificates: true,
 			NetworkConfiguration: &cps.NetworkConfiguration{
 				DisallowedTLSVersions: []string{"TLSv1", "TLSv1_1"},
 				DNSNameSettings: &cps.DNSNameSettings{
@@ -547,6 +547,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 				OU: "WebEx",
 				ST: "MA",
 			},
+			EnableMultiStackedCertificates: true,
 			NetworkConfiguration: &cps.NetworkConfiguration{
 				DNSNameSettings: &cps.DNSNameSettings{
 					CloneDNSNames: false,
@@ -686,6 +687,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 				OU: "WebEx",
 				ST: "MA",
 			},
+			EnableMultiStackedCertificates: true,
 			NetworkConfiguration: &cps.NetworkConfiguration{
 				DNSNameSettings: &cps.DNSNameSettings{
 					CloneDNSNames: false,
@@ -837,7 +839,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 				OU: "WebEx",
 				ST: "MA",
 			},
-			EnableMultiStackedCertificates: false,
+			EnableMultiStackedCertificates: true,
 			NetworkConfiguration: &cps.NetworkConfiguration{
 				DisallowedTLSVersions: []string{"TLSv1", "TLSv1_1"},
 				DNSNameSettings: &cps.DNSNameSettings{
@@ -993,6 +995,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 				OU: "WebEx",
 				ST: "MA",
 			},
+			EnableMultiStackedCertificates: true,
 			NetworkConfiguration: &cps.NetworkConfiguration{
 				DNSNameSettings: &cps.DNSNameSettings{
 					CloneDNSNames: false,
@@ -1112,6 +1115,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 				OU: "WebEx",
 				ST: "MA",
 			},
+			EnableMultiStackedCertificates: true,
 			NetworkConfiguration: &cps.NetworkConfiguration{
 				DNSNameSettings: &cps.DNSNameSettings{
 					CloneDNSNames: false,
@@ -1198,6 +1202,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 				OU: "WebEx",
 				ST: "MA",
 			},
+			EnableMultiStackedCertificates: true,
 			NetworkConfiguration: &cps.NetworkConfiguration{
 				DNSNameSettings: &cps.DNSNameSettings{
 					CloneDNSNames: false,
@@ -1349,6 +1354,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 				OU: "WebEx",
 				ST: "MA",
 			},
+			EnableMultiStackedCertificates: true,
 			NetworkConfiguration: &cps.NetworkConfiguration{
 				DNSNameSettings: &cps.DNSNameSettings{
 					CloneDNSNames: false,
@@ -1468,6 +1474,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 				OU: "WebEx",
 				ST: "MA",
 			},
+			EnableMultiStackedCertificates: true,
 			NetworkConfiguration: &cps.NetworkConfiguration{
 				DNSNameSettings: &cps.DNSNameSettings{
 					CloneDNSNames: false,
@@ -1590,6 +1597,7 @@ func TestResourceThirdPartyEnrollmentImport(t *testing.T) {
 				OU: "WebEx",
 				ST: "MA",
 			},
+			EnableMultiStackedCertificates: true,
 			NetworkConfiguration: &cps.NetworkConfiguration{
 				DNSNameSettings: &cps.DNSNameSettings{
 					CloneDNSNames: false,
@@ -1873,7 +1881,7 @@ func getSimpleEnrollment() cps.Enrollment {
 			SANS: []string{"san.test.akamai.com"},
 			ST:   "MA",
 		},
-		EnableMultiStackedCertificates: false,
+		EnableMultiStackedCertificates: true,
 		NetworkConfiguration: &cps.NetworkConfiguration{
 			DisallowedTLSVersions: []string{"TLSv1", "TLSv1_1"},
 			DNSNameSettings: &cps.DNSNameSettings{
