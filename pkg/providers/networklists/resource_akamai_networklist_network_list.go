@@ -27,6 +27,7 @@ func resourceNetworkList() *schema.Resource {
 		DeleteContext: resourceNetworkListDelete,
 		CustomizeDiff: customdiff.All(
 			VerifyContractGroupUnchanged,
+			MarkSyncPointComputedIfListModified,
 		),
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -372,7 +373,7 @@ func resourceNetworkListDelete(ctx context.Context, d *schema.ResourceData, m in
 func resourceNetworkListRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("NETWORKLISTs", "resourceNetworkListRead")
+	logger := meta.Log("NETWORKLIST", "resourceNetworkListRead")
 
 	getNetworkList := networklists.GetNetworkListRequest{}
 	getNetworkList.UniqueID = d.Id()
@@ -510,7 +511,7 @@ func RemoveIndex(hl []string, index int) []string {
 // value; any such modifications indicate an incorrect understanding of the Update operation.
 func VerifyContractGroupUnchanged(_ context.Context, d *schema.ResourceDiff, m interface{}) error {
 	meta := akamai.Meta(m)
-	logger := meta.Log("NETWORKLISTs", "VerifyContractGroupUnchanged")
+	logger := meta.Log("NETWORKLIST", "VerifyContractGroupUnchanged")
 
 	if d.HasChange("contract_id") {
 		old, new := d.GetChange("contract_id")
@@ -532,6 +533,18 @@ func VerifyContractGroupUnchanged(_ context.Context, d *schema.ResourceDiff, m i
 		}
 	}
 
+	return nil
+}
+
+// MarkSyncPointComputedIfListModified sets 'sync_point' field as new computed
+// if a new version of network list is expected to be created.
+func MarkSyncPointComputedIfListModified(_ context.Context, d *schema.ResourceDiff, m interface{}) error {
+	meta := akamai.Meta(m)
+	logger := meta.Log("NETWORKLIST", "MarkSyncPointComputedIfListModified")
+	if d.HasChange("list") {
+		logger.Debugf("setting sync_point as new computed")
+		return d.SetNewComputed("sync_point")
+	}
 	return nil
 }
 
