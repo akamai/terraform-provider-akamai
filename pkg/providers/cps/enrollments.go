@@ -30,6 +30,10 @@ const (
 	waitUploadThirdParty                = "wait-upload-third-party"
 	statusVerificationWarnings          = "wait-review-pre-verification-safety-checks"
 	inputTypePreVerificationWarningsAck = "pre-verification-warnings-acknowledgement"
+	waitReviewThirdPartyCert            = "wait-review-third-party-cert"
+	waitAckChangeManagement             = "wait-ack-change-management"
+	complete                            = "complete"
+	verifyThirdPartyCert                = "verify-third-party-cert"
 )
 
 var (

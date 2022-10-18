@@ -23,6 +23,7 @@ func resourceCPSUploadCertificate() *schema.Resource {
 		ReadContext:   resourceCPSUploadCertificateRead,
 		UpdateContext: resourceCPSUploadCertificateUpdate,
 		DeleteContext: resourceCPSUploadCertificateDelete,
+		CustomizeDiff: checkUnacknowledgedWarnings,
 		Schema: map[string]*schema.Schema{
 			"enrollment_id": {
 				Type:        schema.TypeInt,
@@ -80,6 +81,11 @@ func resourceCPSUploadCertificate() *schema.Resource {
 				Default:     false,
 				Description: "Whether to wait for certificate to be deployed",
 			},
+			"unacknowledged_warnings": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Used to distinguish whether there are unacknowledged warnings for a certificate",
+			},
 		},
 	}
 }
@@ -102,63 +108,7 @@ func resourceCPSUploadCertificateCreate(ctx context.Context, d *schema.ResourceD
 	client := inst.Client(meta)
 	logger.Debug("Creating upload certificate")
 
-	attrs, err := getCPSUploadCertificateAttrs(d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	err = checkForTrustChainWithoutCert(attrs)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	enrollment, err := client.GetEnrollment(ctx, cps.GetEnrollmentRequest{EnrollmentID: attrs.enrollmentID})
-	if err != nil {
-		return diag.Errorf("could not get an enrollment: %s", err)
-	}
-	changeID, err := toolsCPS.GetChangeIDFromPendingChanges(enrollment.PendingChanges)
-	if err != nil {
-		return diag.Errorf("could not get change ID: %s", err)
-	} else if err != nil && errors.Is(err, toolsCPS.ErrNoPendingChanges) {
-		return diag.Errorf("provided enrollment has no pending changes")
-	}
-
-	certs := wrapCertificatesToUpload(attrs.certificateECDSA, attrs.trustChainECDSA, attrs.certificateRSA, attrs.trustChainRSA)
-	uploadCertAndTrustChainReq := cps.UploadThirdPartyCertAndTrustChainRequest{
-		EnrollmentID: attrs.enrollmentID,
-		ChangeID:     changeID,
-		Certificates: cps.ThirdPartyCertificates{CertificatesAndTrustChains: certs},
-	}
-
-	if err = client.UploadThirdPartyCertAndTrustChain(ctx, uploadCertAndTrustChainReq); err != nil {
-		return diag.Errorf("could not upload third party certificate and trust chain: %s", err)
-	}
-
-	status, err := waitUntilCertIsVerified(ctx, client, attrs.enrollmentID, changeID)
-	if err != nil {
-		return diag.Errorf("incorrect status of a change: %s", err)
-	}
-
-	if status == "wait-review-third-party-cert" {
-		if err = processPostVerificationWarnings(ctx, client, d, attrs.enrollmentID, changeID); err != nil {
-			return diag.Errorf("could not process post verification warnings: %s", err)
-		}
-	}
-
-	if enrollment.ChangeManagement && (attrs.ackChangeManagement || attrs.waitForDeployment) {
-		if err = waitForChangeStatus(ctx, client, attrs.enrollmentID, changeID, "wait-ack-change-management"); err != nil {
-			return diag.FromErr(err)
-		}
-
-		if attrs.ackChangeManagement {
-			if err = sendACKChangeManagement(ctx, client, attrs.enrollmentID, changeID); err != nil {
-				return diag.Errorf("could not acknowledge change management: %s", err)
-			}
-		}
-	}
-	d.SetId(strconv.Itoa(attrs.enrollmentID))
-
-	return resourceCPSUploadCertificateRead(ctx, d, m)
+	return upsertUploadCertificate(ctx, d, m, client)
 }
 
 func resourceCPSUploadCertificateRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -188,21 +138,31 @@ func resourceCPSUploadCertificateRead(ctx context.Context, d *schema.ResourceDat
 	}
 
 	var attrs map[string]interface{}
-	if waitForDeployment && len(enrollment.PendingChanges) != 0 {
+	if waitForDeployment {
 		ackChangeManagement, err := tools.GetBoolValue("acknowledge_change_management", d)
 		if err != nil {
 			return diag.Errorf("could not get `acknowledge change management` attribute: %s", err)
 		}
 
-		if !ackChangeManagement && enrollment.ChangeManagement {
-			if err = waitForChangeStatus(ctx, client, enrollmentID, changeID, "wait-ack-change-management"); err != nil {
+		if len(enrollment.PendingChanges) != 0 {
+			changeStatus, err := sendGetChangeStatusReq(ctx, client, enrollmentID, changeID)
+			if err != nil {
 				return diag.FromErr(err)
 			}
-		} else {
-			if err = waitForChangeStatus(ctx, client, enrollmentID, changeID, "complete"); err != nil {
-				return diag.FromErr(err)
+
+			if changeStatus.StatusInfo.Status != waitUploadThirdParty && changeStatus.StatusInfo.Status != waitReviewThirdPartyCert {
+				if !ackChangeManagement && enrollment.ChangeManagement {
+					if err = waitForChangeStatus(ctx, client, enrollmentID, changeID, waitAckChangeManagement); err != nil {
+						return diag.FromErr(err)
+					}
+				} else {
+					if err = waitForChangeStatus(ctx, client, enrollmentID, changeID, complete); err != nil {
+						return diag.FromErr(err)
+					}
+				}
 			}
 		}
+
 		certHistory, err := client.GetCertificateHistory(ctx, cps.GetCertificateHistoryRequest{EnrollmentID: enrollmentID})
 		if err != nil {
 			return diag.Errorf("could not get certificate history: %s", err)
@@ -250,15 +210,25 @@ func resourceCPSUploadCertificateUpdate(ctx context.Context, d *schema.ResourceD
 			return nil
 		}
 
+		changeID, err := toolsCPS.GetChangeIDFromPendingChanges(enrollment.PendingChanges)
+		if err != nil {
+			return diag.Errorf("could not get changeID: %s", err)
+		}
+
+		changeStatus, err := sendGetChangeStatusReq(ctx, client, enrollmentID, changeID)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		if changeStatus.StatusInfo.Status == waitReviewThirdPartyCert || changeStatus.StatusInfo.Status == waitUploadThirdParty {
+			return upsertUploadCertificate(ctx, d, m, client)
+		}
+
 		if d.HasChanges("acknowledge_post_verification_warnings") || d.HasChanges("auto_approve_warnings") {
 			logger.Warn("Post-verification warnings has either already been accepted or didn't occur - ignoring change in this flag.")
 		}
 
 		if d.HasChanges("acknowledge_change_management") && enrollment.ChangeManagement {
-			changeID, err := toolsCPS.GetChangeIDFromPendingChanges(enrollment.PendingChanges)
-			if err != nil {
-				return diag.Errorf("could not get changeID: %s", err)
-			}
 			ackChangeManagement, err := tools.GetBoolValue("acknowledge_change_management", d)
 			if err != nil {
 				return diag.Errorf("could not get `acknowledge_change_management` attribute: %s", err)
@@ -271,7 +241,7 @@ func resourceCPSUploadCertificateUpdate(ctx context.Context, d *schema.ResourceD
 				return nil
 			}
 
-			if err = waitForChangeStatus(ctx, client, enrollmentID, changeID, "wait-ack-change-management"); err != nil {
+			if err = waitForChangeStatus(ctx, client, enrollmentID, changeID, waitAckChangeManagement); err != nil {
 				return diag.FromErr(err)
 			}
 			if err = sendACKChangeManagement(ctx, client, enrollmentID, changeID); err != nil {
@@ -279,6 +249,23 @@ func resourceCPSUploadCertificateUpdate(ctx context.Context, d *schema.ResourceD
 			}
 		}
 		return resourceCPSUploadCertificateRead(ctx, d, m)
+	}
+
+	if len(enrollment.PendingChanges) != 0 {
+		changeID, err := toolsCPS.GetChangeIDFromPendingChanges(enrollment.PendingChanges)
+		if err != nil {
+			return diag.Errorf("could not get changeID: %s", err)
+		}
+		changeStatus, err := sendGetChangeStatusReq(ctx, client, enrollmentID, changeID)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		if changeStatus.StatusInfo.Status == waitUploadThirdParty || changeStatus.StatusInfo.Status == waitReviewThirdPartyCert {
+			return upsertUploadCertificate(ctx, d, m, client)
+		}
+
+		return diag.Errorf("cannot make changes to the certificate with current status: %s", changeStatus.StatusInfo.Status)
 	}
 
 	return diag.Errorf("cannot make changes to certificate that is already on staging and/or production network, need to create new enrollment")
@@ -289,6 +276,102 @@ func resourceCPSUploadCertificateDelete(_ context.Context, _ *schema.ResourceDat
 	logger := meta.Log("CPS", "resourceCPSUploadCertificateDelete")
 	logger.Debug("Deleting CPS upload certificate configuration")
 	logger.Info("CPS upload certificate deletion - resource will only be removed from local state")
+	return nil
+}
+
+func upsertUploadCertificate(ctx context.Context, d *schema.ResourceData, m interface{}, client cps.CPS) diag.Diagnostics {
+	attrs, err := getCPSUploadCertificateAttrs(d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	err = checkForTrustChainWithoutCert(attrs)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	enrollment, err := client.GetEnrollment(ctx, cps.GetEnrollmentRequest{EnrollmentID: attrs.enrollmentID})
+	if err != nil {
+		return diag.Errorf("could not get an enrollment: %s", err)
+	}
+	changeID, err := toolsCPS.GetChangeIDFromPendingChanges(enrollment.PendingChanges)
+	if err != nil {
+		return diag.Errorf("could not get change ID: %s", err)
+	} else if err != nil && errors.Is(err, toolsCPS.ErrNoPendingChanges) {
+		return diag.Errorf("provided enrollment has no pending changes")
+	}
+
+	certs := wrapCertificatesToUpload(attrs.certificateECDSA, attrs.trustChainECDSA, attrs.certificateRSA, attrs.trustChainRSA)
+	uploadCertAndTrustChainReq := cps.UploadThirdPartyCertAndTrustChainRequest{
+		EnrollmentID: attrs.enrollmentID,
+		ChangeID:     changeID,
+		Certificates: cps.ThirdPartyCertificates{CertificatesAndTrustChains: certs},
+	}
+
+	if err = client.UploadThirdPartyCertAndTrustChain(ctx, uploadCertAndTrustChainReq); err != nil {
+		return diag.Errorf("could not upload third party certificate and trust chain: %s", err)
+	}
+
+	status, err := waitUntilCertIsVerified(ctx, client, attrs.enrollmentID, changeID)
+	if err != nil {
+		return diag.Errorf("incorrect status of a change: %s", err)
+	}
+
+	if status == waitReviewThirdPartyCert {
+		if err = processPostVerificationWarnings(ctx, client, d, attrs.enrollmentID, changeID); err != nil {
+			return diag.Errorf("could not process post verification warnings: %s", err)
+		}
+	}
+
+	if enrollment.ChangeManagement && (attrs.ackChangeManagement || attrs.waitForDeployment) {
+		if err = waitForChangeStatus(ctx, client, attrs.enrollmentID, changeID, waitAckChangeManagement); err != nil {
+			return diag.FromErr(err)
+		}
+
+		if attrs.ackChangeManagement {
+			if err = sendACKChangeManagement(ctx, client, attrs.enrollmentID, changeID); err != nil {
+				return diag.Errorf("could not acknowledge change management: %s", err)
+			}
+		}
+	}
+	d.SetId(strconv.Itoa(attrs.enrollmentID))
+
+	return resourceCPSUploadCertificateRead(ctx, d, m)
+}
+
+// checkUnacknowledgedWarnings checks if there are unacknowledged warnings for a certificate
+func checkUnacknowledgedWarnings(ctx context.Context, diff *schema.ResourceDiff, i interface{}) error {
+	meta := akamai.Meta(i)
+	logger := meta.Log("CPS", "checkUnacknowledgedWarnings")
+	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
+	client := inst.Client(meta)
+	logger.Debug("Checking for unacknowledged warnings")
+
+	id := diff.Get("enrollment_id")
+	enrollmentID := id.(int)
+
+	enrollment, err := client.GetEnrollment(ctx, cps.GetEnrollmentRequest{EnrollmentID: enrollmentID})
+	if err != nil {
+		return fmt.Errorf("could not get an enrollment: %s", err)
+	}
+
+	changeID, err := toolsCPS.GetChangeIDFromPendingChanges(enrollment.PendingChanges)
+	if err != nil && !errors.Is(err, toolsCPS.ErrNoPendingChanges) {
+		return fmt.Errorf("could not get changeID of an enrollment: %s", err)
+	} else if err != nil && errors.Is(err, toolsCPS.ErrNoPendingChanges) {
+		return nil
+	}
+
+	changeStatus, err := sendGetChangeStatusReq(ctx, client, enrollmentID, changeID)
+	if err != nil {
+		return err
+	}
+	if changeStatus.StatusInfo.Status == waitReviewThirdPartyCert || changeStatus.StatusInfo.Status == waitUploadThirdParty {
+		if err := diff.SetNewComputed("unacknowledged_warnings"); err != nil {
+			return fmt.Errorf("could not set 'unacknowledged_warnings' attribute: %s", err)
+		}
+	}
+
 	return nil
 }
 
@@ -308,6 +391,7 @@ func checkForTrustChainWithoutCert(attrs *attributes) error {
 	if attrs.certificateECDSA == "" && attrs.trustChainECDSA != "" {
 		return fmt.Errorf("provided ECDSA trust chain without ECDSA certificate. Please remove it or add a certificate")
 	}
+
 	return nil
 }
 
@@ -347,7 +431,7 @@ func waitUntilCertIsVerified(ctx context.Context, client cps.CPS, enrollmentID, 
 
 	statusDeadlineCtx, cancel := context.WithTimeout(ctx, statusChangeDeadline)
 	defer cancel()
-	for change.StatusInfo.Status == "verify-third-party-cert" {
+	for change.StatusInfo.Status == verifyThirdPartyCert {
 		select {
 		case <-time.After(PollForChangeStatusInterval):
 			change, err = sendGetChangeStatusReq(ctx, client, enrollmentID, changeID)
@@ -362,7 +446,7 @@ func waitUntilCertIsVerified(ctx context.Context, client cps.CPS, enrollmentID, 
 	return change.StatusInfo.Status, nil
 }
 
-// createCertificatesToUpload creates certificates entry used in UploadThirdPartyCertAndTrustChain request,
+// wrapCertificatesToUpload creates certificates entry used in UploadThirdPartyCertAndTrustChain request,
 // depending on number of certificates provided
 func wrapCertificatesToUpload(certificateECDSA, trustChainECDSA, certificateRSA, trustChainRSA string) []cps.CertificateAndTrustChain {
 	var certificates []cps.CertificateAndTrustChain
@@ -474,37 +558,35 @@ func sendACKChangeManagement(ctx context.Context, client cps.CPS, enrollmentID, 
 func createAttrsFromChangeHistory(changeHistory *cps.GetChangeHistoryResponse) map[string]interface{} {
 	var certificateECDSA, certificateRSA, trustChainECDSA, trustChainRSA string
 	if len(changeHistory.Changes) != 0 {
-		if changeHistory.Changes[0].PrimaryCertificate.KeyAlgorithm == "RSA" {
-			certificateRSA = changeHistory.Changes[0].PrimaryCertificate.Certificate
-			trustChainRSA = changeHistory.Changes[0].PrimaryCertificate.TrustChain
-		} else {
-			certificateECDSA = changeHistory.Changes[0].PrimaryCertificate.Certificate
-			trustChainECDSA = changeHistory.Changes[0].PrimaryCertificate.TrustChain
-		}
-	}
-	if len(changeHistory.Changes[0].MultiStackedCertificates) != 0 {
-		if changeHistory.Changes[0].MultiStackedCertificates[0].KeyAlgorithm == "RSA" {
-			certificateRSA = changeHistory.Changes[0].MultiStackedCertificates[0].Certificate
-			trustChainRSA = changeHistory.Changes[0].MultiStackedCertificates[0].TrustChain
-		} else {
-			certificateECDSA = changeHistory.Changes[0].PrimaryCertificate.Certificate
-			trustChainECDSA = changeHistory.Changes[0].PrimaryCertificate.TrustChain
+		for _, change := range changeHistory.Changes {
+			if change.PrimaryCertificate.Certificate != "" {
+				if change.PrimaryCertificate.KeyAlgorithm == "RSA" {
+					certificateRSA = change.PrimaryCertificate.Certificate
+					trustChainRSA = change.PrimaryCertificate.TrustChain
+				} else {
+					certificateECDSA = change.PrimaryCertificate.Certificate
+					trustChainECDSA = change.PrimaryCertificate.TrustChain
+				}
+				if len(change.MultiStackedCertificates) != 0 {
+					if change.MultiStackedCertificates[0].KeyAlgorithm == "RSA" {
+						certificateRSA = change.MultiStackedCertificates[0].Certificate
+						trustChainRSA = change.MultiStackedCertificates[0].TrustChain
+					} else {
+						certificateECDSA = change.MultiStackedCertificates[0].Certificate
+						trustChainECDSA = change.MultiStackedCertificates[0].TrustChain
+					}
+				}
+				break
+			}
 		}
 	}
 
 	attrs := make(map[string]interface{})
-	if certificateECDSA != "" {
-		attrs["certificate_ecdsa_pem"] = certificateECDSA
-	}
-	if trustChainECDSA != "" {
-		attrs["trust_chain_ecdsa_pem"] = trustChainECDSA
-	}
-	if certificateRSA != "" {
-		attrs["certificate_rsa_pem"] = certificateRSA
-	}
-	if trustChainRSA != "" {
-		attrs["trust_chain_rsa_pem"] = trustChainRSA
-	}
+	attrs["certificate_ecdsa_pem"] = certificateECDSA
+	attrs["trust_chain_ecdsa_pem"] = trustChainECDSA
+	attrs["certificate_rsa_pem"] = certificateRSA
+	attrs["trust_chain_rsa_pem"] = trustChainRSA
+
 	return attrs
 }
 
@@ -525,24 +607,16 @@ func createAttrsFromCertificateHistory(certHistory *cps.GetCertificateHistoryRes
 			certificateRSA = certHistory.Certificates[0].MultiStackedCertificates[0].Certificate
 			trustChainRSA = certHistory.Certificates[0].MultiStackedCertificates[0].TrustChain
 		} else {
-			certificateECDSA = certHistory.Certificates[0].PrimaryCertificate.Certificate
-			trustChainECDSA = certHistory.Certificates[0].PrimaryCertificate.TrustChain
+			certificateECDSA = certHistory.Certificates[0].MultiStackedCertificates[0].Certificate
+			trustChainECDSA = certHistory.Certificates[0].MultiStackedCertificates[0].TrustChain
 		}
 	}
 
 	attrs := make(map[string]interface{})
-	if certificateECDSA != "" {
-		attrs["certificate_ecdsa_pem"] = certificateECDSA
-	}
-	if trustChainECDSA != "" {
-		attrs["trust_chain_ecdsa_pem"] = trustChainECDSA
-	}
-	if certificateRSA != "" {
-		attrs["certificate_rsa_pem"] = certificateRSA
-	}
-	if trustChainRSA != "" {
-		attrs["trust_chain_rsa_pem"] = trustChainRSA
-	}
+	attrs["certificate_ecdsa_pem"] = certificateECDSA
+	attrs["trust_chain_ecdsa_pem"] = trustChainECDSA
+	attrs["certificate_rsa_pem"] = certificateRSA
+	attrs["trust_chain_rsa_pem"] = trustChainRSA
 
 	return attrs
 }
