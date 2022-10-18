@@ -8,6 +8,8 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/cps"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -990,6 +992,87 @@ func TestUpdateCPSUploadCertificate(t *testing.T) {
 	}
 }
 
+func TestResourceUploadCertificateImport(t *testing.T) {
+	id := 1
+
+	tests := map[string]struct {
+		init          func(*mockcps)
+		expectedError *regexp.Regexp
+		stateCheck    func(s []*terraform.InstanceState) error
+	}{
+		"import": {
+			init: func(client *mockcps) {
+				enrollment := cps.Enrollment{
+					ValidationType: "third-party",
+				}
+
+				mockGetEnrollment(client, id, 2, &enrollment)
+				mockGetChangeHistory(client, id, 2, &enrollment, ECDSA, certECDSAForTests, trustChainECDSAForTests)
+			},
+			stateCheck: func(s []*terraform.InstanceState) error {
+				state := s[0]
+				assertAttributeFor(state, t, "certificate_ecdsa_pem", certECDSAForTests)
+				assertAttributeFor(state, t, "trust_chain_ecdsa_pem", trustChainECDSAForTests)
+				assertAttributeFor(state, t, "acknowledge_post_verification_warnings", "false")
+				assertAttributeFor(state, t, "wait_for_deployment", "false")
+				assertAttributeFor(state, t, "acknowledge_change_management", "false")
+				assertAttributeFor(state, t, "auto_approve_warnings.#", "0")
+				return nil
+			},
+		},
+		"import error when validation type is not third_party": {
+			init: func(client *mockcps) {
+				enrollment := cps.Enrollment{
+					ValidationType: "dv",
+				}
+
+				mockGetEnrollment(client, id, 1, &enrollment)
+			},
+			expectedError: regexp.MustCompile("unable to import: wrong validation type: expected 'third-party', got 'dv'"),
+		},
+		"import error when no certificate yet uploaded": {
+			init: func(client *mockcps) {
+				enrollment := cps.Enrollment{
+					ValidationType: "third-party",
+				}
+
+				mockGetEnrollment(client, id, 1, &enrollment)
+				mockGetChangeHistoryWithoutCerts(client, id, 1)
+			},
+			expectedError: regexp.MustCompile("no certificate was yet uploaded"),
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			client := &mockcps{}
+			test.init(client)
+
+			useClient(client, func() {
+				resource.UnitTest(t, resource.TestCase{
+					Providers: testAccProviders,
+					Steps: []resource.TestStep{
+						{
+							Config:           loadFixtureString("testdata/TestResCPSUploadCertificate/import/import_upload.tf"),
+							ImportState:      true,
+							ImportStateId:    fmt.Sprintf("%d", id),
+							ResourceName:     "akamai_cps_upload_certificate.import",
+							ImportStateCheck: test.stateCheck,
+							ExpectError:      test.expectedError,
+						},
+					},
+				})
+			})
+		})
+	}
+}
+
+func assertAttributeFor(state *terraform.InstanceState, t *testing.T, key, value string) {
+	valueInState, exist := state.Attributes[key]
+	assert.True(t, exist, fmt.Sprintf("attribute '%s' was not present", key))
+	assert.Equal(t, value, valueInState, fmt.Sprintf("attribute '%s' has incorrect value %s", key, valueInState))
+}
+
 var (
 	certECDSAForTests              = "-----BEGIN CERTIFICATE ECDSA REQUEST-----\n...\n-----END CERTIFICATE ECDSA REQUEST-----"
 	certRSAForTests                = "-----BEGIN CERTIFICATE RSA REQUEST-----\n...\n-----END CERTIFICATE RSA REQUEST-----"
@@ -1326,6 +1409,26 @@ var (
 						PrimaryCertificateOrderDetails: cps.CertificateOrderDetails{},
 						RA:                             "",
 						Status:                         "active",
+					},
+				},
+			}, nil).Times(timesToRun)
+	}
+
+	// mockGetChangeHistoryWithoutCerts mocks GetChangeHistory call when no cert was not yet uploaded
+	mockGetChangeHistoryWithoutCerts = func(client *mockcps, enrollmentID, timesToRun int) {
+		client.On("GetChangeHistory", mock.Anything, cps.GetChangeHistoryRequest{
+			EnrollmentID: enrollmentID,
+		}).Return(
+			&cps.GetChangeHistoryResponse{
+				Changes: []cps.ChangeHistory{
+					{
+						Action:            "new-certificate",
+						ActionDescription: "Create New Certificate",
+						Status:            "wait-upload-third-party",
+						LastUpdated:       "2022-07-21T21:40:00Z",
+						CreatedBy:         "user",
+						CreatedOn:         "2022-07-21T21:40:00Z",
+						RA:                "third-party",
 					},
 				},
 			}, nil).Times(timesToRun)

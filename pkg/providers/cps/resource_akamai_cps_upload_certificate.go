@@ -19,10 +19,14 @@ import (
 
 func resourceCPSUploadCertificate() *schema.Resource {
 	return &schema.Resource{
+		Description:   "Enables to upload a certificates and trust-chains for third-party enrollment",
 		CreateContext: resourceCPSUploadCertificateCreate,
 		ReadContext:   resourceCPSUploadCertificateRead,
 		UpdateContext: resourceCPSUploadCertificateUpdate,
 		DeleteContext: resourceCPSUploadCertificateDelete,
+		Importer: &schema.ResourceImporter{
+			StateContext: resourceCPSUploadCertificateImport,
+		},
 		CustomizeDiff: checkUnacknowledgedWarnings,
 		Schema: map[string]*schema.Schema{
 			"enrollment_id": {
@@ -665,4 +669,55 @@ func getCPSUploadCertificateAttrs(d *schema.ResourceData) (*attributes, error) {
 		ackChangeManagement: ackChangeManagement,
 		waitForDeployment:   waitForDeployment,
 	}, nil
+}
+
+func resourceCPSUploadCertificateImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	meta := akamai.Meta(m)
+	logger := meta.Log("CPS", "resourceCPSUploadCertificateImport")
+	ctx = session.ContextWithOptions(
+		ctx,
+		session.WithContextLog(logger),
+	)
+	logger.Debug("Importing upload certificate")
+	id := d.Id()
+	if id == "" {
+		return nil, fmt.Errorf("didn't provide enrollment id")
+	}
+	enrollmentID, err := strconv.Atoi(id)
+	if err != nil {
+		return nil, fmt.Errorf("enrollment ID must be a number: %s", err)
+	}
+
+	client := inst.Client(meta)
+
+	enrollment, err := client.GetEnrollment(ctx, cps.GetEnrollmentRequest{EnrollmentID: enrollmentID})
+	if err != nil {
+		return nil, fmt.Errorf("unable to fetch enrollment: %s", err)
+	}
+	if enrollment.ValidationType != "third-party" {
+		return nil, fmt.Errorf("unable to import: wrong validation type: expected 'third-party', got '%s'", enrollment.ValidationType)
+	}
+
+	changeHistory, err := client.GetChangeHistory(ctx, cps.GetChangeHistoryRequest{EnrollmentID: enrollmentID})
+	if err != nil {
+		return nil, fmt.Errorf("unable to fetch certificates upload history: %s", err)
+	}
+
+	attrs := createAttrsFromChangeHistory(changeHistory)
+	certECDSA := attrs["certificate_ecdsa_pem"]
+	certRSA := attrs["certificate_rsa_pem"]
+	if certRSA == "" && certECDSA == "" {
+		return nil, fmt.Errorf("no certificate was yet uploaded")
+	}
+	attrs["acknowledge_post_verification_warnings"] = false
+	attrs["auto_approve_warnings"] = []string{}
+	attrs["acknowledge_change_management"] = false
+	attrs["wait_for_deployment"] = false
+	attrs["enrollment_id"] = enrollmentID
+
+	if err = tools.SetAttrs(d, attrs); err != nil {
+		return nil, fmt.Errorf("could not set attributes: %s", err)
+	}
+
+	return []*schema.ResourceData{d}, nil
 }
