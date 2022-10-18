@@ -59,7 +59,7 @@ func resourceActivations() *schema.Resource {
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "List of email addresses of Control Center users who receive an email when activation of this list is complete",
 			},
-			"version": {
+			"sync_point": {
 				Type:        schema.TypeInt,
 				Required:    true,
 				Description: "Identifies the sync point of the network list to be activated",
@@ -178,7 +178,7 @@ func resourceActivationsRead(ctx context.Context, d *schema.ResourceData, m inte
 	networkListID := getResponse.NetworkList.UniqueID
 	networklist, err := client.GetNetworkList(ctx, networklists.GetNetworkListRequest{UniqueID: networkListID})
 
-	if err = d.Set("version", networklist.SyncPoint); err != nil {
+	if err = d.Set("sync_point", networklist.SyncPoint); err != nil {
 		return diag.FromErr(err)
 	}
 	d.SetId(strconv.Itoa(getResponse.ActivationID))

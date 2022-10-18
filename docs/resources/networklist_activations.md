@@ -17,14 +17,19 @@ provider "akamai" {
   edgerc = "~/.edgerc"
 }
 
-data "akamai_networklist_network_lists" "network_lists_filter" {
-  name = var.network_list
+resource "akamai_networklist_network_list" "network_list_ip" {
+  name        = var.ip_list_name
+  type        = "IP"
+  description = "IP network list"
+  list        = var.ip_list
+  mode        = "REPLACE"
 }
 
 resource "akamai_networklist_activations" "activation" {
-  network_list_id = data.akamai_networklist_network_lists.network_lists_filter.list[0]
-  network = "STAGING"
-  notes  = "TEST Notes"
+  network_list_id     = resource.akamai_networklist_network_list.network_list_ip.network_list_id
+  network             = "STAGING"
+  sync_point          = resource.akamai_networklist_network_list.network_list_ip.sync_point
+  notes               = "TEST Notes"
   notification_emails = ["user@example.com"]
 }
 ```
@@ -37,6 +42,9 @@ The following arguments are supported:
 
 * `network` - (Optional) The network to be used, either `STAGING` or `PRODUCTION`. If not supplied, defaults to
   `STAGING`.
+
+* `sync_point` - (Required) An integer that identifies the current version of the network list; this value is incremented each time
+  the list is modified.
 
 * `notes` - (Optional) A comment describing the activation.
 
