@@ -248,11 +248,12 @@ func resourceActivationsUpdate(ctx context.Context, d *schema.ResourceData, m in
 }
 
 func resourceActivationsDelete(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
-	logger := meta.Log("NETWORKLIST", "resourceActivationsDelete")
-	logger.Debug("Deleting resource activation")
-	d.SetId("")
-	return nil
+	return diag.Diagnostics{
+		diag.Diagnostic{
+			Severity: diag.Warning,
+			Summary:  "removing activation resource (will be removed from local state only)",
+		},
+	}
 }
 
 func lookupActivation(ctx context.Context, client networklists.NTWRKLISTS, query networklists.GetActivationRequest) (*networklists.GetActivationResponse, error) {

@@ -26,8 +26,8 @@ func resourceNetworkList() *schema.Resource {
 		UpdateContext: resourceNetworkListUpdate,
 		DeleteContext: resourceNetworkListDelete,
 		CustomizeDiff: customdiff.All(
-			VerifyContractGroupUnchanged,
-			MarkSyncPointComputedIfListModified,
+			verifyContractGroupUnchanged,
+			markSyncPointComputedIfListModified,
 		),
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -506,10 +506,10 @@ func RemoveIndex(hl []string, index int) []string {
 	return append(hl[:index], hl[index+1:]...)
 }
 
-// VerifyContractGroupUnchanged compares the configuration's value for the contract_id and group_id with the resource's
+// verifyContractGroupUnchanged compares the configuration's value for the contract_id and group_id with the resource's
 // value specified in the resources's ID, to ensure that the user has not inadvertently modified the configuration's
 // value; any such modifications indicate an incorrect understanding of the Update operation.
-func VerifyContractGroupUnchanged(_ context.Context, d *schema.ResourceDiff, m interface{}) error {
+func verifyContractGroupUnchanged(_ context.Context, d *schema.ResourceDiff, m interface{}) error {
 	meta := akamai.Meta(m)
 	logger := meta.Log("NETWORKLIST", "VerifyContractGroupUnchanged")
 
@@ -536,13 +536,13 @@ func VerifyContractGroupUnchanged(_ context.Context, d *schema.ResourceDiff, m i
 	return nil
 }
 
-// MarkSyncPointComputedIfListModified sets 'sync_point' field as new computed
+// markSyncPointComputedIfListModified sets 'sync_point' field as new computed
 // if a new version of network list is expected to be created.
-func MarkSyncPointComputedIfListModified(_ context.Context, d *schema.ResourceDiff, m interface{}) error {
+func markSyncPointComputedIfListModified(_ context.Context, d *schema.ResourceDiff, m interface{}) error {
 	meta := akamai.Meta(m)
 	logger := meta.Log("NETWORKLIST", "MarkSyncPointComputedIfListModified")
 	if d.HasChange("list") {
-		logger.Debugf("setting sync_point as new computed")
+		logger.Debug("setting sync_point as new computed")
 		return d.SetNewComputed("sync_point")
 	}
 	return nil
