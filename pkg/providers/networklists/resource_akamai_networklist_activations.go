@@ -247,7 +247,7 @@ func resourceActivationsUpdate(ctx context.Context, d *schema.ResourceData, m in
 	return resourceActivationsRead(ctx, d, m)
 }
 
-func resourceActivationsDelete(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceActivationsDelete(_ context.Context, _ *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	logger := meta.Log("NETWORKLIST", "resourceActivationsDelete")
 	logger.Debug("removing activation from local state")
