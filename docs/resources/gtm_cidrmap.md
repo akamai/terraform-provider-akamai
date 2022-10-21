@@ -30,7 +30,7 @@ resource "akamai_gtm_cidrmap" "demo_cidrmap" {
 
 This resource supports these arguments:
 
-* `domain` - (Required) GTM Domain name for the AS Map.
+* `domain` - (Required) GTM Domain name for the CIDR Map.
 * `name` - (Required) A descriptive label for the CIDR map, up to 255 characters.
 * `default_datacenter` - (Required) A placeholder for all other CIDR zones not found in these CIDR zones. Requires these additional arguments:
   * `datacenter_id` - (Required) For each property, an identifier for all other CIDR zones.
