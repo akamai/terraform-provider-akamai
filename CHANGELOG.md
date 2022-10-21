@@ -28,6 +28,9 @@
 * Datastream
   * Fixed problem with updating the configuration of the following connectors: Splunk, SumoLogic, Custom HTTPS, Datadog
 
+* GTM
+  * Fixed unreadable diff when single attribute is changed in traffic target
+  
 ## 2.4.2 (October 4, 2022)
 
 #### FEATURES/ENHANCEMENTS:

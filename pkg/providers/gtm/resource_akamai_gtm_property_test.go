@@ -308,47 +308,124 @@ func TestResGtmProperty(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 
-	t.Run("no diff with re-ordered traffic targets", func(t *testing.T) {
-		client := getMocks()
+}
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
-				Steps: []resource.TestStep{
-					{
-						Config: loadFixtureString("testdata/TestResGtmProperty/create_multiple_traffic_targets.tf"),
+func TestResourceGTMTrafficTargetOrder(t *testing.T) {
+	// To see actual plan when diff is expected, change 'nonEmptyPlan' to false in test case
+	tests := map[string]struct {
+		client        *mockgtm
+		pathForCreate string
+		pathForUpdate string
+		nonEmptyPlan  bool
+		planOnly      bool
+	}{
+		"second apply - no diff": {
+			client:        getMocks(),
+			pathForCreate: "testdata/TestResGtmProperty/create_multiple_traffic_targets.tf",
+			pathForUpdate: "testdata/TestResGtmProperty/create_multiple_traffic_targets.tf",
+			nonEmptyPlan:  false,
+			planOnly:      true,
+		},
+		"re-ordered traffic targets - no diff": {
+			client:        getMocks(),
+			pathForCreate: "testdata/TestResGtmProperty/multiple_servers.tf",
+			pathForUpdate: "testdata/TestResGtmProperty/traffic_target/diff_order.tf",
+			nonEmptyPlan:  false,
+			planOnly:      true,
+		},
+		"re-ordered traffic target with no datacenter_id - no diff": {
+			client:        getMocks(),
+			pathForCreate: "testdata/TestResGtmProperty/traffic_target/no_datacenter_id.tf",
+			pathForUpdate: "testdata/TestResGtmProperty/traffic_target/no_datacenter_id_diff_order.tf",
+			nonEmptyPlan:  false,
+			planOnly:      true,
+		},
+		"added traffic target - diff": {
+			client:        getMocks(),
+			pathForCreate: "testdata/TestResGtmProperty/multiple_servers.tf",
+			pathForUpdate: "testdata/TestResGtmProperty/traffic_target/add_traffic_target.tf",
+			nonEmptyPlan:  true,
+			planOnly:      true,
+		},
+		"removed traffic target - diff (messy)": {
+			client:        getMocks(),
+			pathForCreate: "testdata/TestResGtmProperty/multiple_servers.tf",
+			pathForUpdate: "testdata/TestResGtmProperty/traffic_target/remove_traffic_target.tf",
+			nonEmptyPlan:  true,
+			planOnly:      true,
+		},
+		"changed 'enabled' field in traffic target - diff": {
+			client:        getMocks(),
+			pathForCreate: "testdata/TestResGtmProperty/multiple_servers.tf",
+			pathForUpdate: "testdata/TestResGtmProperty/traffic_target/change_enabled_field.tf",
+			nonEmptyPlan:  true,
+			planOnly:      true,
+		},
+		"changed 'enabled' field in re-ordered traffic target - diff (messy)": {
+			client:        getMocks(),
+			pathForCreate: "testdata/TestResGtmProperty/multiple_servers.tf",
+			pathForUpdate: "testdata/TestResGtmProperty/traffic_target/change_enabled_field_diff_order.tf",
+			nonEmptyPlan:  true,
+			planOnly:      true,
+		},
+		"re-ordered servers in traffic targets - no diff": {
+			client:        getMocks(),
+			pathForCreate: "testdata/TestResGtmProperty/multiple_servers.tf",
+			pathForUpdate: "testdata/TestResGtmProperty/servers/diff_order.tf",
+			nonEmptyPlan:  false,
+			planOnly:      true,
+		},
+		"re-ordered servers and re-ordered traffic targets - no diff": {
+			client:        getMocks(),
+			pathForCreate: "testdata/TestResGtmProperty/multiple_servers.tf",
+			pathForUpdate: "testdata/TestResGtmProperty/traffic_target/diff_order.tf",
+			nonEmptyPlan:  false,
+			planOnly:      true,
+		},
+		"re-ordered and changed servers in traffic target - diff in one traffic target": {
+			client:        getMocks(),
+			pathForCreate: "testdata/TestResGtmProperty/multiple_servers.tf",
+			pathForUpdate: "testdata/TestResGtmProperty/servers/changed_and_diff_order.tf",
+			nonEmptyPlan:  true,
+			planOnly:      true,
+		},
+		"changed servers - diff": {
+			client:        getMocks(),
+			pathForCreate: "testdata/TestResGtmProperty/multiple_servers.tf",
+			pathForUpdate: "testdata/TestResGtmProperty/servers/change_server.tf",
+			nonEmptyPlan:  true,
+			planOnly:      true,
+		},
+		"changed servers and re-ordered traffic target - diff (messy)": {
+			client:        getMocks(),
+			pathForCreate: "testdata/TestResGtmProperty/multiple_servers.tf",
+			pathForUpdate: "testdata/TestResGtmProperty/servers/change_server_and_diff_traffic_target_order.tf",
+			nonEmptyPlan:  true,
+			planOnly:      true,
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			useClient(test.client, func() {
+				resource.UnitTest(t, resource.TestCase{
+					Providers:  testAccProviders,
+					IsUnitTest: true,
+					Steps: []resource.TestStep{
+						{
+							Config: loadFixtureString(test.pathForCreate),
+						},
+						{
+							Config:             loadFixtureString(test.pathForUpdate),
+							PlanOnly:           test.planOnly,
+							ExpectNonEmptyPlan: test.nonEmptyPlan,
+						},
 					},
-					{
-						Config:   loadFixtureString("testdata/TestResGtmProperty/create_multiple_traffic_targets.tf"),
-						PlanOnly: true,
-					},
-				},
+				})
 			})
+			test.client.AssertExpectations(t)
 		})
-
-		client.AssertExpectations(t)
-	})
-
-	t.Run("no diff with re-ordered traffic targets servers", func(t *testing.T) {
-		client := getMocks()
-
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
-				Steps: []resource.TestStep{
-					{
-						Config: loadFixtureString("testdata/TestResGtmProperty/multiple_servers.tf"),
-					},
-					{
-						Config:   loadFixtureString("testdata/TestResGtmProperty/multiple_servers_in_diff_order.tf"),
-						PlanOnly: true,
-					},
-				},
-			})
-		})
-
-		client.AssertExpectations(t)
-	})
+	}
 }
 
 func getMocks() *mockgtm {

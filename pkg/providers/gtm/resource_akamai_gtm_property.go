@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
 	"strings"
 
 	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/configgtm"
@@ -176,9 +177,10 @@ func resourceGTMv1Property() *schema.Resource {
 				Computed: true,
 			},
 			"traffic_target": {
-				Type:     schema.TypeSet,
-				Optional: true,
-				MinItems: 1,
+				Type:             schema.TypeList,
+				Optional:         true,
+				MinItems:         1,
+				DiffSuppressFunc: trafficTargetDiffSuppress,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"datacenter_id": {
@@ -398,12 +400,12 @@ func resourceGTMv1PropertyCreate(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 	// Static properties cannot have traffic_targets. Non Static properties must
-	traffTargs, err := tools.GetSetValue("traffic_target", d)
-	if strings.ToUpper(propertyType) == "STATIC" && err == nil && (traffTargs != nil && traffTargs.Len() > 0) {
+	traffTargList, err := tools.GetInterfaceArrayValue("traffic_target", d)
+	if strings.ToUpper(propertyType) == "STATIC" && err == nil && (traffTargList != nil && len(traffTargList) > 0) {
 		logger.Errorf("Property %s Create failed. Static property cannot have traffic targets", propertyName)
 		return diag.Errorf("property Create failed. Static property cannot have traffic targets")
 	}
-	if strings.ToUpper(propertyType) != "STATIC" && (err != nil || (traffTargs == nil || traffTargs.Len() < 1)) {
+	if strings.ToUpper(propertyType) != "STATIC" && (err != nil || (traffTargList == nil || len(traffTargList) < 1)) {
 		logger.Errorf("Property %s Create failed. Property must have one or more traffic targets", propertyName)
 		return diag.Errorf("property Create failed. Property must have one or more traffic targets")
 	}
@@ -910,10 +912,10 @@ func populateTrafficTargetObject(ctx context.Context, d *schema.ResourceData, pr
 	logger := meta.Log("Akamai GTM", "populateTrafficTargetObject")
 
 	// pull apart List
-	traffTargs, err := tools.GetSetValue("traffic_target", d)
+	traffTargList, err := tools.GetInterfaceArrayValue("traffic_target", d)
 	if err == nil {
-		trafficObjList := make([]*gtm.TrafficTarget, traffTargs.Len()) // create new object list
-		for i, v := range traffTargs.List() {
+		trafficObjList := make([]*gtm.TrafficTarget, len(traffTargList)) // create new object list
+		for i, v := range traffTargList {
 			ttMap := v.(map[string]interface{})
 			trafficTarget := inst.Client(meta).NewTrafficTarget(ctx) // create new object
 			trafficTarget.DatacenterId = ttMap["datacenter_id"].(int)
@@ -961,7 +963,7 @@ func populateTerraformTrafficTargetState(d *schema.ResourceData, prop *gtm.Prope
 		tt["enabled"] = ttObject.Enabled
 		tt["weight"] = ttObject.Weight
 		tt["handout_cname"] = ttObject.HandoutCName
-		tt["servers"] = reconcileTerraformLists(tt["servers"].([]interface{}), convertStringToInterfaceList(ttObject.Servers, m), m)
+		tt["servers"] = ttObject.Servers
 		// remove object
 		delete(objectInventory, objIndex)
 	}
@@ -1240,4 +1242,86 @@ func reconcileTerraformLists(terraList []interface{}, newList []interface{}, m i
 	logger.Debugf("Updated Terra List: %v", updatedList)
 	return updatedList
 
+}
+
+func trafficTargetDiffSuppress(_, _, _ string, d *schema.ResourceData) bool {
+	logger := akamai.Log("Akamai GTM", "trafficTargetDiffSuppress")
+	oldTarget, newTarget := d.GetChange("traffic_target")
+
+	oldTrafficTarget, ok := oldTarget.([]interface{})
+	if !ok {
+		logger.Warnf("wrong type conversion: expected []interface{}, got %T", oldTrafficTarget)
+		return false
+	}
+
+	newTrafficTarget, ok := newTarget.([]interface{})
+	if !ok {
+		logger.Warnf("wrong type conversion: expected []interface{}, got %T", oldTrafficTarget)
+		return false
+	}
+
+	if len(oldTrafficTarget) != len(newTrafficTarget) {
+		return false
+	}
+
+	sort.Slice(oldTrafficTarget, func(i, j int) bool {
+		return oldTrafficTarget[i].(map[string]interface{})["datacenter_id"].(int) < oldTrafficTarget[j].(map[string]interface{})["datacenter_id"].(int)
+	})
+	sort.Slice(newTrafficTarget, func(i, j int) bool {
+		return newTrafficTarget[i].(map[string]interface{})["datacenter_id"].(int) < newTrafficTarget[j].(map[string]interface{})["datacenter_id"].(int)
+	})
+
+	length := len(oldTrafficTarget)
+	for i := 0; i < length; i++ {
+		for k, v := range oldTrafficTarget[i].(map[string]interface{}) {
+			if k == "servers" {
+				oldServers := oldTrafficTarget[i].(map[string]interface{})["servers"]
+				newServers := newTrafficTarget[i].(map[string]interface{})["servers"]
+				if !serversEqual(oldServers, newServers) {
+					return false
+				}
+			} else {
+				if newTrafficTarget[i].(map[string]interface{})[k] != v {
+					return false
+				}
+			}
+		}
+	}
+
+	return true
+}
+
+// serversEqual checks whether provided sets of ip addresses contain the same entries
+func serversEqual(old, new interface{}) bool {
+	logger := akamai.Log("Akamai GTM", "serversEqual")
+
+	oldServers, ok := old.(*schema.Set)
+	if !ok {
+		logger.Warnf("wrong type conversion: expected *schema.Set, got %T", oldServers)
+		return false
+	}
+
+	newServers, ok := new.(*schema.Set)
+	if !ok {
+		logger.Warnf("wrong type conversion: expected *schema.Set, got %T", newServers)
+		return false
+	}
+
+	if oldServers.Len() != newServers.Len() {
+		return false
+	}
+
+	addresses := make(map[string]bool, oldServers.Len())
+	for _, server := range oldServers.List() {
+		addresses[server.(string)] = true
+	}
+
+	for _, server := range newServers.List() {
+		_, ok := addresses[server.(string)]
+		if !ok {
+			return false
+		}
+	}
+
+	return true
 }
