@@ -2,7 +2,16 @@
 
 ## xxxx (xxx, 2022)
 
+#### BREAKING CHANGES:
+
+* APPSEC
+  * Require network list sync point for network list activation
+
 #### FEATURES/ENHANCEMENTS:
+
+* APPSEC
+  * Automatically activate network list when contents are modified
+  * Increase timeout for security configuration activation to 90 minutes
 
 * Datastream
   * Added `akamai_datastreams` data source ([#327](https://github.com/akamai/terraform-provider-akamai/issues/327))
@@ -12,6 +21,9 @@
     * SumoLogic, Splunk and Custom HTTPS connectors were extended with ability to specify custom HTTP headers
 
 #### BUG FIXES:
+
+* APPSEC
+  * Fix incorrect payload sent by appsec_ip_geo resource in allow mode
 
 * Datastream
   * Fixed probem with updating the configuration of the following connectors: Splunk, SumoLogic, Custom HTTPS, Datadog
