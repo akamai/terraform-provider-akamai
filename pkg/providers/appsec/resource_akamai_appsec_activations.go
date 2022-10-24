@@ -79,6 +79,9 @@ func resourceActivations() *schema.Resource {
 				Description: "The results of the activation",
 			},
 		},
+		Timeouts: &schema.ResourceTimeout{
+			Default: &AppsecResourceTimeout,
+		},
 	}
 }
 
@@ -90,6 +93,9 @@ const (
 var (
 	// ActivationPollInterval is the interval for polling an activation status on creation
 	ActivationPollInterval = ActivationPollMinimum
+
+	// AppsecResourceTimeout is the default timeout for the resource operations
+	AppsecResourceTimeout = time.Minute * 90
 )
 
 func resourceActivationsCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
