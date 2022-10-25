@@ -14,13 +14,15 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
+const (
+	streamID = int64(12321)
+)
+
 func TestResourceStream(t *testing.T) {
 	t.Run("lifecycle test", func(t *testing.T) {
 		client := &mockdatastream{}
 
 		PollForActivationStatusChangeInterval = 1 * time.Millisecond
-
-		streamID := int64(12321)
 
 		streamConfiguration := datastream.StreamConfiguration{
 			ActivateNow: true,
@@ -400,9 +402,263 @@ func TestResourceStream(t *testing.T) {
 	})
 }
 
-func TestEmailIDs(t *testing.T) {
-	streamID := int64(12321)
+func TestResourceUpdate(t *testing.T) {
+	PollForActivationStatusChangeInterval = 1 * time.Millisecond
+	tests := map[string]struct {
+		CreateStreamActive bool
+		UpdateStreamActive bool
+	}{
+		"create active, update active": {
+			CreateStreamActive: true,
+			UpdateStreamActive: true,
+		},
+		"create active, update inactive": {
+			CreateStreamActive: true,
+			UpdateStreamActive: false,
+		},
+		"create inactive, update active": {
+			CreateStreamActive: false,
+			UpdateStreamActive: true,
+		},
+	}
 
+	streamConfigurationFactory := func(activateNow bool) datastream.StreamConfiguration {
+		return datastream.StreamConfiguration{
+			ActivateNow: activateNow,
+			Config: datastream.Config{
+				Delimiter: datastream.DelimiterTypePtr(datastream.DelimiterTypeSpace),
+				Format:    datastream.FormatTypeStructured,
+				Frequency: datastream.Frequency{
+					TimeInSec: datastream.TimeInSec30,
+				},
+				UploadFilePrefix: "pre",
+				UploadFileSuffix: "suf",
+			},
+			Connectors: []datastream.AbstractConnector{
+				&datastream.OracleCloudStorageConnector{
+					AccessKey:       "access_key",
+					Bucket:          "bucket",
+					ConnectorName:   "connector_name",
+					Namespace:       "namespace",
+					Path:            "path",
+					Region:          "region",
+					SecretAccessKey: "secret_access_key",
+				},
+			},
+			ContractID:      "test_contract",
+			DatasetFieldIDs: []int{1001},
+			GroupID:         tools.IntPtr(1337),
+			PropertyIDs:     []int{1},
+			StreamName:      "test_stream",
+			StreamType:      datastream.StreamTypeRawLogs,
+			TemplateName:    datastream.TemplateNameEdgeLogs,
+		}
+	}
+
+	createStreamRequestFactory := func(activateNow bool) datastream.CreateStreamRequest {
+		return datastream.CreateStreamRequest{
+			StreamConfiguration: streamConfigurationFactory(activateNow),
+		}
+	}
+
+	updateStreamResponse := &datastream.StreamUpdate{
+		StreamVersionKey: datastream.StreamVersionKey{
+			StreamID:        streamID,
+			StreamVersionID: 2,
+		},
+	}
+
+	responseFactory := func(activationStatus datastream.ActivationStatus) *datastream.DetailedStreamVersion {
+		return &datastream.DetailedStreamVersion{
+			ActivationStatus: activationStatus,
+			Config: datastream.Config{
+				Delimiter: datastream.DelimiterTypePtr(datastream.DelimiterTypeSpace),
+				Format:    datastream.FormatTypeStructured,
+				Frequency: datastream.Frequency{
+					TimeInSec: datastream.TimeInSec30,
+				},
+				UploadFilePrefix: "pre",
+				UploadFileSuffix: "suf",
+			},
+			Connectors: []datastream.ConnectorDetails{
+				{
+					Bucket:        "bucket",
+					ConnectorName: "connector_name",
+					ConnectorType: datastream.ConnectorTypeOracle,
+					Namespace:     "namespace",
+					Path:          "path",
+					Region:        "region",
+				},
+			},
+			ContractID: "test_contract",
+			Datasets: []datastream.DataSets{
+				{
+					DatasetGroupName:        "group_name_1",
+					DatasetGroupDescription: "group_desc_1",
+					DatasetFields: []datastream.DatasetFields{
+						{
+							DatasetFieldID:          1001,
+							DatasetFieldName:        "dataset_field_name_1",
+							DatasetFieldDescription: "dataset_field_desc_1",
+							Order:                   0,
+						},
+					},
+				},
+			},
+			GroupID: 1337,
+			Properties: []datastream.Property{
+				{
+					PropertyID:   1,
+					PropertyName: "property_1",
+				},
+			},
+			StreamID:        streamID,
+			StreamName:      "test_stream",
+			StreamType:      datastream.StreamTypeRawLogs,
+			StreamVersionID: 1,
+			TemplateName:    datastream.TemplateNameEdgeLogs,
+		}
+	}
+
+	commonChecks := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr("akamai_datastream.s", "id", strconv.FormatInt(streamID, 10)),
+		resource.TestCheckResourceAttr("akamai_datastream.s", "config.#", "1"),
+		resource.TestCheckResourceAttr("akamai_datastream.s", "config.0.delimiter", string(datastream.DelimiterTypeSpace)),
+		resource.TestCheckResourceAttr("akamai_datastream.s", "config.0.format", string(datastream.FormatTypeStructured)),
+		resource.TestCheckResourceAttr("akamai_datastream.s", "config.0.upload_file_prefix", "pre"),
+		resource.TestCheckResourceAttr("akamai_datastream.s", "config.0.upload_file_suffix", "suf"),
+		resource.TestCheckResourceAttr("akamai_datastream.s", "config.0.frequency.#", "1"),
+		resource.TestCheckResourceAttr("akamai_datastream.s", "config.0.frequency.0.time_in_sec", "30"),
+		resource.TestCheckResourceAttr("akamai_datastream.s", "contract_id", "test_contract"),
+		resource.TestCheckResourceAttr("akamai_datastream.s", "dataset_fields_ids.#", "1"),
+		resource.TestCheckResourceAttr("akamai_datastream.s", "group_id", "1337"),
+		resource.TestCheckResourceAttr("akamai_datastream.s", "property_ids.#", "1"),
+		resource.TestCheckResourceAttr("akamai_datastream.s", "stream_name", "test_stream"),
+		resource.TestCheckResourceAttr("akamai_datastream.s", "oracle_connector.#", "1"),
+		resource.TestCheckResourceAttr("akamai_datastream.s", "oracle_connector.0.access_key", "access_key"),
+		resource.TestCheckResourceAttr("akamai_datastream.s", "oracle_connector.0.bucket", "bucket"),
+		resource.TestCheckResourceAttr("akamai_datastream.s", "oracle_connector.0.compress_logs", "false"),
+		resource.TestCheckResourceAttr("akamai_datastream.s", "oracle_connector.0.connector_name", "connector_name"),
+		resource.TestCheckResourceAttr("akamai_datastream.s", "oracle_connector.0.namespace", "namespace"),
+		resource.TestCheckResourceAttr("akamai_datastream.s", "oracle_connector.0.path", "path"),
+		resource.TestCheckResourceAttr("akamai_datastream.s", "oracle_connector.0.region", "region"),
+		resource.TestCheckResourceAttr("akamai_datastream.s", "oracle_connector.0.secret_access_key", "secret_access_key"),
+	)
+
+	type mockConfig struct {
+		status  datastream.ActivationStatus
+		repeats int
+	}
+
+	configureMock := func(m *mockdatastream, statuses ...mockConfig) {
+		for _, statusConfig := range statuses {
+			m.On("GetStream", mock.Anything, mock.Anything).
+				Return(responseFactory(statusConfig.status), nil).
+				Times(statusConfig.repeats)
+		}
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			m := &mockdatastream{}
+			m.On("CreateStream", mock.Anything, createStreamRequestFactory(test.CreateStreamActive)).
+				Return(updateStreamResponse, nil).
+				Once()
+
+			createStreamFilenameSuffix, updateStreamFilenameSuffix := "", ""
+			if test.CreateStreamActive {
+				createStreamFilenameSuffix = "active"
+
+				configureMock(m, []mockConfig{
+					{status: datastream.ActivationStatusActivating, repeats: 1},
+					{status: datastream.ActivationStatusActivated, repeats: 5},
+				}...)
+			} else {
+				createStreamFilenameSuffix = "inactive"
+
+				configureMock(m, []mockConfig{
+					{status: datastream.ActivationStatusInactive, repeats: 6},
+				}...)
+			}
+
+			if test.UpdateStreamActive {
+				updateStreamFilenameSuffix = "active"
+
+				if test.CreateStreamActive {
+					configureMock(m, []mockConfig{
+						{status: datastream.ActivationStatusActivated, repeats: 2},
+						{status: datastream.ActivationStatusActivating, repeats: 1},
+						{status: datastream.ActivationStatusActivated, repeats: 3},
+					}...)
+				} else {
+					m.On("ActivateStream", mock.Anything, mock.Anything).
+						Return(&datastream.ActivateStreamResponse{
+							StreamVersionKey: updateStreamResponse.StreamVersionKey,
+						}, nil).
+						Once()
+
+					configureMock(m, []mockConfig{
+						{status: datastream.ActivationStatusActivating, repeats: 1},
+						{status: datastream.ActivationStatusActivated, repeats: 5},
+					}...)
+				}
+			} else {
+				updateStreamFilenameSuffix = "inactive"
+
+				if test.CreateStreamActive {
+					configureMock(m, []mockConfig{
+						{status: datastream.ActivationStatusActivated, repeats: 2},
+						{status: datastream.ActivationStatusDeactivating, repeats: 1},
+						{status: datastream.ActivationStatusDeactivated, repeats: 4},
+					}...)
+				}
+			}
+
+			// DeleteStream method will deactivate the stream
+			m.On("DeactivateStream", mock.Anything, mock.Anything).
+				Return(&datastream.DeactivateStreamResponse{
+					StreamVersionKey: updateStreamResponse.StreamVersionKey,
+				}, nil).
+				Once()
+
+			// waitForStreamStatusChange in DeleteStream
+			configureMock(m, []mockConfig{
+				{status: datastream.ActivationStatusDeactivating, repeats: 1},
+				{status: datastream.ActivationStatusDeactivated, repeats: 1},
+			}...)
+
+			m.On("DeleteStream", mock.Anything, mock.Anything).
+				Return(&datastream.DeleteStreamResponse{Message: "Success"}, nil).
+				Once()
+
+			useClient(m, func() {
+				resource.UnitTest(t, resource.TestCase{
+					Providers: testAccProviders,
+					Steps: []resource.TestStep{
+						{
+							Config: loadFixtureString(fmt.Sprintf("testdata/TestResourceStream/update_resource/create_stream_%s.tf", createStreamFilenameSuffix)),
+							Check: resource.ComposeTestCheckFunc(
+								commonChecks,
+								resource.TestCheckResourceAttr("akamai_datastream.s", "active", strconv.FormatBool(test.CreateStreamActive)),
+							),
+						},
+						{
+							Config: loadFixtureString(fmt.Sprintf("testdata/TestResourceStream/update_resource/update_stream_%s.tf", updateStreamFilenameSuffix)),
+							Check: resource.ComposeTestCheckFunc(
+								commonChecks,
+								resource.TestCheckResourceAttr("akamai_datastream.s", "active", strconv.FormatBool(test.UpdateStreamActive)),
+							),
+						},
+					},
+				})
+
+				m.AssertExpectations(t)
+			})
+		})
+	}
+}
+
+func TestEmailIDs(t *testing.T) {
 	streamConfiguration := datastream.StreamConfiguration{
 		ActivateNow: false,
 		Config: datastream.Config{
@@ -694,8 +950,6 @@ func TestResourceStreamCustomDiff(t *testing.T) {
 }
 
 func TestDatasetIDsDiff(t *testing.T) {
-	streamID := int64(12321)
-
 	tests := map[string]struct {
 		preConfig             string
 		fileDatasetIdsOrder   []int
@@ -875,8 +1129,6 @@ func TestDatasetIDsDiff(t *testing.T) {
 }
 
 func TestCustomHeaders(t *testing.T) {
-	streamID := int64(12321)
-
 	streamConfiguration := datastream.StreamConfiguration{
 		ActivateNow: false,
 		Config: datastream.Config{
@@ -1406,8 +1658,6 @@ func TestMTLS(t *testing.T) {
 }
 
 func TestUrlSuppressor(t *testing.T) {
-	PollForActivationStatusChangeInterval = 1 * time.Millisecond
-	streamID := int64(12321)
 
 	streamConfigurationFactory := func(connector datastream.AbstractConnector) datastream.StreamConfiguration {
 		return datastream.StreamConfiguration{
@@ -1718,6 +1968,170 @@ func TestUrlSuppressor(t *testing.T) {
 				})
 
 				m.AssertExpectations(t)
+			})
+		})
+	}
+}
+
+func TestConnectors(t *testing.T) {
+	streamConfiguration := datastream.StreamConfiguration{
+		ActivateNow: false,
+		Config: datastream.Config{
+			Format: datastream.FormatTypeJson,
+			Frequency: datastream.Frequency{
+				TimeInSec: datastream.TimeInSec30,
+			},
+			UploadFilePrefix: DefaultUploadFilePrefix,
+			UploadFileSuffix: DefaultUploadFileSuffix,
+		},
+		ContractID:      "test_contract",
+		DatasetFieldIDs: []int{1001},
+		GroupID:         tools.IntPtr(1337),
+		PropertyIDs:     []int{1},
+		StreamName:      "test_stream",
+		StreamType:      datastream.StreamTypeRawLogs,
+		TemplateName:    datastream.TemplateNameEdgeLogs,
+	}
+
+	createStreamRequestFactory := func(connector datastream.AbstractConnector) datastream.CreateStreamRequest {
+		streamConfigurationWithConnector := streamConfiguration
+		streamConfigurationWithConnector.Connectors = []datastream.AbstractConnector{
+			connector,
+		}
+		return datastream.CreateStreamRequest{
+			StreamConfiguration: streamConfigurationWithConnector,
+		}
+	}
+
+	responseFactory := func(connector datastream.ConnectorDetails) *datastream.DetailedStreamVersion {
+		return &datastream.DetailedStreamVersion{
+			ActivationStatus: datastream.ActivationStatusInactive,
+			Config:           streamConfiguration.Config,
+			Connectors: []datastream.ConnectorDetails{
+				connector,
+			},
+			ContractID: streamConfiguration.ContractID,
+			Datasets: []datastream.DataSets{
+				{
+					DatasetFields: []datastream.DatasetFields{
+						{
+							DatasetFieldID: 1001,
+							Order:          0,
+						},
+					},
+				},
+			},
+			GroupID: *streamConfiguration.GroupID,
+			Properties: []datastream.Property{
+				{
+					PropertyID:   1,
+					PropertyName: "property_1",
+				},
+			},
+			StreamID:        streamID,
+			StreamName:      streamConfiguration.StreamName,
+			StreamType:      streamConfiguration.StreamType,
+			StreamVersionID: 2,
+			TemplateName:    streamConfiguration.TemplateName,
+		}
+	}
+
+	getStreamRequest := datastream.GetStreamRequest{
+		StreamID: streamID,
+	}
+
+	updateStreamResponse := &datastream.StreamUpdate{
+		StreamVersionKey: datastream.StreamVersionKey{
+			StreamID:        streamID,
+			StreamVersionID: 1,
+		},
+	}
+
+	tests := map[string]struct {
+		Filename   string
+		Response   datastream.ConnectorDetails
+		Connector  datastream.AbstractConnector
+		TestChecks []resource.TestCheckFunc
+	}{
+		"azure": {
+			Filename: "azure.tf",
+			Connector: &datastream.AzureConnector{
+				AccessKey:     "access_key",
+				AccountName:   "account_name",
+				ConnectorName: "connector_name",
+				ContainerName: "container_name",
+				Path:          "path",
+			},
+			Response: datastream.ConnectorDetails{
+				ConnectorType: datastream.ConnectorTypeAzure,
+				AccountName:   "account_name",
+				ConnectorName: "connector_name",
+				ContainerName: "container_name",
+				Path:          "path",
+			},
+			TestChecks: []resource.TestCheckFunc{
+				resource.TestCheckResourceAttr("akamai_datastream.s", "azure_connector.#", "1"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "azure_connector.0.account_name", "account_name"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "azure_connector.0.compress_logs", "false"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "azure_connector.0.connector_name", "connector_name"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "azure_connector.0.container_name", "container_name"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "azure_connector.0.path", "path"),
+			},
+		},
+		"gcs": {
+			Filename: "gcs.tf",
+			Connector: &datastream.GCSConnector{
+				Bucket:             "bucket",
+				ConnectorName:      "connector_name",
+				Path:               "path",
+				PrivateKey:         "private_key",
+				ProjectID:          "project_id",
+				ServiceAccountName: "service_account_name",
+			},
+			Response: datastream.ConnectorDetails{
+				ConnectorType:      datastream.ConnectorTypeGcs,
+				Bucket:             "bucket",
+				ConnectorName:      "connector_name",
+				Path:               "path",
+				ProjectID:          "project_id",
+				ServiceAccountName: "service_account_name",
+			},
+			TestChecks: []resource.TestCheckFunc{
+				resource.TestCheckResourceAttr("akamai_datastream.s", "gcs_connector.#", "1"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "gcs_connector.0.bucket", "bucket"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "gcs_connector.0.compress_logs", "false"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "gcs_connector.0.connector_name", "connector_name"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "gcs_connector.0.path", "path"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "gcs_connector.0.project_id", "project_id"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "gcs_connector.0.service_account_name", "service_account_name"),
+			},
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			client := &mockdatastream{}
+
+			client.On("CreateStream", mock.Anything, createStreamRequestFactory(test.Connector)).
+				Return(updateStreamResponse, nil)
+
+			client.On("GetStream", mock.Anything, getStreamRequest).
+				Return(responseFactory(test.Response), nil)
+
+			client.On("DeleteStream", mock.Anything, mock.Anything).Return(&datastream.DeleteStreamResponse{Message: "Success"}, nil)
+
+			useClient(client, func() {
+				resource.UnitTest(t, resource.TestCase{
+					Providers: testAccProviders,
+					Steps: []resource.TestStep{
+						{
+							Config: loadFixtureString(fmt.Sprintf("testdata/TestResourceStream/connectors/%s", test.Filename)),
+							Check:  resource.ComposeTestCheckFunc(test.TestChecks...),
+						},
+					},
+				})
+
+				client.AssertExpectations(t)
 			})
 		})
 	}
