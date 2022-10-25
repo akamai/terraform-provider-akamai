@@ -1,6 +1,6 @@
 # RELEASE NOTES
 
-## xxxx (xxx, 2022)
+## 3.0.0 (October 27, 2022)
 
 #### BREAKING CHANGES:
 
@@ -11,7 +11,7 @@
 
 * APPSEC
   * Automatically activate network list when contents are modified
-  * Increase timeout for security configuration activation to 90 minutes
+  * Increase timeout for security configuration activation to 90 minutes ([#348](https://github.com/akamai/terraform-provider-akamai/issues/348))
 
 * Datastream
   * Added `akamai_datastreams` data source ([#327](https://github.com/akamai/terraform-provider-akamai/issues/327))
@@ -23,10 +23,10 @@
 #### BUG FIXES:
 
 * APPSEC
-  * Fix incorrect payload sent by appsec_ip_geo resource in allow mode
+  * Fix incorrect payload sent by `akamai_appsec_ip_geo` resource in allow mode
 
 * Datastream
-  * Fixed probem with updating the configuration of the following connectors: Splunk, SumoLogic, Custom HTTPS, Datadog
+  * Fixed problem with updating the configuration of the following connectors: Splunk, SumoLogic, Custom HTTPS, Datadog
 
 ## 2.4.2 (October 4, 2022)
 
