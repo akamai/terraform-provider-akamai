@@ -5,7 +5,7 @@
 #### BREAKING CHANGES:
 
 * APPSEC
-  * Require network list sync point for network list activation
+  * Require network list sync point for network list activation ([#326](https://github.com/akamai/terraform-provider-akamai/pull/326))
 
 #### FEATURES/ENHANCEMENTS:
 
