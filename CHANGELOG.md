@@ -1,5 +1,36 @@
 # RELEASE NOTES
 
+## 3.0.0 (October 27, 2022)
+
+#### BREAKING CHANGES:
+
+* APPSEC
+  * Require network list sync point for network list activation ([#326](https://github.com/akamai/terraform-provider-akamai/pull/326))
+
+#### FEATURES/ENHANCEMENTS:
+
+* APPSEC
+  * Automatically activate network list when contents are modified
+  * Increase timeout for security configuration activation to 90 minutes ([#348](https://github.com/akamai/terraform-provider-akamai/issues/348))
+
+* Datastream
+  * Added `akamai_datastreams` data source ([#327](https://github.com/akamai/terraform-provider-akamai/issues/327))
+  * Added new features to `akamai_datastream` resource
+    * new connectors: Elasticsearch, NewRelic and Loggly
+    * Splunk and Custom HTTPS connectors were extended with ability to provide mTLS certificates configuration
+    * SumoLogic, Splunk and Custom HTTPS connectors were extended with ability to specify custom HTTP headers
+
+#### BUG FIXES:
+
+* APPSEC
+  * Fix incorrect payload sent by `akamai_appsec_ip_geo` resource in allow mode
+
+* Datastream
+  * Fixed problem with updating the configuration of the following connectors: Splunk, SumoLogic, Custom HTTPS, Datadog
+
+* GTM
+  * Fixed unreadable diff when single attribute is changed in traffic target
+  
 ## 2.4.2 (October 4, 2022)
 
 #### FEATURES/ENHANCEMENTS:

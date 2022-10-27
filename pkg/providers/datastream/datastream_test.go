@@ -51,6 +51,16 @@ func (m *mockdatastream) DeleteStream(ctx context.Context, r datastream.DeleteSt
 	return args.Get(0).(*datastream.DeleteStreamResponse), args.Error(1)
 }
 
+func (m *mockdatastream) ListStreams(ctx context.Context, r datastream.ListStreamsRequest) ([]datastream.StreamDetails, error) {
+	args := m.Called(ctx, r)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).([]datastream.StreamDetails), args.Error(1)
+}
+
 func (m *mockdatastream) ActivateStream(ctx context.Context, r datastream.ActivateStreamRequest) (*datastream.ActivateStreamResponse, error) {
 	args := m.Called(ctx, r)
 

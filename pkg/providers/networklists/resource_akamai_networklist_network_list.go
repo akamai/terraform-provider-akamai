@@ -26,7 +26,8 @@ func resourceNetworkList() *schema.Resource {
 		UpdateContext: resourceNetworkListUpdate,
 		DeleteContext: resourceNetworkListDelete,
 		CustomizeDiff: customdiff.All(
-			VerifyContractGroupUnchanged,
+			verifyContractGroupUnchanged,
+			markSyncPointComputedIfListModified,
 		),
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -372,7 +373,7 @@ func resourceNetworkListDelete(ctx context.Context, d *schema.ResourceData, m in
 func resourceNetworkListRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("NETWORKLISTs", "resourceNetworkListRead")
+	logger := meta.Log("NETWORKLIST", "resourceNetworkListRead")
 
 	getNetworkList := networklists.GetNetworkListRequest{}
 	getNetworkList.UniqueID = d.Id()
@@ -505,12 +506,12 @@ func RemoveIndex(hl []string, index int) []string {
 	return append(hl[:index], hl[index+1:]...)
 }
 
-// VerifyContractGroupUnchanged compares the configuration's value for the contract_id and group_id with the resource's
+// verifyContractGroupUnchanged compares the configuration's value for the contract_id and group_id with the resource's
 // value specified in the resources's ID, to ensure that the user has not inadvertently modified the configuration's
 // value; any such modifications indicate an incorrect understanding of the Update operation.
-func VerifyContractGroupUnchanged(_ context.Context, d *schema.ResourceDiff, m interface{}) error {
+func verifyContractGroupUnchanged(_ context.Context, d *schema.ResourceDiff, m interface{}) error {
 	meta := akamai.Meta(m)
-	logger := meta.Log("NETWORKLISTs", "VerifyContractGroupUnchanged")
+	logger := meta.Log("NETWORKLIST", "VerifyContractGroupUnchanged")
 
 	if d.HasChange("contract_id") {
 		old, new := d.GetChange("contract_id")
@@ -532,6 +533,18 @@ func VerifyContractGroupUnchanged(_ context.Context, d *schema.ResourceDiff, m i
 		}
 	}
 
+	return nil
+}
+
+// markSyncPointComputedIfListModified sets 'sync_point' field as new computed
+// if a new version of network list is expected to be created.
+func markSyncPointComputedIfListModified(_ context.Context, d *schema.ResourceDiff, m interface{}) error {
+	meta := akamai.Meta(m)
+	logger := meta.Log("NETWORKLIST", "MarkSyncPointComputedIfListModified")
+	if d.HasChange("list") {
+		logger.Debug("setting sync_point as new computed")
+		return d.SetNewComputed("sync_point")
+	}
 	return nil
 }
 

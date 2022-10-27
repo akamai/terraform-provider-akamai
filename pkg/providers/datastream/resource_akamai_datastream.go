@@ -16,6 +16,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 var (
@@ -24,13 +25,28 @@ var (
 
 	// ExactlyOneConnectorRule defines connector fields names
 	ExactlyOneConnectorRule = []string{
-		"s3_connector", "azure_connector", "gcs_connector", "https_connector",
-		"splunk_connector", "datadog_connector", "oracle_connector", "sumologic_connector",
+		"azure_connector",
+		"datadog_connector",
+		"elasticsearch_connector",
+		"gcs_connector",
+		"https_connector",
+		"loggly_connector",
+		"new_relic_connector",
+		"oracle_connector",
+		"s3_connector",
+		"splunk_connector",
+		"sumologic_connector",
 	}
 
-	// ConnectorsWithoutFilenameOptionsConfig defines connectors wtihout option to configure prefix and suffix
+	// ConnectorsWithoutFilenameOptionsConfig defines connectors without option to configure prefix and suffix
 	ConnectorsWithoutFilenameOptionsConfig = []string{
-		"https_connector", "datadog_connector", "splunk_connector", "sumologic_connector",
+		"datadog_connector",
+		"elasticsearch_connector",
+		"https_connector",
+		"loggly_connector",
+		"new_relic_connector",
+		"splunk_connector",
+		"sumologic_connector",
 	}
 
 	// DatastreamResourceTimeout is the default timeout for the resource operations (max activation time + polling interval)
@@ -177,7 +193,6 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 		Required:    true,
 		Description: "The name of the template associated with the stream",
 	},
-
 	"s3_connector": {
 		Type:         schema.TypeSet,
 		MaxItems:     1,
@@ -276,10 +291,9 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 		},
 	},
 	"datadog_connector": {
-		Type:             schema.TypeSet,
-		MaxItems:         1,
-		Optional:         true,
-		DiffSuppressFunc: urlSuppressor("url"),
+		Type:     schema.TypeSet,
+		MaxItems: 1,
+		Optional: true,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				"auth_token": {
@@ -331,10 +345,9 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 		},
 	},
 	"splunk_connector": {
-		Type:             schema.TypeSet,
-		MaxItems:         1,
-		Optional:         true,
-		DiffSuppressFunc: urlSuppressor("url"),
+		Type:     schema.TypeSet,
+		MaxItems: 1,
+		Optional: true,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				"compress_logs": {
@@ -353,6 +366,16 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 					Required:    true,
 					Description: "The name of the connector",
 				},
+				"custom_header_name": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "The name of custom header passed with the request to the destination",
+				},
+				"custom_header_value": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "The custom header's contents passed with the request to the destination",
+				},
 				"event_collector_token": {
 					Type:        schema.TypeString,
 					Required:    true,
@@ -363,6 +386,38 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 					Type:        schema.TypeString,
 					Required:    true,
 					Description: "The raw event Splunk URL where logs will be stored",
+				},
+				"tls_hostname": {
+					Type:        schema.TypeString,
+					Required:    false,
+					Optional:    true,
+					Description: "The hostname that verifies the server's certificate and matches the Subject Alternative Names (SANs) in the certificate. If not provided, DataStream fetches the hostname from the endpoint URL.",
+				},
+				"ca_cert": {
+					Type:        schema.TypeString,
+					Required:    false,
+					Optional:    true,
+					Sensitive:   true,
+					Description: "The certification authority (CA) certificate used to verify the origin server's certificate. If the certificate is not signed by a well-known certification authority, enter the CA certificate in the PEM format for verification.",
+				},
+				"client_cert": {
+					Type:        schema.TypeString,
+					Required:    false,
+					Optional:    true,
+					Sensitive:   true,
+					Description: "The digital certificate in the PEM format you want to use to authenticate requests to your destination. If you want to use mutual authentication, you need to provide both the client certificate and the client key (in the PEM format).",
+				},
+				"client_key": {
+					Type:        schema.TypeString,
+					Required:    false,
+					Optional:    true,
+					Sensitive:   true,
+					Description: "The private key in the non-encrypted PKCS8 format you want to use to authenticate with the back-end server. If you want to use mutual authentication, you need to provide both the client certificate and the client key.",
+				},
+				"m_tls": {
+					Type:        schema.TypeBool,
+					Computed:    true,
+					Description: "Indicates whether mTLS is enabled or not.",
 				},
 			},
 		},
@@ -419,16 +474,19 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 		},
 	},
 	"https_connector": {
-		Type:             schema.TypeSet,
-		MaxItems:         1,
-		Optional:         true,
-		DiffSuppressFunc: urlSuppressor("url"),
+		Type:     schema.TypeSet,
+		MaxItems: 1,
+		Optional: true,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				"authentication_type": {
 					Type:        schema.TypeString,
 					Required:    true,
 					Description: "Either NONE for no authentication, or BASIC for username and password authentication",
+					ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{
+						string(datastream.AuthenticationTypeNone),
+						string(datastream.AuthenticationTypeBasic),
+					}, false)),
 				},
 				"compress_logs": {
 					Type:        schema.TypeBool,
@@ -445,6 +503,21 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 					Type:        schema.TypeString,
 					Required:    true,
 					Description: "The name of the connector",
+				},
+				"content_type": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "Content type to pass in the log file header",
+				},
+				"custom_header_name": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "The name of custom header passed with the request to the destination",
+				},
+				"custom_header_value": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "The custom header's contents passed with the request to the destination",
 				},
 				"password": {
 					Type:        schema.TypeString,
@@ -464,6 +537,38 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 					Optional:    true,
 					Sensitive:   true,
 					Description: "Username used for authentication",
+				},
+				"tls_hostname": {
+					Type:        schema.TypeString,
+					Required:    false,
+					Optional:    true,
+					Description: "The hostname that verifies the server's certificate and matches the Subject Alternative Names (SANs) in the certificate. If not provided, DataStream fetches the hostname from the endpoint URL.",
+				},
+				"ca_cert": {
+					Type:        schema.TypeString,
+					Required:    false,
+					Optional:    true,
+					Sensitive:   true,
+					Description: "The certification authority (CA) certificate used to verify the origin server's certificate. If the certificate is not signed by a well-known certification authority, enter the CA certificate in the PEM format for verification.",
+				},
+				"client_cert": {
+					Type:        schema.TypeString,
+					Required:    false,
+					Optional:    true,
+					Sensitive:   true,
+					Description: "The digital certificate in the PEM format you want to use to authenticate requests to your destination. If you want to use mutual authentication, you need to provide both the client certificate and the client key (in the PEM format).",
+				},
+				"client_key": {
+					Type:        schema.TypeString,
+					Required:    false,
+					Optional:    true,
+					Sensitive:   true,
+					Description: "The private key in the non-encrypted PKCS8 format you want to use to authenticate with the back-end server. If you want to use mutual authentication, you need to provide both the client certificate and the client key.",
+				},
+				"m_tls": {
+					Type:        schema.TypeBool,
+					Computed:    true,
+					Description: "Indicates whether mTLS is enabled or not.",
 				},
 			},
 		},
@@ -491,6 +596,21 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 					Type:        schema.TypeInt,
 					Computed:    true,
 					Description: "Identifies the connector associated with the stream",
+				},
+				"content_type": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "Content type to pass in the log file header",
+				},
+				"custom_header_name": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "The name of custom header passed with the request to the destination",
+				},
+				"custom_header_value": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "The custom header's contents passed with the request to the destination",
 				},
 				"connector_name": {
 					Type:        schema.TypeString,
@@ -557,6 +677,175 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 					Required:    true,
 					Sensitive:   true,
 					Description: "The secret access key identifier used to authenticate requests to the Oracle Cloud account",
+				},
+			},
+		},
+	},
+	"loggly_connector": {
+		Type:     schema.TypeSet,
+		MaxItems: 1,
+		Optional: true,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"connector_name": {
+					Type:        schema.TypeString,
+					Required:    true,
+					Description: "The name of the connector.",
+				},
+				"endpoint": {
+					Type:        schema.TypeString,
+					Required:    true,
+					Description: "The Loggly bulk endpoint URL in the https://hostname.loggly.com/bulk/ format. Set the endpoint code in the authToken field instead of providing it in the URL. You can use Akamaized property hostnames as endpoint URLs. See Stream logs to Loggly.",
+				},
+				"auth_token": {
+					Type:        schema.TypeString,
+					Required:    true,
+					Sensitive:   true,
+					Description: "The unique HTTP code for your Loggly bulk endpoint.",
+				},
+				"tags": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "The tags you can use to segment and filter log events in Loggly. See Tags in the Loggly documentation.",
+				},
+				"content_type": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "The type of the resource passed in the request's custom header. For details, see Additional options in the DataStream user guide.",
+				},
+				"custom_header_name": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "A human-readable name for the request's custom header, containing only alphanumeric, dash, and underscore characters. For details, see Additional options in the DataStream user guide.",
+				},
+				"custom_header_value": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "The custom header's contents passed with the request that contains information about the client connection. For details, see Additional options in the DataStream user guide.",
+				},
+			},
+		},
+	},
+	"new_relic_connector": {
+		Type:     schema.TypeSet,
+		MaxItems: 1,
+		Optional: true,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"connector_name": {
+					Type:        schema.TypeString,
+					Required:    true,
+					Description: "The name of the connector.",
+				},
+				"endpoint": {
+					Type:        schema.TypeString,
+					Required:    true,
+					Description: "A New Relic endpoint URL you want to send your logs to. The endpoint URL should follow the https://<newrelic.com>/log/v1/ format format. See Introduction to the Log API https://docs.newrelic.com/docs/logs/log-api/introduction-log-api/ if you want to retrieve your New Relic endpoint URL.",
+				},
+				"auth_token": {
+					Type:        schema.TypeString,
+					Required:    true,
+					Sensitive:   true,
+					Description: "Your Log API token for your account in New Relic.",
+				},
+				"content_type": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "The type of the resource passed in the request's custom header. For details, see Additional options in the DataStream user guide.",
+				},
+				"custom_header_name": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "A human-readable name for the request's custom header, containing only alphanumeric, dash, and underscore characters. For details, see Additional options in the DataStream user guide.",
+				},
+				"custom_header_value": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "The custom header's contents passed with the request that contains information about the client connection. For details, see Additional options in the DataStream user guide.",
+				},
+			},
+		},
+	},
+	"elasticsearch_connector": {
+		Type:     schema.TypeSet,
+		MaxItems: 1,
+		Optional: true,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"connector_name": {
+					Type:        schema.TypeString,
+					Required:    true,
+					Description: "The name of the connector.",
+				},
+				"endpoint": {
+					Type:        schema.TypeString,
+					Required:    true,
+					Description: "The Elasticsearch bulk endpoint URL in the https://hostname.elastic-cloud.com:9243/_bulk/ format. Set indexName in the appropriate field instead of providing it in the URL. You can use Akamaized property hostnames as endpoint URLs. See Stream logs to Elasticsearch.",
+				},
+				"user_name": {
+					Type:        schema.TypeString,
+					Required:    true,
+					Sensitive:   true,
+					Description: "The Elasticsearch basic access authentication username.",
+				},
+				"password": {
+					Type:        schema.TypeString,
+					Required:    true,
+					Sensitive:   true,
+					Description: "The Elasticsearch basic access authentication password.",
+				},
+				"index_name": {
+					Type:        schema.TypeString,
+					Required:    true,
+					Sensitive:   true,
+					Description: "The index name of the Elastic cloud where you want to store log files.",
+				},
+				"content_type": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "The type of the resource passed in the request's custom header. For details, see Additional options in the DataStream user guide.",
+				},
+				"custom_header_name": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "A human-readable name for the request's custom header, containing only alphanumeric, dash, and underscore characters. For details, see Additional options in the DataStream user guide.",
+				},
+				"custom_header_value": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "The custom header's contents passed with the request that contains information about the client connection. For details, see Additional options in the DataStream user guide.",
+				},
+				"tls_hostname": {
+					Type:        schema.TypeString,
+					Required:    false,
+					Optional:    true,
+					Description: "The hostname that verifies the server's certificate and matches the Subject Alternative Names (SANs) in the certificate. If not provided, DataStream fetches the hostname from the endpoint URL.",
+				},
+				"ca_cert": {
+					Type:        schema.TypeString,
+					Required:    false,
+					Optional:    true,
+					Sensitive:   true,
+					Description: "The certification authority (CA) certificate used to verify the origin server's certificate. If the certificate is not signed by a well-known certification authority, enter the CA certificate in the PEM format for verification.",
+				},
+				"client_cert": {
+					Type:        schema.TypeString,
+					Required:    false,
+					Optional:    true,
+					Sensitive:   true,
+					Description: "The PEM-formatted digital certificate you want to authenticate requests to your destination with. If you want to use mutual authentication, you need to provide both the client certificate and the client key.",
+				},
+				"client_key": {
+					Type:        schema.TypeString,
+					Required:    false,
+					Optional:    true,
+					Sensitive:   true,
+					Description: "The private key in the non-encrypted PKCS8 format you want to use to authenticate with the backend server. If you want to use mutual authentication, you need to provide both the client certificate and the client key.",
+				},
+				"m_tls": {
+					Type:        schema.TypeBool,
+					Computed:    true,
+					Description: "Indicates whether mTLS is enabled or not.",
 				},
 			},
 		},
@@ -1137,37 +1426,74 @@ func waitForStreamStatusChange(ctx context.Context, client datastream.DS, stream
 	return &streamDetails.ActivationStatus, nil
 }
 
-func urlSuppressor(key string) schema.SchemaDiffSuppressFunc {
-	return func(k string, _ string, _ string, d *schema.ResourceData) bool {
-		connectorName := strings.Split(k, ".")[0]
+func urlSuppressor(keyToSuppress string) schema.SchemaDiffSuppressFunc {
+	return func(resourceKey string, _, _ string, d *schema.ResourceData) bool {
+		logger := akamai.Log("DataStream", "urlSuppressor")
+
+		// do not suppress when creating the resource
+		if d.Id() == "" {
+			logger.Infof("%s creating resource", resourceKey)
+			return false
+		}
+
+		resourceKeyTokens := strings.Split(resourceKey, ".") // connector_name.ID.propertyName
+		connectorName := resourceKeyTokens[0]
 		if !d.HasChange(connectorName) {
+			logger.Infof("%s hasn't changed", connectorName)
 			return false
 		}
 
-		o, n := d.GetChange(connectorName)
-		oSet, nSet := o.(*schema.Set), n.(*schema.Set)
-
-		if oSet.Len() != 1 || nSet.Len() != 1 {
+		oldConnectorObj, newConnectorObj := d.GetChange(connectorName)
+		oldSet, newSet := oldConnectorObj.(*schema.Set), newConnectorObj.(*schema.Set)
+		if oldSet.Len() != 1 || newSet.Len() != 1 {
 			return false
 		}
 
-		oElem := oSet.List()[0].(map[string]interface{})
-		nElem := nSet.List()[0].(map[string]interface{})
-
-		oItem, oOk := oElem[key]
-		nItem, nOk := nElem[key]
-		if !oOk || !nOk {
+		oldElem, oldOk := oldSet.List()[0].(map[string]interface{})
+		newElem, newOk := newSet.List()[0].(map[string]interface{})
+		if !newOk || !oldOk {
 			return false
 		}
 
-		return strings.TrimSuffix(oItem.(string), "/") == strings.TrimSuffix(nItem.(string), "/")
+		// trim url
+		newElem[keyToSuppress] = strings.TrimRight(newElem[keyToSuppress].(string), "/?")
+
+		// skip computed properties because they cannot be set
+		propertiesToSkip := map[string]bool{
+			"connector_id": true,
+		}
+
+		// do the comparison
+		for propertyName, oldVal := range oldElem {
+			if _, ok := propertiesToSkip[propertyName]; ok {
+				continue
+			}
+			newVal, ok := newElem[propertyName]
+			// if property does not exist in old element, do not suppress change
+			if !ok {
+				logger.Debug("Change detected")
+				return false
+			}
+
+			logger.Debugf("Comparing %s - [%v] and [%v]", propertyName, newVal, oldVal)
+
+			// if values are different, do not suppress change
+			if newVal != oldVal {
+				logger.Debug("Change detected")
+				return false
+			}
+		}
+
+		// all values are the same, suppress the change
+		logger.Debug("No change detected")
+		return true
 	}
 }
 
 func isOrderDifferent(_, oldIDValue, newIDValue string, d *schema.ResourceData) bool {
 	key := "dataset_fields_ids"
 
-	logger := akamai.Log("DataStream", "SupressDiffFunc.isOrderDifferent")
+	logger := akamai.Log("DataStream", "isOrderDifferent")
 
 	defaultDiff := func() bool {
 		return oldIDValue == newIDValue

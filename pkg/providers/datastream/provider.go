@@ -47,6 +47,7 @@ func Provider() *schema.Provider {
 		DataSourcesMap: map[string]*schema.Resource{
 			"akamai_datastream_activation_history": dataAkamaiDatastreamActivationHistory(),
 			"akamai_datastream_dataset_fields":     dataSourceDatasetFields(),
+			"akamai_datastreams":                   dataAkamaiDatastreamStreams(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"akamai_datastream": resourceDatastream(),

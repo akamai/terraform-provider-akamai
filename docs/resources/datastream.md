@@ -100,8 +100,14 @@ The resource supports these arguments:
 * `splunk_connector` - (Optional) Specify details about the Splunk connector in your stream. Note that currently DataStream supports only endpoint URLs ending with `collector/raw`. The argument includes these sub-arguments:
   * `compress_logs` - (Optional) Enables GZIP compression for a log file sent to a destination. If unspecified, this defaults to `true`.
   * `connector_name` - (Required) The name of the connector.
+  * `custom_header_name` - (Optional) A human-readable name for the request's custom header, containing only alphanumeric, dash, and underscore characters. 
+  * `custom_header_value` - (Optional)The custom header's contents passed with the request that contains information about the client connection. 
   * `event_collector_token` - (Required) **Secret**. The Event Collector token associated with your Splunk account. See [View usage of Event Collector token in Splunk](https://docs.splunk.com/Documentation/Splunk/8.0.3/Data/UsetheHTTPEventCollector).
   * `url` - (Required) The raw event Splunk URL where you want to store your logs.
+  * `tls_hostname` - (Optional) The hostname that verifies the server's certificate and matches the Subject Alternative Names (SANs) in the certificate. If not provided, DataStream fetches the hostname from the endpoint URL.
+  * `ca_cert` - (Optional) **Secret**. The certification authority (CA) certificate used to verify the origin server's certificate. It's needed if the certificate stored in `client_cert` is not signed by a well-known certification authority, enter the CA certificate in the PEM format for verification. 
+  * `client_cert` - (Optional) **Secret**. The PEM-formatted digital certificate you want to authenticate requests to your destination with. If you want to use mutual authentication, you need to provide both the client certificate and the client key.
+  * `client_key` - (Optional) **Secret**. The private key in the non-encrypted PKCS8 format you want to use to authenticate with the backend server. If you want to use mutual authentication, you need to provide both the client certificate and the client key.
 * `gcs_connector` - (Optional) Specify details about the Google Cloud Storage connector you can use in a stream. When validating this connector, DataStream uses the private access key to create an `Akamai_access_verification_<timestamp>.txt` object file in your GCS bucket. You can only see this file if the validation process is successful, and you have access to the Google Cloud Storage bucket where you are trying to send logs. The argument includes these sub-arguments:
   * `bucket` - (Required) The name of the storage bucket you created in your Google Cloud account. See [Bucket naming conventions](https://cloud.google.com/storage/docs/naming-buckets).
   * `connector_name` - (Required) The name of the connector.
@@ -113,13 +119,23 @@ The resource supports these arguments:
   * `authentication_type` - (Required) Either `NONE` for no authentication, or `BASIC`. For basic authentication, provide the `user_name` and `password` you set in your custom HTTPS endpoint.
   * `compress_logs` - (Optional) Whether to enable GZIP compression for a log file sent to a destination. If unspecified, this defaults to `false`.
   * `connector_name` - (Required) The name of the connector.
+  * `content_type` - (Optional) Content type to pass in the log file header.
+  * `custom_header_name` - (Optional) A human-readable name for the request's custom header, containing only alphanumeric, dash, and underscore characters. 
+  * `custom_header_value` - (Optional) The custom header's contents passed with the request that contains information about the client connection. 
   * `password` - (Optional) **Secret**. Enter the password you set in your custom HTTPS endpoint for authentication.
   * `url` - (Required) Enter the secure URL where you want to send and store your logs.
   * `user_name` - (Optional) **Secret**. Enter the valid username you set in your custom HTTPS endpoint for authentication.
+  * `tls_hostname` - (Optional) The hostname that verifies the server's certificate and matches the Subject Alternative Names (SANs) in the certificate. If not provided, DataStream fetches the hostname from the endpoint URL.
+  * `ca_cert` - (Optional) **Secret**. The certification authority (CA) certificate used to verify the origin server's certificate. It's needed if the certificate stored in `client_cert` is not signed by a well-known certification authority, enter the CA certificate in the PEM format for verification.  
+  * `client_cert` - (Optional) **Secret**. The PEM-formatted digital certificate you want to authenticate requests to your destination with. If you want to use mutual authentication, you need to provide both the client certificate and the client key.
+  * `client_key` - (Optional) **Secret**. The private key in the non-encrypted PKCS8 format you want to use to authenticate with the backend server. If you want to use mutual authentication, you need to provide both the client certificate and the client key.
 * `sumologic_connector` - (Optional) Specify details about the Sumo Logic connector in a stream, including:
   * `collector_code` - (Required) **Secret**. The unique HTTP collector code of your Sumo Logic `endpoint`.
   * `compress_logs` - (Optional)Enables GZIP compression for a log file sent to a destination. If unspecified, this defaults to `true`.
   * `connector_name` - (Required) The name of the connector.
+  * `content_type` - (Optional) Content type to pass in the log file header.
+  * `custom_header_name` - (Optional) A human-readable name for the request's custom header, containing only alphanumeric, dash, and underscore characters. 
+  * `custom_header_value` - (Optional) The custom header's contents passed with the request that contains information about the client connection. 
   * `endpoint` - (Required) The Sumo Logic collection endpoint where you want to send your logs. You should follow the `https://<SumoEndpoint>/receiver/v1/http` format and pass the collector code in the `collectorCode` argument.
 * `oracle_connector`- (Optional) Specify details about the Oracle Cloud Storage connector in a stream. When validating this connector, DataStream uses the provided `access_key` and `secret_access_key` values and tries to save an `Akamai_access_verification_<timestamp>.txt` file in your Oracle Cloud Storage folder. You can only see this file if the validation process is successful, and you have access to the Oracle Cloud Storage bucket and folder that you’re trying to send logs to.
   * `access_key` - (Required) **Secret**. The access key identifier that you use to authenticate requests to your Oracle Cloud account. See [Managing user credentials in OCS](https://docs.oracle.com/en-us/iaas/Content/Identity/Tasks/managingcredentials.htm).
@@ -129,6 +145,37 @@ The resource supports these arguments:
   * `path` - (Required) The path to the folder within your Oracle Cloud Storage bucket where you want to store your logs.
   * `region` - (Required) The Oracle Cloud Storage region where your bucket resides. See [Regions and availability domains in OCS](https://docs.oracle.com/en-us/iaas/Content/General/Concepts/regions.htm).
   * `secret_access_key` - (Required) **Secret**. The secret access key identifier that you use to authenticate requests to your Oracle Cloud account.
+* `loggly_connector` - (Optional) Specify details about the Loggly connector you can use in a stream, including:
+  * `connector_name` - (Required) The name of the connector.
+  * `endpoint` - (Required) The Loggly bulk endpoint URL in this format: `https://<hostname>.loggly.com/bulk/`. You will enter the endpoint code in the `auth_token` field. You can use Akamaized property hostnames as endpoint URLs. 
+    <br>Learn more about how to [Stream logs to Loggly](https://techdocs.akamai.com/datastream2/docs/stream-loggly).
+  * `auth_token` - (Required) **Secret**. The unique HTTP code for your Loggly bulk endpoint. The token is the value from your Loggly bulk endpoint URL that comes after the `/bulk` segment, and before `tags`.
+  * `tags` - (Optional) The tags you can use to segment and filter log events in Loggly. Learn more about [Tags](https://documentation.solarwinds.com/en/success_center/loggly/content/admin/tags.htm).
+  * `content_type` - (Optional) Content type to pass in the log file header.
+  * `custom_header_name` - (Optional) A human-readable name for the request's custom header, containing only alphanumeric, dash, and underscore characters. 
+  * `custom_header_value` - (Optional) The custom header's contents passed with the request that contains information about the client connection.
+* `new_relic_connector` - (Optional) Specify details about the New Relic connector you can use in a stream, including:
+  * `connector_name` - (Required) The name of the connector.
+  * `endpoint` - (Required) A New Relic endpoint URL you want to send your logs to. The endpoint URL should follow the `https://<newrelic.com>/log/v1/` format. 
+    <br>Learn more about how to [Stream logs to New Relic](https://techdocs.akamai.com/datastream2/docs/stream-new-relic).
+  * `auth_token` - (Required) **Secret**. Your Log API token for your account in New Relic. 
+  * `content_type` - (Optional) Content type to pass in the log file header.
+  * `custom_header_name` - (Optional) A human-readable name for the request's custom header, containing only alphanumeric, dash, and underscore characters. 
+  * `custom_header_value` - (Optional) The custom header's contents passed with the request that contains information about the client connection.
+* `elasticsearch_connector` - (Optional) Specify details about the Elasticsearch connector you can use in a stream, including:
+  * `connector_name` - (Required) The name of the connector.
+  * `endpoint` - (Required) The Elasticsearch bulk endpoint URL in the format: `https://<hostname>.elastic-cloud.com:9243/_bulk/`. Set `index_name` in the appropriate field instead of providing it in the URL. You can use Akamaized property hostnames as endpoint URLs. 
+    <br>Learn more about how to [Stream logs to Elasticsearch](https://techdocs.akamai.com/datastream2/docs/stream-elasticsearch).
+  * `user_name` - (Required) **Secret**. The Elasticsearch basic access authentication username.
+  * `password` - (Required) **Secret**. The Elasticsearch basic access authentication password.
+  * `index_name` - (Required) **Secret**. The index name of the Elastic cloud where you want to store log files.
+  * `content_type` - (Optional) Content type to pass in the log file header.
+  * `custom_header_name` - (Optional) A human-readable name for the request's custom header, containing only alphanumeric, dash, and underscore characters. 
+  * `custom_header_value` - (Optional) The custom header's contents passed with the request that contains information about the client connection.
+  * `tls_hostname` - (Optional) The hostname that verifies the server's certificate and matches the Subject Alternative Names (SANs) in the certificate. If not provided, DataStream fetches the hostname from the endpoint URL.
+  * `ca_cert` - (Optional) **Secret**. The certification authority (CA) certificate used to verify the origin server's certificate. It's needed if the certificate stored in `client_cert` is not signed by a well-known certification authority, enter the CA certificate in the PEM format for verification.
+  * `client_cert` - (Optional) **Secret**. The PEM-formatted digital certificate you want to authenticate requests to your destination with. If you want to use mutual authentication, you need to provide both the client certificate and the client key.
+  * `client_key` - (Optional) **Secret**. The private key in the non-encrypted PKCS8 format you want to use to authenticate with the backend server. If you want to use mutual authentication, you need to provide both the client certificate and the client key.
 
 ## Attributes reference
 
@@ -145,6 +192,7 @@ This resource returns these attributes:
 * `stream_version_id` - Identifies the configuration version of the stream.
 * `compress_logs` - Whether the GZIP compression for a log file was sent to a destination.
 * `connector_id` - Identifies the connector associated with the stream.
+* `m_tls` - Indicates whether mTLS is enabled or not.
 
 ## Import
 

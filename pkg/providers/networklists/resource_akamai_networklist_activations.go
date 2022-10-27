@@ -30,19 +30,22 @@ func resourceActivations() *schema.Resource {
 		DeleteContext: resourceActivationsDelete,
 		Schema: map[string]*schema.Schema{
 			"network_list_id": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: "Unique identifier of the network list",
 			},
 			"network": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Default:  "STAGING",
+				Type:        schema.TypeString,
+				Optional:    true,
+				Default:     "STAGING",
+				Description: "The Akamai network on which the list is activated: STAGING or PRODUCTION",
 			},
 			"notes": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Default:  "Activation Comments",
+				Type:        schema.TypeString,
+				Optional:    true,
+				Default:     "Activation Comments",
+				Description: "Descriptive text to accompany the activation",
 			},
 			"activate": {
 				Type:       schema.TypeBool,
@@ -51,13 +54,20 @@ func resourceActivations() *schema.Resource {
 				Deprecated: akamai.NoticeDeprecatedUseAlias("activate"),
 			},
 			"notification_emails": {
-				Type:     schema.TypeSet,
-				Required: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Type:        schema.TypeSet,
+				Required:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "List of email addresses of Control Center users who receive an email when activation of this list is complete",
+			},
+			"sync_point": {
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "Identifies the sync point of the network list to be activated",
 			},
 			"status": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: `This network list's current activation status in the environment specified by the "network" attribute`,
 			},
 		},
 	}
@@ -77,6 +87,7 @@ func resourceActivationsCreate(ctx context.Context, d *schema.ResourceData, m in
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("NETWORKLIST", "resourceActivationsCreate")
+	logger.Debug("Creating resource activation")
 
 	networkListID, err := tools.GetStringValue("network_list_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -95,35 +106,30 @@ func resourceActivationsCreate(ctx context.Context, d *schema.ResourceData, m in
 		return diag.Errorf("Activation Read failed")
 	}
 
-	createRequest := networklists.CreateActivationsRequest{
+	createResponse, err := createActivation(ctx, client, networklists.CreateActivationsRequest{
 		UniqueID:               networkListID,
 		Network:                network,
 		Comments:               comments,
 		Action:                 "ACTIVATE",
 		NotificationRecipients: tools.SetToStringSlice(notificationEmails),
-	}
-	createResponse, err := createActivation(ctx, client, createRequest)
+	})
 	if err != nil {
-		logger.Debugf("calling 'createActivations': %s", err.Error())
 		return diag.FromErr(err)
 	}
-	logger.Debugf("calling 'createActivations': RESPONSE %v", createResponse)
 	d.SetId(strconv.Itoa(createResponse.ActivationID))
 	if err := d.Set("status", string(createResponse.ActivationStatus)); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.FromErr(err)
 	}
 
-	lookupRequest := networklists.GetActivationRequest{ActivationID: createResponse.ActivationID}
-	lookupResponse, err := lookupActivation(ctx, client, lookupRequest)
+	lookupResponse, err := lookupActivation(ctx, client, networklists.GetActivationRequest{ActivationID: createResponse.ActivationID})
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	logger.Debugf("calling 'createActivations': GET STATUS ID %v", lookupResponse)
 
 	for lookupResponse.ActivationStatus != "ACTIVATED" {
 		select {
 		case <-time.After(tools.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
-			act, err := client.GetActivation(ctx, lookupRequest)
+			act, err := client.GetActivation(ctx, networklists.GetActivationRequest{ActivationID: createResponse.ActivationID})
 
 			if err != nil {
 				return diag.FromErr(err)
@@ -151,21 +157,29 @@ func createActivation(ctx context.Context, client networklists.NTWRKLISTS, param
 func resourceActivationsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceActivationsRead")
+	logger := meta.Log("NETWORKLIST", "resourceActivationsRead")
+	logger.Debug("Reading resource activation")
 
 	activationID, errconv := strconv.Atoi(d.Id())
 	if errconv != nil {
 		return diag.FromErr(errconv)
 	}
 
-	getRequest := networklists.GetActivationRequest{ActivationID: activationID}
-	getResponse, err := client.GetActivation(ctx, getRequest)
+	getResponse, err := client.GetActivation(ctx, networklists.GetActivationRequest{ActivationID: activationID})
 	if err != nil {
-		logger.Warnf("calling 'getActivations': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	if err := d.Set("status", getResponse.ActivationStatus); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.FromErr(err)
+	}
+
+	// Get the current syncpoint of this network list, which may have changed since this activation was created.
+	networkListID := getResponse.NetworkList.UniqueID
+	networklist, err := client.GetNetworkList(ctx, networklists.GetNetworkListRequest{UniqueID: networkListID})
+
+	if err = d.Set("sync_point", networklist.SyncPoint); err != nil {
+		return diag.FromErr(err)
 	}
 	d.SetId(strconv.Itoa(getResponse.ActivationID))
 
@@ -176,6 +190,7 @@ func resourceActivationsUpdate(ctx context.Context, d *schema.ResourceData, m in
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("NETWORKLIST", "resourceActivationsUpdate")
+	logger.Debug("Updating resource activation")
 
 	networkListID, err := tools.GetStringValue("network_list_id", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
@@ -189,35 +204,31 @@ func resourceActivationsUpdate(ctx context.Context, d *schema.ResourceData, m in
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	notificationEmails, ok := d.Get("notification_emails").(*schema.Set)
-	if !ok {
-		return diag.Errorf("Activation Read failed")
+	notificationEmails, err := tools.GetSetValue("notification_emails", d)
+	if err != nil {
+		return diag.FromErr(err)
 	}
 
-	createRequest := networklists.CreateActivationsRequest{
+	response, err := client.CreateActivations(ctx, networklists.CreateActivationsRequest{
 		UniqueID:               networkListID,
 		Network:                network,
 		Comments:               comments,
 		Action:                 "ACTIVATE",
 		NotificationRecipients: tools.SetToStringSlice(notificationEmails),
-	}
-	createResponse, err := client.CreateActivations(ctx, createRequest)
+	})
 	if err != nil {
-		logger.Debugf("calling 'createActivations': %s", err.Error())
 		return diag.FromErr(err)
 	}
-	logger.Debugf("calling 'createActivations': RESPONSE %v", createResponse)
-	d.SetId(strconv.Itoa(createResponse.ActivationID))
-	if err := d.Set("status", string(createResponse.ActivationStatus)); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+	d.SetId(strconv.Itoa(response.ActivationID))
+	if err := d.Set("status", string(response.ActivationStatus)); err != nil {
+		return diag.FromErr(err)
 	}
 
-	lookupRequest := networklists.GetActivationRequest{ActivationID: createResponse.ActivationID}
+	lookupRequest := networklists.GetActivationRequest{ActivationID: response.ActivationID}
 	lookupResponse, err := lookupActivation(ctx, client, lookupRequest)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	logger.Debugf("calling 'createActivations': GET STATUS ID %v", lookupResponse)
 
 	for lookupResponse.ActivationStatus != "ACTIVATED" {
 		select {
@@ -236,12 +247,16 @@ func resourceActivationsUpdate(ctx context.Context, d *schema.ResourceData, m in
 	return resourceActivationsRead(ctx, d, m)
 }
 
-func resourceActivationsDelete(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceActivationsDelete(_ context.Context, _ *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
-	logger := meta.Log("NETWORKLIST", "resourceActivationsRemove")
-	logger.Warnf("calling 'Remove Activations' NOOP ")
-	d.SetId("")
-	return nil
+	logger := meta.Log("NETWORKLIST", "resourceActivationsDelete")
+	logger.Debug("removing activation from local state")
+	return diag.Diagnostics{
+		diag.Diagnostic{
+			Severity: diag.Warning,
+			Summary:  "removing activation resource (will be removed from local state only)",
+		},
+	}
 }
 
 func lookupActivation(ctx context.Context, client networklists.NTWRKLISTS, query networklists.GetActivationRequest) (*networklists.GetActivationResponse, error) {
