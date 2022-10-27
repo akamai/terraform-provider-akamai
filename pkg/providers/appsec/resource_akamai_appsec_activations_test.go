@@ -12,7 +12,7 @@ import (
 
 func TestAkamaiActivations_res_basic(t *testing.T) {
 	t.Run("match by Activations ID", func(t *testing.T) {
-		client := &mockappsec{}
+		client := &appsec.Mock{}
 
 		removeActivationsResponse := appsec.RemoveActivationsResponse{}
 		err := json.Unmarshal(loadFixtureBytes("testdata/TestResActivations/ActivationsDelete.json"), &removeActivationsResponse)

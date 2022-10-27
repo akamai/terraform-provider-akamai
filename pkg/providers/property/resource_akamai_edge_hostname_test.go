@@ -21,12 +21,12 @@ import (
 func TestResourceEdgeHostname(t *testing.T) {
 	testDir := "testdata/TestResourceEdgeHostname"
 	tests := map[string]struct {
-		init      func(*mockpapi, *mockhapi)
+		init      func(*papi.Mock, *hapi.Mock)
 		withError *regexp.Regexp
 		steps     []resource.TestStep
 	}{
 		"edge hostname with .edgesuite.net, create edge hostname": {
-			init: func(mp *mockpapi, mh *mockhapi) {
+			init: func(mp *papi.Mock, mh *hapi.Mock) {
 				mp.On("GetEdgeHostnames", mock.Anything, papi.GetEdgeHostnamesRequest{
 					ContractID: "ctr_2",
 					GroupID:    "grp_2",
@@ -112,7 +112,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 			},
 		},
 		"edge hostname with .edgekey.net, create edge hostname": {
-			init: func(mp *mockpapi, mh *mockhapi) {
+			init: func(mp *papi.Mock, mh *hapi.Mock) {
 				mp.On("GetEdgeHostnames", mock.Anything, papi.GetEdgeHostnamesRequest{
 					ContractID: "ctr_2",
 					GroupID:    "grp_2",
@@ -197,7 +197,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 			},
 		},
 		"edge hostname with .akamaized.net, create edge hostname": {
-			init: func(mp *mockpapi, mh *mockhapi) {
+			init: func(mp *papi.Mock, mh *hapi.Mock) {
 				mp.On("GetEdgeHostnames", mock.Anything, papi.GetEdgeHostnamesRequest{
 					ContractID: "ctr_2",
 					GroupID:    "grp_2",
@@ -279,7 +279,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 			},
 		},
 		"different edge hostname, create": {
-			init: func(mp *mockpapi, mh *mockhapi) {
+			init: func(mp *papi.Mock, mh *hapi.Mock) {
 				mp.On("GetEdgeHostnames", mock.Anything, papi.GetEdgeHostnamesRequest{
 					ContractID: "ctr_2",
 					GroupID:    "grp_2",
@@ -377,7 +377,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 			},
 		},
 		"edge hostname exists": {
-			init: func(mp *mockpapi, mh *mockhapi) {
+			init: func(mp *papi.Mock, mh *hapi.Mock) {
 				mp.On("GetEdgeHostnames", mock.Anything, papi.GetEdgeHostnamesRequest{
 					ContractID: "ctr_2",
 					GroupID:    "grp_2",
@@ -415,7 +415,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 			},
 		},
 		"edge hostname exists - update ip_behavior": {
-			init: func(mp *mockpapi, mh *mockhapi) {
+			init: func(mp *papi.Mock, mh *hapi.Mock) {
 				// 1st step
 				// 1. call from create method
 				// 2. and 3. call from read method
@@ -618,7 +618,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 			},
 		},
 		"error - status_update_email is required to update": {
-			init: func(mp *mockpapi, mh *mockhapi) {
+			init: func(mp *papi.Mock, mh *hapi.Mock) {
 				// 1st step
 				// 1. call from create method
 				// 2. and 3. call from read method
@@ -689,7 +689,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 			},
 		},
 		"error on empty status_update_email - status_update_email is required to update": {
-			init: func(mp *mockpapi, mh *mockhapi) {
+			init: func(mp *papi.Mock, mh *hapi.Mock) {
 				// 1st step
 				// 1. call from create method
 				// 2. and 3. call from read method
@@ -760,7 +760,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 			},
 		},
 		"error fetching edge hostnames": {
-			init: func(mp *mockpapi, mh *mockhapi) {
+			init: func(mp *papi.Mock, mh *hapi.Mock) {
 				mp.On("GetEdgeHostnames", mock.Anything, papi.GetEdgeHostnamesRequest{
 					ContractID: "ctr_2",
 					GroupID:    "grp_2",
@@ -774,7 +774,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 			},
 		},
 		"certificate required for ENHANCED_TLS": {
-			init: func(mp *mockpapi, mh *mockhapi) {
+			init: func(mp *papi.Mock, mh *hapi.Mock) {
 				mp.On("GetEdgeHostnames", mock.Anything, papi.GetEdgeHostnamesRequest{
 					ContractID: "ctr_2",
 					GroupID:    "grp_2",
@@ -788,7 +788,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 			},
 		},
 		"error creating edge hostname": {
-			init: func(mp *mockpapi, mh *mockhapi) {
+			init: func(mp *papi.Mock, mh *hapi.Mock) {
 				mp.On("GetEdgeHostnames", mock.Anything, papi.GetEdgeHostnamesRequest{
 					ContractID: "ctr_2",
 					GroupID:    "grp_2",
@@ -832,7 +832,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 			},
 		},
 		"error edge hostname not found": {
-			init: func(mp *mockpapi, mh *mockhapi) {
+			init: func(mp *papi.Mock, mh *hapi.Mock) {
 				mp.On("GetEdgeHostnames", mock.Anything, papi.GetEdgeHostnamesRequest{
 					ContractID: "ctr_2",
 					GroupID:    "grp_2",
@@ -881,8 +881,8 @@ func TestResourceEdgeHostname(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &mockpapi{}
-			clientHapi := &mockhapi{}
+			client := &papi.Mock{}
+			clientHapi := &hapi.Mock{}
 			test.init(client, clientHapi)
 			useClient(client, clientHapi, func() {
 				resource.UnitTest(t, resource.TestCase{
@@ -897,7 +897,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 }
 
 func TestResourceEdgeHostnames_WithImport(t *testing.T) {
-	expectGetEdgeHostname := func(m *mockpapi, edgehostID, ContractID, GroupID string) *mock.Call {
+	expectGetEdgeHostname := func(m *papi.Mock, edgehostID, ContractID, GroupID string) *mock.Call {
 		return m.On("GetEdgeHostname", mock.Anything, papi.GetEdgeHostnameRequest{
 			EdgeHostnameID: edgehostID,
 			ContractID:     ContractID,
@@ -934,7 +934,7 @@ func TestResourceEdgeHostnames_WithImport(t *testing.T) {
 		}, nil)
 	}
 
-	expectGetEdgeHostnames := func(m *mockpapi, ContractID, GroupID string) *mock.Call {
+	expectGetEdgeHostnames := func(m *papi.Mock, ContractID, GroupID string) *mock.Call {
 		return m.On("GetEdgeHostnames", mock.Anything, papi.GetEdgeHostnamesRequest{
 			ContractID: ContractID,
 			GroupID:    GroupID,
@@ -963,7 +963,7 @@ func TestResourceEdgeHostnames_WithImport(t *testing.T) {
 	}
 
 	t.Run("import existing edgehostname code", func(t *testing.T) {
-		client := &mockpapi{}
+		client := &papi.Mock{}
 		id := "eh_1,1,2"
 
 		expectGetEdgeHostname(client, "eh_1", "ctr_1", "grp_2")

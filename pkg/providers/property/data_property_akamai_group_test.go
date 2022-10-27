@@ -11,7 +11,7 @@ import (
 
 func Test_DSReadGroup(t *testing.T) {
 	t.Run("read group with name and contract provided", func(t *testing.T) {
-		client := &mockpapi{}
+		client := &papi.Mock{}
 		client.On("GetGroups")
 		client.On("GetGroups", AnyCTX).Return(&papi.GetGroupsResponse{
 			AccountID: "act_1-1TJZFB", AccountName: "example.com",
@@ -42,7 +42,7 @@ func Test_DSReadGroup(t *testing.T) {
 	})
 
 	t.Run("read group with name and contract_id provided", func(t *testing.T) {
-		client := &mockpapi{}
+		client := &papi.Mock{}
 		client.On("GetGroups")
 		client.On("GetGroups", AnyCTX).Return(&papi.GetGroupsResponse{
 			AccountID: "act_1-1TJZFB", AccountName: "example.com",
@@ -73,7 +73,7 @@ func Test_DSReadGroup(t *testing.T) {
 	})
 
 	t.Run("read group with group_name and contract_id provided", func(t *testing.T) {
-		client := &mockpapi{}
+		client := &papi.Mock{}
 		client.On("GetGroups")
 		client.On("GetGroups", AnyCTX).Return(&papi.GetGroupsResponse{
 			AccountID: "act_1-1TJZFB", AccountName: "example.com",
@@ -104,7 +104,7 @@ func Test_DSReadGroup(t *testing.T) {
 	})
 
 	t.Run("read group with group_name and contract provided", func(t *testing.T) {
-		client := &mockpapi{}
+		client := &papi.Mock{}
 		client.On("GetGroups")
 		client.On("GetGroups", AnyCTX).Return(&papi.GetGroupsResponse{
 			AccountID: "act_1-1TJZFB", AccountName: "example.com",
@@ -135,7 +135,7 @@ func Test_DSReadGroup(t *testing.T) {
 	})
 
 	t.Run("read group with group_name and name conflict", func(t *testing.T) {
-		client := &mockpapi{}
+		client := &papi.Mock{}
 		client.On("GetGroups")
 		client.On("GetGroups", AnyCTX).Return(&papi.GetGroupsResponse{
 			AccountID: "act_1-1TJZFB", AccountName: "example.com",
@@ -160,7 +160,7 @@ func Test_DSReadGroup(t *testing.T) {
 	})
 
 	t.Run("read group with contract_id and contract conflict", func(t *testing.T) {
-		client := &mockpapi{}
+		client := &papi.Mock{}
 		client.On("GetGroups")
 		client.On("GetGroups", AnyCTX).Return(&papi.GetGroupsResponse{
 			AccountID: "act_1-1TJZFB", AccountName: "example.com",

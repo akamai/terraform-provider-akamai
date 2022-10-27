@@ -12,7 +12,7 @@ import (
 
 func TestAkamaiThreatIntel_res_basic(t *testing.T) {
 	t.Run("match by Threat Intel ID", func(t *testing.T) {
-		client := &mockappsec{}
+		client := &appsec.Mock{}
 
 		updateThreatIntelResponse := appsec.UpdateThreatIntelResponse{}
 		err := json.Unmarshal(loadFixtureBytes("testdata/TestResThreatIntel/ThreatIntel.json"), &updateThreatIntelResponse)

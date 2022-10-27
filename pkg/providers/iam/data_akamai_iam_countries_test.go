@@ -5,15 +5,16 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/iam"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	mock "github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/mock"
 
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/test"
 )
 
 func TestDataCountries(t *testing.T) {
 	t.Run("happy path", func(t *testing.T) {
-		client := &mockiam{}
+		client := &iam.Mock{}
 		client.Test(test.TattleT{T: t})
 		client.On("SupportedCountries", mock.Anything).Return([]string{"first", "second", "third"}, nil)
 
@@ -40,7 +41,7 @@ func TestDataCountries(t *testing.T) {
 	})
 
 	t.Run("fail path", func(t *testing.T) {
-		client := &mockiam{}
+		client := &iam.Mock{}
 		client.Test(test.TattleT{T: t})
 		client.On("SupportedCountries", mock.Anything).Return([]string{}, errors.New("Could not get supported countries"))
 

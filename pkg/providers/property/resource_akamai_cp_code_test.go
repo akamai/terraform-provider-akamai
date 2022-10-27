@@ -23,7 +23,7 @@ var AnyCTX = mock.Anything
 
 func TestResCPCode(t *testing.T) {
 	// Helper to set up an expected call to mock papi.GetCPCode
-	expectGetCPCode := func(m *mockpapi, contractID, groupID string, CPCodeID int, CPCodes *[]papi.CPCode, err error) *mock.Call {
+	expectGetCPCode := func(m *papi.Mock, contractID, groupID string, CPCodeID int, CPCodes *[]papi.CPCode, err error) *mock.Call {
 		var call *mock.Call
 		CPCodeIDStr := tools.AddPrefix(strconv.Itoa(CPCodeID), "cpc_")
 		req := papi.GetCPCodeRequest{CPCodeID: CPCodeIDStr, ContractID: contractID, GroupID: groupID}
@@ -47,7 +47,7 @@ func TestResCPCode(t *testing.T) {
 	}
 
 	// Helper to set up an expected call to mock papi.GetCPCodes with mock impl backed by the given slice
-	expectGetCPCodes := func(m *mockpapi, ContractID, GroupID string, CPCodes *[]papi.CPCode) *mock.Call {
+	expectGetCPCodes := func(m *papi.Mock, ContractID, GroupID string, CPCodes *[]papi.CPCode) *mock.Call {
 		mockImpl := func(_ context.Context, req papi.GetCPCodesRequest) (*papi.GetCPCodesResponse, error) {
 			res := &papi.GetCPCodesResponse{
 				ContractID: req.ContractID,
@@ -63,7 +63,7 @@ func TestResCPCode(t *testing.T) {
 	}
 
 	// Helper to set up an expected call to mock papi.CreateCPCode with mock impl backed by the given slice
-	expectCreateCPCode := func(m *mockpapi, CPCName, Product, Contract, Group string, CPCodes *[]papi.CPCode) *mock.Call {
+	expectCreateCPCode := func(m *papi.Mock, CPCName, Product, Contract, Group string, CPCodes *[]papi.CPCode) *mock.Call {
 		mockImpl := func(_ context.Context, req papi.CreateCPCodeRequest) (*papi.CreateCPCodeResponse, error) {
 			cpc := papi.CPCode{
 				ID:         fmt.Sprintf("cpc_%d", len(*CPCodes)),
@@ -90,7 +90,7 @@ func TestResCPCode(t *testing.T) {
 	}
 
 	// Helper to set up an expected call to mock papi.UpdateCPCode with mock impl backed by the given slice
-	expectUpdateCPCode := func(m *mockpapi, CPCodeID int, name string, CPCodes, CPCodesCopy *[]papi.CPCode, err error) *mock.Call {
+	expectUpdateCPCode := func(m *papi.Mock, CPCodeID int, name string, CPCodes, CPCodesCopy *[]papi.CPCode, err error) *mock.Call {
 		mockImpl := func(_ context.Context, req papi.UpdateCPCodeRequest) (*papi.CPCodeDetailResponse, error) {
 			if err != nil {
 				return nil, err
@@ -118,7 +118,7 @@ func TestResCPCode(t *testing.T) {
 	}
 
 	// // Helper to set up an expected call to mock papi.GetCPCodeDetail
-	expectGetCPCodeDetail := func(m *mockpapi, CPCodeID int, CPCodes *[]papi.CPCode, err error) *mock.Call {
+	expectGetCPCodeDetail := func(m *papi.Mock, CPCodeID int, CPCodes *[]papi.CPCode, err error) *mock.Call {
 		var call *mock.Call
 
 		call = m.On("GetCPCodeDetail", AnyCTX, CPCodeID).Run(func(args mock.Arguments) {
@@ -141,7 +141,7 @@ func TestResCPCode(t *testing.T) {
 	updatePollInterval = updatePollMinimum
 
 	t.Run("create new CP Code", func(t *testing.T) {
-		client := &mockpapi{}
+		client := &papi.Mock{}
 		defer client.AssertExpectations(t)
 
 		// Contains CP Codes known to mock PAPI
@@ -175,7 +175,7 @@ func TestResCPCode(t *testing.T) {
 	})
 
 	t.Run("create new CP Code with deprecated attributes", func(t *testing.T) {
-		client := &mockpapi{}
+		client := &papi.Mock{}
 		defer client.AssertExpectations(t)
 
 		// Contains CP Codes known to mock PAPI
@@ -209,7 +209,7 @@ func TestResCPCode(t *testing.T) {
 	})
 
 	t.Run("use existing CP Code with multiple products", func(t *testing.T) {
-		client := &mockpapi{}
+		client := &papi.Mock{}
 		defer client.AssertExpectations(t)
 
 		// Contains CP Codes known to mock PAPI
@@ -247,7 +247,7 @@ func TestResCPCode(t *testing.T) {
 	})
 
 	t.Run("use existing CP Code", func(t *testing.T) {
-		client := &mockpapi{}
+		client := &papi.Mock{}
 		defer client.AssertExpectations(t)
 
 		// Contains CP Codes known to mock PAPI
@@ -286,7 +286,7 @@ func TestResCPCode(t *testing.T) {
 	})
 
 	t.Run("product missing from CP Code", func(t *testing.T) {
-		client := &mockpapi{}
+		client := &papi.Mock{}
 		defer client.AssertExpectations(t)
 
 		// Contains CP Codes known to mock PAPI
@@ -316,7 +316,7 @@ func TestResCPCode(t *testing.T) {
 	})
 
 	t.Run("change name", func(t *testing.T) {
-		client := &mockpapi{}
+		client := &papi.Mock{}
 		defer client.AssertExpectations(t)
 
 		// Contains CP Codes known to mock PAPI
@@ -359,7 +359,7 @@ func TestResCPCode(t *testing.T) {
 	})
 
 	t.Run("import existing cp code", func(t *testing.T) {
-		client := &mockpapi{}
+		client := &papi.Mock{}
 		id := "0,1,2"
 
 		CPCodes := []papi.CPCode{{ID: "cpc_0", Name: "test cpcode", ProductIDs: []string{"prd_Web_Accel"}}}
@@ -398,7 +398,7 @@ func TestResCPCode(t *testing.T) {
 	})
 
 	t.Run("invalid import ID passed", func(t *testing.T) {
-		client := &mockpapi{}
+		client := &papi.Mock{}
 		id := "123"
 
 		useClient(client, nil, func() {
@@ -419,7 +419,7 @@ func TestResCPCode(t *testing.T) {
 	})
 
 	t.Run("empty CP code ID passed", func(t *testing.T) {
-		client := &mockpapi{}
+		client := &papi.Mock{}
 		id := ",ctr_1-1NC95D,grp_194665"
 
 		useClient(client, nil, func() {
@@ -440,7 +440,7 @@ func TestResCPCode(t *testing.T) {
 	})
 
 	t.Run("immutable attributes updated", func(t *testing.T) {
-		client := &mockpapi{}
+		client := &papi.Mock{}
 		defer client.AssertExpectations(t)
 
 		// Contains CP Codes known to mock PAPI
@@ -506,7 +506,7 @@ func TestResCPCode(t *testing.T) {
 	})
 
 	t.Run("error fetching cpCode details", func(t *testing.T) {
-		client := &mockpapi{}
+		client := &papi.Mock{}
 		defer client.AssertExpectations(t)
 
 		// Contains CP Codes known to mock PAPI
@@ -542,7 +542,7 @@ func TestResCPCode(t *testing.T) {
 	})
 
 	t.Run("error updating cpCode", func(t *testing.T) {
-		client := &mockpapi{}
+		client := &papi.Mock{}
 		defer client.AssertExpectations(t)
 
 		// Contains CP Codes known to mock PAPI
@@ -583,7 +583,7 @@ func TestResCPCode(t *testing.T) {
 		oldInterval := cpCodeResourceUpdateTimeout
 		cpCodeResourceUpdateTimeout = time.Millisecond * 6
 		updatePollInterval = time.Millisecond * 4
-		client := &mockpapi{}
+		client := &papi.Mock{}
 		defer func() {
 			cpCodeResourceUpdateTimeout = timeoutVal
 			updatePollInterval = oldInterval

@@ -34,7 +34,7 @@ func TestResGtmGeomap(t *testing.T) {
 	}
 
 	t.Run("create geomap", func(t *testing.T) {
-		client := &mockgtm{}
+		client := &gtm.Mock{}
 
 		getCall := client.On("GetGeoMap",
 			mock.Anything, // ctx is irrelevant for this test
@@ -112,7 +112,7 @@ func TestResGtmGeomap(t *testing.T) {
 	})
 
 	t.Run("create geomap failed", func(t *testing.T) {
-		client := &mockgtm{}
+		client := &gtm.Mock{}
 
 		client.On("CreateGeoMap",
 			mock.Anything, // ctx is irrelevant for this test
@@ -150,7 +150,7 @@ func TestResGtmGeomap(t *testing.T) {
 	})
 
 	t.Run("create geomap denied", func(t *testing.T) {
-		client := &mockgtm{}
+		client := &gtm.Mock{}
 
 		dr := gtm.GeoMapResponse{}
 		dr.Resource = &geo

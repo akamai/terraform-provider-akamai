@@ -12,7 +12,7 @@ import (
 
 func TestAkamaiEvalPenaltyBox_res_basic(t *testing.T) {
 	t.Run("match by EvalPenaltyBox ID", func(t *testing.T) {
-		client := &mockappsec{}
+		client := &appsec.Mock{}
 
 		updResp := appsec.UpdatePenaltyBoxResponse{}
 		err := json.Unmarshal(loadFixtureBytes("testdata/TestResEvalPenaltyBox/PenaltyBox.json"), &updResp)

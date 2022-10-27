@@ -12,7 +12,7 @@ import (
 
 func TestAkamaiApiHostnameCoverage_data_basic(t *testing.T) {
 	t.Run("match by ApiHostnameCoverage ID", func(t *testing.T) {
-		client := &mockappsec{}
+		client := &appsec.Mock{}
 
 		getCoverageResponse := appsec.GetApiHostnameCoverageResponse{}
 		err := json.Unmarshal(loadFixtureBytes("testdata/TestDSApiHostnameCoverage/ApiHostnameCoverage.json"), &getCoverageResponse)

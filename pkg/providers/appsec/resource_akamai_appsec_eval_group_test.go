@@ -14,7 +14,7 @@ import (
 
 func TestAkamaiEvalGroup_res_basic(t *testing.T) {
 	t.Run("match by AttackGroup ID", func(t *testing.T) {
-		client := &mockappsec{}
+		client := &appsec.Mock{}
 
 		conditionExceptionJSON := loadFixtureString("testdata/TestResEvalGroup/ConditionException.json")
 		conditionExceptionRawMessage := json.RawMessage(conditionExceptionJSON)
@@ -73,7 +73,7 @@ func TestAkamaiEvalGroup_res_basic(t *testing.T) {
 
 func TestAkamaiEvalGroup_res_error_updating_eval_group(t *testing.T) {
 	t.Run("match by AttackGroup ID", func(t *testing.T) {
-		client := &mockappsec{}
+		client := &appsec.Mock{}
 
 		conditionExceptionJSON := loadFixtureString("testdata/TestResEvalGroup/ConditionException.json")
 		conditionExceptionRawMessage := json.RawMessage(conditionExceptionJSON)

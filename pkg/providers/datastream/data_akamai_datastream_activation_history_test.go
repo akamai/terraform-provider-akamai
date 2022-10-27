@@ -73,7 +73,7 @@ func TestDataAkamaiDatastreamActivationHistoryRead(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			client := mockdatastream{}
+			client := datastream.Mock{}
 			useClient(&client, func() {
 				if test.edgegridError != nil {
 					client.On("GetActivationHistory", mock.Anything, mock.Anything).Return(nil, test.edgegridError).Once()

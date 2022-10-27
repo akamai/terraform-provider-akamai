@@ -14,11 +14,11 @@ import (
 func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 	anError := fmt.Errorf("an error")
 	tests := map[string]struct {
-		init  func(*mockcloudlets)
+		init  func(*cloudlets.Mock)
 		steps []resource.TestStep
 	}{
 		"create and read activation, version == 1, inactive -> activate -> second attempt": {
-			init: func(m *mockcloudlets) {
+			init: func(m *cloudlets.Mock) {
 				// create
 				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusInactive, nil).Once()
 				expectActivateLoadBalancerVersion(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
@@ -49,7 +49,7 @@ func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 			},
 		},
 		"create and read activation, version == 1 (many statuses), inactive -> activate -> second attempt": {
-			init: func(m *mockcloudlets) {
+			init: func(m *cloudlets.Mock) {
 				inactive := cloudlets.LoadBalancerActivation{
 					ActivatedDate: "2021-10-29T00:00:10.000Z",
 					Network:       "STAGING",
@@ -109,7 +109,7 @@ func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 			},
 		},
 		"create and read activation, version == 1, inactive -> activate -> error": {
-			init: func(m *mockcloudlets) {
+			init: func(m *cloudlets.Mock) {
 				// create
 				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusInactive, nil).Once()
 				expectActivateLoadBalancerVersion(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, anError).Once()
@@ -122,7 +122,7 @@ func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 			},
 		},
 		"create and read activation, version == 1, inactive -> activate -> get active application load balancer activation -> error": {
-			init: func(m *mockcloudlets) {
+			init: func(m *cloudlets.Mock) {
 				// create
 				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusInactive, nil).Once()
 				expectActivateLoadBalancerVersion(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
@@ -137,7 +137,7 @@ func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 			},
 		},
 		"create and read activation, version == 1, active -> read": {
-			init: func(m *mockcloudlets) {
+			init: func(m *cloudlets.Mock) {
 				// create, alb active so no need to activate
 				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
 				// read
@@ -155,7 +155,7 @@ func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 			},
 		},
 		"create and read activation, version == 1, inactive -> activate -> read -> error": {
-			init: func(m *mockcloudlets) {
+			init: func(m *cloudlets.Mock) {
 				// create
 				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusInactive, nil).Once()
 				expectActivateLoadBalancerVersion(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
@@ -172,7 +172,7 @@ func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 			},
 		},
 		"create and read activation, update - no changes": {
-			init: func(m *mockcloudlets) {
+			init: func(m *cloudlets.Mock) {
 				// first test step
 				// create
 				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusInactive, nil).Once()
@@ -207,7 +207,7 @@ func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 			},
 		},
 		"create and read activation. Update: version already active, read": {
-			init: func(m *mockcloudlets) {
+			init: func(m *cloudlets.Mock) {
 				// 1 - for alb_activation_version1.tf
 				// create
 				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusInactive, nil).Once()
@@ -245,7 +245,7 @@ func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 			},
 		},
 		"create and read activation. Update: version not active, activate": {
-			init: func(m *mockcloudlets) {
+			init: func(m *cloudlets.Mock) {
 				// 1 - for alb_activation_version1.tf
 				// create
 				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusInactive, nil).Once()
@@ -288,7 +288,7 @@ func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 			},
 		},
 		"create and read activation. Update: production version not active, activate new resource": {
-			init: func(m *mockcloudlets) {
+			init: func(m *cloudlets.Mock) {
 				// 1 - for alb_activation_version1.tf
 				// create
 				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusInactive, nil).Once()
@@ -334,7 +334,7 @@ func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 			},
 		},
 		"create and read activation. Update: ListLoadBalancerActivations error": {
-			init: func(m *mockcloudlets) {
+			init: func(m *cloudlets.Mock) {
 				// 1 - for alb_activation_version1.tf
 				// create
 				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusInactive, nil).Once()
@@ -370,7 +370,7 @@ func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 			},
 		},
 		"create and read activation. Update: create application load balancer version error": {
-			init: func(m *mockcloudlets) {
+			init: func(m *cloudlets.Mock) {
 				// 1 - for alb_activation_version1.tf
 				// create
 				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusInactive, nil).Once()
@@ -416,7 +416,7 @@ func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &mockcloudlets{}
+			client := &cloudlets.Mock{}
 			test.init(client)
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
@@ -431,7 +431,7 @@ func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 }
 
 var (
-	expectListLoadBalancerActivations = func(m *mockcloudlets, originID string, version int64, network cloudlets.LoadBalancerActivationNetwork, status cloudlets.LoadBalancerActivationStatus, err error) *mock.Call {
+	expectListLoadBalancerActivations = func(m *cloudlets.Mock, originID string, version int64, network cloudlets.LoadBalancerActivationNetwork, status cloudlets.LoadBalancerActivationStatus, err error) *mock.Call {
 		if err != nil {
 			return m.On(
 				"ListLoadBalancerActivations",
@@ -445,7 +445,7 @@ var (
 			cloudlets.ListLoadBalancerActivationsRequest{OriginID: originID},
 		).Return(
 			[]cloudlets.LoadBalancerActivation{
-				cloudlets.LoadBalancerActivation{
+				{
 					Network:  network,
 					OriginID: originID,
 					Status:   status,
@@ -454,7 +454,7 @@ var (
 			}, nil)
 	}
 
-	expectListLoadBalancerActivationsMany = func(m *mockcloudlets, originID string, activations []cloudlets.LoadBalancerActivation, err error) *mock.Call {
+	expectListLoadBalancerActivationsMany = func(m *cloudlets.Mock, originID string, activations []cloudlets.LoadBalancerActivation, err error) *mock.Call {
 		if err != nil {
 			return m.On(
 				"ListLoadBalancerActivations",
@@ -469,7 +469,7 @@ var (
 		).Return(activations, nil)
 	}
 
-	expectActivateLoadBalancerVersion = func(m *mockcloudlets, originID string, version int64, network cloudlets.LoadBalancerActivationNetwork, status cloudlets.LoadBalancerActivationStatus, err error) *mock.Call {
+	expectActivateLoadBalancerVersion = func(m *cloudlets.Mock, originID string, version int64, network cloudlets.LoadBalancerActivationNetwork, status cloudlets.LoadBalancerActivationStatus, err error) *mock.Call {
 		if err != nil {
 			return m.On(
 				"ActivateLoadBalancerVersion",

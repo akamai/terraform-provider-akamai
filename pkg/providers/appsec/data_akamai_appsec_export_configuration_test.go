@@ -12,7 +12,7 @@ import (
 
 func TestAkamaiExportConfiguration_data_basic(t *testing.T) {
 	t.Run("Configuration Export Tests", func(t *testing.T) {
-		client := &mockappsec{}
+		client := &appsec.Mock{}
 
 		getExportConfigurationResponse := appsec.GetExportConfigurationResponse{}
 		err := json.Unmarshal(loadFixtureBytes("testdata/TestDSExportConfiguration/ExportConfiguration.json"), &getExportConfigurationResponse)

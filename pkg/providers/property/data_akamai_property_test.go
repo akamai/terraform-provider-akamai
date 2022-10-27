@@ -16,13 +16,13 @@ import (
 func TestDataProperty(t *testing.T) {
 	tests := map[string]struct {
 		givenTF            string
-		init               func(*mockpapi)
+		init               func(*papi.Mock)
 		expectedAttributes map[string]string
 		withError          *regexp.Regexp
 	}{
 		"valid rules, no version provided": {
 			givenTF: "no_version.tf",
-			init: func(m *mockpapi) {
+			init: func(m *papi.Mock) {
 				m.On("SearchProperties", mock.Anything, papi.SearchRequest{
 					Key:   papi.SearchKeyPropertyName,
 					Value: "property_name",
@@ -81,7 +81,7 @@ func TestDataProperty(t *testing.T) {
 		},
 		"valid rules, with version provided": {
 			givenTF: "with_version.tf",
-			init: func(m *mockpapi) {
+			init: func(m *papi.Mock) {
 				m.On("SearchProperties", mock.Anything, papi.SearchRequest{
 					Key:   papi.SearchKeyPropertyName,
 					Value: "property_name",
@@ -140,7 +140,7 @@ func TestDataProperty(t *testing.T) {
 		},
 		"error searching for property": {
 			givenTF: "with_version.tf",
-			init: func(m *mockpapi) {
+			init: func(m *papi.Mock) {
 				m.On("SearchProperties", mock.Anything, papi.SearchRequest{
 					Key:   papi.SearchKeyPropertyName,
 					Value: "property_name",
@@ -150,7 +150,7 @@ func TestDataProperty(t *testing.T) {
 		},
 		"error fetching property": {
 			givenTF: "with_version.tf",
-			init: func(m *mockpapi) {
+			init: func(m *papi.Mock) {
 				m.On("SearchProperties", mock.Anything, papi.SearchRequest{
 					Key:   papi.SearchKeyPropertyName,
 					Value: "property_name",
@@ -175,7 +175,7 @@ func TestDataProperty(t *testing.T) {
 		},
 		"property not found": {
 			givenTF: "with_version.tf",
-			init: func(m *mockpapi) {
+			init: func(m *papi.Mock) {
 				m.On("SearchProperties", mock.Anything, papi.SearchRequest{
 					Key:   papi.SearchKeyPropertyName,
 					Value: "property_name",
@@ -189,7 +189,7 @@ func TestDataProperty(t *testing.T) {
 		},
 		"error fetching rules": {
 			givenTF: "with_version.tf",
-			init: func(m *mockpapi) {
+			init: func(m *papi.Mock) {
 				m.On("SearchProperties", mock.Anything, papi.SearchRequest{
 					Key:   papi.SearchKeyPropertyName,
 					Value: "property_name",
@@ -229,13 +229,13 @@ func TestDataProperty(t *testing.T) {
 		},
 		"error name not provided": {
 			givenTF:   "no_name.tf",
-			init:      func(m *mockpapi) {},
+			init:      func(m *papi.Mock) {},
 			withError: regexp.MustCompile("Missing required argument"),
 		},
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &mockpapi{}
+			client := &papi.Mock{}
 			test.init(client)
 			var checkFuncs []resource.TestCheckFunc
 			for k, v := range test.expectedAttributes {

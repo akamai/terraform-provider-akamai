@@ -14,7 +14,7 @@ import (
 func TestDataTimezones(t *testing.T) {
 	workDir := t.Name()
 	t.Run("happy path", func(t *testing.T) {
-		client := &mockiam{}
+		client := &iam.Mock{}
 		client.Test(test.TattleT{T: t})
 
 		client.On("SupportedTimezones", mock.Anything).Return([]iam.Timezone{
@@ -71,7 +71,7 @@ func TestDataTimezones(t *testing.T) {
 	})
 
 	t.Run("fail path", func(t *testing.T) {
-		client := &mockiam{}
+		client := &iam.Mock{}
 		client.Test(test.TattleT{T: t})
 		client.On("SupportedTimezones", mock.Anything).Return([]iam.Timezone{}, fmt.Errorf("supported timezones: timezones could not be fetched"))
 

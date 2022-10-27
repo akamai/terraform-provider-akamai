@@ -12,7 +12,7 @@ import (
 
 func TestDSCPCode(t *testing.T) {
 	t.Run("match by name", func(t *testing.T) {
-		client := &mockpapi{}
+		client := &papi.Mock{}
 
 		// name provided by fixture is "test cpcode"
 		cpc := papi.CPCodeItems{Items: []papi.CPCode{
@@ -44,7 +44,7 @@ func TestDSCPCode(t *testing.T) {
 	})
 
 	t.Run("match by name output products", func(t *testing.T) {
-		client := &mockpapi{}
+		client := &papi.Mock{}
 
 		// name provided by fixture is "test cpcode"
 		cpc := papi.CPCodeItems{Items: []papi.CPCode{
@@ -78,7 +78,7 @@ func TestDSCPCode(t *testing.T) {
 	})
 
 	t.Run("match by full ID", func(t *testing.T) {
-		client := &mockpapi{}
+		client := &papi.Mock{}
 
 		// name provided by fixture is "cpc_test2"
 		cpc := papi.CPCodeItems{Items: []papi.CPCode{
@@ -110,7 +110,7 @@ func TestDSCPCode(t *testing.T) {
 	})
 
 	t.Run("match by unprefixed ID", func(t *testing.T) {
-		client := &mockpapi{}
+		client := &papi.Mock{}
 
 		// name provided by fixture is "test2"
 		cpc := papi.CPCodeItems{Items: []papi.CPCode{
@@ -139,7 +139,7 @@ func TestDSCPCode(t *testing.T) {
 	})
 
 	t.Run("no matches", func(t *testing.T) {
-		client := &mockpapi{}
+		client := &papi.Mock{}
 
 		// name provided by fixture is "test cpcode"
 		cpc := papi.CPCodeItems{Items: []papi.CPCode{
@@ -177,7 +177,7 @@ func TestDSCPCode(t *testing.T) {
 	})
 
 	t.Run("group collides with group ID", func(t *testing.T) {
-		client := &mockpapi{}
+		client := &papi.Mock{}
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers:  testAccProviders,
@@ -191,7 +191,7 @@ func TestDSCPCode(t *testing.T) {
 	})
 
 	t.Run("group not found in state", func(t *testing.T) {
-		client := &mockpapi{}
+		client := &papi.Mock{}
 		client.On("GetCPCodes",
 			AnyCTX, mock.Anything,
 		).Return(&papi.GetCPCodesResponse{CPCodes: papi.CPCodeItems{Items: []papi.CPCode{{

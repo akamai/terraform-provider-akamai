@@ -12,7 +12,7 @@ import (
 
 func TestAkamaiConfiguration_data_basic(t *testing.T) {
 	t.Run("match by Configuration ID", func(t *testing.T) {
-		client := &mockappsec{}
+		client := &appsec.Mock{}
 
 		getConfigurationsResponse := appsec.GetConfigurationsResponse{}
 		err := json.Unmarshal(loadFixtureBytes("testdata/TestDSConfiguration/Configuration.json"), &getConfigurationsResponse)

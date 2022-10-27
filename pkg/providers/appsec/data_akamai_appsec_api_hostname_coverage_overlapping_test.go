@@ -12,7 +12,7 @@ import (
 
 func TestAkamaiApiHostnameCoverageOverlapping_data_basic(t *testing.T) {
 	t.Run("match by ApiHostnameCoverageOverlapping ID", func(t *testing.T) {
-		client := &mockappsec{}
+		client := &appsec.Mock{}
 
 		getOverlapResponse := appsec.GetApiHostnameCoverageOverlappingResponse{}
 		err := json.Unmarshal(loadFixtureBytes("testdata/TestDSApiHostnameCoverageOverlapping/ApiHostnameCoverageOverlapping.json"), &getOverlapResponse)

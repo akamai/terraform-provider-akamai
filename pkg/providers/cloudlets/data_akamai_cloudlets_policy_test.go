@@ -241,7 +241,7 @@ func TestDataCloudletsPolicy(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			client := mockcloudlets{}
+			client := cloudlets.Mock{}
 			useClient(&client, func() {
 				client.On("ListPolicyVersions", mock.Anything, mock.Anything).Return(test.listPolicyVersionsReturn, nil)
 				client.On("GetPolicy", mock.Anything, mock.Anything).Return(&test.getPolicyReturn, nil)

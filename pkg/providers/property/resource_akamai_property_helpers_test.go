@@ -8,7 +8,7 @@ import (
 )
 
 // Sets up an expected call to papi.GetGroups(), which returns the given parameters
-func ExpectGetGroups(client *mockpapi, State *[]*papi.Group) *mock.Call {
+func ExpectGetGroups(client *papi.Mock, State *[]*papi.Group) *mock.Call {
 	fn := func(ctx context.Context) (*papi.GetGroupsResponse, error) {
 		var groups []*papi.Group
 
@@ -25,8 +25,8 @@ func ExpectGetGroups(client *mockpapi, State *[]*papi.Group) *mock.Call {
 
 // Sets up an expected call to papi.GetProperty() which returns a value depending on the given State pointer. When nil,
 // the PAPI response contains a zero-value papi.Property. Otherwise the response will dynamically contain a copy of
-// the State made at the time of the call to mockpapi.GetProperty().
-func ExpectGetProperty(client *mockpapi, PropertyID, GroupID, ContractID string, State *papi.Property) *mock.Call {
+// the State made at the time of the call to papi.Mock.GetProperty().
+func ExpectGetProperty(client *papi.Mock, PropertyID, GroupID, ContractID string, State *papi.Property) *mock.Call {
 	req := papi.GetPropertyRequest{
 		PropertyID: PropertyID,
 		ContractID: ContractID,
@@ -64,7 +64,7 @@ func ExpectGetProperty(client *mockpapi, PropertyID, GroupID, ContractID string,
 // Sets up an expected call to papi.GetPropertyVersionHostnames() which returns a value depending on the value of the
 // pointer to State. When nil or empty, the response contains a nil Items member. Otherwise the response contains a
 // copy of the value pointed to by State made at the time of the call to papi.GetPropertyVersionHostnames().
-func ExpectGetPropertyVersionHostnames(client *mockpapi, PropertyID, GroupID, ContractID string, PropertyVersion int, State *[]papi.Hostname) *mock.Call {
+func ExpectGetPropertyVersionHostnames(client *papi.Mock, PropertyID, GroupID, ContractID string, PropertyVersion int, State *[]papi.Hostname) *mock.Call {
 	req := papi.GetPropertyVersionHostnamesRequest{
 		PropertyID:        PropertyID,
 		GroupID:           GroupID,
@@ -96,8 +96,8 @@ func ExpectGetPropertyVersionHostnames(client *mockpapi, PropertyID, GroupID, Co
 
 // Sets up an expected call to papi.UpdatePropertyVersionHostnames() which returns a constant value based on input
 // params. If given, the value pointed to by State will be updated with a copy of the given Hostnames when the call
-// to mockpapi.UpdatePropertyVersionHostnames() is made.
-func ExpectUpdatePropertyVersionHostnames(client *mockpapi, PropertyID, GroupID, ContractID string, PropertyVersion int, Hostnames []papi.Hostname, err error) *mock.Call {
+// to papi.Mock.UpdatePropertyVersionHostnames() is made.
+func ExpectUpdatePropertyVersionHostnames(client *papi.Mock, PropertyID, GroupID, ContractID string, PropertyVersion int, Hostnames []papi.Hostname, err error) *mock.Call {
 	req := papi.UpdatePropertyVersionHostnamesRequest{
 		PropertyID:      PropertyID,
 		PropertyVersion: PropertyVersion,
@@ -123,7 +123,7 @@ func ExpectUpdatePropertyVersionHostnames(client *mockpapi, PropertyID, GroupID,
 }
 
 // Sets up an expected call to papi.GetPropertyVersions()
-func ExpectGetPropertyVersions(client *mockpapi, PropertyID, PropertyName, ContractID, GroupID string, property *papi.Property, versionItems *papi.PropertyVersionItems) *mock.Call {
+func ExpectGetPropertyVersions(client *papi.Mock, PropertyID, PropertyName, ContractID, GroupID string, property *papi.Property, versionItems *papi.PropertyVersionItems) *mock.Call {
 	req := papi.GetPropertyVersionsRequest{
 		PropertyID: PropertyID,
 		ContractID: ContractID,
@@ -150,7 +150,7 @@ func ExpectGetPropertyVersions(client *mockpapi, PropertyID, PropertyName, Contr
 }
 
 // Sets up an expected call to papi.GetPropertyVersion()
-func ExpectGetPropertyVersion(client *mockpapi, PropertyID, GroupID, ContractID string, Version int, StagStatus, ProdStatus papi.VersionStatus) *mock.Call {
+func ExpectGetPropertyVersion(client *papi.Mock, PropertyID, GroupID, ContractID string, Version int, StagStatus, ProdStatus papi.VersionStatus) *mock.Call {
 	req := papi.GetPropertyVersionRequest{
 		PropertyID:      PropertyID,
 		GroupID:         GroupID,
@@ -171,7 +171,7 @@ func ExpectGetPropertyVersion(client *mockpapi, PropertyID, GroupID, ContractID 
 }
 
 // Sets up an expected call to papi.CreatePropertyVersion()
-func ExpectCreatePropertyVersion(client *mockpapi, PropertyID, GroupID, ContractID string, CreateFromVersion, NewVersion int) *mock.Call {
+func ExpectCreatePropertyVersion(client *papi.Mock, PropertyID, GroupID, ContractID string, CreateFromVersion, NewVersion int) *mock.Call {
 	req := papi.CreatePropertyVersionRequest{
 		PropertyID: PropertyID,
 		GroupID:    GroupID,
@@ -187,7 +187,7 @@ func ExpectCreatePropertyVersion(client *mockpapi, PropertyID, GroupID, Contract
 }
 
 // Sets up an expected successful call to papi.CreateProperty() with a constant success response with the given PropertyID
-func ExpectCreateProperty(client *mockpapi, PropertyName, GroupID, ContractID, ProductID, PropertyID string) *mock.Call {
+func ExpectCreateProperty(client *papi.Mock, PropertyName, GroupID, ContractID, ProductID, PropertyID string) *mock.Call {
 	req := papi.CreatePropertyRequest{
 		GroupID:    GroupID,
 		ContractID: ContractID,
@@ -203,7 +203,7 @@ func ExpectCreateProperty(client *mockpapi, PropertyName, GroupID, ContractID, P
 }
 
 // Sets up an expected call to papi.RemoveProperty() with a constant success response
-func ExpectRemoveProperty(client *mockpapi, PropertyID, ContractID, GroupID string) *mock.Call {
+func ExpectRemoveProperty(client *papi.Mock, PropertyID, ContractID, GroupID string) *mock.Call {
 	req := papi.RemovePropertyRequest{
 		PropertyID: PropertyID,
 		GroupID:    GroupID,
@@ -216,7 +216,7 @@ func ExpectRemoveProperty(client *mockpapi, PropertyID, ContractID, GroupID stri
 
 // Sets up an expected call to papi.GetRuleTree() which returns a value depending on the value of the
 // pointer to State and FormatState.
-func ExpectGetRuleTree(client *mockpapi, PropertyID, GroupID, ContractID string, PropertyVersion int, State *papi.RulesUpdate, RuleFormatState *string) *mock.Call {
+func ExpectGetRuleTree(client *papi.Mock, PropertyID, GroupID, ContractID string, PropertyVersion int, State *papi.RulesUpdate, RuleFormatState *string) *mock.Call {
 	req := papi.GetRuleTreeRequest{
 		PropertyID:      PropertyID,
 		GroupID:         GroupID,
@@ -245,7 +245,7 @@ func ExpectGetRuleTree(client *mockpapi, PropertyID, GroupID, ContractID string,
 	return client.OnGetRuleTree(AnyCTX, req, fn)
 }
 
-func ExpectUpdateRuleTree(client *mockpapi, PropertyID, GroupID, ContractID string, PropertyVersion int, State *papi.RulesUpdate, RuleFormat string, RuleError []papi.RuleError) *mock.Call {
+func ExpectUpdateRuleTree(client *papi.Mock, PropertyID, GroupID, ContractID string, PropertyVersion int, State *papi.RulesUpdate, RuleFormat string, RuleError []papi.RuleError) *mock.Call {
 	var RulesUpdate papi.RulesUpdate
 	if State != nil {
 		RulesUpdate = *State

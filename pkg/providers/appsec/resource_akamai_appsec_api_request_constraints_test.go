@@ -12,7 +12,7 @@ import (
 
 func TestAkamaiApiRequestConstraints_res_basic(t *testing.T) {
 	t.Run("match by ApiRequestConstraints ID", func(t *testing.T) {
-		client := &mockappsec{}
+		client := &appsec.Mock{}
 
 		updateResponse := appsec.UpdateApiRequestConstraintsResponse{}
 		err := json.Unmarshal(loadFixtureBytes("testdata/TestResApiRequestConstraints/ApiRequestConstraints.json"), &updateResponse)

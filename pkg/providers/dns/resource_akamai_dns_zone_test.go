@@ -23,7 +23,7 @@ func TestResDnsZone(t *testing.T) {
 
 	// This test performs a full life-cycle (CRUD) test
 	t.Run("lifecycle test", func(t *testing.T) {
-		client := &mockdns{}
+		client := &dns.Mock{}
 
 		getCall := client.On("GetZone",
 			mock.Anything, // ctx is irrelevant for this test

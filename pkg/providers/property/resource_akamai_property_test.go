@@ -17,7 +17,7 @@ import (
 func TestResProperty(t *testing.T) {
 	// These more or less track the state of a Property in PAPI for the lifecycle tests
 	type TestState struct {
-		Client       *mockpapi
+		Client       *papi.Mock
 		Property     papi.Property
 		Hostnames    []papi.Hostname
 		VersionItems papi.PropertyVersionItems
@@ -626,7 +626,7 @@ func TestResProperty(t *testing.T) {
 		fixtureName = strings.ReplaceAll(fixtureName, " ", "_")
 
 		return func(t *testing.T) {
-			client := &mockpapi{}
+			client := &papi.Mock{}
 			client.Test(T{t})
 
 			useClient(client, nil, func() {
@@ -651,7 +651,7 @@ func TestResProperty(t *testing.T) {
 		fixturePrefix := fmt.Sprintf("testdata/%s/Lifecycle/%s", t.Name(), variant)
 
 		return func(t *testing.T) {
-			client := &mockpapi{}
+			client := &papi.Mock{}
 			client.Test(T{t})
 			State := &TestState{Client: client}
 			kase.ClientSetup(State)
@@ -677,7 +677,7 @@ func TestResProperty(t *testing.T) {
 
 		return func(t *testing.T) {
 
-			client := &mockpapi{}
+			client := &papi.Mock{}
 			client.Test(T{t})
 
 			parameters := strings.Split(ImportID, ",")
@@ -848,7 +848,7 @@ func TestResProperty(t *testing.T) {
 		// Test Delete
 
 		t.Run("property is destroyed and recreated when name is changed", func(t *testing.T) {
-			client := &mockpapi{}
+			client := &papi.Mock{}
 			client.Test(T{t})
 
 			setup := ComposeBehaviors(
@@ -887,7 +887,7 @@ func TestResProperty(t *testing.T) {
 		})
 
 		t.Run("error when deleting active property", func(t *testing.T) {
-			client := &mockpapi{}
+			client := &papi.Mock{}
 			client.Test(T{t})
 
 			setup := ComposeBehaviors(
@@ -935,7 +935,7 @@ func TestResProperty(t *testing.T) {
 		// Test validation
 
 		t.Run("error validations when updating property with rules tree", func(t *testing.T) {
-			client := &mockpapi{}
+			client := &papi.Mock{}
 			client.Test(T{t})
 			ExpectCreateProperty(
 				client, "test_property", "grp_0",
@@ -981,7 +981,7 @@ func TestResProperty(t *testing.T) {
 		})
 
 		t.Run("validation - when updating a property hostnames to empty it should return error", func(t *testing.T) {
-			client := &mockpapi{}
+			client := &papi.Mock{}
 			client.Test(T{t})
 
 			ExpectCreateProperty(
@@ -1066,7 +1066,7 @@ func TestResProperty(t *testing.T) {
 		})
 
 		t.Run("validation - when updating a property hostnames with cert_provisioning_type = 'DEFAULT' with secure-by-default enabled but remaining default certs == 0 it should return error", func(t *testing.T) {
-			client := &mockpapi{}
+			client := &papi.Mock{}
 			client.Test(T{t})
 
 			ExpectCreateProperty(
@@ -1115,7 +1115,7 @@ func TestResProperty(t *testing.T) {
 		})
 
 		t.Run("validation - when updating a property hostnames with cert_provisioning_type = 'DEFAULT' not having enabled secure-by-default it should return error", func(t *testing.T) {
-			client := &mockpapi{}
+			client := &papi.Mock{}
 			client.Test(T{t})
 
 			ExpectCreateProperty(
@@ -1165,7 +1165,7 @@ func TestResProperty(t *testing.T) {
 		// Other tests
 
 		t.Run("error when the given group is not found", func(t *testing.T) {
-			client := &mockpapi{}
+			client := &papi.Mock{}
 			client.Test(T{t})
 
 			req := papi.CreatePropertyRequest{
@@ -1205,7 +1205,7 @@ func TestResProperty(t *testing.T) {
 		})
 
 		t.Run("error when creating property with non-unique name", func(t *testing.T) {
-			client := &mockpapi{}
+			client := &papi.Mock{}
 			client.Test(T{t})
 
 			req := papi.CreatePropertyRequest{

@@ -11,29 +11,29 @@ import (
 
 func TestAccAkamaiNetworkListSubscription_res_basic(t *testing.T) {
 	t.Run("match by NetworkListSubscription ID", func(t *testing.T) {
-		client := &mocknetworklists{}
+		client := &networklists.Mock{}
 
 		cu := networklists.UpdateNetworkListSubscriptionResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResNetworkListSubscription/NetworkListSubscription.json")), &cu)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResNetworkListSubscription/NetworkListSubscription.json"), &cu)
 
 		cr := networklists.GetNetworkListSubscriptionResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResNetworkListSubscription/NetworkListSubscription.json")), &cr)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResNetworkListSubscription/NetworkListSubscription.json"), &cr)
 
 		cd := networklists.RemoveNetworkListSubscriptionResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResNetworkListSubscription/NetworkListSubscription.json")), &cd)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResNetworkListSubscription/NetworkListSubscription.json"), &cd)
 
 		client.On("GetNetworkListSubscription",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			networklists.GetNetworkListSubscriptionRequest{Recipients: []string{"test@email.com"}, UniqueIds: []string{"79536_MARTINNETWORKLIST"}},
 		).Return(&cr, nil)
 
 		client.On("UpdateNetworkListSubscription",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			networklists.UpdateNetworkListSubscriptionRequest{Recipients: []string{"test@email.com"}, UniqueIds: []string{"79536_MARTINNETWORKLIST"}},
 		).Return(&cu, nil)
 
 		client.On("RemoveNetworkListSubscription",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			networklists.RemoveNetworkListSubscriptionRequest{Recipients: []string{"test@email.com"}, UniqueIds: []string{"79536_MARTINNETWORKLIST"}},
 		).Return(&cd, nil)
 

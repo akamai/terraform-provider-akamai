@@ -13,8 +13,8 @@ import (
 
 func TestDSPropertyRulesRead(t *testing.T) {
 	t.Run("get datasource property rules", func(t *testing.T) {
-		client := &mockpapi{}
-		mockImpl := func(m *mockpapi) {
+		client := &papi.Mock{}
+		mockImpl := func(m *papi.Mock) {
 			m.On("GetLatestVersion", mock.Anything, papi.GetLatestVersionRequest{
 				ContractID: "ctr_2",
 				GroupID:    "grp_2",
@@ -84,7 +84,7 @@ func TestDSPropertyRulesRead(t *testing.T) {
 			},
 		}
 
-		mockImpl := func(m *mockpapi, ruleFormat string) {
+		mockImpl := func(m *papi.Mock, ruleFormat string) {
 			m.On("GetRuleFormats", mock.Anything).Return(&papi.GetRuleFormatsResponse{
 				RuleFormats: papi.RuleFormatItems{
 					Items: []string{
@@ -121,7 +121,7 @@ func TestDSPropertyRulesRead(t *testing.T) {
 
 		for name, test := range tests {
 			t.Run(name, func(t *testing.T) {
-				client := &mockpapi{}
+				client := &papi.Mock{}
 				mockImpl(client, test.expectedRuleFormat)
 
 				useClient(client, nil, func() {
@@ -142,8 +142,8 @@ func TestDSPropertyRulesRead(t *testing.T) {
 		}
 	})
 	t.Run("error getting datasource property rules with invalid rule format", func(t *testing.T) {
-		client := &mockpapi{}
-		mockImpl := func(m *mockpapi) {
+		client := &papi.Mock{}
+		mockImpl := func(m *papi.Mock) {
 			m.On("GetRuleFormats", mock.Anything).Return(&papi.GetRuleFormatsResponse{
 				RuleFormats: papi.RuleFormatItems{
 					Items: []string{
@@ -168,8 +168,8 @@ func TestDSPropertyRulesRead(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 	t.Run("error getting rule formats", func(t *testing.T) {
-		client := &mockpapi{}
-		mockImpl := func(m *mockpapi) {
+		client := &papi.Mock{}
+		mockImpl := func(m *papi.Mock) {
 			m.On("GetRuleFormats", mock.Anything).Return(nil, fmt.Errorf("oops"))
 		}
 		mockImpl(client)
@@ -187,7 +187,7 @@ func TestDSPropertyRulesRead(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 	t.Run("group_id is required with contract_id", func(t *testing.T) {
-		client := &mockpapi{}
+		client := &papi.Mock{}
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
@@ -202,7 +202,7 @@ func TestDSPropertyRulesRead(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 	t.Run("contract_id is required with group_id", func(t *testing.T) {
-		client := &mockpapi{}
+		client := &papi.Mock{}
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
@@ -217,7 +217,7 @@ func TestDSPropertyRulesRead(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 	t.Run("contract_id cannot be empty", func(t *testing.T) {
-		client := &mockpapi{}
+		client := &papi.Mock{}
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
@@ -232,7 +232,7 @@ func TestDSPropertyRulesRead(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 	t.Run("group_id cannot be empty", func(t *testing.T) {
-		client := &mockpapi{}
+		client := &papi.Mock{}
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
@@ -247,8 +247,8 @@ func TestDSPropertyRulesRead(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 	t.Run("error fetching latest version", func(t *testing.T) {
-		client := &mockpapi{}
-		mockImpl := func(m *mockpapi) {
+		client := &papi.Mock{}
+		mockImpl := func(m *papi.Mock) {
 			m.On("GetLatestVersion", mock.Anything, papi.GetLatestVersionRequest{
 				ContractID: "ctr_2",
 				GroupID:    "grp_2",
@@ -270,8 +270,8 @@ func TestDSPropertyRulesRead(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 	t.Run("error fetching rules", func(t *testing.T) {
-		client := &mockpapi{}
-		mockImpl := func(m *mockpapi) {
+		client := &papi.Mock{}
+		mockImpl := func(m *papi.Mock) {
 			m.On("GetLatestVersion", mock.Anything, papi.GetLatestVersionRequest{
 				ContractID: "ctr_2",
 				GroupID:    "grp_2",

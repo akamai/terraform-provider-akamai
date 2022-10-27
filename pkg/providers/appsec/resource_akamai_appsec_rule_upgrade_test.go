@@ -12,7 +12,7 @@ import (
 
 func TestAkamaiRuleUpgrade_res_basic(t *testing.T) {
 	t.Run("match by RuleUpgrade ID", func(t *testing.T) {
-		client := &mockappsec{}
+		client := &appsec.Mock{}
 
 		updateRuleUpgradeResponse := appsec.UpdateRuleUpgradeResponse{}
 		err := json.Unmarshal(loadFixtureBytes("testdata/TestResRuleUpgrade/RuleUpgrade.json"), &updateRuleUpgradeResponse)

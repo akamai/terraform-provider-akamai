@@ -29,11 +29,11 @@ func Test_populateEKV(t *testing.T) {
 	tests := map[string]struct {
 		data      []interface{}
 		network   edgeworkers.ItemNetwork
-		init      func(*mockedgeworkers)
+		init      func(*edgeworkers.Mock)
 		withError error
 	}{
 		"no insert": {
-			init: func(m *mockedgeworkers) {},
+			init: func(m *edgeworkers.Mock) {},
 		},
 		"one upsert": {
 			network: staging,
@@ -44,7 +44,7 @@ func Test_populateEKV(t *testing.T) {
 					"group": ekvGroup,
 				},
 			},
-			init: func(m *mockedgeworkers) {
+			init: func(m *edgeworkers.Mock) {
 				m.On("UpsertItem", mock.Anything, edgeworkers.UpsertItemRequest{
 					ItemID:   "FR",
 					ItemData: "bonjour",
@@ -65,7 +65,7 @@ func Test_populateEKV(t *testing.T) {
 					"group": ekvGroup,
 				},
 			},
-			init: func(m *mockedgeworkers) {
+			init: func(m *edgeworkers.Mock) {
 				m.On("UpsertItem", mock.Anything, edgeworkers.UpsertItemRequest{
 					ItemID:   "FR",
 					ItemData: "bonjour",
@@ -87,7 +87,7 @@ func Test_populateEKV(t *testing.T) {
 					"group": ekvGroup,
 				},
 			},
-			init: func(m *mockedgeworkers) {
+			init: func(m *edgeworkers.Mock) {
 				maxUpsertAttempts = 2
 				m.On("UpsertItem", mock.Anything, edgeworkers.UpsertItemRequest{
 					ItemID:   "FR",
@@ -118,7 +118,7 @@ func Test_populateEKV(t *testing.T) {
 					"group": ekvGroup,
 				},
 			},
-			init: func(m *mockedgeworkers) {
+			init: func(m *edgeworkers.Mock) {
 				maxUpsertAttempts = 1
 				m.On("UpsertItem", mock.Anything, edgeworkers.UpsertItemRequest{
 					ItemID:   "FR",
@@ -135,7 +135,7 @@ func Test_populateEKV(t *testing.T) {
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &mockedgeworkers{}
+			client := &edgeworkers.Mock{}
 			test.init(client)
 			err := populateEKV(context.Background(), client, test.data, &edgeworkers.Namespace{Name: namespaceName}, staging)
 			client.AssertExpectations(t)
@@ -173,11 +173,11 @@ func TestResourceEdgeKV(t *testing.T) {
 	var noData []map[string]interface{}
 	id := fmt.Sprintf("%s:%s", namespaceName, net)
 	tests := map[string]struct {
-		init  func(*mockedgeworkers)
+		init  func(*edgeworkers.Mock)
 		steps []resource.TestStep
 	}{
 		"basic": {
-			init: func(m *mockedgeworkers) {
+			init: func(m *edgeworkers.Mock) {
 				// create
 				stubResourceEdgeKVCreatePhase(m, namespaceName, net, retention, groupID, "", "",
 					initStatusOneAttempt, initNoErrorsOneAttempt, noData)
@@ -200,7 +200,7 @@ func TestResourceEdgeKV(t *testing.T) {
 			},
 		},
 		"with some data to upsert": {
-			init: func(m *mockedgeworkers) {
+			init: func(m *edgeworkers.Mock) {
 				// create
 				stubResourceEdgeKVCreatePhase(m, namespaceName, net, retention, groupID, "", "",
 					initStatusOneAttempt, initNoErrorsOneAttempt, []map[string]interface{}{
@@ -225,7 +225,7 @@ func TestResourceEdgeKV(t *testing.T) {
 			},
 		},
 		"data upsert error": {
-			init: func(m *mockedgeworkers) {
+			init: func(m *edgeworkers.Mock) {
 				upsertWindow = 1
 				maxUpsertAttempts = 2
 				// create
@@ -243,7 +243,7 @@ func TestResourceEdgeKV(t *testing.T) {
 			},
 		},
 		"error in namespace initialization": {
-			init: func(m *mockedgeworkers) {
+			init: func(m *edgeworkers.Mock) {
 				// create
 				stubResourceEdgeKVCreatePhase(m, namespaceName, net, retention, groupID, anError, "",
 					[]*edgeworkers.EdgeKVInitializationStatus{}, []error{}, noData)
@@ -256,7 +256,7 @@ func TestResourceEdgeKV(t *testing.T) {
 			},
 		},
 		"namespace not initialized": {
-			init: func(m *mockedgeworkers) {
+			init: func(m *edgeworkers.Mock) {
 				maxInitDuration = time.Duration(2) * time.Millisecond
 				// create
 				m.On("InitializeEdgeKV", mock.Anything).Return(inProgress, nil).Once()
@@ -270,7 +270,7 @@ func TestResourceEdgeKV(t *testing.T) {
 			},
 		},
 		"error create namespace": {
-			init: func(m *mockedgeworkers) {
+			init: func(m *edgeworkers.Mock) {
 				// create
 				stubResourceEdgeKVCreatePhase(m, namespaceName, net, retention, groupID, "", anError,
 					initStatusOneAttempt, initNoErrorsOneAttempt, noData)
@@ -283,7 +283,7 @@ func TestResourceEdgeKV(t *testing.T) {
 			},
 		},
 		"basic error read": {
-			init: func(m *mockedgeworkers) {
+			init: func(m *edgeworkers.Mock) {
 				// create
 				stubResourceEdgeKVCreatePhase(m, namespaceName, net, retention, groupID, "", "",
 					initStatusOneAttempt, initNoErrorsOneAttempt, noData)
@@ -298,7 +298,7 @@ func TestResourceEdgeKV(t *testing.T) {
 			},
 		},
 		"basic no diff no update": {
-			init: func(m *mockedgeworkers) {
+			init: func(m *edgeworkers.Mock) {
 				// create
 				stubResourceEdgeKVCreatePhase(m, namespaceName, net, retention, groupID, "", "",
 					initStatusOneAttempt, initNoErrorsOneAttempt, noData)
@@ -329,7 +329,7 @@ func TestResourceEdgeKV(t *testing.T) {
 			},
 		},
 		"ignore diff on group_id": {
-			init: func(m *mockedgeworkers) {
+			init: func(m *edgeworkers.Mock) {
 				// create
 				stubResourceEdgeKVCreatePhase(m, namespaceName, net, retention, groupID, "", "",
 					initStatusOneAttempt, initNoErrorsOneAttempt, noData)
@@ -360,7 +360,7 @@ func TestResourceEdgeKV(t *testing.T) {
 			},
 		},
 		"basic diff retention update": {
-			init: func(m *mockedgeworkers) {
+			init: func(m *edgeworkers.Mock) {
 				// create
 				stubResourceEdgeKVCreatePhase(m, namespaceName, net, retention, groupID, "", "",
 					initStatusOneAttempt, initNoErrorsOneAttempt, noData)
@@ -395,7 +395,7 @@ func TestResourceEdgeKV(t *testing.T) {
 			},
 		},
 		"basic diff initial_data upsert attempt -> error": {
-			init: func(m *mockedgeworkers) {
+			init: func(m *edgeworkers.Mock) {
 				// create
 				stubResourceEdgeKVCreatePhase(m, namespaceName, net, retention, groupID, "", "",
 					initStatusOneAttempt, initNoErrorsOneAttempt, noData)
@@ -420,7 +420,7 @@ func TestResourceEdgeKV(t *testing.T) {
 			},
 		},
 		"test import": {
-			init: func(m *mockedgeworkers) {
+			init: func(m *edgeworkers.Mock) {
 				// create
 				stubResourceEdgeKVCreatePhase(m, namespaceName, net, retention, groupID, "", "",
 					initStatusOneAttempt, initNoErrorsOneAttempt, noData)
@@ -444,7 +444,7 @@ func TestResourceEdgeKV(t *testing.T) {
 			},
 		},
 		"test import - invalid ID": {
-			init: func(m *mockedgeworkers) {
+			init: func(m *edgeworkers.Mock) {
 				// create
 				stubResourceEdgeKVCreatePhase(m, namespaceName, net, retention, groupID, "", "",
 					initStatusOneAttempt, initNoErrorsOneAttempt, noData)
@@ -469,7 +469,7 @@ func TestResourceEdgeKV(t *testing.T) {
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &mockedgeworkers{}
+			client := &edgeworkers.Mock{}
 			test.init(client)
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
@@ -484,7 +484,7 @@ func TestResourceEdgeKV(t *testing.T) {
 	}
 }
 
-func stubResourceEdgeKVUpdatePhase(m *mockedgeworkers, namespaceName string, retention, groupID *int, err *edgeworkers.Error) *mock.Call {
+func stubResourceEdgeKVUpdatePhase(m *edgeworkers.Mock, namespaceName string, retention, groupID *int, err *edgeworkers.Error) *mock.Call {
 	call := m.On("UpdateEdgeKVNamespace", mock.Anything, mock.AnythingOfType("edgeworkers.UpdateEdgeKVNamespaceRequest"))
 	if err != nil {
 		return call.Return(nil, err).Once()
@@ -496,7 +496,7 @@ func stubResourceEdgeKVUpdatePhase(m *mockedgeworkers, namespaceName string, ret
 	}, nil).Once()
 }
 
-func stubResourceEdgeKVReadPhase(m *mockedgeworkers, namespaceName, net string, retention, groupID *int, anError string) *mock.Call {
+func stubResourceEdgeKVReadPhase(m *edgeworkers.Mock, namespaceName, net string, retention, groupID *int, anError string) *mock.Call {
 	on := m.On("GetEdgeKVNamespace", mock.Anything, edgeworkers.GetEdgeKVNamespaceRequest{Network: edgeworkers.NamespaceNetwork(net), Name: namespaceName})
 	if anError != "" {
 		return on.Return(nil, fmt.Errorf(anError)).Once()
@@ -508,7 +508,7 @@ func stubResourceEdgeKVReadPhase(m *mockedgeworkers, namespaceName, net string, 
 	}, nil).Once()
 }
 
-func stubResourceEdgeKVCreatePhase(m *mockedgeworkers, namespaceName, net string, retention, groupID *int,
+func stubResourceEdgeKVCreatePhase(m *edgeworkers.Mock, namespaceName, net string, retention, groupID *int,
 	errorInit, errorCreate string, initStatus []*edgeworkers.EdgeKVInitializationStatus,
 	errInitStatus []error, data []map[string]interface{}) {
 	onInit := m.On("InitializeEdgeKV", mock.Anything)

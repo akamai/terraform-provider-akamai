@@ -17,7 +17,7 @@ func TestResourceImagingPolicySet(t *testing.T) {
 	var (
 		anError = errors.New("oops")
 
-		expectPolicySetCreation = func(t *testing.T, client *mockimaging, contractID, name, region, mediaType string, policySet *imaging.PolicySet, createError error) {
+		expectPolicySetCreation = func(t *testing.T, client *imaging.Mock, contractID, name, region, mediaType string, policySet *imaging.PolicySet, createError error) {
 			client.On("CreatePolicySet", mock.Anything, imaging.CreatePolicySetRequest{
 				ContractID: contractID,
 				CreatePolicySet: imaging.CreatePolicySet{
@@ -28,13 +28,13 @@ func TestResourceImagingPolicySet(t *testing.T) {
 			}).Return(policySet, createError).Once()
 		}
 
-		expectPolicySetRead = func(t *testing.T, client *mockimaging, contractID, policySetID string, policySet *imaging.PolicySet, getPolicyError error, times int) {
+		expectPolicySetRead = func(t *testing.T, client *imaging.Mock, contractID, policySetID string, policySet *imaging.PolicySet, getPolicyError error, times int) {
 			client.On("GetPolicySet", mock.Anything, imaging.GetPolicySetRequest{
 				PolicySetID: policySetID, ContractID: contractID,
 			}).Return(policySet, getPolicyError).Times(times)
 		}
 
-		expectPolicySetUpdate = func(t *testing.T, client *mockimaging, contractID, policySetID, name, region string, updatePolicySetError error) {
+		expectPolicySetUpdate = func(t *testing.T, client *imaging.Mock, contractID, policySetID, name, region string, updatePolicySetError error) {
 			client.On("UpdatePolicySet", mock.Anything, imaging.UpdatePolicySetRequest{
 				PolicySetID: policySetID,
 				ContractID:  contractID,
@@ -44,7 +44,7 @@ func TestResourceImagingPolicySet(t *testing.T) {
 				},
 			}).Return(nil, updatePolicySetError).Once()
 		}
-		expectPolicySetDelete = func(t *testing.T, client *mockimaging, contractID, policySetID, network string, listPolicyResponse *imaging.ListPoliciesResponse, listPolicyError, deletePolicySetError error) {
+		expectPolicySetDelete = func(t *testing.T, client *imaging.Mock, contractID, policySetID, network string, listPolicyResponse *imaging.ListPoliciesResponse, listPolicyError, deletePolicySetError error) {
 			client.On("ListPolicies", mock.Anything, imaging.ListPoliciesRequest{
 				Network:     imaging.PolicyNetworkProduction,
 				ContractID:  contractID,
@@ -74,11 +74,11 @@ func TestResourceImagingPolicySet(t *testing.T) {
 	importStateID := fmt.Sprintf("%s:%s", policySetID, contractID)
 
 	tests := map[string]struct {
-		init  func(*mockimaging)
+		init  func(*imaging.Mock)
 		steps []resource.TestStep
 	}{
 		"ok create": {
-			init: func(m *mockimaging) {
+			init: func(m *imaging.Mock) {
 				createdPolicySet := &imaging.PolicySet{Name: policySetName, ID: policySetID, Region: imaging.Region(EMEA), Type: mediaType}
 
 				// create
@@ -108,7 +108,7 @@ func TestResourceImagingPolicySet(t *testing.T) {
 			},
 		},
 		"nok create": {
-			init: func(m *mockimaging) {
+			init: func(m *imaging.Mock) {
 				createdPolicySet := &imaging.PolicySet{Name: policySetName, ID: policySetID, Region: imaging.Region(EMEA), Type: mediaType}
 
 				// create
@@ -122,7 +122,7 @@ func TestResourceImagingPolicySet(t *testing.T) {
 			},
 		},
 		"nok get policy set post create": {
-			init: func(m *mockimaging) {
+			init: func(m *imaging.Mock) {
 				createdPolicySet := &imaging.PolicySet{Name: policySetName, ID: policySetID, Region: imaging.Region(EMEA), Type: mediaType}
 
 				// create
@@ -148,7 +148,7 @@ func TestResourceImagingPolicySet(t *testing.T) {
 			},
 		},
 		"ok create update": {
-			init: func(m *mockimaging) {
+			init: func(m *imaging.Mock) {
 				createdPolicySet := &imaging.PolicySet{Name: policySetName, ID: policySetID, Region: imaging.Region(EMEA), Type: mediaType}
 				updatedPolicySet := &imaging.PolicySet{Name: policySetName, ID: policySetID, Region: imaging.Region(US), Type: mediaType}
 
@@ -195,7 +195,7 @@ func TestResourceImagingPolicySet(t *testing.T) {
 			},
 		},
 		"test import": {
-			init: func(m *mockimaging) {
+			init: func(m *imaging.Mock) {
 				createdPolicySet := &imaging.PolicySet{Name: policySetName, ID: policySetID, Region: imaging.Region(EMEA), Type: mediaType}
 
 				// create
@@ -225,7 +225,7 @@ func TestResourceImagingPolicySet(t *testing.T) {
 			},
 		},
 		"test import - invalid ID": {
-			init: func(m *mockimaging) {
+			init: func(m *imaging.Mock) {
 				createdPolicySet := &imaging.PolicySet{Name: policySetName, ID: policySetID, Region: imaging.Region(EMEA), Type: mediaType}
 
 				// create
@@ -259,7 +259,7 @@ func TestResourceImagingPolicySet(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &mockimaging{}
+			client := &imaging.Mock{}
 			test.init(client)
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{

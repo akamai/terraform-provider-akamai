@@ -11,19 +11,19 @@ import (
 
 func TestAccAkamaiActivations_res_basic(t *testing.T) {
 	t.Run("match by Activations ID", func(t *testing.T) {
-		client := &mocknetworklists{}
+		client := &networklists.Mock{}
 
 		cu := networklists.RemoveActivationsResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResActivations/ActivationsDelete.json")), &cu)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResActivations/ActivationsDelete.json"), &cu)
 
 		ga := networklists.GetActivationsResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResActivations/Activations.json")), &ga)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResActivations/Activations.json"), &ga)
 
 		cr := networklists.CreateActivationsResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResActivations/Activations.json")), &cr)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResActivations/Activations.json"), &cr)
 
 		client.On("GetActivations",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			networklists.GetActivationsRequest{ActivationID: 547694},
 		).Return(&ga, nil)
 

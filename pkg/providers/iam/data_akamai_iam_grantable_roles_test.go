@@ -13,7 +13,7 @@ import (
 
 func TestGrantableRoles(t *testing.T) {
 	t.Run("happy path", func(t *testing.T) {
-		client := &mockiam{}
+		client := &iam.Mock{}
 		client.Test(test.TattleT{T: t})
 		client.On("ListGrantableRoles", mock.Anything).Return([]iam.RoleGrantedRole{
 			{Description: "A", RoleID: 1, RoleName: "Can print A"},
@@ -46,7 +46,7 @@ func TestGrantableRoles(t *testing.T) {
 	})
 
 	t.Run("fail path", func(t *testing.T) {
-		client := &mockiam{}
+		client := &iam.Mock{}
 		client.Test(test.TattleT{T: t})
 		client.On("ListGrantableRoles", mock.Anything).Return([]iam.RoleGrantedRole{}, errors.New("could not get grantable roles"))
 

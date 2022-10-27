@@ -19,7 +19,7 @@ type testDataForCPSCSR struct {
 }
 
 var (
-	expectReadCPSCSR = func(t *testing.T, client *mockcps, data testDataForCPSCSR, timesToRun int) {
+	expectReadCPSCSR = func(t *testing.T, client *cps.Mock, data testDataForCPSCSR, timesToRun int) {
 		getEnrollmentReq := cps.GetEnrollmentRequest{
 			EnrollmentID: data.EnrollmentID,
 		}
@@ -36,14 +36,14 @@ var (
 		client.On("GetChangeThirdPartyCSR", mock.Anything, getChangeThirdPartyCSRReq).Return(getChangeThirdPartyCSRRes, nil).Times(timesToRun)
 	}
 
-	expectReadCPSCSRGetEnrollmentError = func(t *testing.T, client *mockcps, data testDataForCPSCSR, errorMessage string) {
+	expectReadCPSCSRGetEnrollmentError = func(t *testing.T, client *cps.Mock, data testDataForCPSCSR, errorMessage string) {
 		getEnrollmentReq := cps.GetEnrollmentRequest{
 			EnrollmentID: data.EnrollmentID,
 		}
 		client.On("GetEnrollment", mock.Anything, getEnrollmentReq).Return(nil, fmt.Errorf(errorMessage)).Once()
 	}
 
-	expectReadCPSCSRGetThirdPartyError = func(t *testing.T, client *mockcps, data testDataForCPSCSR, errorMessage string) {
+	expectReadCPSCSRGetThirdPartyError = func(t *testing.T, client *cps.Mock, data testDataForCPSCSR, errorMessage string) {
 		getEnrollmentReq := cps.GetEnrollmentRequest{
 			EnrollmentID: data.EnrollmentID,
 		}
@@ -59,7 +59,7 @@ var (
 		client.On("GetChangeThirdPartyCSR", mock.Anything, getChangeThirdPartyCSRReq).Return(nil, fmt.Errorf(errorMessage)).Once()
 	}
 
-	expectReadCPSCSRNoPendingChanges = func(t *testing.T, client *mockcps, data testDataForCPSCSR, timesToRun int) {
+	expectReadCPSCSRNoPendingChanges = func(t *testing.T, client *cps.Mock, data testDataForCPSCSR, timesToRun int) {
 		getEnrollmentReq := cps.GetEnrollmentRequest{
 			EnrollmentID: data.EnrollmentID,
 		}
@@ -175,13 +175,13 @@ var (
 
 func TestDataCPSCSR(t *testing.T) {
 	tests := map[string]struct {
-		init       func(*testing.T, *mockcps, testDataForCPSCSR)
+		init       func(*testing.T, *cps.Mock, testDataForCPSCSR)
 		mockData   testDataForCPSCSR
 		configPath string
 		error      *regexp.Regexp
 	}{
 		"happy path with both algorithms": {
-			init: func(t *testing.T, m *mockcps, testData testDataForCPSCSR) {
+			init: func(t *testing.T, m *cps.Mock, testData testDataForCPSCSR) {
 				expectReadCPSCSR(t, m, testData, 5)
 			},
 			mockData:   bothAlgorithmsData,
@@ -189,7 +189,7 @@ func TestDataCPSCSR(t *testing.T) {
 			error:      nil,
 		},
 		"happy path with RSA algorithm": {
-			init: func(t *testing.T, m *mockcps, testData testDataForCPSCSR) {
+			init: func(t *testing.T, m *cps.Mock, testData testDataForCPSCSR) {
 				expectReadCPSCSR(t, m, testData, 5)
 			},
 			mockData:   RSAData,
@@ -197,7 +197,7 @@ func TestDataCPSCSR(t *testing.T) {
 			error:      nil,
 		},
 		"happy path with ECDSA algorithm": {
-			init: func(t *testing.T, m *mockcps, testData testDataForCPSCSR) {
+			init: func(t *testing.T, m *cps.Mock, testData testDataForCPSCSR) {
 				expectReadCPSCSR(t, m, testData, 5)
 			},
 			mockData:   ECDSAData,
@@ -205,7 +205,7 @@ func TestDataCPSCSR(t *testing.T) {
 			error:      nil,
 		},
 		"no algorithms": {
-			init: func(t *testing.T, m *mockcps, testData testDataForCPSCSR) {
+			init: func(t *testing.T, m *cps.Mock, testData testDataForCPSCSR) {
 				expectReadCPSCSR(t, m, testData, 5)
 			},
 			mockData:   noAlgorithmsData,
@@ -213,7 +213,7 @@ func TestDataCPSCSR(t *testing.T) {
 			error:      nil,
 		},
 		"no pending changes": {
-			init: func(t *testing.T, m *mockcps, testData testDataForCPSCSR) {
+			init: func(t *testing.T, m *cps.Mock, testData testDataForCPSCSR) {
 				expectReadCPSCSRNoPendingChanges(t, m, testData, 5)
 			},
 			mockData:   noPendingChanges,
@@ -221,13 +221,13 @@ func TestDataCPSCSR(t *testing.T) {
 			error:      nil,
 		},
 		"enrollment_id not provided": {
-			init:       func(t *testing.T, m *mockcps, testData testDataForCPSCSR) {},
+			init:       func(t *testing.T, m *cps.Mock, testData testDataForCPSCSR) {},
 			mockData:   testDataForCPSCSR{},
 			configPath: "testdata/TestDataCPSCSR/no_enrollment_id.tf",
 			error:      regexp.MustCompile("Missing required argument"),
 		},
 		"could not fetch enrollment": {
-			init: func(t *testing.T, m *mockcps, testData testDataForCPSCSR) {
+			init: func(t *testing.T, m *cps.Mock, testData testDataForCPSCSR) {
 				expectReadCPSCSRGetEnrollmentError(t, m, testData, "could not get enrollment")
 			},
 			mockData:   bothAlgorithmsData,
@@ -235,7 +235,7 @@ func TestDataCPSCSR(t *testing.T) {
 			error:      regexp.MustCompile("could not get enrollment"),
 		},
 		"could not fetch third party csr": {
-			init: func(t *testing.T, m *mockcps, testData testDataForCPSCSR) {
+			init: func(t *testing.T, m *cps.Mock, testData testDataForCPSCSR) {
 				expectReadCPSCSRGetThirdPartyError(t, m, testData, "could not get third party csr")
 			},
 			mockData:   bothAlgorithmsData,
@@ -246,7 +246,7 @@ func TestDataCPSCSR(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &mockcps{}
+			client := &cps.Mock{}
 			test.init(t, client, test.mockData)
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{

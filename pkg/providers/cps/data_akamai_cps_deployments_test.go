@@ -15,11 +15,11 @@ func TestDataCPSDeployments(t *testing.T) {
 		configPath     string
 		checkFunctions []resource.TestCheckFunc
 		withError      *regexp.Regexp
-		init           func(*mockcps)
+		init           func(*cps.Mock)
 	}{
 		"validate schema with ECDSA primary certificate": {
 			configPath: "testdata/TestDataDeployments/deployments.tf",
-			init: func(m *mockcps) {
+			init: func(m *cps.Mock) {
 				m.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{
 					EnrollmentID: 123,
 				}).Return(&cps.Enrollment{
@@ -70,7 +70,7 @@ func TestDataCPSDeployments(t *testing.T) {
 		},
 		"validate schema with RSA primary certificate": {
 			configPath: "testdata/TestDataDeployments/deployments.tf",
-			init: func(m *mockcps) {
+			init: func(m *cps.Mock) {
 				m.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{
 					EnrollmentID: 123,
 				}).Return(&cps.Enrollment{
@@ -121,7 +121,7 @@ func TestDataCPSDeployments(t *testing.T) {
 		},
 		"no RSA MultiStackedCertificate": {
 			configPath: "testdata/TestDataDeployments/deployments.tf",
-			init: func(m *mockcps) {
+			init: func(m *cps.Mock) {
 				m.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{
 					EnrollmentID: 123,
 				}).Return(&cps.Enrollment{
@@ -158,7 +158,7 @@ func TestDataCPSDeployments(t *testing.T) {
 		},
 		"no ECDSA MultiStackedCertificate": {
 			configPath: "testdata/TestDataDeployments/deployments.tf",
-			init: func(m *mockcps) {
+			init: func(m *cps.Mock) {
 				m.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{
 					EnrollmentID: 123,
 				}).Return(&cps.Enrollment{
@@ -195,7 +195,7 @@ func TestDataCPSDeployments(t *testing.T) {
 		},
 		"enrollment not found": {
 			configPath: "testdata/TestDataDeployments/deployments.tf",
-			init: func(m *mockcps) {
+			init: func(m *cps.Mock) {
 				m.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{
 					EnrollmentID: 123,
 				}).Return(nil, &cps.Error{
@@ -208,7 +208,7 @@ func TestDataCPSDeployments(t *testing.T) {
 		},
 		"no deployed certificates": {
 			configPath: "testdata/TestDataDeployments/deployments.tf",
-			init: func(m *mockcps) {
+			init: func(m *cps.Mock) {
 				m.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{
 					EnrollmentID: 123,
 				}).Return(&cps.Enrollment{
@@ -235,7 +235,7 @@ func TestDataCPSDeployments(t *testing.T) {
 	}
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			client := &mockcps{}
+			client := &cps.Mock{}
 			test.init(client)
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{

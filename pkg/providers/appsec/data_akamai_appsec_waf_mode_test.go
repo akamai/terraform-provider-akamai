@@ -12,7 +12,7 @@ import (
 
 func TestAkamaiWAFMode_data_basic(t *testing.T) {
 	t.Run("match by WAFMode ID", func(t *testing.T) {
-		client := &mockappsec{}
+		client := &appsec.Mock{}
 
 		getWAFModeResponse := appsec.GetWAFModeResponse{}
 		err := json.Unmarshal(loadFixtureBytes("testdata/TestDSWAFMode/WAFMode.json"), &getWAFModeResponse)

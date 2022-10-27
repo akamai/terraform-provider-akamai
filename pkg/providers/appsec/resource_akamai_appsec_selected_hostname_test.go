@@ -12,7 +12,7 @@ import (
 
 func TestAkamaiSelectedHostname_res_basic(t *testing.T) {
 	t.Run("match by SelectedHostname ID", func(t *testing.T) {
-		client := &mockappsec{}
+		client := &appsec.Mock{}
 
 		updateSelectedHostnamesResponse := appsec.UpdateSelectedHostnamesResponse{}
 		err := json.Unmarshal(loadFixtureBytes("testdata/TestResSelectedHostname/SelectedHostname.json"), &updateSelectedHostnamesResponse)

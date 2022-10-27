@@ -35,7 +35,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 	}
 
 	var (
-		expectReadEdgeWorkerWithOneVersion = func(t *testing.T, client *mockedgeworkers, name, localBundlePath, version, timeForCreation string, groupID, resourceTierID, edgeWorkerID, numberOfTimes int) {
+		expectReadEdgeWorkerWithOneVersion = func(t *testing.T, client *edgeworkers.Mock, name, localBundlePath, version, timeForCreation string, groupID, resourceTierID, edgeWorkerID, numberOfTimes int) {
 			edgeWorkerGetReq := edgeworkers.GetEdgeWorkerIDRequest{
 				EdgeWorkerID: edgeWorkerID,
 			}
@@ -74,7 +74,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 			}
 		}
 
-		expectReadEdgeWorkerWithTwoVersions = func(t *testing.T, client *mockedgeworkers, name, localBundlePath, version, timeForCreation, timeForUpdate string, groupID, resourceTierID, edgeWorkerID, numberOfTimes int) {
+		expectReadEdgeWorkerWithTwoVersions = func(t *testing.T, client *edgeworkers.Mock, name, localBundlePath, version, timeForCreation, timeForUpdate string, groupID, resourceTierID, edgeWorkerID, numberOfTimes int) {
 			edgeWorkerGetReq := edgeworkers.GetEdgeWorkerIDRequest{
 				EdgeWorkerID: edgeWorkerID,
 			}
@@ -119,7 +119,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 			}
 		}
 
-		expectCreateEdgeWorkerWithVersion = func(t *testing.T, client *mockedgeworkers, name, localBundlePath, timeForCreation string, groupID, resourceTierID, edgeWorkerID int) (*edgeworkers.EdgeWorkerID, *edgeworkers.EdgeWorkerVersion) {
+		expectCreateEdgeWorkerWithVersion = func(t *testing.T, client *edgeworkers.Mock, name, localBundlePath, timeForCreation string, groupID, resourceTierID, edgeWorkerID int) (*edgeworkers.EdgeWorkerID, *edgeworkers.EdgeWorkerVersion) {
 			edgeWorkerReq := edgeworkers.CreateEdgeWorkerIDRequest{
 				Name:           name,
 				GroupID:        groupID,
@@ -162,7 +162,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 			return &createdEdgeWorker, &createdEdgeWorkerVersion
 		}
 
-		expectUpdateEdgeWorker = func(_ *testing.T, client *mockedgeworkers, name, localBundlePath, timeForUpdate string, groupID, resourceTierID, edgeWorkerID int) (*edgeworkers.EdgeWorkerID, *edgeworkers.EdgeWorkerVersion) {
+		expectUpdateEdgeWorker = func(_ *testing.T, client *edgeworkers.Mock, name, localBundlePath, timeForUpdate string, groupID, resourceTierID, edgeWorkerID int) (*edgeworkers.EdgeWorkerID, *edgeworkers.EdgeWorkerVersion) {
 			updatedEdgeWorker := edgeworkers.EdgeWorkerID{
 				Name:           name,
 				ResourceTierID: resourceTierID,
@@ -186,7 +186,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 			return &updatedEdgeWorker, &edgeWorkerVersion
 		}
 
-		expectUpdateEdgeWorkerVersion = func(t *testing.T, client *mockedgeworkers, name, localBundlePath, timeForUpdate string, groupID, resourceTierID, edgeWorkerID int) (*edgeworkers.EdgeWorkerID, *edgeworkers.EdgeWorkerVersion) {
+		expectUpdateEdgeWorkerVersion = func(t *testing.T, client *edgeworkers.Mock, name, localBundlePath, timeForUpdate string, groupID, resourceTierID, edgeWorkerID int) (*edgeworkers.EdgeWorkerID, *edgeworkers.EdgeWorkerVersion) {
 			bytesArray, err := convertLocalBundleFileIntoBytes(localBundlePath)
 			require.NoError(t, err)
 			validateBundleReq := edgeworkers.ValidateBundleRequest{
@@ -231,7 +231,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 			return &updatedEdgeWorker, &edgeWorkerVersion
 		}
 
-		expectDeleteEdgeWorkerWithOneVersion = func(_ *testing.T, client *mockedgeworkers, resourceTierID, edgeWorkerID int, timeForCreation string) {
+		expectDeleteEdgeWorkerWithOneVersion = func(_ *testing.T, client *edgeworkers.Mock, resourceTierID, edgeWorkerID int, timeForCreation string) {
 			edgeWorkerVersion := edgeworkers.EdgeWorkerVersion{
 				EdgeWorkerID: edgeWorkerID,
 				Version:      "1.0",
@@ -257,7 +257,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 			client.On("DeleteEdgeWorkerID", mock.Anything, edgeWorkerDeleteReq).Return(nil).Once()
 		}
 
-		expectDeleteEdgeWorkerWithTwoVersions = func(_ *testing.T, client *mockedgeworkers, resourceTierID, edgeWorkerID int, timeForCreation, timeForUpdate string) {
+		expectDeleteEdgeWorkerWithTwoVersions = func(_ *testing.T, client *edgeworkers.Mock, resourceTierID, edgeWorkerID int, timeForCreation, timeForUpdate string) {
 			firstEdgeWorkerVersion := edgeworkers.EdgeWorkerVersion{
 				EdgeWorkerID: edgeWorkerID,
 				Version:      "1.0",
@@ -294,7 +294,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 			client.On("DeleteEdgeWorkerID", mock.Anything, edgeWorkerDeleteReq).Return(nil).Once()
 		}
 
-		expectImportEdgeWorkerWithOneVersion = func(t *testing.T, client *mockedgeworkers, localBundlePath, version string, timeForCreation string, edgeWorkerID int) {
+		expectImportEdgeWorkerWithOneVersion = func(t *testing.T, client *edgeworkers.Mock, localBundlePath, version string, timeForCreation string, edgeWorkerID int) {
 			edgeWorkerVersion := edgeworkers.EdgeWorkerVersion{
 				EdgeWorkerID: edgeWorkerID,
 				Version:      version,
@@ -353,7 +353,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 
 	t.Run("create a new edgeworker lifecycle", func(t *testing.T) {
 		testDir := "testdata/TestResEdgeWorkersEdgeWorker/edgeworker_lifecycle"
-		client := new(mockedgeworkers)
+		client := new(edgeworkers.Mock)
 
 		timeForCreation := time.Now().Format(time.RFC3339)
 
@@ -399,7 +399,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 			require.NoError(t, err)
 		}()
 		testDir := "testdata/TestResEdgeWorkersEdgeWorker/edgeworker_lifecycle"
-		client := new(mockedgeworkers)
+		client := new(edgeworkers.Mock)
 
 		timeForCreation := time.Now().Format(time.RFC3339)
 
@@ -431,7 +431,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 
 	t.Run("update edgeworker local_bundle lifecycle", func(t *testing.T) {
 		testDir := "testdata/TestResEdgeWorkersEdgeWorker/edgeworker_lifecycle"
-		client := new(mockedgeworkers)
+		client := new(edgeworkers.Mock)
 
 		timeForCreation := time.Now().Format(time.RFC3339)
 		timeForUpdate := time.Now().Add(time.Hour * 24).Format(time.RFC3339)
@@ -478,7 +478,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 
 	t.Run("update edgeworker local_bundle content lifecycle", func(t *testing.T) {
 		testDir := "testdata/TestResEdgeWorkersEdgeWorker/edgeworker_lifecycle"
-		client := new(mockedgeworkers)
+		client := new(edgeworkers.Mock)
 
 		tempBundlePath := "testdata/TestResEdgeWorkersEdgeWorker/bundles/_temp_bundle.tgz"
 
@@ -550,7 +550,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 
 	t.Run("update edgeworker group_id lifecycle", func(t *testing.T) {
 		testDir := "testdata/TestResEdgeWorkersEdgeWorker/edgeworker_lifecycle"
-		client := new(mockedgeworkers)
+		client := new(edgeworkers.Mock)
 
 		timeForCreation := time.Now().Format(time.RFC3339)
 		timeForUpdate := time.Now().Add(time.Hour * 24).Format(time.RFC3339)
@@ -597,7 +597,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 
 	t.Run("edgeworker no update on group_id prefix change", func(t *testing.T) {
 		testDir := "testdata/TestResEdgeWorkersEdgeWorker/edgeworker_lifecycle"
-		client := new(mockedgeworkers)
+		client := new(edgeworkers.Mock)
 
 		timeForCreation := time.Now().Format(time.RFC3339)
 
@@ -640,7 +640,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 
 	t.Run("update edgeworker name lifecycle", func(t *testing.T) {
 		testDir := "testdata/TestResEdgeWorkersEdgeWorker/edgeworker_lifecycle"
-		client := new(mockedgeworkers)
+		client := new(edgeworkers.Mock)
 
 		createdTime := time.Now().Format(time.RFC3339)
 		updatedTime := time.Now().Add(time.Hour * 24).Format(time.RFC3339)
@@ -687,7 +687,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 
 	t.Run("import", func(t *testing.T) {
 		testDir := "testdata/TestResEdgeWorkersEdgeWorker/edgeworker_lifecycle"
-		client := new(mockedgeworkers)
+		client := new(edgeworkers.Mock)
 		createdTime := time.Now().Format(time.RFC3339)
 
 		edgeWorker, edgeWorkerVersion := expectCreateEdgeWorkerWithVersion(t, client, "example", bundlePathForCreate, createdTime, 12345, 54321, 123)

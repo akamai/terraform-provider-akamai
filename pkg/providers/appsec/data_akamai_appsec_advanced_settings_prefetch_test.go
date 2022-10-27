@@ -12,7 +12,7 @@ import (
 
 func TestAkamaiAdvancedSettingsPrefetch_data_basic(t *testing.T) {
 	t.Run("match by AdvancedSettingsPrefetch ID", func(t *testing.T) {
-		client := &mockappsec{}
+		client := &appsec.Mock{}
 
 		getPrefetchResponse := appsec.GetAdvancedSettingsPrefetchResponse{}
 		err := json.Unmarshal(loadFixtureBytes("testdata/TestDSAdvancedSettingsPrefetch/AdvancedSettingsPrefetch.json"), &getPrefetchResponse)

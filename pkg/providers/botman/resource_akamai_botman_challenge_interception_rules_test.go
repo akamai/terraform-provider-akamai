@@ -12,7 +12,7 @@ import (
 func TestResourceChallengeInterceptionRules(t *testing.T) {
 	t.Run("ResourceChallengeInterceptionRules", func(t *testing.T) {
 
-		mockedBotmanClient := &mockbotman{}
+		mockedBotmanClient := &botman.Mock{}
 		createResponse := map[string]interface{}{"testKey": "testValue3"}
 		createRequest := test.FixtureBytes("testdata/JsonPayload/create.json")
 		mockedBotmanClient.On("UpdateChallengeInterceptionRules",

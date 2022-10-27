@@ -11,7 +11,7 @@ import (
 
 func Test_DSReadContract(t *testing.T) {
 	t.Run("read contract with group_id in group provided", func(t *testing.T) {
-		client := &mockpapi{}
+		client := &papi.Mock{}
 		client.On("GetGroups")
 		client.On("GetGroups", AnyCTX).Return(&papi.GetGroupsResponse{
 			AccountID: "act_1-1TJZFB", AccountName: "example.com",
@@ -45,7 +45,7 @@ func Test_DSReadContract(t *testing.T) {
 	})
 
 	t.Run("read contract with group id w/o prefix in group", func(t *testing.T) {
-		client := &mockpapi{}
+		client := &papi.Mock{}
 		client.On("GetGroups")
 		client.On("GetGroups", AnyCTX).Return(&papi.GetGroupsResponse{
 			AccountID: "act_1-1TJZFB", AccountName: "example.com",
@@ -79,7 +79,7 @@ func Test_DSReadContract(t *testing.T) {
 	})
 
 	t.Run("read contract with group name in group", func(t *testing.T) {
-		client := &mockpapi{}
+		client := &papi.Mock{}
 		client.On("GetGroups")
 		client.On("GetGroups", AnyCTX).Return(&papi.GetGroupsResponse{
 			AccountID: "act_1-1TJZFB", AccountName: "example.com",
@@ -113,7 +113,7 @@ func Test_DSReadContract(t *testing.T) {
 	})
 
 	t.Run("read contract with group name and group conflict", func(t *testing.T) {
-		client := &mockpapi{}
+		client := &papi.Mock{}
 		client.On("GetGroups")
 		client.On("GetGroups", AnyCTX).Return(&papi.GetGroupsResponse{
 			AccountID: "act_1-1TJZFB", AccountName: "example.com",
@@ -143,7 +143,7 @@ func Test_DSReadContract(t *testing.T) {
 	})
 
 	t.Run("read contract with group id provided", func(t *testing.T) {
-		client := &mockpapi{}
+		client := &papi.Mock{}
 		client.On("GetGroups")
 		client.On("GetGroups", AnyCTX).Return(&papi.GetGroupsResponse{
 			AccountID: "act_1-1TJZFB", AccountName: "example.com",
@@ -177,7 +177,7 @@ func Test_DSReadContract(t *testing.T) {
 	})
 
 	t.Run("read contract with group id without prefix", func(t *testing.T) {
-		client := &mockpapi{}
+		client := &papi.Mock{}
 		client.On("GetGroups")
 		client.On("GetGroups", AnyCTX).Return(&papi.GetGroupsResponse{
 			AccountID: "act_1-1TJZFB", AccountName: "example.com",
@@ -211,7 +211,7 @@ func Test_DSReadContract(t *testing.T) {
 	})
 
 	t.Run("read contract with group name", func(t *testing.T) {
-		client := &mockpapi{}
+		client := &papi.Mock{}
 		client.On("GetGroups")
 		client.On("GetGroups", AnyCTX).Return(&papi.GetGroupsResponse{
 			AccountID: "act_1-1TJZFB", AccountName: "example.com",

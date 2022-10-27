@@ -12,7 +12,7 @@ import (
 
 func TestAkamaiVersionNotes_res_basic(t *testing.T) {
 	t.Run("match by VersionNotes ID", func(t *testing.T) {
-		client := &mockappsec{}
+		client := &appsec.Mock{}
 
 		updateVersionNotesResponse := appsec.UpdateVersionNotesResponse{}
 		err := json.Unmarshal(loadFixtureBytes("testdata/TestResVersionNotes/VersionNotes.json"), &updateVersionNotesResponse)

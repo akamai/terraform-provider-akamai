@@ -30,7 +30,7 @@ var rsrc = gtm.Resource{
 func TestResGtmResource(t *testing.T) {
 
 	t.Run("create resource", func(t *testing.T) {
-		client := &mockgtm{}
+		client := &gtm.Mock{}
 
 		getCall := client.On("GetResource",
 			mock.Anything, // ctx is irrelevant for this test
@@ -126,7 +126,7 @@ func TestResGtmResource(t *testing.T) {
 	})
 
 	t.Run("create resource failed", func(t *testing.T) {
-		client := &mockgtm{}
+		client := &gtm.Mock{}
 
 		client.On("CreateResource",
 			mock.Anything, // ctx is irrelevant for this test
@@ -180,7 +180,7 @@ func TestResGtmResource(t *testing.T) {
 	})
 
 	t.Run("create resource denied", func(t *testing.T) {
-		client := &mockgtm{}
+		client := &gtm.Mock{}
 
 		dr := gtm.ResourceResponse{}
 		dr.Resource = &rsrc

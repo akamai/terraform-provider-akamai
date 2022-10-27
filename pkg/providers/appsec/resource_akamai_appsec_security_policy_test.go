@@ -12,7 +12,7 @@ import (
 
 func TestAkamaiSecurityPolicy_res_basic(t *testing.T) {
 	t.Run("match by SecurityPolicy ID", func(t *testing.T) {
-		client := &mockappsec{}
+		client := &appsec.Mock{}
 
 		getSecurityPolicyResponse := appsec.GetSecurityPolicyResponse{}
 		err := json.Unmarshal(loadFixtureBytes("testdata/TestResSecurityPolicy/SecurityPolicy.json"), &getSecurityPolicyResponse)

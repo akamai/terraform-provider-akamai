@@ -11,7 +11,7 @@ import (
 
 func Test_readPropertyRuleFormats(t *testing.T) {
 	t.Run("get datasource property rule formats", func(t *testing.T) {
-		client := &mockpapi{}
+		client := &papi.Mock{}
 		ruleFormats := papi.RuleFormatItems{
 			Items: []string{
 				"latest",

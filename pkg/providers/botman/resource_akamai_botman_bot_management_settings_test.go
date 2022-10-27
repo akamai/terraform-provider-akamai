@@ -12,7 +12,7 @@ import (
 func TestResourceBotManagementSettings(t *testing.T) {
 	t.Run("ResourceBotManagementSettings", func(t *testing.T) {
 
-		mockedBotmanClient := &mockbotman{}
+		mockedBotmanClient := &botman.Mock{}
 		createResponse := map[string]interface{}{"testKey": "testValue3"}
 		createRequest := test.FixtureBytes("testdata/JsonPayload/create.json")
 		mockedBotmanClient.On("UpdateBotManagementSetting",

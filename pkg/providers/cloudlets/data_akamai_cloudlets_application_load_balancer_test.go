@@ -15,11 +15,11 @@ func TestDataApplicationLoadBalancer(t *testing.T) {
 		configPath     string
 		checkFunctions []resource.TestCheckFunc
 		withError      *regexp.Regexp
-		init           func(*mockcloudlets)
+		init           func(*cloudlets.Mock)
 	}{
 		"validate schema": {
 			configPath: "testdata/TestDataCloudletsApplicationLoadBalancer/application_load_balancer.tf",
-			init: func(m *mockcloudlets) {
+			init: func(m *cloudlets.Mock) {
 				m.On("GetOrigin", mock.Anything, mock.Anything).Return(&cloudlets.Origin{
 					OriginID:  "alb_test_krk_dc1",
 					Akamaized: false,
@@ -140,7 +140,7 @@ func TestDataApplicationLoadBalancer(t *testing.T) {
 		},
 		"specify load balancer version in file": {
 			configPath: "testdata/TestDataCloudletsApplicationLoadBalancer/application_load_balancer_version.tf",
-			init: func(m *mockcloudlets) {
+			init: func(m *cloudlets.Mock) {
 				m.On("GetLoadBalancerVersion", mock.Anything, mock.Anything).Return(&cloudlets.LoadBalancerVersion{Version: 10}, nil)
 				m.On("GetOrigin", mock.Anything, mock.Anything).Return(&cloudlets.Origin{}, nil)
 			},
@@ -150,7 +150,7 @@ func TestDataApplicationLoadBalancer(t *testing.T) {
 		},
 		"deleted load balancer version": {
 			configPath: "testdata/TestDataCloudletsApplicationLoadBalancer/application_load_balancer_version.tf",
-			init: func(m *mockcloudlets) {
+			init: func(m *cloudlets.Mock) {
 				m.On("GetLoadBalancerVersion", mock.Anything, mock.Anything).Return(&cloudlets.LoadBalancerVersion{Version: 10, Deleted: true}, nil)
 				m.On("GetOrigin", mock.Anything, mock.Anything).Return(&cloudlets.Origin{}, nil)
 			},
@@ -159,7 +159,7 @@ func TestDataApplicationLoadBalancer(t *testing.T) {
 	}
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			client := &mockcloudlets{}
+			client := &cloudlets.Mock{}
 			test.init(client)
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{

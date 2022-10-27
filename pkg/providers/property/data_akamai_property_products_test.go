@@ -27,7 +27,7 @@ func TestVerifyProductsDataSourceSchema(t *testing.T) {
 func TestOutputProductsDataSource(t *testing.T) {
 
 	t.Run("akamai_property_products - input OK - output OK", func(t *testing.T) {
-		client := &mockpapi{}
+		client := &papi.Mock{}
 		client.On("GetProducts", AnyCTX, mock.Anything).Return(&papi.GetProductsResponse{
 			AccountID:  "act_anyAccount",
 			ContractID: "ctr_AnyContract",

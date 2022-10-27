@@ -12,7 +12,7 @@ import (
 
 func TestAkamaiSiemDefinitions_data_basic(t *testing.T) {
 	t.Run("match by SiemDefinitions ID", func(t *testing.T) {
-		client := &mockappsec{}
+		client := &appsec.Mock{}
 
 		getSiemDefinitionsResponse := appsec.GetSiemDefinitionsResponse{}
 		err := json.Unmarshal(loadFixtureBytes("testdata/TestDSSiemDefinitions/SiemDefinitions.json"), &getSiemDefinitionsResponse)

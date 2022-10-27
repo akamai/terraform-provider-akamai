@@ -12,7 +12,7 @@ import (
 
 func TestAkamaiEvalRule_res_basic(t *testing.T) {
 	t.Run("match by EvalRule ID", func(t *testing.T) {
-		client := &mockappsec{}
+		client := &appsec.Mock{}
 
 		updateEvalRuleResponse := appsec.UpdateEvalRuleResponse{}
 		err := json.Unmarshal(loadFixtureBytes("testdata/TestResEvalRule/EvalRuleUpdated.json"), &updateEvalRuleResponse)

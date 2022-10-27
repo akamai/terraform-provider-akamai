@@ -13,7 +13,7 @@ import (
 
 func TestDVValidation(t *testing.T) {
 	t.Run("lifecycle test", func(t *testing.T) {
-		client := &mockcps{}
+		client := &cps.Mock{}
 		PollForChangeStatusInterval = 1 * time.Millisecond
 		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&cps.Enrollment{PendingChanges: []string{"/cps/v2/enrollments/1/changes/2"}}, nil).Once()
@@ -99,7 +99,7 @@ func TestDVValidation(t *testing.T) {
 		})
 	})
 	t.Run("retry acknowledgement", func(t *testing.T) {
-		client := &mockcps{}
+		client := &cps.Mock{}
 		changeAckRetryInterval = 1 * time.Millisecond
 		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&cps.Enrollment{PendingChanges: []string{"/cps/v2/enrollments/1/changes/2"}}, nil).Once()
@@ -149,7 +149,7 @@ func TestDVValidation(t *testing.T) {
 		})
 	})
 	t.Run("retry acknowledgement with timeout", func(t *testing.T) {
-		client := &mockcps{}
+		client := &cps.Mock{}
 		changeAckRetryInterval = 1 * time.Millisecond
 		changeAckDeadline = 2 * time.Millisecond
 		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).

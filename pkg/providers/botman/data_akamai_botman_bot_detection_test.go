@@ -11,7 +11,7 @@ import (
 
 func TestDataBotDetection(t *testing.T) {
 	t.Run("DataBotDetection", func(t *testing.T) {
-		mockedBotmanClient := &mockbotman{}
+		mockedBotmanClient := &botman.Mock{}
 
 		response := botman.GetBotDetectionListResponse{
 			Detections: []map[string]interface{}{
@@ -53,7 +53,7 @@ func TestDataBotDetection(t *testing.T) {
 		mockedBotmanClient.AssertExpectations(t)
 	})
 	t.Run("DataBotDetection filter by BotName", func(t *testing.T) {
-		mockedBotmanClient := &mockbotman{}
+		mockedBotmanClient := &botman.Mock{}
 
 		response := botman.GetBotDetectionListResponse{
 			Detections: []map[string]interface{}{

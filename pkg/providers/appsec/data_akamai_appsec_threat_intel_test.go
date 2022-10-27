@@ -14,7 +14,7 @@ import (
 
 func TestAkamaiThreatIntel_data_basic(t *testing.T) {
 	t.Run("match by ThreatIntel ID", func(t *testing.T) {
-		client := &mockappsec{}
+		client := &appsec.Mock{}
 
 		config := appsec.GetConfigurationResponse{}
 		err := json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
@@ -56,7 +56,7 @@ func TestAkamaiThreatIntel_data_basic(t *testing.T) {
 
 func TestAkamaiThreatIntel_data_error_retrieving_threat_intel(t *testing.T) {
 	t.Run("match by ThreatIntel ID", func(t *testing.T) {
-		client := &mockappsec{}
+		client := &appsec.Mock{}
 
 		config := appsec.GetConfigurationResponse{}
 		err := json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)

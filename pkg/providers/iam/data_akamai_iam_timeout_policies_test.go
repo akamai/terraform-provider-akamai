@@ -14,7 +14,7 @@ import (
 
 func TestDataTimeoutPolicies(t *testing.T) {
 	t.Run("happy path", func(t *testing.T) {
-		client := &mockiam{}
+		client := &iam.Mock{}
 		client.Test(test.TattleT{T: t})
 
 		res := []iam.TimeoutPolicy{
@@ -47,7 +47,7 @@ func TestDataTimeoutPolicies(t *testing.T) {
 	})
 
 	t.Run("fail path", func(t *testing.T) {
-		client := &mockiam{}
+		client := &iam.Mock{}
 		client.Test(test.TattleT{T: t})
 		client.On("ListTimeoutPolicies", mock.Anything).Return(nil, errors.New("Could not get supported timeout policies"))
 

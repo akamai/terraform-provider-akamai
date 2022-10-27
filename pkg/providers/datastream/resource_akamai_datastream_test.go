@@ -20,7 +20,7 @@ const (
 
 func TestResourceStream(t *testing.T) {
 	t.Run("lifecycle test", func(t *testing.T) {
-		client := &mockdatastream{}
+		client := &datastream.Mock{}
 
 		PollForActivationStatusChangeInterval = 1 * time.Millisecond
 
@@ -550,7 +550,7 @@ func TestResourceUpdate(t *testing.T) {
 		repeats int
 	}
 
-	configureMock := func(m *mockdatastream, statuses ...mockConfig) {
+	configureMock := func(m *datastream.Mock, statuses ...mockConfig) {
 		for _, statusConfig := range statuses {
 			m.On("GetStream", mock.Anything, mock.Anything).
 				Return(responseFactory(statusConfig.status), nil).
@@ -560,7 +560,7 @@ func TestResourceUpdate(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			m := &mockdatastream{}
+			m := &datastream.Mock{}
 			m.On("CreateStream", mock.Anything, createStreamRequestFactory(test.CreateStreamActive)).
 				Return(updateStreamResponse, nil).
 				Once()
@@ -788,7 +788,7 @@ func TestEmailIDs(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &mockdatastream{}
+			client := &datastream.Mock{}
 
 			createStreamRequest := createStreamRequestFactory(test.EmailIDs)
 			client.On("CreateStream", mock.Anything, createStreamRequest).
@@ -823,7 +823,7 @@ func TestEmailIDs(t *testing.T) {
 func TestResourceStreamErrors(t *testing.T) {
 	tests := map[string]struct {
 		tfFile    string
-		init      func(*mockdatastream)
+		init      func(*datastream.Mock)
 		withError *regexp.Regexp
 	}{
 		"missing required argument": {
@@ -832,7 +832,7 @@ func TestResourceStreamErrors(t *testing.T) {
 		},
 		"internal server error": {
 			tfFile: "testdata/TestResourceStream/errors/internal_server_error/internal_server_error.tf",
-			init: func(m *mockdatastream) {
+			init: func(m *datastream.Mock) {
 				m.On("CreateStream", mock.Anything, mock.Anything).
 					Return(nil, fmt.Errorf("%w: request failed: %s", datastream.ErrCreateStream, errors.New("500")))
 			},
@@ -840,7 +840,7 @@ func TestResourceStreamErrors(t *testing.T) {
 		},
 		"stream with this name already exists": {
 			tfFile: "testdata/TestResourceStream/errors/stream_name_not_unique/stream_name_not_unique.tf",
-			init: func(m *mockdatastream) {
+			init: func(m *datastream.Mock) {
 				m.On("CreateStream", mock.Anything, mock.Anything).
 					Return(nil, fmt.Errorf("%s: %w", datastream.ErrCreateStream, &datastream.Error{
 						Type:       "bad-request",
@@ -865,7 +865,7 @@ func TestResourceStreamErrors(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &mockdatastream{}
+			client := &datastream.Mock{}
 			if test.init != nil {
 				test.init(client)
 			}
@@ -888,7 +888,7 @@ func TestResourceStreamErrors(t *testing.T) {
 }
 
 func TestResourceStreamCustomDiff(t *testing.T) {
-	client := &mockdatastream{}
+	client := &datastream.Mock{}
 
 	tests := map[string]struct {
 		tfFile    string
@@ -1094,7 +1094,7 @@ func TestDatasetIDsDiff(t *testing.T) {
 		}
 
 		t.Run(name, func(t *testing.T) {
-			client := &mockdatastream{}
+			client := &datastream.Mock{}
 
 			client.On("CreateStream", mock.Anything, createStreamRequest).
 				Return(createStreamResponse, nil)
@@ -1396,7 +1396,7 @@ func TestCustomHeaders(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &mockdatastream{}
+			client := &datastream.Mock{}
 
 			createStreamRequest := createStreamRequestFactory(test.Connector)
 			client.On("CreateStream", mock.Anything, createStreamRequest).
@@ -1626,7 +1626,7 @@ func TestMTLS(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &mockdatastream{}
+			client := &datastream.Mock{}
 
 			createStreamRequest := createStreamRequestFactory(test.Connector)
 			client.On("CreateStream", mock.Anything, createStreamRequest).
@@ -1750,11 +1750,11 @@ func TestUrlSuppressor(t *testing.T) {
 	}
 
 	tests := map[string]struct {
-		Init  func(m *mockdatastream)
+		Init  func(m *datastream.Mock)
 		Steps []resource.TestStep
 	}{
 		"idempotent when endpoint is stripped by api": {
-			Init: func(m *mockdatastream) {
+			Init: func(m *datastream.Mock) {
 				m.On("CreateStream", mock.Anything, createStreamRequestFactory(&datastream.SumoLogicConnector{
 					CollectorCode: "collector_code",
 					CompressLogs:  true,
@@ -1786,7 +1786,7 @@ func TestUrlSuppressor(t *testing.T) {
 			},
 		},
 		"update endpoint field": {
-			Init: func(m *mockdatastream) {
+			Init: func(m *datastream.Mock) {
 				m.On("CreateStream", mock.Anything, createStreamRequestFactory(&datastream.SumoLogicConnector{
 					CollectorCode: "collector_code",
 					CompressLogs:  true,
@@ -1837,7 +1837,7 @@ func TestUrlSuppressor(t *testing.T) {
 			},
 		},
 		"adding new fields": {
-			Init: func(m *mockdatastream) {
+			Init: func(m *datastream.Mock) {
 				m.On("CreateStream", mock.Anything, createStreamRequestFactory(&datastream.SumoLogicConnector{
 					CollectorCode: "collector_code",
 					CompressLogs:  true,
@@ -1898,7 +1898,7 @@ func TestUrlSuppressor(t *testing.T) {
 			},
 		},
 		"change connector": {
-			Init: func(m *mockdatastream) {
+			Init: func(m *datastream.Mock) {
 				m.On("CreateStream", mock.Anything, createStreamRequestFactory(&datastream.SumoLogicConnector{
 					CollectorCode: "collector_code",
 					CompressLogs:  true,
@@ -1954,7 +1954,7 @@ func TestUrlSuppressor(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			m := &mockdatastream{}
+			m := &datastream.Mock{}
 			test.Init(m)
 
 			m.On("DeleteStream", mock.Anything, datastream.DeleteStreamRequest{
@@ -2110,7 +2110,7 @@ func TestConnectors(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &mockdatastream{}
+			client := &datastream.Mock{}
 
 			client.On("CreateStream", mock.Anything, createStreamRequestFactory(test.Connector)).
 				Return(updateStreamResponse, nil)

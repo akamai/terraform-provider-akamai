@@ -14,7 +14,7 @@ import (
 
 func TestAkamaiWAPSelectedHostnames_data_basic(t *testing.T) {
 	t.Run("match by WAPSelectedHostnames ID", func(t *testing.T) {
-		client := &mockappsec{}
+		client := &appsec.Mock{}
 
 		config := appsec.GetConfigurationResponse{}
 		err := json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfigurationWAP.json"), &config)
@@ -56,7 +56,7 @@ func TestAkamaiWAPSelectedHostnames_data_basic(t *testing.T) {
 
 func TestAkamaiWAPSelectedHostnames_data_error_retrieving_hostnames(t *testing.T) {
 	t.Run("match by WAPSelectedHostnames ID", func(t *testing.T) {
-		client := &mockappsec{}
+		client := &appsec.Mock{}
 
 		config := appsec.GetConfigurationResponse{}
 		err := json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfigurationWAP.json"), &config)
@@ -99,7 +99,7 @@ func TestAkamaiWAPSelectedHostnames_data_error_retrieving_hostnames(t *testing.T
 
 func TestAkamaiWAPSelectedHostnames_NonWAP_data_basic(t *testing.T) {
 	t.Run("match by WAPSelectedHostnames ID", func(t *testing.T) {
-		client := &mockappsec{}
+		client := &appsec.Mock{}
 
 		config := appsec.GetConfigurationResponse{}
 		err := json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)

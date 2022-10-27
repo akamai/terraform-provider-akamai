@@ -13,7 +13,7 @@ import (
 func TestResourceCustomDenyAction(t *testing.T) {
 	t.Run("ResourceCustomDenyAction", func(t *testing.T) {
 
-		mockedBotmanClient := &mockbotman{}
+		mockedBotmanClient := &botman.Mock{}
 		createResponse := map[string]interface{}{"actionId": "cc9c3f89-e179-4892-89cf-d5e623ba9dc7", "testKey": "testValue3"}
 		createRequest := test.FixtureBytes("testdata/JsonPayload/create.json")
 		mockedBotmanClient.On("CreateCustomDenyAction",

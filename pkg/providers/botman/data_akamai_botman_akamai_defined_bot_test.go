@@ -11,7 +11,7 @@ import (
 
 func TestDataAkamaiDefinedBot(t *testing.T) {
 	t.Run("DataAkamaiDefinedBot", func(t *testing.T) {
-		mockedBotmanClient := &mockbotman{}
+		mockedBotmanClient := &botman.Mock{}
 
 		response := botman.GetAkamaiDefinedBotListResponse{
 			Bots: []map[string]interface{}{
@@ -53,7 +53,7 @@ func TestDataAkamaiDefinedBot(t *testing.T) {
 		mockedBotmanClient.AssertExpectations(t)
 	})
 	t.Run("DataAkamaiDefinedBot filter by name", func(t *testing.T) {
-		mockedBotmanClient := &mockbotman{}
+		mockedBotmanClient := &botman.Mock{}
 
 		response := botman.GetAkamaiDefinedBotListResponse{
 			Bots: []map[string]interface{}{

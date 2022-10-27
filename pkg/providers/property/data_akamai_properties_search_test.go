@@ -12,7 +12,7 @@ import (
 
 func TestDSPropertiesSearch(t *testing.T) {
 	t.Run("match by hostname", func(t *testing.T) {
-		client := &mockpapi{}
+		client := &papi.Mock{}
 
 		search := papi.SearchItems{Items: []papi.SearchItem{
 			{
@@ -86,10 +86,10 @@ func TestDSPropertiesSearch(t *testing.T) {
 	})
 
 	t.Run("search error", func(t *testing.T) {
-		client := &mockpapi{}
+		client := &papi.Mock{}
 
 		client.On("SearchProperties",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			papi.SearchRequest{Key: "hostname", Value: "www.example.com"},
 		).Return(nil, papi.ErrSearchProperties)
 

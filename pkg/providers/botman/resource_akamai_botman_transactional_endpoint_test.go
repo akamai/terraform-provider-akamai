@@ -13,7 +13,7 @@ import (
 func TestResourceTransactionalEndpoint(t *testing.T) {
 	t.Run("ResourceTransactionalEndpoint", func(t *testing.T) {
 
-		mockedBotmanClient := &mockbotman{}
+		mockedBotmanClient := &botman.Mock{}
 		createResponse := map[string]interface{}{"operationId": "cc9c3f89-e179-4892-89cf-d5e623ba9dc7", "testKey": "testValue3"}
 		createRequest := `{"operationId":"cc9c3f89-e179-4892-89cf-d5e623ba9dc7","testKey":"testValue3"}`
 		mockedBotmanClient.On("CreateTransactionalEndpoint",

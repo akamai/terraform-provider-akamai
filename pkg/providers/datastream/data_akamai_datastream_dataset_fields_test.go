@@ -117,7 +117,7 @@ func TestDataSourceDatasetFieldsRead(t *testing.T) {
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &mockdatastream{}
+			client := &datastream.Mock{}
 			client.On("GetDatasetFields", mock.Anything, datastream.GetDatasetFieldsRequest{
 				TemplateName: datastream.TemplateNameEdgeLogs,
 			}).Return(test.edgegridData, test.edgegridError)

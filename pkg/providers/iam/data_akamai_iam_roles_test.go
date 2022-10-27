@@ -13,7 +13,7 @@ import (
 
 func TestDataRoles(t *testing.T) {
 	t.Run("happy path/no args", func(t *testing.T) {
-		client := &mockiam{}
+		client := &iam.Mock{}
 
 		roles := []iam.Role{{
 			RoleName:        "test role name",
@@ -60,7 +60,7 @@ func TestDataRoles(t *testing.T) {
 	t.Run("fail path", func(t *testing.T) {
 		req := iam.ListRolesRequest{}
 
-		client := &mockiam{}
+		client := &iam.Mock{}
 		client.Test(test.TattleT{T: t})
 		client.On("ListRoles", mock.Anything, req).Return(nil, errors.New("failed to get roles"))
 

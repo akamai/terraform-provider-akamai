@@ -12,7 +12,7 @@ import (
 
 func TestAkamaiEval_data_basic(t *testing.T) {
 	t.Run("match by Eval ID", func(t *testing.T) {
-		client := &mockappsec{}
+		client := &appsec.Mock{}
 
 		getEvalResponse := appsec.GetEvalResponse{}
 		err := json.Unmarshal(loadFixtureBytes("testdata/TestDSEval/Eval.json"), &getEvalResponse)

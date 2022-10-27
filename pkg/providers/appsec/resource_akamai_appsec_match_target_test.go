@@ -12,7 +12,7 @@ import (
 
 func TestAkamaiMatchTarget_res_basic(t *testing.T) {
 	t.Run("match by MatchTarget ID", func(t *testing.T) {
-		client := &mockappsec{}
+		client := &appsec.Mock{}
 
 		updateMatchTargetResponse := appsec.UpdateMatchTargetResponse{}
 		err := json.Unmarshal(loadFixtureBytes("testdata/TestResMatchTarget/MatchTargetUpdated.json"), &updateMatchTargetResponse)

@@ -18,7 +18,7 @@ import (
 func TestResourceThirdPartyEnrollment(t *testing.T) {
 	t.Run("lifecycle test", func(t *testing.T) {
 		PollForChangeStatusInterval = 1 * time.Millisecond
-		client := &mockcps{}
+		client := &cps.Mock{}
 		enrollment := getSimpleEnrollment()
 
 		client.On("CreateEnrollment",
@@ -149,7 +149,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 
 	t.Run("create enrollment, empty sans", func(t *testing.T) {
 		PollForChangeStatusInterval = 1 * time.Millisecond
-		client := &mockcps{}
+		client := &cps.Mock{}
 		enrollment := cps.Enrollment{
 			AdminContact: &cps.Contact{
 				AddressLineOne:   "150 Broadway",
@@ -303,7 +303,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 
 	t.Run("lifecycle test with common name not empty, present in sans", func(t *testing.T) {
 		PollForChangeStatusInterval = 1 * time.Millisecond
-		client := &mockcps{}
+		client := &cps.Mock{}
 		commonName := "test.akamai.com"
 		enrollment := cps.Enrollment{
 			AdminContact: &cps.Contact{
@@ -462,7 +462,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 	})
 
 	t.Run("set challenges arrays to empty if no allowedInput found", func(t *testing.T) {
-		client := &mockcps{}
+		client := &cps.Mock{}
 		enrollment := getSimpleEnrollment()
 
 		client.On("CreateEnrollment",
@@ -522,7 +522,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 	})
 
 	t.Run("update with acknowledge warnings change, no enrollment update", func(t *testing.T) {
-		client := &mockcps{}
+		client := &cps.Mock{}
 		enrollment := cps.Enrollment{
 			AdminContact: &cps.Contact{
 				AddressLineOne:   "150 Broadway",
@@ -661,7 +661,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 	})
 
 	t.Run("acknowledge warnings", func(t *testing.T) {
-		client := &mockcps{}
+		client := &cps.Mock{}
 		PollForChangeStatusInterval = 1 * time.Millisecond
 		enrollment := cps.Enrollment{
 			AdminContact: &cps.Contact{
@@ -813,7 +813,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 	})
 	t.Run("create enrollment, allow duplicate common name", func(t *testing.T) {
 		PollForChangeStatusInterval = 1 * time.Millisecond
-		client := &mockcps{}
+		client := &cps.Mock{}
 		enrollment := cps.Enrollment{
 			AdminContact: &cps.Contact{
 				AddressLineOne:   "150 Broadway",
@@ -968,7 +968,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 	})
 
 	t.Run("verification failed with warnings, no acknowledgement", func(t *testing.T) {
-		client := &mockcps{}
+		client := &cps.Mock{}
 		PollForChangeStatusInterval = 1 * time.Millisecond
 		enrollment := cps.Enrollment{
 			AdminContact: &cps.Contact{
@@ -1088,7 +1088,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 	})
 
 	t.Run("create enrollment returns an error", func(t *testing.T) {
-		client := &mockcps{}
+		client := &cps.Mock{}
 		PollForChangeStatusInterval = 1 * time.Millisecond
 		enrollment := cps.Enrollment{
 			AdminContact: &cps.Contact{
@@ -1175,7 +1175,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 	})
 
 	t.Run("auto approve warnings - all warnings on the list to auto approve", func(t *testing.T) {
-		client := &mockcps{}
+		client := &cps.Mock{}
 		PollForChangeStatusInterval = 1 * time.Millisecond
 		enrollment := cps.Enrollment{
 			AdminContact: &cps.Contact{
@@ -1327,7 +1327,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 	})
 
 	t.Run("auto approve warnings - some warnings not on the list to auto approve", func(t *testing.T) {
-		client := &mockcps{}
+		client := &cps.Mock{}
 		PollForChangeStatusInterval = 1 * time.Millisecond
 		enrollment := cps.Enrollment{
 			AdminContact: &cps.Contact{
@@ -1447,7 +1447,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 	})
 
 	t.Run("auto approve warnings - some warnings are unknown", func(t *testing.T) {
-		client := &mockcps{}
+		client := &cps.Mock{}
 		PollForChangeStatusInterval = 1 * time.Millisecond
 		enrollment := cps.Enrollment{
 			AdminContact: &cps.Contact{
@@ -1569,7 +1569,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 
 func TestResourceThirdPartyEnrollmentImport(t *testing.T) {
 	t.Run("import", func(t *testing.T) {
-		client := &mockcps{}
+		client := &cps.Mock{}
 		id := "1,ctr_1"
 
 		enrollment := cps.Enrollment{
@@ -1708,7 +1708,7 @@ func TestResourceThirdPartyEnrollmentImport(t *testing.T) {
 	})
 
 	t.Run("import error when validation type is not third_party", func(t *testing.T) {
-		client := &mockcps{}
+		client := &cps.Mock{}
 		id := "1,ctr_1"
 
 		enrollment := cps.Enrollment{
@@ -1738,7 +1738,7 @@ func TestResourceThirdPartyEnrollmentImport(t *testing.T) {
 func TestSuppressingSignatureAlgorithm(t *testing.T) {
 	t.Run("suppress signature algorithm", func(t *testing.T) {
 		PollForChangeStatusInterval = 1 * time.Millisecond
-		client := &mockcps{}
+		client := &cps.Mock{}
 		enrollment := getSimpleEnrollment()
 
 		client.On("CreateEnrollment",

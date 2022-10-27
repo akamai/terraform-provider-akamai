@@ -12,7 +12,7 @@ import (
 
 func TestAkamaiIPGeo_res_block(t *testing.T) {
 	t.Run("match by IPGeo ID", func(t *testing.T) {
-		client := &mockappsec{}
+		client := &appsec.Mock{}
 
 		getConfigurationResponse := appsec.GetConfigurationResponse{}
 		err := json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &getConfigurationResponse)
@@ -93,7 +93,7 @@ func TestAkamaiIPGeo_res_block(t *testing.T) {
 
 func TestAkamaiIPGeo_res_allow(t *testing.T) {
 	t.Run("match by IPGeo ID", func(t *testing.T) {
-		client := &mockappsec{}
+		client := &appsec.Mock{}
 
 		getConfigurationResponse := appsec.GetConfigurationResponse{}
 		err := json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &getConfigurationResponse)
@@ -166,7 +166,7 @@ func TestAkamaiIPGeo_res_allow(t *testing.T) {
 
 func TestAkamaiIPGeo_res_block_with_empty_lists(t *testing.T) {
 	t.Run("block with empty lists", func(t *testing.T) {
-		client := &mockappsec{}
+		client := &appsec.Mock{}
 
 		getConfigurationResponse := appsec.GetConfigurationResponse{}
 		err := json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &getConfigurationResponse)
@@ -231,7 +231,7 @@ func TestAkamaiIPGeo_res_block_with_empty_lists(t *testing.T) {
 
 func TestAkamaiIPGeo_res_allow_with_empty_lists(t *testing.T) {
 	t.Run("allow with empty lists", func(t *testing.T) {
-		client := &mockappsec{}
+		client := &appsec.Mock{}
 
 		getConfigurationResponse := appsec.GetConfigurationResponse{}
 		err := json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &getConfigurationResponse)

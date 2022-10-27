@@ -12,7 +12,7 @@ import (
 
 func TestDataSourceMultipleGroups_basic(t *testing.T) {
 	t.Run("test output", func(t *testing.T) {
-		client := &mockpapi{}
+		client := &papi.Mock{}
 		contractIDs := []string{"ctr_1234"}
 		groups := []map[string]interface{}{{
 			"group_id":        "grp_12345",
@@ -51,7 +51,7 @@ func TestDataSourceMultipleGroups_basic(t *testing.T) {
 
 func TestGroup_ContractNotFoundInState(t *testing.T) {
 	t.Run("contractId not found in state", func(t *testing.T) {
-		client := &mockpapi{}
+		client := &papi.Mock{}
 		contractIDs := []string{"ctr_contractID"}
 		groups := []map[string]interface{}{{
 			"group_id":        "grp_test",

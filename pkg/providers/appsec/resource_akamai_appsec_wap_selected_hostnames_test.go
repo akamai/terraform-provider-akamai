@@ -14,7 +14,7 @@ import (
 
 func TestAkamaiWAPSelectedHostnames_res_basic(t *testing.T) {
 	t.Run("match by WAPSelectedHostnames ID", func(t *testing.T) {
-		client := &mockappsec{}
+		client := &appsec.Mock{}
 
 		updateWAPSelectedHostnamesResponse := appsec.UpdateWAPSelectedHostnamesResponse{}
 		err := json.Unmarshal(loadFixtureBytes("testdata/TestResWAPSelectedHostnames/WAPSelectedHostnames.json"), &updateWAPSelectedHostnamesResponse)
@@ -72,7 +72,7 @@ func TestAkamaiWAPSelectedHostnames_res_basic(t *testing.T) {
 
 func TestAkamaiWAPSelectedHostnames_res_error_retrieving_hostnames(t *testing.T) {
 	t.Run("match by WAPSelectedHostnames ID", func(t *testing.T) {
-		client := &mockappsec{}
+		client := &appsec.Mock{}
 
 		updateWAPSelectedHostnamesResponse := appsec.UpdateWAPSelectedHostnamesResponse{}
 		err := json.Unmarshal(loadFixtureBytes("testdata/TestResWAPSelectedHostnames/WAPSelectedHostnames.json"), &updateWAPSelectedHostnamesResponse)

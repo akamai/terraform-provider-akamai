@@ -11,21 +11,21 @@ import (
 
 func TestAccAkamaiNetworkListDescription_res_basic(t *testing.T) {
 	t.Run("match by NetworkListDescription ID", func(t *testing.T) {
-		client := &mocknetworklists{}
+		client := &networklists.Mock{}
 
 		cu := networklists.UpdateNetworkListDescriptionResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResNetworkListDescription/NetworkListDescription.json")), &cu)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResNetworkListDescription/NetworkListDescription.json"), &cu)
 
 		cr := networklists.GetNetworkListDescriptionResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestResNetworkListDescription/NetworkListDescription.json")), &cr)
+		json.Unmarshal(loadFixtureBytes("testdata/TestResNetworkListDescription/NetworkListDescription.json"), &cr)
 
 		client.On("GetNetworkListDescription",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			networklists.GetNetworkListDescriptionRequest{UniqueID: "2275_VOYAGERCALLCENTERWHITELI", Name: ""},
 		).Return(&cr, nil)
 
 		client.On("UpdateNetworkListDescription",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			networklists.UpdateNetworkListDescriptionRequest{UniqueID: "2275_VOYAGERCALLCENTERWHITELI", Name: "Voyager Call Center Whitelist", Description: "Notes about this network list"},
 		).Return(&cu, nil)
 

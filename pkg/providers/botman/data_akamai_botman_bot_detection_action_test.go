@@ -12,7 +12,7 @@ import (
 func TestDataBotDetectionAction(t *testing.T) {
 	t.Run("DataBotDetectionAction", func(t *testing.T) {
 
-		mockedBotmanClient := &mockbotman{}
+		mockedBotmanClient := &botman.Mock{}
 		response := botman.GetBotDetectionActionListResponse{
 			Actions: []map[string]interface{}{
 				{"detectionId": "b85e3eaa-d334-466d-857e-33308ce416be", "testKey": "testValue1"},
@@ -56,7 +56,7 @@ func TestDataBotDetectionAction(t *testing.T) {
 	})
 	t.Run("DataBotDetectionAction filter by id", func(t *testing.T) {
 
-		mockedBotmanClient := &mockbotman{}
+		mockedBotmanClient := &botman.Mock{}
 		response := botman.GetBotDetectionActionListResponse{
 			Actions: []map[string]interface{}{
 				{"detectionId": "cc9c3f89-e179-4892-89cf-d5e623ba9dc7", "testKey": "testValue3"},

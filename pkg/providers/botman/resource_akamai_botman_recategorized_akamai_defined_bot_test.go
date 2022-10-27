@@ -12,7 +12,7 @@ import (
 func TestResourceRecategorizedAkamaiDefinedBot(t *testing.T) {
 	t.Run("ResourceRecategorizedAkamaiDefinedBot", func(t *testing.T) {
 
-		mockedBotmanClient := &mockbotman{}
+		mockedBotmanClient := &botman.Mock{}
 		createResponse := botman.RecategorizedAkamaiDefinedBotResponse{BotID: "cc9c3f89-e179-4892-89cf-d5e623ba9dc7", CategoryID: "87fb601b-4d30-4e0d-a74f-dc77e2b1bb74"}
 		mockedBotmanClient.On("CreateRecategorizedAkamaiDefinedBot",
 			mock.Anything,

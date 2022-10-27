@@ -11,13 +11,13 @@ import (
 
 func TestAccAkamaiNetworkList_data_basic(t *testing.T) {
 	t.Run("match by NetworkList ID", func(t *testing.T) {
-		client := &mocknetworklists{}
+		client := &network.Mock{}
 
 		networkListsResponse := network.GetNetworkListsResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSNetworkList/NetworkList.json")), &networkListsResponse)
+		json.Unmarshal(loadFixtureBytes("testdata/TestDSNetworkList/NetworkList.json"), &networkListsResponse)
 
 		client.On("GetNetworkLists",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			network.GetNetworkListsRequest{Name: "40996_ARTYLABWHITELIST", Type: "IP"},
 		).Return(&networkListsResponse, nil)
 
@@ -42,13 +42,13 @@ func TestAccAkamaiNetworkList_data_basic(t *testing.T) {
 
 func TestAccAkamaiNetworkList_data_by_uniqueID(t *testing.T) {
 	t.Run("match by uniqueID", func(t *testing.T) {
-		client := &mocknetworklists{}
+		client := &network.Mock{}
 
 		networkListResponse := network.GetNetworkListResponse{}
-		json.Unmarshal([]byte(loadFixtureBytes("testdata/TestDSNetworkList/SingleNetworkList.json")), &networkListResponse)
+		json.Unmarshal(loadFixtureBytes("testdata/TestDSNetworkList/SingleNetworkList.json"), &networkListResponse)
 
 		client.On("GetNetworkList",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			network.GetNetworkListRequest{UniqueID: "86093_AGEOLIST"},
 		).Return(&networkListResponse, nil)
 

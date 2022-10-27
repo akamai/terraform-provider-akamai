@@ -12,7 +12,7 @@ import (
 
 func TestAkamaiFailoverHostnames_data_basic(t *testing.T) {
 	t.Run("match by FailoverHostnames ID", func(t *testing.T) {
-		client := &mockappsec{}
+		client := &appsec.Mock{}
 
 		getFailoverHostnamesResponse := appsec.GetFailoverHostnamesResponse{}
 		err := json.Unmarshal(loadFixtureBytes("testdata/TestDSFailoverHostnames/FailoverHostnames.json"), &getFailoverHostnamesResponse)

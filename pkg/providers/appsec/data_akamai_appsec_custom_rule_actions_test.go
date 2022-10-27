@@ -12,7 +12,7 @@ import (
 
 func TestAkamaiCustomRuleActions_data_basic(t *testing.T) {
 	t.Run("match by CustomRuleActions ID", func(t *testing.T) {
-		client := &mockappsec{}
+		client := &appsec.Mock{}
 
 		getCustomRuleActionsResponse := appsec.GetCustomRuleActionsResponse{}
 		err := json.Unmarshal(loadFixtureBytes("testdata/TestDSCustomRuleActions/CustomRuleActions.json"), &getCustomRuleActionsResponse)

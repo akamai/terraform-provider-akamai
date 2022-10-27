@@ -12,7 +12,7 @@ import (
 
 func TestAkamaiRatePolicies_data_basic(t *testing.T) {
 	t.Run("match by RatePolicies ID", func(t *testing.T) {
-		client := &mockappsec{}
+		client := &appsec.Mock{}
 
 		config := appsec.GetConfigurationResponse{}
 		err := json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)

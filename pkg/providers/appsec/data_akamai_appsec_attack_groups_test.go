@@ -12,7 +12,7 @@ import (
 
 func TestAkamaiAttackGroups_data_basic(t *testing.T) {
 	t.Run("match by AttackGroups ID", func(t *testing.T) {
-		client := &mockappsec{}
+		client := &appsec.Mock{}
 
 		getAttackGroupsResponse := appsec.GetAttackGroupsResponse{}
 		err := json.Unmarshal(loadFixtureBytes("testdata/TestDSAttackGroups/AttackGroups.json"), &getAttackGroupsResponse)

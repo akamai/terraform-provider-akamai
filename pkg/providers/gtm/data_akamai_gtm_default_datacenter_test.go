@@ -10,7 +10,7 @@ import (
 
 func TestAccDataSourceGTMDefaultDatacenter_basic(t *testing.T) {
 	t.Run("basic", func(t *testing.T) {
-		client := &mockgtm{}
+		client := &gtm.Mock{}
 
 		dc := gtm.Datacenter{
 			DatacenterId: 1000,

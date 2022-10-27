@@ -51,11 +51,11 @@ func TestResourceIAMBlockedUserProperties(t *testing.T) {
 	}
 
 	tests := map[string]struct {
-		init  func(*mockiam)
+		init  func(*iam.Mock)
 		steps []resource.TestStep
 	}{
 		"basic": {
-			init: func(m *mockiam) {
+			init: func(m *iam.Mock) {
 				// create
 				expectListBlockedProperties(m, listRequest, []int64{}, nil).Once()
 				expectListBlockedProperties(m, listRequest, propertiesCreate, nil).Once()
@@ -82,7 +82,7 @@ func TestResourceIAMBlockedUserProperties(t *testing.T) {
 			},
 		},
 		"update group id - new resource": {
-			init: func(m *mockiam) {
+			init: func(m *iam.Mock) {
 				// create
 				expectListBlockedProperties(m, listRequest, []int64{}, nil).Once()
 				expectListBlockedProperties(m, listRequest, propertiesCreate, nil).Once()
@@ -117,7 +117,7 @@ func TestResourceIAMBlockedUserProperties(t *testing.T) {
 			},
 		},
 		"resource is already on server": {
-			init: func(m *mockiam) {
+			init: func(m *iam.Mock) {
 				// create
 				expectListBlockedProperties(m, listRequest, propertiesCreate, nil).Once()
 			},
@@ -129,7 +129,7 @@ func TestResourceIAMBlockedUserProperties(t *testing.T) {
 			},
 		},
 		"empty properties": {
-			init: func(m *mockiam) {},
+			init: func(m *iam.Mock) {},
 			steps: []resource.TestStep{
 				{
 					Config:      loadFixtureString("./testdata/TestResourceIAMBlockedUserProperties/create-empty-properties.tf"),
@@ -138,7 +138,7 @@ func TestResourceIAMBlockedUserProperties(t *testing.T) {
 			},
 		},
 		"basic import": {
-			init: func(m *mockiam) {
+			init: func(m *iam.Mock) {
 				// create
 				expectListBlockedProperties(m, listRequest, []int64{}, nil).Once()
 				expectListBlockedProperties(m, listRequest, propertiesCreate, nil).Once()
@@ -166,7 +166,7 @@ func TestResourceIAMBlockedUserProperties(t *testing.T) {
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &mockiam{}
+			client := &iam.Mock{}
 			test.init(client)
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
@@ -181,7 +181,7 @@ func TestResourceIAMBlockedUserProperties(t *testing.T) {
 }
 
 // read
-func expectListBlockedProperties(m *mockiam, request iam.ListBlockedPropertiesRequest, response []int64, err error) *mock.Call {
+func expectListBlockedProperties(m *iam.Mock, request iam.ListBlockedPropertiesRequest, response []int64, err error) *mock.Call {
 	on := m.On("ListBlockedProperties", mock.Anything, request)
 	if err != nil {
 		return on.Return(nil, err).Once()
@@ -190,7 +190,7 @@ func expectListBlockedProperties(m *mockiam, request iam.ListBlockedPropertiesRe
 }
 
 // create/update
-func expectUpdateBlockedProperties(m *mockiam, request iam.UpdateBlockedPropertiesRequest, response []int64, err error) *mock.Call {
+func expectUpdateBlockedProperties(m *iam.Mock, request iam.UpdateBlockedPropertiesRequest, response []int64, err error) *mock.Call {
 	on := m.On("UpdateBlockedProperties", mock.Anything, request)
 	if err != nil {
 		return on.Return(nil, err).Once()

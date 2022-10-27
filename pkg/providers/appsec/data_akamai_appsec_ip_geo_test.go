@@ -12,7 +12,7 @@ import (
 
 func TestAkamaiIPGeo_data_basic(t *testing.T) {
 	t.Run("match by IPGeo ID", func(t *testing.T) {
-		client := &mockappsec{}
+		client := &appsec.Mock{}
 
 		getIPGeoResponse := appsec.GetIPGeoResponse{}
 		err := json.Unmarshal(loadFixtureBytes("testdata/TestDSIPGeo/IPGeo.json"), &getIPGeoResponse)

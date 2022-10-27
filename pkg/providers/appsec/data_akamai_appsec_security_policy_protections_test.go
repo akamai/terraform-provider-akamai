@@ -12,7 +12,7 @@ import (
 
 func TestAkamaiPolicyProtections_data_basic(t *testing.T) {
 	t.Run("match by PolicyProtections ID", func(t *testing.T) {
-		client := &mockappsec{}
+		client := &appsec.Mock{}
 
 		policyProtectionsResponse := appsec.PolicyProtectionsResponse{}
 		err := json.Unmarshal(loadFixtureBytes("testdata/TestDSPolicyProtections/PolicyProtections.json"), &policyProtectionsResponse)

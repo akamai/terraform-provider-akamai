@@ -21,7 +21,7 @@ func TestDataGroups(t *testing.T) {
 	})
 
 	t.Run("happy path", func(t *testing.T) {
-		client := &mockiam{}
+		client := &iam.Mock{}
 		client.Test(test.TattleT{T: t})
 
 		{
@@ -79,7 +79,7 @@ func TestDataGroups(t *testing.T) {
 
 	t.Run("fail path", func(t *testing.T) {
 
-		client := &mockiam{}
+		client := &iam.Mock{}
 		client.Test(test.TattleT{T: t})
 
 		{

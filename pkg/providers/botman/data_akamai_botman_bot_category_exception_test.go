@@ -12,7 +12,7 @@ import (
 func TestDataBotCategoryException(t *testing.T) {
 	t.Run("DataBotCategoryException", func(t *testing.T) {
 
-		mockedBotmanClient := &mockbotman{}
+		mockedBotmanClient := &botman.Mock{}
 		response := map[string]interface{}{"testKey": "testValue3"}
 		expectedJSON := `{"testKey":"testValue3"}`
 		mockedBotmanClient.On("GetBotCategoryException",

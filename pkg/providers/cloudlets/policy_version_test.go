@@ -24,12 +24,12 @@ func TestFindingLatestPolicyVersion(t *testing.T) {
 	pageSize := 1000
 
 	tests := map[string]struct {
-		init      func(m *mockcloudlets)
+		init      func(m *cloudlets.Mock)
 		expected  int64
 		withError bool
 	}{
 		"last policy version on 1st page found": {
-			init: func(m *mockcloudlets) {
+			init: func(m *cloudlets.Mock) {
 				m.On("ListPolicyVersions", mock.Anything, cloudlets.ListPolicyVersionsRequest{
 					PolicyID: policyID,
 					PageSize: &pageSize,
@@ -44,7 +44,7 @@ func TestFindingLatestPolicyVersion(t *testing.T) {
 			expected: 999,
 		},
 		"first policy version on 1st page found": {
-			init: func(m *mockcloudlets) {
+			init: func(m *cloudlets.Mock) {
 				policyVersionsPage := preparePolicyVersionsPage(500, 0)
 				policyVersionsPage[0] = cloudlets.PolicyVersion{Version: 500}
 				m.On("ListPolicyVersions", mock.Anything, cloudlets.ListPolicyVersionsRequest{
@@ -56,7 +56,7 @@ func TestFindingLatestPolicyVersion(t *testing.T) {
 			expected: 500,
 		},
 		"policy version on 3rd page found": {
-			init: func(m *mockcloudlets) {
+			init: func(m *cloudlets.Mock) {
 				m.On("ListPolicyVersions", mock.Anything, cloudlets.ListPolicyVersionsRequest{
 					PolicyID: policyID,
 					PageSize: &pageSize,
@@ -76,7 +76,7 @@ func TestFindingLatestPolicyVersion(t *testing.T) {
 			expected: 2499,
 		},
 		"no policy versions found": {
-			init: func(m *mockcloudlets) {
+			init: func(m *cloudlets.Mock) {
 				m.On("ListPolicyVersions", mock.Anything, cloudlets.ListPolicyVersionsRequest{
 					PolicyID: policyID,
 					PageSize: &pageSize,
@@ -86,7 +86,7 @@ func TestFindingLatestPolicyVersion(t *testing.T) {
 			withError: true,
 		},
 		"error listing policy versions": {
-			init: func(m *mockcloudlets) {
+			init: func(m *cloudlets.Mock) {
 				m.On("ListPolicyVersions", mock.Anything, cloudlets.ListPolicyVersionsRequest{
 					PolicyID: policyID,
 					PageSize: &pageSize,
@@ -99,7 +99,7 @@ func TestFindingLatestPolicyVersion(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			m := &mockcloudlets{}
+			m := &cloudlets.Mock{}
 			test.init(m)
 			version, err := findLatestPolicyVersion(context.Background(), policyID, m)
 			if test.withError {

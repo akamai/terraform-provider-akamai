@@ -11,7 +11,7 @@ import (
 
 func TestDataAkamaiBotCategory(t *testing.T) {
 	t.Run("DataAkamaiBotCategory", func(t *testing.T) {
-		mockedBotmanClient := &mockbotman{}
+		mockedBotmanClient := &botman.Mock{}
 
 		response := botman.GetAkamaiBotCategoryListResponse{
 			Categories: []map[string]interface{}{
@@ -53,7 +53,7 @@ func TestDataAkamaiBotCategory(t *testing.T) {
 		mockedBotmanClient.AssertExpectations(t)
 	})
 	t.Run("DataAkamaiBotCategory filter by name", func(t *testing.T) {
-		mockedBotmanClient := &mockbotman{}
+		mockedBotmanClient := &botman.Mock{}
 
 		response := botman.GetAkamaiBotCategoryListResponse{
 			Categories: []map[string]interface{}{

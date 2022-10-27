@@ -12,7 +12,7 @@ import (
 
 func TestAkamaiReputationAnalysis_data_basic(t *testing.T) {
 	t.Run("match by ReputationAnalysis ID", func(t *testing.T) {
-		client := &mockappsec{}
+		client := &appsec.Mock{}
 
 		getReputationAnalysisResponse := appsec.GetReputationAnalysisResponse{}
 		err := json.Unmarshal(loadFixtureBytes("testdata/TestDSReputationAnalysis/ReputationAnalysis.json"), &getReputationAnalysisResponse)

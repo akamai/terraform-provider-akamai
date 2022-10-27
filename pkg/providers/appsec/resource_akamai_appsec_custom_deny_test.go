@@ -12,7 +12,7 @@ import (
 
 func TestAkamaiCustomDeny_res_basic(t *testing.T) {
 	t.Run("match by CustomDeny ID", func(t *testing.T) {
-		client := &mockappsec{}
+		client := &appsec.Mock{}
 
 		configResponse := appsec.GetConfigurationResponse{}
 		err := json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &configResponse)

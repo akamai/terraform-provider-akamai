@@ -12,7 +12,7 @@ import (
 func TestResourceJavascriptInjection(t *testing.T) {
 	t.Run("ResourceJavascriptInjection", func(t *testing.T) {
 
-		mockedBotmanClient := &mockbotman{}
+		mockedBotmanClient := &botman.Mock{}
 		createResponse := map[string]interface{}{"testKey": "testValue3"}
 		createRequest := test.FixtureBytes("testdata/JsonPayload/create.json")
 		mockedBotmanClient.On("UpdateJavascriptInjection",

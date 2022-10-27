@@ -11,7 +11,7 @@ import (
 
 func TestDataContracts(t *testing.T) {
 	t.Run("list contracts", func(t *testing.T) {
-		client := &mockpapi{}
+		client := &papi.Mock{}
 		ctrs := papi.ContractsItems{Items: []*papi.Contract{
 			{
 				ContractID:       "ctr_test1",

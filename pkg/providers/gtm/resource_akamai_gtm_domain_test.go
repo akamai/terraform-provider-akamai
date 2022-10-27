@@ -205,7 +205,7 @@ var completeResponseStatus = gtm.ResponseStatus{
 func TestResGtmDomain(t *testing.T) {
 
 	t.Run("create domain", func(t *testing.T) {
-		client := &mockgtm{}
+		client := &gtm.Mock{}
 
 		getCall := client.On("GetDomain",
 			mock.Anything, // ctx is irrelevant for this test
@@ -280,7 +280,7 @@ func TestResGtmDomain(t *testing.T) {
 	})
 
 	t.Run("create domain failed", func(t *testing.T) {
-		client := &mockgtm{}
+		client := &gtm.Mock{}
 
 		client.On("CreateDomain",
 			mock.Anything, // ctx is irrelevant for this test
@@ -313,7 +313,7 @@ func TestResGtmDomain(t *testing.T) {
 	})
 
 	t.Run("create domain denied", func(t *testing.T) {
-		client := &mockgtm{}
+		client := &gtm.Mock{}
 
 		dr := gtm.DomainResponse{}
 		dr.Resource = &dom
@@ -347,7 +347,7 @@ func TestResGtmDomain(t *testing.T) {
 	})
 
 	t.Run("import domain", func(t *testing.T) {
-		client := &mockgtm{}
+		client := &gtm.Mock{}
 
 		getCall := client.On("GetDomain",
 			mock.Anything,
