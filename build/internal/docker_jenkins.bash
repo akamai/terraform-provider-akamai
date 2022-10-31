@@ -12,7 +12,7 @@ RELOAD_DOCKER_IMAGE="${3:-false}"
 
 # Recalculate DOCKER_IMAGE_SIZE if any changes to dockerfile.
 TIMEOUT="20m"
-DOCKER_IMAGE_SIZE="673113557"
+DOCKER_IMAGE_SIZE="651787326"
 
 SSH_PRV_KEY="$(cat ~/.ssh/id_rsa)"
 SSH_PUB_KEY="$(cat ~/.ssh/id_rsa.pub)"
@@ -26,7 +26,7 @@ COVERAGE_HTML="$COVERAGE_DIR"/index.html
 
 WORKDIR="${WORKDIR-$(pwd)}"
 echo "WORKDIR is $WORKDIR"
-TERRAFORM_VERSION="1.0.4"
+TERRAFORM_VERSION="1.2.5"
 
 STASH_SERVER=git.source.akamai.com
 GIT_IP=$(dig +short $STASH_SERVER)

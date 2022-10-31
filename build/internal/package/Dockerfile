@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.0-experimental
-ARG TERRAFORM_VERSION="1.0.4"
+ARG TERRAFORM_VERSION="1.2.5"
 FROM alpine:3.15
 ENV PROVIDER_VERSION="1.0.0" \
     CGO_ENABLED=0 \
