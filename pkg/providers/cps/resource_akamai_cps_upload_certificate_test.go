@@ -168,7 +168,7 @@ func TestResourceCPSUploadCertificateLifecycle(t *testing.T) {
 			checkFuncForUpdate:        nil,
 			checkFuncForSecondUpdate:  checkAttrs(createMockData(certECDSAUpdatedForTests, trustChainECDSAUpdatedForTests, certRSAUpdatedForTests, trustChainRSAUpdatedForTests, true, false, true, false, []string{"CERTIFICATE_ADDED_TO_TRUST_CHAIN", "CERTIFICATE_ALREADY_LOADED", "CERTIFICATE_DATA_BLANK_OR_MISSING", "CERTIFICATE_HAS_NULL_ISSUER"})),
 			errorForCreate:            nil,
-			errorForUpdate:            regexp.MustCompile("Error: could not process post verification warnings: not every warning has been acknowledged: warnings cannot be approved: CERTIFICATE_HAS_NULL_ISSUER"),
+			errorForUpdate:            regexp.MustCompile(`Error: could not process post verification warnings: not every warning has been acknowledged: warnings cannot be approved: "CERTIFICATE_HAS_NULL_ISSUER"`),
 			errorForSecondUpdate:      nil,
 		},
 	}
@@ -302,7 +302,7 @@ func TestCreateCPSUploadCertificate(t *testing.T) {
 			enrollmentID: 2,
 			changeID:     22,
 			configPath:   "testdata/TestResCPSUploadCertificate/auto_approve_warnings/auto_approve_warnings.tf",
-			error:        regexp.MustCompile(`Error: could not process post verification warnings: not every warning has been acknowledged: warnings cannot be approved: CERTIFICATE_HAS_NULL_ISSUER`),
+			error:        regexp.MustCompile(`Error: could not process post verification warnings: not every warning has been acknowledged: warnings cannot be approved: "CERTIFICATE_HAS_NULL_ISSUER"`),
 		},
 		"create: auto_approve_warnings not provided and empty warning list": {
 			init: func(t *testing.T, m *mockcps, enrollment *cps.Enrollment, enrollmentID, changeID int) {
@@ -337,7 +337,7 @@ func TestCreateCPSUploadCertificate(t *testing.T) {
 			changeID:     22,
 			configPath:   "testdata/TestResCPSUploadCertificate/auto_approve_warnings/auto_approve_warnings_not_provided.tf",
 			checkFunc:    checkAttrs(createMockData("", "", certRSAForTests, trustChainRSAForTests, true, false, false, false, nil)),
-			error:        regexp.MustCompile(`Error: could not process post verification warnings: not every warning has been acknowledged: warnings cannot be approved: CERTIFICATE_KMI_DATA_MISSING`),
+			error:        regexp.MustCompile(`Error: could not process post verification warnings: not every warning has been acknowledged: warnings cannot be approved: "CERTIFICATE_KMI_DATA_MISSING"`),
 		},
 		"create: auto_approve_warnings empty list and warnings": {
 			init: func(t *testing.T, m *mockcps, enrollment *cps.Enrollment, enrollmentID, changeID int) {

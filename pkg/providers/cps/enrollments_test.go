@@ -142,19 +142,19 @@ func TestCanApproveWarnings(t *testing.T) {
 		"none can be auto-approved": {
 			warnings:            "Certificate data is blank or missing for 'RSA'.\nThe 'ECDSA' certificate is set to expire in [2] years, [3] months. The certificate has a validity period of greater than 397 days. This certificate will not be accepted by all major browsers for SSL/TLS connections. Please work with your Certificate Authority to reissue the certificate with an acceptable lifetime.\nThe trust chain is empty and the end-entity certificate may have been signed by a non-standard root certificate.",
 			autoApproveWarnings: []string{},
-			err:                 "warnings cannot be approved: THIRD_PARTY_CERTIFICATE_DATA_BLANK_OR_MISSING, CERTIFICATE_EXPIRATION_DATE_BEYOND_MAX_DAYS, TRUST_CHAIN_EMPTY_AND_CERTIFICATE_SIGNED_BY_NON_STANDARD_ROOT",
+			err:                 `warnings cannot be approved: "THIRD_PARTY_CERTIFICATE_DATA_BLANK_OR_MISSING", "CERTIFICATE_EXPIRATION_DATE_BEYOND_MAX_DAYS", "TRUST_CHAIN_EMPTY_AND_CERTIFICATE_SIGNED_BY_NON_STANDARD_ROOT"`,
 			can:                 false,
 		},
 		"none warning can be auto-approved and none provided": {
 			warnings:            "",
 			autoApproveWarnings: []string{},
-			err:                 "warnings cannot be approved: THIRD_PARTY_CERTIFICATE_DATA_BLANK_OR_MISSING, CERTIFICATE_EXPIRATION_DATE_BEYOND_MAX_DAYS, TRUST_CHAIN_EMPTY_AND_CERTIFICATE_SIGNED_BY_NON_STANDARD_ROOT",
+			err:                 "",
 			can:                 true,
 		},
 		"not all warnings can be approved": {
 			warnings:            "Certificate data is blank or missing for 'RSA'.\nThe 'ECDSA' certificate is set to expire in [2] years, [3] months. The certificate has a validity period of greater than 397 days. This certificate will not be accepted by all major browsers for SSL/TLS connections. Please work with your Certificate Authority to reissue the certificate with an acceptable lifetime.\nThe trust chain is empty and the end-entity certificate may have been signed by a non-standard root certificate.",
 			autoApproveWarnings: []string{"CERTIFICATE_EXPIRATION_DATE_BEYOND_MAX_DAYS", "TRUST_CHAIN_EMPTY_AND_CERTIFICATE_SIGNED_BY_NON_STANDARD_ROOT"},
-			err:                 "warnings cannot be approved: THIRD_PARTY_CERTIFICATE_DATA_BLANK_OR_MISSING",
+			err:                 `warnings cannot be approved: "THIRD_PARTY_CERTIFICATE_DATA_BLANK_OR_MISSING"`,
 			can:                 false,
 		},
 		"unknown warning": {

@@ -11,7 +11,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	cpstools "github.com/akamai/terraform-provider-akamai/v2/pkg/providers/cps/tools"
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/providers/datastream"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
@@ -199,7 +198,7 @@ func resourceCPSThirdPartyEnrollmentCreate(ctx context.Context, d *schema.Resour
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	autoApproveWarningsAsString := datastream.InterfaceSliceToStringSlice(autoApproveWarnings.List())
+	autoApproveWarningsAsString := convertUserWarningsToStringSlice(autoApproveWarnings.List())
 
 	if err = waitForVerification(ctx, logger, client, res.ID, acknowledgeWarnings, autoApproveWarningsAsString); err != nil {
 		return diag.FromErr(err)
@@ -260,11 +259,11 @@ func resourceCPSThirdPartyEnrollmentUpdate(ctx context.Context, d *schema.Resour
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	autoApproveWarnings, err := tools.GetListValue("auto_approve_warnings", d)
+	autoApproveWarnings, err := tools.GetSetValue("auto_approve_warnings", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	autoApproveWarningsAsString := datastream.InterfaceSliceToStringSlice(autoApproveWarnings)
+	autoApproveWarningsAsString := convertUserWarningsToStringSlice(autoApproveWarnings.List())
 
 	enrollmentID, err := strconv.Atoi(d.Id())
 	if err != nil {

@@ -1437,7 +1437,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 				Steps: []resource.TestStep{
 					{
 						Config:      loadFixtureString("testdata/TestResThirdPartyEnrollment/auto_approve_warnings/create_enrollment.tf"),
-						ExpectError: regexp.MustCompile(`warnings cannot be approved: FIXED_TRUST_CHAIN_PARSING_ERROR`),
+						ExpectError: regexp.MustCompile(`warnings cannot be approved: "FIXED_TRUST_CHAIN_PARSING_ERROR"`),
 					},
 				},
 			})

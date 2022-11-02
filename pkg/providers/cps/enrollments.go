@@ -453,7 +453,7 @@ func canApproveWarnings(autoApproveWarnings []string, warningsAsString string) (
 		}
 	}
 	if len(unApprovedWarnings) > 0 {
-		return false, fmt.Errorf("%w: %s", ErrWarningsCannotBeApproved, strings.Join(unApprovedWarnings, ", "))
+		return false, fmt.Errorf(`%w: "%s"`, ErrWarningsCannotBeApproved, strings.Join(unApprovedWarnings, `", "`))
 	}
 	return true, nil
 }

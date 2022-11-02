@@ -8,6 +8,7 @@
   * New data source:
     * [akamai_cps_csr](xxx.md) - returns latest Certificate Signing Request for given enrollment
     * [akamai_cps_deployments](xxx.md) - returns deployed certificates for given enrollment
+    * [akamai_cps_warnings](xxx.md) - returns a map of all possible CPS warnings (ID to warning message). The IDs can be later used to approve warnings (auto_approve_warnings field)
   * Added resources allowing management of third-party enrollments:
     * [akamai_cps_third_party_enrollment](xxx.md) - create, read, update, delete and import third-party enrollments
     * [akamai_cps_upload_certificate](xxx.md) - create, read, update and delete

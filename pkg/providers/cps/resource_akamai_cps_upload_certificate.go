@@ -13,6 +13,7 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	toolsCPS "github.com/akamai/terraform-provider-akamai/v2/pkg/providers/cps/tools"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
+	"github.com/apex/log"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -68,7 +69,7 @@ func resourceCPSUploadCertificate() *schema.Resource {
 				Description: "Whether to acknowledge post-verification warnings",
 			},
 			"auto_approve_warnings": {
-				Type:        schema.TypeList,
+				Type:        schema.TypeSet,
 				Optional:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "List of post-verification warnings to be automatically acknowledged",
@@ -112,7 +113,7 @@ func resourceCPSUploadCertificateCreate(ctx context.Context, d *schema.ResourceD
 	client := inst.Client(meta)
 	logger.Debug("Creating upload certificate")
 
-	return upsertUploadCertificate(ctx, d, m, client)
+	return upsertUploadCertificate(ctx, d, m, client, logger)
 }
 
 func resourceCPSUploadCertificateRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -225,7 +226,7 @@ func resourceCPSUploadCertificateUpdate(ctx context.Context, d *schema.ResourceD
 		}
 
 		if changeStatus.StatusInfo.Status == waitReviewThirdPartyCert || changeStatus.StatusInfo.Status == waitUploadThirdParty {
-			return upsertUploadCertificate(ctx, d, m, client)
+			return upsertUploadCertificate(ctx, d, m, client, logger)
 		}
 
 		if d.HasChanges("acknowledge_post_verification_warnings") || d.HasChanges("auto_approve_warnings") {
@@ -266,7 +267,7 @@ func resourceCPSUploadCertificateUpdate(ctx context.Context, d *schema.ResourceD
 		}
 
 		if changeStatus.StatusInfo.Status == waitUploadThirdParty || changeStatus.StatusInfo.Status == waitReviewThirdPartyCert {
-			return upsertUploadCertificate(ctx, d, m, client)
+			return upsertUploadCertificate(ctx, d, m, client, logger)
 		}
 
 		return diag.Errorf("cannot make changes to the certificate with current status: %s", changeStatus.StatusInfo.Status)
@@ -283,7 +284,7 @@ func resourceCPSUploadCertificateDelete(_ context.Context, _ *schema.ResourceDat
 	return nil
 }
 
-func upsertUploadCertificate(ctx context.Context, d *schema.ResourceData, m interface{}, client cps.CPS) diag.Diagnostics {
+func upsertUploadCertificate(ctx context.Context, d *schema.ResourceData, m interface{}, client cps.CPS, logger log.Interface) diag.Diagnostics {
 	attrs, err := getCPSUploadCertificateAttrs(d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -322,7 +323,7 @@ func upsertUploadCertificate(ctx context.Context, d *schema.ResourceData, m inte
 	}
 
 	if status == waitReviewThirdPartyCert {
-		if err = processPostVerificationWarnings(ctx, client, d, attrs.enrollmentID, changeID); err != nil {
+		if err = processPostVerificationWarnings(ctx, client, d, attrs.enrollmentID, changeID, logger); err != nil {
 			return diag.Errorf("could not process post verification warnings: %s", err)
 		}
 	}
@@ -473,7 +474,7 @@ func wrapCertificatesToUpload(certificateECDSA, trustChainECDSA, certificateRSA,
 }
 
 // processPostVerificationWarnings is responsible for comparison of user-accepted warnings and required warnings
-func processPostVerificationWarnings(ctx context.Context, client cps.CPS, d *schema.ResourceData, enrollmentID, changeID int) error {
+func processPostVerificationWarnings(ctx context.Context, client cps.CPS, d *schema.ResourceData, enrollmentID, changeID int, logger log.Interface) error {
 	warnings, err := client.GetChangePostVerificationWarnings(ctx, cps.GetChangeRequest{
 		EnrollmentID: enrollmentID,
 		ChangeID:     changeID,
@@ -482,17 +483,19 @@ func processPostVerificationWarnings(ctx context.Context, client cps.CPS, d *sch
 		return fmt.Errorf("could not get post verification warnings: %s", err)
 	}
 
+	logger.Debugf("Post-verification warnings: %s", warnings.Warnings)
+
 	acceptAllWarnings, err := tools.GetBoolValue("acknowledge_post_verification_warnings", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return fmt.Errorf("could not get `acknowledge_post_verification_warnings` attribute: %s", err)
 	}
 
-	autoApproveWarnings, err := tools.GetListValue("auto_approve_warnings", d)
+	autoApproveWarnings, err := tools.GetSetValue("auto_approve_warnings", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return fmt.Errorf("could not get `auto_approve_warnings` attribute: %s", err)
 	}
 
-	userWarningsString := convertUserWarningsToStringSlice(autoApproveWarnings)
+	userWarningsString := convertUserWarningsToStringSlice(autoApproveWarnings.List())
 	canAccept, err := canApproveWarnings(userWarningsString, warnings.Warnings)
 
 	if len(warnings.Warnings) != 0 {
