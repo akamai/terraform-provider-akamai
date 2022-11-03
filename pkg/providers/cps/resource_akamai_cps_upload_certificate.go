@@ -143,45 +143,36 @@ func resourceCPSUploadCertificateRead(ctx context.Context, d *schema.ResourceDat
 	}
 
 	var attrs map[string]interface{}
-	if waitForDeployment {
+	if waitForDeployment && len(enrollment.PendingChanges) != 0 {
 		ackChangeManagement, err := tools.GetBoolValue("acknowledge_change_management", d)
 		if err != nil {
 			return diag.Errorf("could not get `acknowledge change management` attribute: %s", err)
 		}
 
-		if len(enrollment.PendingChanges) != 0 {
-			changeStatus, err := sendGetChangeStatusReq(ctx, client, enrollmentID, changeID)
-			if err != nil {
+		changeStatus, err := sendGetChangeStatusReq(ctx, client, enrollmentID, changeID)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		if changeStatus.StatusInfo.Status != waitUploadThirdParty && changeStatus.StatusInfo.Status != waitReviewThirdPartyCert {
+			statusToWaitFor := complete
+			if !ackChangeManagement && enrollment.ChangeManagement {
+				statusToWaitFor = waitAckChangeManagement
+			}
+			if err = waitForChangeStatus(ctx, client, enrollmentID, changeID, statusToWaitFor); err != nil {
 				return diag.FromErr(err)
 			}
 
-			if changeStatus.StatusInfo.Status != waitUploadThirdParty && changeStatus.StatusInfo.Status != waitReviewThirdPartyCert {
-				if !ackChangeManagement && enrollment.ChangeManagement {
-					if err = waitForChangeStatus(ctx, client, enrollmentID, changeID, waitAckChangeManagement); err != nil {
-						return diag.FromErr(err)
-					}
-				} else {
-					if err = waitForChangeStatus(ctx, client, enrollmentID, changeID, complete); err != nil {
-						return diag.FromErr(err)
-					}
-				}
-			}
 		}
-
-		certHistory, err := client.GetCertificateHistory(ctx, cps.GetCertificateHistoryRequest{EnrollmentID: enrollmentID})
-		if err != nil {
-			return diag.Errorf("could not get certificate history: %s", err)
-		}
-		attrs = createAttrsFromCertificateHistory(certHistory)
-	} else {
-		changeHistory, err := client.GetChangeHistory(ctx, cps.GetChangeHistoryRequest{
-			EnrollmentID: enrollmentID,
-		})
-		if err != nil {
-			return diag.Errorf("could not get change history: %s", err)
-		}
-		attrs = createAttrsFromChangeHistory(changeHistory)
 	}
+
+	changeHistory, err := client.GetChangeHistory(ctx, cps.GetChangeHistoryRequest{
+		EnrollmentID: enrollmentID,
+	})
+	if err != nil {
+		return diag.Errorf("could not get change history: %s", err)
+	}
+	attrs = createAttrsFromChangeHistory(changeHistory)
 
 	if err = tools.SetAttrs(d, attrs); err != nil {
 		return diag.Errorf("could not set attributes: %s", err)
@@ -353,7 +344,17 @@ func checkUnacknowledgedWarnings(ctx context.Context, diff *schema.ResourceDiff,
 	logger.Debug("Checking for unacknowledged warnings")
 
 	id := diff.Get("enrollment_id")
-	enrollmentID := id.(int)
+	enrollmentID, ok := id.(int)
+	if !ok {
+		logger.Warnf("expected enrollmentID of type int, got: %T", enrollmentID)
+		return nil
+	}
+
+	// in case of the variable dependency, enrollmentID might be of '0' value when this function is first invoked, hence it should proceed
+	// further and load the variable correctly (after dependent resource is created) in the Create operation
+	if enrollmentID == 0 {
+		return nil
+	}
 
 	enrollment, err := client.GetEnrollment(ctx, cps.GetEnrollmentRequest{EnrollmentID: enrollmentID})
 	if err != nil {
@@ -585,37 +586,6 @@ func createAttrsFromChangeHistory(changeHistory *cps.GetChangeHistoryResponse) m
 				}
 				break
 			}
-		}
-	}
-
-	attrs := make(map[string]interface{})
-	attrs["certificate_ecdsa_pem"] = certificateECDSA
-	attrs["trust_chain_ecdsa_pem"] = trustChainECDSA
-	attrs["certificate_rsa_pem"] = certificateRSA
-	attrs["trust_chain_rsa_pem"] = trustChainRSA
-
-	return attrs
-}
-
-// createAttrsFromCertificateHistory creates attributes for a resource form GetCertificateHistoryResponse
-func createAttrsFromCertificateHistory(certHistory *cps.GetCertificateHistoryResponse) map[string]interface{} {
-	var certificateECDSA, certificateRSA, trustChainECDSA, trustChainRSA string
-	if len(certHistory.Certificates) != 0 {
-		if certHistory.Certificates[0].PrimaryCertificate.KeyAlgorithm == "RSA" {
-			certificateRSA = certHistory.Certificates[0].PrimaryCertificate.Certificate
-			trustChainRSA = certHistory.Certificates[0].PrimaryCertificate.TrustChain
-		} else {
-			certificateECDSA = certHistory.Certificates[0].PrimaryCertificate.Certificate
-			trustChainECDSA = certHistory.Certificates[0].PrimaryCertificate.TrustChain
-		}
-	}
-	if len(certHistory.Certificates[0].MultiStackedCertificates) != 0 {
-		if certHistory.Certificates[0].MultiStackedCertificates[0].KeyAlgorithm == "RSA" {
-			certificateRSA = certHistory.Certificates[0].MultiStackedCertificates[0].Certificate
-			trustChainRSA = certHistory.Certificates[0].MultiStackedCertificates[0].TrustChain
-		} else {
-			certificateECDSA = certHistory.Certificates[0].MultiStackedCertificates[0].Certificate
-			trustChainECDSA = certHistory.Certificates[0].MultiStackedCertificates[0].TrustChain
 		}
 	}
 
