@@ -15,9 +15,10 @@ func dataSourceCPSWarnings() *schema.Resource {
 		ReadContext: dataCPSWarningsRead,
 		Schema: map[string]*schema.Schema{
 			"warnings": {
-				Type:     schema.TypeMap,
-				Computed: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Type:        schema.TypeMap,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "Map of pre- and post-verification warnings consisting of the warning id and description",
 			},
 		},
 	}

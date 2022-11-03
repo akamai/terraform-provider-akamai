@@ -34,7 +34,7 @@ func resourceCPSUploadCertificate() *schema.Resource {
 				Type:        schema.TypeInt,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Unique identifier of the enrollment",
+				Description: "The unique identifier of the enrollment",
 			},
 			"certificate_ecdsa_pem": {
 				Type:             schema.TypeString,
