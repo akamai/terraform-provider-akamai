@@ -83,7 +83,7 @@ checkout_edgegrid() {
 }
 
 adjust_edgegrid() {
-  go mod edit -replace github.com/akamai/AkamaiOPEN-edgegrid-golang/v2="./akamaiopen-edgegrid-golang"
+  go mod edit -replace github.com/akamai/AkamaiOPEN-edgegrid-golang/v3="./akamaiopen-edgegrid-golang"
   go mod tidy -compat=1.17
 }
 
@@ -121,8 +121,8 @@ nexus_push() {
 }
 
 mod_edit() {
-  edgegrid_version=$(go list -m -json -versions github.com/akamai/AkamaiOPEN-edgegrid-golang/v2 | python3 -c "import sys, json; print(json.load(sys.stdin)['Version'])")
-  go mod edit -replace github.com/akamai/AkamaiOPEN-edgegrid-golang/v2="stash.akamai.com/fee/akamaiopen-edgegrid-golang.git/v2@${edgegrid_version}"
+  edgegrid_version=$(go list -m -json -versions github.com/akamai/AkamaiOPEN-edgegrid-golang/v3 | python3 -c "import sys, json; print(json.load(sys.stdin)['Version'])")
+  go mod edit -replace github.com/akamai/AkamaiOPEN-edgegrid-golang/v3="stash.akamai.com/fee/akamaiopen-edgegrid-golang.git/v3@${edgegrid_version}"
 }
 
 outputs=()
