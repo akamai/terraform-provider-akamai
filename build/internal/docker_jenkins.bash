@@ -7,7 +7,7 @@
 set -e
 
 PROVIDER_BRANCH_NAME="${1:-develop}"
-EDGEGRID_BRANCH_NAME="${2:-v2}"
+EDGEGRID_BRANCH_NAME="${2:-develop}"
 RELOAD_DOCKER_IMAGE="${3:-false}"
 
 # Recalculate DOCKER_IMAGE_SIZE if any changes to dockerfile.
