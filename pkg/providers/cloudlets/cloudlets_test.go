@@ -3,7 +3,7 @@ package cloudlets
 import (
 	"context"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/cloudlets"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/cloudlets"
 	"github.com/stretchr/testify/mock"
 )
 

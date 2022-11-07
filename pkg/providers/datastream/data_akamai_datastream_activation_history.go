@@ -10,7 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/datastream"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/datastream"
 )
 
 func dataAkamaiDatastreamActivationHistory() *schema.Resource {

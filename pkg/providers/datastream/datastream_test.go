@@ -3,7 +3,7 @@ package datastream
 import (
 	"context"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/datastream"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/datastream"
 	"github.com/stretchr/testify/mock"
 )
 

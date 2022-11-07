@@ -3,7 +3,7 @@ package iam
 import (
 	"context"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/iam"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/iam"
 	"github.com/stretchr/testify/mock"
 )
 

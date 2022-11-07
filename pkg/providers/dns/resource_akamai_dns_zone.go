@@ -11,8 +11,8 @@ import (
 
 	"github.com/apex/log"
 
-	dns "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/configdns"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/session"
+	dns "github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/configdns"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/session"
 
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"

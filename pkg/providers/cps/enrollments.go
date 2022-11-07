@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/cps"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/cps"
 	cpstools "github.com/akamai/terraform-provider-akamai/v2/pkg/providers/cps/tools"
 )
 

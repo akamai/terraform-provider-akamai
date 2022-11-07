@@ -3,7 +3,7 @@ package imaging
 import (
 	"context"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/imaging"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/imaging"
 	"github.com/stretchr/testify/mock"
 )
 

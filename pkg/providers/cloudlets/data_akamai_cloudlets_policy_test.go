@@ -8,7 +8,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/cloudlets"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/cloudlets"
 )
 
 func TestDataCloudletsPolicy(t *testing.T) {

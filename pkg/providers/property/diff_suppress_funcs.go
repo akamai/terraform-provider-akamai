@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"sort"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/papi"
 )
 
 // compareRulesJSON handles comparison between two papi.Rules JSON representations

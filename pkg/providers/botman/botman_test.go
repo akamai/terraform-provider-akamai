@@ -3,7 +3,7 @@ package botman
 import (
 	"context"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/botman"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/botman"
 	"github.com/stretchr/testify/mock"
 )
 

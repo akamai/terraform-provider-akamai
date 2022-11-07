@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/tj/assert"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/datastream"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/datastream"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 

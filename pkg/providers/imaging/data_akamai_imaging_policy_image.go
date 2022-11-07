@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"io"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/imaging"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/imaging"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/providers/imaging/imagewriter"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"

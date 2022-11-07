@@ -3,7 +3,7 @@ package networklists
 import (
 	"context"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/networklists"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/networklists"
 	"github.com/stretchr/testify/mock"
 )
 

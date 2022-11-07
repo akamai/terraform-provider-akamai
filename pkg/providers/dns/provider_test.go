@@ -10,7 +10,7 @@ import (
 
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 
-	dns "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/configdns"
+	dns "github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/configdns"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )

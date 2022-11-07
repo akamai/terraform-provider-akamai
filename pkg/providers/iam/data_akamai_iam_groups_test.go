@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/iam"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/iam"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/test"
 )
 

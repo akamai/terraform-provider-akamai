@@ -3,7 +3,7 @@ package botman
 import (
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/botman"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/botman"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/test"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"

@@ -3,7 +3,7 @@ package edgeworkers
 import (
 	"context"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/edgeworkers"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/edgeworkers"
 	"github.com/stretchr/testify/mock"
 )
 

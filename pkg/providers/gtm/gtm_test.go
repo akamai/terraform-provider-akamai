@@ -3,7 +3,7 @@ package gtm
 import (
 	"context"
 
-	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/configgtm"
+	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/configgtm"
 	"github.com/stretchr/testify/mock"
 )
 
