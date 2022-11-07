@@ -6,7 +6,7 @@ import (
 	"errors"
 	"strconv"
 
-	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
 
@@ -52,7 +52,7 @@ func dataSourceAPIRequestConstraintsRead(ctx context.Context, d *schema.Resource
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "dataSourceAPIRequestConstraintsRead")
 
-	getAPIiRequestConstraints := v2.GetApiRequestConstraintsRequest{}
+	getAPIiRequestConstraints := appsec.GetApiRequestConstraintsRequest{}
 
 	configID, err := tools.GetIntValue("config_id", d)
 	if err != nil {
