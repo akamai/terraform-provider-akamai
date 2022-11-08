@@ -8,7 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	mock "github.com/stretchr/testify/mock"
 
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/test"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/test"
 )
 
 func TestDataCountries(t *testing.T) {

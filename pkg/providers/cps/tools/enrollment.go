@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/cps"
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 

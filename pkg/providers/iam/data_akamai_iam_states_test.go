@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	iam "github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/iam"
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/test"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/test"
 )
 
 func TestDataStates(t *testing.T) {

@@ -5,15 +5,15 @@ import (
 	"flag"
 
 	// Load the providers
-	_ "github.com/akamai/terraform-provider-akamai/v2/pkg/providers"
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/providers/registry"
+	_ "github.com/akamai/terraform-provider-akamai/v3/pkg/providers"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/providers/registry"
 	goplugin "github.com/hashicorp/go-plugin"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov5"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov5/tf5server"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"google.golang.org/grpc"
 
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
 )
