@@ -664,3 +664,23 @@ func (p *mockpapi) ListIncludeVersionAvailableBehaviors(ctx context.Context, r p
 
 	return args.Get(0).(*papi.AvailableBehaviorsResponse), args.Error(1)
 }
+
+func (p *mockpapi) ListAvailableIncludes(ctx context.Context, r papi.ListAvailableIncludesRequest) (*papi.ListAvailableIncludesResponse, error) {
+	args := p.Called(ctx, r)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*papi.ListAvailableIncludesResponse), args.Error(1)
+}
+
+func (p *mockpapi) ListReferencedIncludes(ctx context.Context, r papi.ListReferencedIncludesRequest) (*papi.ListReferencedIncludesResponse, error) {
+	args := p.Called(ctx, r)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*papi.ListReferencedIncludesResponse), args.Error(1)
+}
