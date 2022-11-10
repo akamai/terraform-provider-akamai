@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 
-	v2 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/appsec"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
 
@@ -56,7 +56,7 @@ func dataSourceContractsGroupsRead(ctx context.Context, d *schema.ResourceData, 
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "dataSourceContractsGroupsRead")
 
-	getContractsGroups := v2.GetContractsGroupsRequest{}
+	getContractsGroups := appsec.GetContractsGroupsRequest{}
 
 	contractID, err := tools.GetStringValue("contractid", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
