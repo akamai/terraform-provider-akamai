@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"testing"
 
-	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/configgtm"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/gtm"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 )

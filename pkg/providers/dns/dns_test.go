@@ -4,7 +4,7 @@ import (
 	"context"
 	"net"
 
-	dns "github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/configdns"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/dns"
 	"github.com/stretchr/testify/mock"
 )
 
