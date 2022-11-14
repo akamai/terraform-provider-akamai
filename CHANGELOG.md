@@ -7,6 +7,7 @@
 * PAPI
   * Added data sources:
     * `akamai_property_include` - get property include version information
+    * `akamai_property_includes` - get property includes information
 
 * APPSEC
   * Add `json` attribute to `akamai_appsec_security_policy` data source to allow obtaining policy name given its ID.
