@@ -80,6 +80,9 @@ var (
 	// ErrNoLatestIncludeActivation is returned when there is no activation for provided include
 	ErrNoLatestIncludeActivation = errors.New("no latest activation for given include")
 
+	// ErrPropertyInclude is returned when operation on property include fails
+	ErrPropertyInclude = errors.New("property include")
+
 	// DiagWarnActivationTimeout returned on activation poll timeout
 	DiagWarnActivationTimeout = diag.Diagnostic{
 		Severity: diag.Warning,

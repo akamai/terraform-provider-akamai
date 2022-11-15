@@ -96,9 +96,10 @@ func Provider() *schema.Provider {
 		ResourcesMap: map[string]*schema.Resource{
 			"akamai_cp_code":             resourceCPCode(),
 			"akamai_edge_hostname":       resourceSecureEdgeHostName(),
-			"akamai_property":            resourceProperty(),
-			"akamai_property_variables":  resourcePropertyVariables(),
 			"akamai_property_activation": resourcePropertyActivation(),
+			"akamai_property":            resourceProperty(),
+			"akamai_property_include":    resourcePropertyInclude(),
+			"akamai_property_variables":  resourcePropertyVariables(),
 		},
 	}
 	return provider

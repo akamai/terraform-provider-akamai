@@ -1,0 +1,12 @@
+[
+  {
+    "type": "https://problems.luna.akamaiapis.net/papi/v0/validation/attribute_required",
+    "detail": "Error1",
+    "errorLocation": "#/rules/behaviors/0/options/"
+  },
+  {
+    "type": "https://problems.luna.akamaiapis.net/papi/v0/validation/attribute_required",
+    "detail": "Error2",
+    "errorLocation": "#/rules/behaviors/0/options/"
+  }
+]

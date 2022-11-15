@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"regexp"
 	"strings"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -98,4 +99,23 @@ func ValidateStringInSlice(valid []string) schema.SchemaValidateDiagFunc {
 
 		return diag.Errorf("expected %s to be one of ['%s'], got %s", name, strings.Join(valid, "', '"), v)
 	}
+}
+
+var (
+	isRuleFormatValid = regexp.MustCompile(`^v[0-9]{4}-[0-9]{2}-[0-9]{2}$`).MatchString
+)
+
+// ValidateRuleFormat checks if value is a valid rule format
+func ValidateRuleFormat(v interface{}, _ cty.Path) diag.Diagnostics {
+	format, ok := v.(string)
+	if !ok {
+		return diag.Errorf("expected string, got %T", v)
+	}
+
+	if !isRuleFormatValid(format) {
+		url := "https://techdocs.akamai.com/property-mgr/reference/latest-behaviors"
+		return diag.Errorf(`"rule_format" must be of the form vYYYY-MM-DD (with a leading "v") see %s`, url)
+	}
+
+	return nil
 }

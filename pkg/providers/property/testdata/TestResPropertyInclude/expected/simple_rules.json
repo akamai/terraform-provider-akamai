@@ -1,0 +1,82 @@
+{
+  "rules": {
+    "behaviors": [
+      {
+        "name": "caching",
+        "options": {
+          "behavior": "MAX_AGE",
+          "mustRevalidate": false,
+          "ttl": "13d"
+        }
+      },
+      {
+        "name": "cpCode",
+        "options": {
+          "value": {
+            "id": 1013931
+          }
+        }
+      },
+      {
+        "name": "origin",
+        "options": {
+          "cacheKeyHostname": "ORIGIN_HOSTNAME",
+          "compress": true,
+          "enableTrueClientIp": false,
+          "forwardHostHeader": "REQUEST_HOST_HEADER",
+          "hostname": "terraform.prov.test.net",
+          "httpPort": 80,
+          "httpsPort": 443,
+          "originCertificate": "",
+          "originSni": true,
+          "originType": "CUSTOMER",
+          "ports": "",
+          "verificationMode": "PLATFORM_SETTINGS"
+        }
+      }
+    ],
+    "children": [
+      {
+        "behaviors": [
+          {
+            "name": "caching",
+            "options": {
+              "behavior": "MAX_AGE",
+              "mustRevalidate": false,
+              "ttl": "13d"
+            }
+          },
+          {
+            "name": "cpCode",
+            "options": {
+              "value": {
+                "id": 1013931
+              }
+            }
+          },
+          {
+            "name": "origin",
+            "options": {
+              "cacheKeyHostname": "ORIGIN_HOSTNAME",
+              "compress": true,
+              "enableTrueClientIp": false,
+              "forwardHostHeader": "REQUEST_HOST_HEADER",
+              "hostname": "terraform.prov.test.net",
+              "httpPort": 80,
+              "httpsPort": 443,
+              "originCertificate": "",
+              "originSni": true,
+              "originType": "CUSTOMER",
+              "ports": "",
+              "verificationMode": "PLATFORM_SETTINGS"
+            }
+          }
+        ],
+        "name": "",
+        "options": {}
+      }
+    ],
+    "name": "default",
+    "options": {}
+  }
+}

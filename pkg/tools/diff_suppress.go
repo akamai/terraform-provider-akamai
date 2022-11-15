@@ -6,6 +6,19 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
+// ComposeDiffSuppress aggregates all given schema.SchemaDiffSuppressFunc into one
+// Aggregated function returns true if any of the functions returns true
+func ComposeDiffSuppress(fncs ...schema.SchemaDiffSuppressFunc) schema.SchemaDiffSuppressFunc {
+	return func(k, oldValue, newValue string, d *schema.ResourceData) bool {
+		for _, fn := range fncs {
+			if fn(k, oldValue, newValue, d) {
+				return true
+			}
+		}
+		return false
+	}
+}
+
 // FieldPrefixSuppress returns schema.SchemaDiffSuppressFunc which verifies whether values are equal disregarding given prefix
 func FieldPrefixSuppress(prefix string) schema.SchemaDiffSuppressFunc {
 	return func(_, old, new string, _ *schema.ResourceData) bool {

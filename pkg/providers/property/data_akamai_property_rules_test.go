@@ -61,7 +61,7 @@ func TestDSPropertyRulesRead(t *testing.T) {
 							resource.TestCheckResourceAttr("data.akamai_property_rules.rules", "contract_id", "ctr_2"),
 							resource.TestCheckResourceAttrSet("data.akamai_property_rules.rules", "rules"),
 							resource.TestCheckResourceAttr("data.akamai_property_rules.rules", "rule_format", "latest"),
-							resource.TestCheckResourceAttr("data.akamai_property_rules.rules", "errors", `[{"type":"","title":"some error","detail":"","limitKey":"","limit":0,"remaining":0}]`),
+							resource.TestCheckResourceAttr("data.akamai_property_rules.rules", "errors", `[{"type":"","title":"some error","detail":""}]`),
 						),
 					},
 				},
