@@ -6,6 +6,7 @@
 
 * PAPI
   * Added data sources:
+    * `akamai_include_activation` - get latest include activation by network
     * `akamai_property_include` - get property include version information
     * `akamai_property_includes` - get property includes information
 

@@ -80,6 +80,7 @@ func Provider() *schema.Provider {
 			"akamai_cp_code":                  dataSourceCPCode(),
 			"akamai_group":                    dataSourcePropertyGroup(),
 			"akamai_groups":                   dataSourcePropertyMultipleGroups(),
+			"akamai_include_activation":       dataSourceIncludeActivation(),
 			"akamai_properties":               dataSourceAkamaiProperties(),
 			"akamai_properties_search":        dataSourcePropertiesSearch(),
 			"akamai_property":                 dataSourceAkamaiProperty(),

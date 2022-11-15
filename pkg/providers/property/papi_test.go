@@ -595,24 +595,24 @@ func (p *mockpapi) DeactivateInclude(ctx context.Context, r papi.DeactivateInclu
 	return args.Get(0).(*papi.DeactivationIncludeResponse), args.Error(1)
 }
 
-func (p *mockpapi) GetIncludeActivation(ctx context.Context, r papi.GetIncludeActivationRequest) (*papi.IncludeActivationResponse, error) {
+func (p *mockpapi) GetIncludeActivation(ctx context.Context, r papi.GetIncludeActivationRequest) (*papi.GetIncludeActivationResponse, error) {
 	args := p.Called(ctx, r)
 
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 
-	return args.Get(0).(*papi.IncludeActivationResponse), args.Error(1)
+	return args.Get(0).(*papi.GetIncludeActivationResponse), args.Error(1)
 }
 
-func (p *mockpapi) ListIncludeActivations(ctx context.Context, r papi.ListIncludeActivationsRequest) (*papi.IncludeActivationsResponse, error) {
+func (p *mockpapi) ListIncludeActivations(ctx context.Context, r papi.ListIncludeActivationsRequest) (*papi.ListIncludeActivationsResponse, error) {
 	args := p.Called(ctx, r)
 
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 
-	return args.Get(0).(*papi.IncludeActivationsResponse), args.Error(1)
+	return args.Get(0).(*papi.ListIncludeActivationsResponse), args.Error(1)
 }
 
 func (p *mockpapi) CreateIncludeVersion(ctx context.Context, r papi.CreateIncludeVersionRequest) (*papi.CreateIncludeVersionResponse, error) {
@@ -625,24 +625,24 @@ func (p *mockpapi) CreateIncludeVersion(ctx context.Context, r papi.CreateInclud
 	return args.Get(0).(*papi.CreateIncludeVersionResponse), args.Error(1)
 }
 
-func (p *mockpapi) GetIncludeVersion(ctx context.Context, r papi.GetIncludeVersionRequest) (*papi.IncludeVersionResponse, error) {
+func (p *mockpapi) GetIncludeVersion(ctx context.Context, r papi.GetIncludeVersionRequest) (*papi.GetIncludeVersionResponse, error) {
 	args := p.Called(ctx, r)
 
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 
-	return args.Get(0).(*papi.IncludeVersionResponse), args.Error(1)
+	return args.Get(0).(*papi.GetIncludeVersionResponse), args.Error(1)
 }
 
-func (p *mockpapi) ListIncludeVersions(ctx context.Context, r papi.ListIncludeVersionsRequest) (*papi.IncludeVersionResponse, error) {
+func (p *mockpapi) ListIncludeVersions(ctx context.Context, r papi.ListIncludeVersionsRequest) (*papi.ListIncludeVersionsResponse, error) {
 	args := p.Called(ctx, r)
 
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 
-	return args.Get(0).(*papi.IncludeVersionResponse), args.Error(1)
+	return args.Get(0).(*papi.ListIncludeVersionsResponse), args.Error(1)
 }
 
 func (p *mockpapi) ListIncludeVersionAvailableCriteria(ctx context.Context, r papi.ListAvailableCriteriaRequest) (*papi.AvailableCriteriaResponse, error) {
