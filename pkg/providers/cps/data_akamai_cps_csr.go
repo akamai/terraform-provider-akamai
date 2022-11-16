@@ -58,55 +58,63 @@ func dataCPSCSRRead(ctx context.Context, d *schema.ResourceData, m interface{}) 
 		return diag.Errorf("could not get enrollment: %s", err)
 	}
 
+	if enrollment.CertificateType != "third-party" {
+		return diag.Errorf("given enrollment has non third-party certificate type which is not supported by this data source")
+	}
+
+	var attrs = make(map[string]interface{})
 	changeID, err := toolsCPS.GetChangeIDFromPendingChanges(enrollment.PendingChanges)
 	if err != nil && errors.Is(err, toolsCPS.ErrNoPendingChanges) {
-		history, err := client.GetChangeHistory(ctx, cps.GetChangeHistoryRequest{
-			EnrollmentID: enrollmentID,
-		})
+		attrs, err = createCSRAttrsFromHistory(ctx, client, enrollmentID)
 		if err != nil {
 			return diag.Errorf("could not get change history: %s", err)
-		}
-		if len(history.Changes) != 0 {
-			cert := history.Changes[0].PrimaryCertificate.CSR
-			key := history.Changes[0].PrimaryCertificate.KeyAlgorithm
-			switch key {
-			case "RSA":
-				if err := d.Set("csr_rsa", cert); err != nil {
-					return diag.Errorf("could not set attribute: %s", err)
-				}
-			case "ECDSA":
-				if err := d.Set("csr_ecdsa", cert); err != nil {
-					return diag.Errorf("could not set attribute: %s", err)
-				}
-			}
 		}
 	} else if err != nil && !errors.Is(err, toolsCPS.ErrNoPendingChanges) {
 		return diag.Errorf("could not get change ID: %s", err)
 	} else {
-		csr, err := client.GetChangeThirdPartyCSR(ctx, cps.GetChangeRequest{
+		changeStatus, err := client.GetChangeStatus(ctx, cps.GetChangeStatusRequest{
 			EnrollmentID: enrollmentID,
 			ChangeID:     changeID,
 		})
 		if err != nil {
-			return diag.Errorf("could not get third party CSR: %s", err)
+			return diag.Errorf("could not get change status: %s", err)
 		}
 
-		attrs := createCSRAttrs(csr.CSRs)
-		err = tools.SetAttrs(d, attrs)
-		if err != nil {
-			return diag.Errorf("could not set attributes: %s", err)
+		statuses := []string{"wait-upload-third-party", "verify-third-party-cert", "wait-review-third-party-cert"}
+
+		if tools.ContainsString(statuses, changeStatus.StatusInfo.Status) {
+			attrs, err = createCSRAttrsFromChange(ctx, client, changeID, enrollmentID)
+			if err != nil {
+				return diag.Errorf("could not get third party CSR: %s", err)
+			}
+		} else {
+			attrs, err = createCSRAttrsFromHistory(ctx, client, enrollmentID)
+			if err != nil {
+				return diag.Errorf("could not get change history: %s", err)
+			}
 		}
+	}
+	if err = tools.SetAttrs(d, attrs); err != nil {
+		return diag.Errorf("could not set attributes: %s", err)
 	}
 	d.SetId(fmt.Sprintf("%d:%d", enrollmentID, changeID))
 
 	return nil
 }
 
-// createCSRAttrs loops through received CSRs, there can be max 1 CSR of each key algorithm type (`ECDSA`, `RSA`).
+// createCSRAttrsFromChange loops through received CSRs from GetChangeThirdPartyCSR, there can be max 1 CSR of each key algorithm type (`ECDSA`, `RSA`).
 // If there is no entry for both of the algorithms, empty map is returned, resulting in attributes being not set
-func createCSRAttrs(CSRs []cps.CertSigningRequest) map[string]interface{} {
+func createCSRAttrsFromChange(ctx context.Context, client cps.CPS, changeID int, enrollmentID int) (map[string]interface{}, error) {
 	attrs := make(map[string]interface{})
-	for _, csr := range CSRs {
+
+	csr, err := client.GetChangeThirdPartyCSR(ctx, cps.GetChangeRequest{
+		EnrollmentID: enrollmentID,
+		ChangeID:     changeID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	for _, csr := range csr.CSRs {
 		if csr.KeyAlgorithm == "ECDSA" {
 			attrs["csr_ecdsa"] = csr.CSR
 		} else if csr.KeyAlgorithm == "RSA" {
@@ -114,5 +122,28 @@ func createCSRAttrs(CSRs []cps.CertSigningRequest) map[string]interface{} {
 		}
 	}
 
-	return attrs
+	return attrs, nil
+}
+
+// createCSRAttrsFromHistory fetches certs from change history and returns them
+func createCSRAttrsFromHistory(ctx context.Context, client cps.CPS, enrollmentID int) (map[string]interface{}, error) {
+	attrs := make(map[string]interface{})
+
+	history, err := client.GetChangeHistory(ctx, cps.GetChangeHistoryRequest{
+		EnrollmentID: enrollmentID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if len(history.Changes) != 0 {
+		for _, cert := range append(history.Changes[0].MultiStackedCertificates, history.Changes[0].PrimaryCertificate) {
+			if cert.KeyAlgorithm == "ECDSA" {
+				attrs["csr_ecdsa"] = cert.CSR
+			} else if cert.KeyAlgorithm == "RSA" {
+				attrs["csr_rsa"] = cert.CSR
+			}
+		}
+	}
+
+	return attrs, nil
 }
