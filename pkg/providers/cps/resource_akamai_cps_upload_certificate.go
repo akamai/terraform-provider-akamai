@@ -308,7 +308,7 @@ func upsertUploadCertificate(ctx context.Context, d *schema.ResourceData, m inte
 		return diag.Errorf("could not upload third party certificate and trust chain: %s", err)
 	}
 
-	status, err := waitUntilCertIsVerified(ctx, client, attrs.enrollmentID, changeID)
+	status, err := waitUntilStatusPasses(ctx, client, attrs.enrollmentID, changeID, verifyThirdPartyCert)
 	if err != nil {
 		return diag.Errorf("incorrect status of a change: %s", err)
 	}
@@ -428,8 +428,8 @@ func waitForChangeStatus(ctx context.Context, client cps.CPS, enrollmentID, chan
 	return nil
 }
 
-// waitUntilCertIsVerified waits for `verify-third-party-cert` to pass and returns last status
-func waitUntilCertIsVerified(ctx context.Context, client cps.CPS, enrollmentID, changeID int) (string, error) {
+// waitUntilStatusPasses waits until the status provided as parameter passes and returns a new one
+func waitUntilStatusPasses(ctx context.Context, client cps.CPS, enrollmentID, changeID int, status string) (string, error) {
 	change, err := sendGetChangeStatusReq(ctx, client, enrollmentID, changeID)
 	if err != nil {
 		return "", fmt.Errorf("could not get change status: %s", err)
@@ -437,7 +437,7 @@ func waitUntilCertIsVerified(ctx context.Context, client cps.CPS, enrollmentID, 
 
 	statusDeadlineCtx, cancel := context.WithTimeout(ctx, statusChangeDeadline)
 	defer cancel()
-	for change.StatusInfo.Status == verifyThirdPartyCert {
+	for change.StatusInfo.Status == status {
 		select {
 		case <-time.After(PollForChangeStatusInterval):
 			change, err = sendGetChangeStatusReq(ctx, client, enrollmentID, changeID)
@@ -503,6 +503,10 @@ func processPostVerificationWarnings(ctx context.Context, client cps.CPS, d *sch
 		if acceptAllWarnings || canAccept {
 			if err = sendACKPostVerificationWarnings(ctx, client, enrollmentID, changeID); err != nil {
 				return fmt.Errorf("could not acknowledge post verification warnings: %s", err)
+			}
+			_, err := waitUntilStatusPasses(ctx, client, enrollmentID, changeID, waitReviewThirdPartyCert)
+			if err != nil {
+				return fmt.Errorf("status %s did not pass: %s", waitReviewThirdPartyCert, err)
 			}
 		} else {
 			return fmt.Errorf("not every warning has been acknowledged: %s", err)
