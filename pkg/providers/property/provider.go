@@ -87,6 +87,7 @@ func Provider() *schema.Provider {
 			"akamai_property_hostnames":       dataSourceAkamaiPropertyHostnames(),
 			"akamai_property_include":         dataSourceAkamaiPropertyInclude(),
 			"akamai_property_include_parents": dataSourceAkamaiPropertyIncludeParents(),
+			"akamai_property_include_rules":   dataSourceAkamaiPropertyIncludeRules(),
 			"akamai_property_includes":        dataSourcePropertyIncludes(),
 			"akamai_property_products":        dataSourceAkamaiPropertyProducts(),
 			"akamai_property_rule_formats":    dataPropertyRuleFormats(),
