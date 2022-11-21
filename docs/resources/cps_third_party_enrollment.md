@@ -3,92 +3,89 @@ layout: akamai
 subcategory: Certificate Provisioning System
 ---
 
-# akamai_cps_dv_enrollment
+# akamai_cps_third_party_enrollment
 
-Use the `akamai_cps_dv_enrollment` resource to create an enrollment for a Domain Validated (DV) certificate. This resource includes all information about your certificate life cycle, from the time you request it, through removal or automatic renewal. You can treat an enrollment as a core container for all the operations you perform within CPS.
+Use the `akamai_cps_third_party_enrollment` resource to create an enrollment for a third-party certificate. As with Domain Validated (DV) certificate enrollments, you can treat a third-party enrollment as a core container for all the operations you perform within CPS.
 
-You can use this resource with [`akamai_dns_record`](../resources/dns_record.md) or other third-party DNS provider to create DNS records, and [`akamai_cps_dv_validation`](../resources/cps_dv_validation.md) to complete the certificate validation.
+You can use this resource with:
 
-<blockquote style="border-left-style: solid; border-left-color: #5bc0de; border-width: 0.25em; padding: 1.33rem; background-color: #e3edf2;"><img src="https://techdocs.akamai.com/terraform-images/img/note.svg" style="float:left; display:inline;" /><div style="overflow:auto;">If you need to enroll a third-party certificate, use the <code><a href="https://registry.terraform.io/providers/akamai/akamai/latest/docs/resources/cps_third_party_enrollment">akamai_cps_third_party_enrollment</a></code> resource.</div></blockquote>
+* [`akamai_dns_record`](../resources/dns_record.md) or other third-party DNS provider to create DNS records
+* [`akamai_cps_upload_certificate`](../resources/cps_upload_certificate.md) to complete the validation and activate the certificate on the staging and production networks. Set the `change_management` argument in this resource to `true` if you want to test and view the certificate on the staging network before deploying it to production.
 
+<blockquote style="border-left-style: solid; border-left-color: #5bc0de; border-width: 0.25em; padding: 1.33rem; background-color: #e3edf2;"><img src="https://techdocs.akamai.com/terraform-images/img/note.svg" style="float:left; display:inline;" /><div style="overflow:auto;">If you need to enroll a DV certificate, use the <code><a href="https://registry.terraform.io/providers/akamai/akamai/latest/docs/resources/cps_dv_enrollment">akamai_cps_dv_enrollment</a></code> resource.</div></blockquote>
 
 ## Example usage
 
 Basic usage:
 
 ```hcl
-resource "akamai_cps_dv_enrollment" "example" {
-  contract_id = "ctr_1-AB123"
-  acknowledge_pre_verification_warnings = true
-  common_name = "cps-test.example.net"
-  sans = ["san1.cps-test.example.net","san2.cps-test.example.net"]
-  secure_network = "enhanced-tls"
-  sni_only = true
+
+resource "akamai_cps_third_party_enrollment" "enrollment" {
+  contract_id           = "C-0N7RAC7"
+  common_name           = "*.example.com"
+  secure_network        = "enhanced-tls"
+  sni_only              = true
+  auto_approve_warnings = [
+    "DNS_NAME_LONGER_THEN_255_CHARS",
+    "CERTIFICATE_EXPIRATION_DATE_BEYOND_MAX_DAYS",
+    "TRUST_CHAIN_EMPTY_AND_CERTIFICATE_SIGNED_BY_NON_STANDARD_ROOT"
+  ]
+  signature_algorithm   = "SHA-256"
   admin_contact {
-    first_name = "x1"
-    last_name = "x2"
-    phone = "123123123"
-    email = "x1x2@example.net"
+    first_name       = "Mario"
+    last_name        = "Rossi"
+    phone            = "+1-311-555-2368"
+    email            = "mrossi@example.com"
     address_line_one = "150 Broadway"
-    city = "Cambridge"
-    country_code = "US"
-    organization = "Akamai"
-    postal_code = "02142"
-    region = "MA"
-    title = "Administrator"
+    city             = "Cambridge"
+    country_code     = "US"
+    organization     = "Example Corp."
+    postal_code      = "02142"
+    region           = "MA"
+    title            = "Administrator"
   }
   tech_contact {
-    first_name = "x3"
-    last_name = "x4"
-    phone = "123123123"
-    email = "x3x4@akamai.com"
+    first_name       = "Juan"
+    last_name        = "Perez"
+    phone            = "+1-311-555-2369"
+    email            = "jperez@example.com"
     address_line_one = "150 Broadway"
-    city = "Cambridge"
-    country_code = "US"
-    organization = "Akamai"
-    postal_code = "02142"
-    region = "MA"
-    title = "Administrator"
+    city             = "Cambridge"
+    country_code     = "US"
+    organization     = "Example Corp."
+    postal_code      = "02142"
+    region           = "MA"
+    title            = "Administrator"
   }
-  certificate_chain_type = "default"
   csr {
-    country_code = "US"
-    city = "Cambridge"
-    organization = "Akamai"
-    organizational_unit = "Dev"
-    state = "MA"
+    country_code        = "US"
+    city                = "Cambridge"
+    organization        = "Example Corp."
+    organizational_unit = "Corp IT"
+    state               = "MA"
   }
   network_configuration {
     disallowed_tls_versions = ["TLSv1", "TLSv1_1"]
-    clone_dns_names = false
-    geography = "core"
-    ocsp_stapling = "on"
-    preferred_ciphers = "ak-akamai-default"
-    must_have_ciphers = "ak-akamai-default"
-    quic_enabled = false
+    clone_dns_names         = false
+    geography               = "core"
+    ocsp_stapling           = "on"
+    preferred_ciphers       = "ak-akamai-default"
+    must_have_ciphers       = "ak-akamai-default"
+    quic_enabled            = false
   }
-  signature_algorithm = "SHA-256"
   organization {
-    name = "Akamai"
-    phone = "123123123"
+    name             = "Example Corp."
+    phone            = "+1-311-555-2370"
     address_line_one = "150 Broadway"
-    city = "Cambridge"
-    country_code = "US"
-    postal_code = "02142"
-    region = "MA"
+    city             = "Cambridge"
+    country_code     = "US"
+    postal_code      = "02142"
+    region           = "MA"
   }
-}
-
-output "dns_challenges" {
-  value = akamai_cps_dv_enrollment.example.dns_challenges
-}
-
-output "http_challenges" {
-  value = akamai_cps_dv_enrollment.example.http_challenges
 }
 
 output "enrollment_id" {
-  value = akamai_cps_dv_enrollment.example.id
+  value = akamai_cps_third_party_enrollment.enrollment.id
 }
 ```
 ## Argument reference
@@ -101,7 +98,8 @@ The following arguments are supported:
 * `sans` - (Optional) Additional common names to create a Subject Alternative Names (SAN) list.
 * `secure_network` - (Required) The type of deployment network you want to use. `standard-tls` deploys your certificate to Akamai's standard secure network, but it isn't PCI compliant. `enhanced-tls` deploys your certificate to Akamai's more secure network with PCI compliance capability.
 * `sni_only` - (Required) Whether you want to enable SNI-only extension for the enrollment. Server Name Indication (SNI) is an extension of the Transport Layer Security (TLS) networking protocol. It allows a server to present multiple certificates on the same IP address. All modern web browsers support the SNI extension. If you have the same SAN on two or more certificates with the SNI-only option set, Akamai may serve traffic using any certificate which matches the requested SNI hostname. You should avoid multiple certificates with overlapping SAN names when using SNI-only. You can't change this setting once an enrollment is created.
-* `acknowledge_pre_verification_warnings` - (Optional) Whether you want to automatically acknowledge the validation warnings of the current job state and proceed with the execution of a change.
+* `acknowledge_pre_verification_warnings` - (Optional) Whether you want to automatically acknowledge the validation warnings related to the current job state and proceed with the change.
+* `auto_approve_warnings` - (Optional) The list of post-verification warning IDs you want to automatically acknowledge. To retrieve the list of warnings, use the `akamai_cps_warnings` data source.
 * `admin_contact` - (Required) Contact information for the certificate administrator at your company.
 
     Requires these additional arguments:
@@ -146,7 +144,7 @@ The following arguments are supported:
       * `ocsp_stapling` - (Optional) Whether to use OCSP stapling for the enrollment, either `on`, `off` or `not-set`. OCSP Stapling improves performance by including a valid OCSP response in every TLS handshake. This option allows the visitors on your site to query the Online Certificate Status Protocol (OCSP) server at regular intervals to obtain a signed time-stamped OCSP response. This response must be signed by the CA, not the server, therefore ensuring security. Disable OSCP Stapling if you want visitors to your site to contact the CA directly for an OSCP response. OCSP allows you to obtain the revocation status of a certificate.
       * `preferred_ciphers` - (Optional) Ciphers that you preferably want to include for the enrollment while deploying it on the network. Defaults to `ak-akamai-default` when it is not set. For more information on cipher profiles, see [Akamai community](https://community.akamai.com/customers/s/article/SSL-TLS-Cipher-Profiles-for-Akamai-Secure-CDNrxdxm).
       * `quic_enabled` - (Optional) Whether to use the QUIC transport layer network protocol.
-* `signature_algorithm` - (Required) The Secure Hash Algorithm (SHA) function, either `SHA-1` or `SHA-256`.
+* `signature_algorithm` - (Required) The Secure Hash Algorithm (SHA) function, either `SHA-1` or `SHA-256`. If you change this value, you may need to run the `terraform destroy` and `terraform apply` commands.
 * `tech_contact` - (Required) The technical contact within Akamai. This is the person you work closest with at Akamai and who can verify the certificate request. The CA calls this contact if there are any issues with the certificate and they can't reach the `admin_contact`.
 
     Requires these additional arguments:
@@ -175,45 +173,26 @@ The following arguments are supported:
       * `region` - (Required) The region of your organization, typically a state or province.
       * `postal_code` - (Required) The postal code of your organization.
       * `country_code` - (Required) The code for the country where your organization resides.
-
-### Deprecated arguments
-
-* `enable_multi_stacked_certificates` - (Deprecated) Whether to enable an ECDSA certificate in addition to an RSA certificate. CPS automatically performs all certificate operations on both certificates, and uses the best certificate for each client connection to your secure properties. If you are pinning the certificates, you need to pin both the RSA and the ECDSA certificate.
+* `change_management` - (Optional) Boolean. Set to `true` to have CPS deploy first to staging for testing purposes. To deploy the certificate to production, use the `acknowledge_change_management` argument in the `akamai_cps_upload_certificate` resource. <br> If you don't use this option, CPS will automatically deploy the certificate to both networks.
+* `exclude_sans` - (Optional) If set to `true`, then the SANs in the enrollment don't appear in the CSR that you send to your CA.
 
 ## Attributes reference
 
-The resource returns these attributes:
+The resource returns this attribute:
 
-* `registration_authority` - (Required) This value populates automatically with the `lets-encrypt` certificate type and is preserved in the `state` file.
-* `certificate_type` - (Required) This value populates automatically with the `san` certificate type and is preserved in the `state` file.
-* `validation_type` - (Required) This value populates automatically with the `dv` validation type and is preserved in the `state` file.
 * `id` - The unique identifier for this enrollment.
-* `dns_challenges` - The validation challenge for the domains listed in the certificate. To successfully perform the validation, only one challenge for each domain must be complete, either `dns_challenges` or `http_challenges`.
-
-    Returns these additional attributes:
-
-      * `domain` - The domain to validate.
-      * `full_path` - The URL where Akamai publishes `response_body` for Let's Encrypt to validate.
-      * `response_body` - The data Let's Encrypt expects to find served at `full_path` URL.
-* `http_challenges` - The validation challenge for the domains listed in the certificate. To successfully perform the validation, only one challenge for each domain must be complete, either `dns_challenges` or `http_challenges`.
-
-    Returns these additional attributes:
-
-      * `domain` - The domain to validate.
-      * `full_path` - The URL where Akamai publishes `response_body` for Let's Encrypt to validate.
-      * `response_body` - The data Let's Encrypt expects to find served at `full_path` URL.
 
 ## Import
 
 Basic Usage:
 
 ```hcl
-resource "akamai_cps_dv_enrollment" "example" {
+resource "akamai_cps_third_party_enrollment" "example" {
 # (resource arguments)
 }
 ```
 
-You can import your Akamai DV enrollment using a comma-delimited string of the enrollment ID and  
+You can import your Akamai third-party enrollment using a comma-delimited string of the enrollment ID and  
 contract ID, optionally with the `ctr_` prefix. You have to enter the IDs in this order:
 
 `enrollment_id,contract_id`
@@ -221,5 +200,5 @@ contract ID, optionally with the `ctr_` prefix. You have to enter the IDs in thi
 For example:
 
 ```shell
-$ terraform import akamai_cps_dv_enrollment.example 12345,1-AB123
+$ terraform import akamai_cps_third_party_enrollment.example 12345,1-AB123
 ```
