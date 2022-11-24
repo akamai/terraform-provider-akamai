@@ -69,6 +69,9 @@ func resourceIAMRoleCreate(ctx context.Context, d *schema.ResourceData, m interf
 		return diag.FromErr(err)
 	}
 	grantedRoles, err := tools.GetListValue("granted_roles", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	grantedRolesIDs := getGrantedRolesIDs(grantedRoles)
 

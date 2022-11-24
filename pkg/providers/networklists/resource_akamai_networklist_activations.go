@@ -177,6 +177,9 @@ func resourceActivationsRead(ctx context.Context, d *schema.ResourceData, m inte
 	// Get the current syncpoint of this network list, which may have changed since this activation was created.
 	networkListID := getResponse.NetworkList.UniqueID
 	networklist, err := client.GetNetworkList(ctx, networklists.GetNetworkListRequest{UniqueID: networkListID})
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	if err = d.Set("sync_point", networklist.SyncPoint); err != nil {
 		return diag.FromErr(err)

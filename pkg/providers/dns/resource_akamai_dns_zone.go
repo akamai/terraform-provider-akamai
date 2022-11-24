@@ -233,7 +233,6 @@ func resourceDNSv2ZoneCreate(ctx context.Context, d *schema.ResourceData, m inte
 func resourceDNSv2ZoneRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	hostname := d.Get("zone").(string)
 	meta := akamai.Meta(m)
 	logger := meta.Log("AkamaiDNS", "resourceDNSZoneRead")
 	// create a context with logging for api calls

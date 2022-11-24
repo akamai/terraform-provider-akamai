@@ -440,7 +440,7 @@ func TestGetOrg(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			rd := resource.TestResourceData()
 			err := rd.Set("organization", test.givenOrg)
-
+			require.NoError(t, err)
 			res, err := GetOrg(rd)
 			require.NoError(t, err)
 			assert.Equal(t, test.expected, res)
