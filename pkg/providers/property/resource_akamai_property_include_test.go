@@ -149,10 +149,14 @@ func TestResourcePropertyInclude(t *testing.T) {
 		calls := test.MockCalls{getIncludeVersionCall}
 
 		if testData.stagingVersion != nil || testData.productionVersion != nil {
+			version := testData.latestVersion
 			testData.latestVersion++
 
 			createIncludeVersionCall := m.On("CreateIncludeVersion", mock.Anything, papi.CreateIncludeVersionRequest{
 				IncludeID: includeID,
+				IncludeVersionRequest: papi.IncludeVersionRequest{
+					CreateFromVersion: version,
+				},
 			}).Return(&papi.CreateIncludeVersionResponse{Version: testData.latestVersion}, nil)
 
 			calls = append(calls, createIncludeVersionCall)

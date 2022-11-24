@@ -287,6 +287,9 @@ func resourcePropertyIncludeUpdate(ctx context.Context, rd *schema.ResourceData,
 	if !isVersionEditable(includeVersion.IncludeVersion) {
 		createVersionResp, err := client.CreateIncludeVersion(ctx, papi.CreateIncludeVersionRequest{
 			IncludeID: includeID,
+			IncludeVersionRequest: papi.IncludeVersionRequest{
+				CreateFromVersion: version,
+			},
 		})
 		if err != nil {
 			return diag.Errorf("%s update: %s", ErrPropertyInclude, err)
