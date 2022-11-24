@@ -445,7 +445,7 @@ var (
 			cloudlets.ListLoadBalancerActivationsRequest{OriginID: originID},
 		).Return(
 			[]cloudlets.LoadBalancerActivation{
-				cloudlets.LoadBalancerActivation{
+				{
 					Network:  network,
 					OriginID: originID,
 					Status:   status,
