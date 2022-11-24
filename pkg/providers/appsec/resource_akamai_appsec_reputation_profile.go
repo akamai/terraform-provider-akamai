@@ -47,7 +47,7 @@ func resourceReputationProfile() *schema.Resource {
 			"reputation_profile_id": {
 				Type:        schema.TypeInt,
 				Computed:    true,
-				Description: "Unique identifer of the reputation profile",
+				Description: "Unique identifier of the reputation profile",
 			},
 		},
 	}

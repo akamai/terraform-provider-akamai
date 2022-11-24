@@ -451,7 +451,7 @@ func populateGeoAssignmentsObject(d *schema.ResourceData, geo *gtm.GeoMap, m int
 	}
 }
 
-// create and populate Terraform geoMap assigments schema
+// create and populate Terraform geoMap assignments schema
 func populateTerraformGeoAssignmentsState(d *schema.ResourceData, geo *gtm.GeoMap, m interface{}) {
 	meta := akamai.Meta(m)
 	logger := meta.Log("Akamai GTM", "populateTerraformGeoAssignmentsState")

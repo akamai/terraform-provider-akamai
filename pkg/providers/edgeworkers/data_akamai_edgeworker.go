@@ -127,7 +127,7 @@ func dataEdgeWorkerRead(ctx context.Context, d *schema.ResourceData, m interface
 		}
 		bundleContentHash, err = getSHAFromBundle(&edgeworkers.Bundle{Reader: bytes.NewReader(content)})
 		if err != nil {
-			return diag.Errorf("could not calulate budle hash:  %s", err)
+			return diag.Errorf("could not calculate bundle hash:  %s", err)
 		}
 
 		localBundlePath, err := tools.GetStringValue("local_bundle", d)

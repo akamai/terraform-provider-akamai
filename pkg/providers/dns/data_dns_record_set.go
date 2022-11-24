@@ -72,7 +72,7 @@ func dataSourceDNSRecordSetRead(ctx context.Context, d *schema.ResourceData, m i
 	if err != nil {
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Failed retriving recordset: %s", host),
+			Summary:  fmt.Sprintf("Failed retrieving recordset: %s", host),
 			Detail:   err.Error(),
 		})
 	}
