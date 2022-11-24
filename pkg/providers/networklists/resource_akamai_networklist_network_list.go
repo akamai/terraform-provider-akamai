@@ -514,9 +514,9 @@ func verifyContractGroupUnchanged(_ context.Context, d *schema.ResourceDiff, m i
 	logger := meta.Log("NETWORKLIST", "VerifyContractGroupUnchanged")
 
 	if d.HasChange("contract_id") {
-		old, new := d.GetChange("contract_id")
-		oldvalue := old.(string)
-		newvalue := new.(string)
+		oldContract, newContract := d.GetChange("contract_id")
+		oldvalue := oldContract.(string)
+		newvalue := newContract.(string)
 		if len(oldvalue) > 0 {
 			logger.Errorf("%s value %s specified in configuration differs from resource ID's value %s", "contract_id", newvalue, oldvalue)
 			return fmt.Errorf("%s value %s specified in configuration differs from resource ID's value %s", "contract_id", newvalue, oldvalue)
@@ -524,9 +524,9 @@ func verifyContractGroupUnchanged(_ context.Context, d *schema.ResourceDiff, m i
 	}
 
 	if d.HasChange("group_id") {
-		old, new := d.GetChange("group_id")
-		oldvalue := old.(int)
-		newvalue := new.(int)
+		oldGroup, newGroup := d.GetChange("group_id")
+		oldvalue := oldGroup.(int)
+		newvalue := newGroup.(int)
 		if oldvalue > 0 {
 			logger.Errorf("%s value %d specified in configuration differs from resource ID's value %d", "group_id", newvalue, oldvalue)
 			return fmt.Errorf("%s value %d specified in configuration differs from resource ID's value %d", "group_id", newvalue, oldvalue)

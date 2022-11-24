@@ -572,10 +572,10 @@ func statePhone(v interface{}) string {
 	return canonicalPhone(v.(string))
 }
 
-func suppressPhone(_, old, new string, _ *schema.ResourceData) bool {
-	old = regexp.MustCompile(`\D+`).ReplaceAllLiteralString(old, "")
-	new = regexp.MustCompile(`\D+`).ReplaceAllLiteralString(new, "")
-	return old == new
+func suppressPhone(_, oldPhone, newPhone string, _ *schema.ResourceData) bool {
+	oldPhone = regexp.MustCompile(`\D+`).ReplaceAllLiteralString(oldPhone, "")
+	newPhone = regexp.MustCompile(`\D+`).ReplaceAllLiteralString(newPhone, "")
+	return oldPhone == newPhone
 }
 
 func suppressEmail(_, old, new string, _ *schema.ResourceData) bool {

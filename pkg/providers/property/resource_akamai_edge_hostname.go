@@ -444,16 +444,17 @@ func resourceSecureEdgeHostNameImport(ctx context.Context, d *schema.ResourceDat
 	return []*schema.ResourceData{d}, nil
 }
 
-func diffSuppressEdgeHostname(_, old, new string, _ *schema.ResourceData) bool {
-	old = strings.ToLower(old)
-	new = strings.ToLower(new)
+func diffSuppressEdgeHostname(_, oldEdgeHostname, newEdgeHostname string, _ *schema.ResourceData) bool {
+	oldEdgeHostname = strings.ToLower(oldEdgeHostname)
+	newEdgeHostname = strings.ToLower(newEdgeHostname)
 
-	if old == new {
+	if oldEdgeHostname == newEdgeHostname {
 		return true
 	}
 
-	if !(strings.HasSuffix(new, "edgekey.net") || strings.HasSuffix(new, "edgesuite.net") || strings.HasSuffix(new, "akamaized.net")) {
-		return old == fmt.Sprintf("%s.edgesuite.net", new)
+	if !(strings.HasSuffix(newEdgeHostname, "edgekey.net") || strings.HasSuffix(newEdgeHostname, "edgesuite.net") ||
+		strings.HasSuffix(newEdgeHostname, "akamaized.net")) {
+		return oldEdgeHostname == fmt.Sprintf("%s.edgesuite.net", newEdgeHostname)
 	}
 	return false
 }
