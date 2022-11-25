@@ -473,13 +473,13 @@ func TestResourceEdgeHostname(t *testing.T) {
 				mh.On("UpdateEdgeHostname", mock.Anything, hapi.UpdateEdgeHostnameRequest{
 					DNSZone:           "akamaized.net",
 					RecordName:        "test",
-					Comments:          "change /ipVersionBehavior to IPV6_PERFORMANCE",
+					Comments:          "change /ipVersionBehavior to IPV6_IPV4_DUALSTACK",
 					StatusUpdateEmail: []string{"hello@akamai.com"},
 					Body: []hapi.UpdateEdgeHostnameRequestBody{
 						{
 							Op:    "replace",
 							Path:  "/ipVersionBehavior",
-							Value: "IPV6_PERFORMANCE",
+							Value: "IPV6_IPV4_DUALSTACK",
 						},
 					},
 				}).Return(&hapi.UpdateEdgeHostnameResponse{}, nil).Once()
@@ -511,13 +511,13 @@ func TestResourceEdgeHostname(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString(fmt.Sprintf("%s/%s", testDir, "new_akamaized_net.tf")),
+					Config: loadFixtureString(fmt.Sprintf("%s/%s", testDir, "new_akamaized_ipv4.tf")),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "id", "eh_123"),
 						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "contract", "ctr_2"),
 						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "group", "grp_2"),
 						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "edge_hostname", "test.akamaized.net"),
-						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "ip_behavior", "IPV6_COMPLIANCE"),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "ip_behavior", "IPV4"),
 					),
 				},
 				{
@@ -527,8 +527,93 @@ func TestResourceEdgeHostname(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "contract", "ctr_2"),
 						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "group", "grp_2"),
 						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "edge_hostname", "test.akamaized.net"),
-						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "ip_behavior", "IPV6_PERFORMANCE"),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "ip_behavior", "IPV6_COMPLIANCE"),
 					),
+				},
+			},
+		},
+		"error - update ip_behavior to ipv6_performance": {
+			init: func(mp *mockpapi, mh *mockhapi) {
+				// 1. call from create method and refresh 2. update ip_behvior to improper value
+				// 1st step - create
+				mp.On("GetEdgeHostnames", mock.Anything, papi.GetEdgeHostnamesRequest{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+				}).Return(&papi.GetEdgeHostnamesResponse{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+					EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
+						{
+							ID:           "eh_123",
+							Domain:       "test.akamaized.net",
+							ProductID:    "prd_2",
+							DomainPrefix: "test",
+							DomainSuffix: "akamaized.net",
+						},
+						{
+							ID:           "eh_2",
+							Domain:       "test.akamaized.net",
+							ProductID:    "prd_2",
+							DomainPrefix: "test",
+							DomainSuffix: "akamaized.net",
+						},
+					}},
+				}, nil).Times(3)
+
+				// refresh
+				mp.On("GetEdgeHostnames", mock.Anything, papi.GetEdgeHostnamesRequest{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+				}).Return(&papi.GetEdgeHostnamesResponse{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+					EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
+						{
+							ID:           "eh_123",
+							Domain:       "test.akamaized.net",
+							ProductID:    "prd_2",
+							DomainPrefix: "test",
+							DomainSuffix: "akamaized.net",
+						},
+						{
+							ID:           "eh_2",
+							Domain:       "test.akamaized.net",
+							ProductID:    "prd_2",
+							DomainPrefix: "test",
+							DomainSuffix: "akamaized.net",
+						},
+					}},
+				}, nil).Once()
+
+				// 2nd step - update
+				mh.On("UpdateEdgeHostname", mock.Anything, hapi.UpdateEdgeHostnameRequest{
+					DNSZone:           "akamaized.net",
+					RecordName:        "test",
+					Comments:          "change /ipVersionBehavior to IPV6_PERFORMANCE",
+					StatusUpdateEmail: []string{"hello@akamai.com"},
+					Body: []hapi.UpdateEdgeHostnameRequestBody{
+						{
+							Op:    "replace",
+							Path:  "/ipVersionBehavior",
+							Value: "IPV6_PERFORMANCE",
+						},
+					},
+				}).Return(nil, errors.New("invalid IP version behavior: valid values are IPV4 and IPV6_IPV4_DUALSTACK; IPV6 and other values aren't currently supported")).Once()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: loadFixtureString(fmt.Sprintf("%s/%s", testDir, "new_akamaized_ipv4.tf")),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "id", "eh_123"),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "contract", "ctr_2"),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "group", "grp_2"),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "edge_hostname", "test.akamaized.net"),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "ip_behavior", "IPV4"),
+					),
+				},
+				{
+					Config:      loadFixtureString(fmt.Sprintf("%s/%s", testDir, "new_akamaized_error_update_ipv6_performance.tf")),
+					ExpectError: regexp.MustCompile("invalid IP version behavior: valid values are IPV4 and IPV6_IPV4_DUALSTACK; IPV6 and other values aren't currently supported"),
 				},
 			},
 		},
@@ -588,13 +673,13 @@ func TestResourceEdgeHostname(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString(fmt.Sprintf("%s/%s", testDir, "new_akamaized_net.tf")),
+					Config: loadFixtureString(fmt.Sprintf("%s/%s", testDir, "new_akamaized_ipv4.tf")),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "id", "eh_123"),
 						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "contract", "ctr_2"),
 						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "group", "grp_2"),
 						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "edge_hostname", "test.akamaized.net"),
-						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "ip_behavior", "IPV6_COMPLIANCE"),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "ip_behavior", "IPV4"),
 					),
 				},
 				{
@@ -659,13 +744,13 @@ func TestResourceEdgeHostname(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString(fmt.Sprintf("%s/%s", testDir, "new_akamaized_net.tf")),
+					Config: loadFixtureString(fmt.Sprintf("%s/%s", testDir, "new_akamaized_ipv4.tf")),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "id", "eh_123"),
 						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "contract", "ctr_2"),
 						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "group", "grp_2"),
 						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "edge_hostname", "test.akamaized.net"),
-						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "ip_behavior", "IPV6_COMPLIANCE"),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "ip_behavior", "IPV4"),
 					),
 				},
 				{

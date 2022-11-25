@@ -1,5 +1,12 @@
 # RELEASE NOTES
 
+## x.x.x (x xx, xxxx)
+
+#### BUG FIXES:
+
+* PAPI
+  * Fixed update of ip_behavior in `akamai_edge_hostname` resource ([#354](https://github.com/akamai/terraform-provider-akamai/issues/354))
+
 ## 3.0.0 (October 27, 2022)
 
 #### BREAKING CHANGES:
@@ -30,7 +37,7 @@
 
 * GTM
   * Fixed unreadable diff when single attribute is changed in traffic target
-  
+
 ## 2.4.2 (October 4, 2022)
 
 #### FEATURES/ENHANCEMENTS:

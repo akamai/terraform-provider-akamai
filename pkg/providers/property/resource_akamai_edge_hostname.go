@@ -347,6 +347,10 @@ func resourceSecureEdgeHostNameUpdate(ctx context.Context, d *schema.ResourceDat
 		}
 
 		logger.Debugf("Proceeding to update /ipVersionBehavior for %s", edgeHostname)
+		// IPV6_COMPLIANCE type has to mapped to IPV6_IPV4_DUALSTACK which is only accepted value by HAPI client
+		if ipBehavior == papi.EHIPVersionV6Compliance {
+			ipBehavior = "IPV6_IPV4_DUALSTACK"
+		}
 
 		if _, err = inst.HapiClient(meta).UpdateEdgeHostname(ctx, hapi.UpdateEdgeHostnameRequest{
 			DNSZone:           dnsZone,

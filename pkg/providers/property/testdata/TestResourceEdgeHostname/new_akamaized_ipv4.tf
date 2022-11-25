@@ -7,7 +7,7 @@ resource "akamai_edge_hostname" "edgehostname" {
   group         = "grp_2"
   product       = "prd_2"
   edge_hostname = "test.akamaized.net"
-  ip_behavior   = "IPV6_COMPLIANCE"
+  ip_behavior   = "IPV4"
 }
 
 output "edge_hostname" {
