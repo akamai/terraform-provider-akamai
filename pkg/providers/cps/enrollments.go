@@ -15,8 +15,8 @@ import (
 	cpstools "github.com/akamai/terraform-provider-akamai/v3/pkg/providers/cps/tools"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
 	"github.com/apex/log"
-	"github.com/hashicorp/terraform-plugin-sdk/v3/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v3/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 type (

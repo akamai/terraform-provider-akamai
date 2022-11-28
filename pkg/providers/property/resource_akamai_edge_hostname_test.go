@@ -533,7 +533,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 			},
 		},
 		"error - update ip_behavior to ipv6_performance": {
-			init: func(mp *mockpapi, mh *mockhapi) {
+			init: func(mp *papi.Mock, mh *hapi.Mock) {
 				// 1. call from create method and refresh 2. update ip_behvior to improper value
 				// 1st step - create
 				mp.On("GetEdgeHostnames", mock.Anything, papi.GetEdgeHostnamesRequest{

@@ -42,7 +42,7 @@ func TestProvider(t *testing.T) {
 var clientLock sync.Mutex
 
 // useClient swaps out the client on the global instance for the duration of the given func
-func useClient(client *mockbotman, f func()) {
+func useClient(client *botman.Mock, f func()) {
 	clientLock.Lock()
 	orig := inst.client
 	inst.client = client
