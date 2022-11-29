@@ -61,6 +61,20 @@ template_data = jsonencode({
     })
 ```
 
+or with a heredoc:
+
+```hcl
+template_data = <<-EOT
+      "rules": {
+        "name": "default",
+        "children": [
+          "#include:base_rules.json",
+          "#include:additional_rules.json"
+        ]
+      }
+    EOT
+```
+
 ## How to use property variables with a template
 
 You can also add variables to a template by using a string like `“${env.<variableName>}"`. These property variables follow the file structure and syntax used when [creating a pipeline in the Property Manager CLI](https://github.com/akamai/cli-property-manager#create-and-set-up-a-new-pipeline).
