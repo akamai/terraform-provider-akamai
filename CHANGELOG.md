@@ -1,17 +1,17 @@
 # RELEASE NOTES
 
-## x.x.x (x xx, xxxx)
+## 3.1.0 (December 1, 2022)
 
 #### FEATURES/ENHANCEMENTS:
 
 * CPS
-  * New data source:
-    * [akamai_cps_csr](xxx.md) - returns latest Certificate Signing Request for given enrollment
-    * [akamai_cps_deployments](xxx.md) - returns deployed certificates for given enrollment
-    * [akamai_cps_warnings](xxx.md) - returns a map of all possible CPS warnings (ID to warning message). The IDs can be later used to approve warnings (auto_approve_warnings field)
+  * New data sources:
+    * [akamai_cps_csr](docs/data-sources/cps_csr.md) - returns latest Certificate Signing Request for given enrollment
+    * [akamai_cps_deployments](docs/data-sources/cps_deployments.md) - returns deployed certificates for given enrollment
+    * [akamai_cps_warnings](docs/data-sources/cps_warnings.md) - returns a map of all possible CPS warnings (ID to warning message). The IDs can be later used to approve warnings (auto_approve_warnings field)
   * Added resources allowing management of third-party enrollments:
-    * [akamai_cps_third_party_enrollment](xxx.md) - create, read, update, delete and import third-party enrollments
-    * [akamai_cps_upload_certificate](xxx.md) - create, read, update and delete
+    * [akamai_cps_third_party_enrollment](docs/resources/cps_third_party_enrollment.md) - create, read, update, delete and import third-party enrollments
+    * [akamai_cps_upload_certificate](docs/resources/cps_upload_certificate.md) - create, read, update and delete
   * Resource cps_dv_enrollment
     * Deprecate `enable_multi_stacked_certificates` field. Now its value is always `false`.
 
