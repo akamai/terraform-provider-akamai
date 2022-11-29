@@ -106,19 +106,41 @@ func dataSourceAkamaiPropertyIncludeParentsRead(ctx context.Context, d *schema.R
 	var includeParents []map[string]interface{}
 	for _, item := range resp.Properties.Items {
 		var stagingVersion, productionVersion string
+		var isIncUsedInStagingVer, isIncUsedInProductionVer bool
+		listRefIncReq := papi.ListReferencedIncludesRequest{
+			PropertyID: item.PropertyID,
+			ContractID: contractID,
+			GroupID:    groupID,
+		}
+
 		if item.StagingVersion != nil {
 			stagingVersion = strconv.Itoa(*item.StagingVersion)
+			isIncUsedInStagingVer = true
 		}
 		if item.ProductionVersion != nil {
 			productionVersion = strconv.Itoa(*item.ProductionVersion)
+			isIncUsedInProductionVer = true
 		}
+		if stagingVersion != productionVersion && item.StagingVersion != nil && item.ProductionVersion != nil {
+			listRefIncReq.PropertyVersion = *item.StagingVersion
+			isIncUsedInStagingVer, err = isIncPresentInReferencedIncludes(ctx, client, listRefIncReq, includeID)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+			listRefIncReq.PropertyVersion = *item.ProductionVersion
+			isIncUsedInProductionVer, err = isIncPresentInReferencedIncludes(ctx, client, listRefIncReq, includeID)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+		}
+
 		attrs := map[string]interface{}{
 			"id":                                    item.PropertyID,
 			"name":                                  item.PropertyName,
 			"staging_version":                       stagingVersion,
 			"production_version":                    productionVersion,
-			"is_include_used_in_staging_version":    item.IsIncludeUsedInStagingVersion,
-			"is_include_used_in_production_version": item.IsIncludeUsedInProductionVersion,
+			"is_include_used_in_staging_version":    isIncUsedInStagingVer,
+			"is_include_used_in_production_version": isIncUsedInProductionVer,
 		}
 		includeParents = append(includeParents, attrs)
 	}
@@ -129,4 +151,17 @@ func dataSourceAkamaiPropertyIncludeParentsRead(ctx context.Context, d *schema.R
 
 	d.SetId(includeID)
 	return nil
+}
+
+func isIncPresentInReferencedIncludes(ctx context.Context, client papi.PAPI, refIncArgs papi.ListReferencedIncludesRequest, includeID string) (bool, error) {
+	refIncResp, err := client.ListReferencedIncludes(ctx, refIncArgs)
+	if err != nil {
+		return false, err
+	}
+	for _, include := range refIncResp.Includes.Items {
+		if include.IncludeID == includeID {
+			return true, nil
+		}
+	}
+	return false, nil
 }

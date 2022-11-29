@@ -29,34 +29,83 @@ func TestDataPropertyIncludeParents(t *testing.T) {
 					Properties: papi.ParentPropertyItems{
 						Items: []papi.ParentProperty{
 							{
-								PropertyID:                       "prop_1",
-								PropertyName:                     "prop_name",
-								StagingVersion:                   tools.IntPtr(3),
-								ProductionVersion:                tools.IntPtr(2),
-								IsIncludeUsedInProductionVersion: true,
-								IsIncludeUsedInStagingVersion:    true,
+								PropertyID:        "prop_1",
+								PropertyName:      "prop_name",
+								StagingVersion:    tools.IntPtr(3),
+								ProductionVersion: tools.IntPtr(2),
 							},
 							{
-								PropertyID:                       "prop_2",
-								PropertyName:                     "some_other_prop_name",
-								StagingVersion:                   tools.IntPtr(5),
-								ProductionVersion:                nil,
-								IsIncludeUsedInStagingVersion:    true,
-								IsIncludeUsedInProductionVersion: false,
+								PropertyID:        "prop_2",
+								PropertyName:      "some_other_prop_name",
+								StagingVersion:    tools.IntPtr(5),
+								ProductionVersion: nil,
+							},
+							{
+								PropertyID:        "prop_3",
+								PropertyName:      "third_prop_name",
+								StagingVersion:    tools.IntPtr(5),
+								ProductionVersion: tools.IntPtr(5),
+							},
+						},
+					},
+				}, nil).Times(5)
+				// run ListReferencedIncludes for each IncludeParent with different and not empty StagingVersion and ProductionVersion
+				m.On("ListReferencedIncludes", mock.Anything, papi.ListReferencedIncludesRequest{
+					ContractID:      "ctr_1",
+					GroupID:         "grp_1",
+					PropertyVersion: 3,
+					PropertyID:      "prop_1",
+				}).Return(&papi.ListReferencedIncludesResponse{
+					Includes: papi.IncludeItems{
+						Items: []papi.Include{
+							{
+								AccountID:         "test_account",
+								AssetID:           "test_asset",
+								ContractID:        "ctr_1",
+								GroupID:           "grp_1",
+								IncludeID:         "inc_1",
+								IncludeName:       "test_include",
+								IncludeType:       papi.IncludeTypeMicroServices,
+								LatestVersion:     1,
+								ProductionVersion: tools.IntPtr(2),
+								StagingVersion:    tools.IntPtr(3),
+							},
+						},
+					},
+				}, nil).Times(5)
+				m.On("ListReferencedIncludes", mock.Anything, papi.ListReferencedIncludesRequest{
+					ContractID:      "ctr_1",
+					GroupID:         "grp_1",
+					PropertyVersion: 2,
+					PropertyID:      "prop_1",
+				}).Return(&papi.ListReferencedIncludesResponse{
+					Includes: papi.IncludeItems{
+						Items: []papi.Include{
+							{
+								AccountID:         "test_account",
+								AssetID:           "test_asset",
+								ContractID:        "ctr_1",
+								GroupID:           "grp_1",
+								IncludeID:         "inc_2",
+								IncludeName:       "test_include_2",
+								IncludeType:       papi.IncludeTypeMicroServices,
+								LatestVersion:     1,
+								ProductionVersion: tools.IntPtr(2),
+								StagingVersion:    tools.IntPtr(3),
 							},
 						},
 					},
 				}, nil).Times(5)
 			},
 			expectedAttributes: map[string]string{
-				"parents.#": "2",
+				"parents.#": "3",
 
 				"parents.0.id":                                    "prop_1",
 				"parents.0.name":                                  "prop_name",
 				"parents.0.staging_version":                       "3",
 				"parents.0.production_version":                    "2",
 				"parents.0.is_include_used_in_staging_version":    "true",
-				"parents.0.is_include_used_in_production_version": "true",
+				"parents.0.is_include_used_in_production_version": "false",
 
 				"parents.1.id":                                    "prop_2",
 				"parents.1.name":                                  "some_other_prop_name",
@@ -64,6 +113,13 @@ func TestDataPropertyIncludeParents(t *testing.T) {
 				"parents.1.production_version":                    "",
 				"parents.1.is_include_used_in_staging_version":    "true",
 				"parents.1.is_include_used_in_production_version": "false",
+
+				"parents.2.id":                                    "prop_3",
+				"parents.2.name":                                  "third_prop_name",
+				"parents.2.staging_version":                       "5",
+				"parents.2.production_version":                    "5",
+				"parents.2.is_include_used_in_staging_version":    "true",
+				"parents.2.is_include_used_in_production_version": "true",
 			},
 			expectError: nil,
 		},
