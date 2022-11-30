@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/mock"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/papi"
 )
 
 type mockpapi struct {
