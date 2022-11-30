@@ -15,14 +15,14 @@ import (
 func TestDataPropertyInclude(t *testing.T) {
 	tests := map[string]struct {
 		givenTF                   string
-		init                      func(*mockpapi)
+		init                      func(*papi.Mock)
 		expectedAttributes        map[string]string
 		expectedMissingAttributes []string
 		expectError               *regexp.Regexp
 	}{
 		"happy path - both staging and production versions are returned": {
 			givenTF: "valid.tf",
-			init: func(m *mockpapi) {
+			init: func(m *papi.Mock) {
 				m.On("GetInclude", mock.Anything, papi.GetIncludeRequest{
 					ContractID: "ctr_1",
 					GroupID:    "grp_1",
@@ -52,7 +52,7 @@ func TestDataPropertyInclude(t *testing.T) {
 		},
 		"happy path - missing production version and staging version": {
 			givenTF: "valid.tf",
-			init: func(m *mockpapi) {
+			init: func(m *papi.Mock) {
 				m.On("GetInclude", mock.Anything, papi.GetIncludeRequest{
 					ContractID: "ctr_1",
 					GroupID:    "grp_1",
@@ -84,7 +84,7 @@ func TestDataPropertyInclude(t *testing.T) {
 		},
 		"error response from api": {
 			givenTF: "valid.tf",
-			init: func(m *mockpapi) {
+			init: func(m *papi.Mock) {
 				m.On("GetInclude", mock.Anything, papi.GetIncludeRequest{
 					ContractID: "ctr_1",
 					GroupID:    "grp_1",
@@ -95,7 +95,7 @@ func TestDataPropertyInclude(t *testing.T) {
 		},
 		"empty include items list in response": {
 			givenTF: "valid.tf",
-			init: func(m *mockpapi) {
+			init: func(m *papi.Mock) {
 				m.On("GetInclude", mock.Anything, papi.GetIncludeRequest{
 					ContractID: "ctr_1",
 					GroupID:    "grp_1",
@@ -123,7 +123,7 @@ func TestDataPropertyInclude(t *testing.T) {
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &mockpapi{}
+			client := &papi.Mock{}
 			if test.init != nil {
 				test.init(client)
 			}

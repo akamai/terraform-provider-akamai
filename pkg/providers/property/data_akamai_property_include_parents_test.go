@@ -14,13 +14,13 @@ import (
 func TestDataPropertyIncludeParents(t *testing.T) {
 	tests := map[string]struct {
 		givenTF            string
-		init               func(*mockpapi)
+		init               func(*papi.Mock)
 		expectedAttributes map[string]string
 		expectError        *regexp.Regexp
 	}{
 		"happy path": {
 			givenTF: "valid.tf",
-			init: func(m *mockpapi) {
+			init: func(m *papi.Mock) {
 				m.On("ListIncludeParents", mock.Anything, papi.ListIncludeParentsRequest{
 					ContractID: "ctr_1",
 					GroupID:    "grp_1",
@@ -125,7 +125,7 @@ func TestDataPropertyIncludeParents(t *testing.T) {
 		},
 		"error response from api": {
 			givenTF: "valid.tf",
-			init: func(m *mockpapi) {
+			init: func(m *papi.Mock) {
 				m.On("ListIncludeParents", mock.Anything, papi.ListIncludeParentsRequest{
 					ContractID: "ctr_1",
 					GroupID:    "grp_1",
@@ -149,7 +149,7 @@ func TestDataPropertyIncludeParents(t *testing.T) {
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &mockpapi{}
+			client := &papi.Mock{}
 			if test.init != nil {
 				test.init(client)
 			}

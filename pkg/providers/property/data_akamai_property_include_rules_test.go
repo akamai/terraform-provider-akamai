@@ -54,7 +54,7 @@ var (
 		RuleErrors:  loadFixtureString("%s/property-snippets/rule_errors.json", workdir),
 	}
 
-	expectReadPropertyRulesInclude = func(t *testing.T, client *mockpapi, data testDataPropertyIncludeRules, timesToRun int, withRuleErrors bool) {
+	expectReadPropertyRulesInclude = func(t *testing.T, client *papi.Mock, data testDataPropertyIncludeRules, timesToRun int, withRuleErrors bool) {
 		getIncludeRuleTreeRequest := papi.GetIncludeRuleTreeRequest{
 			ContractID:     data.ContractID,
 			GroupID:        data.GroupID,
@@ -81,7 +81,7 @@ var (
 		client.On("GetIncludeRuleTree", mock.Anything, getIncludeRuleTreeRequest).Return(&getIncludeRuleTreeResponse, nil).Times(timesToRun)
 	}
 
-	expectGetIncludeRuleTreeError = func(t *testing.T, client *mockpapi, data testDataPropertyIncludeRules) {
+	expectGetIncludeRuleTreeError = func(t *testing.T, client *papi.Mock, data testDataPropertyIncludeRules) {
 		getIncludeRuleTreeRequest := papi.GetIncludeRuleTreeRequest{
 			ContractID:     data.ContractID,
 			GroupID:        data.GroupID,
@@ -96,47 +96,47 @@ var (
 
 func TestDataPropertyIncludeRules(t *testing.T) {
 	tests := map[string]struct {
-		init       func(*testing.T, *mockpapi, testDataPropertyIncludeRules)
+		init       func(*testing.T, *papi.Mock, testDataPropertyIncludeRules)
 		mockData   testDataPropertyIncludeRules
 		configPath string
 		error      *regexp.Regexp
 	}{
 		"happy path include rules with rule errors": {
-			init: func(t *testing.T, m *mockpapi, testData testDataPropertyIncludeRules) {
+			init: func(t *testing.T, m *papi.Mock, testData testDataPropertyIncludeRules) {
 				expectReadPropertyRulesInclude(t, m, testData, 5, true)
 			},
 			mockData:   propertyIncludeRulesWithRuleErrors,
 			configPath: "./testdata/TestDSPropertyIncludeRules/property_include_rules_with_errors.tf",
 		},
 		"happy path include rules without rules errors": {
-			init: func(t *testing.T, m *mockpapi, testData testDataPropertyIncludeRules) {
+			init: func(t *testing.T, m *papi.Mock, testData testDataPropertyIncludeRules) {
 				expectReadPropertyRulesInclude(t, m, testData, 5, false)
 			},
 			mockData:   propertyIncludeRulesWithoutRuleErrors,
 			configPath: "./testdata/TestDSPropertyIncludeRules/property_include_rules_without_errors.tf",
 		},
 		"groupID not provided": {
-			init:       func(t *testing.T, m *mockpapi, testData testDataPropertyIncludeRules) {},
+			init:       func(t *testing.T, m *papi.Mock, testData testDataPropertyIncludeRules) {},
 			configPath: "./testdata/TestDSPropertyIncludeRules/property_include_rules_no_group_id.tf",
 			error:      regexp.MustCompile("Missing required argument"),
 		},
 		"contractID not provided": {
-			init:       func(t *testing.T, m *mockpapi, testData testDataPropertyIncludeRules) {},
+			init:       func(t *testing.T, m *papi.Mock, testData testDataPropertyIncludeRules) {},
 			configPath: "./testdata/TestDSPropertyIncludeRules/property_include_rules_no_contract_id.tf",
 			error:      regexp.MustCompile("Missing required argument"),
 		},
 		"includeID not provided": {
-			init:       func(t *testing.T, m *mockpapi, testData testDataPropertyIncludeRules) {},
+			init:       func(t *testing.T, m *papi.Mock, testData testDataPropertyIncludeRules) {},
 			configPath: "./testdata/TestDSPropertyIncludeRules/property_include_rules_no_include_id.tf",
 			error:      regexp.MustCompile("Missing required argument"),
 		},
 		"version not provided": {
-			init:       func(t *testing.T, m *mockpapi, testData testDataPropertyIncludeRules) {},
+			init:       func(t *testing.T, m *papi.Mock, testData testDataPropertyIncludeRules) {},
 			configPath: "./testdata/TestDSPropertyIncludeRules/property_include_rules_no_version.tf",
 			error:      regexp.MustCompile("Missing required argument"),
 		},
 		"GetIncludeRuleTree response error": {
-			init: func(t *testing.T, m *mockpapi, testData testDataPropertyIncludeRules) {
+			init: func(t *testing.T, m *papi.Mock, testData testDataPropertyIncludeRules) {
 				expectGetIncludeRuleTreeError(t, m, testData)
 			},
 			mockData:   propertyIncludeRulesWithRuleErrors,
@@ -147,7 +147,7 @@ func TestDataPropertyIncludeRules(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &mockpapi{}
+			client := &papi.Mock{}
 			test.init(t, client, test.mockData)
 			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{

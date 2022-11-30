@@ -15,7 +15,7 @@ import (
 func TestDataIncludeActivation(t *testing.T) {
 	tests := map[string]struct {
 		attrs      includeActivationTestAttributes
-		init       func(*testing.T, *mockpapi, includeActivationTestAttributes)
+		init       func(*testing.T, *papi.Mock, includeActivationTestAttributes)
 		configPath string
 		error      *regexp.Regexp
 	}{
@@ -27,7 +27,7 @@ func TestDataIncludeActivation(t *testing.T) {
 				network:             stagingNetwork,
 				activationsResponse: *createIncludeActivationsResponse(accountForTests, contractForTests, groupForTests, includeActivationsForTests),
 			},
-			init: func(t *testing.T, m *mockpapi, attrs includeActivationTestAttributes) {
+			init: func(t *testing.T, m *papi.Mock, attrs includeActivationTestAttributes) {
 				mockListIncludeActivation(m, attrs, 5)
 			},
 			configPath: "testdata/TestDataIncludeActivation/valid_staging.tf",
@@ -40,7 +40,7 @@ func TestDataIncludeActivation(t *testing.T) {
 				network:             productionNetwork,
 				activationsResponse: *createIncludeActivationsResponse(accountForTests, contractForTests, groupForTests, includeActivationsForTests),
 			},
-			init: func(t *testing.T, m *mockpapi, attrs includeActivationTestAttributes) {
+			init: func(t *testing.T, m *papi.Mock, attrs includeActivationTestAttributes) {
 				mockListIncludeActivation(m, attrs, 5)
 			},
 			configPath: "testdata/TestDataIncludeActivation/valid_production.tf",
@@ -53,7 +53,7 @@ func TestDataIncludeActivation(t *testing.T) {
 				network:             productionNetwork,
 				activationsResponse: *createIncludeActivationsResponse(accountForTests, contractForTests, groupForTests, includeActivationsForTests[:2]),
 			},
-			init: func(t *testing.T, m *mockpapi, attrs includeActivationTestAttributes) {
+			init: func(t *testing.T, m *papi.Mock, attrs includeActivationTestAttributes) {
 				mockListIncludeActivation(m, attrs, 5)
 			},
 			configPath: "testdata/TestDataIncludeActivation/no_activation_for_given_network.tf",
@@ -66,7 +66,7 @@ func TestDataIncludeActivation(t *testing.T) {
 				network:             stagingNetwork,
 				activationsResponse: *createIncludeActivationsResponse(accountForTests, contractForTests, groupForTests, includeActivationsWithLatestDeactivate),
 			},
-			init: func(t *testing.T, m *mockpapi, attrs includeActivationTestAttributes) {
+			init: func(t *testing.T, m *papi.Mock, attrs includeActivationTestAttributes) {
 				mockListIncludeActivation(m, attrs, 5)
 			},
 			configPath: "testdata/TestDataIncludeActivation/valid_staging.tf",
@@ -79,7 +79,7 @@ func TestDataIncludeActivation(t *testing.T) {
 				network:             productionNetwork,
 				activationsResponse: *createIncludeActivationsResponse(accountForTests, contractForTests, groupForTests, includeActivationsForTests[:2]),
 			},
-			init: func(t *testing.T, m *mockpapi, attrs includeActivationTestAttributes) {
+			init: func(t *testing.T, m *papi.Mock, attrs includeActivationTestAttributes) {
 				mockListIncludeActivation(m, attrs, 5)
 			},
 			configPath: "testdata/TestDataIncludeActivation/valid_production.tf",
@@ -107,32 +107,32 @@ func TestDataIncludeActivation(t *testing.T) {
 					}),
 				}),
 			},
-			init: func(t *testing.T, m *mockpapi, attrs includeActivationTestAttributes) {
+			init: func(t *testing.T, m *papi.Mock, attrs includeActivationTestAttributes) {
 				mockListIncludeActivation(m, attrs, 5)
 			},
 			configPath: "testdata/TestDataIncludeActivation/valid_staging.tf",
 		},
 		"required attribute missing - contract_id": {
 			attrs:      includeActivationTestAttributes{},
-			init:       func(t *testing.T, m *mockpapi, attrs includeActivationTestAttributes) {},
+			init:       func(t *testing.T, m *papi.Mock, attrs includeActivationTestAttributes) {},
 			configPath: "testdata/TestDataIncludeActivation/no_contract_id.tf",
 			error:      regexp.MustCompile("Error: Missing required argument"),
 		},
 		"required attribute missing - group_id": {
 			attrs:      includeActivationTestAttributes{},
-			init:       func(t *testing.T, m *mockpapi, attrs includeActivationTestAttributes) {},
+			init:       func(t *testing.T, m *papi.Mock, attrs includeActivationTestAttributes) {},
 			configPath: "testdata/TestDataIncludeActivation/no_group_id.tf",
 			error:      regexp.MustCompile("Error: Missing required argument"),
 		},
 		"required attribute missing - include_id": {
 			attrs:      includeActivationTestAttributes{},
-			init:       func(t *testing.T, m *mockpapi, attrs includeActivationTestAttributes) {},
+			init:       func(t *testing.T, m *papi.Mock, attrs includeActivationTestAttributes) {},
 			configPath: "testdata/TestDataIncludeActivation/no_include_id.tf",
 			error:      regexp.MustCompile("Error: Missing required argument"),
 		},
 		"required attribute missing - network": {
 			attrs:      includeActivationTestAttributes{},
-			init:       func(t *testing.T, m *mockpapi, attrs includeActivationTestAttributes) {},
+			init:       func(t *testing.T, m *papi.Mock, attrs includeActivationTestAttributes) {},
 			configPath: "testdata/TestDataIncludeActivation/no_network.tf",
 			error:      regexp.MustCompile("Error: Missing required argument"),
 		},
@@ -144,7 +144,7 @@ func TestDataIncludeActivation(t *testing.T) {
 				network:             stagingNetwork,
 				activationsResponse: *createIncludeActivationsResponse(accountForTests, contractForTests, groupForTests, includeActivationsForTests),
 			},
-			init: func(t *testing.T, m *mockpapi, attrs includeActivationTestAttributes) {
+			init: func(t *testing.T, m *papi.Mock, attrs includeActivationTestAttributes) {
 				m.On("ListIncludeActivations", mock.Anything, papi.ListIncludeActivationsRequest{
 					IncludeID:  attrs.includeID,
 					ContractID: attrs.contractID,
@@ -158,7 +158,7 @@ func TestDataIncludeActivation(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &mockpapi{}
+			client := &papi.Mock{}
 			test.init(t, client, test.attrs)
 			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
@@ -397,7 +397,7 @@ var (
 	}
 
 	// mockListIncludeActivation mocks ListIncludeActivation call with provided parameters
-	mockListIncludeActivation = func(m *mockpapi, attrs includeActivationTestAttributes, timesToRun int) {
+	mockListIncludeActivation = func(m *papi.Mock, attrs includeActivationTestAttributes, timesToRun int) {
 		m.On("ListIncludeActivations", mock.Anything, papi.ListIncludeActivationsRequest{
 			IncludeID:  attrs.includeID,
 			ContractID: attrs.contractID,

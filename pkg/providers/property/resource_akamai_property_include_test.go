@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/hapi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/test"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -97,7 +98,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 		}
 	}
 
-	expectCreate := func(m *mockpapi, testData *testData) test.MockCalls {
+	expectCreate := func(m *papi.Mock, testData *testData) test.MockCalls {
 		testData.latestVersion++
 
 		createIncludeCall := m.On("CreateInclude", mock.Anything, papi.CreateIncludeRequest{
@@ -120,7 +121,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 		return test.MockCalls{createIncludeCall, updateIncludeRuleTreeCall}
 	}
 
-	expectRead := func(m *mockpapi, testData *testData) test.MockCalls {
+	expectRead := func(m *papi.Mock, testData *testData) test.MockCalls {
 		getIncludeCall := m.On("GetInclude", mock.Anything, papi.GetIncludeRequest{
 			ContractID: testData.contractID,
 			GroupID:    testData.groupID,
@@ -138,7 +139,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 		return test.MockCalls{getIncludeCall, getIncludeRuleTreeCall}
 	}
 
-	expectUpdate := func(m *mockpapi, testData *testData) test.MockCalls {
+	expectUpdate := func(m *papi.Mock, testData *testData) test.MockCalls {
 		getIncludeVersionCall := m.On("GetIncludeVersion", mock.Anything, papi.GetIncludeVersionRequest{
 			Version:    testData.latestVersion,
 			GroupID:    testData.groupID,
@@ -168,7 +169,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 		return append(calls, updateIncludeRuleTreeCall)
 	}
 
-	expectDelete := func(m *mockpapi, testData *testData) *mock.Call {
+	expectDelete := func(m *papi.Mock, testData *testData) *mock.Call {
 		return m.On("DeleteInclude", mock.Anything, papi.DeleteIncludeRequest{
 			GroupID:    testData.groupID,
 			IncludeID:  testData.includeID,
@@ -197,7 +198,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 	}
 
 	tests := map[string]struct {
-		init     func(*mockpapi, *testData)
+		init     func(*papi.Mock, *testData)
 		steps    []resource.TestStep
 		testData testData
 	}{
@@ -211,7 +212,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 				includeName: "test include",
 				includeType: papi.IncludeTypeMicroServices,
 			},
-			init: func(m *mockpapi, testData *testData) {
+			init: func(m *papi.Mock, testData *testData) {
 				expectCreate(m, testData).Once()
 				expectRead(m, testData).Times(2)
 				expectDelete(m, testData).Once()
@@ -246,7 +247,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 				includeName: "test include",
 				includeType: papi.IncludeTypeMicroServices,
 			},
-			init: func(m *mockpapi, testData *testData) {
+			init: func(m *papi.Mock, testData *testData) {
 				expectCreate(m, testData).Once()
 				expectRead(m, testData).Times(2)
 				expectDelete(m, testData).Once()
@@ -281,7 +282,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 				includeName: "test include",
 				includeType: papi.IncludeTypeMicroServices,
 			},
-			init: func(m *mockpapi, testData *testData) {
+			init: func(m *papi.Mock, testData *testData) {
 				expectCreate(m, testData).Once()
 				testData.rulesPath = "simple_rules_with_errors.json"
 				expectRead(m, testData).Times(2)
@@ -318,7 +319,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 				stagingStatus:    papi.VersionStatusInactive,
 				productionStatus: papi.VersionStatusInactive,
 			},
-			init: func(m *mockpapi, testData *testData) {
+			init: func(m *papi.Mock, testData *testData) {
 				expectCreate(m, testData).Once()
 				expectRead(m, testData).Times(2)
 
@@ -377,7 +378,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 				stagingStatus:    papi.VersionStatusInactive,
 				productionStatus: papi.VersionStatusInactive,
 			},
-			init: func(m *mockpapi, testData *testData) {
+			init: func(m *papi.Mock, testData *testData) {
 				expectCreate(m, testData).Once()
 				expectRead(m, testData).Times(2)
 
@@ -440,7 +441,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 				includeName: "test include",
 				includeType: papi.IncludeTypeMicroServices,
 			},
-			init: func(m *mockpapi, testData *testData) {
+			init: func(m *papi.Mock, testData *testData) {
 				expectCreate(m, testData).Once()
 				expectRead(m, testData).Times(3)
 				expectDelete(m, testData).Once()
@@ -469,7 +470,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 				includeName: "test include",
 				includeType: papi.IncludeTypeMicroServices,
 			},
-			init: func(m *mockpapi, testData *testData) {
+			init: func(m *papi.Mock, testData *testData) {
 				expectCreate(m, testData).Once()
 				expectRead(m, testData).Times(2)
 				expectDelete(m, testData).Once()
@@ -526,12 +527,12 @@ func TestResourcePropertyInclude(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &mockpapi{}
+			client := &papi.Mock{}
 			if test.init != nil {
 				test.init(client, &test.testData)
 			}
 
-			useClient(client, &mockhapi{}, func() {
+			useClient(client, &hapi.Mock{}, func() {
 				resource.UnitTest(t, resource.TestCase{
 					Providers:  testAccProviders,
 					IsUnitTest: true,
