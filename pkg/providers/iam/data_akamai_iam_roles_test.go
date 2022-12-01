@@ -5,15 +5,15 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/iam"
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/test"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/iam"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/test"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
 
 func TestDataRoles(t *testing.T) {
 	t.Run("happy path/no args", func(t *testing.T) {
-		client := &mockiam{}
+		client := &iam.Mock{}
 
 		roles := []iam.Role{{
 			RoleName:        "test role name",
@@ -60,7 +60,7 @@ func TestDataRoles(t *testing.T) {
 	t.Run("fail path", func(t *testing.T) {
 		req := iam.ListRolesRequest{}
 
-		client := &mockiam{}
+		client := &iam.Mock{}
 		client.Test(test.TattleT{T: t})
 		client.On("ListRoles", mock.Anything, req).Return(nil, errors.New("failed to get roles"))
 

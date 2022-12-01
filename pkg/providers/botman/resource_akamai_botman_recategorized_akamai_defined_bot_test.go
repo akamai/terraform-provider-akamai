@@ -3,8 +3,8 @@ package botman
 import (
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/botman"
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/test"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/botman"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/test"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -12,7 +12,7 @@ import (
 func TestResourceRecategorizedAkamaiDefinedBot(t *testing.T) {
 	t.Run("ResourceRecategorizedAkamaiDefinedBot", func(t *testing.T) {
 
-		mockedBotmanClient := &mockbotman{}
+		mockedBotmanClient := &botman.Mock{}
 		createResponse := botman.RecategorizedAkamaiDefinedBotResponse{BotID: "cc9c3f89-e179-4892-89cf-d5e623ba9dc7", CategoryID: "87fb601b-4d30-4e0d-a74f-dc77e2b1bb74"}
 		mockedBotmanClient.On("CreateRecategorizedAkamaiDefinedBot",
 			mock.Anything,

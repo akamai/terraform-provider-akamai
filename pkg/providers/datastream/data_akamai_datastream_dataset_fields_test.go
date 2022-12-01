@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/datastream"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/datastream"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -117,7 +117,7 @@ func TestDataSourceDatasetFieldsRead(t *testing.T) {
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &mockdatastream{}
+			client := &datastream.Mock{}
 			client.On("GetDatasetFields", mock.Anything, datastream.GetDatasetFieldsRequest{
 				TemplateName: datastream.TemplateNameEdgeLogs,
 			}).Return(test.edgegridData, test.edgegridError)

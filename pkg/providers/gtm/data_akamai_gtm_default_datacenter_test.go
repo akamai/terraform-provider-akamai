@@ -3,14 +3,14 @@ package gtm
 import (
 	"testing"
 
-	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/configgtm"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/gtm"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
 
 func TestAccDataSourceGTMDefaultDatacenter_basic(t *testing.T) {
 	t.Run("basic", func(t *testing.T) {
-		client := &mockgtm{}
+		client := &gtm.Mock{}
 
 		dc := gtm.Datacenter{
 			DatacenterId: 1000,

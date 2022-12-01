@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"testing"
 
-	dns "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/configdns"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/session"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/dns"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/session"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -22,7 +22,7 @@ func TestResDnsRecord(t *testing.T) {
 
 	// This test peforms a full life-cycle (CRUD) test
 	t.Run("lifecycle test", func(t *testing.T) {
-		client := &mockdns{}
+		client := &dns.Mock{}
 
 		getCall := client.On("GetRecord",
 			mock.Anything, // ctx is irrelevant for this test

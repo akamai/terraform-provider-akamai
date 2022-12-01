@@ -9,10 +9,10 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/hapi"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/hapi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/papi"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -122,7 +122,7 @@ func suppressLogging(t *testing.T, f func()) {
 	f()
 }
 
-// Wrapper to intercept the mockpapi's call of t.FailNow(). The Terraform test driver runs the provider code on
+// Wrapper to intercept the papi.Mock's call of t.FailNow(). The Terraform test driver runs the provider code on
 // goroutines other than the one created for the test. When t.FailNow() is called from any other goroutine, it causes
 // the test to hang because the TF test driver is still waiting to serve requests. Mockery's failure message neglects to
 // inform the user which test had failed. Use this struct to wrap a *testing.T when you call mock.Test(T{t}) and the

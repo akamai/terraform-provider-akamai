@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/edgeworkers"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/edgeworkers"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -16,12 +16,12 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 	edgeworkerID := 1234
 
 	tests := map[string]struct {
-		init            func(*mockedgeworkers)
+		init            func(*edgeworkers.Mock)
 		steps           []resource.TestStep
 		omitDefaultMock bool
 	}{
 		"create and read activation - no previous activations": {
-			init: func(m *mockedgeworkers) {
+			init: func(m *edgeworkers.Mock) {
 				net := edgeworkers.ActivationNetworkStaging
 				version := "test"
 				activationID := 1
@@ -54,7 +54,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			},
 		},
 		"create and read activation - some previous activations, but no current": {
-			init: func(m *mockedgeworkers) {
+			init: func(m *edgeworkers.Mock) {
 				net := edgeworkers.ActivationNetworkStaging
 				version := "test"
 				activationID := 8
@@ -108,7 +108,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			},
 		},
 		"create and read activation - version already active": {
-			init: func(m *mockedgeworkers) {
+			init: func(m *edgeworkers.Mock) {
 				net := edgeworkers.ActivationNetworkStaging
 				version := "test"
 				activationID := 1
@@ -144,7 +144,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			},
 		},
 		"create and read activation - longer polling": {
-			init: func(m *mockedgeworkers) {
+			init: func(m *edgeworkers.Mock) {
 				net := edgeworkers.ActivationNetworkStaging
 				version := "test"
 				activationID := 1
@@ -184,7 +184,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			},
 		},
 		"create and read activation - version is already being activated, wait for activation": {
-			init: func(m *mockedgeworkers) {
+			init: func(m *edgeworkers.Mock) {
 				net := edgeworkers.ActivationNetworkStaging
 				version := "test"
 				activationID := 1
@@ -222,7 +222,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			},
 		},
 		"update network": {
-			init: func(m *mockedgeworkers) {
+			init: func(m *edgeworkers.Mock) {
 				createNet, updateNet := edgeworkers.ActivationNetworkStaging, edgeworkers.ActivationNetworkProduction
 				version := "test"
 				createActivationID, updateActivationID := 1, 2
@@ -273,7 +273,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			},
 		},
 		"update version": {
-			init: func(m *mockedgeworkers) {
+			init: func(m *edgeworkers.Mock) {
 				net := edgeworkers.ActivationNetworkStaging
 				createVersion, updateVersion := "test", "test1"
 				createActivationID, updateActivationID := 1, 2
@@ -325,7 +325,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			},
 		},
 		"update version - active version changed on refresh": {
-			init: func(m *mockedgeworkers) {
+			init: func(m *edgeworkers.Mock) {
 				net := edgeworkers.ActivationNetworkStaging
 				createVersion, updateVersion := "test", "test1"
 				createActivationID, updateActivationID := 1, 3
@@ -385,7 +385,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			},
 		},
 		"update version - version already active": {
-			init: func(m *mockedgeworkers) {
+			init: func(m *edgeworkers.Mock) {
 				net := edgeworkers.ActivationNetworkStaging
 				createVersion, updateVersion := "test", "test1"
 				createActivationID, updateActivationID := 1, 2
@@ -433,7 +433,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			},
 		},
 		"update network - version already active": {
-			init: func(m *mockedgeworkers) {
+			init: func(m *edgeworkers.Mock) {
 				createNet, updateNet := edgeworkers.ActivationNetworkStaging, edgeworkers.ActivationNetworkProduction
 				version := "test"
 				createActivationID, updateActivationID := 1, 2
@@ -488,7 +488,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			},
 		},
 		"update edgeworker_id - ForceNew success": {
-			init: func(m *mockedgeworkers) {
+			init: func(m *edgeworkers.Mock) {
 				net := edgeworkers.ActivationNetworkStaging
 				version := "test"
 				activationID := 1
@@ -551,7 +551,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			omitDefaultMock: true,
 		},
 		"destroy - version already deactivated": {
-			init: func(m *mockedgeworkers) {
+			init: func(m *edgeworkers.Mock) {
 				net := edgeworkers.ActivationNetworkStaging
 				version := "test"
 				activationID := 1
@@ -585,7 +585,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			},
 		},
 		"destroy - version is being deactivated, wait": {
-			init: func(m *mockedgeworkers) {
+			init: func(m *edgeworkers.Mock) {
 				net := edgeworkers.ActivationNetworkStaging
 				version := "test"
 				activationID := 1
@@ -624,7 +624,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			},
 		},
 		"destroy - longer polling": {
-			init: func(m *mockedgeworkers) {
+			init: func(m *edgeworkers.Mock) {
 				net := edgeworkers.ActivationNetworkStaging
 				version := "test"
 				activationID := 1
@@ -661,7 +661,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			},
 		},
 		"destroy - timeout, resource deleted successfully": {
-			init: func(m *mockedgeworkers) {
+			init: func(m *edgeworkers.Mock) {
 				net := edgeworkers.ActivationNetworkStaging
 				version := "test"
 				activationID := 1
@@ -699,7 +699,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			},
 		},
 		"import activation on staging": {
-			init: func(m *mockedgeworkers) {
+			init: func(m *edgeworkers.Mock) {
 				net := edgeworkers.ActivationNetworkStaging
 				version := "test"
 				activationID := 1
@@ -732,7 +732,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			},
 		},
 		"error on create - missing required arguments": {
-			init: func(m *mockedgeworkers) {},
+			init: func(m *edgeworkers.Mock) {},
 			steps: []resource.TestStep{
 				{
 					Config:      loadFixtureString(fmt.Sprintf("%s/edgeworkers_activation_missing_required_args.tf", workdir)),
@@ -750,7 +750,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			omitDefaultMock: true,
 		},
 		"error on create - version does not exist": {
-			init: func(m *mockedgeworkers) {
+			init: func(m *edgeworkers.Mock) {
 				// create - version verification
 				expectListEdgeWorkerVersions(m, edgeworkerID, []edgeworkers.EdgeWorkerVersion{
 					*createStubEdgeworkerVersion(edgeworkerID, "someOtherVersion2"),
@@ -765,7 +765,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			},
 		},
 		"error on create - getting current activation failed, ListActivations API error": {
-			init: func(m *mockedgeworkers) {
+			init: func(m *edgeworkers.Mock) {
 				// create - version verification
 				expectListEdgeWorkerVersions(m, edgeworkerID, []edgeworkers.EdgeWorkerVersion{
 					*createStubEdgeworkerVersion(edgeworkerID, "test"),
@@ -781,7 +781,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			},
 		},
 		"error on create - getting current activation failed, ListDeactivations API error": {
-			init: func(m *mockedgeworkers) {
+			init: func(m *edgeworkers.Mock) {
 				// create - version verification
 				expectListEdgeWorkerVersions(m, edgeworkerID, []edgeworkers.EdgeWorkerVersion{
 					*createStubEdgeworkerVersion(edgeworkerID, "test"),
@@ -800,7 +800,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			},
 		},
 		"error on create - API error on list version": {
-			init: func(m *mockedgeworkers) {
+			init: func(m *edgeworkers.Mock) {
 				// create - version verification
 				expectListEdgeWorkerVersions(m, edgeworkerID, []edgeworkers.EdgeWorkerVersion{}, fmt.Errorf("oops")).Once()
 			},
@@ -812,7 +812,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			},
 		},
 		"error on create - API error on activate": {
-			init: func(m *mockedgeworkers) {
+			init: func(m *edgeworkers.Mock) {
 				// create - version verification
 				expectListEdgeWorkerVersions(m, edgeworkerID, []edgeworkers.EdgeWorkerVersion{
 					*createStubEdgeworkerVersion(edgeworkerID, "test"),
@@ -829,7 +829,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			},
 		},
 		"error on create - API error on polling": {
-			init: func(m *mockedgeworkers) {
+			init: func(m *edgeworkers.Mock) {
 				version := "test"
 				net := edgeworkers.ActivationNetworkStaging
 				activationID := 1
@@ -853,7 +853,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			},
 		},
 		"error on create - activation failed": {
-			init: func(m *mockedgeworkers) {
+			init: func(m *edgeworkers.Mock) {
 				version := "test"
 				net := edgeworkers.ActivationNetworkStaging
 				activationID := 1
@@ -877,7 +877,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			},
 		},
 		"error on update - version does not exist": {
-			init: func(m *mockedgeworkers) {
+			init: func(m *edgeworkers.Mock) {
 				net := edgeworkers.ActivationNetworkStaging
 				createVersion, updateVersion := "test", "test1"
 				createActivationID := 1
@@ -914,7 +914,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			},
 		},
 		"error on edgeworker_id ForceNew": {
-			init: func(m *mockedgeworkers) {
+			init: func(m *edgeworkers.Mock) {
 				net := edgeworkers.ActivationNetworkStaging
 				version := "test"
 				activationID := 1
@@ -951,7 +951,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			},
 		},
 		"error on update - no current activation on refresh": {
-			init: func(m *mockedgeworkers) {
+			init: func(m *edgeworkers.Mock) {
 				net := edgeworkers.ActivationNetworkStaging
 				createVersion, updateVersion := "test", "test1"
 				createActivationID := 1
@@ -996,7 +996,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			},
 		},
 		"error on update - error waiting for deactivation": {
-			init: func(m *mockedgeworkers) {
+			init: func(m *edgeworkers.Mock) {
 				net := edgeworkers.ActivationNetworkStaging
 				createVersion, updateVersion := "test", "test1"
 				createActivationID := 1
@@ -1043,7 +1043,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			},
 		},
 		"error on customize diff - error listing edgeworkers": {
-			init: func(m *mockedgeworkers) {
+			init: func(m *edgeworkers.Mock) {
 				// create version verification
 				expectListEdgeWorkersID(m, fmt.Errorf("oops"))
 			},
@@ -1056,7 +1056,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			omitDefaultMock: true,
 		},
 		"error on import - edgeworker id not a number": {
-			init: func(m *mockedgeworkers) {
+			init: func(m *edgeworkers.Mock) {
 				net := edgeworkers.ActivationNetworkStaging
 				version := "test"
 				activationID := 1
@@ -1089,7 +1089,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			},
 		},
 		"error on import - invalid network": {
-			init: func(m *mockedgeworkers) {
+			init: func(m *edgeworkers.Mock) {
 				net := edgeworkers.ActivationNetworkStaging
 				version := "test"
 				activationID := 1
@@ -1129,7 +1129,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &mockedgeworkers{}
+			client := &edgeworkers.Mock{}
 			if !test.omitDefaultMock {
 				expectListEdgeWorkersID(client, nil, edgeworkerID)
 			}
@@ -1146,7 +1146,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 	}
 }
 
-func expectActivateVersion(m *mockedgeworkers, edgeworkerID, activationID int, net edgeworkers.ActivationNetwork, version string, e error) *mock.Call {
+func expectActivateVersion(m *edgeworkers.Mock, edgeworkerID, activationID int, net edgeworkers.ActivationNetwork, version string, e error) *mock.Call {
 	req := edgeworkers.ActivateVersionRequest{
 		EdgeWorkerID: edgeworkerID,
 		ActivateVersion: edgeworkers.ActivateVersion{
@@ -1161,7 +1161,7 @@ func expectActivateVersion(m *mockedgeworkers, edgeworkerID, activationID int, n
 	return m.On("ActivateVersion", mock.Anything, req).Return(createStubActivation(edgeworkerID, activationID, net, version, activationStatusPresubmit, ""), nil)
 }
 
-func expectGetActivation(m *mockedgeworkers, edgeworkerID, activationID int, net edgeworkers.ActivationNetwork, version, status string, e error) *mock.Call {
+func expectGetActivation(m *edgeworkers.Mock, edgeworkerID, activationID int, net edgeworkers.ActivationNetwork, version, status string, e error) *mock.Call {
 	req := edgeworkers.GetActivationRequest{
 		EdgeWorkerID: edgeworkerID,
 		ActivationID: activationID,
@@ -1173,7 +1173,7 @@ func expectGetActivation(m *mockedgeworkers, edgeworkerID, activationID int, net
 	return m.On("GetActivation", mock.Anything, req).Return(createStubActivation(edgeworkerID, activationID, net, version, status, ""), nil)
 }
 
-func expectListActivations(m *mockedgeworkers, edgeworkerID int, version string, activations []edgeworkers.Activation, e error) *mock.Call {
+func expectListActivations(m *edgeworkers.Mock, edgeworkerID int, version string, activations []edgeworkers.Activation, e error) *mock.Call {
 	req := edgeworkers.ListActivationsRequest{
 		EdgeWorkerID: edgeworkerID,
 		Version:      version,
@@ -1187,7 +1187,7 @@ func expectListActivations(m *mockedgeworkers, edgeworkerID int, version string,
 	}, nil)
 }
 
-func expectListDeactivations(m *mockedgeworkers, edgeworkerID int, version string, deactivations []edgeworkers.Deactivation, e error) *mock.Call {
+func expectListDeactivations(m *edgeworkers.Mock, edgeworkerID int, version string, deactivations []edgeworkers.Deactivation, e error) *mock.Call {
 	req := edgeworkers.ListDeactivationsRequest{
 		EdgeWorkerID: edgeworkerID,
 		Version:      version,
@@ -1201,7 +1201,7 @@ func expectListDeactivations(m *mockedgeworkers, edgeworkerID int, version strin
 	}, nil)
 }
 
-func expectDeactivateVersion(m *mockedgeworkers, edgeworkerID, deactivationID int, net edgeworkers.ActivationNetwork, version string, e error) *mock.Call {
+func expectDeactivateVersion(m *edgeworkers.Mock, edgeworkerID, deactivationID int, net edgeworkers.ActivationNetwork, version string, e error) *mock.Call {
 	req := edgeworkers.DeactivateVersionRequest{
 		EdgeWorkerID: edgeworkerID,
 		DeactivateVersion: edgeworkers.DeactivateVersion{
@@ -1216,7 +1216,7 @@ func expectDeactivateVersion(m *mockedgeworkers, edgeworkerID, deactivationID in
 	return m.On("DeactivateVersion", mock.Anything, req).Return(createStubDeactivation(edgeworkerID, deactivationID, net, version, activationStatusPresubmit, ""), nil)
 }
 
-func expectGetDeactivation(m *mockedgeworkers, edgeworkerID, deactivationID int, net edgeworkers.ActivationNetwork, version, status string, e error) *mock.Call {
+func expectGetDeactivation(m *edgeworkers.Mock, edgeworkerID, deactivationID int, net edgeworkers.ActivationNetwork, version, status string, e error) *mock.Call {
 	req := edgeworkers.GetDeactivationRequest{
 		EdgeWorkerID:   edgeworkerID,
 		DeactivationID: deactivationID,
@@ -1228,7 +1228,7 @@ func expectGetDeactivation(m *mockedgeworkers, edgeworkerID, deactivationID int,
 	return m.On("GetDeactivation", mock.Anything, req).Return(createStubDeactivation(edgeworkerID, deactivationID, net, version, status, ""), nil)
 }
 
-func expectListEdgeWorkerVersions(m *mockedgeworkers, edgeworkerID int, versions []edgeworkers.EdgeWorkerVersion, e error) *mock.Call {
+func expectListEdgeWorkerVersions(m *edgeworkers.Mock, edgeworkerID int, versions []edgeworkers.EdgeWorkerVersion, e error) *mock.Call {
 	req := edgeworkers.ListEdgeWorkerVersionsRequest{
 		EdgeWorkerID: edgeworkerID,
 	}
@@ -1241,7 +1241,7 @@ func expectListEdgeWorkerVersions(m *mockedgeworkers, edgeworkerID int, versions
 	}, nil)
 }
 
-func expectListEdgeWorkersID(m *mockedgeworkers, e error, ewIDs ...int) *mock.Call {
+func expectListEdgeWorkersID(m *edgeworkers.Mock, e error, ewIDs ...int) *mock.Call {
 	call := m.On("ListEdgeWorkersID", mock.Anything, edgeworkers.ListEdgeWorkersIDRequest{})
 	if e != nil {
 		return call.Return(nil, e)
@@ -1255,13 +1255,13 @@ func expectListEdgeWorkersID(m *mockedgeworkers, e error, ewIDs ...int) *mock.Ca
 	}, nil)
 }
 
-func expectFullActivation(m *mockedgeworkers, edgeworkerID, activationID int, net edgeworkers.ActivationNetwork, version string) {
+func expectFullActivation(m *edgeworkers.Mock, edgeworkerID, activationID int, net edgeworkers.ActivationNetwork, version string) {
 	expectListActivations(m, edgeworkerID, "", []edgeworkers.Activation{}, nil).Once()
 	expectActivateVersion(m, edgeworkerID, activationID, net, version, nil).Once()
 	expectGetActivation(m, edgeworkerID, activationID, net, version, activationStatusComplete, nil).Once()
 }
 
-func expectFullUpdate(m *mockedgeworkers, edgeworkerID, activationID int, net edgeworkers.ActivationNetwork, version, listDeactivationsVersion string, activations []edgeworkers.Activation) {
+func expectFullUpdate(m *edgeworkers.Mock, edgeworkerID, activationID int, net edgeworkers.ActivationNetwork, version, listDeactivationsVersion string, activations []edgeworkers.Activation) {
 	expectListActivations(m, edgeworkerID, "", activations, nil).Once()
 	expectActivateVersion(m, edgeworkerID, activationID, net, version, nil).Once()
 	if listDeactivationsVersion != "" {
@@ -1270,12 +1270,12 @@ func expectFullUpdate(m *mockedgeworkers, edgeworkerID, activationID int, net ed
 	expectGetActivation(m, edgeworkerID, activationID, net, version, activationStatusComplete, nil).Once()
 }
 
-func expectFullRead(m *mockedgeworkers, edgeworkerID int, version string, acts []edgeworkers.Activation, deacts []edgeworkers.Deactivation, times int) {
+func expectFullRead(m *edgeworkers.Mock, edgeworkerID int, version string, acts []edgeworkers.Activation, deacts []edgeworkers.Deactivation, times int) {
 	expectListActivations(m, edgeworkerID, "", acts, nil).Times(times)
 	expectListDeactivations(m, edgeworkerID, version, deacts, nil).Times(times)
 }
 
-func expectFullDeactivation(m *mockedgeworkers, edgeworkerID, deactivationID int, net edgeworkers.ActivationNetwork, version string) {
+func expectFullDeactivation(m *edgeworkers.Mock, edgeworkerID, deactivationID int, net edgeworkers.ActivationNetwork, version string) {
 	expectDeactivateVersion(m, edgeworkerID, deactivationID, net, version, nil).Once()
 	expectGetDeactivation(m, edgeworkerID, deactivationID, net, version, activationStatusComplete, nil).Once()
 }

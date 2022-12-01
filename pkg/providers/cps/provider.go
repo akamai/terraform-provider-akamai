@@ -7,8 +7,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/cps"
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/cps"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
 )
 
 type (
@@ -46,12 +46,17 @@ func Provider() *schema.Provider {
 	provider := &schema.Provider{
 		Schema: map[string]*schema.Schema{},
 		DataSourcesMap: map[string]*schema.Resource{
+			"akamai_cps_csr":         dataSourceCPSCSR(),
+			"akamai_cps_deployments": dataSourceDeployments(),
 			"akamai_cps_enrollment":  dataSourceCPSEnrollment(),
 			"akamai_cps_enrollments": dataSourceCPSEnrollments(),
+			"akamai_cps_warnings":    dataSourceCPSWarnings(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
-			"akamai_cps_dv_enrollment": resourceCPSDVEnrollment(),
-			"akamai_cps_dv_validation": resourceCPSDVValidation(),
+			"akamai_cps_dv_enrollment":          resourceCPSDVEnrollment(),
+			"akamai_cps_dv_validation":          resourceCPSDVValidation(),
+			"akamai_cps_third_party_enrollment": resourceCPSThirdPartyEnrollment(),
+			"akamai_cps_upload_certificate":     resourceCPSUploadCertificate(),
 		},
 	}
 	return provider

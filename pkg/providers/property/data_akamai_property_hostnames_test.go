@@ -7,12 +7,12 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/papi"
 )
 
 func TestDataPropertyHostnames(t *testing.T) {
 	t.Run("list hostnames", func(t *testing.T) {
-		client := &mockpapi{}
+		client := &papi.Mock{}
 		hostnames := papi.HostnameResponseItems{Items: buildPropertyHostnames()}
 		hostnameItems := flattenHostnames(hostnames.Items)
 
@@ -59,7 +59,7 @@ func TestDataPropertyHostnames(t *testing.T) {
 	})
 
 	t.Run("list hostnames without group prefix", func(t *testing.T) {
-		client := &mockpapi{}
+		client := &papi.Mock{}
 		hostnames := papi.HostnameResponseItems{Items: buildPropertyHostnames()}
 		hostnameItems := flattenHostnames(hostnames.Items)
 
@@ -106,7 +106,7 @@ func TestDataPropertyHostnames(t *testing.T) {
 	})
 
 	t.Run("list hostnames without contract prefix", func(t *testing.T) {
-		client := &mockpapi{}
+		client := &papi.Mock{}
 		hostnames := papi.HostnameResponseItems{Items: buildPropertyHostnames()}
 		hostnameItems := flattenHostnames(hostnames.Items)
 
@@ -153,7 +153,7 @@ func TestDataPropertyHostnames(t *testing.T) {
 	})
 
 	t.Run("list hostnames without property prefix", func(t *testing.T) {
-		client := &mockpapi{}
+		client := &papi.Mock{}
 		hostnames := papi.HostnameResponseItems{Items: buildPropertyHostnames()}
 		hostnameItems := flattenHostnames(hostnames.Items)
 

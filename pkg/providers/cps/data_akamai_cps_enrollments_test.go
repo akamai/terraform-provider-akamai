@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/cps"
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/providers/cps/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/cps"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/providers/cps/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -28,12 +28,12 @@ func TestDataEnrollments(t *testing.T) {
 	tests := map[string]struct {
 		contractID  string
 		enrollments cps.ListEnrollmentsResponse
-		init        func(*testing.T, *mockcps)
+		init        func(*testing.T, *cps.Mock)
 		steps       []resource.TestStep
 	}{
 		"happy path": {
 			enrollments: cps.ListEnrollmentsResponse{Enrollments: []cps.Enrollment{*enrollmentDV1, *enrollmentDV2}},
-			init: func(t *testing.T, m *mockcps) {
+			init: func(t *testing.T, m *cps.Mock) {
 				m.On("ListEnrollments", mock.Anything, cps.ListEnrollmentsRequest{
 					ContractID: contractID,
 				}).Return(enrollmentsList, nil).Times(5)
@@ -47,7 +47,7 @@ func TestDataEnrollments(t *testing.T) {
 		},
 		"could not fetch list of enrollments": {
 			enrollments: cps.ListEnrollmentsResponse{Enrollments: []cps.Enrollment{*enrollmentDV1, *enrollmentDV2}},
-			init: func(t *testing.T, m *mockcps) {
+			init: func(t *testing.T, m *cps.Mock) {
 				m.On("ListEnrollments", mock.Anything, cps.ListEnrollmentsRequest{
 					ContractID: contractID,
 				}).Return(nil, fmt.Errorf("could not get list of enrollments")).Once()
@@ -61,7 +61,7 @@ func TestDataEnrollments(t *testing.T) {
 		},
 		"different change type enrollments": {
 			enrollments: cps.ListEnrollmentsResponse{Enrollments: []cps.Enrollment{*enrollmentDV1, *enrollmentDV2, *enrollmentThirdParty, *enrollmentEV}},
-			init: func(t *testing.T, m *mockcps) {
+			init: func(t *testing.T, m *cps.Mock) {
 				m.On("ListEnrollments", mock.Anything, cps.ListEnrollmentsRequest{
 					ContractID: contractID,
 				}).Return(enrollmentsThirdPartyList, nil).Times(5)
@@ -76,7 +76,7 @@ func TestDataEnrollments(t *testing.T) {
 		},
 		"no enrollments for given contract": {
 			enrollments: cps.ListEnrollmentsResponse{},
-			init: func(t *testing.T, m *mockcps) {
+			init: func(t *testing.T, m *cps.Mock) {
 				m.On("ListEnrollments", mock.Anything, cps.ListEnrollmentsRequest{
 					ContractID: contractID,
 				}).Return(emptyEnrollmentList, nil).Times(10)
@@ -96,7 +96,7 @@ func TestDataEnrollments(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &mockcps{}
+			client := &cps.Mock{}
 			test.init(t, client)
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{

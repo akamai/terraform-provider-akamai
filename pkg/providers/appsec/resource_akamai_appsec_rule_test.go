@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/appsec"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -12,7 +12,7 @@ import (
 
 func TestAkamaiRule_res_basic(t *testing.T) {
 	t.Run("match by Rule ID", func(t *testing.T) {
-		client := &mockappsec{}
+		client := &appsec.Mock{}
 
 		updateRuleResponse := appsec.UpdateRuleResponse{}
 		err := json.Unmarshal(loadFixtureBytes("testdata/TestResRule/Rule.json"), &updateRuleResponse)
@@ -82,7 +82,7 @@ func TestAkamaiRule_res_basic(t *testing.T) {
 
 func TestAkamaiRule_res_AseAuto(t *testing.T) {
 	t.Run("match by Rule ID", func(t *testing.T) {
-		client := &mockappsec{}
+		client := &appsec.Mock{}
 
 		updateConditionExceptionResponse := appsec.UpdateConditionExceptionResponse{}
 		err := json.Unmarshal(loadFixtureBytes("testdata/TestResRule/RuleAseAuto.json"), &updateConditionExceptionResponse)

@@ -8,13 +8,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 
-	iam "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/iam"
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/test"
+	iam "github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/iam"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/test"
 )
 
 func TestDataStates(t *testing.T) {
 	t.Run("happy path", func(t *testing.T) {
-		client := &mockiam{}
+		client := &iam.Mock{}
 		client.Test(test.TattleT{T: t})
 
 		req := iam.ListStatesRequest{Country: "test country"}
@@ -42,7 +42,7 @@ func TestDataStates(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 	t.Run("fail path", func(t *testing.T) {
-		client := &mockiam{}
+		client := &iam.Mock{}
 		client.Test(test.TattleT{T: t})
 
 		req := iam.ListStatesRequest{Country: "test country"}

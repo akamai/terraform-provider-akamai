@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/datastream"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/datastream"
 	"github.com/stretchr/testify/mock"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -73,7 +73,7 @@ func TestDataAkamaiDatastreamActivationHistoryRead(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			client := mockdatastream{}
+			client := datastream.Mock{}
 			useClient(&client, func() {
 				if test.edgegridError != nil {
 					client.On("GetActivationHistory", mock.Anything, mock.Anything).Return(nil, test.edgegridError).Once()

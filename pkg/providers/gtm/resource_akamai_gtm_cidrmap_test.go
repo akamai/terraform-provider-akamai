@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"testing"
 
-	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/configgtm"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/gtm"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -31,7 +31,7 @@ func TestResGtmCidrmap(t *testing.T) {
 	dc := gtm.Datacenter{}
 
 	t.Run("create cidrmap", func(t *testing.T) {
-		client := &mockgtm{}
+		client := &gtm.Mock{}
 
 		getCall := client.On("GetCidrMap",
 			mock.Anything, // ctx is irrelevant for this test
@@ -107,7 +107,7 @@ func TestResGtmCidrmap(t *testing.T) {
 	})
 
 	t.Run("create cidrmap failed", func(t *testing.T) {
-		client := &mockgtm{}
+		client := &gtm.Mock{}
 
 		client.On("CreateCidrMap",
 			mock.Anything, // ctx is irrelevant for this test
@@ -145,7 +145,7 @@ func TestResGtmCidrmap(t *testing.T) {
 	})
 
 	t.Run("create cidrmap denied", func(t *testing.T) {
-		client := &mockgtm{}
+		client := &gtm.Mock{}
 
 		dr := gtm.CidrMapResponse{}
 		dr.Resource = &cidr

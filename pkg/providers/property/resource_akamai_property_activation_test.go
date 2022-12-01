@@ -7,17 +7,17 @@ import (
 
 	"github.com/stretchr/testify/mock"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/papi"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
 func TestResourcePAPIPropertyActivation(t *testing.T) {
 	tests := map[string]struct {
-		init  func(*mockpapi)
+		init  func(*papi.Mock)
 		steps []resource.TestStep
 	}{
 		"property activation lifecycle - OK": {
-			init: func(m *mockpapi) {
+			init: func(m *papi.Mock) {
 				// create
 				expectGetRuleTree(m, "prp_test", 1, ruleTreeResponseValid, nil).Once()
 				expectGetActivations(m, "prp_test", papi.GetActivationsResponse{}, nil).Once()
@@ -69,7 +69,7 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 			},
 		},
 		"check schema property activation - OK": {
-			init: func(m *mockpapi) {
+			init: func(m *papi.Mock) {
 				// create
 				expectGetRuleTree(m, "prp_test", 1, ruleTreeResponseValid, nil).Once()
 				expectGetActivations(m, "prp_test", activationsResponseActivated, nil).Once()
@@ -96,7 +96,7 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 			},
 		},
 		"schema with `property` instead of `property_id` - OK": {
-			init: func(m *mockpapi) {
+			init: func(m *papi.Mock) {
 				// create
 				expectGetRuleTree(m, "prp_test", 1, ruleTreeResponseValid, nil).Once()
 				expectGetActivations(m, "prp_test", activationsResponseActivated, nil).Once()
@@ -121,7 +121,7 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 			},
 		},
 		"check schema property activation - papi error": {
-			init: func(m *mockpapi) {
+			init: func(m *papi.Mock) {
 				expectGetRuleTree(m, "prp_test", 1, papi.GetRuleTreeResponse{}, fmt.Errorf("failed to create request")).Once()
 			},
 			steps: []resource.TestStep{
@@ -148,7 +148,7 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 			},
 		},
 		"check schema property activation with rule errors": {
-			init: func(m *mockpapi) {
+			init: func(m *papi.Mock) {
 				expectGetRuleTree(m, "prp_test", 1, ruleTreeResponseInvalid, nil).Once()
 			},
 			steps: []resource.TestStep{
@@ -159,7 +159,7 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 			},
 		},
 		"Note field cannot be added after activation is completed": {
-			init: func(m *mockpapi) {
+			init: func(m *papi.Mock) {
 				// create
 				expectGetRuleTree(m, "prp_test", 1, ruleTreeResponseValid, nil).Once()
 				expectGetActivations(m, "prp_test", activationsResponseActivated, nil).Once()
@@ -183,7 +183,7 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 			},
 		},
 		"Note field cannot be updated after activation is completed": {
-			init: func(m *mockpapi) {
+			init: func(m *papi.Mock) {
 				// create
 				expectGetRuleTree(m, "prp_test", 1, ruleTreeResponseValid, nil).Once()
 				expectGetActivations(m, "prp_test", activationsResponseActivated, nil).Once()
@@ -210,7 +210,7 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &mockpapi{}
+			client := &papi.Mock{}
 			if test.init != nil {
 				test.init(client)
 			}
@@ -242,7 +242,7 @@ var (
 			},
 		},
 	}
-	expectGetRuleTree = func(m *mockpapi, propertyID string, version int, response papi.GetRuleTreeResponse, err error) *mock.Call {
+	expectGetRuleTree = func(m *papi.Mock, propertyID string, version int, response papi.GetRuleTreeResponse, err error) *mock.Call {
 		if err != nil {
 			return m.On(
 				"GetRuleTree",
@@ -313,7 +313,7 @@ var (
 			},
 		}},
 	}
-	expectGetActivations = func(m *mockpapi, propertyID string, response papi.GetActivationsResponse, err error) *mock.Call {
+	expectGetActivations = func(m *papi.Mock, propertyID string, response papi.GetActivationsResponse, err error) *mock.Call {
 		if err != nil {
 			return m.On(
 				"GetActivations",
@@ -328,7 +328,7 @@ var (
 		).Return(&response, nil)
 	}
 
-	expectCreateActivation = func(m *mockpapi, propertyID string, activationType papi.ActivationType, version int,
+	expectCreateActivation = func(m *papi.Mock, propertyID string, activationType papi.ActivationType, version int,
 		network papi.ActivationNetwork, notify []string, note string, activationID string, err error) *mock.Call {
 		if err != nil {
 			return m.On(
@@ -366,7 +366,7 @@ var (
 		}, nil)
 	}
 
-	expectGetActivation = func(m *mockpapi, propertyID string, activationID string, version int,
+	expectGetActivation = func(m *papi.Mock, propertyID string, activationID string, version int,
 		network papi.ActivationNetwork, status papi.ActivationStatus, err error) *mock.Call {
 		if err != nil {
 			return m.On(

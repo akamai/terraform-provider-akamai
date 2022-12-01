@@ -1,5 +1,4 @@
 TEST ?= $$(go list ./...)
-GOFMT_FILES ?= $$(find . -name '*.go')
 PKG_NAME = akamai
 
 # Local provider install parameters
@@ -49,16 +48,21 @@ vet:
 	fi
 
 .PHONY: fmt
-fmt:
-	gofmt -w $(GOFMT_FILES)
+fmt: |; $(info ==> Running goimports...)
+	goimports -w .
 
 .PHONY: terraform-fmt
 terraform-fmt:
 	terraform fmt -recursive -check
 
 .PHONY: fmtcheck
-fmtcheck:
-	@sh -c "'$(CURDIR)/scripts/gofmtcheck.sh'"
+fmtcheck: |; $(info ==> Running format and imports check...)
+	$(eval OUTPUT = $(shell goimports -l .))
+	@if [ "$(OUTPUT)" != "" ]; then\
+		echo "Found following files with incorrect format and/or imports:";\
+		echo "$(OUTPUT)";\
+		false;\
+	fi
 
 .PHONY: errcheck
 errcheck:
@@ -83,13 +87,18 @@ tools.golangci-lint:
 	@echo Installing golangci-lint
 	@curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $$(go env GOPATH)/bin $(golangci-lint-version)
 
+.PHONY: tools.goimports
+tools.goimports:
+	@echo Installing goimports
+	go install golang.org/x/tools/cmd/goimports@latest
+
 .PHONY: tools.tflint
 tools.tflint:
 	@echo Installing tf-lint
 	@export TFLINT_VERSION=$(tflint-version) && curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
 
 .PHONY: init
-init: tools.golangci-lint tools.tflint
+init: tools.golangci-lint tools.tflint tools.goimports
 
 .PHONY: dummy-edgerc
 dummy-edgerc:

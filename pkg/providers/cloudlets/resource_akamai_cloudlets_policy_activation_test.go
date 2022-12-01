@@ -6,18 +6,18 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/cloudlets"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/cloudlets"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
 
 func TestResourceCloudletsPolicyActivation(t *testing.T) {
 	tests := map[string]struct {
-		init  func(*mockcloudlets)
+		init  func(*cloudlets.Mock)
 		steps []resource.TestStep
 	}{
 		"try to create activation with a non existing policy version": {
-			init: func(m *mockcloudlets) {
+			init: func(m *cloudlets.Mock) {
 				m.On("GetPolicyVersion", mock.Anything, cloudlets.GetPolicyVersionRequest{PolicyID: 1234, Version: 1, OmitRules: true}).Return(nil, fmt.Errorf("an error"))
 			},
 			steps: []resource.TestStep{
@@ -28,7 +28,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 			},
 		},
 		"create and read activation, version == 1, inactive -> activate": {
-			init: func(m *mockcloudlets) {
+			init: func(m *cloudlets.Mock) {
 				expectFullActivation(m, 1234, 1, []string{"prp_0", "prp_1"}, cloudlets.PolicyActivationNetworkStaging, 1)
 				// delete
 				expectDeletePhase(m, 1234, []string{"prp_0", "prp_1"}, nil, cloudlets.PolicyActivationNetworkStaging, nil, nil)
@@ -45,7 +45,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 			},
 		},
 		"create and read activation, version == 1, inactive -> activate -> wait -> failed": {
-			init: func(m *mockcloudlets) {
+			init: func(m *cloudlets.Mock) {
 				policyID, version, staging, properties := int64(1234), int64(1), cloudlets.PolicyActivationNetworkStaging, []string{"prp_0", "prp_1"}
 				// create
 				activations := make([]cloudlets.PolicyActivation, len(properties))
@@ -67,7 +67,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 			},
 		},
 		"create and read activation, version == 1, inactive -> activate -> several iterations in read function": {
-			init: func(m *mockcloudlets) {
+			init: func(m *cloudlets.Mock) {
 				policyID, version, staging, properties := int64(1234), int64(1), cloudlets.PolicyActivationNetworkStaging, []string{"prp_0", "prp_1"}
 				// create
 				activations := make([]cloudlets.PolicyActivation, len(properties))
@@ -100,7 +100,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 			},
 		},
 		"create and read activation, version == 1, inactive -> activate -> read -> no activations -> error": {
-			init: func(m *mockcloudlets) {
+			init: func(m *cloudlets.Mock) {
 				properties, policyID, v1, staging, times := []string{"prp_0", "prp_1"}, int64(1234), int64(1), cloudlets.PolicyActivationNetworkStaging, 1
 				// create
 				activations := make([]cloudlets.PolicyActivation, len(properties))
@@ -126,7 +126,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 			},
 		},
 		"create and read activation, version == 1, production, inactive -> activate": {
-			init: func(m *mockcloudlets) {
+			init: func(m *cloudlets.Mock) {
 				expectFullActivation(m, 1234, 1, []string{"prp_0", "prp_1"}, "prod", 1)
 				// delete
 				expectDeletePhase(m, 1234, []string{"prp_0", "prp_1"}, nil, cloudlets.PolicyActivationNetworkProduction, nil, nil)
@@ -143,7 +143,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 			},
 		},
 		"create and read activation, version == 1, prod, inactive -> activate": {
-			init: func(m *mockcloudlets) {
+			init: func(m *cloudlets.Mock) {
 				expectFullActivation(m, 1234, 1, []string{"prp_0", "prp_1"}, "prod", 1)
 				// delete
 				expectDeletePhase(m, 1234, []string{"prp_0", "prp_1"}, nil, cloudlets.PolicyActivationNetworkProduction, nil, nil)
@@ -159,7 +159,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 			},
 		},
 		"create and read activation, version == 1, inactive -> activate -> error": {
-			init: func(m *mockcloudlets) {
+			init: func(m *cloudlets.Mock) {
 				// create
 				expectGetPolicyVersion(m, 1234, 1, []cloudlets.PolicyActivation{
 					{APIVersion: "1.0", Network: "prod", PolicyInfo: cloudlets.PolicyInfo{
@@ -176,7 +176,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 			},
 		},
 		"create and read activation, version == 1, inactive -> activate -> get active policy activation -> error": {
-			init: func(m *mockcloudlets) {
+			init: func(m *cloudlets.Mock) {
 				// create
 				expectGetPolicyVersion(m, 1234, 1, []cloudlets.PolicyActivation{
 					{APIVersion: "1.0", Network: "staging", PolicyInfo: cloudlets.PolicyInfo{
@@ -195,7 +195,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 			},
 		},
 		"create and read activation, version == 1, active -> read": {
-			init: func(m *mockcloudlets) {
+			init: func(m *cloudlets.Mock) {
 				staging, properties, policyID, v1, active := cloudlets.PolicyActivationNetworkStaging, []string{"prp_0", "prp_1"}, int64(1234), int64(1), cloudlets.PolicyActivationStatusActive
 				// create, policy active so no need to activate
 				expectGetPolicyVersion(m, policyID, v1, []cloudlets.PolicyActivation{
@@ -223,7 +223,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 			},
 		},
 		"create and read activation, version == 1, inactive -> activate -> read -> ListPolicyActivations read error": {
-			init: func(m *mockcloudlets) {
+			init: func(m *cloudlets.Mock) {
 				staging, properties, policyID, v1, active := cloudlets.PolicyActivationNetworkStaging, []string{"prp_0", "prp_1"}, int64(1234), int64(1), cloudlets.PolicyActivationStatusActive
 				// create
 				expectGetPolicyVersion(m, policyID, v1, []cloudlets.PolicyActivation{}, nil).Once()
@@ -243,7 +243,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 			},
 		},
 		"create and read activation, update - no changes, so skip update": {
-			init: func(m *mockcloudlets) {
+			init: func(m *cloudlets.Mock) {
 				staging, properties, policyID, v1, active := cloudlets.PolicyActivationNetworkStaging, []string{"prp_0", "prp_1"}, int64(1234), int64(1), cloudlets.PolicyActivationStatusActive
 				// 1 - for policy_activation_version1.tf
 				// create
@@ -282,7 +282,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 			},
 		},
 		"create activation - failed activation while polling": {
-			init: func(m *mockcloudlets) {
+			init: func(m *cloudlets.Mock) {
 				// create
 				expectGetPolicyVersion(m, 1234, 1, []cloudlets.PolicyActivation{}, nil).Once()
 				expectActivatePolicyVersion(m, 1234, 1, "staging", []string{"prp_0", "prp_1"}, nil).Once()
@@ -297,7 +297,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 			},
 		},
 		"create activation - failed activation while polling with no failed status": {
-			init: func(m *mockcloudlets) {
+			init: func(m *cloudlets.Mock) {
 				// create
 				expectGetPolicyVersion(m, 1234, 1, []cloudlets.PolicyActivation{}, nil).Once()
 				expectActivatePolicyVersion(m, 1234, 1, "staging", []string{"prp_0", "prp_1"}, nil).Once()
@@ -312,7 +312,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 			},
 		},
 		"create and read activation, update - cannot find the property version": {
-			init: func(m *mockcloudlets) {
+			init: func(m *cloudlets.Mock) {
 				policyID, v1, v2, properties, active, staging := int64(1234), int64(1), int64(2), []string{"prp_0", "prp_1"}, cloudlets.PolicyActivationStatusActive, cloudlets.PolicyActivationNetworkStaging
 				// 1 - for policy_activation_version1.tf
 				expectFullActivation(m, policyID, v1, properties, staging, 1)
@@ -340,7 +340,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 			},
 		},
 		"Create and read activation. Update: version already active, read": {
-			init: func(m *mockcloudlets) {
+			init: func(m *cloudlets.Mock) {
 				policyID, version, properties, active, staging := int64(1234), int64(1), []string{"prp_0", "prp_1"}, cloudlets.PolicyActivationStatusActive, cloudlets.PolicyActivationNetworkStaging
 				// 1 - for policy_activation_version1.tf
 				expectFullActivation(m, policyID, version, properties, staging, 1)
@@ -372,7 +372,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 			},
 		},
 		"Create and read activation. Update: version not active, activate": {
-			init: func(m *mockcloudlets) {
+			init: func(m *cloudlets.Mock) {
 				properties, staging, policyID, v1, v2, active := []string{"prp_0", "prp_1"}, cloudlets.PolicyActivationNetworkStaging, int64(1234), int64(1), int64(2), cloudlets.PolicyActivationStatusActive
 				// 1 - for policy_activation_version1.tf
 				expectFullActivation(m, policyID, 1, properties, staging, 1)
@@ -414,7 +414,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 			},
 		},
 		"Create and read activation. Update: change version from staging to prod, activate": {
-			init: func(m *mockcloudlets) {
+			init: func(m *cloudlets.Mock) {
 				properties, policyID, v1, active := []string{"prp_0", "prp_1"}, int64(1234), int64(1), cloudlets.PolicyActivationStatusActive
 				// 1 - for policy_activation_version1.tf
 				expectFullActivation(m, policyID, 1, properties, cloudlets.PolicyActivationNetworkStaging, 1)
@@ -456,7 +456,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 			},
 		},
 		"Create and read activation. Update: ListPolicyActivations error": {
-			init: func(m *mockcloudlets) {
+			init: func(m *cloudlets.Mock) {
 				policyID, v1, v2, net, properties := int64(1234), int64(1), int64(2), cloudlets.PolicyActivationNetworkStaging, []string{"prp_0", "prp_1"}
 				// 1 - for policy_activation_version1.tf
 				expectFullActivation(m, policyID, v1, properties, net, 1)
@@ -485,7 +485,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 			},
 		},
 		"Create and read activation. Update: activate policy version error": {
-			init: func(m *mockcloudlets) {
+			init: func(m *cloudlets.Mock) {
 				staging, properties, policyID, v1, v2, active := cloudlets.PolicyActivationNetworkStaging, []string{"prp_0", "prp_1"}, int64(1234), int64(1), int64(2), cloudlets.PolicyActivationStatusActive
 				// 1 - for policy_activation_version1.tf
 				expectFullActivation(m, policyID, v1, properties, staging, 1)
@@ -516,7 +516,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 			},
 		},
 		"Create and read activation. Update: delete policy property error": {
-			init: func(m *mockcloudlets) {
+			init: func(m *cloudlets.Mock) {
 				staging, properties, moreProperties, policyID, v1, v2, active := cloudlets.PolicyActivationNetworkStaging, []string{"prp_0", "prp_1"}, []string{"prp_0", "prp_1", "prp_2"}, int64(1234), int64(1), int64(2), cloudlets.PolicyActivationStatusActive
 				// 1 - for policy_activation_version1.tf
 				expectFullActivation(m, policyID, v1, properties, staging, 1)
@@ -549,7 +549,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 			},
 		},
 		"Create and read activation. Update: get policy properties error": {
-			init: func(m *mockcloudlets) {
+			init: func(m *cloudlets.Mock) {
 				properties, staging, policyID, v1, v2, active := []string{"prp_0", "prp_1"}, cloudlets.PolicyActivationNetworkStaging, int64(1234), int64(1), int64(2), cloudlets.PolicyActivationStatusActive
 				// 1 - for policy_activation_version1.tf
 				expectFullActivation(m, policyID, v1, properties, staging, 1)
@@ -580,7 +580,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 			},
 		},
 		"Create and read activation. Update: ListPolicyActivations error while polling": {
-			init: func(m *mockcloudlets) {
+			init: func(m *cloudlets.Mock) {
 				policyID, v1, v2, properties, staging, active := int64(1234), int64(1), int64(2), []string{"prp_0", "prp_1"}, cloudlets.PolicyActivationNetworkStaging, cloudlets.PolicyActivationStatusActive
 				// 1 - for policy_activation_version1.tf
 				expectFullActivation(m, policyID, v1, properties, staging, 1)
@@ -613,7 +613,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 			},
 		},
 		"Create and read activation. Update: version already active, read - cannot find version": {
-			init: func(m *mockcloudlets) {
+			init: func(m *cloudlets.Mock) {
 				policyID, v1, v2, properties, staging, active := int64(1234), int64(1), int64(2), []string{"prp_0", "prp_1"}, cloudlets.PolicyActivationNetworkStaging, cloudlets.PolicyActivationStatusActive
 				// 1 - for policy_activation_version1.tf
 				expectFullActivation(m, policyID, v1, properties, staging, 1)
@@ -645,7 +645,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &mockcloudlets{}
+			client := &cloudlets.Mock{}
 			test.init(client)
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
@@ -660,7 +660,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 }
 
 // expect full activation of a policy (creation)
-func expectFullActivation(m *mockcloudlets, policyID, version int64, properties []string, network cloudlets.PolicyActivationNetwork, times int) {
+func expectFullActivation(m *cloudlets.Mock, policyID, version int64, properties []string, network cloudlets.PolicyActivationNetwork, times int) {
 	// create
 	activations := make([]cloudlets.PolicyActivation, len(properties))
 	for _, p := range properties {
@@ -679,7 +679,7 @@ func expectFullActivation(m *mockcloudlets, policyID, version int64, properties 
 }
 
 // expect delete step
-func expectDeletePhase(m *mockcloudlets, policyID int64, deletedProperties, remainingProperties []string, network cloudlets.PolicyActivationNetwork, errGetPolicy, errDeleteProperty error) {
+func expectDeletePhase(m *cloudlets.Mock, policyID int64, deletedProperties, remainingProperties []string, network cloudlets.PolicyActivationNetwork, errGetPolicy, errDeleteProperty error) {
 	expectGetPolicyProperties(m, policyID, deletedProperties, errGetPolicy).Once()
 	if errGetPolicy != nil {
 		return
@@ -694,7 +694,7 @@ func expectDeletePhase(m *mockcloudlets, policyID int64, deletedProperties, rema
 	}
 }
 
-func expectGetPolicyVersion(m *mockcloudlets, policyID, version int64, activations []cloudlets.PolicyActivation, err error) *mock.Call {
+func expectGetPolicyVersion(m *cloudlets.Mock, policyID, version int64, activations []cloudlets.PolicyActivation, err error) *mock.Call {
 	return m.On(
 		"GetPolicyVersion",
 		mock.Anything,
@@ -705,13 +705,13 @@ func expectGetPolicyVersion(m *mockcloudlets, policyID, version int64, activatio
 		}, err)
 }
 
-func expectDeletePolicyProperty(m *mockcloudlets, policyID, propertyID int64, net cloudlets.PolicyActivationNetwork, expectError error) *mock.Call {
+func expectDeletePolicyProperty(m *cloudlets.Mock, policyID, propertyID int64, net cloudlets.PolicyActivationNetwork, expectError error) *mock.Call {
 	return m.On("DeletePolicyProperty", mock.Anything, cloudlets.DeletePolicyPropertyRequest{
 		PolicyID: policyID, PropertyID: propertyID, Network: net,
 	}).Return(expectError)
 }
 
-func expectGetPolicyProperties(m *mockcloudlets, policyID int64, properties []string, expectError error) *mock.Call {
+func expectGetPolicyProperties(m *cloudlets.Mock, policyID int64, properties []string, expectError error) *mock.Call {
 	if expectError != nil {
 		return m.On("GetPolicyProperties", mock.Anything, cloudlets.GetPolicyPropertiesRequest{PolicyID: policyID}).Return(nil, expectError)
 	}
@@ -724,7 +724,7 @@ func expectGetPolicyProperties(m *mockcloudlets, policyID int64, properties []st
 	return m.On("GetPolicyProperties", mock.Anything, cloudlets.GetPolicyPropertiesRequest{PolicyID: policyID}).Return(response, nil)
 }
 
-func expectListPolicyActivations(m *mockcloudlets, policyID, version int64, network cloudlets.PolicyActivationNetwork, propertyNames []string, status cloudlets.PolicyActivationStatus, statusDetail string, numberActivations int, expectedErr error) *mock.Call {
+func expectListPolicyActivations(m *cloudlets.Mock, policyID, version int64, network cloudlets.PolicyActivationNetwork, propertyNames []string, status cloudlets.PolicyActivationStatus, statusDetail string, numberActivations int, expectedErr error) *mock.Call {
 	if expectedErr != nil {
 		return m.On("ListPolicyActivations", mock.Anything, cloudlets.ListPolicyActivationsRequest{
 			PolicyID: policyID,
@@ -760,7 +760,7 @@ func expectListPolicyActivations(m *mockcloudlets, policyID, version int64, netw
 	}).Return(policyActivations, nil)
 }
 
-func expectActivatePolicyVersion(m *mockcloudlets, policyID, version int64, network cloudlets.PolicyActivationNetwork, additionalProps []string, err error) *mock.Call {
+func expectActivatePolicyVersion(m *cloudlets.Mock, policyID, version int64, network cloudlets.PolicyActivationNetwork, additionalProps []string, err error) *mock.Call {
 	return m.On("ActivatePolicyVersion", mock.Anything, cloudlets.ActivatePolicyVersionRequest{
 		PolicyID:                policyID,
 		Async:                   true,

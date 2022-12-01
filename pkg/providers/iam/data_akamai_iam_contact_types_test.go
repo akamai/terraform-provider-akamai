@@ -5,15 +5,16 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/iam"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/test"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/test"
 )
 
 func TestDataContactTypes(t *testing.T) {
 	t.Run("happy path", func(t *testing.T) {
-		client := &mockiam{}
+		client := &iam.Mock{}
 		client.Test(test.TattleT{T: t})
 		client.On("SupportedContactTypes", mock.Anything).Return([]string{"first", "second", "third"}, nil)
 
@@ -40,7 +41,7 @@ func TestDataContactTypes(t *testing.T) {
 	})
 
 	t.Run("fail path", func(t *testing.T) {
-		client := &mockiam{}
+		client := &iam.Mock{}
 		client.Test(test.TattleT{T: t})
 		client.On("SupportedContactTypes", mock.Anything).Return(nil, errors.New("failed to get supported contact types"))
 

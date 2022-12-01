@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/cps"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/cps"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -306,13 +306,13 @@ func TestDataEnrollment(t *testing.T) {
 	tests := map[string]struct {
 		enrollment   *cps.Enrollment
 		enrollmentID int
-		init         func(*testing.T, *mockcps)
+		init         func(*testing.T, *cps.Mock)
 		steps        []resource.TestStep
 	}{
 		"happy path without challenges": {
 			enrollment:   enrollmentDV1,
 			enrollmentID: enrollment1ID,
-			init: func(t *testing.T, m *mockcps) {
+			init: func(t *testing.T, m *cps.Mock) {
 				m.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{
 					EnrollmentID: enrollment1ID,
 				}).Return(enrollmentDV1, nil).Times(5)
@@ -327,7 +327,7 @@ func TestDataEnrollment(t *testing.T) {
 		"happy path with challenges": {
 			enrollment:   enrollmentDV2,
 			enrollmentID: enrollment2ID,
-			init: func(t *testing.T, m *mockcps) {
+			init: func(t *testing.T, m *cps.Mock) {
 				m.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{
 					EnrollmentID: enrollment2ID,
 				}).Return(enrollmentDV2, nil).Times(5)
@@ -355,7 +355,7 @@ func TestDataEnrollment(t *testing.T) {
 		"could not fetch an enrollment": {
 			enrollment:   enrollmentDV1,
 			enrollmentID: enrollment1ID,
-			init: func(t *testing.T, m *mockcps) {
+			init: func(t *testing.T, m *cps.Mock) {
 				m.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{
 					EnrollmentID: enrollment1ID,
 				}).Return(nil, fmt.Errorf("could not get an enrollment")).Once()
@@ -370,7 +370,7 @@ func TestDataEnrollment(t *testing.T) {
 		"could not fetch a change status": {
 			enrollment:   enrollmentDV2,
 			enrollmentID: enrollment2ID,
-			init: func(t *testing.T, m *mockcps) {
+			init: func(t *testing.T, m *cps.Mock) {
 				m.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{
 					EnrollmentID: enrollment2ID,
 				}).Return(enrollmentDV2, nil).Once()
@@ -390,7 +390,7 @@ func TestDataEnrollment(t *testing.T) {
 		"no changes on lets encrypt challenges": {
 			enrollment:   enrollmentDV2,
 			enrollmentID: enrollment2ID,
-			init: func(t *testing.T, m *mockcps) {
+			init: func(t *testing.T, m *cps.Mock) {
 				m.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{
 					EnrollmentID: enrollment2ID,
 				}).Return(enrollmentDV2, nil).Once()
@@ -417,7 +417,7 @@ func TestDataEnrollment(t *testing.T) {
 		"third party change type": {
 			enrollment:   enrollmentThirdParty,
 			enrollmentID: enrollment3ID,
-			init: func(t *testing.T, m *mockcps) {
+			init: func(t *testing.T, m *cps.Mock) {
 				m.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{
 					EnrollmentID: enrollment3ID,
 				}).Return(enrollmentThirdParty, nil).Times(5)
@@ -440,7 +440,7 @@ func TestDataEnrollment(t *testing.T) {
 		"ev change type": {
 			enrollment:   enrollmentEV,
 			enrollmentID: enrollment4ID,
-			init: func(t *testing.T, m *mockcps) {
+			init: func(t *testing.T, m *cps.Mock) {
 				m.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{
 					EnrollmentID: enrollment4ID,
 				}).Return(enrollmentEV, nil).Times(5)
@@ -464,7 +464,7 @@ func TestDataEnrollment(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &mockcps{}
+			client := &cps.Mock{}
 			test.init(t, client)
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{

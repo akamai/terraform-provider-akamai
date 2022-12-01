@@ -6,8 +6,8 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/imaging"
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/imaging"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 	"github.com/tj/assert"
@@ -65,7 +65,7 @@ func TestResourcePolicyImage(t *testing.T) {
 			Video:   tools.BoolPtr(false),
 		}
 
-		expectUpsertPolicy = func(_ *testing.T, client *mockimaging, policyID string, network imaging.PolicyNetwork, contractID string, policySetID string, policy imaging.PolicyInput) {
+		expectUpsertPolicy = func(_ *testing.T, client *imaging.Mock, policyID string, network imaging.PolicyNetwork, contractID string, policySetID string, policy imaging.PolicyInput) {
 			policyResponse := &imaging.PolicyResponse{
 				OperationPerformed: "UPDATED",
 				Description:        fmt.Sprintf("Policy %s updated.", policyID),
@@ -80,7 +80,7 @@ func TestResourcePolicyImage(t *testing.T) {
 			}).Return(policyResponse, nil).Once()
 		}
 
-		expectReadPolicy = func(t *testing.T, client *mockimaging, policyID string, network imaging.PolicyNetwork, contractID string, policySetID string, policyOutput imaging.PolicyOutput, times int) {
+		expectReadPolicy = func(t *testing.T, client *imaging.Mock, policyID string, network imaging.PolicyNetwork, contractID string, policySetID string, policyOutput imaging.PolicyOutput, times int) {
 			client.On("GetPolicy", mock.Anything, imaging.GetPolicyRequest{
 				PolicyID:    policyID,
 				Network:     network,
@@ -89,7 +89,7 @@ func TestResourcePolicyImage(t *testing.T) {
 			}).Return(policyOutput, nil).Times(times)
 		}
 
-		expectDeletePolicy = func(_ *testing.T, client *mockimaging, policyID string, network imaging.PolicyNetwork, contractID string, policySetID string) {
+		expectDeletePolicy = func(_ *testing.T, client *imaging.Mock, policyID string, network imaging.PolicyNetwork, contractID string, policySetID string) {
 			response := imaging.PolicyResponse{}
 			client.On("DeletePolicy", mock.Anything, imaging.DeletePolicyRequest{
 				PolicyID:    policyID,
@@ -99,7 +99,7 @@ func TestResourcePolicyImage(t *testing.T) {
 			}).Return(&response, nil).Once()
 		}
 
-		expectUpsertPolicyWithError = func(_ *testing.T, client *mockimaging, policyID string, network imaging.PolicyNetwork, contractID string, policySetID string, policy imaging.PolicyInput, err error) {
+		expectUpsertPolicyWithError = func(_ *testing.T, client *imaging.Mock, policyID string, network imaging.PolicyNetwork, contractID string, policySetID string, policy imaging.PolicyInput, err error) {
 			client.On("UpsertPolicy", mock.Anything, imaging.UpsertPolicyRequest{
 				PolicyID:    policyID,
 				Network:     network,
@@ -145,7 +145,7 @@ func TestResourcePolicyImage(t *testing.T) {
 	t.Run("regular policy create", func(t *testing.T) {
 		testDir := "testdata/TestResPolicyImage/regular_policy"
 
-		client := new(mockimaging)
+		client := new(imaging.Mock)
 		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyInput)
 		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyOutput, 2)
 
@@ -175,7 +175,7 @@ func TestResourcePolicyImage(t *testing.T) {
 	t.Run("regular policy create and later activate on production", func(t *testing.T) {
 		testDir := "testdata/TestResPolicyImage/regular_policy"
 
-		client := new(mockimaging)
+		client := new(imaging.Mock)
 		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyInput)
 		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyOutput, 5)
 
@@ -217,7 +217,7 @@ func TestResourcePolicyImage(t *testing.T) {
 	t.Run("regular policy create and activate on production, later update both", func(t *testing.T) {
 		testDir := "testdata/TestResPolicyImage/regular_policy_activate_same_time"
 
-		client := new(mockimaging)
+		client := new(imaging.Mock)
 		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyOutput, 2)
 
 		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyInput)
@@ -268,7 +268,7 @@ func TestResourcePolicyImage(t *testing.T) {
 	t.Run("regular policy create and later change policy set id (force new)", func(t *testing.T) {
 		testDir := "testdata/TestResPolicyImage/change_policyset_id"
 
-		client := new(mockimaging)
+		client := new(imaging.Mock)
 		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyInput)
 		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyOutput, 3)
 
@@ -316,7 +316,7 @@ func TestResourcePolicyImage(t *testing.T) {
 	t.Run("regular policy create, later activate on production and later modify on staging only", func(t *testing.T) {
 		testDir := "testdata/TestResPolicyImage/regular_policy_update_staging"
 
-		client := new(mockimaging)
+		client := new(imaging.Mock)
 		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyInput)
 		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyOutput, 6)
 
@@ -374,7 +374,7 @@ func TestResourcePolicyImage(t *testing.T) {
 	t.Run("auto policy create and later activate on production, cannot delete", func(t *testing.T) {
 		testDir := "testdata/TestResPolicyImage/auto_policy"
 
-		client := new(mockimaging)
+		client := new(imaging.Mock)
 		expectUpsertPolicy(t, client, ".auto", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyInput)
 		expectReadPolicy(t, client, ".auto", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyOutput, 5)
 
@@ -435,7 +435,7 @@ func TestResourcePolicyImage(t *testing.T) {
 			},
 		}
 
-		client := new(mockimaging)
+		client := new(imaging.Mock)
 		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyInput)
 		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyOutput, 2)
 
@@ -477,7 +477,7 @@ func TestResourcePolicyImage(t *testing.T) {
 	t.Run("import policy with activate_on_production=true", func(t *testing.T) {
 		testDir := "testdata/TestResPolicyImage/regular_policy"
 
-		client := new(mockimaging)
+		client := new(imaging.Mock)
 		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyInput)
 		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkProduction, "test_contract", "test_policy_set", &policyInput)
 		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyOutput, 5)
@@ -513,7 +513,7 @@ func TestResourcePolicyImage(t *testing.T) {
 		testDir := "testdata/TestResPolicyImage/regular_policy"
 		policyOutputV2 := getPolicyOutputV2(policyOutput)
 
-		client := new(mockimaging)
+		client := new(imaging.Mock)
 		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyInput)
 		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyOutput, 3)
 		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkProduction, "test_contract", "test_policy_set", &policyOutputV2, 1)
@@ -543,7 +543,7 @@ func TestResourcePolicyImage(t *testing.T) {
 	t.Run("import policy with activate_on_production=false and no policy on production", func(t *testing.T) {
 		testDir := "testdata/TestResPolicyImage/regular_policy"
 
-		client := new(mockimaging)
+		client := new(imaging.Mock)
 		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyInput)
 		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyOutput, 3)
 		client.On("GetPolicy", mock.Anything, imaging.GetPolicyRequest{
@@ -581,7 +581,7 @@ func TestResourcePolicyImage(t *testing.T) {
 		policyInput := policyInput
 		policyInput.RolloutDuration = tools.IntPtr(3600)
 
-		client := new(mockimaging)
+		client := new(imaging.Mock)
 		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyInput)
 		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyOutput, 3)
 		client.On("GetPolicy", mock.Anything, imaging.GetPolicyRequest{
@@ -625,7 +625,7 @@ func TestResourcePolicyImage(t *testing.T) {
 	t.Run("policy with invalid policy structure", func(t *testing.T) {
 		testDir := "testdata/TestResPolicyImage/invalid_policy"
 
-		client := new(mockimaging)
+		client := new(imaging.Mock)
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
@@ -642,7 +642,7 @@ func TestResourcePolicyImage(t *testing.T) {
 	t.Run("policy with inconsistent policy structure", func(t *testing.T) {
 		testDir := "testdata/TestResPolicyImage/inconsistent_policy"
 
-		client := new(mockimaging)
+		client := new(imaging.Mock)
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				Providers: testAccProviders,
@@ -659,7 +659,7 @@ func TestResourcePolicyImage(t *testing.T) {
 	t.Run("error when creating policy", func(t *testing.T) {
 		testDir := "testdata/TestResPolicyImage/regular_policy"
 
-		client := new(mockimaging)
+		client := new(imaging.Mock)
 		var withError = imaging.Error{
 			Type:      "https://problems.luna.akamaiapis.net/image-policy-manager/IVM_1004",
 			Title:     "Bad Request",
@@ -686,7 +686,7 @@ func TestResourcePolicyImage(t *testing.T) {
 	t.Run("invalid import id", func(t *testing.T) {
 		testDir := "testdata/TestResPolicyImage/regular_policy"
 
-		client := new(mockimaging)
+		client := new(imaging.Mock)
 		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyInput)
 		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyOutput, 2)
 

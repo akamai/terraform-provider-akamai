@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/edgeworkers"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/edgeworkers"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -18,7 +18,7 @@ type testDataForEdgeWorkersActivation struct {
 }
 
 var (
-	expectReadEdgeWorkersActivation = func(t *testing.T, client *mockedgeworkers, data testDataForEdgeWorkersActivation, timesToRun int) {
+	expectReadEdgeWorkersActivation = func(t *testing.T, client *edgeworkers.Mock, data testDataForEdgeWorkersActivation, timesToRun int) {
 		listActivationsReq := edgeworkers.ListActivationsRequest{
 			EdgeWorkerID: data.EdgeWorkerID,
 		}
@@ -39,7 +39,7 @@ var (
 		client.On("ListDeactivations", mock.Anything, listDeactivationsReq).Return(&listDeactivationsRes, nil).Times(timesToRun)
 	}
 
-	expectReadEmptyEdgeWorkersActivation = func(t *testing.T, client *mockedgeworkers, data testDataForEdgeWorkersActivation, timesToRun int) {
+	expectReadEmptyEdgeWorkersActivation = func(t *testing.T, client *edgeworkers.Mock, data testDataForEdgeWorkersActivation, timesToRun int) {
 		listActivationsReq := edgeworkers.ListActivationsRequest{
 			EdgeWorkerID: data.EdgeWorkerID,
 		}
@@ -49,7 +49,7 @@ var (
 		client.On("ListActivations", mock.Anything, listActivationsReq).Return(&listActivationsRes, nil).Times(timesToRun)
 	}
 
-	expectListActivationsError = func(t *testing.T, client *mockedgeworkers, errorMessage string) {
+	expectListActivationsError = func(t *testing.T, client *edgeworkers.Mock, errorMessage string) {
 		listActivationsReq := edgeworkers.ListActivationsRequest{
 			EdgeWorkerID: 1,
 		}
@@ -128,13 +128,13 @@ var (
 
 func TestDataEdgeWorkersActivation(t *testing.T) {
 	tests := map[string]struct {
-		init       func(*testing.T, *mockedgeworkers, testDataForEdgeWorkersActivation)
+		init       func(*testing.T, *edgeworkers.Mock, testDataForEdgeWorkersActivation)
 		mockData   testDataForEdgeWorkersActivation
 		configPath string
 		error      *regexp.Regexp
 	}{
 		"happy path with one activation": {
-			init: func(t *testing.T, m *mockedgeworkers, testData testDataForEdgeWorkersActivation) {
+			init: func(t *testing.T, m *edgeworkers.Mock, testData testDataForEdgeWorkersActivation) {
 				expectReadEdgeWorkersActivation(t, m, testData, 5)
 			},
 			mockData:   oneActivationData,
@@ -142,7 +142,7 @@ func TestDataEdgeWorkersActivation(t *testing.T) {
 			error:      nil,
 		},
 		"happy path with three activations": {
-			init: func(t *testing.T, m *mockedgeworkers, testData testDataForEdgeWorkersActivation) {
+			init: func(t *testing.T, m *edgeworkers.Mock, testData testDataForEdgeWorkersActivation) {
 				expectReadEdgeWorkersActivation(t, m, testData, 5)
 			},
 			mockData:   threeActivationsData,
@@ -150,7 +150,7 @@ func TestDataEdgeWorkersActivation(t *testing.T) {
 			error:      nil,
 		},
 		"happy path with no activations": {
-			init: func(t *testing.T, m *mockedgeworkers, testData testDataForEdgeWorkersActivation) {
+			init: func(t *testing.T, m *edgeworkers.Mock, testData testDataForEdgeWorkersActivation) {
 				expectReadEmptyEdgeWorkersActivation(t, m, testData, 5)
 			},
 			mockData:   noActivationsData,
@@ -158,7 +158,7 @@ func TestDataEdgeWorkersActivation(t *testing.T) {
 			error:      nil,
 		},
 		"activation status not complete": {
-			init: func(t *testing.T, m *mockedgeworkers, testData testDataForEdgeWorkersActivation) {
+			init: func(t *testing.T, m *edgeworkers.Mock, testData testDataForEdgeWorkersActivation) {
 				expectReadEmptyEdgeWorkersActivation(t, m, testData, 5)
 			},
 			mockData:   wrongStatusData,
@@ -166,7 +166,7 @@ func TestDataEdgeWorkersActivation(t *testing.T) {
 			error:      nil,
 		},
 		"could not list activations": {
-			init: func(t *testing.T, m *mockedgeworkers, testData testDataForEdgeWorkersActivation) {
+			init: func(t *testing.T, m *edgeworkers.Mock, testData testDataForEdgeWorkersActivation) {
 				expectListActivationsError(t, m, "could not fetch activations")
 			},
 			mockData:   testDataForEdgeWorkersActivation{},
@@ -174,13 +174,13 @@ func TestDataEdgeWorkersActivation(t *testing.T) {
 			error:      regexp.MustCompile("could not fetch activations"),
 		},
 		"edgeworker_id not provided": {
-			init:       func(t *testing.T, m *mockedgeworkers, testData testDataForEdgeWorkersActivation) {},
+			init:       func(t *testing.T, m *edgeworkers.Mock, testData testDataForEdgeWorkersActivation) {},
 			mockData:   testDataForEdgeWorkersActivation{},
 			configPath: "testdata/TestDataEdgeWorkersActivation/no_edgeworker_id.tf",
 			error:      regexp.MustCompile("Missing required argument"),
 		},
 		"network not provided": {
-			init:       func(t *testing.T, m *mockedgeworkers, testData testDataForEdgeWorkersActivation) {},
+			init:       func(t *testing.T, m *edgeworkers.Mock, testData testDataForEdgeWorkersActivation) {},
 			mockData:   testDataForEdgeWorkersActivation{},
 			configPath: "testdata/TestDataEdgeWorkersActivation/no_network.tf",
 			error:      regexp.MustCompile("Missing required argument"),
@@ -189,7 +189,7 @@ func TestDataEdgeWorkersActivation(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &mockedgeworkers{}
+			client := &edgeworkers.Mock{}
 			test.init(t, client, test.mockData)
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{

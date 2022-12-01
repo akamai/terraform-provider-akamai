@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"testing"
 
-	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/configgtm"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/gtm"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -80,7 +80,7 @@ var prop = gtm.Property{
 func TestResGtmProperty(t *testing.T) {
 
 	t.Run("create property", func(t *testing.T) {
-		client := &mockgtm{}
+		client := &gtm.Mock{}
 
 		getCall := client.On("GetProperty",
 			mock.Anything, // ctx is irrelevant for this test
@@ -184,7 +184,7 @@ func TestResGtmProperty(t *testing.T) {
 	})
 
 	t.Run("create property failed", func(t *testing.T) {
-		client := &mockgtm{}
+		client := &gtm.Mock{}
 
 		client.On("CreateProperty",
 			mock.Anything, // ctx is irrelevant for this test
@@ -246,7 +246,7 @@ func TestResGtmProperty(t *testing.T) {
 	})
 
 	t.Run("create property denied", func(t *testing.T) {
-		client := &mockgtm{}
+		client := &gtm.Mock{}
 
 		dr := gtm.PropertyResponse{}
 		dr.Resource = &prop
@@ -313,7 +313,7 @@ func TestResGtmProperty(t *testing.T) {
 func TestResourceGTMTrafficTargetOrder(t *testing.T) {
 	// To see actual plan when diff is expected, change 'nonEmptyPlan' to false in test case
 	tests := map[string]struct {
-		client        *mockgtm
+		client        *gtm.Mock
 		pathForCreate string
 		pathForUpdate string
 		nonEmptyPlan  bool
@@ -428,8 +428,8 @@ func TestResourceGTMTrafficTargetOrder(t *testing.T) {
 	}
 }
 
-func getMocks() *mockgtm {
-	client := &mockgtm{}
+func getMocks() *gtm.Mock {
+	client := &gtm.Mock{}
 
 	// read
 	getPropertyCall := client.On("GetProperty", mock.Anything, "tfexample_prop_1", "gtm_terra_testdomain.akadns.net").

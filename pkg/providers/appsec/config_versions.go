@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
 )
 
 // Utility functions for determining current and latest versions of a security

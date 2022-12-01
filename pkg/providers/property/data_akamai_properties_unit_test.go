@@ -7,12 +7,12 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/papi"
 )
 
 func TestDataProperties(t *testing.T) {
 	t.Run("list properties", func(t *testing.T) {
-		client := &mockpapi{}
+		client := &papi.Mock{}
 		props := papi.PropertiesItems{Items: buildPapiProperties()}
 		properties := decodePropertyItems(props.Items)
 
@@ -35,7 +35,7 @@ func TestDataProperties(t *testing.T) {
 	})
 
 	t.Run("list properties without group prefix", func(t *testing.T) {
-		client := &mockpapi{}
+		client := &papi.Mock{}
 		props := papi.PropertiesItems{Items: buildPapiProperties()}
 		properties := decodePropertyItems(props.Items)
 
@@ -58,7 +58,7 @@ func TestDataProperties(t *testing.T) {
 	})
 
 	t.Run("list properties without contract prefix", func(t *testing.T) {
-		client := &mockpapi{}
+		client := &papi.Mock{}
 		props := papi.PropertiesItems{Items: buildPapiProperties()}
 		properties := decodePropertyItems(props.Items)
 

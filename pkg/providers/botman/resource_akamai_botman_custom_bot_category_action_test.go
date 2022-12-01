@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/botman"
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/test"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/botman"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/test"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -13,7 +13,7 @@ import (
 func TestResourceCustomBotCategoryAction(t *testing.T) {
 	t.Run("ResourceCustomBotCategoryAction", func(t *testing.T) {
 
-		mockedBotmanClient := &mockbotman{}
+		mockedBotmanClient := &botman.Mock{}
 		createResponse := map[string]interface{}{"categoryId": "cc9c3f89-e179-4892-89cf-d5e623ba9dc7", "testKey": "testValue3"}
 		createRequest := `{"categoryId":"cc9c3f89-e179-4892-89cf-d5e623ba9dc7", "testKey":"testValue3"}`
 		mockedBotmanClient.On("UpdateCustomBotCategoryAction",

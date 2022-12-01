@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/iam"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/iam"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -30,7 +30,7 @@ func TestResourceGroup(t *testing.T) {
 	}
 
 	tests := map[string]struct {
-		init  func(*mockiam)
+		init  func(*iam.Mock)
 		steps []resource.TestStep
 	}{
 		"creation error": {
@@ -40,7 +40,7 @@ func TestResourceGroup(t *testing.T) {
 					ExpectError: regexp.MustCompile("group creation error"),
 				},
 			},
-			init: func(m *mockiam) {
+			init: func(m *iam.Mock) {
 				expectResourceIAMGroupCreate(m, groupCreate.ParentGroupID, groupCreate.GroupName, &groupCreate, fmt.Errorf("group creation error"))
 			},
 		},
@@ -51,7 +51,7 @@ func TestResourceGroup(t *testing.T) {
 					ExpectError: regexp.MustCompile("group read error"),
 				},
 			},
-			init: func(m *mockiam) {
+			init: func(m *iam.Mock) {
 				// step 1
 				// create
 				expectResourceIAMGroupCreate(m, groupCreate.ParentGroupID, groupCreate.GroupName, &groupCreate, nil)
@@ -76,7 +76,7 @@ func TestResourceGroup(t *testing.T) {
 					),
 				},
 			},
-			init: func(m *mockiam) {
+			init: func(m *iam.Mock) {
 				// step 1
 				// create
 				expectResourceIAMGroupCreate(m, groupCreate.ParentGroupID, groupCreate.GroupName, &groupCreate, nil)
@@ -114,7 +114,7 @@ func TestResourceGroup(t *testing.T) {
 					),
 				},
 			},
-			init: func(m *mockiam) {
+			init: func(m *iam.Mock) {
 				// step 1
 				// create
 				expectResourceIAMGroupCreate(m, groupCreate.ParentGroupID, groupCreate.GroupName, &groupCreate, nil)
@@ -138,7 +138,7 @@ func TestResourceGroup(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &mockiam{}
+			client := &iam.Mock{}
 			test.init(client)
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
@@ -152,7 +152,7 @@ func TestResourceGroup(t *testing.T) {
 	}
 }
 
-func expectResourceIAMGroupUpdate(m *mockiam, group iam.Group, sourceGroupID int64, updateNameError, moveGroupError error) {
+func expectResourceIAMGroupUpdate(m *iam.Mock, group iam.Group, sourceGroupID int64, updateNameError, moveGroupError error) {
 	onUpdateGroupName := m.On("UpdateGroupName", mock.Anything, iam.GroupRequest{GroupName: group.GroupName, GroupID: group.GroupID})
 	if updateNameError != nil {
 		onUpdateGroupName.Return(nil, updateNameError)
@@ -163,11 +163,11 @@ func expectResourceIAMGroupUpdate(m *mockiam, group iam.Group, sourceGroupID int
 	m.On("MoveGroup", mock.Anything, iam.MoveGroupRequest{DestinationGroupID: group.ParentGroupID, SourceGroupID: sourceGroupID}).Return(moveGroupError)
 }
 
-func expectResourceIAMGroupDelete(m *mockiam, groupID int, errRemoveGroup error) {
+func expectResourceIAMGroupDelete(m *iam.Mock, groupID int, errRemoveGroup error) {
 	m.On("RemoveGroup", mock.Anything, iam.RemoveGroupRequest{GroupID: int64(groupID)}).Return(errRemoveGroup)
 }
 
-func expectResourceIAMGroupRead(m *mockiam, groupID int64, group *iam.Group, errRead error) *mock.Call {
+func expectResourceIAMGroupRead(m *iam.Mock, groupID int64, group *iam.Group, errRead error) *mock.Call {
 	onGet := m.On("GetGroup", mock.Anything, iam.GetGroupRequest{GroupID: groupID})
 	if errRead != nil {
 		return onGet.Return(nil, errRead)
@@ -175,7 +175,7 @@ func expectResourceIAMGroupRead(m *mockiam, groupID int64, group *iam.Group, err
 	return onGet.Return(group, nil)
 }
 
-func expectResourceIAMGroupCreate(m *mockiam, parentGroupID int64, createGroupName string, groupCreate *iam.Group, errCreate error) {
+func expectResourceIAMGroupCreate(m *iam.Mock, parentGroupID int64, createGroupName string, groupCreate *iam.Group, errCreate error) {
 	m.On("CreateGroup", mock.Anything, iam.GroupRequest{
 		GroupID: parentGroupID, GroupName: createGroupName,
 	}).Return(groupCreate, errCreate).Once()

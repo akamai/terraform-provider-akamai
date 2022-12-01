@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/appsec"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -14,7 +14,7 @@ import (
 
 func TestAkamaiEvalGroup_res_basic(t *testing.T) {
 	t.Run("match by AttackGroup ID", func(t *testing.T) {
-		client := &mockappsec{}
+		client := &appsec.Mock{}
 
 		conditionExceptionJSON := loadFixtureString("testdata/TestResEvalGroup/ConditionException.json")
 		conditionExceptionRawMessage := json.RawMessage(conditionExceptionJSON)
@@ -73,7 +73,7 @@ func TestAkamaiEvalGroup_res_basic(t *testing.T) {
 
 func TestAkamaiEvalGroup_res_error_updating_eval_group(t *testing.T) {
 	t.Run("match by AttackGroup ID", func(t *testing.T) {
-		client := &mockappsec{}
+		client := &appsec.Mock{}
 
 		conditionExceptionJSON := loadFixtureString("testdata/TestResEvalGroup/ConditionException.json")
 		conditionExceptionRawMessage := json.RawMessage(conditionExceptionJSON)

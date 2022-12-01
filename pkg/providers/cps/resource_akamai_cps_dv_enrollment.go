@@ -8,12 +8,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/cps"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
-	cpstools "github.com/akamai/terraform-provider-akamai/v2/pkg/providers/cps/tools"
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
-	"github.com/apex/log"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/cps"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
+	cpstools "github.com/akamai/terraform-provider-akamai/v3/pkg/providers/cps/tools"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -22,12 +21,6 @@ import (
 var (
 	// PollForChangeStatusInterval defines retry interval for getting status of a pending change
 	PollForChangeStatusInterval = 10 * time.Second
-)
-
-const (
-	statusCoordinateDomainValidation    = "coodinate-domain-validation"
-	statusVerificationWarnings          = "wait-review-pre-verification-safety-checks"
-	inputTypePreVerificationWarningsAck = "pre-verification-warnings-acknowledgement"
 )
 
 func resourceCPSDVEnrollment() *schema.Resource {
@@ -41,249 +34,165 @@ func resourceCPSDVEnrollment() *schema.Resource {
 		},
 		Schema: map[string]*schema.Schema{
 			"common_name": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: "Common name used for enrollment",
 			},
 			"allow_duplicate_common_name": {
-				Type:     schema.TypeBool,
-				Optional: true,
-				Default:  false,
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "Allow to duplicate common name",
 			},
 			"sans": {
-				Type:     schema.TypeSet,
-				Elem:     &schema.Schema{Type: schema.TypeString},
-				Optional: true,
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "List of SANs",
 			},
 			"secure_network": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: "Type of TLS deployment network",
 			},
 			"sni_only": {
-				Type:     schema.TypeBool,
-				Required: true,
-				ForceNew: true,
+				Type:        schema.TypeBool,
+				Required:    true,
+				ForceNew:    true,
+				Description: "Whether Server Name Indication is used for enrollment",
 			},
 			"acknowledge_pre_verification_warnings": {
-				Type:     schema.TypeBool,
-				Optional: true,
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "Whether acknowledge warnings before certificate verification",
 			},
 			"admin_contact": {
-				Type:     schema.TypeSet,
-				Required: true,
-				MinItems: 1,
-				MaxItems: 1,
-				Elem:     contact,
+				Type:        schema.TypeSet,
+				Required:    true,
+				MinItems:    1,
+				MaxItems:    1,
+				Elem:        contact,
+				Description: "Contact information for the certificate administrator to use at organization",
 			},
 			"certificate_chain_type": {
-				Type:     schema.TypeString,
-				Default:  "default",
-				Optional: true,
+				Type:        schema.TypeString,
+				Default:     "default",
+				Optional:    true,
+				Description: "Certificate trust chain type",
 			},
 			"csr": {
-				Type:     schema.TypeSet,
-				Required: true,
-				MinItems: 1,
-				MaxItems: 1,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"country_code": {
-							Type:     schema.TypeString,
-							Required: true,
-						},
-						"city": {
-							Type:     schema.TypeString,
-							Required: true,
-						},
-						"organization": {
-							Type:     schema.TypeString,
-							Required: true,
-						},
-						"organizational_unit": {
-							Type:     schema.TypeString,
-							Required: true,
-						},
-						"state": {
-							Type:     schema.TypeString,
-							Required: true,
-						},
-					},
-				},
+				Type:        schema.TypeSet,
+				Required:    true,
+				MinItems:    1,
+				MaxItems:    1,
+				Elem:        csr,
+				Description: "Certificate signing request generated during enrollment creation",
 			},
 			"enable_multi_stacked_certificates": {
-				Type:     schema.TypeBool,
-				Optional: true,
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Deprecated:  "Deprecated, don't use; always false",
+				Description: "Enable Dual-Stacked certificate deployment for enrollment",
 			},
 			"network_configuration": {
-				Type:     schema.TypeSet,
-				Required: true,
-				MinItems: 1,
-				MaxItems: 1,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"client_mutual_authentication": {
-							Type:     schema.TypeSet,
-							Optional: true,
-							MinItems: 1,
-							MaxItems: 1,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"send_ca_list_to_client": {
-										Type:     schema.TypeBool,
-										Optional: true,
-									},
-									"ocsp_enabled": {
-										Type:     schema.TypeBool,
-										Optional: true,
-									},
-									"set_id": {
-										Type:     schema.TypeString,
-										Optional: true,
-									},
-								},
-							},
-						},
-						"disallowed_tls_versions": {
-							Type:     schema.TypeSet,
-							Optional: true,
-							Elem:     &schema.Schema{Type: schema.TypeString},
-						},
-						"clone_dns_names": {
-							Type:     schema.TypeBool,
-							Optional: true,
-						},
-						"geography": {
-							Type:     schema.TypeString,
-							Required: true,
-						},
-						"must_have_ciphers": {
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-						"ocsp_stapling": {
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-						"preferred_ciphers": {
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-						"quic_enabled": {
-							Type:     schema.TypeBool,
-							Optional: true,
-						},
-					},
-				},
+				Type:        schema.TypeSet,
+				Required:    true,
+				MinItems:    1,
+				MaxItems:    1,
+				Elem:        networkConfiguration,
+				Description: "Settings containing network information and TLS Metadata used by CPS",
 			},
 			"signature_algorithm": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "SHA algorithm type",
 			},
 			"tech_contact": {
-				Type:     schema.TypeSet,
-				Required: true,
-				MinItems: 1,
-				MaxItems: 1,
-				Elem:     contact,
+				Type:        schema.TypeSet,
+				Required:    true,
+				MinItems:    1,
+				MaxItems:    1,
+				Elem:        contact,
+				Description: "Contact information for an administrator at Akamai",
 			},
 			"organization": {
-				Type:     schema.TypeSet,
-				Required: true,
-				MinItems: 1,
-				MaxItems: 1,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"name": {
-							Type:     schema.TypeString,
-							Required: true,
-						},
-						"phone": {
-							Type:     schema.TypeString,
-							Required: true,
-						},
-						"address_line_one": {
-							Type:     schema.TypeString,
-							Required: true,
-						},
-						"address_line_two": {
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-						"city": {
-							Type:     schema.TypeString,
-							Required: true,
-						},
-						"region": {
-							Type:     schema.TypeString,
-							Required: true,
-						},
-						"postal_code": {
-							Type:     schema.TypeString,
-							Required: true,
-						},
-						"country_code": {
-							Type:     schema.TypeString,
-							Required: true,
-						},
-					},
-				},
+				Type:        schema.TypeSet,
+				Required:    true,
+				MinItems:    1,
+				MaxItems:    1,
+				Elem:        organization,
+				Description: "Organization information",
 			},
 			"contract_id": {
 				Type:             schema.TypeString,
 				ForceNew:         true,
 				Required:         true,
 				DiffSuppressFunc: tools.FieldPrefixSuppress("ctr_"),
+				Description:      "Contract ID for which enrollment is retrieved",
 			},
 			"certificate_type": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Certificate type of enrollment",
 			},
 			"validation_type": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Enrolment validation type",
 			},
 			"registration_authority": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The registration authority or certificate authority (CA) used to obtain a certificate",
 			},
 			"dns_challenges": {
-				Type:     schema.TypeSet,
-				Computed: true,
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Description: "DNS challenge information",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"domain": {
-							Type:     schema.TypeString,
-							Computed: true,
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Domain for which the challenges were completed",
 						},
 						"full_path": {
-							Type:     schema.TypeString,
-							Computed: true,
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The domain name where Akamai publishes the response body to validate",
 						},
 						"response_body": {
-							Type:     schema.TypeString,
-							Computed: true,
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The unique content of the challenge",
 						},
 					},
 				},
 				Set: cpstools.HashFromChallengesMap,
 			},
 			"http_challenges": {
-				Type:     schema.TypeSet,
-				Computed: true,
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Description: "HTTP challenge information",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"domain": {
-							Type:     schema.TypeString,
-							Computed: true,
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Domain for which the challenges were completed",
 						},
 						"full_path": {
-							Type:     schema.TypeString,
-							Computed: true,
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The URL where Akamai publishes the response body to validate",
 						},
 						"response_body": {
-							Type:     schema.TypeString,
-							Computed: true,
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The unique content of the challenge",
 						},
 					},
 				},
@@ -311,59 +220,6 @@ func resourceCPSDVEnrollment() *schema.Resource {
 				return nil
 			}),
 	}
-}
-
-var contact = &schema.Resource{
-	Schema: map[string]*schema.Schema{
-		"first_name": {
-			Type:     schema.TypeString,
-			Required: true,
-		},
-		"last_name": {
-			Type:     schema.TypeString,
-			Required: true,
-		},
-		"title": {
-			Type:     schema.TypeString,
-			Optional: true,
-		},
-		"organization": {
-			Type:     schema.TypeString,
-			Required: true,
-		},
-		"email": {
-			Type:     schema.TypeString,
-			Required: true,
-		},
-		"phone": {
-			Type:     schema.TypeString,
-			Required: true,
-		},
-		"address_line_one": {
-			Type:     schema.TypeString,
-			Required: true,
-		},
-		"address_line_two": {
-			Type:     schema.TypeString,
-			Optional: true,
-		},
-		"city": {
-			Type:     schema.TypeString,
-			Required: true,
-		},
-		"region": {
-			Type:     schema.TypeString,
-			Required: true,
-		},
-		"postal_code": {
-			Type:     schema.TypeString,
-			Required: true,
-		},
-		"country_code": {
-			Type:     schema.TypeString,
-			Required: true,
-		},
-	},
 }
 
 func resourceCPSDVEnrollmentCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -397,7 +253,7 @@ func resourceCPSDVEnrollmentCreate(ctx context.Context, d *schema.ResourceData, 
 	}
 	adminContact, err := cpstools.GetContactInfo(adminContactSet)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("'admin_contact' - %s", err))
+		return diag.Errorf("'admin_contact' - %s", err)
 	}
 	enrollment.AdminContact = adminContact
 	techContactSet, err := tools.GetSetValue("tech_contact", d)
@@ -406,7 +262,7 @@ func resourceCPSDVEnrollmentCreate(ctx context.Context, d *schema.ResourceData, 
 	}
 	techContact, err := cpstools.GetContactInfo(techContactSet)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("'tech_contact' - %s", err))
+		return diag.Errorf("'tech_contact' - %s", err)
 	}
 	enrollment.TechContact = techContact
 
@@ -422,11 +278,8 @@ func resourceCPSDVEnrollmentCreate(ctx context.Context, d *schema.ResourceData, 
 	}
 	enrollment.CSR = csr
 
-	enableMultiStacked, err := tools.GetBoolValue("enable_multi_stacked_certificates", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	enrollment.EnableMultiStackedCertificates = enableMultiStacked
+	// DV does not support multi stack certificates
+	enrollment.EnableMultiStackedCertificates = false
 
 	networkConfig, err := cpstools.GetNetworkConfig(d)
 	if err != nil {
@@ -434,7 +287,7 @@ func resourceCPSDVEnrollmentCreate(ctx context.Context, d *schema.ResourceData, 
 	}
 	enrollment.NetworkConfiguration = networkConfig
 	signatureAlgorithm, err := tools.GetStringValue("signature_algorithm", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	enrollment.SignatureAlgorithm = signatureAlgorithm
@@ -469,7 +322,9 @@ func resourceCPSDVEnrollmentCreate(ctx context.Context, d *schema.ResourceData, 
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	err = waitForVerification(ctx, logger, client, res.ID, acknowledgeWarnings)
+	if err = waitForVerification(ctx, logger, client, res.ID, acknowledgeWarnings, nil); err != nil {
+		return diag.FromErr(err)
+	}
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -495,35 +350,10 @@ func resourceCPSDVEnrollmentRead(ctx context.Context, d *schema.ResourceData, m 
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	attrs := make(map[string]interface{})
-	adminContact := cpstools.ContactInfoToMap(*enrollment.AdminContact)
-	attrs["common_name"] = enrollment.CSR.CN
-	sans := make([]string, 0)
-	sansFromSchema, err := tools.GetSetValue("sans", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	attrs, err := readAttrs(enrollment, d)
+	if err != nil {
 		return diag.FromErr(err)
 	}
-	for _, san := range enrollment.CSR.SANS {
-		if (sansFromSchema.Len() == 0 || !sansFromSchema.Contains(enrollment.CSR.CN)) && san == enrollment.CSR.CN {
-			continue
-		}
-		sans = append(sans, san)
-	}
-	attrs["sans"] = sans
-	attrs["sni_only"] = enrollment.NetworkConfiguration.SNIOnly
-	attrs["secure_network"] = enrollment.NetworkConfiguration.SecureNetwork
-	attrs["admin_contact"] = []interface{}{adminContact}
-	techContact := cpstools.ContactInfoToMap(*enrollment.TechContact)
-	attrs["tech_contact"] = []interface{}{techContact}
-	attrs["certificate_chain_type"] = enrollment.CertificateChainType
-	csr := cpstools.CSRToMap(*enrollment.CSR)
-	attrs["csr"] = []interface{}{csr}
-	attrs["enable_multi_stacked_certificates"] = enrollment.EnableMultiStackedCertificates
-	networkConfig := cpstools.NetworkConfigToMap(*enrollment.NetworkConfiguration)
-	attrs["network_configuration"] = []interface{}{networkConfig}
-	attrs["signature_algorithm"] = enrollment.SignatureAlgorithm
-	org := cpstools.OrgToMap(*enrollment.Org)
-	attrs["organization"] = []interface{}{org}
 	attrs["certificate_type"] = enrollment.CertificateType
 	attrs["validation_type"] = enrollment.ValidationType
 	attrs["registration_authority"] = enrollment.RA
@@ -630,13 +460,12 @@ func resourceCPSDVEnrollmentUpdate(ctx context.Context, d *schema.ResourceData, 
 		"tech_contact",
 		"certificate_chain_type",
 		"csr",
-		"enable_multi_stacked_certificates",
 		"network_configuration",
 		"signature_algorithm",
 		"organization",
 	) {
 		logger.Debug("Enrollment does not have to be updated. Verifying status.")
-		if err = waitForVerification(ctx, logger, client, enrollmentID, acknowledgeWarnings); err != nil {
+		if err = waitForVerification(ctx, logger, client, enrollmentID, acknowledgeWarnings, nil); err != nil {
 			return diag.FromErr(err)
 		}
 		return resourceCPSDVEnrollmentRead(ctx, d, m)
@@ -662,7 +491,7 @@ func resourceCPSDVEnrollmentUpdate(ctx context.Context, d *schema.ResourceData, 
 	}
 	adminContact, err := cpstools.GetContactInfo(adminContactSet)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("'admin_contact' - %s", err))
+		return diag.Errorf("'admin_contact' - %s", err)
 	}
 	enrollment.AdminContact = adminContact
 	techContactSet, err := tools.GetSetValue("tech_contact", d)
@@ -671,7 +500,7 @@ func resourceCPSDVEnrollmentUpdate(ctx context.Context, d *schema.ResourceData, 
 	}
 	techContact, err := cpstools.GetContactInfo(techContactSet)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("'tech_contact' - %s", err))
+		return diag.Errorf("'tech_contact' - %s", err)
 	}
 	enrollment.TechContact = techContact
 
@@ -687,11 +516,8 @@ func resourceCPSDVEnrollmentUpdate(ctx context.Context, d *schema.ResourceData, 
 	}
 	enrollment.CSR = csr
 
-	enableMultiStacked, err := tools.GetBoolValue("enable_multi_stacked_certificates", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	enrollment.EnableMultiStackedCertificates = enableMultiStacked
+	// DV does not support multi stack certificates
+	enrollment.EnableMultiStackedCertificates = false
 
 	networkConfig, err := cpstools.GetNetworkConfig(d)
 	if err != nil {
@@ -722,101 +548,14 @@ func resourceCPSDVEnrollmentUpdate(ctx context.Context, d *schema.ResourceData, 
 	}
 	d.SetId(strconv.Itoa(enrollmentID))
 
-	if err = waitForVerification(ctx, logger, client, enrollmentID, acknowledgeWarnings); err != nil {
+	if err = waitForVerification(ctx, logger, client, enrollmentID, acknowledgeWarnings, nil); err != nil {
 		return diag.FromErr(err)
 	}
 	return resourceCPSDVEnrollmentRead(ctx, d, m)
 }
 
 func resourceCPSDVEnrollmentDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
-	logger := meta.Log("CPS", "resourceCPSDVEnrollmentDelete")
-	// create a context with logging for api calls
-	ctx = session.ContextWithOptions(
-		ctx,
-		session.WithContextLog(logger),
-	)
-	client := inst.Client(meta)
-	logger.Debug("Deleting enrollment")
-	enrollmentID, err := strconv.Atoi(d.Id())
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	req := cps.RemoveEnrollmentRequest{
-		EnrollmentID:              enrollmentID,
-		AllowCancelPendingChanges: tools.BoolPtr(true),
-	}
-	if _, err = client.RemoveEnrollment(ctx, req); err != nil {
-		return diag.FromErr(err)
-	}
-	d.SetId("")
-	return nil
-}
-
-func waitForVerification(ctx context.Context, logger log.Interface, client cps.CPS, enrollmentID int, acknowledgeWarnings bool) error {
-	getEnrollmentReq := cps.GetEnrollmentRequest{EnrollmentID: enrollmentID}
-	enrollmentGet, err := client.GetEnrollment(ctx, getEnrollmentReq)
-	if err != nil {
-		return err
-	}
-	changeID, err := cpstools.GetChangeIDFromPendingChanges(enrollmentGet.PendingChanges)
-	if err != nil {
-		if errors.Is(err, cpstools.ErrNoPendingChanges) {
-			logger.Debug("No pending changes found on the enrollment")
-			return nil
-		}
-		return err
-	}
-
-	changeStatusReq := cps.GetChangeStatusRequest{
-		EnrollmentID: enrollmentID,
-		ChangeID:     changeID,
-	}
-	status, err := client.GetChangeStatus(ctx, changeStatusReq)
-	if err != nil {
-		return err
-	}
-	for (status.StatusInfo.Status != statusCoordinateDomainValidation || len(status.AllowedInput) == 0) && status.StatusInfo.Status != "complete" {
-		select {
-		case <-time.After(PollForChangeStatusInterval):
-			status, err = client.GetChangeStatus(ctx, changeStatusReq)
-			if err != nil {
-				return err
-			}
-			if status.StatusInfo != nil && status.StatusInfo.Status == statusVerificationWarnings &&
-				len(status.AllowedInput) > 0 && status.AllowedInput[0].Type == inputTypePreVerificationWarningsAck {
-
-				warnings, err := client.GetChangePreVerificationWarnings(ctx, cps.GetChangeRequest{
-					EnrollmentID: enrollmentID,
-					ChangeID:     changeID,
-				})
-				if err != nil {
-					return err
-				}
-				logger.Debugf("Pre-verification warnings: %s", warnings.Warnings)
-				if acknowledgeWarnings {
-					err = client.AcknowledgePreVerificationWarnings(ctx, cps.AcknowledgementRequest{
-						Acknowledgement: cps.Acknowledgement{Acknowledgement: cps.AcknowledgementAcknowledge},
-						EnrollmentID:    enrollmentID,
-						ChangeID:        changeID,
-					})
-					if err != nil {
-						return err
-					}
-					continue
-				}
-				return fmt.Errorf("enrollment pre-verification returned warnings and the enrollment cannot be validated. Please fix the issues or set acknowledge_pre_validation_warnings flag to true then run 'terraform apply' again: %s",
-					warnings.Warnings)
-			}
-			log.Debugf("Change status: %s", status.StatusInfo.Status)
-			if status.StatusInfo != nil && status.StatusInfo.Error != nil && status.StatusInfo.Error.Description != "" {
-				return fmt.Errorf(status.StatusInfo.Error.Description)
-			}
-		case <-ctx.Done():
-			return fmt.Errorf("change status context terminated: %w", ctx.Err())
-		}
-	}
-	return nil
+	return enrollmentDelete(ctx, d, m, "resourceCPSDVEnrollmentDelete")
 }
 
 func resourceCPSDVEnrollmentImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
@@ -853,6 +592,9 @@ func resourceCPSDVEnrollmentImport(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	if err := d.Set("allow_duplicate_common_name", false); err != nil {
+		return nil, fmt.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+	}
+	if err := d.Set("acknowledge_pre_verification_warnings", false); err != nil {
 		return nil, fmt.Errorf("%v: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("contract_id", contractID); err != nil {

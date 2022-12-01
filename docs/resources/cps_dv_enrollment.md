@@ -5,9 +5,12 @@ subcategory: Certificate Provisioning System
 
 # akamai_cps_dv_enrollment
 
-Use the `akamai_cps_dv_enrollment` resource to create an enrollment with all the information about your certificate life cycle, from the time you request it, through removal or automatic renewal. You can treat an enrollment as a core container for all the operations you perform within CPS.
+Use the `akamai_cps_dv_enrollment` resource to create an enrollment for a Domain Validated (DV) certificate. This resource includes all information about your certificate life cycle, from the time you request it, through removal or automatic renewal. You can treat an enrollment as a core container for all the operations you perform within CPS.
 
 You can use this resource with [`akamai_dns_record`](../resources/dns_record.md) or other third-party DNS provider to create DNS records, and [`akamai_cps_dv_validation`](../resources/cps_dv_validation.md) to complete the certificate validation.
+
+<blockquote style="border-left-style: solid; border-left-color: #5bc0de; border-width: 0.25em; padding: 1.33rem; background-color: #e3edf2;"><img src="https://techdocs.akamai.com/terraform-images/img/note.svg" style="float:left; display:inline;" /><div style="overflow:auto;">If you need to enroll a third-party certificate, use the <code><a href="https://registry.terraform.io/providers/akamai/akamai/latest/docs/resources/cps_third_party_enrollment">akamai_cps_third_party_enrollment</a></code> resource.</div></blockquote>
+
 
 ## Example usage
 
@@ -50,19 +53,18 @@ resource "akamai_cps_dv_enrollment" "example" {
   certificate_chain_type = "default"
   csr {
     country_code = "US"
-    city = "cambridge"
+    city = "Cambridge"
     organization = "Akamai"
     organizational_unit = "Dev"
     state = "MA"
   }
-  enable_multi_stacked_certificates = false
   network_configuration {
     disallowed_tls_versions = ["TLSv1", "TLSv1_1"]
     clone_dns_names = false
     geography = "core"
     ocsp_stapling = "on"
-    preferred_ciphers = "ak-akamai-2020q1"
-    must_have_ciphers = "ak-akamai-2020q1"
+    preferred_ciphers = "ak-akamai-default"
+    must_have_ciphers = "ak-akamai-default"
     quic_enabled = false
   }
   signature_algorithm = "SHA-256"
@@ -95,6 +97,7 @@ The following arguments are supported:
 
 * `contract_id` - (Required) A contract's ID, optionally with the `ctr_` prefix.
 * `common_name` - (Required) The fully qualified domain name (FQDN) for which you plan to use your certificate. The domain name you specify here must be owned or have legal rights to use the domain by the company you specify as `organization`. The company that owns the domain name must be a legally incorporated entity and be active and in good standing.
+* `allow_duplicate_common_name` - (Optional) Boolean. Set to `true` if you want to reuse a common name that's part of an existing enrollment. 
 * `sans` - (Optional) Additional common names to create a Subject Alternative Names (SAN) list.
 * `secure_network` - (Required) The type of deployment network you want to use. `standard-tls` deploys your certificate to Akamai's standard secure network, but it isn't PCI compliant. `enhanced-tls` deploys your certificate to Akamai's more secure network with PCI compliance capability.
 * `sni_only` - (Required) Whether you want to enable SNI-only extension for the enrollment. Server Name Indication (SNI) is an extension of the Transport Layer Security (TLS) networking protocol. It allows a server to present multiple certificates on the same IP address. All modern web browsers support the SNI extension. If you have the same SAN on two or more certificates with the SNI-only option set, Akamai may serve traffic using any certificate which matches the requested SNI hostname. You should avoid multiple certificates with overlapping SAN names when using SNI-only. You can't change this setting once an enrollment is created.
@@ -125,7 +128,6 @@ The following arguments are supported:
       * `organization` - (Required The name of your company or organization. Enter the name as it appears in all legal documents and as it appears in the legal entity filing.
       * `organizational_unit` - (Required) Your organizational unit.
       * `state` - (Required) 	Your state or province.
-* `enable_multi_stacked_certificates` - (Optional) Whether to enable an ECDSA certificate in addition to an RSA certificate. CPS automatically performs all certificate operations on both certificates, and uses the best certificate for each client connection to your secure properties. If you are pinning the certificates, you need to pin both the RSA and the ECDSA certificate.
 * `network_configuration` - (Required) The network information and TLS Metadata you want CPS to use to push the completed certificate to the network.
 
     Requires these additional arguments:
@@ -173,6 +175,10 @@ The following arguments are supported:
       * `region` - (Required) The region of your organization, typically a state or province.
       * `postal_code` - (Required) The postal code of your organization.
       * `country_code` - (Required) The code for the country where your organization resides.
+
+### Deprecated arguments
+
+* `enable_multi_stacked_certificates` - (Deprecated) Whether to enable an ECDSA certificate in addition to an RSA certificate. CPS automatically performs all certificate operations on both certificates, and uses the best certificate for each client connection to your secure properties. If you are pinning the certificates, you need to pin both the RSA and the ECDSA certificate.
 
 ## Attributes reference
 

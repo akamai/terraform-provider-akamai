@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/cps"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/cps"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/jinzhu/copier"
@@ -18,7 +18,7 @@ import (
 func TestResourceDVEnrollment(t *testing.T) {
 	t.Run("lifecycle test", func(t *testing.T) {
 		PollForChangeStatusInterval = 1 * time.Millisecond
-		client := &mockcps{}
+		client := &cps.Mock{}
 		enrollment := cps.Enrollment{
 			AdminContact: &cps.Contact{
 				AddressLineOne:   "150 Broadway",
@@ -34,7 +34,6 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 			CertificateChainType: "default",
 			CertificateType:      "san",
-			ChangeManagement:     false,
 			CSR: &cps.CSR{
 				C:    "US",
 				CN:   "test.akamai.com",
@@ -157,7 +156,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			ChangeID:     2,
 		}).Return(&cps.DVArray{DV: []cps.DV{
 			{
-				Challenges: []cps.Challenges{
+				Challenges: []cps.Challenge{
 					{FullPath: "_acme-challenge.test.akamai.com", ResponseBody: "abc123", Type: "http-01", Status: "pending"},
 					{FullPath: "_acme-challenge.test.akamai.com", ResponseBody: "abc123", Type: "dns-01", Status: "pending"},
 				},
@@ -165,7 +164,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 				ValidationStatus: "IN_PROGRESS",
 			},
 			{
-				Challenges: []cps.Challenges{
+				Challenges: []cps.Challenge{
 					{FullPath: "_acme-challenge.san.test.akamai.com", ResponseBody: "abc123", Type: "http-01", Status: "pending"},
 					{FullPath: "_acme-challenge.san.test.akamai.com", ResponseBody: "abc123", Type: "dns-01", Status: "pending"},
 				},
@@ -228,7 +227,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			ChangeID:     2,
 		}).Return(&cps.DVArray{DV: []cps.DV{
 			{
-				Challenges: []cps.Challenges{
+				Challenges: []cps.Challenge{
 					{FullPath: "_acme-challenge.test.akamai.com", ResponseBody: "abc123", Type: "http-01", Status: "pending"},
 					{FullPath: "_acme-challenge.test.akamai.com", ResponseBody: "abc123", Type: "dns-01", Status: "pending"},
 					{FullPath: "_acme-challenge.test.akamai.com", ResponseBody: "abc123", Type: "dns-01", Status: "pending"},
@@ -237,7 +236,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 				ValidationStatus: "IN_PROGRESS",
 			},
 			{
-				Challenges: []cps.Challenges{
+				Challenges: []cps.Challenge{
 					{FullPath: "_acme-challenge.san.test.akamai.com", ResponseBody: "abc123", Type: "http-01", Status: "pending"},
 					{FullPath: "_acme-challenge.san.test.akamai.com", ResponseBody: "abc123", Type: "dns-01", Status: "pending"},
 				},
@@ -245,7 +244,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 				ValidationStatus: "IN_PROGRESS",
 			},
 			{
-				Challenges: []cps.Challenges{
+				Challenges: []cps.Challenge{
 					{FullPath: "_acme-challenge.san2.test.akamai.com", ResponseBody: "abc123", Type: "http-01", Status: "pending"},
 					{FullPath: "_acme-challenge.san2.test.akamai.com", ResponseBody: "abc123", Type: "dns-01", Status: "pending"},
 				},
@@ -298,7 +297,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 
 	t.Run("create enrollment, empty sans", func(t *testing.T) {
 		PollForChangeStatusInterval = 1 * time.Millisecond
-		client := &mockcps{}
+		client := &cps.Mock{}
 		enrollment := cps.Enrollment{
 			AdminContact: &cps.Contact{
 				AddressLineOne:   "150 Broadway",
@@ -314,7 +313,6 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 			CertificateChainType: "default",
 			CertificateType:      "san",
-			ChangeManagement:     false,
 			CSR: &cps.CSR{
 				C:  "US",
 				CN: "test.akamai.com",
@@ -438,7 +436,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			ChangeID:     2,
 		}).Return(&cps.DVArray{DV: []cps.DV{
 			{
-				Challenges: []cps.Challenges{
+				Challenges: []cps.Challenge{
 					{FullPath: "_acme-challenge.test.akamai.com", ResponseBody: "abc123", Type: "http-01", Status: "pending"},
 					{FullPath: "_acme-challenge.test.akamai.com", ResponseBody: "abc123", Type: "dns-01", Status: "pending"},
 				},
@@ -481,7 +479,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 
 	t.Run("lifecycle test with common name not empty, present in sans", func(t *testing.T) {
 		PollForChangeStatusInterval = 1 * time.Millisecond
-		client := &mockcps{}
+		client := &cps.Mock{}
 		commonName := "test.akamai.com"
 		enrollment := cps.Enrollment{
 			AdminContact: &cps.Contact{
@@ -498,7 +496,6 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 			CertificateChainType: "default",
 			CertificateType:      "san",
-			ChangeManagement:     false,
 			CSR: &cps.CSR{
 				C:    "US",
 				CN:   commonName,
@@ -621,7 +618,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			ChangeID:     2,
 		}).Return(&cps.DVArray{DV: []cps.DV{
 			{
-				Challenges: []cps.Challenges{
+				Challenges: []cps.Challenge{
 					{FullPath: "_acme-challenge.test.akamai.com", ResponseBody: "abc123", Type: "http-01", Status: "pending"},
 					{FullPath: "_acme-challenge.test.akamai.com", ResponseBody: "abc123", Type: "dns-01", Status: "pending"},
 				},
@@ -629,7 +626,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 				ValidationStatus: "IN_PROGRESS",
 			},
 			{
-				Challenges: []cps.Challenges{
+				Challenges: []cps.Challenge{
 					{FullPath: "_acme-challenge.san.test.akamai.com", ResponseBody: "abc123", Type: "http-01", Status: "pending"},
 					{FullPath: "_acme-challenge.san.test.akamai.com", ResponseBody: "abc123", Type: "dns-01", Status: "pending"},
 				},
@@ -682,7 +679,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 	})
 
 	t.Run("set challenges arrays to empty if no allowedInput found", func(t *testing.T) {
-		client := &mockcps{}
+		client := &cps.Mock{}
 		enrollment := cps.Enrollment{
 			AdminContact: &cps.Contact{
 				AddressLineOne:   "150 Broadway",
@@ -698,7 +695,6 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 			CertificateChainType: "default",
 			CertificateType:      "san",
-			ChangeManagement:     false,
 			CSR: &cps.CSR{
 				C:    "US",
 				CN:   "test.akamai.com",
@@ -822,7 +818,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 	})
 
 	t.Run("update with acknowledge warnings change, no enrollment update", func(t *testing.T) {
-		client := &mockcps{}
+		client := &cps.Mock{}
 		enrollment := cps.Enrollment{
 			AdminContact: &cps.Contact{
 				AddressLineOne:   "150 Broadway",
@@ -927,7 +923,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			ChangeID:     2,
 		}).Return(&cps.DVArray{DV: []cps.DV{
 			{
-				Challenges: []cps.Challenges{
+				Challenges: []cps.Challenge{
 					{FullPath: "_acme-challenge.test.akamai.com", ResponseBody: "abc123", Type: "http-01", Status: "pending"},
 					{FullPath: "_acme-challenge.test.akamai.com", ResponseBody: "abc123", Type: "dns-01", Status: "pending"},
 				},
@@ -935,7 +931,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 				ValidationStatus: "IN_PROGRESS",
 			},
 			{
-				Challenges: []cps.Challenges{
+				Challenges: []cps.Challenge{
 					{FullPath: "_acme-challenge.san.test.akamai.com", ResponseBody: "abc123", Type: "http-01", Status: "pending"},
 					{FullPath: "_acme-challenge.san.test.akamai.com", ResponseBody: "abc123", Type: "dns-01", Status: "pending"},
 				},
@@ -973,7 +969,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			ChangeID:     2,
 		}).Return(&cps.DVArray{DV: []cps.DV{
 			{
-				Challenges: []cps.Challenges{
+				Challenges: []cps.Challenge{
 					{FullPath: "_acme-challenge.test.akamai.com", ResponseBody: "abc123", Type: "http-01", Status: "pending"},
 					{FullPath: "_acme-challenge.test.akamai.com", ResponseBody: "abc123", Type: "dns-01", Status: "pending"},
 					{FullPath: "_acme-challenge.test.akamai.com", ResponseBody: "abc123", Type: "dns-01", Status: "pending"},
@@ -982,7 +978,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 				ValidationStatus: "IN_PROGRESS",
 			},
 			{
-				Challenges: []cps.Challenges{
+				Challenges: []cps.Challenge{
 					{FullPath: "_acme-challenge.san.test.akamai.com", ResponseBody: "abc123", Type: "http-01", Status: "pending"},
 					{FullPath: "_acme-challenge.san.test.akamai.com", ResponseBody: "abc123", Type: "dns-01", Status: "pending"},
 				},
@@ -990,7 +986,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 				ValidationStatus: "IN_PROGRESS",
 			},
 			{
-				Challenges: []cps.Challenges{
+				Challenges: []cps.Challenge{
 					{FullPath: "_acme-challenge.san2.test.akamai.com", ResponseBody: "abc123", Type: "http-01", Status: "pending"},
 					{FullPath: "_acme-challenge.san2.test.akamai.com", ResponseBody: "abc123", Type: "dns-01", Status: "pending"},
 				},
@@ -1037,7 +1033,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 	})
 
 	t.Run("acknowledge warnings", func(t *testing.T) {
-		client := &mockcps{}
+		client := &cps.Mock{}
 		PollForChangeStatusInterval = 1 * time.Millisecond
 		enrollment := cps.Enrollment{
 			AdminContact: &cps.Contact{
@@ -1174,7 +1170,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			ChangeID:     2,
 		}).Return(&cps.DVArray{DV: []cps.DV{
 			{
-				Challenges: []cps.Challenges{
+				Challenges: []cps.Challenge{
 					{FullPath: "_acme-challenge.test.akamai.com", ResponseBody: "abc123", Type: "http-01", Status: "pending"},
 					{FullPath: "_acme-challenge.test.akamai.com", ResponseBody: "abc123", Type: "dns-01", Status: "pending"},
 				},
@@ -1214,7 +1210,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 
 	t.Run("create enrollment, allow duplicate common name", func(t *testing.T) {
 		PollForChangeStatusInterval = 1 * time.Millisecond
-		client := &mockcps{}
+		client := &cps.Mock{}
 		enrollment := cps.Enrollment{
 			AdminContact: &cps.Contact{
 				AddressLineOne:   "150 Broadway",
@@ -1230,7 +1226,6 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 			CertificateChainType: "default",
 			CertificateType:      "san",
-			ChangeManagement:     false,
 			CSR: &cps.CSR{
 				C:  "US",
 				CN: "test.akamai.com",
@@ -1355,7 +1350,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			ChangeID:     2,
 		}).Return(&cps.DVArray{DV: []cps.DV{
 			{
-				Challenges: []cps.Challenges{
+				Challenges: []cps.Challenge{
 					{FullPath: "_acme-challenge.test.akamai.com", ResponseBody: "http", Type: "http-01", Status: "pending"},
 					{FullPath: "_acme-challenge.test.akamai.com", ResponseBody: "dns", Type: "dns-01", Status: "pending"},
 				},
@@ -1404,7 +1399,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 	})
 
 	t.Run("verification failed with warnings, no acknowledgement", func(t *testing.T) {
-		client := &mockcps{}
+		client := &cps.Mock{}
 		PollForChangeStatusInterval = 1 * time.Millisecond
 		enrollment := cps.Enrollment{
 			AdminContact: &cps.Contact{
@@ -1520,7 +1515,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 	})
 
 	t.Run("create enrollment returns an error", func(t *testing.T) {
-		client := &mockcps{}
+		client := &cps.Mock{}
 		PollForChangeStatusInterval = 1 * time.Millisecond
 		enrollment := cps.Enrollment{
 			AdminContact: &cps.Contact{
@@ -1605,7 +1600,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 
 func TestResourceDVEnrollmentImport(t *testing.T) {
 	t.Run("import", func(t *testing.T) {
-		client := &mockcps{}
+		client := &cps.Mock{}
 		id := "1,ctr_1"
 
 		enrollment := cps.Enrollment{
@@ -1711,7 +1706,7 @@ func TestResourceDVEnrollmentImport(t *testing.T) {
 			ChangeID:     2,
 		}).Return(&cps.DVArray{DV: []cps.DV{
 			{
-				Challenges: []cps.Challenges{
+				Challenges: []cps.Challenge{
 					{FullPath: "_acme-challenge.test.akamai.com", ResponseBody: "abc123", Type: "http-01", Status: "pending"},
 					{FullPath: "_acme-challenge.test.akamai.com", ResponseBody: "abc123", Type: "dns-01", Status: "pending"},
 				},
@@ -1719,7 +1714,7 @@ func TestResourceDVEnrollmentImport(t *testing.T) {
 				ValidationStatus: "IN_PROGRESS",
 			},
 			{
-				Challenges: []cps.Challenges{
+				Challenges: []cps.Challenge{
 					{FullPath: "_acme-challenge.san.test.akamai.com", ResponseBody: "abc123", Type: "http-01", Status: "pending"},
 					{FullPath: "_acme-challenge.san.test.akamai.com", ResponseBody: "abc123", Type: "dns-01", Status: "pending"},
 				},
@@ -1761,7 +1756,7 @@ func TestResourceDVEnrollmentImport(t *testing.T) {
 	})
 
 	t.Run("import error when validation type is not dv", func(t *testing.T) {
-		client := &mockcps{}
+		client := &cps.Mock{}
 		id := "1,ctr_1"
 
 		enrollment := cps.Enrollment{

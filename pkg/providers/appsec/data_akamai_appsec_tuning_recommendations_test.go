@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/appsec"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/appsec"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -14,7 +14,7 @@ import (
 
 func TestAkamaiTuningRecommendationsDataBasic(t *testing.T) {
 	t.Run(" Recommendations basic", func(t *testing.T) {
-		client := &mockappsec{}
+		client := &appsec.Mock{}
 
 		config := appsec.GetConfigurationResponse{}
 		err := json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
@@ -74,7 +74,7 @@ func TestAkamaiTuningRecommendationsDataBasic(t *testing.T) {
 
 func TestAkamaiTuningRecommenadationsDataErrorRetrievingTuningRecommenadations(t *testing.T) {
 	t.Run("Tuning Recommendations Error", func(t *testing.T) {
-		client := &mockappsec{}
+		client := &appsec.Mock{}
 
 		config := appsec.GetConfigurationResponse{}
 		err := json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)

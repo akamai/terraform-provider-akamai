@@ -5,18 +5,18 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/edgeworkers"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/edgeworkers"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
 
 func TestDataEdgeworkersResourceTier(t *testing.T) {
 	tests := map[string]struct {
-		init  func(*mockedgeworkers)
+		init  func(*edgeworkers.Mock)
 		steps []resource.TestStep
 	}{
 		"read resource tier": {
-			init: func(m *mockedgeworkers) {
+			init: func(m *edgeworkers.Mock) {
 				m.On("ListResourceTiers", mock.Anything, edgeworkers.ListResourceTiersRequest{
 					ContractID: "1-599K",
 				}).Return(&edgeworkers.ListResourceTiersResponse{
@@ -40,7 +40,7 @@ func TestDataEdgeworkersResourceTier(t *testing.T) {
 			},
 		},
 		"ctr contract prefix": {
-			init: func(m *mockedgeworkers) {
+			init: func(m *edgeworkers.Mock) {
 				m.On("ListResourceTiers", mock.Anything, edgeworkers.ListResourceTiersRequest{
 					ContractID: "1-599K",
 				}).Return(&edgeworkers.ListResourceTiersResponse{
@@ -67,7 +67,7 @@ func TestDataEdgeworkersResourceTier(t *testing.T) {
 			},
 		},
 		"ctr contract prefix update": {
-			init: func(m *mockedgeworkers) {
+			init: func(m *edgeworkers.Mock) {
 				m.On("ListResourceTiers", mock.Anything, edgeworkers.ListResourceTiersRequest{
 					ContractID: "1-599K",
 				}).Return(&edgeworkers.ListResourceTiersResponse{
@@ -101,7 +101,7 @@ func TestDataEdgeworkersResourceTier(t *testing.T) {
 			},
 		},
 		"contract id not exist": {
-			init: func(m *mockedgeworkers) {
+			init: func(m *edgeworkers.Mock) {
 				m.On("ListResourceTiers", mock.Anything, edgeworkers.ListResourceTiersRequest{
 					ContractID: "1-599K",
 				}).Return(nil, fmt.Errorf("oops"))
@@ -114,7 +114,7 @@ func TestDataEdgeworkersResourceTier(t *testing.T) {
 			},
 		},
 		"resource tier name not exist": {
-			init: func(m *mockedgeworkers) {
+			init: func(m *edgeworkers.Mock) {
 				m.On("ListResourceTiers", mock.Anything, edgeworkers.ListResourceTiersRequest{
 					ContractID: "1-599K",
 				}).Return(&edgeworkers.ListResourceTiersResponse{
@@ -138,7 +138,7 @@ func TestDataEdgeworkersResourceTier(t *testing.T) {
 			},
 		},
 		"missing constract id": {
-			init: func(m *mockedgeworkers) {},
+			init: func(m *edgeworkers.Mock) {},
 			steps: []resource.TestStep{
 				{
 					Config:      loadFixtureString("./testdata/TestDataEdgeWorkersResourceTier/missing_contract_id.tf"),
@@ -147,7 +147,7 @@ func TestDataEdgeworkersResourceTier(t *testing.T) {
 			},
 		},
 		"missing resource tier name": {
-			init: func(m *mockedgeworkers) {},
+			init: func(m *edgeworkers.Mock) {},
 			steps: []resource.TestStep{
 				{
 					Config:      loadFixtureString("./testdata/TestDataEdgeWorkersResourceTier/missing_resource_tier_name.tf"),
@@ -159,7 +159,7 @@ func TestDataEdgeworkersResourceTier(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &mockedgeworkers{}
+			client := &edgeworkers.Mock{}
 			test.init(client)
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{

@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -41,13 +41,13 @@ func TestResolveVersion(t *testing.T) {
 		versionDataExists bool
 		propertyID        string
 		network           papi.ActivationNetwork
-		init              func(*mockpapi)
+		init              func(*papi.Mock)
 		withError         error
 	}{
 		"ok": {
 			versionData:       0,
 			versionDataExists: true,
-			init: func(m *mockpapi) {
+			init: func(m *papi.Mock) {
 				m.On("GetLatestVersion", mock.Anything, mock.Anything).Return(
 					&papi.GetPropertyVersionsResponse{
 						Version: papi.PropertyVersionGetItem{
@@ -58,7 +58,7 @@ func TestResolveVersion(t *testing.T) {
 		},
 		"version not present but fetched": {
 			versionData: 1,
-			init: func(m *mockpapi) {
+			init: func(m *papi.Mock) {
 				m.On("GetLatestVersion", mock.Anything, mock.Anything).Return(
 					&papi.GetPropertyVersionsResponse{
 						Version: papi.PropertyVersionGetItem{
@@ -69,7 +69,7 @@ func TestResolveVersion(t *testing.T) {
 		},
 		"version not present & not fetched": {
 			versionData: 0,
-			init: func(m *mockpapi) {
+			init: func(m *papi.Mock) {
 				m.On("GetLatestVersion", mock.Anything, mock.Anything).Return(
 					&papi.GetPropertyVersionsResponse{
 						Version: papi.PropertyVersionGetItem{
@@ -83,7 +83,7 @@ func TestResolveVersion(t *testing.T) {
 	for name, test := range tests {
 		d := schema.ResourceData{}
 		ctx := ctxt{}
-		client := &mockpapi{}
+		client := &papi.Mock{}
 		test.init(client)
 		t.Run(name, func(t *testing.T) {
 			if test.versionDataExists {
@@ -104,14 +104,14 @@ func TestResolveVersion(t *testing.T) {
 func TestLookupActivation(t *testing.T) {
 
 	tests := map[string]struct {
-		init                     func(*mockpapi)
+		init                     func(*papi.Mock)
 		query                    lookupActivationRequest
 		mostRecentActivationDate string
 		expectedActivation       *papi.Activation
 		expectedError            error
 	}{
 		"ok": {
-			init: func(m *mockpapi) {
+			init: func(m *papi.Mock) {
 				m.On("GetActivations", mock.Anything, mock.Anything).Return(
 					&papi.GetActivationsResponse{
 						Response: papi.Response{
@@ -192,7 +192,7 @@ func TestLookupActivation(t *testing.T) {
 			},
 		},
 		"ok, but no activations": {
-			init: func(m *mockpapi) {
+			init: func(m *papi.Mock) {
 				m.On("GetActivations", mock.Anything, mock.Anything).Return(
 					&papi.GetActivationsResponse{
 						Response: papi.Response{
@@ -222,7 +222,7 @@ func TestLookupActivation(t *testing.T) {
 			expectedActivation:       nil,
 		},
 		"date parse error": {
-			init: func(m *mockpapi) {
+			init: func(m *papi.Mock) {
 				m.On("GetActivations", mock.Anything, mock.Anything).Return(
 					&papi.GetActivationsResponse{
 						Response: papi.Response{
@@ -270,7 +270,7 @@ func TestLookupActivation(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &mockpapi{}
+			client := &papi.Mock{}
 			test.init(client)
 			query := lookupActivationRequest{
 				propertyID:     "prp_1234",

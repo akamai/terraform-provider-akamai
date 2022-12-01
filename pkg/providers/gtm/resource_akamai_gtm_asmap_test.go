@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"testing"
 
-	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/configgtm"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/gtm"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -42,7 +42,7 @@ func TestResGtmAsmap(t *testing.T) {
 	}
 
 	t.Run("create asmap", func(t *testing.T) {
-		client := &mockgtm{}
+		client := &gtm.Mock{}
 
 		getCall := client.On("GetAsMap",
 			mock.Anything, // ctx is irrelevant for this test
@@ -122,7 +122,7 @@ func TestResGtmAsmap(t *testing.T) {
 	})
 
 	t.Run("create asmap failed", func(t *testing.T) {
-		client := &mockgtm{}
+		client := &gtm.Mock{}
 
 		client.On("CreateAsMap",
 			mock.Anything, // ctx is irrelevant for this test
@@ -160,7 +160,7 @@ func TestResGtmAsmap(t *testing.T) {
 	})
 
 	t.Run("create asmap denied", func(t *testing.T) {
-		client := &mockgtm{}
+		client := &gtm.Mock{}
 
 		dr := gtm.AsMapResponse{}
 		dr.Resource = &asmap
@@ -199,7 +199,7 @@ func TestResGtmAsmap(t *testing.T) {
 	})
 
 	t.Run("import asmap", func(t *testing.T) {
-		client := &mockgtm{}
+		client := &gtm.Mock{}
 
 		resp := gtm.AsMapResponse{}
 		resp.Resource = &asmap

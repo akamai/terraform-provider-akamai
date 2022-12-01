@@ -34,30 +34,22 @@ clean() {
 find_branch() {
   CURRENT_BRANCH=$GIT_BRANCH
   if [[ "$CURRENT_BRANCH" == "develop" ]]; then
-    EDGEGRID_BRANCH="v2"
+    EDGEGRID_BRANCH="develop"
   else
     # find parent branch from which this branch was created, iterate over the list of branches from the history of commits
-    branches=($(git log --pretty=format:'%D' | sed 's@HEAD -> @@' | grep . | sed 's@origin/@@g' | tr ', ' '\n' | grep -v 'tag:' | sed -E 's@v([0-9]+\.?){2,}(-rc\.[0-9]+)?@@g' | grep -v release/ | grep -v HEAD | sed '/^$/d'))
+    branches=($(git log --pretty=format:'%D' | sed 's@HEAD -> @@' | grep . | sed 's@origin/@@g' | sed 's@release/.*@@g' | sed -E $'s@master, (.+)@\\1, master@g' | tr ', ' '\n' | grep -v 'tag:' | sed -E 's@v([0-9]+\.?){2,}(-rc\.[0-9]+)?@@g' | grep -v release/ | grep -v HEAD | sed '/^$/d'))
     for branch in ${branches[*]}
     do
       echo "Checking branch '${branch}'"
       EDGEGRID_BRANCH=$branch
 
       if [[ "$index" -eq "5" ]]; then
-        echo "Exceeding limit of checks, fallback to default branch 'v2'"
-        EDGEGRID_BRANCH="v2"
+        echo "Exceeding limit of checks, fallback to default branch 'develop'"
+        EDGEGRID_BRANCH="develop"
         break
       fi
       index=$((index + 1))
 
-      if [[ "$branch" == "master" ]]; then
-        echo "Ignoring '${branch}'"
-        continue
-      fi
-
-      if [[ "$EDGEGRID_BRANCH" == "develop" ]]; then
-        EDGEGRID_BRANCH="v2"
-      fi
       git -C ./akamaiopen-edgegrid-golang branch -r | grep $EDGEGRID_BRANCH > /dev/null
       if [[ $? -eq 0 ]]; then
         echo "There is matching EdgeGrid branch '${EDGEGRID_BRANCH}'"
@@ -91,7 +83,7 @@ checkout_edgegrid() {
 }
 
 adjust_edgegrid() {
-  go mod edit -replace github.com/akamai/AkamaiOPEN-edgegrid-golang/v2="./akamaiopen-edgegrid-golang"
+  go mod edit -replace github.com/akamai/AkamaiOPEN-edgegrid-golang/v3="./akamaiopen-edgegrid-golang"
   go mod tidy -compat=1.17
 }
 
@@ -129,8 +121,8 @@ nexus_push() {
 }
 
 mod_edit() {
-  edgegrid_version=$(go list -m -json -versions github.com/akamai/AkamaiOPEN-edgegrid-golang/v2 | python3 -c "import sys, json; print(json.load(sys.stdin)['Version'])")
-  go mod edit -replace github.com/akamai/AkamaiOPEN-edgegrid-golang/v2="stash.akamai.com/fee/akamaiopen-edgegrid-golang.git/v2@${edgegrid_version}"
+  edgegrid_version=$(go list -m -json -versions github.com/akamai/AkamaiOPEN-edgegrid-golang/v3 | python3 -c "import sys, json; print(json.load(sys.stdin)['Version'])")
+  go mod edit -replace github.com/akamai/AkamaiOPEN-edgegrid-golang/v3="stash.akamai.com/fee/akamaiopen-edgegrid-golang.git/v3@${edgegrid_version}"
 }
 
 outputs=()

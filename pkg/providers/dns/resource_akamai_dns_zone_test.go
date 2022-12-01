@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	dns "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/configdns"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/dns"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -21,9 +21,9 @@ func TestResDnsZone(t *testing.T) {
 	}
 	recordsetsResp := &dns.RecordSetResponse{Recordsets: make([]dns.Recordset, 2, 2)}
 
-	// This test peforms a full life-cycle (CRUD) test
+	// This test performs a full life-cycle (CRUD) test
 	t.Run("lifecycle test", func(t *testing.T) {
-		client := &mockdns{}
+		client := &dns.Mock{}
 
 		getCall := client.On("GetZone",
 			mock.Anything, // ctx is irrelevant for this test

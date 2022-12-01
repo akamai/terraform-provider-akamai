@@ -7,10 +7,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/tools"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/iam"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/iam"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -219,11 +219,11 @@ func TestResourceUser(t *testing.T) {
 	userCreateWithIgnoredFieldsResponse.AuthGrants = authGrantsCreateWithIgnoredFieldsResponse
 
 	tests := map[string]struct {
-		init  func(*mockiam)
+		init  func(*iam.Mock)
 		steps []resource.TestStep
 	}{
 		"basic": {
-			init: func(m *mockiam) {
+			init: func(m *iam.Mock) {
 				// create
 				expectResourceIAMUserCreatePhase(m, userCreateRequest, userCreate, false, nil, nil)
 				expectResourceIAMUserReadPhase(m, userCreate, nil).Times(2)
@@ -239,7 +239,7 @@ func TestResourceUser(t *testing.T) {
 			},
 		},
 		"basic lock": {
-			init: func(m *mockiam) {
+			init: func(m *iam.Mock) {
 				// create
 				expectResourceIAMUserCreatePhase(m, userCreateLockedRequest, userCreateLocked, true, nil, nil)
 				expectResourceIAMUserReadPhase(m, userCreateLocked, nil).Times(2)
@@ -255,7 +255,7 @@ func TestResourceUser(t *testing.T) {
 			},
 		},
 		"basic error create": {
-			init: func(m *mockiam) {
+			init: func(m *iam.Mock) {
 				// create
 				expectResourceIAMUserCreatePhase(m, userCreateRequest, userCreate, false, fmt.Errorf("error create"), nil)
 			},
@@ -267,7 +267,7 @@ func TestResourceUser(t *testing.T) {
 			},
 		},
 		"basic no diff no update": {
-			init: func(m *mockiam) {
+			init: func(m *iam.Mock) {
 				// create
 				expectResourceIAMUserCreatePhase(m, userCreateRequest, userCreate, false, nil, nil)
 				expectResourceIAMUserReadPhase(m, userCreate, nil).Times(2)
@@ -290,7 +290,7 @@ func TestResourceUser(t *testing.T) {
 			},
 		},
 		"update user info": {
-			init: func(m *mockiam) {
+			init: func(m *iam.Mock) {
 				// create
 				expectResourceIAMUserCreatePhase(m, userCreateRequest, userCreate, false, nil, nil)
 				expectResourceIAMUserReadPhase(m, userCreate, nil).Times(2)
@@ -316,7 +316,7 @@ func TestResourceUser(t *testing.T) {
 			},
 		},
 		"update user info - lock - unlock": {
-			init: func(m *mockiam) {
+			init: func(m *iam.Mock) {
 				// create
 				expectResourceIAMUserCreatePhase(m, userCreateRequest, userCreate, false, nil, nil)
 				expectResourceIAMUserReadPhase(m, userCreate, nil).Once()
@@ -350,7 +350,7 @@ func TestResourceUser(t *testing.T) {
 			},
 		},
 		"update user info - error": {
-			init: func(m *mockiam) {
+			init: func(m *iam.Mock) {
 				// create
 				expectResourceIAMUserCreatePhase(m, userCreateRequest, userCreate, false, nil, nil)
 				expectResourceIAMUserReadPhase(m, userCreate, nil).Times(2)
@@ -375,7 +375,7 @@ func TestResourceUser(t *testing.T) {
 			},
 		},
 		"update user auth grants": {
-			init: func(m *mockiam) {
+			init: func(m *iam.Mock) {
 				// create
 				expectResourceIAMUserCreatePhase(m, userCreateRequest, userCreate, false, nil, nil)
 				expectResourceIAMUserReadPhase(m, userCreate, nil).Times(2)
@@ -401,7 +401,7 @@ func TestResourceUser(t *testing.T) {
 			},
 		},
 		"update user auth grants with redundant fields": {
-			init: func(m *mockiam) {
+			init: func(m *iam.Mock) {
 				// create
 				expectResourceIAMUserCreatePhase(m, userCreateWithIgnoredFieldsRequest, userCreateWithIgnoredFields, false, nil, nil)
 				expectResourceIAMUserReadPhase(m, userCreateWithIgnoredFieldsResponse, nil).Once()
@@ -426,7 +426,7 @@ func TestResourceUser(t *testing.T) {
 			},
 		},
 		"update user auth grants - an error": {
-			init: func(m *mockiam) {
+			init: func(m *iam.Mock) {
 				// create
 				expectResourceIAMUserCreatePhase(m, userCreateRequest, userCreate, false, nil, nil)
 				expectResourceIAMUserReadPhase(m, userCreate, nil).Times(2)
@@ -451,7 +451,7 @@ func TestResourceUser(t *testing.T) {
 			},
 		},
 		"basic import": {
-			init: func(m *mockiam) {
+			init: func(m *iam.Mock) {
 				// create
 				expectResourceIAMUserCreatePhase(m, userCreateRequest, userCreate, false, nil, nil)
 				expectResourceIAMUserReadPhase(m, userCreate, nil).Times(2)
@@ -476,7 +476,7 @@ func TestResourceUser(t *testing.T) {
 			},
 		},
 		"auth_grants_json should not panic when supplied interpolated string with unknown value": {
-			init: func(m *mockiam) {
+			init: func(m *iam.Mock) {
 			},
 			steps: []resource.TestStep{
 				{
@@ -487,7 +487,7 @@ func TestResourceUser(t *testing.T) {
 			},
 		},
 		"error updating email": {
-			init: func(m *mockiam) {
+			init: func(m *iam.Mock) {
 				// create
 				expectResourceIAMUserCreatePhase(m, userCreateRequest, userCreate, false, nil, nil)
 				expectResourceIAMUserReadPhase(m, userCreate, nil).Times(2)
@@ -510,7 +510,7 @@ func TestResourceUser(t *testing.T) {
 			},
 		},
 		"error creating user: invalid auth grants": {
-			init: func(m *mockiam) {},
+			init: func(m *iam.Mock) {},
 			steps: []resource.TestStep{
 				{
 					Config:      loadFixtureString("./testdata/TestResourceUserLifecycle/invalid_auth_grants.tf"),
@@ -521,7 +521,7 @@ func TestResourceUser(t *testing.T) {
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &mockiam{}
+			client := &iam.Mock{}
 			test.init(client)
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
@@ -536,7 +536,7 @@ func TestResourceUser(t *testing.T) {
 }
 
 // create
-func expectResourceIAMUserCreatePhase(m *mockiam, request iam.CreateUserRequest, response iam.User, lock bool, creationError, lockError error) {
+func expectResourceIAMUserCreatePhase(m *iam.Mock, request iam.CreateUserRequest, response iam.User, lock bool, creationError, lockError error) {
 	onCreation := m.On("CreateUser", mock.Anything, iam.CreateUserRequest{
 		UserBasicInfo: request.UserBasicInfo,
 		AuthGrants:    request.AuthGrants,
@@ -557,7 +557,7 @@ func expectResourceIAMUserCreatePhase(m *mockiam, request iam.CreateUserRequest,
 	}
 }
 
-func expectToggleLock(m *mockiam, identityID string, lock bool, err error) *mock.Call {
+func expectToggleLock(m *iam.Mock, identityID string, lock bool, err error) *mock.Call {
 	if lock {
 		return m.On("LockUser", mock.Anything, iam.LockUserRequest{IdentityID: identityID}).Return(err)
 	}
@@ -565,7 +565,7 @@ func expectToggleLock(m *mockiam, identityID string, lock bool, err error) *mock
 }
 
 // read
-func expectResourceIAMUserReadPhase(m *mockiam, user iam.User, anError error) *mock.Call {
+func expectResourceIAMUserReadPhase(m *iam.Mock, user iam.User, anError error) *mock.Call {
 	on := m.On("GetUser", mock.Anything, iam.GetUserRequest{
 		IdentityID: user.IdentityID,
 		AuthGrants: true,
@@ -577,7 +577,7 @@ func expectResourceIAMUserReadPhase(m *mockiam, user iam.User, anError error) *m
 }
 
 // update user info
-func expectResourceIAMUserInfoUpdatePhase(m *mockiam, id string, basicUserInfo iam.UserBasicInfo, anError error) *mock.Call {
+func expectResourceIAMUserInfoUpdatePhase(m *iam.Mock, id string, basicUserInfo iam.UserBasicInfo, anError error) *mock.Call {
 	on := m.On("UpdateUserInfo", mock.Anything, iam.UpdateUserInfoRequest{
 		IdentityID: id,
 		User:       basicUserInfo,
@@ -589,7 +589,7 @@ func expectResourceIAMUserInfoUpdatePhase(m *mockiam, id string, basicUserInfo i
 }
 
 // update auth grants
-func expectResourceIAMUserAuthGrantsUpdatePhase(m *mockiam, id string, authGrantsReqest []iam.AuthGrantRequest, authGrants []iam.AuthGrant, anError error) *mock.Call {
+func expectResourceIAMUserAuthGrantsUpdatePhase(m *iam.Mock, id string, authGrantsReqest []iam.AuthGrantRequest, authGrants []iam.AuthGrant, anError error) *mock.Call {
 	on := m.On("UpdateUserAuthGrants", mock.Anything, iam.UpdateUserAuthGrantsRequest{
 		IdentityID: id,
 		AuthGrants: authGrantsReqest,
@@ -601,7 +601,7 @@ func expectResourceIAMUserAuthGrantsUpdatePhase(m *mockiam, id string, authGrant
 }
 
 // delete
-func expectResourceIAMUserDeletePhase(m *mockiam, user iam.User, anError error) *mock.Call {
+func expectResourceIAMUserDeletePhase(m *iam.Mock, user iam.User, anError error) *mock.Call {
 	on := m.On("RemoveUser", mock.Anything, iam.RemoveUserRequest{IdentityID: user.IdentityID})
 	if anError != nil {
 		return on.Return(anError).Once()

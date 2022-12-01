@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"testing"
 
-	gtm "github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/configgtm"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/gtm"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -37,7 +37,7 @@ var dc = gtm.Datacenter{
 func TestResGtmDatacenter(t *testing.T) {
 
 	t.Run("create datacenter", func(t *testing.T) {
-		client := &mockgtm{}
+		client := &gtm.Mock{}
 
 		getCall := client.On("GetDatacenter",
 			mock.Anything, // ctx is irrelevant for this test
@@ -110,7 +110,7 @@ func TestResGtmDatacenter(t *testing.T) {
 	})
 
 	t.Run("create datacenter failed", func(t *testing.T) {
-		client := &mockgtm{}
+		client := &gtm.Mock{}
 
 		client.On("CreateDatacenter",
 			mock.Anything, // ctx is irrelevant for this test
@@ -141,7 +141,7 @@ func TestResGtmDatacenter(t *testing.T) {
 	})
 
 	t.Run("create datacenter denied", func(t *testing.T) {
-		client := &mockgtm{}
+		client := &gtm.Mock{}
 
 		dr := gtm.DatacenterResponse{}
 		dr.Resource = &dc

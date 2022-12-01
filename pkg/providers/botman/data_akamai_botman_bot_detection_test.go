@@ -3,15 +3,15 @@ package botman
 import (
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/botman"
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/test"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/botman"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/test"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
 
 func TestDataBotDetection(t *testing.T) {
 	t.Run("DataBotDetection", func(t *testing.T) {
-		mockedBotmanClient := &mockbotman{}
+		mockedBotmanClient := &botman.Mock{}
 
 		response := botman.GetBotDetectionListResponse{
 			Detections: []map[string]interface{}{
@@ -53,7 +53,7 @@ func TestDataBotDetection(t *testing.T) {
 		mockedBotmanClient.AssertExpectations(t)
 	})
 	t.Run("DataBotDetection filter by BotName", func(t *testing.T) {
-		mockedBotmanClient := &mockbotman{}
+		mockedBotmanClient := &botman.Mock{}
 
 		response := botman.GetBotDetectionListResponse{
 			Detections: []map[string]interface{}{

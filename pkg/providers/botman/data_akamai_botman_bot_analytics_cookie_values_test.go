@@ -3,14 +3,15 @@ package botman
 import (
 	"testing"
 
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/test"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/botman"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/test"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
 
 func TestDataBotAnalyticsCookieValue(t *testing.T) {
 	t.Run("DataBotAnalyticsCookieValues", func(t *testing.T) {
-		mockedBotmanClient := &mockbotman{}
+		mockedBotmanClient := &botman.Mock{}
 
 		response := map[string]interface{}{
 			"values": []interface{}{

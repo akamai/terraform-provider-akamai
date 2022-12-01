@@ -8,7 +8,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/cloudlets"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/cloudlets"
 )
 
 func TestDataCloudletsPolicy(t *testing.T) {
@@ -241,7 +241,7 @@ func TestDataCloudletsPolicy(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			client := mockcloudlets{}
+			client := cloudlets.Mock{}
 			useClient(&client, func() {
 				client.On("ListPolicyVersions", mock.Anything, mock.Anything).Return(test.listPolicyVersionsReturn, nil)
 				client.On("GetPolicy", mock.Anything, mock.Anything).Return(&test.getPolicyReturn, nil)

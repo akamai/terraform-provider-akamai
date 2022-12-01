@@ -3,7 +3,7 @@ package property
 import (
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/papi"
 	"github.com/stretchr/testify/mock"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -11,7 +11,7 @@ import (
 
 func TestDataContracts(t *testing.T) {
 	t.Run("list contracts", func(t *testing.T) {
-		client := &mockpapi{}
+		client := &papi.Mock{}
 		ctrs := papi.ContractsItems{Items: []*papi.Contract{
 			{
 				ContractID:       "ctr_test1",

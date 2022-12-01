@@ -9,14 +9,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v2/pkg/edgeworkers"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/edgeworkers"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
 var (
-	expectReadEdgeWorkersEdgeWorker = func(t *testing.T, client *mockedgeworkers, data testDataForEdgeWorker, timesToRun int) {
+	expectReadEdgeWorkersEdgeWorker = func(t *testing.T, client *edgeworkers.Mock, data testDataForEdgeWorker, timesToRun int) {
 		edgeWorkerGetReq := edgeworkers.GetEdgeWorkerIDRequest{
 			EdgeWorkerID: data.EdgeWorkerID,
 		}
@@ -66,14 +66,14 @@ var (
 		client.On("ValidateBundle", mock.Anything, mock.Anything).Return(&edgeWorkerValidateBundleRes, nil).Times(timesToRun)
 	}
 
-	expectGetEdgeWorkerError = func(client *mockedgeworkers, errorMessage string) {
+	expectGetEdgeWorkerError = func(client *edgeworkers.Mock, errorMessage string) {
 		edgeWorkerGetReq := edgeworkers.GetEdgeWorkerIDRequest{
 			EdgeWorkerID: 1,
 		}
 		client.On("GetEdgeWorkerID", mock.Anything, edgeWorkerGetReq).Return(nil, fmt.Errorf(errorMessage)).Once()
 	}
 
-	expectListEdgeWorkerVersionsError = func(client *mockedgeworkers, errorMessage string) {
+	expectListEdgeWorkerVersionsError = func(client *edgeworkers.Mock, errorMessage string) {
 		edgeWorkerGetReq := edgeworkers.GetEdgeWorkerIDRequest{
 			EdgeWorkerID: 1,
 		}
@@ -81,7 +81,7 @@ var (
 		client.On("ListEdgeWorkerVersions", mock.Anything, edgeworkers.ListEdgeWorkerVersionsRequest{EdgeWorkerID: 1}).Return(nil, fmt.Errorf(errorMessage)).Once()
 	}
 
-	expectReadEdgeWorkerNoVersions = func(client *mockedgeworkers, data testDataForEdgeWorker, timesToRun int) {
+	expectReadEdgeWorkerNoVersions = func(client *edgeworkers.Mock, data testDataForEdgeWorker, timesToRun int) {
 		edgeWorkerGetReq := edgeworkers.GetEdgeWorkerIDRequest{
 			EdgeWorkerID: data.EdgeWorkerID,
 		}
@@ -243,13 +243,13 @@ type testDataForEdgeWorker struct {
 
 func TestDataEdgeWorkersEdgeWorker(t *testing.T) {
 	tests := map[string]struct {
-		init       func(*testing.T, *mockedgeworkers, testDataForEdgeWorker)
+		init       func(*testing.T, *edgeworkers.Mock, testDataForEdgeWorker)
 		mockData   testDataForEdgeWorker
 		configPath string
 		error      *regexp.Regexp
 	}{
 		"happy path with one version": {
-			init: func(t *testing.T, m *mockedgeworkers, testData testDataForEdgeWorker) {
+			init: func(t *testing.T, m *edgeworkers.Mock, testData testDataForEdgeWorker) {
 				expectReadEdgeWorkersEdgeWorker(t, m, testData, 5)
 			},
 			mockData:   oneVersionData,
@@ -257,7 +257,7 @@ func TestDataEdgeWorkersEdgeWorker(t *testing.T) {
 			error:      nil,
 		},
 		"happy path with 2 versions": {
-			init: func(t *testing.T, m *mockedgeworkers, testData testDataForEdgeWorker) {
+			init: func(t *testing.T, m *edgeworkers.Mock, testData testDataForEdgeWorker) {
 				expectReadEdgeWorkersEdgeWorker(t, m, testData, 5)
 			},
 			mockData:   twoVersionsData,
@@ -265,7 +265,7 @@ func TestDataEdgeWorkersEdgeWorker(t *testing.T) {
 			error:      nil,
 		},
 		"happy path with one warning": {
-			init: func(t *testing.T, m *mockedgeworkers, testData testDataForEdgeWorker) {
+			init: func(t *testing.T, m *edgeworkers.Mock, testData testDataForEdgeWorker) {
 				expectReadEdgeWorkersEdgeWorker(t, m, testData, 5)
 			},
 			mockData:   oneWarningData,
@@ -273,7 +273,7 @@ func TestDataEdgeWorkersEdgeWorker(t *testing.T) {
 			error:      nil,
 		},
 		"happy path with three warnings": {
-			init: func(t *testing.T, m *mockedgeworkers, testData testDataForEdgeWorker) {
+			init: func(t *testing.T, m *edgeworkers.Mock, testData testDataForEdgeWorker) {
 				expectReadEdgeWorkersEdgeWorker(t, m, testData, 5)
 			},
 			mockData:   threeWarningsData,
@@ -281,7 +281,7 @@ func TestDataEdgeWorkersEdgeWorker(t *testing.T) {
 			error:      nil,
 		},
 		"happy path without local bundle path specified": {
-			init: func(t *testing.T, m *mockedgeworkers, testData testDataForEdgeWorker) {
+			init: func(t *testing.T, m *edgeworkers.Mock, testData testDataForEdgeWorker) {
 				expectReadEdgeWorkersEdgeWorker(t, m, testData, 5)
 			},
 			mockData:   defaultBundlePathData,
@@ -289,7 +289,7 @@ func TestDataEdgeWorkersEdgeWorker(t *testing.T) {
 			error:      nil,
 		},
 		"no versions": {
-			init: func(t *testing.T, m *mockedgeworkers, testData testDataForEdgeWorker) {
+			init: func(t *testing.T, m *edgeworkers.Mock, testData testDataForEdgeWorker) {
 				expectReadEdgeWorkerNoVersions(m, noVersionsData, 5)
 			},
 			mockData:   noVersionsData,
@@ -297,7 +297,7 @@ func TestDataEdgeWorkersEdgeWorker(t *testing.T) {
 			error:      nil,
 		},
 		"could not get an edgeworker_id": {
-			init: func(t *testing.T, m *mockedgeworkers, testData testDataForEdgeWorker) {
+			init: func(t *testing.T, m *edgeworkers.Mock, testData testDataForEdgeWorker) {
 				expectGetEdgeWorkerError(m, "could not get an edgeworker")
 			},
 			mockData:   oneVersionData,
@@ -305,7 +305,7 @@ func TestDataEdgeWorkersEdgeWorker(t *testing.T) {
 			error:      regexp.MustCompile("could not get an edgeworker"),
 		},
 		"could not list versions": {
-			init: func(t *testing.T, m *mockedgeworkers, testData testDataForEdgeWorker) {
+			init: func(t *testing.T, m *edgeworkers.Mock, testData testDataForEdgeWorker) {
 				expectListEdgeWorkerVersionsError(m, "could not list edgeworker versions")
 			},
 			mockData:   oneVersionData,
@@ -313,7 +313,7 @@ func TestDataEdgeWorkersEdgeWorker(t *testing.T) {
 			error:      regexp.MustCompile("could not list edgeworker versions"),
 		},
 		"edgeworker_id not provided": {
-			init:       func(t *testing.T, m *mockedgeworkers, worker testDataForEdgeWorker) {},
+			init:       func(t *testing.T, m *edgeworkers.Mock, worker testDataForEdgeWorker) {},
 			mockData:   testDataForEdgeWorker{},
 			configPath: "testdata/TestDataEdgeWorkersEdgeWorker/edgeworker_no_edgeworker_id.tf",
 			error:      regexp.MustCompile("Missing required argument"),
@@ -322,7 +322,7 @@ func TestDataEdgeWorkersEdgeWorker(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &mockedgeworkers{}
+			client := &edgeworkers.Mock{}
 			test.init(t, client, test.mockData)
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{

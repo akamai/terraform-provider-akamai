@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/dns"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -13,7 +14,7 @@ import (
 func TestDataSourceDNSRecordSet_basic(t *testing.T) {
 
 	t.Run("basic", func(t *testing.T) {
-		client := &mockdns{}
+		client := &dns.Mock{}
 
 		dataSourceName := "data.akamai_dns_record_set.test"
 		outputName := "test_addrs"
@@ -51,7 +52,7 @@ func TestDataSourceDNSRecordSet_basic(t *testing.T) {
 	})
 
 	t.Run("error", func(t *testing.T) {
-		client := &mockdns{}
+		client := &dns.Mock{}
 
 		client.On("GetRdata",
 			mock.Anything, // ctx is irrelevant for this test

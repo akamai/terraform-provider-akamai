@@ -9,7 +9,8 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/akamai/terraform-provider-akamai/v2/pkg/akamai"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/botman"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -41,7 +42,7 @@ func TestProvider(t *testing.T) {
 var clientLock sync.Mutex
 
 // useClient swaps out the client on the global instance for the duration of the given func
-func useClient(client *mockbotman, f func()) {
+func useClient(client *botman.Mock, f func()) {
 	clientLock.Lock()
 	orig := inst.client
 	inst.client = client
