@@ -26,7 +26,7 @@ import (
 
 func dataSourcePropertyRulesTemplate() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: dataAkamaiPropertyRulesRead,
+		ReadContext: dataPropertyRulesTemplateRead,
 		Schema: map[string]*schema.Schema{
 			"template_file": {
 				Type:         schema.TypeString,
@@ -112,10 +112,9 @@ const (
 	rightDelim = "#+@"
 )
 
-//nolint:gocyclo
-func dataAkamaiPropertyRulesRead(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataPropertyRulesTemplateRead(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
-	logger := meta.Log("PAPI", "dataAkamaiPropertyRulesRead")
+	logger := meta.Log("PAPI", "dataPropertyRulesTemplateRead")
 
 	file, err := tools.GetStringValue("template_file", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {

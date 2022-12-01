@@ -11,9 +11,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func dataSourceAkamaiPropertyIncludeParents() *schema.Resource {
+func dataSourcePropertyIncludeParents() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: dataSourceAkamaiPropertyIncludeParentsRead,
+		ReadContext: dataPropertyIncludeParentsRead,
 		Schema: map[string]*schema.Schema{
 			"contract_id": {
 				Type:        schema.TypeString,
@@ -33,7 +33,7 @@ func dataSourceAkamaiPropertyIncludeParents() *schema.Resource {
 			"parents": {
 				Type:        schema.TypeList,
 				Computed:    true,
-				Description: "The list of include’s parents",
+				Description: "The list of include's parents",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"id": {
@@ -73,10 +73,10 @@ func dataSourceAkamaiPropertyIncludeParents() *schema.Resource {
 	}
 }
 
-func dataSourceAkamaiPropertyIncludeParentsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataPropertyIncludeParentsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	log := meta.Log("PAPI", "dataSourceAkamaiPropertyIncludeParentsRead")
+	log := meta.Log("PAPI", "dataPropertyIncludeParentsRead")
 	log.Debug("Reading Property Include Parents")
 
 	contractID, err := tools.GetStringValue("contract_id", d)

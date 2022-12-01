@@ -13,9 +13,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func dataSourceIncludeActivation() *schema.Resource {
+func dataSourcePropertyIncludeActivation() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: dataSourceIncludeActivationRead,
+		ReadContext: dataPropertyIncludeActivationRead,
 		Schema: map[string]*schema.Schema{
 			"contract_id": {
 				Type:        schema.TypeString,
@@ -72,11 +72,11 @@ type includeActivationAttrs struct {
 	network    string
 }
 
-func dataSourceIncludeActivationRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataPropertyIncludeActivationRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	log := meta.Log("PAPI", "dataSourceIncludeActivationRead")
-	log.Debug("Reading include activation")
+	log := meta.Log("PAPI", "dataPropertyIncludeActivationRead")
+	log.Debug("Reading Property Include Activation")
 
 	attrs, err := getIncludeActivationAttrs(d)
 	if err != nil {

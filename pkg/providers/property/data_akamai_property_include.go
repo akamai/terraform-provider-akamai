@@ -11,9 +11,9 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
 )
 
-func dataSourceAkamaiPropertyInclude() *schema.Resource {
+func dataSourcePropertyInclude() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: dataAkamaiPropertyIncludeRead,
+		ReadContext: dataPropertyIncludeRead,
 		Schema: map[string]*schema.Schema{
 			"contract_id": {
 				Type:        schema.TypeString,
@@ -59,10 +59,10 @@ func dataSourceAkamaiPropertyInclude() *schema.Resource {
 	}
 }
 
-func dataAkamaiPropertyIncludeRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataPropertyIncludeRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	log := meta.Log("PAPI", "dataAkamaiPropertyIncludeRead")
+	log := meta.Log("PAPI", "dataPropertyIncludeRead")
 	log.Debug("Reading Property Include")
 
 	contractID, err := tools.GetStringValue("contract_id", d)

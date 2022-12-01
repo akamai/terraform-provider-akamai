@@ -10,9 +10,9 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
 )
 
-func dataPropertyRuleFormats() *schema.Resource {
+func dataSourcePropertyRuleFormats() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: readPropertyRuleFormats,
+		ReadContext: dataPropertyRuleFormatsRead,
 		Schema: map[string]*schema.Schema{
 			"rule_format": {
 				Type:     schema.TypeList,
@@ -23,11 +23,11 @@ func dataPropertyRuleFormats() *schema.Resource {
 	}
 }
 
-func readPropertyRuleFormats(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataPropertyRuleFormatsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 
-	logger := meta.Log("PAPI", "readPropertyRuleFormats")
+	logger := meta.Log("PAPI", "dataPropertyRuleFormatsRead")
 	logger.Debugf("read property rule formats")
 
 	// Get property rule formats

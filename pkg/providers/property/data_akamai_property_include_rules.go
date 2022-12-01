@@ -13,9 +13,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func dataSourceAkamaiPropertyIncludeRules() *schema.Resource {
+func dataSourcePropertyIncludeRules() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: dataAkamaiPropertyIncludeRulesRead,
+		ReadContext: dataPropertyIncludeRulesRead,
 		Schema: map[string]*schema.Schema{
 			"contract_id": {
 				Type:        schema.TypeString,
@@ -66,10 +66,10 @@ func dataSourceAkamaiPropertyIncludeRules() *schema.Resource {
 	}
 }
 
-func dataAkamaiPropertyIncludeRulesRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataPropertyIncludeRulesRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	log := meta.Log("PAPI", "dataAkamaiPropertyIncludeRulesRead")
+	log := meta.Log("PAPI", "dataPropertyIncludeRulesRead")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(log))
 
 	groupID, err := tools.GetStringValue("group_id", d)

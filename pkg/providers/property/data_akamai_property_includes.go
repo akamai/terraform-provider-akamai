@@ -16,7 +16,7 @@ import (
 
 func dataSourcePropertyIncludes() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: dataSourcePropertyIncludesRead,
+		ReadContext: dataPropertyIncludesRead,
 		Schema: map[string]*schema.Schema{
 			"contract_id": {
 				Type:        schema.TypeString,
@@ -42,7 +42,7 @@ func dataSourcePropertyIncludes() *schema.Resource {
 						"version": {
 							Type:        schema.TypeInt,
 							Required:    true,
-							Description: "The property’s version for which the data is requested",
+							Description: "The property's version for which the data is requested",
 						},
 					},
 				},
@@ -108,10 +108,10 @@ type parentPropertyAttr struct {
 	version int
 }
 
-func dataSourcePropertyIncludesRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataPropertyIncludesRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	log := meta.Log("PAPI", "dataSourcePropertyIncludesRead")
+	log := meta.Log("PAPI", "dataPropertyIncludesRead")
 	log.Debug("Reading property includes")
 
 	attrs, err := getPropertyIncludesAttrs(d)

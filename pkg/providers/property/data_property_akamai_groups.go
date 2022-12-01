@@ -15,7 +15,7 @@ import (
 
 func dataSourcePropertyMultipleGroups() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: dataSourcePropertyMultipleGroupsRead,
+		ReadContext: dataPropertyMultipleGroupsRead,
 		Schema: map[string]*schema.Schema{
 			"groups": {
 				Type:        schema.TypeList,
@@ -49,9 +49,9 @@ func dataSourcePropertyMultipleGroups() *schema.Resource {
 	}
 }
 
-func dataSourcePropertyMultipleGroupsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataPropertyMultipleGroupsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
-	logger := meta.Log("PAPI", "dataSourcePropertyMultipleGroupsRead")
+	logger := meta.Log("PAPI", "dataPropertyMultipleGroupsRead")
 
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(

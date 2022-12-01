@@ -14,7 +14,7 @@ import (
 
 func dataSourcePropertiesSearch() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: dataSourcePropertiesSearchRead,
+		ReadContext: dataPropertiesSearchRead,
 		Schema: map[string]*schema.Schema{
 			"key": {
 				Type:             schema.TypeString,
@@ -54,11 +54,11 @@ func dataSourcePropertiesSearch() *schema.Resource {
 	}
 }
 
-func dataSourcePropertiesSearchRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataPropertiesSearchRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 
-	log := meta.Log("PAPI", "dataSourcePropertiesSearchRead")
+	log := meta.Log("PAPI", "dataPropertiesSearchRead")
 
 	log.Debug("Searching properties")
 

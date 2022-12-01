@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestDataIncludeActivation(t *testing.T) {
+func TestDataPropertyIncludeActivation(t *testing.T) {
 	tests := map[string]struct {
 		attrs      includeActivationTestAttributes
 		init       func(*testing.T, *papi.Mock, includeActivationTestAttributes)
@@ -30,7 +30,7 @@ func TestDataIncludeActivation(t *testing.T) {
 			init: func(t *testing.T, m *papi.Mock, attrs includeActivationTestAttributes) {
 				mockListIncludeActivation(m, attrs, 5)
 			},
-			configPath: "testdata/TestDataIncludeActivation/valid_staging.tf",
+			configPath: "testdata/TestDataPropertyIncludeActivation/valid_staging.tf",
 		},
 		"happy path - latest active activation - multiple includes - PRODUCTION": {
 			attrs: includeActivationTestAttributes{
@@ -43,7 +43,7 @@ func TestDataIncludeActivation(t *testing.T) {
 			init: func(t *testing.T, m *papi.Mock, attrs includeActivationTestAttributes) {
 				mockListIncludeActivation(m, attrs, 5)
 			},
-			configPath: "testdata/TestDataIncludeActivation/valid_production.tf",
+			configPath: "testdata/TestDataPropertyIncludeActivation/valid_production.tf",
 		},
 		"no latest activation for provided network": {
 			attrs: includeActivationTestAttributes{
@@ -56,7 +56,7 @@ func TestDataIncludeActivation(t *testing.T) {
 			init: func(t *testing.T, m *papi.Mock, attrs includeActivationTestAttributes) {
 				mockListIncludeActivation(m, attrs, 5)
 			},
-			configPath: "testdata/TestDataIncludeActivation/no_activation_for_given_network.tf",
+			configPath: "testdata/TestDataPropertyIncludeActivation/no_activation_for_given_network.tf",
 		},
 		"latest activation of type `DEACTIVATE` - no latest activation": {
 			attrs: includeActivationTestAttributes{
@@ -69,7 +69,7 @@ func TestDataIncludeActivation(t *testing.T) {
 			init: func(t *testing.T, m *papi.Mock, attrs includeActivationTestAttributes) {
 				mockListIncludeActivation(m, attrs, 5)
 			},
-			configPath: "testdata/TestDataIncludeActivation/valid_staging.tf",
+			configPath: "testdata/TestDataPropertyIncludeActivation/valid_staging.tf",
 		},
 		"no `ACTIVE` activations - no latest activation": {
 			attrs: includeActivationTestAttributes{
@@ -82,7 +82,7 @@ func TestDataIncludeActivation(t *testing.T) {
 			init: func(t *testing.T, m *papi.Mock, attrs includeActivationTestAttributes) {
 				mockListIncludeActivation(m, attrs, 5)
 			},
-			configPath: "testdata/TestDataIncludeActivation/valid_production.tf",
+			configPath: "testdata/TestDataPropertyIncludeActivation/valid_production.tf",
 		},
 		"no emails in include activation": {
 			attrs: includeActivationTestAttributes{
@@ -110,30 +110,30 @@ func TestDataIncludeActivation(t *testing.T) {
 			init: func(t *testing.T, m *papi.Mock, attrs includeActivationTestAttributes) {
 				mockListIncludeActivation(m, attrs, 5)
 			},
-			configPath: "testdata/TestDataIncludeActivation/valid_staging.tf",
+			configPath: "testdata/TestDataPropertyIncludeActivation/valid_staging.tf",
 		},
 		"required attribute missing - contract_id": {
 			attrs:      includeActivationTestAttributes{},
 			init:       func(t *testing.T, m *papi.Mock, attrs includeActivationTestAttributes) {},
-			configPath: "testdata/TestDataIncludeActivation/no_contract_id.tf",
+			configPath: "testdata/TestDataPropertyIncludeActivation/no_contract_id.tf",
 			error:      regexp.MustCompile("Error: Missing required argument"),
 		},
 		"required attribute missing - group_id": {
 			attrs:      includeActivationTestAttributes{},
 			init:       func(t *testing.T, m *papi.Mock, attrs includeActivationTestAttributes) {},
-			configPath: "testdata/TestDataIncludeActivation/no_group_id.tf",
+			configPath: "testdata/TestDataPropertyIncludeActivation/no_group_id.tf",
 			error:      regexp.MustCompile("Error: Missing required argument"),
 		},
 		"required attribute missing - include_id": {
 			attrs:      includeActivationTestAttributes{},
 			init:       func(t *testing.T, m *papi.Mock, attrs includeActivationTestAttributes) {},
-			configPath: "testdata/TestDataIncludeActivation/no_include_id.tf",
+			configPath: "testdata/TestDataPropertyIncludeActivation/no_include_id.tf",
 			error:      regexp.MustCompile("Error: Missing required argument"),
 		},
 		"required attribute missing - network": {
 			attrs:      includeActivationTestAttributes{},
 			init:       func(t *testing.T, m *papi.Mock, attrs includeActivationTestAttributes) {},
-			configPath: "testdata/TestDataIncludeActivation/no_network.tf",
+			configPath: "testdata/TestDataPropertyIncludeActivation/no_network.tf",
 			error:      regexp.MustCompile("Error: Missing required argument"),
 		},
 		"ListIncludeActivations - API error": {
@@ -151,7 +151,7 @@ func TestDataIncludeActivation(t *testing.T) {
 					GroupID:    attrs.groupID,
 				}).Return(nil, fmt.Errorf("could not list include activations"))
 			},
-			configPath: "testdata/TestDataIncludeActivation/valid_staging.tf",
+			configPath: "testdata/TestDataPropertyIncludeActivation/valid_staging.tf",
 			error:      regexp.MustCompile("could not list include activations"),
 		},
 	}
@@ -444,11 +444,11 @@ func checkPropertyIncludeActivationAttrs(data includeActivationTestAttributes) r
 	filteredActivations := filterIncludeActivationsByNetwork(data.activationsResponse.Activations.Items, data.network)
 	latestActivation, _ := findLatestIncludeActivation(filteredActivations)
 
-	testCheckFuncs = append(testCheckFuncs, resource.TestCheckResourceAttr("data.akamai_include_activation.test", "id", dataSourceID))
-	testCheckFuncs = append(testCheckFuncs, resource.TestCheckResourceAttr("data.akamai_include_activation.test", "contract_id", data.contractID))
-	testCheckFuncs = append(testCheckFuncs, resource.TestCheckResourceAttr("data.akamai_include_activation.test", "group_id", data.groupID))
-	testCheckFuncs = append(testCheckFuncs, resource.TestCheckResourceAttr("data.akamai_include_activation.test", "include_id", data.includeID))
-	testCheckFuncs = append(testCheckFuncs, resource.TestCheckResourceAttr("data.akamai_include_activation.test", "network", data.network))
+	testCheckFuncs = append(testCheckFuncs, resource.TestCheckResourceAttr("data.akamai_property_include_activation.test", "id", dataSourceID))
+	testCheckFuncs = append(testCheckFuncs, resource.TestCheckResourceAttr("data.akamai_property_include_activation.test", "contract_id", data.contractID))
+	testCheckFuncs = append(testCheckFuncs, resource.TestCheckResourceAttr("data.akamai_property_include_activation.test", "group_id", data.groupID))
+	testCheckFuncs = append(testCheckFuncs, resource.TestCheckResourceAttr("data.akamai_property_include_activation.test", "include_id", data.includeID))
+	testCheckFuncs = append(testCheckFuncs, resource.TestCheckResourceAttr("data.akamai_property_include_activation.test", "network", data.network))
 
 	var version, name, note string
 	emailLength := "0"
@@ -459,14 +459,14 @@ func checkPropertyIncludeActivationAttrs(data includeActivationTestAttributes) r
 		note = latestActivation.Note
 		emailLength = strconv.Itoa(len(latestActivation.NotifyEmails))
 		for i, email := range latestActivation.NotifyEmails {
-			testCheckFuncs = append(testCheckFuncs, resource.TestCheckResourceAttr("data.akamai_include_activation.test", fmt.Sprintf("notify_emails.%d", i), email))
+			testCheckFuncs = append(testCheckFuncs, resource.TestCheckResourceAttr("data.akamai_property_include_activation.test", fmt.Sprintf("notify_emails.%d", i), email))
 		}
 	}
 
-	testCheckFuncs = append(testCheckFuncs, resource.TestCheckResourceAttr("data.akamai_include_activation.test", "notify_emails.#", emailLength))
-	testCheckFuncs = append(testCheckFuncs, resource.TestCheckResourceAttr("data.akamai_include_activation.test", "version", version))
-	testCheckFuncs = append(testCheckFuncs, resource.TestCheckResourceAttr("data.akamai_include_activation.test", "name", name))
-	testCheckFuncs = append(testCheckFuncs, resource.TestCheckResourceAttr("data.akamai_include_activation.test", "note", note))
+	testCheckFuncs = append(testCheckFuncs, resource.TestCheckResourceAttr("data.akamai_property_include_activation.test", "notify_emails.#", emailLength))
+	testCheckFuncs = append(testCheckFuncs, resource.TestCheckResourceAttr("data.akamai_property_include_activation.test", "version", version))
+	testCheckFuncs = append(testCheckFuncs, resource.TestCheckResourceAttr("data.akamai_property_include_activation.test", "name", name))
+	testCheckFuncs = append(testCheckFuncs, resource.TestCheckResourceAttr("data.akamai_property_include_activation.test", "note", note))
 
 	return resource.ComposeAggregateTestCheckFunc(testCheckFuncs...)
 }

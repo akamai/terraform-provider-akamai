@@ -11,9 +11,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func dataSourceAkamaiContracts() *schema.Resource {
+func dataSourceContracts() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: dataSourceContractsRead,
+		ReadContext: dataContractsRead,
 		Schema: map[string]*schema.Schema{
 			"contracts": {
 				Type:        schema.TypeList,
@@ -29,9 +29,9 @@ func dataSourceAkamaiContracts() *schema.Resource {
 	}
 }
 
-func dataSourceContractsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataContractsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
-	log := meta.Log("PAPI", "dataSourceContractsRead")
+	log := meta.Log("PAPI", "dataContractsRead")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
 		ctx,
