@@ -387,11 +387,6 @@ func rulesCustomDiff(_ context.Context, diff *schema.ResourceDiff, _ interface{}
 	if err != nil {
 		return fmt.Errorf("cannot encode rules JSON %s", err)
 	}
-	rulesBytes, err := json.Marshal(newRulesUpdate)
-	if err != nil {
-		return err
-	}
-	rules = string(rulesBytes)
 
 	if err = diff.SetNew("rules", rules); err != nil {
 		return fmt.Errorf("cannot set a new diff value for 'rules' %s", err)

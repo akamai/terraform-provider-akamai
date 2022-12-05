@@ -3,7 +3,6 @@ package cps
 import (
 	"context"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -24,10 +23,10 @@ func dataSourceCPSWarnings() *schema.Resource {
 	}
 }
 
-func dataCPSWarningsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataCPSWarningsRead(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	logger := meta.Log("CPS", "dataCPSWarningsRead")
-	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
+
 	if err := d.Set("warnings", warningMap); err != nil {
 		logger.WithError(err).Error("could not set cps warnings")
 		return diag.FromErr(err)

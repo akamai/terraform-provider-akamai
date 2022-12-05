@@ -1,8 +1,13 @@
 linters:
   disable-all: true
   enable:
-  - revive
-
+    - gocyclo
+    - gofmt
+    - goimports
+    - govet
+    - ineffassign
+    - misspell
+    - revive
 output:
   sort-results: true
 
@@ -10,6 +15,10 @@ issues:
   exclude-use-default: false
   max-issues-per-linter: 0
   max-same-issues: 0
+  exclude-rules:
+    - path: gen\.go
+      linters:
+        - gocyclo
 
 linters-settings:
   revive:

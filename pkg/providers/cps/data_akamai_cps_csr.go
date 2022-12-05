@@ -62,7 +62,7 @@ func dataCPSCSRRead(ctx context.Context, d *schema.ResourceData, m interface{}) 
 		return diag.Errorf("given enrollment has non third-party certificate type which is not supported by this data source")
 	}
 
-	var attrs = make(map[string]interface{})
+	var attrs map[string]interface{}
 	changeID, err := toolsCPS.GetChangeIDFromPendingChanges(enrollment.PendingChanges)
 	if err != nil && errors.Is(err, toolsCPS.ErrNoPendingChanges) {
 		attrs, err = createCSRAttrsFromHistory(ctx, client, enrollmentID)

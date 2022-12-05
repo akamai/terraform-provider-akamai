@@ -39,13 +39,13 @@ func jsonBytesEqual(b1, b2 []byte) bool {
 	return reflect.DeepEqual(o1, o2)
 }
 
-func suppressEquivalentReputationProfileDiffs(_, old, new string, _ *schema.ResourceData) bool {
+func suppressEquivalentReputationProfileDiffs(_, oldVal, newVal string, _ *schema.ResourceData) bool {
 	var rpOld, rpNew appsec.CreateReputationProfileResponse
 
-	if err := json.Unmarshal([]byte(old), &rpOld); err != nil {
+	if err := json.Unmarshal([]byte(oldVal), &rpOld); err != nil {
 		log.Printf("unable to unmarshal old reputation profile: %s", err)
 	}
-	if err := json.Unmarshal([]byte(new), &rpNew); err != nil {
+	if err := json.Unmarshal([]byte(newVal), &rpNew); err != nil {
 		log.Printf("unable to unmarshal new reputation profile: %s", err)
 	}
 
@@ -81,6 +81,14 @@ func compareReputationProfileCondition(rpOld, rpNew appsec.CreateReputationProfi
 	if len(cOld.AtomicConditions) != len(cNew.AtomicConditions) {
 		return false
 	}
+
+	return areReputationProfilesEqual(rpOld, rpNew)
+}
+
+// areReputationProfilesEqual check whether old and new reputation profiles are the same
+func areReputationProfilesEqual(rpOld, rpNew appsec.CreateReputationProfileResponse) bool {
+	cOld := rpOld.Condition
+	cNew := rpNew.Condition
 	for _, acOld := range cOld.AtomicConditions {
 		found := false
 		for _, acNew := range cNew.AtomicConditions {

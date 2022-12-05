@@ -112,6 +112,7 @@ const (
 	rightDelim = "#+@"
 )
 
+//nolint:gocyclo
 func dataAkamaiPropertyRulesRead(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	logger := meta.Log("PAPI", "dataAkamaiPropertyRulesRead")

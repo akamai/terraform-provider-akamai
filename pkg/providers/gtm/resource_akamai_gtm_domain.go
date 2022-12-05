@@ -543,6 +543,7 @@ func populateNewDomainObject(ctx context.Context, meta akamai.OperationMeta, d *
 
 }
 
+//nolint:gocyclo
 // Populate existing domain object from resource data
 func populateDomainObject(d *schema.ResourceData, dom *gtm.Domain, m interface{}) error {
 	meta := akamai.Meta(m)

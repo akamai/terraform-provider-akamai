@@ -633,6 +633,7 @@ func resourceGTMv1PropertyDelete(ctx context.Context, d *schema.ResourceData, m 
 	return nil
 }
 
+//nolint:gocyclo
 // Populate existing property object from resource data
 func populatePropertyObject(ctx context.Context, d *schema.ResourceData, prop *gtm.Property, m interface{}) error {
 	meta := akamai.Meta(m)
