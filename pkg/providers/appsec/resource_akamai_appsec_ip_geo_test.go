@@ -47,6 +47,12 @@ func TestAkamaiIPGeo_res_block(t *testing.T) {
 							"49185_ADTWAFBYPASSLIST",
 						},
 					},
+					AllowedIPNetworkLists: &appsec.IPGeoNetworkLists{
+						NetworkList: []string{
+							"68762_ADYEN",
+							"69601_ADYENPRODWHITELIST",
+						},
+					},
 				},
 			},
 		).Return(&updateIPGeoResponse, nil)
