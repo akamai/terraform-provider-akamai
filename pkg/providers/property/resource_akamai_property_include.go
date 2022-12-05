@@ -312,10 +312,7 @@ func resourcePropertyIncludeDelete(ctx context.Context, rd *schema.ResourceData,
 
 	logger.Debug("Deleting property include")
 
-	// include cannot be deleted if any version is active
-	if err := isAnyVersionActive(rd); err != nil {
-		return diag.Errorf("%s delete: %s", ErrPropertyInclude, err)
-	}
+	includeID := rd.Id()
 
 	contractID, err := tools.GetStringValue("contract_id", rd)
 	if err != nil {
@@ -327,7 +324,18 @@ func resourcePropertyIncludeDelete(ctx context.Context, rd *schema.ResourceData,
 		return diag.FromErr(err)
 	}
 
-	includeID := rd.Id()
+	getIncludeResp, err := client.GetInclude(ctx, papi.GetIncludeRequest{
+		GroupID:    groupID,
+		IncludeID:  includeID,
+		ContractID: contractID,
+	})
+	if err != nil {
+		return diag.Errorf("%s delete: %s", ErrPropertyInclude, err)
+	}
+
+	if err := canIncludeBeDeleted(getIncludeResp.Include); err != nil {
+		return append(diag.Errorf("Include '%s' could not be deleted due to the following reason(s):", includeID), err...)
+	}
 
 	_, err = client.DeleteInclude(ctx, papi.DeleteIncludeRequest{
 		ContractID: contractID,
@@ -417,26 +425,19 @@ func updateRules(ctx context.Context, client papi.PAPI, rd *schema.ResourceData,
 	return nil
 }
 
-// isAnyVersionActive returns error if there is any version active on
-// either staging or production network
-func isAnyVersionActive(rd *schema.ResourceData) error {
-	stagingVersion, err := tools.GetStringValue("staging_version", rd)
-	if err == nil {
-		return fmt.Errorf("version '%s' is active on 'STAGING' network", stagingVersion)
-	}
-	if !errors.Is(err, tools.ErrNotFound) {
-		return err
+// canIncludeBeDeleted returns error if there is any version active on
+// either staging or production network as it prevents the deletion
+func canIncludeBeDeleted(include papi.Include) diag.Diagnostics {
+	var diags diag.Diagnostics
+	if include.StagingVersion != nil {
+		diags = append(diags, diag.Errorf("version '%d' is active on 'STAGING' network", *include.StagingVersion)...)
 	}
 
-	productionVersion, err := tools.GetStringValue("production_version", rd)
-	if err == nil {
-		return fmt.Errorf("version '%s' is active on 'PRODUCTION' network", productionVersion)
-	}
-	if !errors.Is(err, tools.ErrNotFound) {
-		return err
+	if include.ProductionVersion != nil {
+		diags = append(diags, diag.Errorf("version '%d' is active on 'PRODUCTION' network", *include.ProductionVersion)...)
 	}
 
-	return nil
+	return diags
 }
 
 func isVersionEditable(includeVersion papi.IncludeVersion) bool {

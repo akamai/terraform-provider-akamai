@@ -169,12 +169,20 @@ func TestResourcePropertyInclude(t *testing.T) {
 		return append(calls, updateIncludeRuleTreeCall)
 	}
 
-	expectDelete := func(m *papi.Mock, testData *testData) *mock.Call {
-		return m.On("DeleteInclude", mock.Anything, papi.DeleteIncludeRequest{
+	expectDelete := func(m *papi.Mock, testData *testData) test.MockCalls {
+		getIncludeCall := m.On("GetInclude", mock.Anything, papi.GetIncludeRequest{
+			ContractID: testData.contractID,
+			GroupID:    testData.groupID,
+			IncludeID:  includeID,
+		}).Return(newGetIncludeResp(testData), nil)
+
+		deleteCall := m.On("DeleteInclude", mock.Anything, papi.DeleteIncludeRequest{
 			GroupID:    testData.groupID,
 			IncludeID:  testData.includeID,
 			ContractID: testData.contractID,
 		}).Return(&papi.DeleteIncludeResponse{}, nil)
+
+		return test.MockCalls{getIncludeCall, deleteCall}
 	}
 
 	simulateActivation := func(testData *testData, version int, network papi.ActivationNetwork) {
