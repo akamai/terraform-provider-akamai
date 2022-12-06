@@ -7,6 +7,7 @@
 * PAPI
   * Added resources:
     * `akamai_property_include` - create, read, update, delete and import
+    * `akamai_property_include_activation` - create, read, update, delete and import
   * Added data sources:
     * `akamai_include_activation` - get latest include activation by network
     * `akamai_property_include` - get property include version information
