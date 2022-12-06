@@ -27,7 +27,7 @@ build:
 	go build -tags all -o $(build_dir)/$(bin_name)
 
 .PHONY: check
-check: errcheck fmtcheck lint vet
+check: fmtcheck lint vet
 
 .PHONY: test
 test:
@@ -63,10 +63,6 @@ fmtcheck: |; $(info ==> Running format and imports check...)
 		echo "$(OUTPUT)";\
 		false;\
 	fi
-
-.PHONY: errcheck
-errcheck:
-	@sh -c "'$(CURDIR)/scripts/errcheck.sh'"
 
 .PHONY: lint
 lint:

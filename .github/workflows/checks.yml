@@ -1,0 +1,34 @@
+name: build
+on:
+  push:
+    branches:
+      - "**"
+  pull_request:
+    branches:
+      - master
+jobs:
+    test:
+      runs-on: ubuntu-latest
+      steps:
+        - name: Checkout
+          uses: actions/checkout@v3
+        - name: Set up Go
+          uses: actions/setup-go@v3
+          with:
+            go-version-file: 'go.mod'
+        - name: Prepare env
+          run: make init
+        - name: Prepare terraform tools
+          run: make tools.terraform
+        - name: Prepare dummy edgerc
+          run: make dummy-edgerc
+        - name: Run checks
+          run: make check
+        - name: Create build
+          run: make build
+        - name: Run tests
+          run: make test
+        - name: Run terraform-fmt
+          run: make terraform-fmt
+        - name: Run terraform lint
+          run: make terraform-lint

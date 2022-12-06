@@ -249,7 +249,15 @@ func testCacheGet(_ context.Context, d *schema.ResourceData, m interface{}) diag
 		return diags
 	}
 
-	d.Set("value", value)
+	err := d.Set("value", value)
+	if err != nil {
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  err.Error(),
+		})
+
+		return diags
+	}
 
 	d.SetId(key)
 

@@ -8,6 +8,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/dns"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestResDnsZone(t *testing.T) {
@@ -68,8 +69,12 @@ func TestResDnsZone(t *testing.T) {
 		dataSourceName := "akamai_dns_zone.primary_test_zone"
 
 		// work around to skip Delete which fails intentionally
-		os.Setenv("DNS_ZONE_SKIP_DELETE", "")
-		defer os.Unsetenv("DNS_ZONE_SKIP_DELETE")
+		err := os.Setenv("DNS_ZONE_SKIP_DELETE", "")
+		require.NoError(t, err)
+		defer func() {
+			err = os.Unsetenv("DNS_ZONE_SKIP_DELETE")
+			require.NoError(t, err)
+		}()
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				PreCheck:  func() { testAccPreCheck(t) },
