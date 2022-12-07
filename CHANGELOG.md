@@ -50,6 +50,7 @@
 
 * GTM
   * Fixed unreadable diff when single attribute is changed in traffic target
+    > If upgrading to provider version 3.0.0 from an older version and using Akamai GTM Properties, you might see a switch of targets during the first apply. This is needed to get your terraform state in sync with our API, the following terraform plan/apply will not be affected
 
 ## 2.4.2 (October 4, 2022)
 
