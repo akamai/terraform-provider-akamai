@@ -1,5 +1,18 @@
 # RELEASE NOTES
 
+## 3.2.0 (December --, 2022)
+
+#### FEATURES/ENHANCEMENTS:
+
+* APPSEC
+  * Add `json` attribute to `akamai_appsec_security_policy` data source to allow obtaining policy name given its ID.
+
+#### BUG FIXES:
+
+* APPSEC
+  * Fixed bug that prevented `akamai_appsec_ip_geo` resource from sending correct network lists in `block` mode.
+  * Fixed bug that prevented `akamai_appsec_configuration` data source from reporting error correctly when a nonexistent configuration is specified.
+
 ## 3.1.0 (December 1, 2022)
 
 #### FEATURES/ENHANCEMENTS:

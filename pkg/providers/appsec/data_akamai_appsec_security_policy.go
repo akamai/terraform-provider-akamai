@@ -2,6 +2,7 @@ package appsec
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -37,6 +38,11 @@ func dataSourceSecurityPolicy() *schema.Resource {
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "List of security policy IDs",
 			},
+			"json": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "JSON representation",
+			},
 			"output_text": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -64,20 +70,25 @@ func dataSourceSecurityPolicyRead(ctx context.Context, d *schema.ResourceData, m
 		return diag.FromErr(err)
 	}
 
-	getSecurityPoliciesRequest := appsec.GetSecurityPoliciesRequest{
+	securityPolicies, err := client.GetSecurityPolicies(ctx, appsec.GetSecurityPoliciesRequest{
 		ConfigID: configID,
 		Version:  version,
-	}
-
-	securitypolicies, err := client.GetSecurityPolicies(ctx, getSecurityPoliciesRequest)
+	})
 	if err != nil {
 		logger.Errorf("calling 'getSecurityPolicies': %s", err.Error())
 		return diag.FromErr(err)
 	}
 
-	securityPoliciesList := make([]string, 0, len(securitypolicies.Policies))
+	jsonBody, err := json.Marshal(securityPolicies)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if err := d.Set("json", string(jsonBody)); err != nil {
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+	}
 
-	for _, val := range securitypolicies.Policies {
+	securityPoliciesList := make([]string, 0, len(securityPolicies.Policies))
+	for _, val := range securityPolicies.Policies {
 		securityPoliciesList = append(securityPoliciesList, val.PolicyID)
 		if val.PolicyName == securityPolicyName {
 			if err := d.Set("security_policy_id", val.PolicyID); err != nil {
@@ -96,7 +107,7 @@ func dataSourceSecurityPolicyRead(ctx context.Context, d *schema.ResourceData, m
 	ots := OutputTemplates{}
 	InitTemplates(ots)
 
-	outputtext, err := RenderTemplates(ots, "securityPoliciesDS", securitypolicies)
+	outputtext, err := RenderTemplates(ots, "securityPoliciesDS", securityPolicies)
 	if err != nil {
 		return diag.FromErr(err)
 	}
