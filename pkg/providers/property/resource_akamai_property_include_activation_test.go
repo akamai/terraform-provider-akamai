@@ -79,21 +79,17 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 				AccountID:  accountID,
 				ContractID: contractID,
 				GroupID:    groupID,
-				Activations: papi.IncludeActivationsRes{
-					Items: []papi.IncludeActivation{
-						{
-							ActivationID:   tempActID,
-							Network:        network,
-							ActivationType: papi.ActivationTypeActivate,
-							Status:         papi.ActivationStatusActive,
-							SubmitDate:     "2022-10-27T10:21:40Z",
-							UpdateDate:     "2022-10-27T10:22:54Z",
-							Note:           note,
-							NotifyEmails:   []string{email},
-							IncludeID:      includeID,
-							IncludeVersion: version,
-						},
-					},
+				Activation: papi.IncludeActivation{
+					ActivationID:   tempActID,
+					Network:        network,
+					ActivationType: papi.ActivationTypeActivate,
+					Status:         papi.ActivationStatusActive,
+					SubmitDate:     "2022-10-27T10:21:40Z",
+					UpdateDate:     "2022-10-27T10:22:54Z",
+					Note:           note,
+					NotifyEmails:   []string{email},
+					IncludeID:      includeID,
+					IncludeVersion: version,
 				},
 			}
 			client.On("GetIncludeActivation", mock.Anything, getIncludeActivationReq).Return(&getIncludeActivationRes, nil).Once()
@@ -105,21 +101,17 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 				AccountID:  accountID,
 				ContractID: contractID,
 				GroupID:    groupID,
-				Activations: papi.IncludeActivationsRes{
-					Items: []papi.IncludeActivation{
-						{
-							ActivationID:   actID,
-							Network:        network,
-							ActivationType: papi.ActivationTypeActivate,
-							Status:         papi.ActivationStatusActive,
-							SubmitDate:     "2022-10-27T11:21:40Z",
-							UpdateDate:     "2022-10-27T11:22:54Z",
-							Note:           note,
-							NotifyEmails:   []string{email},
-							IncludeID:      includeID,
-							IncludeVersion: version,
-						},
-					},
+				Activation: papi.IncludeActivation{
+					ActivationID:   actID,
+					Network:        network,
+					ActivationType: papi.ActivationTypeActivate,
+					Status:         papi.ActivationStatusActive,
+					SubmitDate:     "2022-10-27T11:21:40Z",
+					UpdateDate:     "2022-10-27T11:22:54Z",
+					Note:           note,
+					NotifyEmails:   []string{email},
+					IncludeID:      includeID,
+					IncludeVersion: version,
 				},
 			}
 			client.On("GetIncludeActivation", mock.Anything, getIncludeActivationReq).Return(&getIncludeActivationRes, nil).Once()
@@ -132,21 +124,17 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 				AccountID:  accountID,
 				ContractID: contractID,
 				GroupID:    groupID,
-				Activations: papi.IncludeActivationsRes{
-					Items: []papi.IncludeActivation{
-						{
-							ActivationID:   actID,
-							Network:        papi.ActivationNetworkProduction,
-							ActivationType: papi.ActivationTypeActivate,
-							Status:         papi.ActivationStatusActive,
-							SubmitDate:     "2022-10-28T11:21:40Z",
-							UpdateDate:     "2022-10-28T11:22:54Z",
-							Note:           note,
-							NotifyEmails:   []string{email},
-							IncludeID:      includeID,
-							IncludeVersion: version,
-						},
-					},
+				Activation: papi.IncludeActivation{
+					ActivationID:   actID,
+					Network:        papi.ActivationNetworkProduction,
+					ActivationType: papi.ActivationTypeActivate,
+					Status:         papi.ActivationStatusActive,
+					SubmitDate:     "2022-10-28T11:21:40Z",
+					UpdateDate:     "2022-10-28T11:22:54Z",
+					Note:           note,
+					NotifyEmails:   []string{email},
+					IncludeID:      includeID,
+					IncludeVersion: version,
 				},
 			}
 			client.On("GetIncludeActivation", mock.Anything, getIncludeActivationReq).Return(&getIncludeActivationRes, nil).Once()
@@ -260,21 +248,17 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 				AccountID:  accountID,
 				ContractID: contractID,
 				GroupID:    groupID,
-				Activations: papi.IncludeActivationsRes{
-					Items: []papi.IncludeActivation{
-						{
-							ActivationID:   tempDeactID,
-							Network:        network,
-							ActivationType: papi.ActivationTypeDeactivate,
-							Status:         papi.ActivationStatusActive,
-							SubmitDate:     "2022-10-27T12:21:40Z",
-							UpdateDate:     "2022-10-27T12:22:54Z",
-							Note:           note,
-							NotifyEmails:   []string{email},
-							IncludeID:      includeID,
-							IncludeVersion: version,
-						},
-					},
+				Activation: papi.IncludeActivation{
+					ActivationID:   tempDeactID,
+					Network:        network,
+					ActivationType: papi.ActivationTypeDeactivate,
+					Status:         papi.ActivationStatusActive,
+					SubmitDate:     "2022-10-27T12:21:40Z",
+					UpdateDate:     "2022-10-27T12:22:54Z",
+					Note:           note,
+					NotifyEmails:   []string{email},
+					IncludeID:      includeID,
+					IncludeVersion: version,
 				},
 			}
 			client.On("GetIncludeActivation", mock.Anything, getIncludeActivationReq).Return(&getIncludeActivationRes, nil).Once()

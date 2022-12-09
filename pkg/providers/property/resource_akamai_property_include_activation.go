@@ -75,6 +75,7 @@ func resourcePropertyIncludeActivation() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "The note to assign to a log message of the activation request",
+				Default:     "",
 			},
 			"auto_acknowledge_rule_warnings": {
 				Type:        schema.TypeBool,
@@ -187,28 +188,30 @@ func resourcePropertyIncludeActivationRead(ctx context.Context, d *schema.Resour
 		return diag.FromErr(err)
 	}
 
-	attrs := make(map[string]interface{})
-	if activation != nil {
-		var validations []byte
-		if activation.Validations != nil {
-			validations, err = json.Marshal(activation.Validations)
-			if err != nil {
-				return diag.FromErr(err)
-			}
-		}
-		attrs["include_id"] = activation.Activations.Items[0].IncludeID
-		attrs["contract_id"] = activation.ContractID
-		attrs["group_id"] = activation.GroupID
-		attrs["version"] = activation.Activations.Items[0].IncludeVersion
-		attrs["network"] = activation.Activations.Items[0].Network
-		attrs["notify_emails"] = activation.Activations.Items[0].NotifyEmails
-		attrs["note"] = activation.Activations.Items[0].Note
-		attrs["validations"] = string(validations)
-
-		// it is impossible to fetch compliance_record and auto_acknowledge_rule_warnings attributes from server
-		if err = tools.SetAttrs(d, attrs); err != nil {
+	var validations []byte
+	if activation.Validations != nil {
+		validations, err = json.Marshal(activation.Validations)
+		if err != nil {
 			return diag.FromErr(err)
 		}
+	}
+	attrs := make(map[string]interface{})
+	attrs["include_id"] = activation.Activation.IncludeID
+	attrs["contract_id"] = activation.ContractID
+	attrs["group_id"] = activation.GroupID
+	attrs["version"] = activation.Activation.IncludeVersion
+	attrs["network"] = activation.Activation.Network
+	attrs["notify_emails"] = activation.Activation.NotifyEmails
+	attrs["note"] = activation.Activation.Note
+	attrs["validations"] = string(validations)
+
+	if len(strings.TrimSpace(activation.Activation.Note)) == 0 {
+		attrs["note"] = ""
+	}
+
+	// it is impossible to fetch compliance_record and auto_acknowledge_rule_warnings attributes from server
+	if err = tools.SetAttrs(d, attrs); err != nil {
+		return diag.FromErr(err)
 	}
 	return nil
 }
@@ -259,7 +262,7 @@ func resourcePropertyIncludeActivationDelete(ctx context.Context, d *schema.Reso
 	}
 	notifyEmails := tools.SetToStringSlice(notifyEmailsSet)
 	note, err := tools.GetStringValue("note", d)
-	if err != nil {
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 	acknowledgement, err := tools.GetBoolValue("auto_acknowledge_rule_warnings", d)
@@ -416,8 +419,8 @@ func waitForPropertyIncludeOperation(ctx context.Context, client papi.PAPI, acti
 		}
 		return nil, err
 	}
-	for activation != nil && activation.Activations.Items[0].Status != papi.ActivationStatusActive {
-		actStatus := activation.Activations.Items[0].Status
+	for activation != nil && activation.Activation.Status != papi.ActivationStatusActive {
+		actStatus := activation.Activation.Status
 
 		if actStatus == papi.ActivationStatusFailed {
 			return nil, fmt.Errorf("%s request failed for property include %v", operationType, includeID)

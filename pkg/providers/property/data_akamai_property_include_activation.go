@@ -95,7 +95,7 @@ func dataPropertyIncludeActivationRead(ctx context.Context, d *schema.ResourceDa
 	filteredActivations := filterIncludeActivationsByNetwork(activations.Activations.Items, attrs.network)
 	latestActivation, err := findLatestIncludeActivation(filteredActivations)
 	if err != nil {
-		log.Info(fmt.Sprintf("%s: no activation is active on %s network", err, attrs.network))
+		log.Info(fmt.Sprintf("%s: there is no active version on %s network", err, attrs.network))
 	}
 
 	attributes := createIncludeActivationAttrs(latestActivation)
