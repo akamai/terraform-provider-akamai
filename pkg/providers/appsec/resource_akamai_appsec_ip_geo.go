@@ -229,38 +229,46 @@ func resourceIPGeoRead(ctx context.Context, d *schema.ResourceData, m interface{
 		}
 	}
 	if ipgeo.Block == "blockSpecificIPGeo" {
-		if err := d.Set("mode", Block); err != nil {
-			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
-		}
-		if ipgeo.GeoControls != nil && ipgeo.GeoControls.BlockedIPNetworkLists != nil && ipgeo.GeoControls.BlockedIPNetworkLists.NetworkList != nil {
-			if err := d.Set("geo_network_lists", ipgeo.GeoControls.BlockedIPNetworkLists.NetworkList); err != nil {
-				return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
-			}
-		} else {
-			if err := d.Set("geo_network_lists", make([]string, 0)); err != nil {
-				return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
-			}
-		}
-		if ipgeo.IPControls != nil && ipgeo.IPControls.BlockedIPNetworkLists != nil && ipgeo.IPControls.BlockedIPNetworkLists.NetworkList != nil {
-			if err := d.Set("ip_network_lists", ipgeo.IPControls.BlockedIPNetworkLists.NetworkList); err != nil {
-				return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
-			}
-		} else {
-			if err := d.Set("ip_network_lists", make([]string, 0)); err != nil {
-				return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
-			}
-		}
-		if ipgeo.IPControls != nil && ipgeo.IPControls.AllowedIPNetworkLists != nil && ipgeo.IPControls.AllowedIPNetworkLists.NetworkList != nil {
-			if err := d.Set("exception_ip_network_lists", ipgeo.IPControls.AllowedIPNetworkLists.NetworkList); err != nil {
-				return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
-			}
-		} else {
-			if err := d.Set("exception_ip_network_lists", make([]string, 0)); err != nil {
-				return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
-			}
+		diagnostics := readForBlockSpecificIPGeo(d, ipgeo)
+		if diagnostics != nil {
+			return diagnostics
 		}
 	}
 
+	return nil
+}
+
+func readForBlockSpecificIPGeo(d *schema.ResourceData, ipgeo *appsec.GetIPGeoResponse) diag.Diagnostics {
+	if err := d.Set("mode", Block); err != nil {
+		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+	}
+	if ipgeo.GeoControls != nil && ipgeo.GeoControls.BlockedIPNetworkLists != nil && ipgeo.GeoControls.BlockedIPNetworkLists.NetworkList != nil {
+		if err := d.Set("geo_network_lists", ipgeo.GeoControls.BlockedIPNetworkLists.NetworkList); err != nil {
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		}
+	} else {
+		if err := d.Set("geo_network_lists", make([]string, 0)); err != nil {
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		}
+	}
+	if ipgeo.IPControls != nil && ipgeo.IPControls.BlockedIPNetworkLists != nil && ipgeo.IPControls.BlockedIPNetworkLists.NetworkList != nil {
+		if err := d.Set("ip_network_lists", ipgeo.IPControls.BlockedIPNetworkLists.NetworkList); err != nil {
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		}
+	} else {
+		if err := d.Set("ip_network_lists", make([]string, 0)); err != nil {
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		}
+	}
+	if ipgeo.IPControls != nil && ipgeo.IPControls.AllowedIPNetworkLists != nil && ipgeo.IPControls.AllowedIPNetworkLists.NetworkList != nil {
+		if err := d.Set("exception_ip_network_lists", ipgeo.IPControls.AllowedIPNetworkLists.NetworkList); err != nil {
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		}
+	} else {
+		if err := d.Set("exception_ip_network_lists", make([]string, 0)); err != nil {
+			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		}
+	}
 	return nil
 }
 

@@ -22,7 +22,8 @@ func TestAkamaiSecurityPolicy_data_basic(t *testing.T) {
 
 		securityPoliciesJSONBytes := loadFixtureBytes("testdata/TestDSSecurityPolicy/SecurityPolicyJSON.json")
 		buf := &bytes.Buffer{}
-		json.Compact(buf, securityPoliciesJSONBytes)
+		err = json.Compact(buf, securityPoliciesJSONBytes)
+		require.NoError(t, err)
 		securityPoliciesJSONString := buf.String()
 
 		config := appsec.GetConfigurationResponse{}
