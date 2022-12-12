@@ -298,10 +298,9 @@ func resourcePropertyIncludeActivationDelete(ctx context.Context, d *schema.Reso
 	return nil
 }
 
-func resourcePropertyIncludeActivationImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+func resourcePropertyIncludeActivationImport(_ context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	meta := akamai.Meta(m)
 	logger := meta.Log("PAPI", "resourcePropertyIncludeActivationImport")
-	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
 	logger.Debug("Importing property include activation")
 
 	id := strings.Split(d.Id(), ":")

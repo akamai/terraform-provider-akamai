@@ -301,6 +301,9 @@ func resourcePropertyIncludeUpdate(ctx context.Context, rd *schema.ResourceData,
 		IncludeID:  includeID,
 		ContractID: contractID,
 	})
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	version := latestVersion
 	if !isVersionEditable(includeVersion.IncludeVersion) {
