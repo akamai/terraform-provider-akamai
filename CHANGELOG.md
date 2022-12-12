@@ -1,17 +1,19 @@
 # RELEASE NOTES
 
-## 3.2.0 (December --, 2022)
+## 3.2.0 (December 15 2022)
 
 #### FEATURES/ENHANCEMENTS:
 
-* PAPI
+* PAPI - Add support for Property Includes
   * Added resources:
-    * `akamai_property_include` - create, read, update, delete and import
-    * `akamai_property_include_activation` - create, read, update, delete and import
+    * [akamai_property_include](docs/resources/property_include.md) - create, read, update, delete and import
+    * [akamai_property_include_activation](docs/resources/property_include_activation.md) - create, read, update, delete and import
   * Added data sources:
-    * `akamai_include_activation` - get latest include activation by network
-    * `akamai_property_include` - get property include version information
-    * `akamai_property_includes` - get property includes information
+    * [akamai_property_include_activation](docs/data-sources/property_include_activation.md) - get latest include activation by network
+    * [akamai_property_include_parents](docs/data-sources/property_include_parents.md) - get property include parents information
+    * [akamai_property_include_rules](docs/data-sources/property_include_rules.md) - get property include version rules information
+    * [akamai_property_include](docs/data-sources/property_include.md) - get property include version information
+    * [akamai_property_includes](docs/data-sources/property_includes.md) - list property includes information
 
 * APPSEC
   * Add `json` attribute to `akamai_appsec_security_policy` data source to allow obtaining policy name given its ID.
