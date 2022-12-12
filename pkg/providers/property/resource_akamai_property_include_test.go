@@ -68,6 +68,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 
 		resp.Rules = rulesResp.Rules
 		resp.Errors = rulesResp.Errors
+		resp.Warnings = rulesResp.Warnings
 		resp.Comments = rulesResp.Comments
 
 		return resp
@@ -210,7 +211,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 		steps    []resource.TestStep
 		testData testData
 	}{
-		"create include - no rules": {
+		"create include - no rules and no warnings": {
 			testData: testData{
 				groupID:     "grp_123",
 				productID:   "prd_test",
@@ -239,7 +240,8 @@ func TestResourcePropertyInclude(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_property_include.test", "staging_version", ""),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "production_version", ""),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "rules", loadFixtureString("%s/expected/default_rules.json", workdir)),
-						resource.TestCheckNoResourceAttr("akamai_property_include.test", "rule_errors"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_errors", ""),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_warnings", ""),
 					),
 				},
 			},
@@ -274,7 +276,8 @@ func TestResourcePropertyInclude(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_property_include.test", "staging_version", ""),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "production_version", ""),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "rules", loadFixtureString("%s/expected/simple_rules.json", workdir)),
-						resource.TestCheckNoResourceAttr("akamai_property_include.test", "rule_errors"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_errors", ""),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_warnings", ""),
 					),
 				},
 			},
@@ -311,6 +314,198 @@ func TestResourcePropertyInclude(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_property_include.test", "production_version", ""),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "rules", loadFixtureString("%s/expected/simple_rules.json", workdir)),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_errors", loadFixtureString("%s/expected/simple_rules_errors.json", workdir)),
+					),
+				},
+			},
+		},
+		"create include - rules with validation warnings": {
+			testData: testData{
+				groupID:     "grp_123",
+				rulesPath:   "simple_rules.json",
+				productID:   "prd_test",
+				includeID:   includeID,
+				ruleFormat:  "v2022-06-28",
+				contractID:  "ctr_123",
+				includeName: "test include",
+				includeType: papi.IncludeTypeMicroServices,
+			},
+			init: func(m *papi.Mock, testData *testData) {
+				expectCreate(m, testData).Once()
+				testData.rulesPath = "simple_rules_with_warnings.json"
+				expectRead(m, testData).Times(2)
+				expectDelete(m, testData).Once()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: loadFixtureString("%s/property_include.tf", workdir),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_property_include.test", "group_id", "grp_123"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "contract_id", "ctr_123"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "product_id", "prd_test"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "name", "test include"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_format", "v2022-06-28"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "type", "MICROSERVICES"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "latest_version", "1"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "staging_version", ""),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "production_version", ""),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "rules", loadFixtureString("%s/expected/simple_rules.json", workdir)),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_warnings", loadFixtureString("%s/expected/simple_rules_warnings.json", workdir)),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_errors", ""),
+					),
+				},
+			},
+		},
+		"create include - rules with validation errors and warnings": {
+			testData: testData{
+				groupID:     "grp_123",
+				rulesPath:   "simple_rules.json",
+				productID:   "prd_test",
+				includeID:   includeID,
+				ruleFormat:  "v2022-06-28",
+				contractID:  "ctr_123",
+				includeName: "test include",
+				includeType: papi.IncludeTypeMicroServices,
+			},
+			init: func(m *papi.Mock, testData *testData) {
+				expectCreate(m, testData).Once()
+				testData.rulesPath = "simple_rules_with_errors_and_warnings.json"
+				expectRead(m, testData).Times(2)
+				expectDelete(m, testData).Once()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: loadFixtureString("%s/property_include.tf", workdir),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_property_include.test", "group_id", "grp_123"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "contract_id", "ctr_123"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "product_id", "prd_test"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "name", "test include"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_format", "v2022-06-28"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "type", "MICROSERVICES"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "latest_version", "1"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "staging_version", ""),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "production_version", ""),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "rules", loadFixtureString("%s/expected/simple_rules.json", workdir)),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_errors", loadFixtureString("%s/expected/simple_rules_errors.json", workdir)),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_warnings", loadFixtureString("%s/expected/simple_rules_warnings.json", workdir)),
+					),
+				},
+			},
+		},
+		"create include - server returns no warnings on second apply": {
+			testData: testData{
+				groupID:     "grp_123",
+				rulesPath:   "simple_rules.json",
+				productID:   "prd_test",
+				includeID:   includeID,
+				ruleFormat:  "v2022-06-28",
+				contractID:  "ctr_123",
+				includeName: "test include",
+				includeType: papi.IncludeTypeMicroServices,
+			},
+			init: func(m *papi.Mock, testData *testData) {
+				// first step when server returns validation warnings
+				expectCreate(m, testData).Once()
+				testData.rulesPath = "simple_rules_with_warnings.json"
+				expectRead(m, testData).Times(2)
+				expectDelete(m, testData).Once()
+
+				// second step when server returns no validation warnings
+				testData.rulesPath = "simple_rules.json"
+				expectRead(m, testData).Times(2)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: loadFixtureString("%s/property_include.tf", workdir),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_property_include.test", "group_id", "grp_123"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "contract_id", "ctr_123"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "product_id", "prd_test"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "name", "test include"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_format", "v2022-06-28"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "type", "MICROSERVICES"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "latest_version", "1"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "staging_version", ""),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "production_version", ""),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "rules", loadFixtureString("%s/expected/simple_rules.json", workdir)),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_warnings", loadFixtureString("%s/expected/simple_rules_warnings.json", workdir)),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_errors", ""),
+					),
+				},
+				{
+					Config: loadFixtureString("%s/property_include.tf", workdir),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_property_include.test", "group_id", "grp_123"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "contract_id", "ctr_123"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "product_id", "prd_test"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "name", "test include"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_format", "v2022-06-28"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "type", "MICROSERVICES"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "latest_version", "1"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "staging_version", ""),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "production_version", ""),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "rules", loadFixtureString("%s/expected/simple_rules.json", workdir)),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_warnings", ""),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_errors", ""),
+					),
+				},
+			},
+		},
+		"create include - server returns no errors on second apply": {
+			testData: testData{
+				groupID:     "grp_123",
+				rulesPath:   "simple_rules.json",
+				productID:   "prd_test",
+				includeID:   includeID,
+				ruleFormat:  "v2022-06-28",
+				contractID:  "ctr_123",
+				includeName: "test include",
+				includeType: papi.IncludeTypeMicroServices,
+			},
+			init: func(m *papi.Mock, testData *testData) {
+				// first step when server returns validation errors
+				expectCreate(m, testData).Once()
+				testData.rulesPath = "simple_rules_with_errors.json"
+				expectRead(m, testData).Times(2)
+
+				// second step when server returns no validation errors
+				testData.rulesPath = "simple_rules.json"
+				expectRead(m, testData).Times(2)
+				expectDelete(m, testData).Once()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: loadFixtureString("%s/property_include.tf", workdir),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_property_include.test", "group_id", "grp_123"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "contract_id", "ctr_123"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "product_id", "prd_test"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "name", "test include"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_format", "v2022-06-28"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "type", "MICROSERVICES"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "latest_version", "1"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "staging_version", ""),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "production_version", ""),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "rules", loadFixtureString("%s/expected/simple_rules.json", workdir)),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_errors", loadFixtureString("%s/expected/simple_rules_errors.json", workdir)),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_warnings", ""),
+					),
+				},
+				{
+					Config: loadFixtureString("%s/property_include.tf", workdir),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_property_include.test", "group_id", "grp_123"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "contract_id", "ctr_123"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "product_id", "prd_test"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "name", "test include"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_format", "v2022-06-28"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "type", "MICROSERVICES"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "latest_version", "1"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "staging_version", ""),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "production_version", ""),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "rules", loadFixtureString("%s/expected/simple_rules.json", workdir)),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_errors", ""),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_warnings", ""),
 					),
 				},
 			},
@@ -353,7 +548,8 @@ func TestResourcePropertyInclude(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_property_include.test", "staging_version", ""),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "production_version", ""),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "rules", loadFixtureString("%s/expected/default_rules.json", workdir)),
-						resource.TestCheckNoResourceAttr("akamai_property_include.test", "rule_errors"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_errors", ""),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_warnings", ""),
 					),
 				},
 				{
@@ -369,12 +565,13 @@ func TestResourcePropertyInclude(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_property_include.test", "staging_version", ""),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "production_version", ""),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "rules", loadFixtureString("%s/expected/simple_rules.json", workdir)),
-						resource.TestCheckNoResourceAttr("akamai_property_include.test", "rule_errors"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_errors", ""),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_warnings", ""),
 					),
 				},
 			},
 		},
-		"update incude - create new version": {
+		"update include - create new version": {
 			testData: testData{
 				groupID:          "grp_123",
 				productID:        "prd_test",
@@ -417,7 +614,8 @@ func TestResourcePropertyInclude(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_property_include.test", "staging_version", ""),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "production_version", ""),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "rules", loadFixtureString("%s/expected/default_rules.json", workdir)),
-						resource.TestCheckNoResourceAttr("akamai_property_include.test", "rule_errors"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_errors", ""),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_warnings", ""),
 					),
 				},
 				{
@@ -433,7 +631,8 @@ func TestResourcePropertyInclude(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_property_include.test", "staging_version", "1"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "production_version", ""),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "rules", loadFixtureString("%s/expected/simple_rules.json", workdir)),
-						resource.TestCheckNoResourceAttr("akamai_property_include.test", "rule_errors"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_errors", ""),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_warnings", ""),
 					),
 				},
 			},
@@ -515,7 +714,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 				},
 				{
 					Config:      loadFixtureString("%s/custom_validation_errors.tf", workdir),
-					ExpectError: regexp.MustCompile(`Error: expected type to be one of \[MICROSERVICES COMMON_SETTINGS\]`),
+					ExpectError: regexp.MustCompile(`Error: expected type to be one of \[MICROSERVICES COMMON_SETTINGS]`),
 				},
 				{
 					Config:      loadFixtureString("%s/custom_validation_errors.tf", workdir),
@@ -533,18 +732,18 @@ func TestResourcePropertyInclude(t *testing.T) {
 		},
 	}
 
-	for name, test := range tests {
+	for name, testCase := range tests {
 		t.Run(name, func(t *testing.T) {
 			client := &papi.Mock{}
-			if test.init != nil {
-				test.init(client, &test.testData)
+			if testCase.init != nil {
+				testCase.init(client, &testCase.testData)
 			}
 
 			useClient(client, &hapi.Mock{}, func() {
 				resource.UnitTest(t, resource.TestCase{
 					Providers:  testAccProviders,
 					IsUnitTest: true,
-					Steps:      test.steps,
+					Steps:      testCase.steps,
 				})
 			})
 			client.AssertExpectations(t)

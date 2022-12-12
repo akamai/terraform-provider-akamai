@@ -52,6 +52,11 @@ func dataSourcePropertyIncludeRules() *schema.Resource {
 				Computed:    true,
 				Description: "Rules validation errors",
 			},
+			"rule_warnings": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Rules validation warnings",
+			},
 			"rule_format": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -117,13 +122,26 @@ func dataPropertyIncludeRulesRead(ctx context.Context, d *schema.ResourceData, m
 		"type":        includeRuleTree.IncludeType,
 	}
 
+	var ruleErrors string
 	if len(includeRuleTree.Errors) > 0 {
 		rulesErrorsJSON, err := json.MarshalIndent(includeRuleTree.Errors, "", "  ")
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		attrs["rule_errors"] = string(rulesErrorsJSON)
+		ruleErrors = string(rulesErrorsJSON)
 	}
+	attrs["rule_errors"] = ruleErrors
+
+	var ruleWarnings string
+	if len(includeRuleTree.Warnings) > 0 {
+		rulesWarningsJSON, err := json.MarshalIndent(includeRuleTree.Warnings, "", "  ")
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		ruleWarnings = string(rulesWarningsJSON)
+	}
+	attrs["rule_warnings"] = ruleWarnings
+
 	if err := tools.SetAttrs(d, attrs); err != nil {
 		return diag.FromErr(err)
 	}

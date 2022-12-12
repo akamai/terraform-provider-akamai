@@ -3,9 +3,7 @@ package property
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"path"
-	"reflect"
 	"regexp"
 	"strconv"
 	"testing"
@@ -17,21 +15,22 @@ import (
 )
 
 type testDataPropertyIncludeRules struct {
-	GroupID     string
-	ContractID  string
-	Version     int
-	IncludeID   string
-	Name        string
-	RuleFormat  string
-	Rules       string
-	RuleErrors  string
-	IncludeType papi.IncludeType
+	GroupID      string
+	ContractID   string
+	Version      int
+	IncludeID    string
+	Name         string
+	RuleFormat   string
+	Rules        string
+	RuleErrors   string
+	RuleWarnings string
+	IncludeType  papi.IncludeType
 }
 
 var (
 	workdir = "./testdata/TestDSPropertyIncludeRules"
 
-	propertyIncludeRulesWithoutRuleErrors = testDataPropertyIncludeRules{
+	propertyIncludeRules = testDataPropertyIncludeRules{
 		ContractID:  "ctr_1",
 		GroupID:     "grp_2",
 		IncludeID:   "12345",
@@ -42,19 +41,23 @@ var (
 		Rules:       loadFixtureString("%s/property-snippets/rules_without_errors.json", workdir),
 	}
 
-	propertyIncludeRulesWithRuleErrors = testDataPropertyIncludeRules{
-		ContractID:  "ctr_1",
-		GroupID:     "grp_2",
-		IncludeID:   "12345",
-		RuleFormat:  "v2022-06-28",
-		Version:     1,
-		Name:        "TestIncludeName",
-		IncludeType: "MICROSERVICES",
-		Rules:       loadFixtureString("%s/property-snippets/rules_with_errors.json", workdir),
-		RuleErrors:  loadFixtureString("%s/property-snippets/rule_errors.json", workdir),
+	propertyIncludeRulesWithRuleErrors = func(propertyIncludeRules testDataPropertyIncludeRules, rulesErrors string) testDataPropertyIncludeRules {
+		propertyIncludeRules.RuleErrors = rulesErrors
+		return propertyIncludeRules
 	}
 
-	expectReadPropertyRulesInclude = func(t *testing.T, client *papi.Mock, data testDataPropertyIncludeRules, timesToRun int, withRuleErrors bool) {
+	propertyIncludeRulesWithRuleWarnings = func(propertyIncludeRules testDataPropertyIncludeRules, rulesWarnings string) testDataPropertyIncludeRules {
+		propertyIncludeRules.RuleWarnings = rulesWarnings
+		return propertyIncludeRules
+	}
+
+	propertyIncludeRulesWithRuleWarningsAndErrors = func(propertyIncludeRules testDataPropertyIncludeRules, rulesWarnings, rulesErrors string) testDataPropertyIncludeRules {
+		propertyIncludeRules.RuleWarnings = rulesWarnings
+		propertyIncludeRules.RuleErrors = rulesErrors
+		return propertyIncludeRules
+	}
+
+	expectReadPropertyRulesInclude = func(t *testing.T, client *papi.Mock, data testDataPropertyIncludeRules, timesToRun int, withRuleErrors, withRuleWarnings bool, rulesFileName string) {
 		getIncludeRuleTreeRequest := papi.GetIncludeRuleTreeRequest{
 			ContractID:     data.ContractID,
 			GroupID:        data.GroupID,
@@ -69,13 +72,16 @@ var (
 		}
 
 		var ruleResp papi.GetIncludeRuleTreeResponse
-		err := json.Unmarshal(loadFixtureBytes(path.Join(workdir, "expected-response", provideIncludesRulesJSONFileName(withRuleErrors))), &ruleResp)
+		err := json.Unmarshal(loadFixtureBytes(path.Join(workdir, "expected-response", rulesFileName)), &ruleResp)
 		assert.NoError(t, err)
 
 		getIncludeRuleTreeResponse.Rules = ruleResp.Rules
 		getIncludeRuleTreeResponse.Comments = ruleResp.Comments
 		if withRuleErrors && ruleResp.Errors != nil {
 			getIncludeRuleTreeResponse.Errors = ruleResp.Errors
+		}
+		if withRuleWarnings && ruleResp.Warnings != nil {
+			getIncludeRuleTreeResponse.Warnings = ruleResp.Warnings
 		}
 
 		client.On("GetIncludeRuleTree", mock.Anything, getIncludeRuleTreeRequest).Return(&getIncludeRuleTreeResponse, nil).Times(timesToRun)
@@ -103,17 +109,32 @@ func TestDataPropertyIncludeRules(t *testing.T) {
 	}{
 		"happy path include rules with rule errors": {
 			init: func(t *testing.T, m *papi.Mock, testData testDataPropertyIncludeRules) {
-				expectReadPropertyRulesInclude(t, m, testData, 5, true)
+				expectReadPropertyRulesInclude(t, m, testData, 5, true, false, "rules_with_errors.json")
 			},
-			mockData:   propertyIncludeRulesWithRuleErrors,
-			configPath: "./testdata/TestDSPropertyIncludeRules/property_include_rules_with_errors.tf",
+			mockData:   propertyIncludeRulesWithRuleErrors(propertyIncludeRules, loadFixtureString("%s/property-snippets/rule_errors.json", workdir)),
+			configPath: "./testdata/TestDSPropertyIncludeRules/property_include_rules.tf",
 		},
-		"happy path include rules without rules errors": {
+		"happy path include rules with rules warnings": {
 			init: func(t *testing.T, m *papi.Mock, testData testDataPropertyIncludeRules) {
-				expectReadPropertyRulesInclude(t, m, testData, 5, false)
+				expectReadPropertyRulesInclude(t, m, testData, 5, false, true, "rules_with_warnings.json")
 			},
-			mockData:   propertyIncludeRulesWithoutRuleErrors,
-			configPath: "./testdata/TestDSPropertyIncludeRules/property_include_rules_without_errors.tf",
+			mockData:   propertyIncludeRulesWithRuleWarnings(propertyIncludeRules, loadFixtureString("%s/property-snippets/rule_warnings.json", workdir)),
+			configPath: "./testdata/TestDSPropertyIncludeRules/property_include_rules.tf",
+		},
+		"happy path include rules with rules warnings and errors": {
+			init: func(t *testing.T, m *papi.Mock, testData testDataPropertyIncludeRules) {
+				expectReadPropertyRulesInclude(t, m, testData, 5, true, true, "rules_with_errors_and_warnings.json")
+			},
+			mockData: propertyIncludeRulesWithRuleWarningsAndErrors(propertyIncludeRules, loadFixtureString("%s/property-snippets/rule_warnings.json", workdir),
+				loadFixtureString("%s/property-snippets/rule_errors.json", workdir)),
+			configPath: "./testdata/TestDSPropertyIncludeRules/property_include_rules.tf",
+		},
+		"happy path include rules": {
+			init: func(t *testing.T, m *papi.Mock, testData testDataPropertyIncludeRules) {
+				expectReadPropertyRulesInclude(t, m, testData, 5, false, false, "rules_without_errors.json")
+			},
+			mockData:   propertyIncludeRules,
+			configPath: "./testdata/TestDSPropertyIncludeRules/property_include_rules.tf",
 		},
 		"groupID not provided": {
 			init:       func(t *testing.T, m *papi.Mock, testData testDataPropertyIncludeRules) {},
@@ -139,7 +160,7 @@ func TestDataPropertyIncludeRules(t *testing.T) {
 			init: func(t *testing.T, m *papi.Mock, testData testDataPropertyIncludeRules) {
 				expectGetIncludeRuleTreeError(t, m, testData)
 			},
-			mockData:   propertyIncludeRulesWithRuleErrors,
+			mockData:   propertyIncludeRulesWithRuleErrors(propertyIncludeRules, loadFixtureString("%s/property-snippets/rule_errors.json", workdir)),
 			configPath: "./testdata/TestDSPropertyIncludeRules/property_include_rules_api_error.tf",
 			error:      regexp.MustCompile("GetIncludeRuleTree response error"),
 		},
@@ -156,7 +177,7 @@ func TestDataPropertyIncludeRules(t *testing.T) {
 					Steps: []resource.TestStep{
 						{
 							Config:      loadFixtureString(test.configPath),
-							Check:       checkPropertyIncludeRulesAttrs(test.mockData),
+							Check:       checkPropertyIncludeRulesAttrs(test.mockData, t),
 							ExpectError: test.error,
 						},
 					},
@@ -167,39 +188,30 @@ func TestDataPropertyIncludeRules(t *testing.T) {
 	}
 }
 
-func checkPropertyIncludeRulesAttrs(data testDataPropertyIncludeRules) resource.TestCheckFunc {
-	var testCheckFuncs []resource.TestCheckFunc
-	testCheckFuncs = append(testCheckFuncs, resource.TestCheckResourceAttr("data.akamai_property_include_rules.test", "contract_id", data.ContractID))
-	testCheckFuncs = append(testCheckFuncs, resource.TestCheckResourceAttr("data.akamai_property_include_rules.test", "group_id", data.GroupID))
-	testCheckFuncs = append(testCheckFuncs, resource.TestCheckResourceAttr("data.akamai_property_include_rules.test", "include_id", data.IncludeID))
-	testCheckFuncs = append(testCheckFuncs, resource.TestCheckResourceAttr("data.akamai_property_include_rules.test", "version", strconv.Itoa(data.Version)))
-	testCheckFuncs = append(testCheckFuncs, resource.TestCheckResourceAttr("data.akamai_property_include_rules.test", "name", data.Name))
-	testCheckFuncs = append(testCheckFuncs, resource.TestCheckResourceAttr("data.akamai_property_include_rules.test", "rule_format", data.RuleFormat))
-	testCheckFuncs = append(testCheckFuncs, resource.TestCheckResourceAttr("data.akamai_property_include_rules.test", "type", string(data.IncludeType)))
-	testCheckFuncs = append(testCheckFuncs, resource.TestCheckResourceAttrSet("data.akamai_property_include_rules.test", "rules"))
+func checkPropertyIncludeRulesAttrs(data testDataPropertyIncludeRules, t *testing.T) resource.TestCheckFunc {
+	testCheckFuncs := []resource.TestCheckFunc{
+		resource.TestCheckResourceAttr("data.akamai_property_include_rules.test", "contract_id", data.ContractID),
+		resource.TestCheckResourceAttr("data.akamai_property_include_rules.test", "group_id", data.GroupID),
+		resource.TestCheckResourceAttr("data.akamai_property_include_rules.test", "include_id", data.IncludeID),
+		resource.TestCheckResourceAttr("data.akamai_property_include_rules.test", "version", strconv.Itoa(data.Version)),
+		resource.TestCheckResourceAttr("data.akamai_property_include_rules.test", "name", data.Name),
+		resource.TestCheckResourceAttr("data.akamai_property_include_rules.test", "rule_format", data.RuleFormat),
+		resource.TestCheckResourceAttr("data.akamai_property_include_rules.test", "type", string(data.IncludeType)),
+		resource.TestCheckResourceAttrSet("data.akamai_property_include_rules.test", "rules"),
+	}
+
 	if len(data.RuleErrors) > 0 {
 		testCheckFuncs = append(testCheckFuncs, resource.TestCheckResourceAttrWith("data.akamai_property_include_rules.test", "rule_errors", func(value string) error {
-			var providedRuleErrors, expectedRuleErrors []papi.Error
-			err := json.Unmarshal([]byte(data.RuleErrors), &providedRuleErrors)
-			if err != nil {
-				return fmt.Errorf("problem with unmarshal JSON")
-			}
-			err = json.Unmarshal([]byte(value), &expectedRuleErrors)
-			if err != nil {
-				return fmt.Errorf("problem with unmarshal JSON")
-			}
-			if !reflect.DeepEqual(providedRuleErrors, expectedRuleErrors) {
-				return fmt.Errorf("two JSONs not equal")
-			}
+			assert.JSONEq(t, data.RuleErrors, value)
+			return nil
+		}))
+	}
+
+	if len(data.RuleWarnings) > 0 {
+		testCheckFuncs = append(testCheckFuncs, resource.TestCheckResourceAttrWith("data.akamai_property_include_rules.test", "rule_warnings", func(value string) error {
+			assert.JSONEq(t, data.RuleWarnings, value)
 			return nil
 		}))
 	}
 	return resource.ComposeAggregateTestCheckFunc(testCheckFuncs...)
-}
-
-func provideIncludesRulesJSONFileName(withRuleErrors bool) string {
-	if withRuleErrors {
-		return "rules_with_errors.json"
-	}
-	return "rules_without_errors.json"
 }

@@ -82,6 +82,11 @@ func resourcePropertyInclude() *schema.Resource {
 				Computed:    true,
 				Description: "Rule validation errors",
 			},
+			"rule_warnings": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Rule validation warnings",
+			},
 			"latest_version": {
 				Type:        schema.TypeInt,
 				Computed:    true,
@@ -234,15 +239,29 @@ func resourcePropertyIncludeRead(ctx context.Context, rd *schema.ResourceData, m
 		"production_version": productionVersion,
 	}
 
+	var rulesError string
 	if len(getIncludeRuleTreeResp.Errors) > 0 {
 		rulesErrorsJSON, err := json.MarshalIndent(getIncludeRuleTreeResp.Errors, "", "  ")
 		if err != nil {
 			return diag.Errorf("%s read: %s", ErrPropertyInclude, err)
 		}
 
-		attrs["rule_errors"] = string(rulesErrorsJSON)
-		logger.Errorf("Include has rule errors %s", rulesErrorsJSON)
+		rulesError = string(rulesErrorsJSON)
+		logger.Errorf("Include has rule errors: %s", rulesErrorsJSON)
 	}
+	attrs["rule_errors"] = rulesError
+
+	var rulesWarnings string
+	if len(getIncludeRuleTreeResp.Warnings) > 0 {
+		rulesWarningsJSON, err := json.MarshalIndent(getIncludeRuleTreeResp.Warnings, "", "  ")
+		if err != nil {
+			return diag.Errorf("%s read: %s", ErrPropertyInclude, err)
+		}
+
+		rulesWarnings = string(rulesWarningsJSON)
+		logger.Errorf("Include has rule warnings: %s", rulesWarningsJSON)
+	}
+	attrs["rule_warnings"] = rulesWarnings
 
 	if err = tools.SetAttrs(rd, attrs); err != nil {
 		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
