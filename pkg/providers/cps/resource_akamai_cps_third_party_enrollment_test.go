@@ -1758,6 +1758,7 @@ func TestSuppressingSignatureAlgorithm(t *testing.T) {
 
 		var enrollmentGet cps.Enrollment
 		err := copier.CopyWithOption(&enrollmentGet, enrollment, copier.Option{DeepCopy: true})
+		require.NoError(t, err)
 		enrollmentGet.SignatureAlgorithm = ""
 
 		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
@@ -1806,6 +1807,7 @@ func TestSuppressingSignatureAlgorithm(t *testing.T) {
 
 		var enrollmentUpdateGet cps.Enrollment
 		err = copier.CopyWithOption(&enrollmentUpdateGet, enrollmentUpdate, copier.Option{DeepCopy: true})
+		require.NoError(t, err)
 		enrollmentUpdateGet.SignatureAlgorithm = ""
 
 		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).

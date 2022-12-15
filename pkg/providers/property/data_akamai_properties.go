@@ -12,9 +12,9 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
 )
 
-func dataSourceAkamaiProperties() *schema.Resource {
+func dataSourceProperties() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: dataAkamaiPropertiesRead,
+		ReadContext: dataPropertiesRead,
 		Schema: map[string]*schema.Schema{
 			"group_id": {
 				Type:             schema.TypeString,
@@ -49,9 +49,9 @@ func dataSourceAkamaiProperties() *schema.Resource {
 	}
 }
 
-func dataAkamaiPropertiesRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataPropertiesRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
-	log := meta.Log("PAPI", "dataAkamaiPropertiesRead")
+	log := meta.Log("PAPI", "dataPropertiesRead")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
 		ctx,

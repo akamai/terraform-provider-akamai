@@ -51,14 +51,9 @@ func resourceImagingPolicySet() *schema.Resource {
 	}
 }
 
-func resourceImagingPolicySetImport(ctx context.Context, rd *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+func resourceImagingPolicySetImport(_ context.Context, rd *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	meta := akamai.Meta(m)
 	logger := meta.Log("Imaging", "resourceImagingPolicySetImport")
-	ctx = session.ContextWithOptions(
-		ctx,
-		session.WithContextLog(logger),
-	)
-
 	logger.Debugf("Import Policy Set")
 
 	parts := strings.Split(rd.Id(), ":")

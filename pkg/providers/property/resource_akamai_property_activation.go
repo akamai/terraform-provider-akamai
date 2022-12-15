@@ -8,14 +8,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/spf13/cast"
-
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/papi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/apex/log"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/spf13/cast"
 )
 
 func resourcePropertyActivation() *schema.Resource {
@@ -178,26 +178,7 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 	}
 
 	// if there are errors return them cleanly
-	var diags diag.Diagnostics
-	if len(rules.Errors) > 0 {
-
-		if err := d.Set("rule_errors", papiErrorsToList(rules.Errors)); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-		}
-		msg, err := json.MarshalIndent(papiErrorsToList(rules.Errors), "", "\t")
-		if err != nil {
-			return diag.FromErr(fmt.Errorf("error marshaling API error: %s", err))
-		}
-		logger.Errorf("Property has rule errors %s", msg)
-		diags = append(diags, diag.Errorf("activation cannot continue due to rule errors: %s", msg)...)
-	}
-	if len(rules.Warnings) > 0 {
-		msg, err := json.MarshalIndent(papiErrorsToList(rules.Warnings), "", "\t")
-		if err != nil {
-			return diag.FromErr(fmt.Errorf("error marshaling API warnings: %s", err))
-		}
-		logger.Warnf("Property has rule warnings %s", msg)
-	}
+	diags := checkRuleTreeErrorsAndWarnings(rules, d, logger)
 	if diags != nil && diags.HasError() {
 		d.Partial(true)
 		return diags
@@ -257,11 +238,8 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 
 		activation = act.Activation
 
-		if err := d.Set("errors", flattenErrorArray(act.Errors)); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-		}
-		if err := d.Set("warnings", flattenErrorArray(act.Warnings)); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		if err = setErrorsAndWarnings(d, flattenErrorArray(act.Errors), flattenErrorArray(act.Warnings)); err != nil {
+			return diag.FromErr(err)
 		}
 	}
 
@@ -295,10 +273,6 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 			}
 			return diag.FromErr(fmt.Errorf("activation context terminated: %w", ctx.Err()))
 		}
-	}
-
-	if err := d.Set("version", activation.PropertyVersion); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
 	if err := d.Set("status", string(activation.Status)); err != nil {
@@ -407,11 +381,8 @@ func resourcePropertyActivationDelete(ctx context.Context, d *schema.ResourceDat
 			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 		}
 
-		if err := d.Set("errors", flattenErrorArray(act.Errors)); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-		}
-		if err := d.Set("warnings", flattenErrorArray(act.Warnings)); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		if err = setErrorsAndWarnings(d, flattenErrorArray(act.Errors), flattenErrorArray(act.Warnings)); err != nil {
+			return diag.FromErr(err)
 		}
 	}
 
@@ -434,11 +405,8 @@ func resourcePropertyActivationDelete(ctx context.Context, d *schema.ResourceDat
 			}
 			activation = act.Activation
 
-			if err := d.Set("errors", flattenErrorArray(act.Errors)); err != nil {
-				return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-			}
-			if err := d.Set("warnings", flattenErrorArray(act.Warnings)); err != nil {
-				return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			if err = setErrorsAndWarnings(d, flattenErrorArray(act.Errors), flattenErrorArray(act.Warnings)); err != nil {
+				return diag.FromErr(err)
 			}
 
 		case <-ctx.Done():
@@ -603,25 +571,7 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 	}
 
 	// if there are errors return them cleanly
-	var diags diag.Diagnostics
-	if len(rules.Errors) > 0 {
-		if err := d.Set("rule_errors", papiErrorsToList(rules.Errors)); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-		}
-		msg, err := json.MarshalIndent(papiErrorsToList(rules.Errors), "", "\t")
-		if err != nil {
-			return diag.FromErr(fmt.Errorf("error marshaling API error: %s", err))
-		}
-		logger.Errorf("Property has rule errors %s", msg)
-		diags = append(diags, diag.Errorf("activation cannot continue due to rule errors: %s", msg)...)
-	}
-	if len(rules.Warnings) > 0 {
-		msg, err := json.MarshalIndent(papiErrorsToList(rules.Warnings), "", "\t")
-		if err != nil {
-			return diag.FromErr(fmt.Errorf("error marshaling API warnings: %s", err))
-		}
-		logger.Warnf("Property has rule warnings %s", msg)
-	}
+	diags := checkRuleTreeErrorsAndWarnings(rules, d, logger)
 	if diags.HasError() {
 		d.Partial(true)
 		return diags
@@ -638,18 +588,9 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 
-	var versionStatus papi.VersionStatus
-	propertyVersion, err := client.GetPropertyVersion(ctx, papi.GetPropertyVersionRequest{
-		PropertyID:      propertyID,
-		PropertyVersion: version,
-	})
+	versionStatus, err := resolveVersionStatus(ctx, client, propertyID, version, network)
 	if err != nil {
 		return diag.FromErr(err)
-	}
-	if network == papi.ActivationNetworkProduction {
-		versionStatus = propertyVersion.Version.ProductionStatus
-	} else {
-		versionStatus = propertyVersion.Version.StagingStatus
 	}
 
 	if propertyActivation == nil || versionStatus == papi.VersionStatusDeactivated {
@@ -688,11 +629,8 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 
 		propertyActivation = act.Activation
 
-		if err := d.Set("errors", flattenErrorArray(act.Errors)); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-		}
-		if err := d.Set("warnings", flattenErrorArray(act.Warnings)); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		if err = setErrorsAndWarnings(d, flattenErrorArray(act.Errors), flattenErrorArray(act.Warnings)); err != nil {
+			return diag.FromErr(err)
 		}
 	} else if d.HasChange("note") {
 		oldValue, _ := d.GetChange("note")
@@ -700,10 +638,6 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 			return diag.FromErr(err)
 		}
 		return diag.Errorf("cannot update activation attribute note after creation")
-	}
-
-	if err := d.Set("activation_id", propertyActivation.ActivationID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
 	for propertyActivation.Status != papi.ActivationStatusActive {
@@ -724,20 +658,13 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 			}
 			propertyActivation = act.Activation
 
-			if err := d.Set("errors", flattenErrorArray(act.Errors)); err != nil {
-				return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-			}
-			if err := d.Set("warnings", flattenErrorArray(act.Warnings)); err != nil {
-				return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			if err = setErrorsAndWarnings(d, flattenErrorArray(act.Errors), flattenErrorArray(act.Warnings)); err != nil {
+				return diag.FromErr(err)
 			}
 
 		case <-ctx.Done():
 			return diag.FromErr(fmt.Errorf("activation context terminated: %w", ctx.Err()))
 		}
-	}
-
-	if err := d.Set("version", propertyActivation.PropertyVersion); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
 	if err := d.Set("status", string(propertyActivation.Status)); err != nil {
@@ -754,6 +681,56 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
 	}
 
+	return nil
+}
+
+func resolveVersionStatus(ctx context.Context, client papi.PAPI, propertyID string, version int, network papi.ActivationNetwork) (papi.VersionStatus, error) {
+	var versionStatus papi.VersionStatus
+	propertyVersion, err := client.GetPropertyVersion(ctx, papi.GetPropertyVersionRequest{
+		PropertyID:      propertyID,
+		PropertyVersion: version,
+	})
+	if err != nil {
+		return "", err
+	}
+	if network == papi.ActivationNetworkProduction {
+		versionStatus = propertyVersion.Version.ProductionStatus
+	} else {
+		versionStatus = propertyVersion.Version.StagingStatus
+	}
+	return versionStatus, nil
+}
+
+func checkRuleTreeErrorsAndWarnings(rules *papi.GetRuleTreeResponse, d *schema.ResourceData, logger log.Interface) diag.Diagnostics {
+	var diags diag.Diagnostics
+	if len(rules.Errors) > 0 {
+		if err := d.Set("rule_errors", papiErrorsToList(rules.Errors)); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		}
+		msg, err := json.MarshalIndent(papiErrorsToList(rules.Errors), "", "\t")
+		if err != nil {
+			return diag.FromErr(fmt.Errorf("error marshaling API error: %s", err))
+		}
+		logger.Errorf("Property has rule errors %s", msg)
+		diags = append(diags, diag.Errorf("activation cannot continue due to rule errors: %s", msg)...)
+	}
+	if len(rules.Warnings) > 0 {
+		msg, err := json.MarshalIndent(papiErrorsToList(rules.Warnings), "", "\t")
+		if err != nil {
+			return diag.FromErr(fmt.Errorf("error marshaling API warnings: %s", err))
+		}
+		logger.Warnf("Property has rule warnings %s", msg)
+	}
+	return diags
+}
+
+func setErrorsAndWarnings(d *schema.ResourceData, errors, warnings string) error {
+	if err := d.Set("errors", errors); err != nil {
+		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+	}
+	if err := d.Set("warnings", warnings); err != nil {
+		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+	}
 	return nil
 }
 

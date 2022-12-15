@@ -14,9 +14,9 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
 )
 
-func dataSourceAkamaiProperty() *schema.Resource {
+func dataSourceProperty() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: dataAkamaiPropertyRead,
+		ReadContext: dataPropertyRead,
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:     schema.TypeString,
@@ -34,9 +34,9 @@ func dataSourceAkamaiProperty() *schema.Resource {
 	}
 }
 
-func dataAkamaiPropertyRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataPropertyRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
-	log := meta.Log("PAPI", "dataAkamaiPropertyRead")
+	log := meta.Log("PAPI", "dataPropertyRead")
 	log.Debug("Reading Property")
 
 	name, err := tools.GetStringValue("name", d)

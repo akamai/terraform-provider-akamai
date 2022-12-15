@@ -7,6 +7,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/networklists"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAccAkamaiNetworkList_res_basic(t *testing.T) {
@@ -14,22 +15,28 @@ func TestAccAkamaiNetworkList_res_basic(t *testing.T) {
 		client := &networklists.Mock{}
 
 		createResponse := networklists.CreateNetworkListResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResNetworkList/NetworkList.json"), &createResponse)
+		err := json.Unmarshal(loadFixtureBytes("testdata/TestResNetworkList/NetworkList.json"), &createResponse)
+		require.NoError(t, err)
 
 		crl := networklists.GetNetworkListsResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResNetworkList/NetworkLists.json"), &crl)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResNetworkList/NetworkLists.json"), &crl)
+		require.NoError(t, err)
 
 		getResponse := networklists.GetNetworkListResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResNetworkList/NetworkList.json"), &getResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResNetworkList/NetworkList.json"), &getResponse)
+		require.NoError(t, err)
 
 		updateResponse := networklists.UpdateNetworkListResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResNetworkList/NetworkListUpdated.json"), &updateResponse)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResNetworkList/NetworkListUpdated.json"), &updateResponse)
+		require.NoError(t, err)
 
 		getResponseAfterUpdate := networklists.GetNetworkListResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResNetworkList/NetworkListUpdated.json"), &getResponseAfterUpdate)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResNetworkList/NetworkListUpdated.json"), &getResponseAfterUpdate)
+		require.NoError(t, err)
 
 		cd := networklists.RemoveNetworkListResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResNetworkList/empty.json"), &cd)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResNetworkList/empty.json"), &cd)
+		require.NoError(t, err)
 
 		client.On("CreateNetworkList",
 			mock.Anything,

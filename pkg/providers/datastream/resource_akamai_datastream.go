@@ -1339,6 +1339,9 @@ func resourceDatastreamDelete(ctx context.Context, d *schema.ResourceData, m int
 	streamDetails, err := client.GetStream(ctx, datastream.GetStreamRequest{
 		StreamID: streamID,
 	})
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	activationStatus := streamDetails.ActivationStatus
 

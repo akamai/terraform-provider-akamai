@@ -322,6 +322,9 @@ func resourceEdgeWorkerDelete(ctx context.Context, d *schema.ResourceData, m int
 	client := inst.Client(meta)
 	logger.Debug("Deleting EdgeWorker and its bundle version")
 	edgeWorkerIDReq, err := strconv.Atoi(d.Id())
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	versions, err := client.ListEdgeWorkerVersions(ctx, edgeworkers.ListEdgeWorkerVersionsRequest{
 		EdgeWorkerID: edgeWorkerIDReq,

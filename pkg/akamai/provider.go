@@ -217,6 +217,9 @@ func configureContext(ctx context.Context, d *schema.ResourceData) (interface{},
 		session.WithLog(logger),
 		session.WithHTTPTracing(cast.ToBool(os.Getenv("AKAMAI_HTTP_TRACE_ENABLED"))),
 	)
+	if err != nil {
+		return nil, diag.FromErr(err)
+	}
 
 	meta := &meta{
 		log:          log,

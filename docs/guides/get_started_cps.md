@@ -1,7 +1,8 @@
 ---
-layout: akamai
-page_title: Guide
-subcategory: Certificate Provisioning
+layout: "akamai"
+page_title: "Module: Certificate Provisioning"
+description: |-
+  Certificate Provisioning module for the Akamai Terraform Provider
 ---
 
 Increase your customers' trust, encrypt sensitive information, and improve SEO rankings using first- and third-party SSL/TLS Domain Validation certificates that securely deliver content to and from your site.

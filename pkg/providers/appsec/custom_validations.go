@@ -43,12 +43,12 @@ func VerifyIDUnchanged(_ context.Context, d *schema.ResourceDiff, m interface{})
 	logger := meta.Log("APPSEC", "VerifyIDUnchanged")
 
 	if d.HasChange("config_id") {
-		old, new := d.GetChange("config_id")
-		oldvalue := old.(int)
-		newvalue := new.(int)
-		if oldvalue > 0 {
-			logger.Errorf("%s value %d specified in configuration differs from resource ID's value %d", "config_id", newvalue, oldvalue)
-			return fmt.Errorf("%s value %d specified in configuration differs from resource ID's value %d", "config_id", newvalue, oldvalue)
+		oldConfig, newConfig := d.GetChange("config_id")
+		oldVal := oldConfig.(int)
+		newVal := newConfig.(int)
+		if oldVal > 0 {
+			logger.Errorf("%s value %d specified in configuration differs from resource ID's value %d", "config_id", newVal, oldVal)
+			return fmt.Errorf("%s value %d specified in configuration differs from resource ID's value %d", "config_id", newVal, oldVal)
 		}
 	}
 
@@ -56,12 +56,12 @@ func VerifyIDUnchanged(_ context.Context, d *schema.ResourceDiff, m interface{})
 		_, exists := d.GetOkExists("security_policy_id")
 
 		if exists && d.HasChange("security_policy_id") {
-			old, new := d.GetChange("security_policy_id")
-			oldvalue := old.(string)
-			newvalue := new.(string)
-			if len(oldvalue) > 0 {
-				logger.Errorf("%s value %s specified in configuration differs from resource ID's value %s", "security_policy_id", newvalue, oldvalue)
-				return fmt.Errorf("%s value %s specified in configuration differs from resource ID's value %s", "security_policy_id", newvalue, oldvalue)
+			oldPolicy, newPolicy := d.GetChange("security_policy_id")
+			oldVal := oldPolicy.(string)
+			newVal := newPolicy.(string)
+			if len(oldVal) > 0 {
+				logger.Errorf("%s value %s specified in configuration differs from resource ID's value %s", "security_policy_id", newVal, oldVal)
+				return fmt.Errorf("%s value %s specified in configuration differs from resource ID's value %s", "security_policy_id", newVal, oldVal)
 			}
 		}
 

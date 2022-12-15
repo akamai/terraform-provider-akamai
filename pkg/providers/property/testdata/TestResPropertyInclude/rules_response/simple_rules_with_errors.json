@@ -1,0 +1,97 @@
+{
+  "rules": {
+    "behaviors": [
+      {
+        "name": "caching",
+        "options": {
+          "behavior": "MAX_AGE",
+          "mustRevalidate": false,
+          "ttl": "13d"
+        }
+      },
+      {
+        "name": "cpCode",
+        "options": {
+          "value": {
+            "id": 1013931
+          }
+        }
+      },
+      {
+        "name": "origin",
+        "options": {
+          "cacheKeyHostname": "ORIGIN_HOSTNAME",
+          "compress": true,
+          "enableTrueClientIp": false,
+          "forwardHostHeader": "REQUEST_HOST_HEADER",
+          "hostname": "terraform.prov.test.net",
+          "httpPort": 80,
+          "httpsPort": 443,
+          "originCertificate": "",
+          "originSni": true,
+          "originType": "CUSTOMER",
+          "ports": "",
+          "verificationMode": "PLATFORM_SETTINGS"
+        }
+      }
+    ],
+    "name": "default",
+    "children": [
+      {
+        "behaviors": [
+          {
+            "name": "caching",
+            "options": {
+              "behavior": "MAX_AGE",
+              "mustRevalidate": false,
+              "ttl": "13d"
+            }
+          },
+          {
+            "name": "cpCode",
+            "options": {
+              "value": {
+                "id": 1013931
+              }
+            }
+          },
+          {
+            "name": "origin",
+            "options": {
+              "cacheKeyHostname": "ORIGIN_HOSTNAME",
+              "compress": true,
+              "enableTrueClientIp": false,
+              "forwardHostHeader": "REQUEST_HOST_HEADER",
+              "hostname": "terraform.prov.test.net",
+              "httpPort": 80,
+              "httpsPort": 443,
+              "originCertificate": "",
+              "originSni": true,
+              "originType": "CUSTOMER",
+              "ports": "",
+              "verificationMode": "PLATFORM_SETTINGS"
+            }
+          }
+        ],
+        "criteria": [],
+        "variables": [],
+        "children": []
+      }
+    ],
+    "criteria": [],
+    "variables": [],
+    "options": {}
+  },
+  "errors": [
+    {
+      "type": "https://problems.luna.akamaiapis.net/papi/v0/validation/attribute_required",
+      "errorLocation": "#/rules/behaviors/0/options/",
+      "detail": "Error1"
+    },
+    {
+      "type": "https://problems.luna.akamaiapis.net/papi/v0/validation/attribute_required",
+      "errorLocation": "#/rules/behaviors/0/options/",
+      "detail": "Error2"
+    }
+  ]
+}

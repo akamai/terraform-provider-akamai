@@ -13,9 +13,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func dataSourceAkamaiPropertyProducts() *schema.Resource {
+func dataSourcePropertyProducts() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: dataSourceAkamaiPropertyProductsRead,
+		ReadContext: dataPropertyProductsRead,
 		Schema: map[string]*schema.Schema{
 			"contract_id": {
 				Type:             schema.TypeString,
@@ -37,11 +37,9 @@ func dataSourceAkamaiPropertyProducts() *schema.Resource {
 	}
 }
 
-func dataSourceAkamaiPropertyProductsRead(
-	ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-
+func dataPropertyProductsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
-	logger := meta.Log("PAPI", "dataSourceAkamaiPropertyProductsRead")
+	logger := meta.Log("PAPI", "dataPropertyProductsRead")
 
 	// create context with logging
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))

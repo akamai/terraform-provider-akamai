@@ -75,6 +75,14 @@ var (
 	// ErrEdgeHostnameNotFound is returned when no edgehostname were found
 	ErrEdgeHostnameNotFound = errors.New("unable to find edge hostname")
 
+	// Property includes errors
+
+	// ErrNoLatestIncludeActivation is returned when there is no activation for provided include
+	ErrNoLatestIncludeActivation = errors.New("no latest activation for given include")
+
+	// ErrPropertyInclude is returned when operation on property include fails
+	ErrPropertyInclude = errors.New("property include")
+
 	// DiagWarnActivationTimeout returned on activation poll timeout
 	DiagWarnActivationTimeout = diag.Diagnostic{
 		Severity: diag.Warning,

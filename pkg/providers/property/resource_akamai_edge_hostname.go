@@ -448,31 +448,32 @@ func resourceSecureEdgeHostNameImport(ctx context.Context, d *schema.ResourceDat
 	return []*schema.ResourceData{d}, nil
 }
 
-func diffSuppressEdgeHostname(_, old, new string, _ *schema.ResourceData) bool {
-	old = strings.ToLower(old)
-	new = strings.ToLower(new)
+func diffSuppressEdgeHostname(_, oldVal, newVal string, _ *schema.ResourceData) bool {
+	oldVal = strings.ToLower(oldVal)
+	newVal = strings.ToLower(newVal)
 
-	if old == new {
+	if oldVal == newVal {
 		return true
 	}
 
-	if !(strings.HasSuffix(new, "edgekey.net") || strings.HasSuffix(new, "edgesuite.net") || strings.HasSuffix(new, "akamaized.net")) {
-		return old == fmt.Sprintf("%s.edgesuite.net", new)
+	if !(strings.HasSuffix(newVal, "edgekey.net") || strings.HasSuffix(newVal, "edgesuite.net") ||
+		strings.HasSuffix(newVal, "akamaized.net")) {
+		return oldVal == fmt.Sprintf("%s.edgesuite.net", newVal)
 	}
 	return false
 }
 
-func suppressEdgeHostnameUseCases(_, old, new string, _ *schema.ResourceData) bool {
+func suppressEdgeHostnameUseCases(_, oldVal, newVal string, _ *schema.ResourceData) bool {
 	logger := akamai.Log("PAPI", "suppressEdgeHostnameUseCases")
-	if old == new {
+	if oldVal == newVal {
 		return true
 	}
 	var oldUseCases, newUseCases []papi.UseCase
-	if err := json.Unmarshal([]byte(old), &oldUseCases); err != nil {
+	if err := json.Unmarshal([]byte(oldVal), &oldUseCases); err != nil {
 		logger.Errorf("Unable to unmarshal 'old' use cases: %s", err)
 		return false
 	}
-	if err := json.Unmarshal([]byte(new), &newUseCases); err != nil {
+	if err := json.Unmarshal([]byte(newVal), &newUseCases); err != nil {
 		logger.Errorf("Unable to unmarshal 'new' use cases: %s", err)
 		return false
 	}

@@ -1,0 +1,79 @@
+{
+  "rules": {
+    "name": "default",
+    "children": [
+      {
+        "name": "/api1",
+        "children": [],
+        "behaviors": [],
+        "criteria": [
+          {
+            "name": "path",
+            "options": {
+              "matchOperator": "MATCHES_ONE_OF",
+              "matchCaseSensitive": false,
+              "normalize": false,
+              "values": [
+                "/api1",
+                "/api1/*"
+              ]
+            }
+          }
+        ],
+        "criteriaMustSatisfy": "all",
+        "comments": "These behaviors apply to /api1"
+      }
+    ],
+    "behaviors": [
+      {
+        "name": "origin",
+        "options": {
+          "cacheKeyHostname": "REQUEST_HOST_HEADER",
+          "compress": true,
+          "enableTrueClientIp": true,
+          "forwardHostHeader": "REQUEST_HOST_HEADER",
+          "httpPort": 80,
+          "httpsPort": 443,
+          "originCertificate": "",
+          "originSni": true,
+          "originType": "CUSTOMER",
+          "ports": "",
+          "trueClientIpClientSetting": false,
+          "trueClientIpHeader": "True-Client-IP",
+          "verificationMode": "PLATFORM_SETTINGS",
+          "hostname": "origin-www.foo.com"
+        }
+      },
+      {
+        "name": "cpCode",
+        "options": {
+          "value": {
+            "id": 12345,
+            "description": "test",
+            "products": [
+              "Site_Defender"
+            ],
+            "createdDate": 1.653506652E12,
+            "cpCodeLimits": null,
+            "name": "test"
+          }
+        }
+      },
+      {
+        "name": "caching",
+        "options": {
+          "behavior": "NO_STORE"
+        }
+      }
+    ],
+    "options": {},
+    "comments": "These behaviors apply to all requests"
+  },
+  "warnings": [
+    {
+      "type": "https://problems.luna.akamaiapis.net/papi/v0/validation/validation_message.ssl_delegate_warning_rotate",
+      "errorLocation": "#/rules/behaviors/0",
+      "detail": "If your `Origin Server` uses HTTPS, make sure to follow <a href=\"/dl/property-manager/property-manager-help/csh_lookup.html?id=PM_0034\" target=\"_blank\">this procedure</a> to avoid a service outage or a security breach when you rotate your origin's certificate."
+    }
+  ]
+}

@@ -6,7 +6,31 @@ import (
 	"sort"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
+
+func diffSuppressRules(_, oldVal, newVal string, _ *schema.ResourceData) bool {
+	logger := akamai.Log("PAPI", "diffSuppressRules")
+
+	if oldVal == "" || newVal == "" {
+		return oldVal == newVal
+	}
+
+	var oldRules, newRules papi.RulesUpdate
+	if err := json.Unmarshal([]byte(oldVal), &oldRules); err != nil {
+		logger.Errorf("Unable to unmarshal 'old' JSON rules: %s", err)
+		return false
+	}
+
+	if err := json.Unmarshal([]byte(newVal), &newRules); err != nil {
+		logger.Errorf("Unable to unmarshal 'new' JSON rules: %s", err)
+		return false
+	}
+
+	res := compareRuleTree(&oldRules, &newRules)
+	return res
+}
 
 // compareRulesJSON handles comparison between two papi.Rules JSON representations
 // true: deeply equals

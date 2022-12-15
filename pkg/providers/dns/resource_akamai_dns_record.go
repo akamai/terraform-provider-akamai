@@ -823,6 +823,7 @@ func resourceDNSRecordCreate(ctx context.Context, d *schema.ResourceData, m inte
 
 }
 
+//nolint:gocyclo
 // Update DNS Record
 func resourceDNSRecordUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	// only allow one record per record type to be updated at a time
@@ -981,6 +982,7 @@ func resourceDNSRecordUpdate(ctx context.Context, d *schema.ResourceData, m inte
 	return resourceDNSRecordRead(ctx, d, meta)
 }
 
+//nolint:gocyclo
 func resourceDNSRecordRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	logger := meta.Log("AkamaiDNS", "resourceDNSRecordRead")
@@ -1418,6 +1420,7 @@ func bindRecord(ctx context.Context, meta akamai.OperationMeta, d *schema.Resour
 	return newRecordCreate(ctx, meta, d, recordType, target, host, ttl, logger)
 }
 
+//nolint:gocyclo
 func newRecordCreate(ctx context.Context, meta akamai.OperationMeta, d *schema.ResourceData, recordType string, target []interface{}, host string, ttl int, logger log.Interface) (dns.RecordBody, error) {
 	var recordCreate dns.RecordBody
 	switch recordType {

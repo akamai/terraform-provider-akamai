@@ -40,6 +40,10 @@ output "security_policies_list" {
   value = data.akamai_appsec_security_policy.security_policies.security_policy_id_list
 }
 
+output "security_policies_json" {
+  value = data.akamai_appsec_security_policy.security_policies.json
+}
+
 output "security_policies_text" {
   value = data.akamai_appsec_security_policy.security_policies.output_text
 }
@@ -65,6 +69,7 @@ This data source supports the following arguments:
 
 The following options can be used to determine the information returned, and how that returned information is formatted:
 
-- `security_policy_id_list`. List of all your security policy IDs.
+- `json`. JSON-formatted list of the security policy information.
 - `output_text`. Tabular report showing the ID and name of all your security policies.
 - `security_policy_id`. ID of the security policy. Included only if the `security_policy_name` argument is included in your Terraform configuration file.
+- `security_policy_id_list`. List of all your security policy IDs.

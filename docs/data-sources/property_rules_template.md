@@ -68,8 +68,7 @@ template_data = <<-EOT
       "rules": {
         "name": "default",
         "children": [
-          "#include:base_rules.json",
-          "#include:additional_rules.json"
+          "#include:rules.json"
         ]
       }
     EOT

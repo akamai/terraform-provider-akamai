@@ -17,7 +17,7 @@ import (
 
 func dataSourcePropertyGroup() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: dataSourcePropertyGroupRead,
+		ReadContext: dataPropertyGroupRead,
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:         schema.TypeString,
@@ -49,9 +49,9 @@ func dataSourcePropertyGroup() *schema.Resource {
 	}
 }
 
-func dataSourcePropertyGroupRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataPropertyGroupRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
-	log := meta.Log("PAPI", "dataSourcePropertyGroupRead")
+	log := meta.Log("PAPI", "dataPropertyGroupRead")
 
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(

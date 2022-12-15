@@ -1,6 +1,7 @@
 package appsec
 
 import (
+	"bytes"
 	"encoding/json"
 	"testing"
 
@@ -14,9 +15,16 @@ func TestAkamaiSecurityPolicy_data_basic(t *testing.T) {
 	t.Run("match by SecurityPolicy ID", func(t *testing.T) {
 		client := &appsec.Mock{}
 
+		securityPoliciesBytes := loadFixtureBytes("testdata/TestDSSecurityPolicy/SecurityPolicy.json")
 		getSecurityPoliciesResponse := appsec.GetSecurityPoliciesResponse{}
-		err := json.Unmarshal(loadFixtureBytes("testdata/TestDSSecurityPolicy/SecurityPolicy.json"), &getSecurityPoliciesResponse)
+		err := json.Unmarshal(securityPoliciesBytes, &getSecurityPoliciesResponse)
 		require.NoError(t, err)
+
+		securityPoliciesJSONBytes := loadFixtureBytes("testdata/TestDSSecurityPolicy/SecurityPolicyJSON.json")
+		buf := &bytes.Buffer{}
+		err = json.Compact(buf, securityPoliciesJSONBytes)
+		require.NoError(t, err)
+		securityPoliciesJSONString := buf.String()
 
 		config := appsec.GetConfigurationResponse{}
 		err = json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
@@ -41,6 +49,7 @@ func TestAkamaiSecurityPolicy_data_basic(t *testing.T) {
 						Config: loadFixtureString("testdata/TestDSSecurityPolicy/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("data.akamai_appsec_security_policy.test", "id", "43253:7"),
+							resource.TestCheckResourceAttr("data.akamai_appsec_security_policy.test", "json", securityPoliciesJSONString),
 						),
 					},
 				},

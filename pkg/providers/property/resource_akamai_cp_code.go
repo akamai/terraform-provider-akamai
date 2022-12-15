@@ -115,7 +115,7 @@ func resourceCPCodeCreate(ctx context.Context, d *schema.ResourceData, m interfa
 
 	// Because CPCodes can't be deleted, we re-use an existing CPCode if it's there
 	cpCode, err := findCPCode(ctx, name, contractID, groupID, meta)
-	if err != nil && !errors.As(err, &ErrCpCodeNotFound) {
+	if err != nil && !errors.Is(err, ErrCpCodeNotFound) {
 		return diag.Errorf("%s: %s", ErrLookingUpCPCode, err)
 	}
 

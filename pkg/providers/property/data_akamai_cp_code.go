@@ -14,7 +14,7 @@ import (
 
 func dataSourceCPCode() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: dataSourceCPCodeRead,
+		ReadContext: dataCPCodeRead,
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:             schema.TypeString,
@@ -60,9 +60,9 @@ func dataSourceCPCode() *schema.Resource {
 	}
 }
 
-func dataSourceCPCodeRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataCPCodeRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
-	log := meta.Log("PAPI", "dataSourceCPCodeRead")
+	log := meta.Log("PAPI", "dataCPCodeRead")
 
 	log.Debug("Read CP Code")
 
@@ -133,5 +133,5 @@ func findCPCode(ctx context.Context, nameOrID, contractID, groupID string, meta 
 		}
 	}
 
-	return nil, fmt.Errorf("%v: CP code: %s", ErrCpCodeNotFound, nameOrID)
+	return nil, fmt.Errorf("%w: CP code: %s", ErrCpCodeNotFound, nameOrID)
 }

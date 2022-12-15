@@ -12,7 +12,7 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
 )
 
-func dataPropertyRules() *schema.Resource {
+func dataSourcePropertyRules() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataPropertyRulesRead,
 		StateUpgraders: []schema.StateUpgrader{{

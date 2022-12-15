@@ -13,9 +13,9 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
 )
 
-func dataSourceAkamaiPropertyHostnames() *schema.Resource {
+func dataSourcePropertyHostnames() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: dataAkamaiPropertyHostnamesRead,
+		ReadContext: dataPropertyHostnamesRead,
 		Schema: map[string]*schema.Schema{
 			"group_id": {
 				Type:             schema.TypeString,
@@ -61,10 +61,10 @@ func dataSourceAkamaiPropertyHostnames() *schema.Resource {
 	}
 }
 
-func dataAkamaiPropertyHostnamesRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataPropertyHostnamesRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
-	log := meta.Log("PAPI", "dataAkamaiPropertyHostnamesRead")
+	log := meta.Log("PAPI", "dataPropertyHostnamesRead")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
 		ctx,

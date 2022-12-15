@@ -1,0 +1,20 @@
+{
+  "rules": {
+    "name": "default",
+    "children": [],
+    "behaviors": [
+      {
+        "name": "constructResponse",
+        "options": {
+          "enabled": true,
+          "responseCode": 200,
+          "body": "api3",
+          "forceEviction": false
+        }
+      }
+    ],
+    "options": {},
+    "variables": [],
+    "comments": "/api3."
+  }
+}

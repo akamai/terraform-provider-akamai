@@ -31,6 +31,155 @@ type (
 	}
 )
 
+var (
+	funcs = template.FuncMap{
+		"join":  strings.Join,
+		"quote": func(in string) string { return fmt.Sprintf("\"%s\"", in) },
+		"json": func(v interface{}) string {
+			buf := &bytes.Buffer{}
+			enc := json.NewEncoder(buf)
+			enc.SetEscapeHTML(false)
+			_ = enc.Encode(v)
+			// Remove the trailing new line added by the encoder
+			return strings.TrimSpace(buf.String())
+		},
+		"jsonwithoutid": func(v interface{}) string {
+			a, _ := json.Marshal(v)
+
+			var i interface{}
+			if err := json.Unmarshal([]byte(a), &i); err != nil {
+				panic(err)
+			}
+			if m, ok := i.(map[string]interface{}); ok {
+				delete(m, "id")
+			}
+
+			buf := &bytes.Buffer{}
+			enc := json.NewEncoder(buf)
+			enc.SetEscapeHTML(false)
+			_ = enc.Encode(i)
+			// Remove the trailing new line added by the encoder
+			return strings.TrimSpace(buf.String())
+		},
+		"marshal": func(v interface{}) string {
+			a, _ := json.Marshal(v)
+			return string(a)
+		},
+		"marshalwithoutid": func(v interface{}) string {
+			a, _ := json.Marshal(v)
+
+			var i interface{}
+			if err := json.Unmarshal([]byte(a), &i); err != nil {
+				panic(err)
+			}
+			if m, ok := i.(map[string]interface{}); ok {
+				delete(m, "id")
+			}
+			b, _ := json.Marshal(i)
+			return string(b)
+		},
+		"marshalconditionexception": func(v interface{}) string {
+			a, _ := json.Marshal(v)
+
+			var i interface{}
+			if err := json.Unmarshal([]byte(a), &i); err != nil {
+				panic(err)
+			}
+			// remove some fields returned by export_configuration.go but not needed here
+			if m, ok := i.(map[string]interface{}); ok {
+				for k := range m {
+					if k != "conditions" && k != "exception" && k != "advancedExceptions" {
+						delete(m, k)
+					}
+				}
+			}
+			b, _ := json.Marshal(i)
+			return string(b)
+		},
+		"marshalruleupgradedetails": func(v interface{}) string {
+			upgradeDetailsPresent := func(i interface{}, key string) string {
+				if m, ok := i.(map[string]interface{}); ok {
+					i2 := m[key]
+					if m2, ok := i2.(map[string]interface{}); ok {
+						if len(m2) > 0 {
+							return "True"
+						}
+					}
+				}
+				return "False"
+			}
+			s, _ := json.Marshal(v)
+			var i interface{}
+			json.Unmarshal([]byte(s), &i)
+			KRSToEvalUpdates := upgradeDetailsPresent(i, "KRSToEvalUpdates")
+			EvalToEvalUpdates := upgradeDetailsPresent(i, "EvalToEvalUpdates")
+			KRSToLatestUpdates := upgradeDetailsPresent(i, "KRSToLatestUpdates")
+			return fmt.Sprintf("%s|%s|%s", KRSToEvalUpdates, EvalToEvalUpdates, KRSToLatestUpdates)
+		},
+		"dash": func(in int) string {
+			if in == 0 {
+				return "-"
+			}
+			return strconv.Itoa(in)
+		},
+
+		"substring": func(start, end int, s string) string {
+			if start < 0 {
+				return s[:end]
+			}
+			if end < 0 || end > len(s) {
+				return s[start:]
+			}
+			return s[start:end]
+		},
+
+		"splitprefix": func(sep, orig string) map[string]string {
+			parts := strings.Split(orig, sep)
+			res := make(map[string]string, len(parts))
+			for i, v := range parts {
+				res["_"+strconv.Itoa(i)] = v
+			}
+			return res
+		},
+
+		"replace": func(old, new, src string) string { return strings.Replace(src, old, new, -1) },
+
+		"collectWAPHostnameInfo": func(exportconfiguration *appsec.GetExportConfigurationResponse) []wapHostnames {
+			hostnameListsByPolicy := make([]wapHostnames, 0)
+			matchTargets := exportconfiguration.MatchTargets
+			websiteTargets := matchTargets.WebsiteTargets
+			protectedHostLists := make(map[string][]string)
+			for _, target := range websiteTargets {
+				policyID := target.SecurityPolicy.PolicyID
+				protectedHostLists[policyID] = target.Hostnames
+			}
+			evaluating := exportconfiguration.Evaluating
+			evalHostLists := make(map[string][]string)
+			for _, policy := range evaluating.SecurityPolicies {
+				policyID := policy.SecurityPolicyID
+				evalHostLists[policyID] = policy.Hostnames
+			}
+
+			for policyID, hostlist := range protectedHostLists {
+				element := wapHostnames{ID: policyID, ProtectedHosts: hostlist}
+				evalHostList, ok := evalHostLists[policyID]
+				if ok {
+					element.EvalHosts = evalHostList
+					delete(evalHostLists, policyID)
+				}
+				hostnameListsByPolicy = append(hostnameListsByPolicy, element)
+			}
+			// add elements for any policies with just evalHostnames lists
+			for policyID, hostlist := range evalHostLists {
+				element := wapHostnames{ID: policyID, EvalHosts: hostlist}
+				hostnameListsByPolicy = append(hostnameListsByPolicy, element)
+			}
+
+			return hostnameListsByPolicy
+		},
+	}
+)
+
 // GetTemplate given map of templates and a key, returns template stored under this key
 func GetTemplate(ots map[string]*OutputTemplate, key string) (*OutputTemplate, error) {
 	if f, ok := ots[key]; ok && f != nil {
@@ -46,154 +195,6 @@ func RenderTemplates(ots map[string]*OutputTemplate, key string, str interface{}
 
 	if err == nil {
 		templateName := templ.TemplateName
-		var (
-			funcs = template.FuncMap{
-				"join":  strings.Join,
-				"quote": func(in string) string { return fmt.Sprintf("\"%s\"", in) },
-				"json": func(v interface{}) string {
-					buf := &bytes.Buffer{}
-					enc := json.NewEncoder(buf)
-					enc.SetEscapeHTML(false)
-					_ = enc.Encode(v)
-					// Remove the trailing new line added by the encoder
-					return strings.TrimSpace(buf.String())
-				},
-				"jsonwithoutid": func(v interface{}) string {
-					a, _ := json.Marshal(v)
-
-					var i interface{}
-					if err := json.Unmarshal([]byte(a), &i); err != nil {
-						panic(err)
-					}
-					if m, ok := i.(map[string]interface{}); ok {
-						delete(m, "id")
-					}
-
-					buf := &bytes.Buffer{}
-					enc := json.NewEncoder(buf)
-					enc.SetEscapeHTML(false)
-					_ = enc.Encode(i)
-					// Remove the trailing new line added by the encoder
-					return strings.TrimSpace(buf.String())
-				},
-				"marshal": func(v interface{}) string {
-					a, _ := json.Marshal(v)
-					return string(a)
-				},
-				"marshalwithoutid": func(v interface{}) string {
-					a, _ := json.Marshal(v)
-
-					var i interface{}
-					if err := json.Unmarshal([]byte(a), &i); err != nil {
-						panic(err)
-					}
-					if m, ok := i.(map[string]interface{}); ok {
-						delete(m, "id")
-					}
-					b, _ := json.Marshal(i)
-					return string(b)
-				},
-				"marshalconditionexception": func(v interface{}) string {
-					a, _ := json.Marshal(v)
-
-					var i interface{}
-					if err := json.Unmarshal([]byte(a), &i); err != nil {
-						panic(err)
-					}
-					// remove some fields returned by export_configuration.go but not needed here
-					if m, ok := i.(map[string]interface{}); ok {
-						for k := range m {
-							if k != "conditions" && k != "exception" && k != "advancedExceptions" {
-								delete(m, k)
-							}
-						}
-					}
-					b, _ := json.Marshal(i)
-					return string(b)
-				},
-				"marshalruleupgradedetails": func(v interface{}) string {
-					upgradeDetailsPresent := func(i interface{}, key string) string {
-						if m, ok := i.(map[string]interface{}); ok {
-							i2 := m[key]
-							if m2, ok := i2.(map[string]interface{}); ok {
-								if len(m2) > 0 {
-									return "True"
-								}
-							}
-						}
-						return "False"
-					}
-					s, _ := json.Marshal(v)
-					var i interface{}
-					json.Unmarshal([]byte(s), &i)
-					KRSToEvalUpdates := upgradeDetailsPresent(i, "KRSToEvalUpdates")
-					EvalToEvalUpdates := upgradeDetailsPresent(i, "EvalToEvalUpdates")
-					KRSToLatestUpdates := upgradeDetailsPresent(i, "KRSToLatestUpdates")
-					return fmt.Sprintf("%s|%s|%s", KRSToEvalUpdates, EvalToEvalUpdates, KRSToLatestUpdates)
-				},
-				"dash": func(in int) string {
-					if in == 0 {
-						return "-"
-					}
-					return strconv.Itoa(in)
-				},
-
-				"substring": func(start, end int, s string) string {
-					if start < 0 {
-						return s[:end]
-					}
-					if end < 0 || end > len(s) {
-						return s[start:]
-					}
-					return s[start:end]
-				},
-
-				"splitprefix": func(sep, orig string) map[string]string {
-					parts := strings.Split(orig, sep)
-					res := make(map[string]string, len(parts))
-					for i, v := range parts {
-						res["_"+strconv.Itoa(i)] = v
-					}
-					return res
-				},
-
-				"replace": func(old, new, src string) string { return strings.Replace(src, old, new, -1) },
-
-				"collectWAPHostnameInfo": func(exportconfiguration *appsec.GetExportConfigurationResponse) []wapHostnames {
-					hostnameListsByPolicy := make([]wapHostnames, 0)
-					matchTargets := exportconfiguration.MatchTargets
-					websiteTargets := matchTargets.WebsiteTargets
-					protectedHostLists := make(map[string][]string)
-					for _, target := range websiteTargets {
-						policyID := target.SecurityPolicy.PolicyID
-						protectedHostLists[policyID] = target.Hostnames
-					}
-					evaluating := exportconfiguration.Evaluating
-					evalHostLists := make(map[string][]string)
-					for _, policy := range evaluating.SecurityPolicies {
-						policyID := policy.SecurityPolicyID
-						evalHostLists[policyID] = policy.Hostnames
-					}
-
-					for policyID, hostlist := range protectedHostLists {
-						element := wapHostnames{ID: policyID, ProtectedHosts: hostlist}
-						evalHostList, ok := evalHostLists[policyID]
-						if ok {
-							element.EvalHosts = evalHostList
-							delete(evalHostLists, policyID)
-						}
-						hostnameListsByPolicy = append(hostnameListsByPolicy, element)
-					}
-					// add elements for any policies with just evalHostnames lists
-					for policyID, hostlist := range evalHostLists {
-						element := wapHostnames{ID: policyID, EvalHosts: hostlist}
-						hostnameListsByPolicy = append(hostnameListsByPolicy, element)
-					}
-
-					return hostnameListsByPolicy
-				},
-			}
-		)
 
 		t := template.Must(template.New("").Funcs(funcs).Parse(templ.TemplateString))
 		if err := t.Execute(&tstr, str); err != nil {

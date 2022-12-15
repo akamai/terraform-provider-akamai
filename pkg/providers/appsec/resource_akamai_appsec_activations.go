@@ -86,7 +86,7 @@ func resourceActivations() *schema.Resource {
 }
 
 const (
-	// ActivationPollMinimum is the minumum polling interval for activation creation
+	// ActivationPollMinimum is the minimum polling interval for activation creation
 	ActivationPollMinimum = time.Minute
 )
 

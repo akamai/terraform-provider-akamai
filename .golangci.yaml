@@ -1,7 +1,14 @@
 linters:
   disable-all: true
   enable:
-  - revive
+    - errcheck
+    - gocyclo
+    - gofmt
+    - goimports
+    - govet
+    - ineffassign
+    - misspell
+    - revive
 
 output:
   sort-results: true
@@ -10,6 +17,25 @@ issues:
   exclude-use-default: false
   max-issues-per-linter: 0
   max-same-issues: 0
+  exclude-rules:
+    - path: gen\.go
+      linters:
+        - gocyclo
+    - path: networklists/.*test\.go
+      linters:
+        - errcheck
+    - path:  appsec/templates\.go
+      linters:
+        - errcheck
+    - path: dns/.*test\.go
+      linters:
+        - errcheck
+    - path: gtm/.*test\.go
+      linters:
+        - errcheck
+    - path: property/.*test\.go
+      linters:
+        - errcheck
 
 linters-settings:
   revive:
@@ -20,23 +46,23 @@ linters-settings:
     - name: context-as-argument
     - name: context-keys-type
     - name: dot-imports
+    - name: empty-block
+    - name: errorf
     - name: error-return
     - name: error-strings
     - name: error-naming
     - name: exported
     - name: if-return
     - name: increment-decrement
-    - name: var-naming
-    - name: var-declaration
+    - name: indent-error-flow
     - name: package-comments
     - name: range
     - name: receiver-naming
+    - name: redefines-builtin-id
+    - name: superfluous-else
     - name: time-naming
     - name: unexported-return
-    - name: indent-error-flow
-    - name: errorf
-    - name: empty-block
-    - name: superfluous-else
-    - name: unused-parameter
     - name: unreachable-code
-    - name: redefines-builtin-id
+    - name: unused-parameter
+    - name: var-declaration
+    - name: var-naming

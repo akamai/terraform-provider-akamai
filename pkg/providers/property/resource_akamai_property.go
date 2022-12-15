@@ -67,27 +67,6 @@ func resourceProperty() *schema.Resource {
 		return nil
 	}
 
-	diffSuppressRules := func(_, old, new string, _ *schema.ResourceData) bool {
-		logger := akamai.Log("PAPI", "suppressRulesJSON")
-
-		if old == "" || new == "" {
-			return old == new
-		}
-
-		var oldRules, newRules papi.RulesUpdate
-		if err := json.Unmarshal([]byte(old), &oldRules); err != nil {
-			logger.Errorf("Unable to unmarshal 'old' JSON rules: %s", err)
-			return false
-		}
-
-		if err := json.Unmarshal([]byte(new), &newRules); err != nil {
-			logger.Errorf("Unable to unmarshal 'new' JSON rules: %s", err)
-			return false
-		}
-
-		return compareRuleTree(&oldRules, &newRules)
-	}
-
 	return &schema.Resource{
 		CreateContext: resourcePropertyCreate,
 		ReadContext:   resourcePropertyRead,
@@ -167,23 +146,11 @@ func resourceProperty() *schema.Resource {
 
 			// Optional
 			"rule_format": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Computed:    true,
-				Description: "Specify the rule format version (defaults to latest version available when created)",
-				ValidateDiagFunc: func(v interface{}, _ cty.Path) diag.Diagnostics {
-					format := v.(string)
-					if format == "" || format == "latest" {
-						return nil
-					}
-
-					if !regexp.MustCompile(`^v[0-9]{4}-[0-9]{2}-[0-9]{2}$`).MatchString(format) {
-						url := "https://techdocs.akamai.com/property-mgr/reference/latest-behaviors"
-						return diag.Errorf(`"rule_format" must be of the form vYYYY-MM-DD (with a leading "v") see %s`, url)
-					}
-
-					return nil
-				},
+				Type:             schema.TypeString,
+				Optional:         true,
+				Computed:         true,
+				Description:      "Specify the rule format version (defaults to latest version available when created)",
+				ValidateDiagFunc: tools.ValidateRuleFormat,
 			},
 			"rules": {
 				Type:             schema.TypeString,
@@ -387,11 +354,6 @@ func rulesCustomDiff(_ context.Context, diff *schema.ResourceDiff, _ interface{}
 	if err != nil {
 		return fmt.Errorf("cannot encode rules JSON %s", err)
 	}
-	rulesBytes, err := json.Marshal(newRulesUpdate)
-	if err != nil {
-		return err
-	}
-	rules = string(rulesBytes)
 
 	if err = diff.SetNew("rules", rules); err != nil {
 		return fmt.Errorf("cannot set a new diff value for 'rules' %s", err)
@@ -1320,12 +1282,12 @@ func updatePropertyHostnames(ctx context.Context, client papi.PAPI, Property pap
 				break
 			}
 		}
-		var e *papi.Error
-		if hasDefaultProvisioningType && errors.As(err, &e) {
-			if e.StatusCode == http.StatusForbidden && e.Type == "https://problems.luna.akamaiapis.net/papi/v0/property-version-hostname/default-cert-provisioning-unavailable" {
+
+		if hasDefaultProvisioningType {
+			if errors.Is(err, papi.ErrSBDNotEnabled) {
 				err = fmt.Errorf("%s: not possible to use cert_provisioning_type = 'DEFAULT' as secure-by-default is not enabled in this account", papi.ErrUpdatePropertyVersionHostnames)
 			}
-			if e.StatusCode == http.StatusTooManyRequests && e.LimitKey == "DEFAULT_CERTS_PER_CONTRACT" && e.Remaining == 0 {
+			if errors.Is(err, papi.ErrDefaultCertLimitReached) {
 				err = fmt.Errorf("%s: not possible to use cert_provisioning_type = 'DEFAULT' as the limit for DEFAULT certificates has been reached", papi.ErrUpdatePropertyVersionHostnames)
 			}
 		}

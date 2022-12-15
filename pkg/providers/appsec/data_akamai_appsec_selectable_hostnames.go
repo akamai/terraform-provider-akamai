@@ -132,8 +132,6 @@ func dataSourceSelectableHostnamesRead(ctx context.Context, d *schema.ResourceDa
 	newhdata := make([]string, 0, len(selectablehostnames.AvailableSet))
 	for _, hosts := range selectablehostnames.AvailableSet {
 		var flagstg, flagprod string
-		flagstg = "NOMATCH"
-		flagprod = "NOMATCH"
 
 		if activeinstaging.(bool) == hosts.ActiveInStaging {
 			flagstg = "MATCH"

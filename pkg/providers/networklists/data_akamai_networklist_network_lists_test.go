@@ -7,6 +7,7 @@ import (
 	network "github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/networklists"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAccAkamaiNetworkList_data_basic(t *testing.T) {
@@ -14,7 +15,8 @@ func TestAccAkamaiNetworkList_data_basic(t *testing.T) {
 		client := &network.Mock{}
 
 		networkListsResponse := network.GetNetworkListsResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestDSNetworkList/NetworkList.json"), &networkListsResponse)
+		err := json.Unmarshal(loadFixtureBytes("testdata/TestDSNetworkList/NetworkList.json"), &networkListsResponse)
+		require.NoError(t, err)
 
 		client.On("GetNetworkLists",
 			mock.Anything,
@@ -45,7 +47,8 @@ func TestAccAkamaiNetworkList_data_by_uniqueID(t *testing.T) {
 		client := &network.Mock{}
 
 		networkListResponse := network.GetNetworkListResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestDSNetworkList/SingleNetworkList.json"), &networkListResponse)
+		err := json.Unmarshal(loadFixtureBytes("testdata/TestDSNetworkList/SingleNetworkList.json"), &networkListResponse)
+		require.NoError(t, err)
 
 		client.On("GetNetworkList",
 			mock.Anything,
