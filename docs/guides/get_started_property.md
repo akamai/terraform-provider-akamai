@@ -13,6 +13,8 @@ provider (CP) codes.
 
 For more information about properties, see the [Property Manager documentation](https://techdocs.akamai.com/property-mgr/docs).
 
+-> **Note** If you are interested in working with property includes, see the [includes](../guides/includes.md) guide.
+
 ## Prerequisites
 
 Before you can create a property, you need to complete the tasks in the
@@ -56,9 +58,9 @@ The following code will create a non-secure Standard TLS edge hostname for
 
 ```hcl
 resource "akamai_edge_hostname" "example" {
-	group_id = data.akamai_group.default.id
-	contract_id = data.akamai_contract.default.id
-	product_id = "prd_SPM"
+	group_id      = data.akamai_group.default.id
+	contract_id   = data.akamai_contract.default.id
+	product_id    = "prd_SPM"
 	edge_hostname = "example.com.edgesuite.net"
 }
 ```
@@ -74,11 +76,11 @@ the certificate enrollment ID you can retrieve from the [Certificate Provisionin
 
 ```hcl
 resource "akamai_edge_hostname" "example" {
-	group_id = data.akamai_group.default.id
-	contract_id = data.akamai_contract.default.id
-	product_id = "prd_SPM"
+	group_id      = data.akamai_group.default.id
+	contract_id   = data.akamai_contract.default.id
+	product_id    = "prd_SPM"
 	edge_hostname = "example.com.edgesuite.net"
-	certificate = "1000"
+	certificate   = "1000"
 }
 ```
 
@@ -142,18 +144,18 @@ resource "akamai_property" "example" {
 	product_id  = "prd_SPM"                         # Product Identifier (Ion)
 	group_id    = data.akamai_group.default.id      # Group ID variable
 	contract_id = data.akamai_contract.default.id   # Contract ID variable
-    hostnames {                                     # Hostname configuration
-      cname_from = "example.com"
-      cname_to = "example.com.edgekey.net"
+    hostnames {                                   # Hostname configuration
+      cname_from             = "example.com"
+      cname_to               = "example.com.edgekey.net"
       cert_provisioning_type = "DEFAULT"
         }
      hostnames {
-     cname_from = "www.example.com"
-     cname_to = "example.com.edgesuite.net"
+     cname_from             = "www.example.com"
+     cname_to               = "example.com.edgesuite.net"
      cert_provisioning_type = "CPS_MANAGED"
         }
-	rule_format = "v2018-02-27"                     # Rule Format
-	rules = file("${path.module}/rules.json")       # JSON Rule tree
+	rule_format = "v2018-02-27"                           # Rule Format
+	rules       = file("${path.module}/rules.json")       # JSON Rule tree
 }
 ```
 
@@ -198,9 +200,9 @@ Here's an example:
 ```hcl
 resource "akamai_property_activation" "example" {
 	property_id = akamai_property.example.id
-	version = akamai_property.example.version
-	network = "STAGING"
-	contact = ["user@example.org"]
+	version     = akamai_property.example.version
+	network     = "STAGING"
+	contact     = ["user@example.org"]
 }
 ```
 
