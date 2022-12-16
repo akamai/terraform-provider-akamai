@@ -38,6 +38,7 @@ find_branch() {
   else
     # find parent branch from which this branch was created, iterate over the list of branches from the history of commits
     branches=($(git log --pretty=format:'%D' | sed 's@HEAD -> @@' | grep . | sed 's@origin/@@g' | sed 's@release/.*@@g' | sed -E $'s@master, (.+)@\\1, master@g' | tr ', ' '\n' | grep -v 'tag:' | sed -E 's@v([0-9]+\.?){2,}(-rc\.[0-9]+)?@@g' | grep -v release/ | grep -v HEAD | sed '/^$/d'))
+    branches+=("develop") # guard to fallback to safe value if less branches than 5
     for branch in ${branches[*]}
     do
       echo "Checking branch '${branch}'"
