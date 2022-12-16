@@ -1,5 +1,12 @@
 # RELEASE NOTES
 
+## 3.2.1 (December 16, 2022)
+
+#### BUG FIXES:
+
+* PAPI
+  * Fix `rule_format` in `akamai_property` to accept `latest`
+
 ## 3.2.0 (December 15 2022)
 
 #### FEATURES/ENHANCEMENTS:
