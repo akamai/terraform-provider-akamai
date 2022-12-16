@@ -728,6 +728,14 @@ func TestResourcePropertyInclude(t *testing.T) {
 					Config:      loadFixtureString("%s/product_id_error.tf", workdir),
 					ExpectError: regexp.MustCompile(`The argument "product_id" is required during create, but no definition was found`),
 				},
+				{
+					Config:      loadFixtureString("%s/rule_format_latest.tf", workdir),
+					ExpectError: regexp.MustCompile(`"rule_format" 'latest' is not valid, must be of the form vYYYY-MM-DD`),
+				},
+				{
+					Config:      loadFixtureString("%s/rule_format_blank.tf", workdir),
+					ExpectError: regexp.MustCompile(`provided value cannot be blank`),
+				},
 			},
 		},
 	}

@@ -150,7 +150,7 @@ func resourceProperty() *schema.Resource {
 				Optional:         true,
 				Computed:         true,
 				Description:      "Specify the rule format version (defaults to latest version available when created)",
-				ValidateDiagFunc: tools.ValidateRuleFormat,
+				ValidateDiagFunc: tools.ValidateRuleFormatAcceptLatest,
 			},
 			"rules": {
 				Type:             schema.TypeString,
