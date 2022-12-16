@@ -60,7 +60,7 @@ func resourcePropertyInclude() *schema.Resource {
 				Type:             schema.TypeString,
 				Required:         true,
 				Description:      "Indicates the versioned set of features and criteria",
-				ValidateDiagFunc: tools.ValidateRuleFormat,
+				ValidateDiagFunc: tools.AggregateValidations(tools.IsNotBlank, tools.ValidateRuleFormat),
 			},
 			"type": {
 				Type:         schema.TypeString,

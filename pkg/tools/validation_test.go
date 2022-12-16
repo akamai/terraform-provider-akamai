@@ -167,3 +167,53 @@ func TestValidateStringInSlice(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateRuleForamt(t *testing.T) {
+	tests := map[string]struct {
+		input        interface{}
+		acceptLatest bool
+		expectError  string
+	}{
+		"valid rule format vYYYY-MM-DD": {
+			input: "v2022-10-18",
+		},
+		"valid rule format vYYYY-MM-DD when acceptLatest is true": {
+			input:        "v2022-10-18",
+			acceptLatest: true,
+		},
+		"valid empty string": {
+			input: "",
+		},
+		"valid `latest` when acceptLatest is true": {
+			input:        "latest",
+			acceptLatest: true,
+		},
+		"invalid `latest` when acceptLatest is false": {
+			input:       "latest",
+			expectError: `"rule_format" 'latest' is not valid`,
+		},
+		"invalid rule format YYYY-MM-DD": {
+			input:       "2022-10-18",
+			expectError: `"rule_format" must be of the form vYYYY-MM-DD`,
+		},
+		"invalid rule format vDD-MM-YYYY": {
+			input:       "v18-10-2022",
+			expectError: `"rule_format" must be of the form vYYYY-MM-DD`,
+		},
+		"error - format is not string": {
+			input:       5,
+			expectError: "expected string, got int",
+		},
+	}
+
+	for name, testCase := range tests {
+		t.Run(name, func(t *testing.T) {
+			err := validateRuleFormat(testCase.input, testCase.acceptLatest)
+			if len(testCase.expectError) > 0 {
+				assert.Contains(t, err.Error(), testCase.expectError)
+				return
+			}
+			assert.NoError(t, err)
+		})
+	}
+}

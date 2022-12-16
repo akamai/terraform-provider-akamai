@@ -105,16 +105,41 @@ var (
 	isRuleFormatValid = regexp.MustCompile(`^v[0-9]{4}-[0-9]{2}-[0-9]{2}$`).MatchString
 )
 
-// ValidateRuleFormat checks if value is a valid rule format
+// ValidateRuleFormat checks if value is a valid rule format of form vYYYY-MM-DD
+// Empty string ("") is considered valid as well
 func ValidateRuleFormat(v interface{}, _ cty.Path) diag.Diagnostics {
+	if err := validateRuleFormat(v, false); err != nil {
+		return diag.FromErr(err)
+	}
+	return nil
+}
+
+// ValidateRuleFormatAcceptLatest checks if value is a valid rule format of form vYYYY-MM-DD or 'latest'
+// Empty string ("") is considered valid as well
+func ValidateRuleFormatAcceptLatest(v interface{}, _ cty.Path) diag.Diagnostics {
+	if err := validateRuleFormat(v, true); err != nil {
+		return diag.FromErr(err)
+	}
+	return nil
+}
+
+func validateRuleFormat(v interface{}, acceptLatest bool) error {
 	format, ok := v.(string)
 	if !ok {
-		return diag.Errorf("expected string, got %T", v)
+		return fmt.Errorf("expected string, got %T", v)
 	}
 
-	if !isRuleFormatValid(format) {
-		url := "https://techdocs.akamai.com/property-mgr/reference/latest-behaviors"
-		return diag.Errorf(`"rule_format" must be of the form vYYYY-MM-DD (with a leading "v") see %s`, url)
+	if acceptLatest && format == "latest" {
+		return nil
+	}
+
+	url := "https://techdocs.akamai.com/property-mgr/reference/api-versioning"
+	if !acceptLatest && format == "latest" {
+		return fmt.Errorf(`"rule_format" 'latest' is not valid, must be of the form vYYYY-MM-DD (with a leading "v") see %s`, url)
+	}
+
+	if len(format) != 0 && !isRuleFormatValid(format) {
+		return fmt.Errorf(`"rule_format" must be of the form vYYYY-MM-DD (with a leading "v") see %s`, url)
 	}
 
 	return nil
