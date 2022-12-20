@@ -1,3 +1,4 @@
+// Package videowriter contains set of functions used to manage video
 package videowriter
 
 import (

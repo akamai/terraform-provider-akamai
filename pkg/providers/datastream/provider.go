@@ -1,3 +1,4 @@
+// Package datastream contains implementation for Akamai Terraform sub-provider responsible for providing scalable, low latency streaming of data
 package datastream
 
 import (

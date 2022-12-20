@@ -1,3 +1,4 @@
+// Package gtm contains implementation for Akamai Terraform sub-provider responsible for managing Global Traffic Management (GTM) domain configuration and administration
 package gtm
 
 import (

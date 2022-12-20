@@ -1,3 +1,4 @@
+// Package registry allows to add and register specific sub-providers in Akamai Terraform
 package registry
 
 import (

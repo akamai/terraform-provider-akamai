@@ -99,7 +99,6 @@ func TestResGtmAsmap(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				PreCheck:  func() { testAccPreCheck(t) },
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{
 					{
@@ -145,7 +144,6 @@ func TestResGtmAsmap(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				PreCheck:  func() { testAccPreCheck(t) },
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{
 					{
@@ -184,7 +182,6 @@ func TestResGtmAsmap(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				PreCheck:  func() { testAccPreCheck(t) },
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{
 					{
@@ -246,7 +243,6 @@ func TestResGtmAsmap(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				PreCheck:  func() { testAccPreCheck(t) },
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{
 					{

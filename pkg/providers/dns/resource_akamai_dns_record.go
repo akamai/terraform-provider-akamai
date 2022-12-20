@@ -823,7 +823,7 @@ func resourceDNSRecordCreate(ctx context.Context, d *schema.ResourceData, m inte
 
 }
 
-//nolint:gocyclo
+// nolint:gocyclo
 // Update DNS Record
 func resourceDNSRecordUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	// only allow one record per record type to be updated at a time

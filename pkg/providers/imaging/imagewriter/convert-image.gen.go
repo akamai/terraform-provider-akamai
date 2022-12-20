@@ -1,3 +1,4 @@
+// Package imagewriter contains set of functions used to manage image
 package imagewriter
 
 import (

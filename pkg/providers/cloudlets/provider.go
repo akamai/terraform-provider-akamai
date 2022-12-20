@@ -1,3 +1,4 @@
+// Package cloudlets contains implementation for Akamai Terraform sub-provider responsible for managing Cloudlets applications
 package cloudlets
 
 import (

@@ -84,7 +84,6 @@ func TestResGtmCidrmap(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				PreCheck:  func() { testAccPreCheck(t) },
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{
 					{
@@ -130,7 +129,6 @@ func TestResGtmCidrmap(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				PreCheck:  func() { testAccPreCheck(t) },
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{
 					{
@@ -169,7 +167,6 @@ func TestResGtmCidrmap(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				PreCheck:  func() { testAccPreCheck(t) },
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{
 					{

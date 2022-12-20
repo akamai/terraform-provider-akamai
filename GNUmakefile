@@ -11,7 +11,7 @@ TF_PLUGIN_DIR ?= ~/.terraform.d/plugins
 install_path = $(TF_PLUGIN_DIR)/$(registry_name)/$(namespace)/$(PKG_NAME)/$(version)/$$(go env GOOS)_$$(go env GOARCH)
 
 # Tools versions
-golangci-lint-version = v1.41.1
+golangci-lint-version = v1.50.1
 tflint-version        = v0.39.3 # Newer versions contain rules that examples are not compliant with
 
 default: build

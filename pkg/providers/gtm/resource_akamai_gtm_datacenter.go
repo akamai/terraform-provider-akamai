@@ -469,7 +469,7 @@ func populateNewDatacenterObject(ctx context.Context, meta akamai.OperationMeta,
 	return dcObj, err
 }
 
-//nolint:gocyclo
+// nolint:gocyclo
 // Populate existing datacenter object from resource data
 func populateDatacenterObject(d *schema.ResourceData, dc *gtm.Datacenter, m interface{}) error {
 	meta := akamai.Meta(m)

@@ -1,3 +1,4 @@
+// Package akamai allows to initialize and set up Akamai Provider
 package akamai
 
 import (

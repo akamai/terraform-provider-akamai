@@ -4,11 +4,8 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"strings"
 	"sync"
 	"testing"
-
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/dns"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
@@ -80,28 +77,6 @@ func (d *data) GetOk(key string) (interface{}, bool) {
 
 func (d *data) List() []interface{} {
 	return []interface{}{d.data}
-}
-
-type args struct {
-	schema tools.ResourceDataFetcher
-}
-
-func setEnv(home string, env map[string]string) {
-	os.Clearenv()
-	os.Setenv("HOME", home)
-	if len(env) > 0 {
-		for key, val := range env {
-			os.Setenv(key, val)
-		}
-	}
-}
-
-func restoreEnv(env []string) {
-	os.Clearenv()
-	for _, value := range env {
-		envVar := strings.Split(value, "=")
-		os.Setenv(envVar[0], envVar[1])
-	}
 }
 
 // loadFixtureBytes returns the entire contents of the given file as a byte slice

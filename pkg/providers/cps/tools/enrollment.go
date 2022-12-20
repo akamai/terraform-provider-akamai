@@ -1,3 +1,4 @@
+// Package tools contains set of specific functions used by CPS sub-provider
 package tools
 
 import (

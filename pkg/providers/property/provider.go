@@ -1,3 +1,4 @@
+// Package property contains implementation for Property Provisioning module used to manage properties
 package property
 
 import (

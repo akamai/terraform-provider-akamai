@@ -27,15 +27,6 @@ issues:
     - path:  appsec/templates\.go
       linters:
         - errcheck
-    - path: dns/.*test\.go
-      linters:
-        - errcheck
-    - path: gtm/.*test\.go
-      linters:
-        - errcheck
-    - path: property/.*test\.go
-      linters:
-        - errcheck
 
 linters-settings:
   revive:

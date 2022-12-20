@@ -1,3 +1,4 @@
+// Package imaging contains implementation for Akamai Terraform sub-provider responsible for managing images and videos
 package imaging
 
 import (

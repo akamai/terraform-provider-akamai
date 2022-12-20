@@ -415,7 +415,7 @@ func populateNewResourceObject(ctx context.Context, meta akamai.OperationMeta, d
 
 }
 
-//nolint:gocyclo
+// nolint:gocyclo
 // Populate existing resource object from resource data
 func populateResourceObject(ctx context.Context, d *schema.ResourceData, rsrc *gtm.Resource, m interface{}) error {
 	meta := akamai.Meta(m)

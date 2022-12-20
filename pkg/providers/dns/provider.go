@@ -1,3 +1,4 @@
+// Package dns contains implementation for Akamai Terraform sub-provider responsible for managing DNS zones configuration
 package dns
 
 import (

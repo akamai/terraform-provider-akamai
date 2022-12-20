@@ -1,3 +1,4 @@
+// Package botman contains implementation for Akamai Terraform sub-provider responsible for maintaining Bot Manager
 package botman
 
 import (
