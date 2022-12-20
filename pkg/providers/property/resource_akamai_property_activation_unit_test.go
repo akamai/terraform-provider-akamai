@@ -3,6 +3,7 @@ package property
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
@@ -44,59 +45,64 @@ func TestResolveVersion(t *testing.T) {
 		init              func(*papi.Mock)
 		withError         error
 	}{
-		"ok": {
-			versionData:       0,
+		"version present and set": {
+			propertyID:        "prp_id",
+			network:           papi.ActivationNetworkStaging,
+			versionData:       3,
 			versionDataExists: true,
-			init: func(m *papi.Mock) {
-				m.On("GetLatestVersion", mock.Anything, mock.Anything).Return(
-					&papi.GetPropertyVersionsResponse{
-						Version: papi.PropertyVersionGetItem{
-							PropertyVersion: 0,
-						},
-					}, nil)
-			},
+			init:              func(m *papi.Mock) {},
 		},
-		"version not present but fetched": {
-			versionData: 1,
+		"version not present but fetched from API": {
+			propertyID: "prp_id",
+			network:    papi.ActivationNetworkStaging,
 			init: func(m *papi.Mock) {
-				m.On("GetLatestVersion", mock.Anything, mock.Anything).Return(
+				m.On("GetLatestVersion", mock.Anything, papi.GetLatestVersionRequest{
+					PropertyID:  "prp_id",
+					ActivatedOn: fmt.Sprintf("%v", papi.ActivationNetworkStaging),
+				}).Return(
 					&papi.GetPropertyVersionsResponse{
 						Version: papi.PropertyVersionGetItem{
 							PropertyVersion: 1,
 						},
-					}, nil)
+					}, nil).Once()
 			},
 		},
-		"version not present & not fetched": {
-			versionData: 0,
+		"version not present & not fetched - error": {
+			propertyID: "prp_id",
+			network:    papi.ActivationNetworkProduction,
 			init: func(m *papi.Mock) {
-				m.On("GetLatestVersion", mock.Anything, mock.Anything).Return(
-					&papi.GetPropertyVersionsResponse{
-						Version: papi.PropertyVersionGetItem{
-							PropertyVersion: 1,
-						},
-					}, tools.ErrNotFound)
+				m.On("GetLatestVersion", mock.Anything, papi.GetLatestVersionRequest{
+					PropertyID:  "prp_id",
+					ActivatedOn: fmt.Sprintf("%v", papi.ActivationNetworkProduction),
+				}).Return(nil, tools.ErrNotFound).Once()
 			},
 			withError: tools.ErrNotFound,
 		},
 	}
 	for name, test := range tests {
-		d := schema.ResourceData{}
+		d := schema.TestResourceDataRaw(t, akamaiPropertyActivationSchema, nil)
+		if test.versionDataExists {
+			d = schema.TestResourceDataRaw(t, akamaiPropertyActivationSchema, map[string]interface{}{
+				"version": test.versionData,
+			})
+		}
 		ctx := ctxt{}
 		client := &papi.Mock{}
-		test.init(client)
+		if test.init != nil {
+			test.init(client)
+		}
 		t.Run(name, func(t *testing.T) {
-			if test.versionDataExists {
-				d.Set("version", test.versionData)
-			}
-
-			version, err := resolveVersion(ctx, &d, client, test.propertyID, test.network)
+			version, err := resolveVersion(ctx, d, client, test.propertyID, test.network)
 			if test.withError != nil {
 				assert.Equal(t, test.withError, err)
+				assert.Equal(t, 0, version)
 			} else {
 				require.NoError(t, err)
+				if test.versionDataExists {
+					assert.Equal(t, test.versionData, version)
+				}
+				assert.Less(t, 0, version)
 			}
-			assert.Equal(t, test.versionData, version)
 		})
 	}
 }
