@@ -69,7 +69,7 @@ func resourceGTMv1Domain() *schema.Resource {
 				Computed: true,
 			},
 			"email_notification_list": {
-				Type:     schema.TypeList,
+				Type:     schema.TypeSet,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 				Optional: true,
 			},
@@ -571,10 +571,10 @@ func populateDomainObject(d *schema.ResourceData, dom *gtm.Domain, m interface{}
 	if err == nil {
 		dom.DefaultUnreachableThreshold = vfl32
 	}
-	vlist, err := tools.GetInterfaceArrayValue("email_notification_list", d)
+	vlist, err := tools.GetSetValue("email_notification_list", d)
 	if err == nil {
-		ls := make([]string, len(vlist))
-		for i, sl := range vlist {
+		ls := make([]string, vlist.Len())
+		for i, sl := range vlist.List() {
 			ls[i] = sl.(string)
 		}
 		dom.EmailNotificationList = ls

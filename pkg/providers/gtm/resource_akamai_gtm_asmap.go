@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"sort"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/gtm"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/session"
-
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -56,8 +56,9 @@ func resourceGTMv1ASmap() *schema.Resource {
 				},
 			},
 			"assignment": {
-				Type:     schema.TypeList,
-				Optional: true,
+				Type:             schema.TypeList,
+				Optional:         true,
+				DiffSuppressFunc: assignmentDiffSuppress,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"datacenter_id": {
@@ -69,7 +70,7 @@ func resourceGTMv1ASmap() *schema.Resource {
 							Required: true,
 						},
 						"as_numbers": {
-							Type:     schema.TypeList,
+							Type:     schema.TypeSet,
 							Elem:     &schema.Schema{Type: schema.TypeInt},
 							Required: true,
 						},
@@ -460,7 +461,7 @@ func populateAsAssignmentsObject(d *schema.ResourceData, as *gtm.AsMap, m interf
 	logger := meta.Log("Akamai GTM", "populateAsAssignmentsObject")
 
 	// pull apart List
-	if asAssignmentsList, err := tools.GetInterfaceArrayValue("assignment", d); err != nil {
+	if asAssignmentsList, err := tools.GetListValue("assignment", d); err != nil {
 		logger.Errorf("Assignment not set: %s", err.Error())
 	} else {
 		asAssignmentsObjList := make([]*gtm.AsAssignment, len(asAssignmentsList)) // create new object list
@@ -470,8 +471,12 @@ func populateAsAssignmentsObject(d *schema.ResourceData, as *gtm.AsMap, m interf
 			asAssignment.DatacenterId = asMap["datacenter_id"].(int)
 			asAssignment.Nickname = asMap["nickname"].(string)
 			if asMap["as_numbers"] != nil {
-				ls := make([]int64, len(asMap["as_numbers"].([]interface{})))
-				for i, sl := range asMap["as_numbers"].([]interface{}) {
+				asNumbers, ok := asMap["as_numbers"].(*schema.Set)
+				if !ok {
+					logger.Errorf("wrong type conversion: expected *schema.Set, got %T", asNumbers)
+				}
+				ls := make([]int64, asNumbers.Len())
+				for i, sl := range asNumbers.List() {
 					ls[i] = int64(sl.(int))
 				}
 				asAssignment.AsNumbers = ls
@@ -542,4 +547,141 @@ func populateTerraformAsDefaultDCState(d *schema.ResourceData, as *gtm.AsMap, m 
 	if err := d.Set("default_datacenter", ddcListNew); err != nil {
 		logger.Errorf("populateTerraformAsDefaultDCState failed: %s", err.Error())
 	}
+}
+
+// assignmentDiffSuppress is a diff suppress function used in gtm_asmap, gtm_cidrmap and gtm_geomap resources
+func assignmentDiffSuppress(_, _, _ string, d *schema.ResourceData) bool {
+	logger := akamai.Log("Akamai GTM", "assignmentDiffSuppress")
+	oldVal, newVal := d.GetChange("assignment")
+
+	oldList, ok := oldVal.([]interface{})
+	if !ok {
+		logger.Warnf("wrong type conversion: expected []interface{}, got %T", oldList)
+		return false
+	}
+
+	newList, ok := newVal.([]interface{})
+	if !ok {
+		logger.Warnf("wrong type conversion: expected []interface{}, got %T", newList)
+		return false
+	}
+
+	if len(oldList) != len(newList) {
+		return false
+	}
+
+	sort.Slice(oldList, func(i, j int) bool {
+		return oldList[i].(map[string]interface{})["datacenter_id"].(int) < oldList[j].(map[string]interface{})["datacenter_id"].(int)
+	})
+	sort.Slice(newList, func(i, j int) bool {
+		return newList[i].(map[string]interface{})["datacenter_id"].(int) < newList[j].(map[string]interface{})["datacenter_id"].(int)
+	})
+
+	attrName, err := resolveAttrName(oldList)
+	if err != nil {
+		logger.Warnf("resolveAttrName: %s", err)
+		return false
+	}
+
+	length := len(oldList)
+	var oldAssignment, newAssignment map[string]interface{}
+	for i := 0; i < length; i++ {
+		oldAssignment, ok = oldList[i].(map[string]interface{})
+		if !ok {
+			logger.Warnf("wrong type conversion: expected map[string]interface{}, got %T", oldAssignment)
+		}
+		newAssignment, ok = newList[i].(map[string]interface{})
+		if !ok {
+			logger.Warnf("wrong type conversion: expected map[string]interface{}, got %T", newAssignment)
+		}
+		for k, v := range oldAssignment {
+			if k == attrName {
+				switch attrName {
+				case "blocks":
+					if !blocksEqual(oldAssignment[attrName], newAssignment[attrName]) {
+						return false
+					}
+				case "countries":
+					if !countriesEqual(oldAssignment[attrName], newAssignment[attrName]) {
+						return false
+					}
+				case "as_numbers":
+					if !asNumbersEqual(oldAssignment[attrName], newAssignment[attrName]) {
+						return false
+					}
+				default:
+					logger.Warn("no expected attribute is present, should be one of [as_numbers, load_servers, countries]")
+				}
+
+			} else {
+				if newAssignment[k] != v {
+					return false
+				}
+			}
+		}
+	}
+
+	return true
+}
+
+// asNumbersEqual checks whether the as_numbers are equal
+func asNumbersEqual(old, new interface{}) bool {
+	logger := akamai.Log("Akamai GTM", "asNumbersEqual")
+
+	oldVal, ok := old.(*schema.Set)
+	if !ok {
+		logger.Warnf("wrong type conversion: expected *schema.Set, got %T", oldVal)
+		return false
+	}
+
+	newVal, ok := new.(*schema.Set)
+	if !ok {
+		logger.Warnf("wrong type conversion: expected *schema.Set, got %T", newVal)
+		return false
+	}
+
+	if oldVal.Len() != newVal.Len() {
+		return false
+	}
+
+	numbers := make(map[int]bool, oldVal.Len())
+	for _, num := range oldVal.List() {
+		numbers[num.(int)] = true
+	}
+
+	for _, num := range newVal.List() {
+		_, ok = numbers[num.(int)]
+		if !ok {
+			return false
+		}
+	}
+
+	return true
+}
+
+// resolveAttrName resolves specific assignment attribute, based on a resource
+func resolveAttrName(list []interface{}) (string, error) {
+	if len(list) == 0 {
+		return "", fmt.Errorf("there are no elements in the list")
+	}
+
+	entry, ok := list[0].(map[string]interface{})
+	if !ok {
+		return "", fmt.Errorf("expected map[string]interface{}, got %T", entry)
+	}
+
+	_, ok = entry["blocks"]
+	if ok {
+		return "blocks", nil
+	}
+	_, ok = entry["countries"]
+	if ok {
+		return "countries", nil
+	}
+	_, ok = entry["as_numbers"]
+	if ok {
+		return "as_numbers", nil
+	}
+
+	return "", fmt.Errorf("there is no attribute matching one of: [blocks, countries, as_numbers]")
 }
