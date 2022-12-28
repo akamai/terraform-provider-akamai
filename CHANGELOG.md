@@ -1,6 +1,10 @@
 # RELEASE NOTES
 
-## 3.X.X (x x, x)
+## 4.X.X (x x, x)
+
+#### BREAKING CHANGES:
+
+* Support for Go 1.18
 
 ### BUG FIXES:
 

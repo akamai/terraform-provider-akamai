@@ -74,4 +74,4 @@ require (
 
 //replace github.com/akamai/AkamaiOPEN-edgegrid-golang/v3 => ../AkamaiOPEN-edgegrid-golang
 
-go 1.17
+go 1.18

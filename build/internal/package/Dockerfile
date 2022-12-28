@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.0-experimental
 ARG TERRAFORM_VERSION="1.2.5"
-FROM alpine:3.15
+FROM alpine:3.16
 ENV PROVIDER_VERSION="1.0.0" \
     CGO_ENABLED=0 \
     GOOS="linux" \
