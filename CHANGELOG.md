@@ -6,6 +6,11 @@
 
 * Support for Go 1.18
 
+#### FEATURES/ENHANCEMENTS:
+
+* PAPI - Added data source for property activation
+  * [akamai_property_activation](docs/data-sources/property_activation.md) - get activation by network
+
 ### BUG FIXES:
 
 * GTM

@@ -84,6 +84,7 @@ func Provider() *schema.Provider {
 			"akamai_properties":                  dataSourceProperties(),
 			"akamai_properties_search":           dataSourcePropertiesSearch(),
 			"akamai_property":                    dataSourceProperty(),
+			"akamai_property_activation":         dataSourcePropertyActivation(),
 			"akamai_property_hostnames":          dataSourcePropertyHostnames(),
 			"akamai_property_include":            dataSourcePropertyInclude(),
 			"akamai_property_include_activation": dataSourcePropertyIncludeActivation(),
