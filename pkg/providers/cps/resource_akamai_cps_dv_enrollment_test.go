@@ -35,13 +35,14 @@ func TestResourceDVEnrollment(t *testing.T) {
 			CertificateChainType: "default",
 			CertificateType:      "san",
 			CSR: &cps.CSR{
-				C:    "US",
-				CN:   "test.akamai.com",
-				L:    "Cambridge",
-				O:    "Akamai",
-				OU:   "WebEx",
-				SANS: []string{"san.test.akamai.com"},
-				ST:   "MA",
+				C:                   "US",
+				CN:                  "test.akamai.com",
+				L:                   "Cambridge",
+				O:                   "Akamai",
+				OU:                  "WebEx",
+				SANS:                []string{"san.test.akamai.com"},
+				ST:                  "MA",
+				PreferredTrustChain: "intermediate-a",
 			},
 			EnableMultiStackedCertificates: false,
 			NetworkConfiguration: &cps.NetworkConfiguration{
@@ -97,7 +98,12 @@ func TestResourceDVEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		enrollment.Location = "/cps/v2/enrollments/1"
-		enrollment.PendingChanges = []string{"/cps/v2/enrollments/1/changes/2"}
+		enrollment.PendingChanges = []cps.PendingChange{
+			{
+				Location:   "/cps/v2/enrollments/1/changes/2",
+				ChangeType: "new-certificate",
+			},
+		}
 		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollment, nil).Once()
 
@@ -179,6 +185,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 		enrollmentUpdate.AdminContact.FirstName = "R5"
 		enrollmentUpdate.AdminContact.LastName = "D5"
 		enrollmentUpdate.CSR.SANS = []string{"san2.test.akamai.com", "san.test.akamai.com"}
+		enrollmentUpdate.CSR.PreferredTrustChain = "dst-root-ca-x3"
 		enrollmentUpdate.NetworkConfiguration.DNSNameSettings.DNSNames = []string{"san2.test.akamai.com", "san.test.akamai.com"}
 		enrollmentUpdate.Location = ""
 		enrollmentUpdate.PendingChanges = nil
@@ -197,7 +204,12 @@ func TestResourceDVEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		enrollmentUpdate.Location = "/cps/v2/enrollments/1"
-		enrollmentUpdate.PendingChanges = []string{"/cps/v2/enrollments/1/changes/2"}
+		enrollmentUpdate.PendingChanges = []cps.PendingChange{
+			{
+				Location:   "/cps/v2/enrollments/1/changes/2",
+				ChangeType: "new-certificate",
+			},
+		}
 		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollmentUpdate, nil).Times(3)
 
@@ -374,7 +386,12 @@ func TestResourceDVEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		enrollment.Location = "/cps/v2/enrollments/1"
-		enrollment.PendingChanges = []string{"/cps/v2/enrollments/1/changes/2"}
+		enrollment.PendingChanges = []cps.PendingChange{
+			{
+				Location:   "/cps/v2/enrollments/1/changes/2",
+				ChangeType: "new-certificate",
+			},
+		}
 		var enrollmentGet cps.Enrollment
 		require.NoError(t, copier.CopyWithOption(&enrollmentGet, enrollment, copier.Option{DeepCopy: true}))
 		enrollmentGet.CSR.SANS = []string{enrollment.CSR.CN}
@@ -559,7 +576,12 @@ func TestResourceDVEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		enrollment.Location = "/cps/v2/enrollments/1"
-		enrollment.PendingChanges = []string{"/cps/v2/enrollments/1/changes/2"}
+		enrollment.PendingChanges = []cps.PendingChange{
+			{
+				Location:   "/cps/v2/enrollments/1/changes/2",
+				ChangeType: "new-certificate",
+			},
+		}
 		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollment, nil).Once()
 
@@ -696,13 +718,14 @@ func TestResourceDVEnrollment(t *testing.T) {
 			CertificateChainType: "default",
 			CertificateType:      "san",
 			CSR: &cps.CSR{
-				C:    "US",
-				CN:   "test.akamai.com",
-				L:    "Cambridge",
-				O:    "Akamai",
-				OU:   "WebEx",
-				SANS: []string{"san.test.akamai.com"},
-				ST:   "MA",
+				C:                   "US",
+				CN:                  "test.akamai.com",
+				L:                   "Cambridge",
+				O:                   "Akamai",
+				OU:                  "WebEx",
+				PreferredTrustChain: "intermediate-a",
+				SANS:                []string{"san.test.akamai.com"},
+				ST:                  "MA",
 			},
 			EnableMultiStackedCertificates: false,
 			NetworkConfiguration: &cps.NetworkConfiguration{
@@ -758,7 +781,12 @@ func TestResourceDVEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		enrollment.Location = "/cps/v2/enrollments/1"
-		enrollment.PendingChanges = []string{"/cps/v2/enrollments/1/changes/2"}
+		enrollment.PendingChanges = []cps.PendingChange{
+			{
+				Location:   "/cps/v2/enrollments/1/changes/2",
+				ChangeType: "new-certificate",
+			},
+		}
 		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollment, nil).Once()
 
@@ -889,7 +917,12 @@ func TestResourceDVEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		enrollment.Location = "/cps/v2/enrollments/1"
-		enrollment.PendingChanges = []string{"/cps/v2/enrollments/1/changes/2"}
+		enrollment.PendingChanges = []cps.PendingChange{
+			{
+				Location:   "/cps/v2/enrollments/1/changes/2",
+				ChangeType: "new-certificate",
+			},
+		}
 		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollment, nil).Once()
 
@@ -1105,7 +1138,12 @@ func TestResourceDVEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		enrollment.Location = "/cps/v2/enrollments/1"
-		enrollment.PendingChanges = []string{"/cps/v2/enrollments/1/changes/2"}
+		enrollment.PendingChanges = []cps.PendingChange{
+			{
+				Location:   "/cps/v2/enrollments/1/changes/2",
+				ChangeType: "new-certificate",
+			},
+		}
 		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollment, nil).Once()
 
@@ -1288,7 +1326,12 @@ func TestResourceDVEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		enrollment.Location = "/cps/v2/enrollments/1"
-		enrollment.PendingChanges = []string{"/cps/v2/enrollments/1/changes/2"}
+		enrollment.PendingChanges = []cps.PendingChange{
+			{
+				Location:   "/cps/v2/enrollments/1/changes/2",
+				ChangeType: "new-certificate",
+			},
+		}
 		var enrollmentGet cps.Enrollment
 		require.NoError(t, copier.CopyWithOption(&enrollmentGet, enrollment, copier.Option{DeepCopy: true}))
 		enrollmentGet.CSR.SANS = []string{enrollment.CSR.CN}
@@ -1471,7 +1514,12 @@ func TestResourceDVEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		enrollment.Location = "/cps/v2/enrollments/1"
-		enrollment.PendingChanges = []string{"/cps/v2/enrollments/1/changes/2"}
+		enrollment.PendingChanges = []cps.PendingChange{
+			{
+				Location:   "/cps/v2/enrollments/1/changes/2",
+				ChangeType: "new-certificate",
+			},
+		}
 		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollment, nil).Once()
 
@@ -1619,12 +1667,13 @@ func TestResourceDVEnrollmentImport(t *testing.T) {
 			CertificateChainType: "default",
 			CertificateType:      "san",
 			CSR: &cps.CSR{
-				C:  "US",
-				CN: "test.akamai.com",
-				L:  "Cambridge",
-				O:  "Akamai",
-				OU: "WebEx",
-				ST: "MA",
+				C:                   "US",
+				CN:                  "test.akamai.com",
+				L:                   "Cambridge",
+				O:                   "Akamai",
+				OU:                  "WebEx",
+				PreferredTrustChain: "intermediate-a",
+				ST:                  "MA",
 			},
 			NetworkConfiguration: &cps.NetworkConfiguration{
 				DNSNameSettings: &cps.DNSNameSettings{
@@ -1672,7 +1721,12 @@ func TestResourceDVEnrollmentImport(t *testing.T) {
 		}, nil).Once()
 
 		enrollment.Location = "/cps/v2/enrollments/1"
-		enrollment.PendingChanges = []string{"/cps/v2/enrollments/1/changes/2"}
+		enrollment.PendingChanges = []cps.PendingChange{
+			{
+				Location:   "/cps/v2/enrollments/1/changes/2",
+				ChangeType: "new-certificate",
+			},
+		}
 		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollment, nil).Once()
 

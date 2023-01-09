@@ -90,6 +90,11 @@ func dataSourceCPSEnrollments() *schema.Resource {
 										Computed:    true,
 										Description: "Organizational unit of organization",
 									},
+									"preferred_trust_chain": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "For the Let's Encrypt Domain Validated (DV) SAN certificates, the preferred trust chain will be included by CPS with the leaf certificate in the TLS handshake. If the field does not have a value, whichever trust chain Akamai chooses will be used by default",
+									},
 									"state": {
 										Type:        schema.TypeString,
 										Computed:    true,

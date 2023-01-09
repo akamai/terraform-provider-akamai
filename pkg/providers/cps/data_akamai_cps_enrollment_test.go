@@ -36,13 +36,14 @@ var (
 		CertificateType:      "san",
 		ChangeManagement:     false,
 		CSR: &cps.CSR{
-			C:    "US",
-			CN:   "test.akamai.com",
-			L:    "Cambridge",
-			O:    "Akamai",
-			OU:   "WebEx",
-			SANS: []string{"san.test.akamai.com"},
-			ST:   "MA",
+			C:                   "US",
+			CN:                  "test.akamai.com",
+			L:                   "Cambridge",
+			O:                   "Akamai",
+			OU:                  "WebEx",
+			PreferredTrustChain: "intermediate-a",
+			SANS:                []string{"san.test.akamai.com"},
+			ST:                  "MA",
 		},
 		Location:                       "/cps/v2/enrollments/1",
 		EnableMultiStackedCertificates: false,
@@ -153,8 +154,13 @@ var (
 		},
 		MaxAllowedWildcardSanNames: 25,
 		MaxAllowedSanNames:         100,
-		PendingChanges:             []string{"/cps/v2/enrollments/27552/changes/2848126"},
-		ValidationType:             "dv",
+		PendingChanges: []cps.PendingChange{
+			{
+				Location:   "/cps/v2/enrollments/27552/changes/2848126",
+				ChangeType: "new-certificate",
+			},
+		},
+		ValidationType: "dv",
 	}
 	enrollmentThirdParty = &cps.Enrollment{
 		AdminContact: &cps.Contact{
@@ -225,8 +231,13 @@ var (
 		},
 		MaxAllowedWildcardSanNames: 25,
 		MaxAllowedSanNames:         100,
-		PendingChanges:             []string{"/cps/v2/enrollments/27552/changes/2848126"},
-		ValidationType:             "third-party",
+		PendingChanges: []cps.PendingChange{
+			{
+				Location:   "/cps/v2/enrollments/27552/changes/2848126",
+				ChangeType: "new-certificate",
+			},
+		},
+		ValidationType: "third-party",
 	}
 	enrollmentEV = &cps.Enrollment{
 		AdminContact: &cps.Contact{
@@ -297,8 +308,13 @@ var (
 		},
 		MaxAllowedWildcardSanNames: 25,
 		MaxAllowedSanNames:         100,
-		PendingChanges:             []string{"/cps/v2/enrollments/27552/changes/2848126"},
-		ValidationType:             "ev",
+		PendingChanges: []cps.PendingChange{
+			{
+				Location:   "/cps/v2/enrollments/27552/changes/2848126",
+				ChangeType: "new-certificate",
+			},
+		},
+		ValidationType: "ev",
 	}
 )
 

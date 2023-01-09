@@ -36,17 +36,19 @@ resource "akamai_cps_dv_enrollment" "dv" {
   }
   certificate_chain_type = "default"
   csr {
-    country_code        = "US"
-    city                = "Cambridge"
-    organization        = "Akamai"
-    organizational_unit = "WebEx"
-    state               = "MA"
+    country_code          = "US"
+    city                  = "Cambridge"
+    organization          = "Akamai"
+    organizational_unit   = "WebEx"
+    preferred_trust_chain = "intermediate-a"
+    state                 = "MA"
   }
   enable_multi_stacked_certificates = false
   network_configuration {
     disallowed_tls_versions = [
       "TLSv1",
-    "TLSv1_1"]
+      "TLSv1_1"
+    ]
     clone_dns_names   = false
     geography         = "core"
     ocsp_stapling     = "on"

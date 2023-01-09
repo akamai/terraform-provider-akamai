@@ -107,7 +107,7 @@ var (
 	}
 
 	expectReadCPSCSRNoPendingChanges = func(t *testing.T, client *cps.Mock, data testDataForCPSCSR, timesToRun int) {
-		data.Enrollment.PendingChanges = []string{}
+		data.Enrollment.PendingChanges = []cps.PendingChange{}
 		getEnrollmentReq := cps.GetEnrollmentRequest{
 			EnrollmentID: data.EnrollmentID,
 		}

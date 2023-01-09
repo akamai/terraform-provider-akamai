@@ -34,7 +34,12 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		enrollment.Location = "/cps/v2/enrollments/1"
-		enrollment.PendingChanges = []string{"/cps/v2/enrollments/1/changes/2"}
+		enrollment.PendingChanges = []cps.PendingChange{
+			{
+				Location:   "/cps/v2/enrollments/1/changes/2",
+				ChangeType: "new-certificate",
+			},
+		}
 		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollment, nil).Once()
 
@@ -102,7 +107,12 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		enrollmentUpdate.Location = "/cps/v2/enrollments/1"
-		enrollmentUpdate.PendingChanges = []string{"/cps/v2/enrollments/1/changes/2"}
+		enrollmentUpdate.PendingChanges = []cps.PendingChange{
+			{
+				Location:   "/cps/v2/enrollments/1/changes/2",
+				ChangeType: "new-certificate",
+			},
+		}
 		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollmentUpdate, nil).Times(3)
 
@@ -230,7 +240,12 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		enrollment.Location = "/cps/v2/enrollments/1"
-		enrollment.PendingChanges = []string{"/cps/v2/enrollments/1/changes/2"}
+		enrollment.PendingChanges = []cps.PendingChange{
+			{
+				Location:   "/cps/v2/enrollments/1/changes/2",
+				ChangeType: "new-certificate",
+			},
+		}
 		var enrollmentGet cps.Enrollment
 		require.NoError(t, copier.CopyWithOption(&enrollmentGet, enrollment, copier.Option{DeepCopy: true}))
 		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
@@ -387,7 +402,12 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		enrollment.Location = "/cps/v2/enrollments/1"
-		enrollment.PendingChanges = []string{"/cps/v2/enrollments/1/changes/2"}
+		enrollment.PendingChanges = []cps.PendingChange{
+			{
+				Location:   "/cps/v2/enrollments/1/changes/2",
+				ChangeType: "new-certificate",
+			},
+		}
 		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollment, nil).Once()
 
@@ -478,7 +498,12 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		enrollment.Location = "/cps/v2/enrollments/1"
-		enrollment.PendingChanges = []string{"/cps/v2/enrollments/1/changes/2"}
+		enrollment.PendingChanges = []cps.PendingChange{
+			{
+				Location:   "/cps/v2/enrollments/1/changes/2",
+				ChangeType: "new-certificate",
+			},
+		}
 		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollment, nil).Once()
 
@@ -597,7 +622,12 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		enrollment.Location = "/cps/v2/enrollments/1"
-		enrollment.PendingChanges = []string{"/cps/v2/enrollments/1/changes/2"}
+		enrollment.PendingChanges = []cps.PendingChange{
+			{
+				Location:   "/cps/v2/enrollments/1/changes/2",
+				ChangeType: "new-certificate",
+			},
+		}
 		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollment, nil).Once()
 
@@ -737,7 +767,12 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		enrollment.Location = "/cps/v2/enrollments/1"
-		enrollment.PendingChanges = []string{"/cps/v2/enrollments/1/changes/2"}
+		enrollment.PendingChanges = []cps.PendingChange{
+			{
+				Location:   "/cps/v2/enrollments/1/changes/2",
+				ChangeType: "new-certificate",
+			},
+		}
 		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollment, nil).Once()
 
@@ -895,7 +930,12 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		enrollment.Location = "/cps/v2/enrollments/1"
-		enrollment.PendingChanges = []string{"/cps/v2/enrollments/1/changes/2"}
+		enrollment.PendingChanges = []cps.PendingChange{
+			{
+				Location:   "/cps/v2/enrollments/1/changes/2",
+				ChangeType: "new-certificate",
+			},
+		}
 		var enrollmentGet cps.Enrollment
 		require.NoError(t, copier.CopyWithOption(&enrollmentGet, enrollment, copier.Option{DeepCopy: true}))
 		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
@@ -1044,7 +1084,12 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		enrollment.Location = "/cps/v2/enrollments/1"
-		enrollment.PendingChanges = []string{"/cps/v2/enrollments/1/changes/2"}
+		enrollment.PendingChanges = []cps.PendingChange{
+			{
+				Location:   "/cps/v2/enrollments/1/changes/2",
+				ChangeType: "new-certificate",
+			},
+		}
 		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollment, nil).Once()
 
@@ -1251,7 +1296,12 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		enrollment.Location = "/cps/v2/enrollments/1"
-		enrollment.PendingChanges = []string{"/cps/v2/enrollments/1/changes/2"}
+		enrollment.PendingChanges = []cps.PendingChange{
+			{
+				Location:   "/cps/v2/enrollments/1/changes/2",
+				ChangeType: "new-certificate",
+			},
+		}
 		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollment, nil).Once()
 
@@ -1403,7 +1453,12 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		enrollment.Location = "/cps/v2/enrollments/1"
-		enrollment.PendingChanges = []string{"/cps/v2/enrollments/1/changes/2"}
+		enrollment.PendingChanges = []cps.PendingChange{
+			{
+				Location:   "/cps/v2/enrollments/1/changes/2",
+				ChangeType: "new-certificate",
+			},
+		}
 		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollment, nil).Once()
 
@@ -1523,7 +1578,12 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		enrollment.Location = "/cps/v2/enrollments/1"
-		enrollment.PendingChanges = []string{"/cps/v2/enrollments/1/changes/2"}
+		enrollment.PendingChanges = []cps.PendingChange{
+			{
+				Location:   "/cps/v2/enrollments/1/changes/2",
+				ChangeType: "new-certificate",
+			},
+		}
 		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollment, nil).Once()
 
@@ -1645,7 +1705,12 @@ func TestResourceThirdPartyEnrollmentImport(t *testing.T) {
 		}, nil).Once()
 
 		enrollment.Location = "/cps/v2/enrollments/1"
-		enrollment.PendingChanges = []string{"/cps/v2/enrollments/1/changes/2"}
+		enrollment.PendingChanges = []cps.PendingChange{
+			{
+				Location:   "/cps/v2/enrollments/1/changes/2",
+				ChangeType: "new-certificate",
+			},
+		}
 		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollment, nil).Once()
 
@@ -1754,7 +1819,12 @@ func TestSuppressingSignatureAlgorithm(t *testing.T) {
 		}, nil).Once()
 
 		enrollment.Location = "/cps/v2/enrollments/1"
-		enrollment.PendingChanges = []string{"/cps/v2/enrollments/1/changes/2"}
+		enrollment.PendingChanges = []cps.PendingChange{
+			{
+				Location:   "/cps/v2/enrollments/1/changes/2",
+				ChangeType: "new-certificate",
+			},
+		}
 
 		var enrollmentGet cps.Enrollment
 		err := copier.CopyWithOption(&enrollmentGet, enrollment, copier.Option{DeepCopy: true})
@@ -1803,7 +1873,12 @@ func TestSuppressingSignatureAlgorithm(t *testing.T) {
 		}, nil).Once()
 
 		enrollmentUpdate.Location = "/cps/v2/enrollments/1"
-		enrollmentUpdate.PendingChanges = []string{"/cps/v2/enrollments/1/changes/2"}
+		enrollmentUpdate.PendingChanges = []cps.PendingChange{
+			{
+				Location:   "/cps/v2/enrollments/1/changes/2",
+				ChangeType: "new-certificate",
+			},
+		}
 
 		var enrollmentUpdateGet cps.Enrollment
 		err = copier.CopyWithOption(&enrollmentUpdateGet, enrollmentUpdate, copier.Option{DeepCopy: true})

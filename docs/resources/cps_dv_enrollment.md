@@ -56,6 +56,7 @@ resource "akamai_cps_dv_enrollment" "example" {
     city = "Cambridge"
     organization = "Akamai"
     organizational_unit = "Dev"
+    preferred_trust_chain = "intermediate-a"
     state = "MA"
   }
   network_configuration {
@@ -127,6 +128,7 @@ The following arguments are supported:
       * `city` - (Required) The city where your organization resides.
       * `organization` - (Required The name of your company or organization. Enter the name as it appears in all legal documents and as it appears in the legal entity filing.
       * `organizational_unit` - (Required) Your organizational unit.
+      * `preferred_trust_chain` - (Optional) The preferred trust chain will be included by CPS with the leaf certificate in the TLS handshake. If the field does not have a value, whichever trust chain Akamai chooses will be used by default.
       * `state` - (Required) 	Your state or province.
 * `network_configuration` - (Required) The network information and TLS Metadata you want CPS to use to push the completed certificate to the network.
 

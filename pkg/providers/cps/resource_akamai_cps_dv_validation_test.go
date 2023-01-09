@@ -16,7 +16,12 @@ func TestDVValidation(t *testing.T) {
 		client := &cps.Mock{}
 		PollForChangeStatusInterval = 1 * time.Millisecond
 		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
-			Return(&cps.Enrollment{PendingChanges: []string{"/cps/v2/enrollments/1/changes/2"}}, nil).Once()
+			Return(&cps.Enrollment{PendingChanges: []cps.PendingChange{
+				{
+					Location:   "/cps/v2/enrollments/1/changes/2",
+					ChangeType: "new-certificate",
+				},
+			}}, nil).Once()
 
 		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{EnrollmentID: 1, ChangeID: 2}).
 			Return(&cps.Change{StatusInfo: &cps.StatusInfo{
@@ -36,7 +41,12 @@ func TestDVValidation(t *testing.T) {
 		}).Return(nil)
 
 		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
-			Return(&cps.Enrollment{PendingChanges: []string{"/cps/v2/enrollments/1/changes/2"}}, nil).Times(3)
+			Return(&cps.Enrollment{PendingChanges: []cps.PendingChange{
+				{
+					Location:   "/cps/v2/enrollments/1/changes/2",
+					ChangeType: "new-certificate",
+				},
+			}}, nil).Times(3)
 
 		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{EnrollmentID: 1, ChangeID: 2}).
 			Return(&cps.Change{StatusInfo: &cps.StatusInfo{
@@ -45,7 +55,12 @@ func TestDVValidation(t *testing.T) {
 			}}, nil).Times(3)
 
 		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
-			Return(&cps.Enrollment{PendingChanges: []string{"/cps/v2/enrollments/1/changes/2"}}, nil).Once()
+			Return(&cps.Enrollment{PendingChanges: []cps.PendingChange{
+				{
+					Location:   "/cps/v2/enrollments/1/changes/2",
+					ChangeType: "new-certificate",
+				},
+			}}, nil).Once()
 
 		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{EnrollmentID: 1, ChangeID: 2}).
 			Return(&cps.Change{StatusInfo: &cps.StatusInfo{
@@ -65,7 +80,12 @@ func TestDVValidation(t *testing.T) {
 		}).Return(nil)
 
 		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
-			Return(&cps.Enrollment{PendingChanges: []string{"/cps/v2/enrollments/1/changes/2"}}, nil).Twice()
+			Return(&cps.Enrollment{PendingChanges: []cps.PendingChange{
+				{
+					Location:   "/cps/v2/enrollments/1/changes/2",
+					ChangeType: "new-certificate",
+				},
+			}}, nil).Twice()
 
 		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{EnrollmentID: 1, ChangeID: 2}).
 			Return(&cps.Change{StatusInfo: &cps.StatusInfo{
@@ -102,7 +122,12 @@ func TestDVValidation(t *testing.T) {
 		client := &cps.Mock{}
 		changeAckRetryInterval = 1 * time.Millisecond
 		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
-			Return(&cps.Enrollment{PendingChanges: []string{"/cps/v2/enrollments/1/changes/2"}}, nil).Once()
+			Return(&cps.Enrollment{PendingChanges: []cps.PendingChange{
+				{
+					Location:   "/cps/v2/enrollments/1/changes/2",
+					ChangeType: "new-certificate",
+				},
+			}}, nil).Once()
 
 		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{EnrollmentID: 1, ChangeID: 2}).
 			Return(&cps.Change{StatusInfo: &cps.StatusInfo{
@@ -123,7 +148,12 @@ func TestDVValidation(t *testing.T) {
 		}).Return(nil).Once()
 
 		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
-			Return(&cps.Enrollment{PendingChanges: []string{"/cps/v2/enrollments/1/changes/2"}}, nil).Twice()
+			Return(&cps.Enrollment{PendingChanges: []cps.PendingChange{
+				{
+					Location:   "/cps/v2/enrollments/1/changes/2",
+					ChangeType: "new-certificate",
+				},
+			}}, nil).Twice()
 
 		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{EnrollmentID: 1, ChangeID: 2}).
 			Return(&cps.Change{StatusInfo: &cps.StatusInfo{
@@ -153,7 +183,12 @@ func TestDVValidation(t *testing.T) {
 		changeAckRetryInterval = 1 * time.Millisecond
 		changeAckDeadline = 2 * time.Millisecond
 		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
-			Return(&cps.Enrollment{PendingChanges: []string{"/cps/v2/enrollments/1/changes/2"}}, nil).Once()
+			Return(&cps.Enrollment{PendingChanges: []cps.PendingChange{
+				{
+					Location:   "/cps/v2/enrollments/1/changes/2",
+					ChangeType: "new-certificate",
+				},
+			}}, nil).Once()
 
 		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{EnrollmentID: 1, ChangeID: 2}).
 			Return(&cps.Change{StatusInfo: &cps.StatusInfo{

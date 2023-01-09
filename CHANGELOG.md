@@ -11,6 +11,11 @@
 * PAPI - Added data source for property activation
   * [akamai_property_activation](docs/data-sources/property_activation.md) - get activation by network
 
+#### FEATURES/ENHANCEMENTS:
+
+* CPS
+  * Add `preferred_trust_chain` to `csr` attribute
+
 ### BUG FIXES:
 
 * GTM
