@@ -28,6 +28,7 @@ func resourcePropertyInclude() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			StateContext: resourcePropertyIncludeImport,
 		},
+		CustomizeDiff: setVersionComputedOnRulesChange,
 		Schema: map[string]*schema.Schema{
 			"contract_id": {
 				Type:        schema.TypeString,
@@ -474,7 +475,7 @@ func buildRuleFormatHeader(ruleFormat string) http.Header {
 
 func suppressDefaultRules(_, oldValue, newValue string, _ *schema.ResourceData) bool {
 	logger := akamai.Log("PAPI", "suppressDefaultRules")
-	if len(newValue) > 0 {
+	if len(newValue) > 0 || len(oldValue) == 0 {
 		return false
 	}
 
@@ -487,4 +488,20 @@ func suppressDefaultRules(_, oldValue, newValue string, _ *schema.ResourceData) 
 	defaultRules := papi.Rules{Name: "default"}
 
 	return reflect.DeepEqual(rules, defaultRules)
+}
+
+func setVersionComputedOnRulesChange(_ context.Context, d *schema.ResourceDiff, _ interface{}) error {
+	o, n := d.GetChange("rules")
+	oldRules, newRules := o.(string), n.(string)
+
+	if compareRulesJSON(oldRules, newRules) {
+		return nil
+	}
+
+	for _, key := range []string{"latest_version", "staging_version", "production_version"} {
+		if err := d.SetNewComputed(key); err != nil {
+			return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		}
+	}
+	return nil
 }
