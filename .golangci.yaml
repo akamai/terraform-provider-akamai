@@ -21,12 +21,6 @@ issues:
     - path: gen\.go
       linters:
         - gocyclo
-    - path: networklists/.*test\.go
-      linters:
-        - errcheck
-    - path:  appsec/templates\.go
-      linters:
-        - errcheck
 
 linters-settings:
   revive:

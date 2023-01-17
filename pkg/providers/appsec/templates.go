@@ -33,7 +33,6 @@ type (
 
 var (
 	funcs = template.FuncMap{
-		"join":  strings.Join,
 		"quote": func(in string) string { return fmt.Sprintf("\"%s\"", in) },
 		"json": func(v interface{}) string {
 			buf := &bytes.Buffer{}
@@ -43,12 +42,12 @@ var (
 			// Remove the trailing new line added by the encoder
 			return strings.TrimSpace(buf.String())
 		},
-		"jsonwithoutid": func(v interface{}) string {
+		"jsonwithoutid": func(v interface{}) (string, error) {
 			a, _ := json.Marshal(v)
 
 			var i interface{}
 			if err := json.Unmarshal([]byte(a), &i); err != nil {
-				panic(err)
+				return "", err
 			}
 			if m, ok := i.(map[string]interface{}); ok {
 				delete(m, "id")
@@ -59,31 +58,31 @@ var (
 			enc.SetEscapeHTML(false)
 			_ = enc.Encode(i)
 			// Remove the trailing new line added by the encoder
-			return strings.TrimSpace(buf.String())
+			return strings.TrimSpace(buf.String()), nil
 		},
 		"marshal": func(v interface{}) string {
 			a, _ := json.Marshal(v)
 			return string(a)
 		},
-		"marshalwithoutid": func(v interface{}) string {
+		"marshalwithoutid": func(v interface{}) (string, error) {
 			a, _ := json.Marshal(v)
 
 			var i interface{}
 			if err := json.Unmarshal([]byte(a), &i); err != nil {
-				panic(err)
+				return "", err
 			}
 			if m, ok := i.(map[string]interface{}); ok {
 				delete(m, "id")
 			}
 			b, _ := json.Marshal(i)
-			return string(b)
+			return string(b), nil
 		},
-		"marshalconditionexception": func(v interface{}) string {
+		"marshalconditionexception": func(v interface{}) (string, error) {
 			a, _ := json.Marshal(v)
 
 			var i interface{}
 			if err := json.Unmarshal([]byte(a), &i); err != nil {
-				panic(err)
+				return "", err
 			}
 			// remove some fields returned by export_configuration.go but not needed here
 			if m, ok := i.(map[string]interface{}); ok {
@@ -94,9 +93,9 @@ var (
 				}
 			}
 			b, _ := json.Marshal(i)
-			return string(b)
+			return string(b), nil
 		},
-		"marshalruleupgradedetails": func(v interface{}) string {
+		"marshalruleupgradedetails": func(v interface{}) (string, error) {
 			upgradeDetailsPresent := func(i interface{}, key string) string {
 				if m, ok := i.(map[string]interface{}); ok {
 					i2 := m[key]
@@ -110,11 +109,13 @@ var (
 			}
 			s, _ := json.Marshal(v)
 			var i interface{}
-			json.Unmarshal([]byte(s), &i)
+			if err := json.Unmarshal([]byte(s), &i); err != nil {
+				return "", err
+			}
 			KRSToEvalUpdates := upgradeDetailsPresent(i, "KRSToEvalUpdates")
 			EvalToEvalUpdates := upgradeDetailsPresent(i, "EvalToEvalUpdates")
 			KRSToLatestUpdates := upgradeDetailsPresent(i, "KRSToLatestUpdates")
-			return fmt.Sprintf("%s|%s|%s", KRSToEvalUpdates, EvalToEvalUpdates, KRSToLatestUpdates)
+			return fmt.Sprintf("%s|%s|%s", KRSToEvalUpdates, EvalToEvalUpdates, KRSToLatestUpdates), nil
 		},
 		"dash": func(in int) string {
 			if in == 0 {
