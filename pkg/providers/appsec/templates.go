@@ -8,7 +8,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/appsec"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/appsec"
 	"github.com/jedib0t/go-pretty/v6/table"
 )
 

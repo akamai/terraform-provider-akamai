@@ -1,12 +1,10 @@
 # RELEASE NOTES
 
-## 4.X.X (x x, x)
-
-#### BREAKING CHANGES:
-
-* Support for Go 1.18
+## 3.3.0 (February 2, 2023)
 
 #### FEATURES/ENHANCEMENTS:
+
+* Support for Go 1.18
 
 * PAPI - Added data source for property activation
   * [akamai_property_activation](docs/data-sources/property_activation.md) - get activation by network
@@ -14,7 +12,7 @@
 #### FEATURES/ENHANCEMENTS:
 
 * CPS
-  * Add `preferred_trust_chain` to `csr` attribute
+  * Add `preferred_trust_chain` to `csr` attribute for `akamai_cps_dv_enrollment` resource
 
 ### BUG FIXES:
 

@@ -10,8 +10,8 @@ import (
 
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/hapi"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/hapi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/papi"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )

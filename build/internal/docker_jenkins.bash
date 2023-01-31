@@ -92,7 +92,7 @@ docker exec akatf-container sh -c 'git clone ssh://git@git.source.akamai.com:799
 echo "Checkout branches"
 docker exec akatf-container sh -c 'cd edgegrid; git checkout ${EDGEGRID_BRANCH_NAME};
                                    cd ../terraform-provider-akamai; git checkout ${PROVIDER_BRANCH_NAME};
-                                   go mod edit -replace github.com/akamai/AkamaiOPEN-edgegrid-golang/v3=../edgegrid;
+                                   go mod edit -replace github.com/akamai/AkamaiOPEN-edgegrid-golang/v4=../edgegrid;
                                    go mod tidy -compat=1.18'
 
 echo "Running tests with xUnit output"

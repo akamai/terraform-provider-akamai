@@ -84,7 +84,7 @@ checkout_edgegrid() {
 }
 
 adjust_edgegrid() {
-  go mod edit -replace github.com/akamai/AkamaiOPEN-edgegrid-golang/v3="./akamaiopen-edgegrid-golang"
+  go mod edit -replace github.com/akamai/AkamaiOPEN-edgegrid-golang/v4="./akamaiopen-edgegrid-golang"
   go mod tidy -compat=1.18
 }
 
@@ -121,11 +121,6 @@ nexus_push() {
   done
 }
 
-mod_edit() {
-  edgegrid_version=$(go list -m -json -versions github.com/akamai/AkamaiOPEN-edgegrid-golang/v3 | python3 -c "import sys, json; print(json.load(sys.stdin)['Version'])")
-  go mod edit -replace github.com/akamai/AkamaiOPEN-edgegrid-golang/v3="stash.akamai.com/fee/akamaiopen-edgegrid-golang.git/v3@${edgegrid_version}"
-}
-
 outputs=()
 parse_arguments
 clean
@@ -134,8 +129,6 @@ if [[ "$RELEASE_TYPE" == "snapshot" ]]; then
   find_branch
   checkout_edgegrid
   adjust_edgegrid
-else
-  mod_edit
 fi
 if ! ./build/internal/docker_jenkins.bash "$CURRENT_BRANCH" "$EDGEGRID_BRANCH"; then
   exit 1
