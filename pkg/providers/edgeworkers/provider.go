@@ -1,9 +1,10 @@
+// Package edgeworkers contains implementation for Akamai Terraform sub-provider responsible for maintaining EdgeWorkers functions to dynamically manage web traffic
 package edgeworkers
 
 import (
 	"sync"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/edgeworkers"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/edgeworkers"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
 	"github.com/apex/log"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"

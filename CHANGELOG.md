@@ -1,5 +1,29 @@
 # RELEASE NOTES
 
+## 3.3.0 (February 2, 2023)
+
+#### FEATURES/ENHANCEMENTS:
+
+* Support for Go 1.18
+
+* PAPI - Added data source for property activation
+  * [akamai_property_activation](docs/data-sources/property_activation.md) - get activation by network
+
+#### FEATURES/ENHANCEMENTS:
+
+* CPS
+  * Add `preferred_trust_chain` to `csr` attribute for `akamai_cps_dv_enrollment` resource
+
+### BUG FIXES:
+
+* GTM
+  * Fixed diff in resources:
+    * `resource_akamai_gtm_asmap` for field `assignment.as_numbers` 
+    * `resource_akamai_gtm_cidrmap` for field `assignment.blocks`
+    * `resource_akamai_gtm_geomap` for field `assignment.countries`
+    * `resource_akamai_gtm_domain` for field `email_notification_list`
+    * `resource_akamai_gtm_resource` for field `resource_instance.load_servers`
+
 ## 3.2.1 (December 16, 2022)
 
 #### BUG FIXES:

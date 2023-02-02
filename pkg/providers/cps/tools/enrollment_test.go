@@ -3,7 +3,7 @@ package tools
 import (
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/cps"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/cps"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -101,6 +101,10 @@ func TestGetCSR(t *testing.T) {
 							Type:     schema.TypeString,
 							Required: true,
 						},
+						"preferred_trust_chain": {
+							Type:     schema.TypeString,
+							Optional: true,
+						},
 						"state": {
 							Type:     schema.TypeString,
 							Required: true,
@@ -135,6 +139,28 @@ func TestGetCSR(t *testing.T) {
 				OU:   "test_ou",
 				SANS: []string{"a.com", "b.com"},
 				ST:   "MA",
+			},
+		},
+		"trust chain provided": {
+			givenCSR: schema.NewSet(schema.HashResource(resource), []interface{}{map[string]interface{}{
+				"city":                  "Cambridge",
+				"state":                 "MA",
+				"country_code":          "US",
+				"organization":          "Akamai",
+				"organizational_unit":   "test_ou",
+				"preferred_trust_chain": "intermediate-a",
+			}}),
+			givenCN:   "test.com",
+			givenSANS: schema.NewSet(schema.HashString, []interface{}{"a.com", "b.com"}),
+			expected: &cps.CSR{
+				C:                   "US",
+				CN:                  "test.com",
+				L:                   "Cambridge",
+				O:                   "Akamai",
+				OU:                  "test_ou",
+				PreferredTrustChain: "intermediate-a",
+				SANS:                []string{"a.com", "b.com"},
+				ST:                  "MA",
 			},
 		},
 		"no sans provided": {
@@ -535,18 +561,20 @@ func TestCSRToMap(t *testing.T) {
 	}{
 		"basic test": {
 			given: cps.CSR{
-				C:  "US",
-				L:  "Cambridge",
-				O:  "Akamai",
-				OU: "WebEx",
-				ST: "MA",
+				C:                   "US",
+				L:                   "Cambridge",
+				O:                   "Akamai",
+				OU:                  "WebEx",
+				PreferredTrustChain: "intermediate-a",
+				ST:                  "MA",
 			},
 			expected: map[string]interface{}{
-				"country_code":        "US",
-				"city":                "Cambridge",
-				"state":               "MA",
-				"organization":        "Akamai",
-				"organizational_unit": "WebEx",
+				"country_code":          "US",
+				"city":                  "Cambridge",
+				"state":                 "MA",
+				"organization":          "Akamai",
+				"organizational_unit":   "WebEx",
+				"preferred_trust_chain": "intermediate-a",
 			},
 		},
 	}
@@ -612,21 +640,31 @@ func TestNetworkConfigToMap(t *testing.T) {
 
 func TestGetChangeIDFromPendingChanges(t *testing.T) {
 	tests := map[string]struct {
-		givenChanges []string
+		givenChanges []cps.PendingChange
 		expected     int
 		withError    bool
 	}{
 		"basic test": {
-			givenChanges: []string{"/cps/enrollments/1/changes/2"},
-			expected:     2,
+			givenChanges: []cps.PendingChange{
+				{
+					Location:   "/cps-api/enrollments/1/changes/2",
+					ChangeType: "new-certificate",
+				},
+			},
+			expected: 2,
 		},
 		"no pending changes provided": {
 			givenChanges: nil,
 			withError:    true,
 		},
 		"invalid change ID": {
-			givenChanges: []string{"/cps/enrollments/1/changes/abc"},
-			withError:    true,
+			givenChanges: []cps.PendingChange{
+				{
+					Location:   "/cps-api/enrollments/1/changes/abc",
+					ChangeType: "new-certificate",
+				},
+			},
+			withError: true,
 		},
 	}
 

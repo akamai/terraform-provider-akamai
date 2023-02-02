@@ -13,8 +13,8 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/gtm"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/session"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/gtm"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/session"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -69,7 +69,7 @@ func resourceGTMv1Domain() *schema.Resource {
 				Computed: true,
 			},
 			"email_notification_list": {
-				Type:     schema.TypeList,
+				Type:     schema.TypeSet,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 				Optional: true,
 			},
@@ -543,7 +543,7 @@ func populateNewDomainObject(ctx context.Context, meta akamai.OperationMeta, d *
 
 }
 
-//nolint:gocyclo
+// nolint:gocyclo
 // Populate existing domain object from resource data
 func populateDomainObject(d *schema.ResourceData, dom *gtm.Domain, m interface{}) error {
 	meta := akamai.Meta(m)
@@ -571,10 +571,10 @@ func populateDomainObject(d *schema.ResourceData, dom *gtm.Domain, m interface{}
 	if err == nil {
 		dom.DefaultUnreachableThreshold = vfl32
 	}
-	vlist, err := tools.GetInterfaceArrayValue("email_notification_list", d)
+	vlist, err := tools.GetSetValue("email_notification_list", d)
 	if err == nil {
-		ls := make([]string, len(vlist))
-		for i, sl := range vlist {
+		ls := make([]string, vlist.Len())
+		for i, sl := range vlist.List() {
 			ls[i] = sl.(string)
 		}
 		dom.EmailNotificationList = ls

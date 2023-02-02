@@ -3,7 +3,7 @@ package datastream
 import (
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/datastream"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/datastream"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/stretchr/testify/assert"
 )

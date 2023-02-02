@@ -3,7 +3,7 @@ package property
 import (
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/papi"
 	"github.com/tj/assert"
 )
 

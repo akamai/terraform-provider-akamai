@@ -7,8 +7,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/gtm"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/session"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/gtm"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
 	"github.com/hashicorp/go-cty/cty"
@@ -633,7 +633,7 @@ func resourceGTMv1PropertyDelete(ctx context.Context, d *schema.ResourceData, m 
 	return nil
 }
 
-//nolint:gocyclo
+// nolint:gocyclo
 // Populate existing property object from resource data
 func populatePropertyObject(ctx context.Context, d *schema.ResourceData, prop *gtm.Property, m interface{}) error {
 	meta := akamai.Meta(m)

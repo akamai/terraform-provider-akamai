@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/cps"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/cps"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -117,7 +117,12 @@ func TestResourceCPSUploadCertificateWithThirdPartyEnrollmentDependency(t *testi
 					Changes:    []string{fmt.Sprintf("/cps/v2/enrollments/%d/changes/%d", enrollmentID, changeID)},
 				}, nil).Once()
 				enrollment.Location = fmt.Sprintf("/cps/v2/enrollments/%d", enrollmentID)
-				enrollment.PendingChanges = []string{fmt.Sprintf("/cps/v2/enrollments/%d/changes/%d", enrollmentID, changeID)}
+				enrollment.PendingChanges = []cps.PendingChange{
+					{
+						Location:   fmt.Sprintf("/cps/v2/enrollments/%d/changes/%d", enrollmentID, changeID),
+						ChangeType: "new-certificate",
+					},
+				}
 				client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: enrollmentID}).
 					Return(enrollment, nil).Once()
 				client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
@@ -1202,9 +1207,14 @@ var (
 
 	// createEnrollment returns third-party enrollment with provided values
 	createEnrollment = func(enrollmentID, changeID int, changeManagement, pendingChangesPresent bool) *cps.Enrollment {
-		pendingChanges := []string{fmt.Sprintf("/cps/v2/enrollments/%d/changes/%d", enrollmentID, changeID)}
+		pendingChanges := []cps.PendingChange{
+			{
+				Location:   fmt.Sprintf("/cps/v2/enrollments/%d/changes/%d", enrollmentID, changeID),
+				ChangeType: "new-certificate",
+			},
+		}
 		if !pendingChangesPresent {
-			pendingChanges = []string{}
+			pendingChanges = []cps.PendingChange{}
 		}
 		return &cps.Enrollment{
 			AdminContact: &cps.Contact{
@@ -1298,7 +1308,12 @@ var (
 	// mockCreateWithEmptyWarningList mocks getting empty warnings list from API
 	mockCreateWithEmptyWarningList = func(client *cps.Mock, enrollmentID, changeID int, enrollment *cps.Enrollment) {
 		mockGetEnrollment(client, enrollmentID, 1, enrollment)
-		enrollment.PendingChanges = []string{fmt.Sprintf("/cps/v2/enrollments/2/changes/%d", changeID)}
+		enrollment.PendingChanges = []cps.PendingChange{
+			{
+				Location:   fmt.Sprintf("/cps/v2/enrollments/2/changes/%d", changeID),
+				ChangeType: "new-certificate",
+			},
+		}
 		mockUploadThirdPartyCertificateAndTrustChain(client, RSA, certRSAForTests, trustChainRSAForTests, enrollmentID, changeID)
 		mockGetChangeStatus(client, enrollmentID, changeID, 1, waitReviewThirdPartyCert)
 		mockEmptyGetPostVerificationWarnings(client, enrollmentID, changeID)
@@ -1309,7 +1324,12 @@ var (
 	// mockUpdate mocks default approach when updating the resource
 	mockUpdate = func(client *cps.Mock, enrollmentID, changeID int, enrollment *cps.Enrollment) {
 		mockGetEnrollment(client, enrollmentID, 1, enrollment)
-		enrollment.PendingChanges = []string{fmt.Sprintf("/cps/v2/enrollments/2/changes/%d", changeID)}
+		enrollment.PendingChanges = []cps.PendingChange{
+			{
+				Location:   fmt.Sprintf("/cps/v2/enrollments/2/changes/%d", changeID),
+				ChangeType: "new-certificate",
+			},
+		}
 		mockGetChangeStatus(client, enrollmentID, changeID, 1, waitAckChangeManagement)
 		mockGetChangeStatus(client, enrollmentID, changeID, 1, waitAckChangeManagement)
 		mockAcknowledgeChangeManagement(client, enrollmentID, changeID)
@@ -1318,7 +1338,12 @@ var (
 	// mockCreateWithACKPostWarnings mocks acknowledging post verification warnings along with creation of the resource
 	mockCreateWithACKPostWarnings = func(client *cps.Mock, enrollmentID, changeID int, enrollment *cps.Enrollment) {
 		mockGetEnrollment(client, enrollmentID, 1, enrollment)
-		enrollment.PendingChanges = []string{fmt.Sprintf("/cps/v2/enrollments/%d/changes/%d", enrollmentID, changeID)}
+		enrollment.PendingChanges = []cps.PendingChange{
+			{
+				Location:   fmt.Sprintf("/cps/v2/enrollments/%d/changes/%d", enrollmentID, changeID),
+				ChangeType: "new-certificate",
+			},
+		}
 		mockUploadThirdPartyCertificateAndTrustChain(client, RSA, certRSAForTests, trustChainRSAForTests, enrollmentID, changeID)
 		mockGetChangeStatus(client, enrollmentID, changeID, 1, waitReviewThirdPartyCert)
 		mockGetPostVerificationWarnings(client, "Certificate Added to the new Trust Chain: TEST\nThere is a problem deploying the 'RSA' certificate.  Please contact your Akamai support team to resolve the issue.\nCertificate data is blank or missing.", enrollmentID, changeID)

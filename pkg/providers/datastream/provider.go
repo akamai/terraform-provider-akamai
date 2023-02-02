@@ -1,9 +1,10 @@
+// Package datastream contains implementation for Akamai Terraform sub-provider responsible for providing scalable, low latency streaming of data
 package datastream
 
 import (
 	"sync"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/datastream"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/datastream"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
 	"github.com/apex/log"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"

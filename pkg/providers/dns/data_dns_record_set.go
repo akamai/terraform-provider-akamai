@@ -7,7 +7,7 @@ import (
 
 	"github.com/apex/log"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/session"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -19,21 +19,25 @@ func dataSourceDNSRecordSet() *schema.Resource {
 		ReadContext: dataSourceDNSRecordSetRead,
 		Schema: map[string]*schema.Schema{
 			"zone": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "The domain zone, including any nested subdomains",
 			},
 			"host": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "The base credential hostname without the protocol",
 			},
 			"record_type": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "The DNS record type",
 			},
 			"rdata": {
-				Type:     schema.TypeList,
-				Elem:     &schema.Schema{Type: schema.TypeString},
-				Computed: true,
+				Type:        schema.TypeList,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Computed:    true,
+				Description: "An array of data strings that represent multiple records within a set",
 			},
 		},
 	}

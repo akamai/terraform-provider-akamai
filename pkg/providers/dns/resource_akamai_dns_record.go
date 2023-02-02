@@ -15,8 +15,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/dns"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/session"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/dns"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/session"
 
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
@@ -823,7 +823,7 @@ func resourceDNSRecordCreate(ctx context.Context, d *schema.ResourceData, m inte
 
 }
 
-//nolint:gocyclo
+// nolint:gocyclo
 // Update DNS Record
 func resourceDNSRecordUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	// only allow one record per record type to be updated at a time

@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/gtm"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/session"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/gtm"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/session"
 
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
@@ -54,8 +54,9 @@ func resourceGTMv1Cidrmap() *schema.Resource {
 				},
 			},
 			"assignment": {
-				Type:     schema.TypeList,
-				Optional: true,
+				Type:             schema.TypeList,
+				Optional:         true,
+				DiffSuppressFunc: assignmentDiffSuppress,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"datacenter_id": {
@@ -67,7 +68,7 @@ func resourceGTMv1Cidrmap() *schema.Resource {
 							Required: true,
 						},
 						"blocks": {
-							Type:     schema.TypeList,
+							Type:     schema.TypeSet,
 							Elem:     &schema.Schema{Type: schema.TypeString},
 							Optional: true,
 						},
@@ -396,7 +397,7 @@ func populateCidrMapObject(d *schema.ResourceData, cidr *gtm.CidrMap, m interfac
 	if v, err := tools.GetStringValue("name", d); err == nil {
 		cidr.Name = v
 	}
-	populateCidrAssignmentsObject(d, cidr)
+	populateCidrAssignmentsObject(d, cidr, m)
 	populateCidrDefaultDCObject(d, cidr, m)
 
 }
@@ -416,7 +417,9 @@ func populateTerraformCidrMapState(d *schema.ResourceData, cidr *gtm.CidrMap, m 
 }
 
 // create and populate GTM CidrMap Assignments object
-func populateCidrAssignmentsObject(d *schema.ResourceData, cidr *gtm.CidrMap) {
+func populateCidrAssignmentsObject(d *schema.ResourceData, cidr *gtm.CidrMap, m interface{}) {
+	meta := akamai.Meta(m)
+	logger := meta.Log("Akamai GTM", "populateCidrAssignmentsObject")
 
 	// pull apart List
 	if cassgns := d.Get("assignment"); cassgns != nil {
@@ -428,8 +431,12 @@ func populateCidrAssignmentsObject(d *schema.ResourceData, cidr *gtm.CidrMap) {
 			cidrAssignment.DatacenterId = cidrMap["datacenter_id"].(int)
 			cidrAssignment.Nickname = cidrMap["nickname"].(string)
 			if cidrMap["blocks"] != nil {
-				ls := make([]string, len(cidrMap["blocks"].([]interface{})))
-				for i, sl := range cidrMap["blocks"].([]interface{}) {
+				blocks, ok := cidrMap["blocks"].(*schema.Set)
+				if !ok {
+					logger.Warnf("wrong type conversion: expected *schema.Set, got %T", blocks)
+				}
+				ls := make([]string, blocks.Len())
+				for i, sl := range blocks.List() {
 					ls[i] = sl.(string)
 				}
 				cidrAssignment.Blocks = ls
@@ -465,7 +472,7 @@ func populateTerraformCidrAssignmentsState(d *schema.ResourceData, cidr *gtm.Cid
 		}
 		a["datacenter_id"] = aObject.DatacenterId
 		a["nickname"] = aObject.Nickname
-		a["blocks"] = reconcileTerraformLists(a["blocks"].([]interface{}), convertStringToInterfaceList(aObject.Blocks, m), m)
+		a["blocks"] = reconcileTerraformLists(a["blocks"].(*schema.Set).List(), convertStringToInterfaceList(aObject.Blocks, m), m)
 		// remove object
 		delete(objectInventory, objIndex)
 	}
@@ -526,4 +533,39 @@ func populateTerraformCidrDefaultDCState(d *schema.ResourceData, cidr *gtm.CidrM
 	if err := d.Set("default_datacenter", ddcListNew); err != nil {
 		logger.Errorf("populateTerraformCidrDefaultDCState failed: %s", err.Error())
 	}
+}
+
+// blocksEqual checks whether blocks are equal
+func blocksEqual(old, new interface{}) bool {
+	logger := akamai.Log("Akamai GTM", "blocksEqual")
+
+	oldBlocks, ok := old.(*schema.Set)
+	if !ok {
+		logger.Warnf("wrong type conversion: expected *schema.Set, got %T", oldBlocks)
+		return false
+	}
+
+	newBlocks, ok := new.(*schema.Set)
+	if !ok {
+		logger.Warnf("wrong type conversion: expected *schema.Set, got %T", newBlocks)
+		return false
+	}
+
+	if oldBlocks.Len() != newBlocks.Len() {
+		return false
+	}
+
+	blocks := make(map[string]bool, oldBlocks.Len())
+	for _, block := range oldBlocks.List() {
+		blocks[block.(string)] = true
+	}
+
+	for _, block := range newBlocks.List() {
+		_, ok = blocks[block.(string)]
+		if !ok {
+			return false
+		}
+	}
+
+	return true
 }

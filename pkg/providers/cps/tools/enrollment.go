@@ -1,3 +1,4 @@
+// Package tools contains set of specific functions used by CPS sub-provider
 package tools
 
 import (
@@ -7,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/cps"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/cps"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -88,6 +89,9 @@ func GetCSR(d *schema.ResourceData) (*cps.CSR, error) {
 	csr.C = csrmap["country_code"].(string)
 	csr.O = csrmap["organization"].(string)
 	csr.OU = csrmap["organizational_unit"].(string)
+	if preferredTrustChain, ok := csrmap["preferred_trust_chain"].(string); ok {
+		csr.PreferredTrustChain = preferredTrustChain
+	}
 
 	return &csr, nil
 }
@@ -223,11 +227,12 @@ func ContactInfoToMap(contact cps.Contact) map[string]interface{} {
 // CSRToMap converts CSR object to a map and returns it
 func CSRToMap(csr cps.CSR) map[string]interface{} {
 	csrMap := map[string]interface{}{
-		"country_code":        csr.C,
-		"city":                csr.L,
-		"organization":        csr.O,
-		"organizational_unit": csr.OU,
-		"state":               csr.ST,
+		"country_code":          csr.C,
+		"city":                  csr.L,
+		"organization":          csr.O,
+		"organizational_unit":   csr.OU,
+		"preferred_trust_chain": csr.PreferredTrustChain,
+		"state":                 csr.ST,
 	}
 	return csrMap
 }
@@ -275,11 +280,11 @@ func OrgToMap(org cps.Org) map[string]interface{} {
 }
 
 // GetChangeIDFromPendingChanges returns ChangeID of pending changes
-func GetChangeIDFromPendingChanges(pendingChanges []string) (int, error) {
+func GetChangeIDFromPendingChanges(pendingChanges []cps.PendingChange) (int, error) {
 	if len(pendingChanges) < 1 {
 		return 0, ErrNoPendingChanges
 	}
-	changeURL, err := url.Parse(pendingChanges[0])
+	changeURL, err := url.Parse(pendingChanges[0].Location)
 	if err != nil {
 		return 0, err
 	}

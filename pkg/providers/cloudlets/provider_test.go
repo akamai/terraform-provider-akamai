@@ -10,7 +10,7 @@ import (
 
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/cloudlets"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/cloudlets"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 

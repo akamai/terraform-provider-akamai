@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/cps"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/session"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/cps"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
 	cpstools "github.com/akamai/terraform-provider-akamai/v3/pkg/providers/cps/tools"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
@@ -235,6 +235,11 @@ var (
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Organizational unit of organization",
+			},
+			"preferred_trust_chain": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "For the Let's Encrypt Domain Validated (DV) SAN certificates, the preferred trust chain will be included by CPS with the leaf certificate in the TLS handshake. If the field does not have a value, whichever trust chain Akamai chooses will be used by default",
 			},
 			"state": {
 				Type:        schema.TypeString,

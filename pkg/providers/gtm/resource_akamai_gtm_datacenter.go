@@ -11,8 +11,8 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/gtm"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/session"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/gtm"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/session"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -469,7 +469,7 @@ func populateNewDatacenterObject(ctx context.Context, meta akamai.OperationMeta,
 	return dcObj, err
 }
 
-//nolint:gocyclo
+// nolint:gocyclo
 // Populate existing datacenter object from resource data
 func populateDatacenterObject(d *schema.ResourceData, dc *gtm.Datacenter, m interface{}) error {
 	meta := akamai.Meta(m)

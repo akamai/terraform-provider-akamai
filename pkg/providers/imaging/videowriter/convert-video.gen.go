@@ -1,3 +1,4 @@
+// Package videowriter contains set of functions used to manage video
 package videowriter
 
 import (
@@ -6,8 +7,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/imaging"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/imaging"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 

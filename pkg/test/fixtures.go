@@ -1,3 +1,4 @@
+// Package test contains set of tools used for testing
 package test
 
 import (

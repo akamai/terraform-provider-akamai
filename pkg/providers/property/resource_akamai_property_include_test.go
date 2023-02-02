@@ -7,8 +7,8 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/hapi"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/hapi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/test"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/assert"
@@ -122,6 +122,17 @@ func TestResourcePropertyInclude(t *testing.T) {
 		return test.MockCalls{createIncludeCall, updateIncludeRuleTreeCall}
 	}
 
+	expectGetIncludeRuleTree := func(m *papi.Mock, testData *testData) *mock.Call {
+		call := m.On("GetIncludeRuleTree", mock.Anything, papi.GetIncludeRuleTreeRequest{
+			ContractID:     testData.contractID,
+			GroupID:        testData.groupID,
+			IncludeID:      testData.includeID,
+			IncludeVersion: testData.latestVersion,
+			ValidateRules:  true,
+		}).Return(newGetIncludeRuleTreeResp(testData), nil)
+		return call
+	}
+
 	expectRead := func(m *papi.Mock, testData *testData) test.MockCalls {
 		getIncludeCall := m.On("GetInclude", mock.Anything, papi.GetIncludeRequest{
 			ContractID: testData.contractID,
@@ -129,13 +140,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 			IncludeID:  includeID,
 		}).Return(newGetIncludeResp(testData), nil)
 
-		getIncludeRuleTreeCall := m.On("GetIncludeRuleTree", mock.Anything, papi.GetIncludeRuleTreeRequest{
-			ContractID:     testData.contractID,
-			GroupID:        testData.groupID,
-			IncludeID:      testData.includeID,
-			IncludeVersion: testData.latestVersion,
-			ValidateRules:  true,
-		}).Return(newGetIncludeRuleTreeResp(testData), nil)
+		getIncludeRuleTreeCall := expectGetIncludeRuleTree(m, testData)
 
 		return test.MockCalls{getIncludeCall, getIncludeRuleTreeCall}
 	}
@@ -633,6 +638,73 @@ func TestResourcePropertyInclude(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_property_include.test", "rules", loadFixtureString("%s/expected/simple_rules.json", workdir)),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_errors", ""),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_warnings", ""),
+					),
+				},
+			},
+		},
+		"update include - version is computed": {
+			testData: testData{
+				groupID:          "grp_123",
+				productID:        "prd_test",
+				includeID:        includeID,
+				ruleFormat:       "v2022-06-28",
+				contractID:       "ctr_123",
+				includeName:      "test include",
+				includeType:      papi.IncludeTypeMicroServices,
+				stagingStatus:    papi.VersionStatusInactive,
+				productionStatus: papi.VersionStatusInactive,
+			},
+			init: func(m *papi.Mock, testData *testData) {
+				// Resource create & post-create plan calls
+				expectCreate(m, testData).Once()
+				expectRead(m, testData).Times(2)
+
+				// Data source create & post-create plan calls
+				expectGetIncludeRuleTree(m, testData).Times(2)
+
+				// Resource refresh calls
+				simulateActivation(testData, 1, papi.ActivationNetworkStaging)
+				expectRead(m, testData).Once()
+
+				// Data source refresh call
+				expectGetIncludeRuleTree(m, testData).Times(2)
+
+				// Resource update calls
+				testData.rulesPath = "simple_rules.json"
+				expectUpdate(m, testData).Once()
+				expectRead(m, testData).Once()
+
+				// Data source update call
+				expectGetIncludeRuleTree(m, testData).Times(2)
+
+				// Resource post-update plan calls
+				simulateDeactivation(testData, papi.ActivationNetworkStaging)
+				expectRead(m, testData).Once()
+
+				// Data source post-update call
+				expectGetIncludeRuleTree(m, testData).Times(2)
+
+				expectDelete(m, testData).Once()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: loadFixtureString("%s/property_include_with_ds_create.tf", workdir),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_property_include.test", "latest_version", "1"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "staging_version", ""),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "production_version", ""),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "rules", loadFixtureString("%s/expected/default_rules.json", workdir)),
+						resource.TestCheckResourceAttrPair("akamai_property_include.test", "latest_version", "data.akamai_property_include_rules.rules", "version"),
+					),
+				},
+				{
+					Config: loadFixtureString("%s/property_include_with_ds_update.tf", workdir),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_property_include.test", "latest_version", "2"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "staging_version", "1"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "production_version", ""),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "rules", loadFixtureString("%s/expected/simple_rules.json", workdir)),
+						resource.TestCheckResourceAttrPair("akamai_property_include.test", "latest_version", "data.akamai_property_include_rules.rules", "version"),
 					),
 				},
 			},

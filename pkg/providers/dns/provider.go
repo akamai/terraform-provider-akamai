@@ -1,3 +1,4 @@
+// Package dns contains implementation for Akamai Terraform sub-provider responsible for managing DNS zones configuration
 package dns
 
 import (
@@ -5,7 +6,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/dns"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/dns"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/config"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"

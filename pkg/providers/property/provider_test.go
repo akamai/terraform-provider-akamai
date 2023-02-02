@@ -5,14 +5,13 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"strings"
 	"sync"
 	"testing"
 
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/hapi"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/hapi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/papi"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -61,37 +60,6 @@ func useClient(client papi.PAPI, hapiClient hapi.HAPI, f func()) {
 	}()
 
 	f()
-}
-
-// TODO marks a test as being in a "pending" state and logs a message telling the user why. Such tests are expected to
-// fail for the time being and may exist for the sake of unfinished/future features or to document known buggy cases
-// that won't be fixed right away. The failure of a pending test is not considered an error and the test will therefore
-// be skipped unless the TEST_TODO environment variable is set to a non-empty value.
-func TODO(t *testing.T, message string) {
-	t.Helper()
-	t.Log(fmt.Sprintf("TODO: %s", message))
-
-	if os.Getenv("TEST_TODO") == "" {
-		t.Skip("TODO: Set TEST_TODO=1 in env to run this test")
-	}
-}
-
-func setEnv(home string, env map[string]string) {
-	os.Clearenv()
-	os.Setenv("HOME", home)
-	if len(env) > 0 {
-		for key, val := range env {
-			os.Setenv(key, val)
-		}
-	}
-}
-
-func restoreEnv(env []string) {
-	os.Clearenv()
-	for _, value := range env {
-		envVar := strings.Split(value, "=")
-		os.Setenv(envVar[0], envVar[1])
-	}
 }
 
 // loadFixtureBytes returns the entire contents of the given file as a byte slice

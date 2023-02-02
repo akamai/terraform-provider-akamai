@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/gtm"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/gtm"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -159,7 +159,6 @@ func TestResGtmProperty(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				PreCheck:  func() { testAccPreCheck(t) },
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{
 					{
@@ -231,7 +230,6 @@ func TestResGtmProperty(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				PreCheck:  func() { testAccPreCheck(t) },
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{
 					{
@@ -294,7 +292,6 @@ func TestResGtmProperty(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				PreCheck:  func() { testAccPreCheck(t) },
 				Providers: testAccProviders,
 				Steps: []resource.TestStep{
 					{

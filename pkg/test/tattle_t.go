@@ -11,7 +11,7 @@ import (
 // method calls on a mock.
 //
 // NB: You would only need to use this where Testify mocks are used in tests that spawn goroutines, such as those run by
-//     the Terraform test driver.
+// the Terraform test driver.
 type TattleT struct{ *testing.T }
 
 // FailNow overrides testing.T.FailNow() so when a test mock fails an assertion, we see which test failed

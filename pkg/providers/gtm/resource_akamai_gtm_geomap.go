@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/gtm"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/session"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/gtm"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/session"
 
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
@@ -55,8 +55,9 @@ func resourceGTMv1Geomap() *schema.Resource {
 				},
 			},
 			"assignment": {
-				Type:     schema.TypeList,
-				Optional: true,
+				Type:             schema.TypeList,
+				Optional:         true,
+				DiffSuppressFunc: assignmentDiffSuppress,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"datacenter_id": {
@@ -68,7 +69,7 @@ func resourceGTMv1Geomap() *schema.Resource {
 							Required: true,
 						},
 						"countries": {
-							Type:     schema.TypeList,
+							Type:     schema.TypeSet,
 							Elem:     &schema.Schema{Type: schema.TypeString},
 							Optional: true,
 						},
@@ -426,7 +427,7 @@ func populateGeoAssignmentsObject(d *schema.ResourceData, geo *gtm.GeoMap, m int
 	logger := meta.Log("Akamai GTM", "populateGeoAssignmentsObject")
 
 	// pull apart List
-	geoAssignmentsList, err := tools.GetInterfaceArrayValue("assignment", d)
+	geoAssignmentsList, err := tools.GetListValue("assignment", d)
 	if err == nil {
 		geoAssignmentsObjList := make([]*gtm.GeoAssignment, len(geoAssignmentsList)) // create new object list
 		for i, v := range geoAssignmentsList {
@@ -439,8 +440,12 @@ func populateGeoAssignmentsObject(d *schema.ResourceData, geo *gtm.GeoMap, m int
 			geoAssignment.DatacenterId = geoMap["datacenter_id"].(int)
 			geoAssignment.Nickname = geoMap["nickname"].(string)
 			if geoMap["countries"] != nil {
-				ls := make([]string, len(geoMap["countries"].([]interface{})))
-				for i, sl := range geoMap["countries"].([]interface{}) {
+				countries, ok := geoMap["countries"].(*schema.Set)
+				if !ok {
+					logger.Warnf("wrong type conversion: expected *schema.Set, got %T", countries)
+				}
+				ls := make([]string, countries.Len())
+				for i, sl := range countries.List() {
 					ls[i] = sl.(string)
 				}
 				geoAssignment.Countries = ls
@@ -473,7 +478,11 @@ func populateTerraformGeoAssignmentsState(d *schema.ResourceData, geo *gtm.GeoMa
 		}
 		a["datacenter_id"] = aObject.DatacenterId
 		a["nickname"] = aObject.Nickname
-		a["countries"] = reconcileTerraformLists(a["countries"].([]interface{}), convertStringToInterfaceList(aObject.Countries, m), m)
+		countries, ok := a["countries"].(*schema.Set)
+		if !ok {
+			logger.Warnf("wrong type conversion: expected *schema.Set, got %T", countries)
+		}
+		a["countries"] = reconcileTerraformLists(countries.List(), convertStringToInterfaceList(aObject.Countries, m), m)
 		// remove object
 		delete(objectInventory, objIndex)
 	}
@@ -531,4 +540,39 @@ func populateTerraformGeoDefaultDCState(d *schema.ResourceData, geo *gtm.GeoMap,
 	if err := d.Set("default_datacenter", ddcListNew); err != nil {
 		logger.Errorf("populateTerraformGeoDefaultDCState failed: %s", err.Error())
 	}
+}
+
+// countriesEqual checks whether countries are equal
+func countriesEqual(old, new interface{}) bool {
+	logger := akamai.Log("Akamai GTM", "countriesEqual")
+
+	oldCountries, ok := old.(*schema.Set)
+	if !ok {
+		logger.Warnf("wrong type conversion: expected *schema.Set, got %T", oldCountries)
+		return false
+	}
+
+	newCountries, ok := new.(*schema.Set)
+	if !ok {
+		logger.Warnf("wrong type conversion: expected *schema.Set, got %T", newCountries)
+		return false
+	}
+
+	if oldCountries.Len() != newCountries.Len() {
+		return false
+	}
+
+	countries := make(map[string]bool, oldCountries.Len())
+	for _, country := range oldCountries.List() {
+		countries[country.(string)] = true
+	}
+
+	for _, country := range newCountries.List() {
+		_, ok = countries[country.(string)]
+		if !ok {
+			return false
+		}
+	}
+
+	return true
 }

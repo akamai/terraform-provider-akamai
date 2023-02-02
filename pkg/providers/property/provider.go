@@ -1,3 +1,4 @@
+// Package property contains implementation for Property Provisioning module used to manage properties
 package property
 
 import (
@@ -11,8 +12,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/hapi"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/hapi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/config"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
@@ -83,6 +84,7 @@ func Provider() *schema.Provider {
 			"akamai_properties":                  dataSourceProperties(),
 			"akamai_properties_search":           dataSourcePropertiesSearch(),
 			"akamai_property":                    dataSourceProperty(),
+			"akamai_property_activation":         dataSourcePropertyActivation(),
 			"akamai_property_hostnames":          dataSourcePropertyHostnames(),
 			"akamai_property_include":            dataSourcePropertyInclude(),
 			"akamai_property_include_activation": dataSourcePropertyIncludeActivation(),

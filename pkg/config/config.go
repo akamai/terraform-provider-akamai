@@ -1,3 +1,4 @@
+// Package config contains set of tools which allow to configure application
 package config
 
 import (

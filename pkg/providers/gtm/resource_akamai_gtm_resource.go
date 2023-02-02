@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/gtm"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/session"
-
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/gtm"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -82,8 +82,9 @@ func resourceGTMv1Resource() *schema.Resource {
 				Optional: true,
 			},
 			"resource_instance": {
-				Type:     schema.TypeSet,
-				Optional: true,
+				Type:             schema.TypeList,
+				Optional:         true,
+				DiffSuppressFunc: resourceInstanceDiffSuppress,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"datacenter_id": {
@@ -99,7 +100,7 @@ func resourceGTMv1Resource() *schema.Resource {
 							Optional: true,
 						},
 						"load_servers": {
-							Type:     schema.TypeList,
+							Type:     schema.TypeSet,
 							Elem:     &schema.Schema{Type: schema.TypeString},
 							Optional: true,
 						},
@@ -415,7 +416,7 @@ func populateNewResourceObject(ctx context.Context, meta akamai.OperationMeta, d
 
 }
 
-//nolint:gocyclo
+// nolint:gocyclo
 // Populate existing resource object from resource data
 func populateResourceObject(ctx context.Context, d *schema.ResourceData, rsrc *gtm.Resource, m interface{}) error {
 	meta := akamai.Meta(m)
@@ -555,18 +556,23 @@ func populateTerraformResourceState(d *schema.ResourceData, rsrc *gtm.Resource, 
 
 // create and populate GTM Resource ResourceInstances object
 func populateResourceInstancesObject(ctx context.Context, meta akamai.OperationMeta, d *schema.ResourceData, rsrc *gtm.Resource) {
+	logger := meta.Log("Akamai GTM", "populateResourceInstancesObject")
 
 	// pull apart List
-	rsrcInstances, err := tools.GetSetValue("resource_instance", d)
+	rsrcInstances, err := tools.GetListValue("resource_instance", d)
 	if err == nil {
-		rsrcInstanceObjList := make([]*gtm.ResourceInstance, rsrcInstances.Len()) // create new object list
-		for i, v := range rsrcInstances.List() {
+		rsrcInstanceObjList := make([]*gtm.ResourceInstance, len(rsrcInstances)) // create new object list
+		for i, v := range rsrcInstances {
 			riMap := v.(map[string]interface{})
 			rsrcInstance := inst.Client(meta).NewResourceInstance(ctx, rsrc, riMap["datacenter_id"].(int)) // create new object
 			rsrcInstance.UseDefaultLoadObject = riMap["use_default_load_object"].(bool)
 			if riMap["load_servers"] != nil {
-				ls := make([]string, len(riMap["load_servers"].([]interface{})))
-				for i, sl := range riMap["load_servers"].([]interface{}) {
+				loadServers, ok := riMap["load_servers"].(*schema.Set)
+				if !ok {
+					logger.Warnf("wrong type conversion: expected *schema.Set, got %T", loadServers)
+				}
+				ls := make([]string, loadServers.Len())
+				for i, sl := range loadServers.List() {
 					ls[i] = sl.(string)
 				}
 				rsrcInstance.LoadServers = ls
@@ -603,7 +609,11 @@ func populateTerraformResourceInstancesState(d *schema.ResourceData, rsrc *gtm.R
 		ri["load_object"] = riObject.LoadObject.LoadObject
 		ri["load_object_port"] = riObject.LoadObjectPort
 		if ri["load_servers"] != nil {
-			ri["load_servers"] = reconcileTerraformLists(ri["load_servers"].([]interface{}), convertStringToInterfaceList(riObject.LoadServers, m), m)
+			loadServers, ok := ri["load_servers"].(*schema.Set)
+			if !ok {
+				logger.Warnf("wrong type conversion: expected *schema.Set, got %T", loadServers)
+			}
+			ri["load_servers"] = reconcileTerraformLists(loadServers.List(), convertStringToInterfaceList(riObject.LoadServers, m), m)
 		} else {
 			ri["load_servers"] = riObject.LoadServers
 		}
@@ -625,4 +635,90 @@ func populateTerraformResourceInstancesState(d *schema.ResourceData, rsrc *gtm.R
 	}
 	_ = d.Set("resource_instance", riStateList)
 
+}
+
+func resourceInstanceDiffSuppress(_, _, _ string, d *schema.ResourceData) bool {
+	logger := akamai.Log("Akamai GTM", "resourceInstanceDiffSuppress")
+	oldRes, newRes := d.GetChange("resource_instance")
+
+	oldList, ok := oldRes.([]interface{})
+	if !ok {
+		logger.Warnf("wrong type conversion: expected []interface{}, got %T", oldList)
+	}
+	newList, ok := newRes.([]interface{})
+	if !ok {
+		logger.Warnf("wrong type conversion: expected []interface{}, got %T", newList)
+	}
+
+	if len(oldList) != len(newList) {
+		return false
+	}
+
+	sort.Slice(oldList, func(i, j int) bool {
+		return oldList[i].(map[string]interface{})["datacenter_id"].(int) < oldList[j].(map[string]interface{})["datacenter_id"].(int)
+	})
+	sort.Slice(newList, func(i, j int) bool {
+		return newList[i].(map[string]interface{})["datacenter_id"].(int) < newList[j].(map[string]interface{})["datacenter_id"].(int)
+	})
+
+	length := len(oldList)
+	var oldServers, newServers map[string]interface{}
+	for i := 0; i < length; i++ {
+		oldServers, ok = oldList[i].(map[string]interface{})
+		if !ok {
+			logger.Warnf("wrong type conversion: expected map[string]interface{}, got %T", oldServers)
+		}
+		newServers, ok = newList[i].(map[string]interface{})
+		if !ok {
+			logger.Warnf("wrong type conversion: expected map[string]interface{}, got %T", newServers)
+		}
+		for k, v := range oldServers {
+			if k == "load_servers" {
+				if !loadServersEqual(oldServers["load_servers"], newServers["load_servers"]) {
+					return false
+				}
+			} else {
+				if newServers[k] != v {
+					return false
+				}
+			}
+		}
+	}
+
+	return true
+}
+
+// loadServersEqual checks whether load_servers are equal
+func loadServersEqual(oldVal, newVal interface{}) bool {
+	logger := akamai.Log("Akamai GTM", "loadServersEqual")
+
+	oldServers, ok := oldVal.(*schema.Set)
+	if !ok {
+		logger.Warnf("wrong type conversion: expected *schema.Set, got %T", oldServers)
+		return false
+	}
+
+	newServers, ok := newVal.(*schema.Set)
+	if !ok {
+		logger.Warnf("wrong type conversion: expected *schema.Set, got %T", newServers)
+		return false
+	}
+
+	if oldServers.Len() != newServers.Len() {
+		return false
+	}
+
+	servers := make(map[string]bool, oldServers.Len())
+	for _, server := range oldServers.List() {
+		servers[server.(string)] = true
+	}
+
+	for _, server := range newServers.List() {
+		_, ok = servers[server.(string)]
+		if !ok {
+			return false
+		}
+	}
+
+	return true
 }

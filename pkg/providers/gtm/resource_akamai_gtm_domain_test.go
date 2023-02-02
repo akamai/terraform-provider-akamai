@@ -1,22 +1,314 @@
 package gtm
 
 import (
-	"log"
 	"net/http"
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/gtm"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/gtm"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
 
-var gtmTestDomain = "gtm_terra_testdomain.akadns.net"
-var contract = "1-2ABCDEF"
-var group = "123ABC"
+func TestResGtmDomain(t *testing.T) {
 
-var dom = gtm.Domain{
-	Datacenters: []*gtm.Datacenter{
+	t.Run("create domain", func(t *testing.T) {
+		client := &gtm.Mock{}
+
+		getCall := client.On("GetDomain",
+			mock.Anything, // ctx is irrelevant for this test
+			gtmTestDomain,
+		).Return(nil, &gtm.Error{
+			StatusCode: http.StatusNotFound,
+		})
+
+		dr := gtm.DomainResponse{}
+		dr.Resource = &dom
+		dr.Status = &pendingResponseStatus
+		client.On("CreateDomain",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("*gtm.Domain"),
+			mock.AnythingOfType("map[string]string"),
+		).Return(&dr, nil).Run(func(args mock.Arguments) {
+			getCall.ReturnArguments = mock.Arguments{args.Get(1).(*gtm.Domain), nil}
+		})
+
+		client.On("NewDomain",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
+		).Return(&dom)
+
+		client.On("GetDomainStatus",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("string"),
+		).Return(&completeResponseStatus, nil)
+
+		client.On("UpdateDomain",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("*gtm.Domain"),
+			mock.AnythingOfType("map[string]string"),
+		).Return(&completeResponseStatus, nil).Run(func(args mock.Arguments) {
+			getCall.ReturnArguments = mock.Arguments{args.Get(1).(*gtm.Domain), nil}
+		})
+
+		client.On("DeleteDomain",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("*gtm.Domain"),
+		).Return(&completeResponseStatus, nil)
+
+		dataSourceName := "akamai_gtm_domain.testdomain"
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString("testdata/TestResGtmDomain/create_basic.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr(dataSourceName, "name", gtmTestDomain),
+							resource.TestCheckResourceAttr(dataSourceName, "type", "weighted"),
+							resource.TestCheckResourceAttr(dataSourceName, "load_imbalance_percentage", "10"),
+						),
+					},
+					{
+						Config: loadFixtureString("testdata/TestResGtmDomain/update_basic.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr(dataSourceName, "name", gtmTestDomain),
+							resource.TestCheckResourceAttr(dataSourceName, "type", "weighted"),
+							resource.TestCheckResourceAttr(dataSourceName, "load_imbalance_percentage", "20"),
+						),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
+	t.Run("create domain failed", func(t *testing.T) {
+		client := &gtm.Mock{}
+
+		client.On("CreateDomain",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("*gtm.Domain"),
+			mock.AnythingOfType("map[string]string"),
+		).Return(nil, &gtm.Error{
+			StatusCode: http.StatusBadRequest,
+		})
+
+		client.On("NewDomain",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
+		).Return(&dom)
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config:      loadFixtureString("testdata/TestResGtmDomain/create_basic.tf"),
+						ExpectError: regexp.MustCompile("Domain Create failed"),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
+	t.Run("create domain denied", func(t *testing.T) {
+		client := &gtm.Mock{}
+
+		dr := gtm.DomainResponse{}
+		dr.Resource = &dom
+		dr.Status = &deniedResponseStatus
+		client.On("CreateDomain",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("*gtm.Domain"),
+			mock.AnythingOfType("map[string]string"),
+		).Return(&dr, nil)
+
+		client.On("NewDomain",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
+		).Return(&dom)
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config:      loadFixtureString("testdata/TestResGtmDomain/create_basic.tf"),
+						ExpectError: regexp.MustCompile("Request could not be completed. Invalid credentials."),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
+	t.Run("import domain", func(t *testing.T) {
+		client := &gtm.Mock{}
+
+		getCall := client.On("GetDomain",
+			mock.Anything,
+			gtmTestDomain,
+		).Return(nil, &gtm.Error{
+			StatusCode: http.StatusNotFound,
+		})
+
+		dr := gtm.DomainResponse{}
+		dr.Resource = &dom
+		dr.Status = &pendingResponseStatus
+		client.On("CreateDomain",
+			mock.Anything,
+			mock.AnythingOfType("*gtm.Domain"),
+			mock.AnythingOfType("map[string]string"),
+		).Return(&dr, nil).Run(func(args mock.Arguments) {
+			getCall.ReturnArguments = mock.Arguments{args.Get(1).(*gtm.Domain), nil}
+		})
+
+		client.On("NewDomain",
+			mock.Anything,
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
+		).Return(&dom)
+
+		client.On("GetDomainStatus",
+			mock.Anything,
+			mock.AnythingOfType("string"),
+		).Return(&completeResponseStatus, nil).Times(2)
+
+		client.On("DeleteDomain",
+			mock.Anything,
+			mock.AnythingOfType("*gtm.Domain"),
+		).Return(&completeResponseStatus, nil)
+
+		dataSourceName := "akamai_gtm_domain.testdomain"
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				Providers: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString("testdata/TestResGtmDomain/create_basic.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr(dataSourceName, "name", gtmTestDomain),
+							resource.TestCheckResourceAttr(dataSourceName, "type", "weighted"),
+							resource.TestCheckResourceAttr(dataSourceName, "load_imbalance_percentage", "10"),
+						),
+					},
+					{
+						Config:                  loadFixtureString("testdata/TestResGtmDomain/create_basic.tf"),
+						ImportState:             true,
+						ImportStateId:           gtmTestDomain,
+						ResourceName:            dataSourceName,
+						ImportStateVerify:       true,
+						ImportStateVerifyIgnore: []string{"contract", "group"},
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+}
+
+func TestGTMDomainOrder(t *testing.T) {
+	tests := map[string]struct {
+		client        *gtm.Mock
+		pathForCreate string
+		pathForUpdate string
+		nonEmptyPlan  bool
+		planOnly      bool
+	}{
+		"reordered emails - no diff": {
+			client:        getGTMDomainMocks(),
+			pathForCreate: "testdata/TestResGtmDomain/order/email_notification_list/create.tf",
+			pathForUpdate: "testdata/TestResGtmDomain/order/email_notification_list/reorder.tf",
+			nonEmptyPlan:  false,
+			planOnly:      true,
+		},
+		"reordered emails and update comment - diff only for comment": {
+			client:        getGTMDomainMocks(),
+			pathForCreate: "testdata/TestResGtmDomain/order/email_notification_list/create.tf",
+			pathForUpdate: "testdata/TestResGtmDomain/order/email_notification_list/reorder_and_update_comment.tf",
+			nonEmptyPlan:  true,
+			planOnly:      true,
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			useClient(test.client, func() {
+				resource.UnitTest(t, resource.TestCase{
+					Providers:  testAccProviders,
+					IsUnitTest: true,
+					Steps: []resource.TestStep{
+						{
+							Config: loadFixtureString(test.pathForCreate),
+						},
+						{
+							Config:             loadFixtureString(test.pathForUpdate),
+							PlanOnly:           test.planOnly,
+							ExpectNonEmptyPlan: test.nonEmptyPlan,
+						},
+					},
+				})
+			})
+			test.client.AssertExpectations(t)
+		})
+	}
+}
+
+// getGTMDomainMocks mocks creation and deletion calls for gtm_domain resource
+func getGTMDomainMocks() *gtm.Mock {
+	client := &gtm.Mock{}
+
+	mockGetDomain := client.On("GetDomain",
+		mock.Anything, // ctx is irrelevant for this test
+		gtmTestDomain,
+	).Return(nil, &gtm.Error{
+		StatusCode: http.StatusNotFound,
+	})
+
+	dr := gtm.DomainResponse{}
+	dr.Resource = &domainWithOrderedEmails
+	dr.Status = &pendingResponseStatus
+	client.On("CreateDomain",
+		mock.Anything, // ctx is irrelevant for this test
+		mock.AnythingOfType("*gtm.Domain"),
+		mock.AnythingOfType("map[string]string"),
+	).Return(&dr, nil).Run(func(args mock.Arguments) {
+		mockGetDomain.ReturnArguments = mock.Arguments{args.Get(1).(*gtm.Domain), nil}
+	})
+
+	client.On("NewDomain",
+		mock.Anything, // ctx is irrelevant for this test
+		mock.AnythingOfType("string"),
+		mock.AnythingOfType("string"),
+	).Return(&dom)
+
+	client.On("GetDomainStatus",
+		mock.Anything, // ctx is irrelevant for this test
+		mock.AnythingOfType("string"),
+	).Return(&completeResponseStatus, nil)
+
+	client.On("DeleteDomain",
+		mock.Anything, // ctx is irrelevant for this test
+		mock.AnythingOfType("*gtm.Domain"),
+	).Return(&completeResponseStatus, nil)
+
+	return client
+}
+
+var (
+	// datacenters is gtm.Datacenter structure used in tests
+	datacenters = []*gtm.Datacenter{
 		{
 			City:                 "Snæfellsjökull",
 			CloudServerTargeting: false,
@@ -40,15 +332,10 @@ var dom = gtm.Domain{
 			StateOrProvince: "",
 			Virtual:         true,
 		},
-	},
-	DefaultErrorPenalty:         75,
-	DefaultSslClientCertificate: "",
-	DefaultSslClientPrivateKey:  "",
-	DefaultTimeoutPenalty:       25,
-	EmailNotificationList:       make([]string, 0),
-	LastModified:                "2019-04-25T14:53:12.000+00:00",
-	LastModifiedBy:              "operator",
-	Links: []*gtm.Link{
+	}
+
+	// links is gtm.Link structure used in tests
+	links = []*gtm.Link{
 		{
 			Href: "https://akab-ymtebc45gco3ypzj-apz4yxpek55y7fyv.luna.akamaiapis.net/config-gtm/v1/domains/gtmdomtest.akadns.net",
 			Rel:  "self",
@@ -73,12 +360,10 @@ var dom = gtm.Domain{
 			Href: "https://akab-ymtebc45gco3ypzj-apz4yxpek55y7fyv.luna.akamaiapis.net/config-gtm/v1/domains/gtmdomtest.akadns.net/resources",
 			Rel:  "resources",
 		},
-	},
-	LoadFeedback:            false,
-	LoadImbalancePercentage: 10.0,
-	ModificationComments:    "Edit Property test_property",
-	Name:                    gtmTestDomain,
-	Properties: []*gtm.Property{
+	}
+
+	// properties is gtm.Property structure used in tests
+	properties = []*gtm.Property{
 		{
 			BackupCName:            "",
 			BackupIp:               "",
@@ -145,8 +430,10 @@ var dom = gtm.Domain{
 			UnreachableThreshold: 0,
 			UseComputedTargets:   false,
 		},
-	},
-	Status: &gtm.ResponseStatus{
+	}
+
+	// status is gtm.ResponseStatus structure used in tests
+	status = &gtm.ResponseStatus{
 		ChangeId: "40e36abd-bfb2-4635-9fca-62175cf17007",
 		Links: &[]gtm.Link{
 			{
@@ -158,267 +445,88 @@ var dom = gtm.Domain{
 		PassingValidation:     true,
 		PropagationStatus:     "COMPLETE",
 		PropagationStatusDate: "2019-04-25T14:54:00.000+00:00",
-	},
-	Type: "weighted",
-}
+	}
 
-var deniedResponseStatus = gtm.ResponseStatus{
-	ChangeId: "40e36abd-bfb2-4635-9fca-62175cf17007",
-	Links: &[]gtm.Link{
-		{
-			Href: "https://akab-ymtebc45gco3ypzj-apz4yxpek55y7fyv.luna.akamaiapis.net/config-gtm/v1/domains/gtmdomtest.akadns.net/status/current",
-			Rel:  "self",
+	// domainWithOrderedEmails is a gtm.Domain structure used in testing of email_notification_order list
+	domainWithOrderedEmails = gtm.Domain{
+		Datacenters:                 datacenters,
+		DefaultErrorPenalty:         75,
+		DefaultSslClientCertificate: "",
+		DefaultSslClientPrivateKey:  "",
+		DefaultTimeoutPenalty:       25,
+		EmailNotificationList:       []string{"email1@nomail.com", "email2@nomail.com", "email3@nomail.com"},
+		LastModified:                "2019-04-25T14:53:12.000+00:00",
+		LastModifiedBy:              "operator",
+		Links:                       links,
+		LoadFeedback:                false,
+		LoadImbalancePercentage:     10.0,
+		ModificationComments:        "Edit Property test_property",
+		Name:                        gtmTestDomain,
+		Properties:                  properties,
+		Status:                      status,
+		Type:                        "weighted",
+	}
+
+	dom = gtm.Domain{
+		Datacenters:                 datacenters,
+		DefaultErrorPenalty:         75,
+		DefaultSslClientCertificate: "",
+		DefaultSslClientPrivateKey:  "",
+		DefaultTimeoutPenalty:       25,
+		EmailNotificationList:       make([]string, 0),
+		LastModified:                "2019-04-25T14:53:12.000+00:00",
+		LastModifiedBy:              "operator",
+		Links:                       links,
+		LoadFeedback:                false,
+		LoadImbalancePercentage:     10.0,
+		ModificationComments:        "Edit Property test_property",
+		Name:                        gtmTestDomain,
+		Properties:                  properties,
+		Status:                      status,
+		Type:                        "weighted",
+	}
+
+	deniedResponseStatus = gtm.ResponseStatus{
+		ChangeId: "40e36abd-bfb2-4635-9fca-62175cf17007",
+		Links: &[]gtm.Link{
+			{
+				Href: "https://akab-ymtebc45gco3ypzj-apz4yxpek55y7fyv.luna.akamaiapis.net/config-gtm/v1/domains/gtmdomtest.akadns.net/status/current",
+				Rel:  "self",
+			},
 		},
-	},
-	Message:               "Request could not be completed. Invalid credentials.",
-	PassingValidation:     true,
-	PropagationStatus:     "DENIED",
-	PropagationStatusDate: "2019-04-25T14:54:00.000+00:00",
-}
-var pendingResponseStatus = gtm.ResponseStatus{
-	ChangeId: "40e36abd-bfb2-4635-9fca-62175cf17007",
-	Links: &[]gtm.Link{
-		{
-			Href: "https://akab-ymtebc45gco3ypzj-apz4yxpek55y7fyv.luna.akamaiapis.net/config-gtm/v1/domains/gtmdomtest.akadns.net/status/current",
-			Rel:  "self",
+		Message:               "Request could not be completed. Invalid credentials.",
+		PassingValidation:     true,
+		PropagationStatus:     "DENIED",
+		PropagationStatusDate: "2019-04-25T14:54:00.000+00:00",
+	}
+
+	pendingResponseStatus = gtm.ResponseStatus{
+		ChangeId: "40e36abd-bfb2-4635-9fca-62175cf17007",
+		Links: &[]gtm.Link{
+			{
+				Href: "https://akab-ymtebc45gco3ypzj-apz4yxpek55y7fyv.luna.akamaiapis.net/config-gtm/v1/domains/gtmdomtest.akadns.net/status/current",
+				Rel:  "self",
+			},
 		},
-	},
-	Message:               "Current configuration has been propagated to all GTM nameservers",
-	PassingValidation:     true,
-	PropagationStatus:     "PENDING",
-	PropagationStatusDate: "2019-04-25T14:54:00.000+00:00",
-}
-var completeResponseStatus = gtm.ResponseStatus{
-	ChangeId: "40e36abd-bfb2-4635-9fca-62175cf17007",
-	Links: &[]gtm.Link{
-		{
-			Href: "https://akab-ymtebc45gco3ypzj-apz4yxpek55y7fyv.luna.akamaiapis.net/config-gtm/v1/domains/gtmdomtest.akadns.net/status/current",
-			Rel:  "self",
+		Message:               "Current configuration has been propagated to all GTM nameservers",
+		PassingValidation:     true,
+		PropagationStatus:     "PENDING",
+		PropagationStatusDate: "2019-04-25T14:54:00.000+00:00",
+	}
+
+	completeResponseStatus = gtm.ResponseStatus{
+		ChangeId: "40e36abd-bfb2-4635-9fca-62175cf17007",
+		Links: &[]gtm.Link{
+			{
+				Href: "https://akab-ymtebc45gco3ypzj-apz4yxpek55y7fyv.luna.akamaiapis.net/config-gtm/v1/domains/gtmdomtest.akadns.net/status/current",
+				Rel:  "self",
+			},
 		},
-	},
-	Message:               "Current configuration has been propagated to all GTM nameservers",
-	PassingValidation:     true,
-	PropagationStatus:     "COMPLETE",
-	PropagationStatusDate: "2019-04-25T14:54:00.000+00:00",
-}
+		Message:               "Current configuration has been propagated to all GTM nameservers",
+		PassingValidation:     true,
+		PropagationStatus:     "COMPLETE",
+		PropagationStatusDate: "2019-04-25T14:54:00.000+00:00",
+	}
 
-func TestResGtmDomain(t *testing.T) {
-
-	t.Run("create domain", func(t *testing.T) {
-		client := &gtm.Mock{}
-
-		getCall := client.On("GetDomain",
-			mock.Anything, // ctx is irrelevant for this test
-			gtmTestDomain,
-		).Return(nil, &gtm.Error{
-			StatusCode: http.StatusNotFound,
-		})
-
-		dr := gtm.DomainResponse{}
-		dr.Resource = &dom
-		dr.Status = &pendingResponseStatus
-		client.On("CreateDomain",
-			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("*gtm.Domain"),
-			mock.AnythingOfType("map[string]string"),
-		).Return(&dr, nil).Run(func(args mock.Arguments) {
-			getCall.ReturnArguments = mock.Arguments{args.Get(1).(*gtm.Domain), nil}
-		})
-
-		client.On("NewDomain",
-			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("string"),
-			mock.AnythingOfType("string"),
-		).Return(&dom)
-
-		client.On("GetDomainStatus",
-			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("string"),
-		).Return(&completeResponseStatus, nil)
-
-		client.On("UpdateDomain",
-			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("*gtm.Domain"),
-			mock.AnythingOfType("map[string]string"),
-		).Return(&completeResponseStatus, nil).Run(func(args mock.Arguments) {
-			getCall.ReturnArguments = mock.Arguments{args.Get(1).(*gtm.Domain), nil}
-		})
-
-		client.On("DeleteDomain",
-			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("*gtm.Domain"),
-		).Return(&completeResponseStatus, nil)
-
-		dataSourceName := "akamai_gtm_domain.testdomain"
-
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				PreCheck:  func() { testAccPreCheck(t) },
-				Providers: testAccProviders,
-				Steps: []resource.TestStep{
-					{
-						Config: loadFixtureString("testdata/TestResGtmDomain/create_basic.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(dataSourceName, "name", gtmTestDomain),
-							resource.TestCheckResourceAttr(dataSourceName, "type", "weighted"),
-							resource.TestCheckResourceAttr(dataSourceName, "load_imbalance_percentage", "10"),
-						),
-					},
-					{
-						Config: loadFixtureString("testdata/TestResGtmDomain/update_basic.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(dataSourceName, "name", gtmTestDomain),
-							resource.TestCheckResourceAttr(dataSourceName, "type", "weighted"),
-							resource.TestCheckResourceAttr(dataSourceName, "load_imbalance_percentage", "20"),
-						),
-					},
-				},
-			})
-		})
-
-		client.AssertExpectations(t)
-	})
-
-	t.Run("create domain failed", func(t *testing.T) {
-		client := &gtm.Mock{}
-
-		client.On("CreateDomain",
-			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("*gtm.Domain"),
-			mock.AnythingOfType("map[string]string"),
-		).Return(nil, &gtm.Error{
-			StatusCode: http.StatusBadRequest,
-		})
-
-		client.On("NewDomain",
-			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("string"),
-			mock.AnythingOfType("string"),
-		).Return(&dom)
-
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				PreCheck:  func() { testAccPreCheck(t) },
-				Providers: testAccProviders,
-				Steps: []resource.TestStep{
-					{
-						Config:      loadFixtureString("testdata/TestResGtmDomain/create_basic.tf"),
-						ExpectError: regexp.MustCompile("Domain Create failed"),
-					},
-				},
-			})
-		})
-
-		client.AssertExpectations(t)
-	})
-
-	t.Run("create domain denied", func(t *testing.T) {
-		client := &gtm.Mock{}
-
-		dr := gtm.DomainResponse{}
-		dr.Resource = &dom
-		dr.Status = &deniedResponseStatus
-		client.On("CreateDomain",
-			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("*gtm.Domain"),
-			mock.AnythingOfType("map[string]string"),
-		).Return(&dr, nil)
-
-		client.On("NewDomain",
-			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("string"),
-			mock.AnythingOfType("string"),
-		).Return(&dom)
-
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				PreCheck:  func() { testAccPreCheck(t) },
-				Providers: testAccProviders,
-				Steps: []resource.TestStep{
-					{
-						Config:      loadFixtureString("testdata/TestResGtmDomain/create_basic.tf"),
-						ExpectError: regexp.MustCompile("Request could not be completed. Invalid credentials."),
-					},
-				},
-			})
-		})
-
-		client.AssertExpectations(t)
-	})
-
-	t.Run("import domain", func(t *testing.T) {
-		client := &gtm.Mock{}
-
-		getCall := client.On("GetDomain",
-			mock.Anything,
-			gtmTestDomain,
-		).Return(nil, &gtm.Error{
-			StatusCode: http.StatusNotFound,
-		})
-
-		dr := gtm.DomainResponse{}
-		dr.Resource = &dom
-		dr.Status = &pendingResponseStatus
-		client.On("CreateDomain",
-			mock.Anything,
-			mock.AnythingOfType("*gtm.Domain"),
-			mock.AnythingOfType("map[string]string"),
-		).Return(&dr, nil).Run(func(args mock.Arguments) {
-			getCall.ReturnArguments = mock.Arguments{args.Get(1).(*gtm.Domain), nil}
-		})
-
-		client.On("NewDomain",
-			mock.Anything,
-			mock.AnythingOfType("string"),
-			mock.AnythingOfType("string"),
-		).Return(&dom)
-
-		client.On("GetDomainStatus",
-			mock.Anything,
-			mock.AnythingOfType("string"),
-		).Return(&completeResponseStatus, nil).Times(2)
-
-		client.On("DeleteDomain",
-			mock.Anything,
-			mock.AnythingOfType("*gtm.Domain"),
-		).Return(&completeResponseStatus, nil)
-
-		dataSourceName := "akamai_gtm_domain.testdomain"
-
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				PreCheck:  func() { testAccPreCheck(t) },
-				Providers: testAccProviders,
-				Steps: []resource.TestStep{
-					{
-						Config: loadFixtureString("testdata/TestResGtmDomain/create_basic.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(dataSourceName, "name", gtmTestDomain),
-							resource.TestCheckResourceAttr(dataSourceName, "type", "weighted"),
-							resource.TestCheckResourceAttr(dataSourceName, "load_imbalance_percentage", "10"),
-						),
-					},
-					{
-						Config:                  loadFixtureString("testdata/TestResGtmDomain/create_basic.tf"),
-						ImportState:             true,
-						ImportStateId:           gtmTestDomain,
-						ResourceName:            dataSourceName,
-						ImportStateVerify:       true,
-						ImportStateVerifyIgnore: []string{"contract", "group"},
-					},
-				},
-			})
-		})
-
-		client.AssertExpectations(t)
-	})
-}
-
-// Sets a Hack flag so cn work with existing Domains (only Admin can Delete)
-func testAccPreCheckTF(_ *testing.T) {
-
-	// by definition, we are running acceptance tests. ;-)
-	log.Printf("[DEBUG] [Akamai GTMV1] Setting HashiAcc true")
-	HashiAcc = true
-
-}
+	gtmTestDomain = "gtm_terra_testdomain.akadns.net"
+)

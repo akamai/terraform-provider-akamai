@@ -1,3 +1,4 @@
+// Package akamai allows to initialize and set up Akamai Provider
 package akamai
 
 import (
@@ -19,8 +20,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
 	"github.com/spf13/cast"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/edgegrid"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/session"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/edgegrid"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/config"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
 	"github.com/akamai/terraform-provider-akamai/v3/version"

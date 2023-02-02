@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/cps"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/cps"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/providers/cps/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
@@ -107,7 +107,7 @@ var (
 	}
 
 	expectReadCPSCSRNoPendingChanges = func(t *testing.T, client *cps.Mock, data testDataForCPSCSR, timesToRun int) {
-		data.Enrollment.PendingChanges = []string{}
+		data.Enrollment.PendingChanges = []cps.PendingChange{}
 		getEnrollmentReq := cps.GetEnrollmentRequest{
 			EnrollmentID: data.EnrollmentID,
 		}

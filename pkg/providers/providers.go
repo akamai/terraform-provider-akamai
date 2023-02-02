@@ -1,3 +1,4 @@
+// Package providers allows to import list of sub-providers
 package providers
 
 import (

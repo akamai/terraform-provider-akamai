@@ -1,9 +1,10 @@
+// Package iam contains implementation for Akamai Terraform sub-provider responsible for managing identities and accesses
 package iam
 
 import (
 	"sync"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/iam"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/iam"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
 	"github.com/apex/log"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"

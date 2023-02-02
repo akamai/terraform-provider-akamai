@@ -4,9 +4,10 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/networklists"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/networklists"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAccAkamaiNetworkListSubscription_res_basic(t *testing.T) {
@@ -14,13 +15,16 @@ func TestAccAkamaiNetworkListSubscription_res_basic(t *testing.T) {
 		client := &networklists.Mock{}
 
 		cu := networklists.UpdateNetworkListSubscriptionResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResNetworkListSubscription/NetworkListSubscription.json"), &cu)
+		err := json.Unmarshal(loadFixtureBytes("testdata/TestResNetworkListSubscription/NetworkListSubscription.json"), &cu)
+		require.NoError(t, err)
 
 		cr := networklists.GetNetworkListSubscriptionResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResNetworkListSubscription/NetworkListSubscription.json"), &cr)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResNetworkListSubscription/NetworkListSubscription.json"), &cr)
+		require.NoError(t, err)
 
 		cd := networklists.RemoveNetworkListSubscriptionResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResNetworkListSubscription/NetworkListSubscription.json"), &cd)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResNetworkListSubscription/NetworkListSubscription.json"), &cd)
+		require.NoError(t, err)
 
 		client.On("GetNetworkListSubscription",
 			mock.Anything,

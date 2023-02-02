@@ -1,3 +1,4 @@
+// Package botman contains implementation for Akamai Terraform sub-provider responsible for maintaining Bot Manager
 package botman
 
 import (
@@ -8,7 +9,7 @@ import (
 
 	"github.com/apex/log"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/botman"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/botman"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
 

@@ -4,9 +4,10 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v3/pkg/networklists"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/networklists"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAccAkamaiActivations_res_basic(t *testing.T) {
@@ -14,13 +15,16 @@ func TestAccAkamaiActivations_res_basic(t *testing.T) {
 		client := &networklists.Mock{}
 
 		cu := networklists.RemoveActivationsResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResActivations/ActivationsDelete.json"), &cu)
+		err := json.Unmarshal(loadFixtureBytes("testdata/TestResActivations/ActivationsDelete.json"), &cu)
+		require.NoError(t, err)
 
 		ga := networklists.GetActivationsResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResActivations/Activations.json"), &ga)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResActivations/Activations.json"), &ga)
+		require.NoError(t, err)
 
 		cr := networklists.CreateActivationsResponse{}
-		json.Unmarshal(loadFixtureBytes("testdata/TestResActivations/Activations.json"), &cr)
+		err = json.Unmarshal(loadFixtureBytes("testdata/TestResActivations/Activations.json"), &cr)
+		require.NoError(t, err)
 
 		client.On("GetActivations",
 			mock.Anything,
