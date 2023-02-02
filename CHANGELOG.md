@@ -24,6 +24,9 @@
     * `resource_akamai_gtm_domain` for field `email_notification_list`
     * `resource_akamai_gtm_resource` for field `resource_instance.load_servers`
 
+* CPS
+  * Fixed terraform always showing diff for fields that use unicode characters ([#368](https://github.com/akamai/terraform-provider-akamai/issues/368))
+
 ## 3.2.1 (December 16, 2022)
 
 #### BUG FIXES:
