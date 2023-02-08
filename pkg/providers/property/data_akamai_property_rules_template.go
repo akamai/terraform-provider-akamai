@@ -266,8 +266,8 @@ func dataPropertyRulesTemplateRead(_ context.Context, d *schema.ResourceData, m 
 }
 
 var (
-	includeRegexp  = regexp.MustCompile(`"#include:.+"`)
-	varRegexp      = regexp.MustCompile(`"\${.+}"`)
+	includeRegexp  = regexp.MustCompile(`"#include:.+?"`)
+	varRegexp      = regexp.MustCompile(`"\${.+?}"`)
 	jsonFileRegexp = regexp.MustCompile(`\.json+$`)
 )
 
