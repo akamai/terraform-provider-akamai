@@ -600,6 +600,10 @@ func TestStringToTemplate(t *testing.T) {
 			givenFile:    "template_in.json",
 			expectedFile: "template_out.json",
 		},
+		"multiple includes in array": {
+			givenFile:    "template_in_with_array.json",
+			expectedFile: "template_out_with_array.json",
+		},
 		"plain JSON passed": {
 			givenFile:    "plain_json.json",
 			expectedFile: "plain_json.json",
