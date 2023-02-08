@@ -1,8 +1,6 @@
 {
   "rules": {
     "name": @+#.name#+@,
-    "children": [
-      @+#template "snippets/some-template.json" .#+@
-    ]
+    "children": [@+#template "snippets/some-template.json" .#+@, @+#template "snippets/some-template.json" .#+@]
   }
 }
