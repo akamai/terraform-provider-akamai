@@ -116,7 +116,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 			})
 		})
 	})
-	t.Run("error setting both ,ap and file variables", func(t *testing.T) {
+	t.Run("error setting both map and file variables", func(t *testing.T) {
 		client := papi.Mock{}
 		useClient(&client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
