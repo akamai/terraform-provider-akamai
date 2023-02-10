@@ -48,13 +48,13 @@ func resourceRatePolicyAction() *schema.Resource {
 			"ipv4_action": {
 				Type:             schema.TypeString,
 				Required:         true,
-				ValidateDiagFunc: ValidateActions,
+				ValidateDiagFunc: validateWithBotManActions,
 				Description:      "Action to be taken for requests coming from an IPv4 address",
 			},
 			"ipv6_action": {
 				Type:             schema.TypeString,
 				Required:         true,
-				ValidateDiagFunc: ValidateActions,
+				ValidateDiagFunc: validateWithBotManActions,
 				Description:      "Action to be taken for requests coming from an IPv6 address",
 			},
 		},

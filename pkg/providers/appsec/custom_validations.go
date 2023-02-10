@@ -35,6 +35,26 @@ func ValidateActions(v interface{}, path cty.Path) diag.Diagnostics {
 	return nil
 }
 
+// ValidateWithBotManActions ensure actions are correct for API call
+func validateWithBotManActions(v interface{}, path cty.Path) diag.Diagnostics {
+	schemaFieldName, err := tools.GetSchemaFieldNameFromPath(path)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	value, ok := v.(string)
+	if !ok {
+		return diag.Errorf("%q is not a string", schemaFieldName)
+	}
+
+	m := map[string]struct{}{"alert": {}, "delay": {}, "deny": {}, "monitor": {}, "none": {}, "slow": {}, "tarpit": {}}
+	_, ok = m[value]
+	if !(ok || strings.Contains(value, "deny_custom_") || strings.Contains(value, "cond_action_") || strings.Contains(value, "serve_alt_")) {
+		return diag.Errorf("%q may only contain alert, cond_action_{action_id}, delay, deny, deny_custom_{action_id}, monitor, none, serve_alt_{action_id}, slow, tarpit", schemaFieldName)
+	}
+
+	return nil
+}
+
 // VerifyIDUnchanged compares the configuration's value for the configuration ID with the resource's value
 // specified in the resources's ID, to ensure that the user has not inadvertently modified the configuration's value;
 // any such modifications indicate an incorrect understanding of the Update operation.
