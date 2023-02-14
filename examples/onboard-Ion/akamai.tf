@@ -1,3 +1,17 @@
+terraform {
+  required_providers {
+    akamai = {
+      source  = "akamai/akamai"
+      version = ">= 2.0.0"
+    }
+    template = {
+      source  = "hashicorp/template"
+      version = "~> 0.1"
+    }
+  }
+  required_version = ">= 0.13"
+}
+
 provider "akamai" {
   #Credentials can be provided inline using services such as Terraform Vault or by via an .edgerc file
   edgerc         = "../../.edgerc"
@@ -27,14 +41,14 @@ data "akamai_cp_code" "cp_code" {
 
 data "template_file" "rule_template" {
   template = file("${path.module}/rules/rules.json")
-  vars = {
+  vars     = {
     snippets = "${path.module}/rules/snippets"
   }
 }
 
 data "template_file" "rules" {
   template = data.template_file.rule_template.rendered
-  vars = {
+  vars     = {
     tdenabled = var.tdenabled
   }
 }
@@ -53,7 +67,7 @@ resource "akamai_property" "example-property" {
   group       = data.akamai_group.group.id
   product     = "prd_xxxx"
   rule_format = "latest"
-  hostnames = {
+  hostnames   = {
     "example.mydomain.com" = akamai_edge_hostname.example-property.edge_hostname,
   }
   rules     = data.template_file.rules.rendered

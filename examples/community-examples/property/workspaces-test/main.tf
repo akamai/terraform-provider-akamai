@@ -2,23 +2,28 @@ terraform {
   required_version = ">= 0.12"
   required_providers {
     akamai = {
-      source = "akamai/akamai"
+      source  = "akamai/akamai"
+      version = ">= 2.0.0"
     }
     template = {
-      source = "hashicorp/template"
+      source  = "hashicorp/template"
+      version = "~> 0.1"
     }
   }
 }
 
-provider "akamai" {}
+provider "akamai" {
+  edgerc         = var.edgerc_path
+  config_section = var.config_section
+}
 
-variable "edgerc" {
+variable "edgerc_path" {
   type        = string
   default     = "~/.edgerc"
   description = "Path to edgerc file"
 }
 
-variable "edgerc_papi" {
+variable "config_section" {
   type        = string
   default     = "papi"
   description = "PAPI section"

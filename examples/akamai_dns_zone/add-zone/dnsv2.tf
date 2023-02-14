@@ -2,7 +2,8 @@ terraform {
   required_version = ">= 0.12"
   required_providers {
     akamai = {
-      source = "akamai/akamai"
+      source  = "akamai/akamai"
+      version = ">= 2.0.0"
     }
   }
 }
@@ -33,6 +34,8 @@ resource "akamai_dns_zone" "test_secondary_zone" {
   sign_and_serve = false
 }
 
+/*
 data "akamai_authorities_set" "ns" {
   contract = data.akamai_contract.contract.id
 }
+*/

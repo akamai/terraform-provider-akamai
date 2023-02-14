@@ -2,10 +2,12 @@ terraform {
   required_version = ">= 0.12"
   required_providers {
     akamai = {
-      source = "akamai/akamai"
+      source  = "akamai/akamai"
+      version = ">= 2.0.0"
     }
     template = {
-      source = "hashicorp/template"
+      source  = "hashicorp/template"
+      version = "~> 0.1"
     }
   }
 }

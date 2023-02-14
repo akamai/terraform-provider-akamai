@@ -12,7 +12,7 @@ install_path = $(TF_PLUGIN_DIR)/$(registry_name)/$(namespace)/$(PKG_NAME)/$(vers
 
 # Tools versions
 golangci-lint-version = v1.50.1
-tflint-version        = v0.39.3 # Newer versions contain rules that examples are not compliant with
+tflint-version        = v0.45.0
 
 default: build
 
