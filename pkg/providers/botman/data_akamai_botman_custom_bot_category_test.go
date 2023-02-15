@@ -40,8 +40,8 @@ func TestDataCustomBotCategory(t *testing.T) {
 		useClient(mockedBotmanClient, func() {
 
 			resource.Test(t, resource.TestCase{
-				IsUnitTest: true,
-				Providers:  testAccProviders,
+				IsUnitTest:        true,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: test.Fixture("testdata/TestDataCustomBotCategory/basic.tf"),
@@ -76,8 +76,8 @@ func TestDataCustomBotCategory(t *testing.T) {
 		useClient(mockedBotmanClient, func() {
 
 			resource.Test(t, resource.TestCase{
-				IsUnitTest: true,
-				Providers:  testAccProviders,
+				IsUnitTest:        true,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: test.Fixture("testdata/TestDataCustomBotCategory/filter_by_id.tf"),

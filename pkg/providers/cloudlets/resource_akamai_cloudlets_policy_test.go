@@ -236,7 +236,7 @@ func TestResourcePolicy(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString(fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -300,7 +300,7 @@ func TestResourcePolicy(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString(fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -363,7 +363,7 @@ func TestResourcePolicy(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString(fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -426,7 +426,7 @@ func TestResourcePolicy(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString(fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -497,7 +497,7 @@ func TestResourcePolicy(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString(fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -556,7 +556,7 @@ func TestResourcePolicy(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString(fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -589,7 +589,7 @@ func TestResourcePolicy(t *testing.T) {
 		expectRemovePolicy(t, client, 2, 1)
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString(fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -617,7 +617,7 @@ func TestResourcePolicy(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config:      loadFixtureString(fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -712,7 +712,7 @@ func TestResourcePolicy(t *testing.T) {
 			testCases[i].Expectations(client)
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					Providers: testAccProviders,
+					ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
 							Config:      loadFixtureString(fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -734,7 +734,7 @@ func TestResourcePolicy(t *testing.T) {
 		expectRemovePolicy(t, client, 2, 1)
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config:      loadFixtureString(fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -759,7 +759,7 @@ func TestResourcePolicy(t *testing.T) {
 		expectRemovePolicy(t, client, 2, 1)
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config:      loadFixtureString(fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -815,7 +815,7 @@ func TestResourcePolicy(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString(fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -906,7 +906,7 @@ func TestResourcePolicy(t *testing.T) {
 			testCases[i].Expectations(client)
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					Providers: testAccProviders,
+					ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
 							Config: loadFixtureString(fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -928,7 +928,7 @@ func TestResourcePolicy(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config:      loadFixtureString(fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -979,7 +979,7 @@ func TestResourcePolicy(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString(fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -1009,7 +1009,7 @@ func TestResourcePolicy(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString(fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -1037,7 +1037,7 @@ func TestResourcePolicy(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString(fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -1064,7 +1064,7 @@ func TestResourcePolicy(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString(fmt.Sprintf("%s/policy_create.tf", testDir)),

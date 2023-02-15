@@ -36,8 +36,8 @@ func TestAkamaiThreatIntel_data_basic(t *testing.T) {
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
-				IsUnitTest: true,
-				Providers:  testAccProviders,
+				IsUnitTest:        true,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString("testdata/TestDSThreatIntel/match_by_id.tf"),
@@ -78,8 +78,8 @@ func TestAkamaiThreatIntel_data_error_retrieving_threat_intel(t *testing.T) {
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
-				IsUnitTest: true,
-				Providers:  testAccProviders,
+				IsUnitTest:        true,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString("testdata/TestDSThreatIntel/match_by_id.tf"),

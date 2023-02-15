@@ -304,7 +304,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString(fmt.Sprintf("%s/property_include_activation.tf", testDir)),
@@ -377,7 +377,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString(fmt.Sprintf("%s/property_include_activation.tf", testDir)),
@@ -440,7 +440,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString(fmt.Sprintf("%s/property_include_activation.tf", testDir)),

@@ -322,7 +322,7 @@ func TestResourceStream(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString("testdata/TestResourceStream/lifecycle/create_stream.tf"),
@@ -633,7 +633,7 @@ func TestResourceUpdate(t *testing.T) {
 
 			useClient(m, func() {
 				resource.UnitTest(t, resource.TestCase{
-					Providers: testAccProviders,
+					ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
 							Config: loadFixtureString(fmt.Sprintf("testdata/TestResourceStream/update_resource/create_stream_%s.tf", createStreamFilenameSuffix)),
@@ -804,7 +804,7 @@ func TestEmailIDs(t *testing.T) {
 
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					Providers: testAccProviders,
+					ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
 							Config: loadFixtureString(fmt.Sprintf("testdata/TestResourceStream/email_ids/%s", test.Filename)),
@@ -872,7 +872,7 @@ func TestResourceStreamErrors(t *testing.T) {
 
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					Providers: testAccProviders,
+					ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
 							Config:      loadFixtureString(test.tfFile),
@@ -932,7 +932,7 @@ func TestResourceStreamCustomDiff(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					Providers: testAccProviders,
+					ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
 							Config:             loadFixtureString(test.tfFile),
@@ -1107,7 +1107,7 @@ func TestDatasetIDsDiff(t *testing.T) {
 
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					Providers: testAccProviders,
+					ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
 							Config:             loadFixtureString(test.preConfig),
@@ -1412,7 +1412,7 @@ func TestCustomHeaders(t *testing.T) {
 
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					Providers: testAccProviders,
+					ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
 							Config: loadFixtureString(fmt.Sprintf("testdata/TestResourceStream/custom_headers/%s", test.Filename)),
@@ -1642,7 +1642,7 @@ func TestMTLS(t *testing.T) {
 
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					Providers: testAccProviders,
+					ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
 							Config: loadFixtureString(fmt.Sprintf("testdata/TestResourceStream/mtls/%s", test.Filename)),
@@ -1963,8 +1963,8 @@ func TestUrlSuppressor(t *testing.T) {
 
 			useClient(m, func() {
 				resource.UnitTest(t, resource.TestCase{
-					Providers: testAccProviders,
-					Steps:     test.Steps,
+					ProviderFactories: testAccProviders,
+					Steps:             test.Steps,
 				})
 
 				m.AssertExpectations(t)
@@ -2122,7 +2122,7 @@ func TestConnectors(t *testing.T) {
 
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					Providers: testAccProviders,
+					ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
 							Config: loadFixtureString(fmt.Sprintf("testdata/TestResourceStream/connectors/%s", test.Filename)),

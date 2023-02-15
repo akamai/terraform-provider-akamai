@@ -27,8 +27,8 @@ func TestDataSourceAuthoritiesSet_basic(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				PreCheck:  func() { testAccPreCheck(t) },
-				Providers: testAccProviders,
+				PreCheck:          func() { testAccPreCheck(t) },
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString("testdata/TestDataSetAuthorities/basic.tf"),
@@ -53,8 +53,8 @@ func TestDataSourceAuthoritiesSet_basic(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				PreCheck:  func() { testAccPreCheck(t) },
-				Providers: testAccProviders,
+				PreCheck:          func() { testAccPreCheck(t) },
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config:      loadFixtureString("testdata/TestDataSetAuthorities/missing_contract.tf"),
@@ -77,8 +77,8 @@ func TestDataSourceAuthoritiesSet_basic(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				PreCheck:  func() { testAccPreCheck(t) },
-				Providers: testAccProviders,
+				PreCheck:          func() { testAccPreCheck(t) },
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config:      loadFixtureString("testdata/TestDataSetAuthorities/basic.tf"),

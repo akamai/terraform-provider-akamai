@@ -88,9 +88,9 @@ func TestAkamaiReputationProtection_res_basic(t *testing.T) {
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
-				PreCheck:   func() { testAccPreCheck(t) },
-				IsUnitTest: true,
-				Providers:  testAccProviders,
+				PreCheck:          func() { testAccPreCheck(t) },
+				IsUnitTest:        true,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString("testdata/TestResReputationProtection/match_by_id.tf"),

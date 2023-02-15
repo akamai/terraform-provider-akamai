@@ -43,8 +43,8 @@ func TestAkamaiPenaltyBox_res_basic(t *testing.T) {
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
-				IsUnitTest: true,
-				Providers:  testAccProviders,
+				IsUnitTest:        true,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString("testdata/TestResPenaltyBox/match_by_id.tf"),

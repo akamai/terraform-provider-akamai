@@ -159,8 +159,8 @@ func TestDataPropertyIncludeParents(t *testing.T) {
 			}
 			useClient(client, nil, func() {
 				resource.Test(t, resource.TestCase{
-					IsUnitTest: true,
-					Providers:  testAccProviders,
+					IsUnitTest:        true,
+					ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{{
 						Config:      loadFixtureString(fmt.Sprintf("testdata/TestDataPropertyIncludeParents/%s", test.givenTF)),
 						Check:       resource.ComposeAggregateTestCheckFunc(checkFuncs...),

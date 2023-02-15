@@ -54,8 +54,8 @@ func TestAkamaiTuningRecommendationsDataBasic(t *testing.T) {
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
-				IsUnitTest: true,
-				Providers:  testAccProviders,
+				IsUnitTest:        true,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString("testdata/TestDSTuningRecommendations/match_by_id.tf"),
@@ -114,8 +114,8 @@ func TestAkamaiTuningRecommenadationsDataErrorRetrievingTuningRecommenadations(t
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
-				IsUnitTest: true,
-				Providers:  testAccProviders,
+				IsUnitTest:        true,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString("testdata/TestDSTuningRecommendations/match_by_id.tf"),

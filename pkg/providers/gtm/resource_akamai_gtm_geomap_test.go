@@ -72,7 +72,7 @@ func TestResGtmGeomap(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString("testdata/TestResGtmGeomap/create_basic.tf"),
@@ -117,7 +117,7 @@ func TestResGtmGeomap(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config:      loadFixtureString("testdata/TestResGtmGeomap/create_basic.tf"),
@@ -155,7 +155,7 @@ func TestResGtmGeomap(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config:      loadFixtureString("testdata/TestResGtmGeomap/create_basic.tf"),
@@ -239,8 +239,8 @@ func TestGTMGeoMapOrder(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			useClient(test.client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					Providers:  testAccProviders,
-					IsUnitTest: true,
+					ProviderFactories: testAccProviders,
+					IsUnitTest:        true,
 					Steps: []resource.TestStep{
 						{
 							Config: loadFixtureString(test.pathForCreate),

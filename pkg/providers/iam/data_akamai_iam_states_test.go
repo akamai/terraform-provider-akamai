@@ -22,8 +22,8 @@ func TestDataStates(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers:  testAccProviders,
-				IsUnitTest: true,
+				ProviderFactories: testAccProviders,
+				IsUnitTest:        true,
 				Steps: []resource.TestStep{
 					{
 						Config: test.Fixture("testdata/%s/step0.tf", t.Name()),
@@ -50,8 +50,8 @@ func TestDataStates(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers:  testAccProviders,
-				IsUnitTest: true,
+				ProviderFactories: testAccProviders,
+				IsUnitTest:        true,
 				Steps: []resource.TestStep{
 					{
 						Config:      test.Fixture("testdata/%s/step0.tf", t.Name()),

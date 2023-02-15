@@ -76,8 +76,8 @@ func TestAkamaiCustomRule_res_basic(t *testing.T) {
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
-				IsUnitTest: true,
-				Providers:  testAccProviders,
+				IsUnitTest:        true,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString("testdata/TestResCustomRule/match_by_id.tf"),
@@ -164,8 +164,8 @@ func TestAkamaiCustomRule_res_error_removing_active_rule(t *testing.T) {
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
-				IsUnitTest: true,
-				Providers:  testAccProviders,
+				IsUnitTest:        true,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString("testdata/TestResCustomRule/match_by_id.tf"),
