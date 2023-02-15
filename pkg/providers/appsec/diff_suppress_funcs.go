@@ -182,6 +182,32 @@ func compareLoggingSettings(old, new *appsec.UpdateAdvancedSettingsLoggingRespon
 	return reflect.DeepEqual(old, new)
 }
 
+func suppressEquivalentAttackPayloadLoggingSettingsDiffs(_, oldValue, newValue string, _ *schema.ResourceData) bool {
+	var oldJSON, newJSON appsec.UpdateAdvancedSettingsAttackPayloadLoggingResponse
+	if oldValue == newValue {
+		return true
+	}
+	if err := json.Unmarshal([]byte(oldValue), &oldJSON); err != nil {
+		return false
+	}
+	if err := json.Unmarshal([]byte(newValue), &newJSON); err != nil {
+		return false
+	}
+	diff := compareAttackPayloadLoggingSettings(&oldJSON, &newJSON)
+	return diff
+}
+
+func compareAttackPayloadLoggingSettings(oldValue, newValue *appsec.UpdateAdvancedSettingsAttackPayloadLoggingResponse) bool {
+	if oldValue.Override != newValue.Override ||
+		oldValue.Enabled != newValue.Enabled ||
+		oldValue.RequestBody.Type != newValue.RequestBody.Type ||
+		oldValue.ResponseBody.Type != newValue.ResponseBody.Type {
+		return false
+	}
+
+	return reflect.DeepEqual(oldValue, newValue)
+}
+
 func suppressCustomDenyJSONDiffs(_, old, new string, _ *schema.ResourceData) bool {
 	var ob, nb bytes.Buffer
 	if err := json.Compact(&ob, []byte(old)); err != nil {

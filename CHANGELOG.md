@@ -1,5 +1,17 @@
 # RELEASE NOTES
 
+## 3.4.0
+
+#### FEATURES/ENHANCEMENTS:
+
+  * Advanced Options Settings
+    * New settings added for Attack Payload Logging
+      * Added data source
+        [akamai_appsec_advanced_settings_attack_payload_logging](docs/data-sources/appsec_advanced_settings_attack_payload_logging.md)
+      * Added resource
+        [akamai_appsec_advanced_settings_attack_payload_logging](docs/resources/appsec_advanced_settings_attack_payload_logging.md)
+
+
 ## 3.3.0 (February 2, 2023)
 
 #### FEATURES/ENHANCEMENTS:
