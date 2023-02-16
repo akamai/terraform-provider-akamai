@@ -5,6 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
+	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -131,9 +134,25 @@ func resourcePropertyIncludeActivation() *schema.Resource {
 			},
 		},
 		Timeouts: &schema.ResourceTimeout{
-			Default: &includeActivationTimeout,
+			Default: readTimeoutFromEnvOrDefault("AKAMAI_ACTIVATION_TIMEOUT", includeActivationTimeout),
 		},
 	}
+}
+
+func readTimeoutFromEnvOrDefault(name string, timeout time.Duration) *time.Duration {
+	logger := akamai.Log("readTimeoutFromEnvOrDefault")
+
+	value := os.Getenv(name)
+	if value != "" {
+		n, err := strconv.Atoi(value)
+		if err != nil {
+			logger.Errorf("Provided timeout value %q is not a valid number: %s", n, err)
+		} else {
+			timeout = time.Minute * time.Duration(n)
+		}
+	}
+	logger.Infof("using activation timeout value of %d minutes", timeout/time.Minute)
+	return &timeout
 }
 
 var (
@@ -148,12 +167,14 @@ func resourcePropertyIncludeActivationCreate(ctx context.Context, d *schema.Reso
 	logger := meta.Log("PAPI", "resourcePropertyIncludeActivationCreate")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
 	client := inst.Client(meta)
+
 	logger.Debug("Create property include activation")
 
 	err := resourcePropertyIncludeActivationUpsert(ctx, d, client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
 	return resourcePropertyIncludeActivationRead(ctx, d, m)
 }
 
@@ -164,28 +185,20 @@ func resourcePropertyIncludeActivationRead(ctx context.Context, d *schema.Resour
 	client := inst.Client(meta)
 	logger.Debug("Reading property include activation")
 
-	id := strings.Split(d.Id(), ":")
-	if len(id) < 4 {
-		return diag.Errorf("invalid include activation identifier: %s", d.Id())
-	}
-	contractID, groupID, includeID, network := id[0], id[1], id[2], id[3]
-
-	versions, err := client.ListIncludeActivations(ctx, papi.ListIncludeActivationsRequest{
-		IncludeID:  includeID,
-		GroupID:    groupID,
-		ContractID: contractID,
-	})
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	activationID, err := getLatestIncludeActivationID(versions, network)
+	rd, err := parsePropertyIncludeActivationResourceID(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	activation, err := waitForPropertyIncludeOperation(ctx, client, activationID, includeID, "activation")
+	activation, err := getLatestActiveIncludeActivationResponseInNetwork(ctx, client, rd)
 	if err != nil {
 		return diag.FromErr(err)
+	}
+
+	if activation.Activation.ActivationType == papi.ActivationTypeDeactivate {
+		logger.Info("include is deactivated, needs recreation")
+		d.SetId("")
+		return nil
 	}
 
 	var validations []byte
@@ -195,6 +208,7 @@ func resourcePropertyIncludeActivationRead(ctx context.Context, d *schema.Resour
 			return diag.FromErr(err)
 		}
 	}
+
 	attrs := make(map[string]interface{})
 	attrs["include_id"] = activation.Activation.IncludeID
 	attrs["contract_id"] = activation.ContractID
@@ -243,58 +257,37 @@ func resourcePropertyIncludeActivationDelete(ctx context.Context, d *schema.Reso
 	client := inst.Client(meta)
 	logger.Debug("Deactivating property include")
 
-	includeID, err := tools.GetStringValue("include_id", d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	includeID = tools.AddPrefix(includeID, "inc_")
-	version, err := tools.GetIntValue("version", d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	network, err := tools.GetStringValue("network", d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	notifyEmailsSet, err := tools.GetSetValue("notify_emails", d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	notifyEmails := tools.SetToStringSlice(notifyEmailsSet)
-	note, err := tools.GetStringValue("note", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	acknowledgement, err := tools.GetBoolValue("auto_acknowledge_rule_warnings", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	complianceRecord, err := tools.GetListValue("compliance_record", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	activationResourceData := propertyIncludeActivationData{}
+	if err := activationResourceData.populateFromResource(d); err != nil {
 		return diag.FromErr(err)
 	}
 
-	deactivateIncludeRequest := papi.DeactivateIncludeRequest{
-		IncludeID:              includeID,
-		Version:                version,
-		Network:                papi.ActivationNetwork(network),
-		Note:                   note,
-		NotifyEmails:           notifyEmails,
-		AcknowledgeAllWarnings: acknowledgement,
+	logger.Debug("waiting for pending (de)activations")
+	if err := waitUntilNoPendingActivationInNetwork(ctx, client, activationResourceData); err != nil {
+		return diag.FromErr(err)
 	}
-	deactivateIncludeRequest, err = addComplianceRecordToDeactivationByNetwork(network, complianceRecord, deactivateIncludeRequest)
+
+	expectedIsActive, err := isLatestActiveExpectedDeactivated(ctx, client, activationResourceData)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	deactivation, err := client.DeactivateInclude(ctx, deactivateIncludeRequest)
+	if expectedIsActive {
+		// we are done here
+		logger.Debug("include version already deactivated")
+		return nil
+	}
+
+	logger.Debug("creating new deactivation")
+	err = createNewDeactivation(ctx, client, activationResourceData)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	_, err = waitForPropertyIncludeOperation(ctx, client, deactivation.ActivationID, includeID, "deactivation")
-	if err != nil {
+	logger.Debug("waiting for pending deactivation")
+	if err := waitUntilNoPendingActivationInNetwork(ctx, client, activationResourceData); err != nil {
 		return diag.FromErr(err)
 	}
+
 	return nil
 }
 
@@ -303,165 +296,387 @@ func resourcePropertyIncludeActivationImport(_ context.Context, d *schema.Resour
 	logger := meta.Log("PAPI", "resourcePropertyIncludeActivationImport")
 	logger.Debug("Importing property include activation")
 
-	id := strings.Split(d.Id(), ":")
-	if len(id) < 4 {
-		return nil, fmt.Errorf("invalid include activation identifier: %s", d.Id())
+	rd, err := parsePropertyIncludeActivationResourceID(d.Id())
+	if err != nil {
+		return nil, err
 	}
-	contractID, groupID, includeID, network := id[0], id[1], id[2], id[3]
 
-	if contractID == "" || groupID == "" || includeID == "" || network == "" {
-		return nil, fmt.Errorf("contract, group, include IDs and network must have non empty values")
-	}
+	attrs := make(map[string]interface{})
+	attrs["contract_id"] = rd.contractID
+	attrs["group_id"] = rd.groupID
+	attrs["include_id"] = rd.includeID
+	attrs["network"] = rd.network
 
 	// it is impossible to fetch auto_acknowledge_rule_warnings from server
-	if err := d.Set("auto_acknowledge_rule_warnings", false); err != nil {
-		return nil, fmt.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+	attrs["auto_acknowledge_rule_warnings"] = false
+
+	if err := tools.SetAttrs(d, attrs); err != nil {
+		return nil, err
 	}
 
 	return []*schema.ResourceData{d}, nil
 }
 
 func resourcePropertyIncludeActivationUpsert(ctx context.Context, d *schema.ResourceData, client papi.PAPI) error {
+	logger := akamai.Log("resourcePropertyIncludeActivationUpsert")
+
+	activationResourceData := propertyIncludeActivationData{}
+	if err := activationResourceData.populateFromResource(d); err != nil {
+		return err
+	}
+
+	logger.Debug("waiting for pending activations")
+	if err := waitUntilNoPendingActivationInNetwork(ctx, client, activationResourceData); err != nil {
+		return err
+	}
+
+	logger.Debug("checking if include version is already active")
+	expectedIsActive, err := isLatestActiveExpectedActivated(ctx, client, activationResourceData)
+	if err != nil && !errors.Is(err, ErrNoLatestIncludeActivation) {
+		return err
+	}
+	if expectedIsActive {
+		// we are done here
+		logger.Debug("include version already active")
+		d.SetId(fmt.Sprintf("%s:%s:%s:%s", activationResourceData.contractID, activationResourceData.groupID, activationResourceData.includeID, activationResourceData.network))
+		return nil
+	}
+
+	logger.Debug("creating new activation")
+	err = createNewActivation(ctx, client, activationResourceData)
+	if err != nil {
+		return err
+	}
+
+	logger.Debug("waiting for pending activations")
+	if err := waitUntilNoPendingActivationInNetwork(ctx, client, activationResourceData); err != nil {
+		return err
+	}
+
+	d.SetId(fmt.Sprintf("%s:%s:%s:%s", activationResourceData.contractID, activationResourceData.groupID, activationResourceData.includeID, activationResourceData.network))
+	return nil
+}
+
+type propertyIncludeActivationData struct {
+	includeID        string
+	contractID       string
+	groupID          string
+	version          int
+	network          string
+	notifyEmails     []string
+	note             string
+	acknowledgement  bool
+	complianceRecord []any
+}
+
+func (p *propertyIncludeActivationData) populateFromResource(d *schema.ResourceData) error {
 	includeID, err := tools.GetStringValue("include_id", d)
 	if err != nil {
 		return err
 	}
-	includeID = tools.AddPrefix(includeID, "inc_")
+	p.includeID = tools.AddPrefix(includeID, "inc_")
+
 	contractID, err := tools.GetStringValue("contract_id", d)
 	if err != nil {
 		return err
 	}
-	contractID = tools.AddPrefix(contractID, "ctr_")
+	p.contractID = tools.AddPrefix(contractID, "ctr_")
 	groupID, err := tools.GetStringValue("group_id", d)
 	if err != nil {
 		return err
 	}
-	groupID = tools.AddPrefix(groupID, "grp_")
-	version, err := tools.GetIntValue("version", d)
+	p.groupID = tools.AddPrefix(groupID, "grp_")
+	p.network, err = tools.GetStringValue("network", d)
 	if err != nil {
 		return err
 	}
-	network, err := tools.GetStringValue("network", d)
-	if err != nil {
+	p.version, err = tools.GetIntValue("version", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return err
 	}
 	notifyEmailsSet, err := tools.GetSetValue("notify_emails", d)
 	if err != nil {
 		return err
 	}
-	notifyEmails := tools.SetToStringSlice(notifyEmailsSet)
-	note, err := tools.GetStringValue("note", d)
+	p.notifyEmails = tools.SetToStringSlice(notifyEmailsSet)
+	p.note, err = tools.GetStringValue("note", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return err
 	}
-	acknowledgement, err := tools.GetBoolValue("auto_acknowledge_rule_warnings", d)
+	p.acknowledgement, err = tools.GetBoolValue("auto_acknowledge_rule_warnings", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return err
 	}
-	complianceRecord, err := tools.GetListValue("compliance_record", d)
+	p.complianceRecord, err = tools.GetListValue("compliance_record", d)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return err
 	}
-
-	activateIncludeRequest := papi.ActivateIncludeRequest{
-		IncludeID:              includeID,
-		Version:                version,
-		Network:                papi.ActivationNetwork(network),
-		Note:                   note,
-		NotifyEmails:           notifyEmails,
-		AcknowledgeAllWarnings: acknowledgement,
-	}
-
-	activateIncludeRequest, err = addComplianceRecordToActivationByNetwork(network, complianceRecord, activateIncludeRequest)
-	if err != nil {
-		return err
-	}
-	activationRes, err := client.ActivateInclude(ctx, activateIncludeRequest)
-	if err != nil {
-		return err
-	}
-
-	// here is used temporary activationID
-	if _, err := waitForPropertyIncludeOperation(ctx, client, activationRes.ActivationID, includeID, "activation"); err != nil {
-		return err
-	}
-
-	d.SetId(fmt.Sprintf("%s:%s:%s:%s", contractID, groupID, includeID, network))
 	return nil
 }
 
-// returns stable include activation id instead a temporary one
-func getLatestIncludeActivationID(versions *papi.ListIncludeActivationsResponse, network string) (string, error) {
-	activations := filterIncludeActivationsByNetwork(versions.Activations.Items, network)
-	act, err := findLatestIncludeActivation(activations)
-	if err != nil {
-		return "", err
-	}
-	return act.ActivationID, nil
+type propertyIncludeActivationID struct {
+	contractID string
+	groupID    string
+	includeID  string
+	network    string
 }
 
-// waitForPropertyIncludeOperation adds timeout for activation and deactivation include operations
-func waitForPropertyIncludeOperation(ctx context.Context, client papi.PAPI, activationID, includeID, operationType string) (*papi.GetIncludeActivationResponse, error) {
-	activation, err := client.GetIncludeActivation(ctx, papi.GetIncludeActivationRequest{
-		IncludeID:    includeID,
-		ActivationID: activationID,
+func parsePropertyIncludeActivationResourceID(activationResourceID string) (*propertyIncludeActivationID, error) {
+	id := strings.Split(activationResourceID, ":")
+	if len(id) != 4 {
+		return nil, fmt.Errorf("invalid include activation identifier: %s", activationResourceID)
+	}
+	contractID, groupID, includeID, network := id[0], id[1], id[2], id[3]
+	return &propertyIncludeActivationID{
+		contractID: contractID,
+		groupID:    groupID,
+		includeID:  includeID,
+		network:    network,
+	}, nil
+}
+
+func waitUntilNoPendingActivationInNetwork(ctx context.Context, client papi.PAPI, activationResourceData propertyIncludeActivationData) error {
+	act, err := findLatestActivationInNetwork(ctx, client, &propertyIncludeActivationID{
+		contractID: activationResourceData.contractID,
+		groupID:    activationResourceData.groupID,
+		includeID:  activationResourceData.includeID,
+		network:    activationResourceData.network,
+	})
+	if errors.Is(err, ErrNoLatestIncludeActivation) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+
+	_, err = waitForActivationCondition(ctx, client, activationResourceData.includeID, act.ActivationID,
+		func(status papi.ActivationStatus) bool {
+			return status == papi.ActivationStatusActive ||
+				status == papi.ActivationStatusFailed ||
+				status == papi.ActivationStatusAborted ||
+				status == papi.ActivationStatusDeactivated
+		})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func isLatestActiveExpectedWithActivationType(ctx context.Context, client papi.PAPI, activationResourceData propertyIncludeActivationData, expectedActivationType papi.ActivationType) (bool, error) {
+	activation, err := getLatestActiveActivationInNetwork(ctx, client, &propertyIncludeActivationID{
+		contractID: activationResourceData.contractID,
+		groupID:    activationResourceData.groupID,
+		includeID:  activationResourceData.includeID,
+		network:    activationResourceData.network,
+	})
+	if errors.Is(err, ErrNoLatestIncludeActivation) {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+
+	// expected conditions
+	if activation.Status == papi.ActivationStatusActive &&
+		activation.ActivationType == expectedActivationType &&
+		activation.IncludeVersion == activationResourceData.version {
+		return true, nil
+	}
+	return false, nil
+}
+
+func isLatestActiveExpectedDeactivated(ctx context.Context, client papi.PAPI, activationResourceData propertyIncludeActivationData) (bool, error) {
+	return isLatestActiveExpectedWithActivationType(ctx, client, activationResourceData, papi.ActivationTypeDeactivate)
+}
+
+func isLatestActiveExpectedActivated(ctx context.Context, client papi.PAPI, activationResourceData propertyIncludeActivationData) (bool, error) {
+	return isLatestActiveExpectedWithActivationType(ctx, client, activationResourceData, papi.ActivationTypeActivate)
+}
+
+func createNewActivation(ctx context.Context, client papi.PAPI, activationResourceData propertyIncludeActivationData) error {
+	logger := akamai.Log("createNewActivation")
+
+	logger.Debug("preparing activation request")
+	activateIncludeRequest := papi.ActivateIncludeRequest{
+		IncludeID:              activationResourceData.includeID,
+		Version:                activationResourceData.version,
+		Network:                papi.ActivationNetwork(activationResourceData.network),
+		Note:                   activationResourceData.note,
+		NotifyEmails:           activationResourceData.notifyEmails,
+		AcknowledgeAllWarnings: activationResourceData.acknowledgement,
+	}
+
+	activateIncludeRequest, err := addComplianceRecordToActivationByNetwork(activationResourceData.network, activationResourceData.complianceRecord, activateIncludeRequest)
+	if err != nil {
+		return err
+	}
+
+	logger.Debug("sending include activation request")
+	activationResponse, err := client.ActivateInclude(ctx, activateIncludeRequest)
+	if err != nil {
+		return err
+	}
+
+	logger.Debug("waiting for activation creation")
+	// here is used temporary activationID
+	if _, err := waitForActivationCreation(ctx, client, activationResourceData.includeID, activationResponse.ActivationID); err != nil {
+		return err
+	}
+	return nil
+}
+
+func createNewDeactivation(ctx context.Context, client papi.PAPI, activationResourceData propertyIncludeActivationData) error {
+	logger := akamai.Log("createNewDeactivation")
+
+	deactivateIncludeRequest := papi.DeactivateIncludeRequest{
+		IncludeID:              activationResourceData.includeID,
+		Version:                activationResourceData.version,
+		Network:                papi.ActivationNetwork(activationResourceData.network),
+		Note:                   activationResourceData.note,
+		NotifyEmails:           activationResourceData.notifyEmails,
+		AcknowledgeAllWarnings: activationResourceData.acknowledgement,
+	}
+	deactivateIncludeRequest, err := addComplianceRecordToDeactivationByNetwork(activationResourceData.network, activationResourceData.complianceRecord, deactivateIncludeRequest)
+	if err != nil {
+		return err
+	}
+
+	deactivation, err := client.DeactivateInclude(ctx, deactivateIncludeRequest)
+	if err != nil {
+		return err
+	}
+
+	logger.Info("waiting for creation of include deactivation")
+	if _, err := waitForActivationCreation(ctx, client, activationResourceData.includeID, deactivation.ActivationID); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func findLatestActivationWithCondition(ctx context.Context, client papi.PAPI, activationResourceID *propertyIncludeActivationID,
+	cond func(papi.IncludeActivation) bool) (*papi.IncludeActivation, error) {
+	versions, err := client.ListIncludeActivations(ctx, papi.ListIncludeActivationsRequest{
+		ContractID: activationResourceID.contractID,
+		GroupID:    activationResourceID.groupID,
+		IncludeID:  activationResourceID.includeID,
 	})
 	if err != nil {
-		// it can take a few seconds to fetch include activation/deactivation right after activation/deactivation request
-		if strings.Contains(err.Error(), papi.ErrNotFound.Error()) && strings.Contains(err.Error(), papi.ErrGetIncludeActivation.Error()) {
-			select {
-			case <-time.After(getActivationInterval):
-				return waitForPropertyIncludeOperation(ctx, client, activationID, includeID, operationType)
-			case <-ctx.Done():
-				return nil, terminateProcess(ctx, operationType)
-			}
-		}
 		return nil, err
 	}
-	for activation != nil && activation.Activation.Status != papi.ActivationStatusActive {
-		actStatus := activation.Activation.Status
+	activations := versions.Activations.Items
+	if len(activations) == 0 {
+		return nil, ErrNoLatestIncludeActivation
+	}
 
-		if actStatus == papi.ActivationStatusFailed {
-			return nil, fmt.Errorf("%s request failed for property include %v", operationType, includeID)
+	sort.Slice(activations, func(i, j int) bool {
+		return activations[i].UpdateDate > activations[j].UpdateDate
+	})
+
+	for _, v := range activations {
+		if cond(v) {
+			return &v, nil
 		}
-		if actStatus == papi.ActivationStatusAborted {
-			return nil, fmt.Errorf("pending %s request aborted for property include %v", operationType, includeID)
+	}
+	return nil, ErrNoLatestIncludeActivation
+}
+
+func findLatestActivationInNetwork(ctx context.Context, client papi.PAPI, activationResourceID *propertyIncludeActivationID) (*papi.IncludeActivation, error) {
+	return findLatestActivationWithCondition(ctx, client, activationResourceID,
+		func(ia papi.IncludeActivation) bool {
+			return ia.Network == papi.ActivationNetwork(activationResourceID.network)
+		})
+}
+
+func getLatestActiveActivationInNetwork(ctx context.Context, client papi.PAPI, activationResourceID *propertyIncludeActivationID) (*papi.IncludeActivation, error) {
+	act, err := findLatestActivationWithCondition(ctx, client, activationResourceID,
+		func(ia papi.IncludeActivation) bool {
+			return ia.Status == papi.ActivationStatusActive &&
+				ia.Network == papi.ActivationNetwork(activationResourceID.network)
+		})
+	if err != nil {
+		return nil, err
+	}
+	return act, nil
+}
+
+func getLatestActiveIncludeActivationResponseInNetwork(ctx context.Context, client papi.PAPI, activationResourceID *propertyIncludeActivationID) (*papi.GetIncludeActivationResponse, error) {
+	act, err := getLatestActiveActivationInNetwork(ctx, client, activationResourceID)
+	if err != nil {
+		return nil, err
+	}
+
+	activation, err := client.GetIncludeActivation(ctx, papi.GetIncludeActivationRequest{
+		IncludeID:    activationResourceID.includeID,
+		ActivationID: act.ActivationID,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return activation, nil
+}
+
+func waitForActivationCreation(ctx context.Context, client papi.PAPI, includeID, activationID string) (*papi.GetIncludeActivationResponse, error) {
+	for {
+		activation, err := client.GetIncludeActivation(ctx, papi.GetIncludeActivationRequest{
+			IncludeID:    includeID,
+			ActivationID: activationID,
+		})
+		if err == nil {
+			return activation, nil
+		}
+		if !(strings.Contains(err.Error(), papi.ErrNotFound.Error()) &&
+			strings.Contains(err.Error(), papi.ErrGetIncludeActivation.Error())) {
+			// return in case we get unexpected error
+			return nil, err
+		}
+
+		select {
+		case <-time.After(getActivationInterval):
+			// wait some time and check again
+			continue
+		}
+	}
+}
+
+func waitForActivationCondition(ctx context.Context,
+	client papi.PAPI,
+	includeID, activationID string,
+	cond func(papi.ActivationStatus) bool,
+) (*papi.GetIncludeActivationResponse, error) {
+	for {
+		activation, err := client.GetIncludeActivation(ctx, papi.GetIncludeActivationRequest{
+			IncludeID:    includeID,
+			ActivationID: activationID,
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		actStatus := activation.Activation.Status
+		if cond(actStatus) {
+			return activation, nil
 		}
 
 		select {
 		case <-time.After(activationPollInterval):
-			activation, err = client.GetIncludeActivation(ctx, papi.GetIncludeActivationRequest{
-				IncludeID:    includeID,
-				ActivationID: activationID,
-			})
-			if err != nil {
-				// it can take a few seconds to fetch include activation/deactivation right after activation/deactivation request
-				if strings.Contains(err.Error(), papi.ErrNotFound.Error()) && strings.Contains(err.Error(), papi.ErrGetIncludeActivation.Error()) {
-					select {
-					case <-time.After(getActivationInterval):
-						return waitForPropertyIncludeOperation(ctx, client, activationID, includeID, operationType)
-					}
-				}
-				return nil, err
-			}
-			if err != nil {
-				return nil, err
-			}
+			continue
 		case <-ctx.Done():
-			return nil, terminateProcess(ctx, operationType)
+			return nil, terminateProcess(ctx, string(actStatus))
 		}
 	}
-	return activation, nil
 }
 
-func terminateProcess(ctx context.Context, operationType string) error {
+func terminateProcess(ctx context.Context, actStatus string) error {
 	if errors.Is(ctx.Err(), context.DeadlineExceeded) {
-		return fmt.Errorf("timeout waiting for %s status", operationType)
+		return fmt.Errorf("timeout waiting for activation status: current status: %s", actStatus)
 	}
 	if errors.Is(ctx.Err(), context.Canceled) {
-		return fmt.Errorf("operation canceled while waiting for %s status", operationType)
+		return fmt.Errorf("operation canceled while waiting for activation status, current status: %s", actStatus)
 	}
-	return fmt.Errorf("%s context terminated: %w", operationType, ctx.Err())
+	return fmt.Errorf("activation context terminated: %w", ctx.Err())
 }
 
 func addComplianceRecordToActivationByNetwork(network string, complianceRecord []interface{}, activateIncludeRequest papi.ActivateIncludeRequest) (papi.ActivateIncludeRequest, error) {
