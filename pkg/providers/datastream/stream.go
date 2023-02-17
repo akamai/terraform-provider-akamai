@@ -106,7 +106,6 @@ func InterfaceSliceToStringSlice(list []interface{}) []string {
 
 // DataSetFieldsToList converts slice of DataSets to slice of ints
 func DataSetFieldsToList(dataSets []datastream.DataSets) []int {
-	ids := make([]int, 0)
 	datasetFields := make([]datastream.DatasetFields, 0)
 
 	for _, datasetGroup := range dataSets {
@@ -116,6 +115,8 @@ func DataSetFieldsToList(dataSets []datastream.DataSets) []int {
 	sort.Slice(datasetFields, func(i, j int) bool {
 		return datasetFields[i].Order < datasetFields[j].Order
 	})
+
+	ids := make([]int, 0, len(datasetFields))
 
 	for _, field := range datasetFields {
 		ids = append(ids, field.DatasetFieldID)
