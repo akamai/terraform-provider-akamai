@@ -87,7 +87,9 @@ provider "akamai" {
 	config_section = local.section
 }
 
-data "akamai_contract" "default" { }
+data "akamai_contract" "default" {
+  group_name = var.group_name
+}
 
 data "akamai_group" "default" {
 	contract_id = data.akamai_contract.default.id

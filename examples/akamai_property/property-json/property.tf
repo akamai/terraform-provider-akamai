@@ -15,49 +15,46 @@ terraform {
 provider "akamai" {}
 
 resource "akamai_property" "terraform_example" {
-  name    = "terraform_example1"
-  product = "prd_SPM"
-  cp_code = "cpc_846642"
+  contract_id = data.akamai_contract.contract.id
+  group_id    = data.akamai_group.group.id
+  name        = "terraform_example1"
+  product_id  = "prd_SPM"
 
-  hostnames = {
-    "terraform.example1.org" = akamai_edge_hostname.ehn.edge_hostname
-    "terraform.example1.com" = akamai_edge_hostname.ehn.edge_hostname
+  hostnames {
+    cname_from             = "terraform.example1.org"
+    cname_to               = akamai_edge_hostname.ehn.edge_hostname
+    cert_provisioning_type = "CPS_MANAGED"
+  }
+
+  hostnames {
+    cname_from             = "terraform.example1.com"
+    cname_to               = akamai_edge_hostname.ehn.edge_hostname
+    cert_provisioning_type = "CPS_MANAGED"
   }
 
   rule_format = "v2019-07-25"
-  variables   = akamai_property_variables.origin.json
   rules       = data.local_file.rules.content
 }
 
 resource "akamai_edge_hostname" "ehn" {
   edge_hostname = "terraform.example1.org.edgesuite.net"
 
-  product  = "prd_SPM"
-  contract = data.akamai_contract.contract.id
-  group    = data.akamai_group.group.id
+  product_id  = "prd_SPM"
+  contract_id = data.akamai_contract.contract.id
+  group_id    = data.akamai_group.group.id
 
-  ipv4 = true
-  ipv6 = true
+  ip_behavior = "IPV6_COMPLIANCE"
 }
 
 data "akamai_contract" "contract" {
-  group = data.akamai_group.group.name
+  group_name = data.akamai_group.group.name
 }
 
-data "akamai_group" "group" {}
+data "akamai_group" "group" {
+  group_name  = "Example.com-1-1TJZH5"
+  contract_id = "ctr_1-1TJZH5"
+}
 
 data "local_file" "rules" {
   filename = "rules.json"
-}
-
-resource "akamai_property_variables" "origin" {
-  variables {
-    variable {
-      name        = "PMUSER_ORIGIN"
-      value       = "origin.example1.org"
-      description = "Terraform Demo Origin"
-      hidden      = true
-      sensitive   = false
-    }
-  }
 }

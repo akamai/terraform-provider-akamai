@@ -6,7 +6,7 @@ terraform {
     }
     template = {
       source  = "hashicorp/template"
-      version = "~> 0.1"
+      version = ">= 2.2.0"
     }
   }
   required_version = ">= 0.13"
@@ -25,58 +25,53 @@ provider "akamai" {
 }
 
 data "akamai_group" "group" {
-  name     = "test"
-  contract = data.akamai_contract.contract.id
+  group_name  = "test"
+  contract_id = "test_contract"
 }
 
 data "akamai_contract" "contract" {
-  group = "test"
-}
-
-data "akamai_cp_code" "cp_code" {
-  name     = "xxxxxx"
-  group    = data.akamai_group.group.id
-  contract = data.akamai_contract.contract.id
+  group_name = data.akamai_group.group.name
 }
 
 data "template_file" "rule_template" {
   template = file("${path.module}/rules/rules.json")
-  vars     = {
+  vars = {
     snippets = "${path.module}/rules/snippets"
   }
 }
 
 data "template_file" "rules" {
   template = data.template_file.rule_template.rendered
-  vars     = {
+  vars = {
     tdenabled = var.tdenabled
   }
 }
 
 resource "akamai_edge_hostname" "example-property" {
-  product       = "prd_xxxx"
-  contract      = data.akamai_contract.contract.id
-  group         = data.akamai_group.group.id
+  product_id    = "prd_xxxx"
+  contract_id   = data.akamai_contract.contract.id
+  group_id      = data.akamai_group.group.id
   edge_hostname = "xxxx.edgesuite.net"
+  ip_behavior   = "IPV6_COMPLIANCE"
 }
 
 resource "akamai_property" "example-property" {
   name        = "example.mydomain.com"
-  cp_code     = data.akamai_cp_code.cp_code.id
-  contract    = data.akamai_contract.contract.id
-  group       = data.akamai_group.group.id
-  product     = "prd_xxxx"
+  contract_id = data.akamai_contract.contract.id
+  group_id    = data.akamai_group.group.id
+  product_id  = "prd_xxxx"
   rule_format = "latest"
-  hostnames   = {
-    "example.mydomain.com" = akamai_edge_hostname.example-property.edge_hostname,
+  hostnames {
+    cname_from             = "example.mydomain.com"
+    cname_to               = akamai_edge_hostname.example-property.edge_hostname
+    cert_provisioning_type = "CPS_MANAGED"
   }
-  rules     = data.template_file.rules.rendered
-  is_secure = true
-  contact   = []
+  rules = data.template_file.rules.rendered
 }
 
 resource "akamai_property_activation" "example-property" {
-  property = akamai_property.example-property.id
-  contact  = ["me@mydomain.com"]
-  network  = "STAGING"
+  property_id = akamai_property.example-property.id
+  contact     = ["me@mydomain.com"]
+  network     = "STAGING"
+  version     = akamai_property.example-property.latest_version
 }

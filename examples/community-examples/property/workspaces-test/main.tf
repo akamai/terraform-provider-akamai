@@ -7,7 +7,7 @@ terraform {
     }
     template = {
       source  = "hashicorp/template"
-      version = "~> 0.1"
+      version = ">= 2.2.0"
     }
   }
 }
@@ -64,18 +64,6 @@ variable "email" {
   description = "Notification email"
 }
 
-variable "production" {
-  type        = bool
-  default     = false
-  description = "Deploy to Akamai production network"
-}
-
-variable "staging" {
-  type        = bool
-  default     = true
-  description = "Deploy to Akamai staging network"
-}
-
 variable "group_name" {
   type        = string
   description = "Access Control Group in which the Akamai configuration should be created"
@@ -91,24 +79,27 @@ variable "rule_format" {
   description = "PAPI rule schema version"
 }
 
-data "akamai_contract" "default" {}
+data "akamai_contract" "default" {
+  group_name = data.akamai_group.default.name
+}
 
 data "akamai_group" "default" {
-  contract = data.akamai_contract.default.id
-  name     = var.group_name
+  contract_id = "test_contract"
+  group_name  = var.group_name
 }
 
 data "akamai_cp_code" "default" {
-  contract = data.akamai_contract.default.id
-  name     = var.cpcode_name
-  group    = data.akamai_group.default.id
+  contract_id = data.akamai_contract.default.id
+  name        = var.cpcode_name
+  group_id    = data.akamai_group.default.id
 }
 
 resource "akamai_edge_hostname" "default" {
-  product       = "prd_${var.product}"
-  contract      = data.akamai_contract.default.id
-  group         = data.akamai_group.default.id
+  product_id    = "prd_${var.product}"
+  contract_id   = data.akamai_contract.default.id
+  group_id      = data.akamai_group.default.id
   edge_hostname = var.edge_hostname
+  ip_behavior   = "IPV6_COMPLIANCE"
 }
 
 # Two-stage template evaluation:
@@ -133,13 +124,15 @@ data "template_file" "rules" {
 }
 
 resource "akamai_property" "default" {
-  name     = var.conf_name
-  product  = "prd_${var.product}"
-  contract = data.akamai_contract.default.id
-  group    = data.akamai_group.default.id
+  name        = var.conf_name
+  product_id  = "prd_${var.product}"
+  contract_id = data.akamai_contract.default.id
+  group_id    = data.akamai_group.default.id
 
-  hostnames = {
-    (var.hostname) = akamai_edge_hostname.default.edge_hostname
+  hostnames {
+    cname_from             = var.hostname
+    cname_to               = akamai_edge_hostname.default.edge_hostname
+    cert_provisioning_type = "CPS_MANAGED"
   }
 
   rule_format = var.rule_format
@@ -147,15 +140,15 @@ resource "akamai_property" "default" {
 }
 
 resource "akamai_property_activation" "staging" {
-  property = akamai_property.default.id
-  network  = "STAGING"
-  activate = var.staging
-  contact  = var.email
+  property_id = akamai_property.default.id
+  network     = "STAGING"
+  contact     = var.email
+  version     = akamai_property.default.latest_version
 }
 
 resource "akamai_property_activation" "production" {
-  property = akamai_property.default.id
-  network  = "PRODUCTION"
-  activate = var.production
-  contact  = var.email
+  property_id = akamai_property.default.id
+  network     = "PRODUCTION"
+  contact     = var.email
+  version     = akamai_property.default.latest_version
 }

@@ -11,54 +11,19 @@ terraform {
 provider "akamai" {}
 
 resource "akamai_property" "prop" {
-  name    = "host.example.com"
-  product = "prd_SPM"
-  cp_code = "XXXXX"
-  hostnames = {
-    examplehost = "host.example.com"
+  name        = "host.example.com"
+  product_id  = "prd_SPM"
+  group_id    = "grp_1"
+  contract_id = "ctr_1"
+  hostnames {
+    cname_from             = "examplehost"
+    cname_to               = "host.example.com"
+    cert_provisioning_type = "CPS_MANAGED"
   }
 
-  rules = data.akamai_property_rules.prop.json
+  rules = data.akamai_property_rules.prop.rules
 }
 
 data "akamai_property_rules" "prop" {
-  rules {
-    rule {
-      name    = "l10n"
-      comment = "Localize the default timezone"
-
-      criteria {
-        name = "path"
-
-        option {
-          key   = "matchOperator"
-          value = "MATCHES_ONE_OF"
-        }
-
-        option {
-          key   = "matchCaseSensitive"
-          value = "true"
-        }
-
-        option {
-          key    = "values"
-          values = ["/"]
-        }
-      }
-
-      behavior {
-        name = "rewriteUrl"
-
-        option {
-          key   = "behavior"
-          value = "REWRITE"
-        }
-
-        option {
-          key   = "targetUrl"
-          value = "/America/Los_Angeles"
-        }
-      }
-    }
-  }
+  property_id = "prp_1"
 }

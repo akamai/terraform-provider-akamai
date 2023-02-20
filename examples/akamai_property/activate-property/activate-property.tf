@@ -11,6 +11,7 @@ terraform {
 provider "akamai" {}
 
 resource "akamai_property_activation" "activation" {
-  property = "example.com"
-  contact  = ["you@example.com"]
+  property_id = "prp_1"
+  contact     = ["you@example.com"]
+  version     = 1
 }

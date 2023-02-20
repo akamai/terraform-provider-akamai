@@ -142,9 +142,9 @@ output "custom_rules" {
 resource "akamai_appsec_activations" "appsecactivations" {
   config_id           = data.akamai_appsec_configuration.appsec_config.config_id
   network             = "STAGING"
-  notes               = "TEST Notes"
-  activate            = false
+  note                = "TEST Notes"
   notification_emails = ["plodine@akamai.com"]
+  version             = data.akamai_appsec_configuration.appsec_config.latest_version
 }
 
 resource "akamai_appsec_rate_policy" "appsecratepolicy" {

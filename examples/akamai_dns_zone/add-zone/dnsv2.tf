@@ -10,9 +10,14 @@ terraform {
 
 provider "akamai" {}
 
-data "akamai_contract" "contract" {}
+data "akamai_group" "group" {
+  group_name  = "Example.com-1-1TJZH5"
+  contract_id = "ctr_1-1TJZH5"
+}
 
-data "akamai_group" "group" {}
+data "akamai_contract" "contract" {
+  group_name = data.akamai_group.group.name
+}
 
 // NOTE: Please review the Provider Getting Started documentation before creating a Primary zone
 resource "akamai_dns_zone" "test_primary_zone" {
