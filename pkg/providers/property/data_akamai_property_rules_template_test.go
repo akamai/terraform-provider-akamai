@@ -116,7 +116,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 			})
 		})
 	})
-	t.Run("error setting both ,ap and file variables", func(t *testing.T) {
+	t.Run("error setting both map and file variables", func(t *testing.T) {
 		client := papi.Mock{}
 		useClient(&client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -599,6 +599,10 @@ func TestStringToTemplate(t *testing.T) {
 		"valid conversion": {
 			givenFile:    "template_in.json",
 			expectedFile: "template_out.json",
+		},
+		"multiple includes in array": {
+			givenFile:    "template_in_with_array.json",
+			expectedFile: "template_out_with_array.json",
 		},
 		"plain JSON passed": {
 			givenFile:    "plain_json.json",

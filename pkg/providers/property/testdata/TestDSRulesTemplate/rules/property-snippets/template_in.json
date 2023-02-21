@@ -1,8 +1,6 @@
 {
   "rules": {
     "name": "${env.name}",
-    "children": [
-      "#include:snippets/some-template.json"
-    ]
+    "children": ["#include:snippets/some-template.json"]
   }
 }
