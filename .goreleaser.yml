@@ -53,9 +53,15 @@ signs:
       - "${signature}"
       - "--detach-sign"
       - "${artifact}"
+changelog:
+  skip: true
 release:
   # Visit your project's GitHub Releases page to publish this release.
   draft: true
+  header: |
+    # RELEASE NOTES
+  footer: |
+    {{ .Env.CHANGELOG_BODY }}
   extra_files:
     - glob: 'terraform-provider-manifest.json'
       name_template: '{{ .ProjectName }}_{{ .Version }}_manifest.json'
