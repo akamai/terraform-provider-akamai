@@ -60,8 +60,8 @@ func TestAkamaiAdvancedSettingsAttackPayloadLoggingResBasic(t *testing.T) {
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
-				IsUnitTest: true,
-				Providers:  testAccProviders,
+				IsUnitTest:        true,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString("testdata/TestResAdvancedSettingsAttackPayloadLogging/match_by_id.tf"),
@@ -128,8 +128,8 @@ func TestAkamaiAdvancedSettingsAttackPayloadLoggingResBasicPolicy(t *testing.T) 
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
-				IsUnitTest: true,
-				Providers:  testAccProviders,
+				IsUnitTest:        true,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString("testdata/TestResAdvancedSettingsAttackPayloadLogging/update_by_policy_id.tf"),
