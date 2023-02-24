@@ -44,6 +44,7 @@ func resourceRatePolicyAction() *schema.Resource {
 				Type:        schema.TypeInt,
 				Required:    true,
 				Description: "Unique identifier of the rate policy",
+				ForceNew:    true,
 			},
 			"ipv4_action": {
 				Type:             schema.TypeString,
