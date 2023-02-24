@@ -12,13 +12,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func suppressEquivalentJSONDiffsGeneric(_, old, new string, _ *schema.ResourceData) bool {
+func suppressEquivalentJSONDiffsGeneric(_, oldString, newString string, _ *schema.ResourceData) bool {
 	var ob, nb bytes.Buffer
-	if err := json.Compact(&ob, []byte(old)); err != nil {
+	if err := json.Compact(&ob, []byte(oldString)); err != nil {
 		return false
 	}
 
-	if err := json.Compact(&nb, []byte(new)); err != nil {
+	if err := json.Compact(&nb, []byte(newString)); err != nil {
 		return false
 	}
 
@@ -86,39 +86,39 @@ func compareReputationProfileCondition(rpOld, rpNew appsec.CreateReputationProfi
 }
 
 // areReputationProfilesEqual check whether old and new reputation profiles are the same
-func areReputationProfilesEqual(rpOld, rpNew appsec.CreateReputationProfileResponse) bool {
-	cOld := rpOld.Condition
-	cNew := rpNew.Condition
-	for _, acOld := range cOld.AtomicConditions {
+func areReputationProfilesEqual(oldProfile, newProfile appsec.CreateReputationProfileResponse) bool {
+	oldCond := oldProfile.Condition
+	newCond := newProfile.Condition
+	for _, oldAtomicCond := range oldCond.AtomicConditions {
 		found := false
-		for _, acNew := range cNew.AtomicConditions {
-			if acOld.ClassName == acNew.ClassName {
+		for _, newAtomicCond := range newCond.AtomicConditions {
+			if oldAtomicCond.ClassName == newAtomicCond.ClassName {
 				found = true
-				if acOld.CheckIps != acNew.CheckIps && acNew.CheckIps != "" {
+				if oldAtomicCond.CheckIps != newAtomicCond.CheckIps && newAtomicCond.CheckIps != "" {
 					return false
 				}
-				if acOld.NameCase != acNew.NameCase && !(acOld.NameCase && !acNew.NameCase) {
+				if oldAtomicCond.NameCase != newAtomicCond.NameCase && !(oldAtomicCond.NameCase && !newAtomicCond.NameCase) {
 					return false
 				}
-				if acOld.NameWildcard != acNew.NameWildcard && !(acOld.NameWildcard && !acNew.NameWildcard) {
+				if oldAtomicCond.NameWildcard != newAtomicCond.NameWildcard && !(oldAtomicCond.NameWildcard && !newAtomicCond.NameWildcard) {
 					return false
 				}
-				if acOld.ValueCase != acNew.ValueCase && !(acOld.ValueCase && !acNew.ValueCase) {
+				if oldAtomicCond.ValueCase != newAtomicCond.ValueCase && !(oldAtomicCond.ValueCase && !newAtomicCond.ValueCase) {
 					return false
 				}
-				if acOld.ValueWildcard != acNew.ValueWildcard && !(acOld.ValueWildcard && !acNew.ValueWildcard) {
+				if oldAtomicCond.ValueWildcard != newAtomicCond.ValueWildcard && !(oldAtomicCond.ValueWildcard && !newAtomicCond.ValueWildcard) {
 					return false
 				}
-				if acOld.PositiveMatch != acNew.PositiveMatch && !(acOld.PositiveMatch && !acNew.PositiveMatch) {
+				if oldAtomicCond.PositiveMatch != newAtomicCond.PositiveMatch && !(oldAtomicCond.PositiveMatch && !newAtomicCond.PositiveMatch) {
 					// only 'true' is supported for this case
-					if acOld.ClassName != "HostCondition" {
+					if oldAtomicCond.ClassName != "HostCondition" {
 						return false
 					}
 				}
-				if !suppressAtomicConditionSliceDiffs(acOld.Value, acNew.Value) {
+				if !suppressAtomicConditionSliceDiffs(oldAtomicCond.Value, newAtomicCond.Value) {
 					return false
 				}
-				if !suppressAtomicConditionSliceDiffs(acOld.Host, acNew.Host) {
+				if !suppressAtomicConditionSliceDiffs(oldAtomicCond.Host, newAtomicCond.Host) {
 					return false
 				}
 			}
@@ -130,13 +130,13 @@ func areReputationProfilesEqual(rpOld, rpNew appsec.CreateReputationProfileRespo
 	return true
 }
 
-func suppressAtomicConditionSliceDiffs(old, new []string) bool {
-	if len(old) != len(new) {
+func suppressAtomicConditionSliceDiffs(oldSlice, newSlice []string) bool {
+	if len(oldSlice) != len(newSlice) {
 		return false
 	}
-	for _, ov := range old {
+	for _, ov := range oldSlice {
 		found := false
-		for _, nv := range new {
+		for _, nv := range newSlice {
 			if strings.EqualFold(ov, nv) {
 				found = true
 			}
@@ -148,38 +148,38 @@ func suppressAtomicConditionSliceDiffs(old, new []string) bool {
 	return true
 }
 
-func suppressEquivalentLoggingSettingsDiffs(_, old, new string, _ *schema.ResourceData) bool {
+func suppressEquivalentLoggingSettingsDiffs(_, oldString, newString string, _ *schema.ResourceData) bool {
 	var oldJSON, newJSON appsec.UpdateAdvancedSettingsLoggingResponse
-	if old == new {
+	if oldString == newString {
 		return true
 	}
-	if err := json.Unmarshal([]byte(old), &oldJSON); err != nil {
+	if err := json.Unmarshal([]byte(oldString), &oldJSON); err != nil {
 		return false
 	}
-	if err := json.Unmarshal([]byte(new), &newJSON); err != nil {
+	if err := json.Unmarshal([]byte(newString), &newJSON); err != nil {
 		return false
 	}
 	diff := compareLoggingSettings(&oldJSON, &newJSON)
 	return diff
 }
 
-func compareLoggingSettings(old, new *appsec.UpdateAdvancedSettingsLoggingResponse) bool {
-	if old.Override != new.Override ||
-		old.AllowSampling != new.AllowSampling ||
-		old.Cookies.Type != new.Cookies.Type ||
-		old.CustomHeaders.Type != new.CustomHeaders.Type ||
-		old.StandardHeaders.Type != new.StandardHeaders.Type {
+func compareLoggingSettings(oldResponse, newResponse *appsec.UpdateAdvancedSettingsLoggingResponse) bool {
+	if oldResponse.Override != newResponse.Override ||
+		oldResponse.AllowSampling != newResponse.AllowSampling ||
+		oldResponse.Cookies.Type != newResponse.Cookies.Type ||
+		oldResponse.CustomHeaders.Type != newResponse.CustomHeaders.Type ||
+		oldResponse.StandardHeaders.Type != newResponse.StandardHeaders.Type {
 		return false
 	}
 
-	sort.Strings(old.Cookies.Values)
-	sort.Strings(new.Cookies.Values)
-	sort.Strings(old.CustomHeaders.Values)
-	sort.Strings(new.CustomHeaders.Values)
-	sort.Strings(old.StandardHeaders.Values)
-	sort.Strings(new.StandardHeaders.Values)
+	sort.Strings(oldResponse.Cookies.Values)
+	sort.Strings(newResponse.Cookies.Values)
+	sort.Strings(oldResponse.CustomHeaders.Values)
+	sort.Strings(newResponse.CustomHeaders.Values)
+	sort.Strings(oldResponse.StandardHeaders.Values)
+	sort.Strings(newResponse.StandardHeaders.Values)
 
-	return reflect.DeepEqual(old, new)
+	return reflect.DeepEqual(oldResponse, newResponse)
 }
 
 func suppressEquivalentAttackPayloadLoggingSettingsDiffs(_, oldValue, newValue string, _ *schema.ResourceData) bool {
@@ -208,13 +208,13 @@ func compareAttackPayloadLoggingSettings(oldValue, newValue *appsec.UpdateAdvanc
 	return reflect.DeepEqual(oldValue, newValue)
 }
 
-func suppressCustomDenyJSONDiffs(_, old, new string, _ *schema.ResourceData) bool {
+func suppressCustomDenyJSONDiffs(_, oldString, newString string, _ *schema.ResourceData) bool {
 	var ob, nb bytes.Buffer
-	if err := json.Compact(&ob, []byte(old)); err != nil {
+	if err := json.Compact(&ob, []byte(oldString)); err != nil {
 		return false
 	}
 
-	if err := json.Compact(&nb, []byte(new)); err != nil {
+	if err := json.Compact(&nb, []byte(newString)); err != nil {
 		return false
 	}
 
@@ -247,85 +247,107 @@ func jsonBytesEqualIncludingParametersSlice(b1, b2 []byte) bool {
 	return reflect.DeepEqual(o1, o2)
 }
 
-func suppressEquivalentMatchTargetDiffs(_, old, new string, _ *schema.ResourceData) bool {
+func suppressEquivalentMatchTargetDiffs(_, oldString, newString string, _ *schema.ResourceData) bool {
 
-	return compareMatchTargetsJSON(old, new)
+	return compareMatchTargetsJSON(oldString, newString)
 }
 
-func suppressEquivalentJSONDiffsConditionException(_, old, new string, _ *schema.ResourceData) bool {
-	return compareConditionExceptionJSON(old, new)
-
+func suppressEquivalentJSONDiffsConditionException(_, oldString, newString string, _ *schema.ResourceData) bool {
+	return compareConditionExceptionJSON(oldString, newString)
 }
 
-func compareConditionExceptionJSON(old, new string) bool {
+func compareConditionExceptionJSON(oldString, newString string) bool {
 	var oldJSON, newJSON appsec.RuleConditionException
-	if old == new {
+	if oldString == newString {
 		return true
 	}
-	if err := json.Unmarshal([]byte(old), &oldJSON); err != nil {
+	if err := json.Unmarshal([]byte(oldString), &oldJSON); err != nil {
 		return false
 	}
-	if err := json.Unmarshal([]byte(new), &newJSON); err != nil {
+	if err := json.Unmarshal([]byte(newString), &newJSON); err != nil {
 		return false
 	}
 	diff := compareConditionException(oldJSON, newJSON)
 	return diff
 }
 
-func compareConditionException(old, new appsec.RuleConditionException) bool {
+func compareConditionException(oldValue, newValue appsec.RuleConditionException) bool {
 
-	return reflect.DeepEqual(old, new)
+	return reflect.DeepEqual(oldValue, newValue)
 }
 
-func compareMatchTargetsJSON(old, new string) bool {
-	var oldJSON, newJSON appsec.CreateMatchTargetResponse
-	if old == new {
+func suppressEquivalentMalwarePolicyJSONDiffs(_, oldString, newString string, _ *schema.ResourceData) bool {
+	return compareMalwarePolicyJSON(oldString, newString)
+}
+
+func compareMalwarePolicyJSON(oldJSON, newJSON string) bool {
+	if oldJSON == newJSON {
 		return true
 	}
-	if err := json.Unmarshal([]byte(old), &oldJSON); err != nil {
+
+	var oldPolicy, newPolicy appsec.MalwarePolicyBody
+	if err := json.Unmarshal([]byte(oldJSON), &oldPolicy); err != nil {
 		return false
 	}
-	if err := json.Unmarshal([]byte(new), &newJSON); err != nil {
+	if err := json.Unmarshal([]byte(newJSON), &newPolicy); err != nil {
+		return false
+	}
+	return compareMalwarePolicy(oldPolicy, newPolicy)
+}
+
+func compareMalwarePolicy(oldPolicy, newPolicy appsec.MalwarePolicyBody) bool {
+	return reflect.DeepEqual(oldPolicy, newPolicy)
+}
+
+func compareMatchTargetsJSON(oldString, newString string) bool {
+	var oldJSON, newJSON appsec.CreateMatchTargetResponse
+	if oldString == newString {
+		return true
+	}
+	if err := json.Unmarshal([]byte(oldString), &oldJSON); err != nil {
+		return false
+	}
+	if err := json.Unmarshal([]byte(newString), &newJSON); err != nil {
 		return false
 	}
 	diff := compareMatchTargets(&oldJSON, &newJSON)
 	return diff
 }
 
-func compareMatchTargets(old, new *appsec.CreateMatchTargetResponse) bool {
-	if len(old.FilePaths) != len(new.FilePaths) ||
-		len(old.FileExtensions) != len(new.FileExtensions) ||
-		len(old.Hostnames) != len(new.Hostnames) ||
-		len(old.BypassNetworkLists) != len(new.BypassNetworkLists) ||
-		len(old.Apis) != len(new.Apis) {
+func compareMatchTargets(oldTarget, newTarget *appsec.CreateMatchTargetResponse) bool {
+	if len(oldTarget.FilePaths) != len(newTarget.FilePaths) ||
+		len(oldTarget.FileExtensions) != len(newTarget.FileExtensions) ||
+		len(oldTarget.Hostnames) != len(newTarget.Hostnames) ||
+		len(oldTarget.BypassNetworkLists) != len(newTarget.BypassNetworkLists) ||
+		len(oldTarget.Apis) != len(newTarget.Apis) {
 		return false
 	}
 
-	sort.Strings(old.FilePaths)
-	sort.Strings(new.FilePaths)
+	sort.Strings(oldTarget.FilePaths)
+	sort.Strings(newTarget.FilePaths)
 
-	sort.Strings(old.FileExtensions)
-	sort.Strings(new.FileExtensions)
+	sort.Strings(oldTarget.FileExtensions)
+	sort.Strings(newTarget.FileExtensions)
 
-	sort.Strings(old.Hostnames)
-	sort.Strings(new.Hostnames)
+	sort.Strings(oldTarget.Hostnames)
+	sort.Strings(newTarget.Hostnames)
 
-	new.TargetID = 0
-	old.TargetID = 0
+	newTarget.TargetID = 0
+	oldTarget.TargetID = 0
 
-	new.Sequence = 0
-	old.Sequence = 0
+	newTarget.Sequence = 0
+	oldTarget.Sequence = 0
 
-	sort.Slice(old.Apis, func(i, j int) bool {
-		p1 := old.Apis[i]
-		p2 := old.Apis[j]
+	sort.Slice(oldTarget.Apis, func(i, j int) bool {
+		p1 := oldTarget.Apis[i]
+		p2 := oldTarget.Apis[j]
 		return p1.ID < p2.ID || ((p1.ID == p2.ID) && p1.Name < p2.Name)
 	})
 
-	sort.Slice(new.Apis, func(i, j int) bool {
-		p1 := new.Apis[i]
-		p2 := new.Apis[j]
+	sort.Slice(newTarget.Apis, func(i, j int) bool {
+		p1 := newTarget.Apis[i]
+		p2 := newTarget.Apis[j]
 		return p1.ID < p2.ID || ((p1.ID == p2.ID) && p1.Name < p2.Name)
 	})
-	return reflect.DeepEqual(old, new)
+	return reflect.DeepEqual(oldTarget, newTarget)
 }
