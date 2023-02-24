@@ -11,6 +11,11 @@
       * Added resource
         [akamai_appsec_advanced_settings_attack_payload_logging](docs/resources/appsec_advanced_settings_attack_payload_logging.md)
 
+#### BUG FIXES:
+
+* APPSEC
+  * Fix drift on `logFilename` element of `malware_policy`
+  * Prevent changes to `rate_policy` field of existing `akamai_appsec_rate_policy_action` resource
 
 ## 3.3.0 (February 2, 2023)
 
