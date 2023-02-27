@@ -6,6 +6,7 @@ subcategory: Property Provisioning
 # akamai_property_include_activation (Beta)
 
 Use the `akamai_property_include_activation` resource to activate your include and make available to a property.
+You can also modify the activation time out with the `AKAMAI_ACTIVATION_TIMEOUT` environment variable, providing time in minutes. The default time out is 30 minutes.
 
 ## Basic usage
 
@@ -21,6 +22,12 @@ resource "akamai_property_include_activation" "my_example" {
       "example2@example.com"
   ]
 }
+```
+
+The activation time out. Here, set at 120 minutes.
+
+```shell
+$ export AKAMAI_ACTIVATION_TIMEOUT=120
 ```
 
 ## Argument reference

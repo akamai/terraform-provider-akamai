@@ -1,10 +1,8 @@
 variable "env" {
+  type = string
 }
 
 variable "network" {
-}
-
-variable "activate" {
-  default = "true"
+  type = string
 }
 

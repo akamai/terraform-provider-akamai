@@ -1,8 +1,8 @@
 # Path to .edgerc file
-edgerc = "~/.edgerc"
+edgerc_path = "~/.edgerc"
 
 # Edgerc section for PAPI
-#edgerc_papi = "papi"
+#config_section = "papi"
 
 # Name of the Access Control Group
 group_name = "terraform_workspaces"

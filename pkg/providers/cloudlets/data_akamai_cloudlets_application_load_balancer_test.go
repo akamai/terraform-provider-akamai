@@ -163,7 +163,7 @@ func TestDataApplicationLoadBalancer(t *testing.T) {
 			test.init(client)
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					Providers: testAccProviders,
+					ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
 							Config:      loadFixtureString(test.configPath),

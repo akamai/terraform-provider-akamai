@@ -18,7 +18,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 		client := papi.Mock{}
 		useClient(&client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString("testdata/TestDSRulesTemplate/template_vars_map.tf"),
@@ -40,7 +40,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 		client := papi.Mock{}
 		useClient(&client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString("testdata/TestDSRulesTemplate/template_null_values.tf"),
@@ -62,7 +62,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 		client := papi.Mock{}
 		useClient(&client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString("testdata/TestDSRulesTemplate/template_vars_file.tf"),
@@ -84,7 +84,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 		client := papi.Mock{}
 		useClient(&client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config:      loadFixtureString("testdata/TestDSRulesTemplate/template_file_data_conflict.tf"),
@@ -102,7 +102,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 		client := papi.Mock{}
 		useClient(&client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config:      loadFixtureString("testdata/TestDSRulesTemplate/template_missing_data.tf"),
@@ -120,7 +120,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 		client := papi.Mock{}
 		useClient(&client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config:      loadFixtureString("testdata/TestDSRulesTemplate/template_vars_conflict.tf"),
@@ -134,7 +134,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 		client := papi.Mock{}
 		useClient(&client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config:      loadFixtureString("testdata/TestDSRulesTemplate/template_vars_invalid_type.tf"),
@@ -148,7 +148,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 		client := papi.Mock{}
 		useClient(&client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config:      loadFixtureString("testdata/TestDSRulesTemplate/template_var_not_found.tf"),
@@ -162,7 +162,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 		client := papi.Mock{}
 		useClient(&client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config:      loadFixtureString("testdata/TestDSRulesTemplate/template_vars_invalid_value.tf"),
@@ -176,7 +176,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 		client := papi.Mock{}
 		useClient(&client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config:      loadFixtureString("testdata/TestDSRulesTemplate/template_vars_file_not_found.tf"),
@@ -190,7 +190,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 		client := papi.Mock{}
 		useClient(&client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config:      loadFixtureString("testdata/TestDSRulesTemplate/template_invalid_json.tf"),
@@ -204,7 +204,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 		client := papi.Mock{}
 		useClient(&client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config:      loadFixtureString("testdata/TestDSRulesTemplate/template_file_not_found.tf"),
@@ -219,7 +219,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 		client := papi.Mock{}
 		useClient(&client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config:      loadFixtureString("testdata/TestDSRulesTemplate/template_file_is_empty.tf"),
@@ -234,7 +234,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 		client := papi.Mock{}
 		useClient(&client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config:      loadFixtureString("testdata/TestDSRulesTemplate/template_invalid_snippets_folder_json.tf"),
@@ -249,7 +249,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 		client := papi.Mock{}
 		useClient(&client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config:      loadFixtureString("testdata/TestDSRulesTemplate/template_invalid_snippets_only_one_folder_json.tf"),

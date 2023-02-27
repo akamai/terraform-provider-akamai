@@ -40,8 +40,8 @@ func TestDataCustomDenyAction(t *testing.T) {
 		useClient(mockedBotmanClient, func() {
 
 			resource.Test(t, resource.TestCase{
-				IsUnitTest: true,
-				Providers:  testAccProviders,
+				IsUnitTest:        true,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: test.Fixture("testdata/TestDataCustomDenyAction/basic.tf"),
@@ -76,8 +76,8 @@ func TestDataCustomDenyAction(t *testing.T) {
 		useClient(mockedBotmanClient, func() {
 
 			resource.Test(t, resource.TestCase{
-				IsUnitTest: true,
-				Providers:  testAccProviders,
+				IsUnitTest:        true,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: test.Fixture("testdata/TestDataCustomDenyAction/filter_by_id.tf"),

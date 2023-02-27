@@ -50,7 +50,7 @@ func TestDSPropertyRulesRead(t *testing.T) {
 		mockImpl(client)
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString("testdata/TestDSPropertyRules/ds_property_rules.tf"),
@@ -126,7 +126,7 @@ func TestDSPropertyRulesRead(t *testing.T) {
 
 				useClient(client, nil, func() {
 					resource.UnitTest(t, resource.TestCase{
-						Providers: testAccProviders,
+						ProviderFactories: testAccProviders,
 						Steps: []resource.TestStep{
 							{
 								Config: loadFixtureString(test.configFile),
@@ -156,7 +156,7 @@ func TestDSPropertyRulesRead(t *testing.T) {
 		mockImpl(client)
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config:      loadFixtureString("testdata/TestDSPropertyRules/with_versioned_rule_format.tf"),
@@ -175,7 +175,7 @@ func TestDSPropertyRulesRead(t *testing.T) {
 		mockImpl(client)
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config:      loadFixtureString("testdata/TestDSPropertyRules/with_versioned_rule_format.tf"),
@@ -190,7 +190,7 @@ func TestDSPropertyRulesRead(t *testing.T) {
 		client := &papi.Mock{}
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config:      loadFixtureString("testdata/TestDSPropertyRules/missing_group_id.tf"),
@@ -205,7 +205,7 @@ func TestDSPropertyRulesRead(t *testing.T) {
 		client := &papi.Mock{}
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config:      loadFixtureString("testdata/TestDSPropertyRules/missing_contract_id.tf"),
@@ -220,7 +220,7 @@ func TestDSPropertyRulesRead(t *testing.T) {
 		client := &papi.Mock{}
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config:      loadFixtureString("testdata/TestDSPropertyRules/empty_contract_id.tf"),
@@ -235,7 +235,7 @@ func TestDSPropertyRulesRead(t *testing.T) {
 		client := &papi.Mock{}
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config:      loadFixtureString("testdata/TestDSPropertyRules/empty_group_id.tf"),
@@ -258,7 +258,7 @@ func TestDSPropertyRulesRead(t *testing.T) {
 		mockImpl(client)
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config:      loadFixtureString("testdata/TestDSPropertyRules/ds_property_rules.tf"),
@@ -295,7 +295,7 @@ func TestDSPropertyRulesRead(t *testing.T) {
 		mockImpl(client)
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config:      loadFixtureString("testdata/TestDSPropertyRules/ds_property_rules.tf"),
@@ -310,7 +310,7 @@ func TestDSPropertyRulesRead(t *testing.T) {
 
 func TestDSPropertyRulesRead_Fail(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		Providers: testAccProviders,
+		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{{
 			Config:      loadFixtureString("testdata/TestDSPropertyRules/always_fails.tf"),
 			ExpectError: regexp.MustCompile(`Error: provided value cannot be blank`),

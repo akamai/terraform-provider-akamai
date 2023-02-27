@@ -484,9 +484,9 @@ func TestDataEnrollment(t *testing.T) {
 			test.init(t, client)
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					Providers:  testAccProviders,
-					IsUnitTest: true,
-					Steps:      test.steps,
+					ProviderFactories: testAccProviders,
+					IsUnitTest:        true,
+					Steps:             test.steps,
 				})
 			})
 			client.AssertExpectations(t)

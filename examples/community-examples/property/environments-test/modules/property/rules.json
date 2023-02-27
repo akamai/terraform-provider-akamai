@@ -4,6 +4,14 @@
     "name": "default",
     "behaviors": [
       {
+        "name": "cpCode",
+        "options": {
+          "value": {
+            "id": 350001
+          }
+        }
+      },
+      {
         "name": "originCharacteristics",
         "options": {
           "authenticationMethod": "AUTOMATIC",
@@ -191,6 +199,8 @@
         "sensitive": true
       }
     ],
-    "options": {}
+    "options": {
+      "is_secure": true
+    }
   }
 }

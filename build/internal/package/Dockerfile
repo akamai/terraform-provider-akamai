@@ -6,7 +6,7 @@ ENV PROVIDER_VERSION="1.0.0" \
     GOOS="linux" \
     GOARCH="amd64" \
     PATH=$PATH:/usr/local/go/bin:/root/go/bin \
-    TFLINT_VERSION="v0.39.3"
+    TFLINT_VERSION="v0.45.0"
 
 ARG GOLANGCI_LINT_VERSION="v1.50.1"
 ARG SSH_PRV_KEY

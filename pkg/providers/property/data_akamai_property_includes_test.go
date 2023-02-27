@@ -296,8 +296,8 @@ func TestDataPropertyIncludes(t *testing.T) {
 			test.init(t, client, test.attrs)
 			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
-					Providers:  testAccProviders,
-					IsUnitTest: true,
+					ProviderFactories: testAccProviders,
+					IsUnitTest:        true,
 					Steps: []resource.TestStep{{
 						Config:      loadFixtureString(test.configPath),
 						Check:       checkPropertyIncludesAttrs(test.attrs),

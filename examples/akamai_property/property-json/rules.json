@@ -371,12 +371,28 @@
           "allowWithoutContentLength": false,
           "enabled": true
         }
+      },
+      {
+        "name": "cpCode",
+        "options": {
+          "value": {
+            "id": 846642
+          }
+        }
       }
     ],
     "options": {
       "is_secure": false
     },
-    "variables": [],
+    "variables": [
+      {
+        "name": "PMUSER_ORIGIN",
+        "value": "origin.example1.org",
+        "description": "Terraform Demo Origin",
+        "hidden": true,
+        "sensitive": false
+      }
+    ],
     "comments": "The behaviors in the Default Rule apply to all requests for the property hostname(s) unless another rule overrides the Default Rule settings."
   }
 }

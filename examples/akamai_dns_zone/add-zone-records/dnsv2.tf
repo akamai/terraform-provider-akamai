@@ -2,7 +2,8 @@ terraform {
   required_version = ">= 0.12"
   required_providers {
     akamai = {
-      source = "akamai/akamai"
+      source  = "akamai/akamai"
+      version = ">= 2.0.0"
     }
   }
 }
@@ -18,10 +19,6 @@ locals {
   zone     = "example_primary_test.zone"
   contract = "9-ABCDEF"
   group    = "12345"
-}
-
-data "akamai_authorities_set" "ns_auths" {
-  contract = local.contract
 }
 
 /*
@@ -62,6 +59,10 @@ resource "akamai_dns_record" "soa_record" {
   expiry = 604800
   nxdomain_ttl = 300
   depends_on = [ akamai_dns_zone.test_zone ]
+}
+
+data "akamai_authorities_set" "ns_auths" {
+  contract = local.contract
 }
 
 resource "akamai_dns_record" "ns_record" {

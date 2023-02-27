@@ -263,8 +263,8 @@ func TestResourceImagingPolicySet(t *testing.T) {
 			test.init(client)
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					Providers: testAccProviders,
-					Steps:     test.steps,
+					ProviderFactories: testAccProviders,
+					Steps:             test.steps,
 				})
 			})
 			client.AssertExpectations(t)

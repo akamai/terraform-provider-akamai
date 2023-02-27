@@ -25,8 +25,8 @@ func Test_DSReadGroup(t *testing.T) {
 			}}}, nil)
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers:  testAccProviders,
-				IsUnitTest: true,
+				ProviderFactories: testAccProviders,
+				IsUnitTest:        true,
 				Steps: []resource.TestStep{{
 					Config: loadFixtureString("testdata/TestDSGroup/ds-group-w-name-and-contract.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
@@ -56,8 +56,8 @@ func Test_DSReadGroup(t *testing.T) {
 			}}}, nil)
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers:  testAccProviders,
-				IsUnitTest: true,
+				ProviderFactories: testAccProviders,
+				IsUnitTest:        true,
 				Steps: []resource.TestStep{{
 					Config: loadFixtureString("testdata/TestDSGroup/ds-group-w-name-and-contract_id.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
@@ -87,8 +87,8 @@ func Test_DSReadGroup(t *testing.T) {
 			}}}, nil)
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers:  testAccProviders,
-				IsUnitTest: true,
+				ProviderFactories: testAccProviders,
+				IsUnitTest:        true,
 				Steps: []resource.TestStep{{
 					Config: loadFixtureString("testdata/TestDSGroup/ds-group-w-group-name-and-contract_id.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
@@ -118,8 +118,8 @@ func Test_DSReadGroup(t *testing.T) {
 			}}}, nil)
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers:  testAccProviders,
-				IsUnitTest: true,
+				ProviderFactories: testAccProviders,
+				IsUnitTest:        true,
 				Steps: []resource.TestStep{{
 					Config: loadFixtureString("testdata/TestDSGroup/ds-group-w-group-name-and-contract.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
@@ -149,8 +149,8 @@ func Test_DSReadGroup(t *testing.T) {
 			}}}, nil)
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers:  testAccProviders,
-				IsUnitTest: true,
+				ProviderFactories: testAccProviders,
+				IsUnitTest:        true,
 				Steps: []resource.TestStep{{
 					Config:      loadFixtureString("testdata/TestDSGroup/ds-group-w-group-name-and-name-conflict.tf"),
 					ExpectError: regexp.MustCompile("only one of `group_name,name` can be specified"),
@@ -174,8 +174,8 @@ func Test_DSReadGroup(t *testing.T) {
 			}}}, nil)
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers:  testAccProviders,
-				IsUnitTest: true,
+				ProviderFactories: testAccProviders,
+				IsUnitTest:        true,
 				Steps: []resource.TestStep{{
 					Config:      loadFixtureString("testdata/TestDSGroup/ds-group-w-contract-id-and-contract-conflict.tf"),
 					ExpectError: regexp.MustCompile("only one of `contract,contract_id` can be specified"),

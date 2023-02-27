@@ -2,9 +2,11 @@ package property
 
 import (
 	"fmt"
+	"math/rand"
 	"regexp"
 	"strconv"
 	"testing"
+	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/papi"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -20,13 +22,17 @@ var (
 	accountID         = "test_account"
 	note              = "test activation"
 	email             = "jbond@example.com"
-	networkStaging    = "STAGING"
 	networkProduction = "PRODUCTION"
 	version           = 3
 	testDir           = "testdata/TestResPropertyIncludeActivation"
 )
 
 func TestResourcePropertyIncludeActivation(t *testing.T) {
+
+	// lower down the timeouts for testing purposes
+	activationPollInterval = time.Microsecond
+	getActivationInterval = time.Microsecond
+
 	type attrs struct {
 		includeID, contractID, groupID, network, note string
 		version                                       int
@@ -34,234 +40,223 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 		autoAcknowledgeRuleWarnings                   bool
 	}
 
+	type State struct {
+		activations []papi.IncludeActivation
+	}
+
 	var (
-		activateIncludeReq = func(network string, acknowledgeAllWarnings bool) papi.ActivateIncludeRequest {
-			return papi.ActivateIncludeRequest{
+		activateIncludeReq = func(network papi.ActivationNetwork, acknowledgeAllWarnings bool) papi.ActivateIncludeRequest {
+			req := papi.ActivateIncludeRequest{
 				IncludeID:              includeID,
 				Version:                3,
-				Network:                papi.ActivationNetwork(network),
+				Network:                network,
 				Note:                   note,
 				NotifyEmails:           []string{email},
 				AcknowledgeAllWarnings: acknowledgeAllWarnings,
 			}
-		}
-
-		activateIncludeRes = papi.ActivationIncludeResponse{
-			ActivationID:   "temporary-activation-id",
-			ActivationLink: "/papi/v1/includes/inc_12345/activations/temporary-activation-id",
-		}
-
-		expectActivateIncludeOnStaging = func(client *papi.Mock, network string, acknowledgeAllWarnings bool) *papi.ActivationIncludeResponse {
-			activateIncludeReq := activateIncludeReq(network, acknowledgeAllWarnings)
-			activateIncludeRes := activateIncludeRes
-			client.On("ActivateInclude", mock.Anything, activateIncludeReq).Return(&activateIncludeRes, nil).Once()
-			return &activateIncludeRes
-		}
-
-		expectActivateIncludeOnProduction = func(client *papi.Mock, network string, acknowledgeAllWarnings bool) *papi.ActivationIncludeResponse {
-			activateIncludeReq := activateIncludeReq(network, acknowledgeAllWarnings)
-			activateIncludeReq.ComplianceRecord = &papi.ComplianceRecordOther{}
-			activateIncludeRes := activateIncludeRes
-			client.On("ActivateInclude", mock.Anything, activateIncludeReq).Return(&activateIncludeRes, nil).Once()
-			return &activateIncludeRes
-		}
-
-		getIncludeActivationReq = func(actID string) papi.GetIncludeActivationRequest {
-			return papi.GetIncludeActivationRequest{
-				IncludeID:    includeID,
-				ActivationID: actID,
+			if network == papi.ActivationNetworkProduction {
+				req.ComplianceRecord = &papi.ComplianceRecordOther{}
 			}
+			return req
 		}
 
-		expectGetTempIncludeActivation = func(client *papi.Mock, tempActID string, network papi.ActivationNetwork) {
-			getIncludeActivationReq := getIncludeActivationReq(tempActID)
-			getIncludeActivationRes := papi.GetIncludeActivationResponse{
-				AccountID:  accountID,
-				ContractID: contractID,
-				GroupID:    groupID,
-				Activation: papi.IncludeActivation{
-					ActivationID:   tempActID,
-					Network:        network,
-					ActivationType: papi.ActivationTypeActivate,
-					Status:         papi.ActivationStatusActive,
-					SubmitDate:     "2022-10-27T10:21:40Z",
-					UpdateDate:     "2022-10-27T10:22:54Z",
-					Note:           note,
-					NotifyEmails:   []string{email},
-					IncludeID:      includeID,
-					IncludeVersion: version,
-				},
-			}
-			client.On("GetIncludeActivation", mock.Anything, getIncludeActivationReq).Return(&getIncludeActivationRes, nil).Once()
-		}
-
-		expectGetIncludeActivation = func(client *papi.Mock, actID string, network papi.ActivationNetwork) *papi.GetIncludeActivationResponse {
-			getIncludeActivationReq := getIncludeActivationReq(actID)
-			getIncludeActivationRes := papi.GetIncludeActivationResponse{
-				AccountID:  accountID,
-				ContractID: contractID,
-				GroupID:    groupID,
-				Activation: papi.IncludeActivation{
-					ActivationID:   actID,
-					Network:        network,
-					ActivationType: papi.ActivationTypeActivate,
-					Status:         papi.ActivationStatusActive,
-					SubmitDate:     "2022-10-27T11:21:40Z",
-					UpdateDate:     "2022-10-27T11:22:54Z",
-					Note:           note,
-					NotifyEmails:   []string{email},
-					IncludeID:      includeID,
-					IncludeVersion: version,
-				},
-			}
-			client.On("GetIncludeActivation", mock.Anything, getIncludeActivationReq).Return(&getIncludeActivationRes, nil).Once()
-			return &getIncludeActivationRes
-		}
-
-		expectGetIncludeActivationOnProduction = func(client *papi.Mock, actID string) *papi.GetIncludeActivationResponse {
-			getIncludeActivationReq := getIncludeActivationReq(actID)
-			getIncludeActivationRes := papi.GetIncludeActivationResponse{
-				AccountID:  accountID,
-				ContractID: contractID,
-				GroupID:    groupID,
-				Activation: papi.IncludeActivation{
-					ActivationID:   actID,
-					Network:        papi.ActivationNetworkProduction,
-					ActivationType: papi.ActivationTypeActivate,
-					Status:         papi.ActivationStatusActive,
-					SubmitDate:     "2022-10-28T11:21:40Z",
-					UpdateDate:     "2022-10-28T11:22:54Z",
-					Note:           note,
-					NotifyEmails:   []string{email},
-					IncludeID:      includeID,
-					IncludeVersion: version,
-				},
-			}
-			client.On("GetIncludeActivation", mock.Anything, getIncludeActivationReq).Return(&getIncludeActivationRes, nil).Once()
-			return &getIncludeActivationRes
-		}
-
-		listActivationsReq = papi.ListIncludeActivationsRequest{
-			IncludeID:  includeID,
-			GroupID:    groupID,
-			ContractID: contractID,
-		}
-
-		activations = papi.IncludeActivationsRes{
-			Items: []papi.IncludeActivation{
-				{
-					ActivationID:   "atv_12345",
-					Network:        papi.ActivationNetworkStaging,
-					ActivationType: papi.ActivationTypeActivate,
-					Status:         papi.ActivationStatusActive,
-					SubmitDate:     "2022-10-27T11:21:40Z",
-					UpdateDate:     "2022-10-27T11:22:54Z",
-					Note:           note,
-					NotifyEmails:   []string{email},
-					IncludeID:      includeID,
-					IncludeVersion: 3,
-				},
-				{
-					ActivationID:   "atv_12344",
-					Network:        papi.ActivationNetworkStaging,
-					ActivationType: papi.ActivationTypeActivate,
-					Status:         papi.ActivationStatusActive,
-					SubmitDate:     "2022-10-26T12:37:49Z",
-					UpdateDate:     "2022-10-26T12:38:59Z",
-					Note:           note,
-					NotifyEmails:   []string{email},
-					IncludeID:      includeID,
-					IncludeVersion: 2,
-				},
-				{
-					ActivationID:   "atv_12343",
-					Network:        papi.ActivationNetworkStaging,
-					ActivationType: papi.ActivationTypeActivate,
-					Status:         papi.ActivationStatusActive,
-					SubmitDate:     "2022-08-17T09:13:18Z",
-					UpdateDate:     "2022-08-17T09:15:35Z",
-					Note:           note,
-					NotifyEmails:   []string{email},
-					IncludeID:      includeID,
-					IncludeVersion: 1,
-				},
-			},
-		}
-
-		expectListIncludeActivations = func(client *papi.Mock) *papi.ListIncludeActivationsResponse {
-			activationsRes := papi.ListIncludeActivationsResponse{
-				AccountID:   accountID,
-				ContractID:  contractID,
-				GroupID:     groupID,
-				Activations: activations,
-			}
-			client.On("ListIncludeActivations", mock.Anything, listActivationsReq).Return(&activationsRes, nil).Once()
-			return &activationsRes
-		}
-
-		expectListIncludeActivationsUpdate = func(client *papi.Mock) *papi.ListIncludeActivationsResponse {
-			activations.Items = append(activations.Items, papi.IncludeActivation{
-				ActivationID:   "atv_12346",
-				Network:        papi.ActivationNetworkProduction,
-				ActivationType: papi.ActivationTypeActivate,
-				Status:         papi.ActivationStatusActive,
-				SubmitDate:     "2022-10-28T11:21:40Z",
-				UpdateDate:     "2022-10-28T11:22:54Z",
-				Note:           note,
-				NotifyEmails:   []string{email},
-				IncludeID:      includeID,
-				IncludeVersion: version,
-			})
-			activationsRes := papi.ListIncludeActivationsResponse{
-				AccountID:   accountID,
-				ContractID:  contractID,
-				GroupID:     groupID,
-				Activations: activations,
-			}
-			client.On("ListIncludeActivations", mock.Anything, listActivationsReq).Return(&activationsRes, nil).Once()
-			return &activationsRes
-		}
-
-		expectDeactivateInclude = func(client *papi.Mock, network papi.ActivationNetwork, acknowledgedWarnings bool) *papi.DeactivationIncludeResponse {
-			deactivateIncludeReq := papi.DeactivateIncludeRequest{
+		deactivateIncludeReq = func(network papi.ActivationNetwork, acknowledgeAllWarnings bool) papi.DeactivateIncludeRequest {
+			req := papi.DeactivateIncludeRequest{
 				IncludeID:              includeID,
-				Version:                version,
+				Version:                3,
 				Network:                network,
 				Note:                   note,
 				NotifyEmails:           []string{email},
-				AcknowledgeAllWarnings: acknowledgedWarnings,
+				AcknowledgeAllWarnings: acknowledgeAllWarnings,
 			}
 			if network == papi.ActivationNetworkProduction {
-				deactivateIncludeReq.ComplianceRecord = &papi.ComplianceRecordOther{}
+				req.ComplianceRecord = &papi.ComplianceRecordOther{}
 			}
-			deactivateIncludeRes := papi.DeactivationIncludeResponse{
-				ActivationID:   "temporary-deactivation-id",
-				ActivationLink: "/papi/v1/includes/inc_12345/activations/temporary-deactivation-id",
-			}
-			client.On("DeactivateInclude", mock.Anything, deactivateIncludeReq).Return(&deactivateIncludeRes, nil).Once()
-			return &deactivateIncludeRes
+			return req
 		}
 
-		expectGetTempIncludeDeactivation = func(client *papi.Mock, tempDeactID string, network papi.ActivationNetwork) {
-			getIncludeActivationReq := getIncludeActivationReq(tempDeactID)
-			getIncludeActivationRes := papi.GetIncludeActivationResponse{
+		expectListIncludeActivations = func(client *papi.Mock, activations []papi.IncludeActivation) {
+			client.On("ListIncludeActivations", mock.Anything, mock.Anything).
+				Return(&papi.ListIncludeActivationsResponse{
+					AccountID:  accountID,
+					ContractID: contractID,
+					GroupID:    groupID,
+					Activations: papi.IncludeActivationsRes{
+						Items: append([]papi.IncludeActivation(nil), activations...),
+					},
+				}, nil).Once()
+		}
+
+		expectGetIncludeActivation = func(client *papi.Mock, activation papi.IncludeActivation) *mock.Call {
+			return client.On("GetIncludeActivation", mock.Anything, papi.GetIncludeActivationRequest{
+				IncludeID:    includeID,
+				ActivationID: activation.ActivationID,
+			}).Return(&papi.GetIncludeActivationResponse{
 				AccountID:  accountID,
 				ContractID: contractID,
 				GroupID:    groupID,
-				Activation: papi.IncludeActivation{
-					ActivationID:   tempDeactID,
-					Network:        network,
-					ActivationType: papi.ActivationTypeDeactivate,
-					Status:         papi.ActivationStatusActive,
-					SubmitDate:     "2022-10-27T12:21:40Z",
-					UpdateDate:     "2022-10-27T12:22:54Z",
-					Note:           note,
-					NotifyEmails:   []string{email},
-					IncludeID:      includeID,
-					IncludeVersion: version,
-				},
+				Activation: activation,
+			}, nil)
+		}
+
+		expectWaitPending = func(client *papi.Mock, state State, network papi.ActivationNetwork, Npending int) State {
+			expectListIncludeActivations(client, state.activations)
+
+			if len(state.activations) == 0 {
+				// if there are no activations, wait logic wont do any other calls
+				// so there is nothing more to mock -> return
+				return state
 			}
-			client.On("GetIncludeActivation", mock.Anything, getIncludeActivationReq).Return(&getIncludeActivationRes, nil).Once()
+
+			for n := range state.activations {
+				if state.activations[n].Network == network {
+					if Npending > 0 && state.activations[n].Status == papi.ActivationStatusPending {
+						expectGetIncludeActivation(client, state.activations[n]).Times(Npending - 1)
+					}
+					// Mutate state -> change activation state to active
+					state.activations[n].Status = papi.ActivationStatusActive
+
+					expectGetIncludeActivation(client, state.activations[n]).Once()
+
+					return state
+				}
+			}
+
+			// if not found, mock a call that returns an error
+			client.On("GetIncludeActivation", mock.Anything, mock.Anything).
+				Return(nil, fmt.Errorf("%w: %s", papi.ErrNotFound, papi.ErrGetIncludeActivation)).Once()
+
+			return state
+		}
+
+		getRandomActID = func() string {
+			return fmt.Sprintf("atv_%d", rand.Int()%10000)
+		}
+
+		getActivationBasedOnRequest = func(req papi.ActivateOrDeactivateIncludeRequest, activationType papi.ActivationType) papi.IncludeActivation {
+			return papi.IncludeActivation{
+				ActivationID:   getRandomActID(),
+				Network:        req.Network,
+				ActivationType: activationType,
+				Status:         papi.ActivationStatusPending,
+				SubmitDate:     "",
+				UpdateDate:     time.Now().String(),
+				NotifyEmails:   req.NotifyEmails,
+				Note:           req.Note,
+				IncludeID:      req.IncludeID,
+				IncludeVersion: req.Version,
+			}
+		}
+
+		getExpectedActivationBasedOnRequest = func(req papi.ActivateIncludeRequest) papi.IncludeActivation {
+			return getActivationBasedOnRequest(papi.ActivateOrDeactivateIncludeRequest(req), papi.ActivationTypeActivate)
+		}
+
+		getActivationBasedOnDeactivationRequest = func(req papi.DeactivateIncludeRequest) papi.IncludeActivation {
+			return getActivationBasedOnRequest(papi.ActivateOrDeactivateIncludeRequest(req), papi.ActivationTypeDeactivate)
+		}
+
+		expectActivateInclude = func(client *papi.Mock, state State, req papi.ActivateIncludeRequest, Nretries int) State {
+
+			newIncludeActivation := getExpectedActivationBasedOnRequest(req)
+
+			client.On("ActivateInclude", mock.Anything, req).
+				Return(&papi.ActivationIncludeResponse{
+					ActivationID: newIncludeActivation.ActivationID,
+				}, nil).Once()
+
+			if Nretries > 0 {
+				// here we want to simulate some failing calls that may happen and upsert should just retry
+				client.On("GetIncludeActivation", mock.Anything, papi.GetIncludeActivationRequest{
+					IncludeID:    includeID,
+					ActivationID: newIncludeActivation.ActivationID,
+				}).Return(nil, fmt.Errorf("%w: %s", papi.ErrNotFound, papi.ErrGetIncludeActivation)).Times(Nretries)
+			}
+
+			// mutate state - add new activation
+			state.activations = append([]papi.IncludeActivation{newIncludeActivation}, state.activations...)
+
+			expectGetIncludeActivation(client, state.activations[0]).Once()
+
+			return state
+		}
+
+		expectActivateIncludeWithFail = func(client *papi.Mock, state State, req papi.ActivateIncludeRequest) {
+			client.On("ActivateInclude", mock.Anything, req).
+				Return(nil, fmt.Errorf("oops")).Once()
+		}
+
+		expectAssertState = func(client *papi.Mock, state State) {
+			expectListIncludeActivations(client, state.activations)
+		}
+
+		expectCreate = func(client *papi.Mock, state State, req papi.ActivateIncludeRequest) State {
+			state = expectWaitPending(client, state, req.Network, 2)
+			expectAssertState(client, state)
+			state = expectActivateInclude(client, state, req, 2)
+			state = expectWaitPending(client, state, req.Network, 2)
+			return state
+		}
+
+		expectCreateWithFail = func(client *papi.Mock, state State, req papi.ActivateIncludeRequest) State {
+			state = expectWaitPending(client, state, req.Network, 2)
+			expectAssertState(client, state)
+			expectActivateIncludeWithFail(client, state, req)
+			return state
+		}
+
+		expectCreateOnlyReadState = func(client *papi.Mock, state State, req papi.ActivateIncludeRequest) State {
+			state = expectWaitPending(client, state, req.Network, 2)
+			expectAssertState(client, state)
+			return state
+		}
+
+		expectRead = func(client *papi.Mock, state State, network papi.ActivationNetwork) {
+			expectListIncludeActivations(client, state.activations)
+
+			// read filters the list for latest active include in given network
+			// find it and mock the call for it
+			for _, a := range state.activations {
+				if a.Network == network && a.Status == papi.ActivationStatusActive {
+					expectGetIncludeActivation(client, a).Once()
+					return
+				}
+			}
+			// if not found, mock a call that returns an error
+			client.On("GetIncludeActivation", mock.Anything, mock.Anything).
+				Return(nil, fmt.Errorf("%w: %s", papi.ErrNotFound, papi.ErrGetIncludeActivation)).Once()
+		}
+
+		expectDectivateInclude = func(client *papi.Mock, state State, req papi.DeactivateIncludeRequest, Nretries int) State {
+			newIncludeDeactivation := getActivationBasedOnDeactivationRequest(req)
+
+			client.On("DeactivateInclude", mock.Anything, req).
+				Return(&papi.DeactivationIncludeResponse{
+					ActivationID: newIncludeDeactivation.ActivationID,
+				}, nil).Once()
+
+			if Nretries > 0 {
+				// here we want to simulate some failing calls that may happen and upsert should just retry
+				client.On("GetIncludeActivation", mock.Anything, papi.GetIncludeActivationRequest{
+					IncludeID:    includeID,
+					ActivationID: newIncludeDeactivation.ActivationID,
+				}).Return(nil, fmt.Errorf("%w: %s", papi.ErrNotFound, papi.ErrGetIncludeActivation)).Times(Nretries)
+			}
+
+			// mutate state - add deactivation
+			state.activations = append([]papi.IncludeActivation{newIncludeDeactivation}, state.activations...)
+
+			expectGetIncludeActivation(client, newIncludeDeactivation).Once()
+
+			return state
+		}
+
+		expectDelete = func(client *papi.Mock, state State, req papi.DeactivateIncludeRequest) State {
+			state = expectWaitPending(client, state, req.Network, 2)
+			expectAssertState(client, state)
+			state = expectDectivateInclude(client, state, req, 2)
+			state = expectWaitPending(client, state, req.Network, 2)
+			return state
 		}
 
 		checkAttributes = func(attrs attrs) resource.TestCheckFunc {
@@ -273,6 +268,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 				resource.TestCheckResourceAttr("akamai_property_include_activation.activation", "network", attrs.network),
 				resource.TestCheckResourceAttr("akamai_property_include_activation.activation", "note", attrs.note),
 				resource.TestCheckResourceAttr("akamai_property_include_activation.activation", "notify_emails.0", attrs.notifyEmails[0]),
+				resource.TestCheckResourceAttr("akamai_property_include_activation.activation", "auto_acknowledge_rule_warnings", strconv.FormatBool(attrs.autoAcknowledgeRuleWarnings)),
 			}
 
 			return resource.ComposeAggregateTestCheckFunc(checks...)
@@ -281,30 +277,25 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 
 	t.Run("create a new include activation lifecycle", func(t *testing.T) {
 		client := new(papi.Mock)
+		state := State{}
 
 		// create
-		actResWithTempID := expectActivateIncludeOnStaging(client, networkStaging, false)
-		expectGetTempIncludeActivation(client, actResWithTempID.ActivationID, papi.ActivationNetworkStaging)
+		actReq := activateIncludeReq("STAGING", false)
+		state = expectCreate(client, state, actReq)
 
 		// read
-		activations := expectListIncludeActivations(client)
-		actID, err := getLatestIncludeActivationID(activations, networkStaging)
-		require.NoError(t, err)
-		expectGetIncludeActivation(client, actID, papi.ActivationNetworkStaging)
+		expectRead(client, state, papi.ActivationNetworkStaging)
 
-		// refresh
-		activations = expectListIncludeActivations(client)
-		actID, err = getLatestIncludeActivationID(activations, networkStaging)
-		require.NoError(t, err)
-		expectGetIncludeActivation(client, actID, papi.ActivationNetworkStaging)
+		// read
+		expectRead(client, state, papi.ActivationNetworkStaging)
 
-		// destroy
-		deactivation := expectDeactivateInclude(client, papi.ActivationNetworkStaging, false)
-		expectGetTempIncludeDeactivation(client, deactivation.ActivationID, papi.ActivationNetworkStaging)
+		// delete
+		deactReq := deactivateIncludeReq("STAGING", false)
+		_ = expectDelete(client, state, deactReq)
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString(fmt.Sprintf("%s/property_include_activation.tf", testDir)),
@@ -326,58 +317,46 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 
 	t.Run("update include activation lifecycle", func(t *testing.T) {
 		client := new(papi.Mock)
+		state := State{}
 
 		// 1. first step
+
 		// create
-		actResWithTempIDStaging := expectActivateIncludeOnStaging(client, networkStaging, false)
-		expectGetTempIncludeActivation(client, actResWithTempIDStaging.ActivationID, papi.ActivationNetworkStaging)
+		actReq := activateIncludeReq("STAGING", false)
+		state = expectCreate(client, state, actReq)
 
 		// read
-		activations := expectListIncludeActivations(client)
-		actID, err := getLatestIncludeActivationID(activations, networkStaging)
-		require.NoError(t, err)
-		expectGetIncludeActivation(client, actID, papi.ActivationNetworkStaging)
+		expectRead(client, state, papi.ActivationNetworkStaging)
 
-		// refresh
-		activations = expectListIncludeActivations(client)
-		actID, err = getLatestIncludeActivationID(activations, networkStaging)
-		require.NoError(t, err)
-		expectGetIncludeActivation(client, actID, papi.ActivationNetworkStaging)
-
-		// refresh
-		activations = expectListIncludeActivations(client)
-		actID, err = getLatestIncludeActivationID(activations, networkStaging)
-		require.NoError(t, err)
-		expectGetIncludeActivation(client, actID, papi.ActivationNetworkStaging)
-
-		// destroy
-		deactivation := expectDeactivateInclude(client, papi.ActivationNetworkStaging, false)
-		expectGetTempIncludeDeactivation(client, deactivation.ActivationID, papi.ActivationNetworkStaging)
+		// read
+		expectRead(client, state, papi.ActivationNetworkStaging)
 
 		// 2. second step - network ForceNew
-		// create
-		actResWithTempIDProduction := expectActivateIncludeOnProduction(client, networkProduction, true)
-		expectGetTempIncludeActivation(client, actResWithTempIDProduction.ActivationID, papi.ActivationNetworkProduction)
 
 		// read
-		activations = expectListIncludeActivationsUpdate(client)
-		actID, err = getLatestIncludeActivationID(activations, networkProduction)
-		require.NoError(t, err)
-		expectGetIncludeActivationOnProduction(client, actID)
+		expectRead(client, state, papi.ActivationNetworkStaging)
 
-		// destroy
-		deactivation = expectDeactivateInclude(client, papi.ActivationNetworkProduction, true)
-		expectGetTempIncludeDeactivation(client, deactivation.ActivationID, papi.ActivationNetworkProduction)
+		// delete
+		deactReq := deactivateIncludeReq("STAGING", false)
+		state = expectDelete(client, state, deactReq)
 
-		// refresh
-		activations = expectListIncludeActivationsUpdate(client)
-		actID, err = getLatestIncludeActivationID(activations, networkProduction)
-		require.NoError(t, err)
-		expectGetIncludeActivationOnProduction(client, actID)
+		// create
+		actReq = activateIncludeReq("PRODUCTION", true)
+		state = expectCreate(client, state, actReq)
+
+		// read
+		expectRead(client, state, papi.ActivationNetworkProduction)
+
+		// read
+		expectRead(client, state, papi.ActivationNetworkProduction)
+
+		// delete
+		deactReq = deactivateIncludeReq("PRODUCTION", true)
+		_ = expectDelete(client, state, deactReq)
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString(fmt.Sprintf("%s/property_include_activation.tf", testDir)),
@@ -394,11 +373,166 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 					{
 						Config: loadFixtureString(fmt.Sprintf("%s/property_include_activation_update.tf", testDir)),
 						Check: checkAttributes(attrs{
+							includeID:                   includeID,
+							contractID:                  contractID,
+							groupID:                     groupID,
+							version:                     version,
+							network:                     "PRODUCTION",
+							note:                        note,
+							notifyEmails:                []string{email},
+							autoAcknowledgeRuleWarnings: true,
+						}),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
+	t.Run("wait for ongoing expected activation to finish", func(t *testing.T) {
+		client := new(papi.Mock)
+		state := State{}
+
+		actReq := activateIncludeReq("STAGING", false)
+
+		pendingIncludeActivation := getExpectedActivationBasedOnRequest(actReq)
+		state.activations = append(state.activations, pendingIncludeActivation)
+
+		// create
+		state = expectCreateOnlyReadState(client, state, actReq)
+
+		// read
+		expectRead(client, state, papi.ActivationNetworkStaging)
+
+		// read
+		expectRead(client, state, papi.ActivationNetworkStaging)
+
+		// delete
+		deactReq := deactivateIncludeReq("STAGING", false)
+		_ = expectDelete(client, state, deactReq)
+
+		useClient(client, nil, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProviderFactories: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString(fmt.Sprintf("%s/property_include_activation.tf", testDir)),
+						Check: checkAttributes(attrs{
 							includeID:    includeID,
 							contractID:   contractID,
 							groupID:      groupID,
 							version:      version,
-							network:      "PRODUCTION",
+							network:      "STAGING",
+							note:         note,
+							notifyEmails: []string{email},
+						}),
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
+
+	t.Run("wait for ongoing unexpected activation to finish", func(t *testing.T) {
+		client := new(papi.Mock)
+		state := State{}
+
+		actReq := activateIncludeReq("STAGING", false)
+		unexpectedActivationReq := activateIncludeReq("PRODUCTION", false)
+		unexpectedActivationReq.Version = 2
+
+		assert.NotEqual(t, unexpectedActivationReq.Version, actReq.Version)
+
+		pendingIncludeActivation := getExpectedActivationBasedOnRequest(unexpectedActivationReq)
+		state.activations = append(state.activations, pendingIncludeActivation)
+
+		// create
+		state = expectCreate(client, state, actReq)
+
+		// read
+		expectRead(client, state, papi.ActivationNetworkStaging)
+
+		// read
+		expectRead(client, state, papi.ActivationNetworkStaging)
+
+		// delete
+		deactReq := deactivateIncludeReq("STAGING", false)
+		_ = expectDelete(client, state, deactReq)
+
+		useClient(client, nil, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProviderFactories: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString(fmt.Sprintf("%s/property_include_activation.tf", testDir)),
+						Check: checkAttributes(attrs{
+							includeID:    includeID,
+							contractID:   contractID,
+							groupID:      groupID,
+							version:      version,
+							network:      "STAGING",
+							note:         note,
+							notifyEmails: []string{email},
+						}),
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
+
+	t.Run("first create fails but second create works", func(t *testing.T) {
+		client := new(papi.Mock)
+		state := State{}
+
+		actReq := activateIncludeReq("STAGING", false)
+
+		// --- 1st step ---
+
+		// create -> fail
+		state = expectCreateWithFail(client, state, actReq)
+
+		// --- 2nd step ---
+
+		// create
+		state = expectCreate(client, state, actReq)
+
+		// read
+		expectRead(client, state, papi.ActivationNetworkStaging)
+
+		// read
+		expectRead(client, state, papi.ActivationNetworkStaging)
+
+		// delete
+		deactReq := deactivateIncludeReq("STAGING", false)
+		_ = expectDelete(client, state, deactReq)
+
+		useClient(client, nil, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProviderFactories: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString(fmt.Sprintf("%s/property_include_activation.tf", testDir)),
+						Check: checkAttributes(attrs{
+							includeID:    includeID,
+							contractID:   contractID,
+							groupID:      groupID,
+							version:      version,
+							network:      "STAGING",
+							note:         note,
+							notifyEmails: []string{email},
+						}),
+						ExpectError: regexp.MustCompile("oops"),
+					},
+					{
+						Config: loadFixtureString(fmt.Sprintf("%s/property_include_activation.tf", testDir)),
+						Check: checkAttributes(attrs{
+							includeID:    includeID,
+							contractID:   contractID,
+							groupID:      groupID,
+							version:      version,
+							network:      "STAGING",
 							note:         note,
 							notifyEmails: []string{email},
 						}),
@@ -411,36 +545,28 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 
 	t.Run("import", func(t *testing.T) {
 		client := new(papi.Mock)
+		state := State{}
 
 		// create
-		actResWithTempIDStaging := expectActivateIncludeOnStaging(client, networkStaging, false)
-		expectGetTempIncludeActivation(client, actResWithTempIDStaging.ActivationID, papi.ActivationNetworkStaging)
+		actReq := activateIncludeReq("STAGING", false)
+		state = expectCreate(client, state, actReq)
 
 		// read
-		activations := expectListIncludeActivations(client)
-		actID, err := getLatestIncludeActivationID(activations, networkStaging)
-		require.NoError(t, err)
-		expectGetIncludeActivation(client, actID, papi.ActivationNetworkStaging)
+		expectRead(client, state, papi.ActivationNetworkStaging)
 
-		// refresh
-		activations = expectListIncludeActivations(client)
-		actID, err = getLatestIncludeActivationID(activations, networkStaging)
-		require.NoError(t, err)
-		expectGetIncludeActivation(client, actID, papi.ActivationNetworkStaging)
+		// read
+		expectRead(client, state, papi.ActivationNetworkStaging)
 
-		// import
-		activations = expectListIncludeActivations(client)
-		actID, err = getLatestIncludeActivationID(activations, networkStaging)
-		require.NoError(t, err)
-		expectGetIncludeActivation(client, actID, papi.ActivationNetworkStaging)
+		// read
+		expectRead(client, state, papi.ActivationNetworkStaging)
 
-		// destroy
-		deactivation := expectDeactivateInclude(client, papi.ActivationNetworkStaging, false)
-		expectGetTempIncludeDeactivation(client, deactivation.ActivationID, papi.ActivationNetworkStaging)
+		// delete
+		deactReq := deactivateIncludeReq("STAGING", false)
+		_ = expectDelete(client, state, deactReq)
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString(fmt.Sprintf("%s/property_include_activation.tf", testDir)),
@@ -462,4 +588,45 @@ func Test_addComplianceRecordByNetwork(t *testing.T) {
 	_, err := addComplianceRecordByNetwork(networkProduction, "activate", []interface{}{}, papi.ActivateOrDeactivateIncludeRequest{})
 	require.Error(t, err)
 	assert.True(t, regexp.MustCompile("compliance_record field is required for 'PRODUCTION' network to activate include version").MatchString(err.Error()))
+}
+
+func TestReadTimeoutFromEnvOrDefault(t *testing.T) {
+	tests := map[string]struct {
+		envName      string
+		envValue     string
+		defaultValue time.Duration
+		expect       time.Duration
+	}{
+		"no env value set": {
+			envName:      "TEST_NAME",
+			envValue:     "",
+			defaultValue: time.Hour,
+			expect:       time.Hour,
+		},
+		"correct env value 120 set": {
+			envName:      "TEST_NAME",
+			envValue:     "120",
+			defaultValue: time.Hour,
+			expect:       time.Hour * 2,
+		},
+		"correct env value 12 set": {
+			envName:      "TEST_NAME",
+			envValue:     "12",
+			defaultValue: time.Hour,
+			expect:       time.Minute * 12,
+		},
+		"incorrect env value set": {
+			envName:      "TEST_NAME_2",
+			envValue:     "not a number",
+			defaultValue: time.Hour,
+			expect:       time.Hour,
+		},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Setenv(test.envName, test.envValue)
+			result := readTimeoutFromEnvOrDefault(test.envName, test.defaultValue)
+			assert.Equal(t, test.expect, *result)
+		})
+	}
 }

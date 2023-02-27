@@ -60,8 +60,8 @@ func TestResourceJavascriptInjection(t *testing.T) {
 		useClient(mockedBotmanClient, func() {
 
 			resource.Test(t, resource.TestCase{
-				IsUnitTest: true,
-				Providers:  testAccProviders,
+				IsUnitTest:        true,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: test.Fixture("testdata/TestResourceJavascriptInjection/create.tf"),

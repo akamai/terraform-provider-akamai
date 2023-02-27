@@ -37,8 +37,8 @@ func TestDataBotAnalyticsCookieValue(t *testing.T) {
 		).Return(response, nil)
 		useClient(mockedBotmanClient, func() {
 			resource.Test(t, resource.TestCase{
-				IsUnitTest: true,
-				Providers:  testAccProviders,
+				IsUnitTest:        true,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: test.Fixture("testdata/TestDataBotAnalyticsCookieValues/basic.tf"),
