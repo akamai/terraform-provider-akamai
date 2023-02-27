@@ -1,21 +1,28 @@
 # RELEASE NOTES
 
-## 3.4.0
+## 3.4.0 (March 2, 2023)
 
 #### FEATURES/ENHANCEMENTS:
 
-  * Advanced Options Settings
-    * New settings added for Attack Payload Logging
-      * Added data source
-        [akamai_appsec_advanced_settings_attack_payload_logging](docs/data-sources/appsec_advanced_settings_attack_payload_logging.md)
-      * Added resource
-        [akamai_appsec_advanced_settings_attack_payload_logging](docs/resources/appsec_advanced_settings_attack_payload_logging.md)
+* Various dependencies updated
+* Updated Akamai Terraform Provider examples to be compliant with current Akamai Terraform Provider version and `TFLint`
+
+* APPSEC
+  * Advanced Options Settings - New settings added for Attack Payload Logging
+    * Added data source
+      [akamai_appsec_advanced_settings_attack_payload_logging](docs/data-sources/appsec_advanced_settings_attack_payload_logging.md)
+    * Added resource
+      [akamai_appsec_advanced_settings_attack_payload_logging](docs/resources/appsec_advanced_settings_attack_payload_logging.md)
 
 #### BUG FIXES:
 
 * APPSEC
   * Fix drift on `logFilename` element of `malware_policy`
   * Prevent changes to `rate_policy` field of existing `akamai_appsec_rate_policy_action` resource
+  * Fix issue that disabled users from using all values allowed by the API in `akamai_appsec_rate_policy_action resource` resource
+* PAPI
+  * Fix issue when `akamai_property_include_activation` broke during creation, Terraform could not recover
+  * Fixed issue that `property_rules_template` data source failed with multiple includes in array ([#387](https://github.com/akamai/terraform-provider-akamai/pull/387))
 
 ## 3.3.0 (February 2, 2023)
 
