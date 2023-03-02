@@ -12,13 +12,15 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-var testAccProviders map[string]*schema.Provider
+var testAccProviders map[string]func() (*schema.Provider, error)
 var testAccProvider *schema.Provider
 
 func TestMain(m *testing.M) {
 	testAccProvider = akamai.Provider(Subprovider())()
-	testAccProviders = map[string]*schema.Provider{
-		"akamai": testAccProvider,
+	testAccProviders = map[string]func() (*schema.Provider, error){
+		"akamai": func() (*schema.Provider, error) {
+			return testAccProvider, nil
+		},
 	}
 	if err := akamai.TFTestSetup(); err != nil {
 		log.Fatal(err)

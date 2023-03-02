@@ -9,8 +9,8 @@ import (
 func TestDataWarnings(t *testing.T) {
 	t.Run("run warning datasource", func(t *testing.T) {
 		resource.UnitTest(t, resource.TestCase{
-			Providers:  testAccProviders,
-			IsUnitTest: true,
+			ProviderFactories: testAccProviders,
+			IsUnitTest:        true,
 			Steps: []resource.TestStep{
 				{
 					Config: loadFixtureString("testdata/TestDataWarnings/warnings.tf"),

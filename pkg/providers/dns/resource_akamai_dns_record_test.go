@@ -83,8 +83,8 @@ func TestResDnsRecord(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				PreCheck:  func() { testAccPreCheck(t) },
-				Providers: testAccProviders,
+				PreCheck:          func() { testAccPreCheck(t) },
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString("testdata/TestResDnsRecord/create_basic.tf"),

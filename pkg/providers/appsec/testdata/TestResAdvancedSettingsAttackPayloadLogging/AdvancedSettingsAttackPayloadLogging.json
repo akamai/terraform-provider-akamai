@@ -1,0 +1,9 @@
+{
+    "enabled": true,
+    "requestBody": {
+        "type": "NONE"
+    },
+    "responseBody": {
+        "type": "ATTACK_PAYLOAD"
+    }
+}

@@ -71,8 +71,8 @@ func TestResourceCPSUploadCertificate(t *testing.T) {
 			test.init(t, client, test.enrollment, test.enrollmentID, test.changeID)
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					Providers:  testAccProviders,
-					IsUnitTest: true,
+					ProviderFactories: testAccProviders,
+					IsUnitTest:        true,
 					Steps: []resource.TestStep{
 						{
 							Config:      loadFixtureString(test.configPathForCreate),
@@ -172,8 +172,8 @@ func TestResourceCPSUploadCertificateWithThirdPartyEnrollmentDependency(t *testi
 			test.init(t, client, &test.enrollment, test.enrollmentID, test.changeID)
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					Providers:  testAccProviders,
-					IsUnitTest: true,
+					ProviderFactories: testAccProviders,
+					IsUnitTest:        true,
 					Steps: []resource.TestStep{
 						{
 							Config:      loadFixtureString(test.configPath),
@@ -279,8 +279,8 @@ func TestResourceCPSUploadCertificateLifecycle(t *testing.T) {
 			test.init(t, client, test.enrollment, test.enrollmentUpdated, test.enrollmentID, test.changeID, test.changeIDUpdated)
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					Providers:  testAccProviders,
-					IsUnitTest: true,
+					ProviderFactories: testAccProviders,
+					IsUnitTest:        true,
 					Steps: []resource.TestStep{
 						{
 							Config:      loadFixtureString(test.configPathForCreate),
@@ -659,8 +659,8 @@ func TestCreateCPSUploadCertificate(t *testing.T) {
 			test.init(t, client, test.enrollment, test.enrollmentID, test.changeID)
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					Providers:  testAccProviders,
-					IsUnitTest: true,
+					ProviderFactories: testAccProviders,
+					IsUnitTest:        true,
 					Steps: []resource.TestStep{
 						{
 							Config:      loadFixtureString(test.configPath),
@@ -774,8 +774,8 @@ func TestReadCPSUploadCertificate(t *testing.T) {
 			test.init(t, client, test.enrollment, test.enrollmentID, test.changeID)
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					Providers:  testAccProviders,
-					IsUnitTest: true,
+					ProviderFactories: testAccProviders,
+					IsUnitTest:        true,
 					Steps: []resource.TestStep{
 						{
 							Config:      loadFixtureString(test.configPath),
@@ -1087,8 +1087,8 @@ func TestUpdateCPSUploadCertificate(t *testing.T) {
 			test.init(t, client, test.enrollment, test.enrollmentUpdated, test.enrollmentID, test.changeID, test.changeIDUpdated)
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					Providers:  testAccProviders,
-					IsUnitTest: true,
+					ProviderFactories: testAccProviders,
+					IsUnitTest:        true,
 					Steps: []resource.TestStep{
 						{
 							Config:      loadFixtureString(test.configPathForCreate),
@@ -1166,7 +1166,7 @@ func TestResourceUploadCertificateImport(t *testing.T) {
 
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					Providers: testAccProviders,
+					ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
 							Config:           loadFixtureString("testdata/TestResCPSUploadCertificate/import/import_upload.tf"),

@@ -31,7 +31,7 @@ func Test_DSReadContract(t *testing.T) {
 			}}}, nil)
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{{
 					Config: loadFixtureString("testdata/TestDSContractRequired/ds_contract_with_group_id_in_group.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
@@ -65,7 +65,7 @@ func Test_DSReadContract(t *testing.T) {
 			}}}, nil)
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{{
 					Config: loadFixtureString("testdata/TestDSContractRequired/ds_contract_with_group_id_in_group_wo_prefix.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
@@ -99,7 +99,7 @@ func Test_DSReadContract(t *testing.T) {
 			}}}, nil)
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{{
 					Config: loadFixtureString("testdata/TestDSContractRequired/ds_contract_with_group_name_in_group.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
@@ -133,7 +133,7 @@ func Test_DSReadContract(t *testing.T) {
 			}}}, nil)
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{{
 					Config:      loadFixtureString("testdata/TestDSContractRequired/ds_contract_with_group_name_and_group.tf"),
 					ExpectError: regexp.MustCompile("only one of `group,group_id,group_name` can be specified"),
@@ -163,7 +163,7 @@ func Test_DSReadContract(t *testing.T) {
 			}}}, nil)
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{{
 					Config: loadFixtureString("testdata/TestDSContractRequired/ds_contract_with_group_id.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
@@ -197,7 +197,7 @@ func Test_DSReadContract(t *testing.T) {
 			}}}, nil)
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{{
 					Config: loadFixtureString("testdata/TestDSContractRequired/ds_contract_with_group_id_without_prefix.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
@@ -231,7 +231,7 @@ func Test_DSReadContract(t *testing.T) {
 			}}}, nil)
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{{
 					Config: loadFixtureString("testdata/TestDSContractRequired/ds_contract_with_group_name.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(

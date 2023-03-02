@@ -36,8 +36,8 @@ func TestAkamaiWAPSelectedHostnames_data_basic(t *testing.T) {
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
-				IsUnitTest: true,
-				Providers:  testAccProviders,
+				IsUnitTest:        true,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString("testdata/TestDSWAPSelectedHostnames/match_by_id.tf"),
@@ -78,8 +78,8 @@ func TestAkamaiWAPSelectedHostnames_data_error_retrieving_hostnames(t *testing.T
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
-				IsUnitTest: true,
-				Providers:  testAccProviders,
+				IsUnitTest:        true,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString("testdata/TestDSWAPSelectedHostnames/match_by_id.tf"),
@@ -130,8 +130,8 @@ func TestAkamaiWAPSelectedHostnames_NonWAP_data_basic(t *testing.T) {
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
-				IsUnitTest: true,
-				Providers:  testAccProviders,
+				IsUnitTest:        true,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString("testdata/TestDSWAPSelectedHostnames/match_by_id.tf"),

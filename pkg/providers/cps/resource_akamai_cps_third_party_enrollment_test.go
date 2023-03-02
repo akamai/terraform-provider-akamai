@@ -136,7 +136,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString("testdata/TestResThirdPartyEnrollment/lifecycle/create_enrollment.tf"),
@@ -301,7 +301,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString("testdata/TestResThirdPartyEnrollment/empty_sans/create_enrollment.tf"),
@@ -460,7 +460,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString("testdata/TestResThirdPartyEnrollment/lifecycle_cn_in_sans/create_enrollment.tf"),
@@ -531,7 +531,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString("testdata/TestResThirdPartyEnrollment/lifecycle/create_enrollment.tf"),
@@ -669,7 +669,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString("testdata/TestResThirdPartyEnrollment/no_acknowledge_warnings/create_enrollment.tf"),
@@ -832,7 +832,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString("testdata/TestResThirdPartyEnrollment/acknowledge_warnings/create_enrollment.tf"),
@@ -991,7 +991,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString("testdata/TestResThirdPartyEnrollment/allow_duplicate_cn/create_enrollment.tf"),
@@ -1119,7 +1119,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config:      loadFixtureString("testdata/TestResThirdPartyEnrollment/no_acknowledge_warnings/create_enrollment.tf"),
@@ -1206,7 +1206,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config:      loadFixtureString("testdata/TestResThirdPartyEnrollment/no_acknowledge_warnings/create_enrollment.tf"),
@@ -1361,7 +1361,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString("testdata/TestResThirdPartyEnrollment/auto_approve_warnings/create_enrollment.tf"),
@@ -1488,7 +1488,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config:      loadFixtureString("testdata/TestResThirdPartyEnrollment/auto_approve_warnings/create_enrollment.tf"),
@@ -1613,7 +1613,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config:      loadFixtureString("testdata/TestResThirdPartyEnrollment/auto_approve_warnings/create_enrollment.tf"),
@@ -1748,7 +1748,7 @@ func TestResourceThirdPartyEnrollmentImport(t *testing.T) {
 		}, nil).Once()
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString("testdata/TestResThirdPartyEnrollment/import/import_enrollment.tf"),
@@ -1785,7 +1785,7 @@ func TestResourceThirdPartyEnrollmentImport(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config:        loadFixtureString("testdata/TestResThirdPartyEnrollment/import/import_enrollment.tf"),
@@ -1908,7 +1908,7 @@ func TestSuppressingSignatureAlgorithm(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString("testdata/TestResThirdPartyEnrollment/lifecycle/create_enrollment.tf"),

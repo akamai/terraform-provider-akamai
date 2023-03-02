@@ -19,7 +19,7 @@ type (
 var (
 	testInst *cacheSubprovider
 
-	testAccProviders map[string]*schema.Provider
+	testAccProviders map[string]func() (*schema.Provider, error)
 
 	testAccProvider *schema.Provider
 )
@@ -28,8 +28,10 @@ func init() {
 	hclog.Default().SetLevel(hclog.Trace)
 
 	testAccProvider = Provider(newCacheProvider())()
-	testAccProviders = map[string]*schema.Provider{
-		"akamai": testAccProvider,
+	testAccProviders = map[string]func() (*schema.Provider, error){
+		"akamai": func() (*schema.Provider, error) {
+			return testAccProvider, nil
+		},
 	}
 }
 
@@ -102,8 +104,8 @@ resource "akamai_cache" "test" {
 
 func TestCache_ok(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		IsUnitTest: true,
-		Providers:  testAccProviders,
+		IsUnitTest:        true,
+		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{
 				Config: configCacheSet(),
@@ -123,8 +125,8 @@ func TestCache_ok(t *testing.T) {
 
 func TestCache_miss(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		IsUnitTest: true,
-		Providers:  testAccProviders,
+		IsUnitTest:        true,
+		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{
 				Config:      configCacheMiss(),
@@ -136,8 +138,8 @@ func TestCache_miss(t *testing.T) {
 
 func TestCacheGet_disabled(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		IsUnitTest: true,
-		Providers:  testAccProviders,
+		IsUnitTest:        true,
+		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{
 				Config:      configCacheGetDisabled(),
@@ -149,8 +151,8 @@ func TestCacheGet_disabled(t *testing.T) {
 
 func TestCacheSet_disabled(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		IsUnitTest: true,
-		Providers:  testAccProviders,
+		IsUnitTest:        true,
+		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{
 				Config: configCacheSetDisabled(),

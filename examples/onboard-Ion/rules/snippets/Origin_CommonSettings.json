@@ -69,21 +69,28 @@
 	    "titleOptional": ""
 	}
     },
-    {
-	"name": "report",
-	"options": {
-	    "logHost": false,
-	    "logReferer": false,
-	    "logUserAgent": false,
-	    "logAcceptLanguage": false,
-	    "logCookies": "OFF",
-	    "logCustomLogField": false
-	}
-    },            
-            
-   {
-      "name": "tieredDistribution",
-      "options": {
-      "enabled": ${tdenabled}
-      }
-   }
+		{
+		"name": "report",
+  "options": {
+  "logHost": false,
+  "logReferer": false,
+  "logUserAgent": false,
+  "logAcceptLanguage": false,
+  "logCookies": "OFF",
+  "logCustomLogField": false
+  }
+  },
+  {
+  "name": "cpCode",
+  "options": {
+  "value": {
+  "id": 1234
+  }
+  }
+  },
+  {
+  "name": "tieredDistribution",
+  "options": {
+  "enabled": ${tdenabled}
+  }
+  }

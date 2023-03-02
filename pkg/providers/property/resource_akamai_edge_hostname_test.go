@@ -886,8 +886,8 @@ func TestResourceEdgeHostname(t *testing.T) {
 			test.init(client, clientHapi)
 			useClient(client, clientHapi, func() {
 				resource.UnitTest(t, resource.TestCase{
-					Providers: testAccProviders,
-					Steps:     test.steps,
+					ProviderFactories: testAccProviders,
+					Steps:             test.steps,
 				})
 			})
 			client.AssertExpectations(t)
@@ -970,7 +970,7 @@ func TestResourceEdgeHostnames_WithImport(t *testing.T) {
 		expectGetEdgeHostnames(client, "ctr_1", "grp_2")
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString("testdata/TestResourceEdgeHostname/import_edgehostname.tf"),

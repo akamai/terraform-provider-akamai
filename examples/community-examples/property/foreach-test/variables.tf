@@ -1,13 +1,6 @@
 variable "env" {
+  type    = string
   default = "staging"
-}
-
-variable "username" {
-  default = "test"
-}
-
-variable "password" {
-  default = "test"
 }
 
 variable "customers" {

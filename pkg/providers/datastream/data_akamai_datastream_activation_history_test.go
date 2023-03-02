@@ -81,7 +81,7 @@ func TestDataAkamaiDatastreamActivationHistoryRead(t *testing.T) {
 					client.On("GetActivationHistory", mock.Anything, mock.Anything).Return(test.getActivationHistoryReturn, nil)
 				}
 				resource.UnitTest(t, resource.TestCase{
-					Providers: testAccProviders,
+					ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
 							Config: loadFixtureString(test.configPath),

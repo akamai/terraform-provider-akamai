@@ -8,10 +8,10 @@ For example, here we define a CPCode specific for the environment
 
 ```
 resource "akamai_cp_code" "test-wheep-co-uk" {
- product  = "prd_Download_Delivery"
- contract = data.akamai_contract.contract.id
- group = data.akamai_group.group.id
- name = "${var.env}.wheep.co.uk"
+ product_id  = "prd_Download_Delivery"
+ contract_id = data.akamai_contract.contract.id
+ group_id    = data.akamai_group.group.id
+ name        = "${var.env}.wheep.co.uk"
 }
 ```
 
@@ -19,11 +19,10 @@ and here we define an edge hostname specific for the environment
 
 ```
 resource "akamai_edge_hostname" "test-wheep-co-uk-edgesuite-net" {
- product  = "prd_Download_Delivery"
- contract = data.akamai_contract.contract.id
- group = data.akamai_group.group.id
- ipv6 = false
- ipv4 = true
+ product_id    = "prd_Download_Delivery"
+ contract_id   = data.akamai_contract.contract.id
+ group_id      = data.akamai_group.group.id
+ ip_behavior   = "IPV6_COMPLIANCE"
  edge_hostname = "${var.env}.wheep.co.uk.edgesuite.net"
 }
 ```

@@ -821,9 +821,9 @@ func TestResourcePropertyInclude(t *testing.T) {
 
 			useClient(client, &hapi.Mock{}, func() {
 				resource.UnitTest(t, resource.TestCase{
-					Providers:  testAccProviders,
-					IsUnitTest: true,
-					Steps:      testCase.steps,
+					ProviderFactories: testAccProviders,
+					IsUnitTest:        true,
+					Steps:             testCase.steps,
 				})
 			})
 			client.AssertExpectations(t)

@@ -53,17 +53,17 @@ resource "akamai_property" "property" {
 
   name        = each.key
   cp_code     = akamai_cp_code.cpcode[each.key].id
-  contract = data.akamai_contract.contract.id
-  group = data.akamai_group.group.id
-  product     = "prd_Site_Accel"
+  contract_id = data.akamai_contract.contract.id
+  group_id    = data.akamai_group.group.id
+  product_id  = "prd_Site_Accel"
   rule_format = "v2018-02-27"
 
-  hostnames    = {
-        "${each.key}" = akamai_edge_hostname.edge_hostname.edge_hostname
-  }
+  hostnames {
+    cname_from             = each.key
+    cname_to               = akamai_edge_hostname.edge_hostname.edge_hostname
+    cert_provisioning_type = "CPS_MANAGED"
+  }  
   rules       = data.template_file.rules[each.key].rendered
-  is_secure = true
-
 }
 ```
 
@@ -92,7 +92,6 @@ Terraform will perform the following actions:
 
   # akamai_property_activation.activation["foreach1.wheep.co.uk"] will be destroyed
   - resource "akamai_property_activation" "activation" {
-      - activate = true -> null
       - contact  = [
           - "icass@akamai.com",
         ] -> null

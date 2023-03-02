@@ -84,7 +84,7 @@ func TestResGtmResource(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString("testdata/TestResGtmResource/create_basic.tf"),
@@ -147,7 +147,7 @@ func TestResGtmResource(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config:      loadFixtureString("testdata/TestResGtmResource/create_basic.tf"),
@@ -201,7 +201,7 @@ func TestResGtmResource(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config:      loadFixtureString("testdata/TestResGtmResource/create_basic.tf"),
@@ -271,8 +271,8 @@ func TestGTMResourceOrder(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			useClient(test.client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					Providers:  testAccProviders,
-					IsUnitTest: true,
+					ProviderFactories: testAccProviders,
+					IsUnitTest:        true,
 					Steps: []resource.TestStep{
 						{
 							Config: loadFixtureString(test.pathForCreate),

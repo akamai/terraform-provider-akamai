@@ -274,7 +274,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString("testdata/TestResDVEnrollment/lifecycle/create_enrollment.tf"),
@@ -473,7 +473,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString("testdata/TestResDVEnrollment/empty_sans/create_enrollment.tf"),
@@ -667,7 +667,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString("testdata/TestResDVEnrollment/lifecycle_cn_in_sans/create_enrollment.tf"),
@@ -825,7 +825,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString("testdata/TestResDVEnrollment/lifecycle/create_enrollment.tf"),
@@ -1038,7 +1038,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString("testdata/TestResDVEnrollment/no_acknowledge_warnings/create_enrollment.tf"),
@@ -1227,7 +1227,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString("testdata/TestResDVEnrollment/acknowledge_warnings/create_enrollment.tf"),
@@ -1413,7 +1413,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString("testdata/TestResDVEnrollment/allow_duplicate_cn/create_enrollment.tf"),
@@ -1549,7 +1549,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config:      loadFixtureString("testdata/TestResDVEnrollment/no_acknowledge_warnings/create_enrollment.tf"),
@@ -1632,7 +1632,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config:      loadFixtureString("testdata/TestResDVEnrollment/no_acknowledge_warnings/create_enrollment.tf"),
@@ -1785,7 +1785,7 @@ func TestResourceDVEnrollmentImport(t *testing.T) {
 		}, nil).Once()
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString("testdata/TestResDVEnrollment/import/import_enrollment.tf"),
@@ -1822,7 +1822,7 @@ func TestResourceDVEnrollmentImport(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config:        loadFixtureString("testdata/TestResDVEnrollment/import/import_enrollment.tf"),

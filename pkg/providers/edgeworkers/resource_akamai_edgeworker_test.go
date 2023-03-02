@@ -364,7 +364,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString(fmt.Sprintf("%s/edgeworker_create.tf", testDir)),
@@ -410,7 +410,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString(fmt.Sprintf("%s/edgeworker_no_bundle.tf", testDir)),
@@ -446,7 +446,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString(fmt.Sprintf("%s/edgeworker_create.tf", testDir)),
@@ -516,7 +516,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						PreConfig: prepareTempBundleLink(t, bundlePathForCreate, tempBundlePath),
@@ -565,7 +565,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString(fmt.Sprintf("%s/edgeworker_create.tf", testDir)),
@@ -608,7 +608,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString(fmt.Sprintf("%s/edgeworker_create.tf", testDir)),
@@ -655,7 +655,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString(fmt.Sprintf("%s/edgeworker_create.tf", testDir)),
@@ -699,7 +699,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString(fmt.Sprintf("%s/edgeworker_create.tf", testDir)),

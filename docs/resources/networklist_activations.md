@@ -29,7 +29,7 @@ resource "akamai_networklist_activations" "activation" {
   network_list_id     = resource.akamai_networklist_network_list.network_list_ip.network_list_id
   network             = "STAGING"
   sync_point          = resource.akamai_networklist_network_list.network_list_ip.sync_point
-  notes               = "TEST Notes"
+  note                = "TEST Notes"
   notification_emails = ["user@example.com"]
 }
 ```

@@ -599,7 +599,7 @@ func TestResProperty(t *testing.T) {
 
 		return func(t *testing.T) {
 			resource.UnitTest(t, resource.TestCase{
-				Providers: testAccProviders,
+				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{{
 					Config:      loadFixtureString("testdata/TestResProperty/ConfigError/%s.tf", fixtureName),
 					ExpectError: regexp.MustCompile(rx),
@@ -632,7 +632,7 @@ func TestResProperty(t *testing.T) {
 
 			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
-					Providers: testAccProviders,
+					ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{{
 						Config:      loadFixtureString("testdata/TestResProperty/ForbiddenAttr/%s.tf", fixtureName),
 						ExpectError: regexp.MustCompile("See the Akamai Terraform Upgrade Guide"),
@@ -659,9 +659,9 @@ func TestResProperty(t *testing.T) {
 
 			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
-					Providers:  testAccProviders,
-					IsUnitTest: true,
-					Steps:      kase.Steps(State, fixturePrefix),
+					ProviderFactories: testAccProviders,
+					IsUnitTest:        true,
+					Steps:             kase.Steps(State, fixturePrefix),
 				})
 			})
 
@@ -748,8 +748,8 @@ func TestResProperty(t *testing.T) {
 			kase.ClientSetup(State)
 			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
-					Providers: testAccProviders,
-					Steps:     kase.Steps(State, ""),
+					ProviderFactories: testAccProviders,
+					Steps:             kase.Steps(State, ""),
 				})
 			})
 
@@ -866,7 +866,7 @@ func TestResProperty(t *testing.T) {
 
 			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
-					Providers: testAccProviders,
+					ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
 							Config: loadFixtureString("testdata/%s-step0.tf", t.Name()),
@@ -915,7 +915,7 @@ func TestResProperty(t *testing.T) {
 
 			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
-					Providers: testAccProviders,
+					ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
 							Config: loadFixtureString("testdata/%s/step0.tf", t.Name()),
@@ -966,7 +966,7 @@ func TestResProperty(t *testing.T) {
 			ExpectRemoveProperty(client, "prp_1", "", "")
 			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
-					Providers: testAccProviders,
+					ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
 							Config: loadFixtureString("testdata/TestResProperty/property_update_with_validation_error_for_rules.tf"),
@@ -1047,7 +1047,7 @@ func TestResProperty(t *testing.T) {
 
 			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
-					Providers: testAccProviders,
+					ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
 							Config: loadFixtureString("testdata/TestResProperty/CreationUpdateNoHostnames/creation/property_create.tf"),
@@ -1103,7 +1103,7 @@ func TestResProperty(t *testing.T) {
 
 			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
-					Providers: testAccProviders,
+					ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
 							Config:      loadFixtureString("testdata/TestResProperty/CreationUpdateNoHostnames/creation/property_create.tf"),
@@ -1151,7 +1151,7 @@ func TestResProperty(t *testing.T) {
 
 			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
-					Providers: testAccProviders,
+					ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
 							Config:      loadFixtureString("testdata/TestResProperty/CreationUpdateNoHostnames/creation/property_create.tf"),
@@ -1194,7 +1194,7 @@ func TestResProperty(t *testing.T) {
 
 			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
-					Providers: testAccProviders,
+					ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{{
 						Config:      loadFixtureString("testdata/TestResProperty/Creation/property.tf"),
 						ExpectError: regexp.MustCompile("group not found: grp_0"),
@@ -1221,7 +1221,7 @@ func TestResProperty(t *testing.T) {
 			client.On("CreateProperty", AnyCTX, req).Return(nil, fmt.Errorf("given property name is not unique"))
 			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
-					Providers: testAccProviders,
+					ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
 							Config:      loadFixtureString("testdata/%s.tf", t.Name()),
