@@ -63,18 +63,18 @@ The Domain itself is represented by a [`akamai_gtm_domain` resource](../resource
 
 To define the entire configuration, we start by opening the resource block and giving the domain a `name`. In this case, we're going to use the name "example".
 
-Next, we set the required (`name`, `type`) and optional (`group_id`, `contract_id`, `email_notification_list`, `comment`) arguments.
+Next, we set the required (`name`, `type`) and optional (`group`, `contract`, `email_notification_list`, `comment`) arguments.
 
 Once you're done, your Domain configuration should look like this:
 
 ```
 resource "akamai_gtm_domain" "example" {
-	name = "example.akadns.net"                     # Domain Name
-	type = "weighted"				# Domain type
-	group_id    = data.akamai_group.default.id         # Group ID variable
-	contract_id = data.akamai_contract.default.id      # Contract ID variable
-	email_notification_list = ["user@demo.me"]        # email notification list
-	comment = "example domain demo"
+  name                    = "example.akadns.net"            # Domain Name
+  type                    = "weighted"                      # Domain type
+  group                   = data.akamai_group.default.id    # Group ID variable
+  contract                = data.akamai_contract.default.id # Contract ID variable
+  email_notification_list = ["user@demo.me"]                # email notification list
+  comment                 = "example domain demo"
 }
 ```
 > **Note:** Notice the use of variables from the previous section to reference the group and contract IDs. These will be replaced at runtime by Terraform with the actual values.
@@ -91,9 +91,9 @@ Once done, your Datacenter configuration should look like this:
 
 ```
 resource "akamai_gtm_datacenter" "example_dc" {
-	domain = akamai_gtm_domain.example.name		# domain
-	nickname = "datacenter_1"   			# Datacenter Nickname
-	depends_on = [akamai_gtm_domain.example]
+  domain     = akamai_gtm_domain.example.name # domain
+  nickname   = "datacenter_1"                 # Datacenter Nickname
+  depends_on = [akamai_gtm_domain.example]
 }
 ```
 
