@@ -1,5 +1,11 @@
 # RELEASE NOTES
 
+## 3.X.X (XX X, 20XX)
+
+#### BUG FIXES:
+* PAPI
+  * Fix issue when `akamai_property` imported an older version and during update it didn't create a new version from it
+
 ## 3.4.0 (March 2, 2023)
 
 #### FEATURES/ENHANCEMENTS:
