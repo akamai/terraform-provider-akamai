@@ -5,7 +5,9 @@ description: |-
   Certificate Provisioning module for the Akamai Terraform Provider
 ---
 
-Increase your customers' trust, encrypt sensitive information, and improve SEO rankings using first- and third-party SSL/TLS Domain Validation certificates that securely deliver content to and from your site.
+Increase your customers' trust, encrypt sensitive information, and improve SEO rankings using Akamai-managed and third-party SSL/TLS Domain Validation certificates that securely deliver content to and from your site.
+
+<blockquote style="border-left-style: solid; border-left-color: #5bc0de; border-width: 0.25em; padding: 1.33rem; background-color: #e3edf2;"><img src="https://techdocs.akamai.com/terraform-images/img/note.svg" style="float:left; display:inline;" /><div style="overflow:auto;">When you create a certificate enrollment with CPS, Akamai manages the resulting first-party certificate. </div></blockquote>
 
 ## Before you begin
 
@@ -30,7 +32,7 @@ value = data.akamai_contracts.my-contracts
 }
 ```
 
-## First-party enrollments
+## Akamai-managed enrollments
 
 ### Create a Domain Validated enrollment
 
