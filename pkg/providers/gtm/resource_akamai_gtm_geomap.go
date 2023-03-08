@@ -3,6 +3,7 @@ package gtm
 import (
 	"context"
 	"fmt"
+	"sort"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/gtm"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/session"
@@ -11,6 +12,8 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+
+	"golang.org/x/exp/slices"
 )
 
 func resourceGTMv1Geomap() *schema.Resource {
@@ -429,13 +432,20 @@ func populateGeoAssignmentsObject(d *schema.ResourceData, geo *gtm.GeoMap, m int
 	// pull apart List
 	geoAssignmentsList, err := tools.GetListValue("assignment", d)
 	if err == nil {
-		geoAssignmentsObjList := make([]*gtm.GeoAssignment, len(geoAssignmentsList)) // create new object list
-		for i, v := range geoAssignmentsList {
+		dcIds := make([]int, len(geoAssignmentsList))
+		for k, v := range geoAssignmentsList {
 			geoMap, ok := v.(map[string]interface{})
 			if !ok {
 				logger.Warnf("populateGeoAssignmentsObject failed, bad geoMap format: %s", v)
 				continue
 			}
+			dcIds[k] = geoMap["datacenter_id"].(int)
+		}
+		sort.Sort(sort.IntSlice(dcIds))
+
+		geoAssignmentsObjList := make([]*gtm.GeoAssignment, len(geoAssignmentsList)) // create new object list
+		for _, v := range geoAssignmentsList {
+			geoMap := v.(map[string]interface{})
 			geoAssignment := gtm.GeoAssignment{}
 			geoAssignment.DatacenterId = geoMap["datacenter_id"].(int)
 			geoAssignment.Nickname = geoMap["nickname"].(string)
@@ -450,7 +460,7 @@ func populateGeoAssignmentsObject(d *schema.ResourceData, geo *gtm.GeoMap, m int
 				}
 				geoAssignment.Countries = ls
 			}
-			geoAssignmentsObjList[i] = &geoAssignment
+			geoAssignmentsObjList[slices.Index(dcIds, geoAssignment.DatacenterId)] = &geoAssignment
 		}
 		geo.Assignments = geoAssignmentsObjList
 	}
@@ -488,7 +498,7 @@ func populateTerraformGeoAssignmentsState(d *schema.ResourceData, geo *gtm.GeoMa
 	}
 	if len(objectInventory) > 0 {
 		logger.Debugf("Geo Assignment objects left...")
-		// Objects not in the state yet. Add. Unfortunately, they not align with instance indices in the config
+		// Objects not in the state yet. Add.
 		for _, maObj := range objectInventory {
 			aNew := map[string]interface{}{
 				"datacenter_id": maObj.DatacenterId,
@@ -498,7 +508,20 @@ func populateTerraformGeoAssignmentsState(d *schema.ResourceData, geo *gtm.GeoMa
 			aStateList = append(aStateList, aNew)
 		}
 	}
-	if err := d.Set("assignment", aStateList); err != nil {
+
+	dcIds := make([]int, len(aStateList))
+	for k, st := range aStateList {
+		elt, _ := st.(map[string]interface{})
+		dcIds[k] = elt["datacenter_id"].(int)
+	}
+	sort.Sort(sort.IntSlice(dcIds))
+	aStateSortedList := make([]interface{}, len(aStateList))
+	for _, st := range aStateList {
+		elt, _ := st.(map[string]interface{})
+		aStateSortedList[slices.Index(dcIds, elt["datacenter_id"].(int))] = st
+	}
+
+	if err := d.Set("assignment", aStateSortedList); err != nil {
 		logger.Errorf("populateTerraformGeoAssignmentsState failed: %s", err.Error())
 	}
 }
