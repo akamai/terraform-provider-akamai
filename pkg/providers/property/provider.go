@@ -94,6 +94,7 @@ func Provider() *schema.Provider {
 			"akamai_property_products":           dataSourcePropertyProducts(),
 			"akamai_property_rule_formats":       dataSourcePropertyRuleFormats(),
 			"akamai_property_rules":              dataSourcePropertyRules(),
+			"akamai_property_rules_builder":      dataSourcePropertyRulesBuilder(),
 			"akamai_property_rules_template":     dataSourcePropertyRulesTemplate(),
 		},
 		ResourcesMap: map[string]*schema.Resource{

@@ -1,0 +1,275 @@
+{
+  "rules": {
+    "advancedOverride": "test",
+    "behaviors": [
+      {
+        "name": "origin",
+        "options": {
+          "cacheKeyHostname": "ORIGIN_HOSTNAME",
+          "compress": true,
+          "customCertificateAuthorities": [],
+          "customCertificates": [],
+          "customValidCnValues": [],
+          "enableTrueClientIp": true,
+          "forwardHostHeader": "REQUEST_HOST_HEADER",
+          "httpPort": 80,
+          "httpsPort": 443,
+          "originSni": true,
+          "originType": "CUSTOMER",
+          "standardCertificateAuthorities": [],
+          "trueClientIpHeader": "True-Client-IP",
+          "verificationMode": "PLATFORM_SETTINGS"
+        }
+      },
+      {
+        "name": "adScalerCircuitBreaker",
+        "options": {
+          "returnErrorResponseCodeBased": 502
+        }
+      },
+      {
+        "name": "apiPrioritization",
+        "options": {
+          "cloudletPolicy": {
+            "id": 1337,
+            "name": "test"
+          }
+        }
+      },
+      {
+        "name": "caching",
+        "options": {
+          "behavior": "NO_STORE"
+        }
+      },
+      {
+        "name": "sureRoute",
+        "options": {
+          "enabled": true,
+          "raceStatTtl": "30m",
+          "toHostStatus": "INCOMING_HH",
+          "type": "PERFORMANCE"
+        }
+      },
+      {
+        "name": "tieredDistribution",
+        "options": {
+          "enabled": true,
+          "tieredDistributionMap": "CH2"
+        }
+      },
+      {
+        "name": "prefetch",
+        "options": {
+          "enabled": true
+        }
+      },
+      {
+        "name": "allowPost",
+        "options": {
+          "enabled": true
+        }
+      },
+      {
+        "name": "report",
+        "options": {
+          "cookies": [],
+          "logCookies": "OFF",
+          "logUserAgent": true
+        }
+      },
+      {
+        "name": "mPulse",
+        "options": {
+          "configOverride": "\n",
+          "enabled": true,
+          "loaderVersion": "V12"
+        }
+      }
+    ],
+    "children": [
+      {
+        "behaviors": [
+          {
+            "name": "gzipResponse",
+            "options": {
+              "behavior": "ALWAYS"
+            }
+          }
+        ],
+        "criteria": [
+          {
+            "name": "contentType",
+            "options": {
+              "matchOperator": "IS_ONE_OF",
+              "matchWildcard": true,
+              "values": [
+                "text/*",
+                "application/javascript",
+                "application/x-javascript",
+                "application/x-javascript*",
+                "application/json",
+                "application/x-json",
+                "application/*+json",
+                "application/*+xml",
+                "application/text",
+                "application/vnd.microsoft.icon",
+                "application/vnd-ms-fontobject",
+                "application/x-font-ttf",
+                "application/x-font-opentype",
+                "application/x-font-truetype",
+                "application/xmlfont/eot",
+                "application/xml",
+                "font/opentype",
+                "font/otf",
+                "font/eot",
+                "image/svg+xml",
+                "image/vnd.microsoft.icon"
+              ]
+            }
+          }
+        ],
+        "name": "Content Compression",
+        "options": {},
+        "criteriaMustSatisfy": "all"
+      },
+      {
+        "behaviors": [
+          {
+            "name": "caching",
+            "options": {
+              "behavior": "MAX_AGE",
+              "ttl": "1d"
+            }
+          },
+          {
+            "name": "prefetch",
+            "options": {}
+          },
+          {
+            "name": "prefetchable",
+            "options": {
+              "enabled": true
+            }
+          }
+        ],
+        "criteria": [
+          {
+            "name": "fileExtension",
+            "options": {
+              "matchOperator": "IS_ONE_OF",
+              "values": [
+                "aif",
+                "aiff",
+                "au",
+                "avi",
+                "bin",
+                "bmp",
+                "cab",
+                "carb",
+                "cct",
+                "cdf",
+                "class",
+                "css",
+                "doc",
+                "dcr",
+                "dtd",
+                "exe",
+                "flv",
+                "gcf",
+                "gff",
+                "gif",
+                "grv",
+                "hdml",
+                "hqx",
+                "ico",
+                "ini",
+                "jpeg",
+                "jpg",
+                "js",
+                "mov",
+                "mp3",
+                "nc",
+                "pct",
+                "pdf",
+                "png",
+                "ppc",
+                "pws",
+                "swa",
+                "swf",
+                "txt",
+                "vbs",
+                "w32",
+                "wav",
+                "wbmp",
+                "wml",
+                "wmlc",
+                "wmls",
+                "wmlsc",
+                "xsd",
+                "zip",
+                "webp",
+                "jxr",
+                "hdp",
+                "wdp",
+                "pict",
+                "tif",
+                "tiff",
+                "mid",
+                "midi",
+                "ttf",
+                "eot",
+                "woff",
+                "woff2",
+                "otf",
+                "svg",
+                "svgz",
+                "webp",
+                "jxr",
+                "jar",
+                "jp2"
+              ]
+            }
+          }
+        ],
+        "name": "Static Content",
+        "options": {},
+        "criteriaMustSatisfy": "all"
+      },
+      {
+        "behaviors": [
+          {
+            "name": "downstreamCache",
+            "options": {
+              "behavior": "TUNNEL_ORIGIN"
+            }
+          }
+        ],
+        "criteria": [
+          {
+            "name": "cacheability",
+            "options": {
+              "matchOperator": "IS_NOT",
+              "value": "CACHEABLE"
+            }
+          }
+        ],
+        "name": "Dynamic Content",
+        "options": {},
+        "criteriaMustSatisfy": "all"
+      }
+    ],
+    "comments": "test",
+    "criteriaLocked": true,
+    "customOverride": {
+      "name": "test",
+      "overrideId": "test"
+    },
+    "name": "default",
+    "options": {},
+    "uuid": "test",
+    "templateUuid": "test",
+    "templateLink": "test",
+    "criteriaMustSatisfy": "test"
+  }
+}

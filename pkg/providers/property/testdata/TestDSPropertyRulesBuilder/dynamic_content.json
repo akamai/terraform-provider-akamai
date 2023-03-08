@@ -1,0 +1,24 @@
+{
+  "rules": {
+    "behaviors": [
+      {
+        "name": "downstreamCache",
+        "options": {
+          "behavior": "TUNNEL_ORIGIN"
+        }
+      }
+    ],
+    "criteria": [
+      {
+        "name": "cacheability",
+        "options": {
+          "matchOperator": "IS_NOT",
+          "value": "CACHEABLE"
+        }
+      }
+    ],
+    "name": "Dynamic Content",
+    "options": {},
+    "criteriaMustSatisfy": "all"
+  }
+}
