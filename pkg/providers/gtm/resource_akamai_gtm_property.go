@@ -14,6 +14,8 @@ import (
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+
+	"golang.org/x/exp/slices"
 )
 
 func resourceGTMv1Property() *schema.Resource {
@@ -915,8 +917,19 @@ func populateTrafficTargetObject(ctx context.Context, d *schema.ResourceData, pr
 	// pull apart List
 	traffTargList, err := tools.GetInterfaceArrayValue("traffic_target", d)
 	if err == nil {
+		dcIds := make([]int, len(traffTargList))
+		for k, v := range traffTargList {
+			ttMap, ok := v.(map[string]interface{})
+			if !ok {
+				logger.Warnf("populateTrafficTargetObject failed, bad trafficTarget format: %s", v)
+				continue
+			}
+			dcIds[k] = ttMap["datacenter_id"].(int)
+		}
+		sort.Sort(sort.IntSlice(dcIds))
+
 		trafficObjList := make([]*gtm.TrafficTarget, len(traffTargList)) // create new object list
-		for i, v := range traffTargList {
+		for _, v := range traffTargList {
 			ttMap := v.(map[string]interface{})
 			trafficTarget := inst.Client(meta).NewTrafficTarget(ctx) // create new object
 			trafficTarget.DatacenterId = ttMap["datacenter_id"].(int)
@@ -927,11 +940,12 @@ func populateTrafficTargetObject(ctx context.Context, d *schema.ResourceData, pr
 				for i, sl := range ttMap["servers"].(*schema.Set).List() {
 					ls[i] = sl.(string)
 				}
+				sort.Sort(sort.StringSlice(ls))
 				trafficTarget.Servers = ls
 			}
 			trafficTarget.Name = ttMap["name"].(string)
 			trafficTarget.HandoutCName = ttMap["handout_cname"].(string)
-			trafficObjList[i] = trafficTarget
+			trafficObjList[slices.Index(dcIds, trafficTarget.DatacenterId)] = trafficTarget
 		}
 		prop.TrafficTargets = trafficObjList
 	} else {
@@ -964,14 +978,16 @@ func populateTerraformTrafficTargetState(d *schema.ResourceData, prop *gtm.Prope
 		tt["enabled"] = ttObject.Enabled
 		tt["weight"] = ttObject.Weight
 		tt["handout_cname"] = ttObject.HandoutCName
+		sort.Sort(sort.StringSlice(ttObject.Servers))
 		tt["servers"] = ttObject.Servers
 		// remove object
 		delete(objectInventory, objIndex)
 	}
 	if len(objectInventory) > 0 {
-		// Objects not in the state yet. Add. Unfortunately, they not align with instance indices in the config
+		// Objects not in the state yet. Add.
 		for _, mttObj := range objectInventory {
 			logger.Debugf("Property TrafficObject NEW State Object: %d", mttObj.DatacenterId)
+			sort.Sort(sort.StringSlice(mttObj.Servers))
 			ttNew := map[string]interface{}{
 				"datacenter_id": mttObj.DatacenterId,
 				"enabled":       mttObj.Enabled,
@@ -983,7 +999,20 @@ func populateTerraformTrafficTargetState(d *schema.ResourceData, prop *gtm.Prope
 			ttStateList = append(ttStateList, ttNew)
 		}
 	}
-	_ = d.Set("traffic_target", ttStateList)
+
+	dcIds := make([]int, len(ttStateList))
+	for k, st := range ttStateList {
+		elt, _ := st.(map[string]interface{})
+		dcIds[k] = elt["datacenter_id"].(int)
+	}
+	sort.Sort(sort.IntSlice(dcIds))
+	ttStateSortedList := make([]interface{}, len(ttStateList))
+	for _, st := range ttStateList {
+		elt, _ := st.(map[string]interface{})
+		ttStateSortedList[slices.Index(dcIds, elt["datacenter_id"].(int))] = st
+	}
+
+	_ = d.Set("traffic_target", ttStateSortedList)
 }
 
 // Populate existing static_rr_sets object from resource data
@@ -1055,11 +1084,23 @@ func populateTerraformStaticRRSetState(d *schema.ResourceData, prop *gtm.Propert
 
 // Populate existing Liveness test  object from resource data
 func populateLivenessTestObject(ctx context.Context, meta akamai.OperationMeta, d *schema.ResourceData, prop *gtm.Property) {
+	logger := meta.Log("Akamai GTM", "populateLivenessTestObject")
 
 	liveTestList, err := tools.GetInterfaceArrayValue("liveness_test", d)
 	if err == nil {
+		ltNames := make([]string, len(liveTestList))
+		for k, lt := range liveTestList {
+			livenessTest, ok := lt.(map[string]interface{})
+			if !ok {
+				logger.Warnf("populateLivenessTestObject failed, bad livenessTest format: %s", lt)
+				continue
+			}
+			ltNames[k] = livenessTest["name"].(string)
+		}
+		sort.Sort(sort.StringSlice(ltNames))
+
 		liveTestObjList := make([]*gtm.LivenessTest, len(liveTestList)) // create new object list
-		for i, l := range liveTestList {
+		for _, l := range liveTestList {
 			v := l.(map[string]interface{})
 			lt := inst.Client(meta).NewLivenessTest(ctx, v["name"].(string),
 				v["test_object_protocol"].(string),
@@ -1087,16 +1128,22 @@ func populateLivenessTestObject(ctx context.Context, meta akamai.OperationMeta, 
 			httpHeaderList := v["http_header"].([]interface{})
 			if httpHeaderList != nil {
 				headerObjList := make([]*gtm.HttpHeader, len(httpHeaderList)) // create new object list
-				for i, h := range httpHeaderList {
+				headerNames := make([]string, len(httpHeaderList))
+				for k, h := range httpHeaderList {
+					headerNames[k] = h.(map[string]interface{})["name"].(string)
+				}
+				sort.Sort(sort.StringSlice(headerNames))
+
+				for _, h := range httpHeaderList {
 					recMap := h.(map[string]interface{})
 					record := lt.NewHttpHeader() // create new object
 					record.Name = recMap["name"].(string)
 					record.Value = recMap["value"].(string)
-					headerObjList[i] = record
+					headerObjList[slices.Index(headerNames, record.Name)] = record
 				}
 				lt.HttpHeaders = headerObjList
 			}
-			liveTestObjList[i] = lt
+			liveTestObjList[slices.Index(ltNames, lt.Name)] = lt
 		}
 		prop.LivenessTests = liveTestObjList
 	}
@@ -1146,12 +1193,17 @@ func populateTerraformLivenessTestState(d *schema.ResourceData, prop *gtm.Proper
 		lt["resource_type"] = ltObject.ResourceType
 		lt["recursion_requested"] = ltObject.RecursionRequested
 		httpHeaderListNew := make([]interface{}, len(ltObject.HttpHeaders))
-		for i, r := range ltObject.HttpHeaders {
+		headerNames := make([]string, len(ltObject.HttpHeaders))
+		for k, r := range ltObject.HttpHeaders {
+			headerNames[k] = r.Name
+		}
+		sort.Sort(sort.StringSlice(headerNames))
+		for _, r := range ltObject.HttpHeaders {
 			httpHeaderNew := map[string]interface{}{
 				"name":  r.Name,
 				"value": r.Value,
 			}
-			httpHeaderListNew[i] = httpHeaderNew
+			httpHeaderListNew[slices.Index(headerNames, r.Name)] = httpHeaderNew
 		}
 		lt["http_header"] = httpHeaderListNew
 		// remove object
@@ -1159,7 +1211,7 @@ func populateTerraformLivenessTestState(d *schema.ResourceData, prop *gtm.Proper
 	}
 	if len(objectInventory) > 0 {
 		logger.Debugf("Property LivenessTest objects left...")
-		// Objects not in the state yet. Add. Unfortunately, they not align with instance indices in the config
+		// Objects not in the state yet. Add.
 		for _, l := range objectInventory {
 			ltNew := map[string]interface{}{
 				"name":                             l.Name,
@@ -1187,18 +1239,36 @@ func populateTerraformLivenessTestState(d *schema.ResourceData, prop *gtm.Proper
 				"recursion_requested":              l.RecursionRequested,
 			}
 			httpHeaderListNew := make([]interface{}, len(l.HttpHeaders))
-			for i, r := range l.HttpHeaders {
+			headerNames := make([]string, len(l.HttpHeaders))
+			for k, r := range l.HttpHeaders {
+				headerNames[k] = r.Name
+			}
+			sort.Sort(sort.StringSlice(headerNames))
+			for _, r := range l.HttpHeaders {
 				httpHeaderNew := map[string]interface{}{
 					"name":  r.Name,
 					"value": r.Value,
 				}
-				httpHeaderListNew[i] = httpHeaderNew
+				httpHeaderListNew[slices.Index(headerNames, r.Name)] = httpHeaderNew
 			}
 			ltNew["http_header"] = httpHeaderListNew
 			ltStateList = append(ltStateList, ltNew)
 		}
 	}
-	_ = d.Set("liveness_test", ltStateList)
+
+	ltNames := make([]string, len(ltStateList))
+	for k, lt := range ltStateList {
+		elt, _ := lt.(map[string]interface{})
+		ltNames[k] = elt["name"].(string)
+	}
+	sort.Sort(sort.StringSlice(ltNames))
+	ltStateSortedList := make([]interface{}, len(ltStateList))
+	for _, lt := range ltStateList {
+		elt, _ := lt.(map[string]interface{})
+		ltStateSortedList[slices.Index(ltNames, elt["name"].(string))] = lt
+	}
+
+	_ = d.Set("liveness_test", ltStateSortedList)
 
 }
 
