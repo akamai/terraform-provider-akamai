@@ -43,7 +43,6 @@ This data source supports these arguments:
 
 * `match_rules` - (Optional) A list of Cloudlet-specific match rules for a policy.
   * `name` - (Optional) The name of the rule.
-  * `type` - (Optional) The type of Cloudlet the rule is for. For example, the string for Application Load Balancer is `albMatchRule`.
   * `start` - (Optional) The start time for this match. Specify the value in UTC in seconds since the epoch.
   * `end` - (Optional) The end time for this match. Specify the value in UTC in seconds since the epoch.
   * `id` - (Optional) An identifier for Akamai internal use only.
