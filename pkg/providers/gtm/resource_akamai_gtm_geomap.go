@@ -11,6 +11,8 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+
+	"golang.org/x/exp/slices"
 )
 
 func resourceGTMv1Geomap() *schema.Resource {
@@ -456,47 +458,70 @@ func populateGeoAssignmentsObject(d *schema.ResourceData, geo *gtm.GeoMap, m int
 	}
 }
 
+func setGeoAssignmentAtIndex(asArr *[]interface{}, as *gtm.GeoAssignment, index int, doReplace bool, m interface{}) {
+	meta := akamai.Meta(m)
+	logger := meta.Log("Akamai GTM", "setGeoAssignmentAtIndex")
+
+	if !doReplace {
+		newInt := make([]interface{}, 1)
+		newInt[0] = make(map[string]interface{})
+		if index == 0 {
+			*asArr = append(newInt, *asArr...)
+		} else {
+			*asArr = append((*asArr)[:index], append(newInt, (*asArr)[index:]...)...)
+		}
+	}
+
+	targetAs := (*asArr)[index].(map[string]interface{})
+	targetAs["datacenter_id"] = as.DatacenterId
+	targetAs["nickname"] = as.Nickname
+
+	cts, ok := targetAs["countries"]
+	if ok {
+		countries, cOk := cts.(*schema.Set)
+		if !cOk {
+			logger.Warnf("wrong type conversion: expected *schema.Set, got %T", countries)
+		}
+		targetAs["countries"] = reconcileTerraformLists(countries.List(), convertStringToInterfaceList(as.Countries, m), m)
+	} else {
+		targetAs["countries"] = as.Countries
+	}
+}
+
 // create and populate Terraform geoMap assignments schema
 func populateTerraformGeoAssignmentsState(d *schema.ResourceData, geo *gtm.GeoMap, m interface{}) {
 	meta := akamai.Meta(m)
 	logger := meta.Log("Akamai GTM", "populateTerraformGeoAssignmentsState")
 
-	objectInventory := make(map[int]*gtm.GeoAssignment, len(geo.Assignments))
-	if len(geo.Assignments) > 0 {
-		for _, aObj := range geo.Assignments {
-			objectInventory[aObj.DatacenterId] = aObj
-		}
-	}
 	aStateList, _ := tools.GetInterfaceArrayValue("assignment", d)
-	for _, aMap := range aStateList {
-		a := aMap.(map[string]interface{})
-		objIndex := a["datacenter_id"].(int)
-		aObject := objectInventory[objIndex]
-		if aObject == nil {
-			logger.Warnf("Geo Assignment %d NOT FOUND in returned GTM Object", a["datacenter_id"])
-			continue
-		}
-		a["datacenter_id"] = aObject.DatacenterId
-		a["nickname"] = aObject.Nickname
-		countries, ok := a["countries"].(*schema.Set)
-		if !ok {
-			logger.Warnf("wrong type conversion: expected *schema.Set, got %T", countries)
-		}
-		a["countries"] = reconcileTerraformLists(countries.List(), convertStringToInterfaceList(aObject.Countries, m), m)
-		// remove object
-		delete(objectInventory, objIndex)
-	}
-	if len(objectInventory) > 0 {
-		logger.Debugf("Geo Assignment objects left...")
-		// Objects not in the state yet. Add. Unfortunately, they not align with instance indices in the config
-		for _, maObj := range objectInventory {
-			aNew := map[string]interface{}{
-				"datacenter_id": maObj.DatacenterId,
-				"nickname":      maObj.Nickname,
-				"countries":     maObj.Countries,
+	stateIdx := 0
+
+	for _, aObj := range geo.Assignments {
+		idx := slices.IndexFunc(aStateList, func(as interface{}) bool {
+			return as.(map[string]interface{})["datacenter_id"].(int) == aObj.DatacenterId
+		})
+
+		if idx == -1 {
+			if stateIdx == 0 {
+				logger.Debugf("assignment for dc %s not found into the state, prepending it", aObj.DatacenterId)
+				setGeoAssignmentAtIndex(&aStateList, aObj, 0, false, m)
+			} else {
+				logger.Debugf("assignment for dc %s not found into the state, inserting it at position %s into the state", aObj.DatacenterId, stateIdx)
+				setGeoAssignmentAtIndex(&aStateList, aObj, stateIdx, false, m)
 			}
-			aStateList = append(aStateList, aNew)
+		} else {
+			if idx < stateIdx {
+				stateIdx--
+				logger.Debugf("assignment for dc %s will now be placed after the position it was in the past (moving it from %s to %s)", aObj.DatacenterId, idx, stateIdx)
+				aStateList = append(aStateList[:idx], aStateList[idx+1:]...)
+				setGeoAssignmentAtIndex(&aStateList, aObj, stateIdx, false, m)
+			} else {
+				logger.Debugf("assignment for dc %s will be updated in-place into the state (index %s)", aObj.DatacenterId, idx)
+				setGeoAssignmentAtIndex(&aStateList, aObj, idx, true, m)
+				stateIdx = idx
+			}
 		}
+		stateIdx++
 	}
 	if err := d.Set("assignment", aStateList); err != nil {
 		logger.Errorf("populateTerraformGeoAssignmentsState failed: %s", err.Error())

@@ -17,6 +17,7 @@ require (
 	github.com/spf13/cast v1.3.1
 	github.com/stretchr/testify v1.7.2
 	github.com/tj/assert v0.0.3
+	golang.org/x/exp v0.0.0-20230307190834-24139beb5833
 	google.golang.org/grpc v1.50.1
 )
 
