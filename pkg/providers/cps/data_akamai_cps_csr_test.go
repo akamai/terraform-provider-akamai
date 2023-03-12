@@ -182,6 +182,58 @@ var (
 		},
 	}
 
+	bothAlgorithmsDataWithGetLongerChangeHistory = testDataForCPSCSR{
+		Enrollment:   *enrollmentThirdParty,
+		EnrollmentID: 2,
+		GetChangeStatusResponse: cps.Change{
+			StatusInfo: &cps.StatusInfo{
+				Status: "not-in-list",
+			},
+		},
+		GetChangeHistoryResponse: &cps.GetChangeHistoryResponse{
+			Changes: []cps.ChangeHistory{
+				{
+					Action:                         "action1",
+					ActionDescription:              "description1",
+					BusinessCaseID:                 "id",
+					CreatedBy:                      "user",
+					CreatedOn:                      "",
+					LastUpdated:                    "",
+					MultiStackedCertificates:       []cps.CertificateChangeHistory{},
+					PrimaryCertificate:             cps.CertificateChangeHistory{},
+					PrimaryCertificateOrderDetails: cps.CertificateOrderDetails{},
+					RA:                             "",
+					Status:                         "",
+				},
+				{
+					Action:            "action1",
+					ActionDescription: "description1",
+					BusinessCaseID:    "id",
+					CreatedBy:         "user",
+					CreatedOn:         "",
+					LastUpdated:       "",
+					MultiStackedCertificates: []cps.CertificateChangeHistory{
+						{
+							Certificate:  "-----BEGIN CERTIFICATE RSA REQUEST-----\n...RSA...\n-----END CERTIFICATE REQUEST-----",
+							TrustChain:   "-----BEGIN CERTIFICATE TRUST-CHAIN RSA REQUEST-----\n...\n-----END CERTIFICATE REQUEST-----",
+							CSR:          "-----BEGIN CERTIFICATE CSR RSA REQUEST-----\n...\n-----END CERTIFICATE REQUEST-----",
+							KeyAlgorithm: "RSA",
+						},
+					},
+					PrimaryCertificate: cps.CertificateChangeHistory{
+						Certificate:  "-----BEGIN CERTIFICATE ECDSA REQUEST-----\n...\n-----END CERTIFICATE REQUEST-----",
+						TrustChain:   "-----BEGIN CERTIFICATE TRUST-CHAIN ECDSA REQUEST-----\n...\n-----END CERTIFICATE REQUEST-----",
+						CSR:          "-----BEGIN CERTIFICATE CSR ECDSA REQUEST-----\n...\n-----END CERTIFICATE REQUEST-----",
+						KeyAlgorithm: "ECDSA",
+					},
+					PrimaryCertificateOrderDetails: cps.CertificateOrderDetails{},
+					RA:                             "",
+					Status:                         "",
+				},
+			},
+		},
+	}
+
 	RSAData = testDataForCPSCSR{
 		Enrollment:   *enrollmentThirdParty,
 		EnrollmentID: 2,
@@ -308,6 +360,14 @@ func TestDataCPSCSR(t *testing.T) {
 			configPath: "testdata/TestDataCPSCSR/default.tf",
 			error:      nil,
 		},
+		"happy path with both algorithms with get longer change history": {
+			init: func(t *testing.T, m *cps.Mock, testData testDataForCPSCSR) {
+				expectReadCPSCSRWithHistory(t, m, testData, 5)
+			},
+			mockData:   bothAlgorithmsDataWithGetLongerChangeHistory,
+			configPath: "testdata/TestDataCPSCSR/default.tf",
+			error:      nil,
+		},
 		"happy path with RSA algorithm": {
 			init: func(t *testing.T, m *cps.Mock, testData testDataForCPSCSR) {
 				expectReadCPSCSR(t, m, testData, 5)
@@ -397,18 +457,26 @@ func TestDataCPSCSR(t *testing.T) {
 func checkAttrsForCPSCSRFromHistory(data testDataForCPSCSR) resource.TestCheckFunc {
 	var checkFuncs []resource.TestCheckFunc
 	var rsa, ecdsa bool
-	for _, history := range append(data.GetChangeHistoryResponse.Changes[0].MultiStackedCertificates, data.GetChangeHistoryResponse.Changes[0].PrimaryCertificate) {
-		switch history.KeyAlgorithm {
-		case "RSA":
-			{
-				rsa = true
-				checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("data.akamai_cps_csr.test", "csr_rsa", history.CSR))
+	certificate_found := false
+	for _, change := range data.GetChangeHistoryResponse.Changes {
+		for _, certificate := range append(change.MultiStackedCertificates, change.PrimaryCertificate) {
+			switch certificate.KeyAlgorithm {
+			case "RSA":
+				{
+					rsa = true
+					checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("data.akamai_cps_csr.test", "csr_rsa", certificate.CSR))
+					certificate_found = true
+				}
+			case "ECDSA":
+				{
+					ecdsa = true
+					checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("data.akamai_cps_csr.test", "csr_ecdsa", certificate.CSR))
+					certificate_found = true
+				}
 			}
-		case "ECDSA":
-			{
-				ecdsa = true
-				checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("data.akamai_cps_csr.test", "csr_ecdsa", history.CSR))
-			}
+		}
+		if certificate_found {
+			continue
 		}
 	}
 	if !rsa {
