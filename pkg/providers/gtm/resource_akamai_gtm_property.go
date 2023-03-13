@@ -998,56 +998,6 @@ func populateTerraformTrafficTargetState(d *schema.ResourceData, prop *gtm.Prope
 		stateIdx++
 	}
 	_ = d.Set("traffic_target", ttStateList)
-	/*
-		        meta := akamai.Meta(m)
-		        logger := meta.Log("Akamai GTM", "populateTerraformTrafficTargetState")
-
-		        objectInventory := make(map[int]*gtm.TrafficTarget, len(prop.TrafficTargets))
-		        objectInventoryDcs := make([]int, len(prop.TrafficTargets))
-		        if len(prop.TrafficTargets) > 0 {
-		                for i, aObj := range prop.TrafficTargets {
-		                        objectInventory[aObj.DatacenterId] = aObj
-		                        objectInventoryDcs[i] = aObj.DatacenterId
-		                }
-		        }
-
-			ttStateList, _ := tools.GetInterfaceArrayValue("traffic_target", d)
-			for _, ttMap := range ttStateList {
-				tt := ttMap.(map[string]interface{})
-				objIndex := tt["datacenter_id"].(int)
-				ttObject := objectInventory[objIndex]
-				if ttObject == nil {
-					logger.Warnf("Property TrafficTarget %d NOT FOUND in returned GTM Object", tt["datacenter_id"])
-					continue
-				}
-				tt["datacenter_id"] = ttObject.DatacenterId
-				tt["name"] = ttObject.Name
-				tt["enabled"] = ttObject.Enabled
-				tt["weight"] = ttObject.Weight
-				tt["handout_cname"] = ttObject.HandoutCName
-				tt["servers"] = ttObject.Servers
-				// Get dc index in objectInventoryDcs slice and remove object
-				elementBaseIdx := slices.Index(objectInventoryDcs, ttObject.DatacenterId)
-				objectInventoryDcs = append(objectInventoryDcs[:elementBaseIdx], objectInventoryDcs[elementBaseIdx+1:]...)
-			}
-			if len(objectInventoryDcs) > 0 {
-				// Objects not in the state yet. Add.
-				for _, dcId := range objectInventoryDcs {
-					mttObj := objectInventory[dcId]
-					logger.Debugf("Property TrafficObject NEW State Object: %d", mttObj.DatacenterId)
-					ttNew := map[string]interface{}{
-						"datacenter_id": mttObj.DatacenterId,
-						"enabled":       mttObj.Enabled,
-						"weight":        mttObj.Weight,
-						"name":          mttObj.Name,
-						"handout_cname": mttObj.HandoutCName,
-						"servers":       mttObj.Servers,
-					}
-					ttStateList = append(ttStateList, ttNew)
-				}
-			}
-		        _ = d.Set("traffic_target", ttStateList)
-	*/
 }
 
 // Populate existing static_rr_sets object from resource data
