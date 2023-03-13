@@ -457,7 +457,7 @@ func TestDataCPSCSR(t *testing.T) {
 func checkAttrsForCPSCSRFromHistory(data testDataForCPSCSR) resource.TestCheckFunc {
 	var checkFuncs []resource.TestCheckFunc
 	var rsa, ecdsa bool
-	certificate_found := false
+	certificateFound := false
 	for _, change := range data.GetChangeHistoryResponse.Changes {
 		for _, certificate := range append(change.MultiStackedCertificates, change.PrimaryCertificate) {
 			switch certificate.KeyAlgorithm {
@@ -465,17 +465,17 @@ func checkAttrsForCPSCSRFromHistory(data testDataForCPSCSR) resource.TestCheckFu
 				{
 					rsa = true
 					checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("data.akamai_cps_csr.test", "csr_rsa", certificate.CSR))
-					certificate_found = true
+					certificateFound = true
 				}
 			case "ECDSA":
 				{
 					ecdsa = true
 					checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("data.akamai_cps_csr.test", "csr_ecdsa", certificate.CSR))
-					certificate_found = true
+					certificateFound = true
 				}
 			}
 		}
-		if certificate_found {
+		if certificateFound {
 			break
 		}
 	}
