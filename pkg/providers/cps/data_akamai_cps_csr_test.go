@@ -476,7 +476,7 @@ func checkAttrsForCPSCSRFromHistory(data testDataForCPSCSR) resource.TestCheckFu
 			}
 		}
 		if certificate_found {
-			continue
+			break
 		}
 	}
 	if !rsa {

@@ -148,7 +148,7 @@ func createCSRAttrsFromHistory(ctx context.Context, client cps.CPS, enrollmentID
 				}
 			}
 			if csr_present {
-				continue
+				break
 			}
 		}
 	}
