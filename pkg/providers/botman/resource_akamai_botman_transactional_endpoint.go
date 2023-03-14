@@ -99,10 +99,14 @@ func resourceTransactionalEndpointCreate(ctx context.Context, d *schema.Resource
 
 	d.SetId(fmt.Sprintf("%d:%s:%s", configID, securityPolicyID, (response)["operationId"]))
 
-	return resourceTransactionalEndpointRead(ctx, d, m)
+	return transactionalEndpointRead(ctx, d, m, false)
 }
 
 func resourceTransactionalEndpointRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	return transactionalEndpointRead(ctx, d, m, true)
+}
+
+func transactionalEndpointRead(ctx context.Context, d *schema.ResourceData, m interface{}, readFromCache bool) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("botman", "resourceTransactionalEndpointReadAction")
@@ -133,12 +137,18 @@ func resourceTransactionalEndpointRead(ctx context.Context, d *schema.ResourceDa
 		SecurityPolicyID: securityPolicyID,
 		OperationID:      operationID,
 	}
-
-	response, err := client.GetTransactionalEndpoint(ctx, request)
-
-	if err != nil {
-		logger.Errorf("calling 'GetTransactionalEndpoint': %s", err.Error())
-		return diag.FromErr(err)
+	var response map[string]interface{}
+	if readFromCache {
+		response, err = getTransactionalEndpoint(ctx, request, m)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	} else {
+		response, err = client.GetTransactionalEndpoint(ctx, request)
+		if err != nil {
+			logger.Errorf("calling 'GetTransactionalEndpoint': %s", err.Error())
+			return diag.FromErr(err)
+		}
 	}
 
 	// Removing operationId from response to suppress diff
@@ -215,7 +225,7 @@ func resourceTransactionalEndpointUpdate(ctx context.Context, d *schema.Resource
 		return diag.FromErr(err)
 	}
 
-	return resourceTransactionalEndpointRead(ctx, d, m)
+	return transactionalEndpointRead(ctx, d, m, false)
 }
 
 func resourceTransactionalEndpointDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
