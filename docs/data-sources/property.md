@@ -5,11 +5,11 @@ subcategory: Property Provisioning
 
 # akamai_property
 
-Use the `akamai_property` data source to query and list the property ID and rule tree based on the property name.
+Use the `akamai_property` data source to query and list the identifier of property and rule tree based on the property name.
 
 ## Example usage
 
-This example returns the property ID and rule tree based on the property name and optional version argument:
+This example returns the identifier of property and rule tree based on the property name and optional version argument:
 
 
 ```hcl
@@ -18,7 +18,7 @@ data "akamai_property" "example" {
     version = "1"
 }
 
-output "my_property_ID" {
+output "my_id" {
   value = data.akamai_property.example
 }
 ```
@@ -34,5 +34,5 @@ This data source supports these arguments:
 
 This data source returns these attributes:
 
-* `property_ID` - A property's unique identifier, including the `prp_` prefix.
+* `id` - A property's unique identifier, including the `prp_` prefix.
 * `rules` - A JSON-encoded rule tree for a given property.
