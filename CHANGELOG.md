@@ -2,6 +2,11 @@
 
 ## X.X.X (X X, 2023)
 
+#### FEATURES/ENHANCEMENTS:
+* EdgeKV
+  * Added resource:
+    * [akamai_edgekv_group_items](x.md) - create, read, update, delete and import
+
 #### BUG FIXES:
 
 * Cloudlets

@@ -53,6 +53,7 @@ func Provider() *schema.Provider {
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"akamai_edgekv":                 resourceEdgeKV(),
+			"akamai_edgekv_group_items":     resourceEdgeKVGroupItems(),
 			"akamai_edgeworkers_activation": resourceEdgeworkersActivation(),
 			"akamai_edgeworker":             resourceEdgeWorker(),
 		},
