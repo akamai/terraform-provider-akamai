@@ -16,7 +16,7 @@ func validateRegex(pattern string) schema.SchemaValidateDiagFunc {
 	return func(i interface{}, path cty.Path) diag.Diagnostics {
 		value := fmt.Sprintf("%v", i)
 		matchString, err := re.MatchString(value)
-		if err != nil || !matchString {
+		if value != "" && (err != nil || !matchString) {
 			errorSummary := fmt.Sprintf("value %q does not match the pattern %q", value, pattern)
 			schemaField, err := tools.GetSchemaFieldNameFromPath(path)
 			if err == nil {
