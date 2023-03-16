@@ -92,7 +92,7 @@ func (r *registry) schemas() map[string]*schema.Schema {
 	for _, ruleFormat := range r.rules {
 		schemas[ruleFormat.version] = &schema.Schema{
 			Type:         schema.TypeList,
-			Required:     true,
+			Optional:     true,
 			MaxItems:     1,
 			ExactlyOneOf: registeredVersions,
 			Elem: &schema.Resource{
