@@ -45,7 +45,7 @@ func dataSourcePropertyRulesBuilderRead(_ context.Context, d *schema.ResourceDat
 	}
 
 	rulesUpdate := papi.RulesUpdate{
-		Rules: rules,
+		Rules: *rules,
 	}
 
 	JSON, err := json.MarshalIndent(rulesUpdate, "", "  ")

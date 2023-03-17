@@ -24,9 +24,12 @@ func ShouldFlattenFunc(ruleFormat string) func(string) bool {
 	return schemasRegistry.shouldFlattenFunc(ruleFormat)
 }
 
-// TypeMappings returns a map of mappings for given rule format
+// TypeMappings returns a map of mappings for a given rule format
 // that is: mappings of values to its expected form in json
 // the keys are "{behavior}.{option_name}.{value}".
+//
+// For example if a certain enum expects some of the fields to be of a different type than the others,
+// type mapping will take care of the conversion from the common terraform type of that attribute.
 func TypeMappings(ruleFormat string) map[string]any {
 	return schemasRegistry.typeMappings(ruleFormat)
 }

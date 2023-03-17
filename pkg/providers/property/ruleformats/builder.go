@@ -32,87 +32,78 @@ func NewBuilder(d *schema.ResourceData) *RulesBuilder {
 }
 
 // Build returns papi.Rules built from the terraform schema.
-func (r RulesBuilder) Build() (papi.Rules, error) {
-	rules, err := r.buildRule()
-	if err != nil {
-		return papi.Rules{}, err
-	}
-
-	return rules, nil
-}
-
-func (r RulesBuilder) buildRule() (papi.Rules, error) {
+func (r RulesBuilder) Build() (*papi.Rules, error) {
 	name, err := r.ruleName()
 	if err != nil {
-		return papi.Rules{}, err
+		return nil, err
 	}
 
 	variables, err := r.ruleVariables()
 	if err != nil {
-		return papi.Rules{}, err
+		return nil, err
 	}
 
 	criteriaMustSatisfy, err := r.ruleCriteriaMustSatisfy()
 	if err != nil && !errors.Is(err, ErrNotFound) {
-		return papi.Rules{}, err
+		return nil, err
 	}
 
 	isSecure, err := r.ruleIsSecure()
 	if err != nil && !errors.Is(err, ErrNotFound) {
-		return papi.Rules{}, err
+		return nil, err
 	}
 
 	advancedOverride, err := r.ruleAdvancedOverride()
 	if err != nil && !errors.Is(err, ErrNotFound) {
-		return papi.Rules{}, err
+		return nil, err
 	}
 
 	comments, err := r.ruleComments()
 	if err != nil && !errors.Is(err, ErrNotFound) {
-		return papi.Rules{}, err
+		return nil, err
 	}
 
 	criteriaLocked, err := r.ruleCriteriaLocked()
 	if err != nil && !errors.Is(err, ErrNotFound) {
-		return papi.Rules{}, err
+		return nil, err
 	}
 
 	customOverride, err := r.ruleCustomOverride()
 	if err != nil && !errors.Is(err, ErrNotFound) {
-		return papi.Rules{}, err
+		return nil, err
 	}
 
 	uuid, err := r.ruleUUID()
 	if err != nil && !errors.Is(err, ErrNotFound) {
-		return papi.Rules{}, err
+		return nil, err
 	}
 
 	templateUUID, err := r.ruleTemplateUUID()
 	if err != nil && !errors.Is(err, ErrNotFound) {
-		return papi.Rules{}, err
+		return nil, err
 	}
 
 	templateLink, err := r.ruleTemplateLink()
 	if err != nil && !errors.Is(err, ErrNotFound) {
-		return papi.Rules{}, err
+		return nil, err
 	}
 
 	criteria, err := r.ruleCriteria()
 	if err != nil {
-		return papi.Rules{}, err
+		return nil, err
 	}
 
 	behaviors, err := r.ruleBehaviors()
 	if err != nil {
-		return papi.Rules{}, err
+		return nil, err
 	}
 
 	children, err := r.ruleChildren()
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return papi.Rules{}, err
+		return nil, err
 	}
 
-	rules := papi.Rules{
+	rules := &papi.Rules{
 		AdvancedOverride: advancedOverride,
 		Behaviors:        behaviors,
 		Children:         children,
@@ -121,13 +112,13 @@ func (r RulesBuilder) buildRule() (papi.Rules, error) {
 		CriteriaLocked:   criteriaLocked,
 		CustomOverride:   customOverride,
 		Name:             name,
-		UUID:             uuid,
-		TemplateUuid:     templateUUID,
-		TemplateLink:     templateLink,
-		Variables:        variables,
 		Options: papi.RuleOptions{
 			IsSecure: isSecure,
 		},
+		UUID:                uuid,
+		TemplateUuid:        templateUUID,
+		TemplateLink:        templateLink,
+		Variables:           variables,
 		CriteriaMustSatisfy: papi.RuleCriteriaMustSatisfy(criteriaMustSatisfy),
 	}
 
@@ -252,6 +243,7 @@ func (r RulesBuilder) remapOptionValues(behaviorName string, options papi.RuleOp
 
 	for optionName, v := range options {
 		optKey := fmt.Sprintf("%s.%s", behaviorName, optionName)
+		optValKey := fmt.Sprintf("%s.%v", optKey, v)
 		if r.shouldFlatten(optKey) {
 			slc, ok := v.([]any)
 			if !ok {
@@ -263,15 +255,11 @@ func (r RulesBuilder) remapOptionValues(behaviorName string, options papi.RuleOp
 			if len(slc) == 1 {
 				newRom[optionName] = slc[0]
 			}
-			continue
-		}
-
-		key := fmt.Sprintf("%s.%v", optKey, v)
-		if mappedType, ok := r.typeMappings[key]; ok {
+		} else if mappedType, ok := r.typeMappings[optValKey]; ok {
 			newRom[optionName] = mappedType
-			continue
+		} else {
+			newRom[optionName] = v
 		}
-		newRom[optionName] = v
 	}
 
 	return newRom
