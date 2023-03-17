@@ -25,7 +25,7 @@ func validateRegex(pattern string) schema.SchemaValidateDiagFunc {
 			return diag.Diagnostics{diag.Diagnostic{
 				Severity:      diag.Error,
 				Summary:       errorSummary,
-				AttributePath: path,
+				AttributePath: path.Copy(),
 			}}
 		}
 		return nil
