@@ -507,10 +507,7 @@ func createNewActivation(ctx context.Context, client papi.PAPI, activationResour
 		AcknowledgeAllWarnings: activationResourceData.acknowledgement,
 	}
 
-	activateIncludeRequest, err := addComplianceRecordToActivationByNetwork(activationResourceData.network, activationResourceData.complianceRecord, activateIncludeRequest)
-	if err != nil {
-		return err
-	}
+	activateIncludeRequest = papi.ActivateIncludeRequest(addComplianceRecord(activationResourceData.complianceRecord, papi.ActivateOrDeactivateIncludeRequest(activateIncludeRequest)))
 
 	logger.Debug("sending include activation request")
 	activationResponse, err := client.ActivateInclude(ctx, activateIncludeRequest)
@@ -537,10 +534,8 @@ func createNewDeactivation(ctx context.Context, client papi.PAPI, activationReso
 		NotifyEmails:           activationResourceData.notifyEmails,
 		AcknowledgeAllWarnings: activationResourceData.acknowledgement,
 	}
-	deactivateIncludeRequest, err := addComplianceRecordToDeactivationByNetwork(activationResourceData.network, activationResourceData.complianceRecord, deactivateIncludeRequest)
-	if err != nil {
-		return err
-	}
+
+	deactivateIncludeRequest = papi.DeactivateIncludeRequest(addComplianceRecord(activationResourceData.complianceRecord, papi.ActivateOrDeactivateIncludeRequest(deactivateIncludeRequest)))
 
 	deactivation, err := client.DeactivateInclude(ctx, deactivateIncludeRequest)
 	if err != nil {
@@ -677,25 +672,6 @@ func terminateProcess(ctx context.Context, actStatus string) error {
 		return fmt.Errorf("operation canceled while waiting for activation status, current status: %s", actStatus)
 	}
 	return fmt.Errorf("activation context terminated: %w", ctx.Err())
-}
-
-func addComplianceRecordToActivationByNetwork(network string, complianceRecord []interface{}, activateIncludeRequest papi.ActivateIncludeRequest) (papi.ActivateIncludeRequest, error) {
-	result, err := addComplianceRecordByNetwork(network, "activation", complianceRecord, papi.ActivateOrDeactivateIncludeRequest(activateIncludeRequest))
-	return papi.ActivateIncludeRequest(result), err
-}
-
-func addComplianceRecordToDeactivationByNetwork(network string, complianceRecord []interface{}, deactivateIncludeRequest papi.DeactivateIncludeRequest) (papi.DeactivateIncludeRequest, error) {
-	result, err := addComplianceRecordByNetwork(network, "deactivation", complianceRecord, papi.ActivateOrDeactivateIncludeRequest(deactivateIncludeRequest))
-	return papi.DeactivateIncludeRequest(result), err
-}
-
-// all the validations for compliance_record attributes is performed in AkamaiOPEN-edgegrid-golang
-func addComplianceRecordByNetwork(network, operation string, complianceRecord []interface{}, activateIncludeRequest papi.ActivateOrDeactivateIncludeRequest) (papi.ActivateOrDeactivateIncludeRequest, error) {
-	if papi.ActivationNetwork(network) == papi.ActivationNetworkProduction && len(complianceRecord) == 0 {
-		return activateIncludeRequest, fmt.Errorf("compliance_record field is required for '%v' network to %s include version", papi.ActivationNetworkProduction, operation)
-	}
-	activateIncludeRequest = addComplianceRecord(complianceRecord, activateIncludeRequest)
-	return activateIncludeRequest, nil
 }
 
 func addComplianceRecord(complianceRecord []interface{}, activateIncludeRequest papi.ActivateOrDeactivateIncludeRequest) papi.ActivateOrDeactivateIncludeRequest {

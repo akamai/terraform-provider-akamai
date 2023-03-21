@@ -7,6 +7,9 @@
 * Image and Video Manager
   * Add `forced_formats` and `allowed_formats` fields to `output` field
 
+* PAPI
+  * Add `compliance_record` for `akamai_property_activation` resource
+
 #### BUG FIXES:
 
 * PAPI

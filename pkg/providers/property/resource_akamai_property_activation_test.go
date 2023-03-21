@@ -68,6 +68,54 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 				},
 			},
 		},
+		"check property activation with compliance record - OK": {
+			init: func(m *papi.Mock) {
+				// create
+				expectGetRuleTree(m, "prp_test", 1, ruleTreeResponseValid, nil).Once()
+				expectGetActivations(m, "prp_test", papi.GetActivationsResponse{}, nil).Once()
+				// Create with compliance record
+				m.On(
+					"CreateActivation",
+					mock.Anything,
+					papi.CreateActivationRequest{
+						PropertyID: "prp_test",
+						Activation: papi.Activation{
+							ActivationType:         papi.ActivationTypeActivate,
+							AcknowledgeAllWarnings: true,
+							PropertyVersion:        1,
+							Network:                "STAGING",
+							NotifyEmails:           []string{"user@example.com"},
+							Note:                   "property activation note for creating",
+							ComplianceRecord:       &papi.ComplianceRecordOther{},
+						},
+					},
+				).Return(&papi.CreateActivationResponse{
+					ActivationID: "atv_activation1",
+				}, nil).Once()
+
+				expectGetActivation(m, "prp_test", "atv_activation1", 1, "STAGING", papi.ActivationStatusActive, nil).Once()
+				// read and delete
+				expectGetActivations(m, "prp_test", activationsResponseDeactivated, nil).Twice()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: loadFixtureString("./testdata/TestPropertyActivation/ok/resource_property_activation_with_compliance_record.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "id", "prp_test:STAGING"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "property_id", "prp_test"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "network", "STAGING"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "version", "1"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "auto_acknowledge_rule_warnings", "true"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "warnings", ""),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "errors", ""),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "activation_id", "atv_activation1"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "status", "ACTIVE"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "compliance_record.0.noncompliance_reason", "OTHER"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "note", "property activation note for creating"),
+					),
+				},
+			},
+		},
 		"check schema property activation - OK": {
 			init: func(m *papi.Mock) {
 				// create
