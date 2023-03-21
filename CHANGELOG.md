@@ -2,7 +2,13 @@
 
 ## 3.X.X (XX X, 20XX)
 
+#### FEATURES/ENHANCEMENTS:
+
+* Image and Video Manager
+  * Add `forced_formats` and `allowed_formats` fields to `output` field
+
 #### BUG FIXES:
+
 * PAPI
   * Fix issue when `akamai_property` imported an older version and during update it didn't create a new version from it
 

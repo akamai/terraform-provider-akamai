@@ -2084,6 +2084,18 @@ func outputImage(_ int) map[string]*schema.Schema {
 			Description:      "Override the quality of image to serve when Image & Video Manager detects a slow connection. Specifying lower values lets users with slow connections browse your site with reduced load times without impacting the quality of images for users with faster connections.",
 			ValidateDiagFunc: stringAsIntBetween(1, 100),
 		},
+		"allowed_formats": {
+			Type:        schema.TypeList,
+			Optional:    true,
+			Description: "The graphics file formats allowed for browser specific results.",
+			Elem:        &schema.Schema{Type: schema.TypeString},
+		},
+		"forced_formats": {
+			Type:        schema.TypeList,
+			Optional:    true,
+			Description: "The forced extra formats for the `imFormat` query parameter, which requests a specific browser type. By default, Image and Video Manager detects the browser and returns the appropriate image.",
+			Elem:        &schema.Schema{Type: schema.TypeString},
+		},
 		"perceptual_quality": {
 			Type:             schema.TypeString,
 			Optional:         true,
