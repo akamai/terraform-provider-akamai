@@ -34,6 +34,15 @@ func TypeMappings(ruleFormat string) map[string]any {
 	return schemasRegistry.typeMappings(ruleFormat)
 }
 
+// NameMappings returns a map of option name mappings for a given rule format
+//
+// For example, field "detect_smart_dns_proxy" converted to camelCase would end up as "detectSmartDnsProxy"
+// and it would be incorrect. Correct value that is expected by API should be "detectSmartDNSProxy"
+// and the returned map would contain following mapping: {"detectSmartDnsProxy":"detectSmartDNSProxy"}
+func NameMappings(ruleFormat string) map[string]string {
+	return schemasRegistry.nameMappings(ruleFormat)
+}
+
 // RulesFormats returns a list of all rule formats that are in registry.
 func RulesFormats() []RuleVersion {
 	return schemasRegistry.rulesFormats()
@@ -57,6 +66,15 @@ func (r *registry) typeMappings(ruleFormat string) map[string]any {
 	for _, r := range r.rules {
 		if r.version == ruleFormat {
 			return r.typeMappings
+		}
+	}
+	return nil
+}
+
+func (r *registry) nameMappings(ruleFormat string) map[string]string {
+	for _, r := range r.rules {
+		if r.version == ruleFormat {
+			return r.nameMappings
 		}
 	}
 	return nil

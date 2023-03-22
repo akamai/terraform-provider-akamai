@@ -7,16 +7,16 @@
         "options": {
           "cacheKeyHostname": "ORIGIN_HOSTNAME",
           "compress": true,
-          "customCertificateAuthorities": [],
-          "customCertificates": [],
-          "customValidCnValues": [],
+          "customCertificateAuthorities": null,
+          "customCertificates": null,
+          "customValidCnValues": null,
           "enableTrueClientIp": true,
           "forwardHostHeader": "REQUEST_HOST_HEADER",
           "httpPort": 80,
           "httpsPort": 443,
           "originSni": true,
           "originType": "CUSTOMER",
-          "standardCertificateAuthorities": [],
+          "standardCertificateAuthorities": null,
           "trueClientIpHeader": "True-Client-IP",
           "verificationMode": "PLATFORM_SETTINGS"
         }
@@ -25,6 +25,22 @@
         "name": "adScalerCircuitBreaker",
         "options": {
           "returnErrorResponseCodeBased": 502
+        }
+      },
+      {
+        "name": "applicationLoadBalancer",
+        "options": {
+          "allDownNetStorage": {
+            "cpCode": 123,
+            "downloadDomainName": "test"
+          },
+          "failoverOriginMap": [
+            {
+              "fromOriginId": "123",
+              "toOriginIds": null
+            }
+          ],
+          "failoverStatusCodes": null
         }
       },
       {
@@ -73,7 +89,7 @@
       {
         "name": "report",
         "options": {
-          "cookies": [],
+          "cookies": null,
           "logCookies": "OFF",
           "logUserAgent": true
         }

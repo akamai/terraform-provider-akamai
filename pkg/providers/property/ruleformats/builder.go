@@ -16,6 +16,7 @@ import (
 type RulesBuilder struct {
 	schemaReader  *RulesSchemaReader
 	typeMappings  map[string]any
+	nameMappings  map[string]string
 	shouldFlatten func(string) bool
 }
 
@@ -28,6 +29,7 @@ func NewBuilder(d *schema.ResourceData) *RulesBuilder {
 		schemaReader:  schemaReader,
 		shouldFlatten: ShouldFlattenFunc(ruleFormat),
 		typeMappings:  TypeMappings(ruleFormat),
+		nameMappings:  NameMappings(ruleFormat),
 	}
 }
 
@@ -223,14 +225,18 @@ func (r RulesBuilder) ruleCriteria() ([]papi.RuleBehavior, error) {
 func (r RulesBuilder) buildRuleBehaviors(behaviorsList []RuleItem) ([]papi.RuleBehavior, error) {
 	behaviors := make([]papi.RuleBehavior, 0)
 	for _, item := range behaviorsList {
+		itemName := strcase.ToLowerCamel(item.Name)
+		if name, ok := r.nameMappings[itemName]; ok {
+			itemName = name
+		}
 		b := papi.RuleBehavior{
-			Name:         strcase.ToLowerCamel(item.Name),
+			Name:         itemName,
 			Locked:       getFromMapAndDelete(item.Item, "locked").(bool),
 			UUID:         getFromMapAndDelete(item.Item, "uuid").(string),
 			TemplateUuid: getFromMapAndDelete(item.Item, "template_uuid").(string),
 		}
 
-		b.Options = r.remapOptionValues(b.Name, mapKeysToCamelCase(item.Item))
+		b.Options = r.remapOptionValues(itemName, r.mapKeysToCamelCase(item.Item))
 
 		behaviors = append(behaviors, b)
 	}
@@ -292,11 +298,28 @@ func getFromMapAndDelete(m map[string]any, key string) any {
 	return m[key]
 }
 
-func mapKeysToCamelCase(old map[string]any) map[string]any {
+func (r RulesBuilder) mapKeysToCamelCase(old map[string]any) map[string]any {
 	newMap := make(map[string]any)
 	for k, v := range old {
 		if !reflect.ValueOf(v).IsZero() {
-			newMap[strcase.ToLowerCamel(k)] = v
+			if mapValue, ok := v.(map[string]any); ok {
+				v = r.mapKeysToCamelCase(mapValue)
+			}
+			if sliceValue, ok := v.([]any); ok {
+				var newSlice []any
+				for _, value := range sliceValue {
+					if mapValue, ok := value.(map[string]any); ok {
+						value = r.mapKeysToCamelCase(mapValue)
+					}
+					newSlice = append(newSlice, value)
+				}
+				v = newSlice
+			}
+			key := strcase.ToLowerCamel(k)
+			if name, ok := r.nameMappings[key]; ok {
+				key = name
+			}
+			newMap[key] = v
 		}
 	}
 	return newMap

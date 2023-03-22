@@ -11,6 +11,7 @@ func init() {
 		behaviorsSchemas: getBehaviorsSchemaV20230105(),
 		criteriaSchemas:  getCriteriaSchemaV20230105(),
 		typeMappings:     map[string]interface{}{"adScalerCircuitBreaker.returnErrorResponseCodeBased.408": 408, "adScalerCircuitBreaker.returnErrorResponseCodeBased.500": 500, "adScalerCircuitBreaker.returnErrorResponseCodeBased.502": 502, "adScalerCircuitBreaker.returnErrorResponseCodeBased.504": 504},
+		nameMappings:     map[string]string{"allowFcmParentOverride": "allowFCMParentOverride", "allowHttpsCacheKeySharing": "allowHTTPSCacheKeySharing", "allowHttpsDowngrade": "allowHTTPSDowngrade", "allowHttpsUpgrade": "allowHTTPSUpgrade", "conditionalHttpStatus": "conditionalHTTPStatus", "contentCharacteristicsAmd": "contentCharacteristicsAMD", "contentCharacteristicsDd": "contentCharacteristicsDD", "dcpAuthHmacTransformation": "dcpAuthHMACTransformation", "detectSmartDnsProxy": "detectSmartDNSProxy", "detectSmartDnsProxyAction": "detectSmartDNSProxyAction", "detectSmartDnsProxyRedirecturl": "detectSmartDNSProxyRedirecturl", "enableEs256": "enableES256", "enableIpAvoidance": "enableIPAvoidance", "enableIpProtection": "enableIPProtection", "enableIpRedirectOnDeny": "enableIPRedirectOnDeny", "enableRs256": "enableRS256", "enableTokenInUri": "enableTokenInURI", "g2Oheader": "g2oheader", "i18NCharset": "i18nCharset", "i18NStatus": "i18nStatus", "isCertificateSniOnly": "isCertificateSNIOnly", "logEdgeIp": "logEdgeIP", "originSettings": "origin_settings", "overrideIpAddresses": "overrideIPAddresses", "segmentDurationDash": "segmentDurationDASH", "segmentDurationDashCustom": "segmentDurationDASHCustom", "segmentDurationHds": "segmentDurationHDS", "segmentDurationHdsCustom": "segmentDurationHDSCustom", "segmentDurationHls": "segmentDurationHLS", "segmentDurationHlsCustom": "segmentDurationHLSCustom", "segmentSizeDash": "segmentSizeDASH", "segmentSizeHds": "segmentSizeHDS", "segmentSizeHls": "segmentSizeHLS", "sf3COriginHost": "sf3cOriginHost", "sf3COriginHostHeader": "sf3cOriginHostHeader", "smartDnsProxy": "smartDNSProxy", "standardTlsMigration": "standardTLSMigration", "standardTlsMigrationOverride": "standardTLSMigrationOverride", "titleAicMobile": "title_aic_mobile", "titleAicNonmobile": "title_aic_nonmobile", "tokenAuthHlsTitle": "tokenAuthHLSTitle"},
 		shouldFlatten:    []string{"apiPrioritization.cloudletPolicy", "apiPrioritization.throttledCpCode", "apiPrioritization.netStorage", "applicationLoadBalancer.cloudletPolicy", "applicationLoadBalancer.allDownNetStorage", "audienceSegmentation.cloudletPolicy", "cpCode.value", "edgeRedirector.cloudletPolicy", "failAction.netStorageHostname", "failAction.cpCode", "firstPartyMarketing.cloudletPolicy", "firstPartyMarketingPlus.cloudletPolicy", "forwardRewrite.cloudletPolicy", "imageAndVideoManager.cpCodeOriginal", "imageAndVideoManager.cpCodeTransformed", "imageManager.cpCodeOriginal", "imageManager.cpCodeTransformed", "imageManagerVideo.cpCodeOriginal", "imageManagerVideo.cpCodeTransformed", "inputValidation.cloudletPolicy", "inputValidation.penaltyNetStorage", "origin.netStorage", "phasedRelease.cloudletPolicy", "requestControl.cloudletPolicy", "requestControl.netStorage", "siteShield.ssmap", "visitorPrioritization.cloudletPolicy", "visitorPrioritization.waitingRoomCpCode", "visitorPrioritization.waitingRoomNetStorage", "matchCpCode.value"},
 	})
 }
@@ -20,24 +21,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"ad_scaler_circuit_breaker": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "This behavior works with `manifestRerouting` to provide the scale and reliability of Akamai network while simultaneously allowing third party partners to modify the requested media content with value-added features. The `adScalerCircuitBreaker` behavior specifies the fallback action in case the technology partner encounters errors and can't modify the requested media object.",
+			Description: "This behavior works with `manifestRerouting` to provide the scale and reliability of Akamai network while simultaneously allowing third party partners to modify the requested media content with value-added features. The `adScalerCircuitBreaker` behavior specifies the fallback action in case the technology partner encounters errors and can't modify the requested media object. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"response_delay_based": {
@@ -86,24 +87,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"adaptive_acceleration": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Adaptive Acceleration uses HTTP/2 server push functionality with Ion properties to pre-position content and improve the performance of HTML page loading based on real user monitoring (RUM) timing data. It also helps browsers to preconnect to content that’s likely needed for upcoming requests. To use this behavior, make sure you enable the `http2` behavior. Use the `Adaptive Acceleration API` to report on the set of assets this feature optimizes.",
+			Description: "Adaptive Acceleration uses HTTP/2 server push functionality with Ion properties to pre-position content and improve the performance of HTML page loading based on real user monitoring (RUM) timing data. It also helps browsers to preconnect to content that’s likely needed for upcoming requests. To use this behavior, make sure you enable the `http2` behavior. Use the `Adaptive Acceleration API` to report on the set of assets this feature optimizes. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"source": {
@@ -158,24 +159,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"adaptive_image_compression": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "The Adaptive Image Compression feature compresses JPEG images depending on the requesting network's performance, thus improving response time. The behavior specifies three performance tiers based on round-trip tests: 1 for excellent, 2 for good, and 3 for poor. It assigns separate performance criteria for mobile (cellular) and non-mobile networks, which the `compressMobile` and `compressStandard` options enable independently.",
+			Description: "The Adaptive Image Compression feature compresses JPEG images depending on the requesting network's performance, thus improving response time. The behavior specifies three performance tiers based on round-trip tests: 1 for excellent, 2 for good, and 3 for poor. It assigns separate performance criteria for mobile (cellular) and non-mobile networks, which the `compressMobile` and `compressStandard` options enable independently. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"compress_mobile": {
@@ -266,24 +267,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"advanced": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "This specifies Akamai XML metadata. It can only be configured on your behalf by Akamai Professional Services.",
+			Description: "This specifies Akamai XML metadata. It can only be configured on your behalf by Akamai Professional Services. This behavior is for internal usage only. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"description": {
@@ -302,24 +303,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"aggregated_reporting": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Configure attributes for your custom aggregated reports. You can configure up to four attributes.",
+			Description: "Configure attributes for your custom aggregated reports. You can configure up to four attributes. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -364,24 +365,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"akamaizer": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "This allows you to run regular expression substitutions over web pages. To apply this behavior, you need to match on a `contentType`. Contact Akamai Professional Services for help configuring the Akamaizer. See also the `akamaizerTag` behavior.",
+			Description: "This allows you to run regular expression substitutions over web pages. To apply this behavior, you need to match on a `contentType`. Contact Akamai Professional Services for help configuring the Akamaizer. See also the `akamaizerTag` behavior. This behavior is for internal usage only. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -395,24 +396,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"akamaizer_tag": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "This specifies HTML tags and replacement rules for hostnames used in conjunction with the `akamaizer` behavior. Contact Akamai Professional Services for help configuring the Akamaizer.",
+			Description: "This specifies HTML tags and replacement rules for hostnames used in conjunction with the `akamaizer` behavior. Contact Akamai Professional Services for help configuring the Akamaizer. This behavior is for internal usage only. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"match_hostname": {
@@ -453,24 +454,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"all_http_in_cache_hierarchy": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Allow all HTTP request methods to be used for the edge's parent servers, useful to implement features such as `Site Shield`, `SureRoute`, and Tiered Distribution. (See the `siteShield`, `sureRoute`, and `tieredDistribution` behaviors.)",
+			Description: "Allow all HTTP request methods to be used for the edge's parent servers, useful to implement features such as `Site Shield`, `SureRoute`, and Tiered Distribution. (See the `siteShield`, `sureRoute`, and `tieredDistribution` behaviors.) This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -484,24 +485,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"allow_cloudlets_origins": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Allows Cloudlets Origins to determine the criteria, separately from the Property Manager, under which alternate `origin` definitions are assigned.",
+			Description: "Allows Cloudlets Origins to determine the criteria, separately from the Property Manager, under which alternate `origin` definitions are assigned. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -526,24 +527,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"allow_delete": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Allow HTTP requests using the DELETE method. By default, GET, HEAD, and OPTIONS requests are allowed, and all other methods result in a 403 error. Such content does not cache, and any DELETE requests pass to the origin. See also the `allowOptions`, `allowPatch`, `allowPost`, and `allowPut` behaviors.",
+			Description: "Allow HTTP requests using the DELETE method. By default, GET, HEAD, and OPTIONS requests are allowed, and all other methods result in a 403 error. Such content does not cache, and any DELETE requests pass to the origin. See also the `allowOptions`, `allowPatch`, `allowPost`, and `allowPut` behaviors. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -562,24 +563,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"allow_https_cache_key_sharing": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "HTTPS cache key sharing allows HTTP requests to be served from an HTTPS cache.",
+			Description: "HTTPS cache key sharing allows HTTP requests to be served from an HTTPS cache. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -593,24 +594,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"allow_https_downgrade": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Passes HTTPS requests to origin as HTTP. This is useful when incorporating Standard TLS or Akamai's shared certificate delivery security with an origin that serves HTTP traffic.",
+			Description: "Passes HTTPS requests to origin as HTTP. This is useful when incorporating Standard TLS or Akamai's shared certificate delivery security with an origin that serves HTTP traffic. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -624,24 +625,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"allow_options": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "GET, HEAD, and OPTIONS requests are allowed by default. All other HTTP methods result in a 403 error. For full support of Cross-Origin Resource Sharing (CORS), you need to allow requests that use the OPTIONS method. If you're using the `corsSupport` behavior, do not disable OPTIONS requests. The response to an OPTIONS request is not cached, so the request always goes through the Akamai network to your origin, unless you use the `constructResponse` behavior to send responses directly from the Akamai network. See also the `allowDelete`, `allowPatch`, `allowPost`, and `allowPut` behaviors.",
+			Description: "GET, HEAD, and OPTIONS requests are allowed by default. All other HTTP methods result in a 403 error. For full support of Cross-Origin Resource Sharing (CORS), you need to allow requests that use the OPTIONS method. If you're using the `corsSupport` behavior, do not disable OPTIONS requests. The response to an OPTIONS request is not cached, so the request always goes through the Akamai network to your origin, unless you use the `constructResponse` behavior to send responses directly from the Akamai network. See also the `allowDelete`, `allowPatch`, `allowPost`, and `allowPut` behaviors. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -655,24 +656,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"allow_patch": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Allow HTTP requests using the PATCH method. By default, GET, HEAD, and OPTIONS requests are allowed, and all other methods result in a 403 error. Such content does not cache, and any PATCH requests pass to the origin. See also the `allowDelete`, `allowOptions`, `allowPost`, and `allowPut` behaviors.",
+			Description: "Allow HTTP requests using the PATCH method. By default, GET, HEAD, and OPTIONS requests are allowed, and all other methods result in a 403 error. Such content does not cache, and any PATCH requests pass to the origin. See also the `allowDelete`, `allowOptions`, `allowPost`, and `allowPut` behaviors. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -686,24 +687,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"allow_post": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Allow HTTP requests using the POST method. By default, GET, HEAD, and OPTIONS requests are allowed, and all other methods result in a 403 error. See also the `allowDelete`, `allowOptions`, `allowPatch`, and `allowPut` behaviors.",
+			Description: "Allow HTTP requests using the POST method. By default, GET, HEAD, and OPTIONS requests are allowed, and all other methods result in a 403 error. See also the `allowDelete`, `allowOptions`, `allowPatch`, and `allowPut` behaviors. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -722,24 +723,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"allow_put": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Allow HTTP requests using the PUT method.  By default, GET, HEAD, and OPTIONS requests are allowed, and all other methods result in a 403 error. Such content does not cache, and any PUT requests pass to the origin. See also the `allowDelete`, `allowOptions`, `allowPatch`, and `allowPost` behaviors.",
+			Description: "Allow HTTP requests using the PUT method.  By default, GET, HEAD, and OPTIONS requests are allowed, and all other methods result in a 403 error. Such content does not cache, and any PUT requests pass to the origin. See also the `allowDelete`, `allowOptions`, `allowPatch`, and `allowPost` behaviors. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -753,24 +754,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"allow_transfer_encoding": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Controls whether to allow or deny Chunked Transfer Encoding (CTE) requests to pass to your origin. If your origin supports CTE, you should enable this behavior. This behavior also protects against a known issue when pairing `http2` and `webdav` behaviors within the same rule tree, in which case it's required.",
+			Description: "Controls whether to allow or deny Chunked Transfer Encoding (CTE) requests to pass to your origin. If your origin supports CTE, you should enable this behavior. This behavior also protects against a known issue when pairing `http2` and `webdav` behaviors within the same rule tree, in which case it's required. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -784,30 +785,30 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"alt_svc_header": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Sets the maximum age value for the Alternative Services (`Alt-Svc`) header.",
+			Description: "Sets the maximum age value for the Alternative Services (`Alt-Svc`) header. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"max_age": {
 						Optional:    true,
 						Description: "Specifies the `max-age` value in seconds for the `Alt-Svc` header. The default `max-age` for an `Alt-Svc` header is 93600 seconds (26 hours).",
-						Type:        schema.TypeFloat,
+						Type:        schema.TypeInt,
 					},
 				},
 			},
@@ -815,24 +816,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"api_prioritization": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Enables the API Prioritization Cloudlet, which maintains continuity in user experience by serving an alternate static response when load is too high. You can configure rules using either the Cloudlets Policy Manager application or the `Cloudlets API`. Use this feature serve static API content, such as fallback JSON data.  To serve non-API HTML content, use the `visitorPrioritization` behavior.",
+			Description: "Enables the API Prioritization Cloudlet, which maintains continuity in user experience by serving an alternate static response when load is too high. You can configure rules using either the Cloudlets Policy Manager application or the `Cloudlets API`. Use this feature serve static API content, such as fallback JSON data.  To serve non-API HTML content, use the `visitorPrioritization` behavior. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -895,7 +896,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						ValidateDiagFunc: validateRegex("^\\d{3}$"),
 						Optional:         true,
 						Description:      "Specifies the HTTP response code for requests that receive the alternate response.",
-						Type:             schema.TypeFloat,
+						Type:             schema.TypeInt,
 					},
 					"net_storage": {
 						Optional:    true,
@@ -907,7 +908,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 								"cp_code": {
 									Optional:    true,
 									Description: "",
-									Type:        schema.TypeFloat,
+									Type:        schema.TypeInt,
 								},
 								"download_domain_name": {
 									Optional:    true,
@@ -935,24 +936,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"application_load_balancer": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Enables the Application Load Balancer Cloudlet, which automates load balancing based on configurable criteria. To configure this behavior, use either the Cloudlets Policy Manager or the `Cloudlets API` to set up a policy.",
+			Description: "Enables the Application Load Balancer Cloudlet, which automates load balancing based on configurable criteria. To configure this behavior, use either the Cloudlets Policy Manager or the `Cloudlets API` to set up a policy. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -993,7 +994,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Type:             schema.TypeString,
 					},
 					"stickiness_expiration_date": {
-						ValidateDiagFunc: validateRegex("^[1-9]\\d*$"),
+						ValidateDiagFunc: validateRegex("^[0-9]+$"),
 						Optional:         true,
 						Description:      "Specifies when the cookie expires.",
 						Type:             schema.TypeString,
@@ -1052,7 +1053,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 								"cp_code": {
 									Optional:    true,
 									Description: "",
-									Type:        schema.TypeFloat,
+									Type:        schema.TypeInt,
 								},
 								"download_domain_name": {
 									Optional:    true,
@@ -1114,7 +1115,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 					"failover_attempts_threshold": {
 						Optional:    true,
 						Description: "Sets the number of failed requests that would trigger the failover process.",
-						Type:        schema.TypeFloat,
+						Type:        schema.TypeInt,
 					},
 					"allow_cache_prefresh": {
 						Optional:    true,
@@ -1127,24 +1128,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"audience_segmentation": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Allows you to divide your users into different segments based on a persistent cookie. You can configure rules using either the Cloudlets Policy Manager application or the `Cloudlets API`.",
+			Description: "Allows you to divide your users into different segments based on a persistent cookie. You can configure rules using either the Cloudlets Policy Manager application or the `Cloudlets API`. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -1180,7 +1181,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 					"cloudlet_shared_policy": {
 						Optional:    true,
 						Description: "This identifies the Cloudlet shared policy to use with this behavior. You can list available shared policies with the `Cloudlets API`.",
-						Type:        schema.TypeFloat,
+						Type:        schema.TypeInt,
 					},
 					"label": {
 						ValidateDiagFunc: validateRegex("^[a-zA-Z0-9_\\-*\\.]+$"),
@@ -1262,24 +1263,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"auto_domain_validation": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "This behavior allows standard TLS domain validated certificates to renew automatically. Apply it after using the `Certificate Provisioning System` to request a certificate for a hostname.  To provision certificates programmatically, see the `Certificate Provisioning System API`.",
+			Description: "This behavior allows standard TLS domain validated certificates to renew automatically. Apply it after using the `Certificate Provisioning System` to request a certificate for a hostname.  To provision certificates programmatically, see the `Certificate Provisioning System API`. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 				},
@@ -1288,24 +1289,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"base_directory": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Prefix URLs sent to the origin with a base path.",
+			Description: "Prefix URLs sent to the origin with a base path. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"value": {
@@ -1320,24 +1321,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"boss_beaconing": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Triggers diagnostic data beacons for use with BOSS, Akamai's monitoring and diagnostics system.",
+			Description: "Triggers diagnostic data beacons for use with BOSS, Akamai's monitoring and diagnostics system. This behavior is for internal usage only. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -1394,24 +1395,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"breadcrumbs": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Provides per-HTTP transaction visibility into a request for content, regardless of how deep the request goes into the Akamai platform. The `X-Breadcrumbs` response header includes various data, such as network health and the location in the Akamai network used to serve content, which simplifies log review for troubleshooting.",
+			Description: "Provides per-HTTP transaction visibility into a request for content, regardless of how deep the request goes into the Akamai platform. The `X-Breadcrumbs` response header includes various data, such as network health and the location in the Akamai network used to serve content, which simplifies log review for troubleshooting. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -1435,24 +1436,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"break_connection": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "This behavior simulates an origin connection problem, typically to test an accompanying `failAction` policy.",
+			Description: "This behavior simulates an origin connection problem, typically to test an accompanying `failAction` policy. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -1466,24 +1467,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"brotli": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Accesses Brotli-compressed assets from your origin and caches them on edge servers. This doesn't compress resources within the content delivery network in real time. You need to set up Brotli compression separately on your origin. If a requesting client doesn't support Brotli, edge servers deliver non-Brotli resources.",
+			Description: "Accesses Brotli-compressed assets from your origin and caches them on edge servers. This doesn't compress resources within the content delivery network in real time. You need to set up Brotli compression separately on your origin. If a requesting client doesn't support Brotli, edge servers deliver non-Brotli resources. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -1497,24 +1498,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"cache_error": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Caches the origin's error responses to decrease server load. Applies for 10 seconds by default to the following HTTP codes: `204`, `305`, `400`, `404`, `405`, `501`, `502`, `503`, `504`, and `505`.",
+			Description: "Caches the origin's error responses to decrease server load. Applies for 10 seconds by default to the following HTTP codes: `204`, `305`, `400`, `404`, `405`, `501`, `502`, `503`, `504`, and `505`. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -1539,24 +1540,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"cache_id": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Controls which query parameters, headers, and cookies are included in or excluded from the cache key identifier.",
+			Description: "Controls which query parameters, headers, and cookies are included in or excluded from the cache key identifier. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"rule": {
@@ -1594,24 +1595,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"cache_key_ignore_case": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "By default, cache keys are generated under the assumption that path and filename components are case-sensitive, so that `File.html` and `file.html` use separate cache keys. Enabling this behavior forces URL components whose case varies to resolve to the same cache key. Enable this behavior if your origin server is already case-insensitive, such as those based on Microsoft IIS.",
+			Description: "By default, cache keys are generated under the assumption that path and filename components are case-sensitive, so that `File.html` and `file.html` use separate cache keys. Enabling this behavior forces URL components whose case varies to resolve to the same cache key. Enable this behavior if your origin server is already case-insensitive, such as those based on Microsoft IIS. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -1625,24 +1626,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"cache_key_query_params": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "By default, cache keys are formed as URLs with full query strings. This behavior allows you to consolidate cached objects based on specified sets of query parameters.",
+			Description: "By default, cache keys are formed as URLs with full query strings. This behavior allows you to consolidate cached objects based on specified sets of query parameters. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"behavior": {
@@ -1670,24 +1671,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"cache_key_rewrite": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "This behavior rewrites a default cache key's path. Contact Akamai Professional Services for help configuring it.",
+			Description: "This behavior rewrites a default cache key's path. Contact Akamai Professional Services for help configuring it. This behavior is for internal usage only. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"purge_key": {
@@ -1702,24 +1703,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"cache_post": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "By default, POST requests are passed to the origin. This behavior overrides the default, and allows you to cache POST responses.",
+			Description: "By default, POST requests are passed to the origin. This behavior overrides the default, and allows you to cache POST responses. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -1739,24 +1740,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"cache_redirect": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Controls the caching of HTTP 302 and 307 temporary redirects. By default, Akamai edge servers don't cache them. Enabling this behavior instructs edge servers to allow these redirects to be cached the same as HTTP 200 responses.",
+			Description: "Controls the caching of HTTP 302 and 307 temporary redirects. By default, Akamai edge servers don't cache them. Enabling this behavior instructs edge servers to allow these redirects to be cached the same as HTTP 200 responses. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -1770,24 +1771,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"cache_tag": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "This adds a cache tag to the requested object. With cache tags, you can flexibly fast purge tagged segments of your cached content. You can either define these tags with an `Edge-Cache-Tag` header at the origin server level, or use this behavior to directly add a cache tag to the object as the edge server caches it. The `cacheTag` behavior can only take a single value, including a variable. If you want to specify more tags for an object, add a few instances of this behavior to your configuration.",
+			Description: "This adds a cache tag to the requested object. With cache tags, you can flexibly fast purge tagged segments of your cached content. You can either define these tags with an `Edge-Cache-Tag` header at the origin server level, or use this behavior to directly add a cache tag to the object as the edge server caches it. The `cacheTag` behavior can only take a single value, including a variable. If you want to specify more tags for an object, add a few instances of this behavior to your configuration. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"tag": {
@@ -1802,24 +1803,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"cache_tag_visible": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Cache tags are comma-separated string values you define within an `Edge-Cache-Tag` header. You can use them to flexibly fast purge tagged segments of your cached content. You can either define these headers at the origin server level, or use the `modifyOutgoingResponseHeader` behavior to configure them at the edge.  Apply this behavior to confirm you're deploying the intended set of cache tags to your content.",
+			Description: "Cache tags are comma-separated string values you define within an `Edge-Cache-Tag` header. You can use them to flexibly fast purge tagged segments of your cached content. You can either define these headers at the origin server level, or use the `modifyOutgoingResponseHeader` behavior to configure them at the edge.  Apply this behavior to confirm you're deploying the intended set of cache tags to your content. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"behavior": {
@@ -1834,24 +1835,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"caching": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Control content caching on edge servers: whether or not to cache, whether to honor the origin's caching headers, and for how long to cache.  Note that any `NO_STORE` or `BYPASS_CACHE` HTTP headers set on the origin's content override this behavior. For more details on how caching works in Property Manager, see the `Learn about caching` section in the guide.",
+			Description: "Control content caching on edge servers: whether or not to cache, whether to honor the origin's caching headers, and for how long to cache.  Note that any `NO_STORE` or `BYPASS_CACHE` HTTP headers set on the origin's content override this behavior. For more details on how caching works in Property Manager, see the `Learn about caching` section in the guide. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"behavior": {
@@ -1923,24 +1924,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"central_authorization": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Forward client requests to the origin server for authorization, along with optional `Set-Cookie` headers, useful when you need to maintain tight access control. The edge server forwards an `If-Modified-Since` header, to which the origin needs to respond with a `304` (Not-Modified) HTTP status when authorization succeeds. If so, the edge server responds to the client with the cached object, since it does not need to be re-acquired from the origin.",
+			Description: "Forward client requests to the origin server for authorization, along with optional `Set-Cookie` headers, useful when you need to maintain tight access control. The edge server forwards an `If-Modified-Since` header, to which the origin needs to respond with a `304` (Not-Modified) HTTP status when authorization succeeds. If so, the edge server responds to the client with the cached object, since it does not need to be re-acquired from the origin. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -1954,24 +1955,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"chase_redirects": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Controls whether the edge server chases any redirects served from the origin.",
+			Description: "Controls whether the edge server chases any redirects served from the origin. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -1995,24 +1996,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"client_characteristics": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Specifies characteristics of the client ecosystem. Akamai uses this information to optimize your metadata configuration, which may result in better end-user performance.",
+			Description: "Specifies characteristics of the client ecosystem. Akamai uses this information to optimize your metadata configuration, which may result in better end-user performance. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"country": {
@@ -2027,24 +2028,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"cloud_interconnects": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Cloud Interconnects forwards traffic from edge servers to your cloud origin through Private Network Interconnects (PNIs), helping to reduce the egress costs at the origin. Supports origins hosted by Google Cloud Provider (GCP).",
+			Description: "Cloud Interconnects forwards traffic from edge servers to your cloud origin through Private Network Interconnects (PNIs), helping to reduce the egress costs at the origin. Supports origins hosted by Google Cloud Provider (GCP). This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -2066,24 +2067,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"cloud_wrapper": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "`Cloud Wrapper` maximizes origin offload for large libraries of video, game, and software downloads by optimizing data caches in regions nearest to your origin. You can't use this behavior in conjunction with `sureRoute` or `tieredDistribution`.",
+			Description: "`Cloud Wrapper` maximizes origin offload for large libraries of video, game, and software downloads by optimizing data caches in regions nearest to your origin. You can't use this behavior in conjunction with `sureRoute` or `tieredDistribution`. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -2102,24 +2103,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"cloud_wrapper_advanced": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Your account representative uses this behavior to implement a customized failover configuration on your behalf. Use Cloud Wrapper Advanced with an enabled `cloudWrapper` behavior in the same rule.",
+			Description: "Your account representative uses this behavior to implement a customized failover configuration on your behalf. Use Cloud Wrapper Advanced with an enabled `cloudWrapper` behavior in the same rule. This behavior is for internal usage only. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -2144,30 +2145,30 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"conditional_origin": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "2DO.",
+			Description: "This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"origin_id": {
 						ValidateDiagFunc: validateRegex("^[a-zA-Z0-9_\\-\\.]+$"),
 						Optional:         true,
-						Description:      "2DO.",
+						Description:      "",
 						Type:             schema.TypeString,
 					},
 				},
@@ -2176,24 +2177,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"construct_response": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "This behavior constructs an HTTP response, complete with HTTP status code and body, to serve from the edge independently of your origin. It supports all request methods except for `POST`.",
+			Description: "This behavior constructs an HTTP response, complete with HTTP status code and body, to serve from the edge independently of your origin. It supports all request methods except for `POST`. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -2228,24 +2229,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"content_characteristics": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Specifies characteristics of the delivered content. Akamai uses this information to optimize your metadata configuration, which may result in better origin offload and end-user performance.",
+			Description: "Specifies characteristics of the delivered content. Akamai uses this information to optimize your metadata configuration, which may result in better origin offload and end-user performance. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"object_size": {
@@ -2278,24 +2279,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"content_characteristics_amd": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Specifies characteristics of the delivered content. Akamai uses this information to optimize your metadata configuration, which may result in better origin offload and end-user performance.",
+			Description: "Specifies characteristics of the delivered content. Akamai uses this information to optimize your metadata configuration, which may result in better origin offload and end-user performance. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"catalog_size": {
@@ -2352,7 +2353,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 					"segment_duration_hds_custom": {
 						Optional:    true,
 						Description: "Customizes the number of seconds for the fragment.",
-						Type:        schema.TypeFloat,
+						Type:        schema.TypeInt,
 					},
 					"segment_size_hds": {
 						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"LESS_THAN_1MB", "ONE_MB_TO_TEN_MB", "TEN_MB_TO_100_MB", "GREATER_THAN_100MB", "UNKNOWN", "OTHER"}, false)),
@@ -2374,7 +2375,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 					"segment_duration_dash_custom": {
 						Optional:    true,
 						Description: "Customizes the number of seconds for the segment.",
-						Type:        schema.TypeFloat,
+						Type:        schema.TypeInt,
 					},
 					"segment_size_dash": {
 						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"LESS_THAN_1MB", "ONE_MB_TO_TEN_MB", "TEN_MB_TO_100_MB", "GREATER_THAN_100MB", "UNKNOWN", "OTHER"}, false)),
@@ -2410,24 +2411,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"content_characteristics_dd": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Specifies characteristics of the delivered content. Akamai uses this information to optimize your metadata configuration, which may result in better origin offload and end-user performance.",
+			Description: "Specifies characteristics of the delivered content. Akamai uses this information to optimize your metadata configuration, which may result in better origin offload and end-user performance. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"object_size": {
@@ -2465,24 +2466,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"content_characteristics_wsd_large_file": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Specifies characteristics of the delivered content, specifically targeted to delivering large files. Akamai uses this information to optimize your metadata configuration, which may result in better origin offload and end-user performance.",
+			Description: "Specifies characteristics of the delivered content, specifically targeted to delivering large files. Akamai uses this information to optimize your metadata configuration, which may result in better origin offload and end-user performance. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"object_size": {
@@ -2515,24 +2516,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"content_characteristics_wsd_live": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Specifies characteristics of the delivered content, specifically targeted to delivering live video. Akamai uses this information to optimize your metadata configuration, which may result in better origin offload and end-user performance.",
+			Description: "Specifies characteristics of the delivered content, specifically targeted to delivering live video. Akamai uses this information to optimize your metadata configuration, which may result in better origin offload and end-user performance. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"catalog_size": {
@@ -2627,24 +2628,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"content_characteristics_wsd_vod": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Specifies characteristics of the delivered content, specifically targeted to delivering on-demand video. Akamai uses this information to optimize your metadata configuration, which may result in better origin offload and end-user performance.",
+			Description: "Specifies characteristics of the delivered content, specifically targeted to delivering on-demand video. Akamai uses this information to optimize your metadata configuration, which may result in better origin offload and end-user performance. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"catalog_size": {
@@ -2739,24 +2740,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"content_pre_position": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Content Preposition.",
+			Description: "Content Preposition. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -2767,23 +2768,23 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 					"source_type": {
 						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"ORIGIN"}, false)),
 						Optional:         true,
-						Description:      "2DO.",
+						Description:      "",
 						Type:             schema.TypeString,
 					},
 					"targets": {
 						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"CLOUDWRAPPER"}, false)),
 						Optional:         true,
-						Description:      "2DO.",
+						Description:      "",
 						Type:             schema.TypeString,
 					},
 					"first_location": {
 						Optional:    true,
-						Description: "2DO.",
+						Description: "",
 						Type:        schema.TypeString,
 					},
 					"second_location": {
 						Optional:    true,
-						Description: "2DO.",
+						Description: "",
 						Type:        schema.TypeString,
 					},
 				},
@@ -2792,24 +2793,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"content_targeting_protection": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Content Targeting is based on `EdgeScape`, Akamai's location-based access control system.  You can use it to allow or deny access to a set of geographic regions or IP addresses.",
+			Description: "Content Targeting is based on `EdgeScape`, Akamai's location-based access control system.  You can use it to allow or deny access to a set of geographic regions or IP addresses. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -2934,24 +2935,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"cors_support": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Cross-origin resource sharing (CORS) allows web pages in one domain to access restricted resources from your domain. Specify external origin hostnames, methods, and headers that you want to accept via HTTP response headers. Full support of CORS requires allowing requests that use the OPTIONS method. See `allowOptions`.",
+			Description: "Cross-origin resource sharing (CORS) allows web pages in one domain to access restricted resources from your domain. Specify external origin hostnames, methods, and headers that you want to accept via HTTP response headers. Full support of CORS requires allowing requests that use the OPTIONS method. See `allowOptions`. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -3020,24 +3021,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"cp_code": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Content Provider Codes (CP codes) allow you to distinguish various reporting and billing segments. You receive a CP code when purchasing Akamai service, and you need it to access properties. This behavior allows you to apply any valid CP code, including additional ones you may request from Akamai Professional Services. For a CP code to be valid, it needs to belong to the same contract and be associated with the same product as the property, and the group needs access to it.",
+			Description: "Content Provider Codes (CP codes) allow you to distinguish various reporting and billing segments. You receive a CP code when purchasing Akamai service, and you need it to access properties. This behavior allows you to apply any valid CP code, including additional ones you may request from Akamai Professional Services. For a CP code to be valid, it needs to belong to the same contract and be associated with the same product as the property, and the group needs access to it. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"value": {
@@ -3061,24 +3062,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"custom_behavior": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Allows you to insert a customized XML metadata behavior into any property's rule tree.  Talk to your Akamai representative to implement the customized behavior. Once it's ready, run PAPI's `List custom behaviors` operation, then apply the relevant `behaviorId` value from the response within the current `customBehavior`. See `Custom behaviors and overrides` for guidance on custom metadata behaviors.",
+			Description: "Allows you to insert a customized XML metadata behavior into any property's rule tree.  Talk to your Akamai representative to implement the customized behavior. Once it's ready, run PAPI's `List custom behaviors` operation, then apply the relevant `behaviorId` value from the response within the current `customBehavior`. See `Custom behaviors and overrides` for guidance on custom metadata behaviors. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"behavior_id": {
@@ -3092,24 +3093,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"datastream": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "The `DataStream` reporting service provides real-time logs on application activity, including aggregated metrics on complete request and response cycles and origin response times.  Apply this behavior to report on this set of traffic.  Use the `DataStream API` to aggregate the data.",
+			Description: "The `DataStream` reporting service provides real-time logs on application activity, including aggregated metrics on complete request and response cycles and origin response times.  Apply this behavior to report on this set of traffic.  Use the `DataStream API` to aggregate the data. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"stream_type": {
@@ -3137,12 +3138,12 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 					"log_stream_name": {
 						Optional:    true,
 						Description: "Specifies the name of the active stream monitoring the property that you want to receive log data from.",
-						Type:        schema.TypeFloat,
+						Type:        schema.TypeInt,
 					},
 					"sampling_percentage": {
 						Optional:    true,
 						Description: "Specifies the percentage of log data you want to collect for this property.",
-						Type:        schema.TypeFloat,
+						Type:        schema.TypeInt,
 					},
 					"collect_midgress_traffic": {
 						Optional:    true,
@@ -3155,24 +3156,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"dcp": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "The `Internet of Things: Edge Connect` product allows connected users and devices to communicate on a publish-subscribe basis within reserved namespaces. (The `IoT Edge Connect API` allows programmatic access.) This behavior allows you to select previously reserved namespaces and set the protocols for users to publish and receive messages within these namespaces.  Use the `verifyJsonWebTokenForDcp` behavior to control access.",
+			Description: "The `Internet of Things: Edge Connect` product allows connected users and devices to communicate on a publish-subscribe basis within reserved namespaces. (The `IoT Edge Connect API` allows programmatic access.) This behavior allows you to select previously reserved namespaces and set the protocols for users to publish and receive messages within these namespaces.  Use the `verifyJsonWebTokenForDcp` behavior to control access. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -3211,24 +3212,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"dcp_auth_hmac_transformation": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "The `Internet of Things: Edge Connect` product allows connected users and devices to communicate on a publish-subscribe basis within reserved namespaces. In conjunction with `dcpAuthVariableExtractor`, this behavior affects how clients can authenticate themselves to edge servers, and which groups within namespaces are authorized to access topics. It transforms a source string value extracted from the client certificate and stored as a variable, then generates a hash value based on the selected algorithm, for use in authenticating the client request.",
+			Description: "The `Internet of Things: Edge Connect` product allows connected users and devices to communicate on a publish-subscribe basis within reserved namespaces. In conjunction with `dcpAuthVariableExtractor`, this behavior affects how clients can authenticate themselves to edge servers, and which groups within namespaces are authorized to access topics. It transforms a source string value extracted from the client certificate and stored as a variable, then generates a hash value based on the selected algorithm, for use in authenticating the client request. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"hash_conversion_algorithm": {
@@ -3248,24 +3249,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"dcp_auth_regex_transformation": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "The `Internet of Things: Edge Connect` product allows connected users and devices to communicate on a publish-subscribe basis within reserved namespaces. In conjunction with `dcpAuthVariableExtractor`, this behavior affects how clients can authenticate themselves to edge servers, and which groups within namespaces are authorized to access topics. It transforms a source string value extracted from the client certificate and stored as a variable, then transforms the string based on a regular expression search pattern, for use in authenticating the client request.",
+			Description: "The `Internet of Things: Edge Connect` product allows connected users and devices to communicate on a publish-subscribe basis within reserved namespaces. In conjunction with `dcpAuthVariableExtractor`, this behavior affects how clients can authenticate themselves to edge servers, and which groups within namespaces are authorized to access topics. It transforms a source string value extracted from the client certificate and stored as a variable, then transforms the string based on a regular expression search pattern, for use in authenticating the client request. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"regex_pattern": {
@@ -3280,24 +3281,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"dcp_auth_substring_transformation": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "The `Internet of Things: Edge Connect` product allows connected users and devices to communicate on a publish-subscribe basis within reserved namespaces. In conjunction with `dcpAuthVariableExtractor`, this behavior affects how clients can authenticate themselves to edge servers, and which groups within namespaces are authorized to access topics. It transforms a source string value extracted from the client certificate and stored as a variable, then extracts a substring, for use in authenticating the client request.",
+			Description: "The `Internet of Things: Edge Connect` product allows connected users and devices to communicate on a publish-subscribe basis within reserved namespaces. In conjunction with `dcpAuthVariableExtractor`, this behavior affects how clients can authenticate themselves to edge servers, and which groups within namespaces are authorized to access topics. It transforms a source string value extracted from the client certificate and stored as a variable, then extracts a substring, for use in authenticating the client request. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"substring_start": {
@@ -3318,24 +3319,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"dcp_auth_variable_extractor": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "The `Internet of Things: Edge Connect` product allows connected users and devices to communicate on a publish-subscribe basis within reserved namespaces. This behavior affects how clients can authenticate themselves to edge servers, and which groups within namespaces are authorized to access topics. When enabled, this behavior allows end users to authenticate their requests with valid x509 client certificates. Either a client identifier or access authorization groups are required to make the request valid.",
+			Description: "The `Internet of Things: Edge Connect` product allows connected users and devices to communicate on a publish-subscribe basis within reserved namespaces. This behavior affects how clients can authenticate themselves to edge servers, and which groups within namespaces are authorized to access topics. When enabled, this behavior allows end users to authenticate their requests with valid x509 client certificates. Either a client identifier or access authorization groups are required to make the request valid. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"certificate_field": {
@@ -3356,24 +3357,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"dcp_default_authz_groups": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "The `Internet of Things: Edge Connect` product allows connected users and devices to communicate on a publish-subscribe basis within reserved namespaces. This behavior defines a set of default authorization groups to add to each request the property configuration controls.  These groups have access regardless of the authentication method you use, either JWT using the `verifyJsonWebTokenForDcp` behavior, or mutual authentication using the `dcpAuthVariableExtractor` behavior to control where authorization groups are extracted from within certificates.",
+			Description: "The `Internet of Things: Edge Connect` product allows connected users and devices to communicate on a publish-subscribe basis within reserved namespaces. This behavior defines a set of default authorization groups to add to each request the property configuration controls.  These groups have access regardless of the authentication method you use, either JWT using the `verifyJsonWebTokenForDcp` behavior, or mutual authentication using the `dcpAuthVariableExtractor` behavior to control where authorization groups are extracted from within certificates. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"group_names": {
@@ -3390,24 +3391,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"dcp_dev_relations": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "The `Internet of Things: Edge Connect` product allows connected users and devices to communicate on a publish-subscribe basis within reserved namespaces. This behavior allows Akamai-external clients to use developer test accounts in a shared environment. In conjunction with `verifyJsonWebTokenForDcp`, this behavior allows you to use your own JWTs in your requests, or those generated by Akamai. It lets you either enable the default JWT server for your test configuration by setting the authentication endpoint to a default path, or specify custom settings for your JWT server and the authentication endpoint.",
+			Description: "The `Internet of Things: Edge Connect` product allows connected users and devices to communicate on a publish-subscribe basis within reserved namespaces. This behavior allows Akamai-external clients to use developer test accounts in a shared environment. In conjunction with `verifyJsonWebTokenForDcp`, this behavior allows you to use your own JWTs in your requests, or those generated by Akamai. It lets you either enable the default JWT server for your test configuration by setting the authentication endpoint to a default path, or specify custom settings for your JWT server and the authentication endpoint. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -3437,24 +3438,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"dcp_real_time_auth": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "INTERNAL ONLY: The `Internet of Things: Edge Connect` product allows connected users and devices to communicate on a publish-subscribe basis within reserved namespaces. This behavior lets you configure the real time authentication to edge servers.",
+			Description: "INTERNAL ONLY: The `Internet of Things: Edge Connect` product allows connected users and devices to communicate on a publish-subscribe basis within reserved namespaces. This behavior lets you configure the real time authentication to edge servers. This behavior is for internal usage only. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"extract_namespace": {
@@ -3493,24 +3494,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"delivery_receipt": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "A static behavior that's required when specifying the Cloud Monitor module's (`edgeConnect` behavior. You can only apply this behavior if the property is marked as secure. See `Secure property requirements` for guidance.",
+			Description: "A static behavior that's required when specifying the Cloud Monitor module's (`edgeConnect` behavior. You can only apply this behavior if the property is marked as secure. See `Secure property requirements` for guidance. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 				},
@@ -3519,24 +3520,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"deny_access": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Assuming a condition in the rule matches, this denies access to the requested content. For example, a `userLocation` match paired with this behavior would deny requests from a specified part of the world.",
+			Description: "Assuming a condition in the rule matches, this denies access to the requested content. For example, a `userLocation` match paired with this behavior would deny requests from a specified part of the world. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"reason": {
@@ -3556,24 +3557,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"deny_direct_failover_access": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "A static behavior required for all properties that implement a failover under the Cloud Security Failover product.",
+			Description: "A static behavior required for all properties that implement a failover under the Cloud Security Failover product. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 				},
@@ -3582,24 +3583,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"device_characteristic_cache_id": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "By default, source URLs serve as cache IDs on edge servers. Electronic Data Capture allows you to specify an additional set of device characteristics to generate separate cache keys. Use this in conjunction with the `deviceCharacteristicHeader` behavior.",
+			Description: "By default, source URLs serve as cache IDs on edge servers. Electronic Data Capture allows you to specify an additional set of device characteristics to generate separate cache keys. Use this in conjunction with the `deviceCharacteristicHeader` behavior. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"elements": {
@@ -3616,24 +3617,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"device_characteristic_header": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Sends selected information about requesting devices to the origin server, in the form of an `X-Akamai-Device-Characteristics` HTTP header. Use in conjunction with the `deviceCharacteristicCacheId` behavior.",
+			Description: "Sends selected information about requesting devices to the origin server, in the form of an `X-Akamai-Device-Characteristics` HTTP header. Use in conjunction with the `deviceCharacteristicCacheId` behavior. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"elements": {
@@ -3650,24 +3651,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"dns_async_refresh": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Allow an edge server to use an expired DNS record when forwarding a request to your origin. The `type A` DNS record refreshes `after` content is served to the end user, so there is no wait for the DNS resolution. Avoid this behavior if you want to be able to disable a server immediately after its DNS record expires.",
+			Description: "Allow an edge server to use an expired DNS record when forwarding a request to your origin. The `type A` DNS record refreshes `after` content is served to the end user, so there is no wait for the DNS resolution. Avoid this behavior if you want to be able to disable a server immediately after its DNS record expires. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -3687,24 +3688,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"dns_prefresh": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Allows edge servers to refresh your origin's DNS record independently from end-user requests. The `type A` DNS record refreshes before the origin's DNS record expires.",
+			Description: "Allows edge servers to refresh your origin's DNS record independently from end-user requests. The `type A` DNS record refreshes before the origin's DNS record expires. This behavior is for internal usage only. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -3730,24 +3731,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"downgrade_protocol": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Serve static objects to the end-user client over HTTPS, but fetch them from the origin via HTTP.",
+			Description: "Serve static objects to the end-user client over HTTPS, but fetch them from the origin via HTTP. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -3761,24 +3762,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"download_complete_marker": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "The `Internet of Things: OTA Updates` product allows customers to securely distribute firmware to devices over cellular networks.  Based on match criteria that executes a rule, this behavior logs requests to the OTA servers as completed in aggregated and individual reports.",
+			Description: "The `Internet of Things: OTA Updates` product allows customers to securely distribute firmware to devices over cellular networks.  Based on match criteria that executes a rule, this behavior logs requests to the OTA servers as completed in aggregated and individual reports. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 				},
@@ -3787,24 +3788,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"download_notification": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "The `Internet of Things: OTA Updates` product allows customers to securely distribute firmware to devices over cellular networks. Based on match criteria that executes a rule, this behavior allows requests to the `OTA Updates API` for a list of completed downloads to individual vehicles.",
+			Description: "The `Internet of Things: OTA Updates` product allows customers to securely distribute firmware to devices over cellular networks. Based on match criteria that executes a rule, this behavior allows requests to the `OTA Updates API` for a list of completed downloads to individual vehicles. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 				},
@@ -3813,24 +3814,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"downstream_cache": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Specify the caching instructions the edge server sends to the end user's client or client proxies. By default, the cache's duration is whichever is less: the remaining lifetime of the edge cache, or what the origin's header specifies. If the origin is set to `no-store` or `bypass-cache`, edge servers send `cache-busting` headers downstream to prevent downstream caching.",
+			Description: "Specify the caching instructions the edge server sends to the end user's client or client proxies. By default, the cache's duration is whichever is less: the remaining lifetime of the edge cache, or what the origin's header specifies. If the origin is set to `no-store` or `bypass-cache`, edge servers send `cache-busting` headers downstream to prevent downstream caching. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"behavior": {
@@ -3868,24 +3869,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"dynamic_throughtput_optimization": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Enables `quick retry`, which detects slow forward throughput while fetching an object, and attempts a different forward connection path to avoid congestion. By default, connections under 5 mbps trigger this behavior. When the transfer rate drops below this rate during a connection attempt, quick retry is enabled and a different forward connection path is used. Contact Akamai Professional Services to override this threshold.",
+			Description: "Enables `quick retry`, which detects slow forward throughput while fetching an object, and attempts a different forward connection path to avoid congestion. By default, connections under 5 mbps trigger this behavior. When the transfer rate drops below this rate during a connection attempt, quick retry is enabled and a different forward connection path is used. Contact Akamai Professional Services to override this threshold. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -3899,29 +3900,29 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"dynamic_throughtput_optimization_override": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "2DO.",
+			Description: "This behavior is for internal usage only. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"throughput": {
 						Optional:    true,
-						Description: "2DO.",
+						Description: "",
 						Type:        schema.TypeString,
 					},
 				},
@@ -3930,24 +3931,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"dynamic_web_content": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "In conjunction with the `subCustomer` behavior, this optional behavior allows you to control how dynamic web content behaves for your subcustomers using `Akamai Cloud Embed`.",
+			Description: "In conjunction with the `subCustomer` behavior, this optional behavior allows you to control how dynamic web content behaves for your subcustomers using `Akamai Cloud Embed`. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"sure_route": {
@@ -3976,24 +3977,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"ecms_bulk_upload": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Uploads a ZIP archive with objects to an existing data set. The target data set stores objects as key-value pairs. The path to an object in the ZIP archive is a key, and the content of an object is a value. For an overview, see `ecmsDatabase`.",
+			Description: "Uploads a ZIP archive with objects to an existing data set. The target data set stores objects as key-value pairs. The path to an object in the ZIP archive is a key, and the content of an object is a value. For an overview, see `ecmsDatabase`. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -4007,24 +4008,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"ecms_database": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Edge Connect Message Store is available for `Internet of Things: Edge Connect` users. It lets you create databases and data sets within these databases. You can use this object store to save files smaller than 2 GB. `ecmsDatabase` specifies a default database for requests to this property, unless indicated otherwise in the URL. To access objects in the default database, you can skip its name in the URLs. To access objects in a different database, pass its name in the header, query parameter, or a regular expression matching a URL segment. You can also configure the `ecmsDataset` behavior to specify a default data set for requests.",
+			Description: "Edge Connect Message Store is available for `Internet of Things: Edge Connect` users. It lets you create databases and data sets within these databases. You can use this object store to save files smaller than 2 GB. `ecmsDatabase` specifies a default database for requests to this property, unless indicated otherwise in the URL. To access objects in the default database, you can skip its name in the URLs. To access objects in a different database, pass its name in the header, query parameter, or a regular expression matching a URL segment. You can also configure the `ecmsDataset` behavior to specify a default data set for requests. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"database": {
@@ -4060,24 +4061,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"ecms_dataset": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Specifies a default data set for requests to this property unless indicated otherwise in the URL. To access objects in this data set, you can skip the data set name in the URLs. To access objects in a different data set within a database, pass the data set name in the header, query parameter, or a regular expression pattern matching a URL segment. You can also configure the `ecmsDatabase` behavior to specify a default database for requests.",
+			Description: "Specifies a default data set for requests to this property unless indicated otherwise in the URL. To access objects in this data set, you can skip the data set name in the URLs. To access objects in a different data set within a database, pass the data set name in the header, query parameter, or a regular expression pattern matching a URL segment. You can also configure the `ecmsDatabase` behavior to specify a default database for requests. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"dataset": {
@@ -4113,24 +4114,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"ecms_object_key": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Defines a regular expression to match object keys in custom URLs and to access objects in a data set. You can point custom URLs to access proper values in the target data set. For an overview, see `ecmsDatabase`.",
+			Description: "Defines a regular expression to match object keys in custom URLs and to access objects in a data set. You can point custom URLs to access proper values in the target data set. For an overview, see `ecmsDatabase`. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"regex": {
@@ -4145,24 +4146,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"edge_connect": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Configures traffic logs for the Cloud Monitor push API.",
+			Description: "Configures traffic logs for the Cloud Monitor push API. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -4225,24 +4226,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"edge_load_balancing_advanced": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "This behavior implements customized Edge Load Balancing features. Contact Akamai Professional Services for help configuring it.",
+			Description: "This behavior implements customized Edge Load Balancing features. Contact Akamai Professional Services for help configuring it. This behavior is for internal usage only. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"description": {
@@ -4261,24 +4262,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"edge_load_balancing_data_center": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "The Edge Load Balancing module allows you to specify groups of data centers that implement load balancing, session persistence, and real-time dynamic failover. Enabling ELB routes requests contextually based on location, device, or network, along with optional rules you specify.",
+			Description: "The Edge Load Balancing module allows you to specify groups of data centers that implement load balancing, session persistence, and real-time dynamic failover. Enabling ELB routes requests contextually based on location, device, or network, along with optional rules you specify. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"origin_id": {
@@ -4356,24 +4357,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"edge_load_balancing_origin": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "The Edge Load Balancing module allows you to implement groups of data centers featuring load balancing, session persistence, and real-time dynamic failover. Enabling ELB routes requests contextually based on location, device, or network, along with optional rules you specify.",
+			Description: "The Edge Load Balancing module allows you to implement groups of data centers featuring load balancing, session persistence, and real-time dynamic failover. Enabling ELB routes requests contextually based on location, device, or network, along with optional rules you specify. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"id": {
@@ -4409,24 +4410,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"edge_origin_authorization": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Allows the origin server to use a cookie to ensure requests from Akamai servers are genuine.",
+			Description: "Allows the origin server to use a cookie to ensure requests from Akamai servers are genuine. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -4458,24 +4459,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"edge_redirector": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "This behavior enables the `Edge Redirector Cloudlet` application, which helps you manage large numbers of redirects. With Cloudlets available on your contract, choose `Your services`, `Edge logic Cloudlets` to control the Edge Redirector within `Control Center`. Otherwise use the `Cloudlets API` to configure it programmatically.",
+			Description: "This behavior enables the `Edge Redirector Cloudlet` application, which helps you manage large numbers of redirects. With Cloudlets available on your contract, choose `Your services`, `Edge logic Cloudlets` to control the Edge Redirector within `Control Center`. Otherwise use the `Cloudlets API` to configure it programmatically. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -4511,7 +4512,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 					"cloudlet_shared_policy": {
 						Optional:    true,
 						Description: "Identifies the Cloudlet shared policy to use with this behavior. Use the `Cloudlets API` to list available shared policies.",
-						Type:        schema.TypeFloat,
+						Type:        schema.TypeInt,
 					},
 				},
 			},
@@ -4519,24 +4520,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"edge_scape": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "`EdgeScape` allows you to customize content based on the end user's geographic location or connection speed. When enabled, the edge server sends a special `X-Akamai-Edgescape` header to the origin server encoding relevant details about the end-user client as key-value pairs.",
+			Description: "`EdgeScape` allows you to customize content based on the end user's geographic location or connection speed. When enabled, the edge server sends a special `X-Akamai-Edgescape` header to the origin server encoding relevant details about the end-user client as key-value pairs. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -4550,24 +4551,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"edge_side_includes": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Allows edge servers to process edge side include (ESI) code to generate dynamic content. To apply this behavior, you need to match on a `contentType`, `path`, or `filename`. Since this behavior requires more parsing time, you should not apply it to pages that lack ESI code, or to any non-HTML content.",
+			Description: "Allows edge servers to process edge side include (ESI) code to generate dynamic content. To apply this behavior, you need to match on a `contentType`, `path`, or `filename`. Since this behavior requires more parsing time, you should not apply it to pages that lack ESI code, or to any non-HTML content. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -4614,24 +4615,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"edge_worker": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "`EdgeWorkers` are JavaScript applications that allow you to manipulate your web traffic on edge servers outside of Property Manager behaviors, and deployed independently from your configuration's logic.  This behavior applies an EdgeWorker to a set of edge requests.",
+			Description: "`EdgeWorkers` are JavaScript applications that allow you to manipulate your web traffic on edge servers outside of Property Manager behaviors, and deployed independently from your configuration's logic.  This behavior applies an EdgeWorker to a set of edge requests. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -4650,24 +4651,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"enhanced_akamai_protocol": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Enables the Enhanced Akamai Protocol, a suite of advanced routing and transport optimizations that increase your website's performance and reliability. It is only available to specific applications, and requires a special routing from edge to origin.",
+			Description: "Enables the Enhanced Akamai Protocol, a suite of advanced routing and transport optimizations that increase your website's performance and reliability. It is only available to specific applications, and requires a special routing from edge to origin. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 				},
@@ -4676,24 +4677,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"enhanced_proxy_detection": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Enhanced Proxy Detection (EPD) leverages the GeoGuard service provided by GeoComply to add proxy detection and location spoofing protection. It identifies requests for your content that have been redirected from an unwanted source through a proxy. You can then allow, deny, or redirect these requests.",
+			Description: "Enhanced Proxy Detection (EPD) leverages the GeoGuard service provided by GeoComply to add proxy detection and location spoofing protection. It identifies requests for your content that have been redirected from an unwanted source through a proxy. You can then allow, deny, or redirect these requests. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -4849,24 +4850,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"epd_forward_header_enrichment": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "This behavior identifies unwanted requests from an anonymous proxy. This and the `enhancedProxyDetection` behavior work together and need to be included either in the same rule, or in the default one.",
+			Description: "This behavior identifies unwanted requests from an anonymous proxy. This and the `enhancedProxyDetection` behavior work together and need to be included either in the same rule, or in the default one. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -4880,24 +4881,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"fail_action": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Specifies how to respond when the origin is not available: by serving stale content, by serving an error page, or by redirecting.  To apply this behavior, you should match on an `originTimeout` or `matchResponseCode`.",
+			Description: "Specifies how to respond when the origin is not available: by serving stale content, by serving an error page, or by redirecting.  To apply this behavior, you should match on an `originTimeout` or `matchResponseCode`. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -4926,7 +4927,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						ValidateDiagFunc: validateRegex("^[0-9]+$"),
 						Optional:         true,
 						Description:      "Specifies the number of elements in the CNAME chain backwards from the edge hostname that determines the hostname for the SaaS dynamic failaction.",
-						Type:             schema.TypeFloat,
+						Type:             schema.TypeInt,
 					},
 					"saas_cookie": {
 						ValidateDiagFunc: validateRegex("^[a-zA-Z0-9_\\-*\\.]+$"),
@@ -5031,7 +5032,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 								"cp_code": {
 									Optional:    true,
 									Description: "",
-									Type:        schema.TypeFloat,
+									Type:        schema.TypeInt,
 								},
 								"download_domain_name": {
 									Optional:    true,
@@ -5112,24 +5113,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"failover_bot_manager_feature_compatibility": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Ensures that functionality such as challenge authentication and reset protocol work with a failover product property you use to create an alternate hostname. Apply it to any properties that implement a failover under the Cloud Security Failover product.",
+			Description: "Ensures that functionality such as challenge authentication and reset protocol work with a failover product property you use to create an alternate hostname. Apply it to any properties that implement a failover under the Cloud Security Failover product. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"compatibility": {
@@ -5143,24 +5144,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"fast_invalidate": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Applies Akamai's `Fast Purge` feature to selected edge content, invalidating it within approximately five seconds.  This behavior sends an `If-Modified-Since` request to the origin for subsequent requests, replacing it with origin content if its timestamp is more recent. Otherwise if the origin lacks a `Last-Modified` header, it sends a simple GET request. Note that this behavior does not simply delete content if more recent origin content is unavailable.  See the `Fast Purge API` for an independent way to invalidate selected sets of content, and for more information on the feature.",
+			Description: "Applies Akamai's `Fast Purge` feature to selected edge content, invalidating it within approximately five seconds.  This behavior sends an `If-Modified-Since` request to the origin for subsequent requests, replacing it with origin content if its timestamp is more recent. Otherwise if the origin lacks a `Last-Modified` header, it sends a simple GET request. Note that this behavior does not simply delete content if more recent origin content is unavailable.  See the `Fast Purge API` for an independent way to invalidate selected sets of content, and for more information on the feature. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -5174,24 +5175,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"first_party_marketing": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Enables the `Cloud Marketing Cloudlet`, which helps MediaMath customers collect usage data and place corresponding tags for use in online advertising.  You can configure tags using either the Cloudlets Policy Manager application or the `Cloudlets API`. See also the `firstPartyMarketingPlus` behavior, which integrates better with both MediaMath and its partners. Both behaviors support the same set of options.",
+			Description: "Enables the `Cloud Marketing Cloudlet`, which helps MediaMath customers collect usage data and place corresponding tags for use in online advertising.  You can configure tags using either the Cloudlets Policy Manager application or the `Cloudlets API`. See also the `firstPartyMarketingPlus` behavior, which integrates better with both MediaMath and its partners. Both behaviors support the same set of options. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -5237,24 +5238,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"first_party_marketing_plus": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Enables the `Cloud Marketing Plus Cloudlet`, which helps MediaMath customers collect usage data and place corresponding tags for use in online advertising.  You can configure tags using either the Cloudlets Policy Manager application or the `Cloudlets API`. See also the `firstPartyMarketing` behavior, which integrates with MediaMath but not its partners. Both behaviors support the same set of options.",
+			Description: "Enables the `Cloud Marketing Plus Cloudlet`, which helps MediaMath customers collect usage data and place corresponding tags for use in online advertising.  You can configure tags using either the Cloudlets Policy Manager application or the `Cloudlets API`. See also the `firstPartyMarketing` behavior, which integrates with MediaMath but not its partners. Both behaviors support the same set of options. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -5300,24 +5301,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"forward_rewrite": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "The Forward Rewrite Cloudlet allows you to conditionally modify the forward path in edge content without affecting the URL that displays in the user's address bar. If Cloudlets are available on your contract, choose `Your services`, `Edge logic Cloudlets` to control how this feature works within `Control Center`, or use the `Cloudlets API` to configure it programmatically.",
+			Description: "The Forward Rewrite Cloudlet allows you to conditionally modify the forward path in edge content without affecting the URL that displays in the user's address bar. If Cloudlets are available on your contract, choose `Your services`, `Edge logic Cloudlets` to control how this feature works within `Control Center`, or use the `Cloudlets API` to configure it programmatically. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -5353,7 +5354,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 					"cloudlet_shared_policy": {
 						Optional:    true,
 						Description: "This identifies the Cloudlet shared policy to use with this behavior. You can list available shared policies with the `Cloudlets API`.",
-						Type:        schema.TypeFloat,
+						Type:        schema.TypeInt,
 					},
 				},
 			},
@@ -5361,24 +5362,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"front_end_optimization": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "This behavior enables `Front End Optimization`, a suite of performance enhancements that accelerate page rendering and reduce download times, for example by `minifying` JavaScript and CSS.",
+			Description: "This behavior enables `Front End Optimization`, a suite of performance enhancements that accelerate page rendering and reduce download times, for example by `minifying` JavaScript and CSS. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -5392,24 +5393,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"g2oheader": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "The `signature header authentication` (g2o) security feature provides header-based verification of outgoing origin requests. Edge servers encrypt request data in a pre-defined header, which the origin uses to verify that the edge server processed the request. This behavior configures the request data, header names, encryption algorithm, and shared secret to use for verification.",
+			Description: "The `signature header authentication` (g2o) security feature provides header-based verification of outgoing origin requests. Edge servers encrypt request data in a pre-defined header, which the origin uses to verify that the edge server processed the request. This behavior configures the request data, header names, encryption algorithm, and shared secret to use for verification. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -5466,24 +5467,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"global_request_number": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Generates a unique identifier for each request on the Akamai edge network, for use in logging and debugging. GRN identifiers follow the same format as Akamai's error reference strings, for example: `0.05313217.1567801841.1457a3`. You can use the Edge Diagnostics API's `Translate error string` operation to get low-level details about any request.",
+			Description: "Generates a unique identifier for each request on the Akamai edge network, for use in logging and debugging. GRN identifiers follow the same format as Akamai's error reference strings, for example: `0.05313217.1567801841.1457a3`. You can use the Edge Diagnostics API's `Translate error string` operation to get low-level details about any request. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"output_option": {
@@ -5509,24 +5510,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"graphql_caching": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "This behavior configures how to cache GraphQL-based API traffic.  Enable `caching` for your GraphQL API traffic, along with `allowPost` to cache POST responses.  To configure REST API traffic, use the `rapid` behavior.",
+			Description: "This behavior configures how to cache GraphQL-based API traffic.  Enable `caching` for your GraphQL API traffic, along with `allowPost` to cache POST responses.  To configure REST API traffic, use the `rapid` behavior. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -5561,24 +5562,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"gzip_response": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Apply `gzip` compression to speed transfer time. This behavior applies best to text-based content such as HTML, CSS, and JavaScript, especially once files exceed about 10KB. Do not apply it to already compressed image formats, or to small files that would add more time to uncompress. To apply this behavior, you should match on `contentType` or the content's `cacheability`.",
+			Description: "Apply `gzip` compression to speed transfer time. This behavior applies best to text-based content such as HTML, CSS, and JavaScript, especially once files exceed about 10KB. Do not apply it to already compressed image formats, or to small files that would add more time to uncompress. To apply this behavior, you should match on `contentType` or the content's `cacheability`. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"behavior": {
@@ -5593,24 +5594,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"hd_data_advanced": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "This behavior specifies Akamai XML metadata that can only be configured on your behalf by Akamai Professional Services.  Unlike the `advanced` behavior, this may apply a different set of overriding metadata that executes in a post-processing phase.",
+			Description: "This behavior specifies Akamai XML metadata that can only be configured on your behalf by Akamai Professional Services.  Unlike the `advanced` behavior, this may apply a different set of overriding metadata that executes in a post-processing phase. This behavior is for internal usage only. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"description": {
@@ -5629,30 +5630,30 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"health_detection": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Monitors the health of your origin server by tracking unsuccessful attempts to contact it. Use this behavior to keep end users from having to wait several seconds before a forwarded request times out, or to reduce requests on the origin server when it is unavailable.",
+			Description: "Monitors the health of your origin server by tracking unsuccessful attempts to contact it. Use this behavior to keep end users from having to wait several seconds before a forwarded request times out, or to reduce requests on the origin server when it is unavailable. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"retry_count": {
 						Optional:    true,
 						Description: "The number of consecutive connection failures that mark an IP address as faulty.",
-						Type:        schema.TypeFloat,
+						Type:        schema.TypeInt,
 					},
 					"retry_interval": {
 						ValidateDiagFunc: validateRegex("^[0-9]+[DdHhMmSs]$"),
@@ -5663,7 +5664,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 					"maximum_reconnects": {
 						Optional:    true,
 						Description: "Specifies the maximum number of times the edge server will contact your origin server. If your origin is associated with several IP addresses, `maximumReconnects` effectively overrides the value of `retryCount`.",
-						Type:        schema.TypeFloat,
+						Type:        schema.TypeInt,
 					},
 				},
 			},
@@ -5671,50 +5672,50 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"hsaf_eip_binding": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "2DO.",
+			Description: "This behavior is for internal usage only. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
 						Optional:    true,
-						Description: "2DO.",
+						Description: "",
 						Type:        schema.TypeBool,
 					},
 					"custom_extracted_serial": {
 						Optional:    true,
-						Description: "2DO.",
+						Description: "",
 						Type:        schema.TypeBool,
 					},
 					"hash_min_value": {
 						Optional:    true,
-						Description: "2DO.",
-						Type:        schema.TypeFloat,
+						Description: "",
+						Type:        schema.TypeInt,
 					},
 					"hash_max_value": {
 						Optional:    true,
-						Description: "2DO.",
-						Type:        schema.TypeFloat,
+						Description: "",
+						Type:        schema.TypeInt,
 					},
 					"tier": {
 						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"EDGE", "PARENT", "BOTH"}, false)),
 						Optional:         true,
-						Description:      "2DO.",
+						Description:      "",
 						Type:             schema.TypeString,
 					},
 				},
@@ -5723,24 +5724,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"http2": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Enables the HTTP/2 protocol, which reduces latency and improves efficiency. You can only apply this behavior if the property is marked as secure.  See `Secure property requirements` for guidance.",
+			Description: "Enables the HTTP/2 protocol, which reduces latency and improves efficiency. You can only apply this behavior if the property is marked as secure.  See `Secure property requirements` for guidance. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 				},
@@ -5749,24 +5750,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"http3": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "This enables the HTTP/3 protocol that uses QUIC. The behavior allows for improved performance and faster connection setup. You can only apply this behavior if the property is marked as secure. See `Secure property requirements` and the `Property Manager documentation` for guidance.",
+			Description: "This enables the HTTP/3 protocol that uses QUIC. The behavior allows for improved performance and faster connection setup. You can only apply this behavior if the property is marked as secure. See `Secure property requirements` and the `Property Manager documentation` for guidance. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enable": {
@@ -5780,24 +5781,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"http_strict_transport_security": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Applies HTTP Strict Transport Security (HSTS), disallowing insecure HTTP traffic. Apply this to hostnames managed with Standard TLS or Enhanced TLS certificates.",
+			Description: "Applies HTTP Strict Transport Security (HSTS), disallowing insecure HTTP traffic. Apply this to hostnames managed with Standard TLS or Enhanced TLS certificates. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enable": {
@@ -5838,24 +5839,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"http_to_https_upgrade": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Upgrades an HTTP edge request to HTTPS for the remainder of the request flow. Enable this behavior only if your origin supports HTTPS, and if your `origin` behavior is configured with `originCertsToHonor` to verify SSL certificates.",
+			Description: "Upgrades an HTTP edge request to HTTPS for the remainder of the request flow. Enable this behavior only if your origin supports HTTPS, and if your `origin` behavior is configured with `originCertsToHonor` to verify SSL certificates. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 				},
@@ -5864,24 +5865,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"im_override": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "This specifies common query parameters that affect how `imageManager` transforms images, potentially overriding policy, width, format, or density request parameters. This also allows you to assign the value of one of the property's `rule tree variables` to one of Image and Video Manager's own policy variables.",
+			Description: "This specifies common query parameters that affect how `imageManager` transforms images, potentially overriding policy, width, format, or density request parameters. This also allows you to assign the value of one of the property's `rule tree variables` to one of Image and Video Manager's own policy variables. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"override": {
@@ -5968,49 +5969,49 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"image_and_video_manager": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "2DO.",
+			Description: "This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"policy_set_type": {
 						Optional:    true,
-						Description: "2DO.",
+						Description: "",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
 						Optional:    true,
-						Description: "2DO.",
+						Description: "",
 						Type:        schema.TypeBool,
 					},
 					"resize": {
 						Optional:    true,
-						Description: "2DO.",
+						Description: "",
 						Type:        schema.TypeBool,
 					},
 					"apply_best_file_type": {
 						Optional:    true,
-						Description: "2DO.",
+						Description: "",
 						Type:        schema.TypeBool,
 					},
 					"cp_code_original": {
 						Optional:    true,
-						Description: "2DO.",
+						Description: "",
 						Type:        schema.TypeList,
 						MaxItems:    1,
 						Elem: &schema.Resource{
@@ -6025,7 +6026,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 					},
 					"cp_code_transformed": {
 						Optional:    true,
-						Description: "2DO.",
+						Description: "",
 						Type:        schema.TypeList,
 						MaxItems:    1,
 						Elem: &schema.Resource{
@@ -6041,13 +6042,13 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 					"image_set": {
 						ValidateDiagFunc: validateRegex("^[a-zA-Z0-9_-]+([^-].|[^v])$"),
 						Optional:         true,
-						Description:      "2DO.",
+						Description:      "",
 						Type:             schema.TypeString,
 					},
 					"video_set": {
 						ValidateDiagFunc: validateRegex("^[a-zA-Z0-9_-]+-v$"),
 						Optional:         true,
-						Description:      "2DO.",
+						Description:      "",
 						Type:             schema.TypeString,
 					},
 				},
@@ -6056,24 +6057,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"image_manager": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Optimizes images' size or file type for the requesting device.  You can also use this behavior to generate API tokens to apply your own policies to matching images using the `Image and Video Manager API`. To apply this behavior, you need to match on a `fileExtension`. Once you apply Image and Video Manager to traffic, you can add the `advancedImMatch` to ensure the behavior applies to the requests from the Image and Video Manager backend.",
+			Description: "Optimizes images' size or file type for the requesting device.  You can also use this behavior to generate API tokens to apply your own policies to matching images using the `Image and Video Manager API`. To apply this behavior, you need to match on a `fileExtension`. Once you apply Image and Video Manager to traffic, you can add the `advancedImMatch` to ensure the behavior applies to the requests from the Image and Video Manager backend. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -6160,24 +6161,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"image_manager_video": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Optimizes videos managed by Image and Video Manager for the requesting device.  You can also use this behavior to generate API tokens to apply your own policies to matching videos using the `Image and Video Manager API`. To apply this behavior, you need to match on a `fileExtension`.",
+			Description: "Optimizes videos managed by Image and Video Manager for the requesting device.  You can also use this behavior to generate API tokens to apply your own policies to matching videos using the `Image and Video Manager API`. To apply this behavior, you need to match on a `fileExtension`. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -6264,24 +6265,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"include": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Includes let you reuse chunks of a property configuration that you can manage separately from the rest of the property rule tree.",
+			Description: "Includes let you reuse chunks of a property configuration that you can manage separately from the rest of the property rule tree. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"id": {
@@ -6295,24 +6296,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"input_validation": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "The Input Validation Cloudlet detects anomalous edge requests and helps mitigate repeated invalid requests.  You can configure it using either the Cloudlets Policy Manager application, available within `Control Center` under `Your services`, `Edge logic Cloudlets`, or the `Cloudlets API`.",
+			Description: "The Input Validation Cloudlet detects anomalous edge requests and helps mitigate repeated invalid requests.  You can configure it using either the Cloudlets Policy Manager application, available within `Control Center` under `Your services`, `Edge logic Cloudlets`, or the `Cloudlets API`. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -6420,7 +6421,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						ValidateDiagFunc: validateRegex("^\\d{3}$"),
 						Optional:         true,
 						Description:      "Unless `validateOnOriginWith` is `DISABLED`, this identifies the integer response code for requests the origin identifies as invalid.",
-						Type:             schema.TypeFloat,
+						Type:             schema.TypeInt,
 					},
 					"failure302_uri": {
 						ValidateDiagFunc: validateRegex("^[^\\s]+$"),
@@ -6431,7 +6432,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 					"penalty_threshold": {
 						Optional:    true,
 						Description: "Specifies the number of invalid requests permitted before executing the `penaltyAction`.",
-						Type:        schema.TypeFloat,
+						Type:        schema.TypeInt,
 					},
 					"penalty_action": {
 						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"REDIRECT_302", "BLANK_403", "BRANDED_403"}, false)),
@@ -6455,7 +6456,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 								"cp_code": {
 									Optional:    true,
 									Description: "",
-									Type:        schema.TypeFloat,
+									Type:        schema.TypeInt,
 								},
 								"download_domain_name": {
 									Optional:    true,
@@ -6483,24 +6484,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"instant": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "The Instant feature allows you to prefetch content to the edge cache by adding link relation attributes to markup. For example:",
+			Description: "The Instant feature allows you to prefetch content to the edge cache by adding link relation attributes to markup. For example: This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"prefetch_cacheable": {
@@ -6540,24 +6541,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"instant_config": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Multi-Domain Configuration, also known as `InstantConfig`, allows you to apply property settings to all incoming hostnames based on a DNS lookup, without explicitly listing them among the property's hostnames.",
+			Description: "Multi-Domain Configuration, also known as `InstantConfig`, allows you to apply property settings to all incoming hostnames based on a DNS lookup, without explicitly listing them among the property's hostnames. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -6571,24 +6572,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"large_file_optimization": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "The `Large File Optimization` feature improves performance and reliability when delivering large files. You need this behavior for objects larger than 1.8GB, and it's recommended for anything over 100MB. You should apply it only to the specific content to be optimized, such as a download directory's `.gz` files, and enable the `useVersioning` option while enforcing your own filename versioning policy.  Note that it is best to use `NetStorage` for objects larger than 1.8GB.",
+			Description: "The `Large File Optimization` feature improves performance and reliability when delivering large files. You need this behavior for objects larger than 1.8GB, and it's recommended for anything over 100MB. You should apply it only to the specific content to be optimized, such as a download directory's `.gz` files, and enable the `useVersioning` option while enforcing your own filename versioning policy.  Note that it is best to use `NetStorage` for objects larger than 1.8GB. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -6611,7 +6612,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 					"maximum_size": {
 						ValidateDiagFunc: validateRegex("^\\d+[K,M,G,T]B$"),
 						Optional:         true,
-						Description:      "Optimization does not apply to files larger than this, expressed as a number suffixed with a unit string such as `MB` or `GB`.",
+						Description:      "Optimization does not apply to files larger than this, expressed as a number suffixed with a unit string such as `MB` or `GB`. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"use_versioning": {
@@ -6625,24 +6626,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"large_file_optimization_advanced": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "The `Large File Optimization` feature improves performance and reliability when delivering large files. You need this behavior for objects larger than 1.8GB, and it's recommended for anything over 100MB. You should apply it only to the specific content to be optimized, such as a download directory's `.gz` files.  Note that it is best to use `NetStorage` for objects larger than 1.8GB.",
+			Description: "The `Large File Optimization` feature improves performance and reliability when delivering large files. You need this behavior for objects larger than 1.8GB, and it's recommended for anything over 100MB. You should apply it only to the specific content to be optimized, such as a download directory's `.gz` files.  Note that it is best to use `NetStorage` for objects larger than 1.8GB. This behavior is for internal usage only. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -6665,12 +6666,12 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 					"prefetch_during_request": {
 						Optional:    true,
 						Description: "The number of POC fragments to prefetch during the request.",
-						Type:        schema.TypeFloat,
+						Type:        schema.TypeInt,
 					},
 					"prefetch_after_request": {
 						Optional:    true,
 						Description: "The number of POC fragments to prefetch after the request.",
-						Type:        schema.TypeFloat,
+						Type:        schema.TypeInt,
 					},
 				},
 			},
@@ -6678,24 +6679,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"limit_bit_rate": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Control the rate at which content serves out to end users, optionally varying the speed depending on the file size or elapsed download time. Each bit rate specified in the `bitrateTable` array corresponds to a `thresholdTable` entry that activates it.  You can use this behavior to prevent media downloads from progressing faster than they are viewed, for example, or to differentiate various tiers of end-user experience. To apply this behavior, you should match on a `contentType`, `path`, or `filename`.",
+			Description: "Control the rate at which content serves out to end users, optionally varying the speed depending on the file size or elapsed download time. Each bit rate specified in the `bitrateTable` array corresponds to a `thresholdTable` entry that activates it.  You can use this behavior to prevent media downloads from progressing faster than they are viewed, for example, or to differentiate various tiers of end-user experience. To apply this behavior, you should match on a `contentType`, `path`, or `filename`. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -6732,7 +6733,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 								"threshold_value": {
 									Optional:    true,
 									Description: "The numeric indicator of the minimum file size or elapsed download time.",
-									Type:        schema.TypeFloat,
+									Type:        schema.TypeInt,
 								},
 								"threshold_unit": {
 									ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"BYTES", "SECONDS"}, false)),
@@ -6749,24 +6750,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"log_custom": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Logs custom details from the origin response in the `Log Delivery Service` report.",
+			Description: "Logs custom details from the origin response in the `Log Delivery Service` report. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"log_custom_log_field": {
@@ -6785,24 +6786,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"m_pulse": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "`mPulse` provides high-level performance analytics and predictive recommendations based on real end user data. See the `mPulse Quick Start` to set up mPulse on your website.",
+			Description: "`mPulse` provides high-level performance analytics and predictive recommendations based on real end user data. See the `mPulse Quick Start` to set up mPulse on your website. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -6844,24 +6845,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"manifest_personalization": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Allows customers who use the Adaptive Media Delivery product to enhance content based on the capabilities of each end user's device.  This behavior configures a `manifest` for both HLS Live and on-demand streaming. For more information, see `Adaptive Media Delivery`.",
+			Description: "Allows customers who use the Adaptive Media Delivery product to enhance content based on the capabilities of each end user's device.  This behavior configures a `manifest` for both HLS Live and on-demand streaming. For more information, see `Adaptive Media Delivery`. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -6930,24 +6931,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"manifest_rerouting": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "This behavior works with `adScalerCircuitBreaker`. It delegates parts of the media delivery workflow, like ad insertion, to other technology partners. Akamai reroutes manifest file requests to partner platforms for processing prior to being delivered. Rerouting simplifies the workflow and improves the media streaming experience.",
+			Description: "This behavior works with `adScalerCircuitBreaker`. It delegates parts of the media delivery workflow, like ad insertion, to other technology partners. Akamai reroutes manifest file requests to partner platforms for processing prior to being delivered. Rerouting simplifies the workflow and improves the media streaming experience. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"partner": {
@@ -6968,24 +6969,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"manual_server_push": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "With the `http2` behavior enabled, this loads a specified set of objects into the client browser's cache. To apply this behavior, you should match on a `path` or `filename`.",
+			Description: "With the `http2` behavior enabled, this loads a specified set of objects into the client browser's cache. To apply this behavior, you should match on a `path` or `filename`. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"serverpushlist": {
@@ -7002,24 +7003,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"media_acceleration": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Enables Accelerated Media Delivery for this set of requests.",
+			Description: "Enables Accelerated Media Delivery for this set of requests. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -7033,24 +7034,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"media_acceleration_quic_optout": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "When enabled, disables use of QUIC protocol for this set of accelerated media content.",
+			Description: "When enabled, disables use of QUIC protocol for this set of accelerated media content. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 				},
@@ -7059,24 +7060,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"media_client": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Enables client-side reporting through analytics beacon requests.",
+			Description: "Enables client-side reporting through analytics beacon requests. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -7100,24 +7101,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"media_file_retrieval_optimization": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Media File Retrieval Optimization (MFRO) speeds the delivery of large media files by relying on caches of partial objects. You should use it for files larger than 100 MB. It's required for files larger than 1.8 GB, and works best with `NetStorage`. To apply this behavior, you should match on a `fileExtension`.",
+			Description: "Media File Retrieval Optimization (MFRO) speeds the delivery of large media files by relying on caches of partial objects. You should use it for files larger than 100 MB. It's required for files larger than 1.8 GB, and works best with `NetStorage`. To apply this behavior, you should match on a `fileExtension`. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -7131,24 +7132,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"media_origin_failover": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Specifies how edge servers respond when the origin is unresponsive, or suffers from server or content errors. You can specify how many times to retry, switch to a backup origin hostname, or configure a redirect.",
+			Description: "Specifies how edge servers respond when the origin is unresponsive, or suffers from server or content errors. You can specify how many times to retry, switch to a backup origin hostname, or configure a redirect. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"detect_origin_unresponsive": {
@@ -7426,24 +7427,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"metadata_caching": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "This behavior reduces time spent waiting for the initial response, also known as time to first byte, during peak traffic events. Contact Akamai Professional Services for help configuring it.",
+			Description: "This behavior reduces time spent waiting for the initial response, also known as time to first byte, during peak traffic events. Contact Akamai Professional Services for help configuring it. This behavior is for internal usage only. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -7457,24 +7458,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"mobile_sdk_performance": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "The Mobile Application Performance software development kit allows you to optimize native iOS and Android apps, effectively extending Akamai's intelligent edge platform's advantages to mobile devices operation in poor network conditions. This behavior enables the SDK's features for this set of requests.",
+			Description: "The Mobile Application Performance software development kit allows you to optimize native iOS and Android apps, effectively extending Akamai's intelligent edge platform's advantages to mobile devices operation in poor network conditions. This behavior enables the SDK's features for this set of requests. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -7493,24 +7494,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"modify_incoming_request_header": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Modify, add, remove, or pass along specific request headers coming upstream from the client.",
+			Description: "Modify, add, remove, or pass along specific request headers coming upstream from the client. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"action": {
@@ -7570,24 +7571,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"modify_incoming_response_header": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Modify, add, remove, or pass along specific response headers coming downstream from the origin.",
+			Description: "Modify, add, remove, or pass along specific response headers coming downstream from the origin. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"action": {
@@ -7647,24 +7648,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"modify_outgoing_request_header": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Modify, add, remove, or pass along specific request headers going upstream towards the origin.",
+			Description: "Modify, add, remove, or pass along specific request headers going upstream towards the origin. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"action": {
@@ -7733,24 +7734,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"modify_outgoing_response_header": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Modify, add, remove, or pass along specific response headers going downstream towards the client.",
+			Description: "Modify, add, remove, or pass along specific response headers going downstream towards the client. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"action": {
@@ -7819,24 +7820,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"modify_via_header": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Removes or renames the HTTP `Via` headers used to inform the server of proxies through which the request was sent to the origin.",
+			Description: "Removes or renames the HTTP `Via` headers used to inform the server of proxies through which the request was sent to the origin. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -7862,24 +7863,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"origin": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Specify the hostname and settings used to contact the origin once service begins. You can use your own origin, `NetStorage`, an Edge Load Balancing origin, or a SaaS dynamic origin.",
+			Description: "Specify the hostname and settings used to contact the origin once service begins. You can use your own origin, `NetStorage`, an Edge Load Balancing origin, or a SaaS dynamic origin. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"origin_type": {
@@ -7898,7 +7899,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 								"cp_code": {
 									Optional:    true,
 									Description: "",
-									Type:        schema.TypeFloat,
+									Type:        schema.TypeInt,
 								},
 								"download_domain_name": {
 									Optional:    true,
@@ -7948,7 +7949,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						ValidateDiagFunc: validateRegex("^[0-9]+$"),
 						Optional:         true,
 						Description:      "Specifies the desired number of hostnames to use in the `CNAME chain`, starting backwards from the edge server.",
-						Type:             schema.TypeFloat,
+						Type:             schema.TypeInt,
 					},
 					"saas_cookie": {
 						ValidateDiagFunc: validateRegex("^[a-zA-Z0-9_\\-*\\.]+$"),
@@ -8107,12 +8108,12 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 					"http_port": {
 						Optional:    true,
 						Description: "Specifies the port on your origin server to which edge servers should connect for HTTP requests, customarily `80`.",
-						Type:        schema.TypeFloat,
+						Type:        schema.TypeInt,
 					},
 					"https_port": {
 						Optional:    true,
 						Description: "Specifies the port on your origin server to which edge servers should connect for secure HTTPS requests, customarily `443`. This option only applies if the property is marked as secure. See `Secure property requirements` for guidance.",
-						Type:        schema.TypeFloat,
+						Type:        schema.TypeInt,
 					},
 				},
 			},
@@ -8120,24 +8121,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"origin_characteristics": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Specifies characteristics of the origin. Akamai uses this information to optimize your metadata configuration, which may result in better origin offload and end-user performance.",
+			Description: "Specifies characteristics of the origin. Akamai uses this information to optimize your metadata configuration, which may result in better origin offload and end-user performance. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"country": {
@@ -8262,24 +8263,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"origin_characteristics_wsd": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Specifies characteristics of the origin, for use in Akamai's Wholesale Delivery product.",
+			Description: "Specifies characteristics of the origin, for use in Akamai's Wholesale Delivery product. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"origintype": {
@@ -8294,24 +8295,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"origin_failure_recovery_method": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Origin Failover requires that you set up a separate rule containing origin failure recovery methods. You also need to set up the Origin Failure Recovery Policy behavior in a separate rule with a desired match criteria, and select the desired failover method. You can do this using Property Manager. Learn more about this process in `Adaptive Media Delivery Implementation Guide`. You can use the `originFailureRecoveryPolicy` member to edit existing instances of the Origin Failure Recover Policy behavior.",
+			Description: "Origin Failover requires that you set up a separate rule containing origin failure recovery methods. You also need to set up the Origin Failure Recovery Policy behavior in a separate rule with a desired match criteria, and select the desired failover method. You can do this using Property Manager. Learn more about this process in `Adaptive Media Delivery Implementation Guide`. You can use the `originFailureRecoveryPolicy` member to edit existing instances of the Origin Failure Recover Policy behavior. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"recovery_method": {
@@ -8331,24 +8332,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"origin_failure_recovery_policy": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Configures how to detect an origin failure, in which case the `originFailureRecoveryMethod` behavior applies. You can also define up to three sets of criteria to detect origin failure based on specific response codes. Use it to apply specific retry or recovery actions. You can do this using Property Manager. Learn more about this process in `Adaptive Media Delivery Implementation Guide`. You can use the `originFailureRecoveryMethod` member to edit existing instances of the Origin Failure Recover Method behavior.",
+			Description: "Configures how to detect an origin failure, in which case the `originFailureRecoveryMethod` behavior applies. You can also define up to three sets of criteria to detect origin failure based on specific response codes. Use it to apply specific retry or recovery actions. You can do this using Property Manager. Learn more about this process in `Adaptive Media Delivery Implementation Guide`. You can use the `originFailureRecoveryMethod` member to edit existing instances of the Origin Failure Recover Method behavior. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -8364,12 +8365,12 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 					"ip_avoidance_error_threshold": {
 						Optional:    true,
 						Description: "Defines the number of failures that need to occur to an origin address before it's blocked.",
-						Type:        schema.TypeFloat,
+						Type:        schema.TypeInt,
 					},
 					"ip_avoidance_retry_interval": {
 						Optional:    true,
 						Description: "Defines the number of seconds after which the IP address is removed from the blocklist.",
-						Type:        schema.TypeFloat,
+						Type:        schema.TypeInt,
 					},
 					"binary_equivalent_content": {
 						Optional:    true,
@@ -8390,7 +8391,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 					"origin_responsiveness_custom_timeout": {
 						Optional:    true,
 						Description: "Specify a custom timeout, from 1 to 10 seconds.",
-						Type:        schema.TypeFloat,
+						Type:        schema.TypeInt,
 					},
 					"origin_responsiveness_enable_retry": {
 						Optional:    true,
@@ -8497,24 +8498,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"origin_ip_acl": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Origin IP Access Control List limits the traffic to your origin. It only allows requests from specific edge servers that are configured as part of a supernet defined by CIDR blocks.",
+			Description: "Origin IP Access Control List limits the traffic to your origin. It only allows requests from specific edge servers that are configured as part of a supernet defined by CIDR blocks. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enable": {
@@ -8528,24 +8529,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"persistent_client_connection": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "This behavior activates `persistent connections` between edge servers and clients, which allow for better performance and more efficient use of resources. Compare with the `persistentConnection` behavior, which configures persistent connections for the entire journey from origin to edge to client.  Contact Akamai Professional Services for help configuring either.",
+			Description: "This behavior activates `persistent connections` between edge servers and clients, which allow for better performance and more efficient use of resources. Compare with the `persistentConnection` behavior, which configures persistent connections for the entire journey from origin to edge to client.  Contact Akamai Professional Services for help configuring either. This behavior is for internal usage only. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -8565,24 +8566,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"persistent_connection": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "This behavior enables more efficient `persistent connections` from origin to edge server to client. Compare with the `persistentClientConnection` behavior, which customizes persistent connections from edge to client. Contact Akamai Professional Services for help configuring either.",
+			Description: "This behavior enables more efficient `persistent connections` from origin to edge server to client. Compare with the `persistentClientConnection` behavior, which customizes persistent connections from edge to client. Contact Akamai Professional Services for help configuring either. This behavior is for internal usage only. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -8602,24 +8603,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"personally_identifiable_information": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Marks content covered by the current rule as sensitive `personally identifiable information` that needs to be treated as secure and private. That includes anything involving personal information: name, social security number, date and place of birth, mother's maiden name, biometric data, or any other data linked to an individual. If you attempt to save a property with such a rule that also caches or logs sensitive content, the added behavior results in a validation error.",
+			Description: "Marks content covered by the current rule as sensitive `personally identifiable information` that needs to be treated as secure and private. That includes anything involving personal information: name, social security number, date and place of birth, mother's maiden name, biometric data, or any other data linked to an individual. If you attempt to save a property with such a rule that also caches or logs sensitive content, the added behavior results in a validation error. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -8633,24 +8634,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"phased_release": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "The Phased Release Cloudlet provides gradual and granular traffic management to an alternate origin in near real time.  Use the `Cloudlets API` or the Cloudlets Policy Manager application within `Control Center` to set up your Cloudlets policies.",
+			Description: "The Phased Release Cloudlet provides gradual and granular traffic management to an alternate origin in near real time.  Use the `Cloudlets API` or the Cloudlets Policy Manager application within `Control Center` to set up your Cloudlets policies. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -8691,7 +8692,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Type:             schema.TypeString,
 					},
 					"population_expiration_date": {
-						ValidateDiagFunc: validateRegex("^[1-9]\\d*$"),
+						ValidateDiagFunc: validateRegex("^[0-9]+$"),
 						Optional:         true,
 						Description:      "Specifies the date and time when membership expires, and the browser no longer sends the cookie. Subsequent requests re-evaluate based on current membership settings.",
 						Type:             schema.TypeString,
@@ -8732,24 +8733,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"preconnect": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "With the `http2` behavior enabled, this requests a specified set of domains that relate to your property hostname, and keeps the connection open for faster loading of content from those domains.",
+			Description: "With the `http2` behavior enabled, this requests a specified set of domains that relate to your property hostname, and keeps the connection open for faster loading of content from those domains. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"preconnectlist": {
@@ -8766,24 +8767,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"predictive_content_delivery": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Improves user experience and reduces the cost of downloads by enabling mobile devices to predictively fetch and cache content from catalogs managed by Akamai servers. You can't use this feature if in the `segmentedMediaOptimization` behavior, the value for `behavior` is set to `LIVE`.",
+			Description: "Improves user experience and reduces the cost of downloads by enabling mobile devices to predictively fetch and cache content from catalogs managed by Akamai servers. You can't use this feature if in the `segmentedMediaOptimization` behavior, the value for `behavior` is set to `LIVE`. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -8797,24 +8798,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"predictive_prefetching": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "This behavior potentially reduces the client's page load time by pre-caching objects based on historical data for the page, not just its current set of referenced objects. It also detects second-level dependencies, such as objects retrieved by JavaScript.",
+			Description: "This behavior potentially reduces the client's page load time by pre-caching objects based on historical data for the page, not just its current set of referenced objects. It also detects second-level dependencies, such as objects retrieved by JavaScript. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -8834,24 +8835,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"prefetch": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Instructs edge servers to retrieve content linked from requested pages as they load, rather than waiting for separate requests for the linked content. This behavior applies depending on the rule's set of matching conditions. Use in conjunction with the `prefetchable` behavior, which specifies the set of objects to prefetch.",
+			Description: "Instructs edge servers to retrieve content linked from requested pages as they load, rather than waiting for separate requests for the linked content. This behavior applies depending on the rule's set of matching conditions. Use in conjunction with the `prefetchable` behavior, which specifies the set of objects to prefetch. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -8865,24 +8866,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"prefetchable": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Allow matching objects to prefetch into the edge cache as the parent page that links to them loads, rather than waiting for a direct request. This behavior applies depending on the rule's set of matching conditions. Use `prefetch` to enable the overall behavior for parent pages that contain links to the object. To apply this behavior, you need to match on a `filename` or `fileExtension`.",
+			Description: "Allow matching objects to prefetch into the edge cache as the parent page that links to them loads, rather than waiting for a direct request. This behavior applies depending on the rule's set of matching conditions. Use `prefetch` to enable the overall behavior for parent pages that contain links to the object. To apply this behavior, you need to match on a `filename` or `fileExtension`. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -8896,24 +8897,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"prefresh_cache": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Refresh cached content before its time-to-live (TTL) expires, to keep end users from having to wait for the origin to provide fresh content.",
+			Description: "Refresh cached content before its time-to-live (TTL) expires, to keep end users from having to wait for the origin to provide fresh content. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -8933,102 +8934,102 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"quality": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "2DO.",
+			Description: "This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"country": {
 						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"EUROPE", "NORTH_AMERICA", "LATIN_AMERICA", "SOUTH_AMERICA", "NORDICS", "ASIA_PACIFIC", "OTHER_AMERICAS", "OTHER_APJ", "OTHER_EMEA", "AUSTRALIA", "GERMANY", "INDIA", "ITALY", "JAPAN", "MEXICO", "TAIWAN", "UNITED_KINGDOM", "US_EAST", "US_CENTRAL", "US_WEST"}, false)),
 						Optional:         true,
-						Description:      "2DO.",
+						Description:      "",
 						Type:             schema.TypeString,
 					},
 					"end_user_location": {
 						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"GLOBAL", "GLOBAL_US_CENTRIC", "GLOBAL_EU_CENTRIC", "GLOBAL_ASIA_CENTRIC", "EUROPE", "NORTH_AMERICA", "SOUTH_AMERICA", "NORDICS", "ASIA_PACIFIC", "AUSTRALIA", "GERMANY", "INDIA", "ITALY", "JAPAN", "TAIWAN", "UNITED_KINGDOM"}, false)),
 						Optional:         true,
-						Description:      "2DO.",
+						Description:      "",
 						Type:             schema.TypeString,
 					},
 					"maximum_concurrent_users": {
 						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"NONE", "LESS_THAN_10K", "10K_TO_50K", "50K_TO_100K", "GREATER_THAN_100K"}, false)),
 						Optional:         true,
-						Description:      "2DO.",
+						Description:      "",
 						Type:             schema.TypeString,
 					},
 					"content_type": {
 						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"NONE", "SITE", "IMAGES", "CONFIG", "OTHERS", "AUDIO", "SD_VIDEO", "HD_VIDEO", "SUPER_HD_VIDEO", "LARGE_OBJECTS"}, false)),
 						Optional:         true,
-						Description:      "2DO.",
+						Description:      "",
 						Type:             schema.TypeString,
 					},
 					"object_size": {
 						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"LESS_THAN_1MB", "1_TO_10MB", "10_TO_100MB", "GREATER_THAN_100MB"}, false)),
 						Optional:         true,
-						Description:      "2DO.",
+						Description:      "",
 						Type:             schema.TypeString,
 					},
 					"download_type": {
 						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"FOREGROUND", "BACKGROUND"}, false)),
 						Optional:         true,
-						Description:      "2DO.",
+						Description:      "",
 						Type:             schema.TypeString,
 					},
 					"popularity_distribution": {
 						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"TYPICAL", "LONG_TAIL", "ALL_POPULAR", "ALL_UNPOPULAR"}, false)),
 						Optional:         true,
-						Description:      "2DO.",
+						Description:      "",
 						Type:             schema.TypeString,
 					},
 					"delivery_type": {
 						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"ON_DEMAND", "LIVE"}, false)),
 						Optional:         true,
-						Description:      "2DO.",
+						Description:      "",
 						Type:             schema.TypeString,
 					},
 					"delivery_format": {
 						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"DASH", "HDS", "HLS", "SILVER_LIGHT", "OTHER"}, false)),
 						Optional:         true,
-						Description:      "2DO.",
+						Description:      "",
 						Type:             schema.TypeString,
 					},
 					"segment_duration": {
 						ValidateDiagFunc: validation.ToDiagFunc(validation.IntInSlice([]int{2, 4, 6, 8, 10})),
 						Optional:         true,
-						Description:      "2DO.",
+						Description:      "",
 						Type:             schema.TypeInt,
 					},
 					"catalog_size": {
 						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"SMALL", "MEDIUM", "LARGE", "EXTRA_LARGE"}, false)),
 						Optional:         true,
-						Description:      "2DO.",
+						Description:      "",
 						Type:             schema.TypeString,
 					},
 					"refresh_rate": {
 						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"NONE", "HOURLY", "DAILY", "MONTHLY", "YEARLY"}, false)),
 						Optional:         true,
-						Description:      "2DO.",
+						Description:      "",
 						Type:             schema.TypeString,
 					},
 					"optimize_for": {
 						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"NONE", "ORIGIN", "STARTUP"}, false)),
 						Optional:         true,
-						Description:      "2DO.",
+						Description:      "",
 						Type:             schema.TypeString,
 					},
 				},
@@ -9037,24 +9038,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"quic_beta": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "For a share of responses, includes an `Alt-Svc` header for compatible clients to initiate subsequent sessions using the QUIC protocol.",
+			Description: "For a share of responses, includes an `Alt-Svc` header for compatible clients to initiate subsequent sessions using the QUIC protocol. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -9074,24 +9075,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"random_seek": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Optimizes `.flv` and `.mp4` files to allow random jump-point navigation.",
+			Description: "Optimizes `.flv` and `.mp4` files to allow random jump-point navigation. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"flv": {
@@ -9116,24 +9117,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"rapid": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "The `Akamai API Gateway` allows you to configure API traffic delivered over the Akamai network. Apply this behavior to a set of API assets, then use Akamai's `API Endpoints API` to configure how the traffic responds.  Use the `API Keys and Traffic Management API` to control access to your APIs.",
+			Description: "The `Akamai API Gateway` allows you to configure API traffic delivered over the Akamai network. Apply this behavior to a set of API assets, then use Akamai's `API Endpoints API` to configure how the traffic responds.  Use the `API Keys and Traffic Management API` to control access to your APIs. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -9147,24 +9148,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"read_timeout": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "This behavior specifies how long the edge server should wait for a response from the requesting forward server after a connection has already been established. Any failure to read aborts the request and sends a `504` Gateway Timeout error to the client. Contact Akamai Professional Services for help configuring this behavior.",
+			Description: "This behavior specifies how long the edge server should wait for a response from the requesting forward server after a connection has already been established. Any failure to read aborts the request and sends a `504` Gateway Timeout error to the client. Contact Akamai Professional Services for help configuring this behavior. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"value": {
@@ -9179,39 +9180,39 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"real_time_reporting": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "2DO.",
+			Description: "This behavior is for internal usage only. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
 						Optional:    true,
-						Description: "2DO.",
+						Description: "",
 						Type:        schema.TypeBool,
 					},
 					"advanced": {
 						Optional:    true,
-						Description: "2DO.",
+						Description: "",
 						Type:        schema.TypeBool,
 					},
 					"beacon_sampling_percentage": {
 						Optional:    true,
-						Description: "2DO.",
+						Description: "",
 						Type:        schema.TypeFloat,
 					},
 				},
@@ -9220,24 +9221,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"real_user_monitoring": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Real User Monitoring (RUM) injects JavaScript into HTML pages served to end-user clients that monitors page-load performance and reports on various data, such as browser type and geographic location. The `report` behavior allows you to configure logs.",
+			Description: "Real User Monitoring (RUM) injects JavaScript into HTML pages served to end-user clients that monitors page-load performance and reports on various data, such as browser type and geographic location. The `report` behavior allows you to configure logs. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -9251,24 +9252,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"redirect": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Respond to the client request with a redirect without contacting the origin. Specify the redirect as a path expression starting with a `/` character relative to the current root, or as a fully qualified URL. This behavior relies primarily on `destinationHostname` and `destinationPath` to manipulate the hostname and path independently.",
+			Description: "Respond to the client request with a redirect without contacting the origin. Specify the redirect as a path expression starting with a `/` character relative to the current root, or as a fully qualified URL. This behavior relies primarily on `destinationHostname` and `destinationPath` to manipulate the hostname and path independently. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"mobile_default_choice": {
@@ -9352,24 +9353,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"redirectplus": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Respond to the client request with a redirect without contacting the origin. This behavior fills the same need as `redirect`, but allows you to use `variables` to express the redirect `destination`'s component values more concisely.",
+			Description: "Respond to the client request with a redirect without contacting the origin. This behavior fills the same need as `redirect`, but allows you to use `variables` to express the redirect `destination`'s component values more concisely. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -9394,24 +9395,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"referer_checking": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Limits allowed requests to a set of domains you specify.",
+			Description: "Limits allowed requests to a set of domains you specify. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -9443,24 +9444,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"remove_query_parameter": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Remove named query parameters before forwarding the request to the origin.",
+			Description: "Remove named query parameters before forwarding the request to the origin. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"parameters": {
@@ -9477,24 +9478,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"remove_vary": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "By default, responses that feature a `Vary` header value of anything other than `Accept-Encoding` and a corresponding `Content-Encoding: gzip` header aren't cached on edge servers. `Vary` headers indicate when a URL's content varies depending on some variable, such as which `User-Agent` requests it. This behavior simply removes the `Vary` header to make responses cacheable.",
+			Description: "By default, responses that feature a `Vary` header value of anything other than `Accept-Encoding` and a corresponding `Content-Encoding: gzip` header aren't cached on edge servers. `Vary` headers indicate when a URL's content varies depending on some variable, such as which `User-Agent` requests it. This behavior simply removes the `Vary` header to make responses cacheable. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -9508,24 +9509,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"report": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Specify the HTTP request headers or cookie names to log in your Log Delivery Service reports.",
+			Description: "Specify the HTTP request headers or cookie names to log in your Log Delivery Service reports. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"log_host": {
@@ -9588,24 +9589,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"request_control": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "The Request Control Cloudlet allows you to control access to your web content based on the incoming request's IP or geographic location.  With Cloudlets available on your contract, choose `Your services`, `Edge logic Cloudlets` to control how the feature works within `Control Center`, or use the `Cloudlets API` to configure it programmatically.",
+			Description: "The Request Control Cloudlet allows you to control access to your web content based on the incoming request's IP or geographic location.  With Cloudlets available on your contract, choose `Your services`, `Edge logic Cloudlets` to control how the feature works within `Control Center`, or use the `Cloudlets API` to configure it programmatically. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -9654,7 +9655,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 								"cp_code": {
 									Optional:    true,
 									Description: "",
-									Type:        schema.TypeFloat,
+									Type:        schema.TypeInt,
 								},
 								"download_domain_name": {
 									Optional:    true,
@@ -9688,24 +9689,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"request_type_marker": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "The `Internet of Things: OTA Updates` product allows customers to securely distribute firmware to devices over cellular networks. When using the `downloadCompleteMarker` behavior to log successful downloads, this related behavior identifies download or campaign server types in aggregated and individual reports.",
+			Description: "The `Internet of Things: OTA Updates` product allows customers to securely distribute firmware to devices over cellular networks. When using the `downloadCompleteMarker` behavior to log successful downloads, this related behavior identifies download or campaign server types in aggregated and individual reports. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"request_type": {
@@ -9720,24 +9721,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"resource_optimizer": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "The Resource Optimizer helps compress and cache web resources such as JavaScript, CSS, and font files.",
+			Description: "The Resource Optimizer helps compress and cache web resources such as JavaScript, CSS, and font files. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -9751,24 +9752,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"resource_optimizer_extended_compatibility": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "The Resource Optimizer helps compress and cache web resources such as JavaScript, CSS, and font files.",
+			Description: "The Resource Optimizer helps compress and cache web resources such as JavaScript, CSS, and font files. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -9787,24 +9788,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"response_code": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Change the existing response code. For example, if your origin sends a `301` permanent redirect, this behavior can change it on the edge to a temporary `302` redirect.",
+			Description: "Change the existing response code. For example, if your origin sends a `301` permanent redirect, this behavior can change it on the edge to a temporary `302` redirect. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"status_code": {
@@ -9824,24 +9825,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"response_cookie": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Set a cookie to send downstream to the client with either a fixed value or a unique stamp.",
+			Description: "Set a cookie to send downstream to the client with either a fixed value or a unique stamp. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"cookie_name": {
@@ -9902,7 +9903,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Type:             schema.TypeString,
 					},
 					"expiration_date": {
-						ValidateDiagFunc: validateRegex("^[1-9]\\d*$"),
+						ValidateDiagFunc: validateRegex("^[0-9]+$"),
 						Optional:         true,
 						Description:      "If `expires` is set to `FIXED_DATE`, this sets when the cookie expires as a UTC date and time.",
 						Type:             schema.TypeString,
@@ -9935,24 +9936,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"restrict_object_caching": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "You need this behavior to deploy the Object Caching product. It disables serving HTML content and limits the maximum object size to 100MB. Contact Akamai Professional Services for help configuring it.",
+			Description: "You need this behavior to deploy the Object Caching product. It disables serving HTML content and limits the maximum object size to 100MB. Contact Akamai Professional Services for help configuring it. This behavior is for internal usage only. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 				},
@@ -9961,24 +9962,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"return_cache_status": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Generates a response header with information about cache status. Among other things, this can tell you whether the response came from the Akamai cache, or from the origin. Status values report with either of these forms of syntax, depending for example on whether you're deploying traffic using `sureRoute` or `tieredDistribution`:",
+			Description: "Generates a response header with information about cache status. Among other things, this can tell you whether the response came from the Akamai cache, or from the origin. Status values report with either of these forms of syntax, depending for example on whether you're deploying traffic using `sureRoute` or `tieredDistribution`: This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"response_header_name": {
@@ -9993,24 +9994,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"rewrite_url": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Modifies the path of incoming requests to forward to the origin. This helps you offload URL-rewriting tasks to the edge to increase the origin server's performance, allows you to redirect links to different targets without changing markup, and hides your original directory structure.",
+			Description: "Modifies the path of incoming requests to forward to the origin. This helps you offload URL-rewriting tasks to the edge to increase the origin server's performance, allows you to redirect links to different targets without changing markup, and hides your original directory structure. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"behavior": {
@@ -10069,24 +10070,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"rum_custom": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "With `realUserMonitoring` enabled, this configures the sample of data to include in your RUM report.",
+			Description: "With `realUserMonitoring` enabled, this configures the sample of data to include in your RUM report. This behavior is for internal usage only. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"rum_sample_rate": {
@@ -10107,24 +10108,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"saas_definitions": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Configures how the Software as a Service feature identifies `customers`, `applications`, and `users`. A different set of options is available for each type of targeted request, each enabled with the `action`-suffixed option. In each case, you can use `PATH`, `COOKIE`, `QUERY_STRING`, or `HOSTNAME` components as identifiers, or `disable` the SaaS behavior for certain targets. If you rely on a `HOSTNAME`, you also have the option of specifying a `CNAME chain` rather than an individual hostname. The various options suffixed `regex` and `replace` subsequently remove the identifier from the request. This behavior requires a sibling `origin` behavior whose `originType` option is set to `SAAS_DYNAMIC_ORIGIN`.",
+			Description: "Configures how the Software as a Service feature identifies `customers`, `applications`, and `users`. A different set of options is available for each type of targeted request, each enabled with the `action`-suffixed option. In each case, you can use `PATH`, `COOKIE`, `QUERY_STRING`, or `HOSTNAME` components as identifiers, or `disable` the SaaS behavior for certain targets. If you rely on a `HOSTNAME`, you also have the option of specifying a `CNAME chain` rather than an individual hostname. The various options suffixed `regex` and `replace` subsequently remove the identifier from the request. This behavior requires a sibling `origin` behavior whose `originType` option is set to `SAAS_DYNAMIC_ORIGIN`. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"customer_action": {
@@ -10142,7 +10143,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						ValidateDiagFunc: validateRegex("^[0-9]+$"),
 						Optional:         true,
 						Description:      "Specifies the number of CNAMEs to use in the chain.",
-						Type:             schema.TypeFloat,
+						Type:             schema.TypeInt,
 					},
 					"customer_cookie": {
 						ValidateDiagFunc: validateRegex("^[a-zA-Z0-9_\\-*\\.]+$"),
@@ -10183,7 +10184,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						ValidateDiagFunc: validateRegex("^[0-9]+$"),
 						Optional:         true,
 						Description:      "Specifies the number of CNAMEs to use in the chain.",
-						Type:             schema.TypeFloat,
+						Type:             schema.TypeInt,
 					},
 					"application_cookie": {
 						ValidateDiagFunc: validateRegex("^[a-zA-Z0-9_\\-*\\.]+$"),
@@ -10224,7 +10225,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						ValidateDiagFunc: validateRegex("^[0-9]+$"),
 						Optional:         true,
 						Description:      "Specifies the number of CNAMEs to use in the chain.",
-						Type:             schema.TypeFloat,
+						Type:             schema.TypeInt,
 					},
 					"users_cookie": {
 						ValidateDiagFunc: validateRegex("^[a-zA-Z0-9_\\-*\\.]+$"),
@@ -10256,24 +10257,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"sales_force_commerce_cloud_client": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "If you use the Salesforce Commerce Cloud platform for your origin content, this behavior allows your edge content managed by Akamai to contact directly to origin.",
+			Description: "If you use the Salesforce Commerce Cloud platform for your origin content, this behavior allows your edge content managed by Akamai to contact directly to origin. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -10320,24 +10321,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"sales_force_commerce_cloud_provider": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "This manages traffic between mutual customers and the Salesforce Commerce Cloud platform.",
+			Description: "This manages traffic between mutual customers and the Salesforce Commerce Cloud platform. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -10351,24 +10352,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"sales_force_commerce_cloud_provider_host_header": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Manages host header values sent to the Salesforce Commerce Cloud platform.",
+			Description: "Manages host header values sent to the Salesforce Commerce Cloud platform. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"host_header_source": {
@@ -10383,24 +10384,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"save_post_dca_processing": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Used in conjunction with the `cachePost` behavior, this behavior allows the body of POST requests to be processed through Dynamic Content Assembly.  Contact Akamai Professional Services for help configuring it.",
+			Description: "Used in conjunction with the `cachePost` behavior, this behavior allows the body of POST requests to be processed through Dynamic Content Assembly.  Contact Akamai Professional Services for help configuring it. This behavior is for internal usage only. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -10414,24 +10415,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"schedule_invalidation": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Specifies when cached content that satisfies a rule's criteria expires, optionally at repeating intervals. In addition to periodic cache flushes, you can use this behavior to minimize potential conflicts when related objects expire at different times.",
+			Description: "Specifies when cached content that satisfies a rule's criteria expires, optionally at repeating intervals. In addition to periodic cache flushes, you can use this behavior to minimize potential conflicts when related objects expire at different times. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"start": {
@@ -10462,24 +10463,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"script_management": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Ensures unresponsive linked JavaScript files do not prevent HTML pages from loading.",
+			Description: "Ensures unresponsive linked JavaScript files do not prevent HTML pages from loading. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -10496,7 +10497,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 					"timestamp": {
 						Optional:    true,
 						Description: "A read-only epoch timestamp value used for synchronization.",
-						Type:        schema.TypeFloat,
+						Type:        schema.TypeInt,
 					},
 				},
 			},
@@ -10504,24 +10505,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"segmented_content_protection": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Validates authorization tokens at the edge server to prevent unauthorized link sharing.",
+			Description: "Validates authorization tokens at the edge server to prevent unauthorized link sharing. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -10601,7 +10602,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 					"revoked_list_id": {
 						Optional:    true,
 						Description: "Identifies the `TokenAuth` tokens to block from accessing your content.",
-						Type:        schema.TypeFloat,
+						Type:        schema.TypeInt,
 					},
 					"hls_media_encryption": {
 						Optional:    true,
@@ -10619,24 +10620,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"segmented_media_optimization": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Optimizes segmented media for live or streaming delivery contexts.",
+			Description: "Optimizes segmented media for live or streaming delivery contexts. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"behavior": {
@@ -10662,13 +10663,13 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Type:             schema.TypeString,
 					},
 					"start_time": {
-						ValidateDiagFunc: validateRegex("^[1-9]\\d*$"),
+						ValidateDiagFunc: validateRegex("^[0-9]+$"),
 						Optional:         true,
 						Description:      "This specifies when the live media event begins.",
 						Type:             schema.TypeString,
 					},
 					"end_time": {
-						ValidateDiagFunc: validateRegex("^[1-9]\\d*$"),
+						ValidateDiagFunc: validateRegex("^[0-9]+$"),
 						Optional:         true,
 						Description:      "This specifies when the live media event ends.",
 						Type:             schema.TypeString,
@@ -10691,24 +10692,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"segmented_media_streaming_prefetch": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Prefetches HLS and DASH media stream manifest and segment files, accelerating delivery to end users. For prefetching to work, your origin media's response needs to specify `CDN-Origin-Assist-Prefetch-Path` headers with each URL to prefetch, expressed as either a relative or absolute path.",
+			Description: "Prefetches HLS and DASH media stream manifest and segment files, accelerating delivery to end users. For prefetching to work, your origin media's response needs to specify `CDN-Origin-Assist-Prefetch-Path` headers with each URL to prefetch, expressed as either a relative or absolute path. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -10722,24 +10723,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"set_variable": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Modify a variable to insert into subsequent fields within the rule tree.  Use this behavior to specify the predeclared `variableName` and determine from where to derive its new value. Based on this `valueSource`, you can either generate the value, extract it from some part of the incoming request, assign it from another variable (including a set of built-in system variables), or directly specify its text.  Optionally choose a `transform` function to modify the value once. See `Support for variables` for more information.",
+			Description: "Modify a variable to insert into subsequent fields within the rule tree.  Use this behavior to specify the predeclared `variableName` and determine from where to derive its new value. Based on this `valueSource`, you can either generate the value, extract it from some part of the incoming request, assign it from another variable (including a set of built-in system variables), or directly specify its text.  Optionally choose a `transform` function to modify the value once. See `Support for variables` for more information. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"variable_name": {
@@ -10891,12 +10892,12 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 					"min": {
 						Optional:    true,
 						Description: "Specifies a minimum value for the generated integer.",
-						Type:        schema.TypeFloat,
+						Type:        schema.TypeInt,
 					},
 					"max": {
 						Optional:    true,
 						Description: "Specifies a maximum value for the generated integer.",
-						Type:        schema.TypeFloat,
+						Type:        schema.TypeInt,
 					},
 					"hmac_key": {
 						Optional:    true,
@@ -10984,24 +10985,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"shutr": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "The SHUTR protocol extends HTTP to reduce the amount of header data necessary for web transactions with mobile devices.",
+			Description: "The SHUTR protocol extends HTTP to reduce the amount of header data necessary for web transactions with mobile devices. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 				},
@@ -11010,24 +11011,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"simulate_error_code": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "This behavior simulates various error response codes. Contact Akamai Professional Services for help configuring it.",
+			Description: "This behavior simulates various error response codes. Contact Akamai Professional Services for help configuring it. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"error_type": {
@@ -11048,24 +11049,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"site_shield": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "This behavior implements the `Site Shield` feature, which helps prevent non-Akamai machines from contacting your origin. Your service representative periodically sends you a list of Akamai servers allowed to contact your origin, with which you establish an Access Control List on your firewall to prevent any other requests.",
+			Description: "This behavior implements the `Site Shield` feature, which helps prevent non-Akamai machines from contacting your origin. Your service representative periodically sends you a list of Akamai servers allowed to contact your origin, with which you establish an Access Control List on your firewall to prevent any other requests. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"ssmap": {
@@ -11099,24 +11100,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"standard_tls_migration": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Migrates traffic to Standard TLS. Apply this behavior within the default rule or any `hostname` match.  In some cases you may need to apply this along with the `standardTLSMigrationOverride` behavior.",
+			Description: "Migrates traffic to Standard TLS. Apply this behavior within the default rule or any `hostname` match.  In some cases you may need to apply this along with the `standardTLSMigrationOverride` behavior. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -11141,7 +11142,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"migration_start_time": {
-						ValidateDiagFunc: validateRegex("^[1-9]\\d*$"),
+						ValidateDiagFunc: validateRegex("^[0-9]+$"),
 						Optional:         true,
 						Description:      "Specifies when to start migrating the cache.",
 						Type:             schema.TypeString,
@@ -11150,10 +11151,10 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						ValidateDiagFunc: validateRegex("^[1-9]$|^[1-2]\\d$|^30$"),
 						Optional:         true,
 						Description:      "Specifies the number of days to migrate the cache.",
-						Type:             schema.TypeFloat,
+						Type:             schema.TypeInt,
 					},
 					"cache_sharing_start_time": {
-						ValidateDiagFunc: validateRegex("^[1-9]\\d*$"),
+						ValidateDiagFunc: validateRegex("^[0-9]+$"),
 						Optional:         true,
 						Description:      "Specifies when to start cache sharing.",
 						Type:             schema.TypeString,
@@ -11162,7 +11163,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						ValidateDiagFunc: validateRegex("^[1-9]$|^[1-2]\\d$|^30$"),
 						Optional:         true,
 						Description:      "Specifies the number cache sharing days.",
-						Type:             schema.TypeFloat,
+						Type:             schema.TypeInt,
 					},
 					"is_certificate_sni_only": {
 						Optional:    true,
@@ -11186,24 +11187,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"standard_tls_migration_override": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "When applying `standardTLSMigration`, add this behavior if your new certificate is SNI-only, if your property includes any `advanced features`, any Edge IP Binding enabled hosts, or if any foreground downloads are configured.",
+			Description: "When applying `standardTLSMigration`, add this behavior if your new certificate is SNI-only, if your property includes any `advanced features`, any Edge IP Binding enabled hosts, or if any foreground downloads are configured. This behavior is for internal usage only. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 				},
@@ -11212,24 +11213,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"strict_header_parsing": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "This behavior specifies how the edge servers should handle requests containing improperly formatted or invalid headers that don’t comply with `RFC 9110`.",
+			Description: "This behavior specifies how the edge servers should handle requests containing improperly formatted or invalid headers that don’t comply with `RFC 9110`. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"valid_mode": {
@@ -11248,24 +11249,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"sub_customer": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "When positioned in a property's top-level default rule, enables various `Cloud Embed` features that allow you to leverage Akamai's CDN architecture for your own subcustomers.  This behavior's options allow you to use Cloud Embed to configure your subcustomers' content.  Once enabled, you can use the `Akamai Cloud Embed API` (ACE) to assign subcustomers to this base configuration, and to customize policies for them.  See also the `dynamicWebContent` behavior to configure subcustomers' dynamic web content.",
+			Description: "When positioned in a property's top-level default rule, enables various `Cloud Embed` features that allow you to leverage Akamai's CDN architecture for your own subcustomers.  This behavior's options allow you to use Cloud Embed to configure your subcustomers' content.  Once enabled, you can use the `Akamai Cloud Embed API` (ACE) to assign subcustomers to this base configuration, and to customize policies for them.  See also the `dynamicWebContent` behavior to configure subcustomers' dynamic web content. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -11369,24 +11370,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"sure_route": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "The `SureRoute` feature continually tests different routes between origin and edge servers to identify the optimal path. By default, it conducts `races` to identify alternative paths to use in case of a transmission failure. These races increase origin traffic slightly.",
+			Description: "The `SureRoute` feature continually tests different routes between origin and edge servers to identify the optimal path. By default, it conducts `races` to identify alternative paths to use in case of a transmission failure. These races increase origin traffic slightly. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -11455,24 +11456,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"tcp_optimization": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Enables a suite of optimizations targeting buffers, time-outs, and packet loss that improve transmission performance. This behavior is deprecated, but you should not disable or remove it if present.",
+			Description: "Enables a suite of optimizations targeting buffers, time-outs, and packet loss that improve transmission performance. This behavior is deprecated, but you should not disable or remove it if present. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 				},
@@ -11481,24 +11482,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"tea_leaf": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Allows IBM Tealeaf Customer Experience on Cloud to record HTTPS requests and responses for Akamai-enabled properties. Recorded data becomes available in your IBM Tealeaf account.",
+			Description: "Allows IBM Tealeaf Customer Experience on Cloud to record HTTPS requests and responses for Akamai-enabled properties. Recorded data becomes available in your IBM Tealeaf account. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -11514,7 +11515,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 					"ibm_customer_id": {
 						Optional:    true,
 						Description: "The integer identifier for the IBM Tealeaf Connector account.",
-						Type:        schema.TypeFloat,
+						Type:        schema.TypeInt,
 					},
 				},
 			},
@@ -11522,24 +11523,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"tiered_distribution": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "This behavior allows Akamai edge servers to retrieve cached content from other Akamai servers, rather than directly from the origin. These interim `parent` servers in the `cache hierarchy` (`CH`) are positioned close to the origin, and fall along the path from the origin to the edge server. Tiered Distribution typically reduces the origin server's load, and reduces the time it takes for edge servers to refresh content.",
+			Description: "This behavior allows Akamai edge servers to retrieve cached content from other Akamai servers, rather than directly from the origin. These interim `parent` servers in the `cache hierarchy` (`CH`) are positioned close to the origin, and fall along the path from the origin to the edge server. Tiered Distribution typically reduces the origin server's load, and reduces the time it takes for edge servers to refresh content. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -11559,24 +11560,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"tiered_distribution_advanced": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "This behavior allows Akamai edge servers to retrieve cached content from other Akamai servers, rather than directly from the origin. These interim `parent` servers in the `cache hierarchy` (`CH`) are positioned close to the origin, and fall along the path from the origin to the edge server. Tiered Distribution typically reduces the origin server's load, and reduces the time it takes for edge servers to refresh content.  This advanced behavior provides a wider set of options than `tieredDistribution`.",
+			Description: "This behavior allows Akamai edge servers to retrieve cached content from other Akamai servers, rather than directly from the origin. These interim `parent` servers in the `cache hierarchy` (`CH`) are positioned close to the origin, and fall along the path from the origin to the edge server. Tiered Distribution typically reduces the origin server's load, and reduces the time it takes for edge servers to refresh content.  This advanced behavior provides a wider set of options than `tieredDistribution`. This behavior is for internal usage only. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -11612,24 +11613,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"tiered_distribution_customization": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "With Tiered Distribution, Akamai edge servers retrieve cached content from other Akamai servers, rather than directly from the origin. This behavior sets custom Tiered Distribution maps (TD0) and migrates TD1 maps configured with `advanced features` to Cloud Wrapper. You need to enable `cloudWrapper` within the same rule.",
+			Description: "With Tiered Distribution, Akamai edge servers retrieve cached content from other Akamai servers, rather than directly from the origin. This behavior sets custom Tiered Distribution maps (TD0) and migrates TD1 maps configured with `advanced features` to Cloud Wrapper. You need to enable `cloudWrapper` within the same rule. This behavior is for internal usage only. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"custom_map_enabled": {
@@ -11675,13 +11676,13 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Type:        schema.TypeString,
 					},
 					"migration_start_date": {
-						ValidateDiagFunc: validateRegex("^[1-9]\\d*$"),
+						ValidateDiagFunc: validateRegex("^[0-9]+$"),
 						Optional:         true,
 						Description:      "Specifies when to start migrating the map.",
 						Type:             schema.TypeString,
 					},
 					"migration_end_date": {
-						ValidateDiagFunc: validateRegex("^[1-9]\\d*$"),
+						ValidateDiagFunc: validateRegex("^[0-9]+$"),
 						Optional:         true,
 						Description:      "Specifies when the map migration should end.",
 						Type:             schema.TypeString,
@@ -11692,24 +11693,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"timeout": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Sets the HTTP connect timeout.",
+			Description: "Sets the HTTP connect timeout. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"value": {
@@ -11724,24 +11725,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"uid_configuration": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "This behavior allows you to extract unique identifier (UID) values from live traffic, for use in OTA applications. Note that you are responsible for maintaining the security of any data that may identify individual users.",
+			Description: "This behavior allows you to extract unique identifier (UID) values from live traffic, for use in OTA applications. Note that you are responsible for maintaining the security of any data that may identify individual users. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -11776,24 +11777,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"validate_entity_tag": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Instructs edge servers to compare the request's `ETag` header with that of the cached object. If they differ, the edge server sends a new copy of the object. This validation occurs in addition to the default validation of `Last-Modified` and `If-Modified-Since` headers.",
+			Description: "Instructs edge servers to compare the request's `ETag` header with that of the cached object. If they differ, the edge server sends a new copy of the object. This validation occurs in addition to the default validation of `Last-Modified` and `If-Modified-Since` headers. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -11807,24 +11808,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"verify_json_web_token": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "This behavior allows you to use JSON Web Tokens (JWT) to verify requests.",
+			Description: "This behavior allows you to use JSON Web Tokens (JWT) to verify requests. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"extract_location": {
@@ -11864,24 +11865,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"verify_json_web_token_for_dcp": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "This behavior allows you to use JSON web tokens (JWT) to verify requests for use in implementing `IoT Edge Connect`, which you use the `dcp` behavior to configure. You can specify the location in a request to pass a JSON web token (JWT), collections of public keys to verify the integrity of this token, and specific claims to extract from it. Use the `verifyJsonWebToken` behavior for other JWT validation.",
+			Description: "This behavior allows you to use JSON web tokens (JWT) to verify requests for use in implementing `IoT Edge Connect`, which you use the `dcp` behavior to configure. You can specify the location in a request to pass a JSON web token (JWT), collections of public keys to verify the integrity of this token, and specific claims to extract from it. Use the `verifyJsonWebToken` behavior for other JWT validation. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"extract_location": {
@@ -11965,24 +11966,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"verify_token_authorization": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Verifies Auth 2.0 tokens.",
+			Description: "Verifies Auth 2.0 tokens. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"use_advanced": {
@@ -12046,30 +12047,30 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"virtual_waiting_room": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "This behavior helps you maintain business continuity for dynamic applications in high-demand situations such as flash sales. It decreases abandonment by providing a user-friendly waiting room experience. FIFO (First-in First-out) is a request processing mechanism that prioritizes the first requests that enter the waiting room to send them first to the origin. Users can see both their estimated arrival time and position in the line. With Cloudlets available on your contract, choose `Your services`, `Edge logic Cloudlets` to control Virtual Waitig Room within `Control Center`. Otherwise use the `Cloudlets API` to configure it programmatically.",
+			Description: "This behavior helps you maintain business continuity for dynamic applications in high-demand situations such as flash sales. It decreases abandonment by providing a user-friendly waiting room experience. FIFO (First-in First-out) is a request processing mechanism that prioritizes the first requests that enter the waiting room to send them first to the origin. Users can see both their estimated arrival time and position in the line. With Cloudlets available on your contract, choose `Your services`, `Edge logic Cloudlets` to control Virtual Waitig Room within `Control Center`. Otherwise use the `Cloudlets API` to configure it programmatically. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"cloudlet_shared_policy": {
 						Optional:    true,
 						Description: "This identifies the Visitor Waiting Room Cloudlet shared policy to use with this behavior. You can list available shared policies with the `Cloudlets API`.",
-						Type:        schema.TypeFloat,
+						Type:        schema.TypeInt,
 					},
 					"domain_config": {
 						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"HOST_HEADER", "CUSTOM"}, false)),
@@ -12113,24 +12114,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"virtual_waiting_room_with_edge_workers": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "This behavior allows you to configure the `virtualWaitingRoom` behavior with EdgeWorkers for extended scalability and customization.",
+			Description: "This behavior allows you to configure the `virtualWaitingRoom` behavior with EdgeWorkers for extended scalability and customization. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 				},
@@ -12139,24 +12140,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"visitor_prioritization": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "The `Visitor Prioritization Cloudlet` decreases abandonment by providing a user-friendly waiting room experience.  With Cloudlets available on your contract, choose `Your services`, `Edge logic Cloudlets` to control Visitor Prioritization within `Control Center`. Otherwise use the `Cloudlets API` to configure it programmatically.  To serve non-HTML API content such as JSON blocks, see the `apiPrioritization` behavior.",
+			Description: "The `Visitor Prioritization Cloudlet` decreases abandonment by providing a user-friendly waiting room experience.  With Cloudlets available on your contract, choose `Your services`, `Edge logic Cloudlets` to control Visitor Prioritization within `Control Center`. Otherwise use the `Cloudlets API` to configure it programmatically.  To serve non-HTML API content such as JSON blocks, see the `apiPrioritization` behavior. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -12340,7 +12341,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						ValidateDiagFunc: validateRegex("[2|4|5][0-9][0-9]"),
 						Optional:         true,
 						Description:      "Specifies the response code for requests sent to the waiting room.",
-						Type:             schema.TypeFloat,
+						Type:             schema.TypeInt,
 					},
 					"waiting_room_use_cp_code": {
 						Optional:    true,
@@ -12372,7 +12373,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 								"cp_code": {
 									Optional:    true,
 									Description: "",
-									Type:        schema.TypeFloat,
+									Type:        schema.TypeInt,
 								},
 								"download_domain_name": {
 									Optional:    true,
@@ -12400,30 +12401,30 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"visitor_prioritization_fifo": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "(**BETA**) The `Visitor Prioritization Cloudlet (FIFO)` decreases abandonment by providing a user-friendly waiting room experience. FIFO (First-in First-out) is a fair request processing mechanism, which prioritizes the first requests that enter the waiting room to send them first to the origin. Users can see both their estimated arrival time and position in the line. With Cloudlets available on your contract, choose `Your services`, `Edge logic Cloudlets` to control Visitor Prioritization (FIFO) within `Control Center`. Otherwise use the `Cloudlets API` to configure it programmatically. To serve non-HTML API content such as JSON blocks, see the `apiPrioritization` behavior.",
+			Description: "(**BETA**) The `Visitor Prioritization Cloudlet (FIFO)` decreases abandonment by providing a user-friendly waiting room experience. FIFO (First-in First-out) is a fair request processing mechanism, which prioritizes the first requests that enter the waiting room to send them first to the origin. Users can see both their estimated arrival time and position in the line. With Cloudlets available on your contract, choose `Your services`, `Edge logic Cloudlets` to control Visitor Prioritization (FIFO) within `Control Center`. Otherwise use the `Cloudlets API` to configure it programmatically. To serve non-HTML API content such as JSON blocks, see the `apiPrioritization` behavior. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"cloudlet_shared_policy": {
 						Optional:    true,
 						Description: "This identifies the Visitor Prioritization FIFO shared policy to use with this behavior. You can list available shared policies with the `Cloudlets API`.",
-						Type:        schema.TypeFloat,
+						Type:        schema.TypeInt,
 					},
 					"domain_config": {
 						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"HOST_HEADER", "CUSTOM"}, false)),
@@ -12467,24 +12468,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"visitor_prioritization_fifo_standalone": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "2DO.",
+			Description: "This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 				},
@@ -12493,24 +12494,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"watermarking": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Adds watermarking for each valid user's content. Content segments are delivered from different sources using a pattern unique to each user, based on a watermarking token included in each request. If your content is pirated or redistributed, you can forensically analyze the segments to extract the pattern, and identify the user who leaked the content.",
+			Description: "Adds watermarking for each valid user's content. Content segments are delivered from different sources using a pattern unique to each user, based on a watermarking token included in each request. If your content is pirated or redistributed, you can forensically analyze the segments to extract the pattern, and identify the user who leaked the content. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enable": {
@@ -12585,24 +12586,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"web_application_firewall": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "This behavior implements a suite of security features that blocks threatening HTTP and HTTPS requests. Use it as your primary firewall, or in addition to existing security measures.  Only one referenced configuration is allowed per property, so this behavior typically belongs as part of its default rule.",
+			Description: "This behavior implements a suite of security features that blocks threatening HTTP and HTTPS requests. Use it as your primary firewall, or in addition to existing security measures.  Only one referenced configuration is allowed per property, so this behavior typically belongs as part of its default rule. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"firewall_configuration": {
@@ -12619,24 +12620,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"web_sockets": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "The WebSocket protocol allows web applications real-time bidirectional communication between clients and servers.",
+			Description: "The WebSocket protocol allows web applications real-time bidirectional communication between clients and servers. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -12650,24 +12651,24 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"webdav": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Web-based Distributed Authoring and Versioning (WebDAV) is a set of extensions to the HTTP protocol that allows users to collaboratively edit and manage files on remote web servers. This behavior enables WebDAV, and provides support for the following additional request methods: PROPFIND, PROPPATCH, MKCOL, COPY, MOVE, LOCK, and UNLOCK. To apply this behavior, you need to match on a `requestMethod`.",
+			Description: "Web-based Distributed Authoring and Versioning (WebDAV) is a set of extensions to the HTTP protocol that allows users to collaboratively edit and manage files on remote web servers. This behavior enables WebDAV, and provides support for the following additional request methods: PROPFIND, PROPPATCH, MKCOL, COPY, MOVE, LOCK, and UNLOCK. To apply this behavior, you need to match on a `requestMethod`. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -12686,24 +12687,24 @@ func getCriteriaSchemaV20230105() map[string]*schema.Schema {
 		"advanced_im_match": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Matches whether the `imageManager` behavior already applies to the current set of requests.",
+			Description: "Matches whether the `imageManager` behavior already applies to the current set of requests. This criterion can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"match_operator": {
@@ -12724,24 +12725,24 @@ func getCriteriaSchemaV20230105() map[string]*schema.Schema {
 		"bucket": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "This matches a specified percentage of requests when used with the accompanying behavior. Contact Akamai Professional Services for help configuring it.",
+			Description: "This matches a specified percentage of requests when used with the accompanying behavior. Contact Akamai Professional Services for help configuring it. This criterion can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"percentage": {
@@ -12756,24 +12757,24 @@ func getCriteriaSchemaV20230105() map[string]*schema.Schema {
 		"cacheability": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Matches the current cache state.  Note that any `NO_STORE` or `BYPASS_CACHE` HTTP headers set on the origin's content overrides properties' `caching` instructions, in which case this criteria does not apply.",
+			Description: "Matches the current cache state.  Note that any `NO_STORE` or `BYPASS_CACHE` HTTP headers set on the origin's content overrides properties' `caching` instructions, in which case this criteria does not apply. This criterion can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"match_operator": {
@@ -12794,24 +12795,24 @@ func getCriteriaSchemaV20230105() map[string]*schema.Schema {
 		"china_cdn_region": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Identifies traffic deployed over Akamai's regional ChinaCDN infrastructure.",
+			Description: "Identifies traffic deployed over Akamai's regional ChinaCDN infrastructure. This criterion can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"match_operator": {
@@ -12826,24 +12827,24 @@ func getCriteriaSchemaV20230105() map[string]*schema.Schema {
 		"client_certificate": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Matches whether you have configured a client certificate to authenticate requests to edge servers.",
+			Description: "Matches whether you have configured a client certificate to authenticate requests to edge servers. This criterion can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"is_certificate_present": {
@@ -12863,24 +12864,24 @@ func getCriteriaSchemaV20230105() map[string]*schema.Schema {
 		"client_ip": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Matches the IP number of the requesting client.",
+			Description: "Matches the IP number of the requesting client. This criterion can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"match_operator": {
@@ -12908,24 +12909,24 @@ func getCriteriaSchemaV20230105() map[string]*schema.Schema {
 		"client_ip_version": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Matches the version of the IP protocol used by the requesting client.",
+			Description: "Matches the version of the IP protocol used by the requesting client. This criterion can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"value": {
@@ -12945,24 +12946,24 @@ func getCriteriaSchemaV20230105() map[string]*schema.Schema {
 		"cloudlets_origin": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Allows Cloudlets Origins, referenced by label, to define their own criteria to assign custom origin definitions. The criteria may match, for example, for a specified percentage of requests defined by the cloudlet to use an alternative version of a website.",
+			Description: "Allows Cloudlets Origins, referenced by label, to define their own criteria to assign custom origin definitions. The criteria may match, for example, for a specified percentage of requests defined by the cloudlet to use an alternative version of a website. This criterion can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"origin_id": {
@@ -12977,24 +12978,24 @@ func getCriteriaSchemaV20230105() map[string]*schema.Schema {
 		"content_delivery_network": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Specifies the type of Akamai network handling the request.",
+			Description: "Specifies the type of Akamai network handling the request. This criterion can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"match_operator": {
@@ -13015,24 +13016,24 @@ func getCriteriaSchemaV20230105() map[string]*schema.Schema {
 		"content_type": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Matches the HTTP response header's `Content-Type`.",
+			Description: "Matches the HTTP response header's `Content-Type`. This criterion can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"match_operator": {
@@ -13065,24 +13066,24 @@ func getCriteriaSchemaV20230105() map[string]*schema.Schema {
 		"device_characteristic": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Match various aspects of the device or browser making the request. Based on the value of the `characteristic` option, the expected value is either a boolean, a number, or a string, possibly representing a version number. Each type of value requires a different field.",
+			Description: "Match various aspects of the device or browser making the request. Based on the value of the `characteristic` option, the expected value is either a boolean, a number, or a string, possibly representing a version number. Each type of value requires a different field. This criterion can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"characteristic": {
@@ -13125,7 +13126,7 @@ func getCriteriaSchemaV20230105() map[string]*schema.Schema {
 					"numeric_value": {
 						Optional:    true,
 						Description: "When the `characteristic` expects a numeric value, this specifies the number.",
-						Type:        schema.TypeFloat,
+						Type:        schema.TypeInt,
 					},
 					"version_value": {
 						Optional:    true,
@@ -13148,36 +13149,36 @@ func getCriteriaSchemaV20230105() map[string]*schema.Schema {
 		"ecmd_auth_groups": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "2DO.",
+			Description: "This criterion can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"match_operator": {
 						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"CONTAINS", "DOES_NOT_CONTAIN"}, false)),
 						Optional:         true,
-						Description:      "2DO.",
+						Description:      "",
 						Type:             schema.TypeString,
 					},
 					"value": {
 						ValidateDiagFunc: validateRegex("^[a-zA-Z0-9_-]{1,255}$"),
 						Optional:         true,
-						Description:      "2DO.",
+						Description:      "",
 						Type:             schema.TypeString,
 					},
 				},
@@ -13186,30 +13187,30 @@ func getCriteriaSchemaV20230105() map[string]*schema.Schema {
 		"ecmd_auth_scheme": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "2DO.",
+			Description: "This criterion can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"auth_scheme": {
 						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"ANONYMOUS", "JWT", "MUTUAL"}, false)),
 						Optional:         true,
-						Description:      "2DO.",
+						Description:      "",
 						Type:             schema.TypeString,
 					},
 				},
@@ -13218,30 +13219,30 @@ func getCriteriaSchemaV20230105() map[string]*schema.Schema {
 		"ecmd_is_authenticated": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "2DO.",
+			Description: "This criterion can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"match_operator": {
 						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"IS_AUTHENTICATED", "IS_NOT_AUTHENTICATED"}, false)),
 						Optional:         true,
-						Description:      "2DO.",
+						Description:      "",
 						Type:             schema.TypeString,
 					},
 				},
@@ -13250,42 +13251,42 @@ func getCriteriaSchemaV20230105() map[string]*schema.Schema {
 		"ecmd_username": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "2DO.",
+			Description: "This criterion can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"match_operator": {
 						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"CONTAINS", "DOES_NOT_CONTAIN", "STARTS_WITH", "DOES_NOT_START_WITH", "ENDS_WITH", "DOES_NOT_END_WITH", "LENGTH_EQUALS", "LENGTH_GREATER_THAN", "LENGTH_SMALLER_THAN"}, false)),
 						Optional:         true,
-						Description:      "2DO.",
+						Description:      "",
 						Type:             schema.TypeString,
 					},
 					"value": {
 						ValidateDiagFunc: validateRegex("^[a-zA-Z0-9_-]{1,255}$"),
 						Optional:         true,
-						Description:      "2DO.",
+						Description:      "",
 						Type:             schema.TypeString,
 					},
 					"length": {
 						ValidateDiagFunc: validateRegex("^[1-9]\\d*$"),
 						Optional:         true,
-						Description:      "2DO.",
+						Description:      "",
 						Type:             schema.TypeString,
 					},
 				},
@@ -13294,24 +13295,24 @@ func getCriteriaSchemaV20230105() map[string]*schema.Schema {
 		"edge_workers_failure": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Checks the EdgeWorkers execution status and detects whether a customer's JavaScript failed on edge servers.",
+			Description: "Checks the EdgeWorkers execution status and detects whether a customer's JavaScript failed on edge servers. This criterion can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"exec_status": {
@@ -13326,24 +13327,24 @@ func getCriteriaSchemaV20230105() map[string]*schema.Schema {
 		"file_extension": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Matches the requested filename's extension, if present.",
+			Description: "Matches the requested filename's extension, if present. This criterion can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"match_operator": {
@@ -13371,24 +13372,24 @@ func getCriteriaSchemaV20230105() map[string]*schema.Schema {
 		"filename": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Matches the requested filename, or test whether it is present.",
+			Description: "Matches the requested filename, or test whether it is present. This criterion can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"match_operator": {
@@ -13416,24 +13417,24 @@ func getCriteriaSchemaV20230105() map[string]*schema.Schema {
 		"hostname": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Matches the requested hostname.",
+			Description: "Matches the requested hostname. This criterion can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"match_operator": {
@@ -13456,24 +13457,24 @@ func getCriteriaSchemaV20230105() map[string]*schema.Schema {
 		"match_advanced": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "This specifies match criteria using Akamai XML metadata. It can only be configured on your behalf by Akamai Professional Services.",
+			Description: "This specifies match criteria using Akamai XML metadata. It can only be configured on your behalf by Akamai Professional Services. This criterion is for internal usage only. This criterion can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"description": {
@@ -13497,24 +13498,24 @@ func getCriteriaSchemaV20230105() map[string]*schema.Schema {
 		"match_cp_code": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Match the assigned content provider code.",
+			Description: "Match the assigned content provider code. This criterion can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"value": {
@@ -13538,24 +13539,24 @@ func getCriteriaSchemaV20230105() map[string]*schema.Schema {
 		"match_response_code": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Match a set or range of HTTP response codes.",
+			Description: "Match a set or range of HTTP response codes. This criterion can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"match_operator": {
@@ -13576,13 +13577,13 @@ func getCriteriaSchemaV20230105() map[string]*schema.Schema {
 						ValidateDiagFunc: validateRegex("^\\d{3}$"),
 						Optional:         true,
 						Description:      "Specifies the start of a range of responses. For example, `400` to match anything from `400` to `500`.",
-						Type:             schema.TypeFloat,
+						Type:             schema.TypeInt,
 					},
 					"upper_bound": {
 						ValidateDiagFunc: validateRegex("^\\d{3}$"),
 						Optional:         true,
 						Description:      "Specifies the end of a range of responses. For example, `500` to match anything from `400` to `500`.",
-						Type:             schema.TypeFloat,
+						Type:             schema.TypeInt,
 					},
 				},
 			},
@@ -13590,24 +13591,24 @@ func getCriteriaSchemaV20230105() map[string]*schema.Schema {
 		"match_variable": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Matches a built-in variable, or a custom variable pre-declared within the rule tree by the `setVariable` behavior.  See `Support for variables` for more information on this feature.",
+			Description: "Matches a built-in variable, or a custom variable pre-declared within the rule tree by the `setVariable` behavior.  See `Support for variables` for more information on this feature. This criterion can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"variable_name": {
@@ -13663,24 +13664,24 @@ func getCriteriaSchemaV20230105() map[string]*schema.Schema {
 		"metadata_stage": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Matches how the current rule corresponds to low-level syntax elements in translated XML metadata, indicating progressive stages as each edge server handles the request and response.  To use this match, you need to be thoroughly familiar with how Akamai edge servers process requests. Contact your Akamai Technical representative if you need help, and test thoroughly on staging before activating on production.",
+			Description: "Matches how the current rule corresponds to low-level syntax elements in translated XML metadata, indicating progressive stages as each edge server handles the request and response.  To use this match, you need to be thoroughly familiar with how Akamai edge servers process requests. Contact your Akamai Technical representative if you need help, and test thoroughly on staging before activating on production. This criterion can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"match_operator": {
@@ -13701,24 +13702,24 @@ func getCriteriaSchemaV20230105() map[string]*schema.Schema {
 		"origin_timeout": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Matches when the origin responds with a timeout error.",
+			Description: "Matches when the origin responds with a timeout error. This criterion can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"match_operator": {
@@ -13733,24 +13734,24 @@ func getCriteriaSchemaV20230105() map[string]*schema.Schema {
 		"path": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Matches the URL's non-hostname path component.",
+			Description: "Matches the URL's non-hostname path component. This criterion can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"match_operator": {
@@ -13783,24 +13784,24 @@ func getCriteriaSchemaV20230105() map[string]*schema.Schema {
 		"query_string_parameter": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Matches query string field names or values.",
+			Description: "Matches query string field names or values. This criterion can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"parameter_name": {
@@ -13827,13 +13828,13 @@ func getCriteriaSchemaV20230105() map[string]*schema.Schema {
 						ValidateDiagFunc: validateRegex("^[0-9]+$"),
 						Optional:         true,
 						Description:      "Specifies the match's minimum value.",
-						Type:             schema.TypeFloat,
+						Type:             schema.TypeInt,
 					},
 					"upper_bound": {
 						ValidateDiagFunc: validateRegex("^[0-9]+$"),
 						Optional:         true,
 						Description:      "When the `value` is numeric, this field specifies the match's maximum value.",
-						Type:             schema.TypeFloat,
+						Type:             schema.TypeInt,
 					},
 					"match_wildcard_name": {
 						Optional:    true,
@@ -13866,24 +13867,24 @@ func getCriteriaSchemaV20230105() map[string]*schema.Schema {
 		"random": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Matches a specified percentage of requests. Use this match to apply behaviors to a percentage of your incoming requests that differ from the remainder, useful for A/b testing, or to offload traffic onto different servers.",
+			Description: "Matches a specified percentage of requests. Use this match to apply behaviors to a percentage of your incoming requests that differ from the remainder, useful for A/b testing, or to offload traffic onto different servers. This criterion can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"bucket": {
@@ -13898,24 +13899,24 @@ func getCriteriaSchemaV20230105() map[string]*schema.Schema {
 		"recovery_config": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Matches on specified origin recovery scenarios. The `originFailureRecoveryPolicy` behavior defines the scenarios that trigger the recovery or retry methods you set in the `originFailureRecoveryMethod` rule. If the origin fails, the system checks the name of the recovery method applied to your policy. It then either redirects the requesting client to a backup origin or returns predefined HTTP response codes.",
+			Description: "Matches on specified origin recovery scenarios. The `originFailureRecoveryPolicy` behavior defines the scenarios that trigger the recovery or retry methods you set in the `originFailureRecoveryMethod` rule. If the origin fails, the system checks the name of the recovery method applied to your policy. It then either redirects the requesting client to a backup origin or returns predefined HTTP response codes. This criterion can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"config_name": {
@@ -13930,24 +13931,24 @@ func getCriteriaSchemaV20230105() map[string]*schema.Schema {
 		"regular_expression": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Matches a regular expression against a string, especially to apply behaviors flexibly based on the contents of dynamic `variables`.",
+			Description: "Matches a regular expression against a string, especially to apply behaviors flexibly based on the contents of dynamic `variables`. This criterion can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"match_string": {
@@ -13971,24 +13972,24 @@ func getCriteriaSchemaV20230105() map[string]*schema.Schema {
 		"request_cookie": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Match the cookie name or value passed with the request.",
+			Description: "Match the cookie name or value passed with the request. This criterion can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"cookie_name": {
@@ -14013,13 +14014,13 @@ func getCriteriaSchemaV20230105() map[string]*schema.Schema {
 						ValidateDiagFunc: validateRegex("^[1-9]\\d*$"),
 						Optional:         true,
 						Description:      "When the `value` is numeric, this field specifies the match's minimum value.",
-						Type:             schema.TypeFloat,
+						Type:             schema.TypeInt,
 					},
 					"upper_bound": {
 						ValidateDiagFunc: validateRegex("^[1-9]\\d*$"),
 						Optional:         true,
 						Description:      "When the `value` is numeric, this field specifies the match's maximum value.",
-						Type:             schema.TypeFloat,
+						Type:             schema.TypeInt,
 					},
 					"match_wildcard_name": {
 						Optional:    true,
@@ -14047,24 +14048,24 @@ func getCriteriaSchemaV20230105() map[string]*schema.Schema {
 		"request_header": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Match HTTP header names or values.",
+			Description: "Match HTTP header names or values. This criterion can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"header_name": {
@@ -14108,24 +14109,24 @@ func getCriteriaSchemaV20230105() map[string]*schema.Schema {
 		"request_method": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Specify the request's HTTP verb. Also supports WebDAV methods and common Akamai operations.",
+			Description: "Specify the request's HTTP verb. Also supports WebDAV methods and common Akamai operations. This criterion can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"match_operator": {
@@ -14146,24 +14147,24 @@ func getCriteriaSchemaV20230105() map[string]*schema.Schema {
 		"request_protocol": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Matches whether the request uses the HTTP or HTTPS protocol.",
+			Description: "Matches whether the request uses the HTTP or HTTPS protocol. This criterion can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"value": {
@@ -14178,24 +14179,24 @@ func getCriteriaSchemaV20230105() map[string]*schema.Schema {
 		"request_type": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Matches the basic type of request.  To use this match, you need to be thoroughly familiar with how Akamai edge servers process requests.  Contact your Akamai Technical representative if you need help, and test thoroughly on staging before activating on production.",
+			Description: "Matches the basic type of request.  To use this match, you need to be thoroughly familiar with how Akamai edge servers process requests.  Contact your Akamai Technical representative if you need help, and test thoroughly on staging before activating on production. This criterion can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"match_operator": {
@@ -14216,24 +14217,24 @@ func getCriteriaSchemaV20230105() map[string]*schema.Schema {
 		"response_header": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Match HTTP header names or values.",
+			Description: "Match HTTP header names or values. This criterion can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"header_name": {
@@ -14260,13 +14261,13 @@ func getCriteriaSchemaV20230105() map[string]*schema.Schema {
 						ValidateDiagFunc: validateRegex("^[0-9]+$"),
 						Optional:         true,
 						Description:      "When the `value` is numeric, this field specifies the match's minimum value.",
-						Type:             schema.TypeFloat,
+						Type:             schema.TypeInt,
 					},
 					"upper_bound": {
 						ValidateDiagFunc: validateRegex("^[0-9]+$"),
 						Optional:         true,
 						Description:      "When the `value` is numeric, this field specifies the match's maximum value.",
-						Type:             schema.TypeFloat,
+						Type:             schema.TypeInt,
 					},
 					"match_wildcard_name": {
 						Optional:    true,
@@ -14289,24 +14290,24 @@ func getCriteriaSchemaV20230105() map[string]*schema.Schema {
 		"time": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Specifies ranges of times during which the request occurred.",
+			Description: "Specifies ranges of times during which the request occurred. This criterion can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"match_operator": {
@@ -14364,24 +14365,24 @@ func getCriteriaSchemaV20230105() map[string]*schema.Schema {
 		"token_authorization": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Match on Auth Token 2.0 verification results.",
+			Description: "Match on Auth Token 2.0 verification results. This criterion can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"match_operator": {
@@ -14404,24 +14405,24 @@ func getCriteriaSchemaV20230105() map[string]*schema.Schema {
 		"user_agent": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Matches the user agent string that helps identify the client browser and device.",
+			Description: "Matches the user agent string that helps identify the client browser and device. This criterion can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"match_operator": {
@@ -14454,24 +14455,24 @@ func getCriteriaSchemaV20230105() map[string]*schema.Schema {
 		"user_location": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "The client browser's approximate geographic location, determined by looking up the IP address in a database.",
+			Description: "The client browser's approximate geographic location, determined by looking up the IP address in a database. This criterion can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"field": {
@@ -14527,24 +14528,24 @@ func getCriteriaSchemaV20230105() map[string]*schema.Schema {
 		"user_network": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Matches details of the network over which the request was made, determined by looking up the IP address in a database.",
+			Description: "Matches details of the network over which the request was made, determined by looking up the IP address in a database. This criterion can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"field": {
@@ -14600,24 +14601,24 @@ func getCriteriaSchemaV20230105() map[string]*schema.Schema {
 		"variable_error": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Matches any runtime errors that occur on edge servers based on the configuration of a `setVariable` behavior. See `Support for variables` section for more information on this feature.",
+			Description: "Matches any runtime errors that occur on edge servers based on the configuration of a `setVariable` behavior. See `Support for variables` section for more information on this feature. This criterion can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"result": {
@@ -14639,24 +14640,24 @@ func getCriteriaSchemaV20230105() map[string]*schema.Schema {
 		"virtual_waiting_room_request": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Helps to customize the requests identified by the `virtualWaitingRoom` behavior. Use this match criteria to define the `originServer` behavior for the waiting room.",
+			Description: "Helps to customize the requests identified by the `virtualWaitingRoom` behavior. Use this match criteria to define the `originServer` behavior for the waiting room. This criterion cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"match_operator": {
@@ -14677,24 +14678,24 @@ func getCriteriaSchemaV20230105() map[string]*schema.Schema {
 		"visitor_prioritization_request": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Helps to customize the requests identified by the `visitorPrioritizationFifo` behavior. The basic use case for this match criteria is to define the `originServer` behavior for the waiting room.",
+			Description: "Helps to customize the requests identified by the `visitorPrioritizationFifo` behavior. The basic use case for this match criteria is to define the `originServer` behavior for the waiting room. This criterion cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"locked": {
 						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it.",
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
 						Type:        schema.TypeBool,
 					},
 					"uuid": {
 						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
 						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree.",
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"template_uuid": {
 						Optional:    true,
-						Description: "internal",
+						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
 					"match_operator": {

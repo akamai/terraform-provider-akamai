@@ -41,6 +41,17 @@ data "akamai_property_rules_builder" "default" {
       }
     }
     behavior {
+      application_load_balancer {
+        all_down_net_storage {
+          cp_code              = 123
+          download_domain_name = "test"
+        }
+        failover_origin_map {
+          from_origin_id = 123
+        }
+      }
+    }
+    behavior {
       api_prioritization {
         cloudlet_policy {
           id   = 1337

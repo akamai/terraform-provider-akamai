@@ -14,6 +14,7 @@ type (
 		behaviorsSchemas map[string]*schema.Schema
 		criteriaSchemas  map[string]*schema.Schema
 		typeMappings     map[string]any
+		nameMappings     map[string]string
 		shouldFlatten    []string
 	}
 
