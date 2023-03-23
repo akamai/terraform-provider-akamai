@@ -101,6 +101,12 @@ func Provider(provs ...Subprovider) plugin.ProviderFunc {
 						Default:  true,
 						Type:     schema.TypeBool,
 					},
+					"request_limit": {
+						Optional:    true,
+						DefaultFunc: schema.EnvDefaultFunc("AKAMAI_REQUEST_LIMIT", 0),
+						Type:        schema.TypeInt,
+						Description: "The maximum number of API requests to be made per second (0 for no limit)",
+					},
 				},
 				ResourcesMap:       make(map[string]*schema.Resource),
 				DataSourcesMap:     make(map[string]*schema.Resource),
@@ -198,6 +204,11 @@ func configureContext(ctx context.Context, d *schema.ResourceData) (interface{},
 		}
 	}
 
+	requestLimit, err := tools.GetIntValue("request_limit", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return nil, diag.FromErr(err)
+	}
+
 	edgerc, err := edgegrid.New(edgercOps...)
 	if err != nil {
 		return nil, diag.Errorf(ConfigurationIsNotSpecified)
@@ -212,11 +223,13 @@ func configureContext(ctx context.Context, d *schema.ResourceData) (interface{},
 	logger := LogFromHCLog(log)
 	logger.Infof("Provider version: %s", version.ProviderVersion)
 
+	logger.Debugf("Using request_limit value %d", requestLimit)
 	sess, err := session.New(
 		session.WithSigner(edgerc),
 		session.WithUserAgent(userAgent),
 		session.WithLog(logger),
 		session.WithHTTPTracing(cast.ToBool(os.Getenv("AKAMAI_HTTP_TRACE_ENABLED"))),
+		session.WithRequestLimit(requestLimit),
 	)
 	if err != nil {
 		return nil, diag.FromErr(err)
