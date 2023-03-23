@@ -7,16 +7,16 @@
         "options": {
           "cacheKeyHostname": "ORIGIN_HOSTNAME",
           "compress": true,
-          "customCertificateAuthorities": null,
-          "customCertificates": null,
-          "customValidCnValues": null,
+          "customCertificateAuthorities": [],
+          "customCertificates": [],
+          "customValidCnValues": [],
           "enableTrueClientIp": true,
           "forwardHostHeader": "REQUEST_HOST_HEADER",
           "httpPort": 80,
           "httpsPort": 443,
           "originSni": true,
           "originType": "CUSTOMER",
-          "standardCertificateAuthorities": null,
+          "standardCertificateAuthorities": [],
           "trueClientIpHeader": "True-Client-IP",
           "verificationMode": "PLATFORM_SETTINGS"
         }
@@ -37,10 +37,10 @@
           "failoverOriginMap": [
             {
               "fromOriginId": "123",
-              "toOriginIds": null
+              "toOriginIds": []
             }
           ],
-          "failoverStatusCodes": null
+          "failoverStatusCodes": []
         }
       },
       {
@@ -89,7 +89,7 @@
       {
         "name": "report",
         "options": {
-          "cookies": null,
+          "cookies": [],
           "logCookies": "OFF",
           "logUserAgent": true
         }

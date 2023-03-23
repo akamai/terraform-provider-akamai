@@ -306,7 +306,7 @@ func (r RulesBuilder) mapKeysToCamelCase(old map[string]any) map[string]any {
 				v = r.mapKeysToCamelCase(mapValue)
 			}
 			if sliceValue, ok := v.([]any); ok {
-				var newSlice []any
+				newSlice := make([]any, 0, len(sliceValue))
 				for _, value := range sliceValue {
 					if mapValue, ok := value.(map[string]any); ok {
 						value = r.mapKeysToCamelCase(mapValue)
