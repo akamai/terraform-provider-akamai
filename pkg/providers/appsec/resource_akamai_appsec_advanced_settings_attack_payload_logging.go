@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
@@ -25,7 +27,7 @@ func resourceAdvancedSettingsAttackPayloadLogging() *schema.Resource {
 			VerifyIDUnchanged,
 		),
 		Importer: &schema.ResourceImporter{
-			StateContext: schema.ImportStatePassthroughContext,
+			StateContext: resourceAdvancedSettingsAttackPayloadLoggingImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"config_id": {
@@ -47,6 +49,71 @@ func resourceAdvancedSettingsAttackPayloadLogging() *schema.Resource {
 			},
 		},
 	}
+}
+
+func resourceAdvancedSettingsAttackPayloadLoggingImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	meta := akamai.Meta(m)
+	logger := meta.Log("APPSEC", "resourceAdvancedSettingsAttackPayloadLoggingImport")
+	logger.Debugf("Import AdvancedSettingsAttackPayloadLogging")
+
+	client := inst.Client(meta)
+
+	getAdvancedSettingsAttackPayloadLogging := appsec.GetAdvancedSettingsAttackPayloadLoggingRequest{}
+	if d.Id() != "" && strings.Contains(d.Id(), ":") {
+		iDParts, err := splitID(d.Id(), 2, "configID:policyID")
+		if err != nil {
+			return nil, err
+		}
+		configID, err := strconv.Atoi(iDParts[0])
+		if err != nil {
+			return nil, err
+		}
+		version, err := getLatestConfigVersion(ctx, configID, m)
+		if err != nil {
+			return nil, err
+		}
+		policyID := iDParts[1]
+
+		getAdvancedSettingsAttackPayloadLogging.ConfigID = configID
+		getAdvancedSettingsAttackPayloadLogging.Version = version
+		getAdvancedSettingsAttackPayloadLogging.PolicyID = policyID
+	} else {
+		configID, err := strconv.Atoi(d.Id())
+		if err != nil {
+			return nil, err
+		}
+		version, err := getLatestConfigVersion(ctx, configID, m)
+		if err != nil {
+			return nil, err
+		}
+
+		getAdvancedSettingsAttackPayloadLogging.ConfigID = configID
+		getAdvancedSettingsAttackPayloadLogging.Version = version
+	}
+	d.SetId(fmt.Sprintf("%d:%s", getAdvancedSettingsAttackPayloadLogging.ConfigID, getAdvancedSettingsAttackPayloadLogging.PolicyID))
+
+	settings, err := client.GetAdvancedSettingsAttackPayloadLogging(ctx, getAdvancedSettingsAttackPayloadLogging)
+
+	if err != nil {
+		logger.Errorf("calling 'advancedSettingsAttackPayloadLogging': %s", err.Error())
+		return nil, err
+	}
+	if err := d.Set("config_id", getAdvancedSettingsAttackPayloadLogging.ConfigID); err != nil {
+		return nil, err
+	}
+	if err := d.Set("security_policy_id", getAdvancedSettingsAttackPayloadLogging.PolicyID); err != nil {
+		return nil, err
+	}
+	jsonBody, err := json.Marshal(settings)
+	if err != nil {
+		return nil, err
+	}
+	if err := d.Set("attack_payload_logging", string(jsonBody)); err != nil {
+		return nil, err
+	}
+
+	return []*schema.ResourceData{d}, nil
+
 }
 
 func resourceAdvancedSettingsAttackPayloadLoggingCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -83,11 +150,7 @@ func resourceAdvancedSettingsAttackPayloadLoggingCreate(ctx context.Context, d *
 		return diag.FromErr(err)
 	}
 
-	if len(createAdvancedSettingsAttackPayloadLogging.PolicyID) > 0 {
-		d.SetId(fmt.Sprintf("%d:%s", createAdvancedSettingsAttackPayloadLogging.ConfigID, createAdvancedSettingsAttackPayloadLogging.PolicyID))
-	} else {
-		d.SetId(fmt.Sprintf("%d", createAdvancedSettingsAttackPayloadLogging.ConfigID))
-	}
+	d.SetId(fmt.Sprintf("%d:%s", configID, policyID))
 
 	return resourceAdvancedSettingsAttackPayloadLoggingRead(ctx, d, m)
 }
