@@ -121,63 +121,64 @@ func (r *registry) schemas() map[string]*schema.Schema {
 					"name": {
 						Type:        schema.TypeString,
 						Required:    true,
-						Description: "",
+						Description: "The name of a rule",
 					},
 					"advanced_override": {
 						Optional:    true,
 						Type:        schema.TypeString,
-						Description: "",
+						Description: "XML metadata of the rule",
 					},
 					"comments": {
 						Optional:    true,
 						Type:        schema.TypeString,
-						Description: "",
+						Description: "The comments for a rule",
 					},
 					"is_secure": {
 						Optional:    true,
 						Type:        schema.TypeBool,
-						Description: "",
+						Description: "States whether a rule is secure",
 					},
 					"criteria_must_satisfy": {
 						Optional:    true,
 						Type:        schema.TypeString,
-						Description: "",
+						Description: "States whether 'all' criteria need to match or 'any'",
 					},
 					"uuid": {
 						Optional:    true,
 						Type:        schema.TypeString,
-						Description: "",
+						Description: "The UUID of the rule",
 					},
 					"template_uuid": {
 						Optional:    true,
 						Type:        schema.TypeString,
-						Description: "",
+						Description: "The UUID of a rule template",
 					},
 					"template_link": {
 						Optional:    true,
 						Type:        schema.TypeString,
-						Description: "",
+						Description: "The template link for the rule",
 					},
 					"criteria_locked": {
 						Optional:    true,
 						Type:        schema.TypeBool,
-						Description: "",
+						Description: "States whether changes to 'criterion' objects are prohibited",
 					},
 					"custom_override": {
 						Optional: true,
 						Type:     schema.TypeList,
 						MaxItems: 1,
+                        Description: "XML metadata of the rule"
 						Elem: &schema.Resource{
 							Schema: map[string]*schema.Schema{
 								"name": {
 									Optional:    true,
 									Type:        schema.TypeString,
-									Description: "",
+									Description: "The name of a custom override",
 								},
 								"override_id": {
 									Optional:    true,
 									Type:        schema.TypeString,
-									Description: "",
+									Description: "The ID of a custom override",
 								},
 							},
 						},
@@ -188,7 +189,7 @@ func (r *registry) schemas() map[string]*schema.Schema {
 						Elem: &schema.Resource{
 							Schema: ruleFormat.behaviorsSchemas,
 						},
-						Description: "",
+						Description: "The list of behaviors for a rule",
 					},
 					"criterion": {
 						Optional: true,
@@ -196,7 +197,7 @@ func (r *registry) schemas() map[string]*schema.Schema {
 						Elem: &schema.Resource{
 							Schema: ruleFormat.criteriaSchemas,
 						},
-						Description: "",
+						Description: "The list of criteria for a rule",
 					},
 					"variable": {
 						Optional: true,
@@ -206,31 +207,31 @@ func (r *registry) schemas() map[string]*schema.Schema {
 								"name": {
 									Required:    true,
 									Type:        schema.TypeString,
-									Description: "",
+									Description: "The name of a variable",
 								},
 								"value": {
 									Required:    true,
 									Type:        schema.TypeString,
-									Description: "",
+									Description: "The value for a variable",
 								},
 								"description": {
 									Required:    true,
 									Type:        schema.TypeString,
-									Description: "",
+									Description: "The description for a variable",
 								},
 								"hidden": {
 									Required:    true,
 									Type:        schema.TypeBool,
-									Description: "",
+									Description: "Whether a variable should be hidden",
 								},
 								"sensitive": {
 									Required:    true,
 									Type:        schema.TypeBool,
-									Description: "",
+									Description: "States whether a variable contains sensitive information",
 								},
 							},
 						},
-						Description: "",
+						Description: "A list of variables for a rule",
 					},
 					"children": {
 						Optional: true,
@@ -238,7 +239,7 @@ func (r *registry) schemas() map[string]*schema.Schema {
 						Elem: &schema.Schema{
 							Type: schema.TypeString,
 						},
-						Description: "",
+						Description: "A list of child rules for a particular rule in JSON format",
 					},
 				},
 			},
