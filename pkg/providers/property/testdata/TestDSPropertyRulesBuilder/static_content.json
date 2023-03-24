@@ -5,12 +5,15 @@
         "name": "caching",
         "options": {
           "behavior": "MAX_AGE",
+          "mustRevalidate": false,
           "ttl": "1d"
         }
       },
       {
         "name": "prefetch",
-        "options": {}
+        "options": {
+          "enabled": false
+        }
       },
       {
         "name": "prefetchable",
@@ -23,6 +26,7 @@
       {
         "name": "fileExtension",
         "options": {
+          "matchCaseSensitive": false,
           "matchOperator": "IS_ONE_OF",
           "values": [
             "aif",

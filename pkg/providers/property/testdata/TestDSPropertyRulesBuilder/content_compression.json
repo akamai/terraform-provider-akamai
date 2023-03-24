@@ -2,6 +2,25 @@
   "rules": {
     "behaviors": [
       {
+        "name": "cpCode",
+        "options": {
+          "value": {
+            "cpCodeLimits": {
+              "currentCapacity": -143,
+              "limit": 100,
+              "limitType": "global"
+            },
+            "createdDate": 1678276597000,
+            "description": "papi.declarativ.test.ipqa",
+            "id": 1048126,
+            "name": "papi.declarativ.test.ipqa",
+            "products": [
+              "Fresca"
+            ]
+          }
+        }
+      },
+      {
         "name": "gzipResponse",
         "options": {
           "behavior": "ALWAYS"
@@ -12,6 +31,7 @@
       {
         "name": "contentType",
         "options": {
+          "matchCaseSensitive": false,
           "matchOperator": "IS_ONE_OF",
           "matchWildcard": true,
           "values": [

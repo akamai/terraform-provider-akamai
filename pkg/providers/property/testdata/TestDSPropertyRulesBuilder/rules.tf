@@ -47,7 +47,8 @@ data "akamai_property_rules_builder" "default" {
           download_domain_name = "test"
         }
         failover_origin_map {
-          from_origin_id = 123
+          from_origin_id = "123"
+
         }
       }
     }
@@ -95,7 +96,17 @@ data "akamai_property_rules_builder" "default" {
         enabled                      = true
       }
     }
-
+    behavior {
+      cp_code {
+        value {
+          created_date = 1678276597000
+          description  = "papi.declarativ.test.ipqa"
+          id           = 1048126
+          name         = "papi.declarativ.test.ipqa"
+          products     = ["Fresca", ]
+        }
+      }
+    }
     behavior {
       report {
         log_accept_language  = false
@@ -141,6 +152,22 @@ data "akamai_property_rules_builder" "content_compression" {
         match_operator       = "IS_ONE_OF"
         match_wildcard       = true
         values               = ["text/*", "application/javascript", "application/x-javascript", "application/x-javascript*", "application/json", "application/x-json", "application/*+json", "application/*+xml", "application/text", "application/vnd.microsoft.icon", "application/vnd-ms-fontobject", "application/x-font-ttf", "application/x-font-opentype", "application/x-font-truetype", "application/xmlfont/eot", "application/xml", "font/opentype", "font/otf", "font/eot", "image/svg+xml", "image/vnd.microsoft.icon", ]
+      }
+    }
+    behavior {
+      cp_code {
+        value {
+          created_date = 1678276597000
+          description  = "papi.declarativ.test.ipqa"
+          id           = 1048126
+          name         = "papi.declarativ.test.ipqa"
+          products     = ["Fresca", ]
+          cp_code_limits {
+            current_capacity = -143
+            limit            = 100
+            limit_type       = "global"
+          }
+        }
       }
     }
     behavior {

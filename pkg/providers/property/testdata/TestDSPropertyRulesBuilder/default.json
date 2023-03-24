@@ -7,17 +7,15 @@
         "options": {
           "cacheKeyHostname": "ORIGIN_HOSTNAME",
           "compress": true,
-          "customCertificateAuthorities": [],
-          "customCertificates": [],
-          "customValidCnValues": [],
           "enableTrueClientIp": true,
           "forwardHostHeader": "REQUEST_HOST_HEADER",
           "httpPort": 80,
           "httpsPort": 443,
           "originSni": true,
           "originType": "CUSTOMER",
-          "standardCertificateAuthorities": [],
+          "trueClientIpClientSetting": false,
           "trueClientIpHeader": "True-Client-IP",
+          "useUniqueCacheKey": false,
           "verificationMode": "PLATFORM_SETTINGS"
         }
       },
@@ -36,11 +34,9 @@
           },
           "failoverOriginMap": [
             {
-              "fromOriginId": "123",
-              "toOriginIds": []
+              "fromOriginId": "123"
             }
-          ],
-          "failoverStatusCodes": []
+          ]
         }
       },
       {
@@ -62,6 +58,7 @@
         "name": "sureRoute",
         "options": {
           "enabled": true,
+          "forceSslForward": false,
           "raceStatTtl": "30m",
           "toHostStatus": "INCOMING_HH",
           "type": "PERFORMANCE"
@@ -83,29 +80,71 @@
       {
         "name": "allowPost",
         "options": {
+          "allowWithoutContentLength": false,
           "enabled": true
+        }
+      },
+      {
+        "name": "cpCode",
+        "options": {
+          "value": {
+            "createdDate": 1678276597000,
+            "description": "papi.declarativ.test.ipqa",
+            "id": 1048126,
+            "name": "papi.declarativ.test.ipqa",
+            "products": [
+              "Fresca"
+            ]
+          }
         }
       },
       {
         "name": "report",
         "options": {
-          "cookies": [],
+          "logAcceptLanguage": false,
           "logCookies": "OFF",
-          "logUserAgent": true
+          "logCustomLogField": false,
+          "logEdgeIP": false,
+          "logHost": false,
+          "logReferer": false,
+          "logUserAgent": true,
+          "logXForwardedFor": false
         }
       },
       {
         "name": "mPulse",
         "options": {
+          "apiKey": "",
+          "bufferSize": "",
           "configOverride": "\n",
           "enabled": true,
-          "loaderVersion": "V12"
+          "loaderVersion": "V12",
+          "requirePci": false
         }
       }
     ],
     "children": [
       {
         "behaviors": [
+          {
+            "name": "cpCode",
+            "options": {
+              "value": {
+                "cpCodeLimits": {
+                  "currentCapacity": -143,
+                  "limit": 100,
+                  "limitType": "global"
+                },
+                "createdDate": 1678276597000,
+                "description": "papi.declarativ.test.ipqa",
+                "id": 1048126,
+                "name": "papi.declarativ.test.ipqa",
+                "products": [
+                  "Fresca"
+                ]
+              }
+            }
+          },
           {
             "name": "gzipResponse",
             "options": {
@@ -117,6 +156,7 @@
           {
             "name": "contentType",
             "options": {
+              "matchCaseSensitive": false,
               "matchOperator": "IS_ONE_OF",
               "matchWildcard": true,
               "values": [
@@ -155,12 +195,15 @@
             "name": "caching",
             "options": {
               "behavior": "MAX_AGE",
+              "mustRevalidate": false,
               "ttl": "1d"
             }
           },
           {
             "name": "prefetch",
-            "options": {}
+            "options": {
+              "enabled": false
+            }
           },
           {
             "name": "prefetchable",
@@ -173,6 +216,7 @@
           {
             "name": "fileExtension",
             "options": {
+              "matchCaseSensitive": false,
               "matchOperator": "IS_ONE_OF",
               "values": [
                 "aif",

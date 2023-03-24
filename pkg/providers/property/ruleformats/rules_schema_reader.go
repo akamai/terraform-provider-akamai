@@ -8,9 +8,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
+type attributeGetter interface {
+	GetOk(string) (any, bool)
+}
+
 // RulesSchemaReader knows how to retrieve data from schema.ResourceData.
 type RulesSchemaReader struct {
-	data          *schema.ResourceData
+	data          attributeGetter
 	ruleFormatKey string
 }
 
@@ -39,7 +43,7 @@ func NewRulesSchemaReader(d *schema.ResourceData) *RulesSchemaReader {
 	rfVersion := GetUsedRuleFormat(d)
 
 	reader := RulesSchemaReader{
-		data:          d,
+		data:          NewRawConfig(d),
 		ruleFormatKey: rfVersion.SchemaKey(),
 	}
 	return &reader
@@ -63,7 +67,7 @@ func (r *RulesSchemaReader) GetCriteriaList() ([]RuleItem, error) {
 // GetVariablesList reads and returns rule variables as slice of map[string]any.
 func (r *RulesSchemaReader) GetVariablesList() ([]map[string]any, error) {
 	rawVal, ok := r.data.GetOk(r.variablesKey())
-	if !ok {
+	if !ok || rawVal == nil {
 		return nil, &NotFoundError{r.variablesKey()}
 	}
 
@@ -86,8 +90,9 @@ func (r *RulesSchemaReader) GetVariablesList() ([]map[string]any, error) {
 
 // GetChildrenList reads and returns slice of children.
 func (r *RulesSchemaReader) GetChildrenList() ([]string, error) {
+	// rawVal, ok := dataOK.(r.childrenKey())
 	rawVal, ok := r.data.GetOk(r.childrenKey())
-	if !ok {
+	if !ok || rawVal == nil {
 		return nil, &NotFoundError{r.childrenKey()}
 	}
 
@@ -110,7 +115,7 @@ func (r *RulesSchemaReader) GetChildrenList() ([]string, error) {
 
 func (r *RulesSchemaReader) getString(key string) (string, error) {
 	rawVal, ok := r.data.GetOk(key)
-	if !ok {
+	if !ok || rawVal == nil {
 		return "", &NotFoundError{key}
 	}
 	val, ok := rawVal.(string)
@@ -122,7 +127,7 @@ func (r *RulesSchemaReader) getString(key string) (string, error) {
 
 func (r *RulesSchemaReader) getBool(key string) (bool, error) {
 	rawVal, ok := r.data.GetOk(key)
-	if !ok {
+	if !ok || rawVal == nil {
 		return false, &NotFoundError{key}
 	}
 	val, ok := rawVal.(bool)
@@ -134,7 +139,7 @@ func (r *RulesSchemaReader) getBool(key string) (bool, error) {
 
 func (r *RulesSchemaReader) getCustomOverride(key string) (*papi.RuleCustomOverride, error) {
 	rawVal, ok := r.data.GetOk(key)
-	if !ok {
+	if !ok || rawVal == nil {
 		return nil, &NotFoundError{key}
 	}
 	val, ok := rawVal.([]any)
@@ -159,7 +164,7 @@ func (r *RulesSchemaReader) getCustomOverride(key string) (*papi.RuleCustomOverr
 
 func (r *RulesSchemaReader) getMapOfSlice(key string) (map[string][]any, error) {
 	rawVal, ok := r.data.GetOk(key)
-	if !ok {
+	if !ok || rawVal == nil {
 		return nil, &NotFoundError{key}
 	}
 
@@ -182,7 +187,7 @@ func (r *RulesSchemaReader) getMapOfSlice(key string) (map[string][]any, error) 
 
 func (r *RulesSchemaReader) getRuleItems(key string) ([]RuleItem, error) {
 	rawVal, ok := r.data.GetOk(key)
-	if !ok {
+	if !ok || rawVal == nil {
 		return nil, &NotFoundError{key}
 	}
 
@@ -220,6 +225,9 @@ func (r *RulesSchemaReader) findRuleItem(itemsMap map[string]any) (RuleItem, err
 	var ruleItems RuleItems
 
 	for name, v := range itemsMap {
+		if v == nil {
+			continue
+		}
 		items, ok := v.([]any)
 		if !ok {
 			return RuleItem{}, &TypeAssertionError{want: "[]any", got: typeof(v)}

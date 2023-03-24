@@ -229,11 +229,12 @@ func (r RulesBuilder) buildRuleBehaviors(behaviorsList []RuleItem) ([]papi.RuleB
 		if name, ok := r.nameMappings[itemName]; ok {
 			itemName = name
 		}
+
 		b := papi.RuleBehavior{
 			Name:         itemName,
-			Locked:       getFromMapAndDelete(item.Item, "locked").(bool),
-			UUID:         getFromMapAndDelete(item.Item, "uuid").(string),
-			TemplateUuid: getFromMapAndDelete(item.Item, "template_uuid").(string),
+			Locked:       getFromMapAndDeleteOrDefault(item.Item, "locked", false),
+			UUID:         getFromMapAndDeleteOrDefault(item.Item, "uuid", ""),
+			TemplateUuid: getFromMapAndDeleteOrDefault(item.Item, "template_uuid", ""),
 		}
 
 		b.Options = r.remapOptionValues(itemName, r.mapKeysToCamelCase(item.Item))
@@ -270,6 +271,11 @@ func (r RulesBuilder) remapOptionValues(behaviorName string, options papi.RuleOp
 		} else {
 			newRom[optionName] = v
 		}
+
+		if v, ok := newRom[optionName].(map[string]interface{}); ok {
+			newRom[optionName] = r.remapOptionValues(optKey, v)
+		}
+
 	}
 
 	return newRom
@@ -297,15 +303,20 @@ func (r RulesBuilder) ruleChildren() ([]papi.Rules, error) {
 	return children, nil
 }
 
-func getFromMapAndDelete(m map[string]any, key string) any {
-	defer delete(m, key)
-	return m[key]
+func getFromMapAndDeleteOrDefault[T any](m map[string]any, key string, def T) T {
+	res, ok := m[key]
+	if !ok || res == nil {
+		return def
+	}
+
+	delete(m, key)
+	return res.(T)
 }
 
 func (r RulesBuilder) mapKeysToCamelCase(old map[string]any) map[string]any {
 	newMap := make(map[string]any)
 	for k, v := range old {
-		if !reflect.ValueOf(v).IsZero() {
+		if reflect.ValueOf(v).IsValid() {
 			if mapValue, ok := v.(map[string]any); ok {
 				v = r.mapKeysToCamelCase(mapValue)
 			}

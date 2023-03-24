@@ -11,8 +11,8 @@ func init() {
 		behaviorsSchemas: getBehaviorsSchemaV20230105(),
 		criteriaSchemas:  getCriteriaSchemaV20230105(),
 		typeMappings:     map[string]interface{}{"adScalerCircuitBreaker.returnErrorResponseCodeBased.408": 408, "adScalerCircuitBreaker.returnErrorResponseCodeBased.500": 500, "adScalerCircuitBreaker.returnErrorResponseCodeBased.502": 502, "adScalerCircuitBreaker.returnErrorResponseCodeBased.504": 504},
-		nameMappings:     map[string]string{"allowFcmParentOverride": "allowFCMParentOverride", "allowHttpsCacheKeySharing": "allowHTTPSCacheKeySharing", "allowHttpsDowngrade": "allowHTTPSDowngrade", "allowHttpsUpgrade": "allowHTTPSUpgrade", "conditionalHttpStatus": "conditionalHTTPStatus", "contentCharacteristicsAmd": "contentCharacteristicsAMD", "contentCharacteristicsDd": "contentCharacteristicsDD", "dcpAuthHmacTransformation": "dcpAuthHMACTransformation", "detectSmartDnsProxy": "detectSmartDNSProxy", "detectSmartDnsProxyAction": "detectSmartDNSProxyAction", "detectSmartDnsProxyRedirecturl": "detectSmartDNSProxyRedirecturl", "enableEs256": "enableES256", "enableIpAvoidance": "enableIPAvoidance", "enableIpProtection": "enableIPProtection", "enableIpRedirectOnDeny": "enableIPRedirectOnDeny", "enableRs256": "enableRS256", "enableTokenInUri": "enableTokenInURI", "g2Oheader": "g2oheader", "i18NCharset": "i18nCharset", "i18NStatus": "i18nStatus", "isCertificateSniOnly": "isCertificateSNIOnly", "logEdgeIp": "logEdgeIP", "originSettings": "origin_settings", "overrideIpAddresses": "overrideIPAddresses", "segmentDurationDash": "segmentDurationDASH", "segmentDurationDashCustom": "segmentDurationDASHCustom", "segmentDurationHds": "segmentDurationHDS", "segmentDurationHdsCustom": "segmentDurationHDSCustom", "segmentDurationHls": "segmentDurationHLS", "segmentDurationHlsCustom": "segmentDurationHLSCustom", "segmentSizeDash": "segmentSizeDASH", "segmentSizeHds": "segmentSizeHDS", "segmentSizeHls": "segmentSizeHLS", "sf3COriginHost": "sf3cOriginHost", "sf3COriginHostHeader": "sf3cOriginHostHeader", "smartDnsProxy": "smartDNSProxy", "standardTlsMigration": "standardTLSMigration", "standardTlsMigrationOverride": "standardTLSMigrationOverride", "titleAicMobile": "title_aic_mobile", "titleAicNonmobile": "title_aic_nonmobile", "tokenAuthHlsTitle": "tokenAuthHLSTitle"},
-		shouldFlatten:    []string{"apiPrioritization.cloudletPolicy", "apiPrioritization.throttledCpCode", "apiPrioritization.netStorage", "applicationLoadBalancer.cloudletPolicy", "applicationLoadBalancer.allDownNetStorage", "audienceSegmentation.cloudletPolicy", "cpCode.value", "edgeRedirector.cloudletPolicy", "failAction.netStorageHostname", "failAction.cpCode", "firstPartyMarketing.cloudletPolicy", "firstPartyMarketingPlus.cloudletPolicy", "forwardRewrite.cloudletPolicy", "imageAndVideoManager.cpCodeOriginal", "imageAndVideoManager.cpCodeTransformed", "imageManager.cpCodeOriginal", "imageManager.cpCodeTransformed", "imageManagerVideo.cpCodeOriginal", "imageManagerVideo.cpCodeTransformed", "inputValidation.cloudletPolicy", "inputValidation.penaltyNetStorage", "origin.netStorage", "phasedRelease.cloudletPolicy", "requestControl.cloudletPolicy", "requestControl.netStorage", "siteShield.ssmap", "visitorPrioritization.cloudletPolicy", "visitorPrioritization.waitingRoomCpCode", "visitorPrioritization.waitingRoomNetStorage", "matchCpCode.value"},
+		nameMappings:     map[string]string{"allowFcmParentOverride": "allowFCMParentOverride", "allowHttpsCacheKeySharing": "allowHTTPSCacheKeySharing", "allowHttpsDowngrade": "allowHTTPSDowngrade", "allowHttpsUpgrade": "allowHTTPSUpgrade", "conditionalHttpStatus": "conditionalHTTPStatus", "contentCharacteristicsAmd": "contentCharacteristicsAMD", "contentCharacteristicsDd": "contentCharacteristicsDD", "dcpAuthHmacTransformation": "dcpAuthHMACTransformation", "detectSmartDnsProxy": "detectSmartDNSProxy", "detectSmartDnsProxyAction": "detectSmartDNSProxyAction", "detectSmartDnsProxyRedirecturl": "detectSmartDNSProxyRedirecturl", "enableEs256": "enableES256", "enableIpAvoidance": "enableIPAvoidance", "enableIpProtection": "enableIPProtection", "enableIpRedirectOnDeny": "enableIPRedirectOnDeny", "enableRs256": "enableRS256", "enableTokenInUri": "enableTokenInURI", "g2OToken": "g2oToken", "g2Oheader": "g2oheader", "i18NCharset": "i18nCharset", "i18NStatus": "i18nStatus", "isCertificateSniOnly": "isCertificateSNIOnly", "logEdgeIp": "logEdgeIP", "originSettings": "origin_settings", "overrideIpAddresses": "overrideIPAddresses", "segmentDurationDash": "segmentDurationDASH", "segmentDurationDashCustom": "segmentDurationDASHCustom", "segmentDurationHds": "segmentDurationHDS", "segmentDurationHdsCustom": "segmentDurationHDSCustom", "segmentDurationHls": "segmentDurationHLS", "segmentDurationHlsCustom": "segmentDurationHLSCustom", "segmentSizeDash": "segmentSizeDASH", "segmentSizeHds": "segmentSizeHDS", "segmentSizeHls": "segmentSizeHLS", "sf3COriginHost": "sf3cOriginHost", "sf3COriginHostHeader": "sf3cOriginHostHeader", "smartDnsProxy": "smartDNSProxy", "standardTlsMigration": "standardTLSMigration", "standardTlsMigrationOverride": "standardTLSMigrationOverride", "titleAicMobile": "title_aic_mobile", "titleAicNonmobile": "title_aic_nonmobile", "tokenAuthHlsTitle": "tokenAuthHLSTitle"},
+		shouldFlatten:    []string{"apiPrioritization.cloudletPolicy", "apiPrioritization.throttledCpCode", "apiPrioritization.throttledCpCode.cpCodeLimits", "apiPrioritization.netStorage", "applicationLoadBalancer.cloudletPolicy", "applicationLoadBalancer.allDownNetStorage", "audienceSegmentation.cloudletPolicy", "cpCode.value", "cpCode.value.cpCodeLimits", "edgeRedirector.cloudletPolicy", "failAction.netStorageHostname", "failAction.cpCode", "failAction.cpCode.cpCodeLimits", "firstPartyMarketing.cloudletPolicy", "firstPartyMarketingPlus.cloudletPolicy", "forwardRewrite.cloudletPolicy", "imageAndVideoManager.cpCodeOriginal", "imageAndVideoManager.cpCodeOriginal.cpCodeLimits", "imageAndVideoManager.cpCodeTransformed", "imageAndVideoManager.cpCodeTransformed.cpCodeLimits", "imageManager.cpCodeOriginal", "imageManager.cpCodeOriginal.cpCodeLimits", "imageManager.cpCodeTransformed", "imageManager.cpCodeTransformed.cpCodeLimits", "imageManagerVideo.cpCodeOriginal", "imageManagerVideo.cpCodeOriginal.cpCodeLimits", "imageManagerVideo.cpCodeTransformed", "imageManagerVideo.cpCodeTransformed.cpCodeLimits", "inputValidation.cloudletPolicy", "inputValidation.penaltyNetStorage", "origin.netStorage", "phasedRelease.cloudletPolicy", "requestControl.cloudletPolicy", "requestControl.netStorage", "siteShield.ssmap", "visitorPrioritization.cloudletPolicy", "visitorPrioritization.waitingRoomCpCode", "visitorPrioritization.waitingRoomCpCode.cpCodeLimits", "visitorPrioritization.waitingRoomNetStorage", "webApplicationFirewall.firewallConfiguration", "matchCpCode.value", "matchCpCode.value.cpCodeLimits"},
 	})
 }
 
@@ -112,20 +112,40 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Description: "The source Adaptive Acceleration uses to gather the real user monitoring timing data, either `mPulse` or `realUserMonitoring`. The recommended `mPulse` option supports all optimizations and requires the `mPulse` behavior added by default to new Ion properties. The classic `realUserMonitoring` method has been deprecated. If you set it as the data source, make sure you use it with the `realUserMonitoring` behavior.",
 						Type:        schema.TypeString,
 					},
+					"title_http2_server_push": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
+					},
 					"enable_push": {
 						Optional:    true,
 						Description: "Recognizes resources like JavaScript, CSS, and images  based on gathered timing data and sends these resources to a browser as it's waiting for a response to the initial request for your website or app. See `Automatic Server Push` for more information.",
 						Type:        schema.TypeBool,
+					},
+					"title_preconnect": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
 					},
 					"enable_preconnect": {
 						Optional:    true,
 						Description: "Allows browsers to anticipate what connections your site needs, and establishes those connections ahead of time. See `Automatic Preconnect` for more information.",
 						Type:        schema.TypeBool,
 					},
+					"title_preload": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
+					},
 					"preload_enable": {
 						Optional:    true,
 						Description: "Allows browsers to preload necessary fonts before they fetch and process other resources. See `Automatic Font Preload` for more information.",
 						Type:        schema.TypeBool,
+					},
+					"ab_testing": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
 					},
 					"ab_logic": {
 						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"DISABLED", "CLOUDLETS", "MANUAL"}, false)),
@@ -138,10 +158,25 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Description: "This specifies the name of the cookie file used for redirecting the requests in the A/B testing environment.",
 						Type:        schema.TypeString,
 					},
+					"compression": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
+					},
+					"title_ro": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
+					},
 					"enable_ro": {
 						Optional:    true,
-						Description: "Enables the Resource Optimizer, which automates the compression and delivery of your `.css`, `.js`, and `.svg` content using a combination of Brotli and Zopfli compressions. The compression is performed offline, during a time to live that the feature automatically sets.",
+						Description: "Enables the Resource Optimizer, which automates the compression and delivery of your `.css`, `.js`, and `.svg` content using a combination of Brotli and Zopfli compressions. The compression is performed offline, during a time to live that the feature automatically sets. See the `resourceOptimizer` and `resourceOptimizerExtendedCompatibility` behaviors for more details.",
 						Type:        schema.TypeBool,
+					},
+					"title_brotli": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
 					},
 					"enable_brotli_compression": {
 						Optional:    true,
@@ -177,6 +212,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 					"template_uuid": {
 						Optional:    true,
 						Description: "This option is for internal usage only.",
+						Type:        schema.TypeString,
+					},
+					"title_aic_mobile": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
 						Type:        schema.TypeString,
 					},
 					"compress_mobile": {
@@ -219,6 +259,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Optional:         true,
 						Description:      "Specifies the compression percentage.",
 						Type:             schema.TypeInt,
+					},
+					"title_aic_nonmobile": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
 					},
 					"compress_standard": {
 						Optional:    true,
@@ -303,7 +348,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"aggregated_reporting": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Configure attributes for your custom aggregated reports. You can configure up to four attributes. This behavior cannot be used in includes.",
+			Description: "Configure a custom report that collects traffic data. The data is based on one to four variables, such as `sum`, `average`, `min`, and `max`. These aggregation attributes help compile traffic data summaries. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -336,27 +381,27 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 					"attributes_count": {
 						ValidateDiagFunc: validation.ToDiagFunc(validation.IntBetween(1, 4)),
 						Optional:         true,
-						Description:      "Select the number of attributes by which your report is grouped. You can add up to four attributes.",
+						Description:      "The number of attributes to include in the report, ranging from 1 to 4.",
 						Type:             schema.TypeInt,
 					},
 					"attribute1": {
 						Optional:    true,
-						Description: "Select a previously user-defined variable to be an attribute for the report. The values extracted for all attributes range from 0 to 20 characters.",
+						Description: "Specify a previously user-defined variable name as a report attribute. The values extracted for all attributes range from 0 to 20 characters.",
 						Type:        schema.TypeString,
 					},
 					"attribute2": {
 						Optional:    true,
-						Description: "Select a previously user-defined variable to be an attribute for the report. The values extracted for all attributes range from 0 to 20 characters.",
+						Description: "Specify a previously user-defined variable name as a report attribute. The values extracted for all attributes range from 0 to 20 characters.",
 						Type:        schema.TypeString,
 					},
 					"attribute3": {
 						Optional:    true,
-						Description: "Select a previously user-defined variable to be an attribute for the report. The values extracted for all attributes range from 0 to 20 characters.",
+						Description: "Specify a previously user-defined variable name as a report attribute. The values extracted for all attributes range from 0 to 20 characters.",
 						Type:        schema.TypeString,
 					},
 					"attribute4": {
 						Optional:    true,
-						Description: "Select a previously user-defined variable to be an attribute for the report. The values extracted for all attributes range from 0 to 20 characters.",
+						Description: "Specify a previously user-defined variable name as a report attribute. The values extracted for all attributes range from 0 to 20 characters.",
 						Type:        schema.TypeString,
 					},
 				},
@@ -884,6 +929,54 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 									Description: "",
 									Type:        schema.TypeInt,
 								},
+								"name": {
+									Optional:    true,
+									Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+									Type:        schema.TypeString,
+								},
+								"created_date": {
+									Optional:    true,
+									Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+									Type:        schema.TypeInt,
+								},
+								"description": {
+									Optional:    true,
+									Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+									Type:        schema.TypeString,
+								},
+								"products": {
+									Optional:    true,
+									Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+									Type:        schema.TypeList,
+									Elem: &schema.Schema{
+										Type: schema.TypeString,
+									},
+								},
+								"cp_code_limits": {
+									Optional:    true,
+									Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+									Type:        schema.TypeList,
+									MaxItems:    1,
+									Elem: &schema.Resource{
+										Schema: map[string]*schema.Schema{
+											"current_capacity": {
+												Optional:    true,
+												Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+												Type:        schema.TypeInt,
+											},
+											"limit": {
+												Optional:    true,
+												Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+												Type:        schema.TypeInt,
+											},
+											"limit_type": {
+												Optional:    true,
+												Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+												Type:        schema.TypeString,
+											},
+										},
+									},
+								},
 							},
 						},
 					},
@@ -911,6 +1004,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 									Type:        schema.TypeInt,
 								},
 								"download_domain_name": {
+									Optional:    true,
+									Description: "",
+									Type:        schema.TypeString,
+								},
+								"g2o_token": {
 									Optional:    true,
 									Description: "",
 									Type:        schema.TypeString,
@@ -987,6 +1085,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Description:      "A label to distinguish this Application Load Balancer policy from any others within the same property.",
 						Type:             schema.TypeString,
 					},
+					"stickiness_title": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
+					},
 					"stickiness_cookie_type": {
 						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"NONE", "NEVER", "ON_BROWSER_CLOSE", "FIXED_DATE", "DURATION", "ORIGIN_SESSION"}, false)),
 						Optional:         true,
@@ -1043,6 +1146,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Description: "Ensures the cookie is transmitted only over HTTP.",
 						Type:        schema.TypeBool,
 					},
+					"all_down_title": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
+					},
 					"all_down_net_storage": {
 						Optional:    true,
 						Description: "Specifies a NetStorage account for a static maintenance page as a fallback when no origins are available.",
@@ -1056,6 +1164,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 									Type:        schema.TypeInt,
 								},
 								"download_domain_name": {
+									Optional:    true,
+									Description: "",
+									Type:        schema.TypeString,
+								},
+								"g2o_token": {
 									Optional:    true,
 									Description: "",
 									Type:        schema.TypeString,
@@ -1074,6 +1187,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Optional:         true,
 						Description:      "Specifies the HTTP response code when all load-balancing origins are unavailable.",
 						Type:             schema.TypeString,
+					},
+					"failover_title": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
 					},
 					"failover_status_codes": {
 						Optional:    true,
@@ -1116,6 +1234,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Optional:    true,
 						Description: "Sets the number of failed requests that would trigger the failover process.",
 						Type:        schema.TypeInt,
+					},
+					"cached_content_title": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
 					},
 					"allow_cache_prefresh": {
 						Optional:    true,
@@ -1189,6 +1312,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Description:      "Specifies a suffix to append to the cookie name. This helps distinguish this audience segmentation policy from any others within the same property.",
 						Type:             schema.TypeString,
 					},
+					"segment_tracking_title": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
+					},
 					"segment_tracking_method": {
 						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"IN_QUERY_PARAM", "IN_COOKIE_HEADER", "IN_CUSTOM_HEADER", "NONE"}, false)),
 						Optional:         true,
@@ -1212,6 +1340,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Optional:         true,
 						Description:      "This custom HTTP header specifies the name of the segmentation rule.",
 						Type:             schema.TypeString,
+					},
+					"population_title": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
 					},
 					"population_cookie_type": {
 						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"NEVER", "ON_BROWSER_CLOSE", "DURATION"}, false)),
@@ -1281,6 +1414,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 					"template_uuid": {
 						Optional:    true,
 						Description: "This option is for internal usage only.",
+						Type:        schema.TypeString,
+					},
+					"autodv": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
 						Type:        schema.TypeString,
 					},
 				},
@@ -1878,10 +2016,20 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Description:      "Set the `MAX_AGE` header for the cached content.",
 						Type:             schema.TypeString,
 					},
+					"cache_control_directives": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
+					},
 					"enhanced_rfc_support": {
 						Optional:    true,
 						Description: "This enables honoring particular `Cache-Control` header directives from the origin. Supports all official `RFC 7234` directives except for `no-transform`.",
 						Type:        schema.TypeBool,
+					},
+					"cacheability_settings": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
 					},
 					"honor_no_store": {
 						Optional:    true,
@@ -1898,6 +2046,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Description: "With the `no-cache` directive present in the response, this instructs edge servers to validate or refetch the response for each request. Effectively, set the time to live `ttl` to zero seconds.",
 						Type:        schema.TypeBool,
 					},
+					"expiration_settings": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
+					},
 					"honor_max_age": {
 						Optional:    true,
 						Description: "This instructs edge servers to cache the object for a length of time set by the `max-age` directive in the response. When present in the origin response, this directive takes precedence over the `max-age` directive and the `defaultTtl` setting.",
@@ -1907,6 +2060,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Optional:    true,
 						Description: "Instructs edge servers to cache the object for a length of time set by the `s-maxage` directive in the response. When present in the origin response, this directive takes precedence over the `max-age` directive and the `defaultTtl` setting.",
 						Type:        schema.TypeBool,
+					},
+					"revalidation_settings": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
 					},
 					"honor_must_revalidate": {
 						Optional:    true,
@@ -2818,6 +2976,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Description: "Enables the Content Targeting feature.",
 						Type:        schema.TypeBool,
 					},
+					"geo_protection_title": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
+					},
 					"enable_geo_protection": {
 						Optional:    true,
 						Description: "When enabled, verifies IP addresses are unique to specific geographic regions.",
@@ -2871,6 +3034,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Description: "This specifies the full URL to the redirect page for denied requests.",
 						Type:        schema.TypeString,
 					},
+					"ip_protection_title": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
+					},
 					"enable_ip_protection": {
 						Optional:    true,
 						Description: "Allows you to control access to your content from specific sets of IP addresses and CIDR blocks.",
@@ -2898,6 +3066,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 					"ip_redirect_url": {
 						Optional:    true,
 						Description: "This specifies the full URL to the redirect page for denied requests.",
+						Type:        schema.TypeString,
+					},
+					"referrer_protection_title": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
 						Type:        schema.TypeString,
 					},
 					"enable_referrer_protection": {
@@ -3053,6 +3226,54 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 									Description: "",
 									Type:        schema.TypeInt,
 								},
+								"name": {
+									Optional:    true,
+									Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+									Type:        schema.TypeString,
+								},
+								"created_date": {
+									Optional:    true,
+									Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+									Type:        schema.TypeInt,
+								},
+								"description": {
+									Optional:    true,
+									Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+									Type:        schema.TypeString,
+								},
+								"products": {
+									Optional:    true,
+									Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+									Type:        schema.TypeList,
+									Elem: &schema.Schema{
+										Type: schema.TypeString,
+									},
+								},
+								"cp_code_limits": {
+									Optional:    true,
+									Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+									Type:        schema.TypeList,
+									MaxItems:    1,
+									Elem: &schema.Resource{
+										Schema: map[string]*schema.Schema{
+											"current_capacity": {
+												Optional:    true,
+												Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+												Type:        schema.TypeInt,
+											},
+											"limit": {
+												Optional:    true,
+												Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+												Type:        schema.TypeInt,
+											},
+											"limit_type": {
+												Optional:    true,
+												Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+												Type:        schema.TypeString,
+											},
+										},
+									},
+								},
 							},
 						},
 					},
@@ -3119,6 +3340,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Description:      "Specify the DataStream type.",
 						Type:             schema.TypeString,
 					},
+					"beacon_stream_title": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
+					},
 					"enabled": {
 						Optional:    true,
 						Description: "Enables DataStream reporting.",
@@ -3130,6 +3356,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Description:      "A set of dash-separated DataStream ID values to limit the scope of reported data. By default, all active streams report. Use the DataStream application to gather stream ID values that apply to this property configuration. Specifying IDs for any streams that don't apply to this property has no effect, and results in no data reported.",
 						Type:             schema.TypeString,
 					},
+					"log_stream_title": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
+					},
 					"log_enabled": {
 						Optional:    true,
 						Description: "Enables log collection for the property by associating it with DataStream configurations.",
@@ -3137,7 +3368,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 					},
 					"log_stream_name": {
 						Optional:    true,
-						Description: "Specifies the name of the active stream monitoring the property that you want to receive log data from.",
+						Description: "Specifies the unique IDs of streams configured for the property. For properties created with the previous version of the rule format, this option contains a string instead of an array of strings. You can use the `List streams` operation to get stream IDs.",
 						Type:        schema.TypeInt,
 					},
 					"sampling_percentage": {
@@ -3147,7 +3378,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 					},
 					"collect_midgress_traffic": {
 						Optional:    true,
-						Description: "Whether to collect traffic data from within the Akamai platform, such as between two edge servers.",
+						Description: "If enabled, gathers midgress traffic data within the Akamai platform, such as between two edge servers, for all streams configured.",
 						Type:        schema.TypeBool,
 					},
 				},
@@ -3514,6 +3745,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
+					"enabled": {
+						Optional:    true,
+						Description: "Enables the behavior.",
+						Type:        schema.TypeString,
+					},
 				},
 			},
 		},
@@ -3575,6 +3811,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 					"template_uuid": {
 						Optional:    true,
 						Description: "This option is for internal usage only.",
+						Type:        schema.TypeString,
+					},
+					"enabled": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
 						Type:        schema.TypeString,
 					},
 				},
@@ -3782,6 +4023,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
+					"enabled": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
+					},
 				},
 			},
 		},
@@ -3806,6 +4052,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 					"template_uuid": {
 						Optional:    true,
 						Description: "This option is for internal usage only.",
+						Type:        schema.TypeString,
+					},
+					"enabled": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
 						Type:        schema.TypeString,
 					},
 				},
@@ -3900,7 +4151,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"dynamic_throughtput_optimization_override": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "This behavior is for internal usage only. This behavior can be used in includes.",
+			Description: "This overrides the default threshold of 5 Mbps that triggers the `dynamicThroughtputOptimization` behavior, which enables the quick retry feature. Quick retry detects slow forward throughput while fetching an object, and attempts a different forward connection path to avoid congestion. This behavior is for internal usage only. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -3922,7 +4173,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 					},
 					"throughput": {
 						Optional:    true,
-						Description: "",
+						Description: "Specifies the default target forward throughput in Mbps, ranging from 2 to 50 Mbps. If this time is exceeded during a connection attempt, quick retry is enabled and a different forward connection path is used.",
 						Type:        schema.TypeString,
 					},
 				},
@@ -4304,6 +4555,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Description:      "If using session persistence, this specifies the value of the cookie named in the corresponding `edgeLoadBalancingOrigin` behavior's `cookie_name` option.",
 						Type:             schema.TypeString,
 					},
+					"failover_title": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
+					},
 					"enable_failover": {
 						Optional:    true,
 						Description: "Allows you to specify failover rules.",
@@ -4392,6 +4648,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Optional:         true,
 						Description:      "Specifies the hostname associated with the ELB rule.",
 						Type:             schema.TypeString,
+					},
+					"session_persistence_title": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
 					},
 					"enable_session_persistence": {
 						Optional:    true,
@@ -4640,9 +4901,19 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Description: "When enabled, applies specified EdgeWorker functionality to this rule's web traffic.",
 						Type:        schema.TypeBool,
 					},
+					"create_edge_worker": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
+					},
 					"edge_worker_id": {
 						Optional:    true,
 						Description: "Identifies the EdgeWorker application to apply to this rule's web traffic. You can use the `EdgeWorkers API` to get this value.",
+						Type:        schema.TypeString,
+					},
+					"resource_tier": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
 						Type:        schema.TypeString,
 					},
 				},
@@ -4669,6 +4940,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 					"template_uuid": {
 						Optional:    true,
 						Description: "This option is for internal usage only.",
+						Type:        schema.TypeString,
+					},
+					"display": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
 						Type:        schema.TypeString,
 					},
 				},
@@ -4725,6 +5001,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Description:      "This specifies the URL to which to redirect requests.",
 						Type:             schema.TypeString,
 					},
+					"anonymous_vpn": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
+					},
 					"detect_anonymous_vpn": {
 						Optional:    true,
 						Description: "This enables detection of requests from anonymous VPNs.",
@@ -4741,6 +5022,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Optional:         true,
 						Description:      "This specifies the URL to which to redirect anonymous VPN requests.",
 						Type:             schema.TypeString,
+					},
+					"public_proxy": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
 					},
 					"detect_public_proxy": {
 						Optional:    true,
@@ -4759,6 +5045,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Description:      "This specifies the URL to which to redirect public proxy requests.",
 						Type:             schema.TypeString,
 					},
+					"tor_exit_node": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
+					},
 					"detect_tor_exit_node": {
 						Optional:    true,
 						Description: "This enables detection of requests from Tor exit nodes.",
@@ -4775,6 +5066,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Optional:         true,
 						Description:      "This specifies the URL to which to redirect requests from Tor exit nodes.",
 						Type:             schema.TypeString,
+					},
+					"smart_dns_proxy": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
 					},
 					"detect_smart_dns_proxy": {
 						Optional:    true,
@@ -4793,6 +5089,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Description:      "This specifies the URL to which to redirect DNS proxy requests.",
 						Type:             schema.TypeString,
 					},
+					"hosting_provider": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
+					},
 					"detect_hosting_provider": {
 						Optional:    true,
 						Description: "This detects requests from a hosting provider.",
@@ -4810,6 +5111,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Description:      "This specifies the absolute URL to which to redirect requests from hosting providers.",
 						Type:             schema.TypeString,
 					},
+					"vpn_data_center": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
+					},
 					"detect_vpn_data_center": {
 						Optional:    true,
 						Description: "This enables detection of requests from VPN data centers.",
@@ -4826,6 +5132,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Optional:         true,
 						Description:      "This specifies the URL to which to redirect requests from VPN data centers.",
 						Type:             schema.TypeString,
+					},
+					"residential_proxy": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
 					},
 					"detect_residential_proxy": {
 						Optional:    true,
@@ -5039,6 +5350,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 									Description: "",
 									Type:        schema.TypeString,
 								},
+								"g2o_token": {
+									Optional:    true,
+									Description: "",
+									Type:        schema.TypeString,
+								},
 							},
 						},
 					},
@@ -5076,6 +5392,54 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 									Optional:    true,
 									Description: "",
 									Type:        schema.TypeInt,
+								},
+								"name": {
+									Optional:    true,
+									Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+									Type:        schema.TypeString,
+								},
+								"created_date": {
+									Optional:    true,
+									Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+									Type:        schema.TypeInt,
+								},
+								"description": {
+									Optional:    true,
+									Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+									Type:        schema.TypeString,
+								},
+								"products": {
+									Optional:    true,
+									Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+									Type:        schema.TypeList,
+									Elem: &schema.Schema{
+										Type: schema.TypeString,
+									},
+								},
+								"cp_code_limits": {
+									Optional:    true,
+									Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+									Type:        schema.TypeList,
+									MaxItems:    1,
+									Elem: &schema.Resource{
+										Schema: map[string]*schema.Schema{
+											"current_capacity": {
+												Optional:    true,
+												Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+												Type:        schema.TypeInt,
+											},
+											"limit": {
+												Optional:    true,
+												Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+												Type:        schema.TypeInt,
+											},
+											"limit_type": {
+												Optional:    true,
+												Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+												Type:        schema.TypeString,
+											},
+										},
+									},
 								},
 							},
 						},
@@ -5540,6 +5904,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Description: "When enabled, caches responses that include an `error` field at the top of the response body object.  Disable this if your GraphQL server yields temporary errors with success codes in the 2xx range.",
 						Type:        schema.TypeBool,
 					},
+					"advanced": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
+					},
 					"post_request_processing_error_handling": {
 						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"APPLY_CACHING_BEHAVIOR", "NO_STORE"}, false)),
 						Optional:         true,
@@ -5672,7 +6041,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"hsaf_eip_binding": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "This behavior is for internal usage only. This behavior cannot be used in includes.",
+			Description: "Edge IP Binding works with a limited set of static IP addresses to distribute your content, which can be limiting in large footprint environments. This behavior sets Hash Serial and Forward (HSAF) for Edge IP Binding to deal with larger footprints. It can only be configured on your behalf by Akamai Professional Services. This behavior is for internal usage only. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -5694,28 +6063,28 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 					},
 					"enabled": {
 						Optional:    true,
-						Description: "",
+						Description: "Enables HSAF for Edge IP Binding customers with a large footprint.",
 						Type:        schema.TypeBool,
 					},
 					"custom_extracted_serial": {
 						Optional:    true,
-						Description: "",
+						Description: "Whether to pull the serial number from the variable value set in the `advanced` behavior. Work with your Akamai Services team to add the `advanced` behavior earlier in your property to extract and apply the `AKA_PM_EIP_HSAF_SERIAL` variable.",
 						Type:        schema.TypeBool,
 					},
 					"hash_min_value": {
 						Optional:    true,
-						Description: "",
+						Description: "Specifies the minimum value for the HSAF hash range, from 2 through 2045. This needs to be lower than `hashMaxValue`.",
 						Type:        schema.TypeInt,
 					},
 					"hash_max_value": {
 						Optional:    true,
-						Description: "",
+						Description: "Specifies the maximum value for the hash range, from 3 through 2046. This needs to be higher than `hashMinValue`.",
 						Type:        schema.TypeInt,
 					},
 					"tier": {
 						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"EDGE", "PARENT", "BOTH"}, false)),
 						Optional:         true,
-						Description:      "",
+						Description:      "Specifies where the behavior is applied.",
 						Type:             schema.TypeString,
 					},
 				},
@@ -5742,6 +6111,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 					"template_uuid": {
 						Optional:    true,
 						Description: "This option is for internal usage only.",
+						Type:        schema.TypeString,
+					},
+					"enabled": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
 						Type:        schema.TypeString,
 					},
 				},
@@ -5857,6 +6231,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 					"template_uuid": {
 						Optional:    true,
 						Description: "This option is for internal usage only.",
+						Type:        schema.TypeString,
+					},
+					"upgrade": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
 						Type:        schema.TypeString,
 					},
 				},
@@ -6021,6 +6400,54 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 									Description: "",
 									Type:        schema.TypeInt,
 								},
+								"name": {
+									Optional:    true,
+									Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+									Type:        schema.TypeString,
+								},
+								"created_date": {
+									Optional:    true,
+									Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+									Type:        schema.TypeInt,
+								},
+								"description": {
+									Optional:    true,
+									Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+									Type:        schema.TypeString,
+								},
+								"products": {
+									Optional:    true,
+									Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+									Type:        schema.TypeList,
+									Elem: &schema.Schema{
+										Type: schema.TypeString,
+									},
+								},
+								"cp_code_limits": {
+									Optional:    true,
+									Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+									Type:        schema.TypeList,
+									MaxItems:    1,
+									Elem: &schema.Resource{
+										Schema: map[string]*schema.Schema{
+											"current_capacity": {
+												Optional:    true,
+												Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+												Type:        schema.TypeInt,
+											},
+											"limit": {
+												Optional:    true,
+												Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+												Type:        schema.TypeInt,
+											},
+											"limit_type": {
+												Optional:    true,
+												Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+												Type:        schema.TypeString,
+											},
+										},
+									},
+								},
 							},
 						},
 					},
@@ -6035,6 +6462,54 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 									Optional:    true,
 									Description: "",
 									Type:        schema.TypeInt,
+								},
+								"name": {
+									Optional:    true,
+									Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+									Type:        schema.TypeString,
+								},
+								"created_date": {
+									Optional:    true,
+									Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+									Type:        schema.TypeInt,
+								},
+								"description": {
+									Optional:    true,
+									Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+									Type:        schema.TypeString,
+								},
+								"products": {
+									Optional:    true,
+									Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+									Type:        schema.TypeList,
+									Elem: &schema.Schema{
+										Type: schema.TypeString,
+									},
+								},
+								"cp_code_limits": {
+									Optional:    true,
+									Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+									Type:        schema.TypeList,
+									MaxItems:    1,
+									Elem: &schema.Resource{
+										Schema: map[string]*schema.Schema{
+											"current_capacity": {
+												Optional:    true,
+												Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+												Type:        schema.TypeInt,
+											},
+											"limit": {
+												Optional:    true,
+												Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+												Type:        schema.TypeInt,
+											},
+											"limit_type": {
+												Optional:    true,
+												Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+												Type:        schema.TypeString,
+											},
+										},
+									},
 								},
 							},
 						},
@@ -6077,6 +6552,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
+					"settings_title": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
+					},
 					"enabled": {
 						Optional:    true,
 						Description: "Enable image management capabilities and generate a corresponding API token.",
@@ -6098,6 +6578,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Description:      "Specifies a location for your site's heaviest traffic, for use in caching derivatives on edge servers.",
 						Type:             schema.TypeString,
 					},
+					"traffic_title": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
+					},
 					"cp_code_original": {
 						Optional:    true,
 						Description: "Assigns a CP code to track traffic and billing for original images that the Image and Video Manager has not modified.",
@@ -6109,6 +6594,54 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 									Optional:    true,
 									Description: "",
 									Type:        schema.TypeInt,
+								},
+								"name": {
+									Optional:    true,
+									Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+									Type:        schema.TypeString,
+								},
+								"created_date": {
+									Optional:    true,
+									Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+									Type:        schema.TypeInt,
+								},
+								"description": {
+									Optional:    true,
+									Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+									Type:        schema.TypeString,
+								},
+								"products": {
+									Optional:    true,
+									Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+									Type:        schema.TypeList,
+									Elem: &schema.Schema{
+										Type: schema.TypeString,
+									},
+								},
+								"cp_code_limits": {
+									Optional:    true,
+									Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+									Type:        schema.TypeList,
+									MaxItems:    1,
+									Elem: &schema.Resource{
+										Schema: map[string]*schema.Schema{
+											"current_capacity": {
+												Optional:    true,
+												Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+												Type:        schema.TypeInt,
+											},
+											"limit": {
+												Optional:    true,
+												Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+												Type:        schema.TypeInt,
+											},
+											"limit_type": {
+												Optional:    true,
+												Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+												Type:        schema.TypeString,
+											},
+										},
+									},
 								},
 							},
 						},
@@ -6125,8 +6658,61 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 									Description: "",
 									Type:        schema.TypeInt,
 								},
+								"name": {
+									Optional:    true,
+									Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+									Type:        schema.TypeString,
+								},
+								"created_date": {
+									Optional:    true,
+									Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+									Type:        schema.TypeInt,
+								},
+								"description": {
+									Optional:    true,
+									Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+									Type:        schema.TypeString,
+								},
+								"products": {
+									Optional:    true,
+									Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+									Type:        schema.TypeList,
+									Elem: &schema.Schema{
+										Type: schema.TypeString,
+									},
+								},
+								"cp_code_limits": {
+									Optional:    true,
+									Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+									Type:        schema.TypeList,
+									MaxItems:    1,
+									Elem: &schema.Resource{
+										Schema: map[string]*schema.Schema{
+											"current_capacity": {
+												Optional:    true,
+												Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+												Type:        schema.TypeInt,
+											},
+											"limit": {
+												Optional:    true,
+												Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+												Type:        schema.TypeInt,
+											},
+											"limit_type": {
+												Optional:    true,
+												Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+												Type:        schema.TypeString,
+											},
+										},
+									},
+								},
 							},
 						},
+					},
+					"api_reference_title": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
 					},
 					"use_existing_policy_set": {
 						Optional:    true,
@@ -6181,6 +6767,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
+					"settings_title": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
+					},
 					"enabled": {
 						Optional:    true,
 						Description: "Applies Image and Video Manager's video optimization to the current content.",
@@ -6202,6 +6793,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Description:      "To optimize caching, assign a region close to your site's heaviest traffic.",
 						Type:             schema.TypeString,
 					},
+					"traffic_title": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
+					},
 					"cp_code_original": {
 						Optional:    true,
 						Description: "Select the CP code for which to track Image and Video Manager video traffic. Use this along with `cpCodeTransformed` to track traffic to derivative video content.",
@@ -6213,6 +6809,54 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 									Optional:    true,
 									Description: "",
 									Type:        schema.TypeInt,
+								},
+								"name": {
+									Optional:    true,
+									Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+									Type:        schema.TypeString,
+								},
+								"created_date": {
+									Optional:    true,
+									Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+									Type:        schema.TypeInt,
+								},
+								"description": {
+									Optional:    true,
+									Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+									Type:        schema.TypeString,
+								},
+								"products": {
+									Optional:    true,
+									Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+									Type:        schema.TypeList,
+									Elem: &schema.Schema{
+										Type: schema.TypeString,
+									},
+								},
+								"cp_code_limits": {
+									Optional:    true,
+									Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+									Type:        schema.TypeList,
+									MaxItems:    1,
+									Elem: &schema.Resource{
+										Schema: map[string]*schema.Schema{
+											"current_capacity": {
+												Optional:    true,
+												Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+												Type:        schema.TypeInt,
+											},
+											"limit": {
+												Optional:    true,
+												Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+												Type:        schema.TypeInt,
+											},
+											"limit_type": {
+												Optional:    true,
+												Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+												Type:        schema.TypeString,
+											},
+										},
+									},
 								},
 							},
 						},
@@ -6229,8 +6873,61 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 									Description: "",
 									Type:        schema.TypeInt,
 								},
+								"name": {
+									Optional:    true,
+									Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+									Type:        schema.TypeString,
+								},
+								"created_date": {
+									Optional:    true,
+									Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+									Type:        schema.TypeInt,
+								},
+								"description": {
+									Optional:    true,
+									Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+									Type:        schema.TypeString,
+								},
+								"products": {
+									Optional:    true,
+									Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+									Type:        schema.TypeList,
+									Elem: &schema.Schema{
+										Type: schema.TypeString,
+									},
+								},
+								"cp_code_limits": {
+									Optional:    true,
+									Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+									Type:        schema.TypeList,
+									MaxItems:    1,
+									Elem: &schema.Resource{
+										Schema: map[string]*schema.Schema{
+											"current_capacity": {
+												Optional:    true,
+												Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+												Type:        schema.TypeInt,
+											},
+											"limit": {
+												Optional:    true,
+												Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+												Type:        schema.TypeInt,
+											},
+											"limit_type": {
+												Optional:    true,
+												Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+												Type:        schema.TypeString,
+											},
+										},
+									},
+								},
 							},
 						},
+					},
+					"api_reference_title": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
 					},
 					"use_existing_policy_set": {
 						Optional:    true,
@@ -6347,6 +7044,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Description:      "Distinguishes this Input Validation policy from any others within the same property.",
 						Type:             schema.TypeString,
 					},
+					"user_identification_title": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
+					},
 					"user_identification_by_cookie": {
 						Optional:    true,
 						Description: "When enabled, identifies users by the value of a cookie.",
@@ -6389,6 +7091,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 							Type: schema.TypeString,
 						},
 					},
+					"validation_title": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
+					},
 					"allow_large_post_body": {
 						Optional:    true,
 						Description: "Fails POST request bodies that exceed 16 KB when enabled, otherwise allows them to pass with no validation for policy compliance.",
@@ -6429,6 +7136,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Description:      "Specifies the redirect link for invalid requests that have not yet triggered a penalty.",
 						Type:             schema.TypeString,
 					},
+					"penalty_title": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
+					},
 					"penalty_threshold": {
 						Optional:    true,
 						Description: "Specifies the number of invalid requests permitted before executing the `penaltyAction`.",
@@ -6459,6 +7171,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 									Type:        schema.TypeInt,
 								},
 								"download_domain_name": {
+									Optional:    true,
+									Description: "",
+									Type:        schema.TypeString,
+								},
+								"g2o_token": {
 									Optional:    true,
 									Description: "",
 									Type:        schema.TypeString,
@@ -6822,6 +7539,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Description:      "Specifies the version of the Boomerang JavaScript loader snippet. See `mPulse Loader Snippets` for more information.",
 						Type:             schema.TypeString,
 					},
+					"title_optional": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
+					},
 					"api_key": {
 						ValidateDiagFunc: validateRegex("^$|^[a-zA-Z2-9]{5}-[a-zA-Z2-9]{5}-[a-zA-Z2-9]{5}-[a-zA-Z2-9]{5}-[a-zA-Z2-9]{5}$"),
 						Optional:         true,
@@ -6869,6 +7591,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Optional:    true,
 						Description: "Enables the Manifest Personalization feature.",
 						Type:        schema.TypeBool,
+					},
+					"hls_title": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
 					},
 					"hls_enabled": {
 						Optional:    true,
@@ -7054,6 +7781,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
+					"optout": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
+					},
 				},
 			},
 		},
@@ -7152,6 +7884,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
+					"detect_origin_unresponsive_title": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
+					},
 					"detect_origin_unresponsive": {
 						Optional:    true,
 						Description: "Allows you to configure what happens when the origin is unresponsive.",
@@ -7230,6 +7967,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Optional:         true,
 						Description:      "Specifies which protocol to use.",
 						Type:             schema.TypeString,
+					},
+					"detect_origin_unavailable_title": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
 					},
 					"detect_origin_unavailable": {
 						Optional:    true,
@@ -7318,6 +8060,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Description:      "Specifies either the `HTTP` or `HTTPS` protocol.",
 						Type:             schema.TypeString,
 					},
+					"detect_object_unavailable_title": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
+					},
 					"detect_object_unavailable": {
 						Optional:    true,
 						Description: "Allows you to configure failover settings when the origin has content errors.",
@@ -7404,6 +8151,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Optional:         true,
 						Description:      "Specifies either the `HTTP` or `HTTPS` protocol.",
 						Type:             schema.TypeString,
+					},
+					"other_options": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
 					},
 					"client_response_code": {
 						Optional:    true,
@@ -7906,6 +8658,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 									Description: "",
 									Type:        schema.TypeString,
 								},
+								"g2o_token": {
+									Optional:    true,
+									Description: "",
+									Type:        schema.TypeString,
+								},
 							},
 						},
 					},
@@ -8030,6 +8787,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Description: "If a client sets the `True-Client-IP` header, the edge server allows it and passes the value to the origin. Otherwise the edge server removes it and sets the value itself.",
 						Type:        schema.TypeBool,
 					},
+					"origin_certificate": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
+					},
 					"verification_mode": {
 						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"PLATFORM_SETTINGS", "CUSTOM", "THIRD_PARTY"}, false)),
 						Optional:         true,
@@ -8105,6 +8867,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 							},
 						},
 					},
+					"ports": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
+					},
 					"http_port": {
 						Optional:    true,
 						Description: "Specifies the port on your origin server to which edge servers should connect for HTTP requests, customarily `80`.",
@@ -8147,9 +8914,19 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Description:      "Specifies the origin's geographic region.",
 						Type:             schema.TypeString,
 					},
+					"adc_title": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
+					},
 					"direct_connect_geo": {
 						Optional:    true,
 						Description: "Provides a region used by Akamai Direct Connection.",
+						Type:        schema.TypeString,
+					},
+					"authentication_method_title": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
 						Type:        schema.TypeString,
 					},
 					"authentication_method": {
@@ -8357,6 +9134,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Description: "Activates and configures a recovery policy.",
 						Type:        schema.TypeBool,
 					},
+					"tuning_parameters": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
+					},
 					"enable_ip_avoidance": {
 						Optional:    true,
 						Description: "Temporarily blocks an origin IP address that experienced a certain number of failures. When an IP address is blocked, the `configName` established for `originResponsivenessRecoveryConfigName` is applied.",
@@ -8376,6 +9158,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Optional:    true,
 						Description: "Synchronizes content between the primary and backup origins, byte for byte.",
 						Type:        schema.TypeBool,
+					},
+					"origin_responsiveness_monitoring": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
 					},
 					"monitor_origin_responsiveness": {
 						Optional:    true,
@@ -8408,6 +9195,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Description: "Specifies a recovery configuration using the `configName` you defined in the `recoveryConfig` match criteria. Specify 3 to 20 alphanumeric characters or dashes. Ensure that you use the `recoveryConfig` match criteria to apply this option.",
 						Type:        schema.TypeString,
 					},
+					"status_code_monitoring1": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
+					},
 					"monitor_status_codes1": {
 						Optional:    true,
 						Description: "Enables continuous monitoring for the specific origin status codes that trigger retry or recovery actions.",
@@ -8436,6 +9228,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Description: "Specifies a recovery configuration using the `configName` you defined in the `recoveryConfig` match criteria. Specify 3 to 20 alphanumeric characters or dashes. Ensure that you use the `recoveryConfig` match criteria to apply this option.",
 						Type:        schema.TypeString,
 					},
+					"status_code_monitoring2": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
+					},
 					"monitor_status_codes2": {
 						Optional:    true,
 						Description: "Enables continuous monitoring for the specific origin status codes that trigger retry or recovery actions.",
@@ -8462,6 +9259,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 					"monitor_status_codes2_recovery_config_name": {
 						Optional:    true,
 						Description: "Specifies a recovery configuration using the `configName` you defined in the `recoveryConfig` match criteria. Specify 3 to 20 alphanumeric characters or dashes. Ensure that you use the `recoveryConfig` match criteria to apply this option.",
+						Type:        schema.TypeString,
+					},
+					"status_code_monitoring3": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
 						Type:        schema.TypeString,
 					},
 					"monitor_status_codes3": {
@@ -8685,6 +9487,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Description:      "A label to distinguish this Phased Release policy from any others within the same property.",
 						Type:             schema.TypeString,
 					},
+					"population_title": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
+					},
 					"population_cookie_type": {
 						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"NONE", "NEVER", "ON_BROWSER_CLOSE", "FIXED_DATE", "DURATION"}, false)),
 						Optional:         true,
@@ -8707,6 +9514,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Optional:    true,
 						Description: "Enabling this option resets the original duration of the cookie if the browser refreshes before the cookie expires.",
 						Type:        schema.TypeBool,
+					},
+					"failover_title": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
 					},
 					"failover_enabled": {
 						Optional:    true,
@@ -8954,11 +9766,21 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
+					"origin_settings": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
+					},
 					"country": {
 						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"EUROPE", "NORTH_AMERICA", "LATIN_AMERICA", "SOUTH_AMERICA", "NORDICS", "ASIA_PACIFIC", "OTHER_AMERICAS", "OTHER_APJ", "OTHER_EMEA", "AUSTRALIA", "GERMANY", "INDIA", "ITALY", "JAPAN", "MEXICO", "TAIWAN", "UNITED_KINGDOM", "US_EAST", "US_CENTRAL", "US_WEST"}, false)),
 						Optional:         true,
 						Description:      "",
 						Type:             schema.TypeString,
+					},
+					"audience_settings": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
 					},
 					"end_user_location": {
 						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"GLOBAL", "GLOBAL_US_CENTRIC", "GLOBAL_EU_CENTRIC", "GLOBAL_ASIA_CENTRIC", "EUROPE", "NORTH_AMERICA", "SOUTH_AMERICA", "NORDICS", "ASIA_PACIFIC", "AUSTRALIA", "GERMANY", "INDIA", "ITALY", "JAPAN", "TAIWAN", "UNITED_KINGDOM"}, false)),
@@ -8971,6 +9793,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Optional:         true,
 						Description:      "",
 						Type:             schema.TypeString,
+					},
+					"content_settings": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
 					},
 					"content_type": {
 						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"NONE", "SITE", "IMAGES", "CONFIG", "OTHERS", "AUDIO", "SD_VIDEO", "HD_VIDEO", "SUPER_HD_VIDEO", "LARGE_OBJECTS"}, false)),
@@ -9180,7 +10007,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"real_time_reporting": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "This behavior is for internal usage only. This behavior can be used in includes.",
+			Description: "This enables `Real-Time Reporting` for Akamai Cloud Embed customers. The behavior can only be configured on your behalf by Akamai Professional Services. This behavior is for internal usage only. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -9202,17 +10029,17 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 					},
 					"enabled": {
 						Optional:    true,
-						Description: "",
+						Description: "Enables reports on delivery of cloud hosted content at near real-time latencies.",
 						Type:        schema.TypeBool,
 					},
 					"advanced": {
 						Optional:    true,
-						Description: "",
+						Description: "Enables advanced options.",
 						Type:        schema.TypeBool,
 					},
 					"beacon_sampling_percentage": {
 						Optional:    true,
-						Description: "",
+						Description: "Specifies the percentage for sampling.",
 						Type:        schema.TypeFloat,
 					},
 				},
@@ -9662,6 +10489,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 									Description: "",
 									Type:        schema.TypeString,
 								},
+								"g2o_token": {
+									Optional:    true,
+									Description: "",
+									Type:        schema.TypeString,
+								},
 							},
 						},
 					},
@@ -9721,7 +10553,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"resource_optimizer": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "The Resource Optimizer helps compress and cache web resources such as JavaScript, CSS, and font files. This behavior can be used in includes.",
+			Description: "Use this along with `adaptiveAcceleration` to compress and cache resources such as JavaScript, CSS, and font files. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -9956,6 +10788,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
+					"maximum_size": {
+						Optional:    true,
+						Description: "Specifies a fixed maximum size of non-HTML content to cache.",
+						Type:        schema.TypeString,
+					},
 				},
 			},
 		},
@@ -10128,6 +10965,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
+					"customer_title": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
+					},
 					"customer_action": {
 						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"DISABLED", "HOSTNAME", "PATH", "QUERY_STRING", "COOKIE"}, false)),
 						Optional:         true,
@@ -10169,6 +11011,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Description:      "Specifies a string to replace the request's customer ID matched by `customerRegex`.",
 						Type:             schema.TypeString,
 					},
+					"application_title": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
+					},
 					"application_action": {
 						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"DISABLED", "HOSTNAME", "PATH", "QUERY_STRING", "COOKIE"}, false)),
 						Optional:         true,
@@ -10209,6 +11056,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Optional:         true,
 						Description:      "Specifies a string to replace the request's application ID matched by `applicationRegex`.",
 						Type:             schema.TypeString,
+					},
+					"users_title": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
 					},
 					"users_action": {
 						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"DISABLED", "HOSTNAME", "PATH", "QUERY_STRING", "COOKIE"}, false)),
@@ -10491,12 +11343,12 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 					"serviceworker": {
 						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"YES_SERVICE_WORKER", "NO_SERVICE_WORKER"}, false)),
 						Optional:         true,
-						Description:      "Choose `NO_SERVICE_WORKER` to simply view script insights within the Akamai Control Panel.  Choose `YES_SERVICE_WORKER` to configure additional script actions, and to activate policies.",
+						Description:      "Script Management uses a JavaScript service worker called `akam-sw.js`. It applies a policy that helps you manage scripts.",
 						Type:             schema.TypeString,
 					},
 					"timestamp": {
 						Optional:    true,
-						Description: "A read-only epoch timestamp value used for synchronization.",
+						Description: "A read-only epoch timestamp that represents the last time a Script Management policy was synchronized with its Ion property.",
 						Type:        schema.TypeInt,
 					},
 				},
@@ -10523,6 +11375,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 					"template_uuid": {
 						Optional:    true,
 						Description: "This option is for internal usage only.",
+						Type:        schema.TypeString,
+					},
+					"token_authentication_title": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -10561,6 +11418,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 							Type: schema.TypeString,
 						},
 					},
+					"field_carry_over": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
+					},
 					"session_id": {
 						Optional:    true,
 						Description: "Enabling this option carries the `session_id` value from the access token over to the session token, for use in tracking and counting unique playback sessions.",
@@ -10581,6 +11443,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Description: "Enabling this option carries the `ACL` field from the access token over to the session token, to limit the requesting client's access to the specific URL or path set in the `ACL` field. Playback may fail if the base path of the master playlist (and variant playlist, plus segments) varies from that of the `ACL` field.",
 						Type:        schema.TypeBool,
 					},
+					"token_auth_hls_title": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
+					},
 					"enable_token_in_uri": {
 						Optional:    true,
 						Description: "When enabled, passes tokens in HLS variant manifest URLs and HLS segment URLs, as an alternative to cookies.",
@@ -10594,6 +11461,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 							Type: schema.TypeString,
 						},
 					},
+					"token_revocation_title": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
+					},
 					"token_revocation_enabled": {
 						Optional:    true,
 						Description: "Enable this to deny requests from playback URLs that contain a `TokenAuth` token that uses specific token identifiers.",
@@ -10603,6 +11475,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Optional:    true,
 						Description: "Identifies the `TokenAuth` tokens to block from accessing your content.",
 						Type:        schema.TypeInt,
+					},
+					"media_encryption_title": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
 					},
 					"hls_media_encryption": {
 						Optional:    true,
@@ -11005,6 +11882,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
+					"status": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
+					},
 				},
 			},
 		},
@@ -11093,6 +11975,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 								},
 							},
 						},
+					},
+					"nossmap": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
 					},
 				},
 			},
@@ -11205,6 +12092,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 					"template_uuid": {
 						Optional:    true,
 						Description: "This option is for internal usage only.",
+						Type:        schema.TypeString,
+					},
+					"info": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
 						Type:        schema.TypeString,
 					},
 				},
@@ -11412,6 +12304,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Description:      "Specifies the path and filename for your origin's test object to use in races to test routes.",
 						Type:             schema.TypeString,
 					},
+					"sr_download_link_title": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
+					},
 					"to_host_status": {
 						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"INCOMING_HH", "OTHER"}, false)),
 						Optional:         true,
@@ -11474,6 +12371,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 					"template_uuid": {
 						Optional:    true,
 						Description: "This option is for internal usage only.",
+						Type:        schema.TypeString,
+					},
+					"display": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
 						Type:        schema.TypeString,
 					},
 				},
@@ -11633,6 +12535,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
+					"tier1_title": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
+					},
 					"custom_map_enabled": {
 						Optional:    true,
 						Description: "Enables custom maps.",
@@ -11659,6 +12566,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Optional:         true,
 						Description:      "Specifies the hash algorithm.",
 						Type:             schema.TypeString,
+					},
+					"cloudwrapper_map_migration_title": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
 					},
 					"map_migration_enabled": {
 						Optional:    true,
@@ -11743,6 +12655,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 					"template_uuid": {
 						Optional:    true,
 						Description: "This option is for internal usage only.",
+						Type:        schema.TypeString,
+					},
+					"legal_text": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
 						Type:        schema.TypeString,
 					},
 					"enabled": {
@@ -12084,6 +13001,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Description:      "This specifies a domain for all session cookies. In case you configure many property hostnames, this may be their common domain. Make sure the user agent accepts the custom domain for any request matching the `virtualWaitingRoom` behavior. Don't use top level domains (TLDs).",
 						Type:             schema.TypeString,
 					},
+					"waiting_room_title": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
+					},
 					"waiting_room_path": {
 						Optional:    true,
 						Description: "This specifies the path to the waiting room main page on the origin server, for example `/vp/waiting-room.html`. When the request is marked as Waiting Room Main Page and blocked, the visitor enters the waiting room. The behavior sets the outgoing request path to the `waitingRoomPath` and modifies the cache key accordingly. See the `virtualWaitingRoomRequest` match criteria to further customize these requests.",
@@ -12096,6 +13018,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Elem: &schema.Schema{
 							Type: schema.TypeString,
 						},
+					},
+					"access_title": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
 					},
 					"session_duration": {
 						ValidateDiagFunc: validation.ToDiagFunc(validation.IntBetween(0, 86400)),
@@ -12185,6 +13112,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 							},
 						},
 					},
+					"user_identification_title": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
+					},
 					"user_identification_by_cookie": {
 						Optional:    true,
 						Description: "When enabled, identifies users by the value of a cookie.",
@@ -12226,6 +13158,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Elem: &schema.Schema{
 							Type: schema.TypeString,
 						},
+					},
+					"allowed_user_cookie_management_title": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
 					},
 					"allowed_user_cookie_enabled": {
 						Optional:    true,
@@ -12282,6 +13219,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Description: "Applies the `HttpOnly` flag to the allowed user's cookie to ensure it's accessed over HTTP and not manipulated by the client.",
 						Type:        schema.TypeBool,
 					},
+					"waiting_room_cookie_management_title": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
+					},
 					"waiting_room_cookie_enabled": {
 						Optional:    true,
 						Description: "Enables a cookie to track a waiting room assignment.",
@@ -12337,6 +13279,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Description: "Applies the `HttpOnly` flag to the waiting room cookie to ensure it's accessed over HTTP and not manipulated by the client.",
 						Type:        schema.TypeBool,
 					},
+					"waiting_room_management_title": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
+					},
 					"waiting_room_status_code": {
 						ValidateDiagFunc: validateRegex("[2|4|5][0-9][0-9]"),
 						Optional:         true,
@@ -12360,6 +13307,54 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 									Description: "",
 									Type:        schema.TypeInt,
 								},
+								"name": {
+									Optional:    true,
+									Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+									Type:        schema.TypeString,
+								},
+								"created_date": {
+									Optional:    true,
+									Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+									Type:        schema.TypeInt,
+								},
+								"description": {
+									Optional:    true,
+									Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+									Type:        schema.TypeString,
+								},
+								"products": {
+									Optional:    true,
+									Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+									Type:        schema.TypeList,
+									Elem: &schema.Schema{
+										Type: schema.TypeString,
+									},
+								},
+								"cp_code_limits": {
+									Optional:    true,
+									Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+									Type:        schema.TypeList,
+									MaxItems:    1,
+									Elem: &schema.Resource{
+										Schema: map[string]*schema.Schema{
+											"current_capacity": {
+												Optional:    true,
+												Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+												Type:        schema.TypeInt,
+											},
+											"limit": {
+												Optional:    true,
+												Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+												Type:        schema.TypeInt,
+											},
+											"limit_type": {
+												Optional:    true,
+												Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+												Type:        schema.TypeString,
+											},
+										},
+									},
+								},
 							},
 						},
 					},
@@ -12376,6 +13371,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 									Type:        schema.TypeInt,
 								},
 								"download_domain_name": {
+									Optional:    true,
+									Description: "",
+									Type:        schema.TypeString,
+								},
+								"g2o_token": {
 									Optional:    true,
 									Description: "",
 									Type:        schema.TypeString,
@@ -12438,6 +13438,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Description:      "This specifies a domain for all session cookies. In case you configure many property hostnames, this may be their common domain. Make sure the user agent accepts the custom domain for any request matching the `visitorPrioritizationFifo` behavior. Don't use top level domains (TLDs).",
 						Type:             schema.TypeString,
 					},
+					"waiting_room_title": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
+					},
 					"waiting_room_path": {
 						Optional:    true,
 						Description: "This specifies the path to the waiting room main page on the origin server, for example `/vp/waiting-room.html`. When the request is marked as `Waiting Room Main Page` and blocked, the visitor enters the waiting room. The behavior sets the outgoing request path to the `waitingRoomPath` and modifies the cache key accordingly. See the `visitorPrioritizationRequest` match criteria to further customize these requests.",
@@ -12450,6 +13455,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Elem: &schema.Schema{
 							Type: schema.TypeString,
 						},
+					},
+					"access_title": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
 					},
 					"session_duration": {
 						ValidateDiagFunc: validation.ToDiagFunc(validation.IntBetween(0, 86400)),
@@ -12519,6 +13529,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Description: "Enables the watermarking behavior.",
 						Type:        schema.TypeBool,
 					},
+					"token_signing_title": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
+					},
 					"signature_verification_enable": {
 						Optional:    true,
 						Description: "When enabled, you can verify the signature in your watermarking token.",
@@ -12544,6 +13559,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Description: "Specifies the optional second public key in its entirety. Specify a second key to enable rotation.",
 						Type:        schema.TypeString,
 					},
+					"pattern_encryption_title": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
+					},
 					"pattern_decryption_enable": {
 						Optional:    true,
 						Description: "If patterns in your watermarking tokens have been encrypted, enabling this allows you to provide values to decrypt them.",
@@ -12567,6 +13587,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 					"decryption_password2": {
 						Optional:    true,
 						Description: "Provides the secondary password you can use to rotate passwords.",
+						Type:        schema.TypeString,
+					},
+					"miscellaneous_settings_title": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
 						Type:        schema.TypeString,
 					},
 					"use_original_as_a": {
@@ -12610,8 +13635,40 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Optional:    true,
 						Description: "An object featuring details about your firewall configuration.",
 						Type:        schema.TypeList,
-						Elem: &schema.Schema{
-							Type: schema.TypeString,
+						MaxItems:    1,
+						Elem: &schema.Resource{
+							Schema: map[string]*schema.Schema{
+								"config_id": {
+									Optional:    true,
+									Description: "",
+									Type:        schema.TypeInt,
+								},
+								"production_status": {
+									Optional:    true,
+									Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior",
+									Type:        schema.TypeString,
+								},
+								"staging_status": {
+									Optional:    true,
+									Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior",
+									Type:        schema.TypeString,
+								},
+								"production_version": {
+									Optional:    true,
+									Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior",
+									Type:        schema.TypeInt,
+								},
+								"staging_version": {
+									Optional:    true,
+									Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior",
+									Type:        schema.TypeInt,
+								},
+								"file_name": {
+									Optional:    true,
+									Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior",
+									Type:        schema.TypeString,
+								},
+							},
 						},
 					},
 				},
@@ -13529,6 +14586,54 @@ func getCriteriaSchemaV20230105() map[string]*schema.Schema {
 									Optional:    true,
 									Description: "",
 									Type:        schema.TypeInt,
+								},
+								"name": {
+									Optional:    true,
+									Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+									Type:        schema.TypeString,
+								},
+								"created_date": {
+									Optional:    true,
+									Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+									Type:        schema.TypeInt,
+								},
+								"description": {
+									Optional:    true,
+									Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+									Type:        schema.TypeString,
+								},
+								"products": {
+									Optional:    true,
+									Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+									Type:        schema.TypeList,
+									Elem: &schema.Schema{
+										Type: schema.TypeString,
+									},
+								},
+								"cp_code_limits": {
+									Optional:    true,
+									Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+									Type:        schema.TypeList,
+									MaxItems:    1,
+									Elem: &schema.Resource{
+										Schema: map[string]*schema.Schema{
+											"current_capacity": {
+												Optional:    true,
+												Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+												Type:        schema.TypeInt,
+											},
+											"limit": {
+												Optional:    true,
+												Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+												Type:        schema.TypeInt,
+											},
+											"limit_type": {
+												Optional:    true,
+												Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+												Type:        schema.TypeString,
+											},
+										},
+									},
 								},
 							},
 						},
