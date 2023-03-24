@@ -8,11 +8,20 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-// RulesSchemaReader is used to retrieve data from schema.ResourceData.
+// RulesSchemaReader knows how to retrieve data from schema.ResourceData.
 type RulesSchemaReader struct {
 	data          *schema.ResourceData
 	ruleFormatKey string
 }
+
+// RuleItem is a struct for holding information about a single behavior or criterion.
+type RuleItem struct {
+	Name string
+	Item map[string]any
+}
+
+// RuleItems contains slice of RuleItem.
+type RuleItems []RuleItem
 
 // GetUsedRuleFormat finds RuleVersion that is used in schema.ResourceData.
 func GetUsedRuleFormat(d *schema.ResourceData) RuleVersion {
@@ -39,12 +48,6 @@ func NewRulesSchemaReader(d *schema.ResourceData) *RulesSchemaReader {
 // GetRuleFormat returns rule format as a string.
 func (r *RulesSchemaReader) GetRuleFormat() string {
 	return r.ruleFormatKey
-}
-
-// RuleItem is a struct for holding behavior or criteria.
-type RuleItem struct {
-	Name string
-	Item map[string]any
 }
 
 // GetBehaviorsList reads and returns a slice of RuleItem, which are bahaviors.
@@ -190,7 +193,7 @@ func (r *RulesSchemaReader) getRuleItems(key string) ([]RuleItem, error) {
 
 	listUnpacked := make([]RuleItem, 0, len(listVal))
 
-	for _, val := range listVal {
+	for i, val := range listVal {
 		if val == nil {
 			continue
 		}
@@ -199,9 +202,9 @@ func (r *RulesSchemaReader) getRuleItems(key string) ([]RuleItem, error) {
 			return nil, &TypeAssertionError{"map[string]any", typeof(val), key}
 		}
 
-		item, err := r.findFirstRuleItem(behaviorsMap)
+		item, err := r.findRuleItem(behaviorsMap)
 		if err != nil && !errors.Is(err, ErrNotFound) {
-			return nil, fmt.Errorf("%s: %w", key, err)
+			return nil, fmt.Errorf("%s.%d: %w", key, i, err)
 		}
 		if errors.Is(err, ErrNotFound) {
 			continue
@@ -213,25 +216,38 @@ func (r *RulesSchemaReader) getRuleItems(key string) ([]RuleItem, error) {
 	return listUnpacked, nil
 }
 
-func (r *RulesSchemaReader) findFirstRuleItem(itemsMap map[string]any) (RuleItem, error) {
+func (r *RulesSchemaReader) findRuleItem(itemsMap map[string]any) (RuleItem, error) {
+	var ruleItems RuleItems
+
 	for name, v := range itemsMap {
 		items, ok := v.([]any)
 		if !ok {
 			return RuleItem{}, &TypeAssertionError{want: "[]any", got: typeof(v)}
 		}
 
-		if len(items) == 1 && items[0] != nil {
+		if len(items) == 0 {
+			continue
+		}
+
+		if items[0] != nil {
 			item, ok := items[0].(map[string]any)
 			if !ok {
 				return RuleItem{}, &TypeAssertionError{want: "map[string]any", got: typeof(items[0])}
 			}
-			return RuleItem{
-				Name: name,
-				Item: item,
-			}, nil
+			ruleItems = append(ruleItems, RuleItem{Name: name, Item: item})
+		} else {
+			ruleItems = append(ruleItems, RuleItem{Name: name, Item: defaultOptionMap()})
 		}
 	}
-	return RuleItem{}, ErrNotFound
+
+	if len(ruleItems) == 0 {
+		return RuleItem{}, ErrNotFound
+	}
+	if len(ruleItems) > 1 {
+		return RuleItem{}, &TooManyElementsError{names: ruleItems.Names(), expected: 1}
+	}
+
+	return ruleItems[0], nil
 }
 
 func (r *RulesSchemaReader) behaviorsBaseKey() string {
@@ -299,4 +315,17 @@ func (r *RulesSchemaReader) commentsKey() string {
 
 func (r *RulesSchemaReader) genericKey(k string) string {
 	return fmt.Sprintf("%s.0.%s", r.ruleFormatKey, k)
+}
+
+// Names returns names of all RuleItem contained by RuleItems.
+func (r RuleItems) Names() []string {
+	names := make([]string, 0, len(r))
+	for _, item := range r {
+		names = append(names, item.Name)
+	}
+	return names
+}
+
+func defaultOptionMap() map[string]any {
+	return map[string]any{"locked": false, "uuid": "", "template_uuid": ""}
 }

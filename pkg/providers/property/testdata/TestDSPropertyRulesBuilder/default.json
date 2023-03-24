@@ -259,6 +259,10 @@
             "options": {
               "behavior": "TUNNEL_ORIGIN"
             }
+          },
+          {
+            "name": "restrictObjectCaching",
+            "options": {}
           }
         ],
         "criteria": [

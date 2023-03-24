@@ -59,10 +59,7 @@ data "akamai_property_rules_builder" "default" {
         }
       }
     }
-    behavior {
-      cp_code {
-      }
-    }
+
     behavior {
       caching {
         behavior = "NO_STORE"
@@ -206,6 +203,11 @@ data "akamai_property_rules_builder" "dynamic_content" {
         behavior = "TUNNEL_ORIGIN"
       }
     }
+
+    behavior {
+      restrict_object_caching {}
+    }
+
     children = [
     ]
   }

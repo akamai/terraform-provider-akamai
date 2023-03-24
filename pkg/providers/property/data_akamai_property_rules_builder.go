@@ -5,6 +5,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
@@ -41,7 +42,11 @@ func dataSourcePropertyRulesBuilderRead(_ context.Context, d *schema.ResourceDat
 
 	rules, err := ruleformats.NewBuilder(d).Build()
 	if err != nil {
-		return diag.Errorf("error building rules: %s", err)
+		diags := diag.Errorf("building rules: %s", err)
+		if errors.Is(err, ruleformats.ErrTooManyElements) {
+			diags[0].Detail = "You can have only one behavior/criterion in a single block. Make sure each of them is placed into a separate block."
+		}
+		return diags
 	}
 
 	rulesUpdate := papi.RulesUpdate{
@@ -50,16 +55,16 @@ func dataSourcePropertyRulesBuilderRead(_ context.Context, d *schema.ResourceDat
 
 	JSON, err := json.MarshalIndent(rulesUpdate, "", "  ")
 	if err != nil {
-		return diag.Errorf("error marshaling rules to json: %s", err)
+		return diag.Errorf("marshaling rules to json: %s", err)
 	}
 
 	if err := d.Set("json", string(JSON)); err != nil {
-		return diag.Errorf("error setting json in schema: %s", err)
+		return diag.Errorf("setting json in schema: %s", err)
 	}
 
 	ruleFormat := ruleformats.GetUsedRuleFormat(d)
 	if err := d.Set("rule_format", ruleFormat.Version()); err != nil {
-		return diag.Errorf("error setting rule_format in schema %s", err)
+		return diag.Errorf("setting rule_format in schema %s", err)
 	}
 
 	sum := md5.Sum([]byte(JSON))

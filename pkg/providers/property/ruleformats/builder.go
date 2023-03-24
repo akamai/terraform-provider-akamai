@@ -244,6 +244,10 @@ func (r RulesBuilder) buildRuleBehaviors(behaviorsList []RuleItem) ([]papi.RuleB
 	return behaviors, nil
 }
 
+// remapOptionValues ensures that options for behaviorName are in the format expected by the API.
+// It either converts list to object by taking the first element or uses type mappings in specific cases
+// e.g. if the API expects different types for the same attribute, depending on the value.
+// If no action is required, value is rewritten without any mutations.
 func (r RulesBuilder) remapOptionValues(behaviorName string, options papi.RuleOptionsMap) papi.RuleOptionsMap {
 	newRom := make(papi.RuleOptionsMap)
 

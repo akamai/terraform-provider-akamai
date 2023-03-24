@@ -164,10 +164,10 @@ func (r *registry) schemas() map[string]*schema.Schema {
 						Description: "States whether changes to 'criterion' objects are prohibited",
 					},
 					"custom_override": {
-						Optional: true,
-						Type:     schema.TypeList,
-						MaxItems: 1,
-                        Description: "XML metadata of the rule"
+						Optional:    true,
+						Type:        schema.TypeList,
+						MaxItems:    1,
+						Description: "XML metadata of the rule",
 						Elem: &schema.Resource{
 							Schema: map[string]*schema.Schema{
 								"name": {
