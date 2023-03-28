@@ -3,8 +3,8 @@ package cps
 import (
 	"context"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/cps"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/session"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/cps"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
 	cpstools "github.com/akamai/terraform-provider-akamai/v3/pkg/providers/cps/tools"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"

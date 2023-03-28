@@ -6,7 +6,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/papi"
 )
 
 func Test_DSReadGroup(t *testing.T) {

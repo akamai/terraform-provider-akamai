@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/dns"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/session"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/dns"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/session"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 )

@@ -11,7 +11,7 @@ EDGEGRID_BRANCH_NAME="${2:-develop}"
 RELOAD_DOCKER_IMAGE="${3:-false}"
 
 # Recalculate DOCKER_IMAGE_SIZE if any changes to dockerfile.
-TIMEOUT="20m"
+TIMEOUT="40m"
 DOCKER_IMAGE_SIZE="651787326"
 
 SSH_PRV_KEY="$(cat ~/.ssh/id_rsa)"
@@ -92,7 +92,7 @@ docker exec akatf-container sh -c 'git clone ssh://git@git.source.akamai.com:799
 echo "Checkout branches"
 docker exec akatf-container sh -c 'cd edgegrid; git checkout ${EDGEGRID_BRANCH_NAME};
                                    cd ../terraform-provider-akamai; git checkout ${PROVIDER_BRANCH_NAME};
-                                   go mod edit -replace github.com/akamai/AkamaiOPEN-edgegrid-golang/v4=../edgegrid;
+                                   go mod edit -replace github.com/akamai/AkamaiOPEN-edgegrid-golang/v5=../edgegrid;
                                    go mod tidy -compat=1.18'
 
 echo "Running tests with xUnit output"

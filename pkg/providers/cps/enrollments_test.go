@@ -3,7 +3,7 @@ package cps
 import (
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/cps"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/cps"
 	"github.com/stretchr/testify/assert"
 )
 

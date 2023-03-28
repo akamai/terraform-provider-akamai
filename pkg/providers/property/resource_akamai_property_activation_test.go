@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/mock"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/papi"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/botman"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/botman"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
 	"github.com/apex/log"
 )

@@ -11,8 +11,8 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/cloudlets"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/session"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/cloudlets"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"

@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	network "github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/networklists"
+	network "github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/networklists"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"

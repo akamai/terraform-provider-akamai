@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/cloudlets"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/cloudlets"
 )
 
 func getAllPolicyVersions(ctx context.Context, policyID int64, client cloudlets.Cloudlets) ([]cloudlets.PolicyVersion, error) {
