@@ -15,6 +15,9 @@
 * PAPI
   * Fix issue when `akamai_property` imported an older version and during update it didn't create a new version from it
 
+* APPSEC
+  * Fix issue updating rule action for ASE AUTO policy
+
 #### FEATURES/ENHANCEMENTS:
 * APPSEC
   * Advanced Options Settings - New settings added for Request Size Inspection Limit
@@ -22,6 +25,9 @@
       [akamai_appsec_advanced_settings_request_body](docs/data-sources/appsec_advanced_settings_request_body.md)
     * Added resource
       [akamai_appsec_advanced_settings_request_body](docs/resources/appsec_advanced_settings_request_body.md)
+
+* BOTMAN
+  * Cache OpenAPI calls to improve performance
 
 ## 3.4.0 (March 2, 2023)
 
