@@ -670,11 +670,10 @@ func TestResProperty(t *testing.T) {
 	}
 
 	// Test Import
-
 	// Run a test case that verifies the resource can be imported by the given ID
-	AssertImportable := func(t *testing.T, TestName, ImportID string) func(t *testing.T) {
+	AssertImportableWithOptions := func(t *testing.T, TestName, ImportID, fileName, Rules string, Setup []BehaviorFunc) func(t *testing.T) {
 
-		fixturePath := fmt.Sprintf("testdata/%s/Importable/importable.tf", t.Name())
+		fixturePath := fmt.Sprintf("testdata/%s/Importable/%s", t.Name(), fileName)
 
 		return func(t *testing.T) {
 
@@ -684,13 +683,13 @@ func TestResProperty(t *testing.T) {
 			parameters := strings.Split(ImportID, ",")
 			numberParameters := len(parameters)
 			lastParameter := parameters[len(parameters)-1]
-			setup := []BehaviorFunc{
+			Setup = append(Setup,
 				PropertyLifecycle("test_property", "prp_0", "grp_0",
 					papi.RulesUpdate{Rules: papi.Rules{Name: "default"}}),
 				GetPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive),
 				SetHostnames("prp_0", 1, "to.test.domain"),
 				ImportProperty("prp_0"),
-			}
+			)
 			if (numberParameters == 2 || numberParameters == 4) && !isDefaultVersion(lastParameter) {
 				var ContractID, GroupID string
 				if numberParameters == 4 {
@@ -698,11 +697,11 @@ func TestResProperty(t *testing.T) {
 					GroupID = "grp_0"
 				}
 				if numberParameters == 2 {
-					setup = append(setup, GetPropertyVersions("prp_0", "test_property", "ctr_0", "grp_0"))
+					Setup = append(Setup, GetPropertyVersions("prp_0", "test_property", "ctr_0", "grp_0"))
 				}
-				setup = append(setup, GetPropertyVersions("prp_0", "test_property", ContractID, GroupID))
+				Setup = append(Setup, GetPropertyVersions("prp_0", "test_property", ContractID, GroupID))
 			}
-			s := ComposeBehaviors(setup...)
+			s := ComposeBehaviors(Setup...)
 			kase := LifecycleTestCase{
 				Name:        "Importable",
 				ClientSetup: s,
@@ -710,8 +709,7 @@ func TestResProperty(t *testing.T) {
 					return []resource.TestStep{
 						{
 							Config: loadFixtureString(fixturePath),
-							Check: CheckAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
-								"{\"rules\":{\"name\":\"default\",\"options\":{}}}"),
+							Check:  CheckAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123", Rules),
 						},
 						// this step is used to refresh state with updated staging/production statuses
 						{
@@ -728,8 +726,7 @@ func TestResProperty(t *testing.T) {
 
 							},
 							Config: loadFixtureString(fixturePath),
-							Check: CheckAttrs("prp_0", "to.test.domain", "1", "1", "0", "ehn_123",
-								"{\"rules\":{\"name\":\"default\",\"options\":{}}}"),
+							Check:  CheckAttrs("prp_0", "to.test.domain", "1", "1", "0", "ehn_123", Rules),
 						},
 						{
 							ImportState:             true,
@@ -738,8 +735,7 @@ func TestResProperty(t *testing.T) {
 							ResourceName:            "akamai_property.test",
 							Config:                  loadFixtureString(fixturePath),
 							ImportStateVerifyIgnore: []string{"product", "read_version"},
-							Check: CheckAttrs("prp_0", "to.test.domain", "1", "1", "0", "ehn_123",
-								"{\"rules\":{\"name\":\"default\",\"options\":{}}}"),
+							Check:                   CheckAttrs("prp_0", "to.test.domain", "1", "1", "0", "ehn_123", Rules),
 						},
 					}
 				},
@@ -755,6 +751,10 @@ func TestResProperty(t *testing.T) {
 
 			client.AssertExpectations(t)
 		}
+	}
+
+	AssertImportable := func(t *testing.T, TestName, ImportID string) func(t *testing.T) {
+		return AssertImportableWithOptions(t, TestName, ImportID, "importable.tf", "{\"rules\":{\"name\":\"default\",\"options\":{}}}", []BehaviorFunc{})
 	}
 
 	suppressLogging(t, func() {
@@ -825,6 +825,20 @@ func TestResProperty(t *testing.T) {
 
 		// Test Import
 
+		t.Run("Importable: property_id with ds", AssertImportableWithOptions(t, "property_id", "prp_0", "importable_with_property_rules_builder.tf",
+			"{\"rules\":{\"behaviors\":[{\"name\":\"mPulse\",\"options\":{\"configOverride\":\"no new line\"}},{\"name\":\"mPulse\",\"options\":{\"configOverride\":\"\"}},{\"name\":\"mPulse\",\"options\":{\"configOverride\":\"\\n\\tline with new line before and after + tab\\n\"}}],\"name\":\"default\",\"options\":{}}}",
+			[]BehaviorFunc{
+				UpdateRuleTree("prp_0", "ctr_0", "grp_0", 1,
+					&papi.RulesUpdate{
+						Rules: papi.Rules{
+							Name: "default",
+							Behaviors: []papi.RuleBehavior{
+								{Name: "mPulse", Options: papi.RuleOptionsMap{"configOverride": "no new line"}},
+								{Name: "mPulse", Options: papi.RuleOptionsMap{"configOverride": ""}},
+								{Name: "mPulse", Options: papi.RuleOptionsMap{"configOverride": "\n\tline with new line before and after + tab\n"}},
+							},
+						}})},
+		))
 		t.Run("Importable: property_id", AssertImportable(t, "property_id", "prp_0"))
 		t.Run("Importable: property_id and ver_# version", AssertImportable(t, "property_id and ver_# version", "prp_0,ver_1"))
 		t.Run("Importable: property_id and # version", AssertImportable(t, "property_id and # version", "prp_0,1"))
