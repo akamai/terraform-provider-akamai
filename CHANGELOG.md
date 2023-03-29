@@ -1,13 +1,23 @@
 # RELEASE NOTES
 
-## 3.X.X (XX X, 20XX)
+## 3.5.0 (March 30, 2023)
 
 #### FEATURES/ENHANCEMENTS:
+
+* APPSEC
+  * Advanced Options Settings - New settings added for Request Size Inspection Limit
+    * Add data source `akamai_appsec_advanced_settings_request_body`
+    * Add resource `akamai_appsec_advanced_settings_request_body`
+
+* BOTMAN
+  * Cache OpenAPI calls to improve performance
 
 * Image and Video Manager
   * Add `forced_formats` and `allowed_formats` fields to `output` field
 
 * PAPI
+  * Add data source
+    * `akamai_property_rules_builder` - create property rule trees directly from HCL (Beta).
   * Add `compliance_record` for `akamai_property_activation` resource
 
 #### BUG FIXES:
@@ -17,17 +27,6 @@
 
 * APPSEC
   * Fix issue updating rule action for ASE AUTO policy
-
-#### FEATURES/ENHANCEMENTS:
-* APPSEC
-  * Advanced Options Settings - New settings added for Request Size Inspection Limit
-    * Added data source
-      [akamai_appsec_advanced_settings_request_body](docs/data-sources/appsec_advanced_settings_request_body.md)
-    * Added resource
-      [akamai_appsec_advanced_settings_request_body](docs/resources/appsec_advanced_settings_request_body.md)
-
-* BOTMAN
-  * Cache OpenAPI calls to improve performance
 
 ## 3.4.0 (March 2, 2023)
 
