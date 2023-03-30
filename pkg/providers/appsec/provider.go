@@ -7,7 +7,7 @@ import (
 
 	"github.com/apex/log"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/appsec"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/config"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
@@ -68,6 +68,7 @@ func Provider() *schema.Provider {
 			"akamai_appsec_advanced_settings_logging":                dataSourceAdvancedSettingsLogging(),
 			"akamai_appsec_advanced_settings_pragma_header":          dataSourceAdvancedSettingsPragmaHeader(),
 			"akamai_appsec_advanced_settings_prefetch":               dataSourceAdvancedSettingsPrefetch(),
+			"akamai_appsec_advanced_settings_request_body":           dataSourceAdvancedSettingsRequestBody(),
 			"akamai_appsec_api_endpoints":                            dataSourceAPIEndpoints(),
 			"akamai_appsec_api_request_constraints":                  dataSourceAPIRequestConstraints(),
 			"akamai_appsec_attack_groups":                            dataSourceAttackGroups(),
@@ -120,6 +121,7 @@ func Provider() *schema.Provider {
 			"akamai_appsec_advanced_settings_logging":                resourceAdvancedSettingsLogging(),
 			"akamai_appsec_advanced_settings_pragma_header":          resourceAdvancedSettingsPragmaHeader(),
 			"akamai_appsec_advanced_settings_prefetch":               resourceAdvancedSettingsPrefetch(),
+			"akamai_appsec_advanced_settings_request_body":           resourceAdvancedSettingsRequestBody(),
 			"akamai_appsec_api_constraints_protection":               resourceAPIConstraintsProtection(),
 			"akamai_appsec_api_request_constraints":                  resourceAPIRequestConstraints(),
 			"akamai_appsec_attack_group":                             resourceAttackGroup(),

@@ -17,7 +17,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/edgeworkers"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/edgeworkers"
 )
 
 func Test_populateEKV(t *testing.T) {

@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/datastream"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/datastream"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )

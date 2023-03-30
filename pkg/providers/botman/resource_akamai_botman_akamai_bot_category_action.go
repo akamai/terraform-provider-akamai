@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/botman"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/botman"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -99,10 +99,15 @@ func resourceAkamaiBotCategoryActionCreate(ctx context.Context, d *schema.Resour
 
 	d.SetId(fmt.Sprintf("%d:%s:%s", configID, securityPolicyID, categoryID))
 
-	return resourceAkamaiBotCategoryActionRead(ctx, d, m)
+	return akamaiBotCategoryActionRead(ctx, d, m, false)
 }
 
 func resourceAkamaiBotCategoryActionRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	return akamaiBotCategoryActionRead(ctx, d, m, true)
+}
+
+func akamaiBotCategoryActionRead(ctx context.Context, d *schema.ResourceData, m interface{}, readFromCache bool) diag.Diagnostics {
+
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("botman", "resourceAkamaiBotCategoryActionRead")
@@ -134,10 +139,18 @@ func resourceAkamaiBotCategoryActionRead(ctx context.Context, d *schema.Resource
 		CategoryID:       categoryID,
 	}
 
-	response, err := client.GetAkamaiBotCategoryAction(ctx, request)
-	if err != nil {
-		logger.Errorf("calling 'GetAkamaiBotCategoryAction': %s", err.Error())
-		return diag.FromErr(err)
+	var response map[string]interface{}
+	if readFromCache {
+		response, err = getAkamaiBotCategoryAction(ctx, request, m)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	} else {
+		response, err = client.GetAkamaiBotCategoryAction(ctx, request)
+		if err != nil {
+			logger.Errorf("calling 'GetAkamaiBotCategoryAction': %s", err.Error())
+			return diag.FromErr(err)
+		}
 	}
 
 	// Removing categoryId from response to suppress diff
@@ -204,7 +217,7 @@ func resourceAkamaiBotCategoryActionUpdate(ctx context.Context, d *schema.Resour
 		return diag.FromErr(err)
 	}
 
-	return resourceAkamaiBotCategoryActionRead(ctx, d, m)
+	return akamaiBotCategoryActionRead(ctx, d, m, false)
 }
 
 func resourceAkamaiBotCategoryActionDelete(_ context.Context, _ *schema.ResourceData, m interface{}) diag.Diagnostics {

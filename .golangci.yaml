@@ -21,6 +21,9 @@ issues:
     - path: gen\.go
       linters:
         - gocyclo
+    - path: ruleformats/.*gen\.go
+      linters:
+        - misspell
 
 linters-settings:
   revive:

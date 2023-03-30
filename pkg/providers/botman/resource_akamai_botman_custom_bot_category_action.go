@@ -9,7 +9,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/botman"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/botman"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -101,10 +101,14 @@ func resourceCustomBotCategoryActionCreate(ctx context.Context, d *schema.Resour
 
 	d.SetId(fmt.Sprintf("%d:%s:%s", configID, securityPolicyID, categoryID))
 
-	return resourceCustomBotCategoryActionRead(ctx, d, m)
+	return customBotCategoryActionRead(ctx, d, m, false)
 }
 
 func resourceCustomBotCategoryActionRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	return customBotCategoryActionRead(ctx, d, m, true)
+}
+
+func customBotCategoryActionRead(ctx context.Context, d *schema.ResourceData, m interface{}, readFromCache bool) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	client := inst.Client(meta)
 	logger := meta.Log("botman", "resourceCustomBotCategoryActionRead")
@@ -136,10 +140,18 @@ func resourceCustomBotCategoryActionRead(ctx context.Context, d *schema.Resource
 		CategoryID:       categoryID,
 	}
 
-	response, err := client.GetCustomBotCategoryAction(ctx, request)
-	if err != nil {
-		logger.Errorf("calling 'request': %s", err.Error())
-		return diag.FromErr(err)
+	var response map[string]interface{}
+	if readFromCache {
+		response, err = getCustomBotCategoryAction(ctx, request, m)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	} else {
+		response, err = client.GetCustomBotCategoryAction(ctx, request)
+		if err != nil {
+			logger.Errorf("calling 'GetCustomBotCategoryAction': %s", err.Error())
+			return diag.FromErr(err)
+		}
 	}
 
 	// Removing categoryId from response to suppress diff
@@ -205,7 +217,7 @@ func resourceCustomBotCategoryActionUpdate(ctx context.Context, d *schema.Resour
 		return diag.FromErr(err)
 	}
 
-	return resourceCustomBotCategoryActionRead(ctx, d, m)
+	return customBotCategoryActionRead(ctx, d, m, false)
 }
 
 func resourceCustomBotCategoryActionDelete(_ context.Context, _ *schema.ResourceData, m interface{}) diag.Diagnostics {

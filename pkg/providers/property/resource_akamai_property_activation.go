@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/papi"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/session"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
 	"github.com/apex/log"
@@ -115,6 +115,47 @@ var akamaiPropertyActivationSchema = map[string]*schema.Schema{
 		Optional:    true,
 		Description: "assigns a log message to the activation request",
 	},
+	"compliance_record": {
+		Type:        schema.TypeList,
+		Optional:    true,
+		MaxItems:    1,
+		Description: "Provides an audit record when activating on a production network",
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"noncompliance_reason": {
+					Type:             schema.TypeString,
+					Required:         true,
+					Description:      fmt.Sprintf("Specifies the reason for the expedited activation on production network. Valid noncompliance reasons are: %s", strings.Join(validComplianceRecords, ", ")),
+					ValidateDiagFunc: tools.ValidateStringInSlice(validComplianceRecords),
+				},
+				"ticket_id": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "Identifies the ticket that describes the need for the activation",
+				},
+				"other_noncompliance_reason": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "Describes the reason why the activation must occur immediately, out of compliance with the standard procedure",
+				},
+				"customer_email": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "Identifies the customer",
+				},
+				"peer_reviewed_by": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "Identifies person who has independently approved the activation request",
+				},
+				"unit_tested": {
+					Type:        schema.TypeBool,
+					Optional:    true,
+					Description: "Whether the metadata to activate has been fully tested",
+				},
+			},
+		},
+	},
 }
 
 func papiError() *schema.Resource {
@@ -183,6 +224,12 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 		d.Partial(true)
 		return diags
 	}
+
+	complianceRecord, err := tools.GetListValue("compliance_record", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+
 	activation, err := lookupActivation(ctx, client, lookupActivationRequest{
 		propertyID: propertyID,
 		version:    version,
@@ -212,7 +259,7 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 			return diag.FromErr(err)
 		}
 
-		create, err := client.CreateActivation(ctx, papi.CreateActivationRequest{
+		createActivationRequest := papi.CreateActivationRequest{
 			PropertyID: propertyID,
 			Activation: papi.Activation{
 				ActivationType:         papi.ActivationTypeActivate,
@@ -222,7 +269,9 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 				AcknowledgeAllWarnings: acknowledgeRuleWarnings,
 				Note:                   note,
 			},
-		})
+		}
+
+		create, err := client.CreateActivation(ctx, addPropertyComplianceRecord(complianceRecord, createActivationRequest))
 		if err != nil {
 			return diag.FromErr(fmt.Errorf("create activation failed: %w", err))
 		}
@@ -243,47 +292,21 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 		}
 	}
 
-	if err := d.Set("activation_id", activation.ActivationID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	activation, diagErr := pollActivation(ctx, client, activation, propertyID)
+	if diagErr != nil {
+		return diagErr
 	}
 
-	for activation.Status != papi.ActivationStatusActive {
-		if activation.Status == papi.ActivationStatusAborted {
-			return diag.FromErr(fmt.Errorf("activation request aborted"))
-		}
-		if activation.Status == papi.ActivationStatusFailed {
-			return diag.FromErr(fmt.Errorf("activation request failed in downstream system"))
-		}
-		select {
-		case <-time.After(tools.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
-			act, err := client.GetActivation(ctx, papi.GetActivationRequest{
-				ActivationID: activation.ActivationID,
-				PropertyID:   propertyID,
-			})
-			if err != nil {
-				return diag.FromErr(err)
-			}
-			activation = act.Activation
-
-		case <-ctx.Done():
-			if errors.Is(ctx.Err(), context.DeadlineExceeded) {
-				return diag.Diagnostics{DiagWarnActivationTimeout}
-			} else if errors.Is(ctx.Err(), context.Canceled) {
-				return diag.Diagnostics{DiagWarnActivationCanceled}
-			}
-			return diag.FromErr(fmt.Errorf("activation context terminated: %w", ctx.Err()))
-		}
+	attrs := map[string]interface{}{
+		"status":        string(activation.Status),
+		"activation_id": activation.ActivationID,
+		"version":       version,
 	}
-
-	if err := d.Set("status", string(activation.Status)); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	if err := rdSetAttrs(ctx, d, attrs); err != nil {
+		return diag.FromErr(err)
 	}
 
 	d.SetId(propertyID + ":" + string(network))
-
-	if err := d.Set("version", version); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-	}
 
 	return nil
 }
@@ -319,6 +342,11 @@ func resourcePropertyActivationDelete(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 
+	complianceRecord, err := tools.GetListValue("compliance_record", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+
 	// Schema guarantees these types
 	acknowledgeRuleWarnings := d.Get("auto_acknowledge_rule_warnings").(bool)
 
@@ -349,7 +377,7 @@ func resourcePropertyActivationDelete(ctx context.Context, d *schema.ResourceDat
 			return diag.FromErr(err)
 		}
 
-		deleteActivation, err := client.CreateActivation(ctx, papi.CreateActivationRequest{
+		deleteActivationRequest := papi.CreateActivationRequest{
 			PropertyID: propertyID,
 			Activation: papi.Activation{
 				ActivationType:         papi.ActivationTypeDeactivate,
@@ -359,7 +387,10 @@ func resourcePropertyActivationDelete(ctx context.Context, d *schema.ResourceDat
 				AcknowledgeAllWarnings: acknowledgeRuleWarnings,
 				Note:                   note,
 			},
-		})
+		}
+
+		deleteActivation, err := client.CreateActivation(ctx, addPropertyComplianceRecord(complianceRecord, deleteActivationRequest))
+
 		if err != nil {
 			return diag.FromErr(fmt.Errorf("create deactivation failed: %w", err))
 		}
@@ -549,6 +580,11 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 
+	complianceRecord, err := tools.GetListValue("compliance_record", d)
+	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+
 	// Schema guarantees these types
 	acknowledgeRuleWarnings := d.Get("auto_acknowledge_rule_warnings").(bool)
 
@@ -603,7 +639,7 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 			notify = append(notify, cast.ToString(contact))
 		}
 
-		create, err := client.CreateActivation(ctx, papi.CreateActivationRequest{
+		createActivationRequest := papi.CreateActivationRequest{
 			PropertyID: propertyID,
 			Activation: papi.Activation{
 				ActivationType:         papi.ActivationTypeActivate,
@@ -613,7 +649,9 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 				AcknowledgeAllWarnings: acknowledgeRuleWarnings,
 				Note:                   note,
 			},
-		})
+		}
+
+		create, err := client.CreateActivation(ctx, addPropertyComplianceRecord(complianceRecord, createActivationRequest))
 		if err != nil {
 			return diag.FromErr(fmt.Errorf("create activation failed: %w", err))
 		}
@@ -632,56 +670,77 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 		if err = setErrorsAndWarnings(d, flattenErrorArray(act.Errors), flattenErrorArray(act.Warnings)); err != nil {
 			return diag.FromErr(err)
 		}
-	} else if d.HasChange("note") {
-		oldValue, _ := d.GetChange("note")
-		if err = d.Set("note", oldValue); err != nil {
-			return diag.FromErr(err)
-		}
-		return diag.Errorf("cannot update activation attribute note after creation")
-	}
-
-	for propertyActivation.Status != papi.ActivationStatusActive {
-		if propertyActivation.Status == papi.ActivationStatusAborted {
-			return diag.FromErr(fmt.Errorf("activation request aborted"))
-		}
-		if propertyActivation.Status == papi.ActivationStatusFailed {
-			return diag.FromErr(fmt.Errorf("activation request failed in downstream system"))
-		}
-		select {
-		case <-time.After(tools.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
-			act, err := client.GetActivation(ctx, papi.GetActivationRequest{
-				ActivationID: propertyActivation.ActivationID,
-				PropertyID:   propertyID,
-			})
-			if err != nil {
-				return diag.FromErr(err)
+	} else {
+		for _, changedAttr := range []string{"note", "compliance_record"} {
+			if d.HasChange(changedAttr) {
+				oldValue, _ := d.GetChange(changedAttr)
+				if err = d.Set(changedAttr, oldValue); err != nil {
+					return diag.FromErr(err)
+				}
+				return diag.Errorf("cannot update activation attribute %s after creation", changedAttr)
 			}
-			propertyActivation = act.Activation
-
-			if err = setErrorsAndWarnings(d, flattenErrorArray(act.Errors), flattenErrorArray(act.Warnings)); err != nil {
-				return diag.FromErr(err)
-			}
-
-		case <-ctx.Done():
-			return diag.FromErr(fmt.Errorf("activation context terminated: %w", ctx.Err()))
 		}
 	}
 
-	if err := d.Set("status", string(propertyActivation.Status)); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+	propertyActivation, diagErr := pollActivation(ctx, client, propertyActivation, propertyID)
+	if diagErr != nil {
+		return diagErr
+	}
+
+	attrs := map[string]interface{}{
+		"status":        string(propertyActivation.Status),
+		"activation_id": propertyActivation.ActivationID,
+		"version":       version,
+	}
+	if err := rdSetAttrs(ctx, d, attrs); err != nil {
+		return diag.FromErr(err)
 	}
 
 	d.SetId(propertyID + ":" + string(network))
 
-	if err := d.Set("version", version); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-	}
-
-	if err := d.Set("activation_id", propertyActivation.ActivationID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-	}
-
 	return nil
+}
+
+func addPropertyComplianceRecord(complianceRecord []interface{}, activatePAPIRequest papi.CreateActivationRequest) papi.CreateActivationRequest {
+	if len(complianceRecord) == 0 {
+		return activatePAPIRequest
+	}
+
+	crMap := complianceRecord[0].(map[string]interface{})
+	noncomplianceReason := crMap["noncompliance_reason"].(string)
+	ticketID := crMap["ticket_id"].(string)
+	otherNoncomplianceReason := crMap["other_noncompliance_reason"].(string)
+	customerEmail := crMap["customer_email"].(string)
+	peerReviewedBy := crMap["peer_reviewed_by"].(string)
+	unitTested := crMap["unit_tested"].(bool)
+
+	switch noncomplianceReason {
+	case papi.NoncomplianceReasonOther:
+		complianceRecordOther := &papi.ComplianceRecordOther{
+			TicketID:                 ticketID,
+			OtherNoncomplianceReason: otherNoncomplianceReason,
+		}
+		activatePAPIRequest.Activation.ComplianceRecord = complianceRecordOther
+	case papi.NoncomplianceReasonNone:
+		complianceRecordNone := &papi.ComplianceRecordNone{
+			CustomerEmail:  customerEmail,
+			PeerReviewedBy: peerReviewedBy,
+			TicketID:       ticketID,
+			UnitTested:     unitTested,
+		}
+		activatePAPIRequest.Activation.ComplianceRecord = complianceRecordNone
+	case papi.NoncomplianceReasonNoProductionTraffic:
+		complianceRecordNoProductionTraffic := &papi.ComplianceRecordNoProductionTraffic{
+			TicketID: ticketID,
+		}
+		activatePAPIRequest.Activation.ComplianceRecord = complianceRecordNoProductionTraffic
+	case papi.NoncomplianceReasonEmergency:
+		complianceRecordEmergency := &papi.ComplianceRecordEmergency{
+			TicketID: ticketID,
+		}
+		activatePAPIRequest.Activation.ComplianceRecord = complianceRecordEmergency
+	}
+	return activatePAPIRequest
 }
 
 func resolveVersionStatus(ctx context.Context, client papi.PAPI, propertyID string, version int, network papi.ActivationNetwork) (papi.VersionStatus, error) {
@@ -820,4 +879,35 @@ func networkAlias(d *schema.ResourceData) (papi.ActivationNetwork, error) {
 	}
 
 	return papi.ActivationNetwork(alias), nil
+}
+
+func pollActivation(ctx context.Context, client papi.PAPI, activation *papi.Activation, propertyID string) (*papi.Activation, diag.Diagnostics) {
+	for activation.Status != papi.ActivationStatusActive {
+		if activation.Status == papi.ActivationStatusAborted {
+			return nil, diag.FromErr(fmt.Errorf("activation request aborted"))
+		}
+		if activation.Status == papi.ActivationStatusFailed {
+			return nil, diag.FromErr(fmt.Errorf("activation request failed in downstream system"))
+		}
+		select {
+		case <-time.After(tools.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
+			act, err := client.GetActivation(ctx, papi.GetActivationRequest{
+				ActivationID: activation.ActivationID,
+				PropertyID:   propertyID,
+			})
+			if err != nil {
+				return nil, diag.FromErr(err)
+			}
+			activation = act.Activation
+
+		case <-ctx.Done():
+			if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+				return nil, diag.Diagnostics{DiagWarnActivationTimeout}
+			} else if errors.Is(ctx.Err(), context.Canceled) {
+				return nil, diag.Diagnostics{DiagWarnActivationCanceled}
+			}
+			return nil, diag.FromErr(fmt.Errorf("activation context terminated: %w", ctx.Err()))
+		}
+	}
+	return activation, nil
 }

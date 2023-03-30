@@ -12,8 +12,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/hapi"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/hapi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/config"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
@@ -94,6 +94,7 @@ func Provider() *schema.Provider {
 			"akamai_property_products":           dataSourcePropertyProducts(),
 			"akamai_property_rule_formats":       dataSourcePropertyRuleFormats(),
 			"akamai_property_rules":              dataSourcePropertyRules(),
+			"akamai_property_rules_builder":      dataSourcePropertyRulesBuilder(),
 			"akamai_property_rules_template":     dataSourcePropertyRulesTemplate(),
 		},
 		ResourcesMap: map[string]*schema.Resource{

@@ -8,23 +8,21 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/papi"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 )
 
 var (
-	includeID         = "inc_12345"
-	contractID        = "ctr_test_contract"
-	groupID           = "grp_test_group"
-	accountID         = "test_account"
-	note              = "test activation"
-	email             = "jbond@example.com"
-	networkProduction = "PRODUCTION"
-	version           = 3
-	testDir           = "testdata/TestResPropertyIncludeActivation"
+	includeID  = "inc_12345"
+	contractID = "ctr_test_contract"
+	groupID    = "grp_test_group"
+	accountID  = "test_account"
+	note       = "test activation"
+	email      = "jbond@example.com"
+	version    = 3
+	testDir    = "testdata/TestResPropertyIncludeActivation"
 )
 
 func TestResourcePropertyIncludeActivation(t *testing.T) {
@@ -582,12 +580,6 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 		})
 		client.AssertExpectations(t)
 	})
-}
-
-func Test_addComplianceRecordByNetwork(t *testing.T) {
-	_, err := addComplianceRecordByNetwork(networkProduction, "activate", []interface{}{}, papi.ActivateOrDeactivateIncludeRequest{})
-	require.Error(t, err)
-	assert.True(t, regexp.MustCompile("compliance_record field is required for 'PRODUCTION' network to activate include version").MatchString(err.Error()))
 }
 
 func TestReadTimeoutFromEnvOrDefault(t *testing.T) {

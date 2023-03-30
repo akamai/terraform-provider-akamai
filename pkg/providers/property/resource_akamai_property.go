@@ -16,8 +16,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/papi"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/session"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
 )
@@ -714,7 +714,7 @@ func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 		ProductionVersion = &i
 	}
 
-	Property := papi.Property{
+	property := papi.Property{
 		PropertyID:        d.Id(),
 		PropertyName:      d.Get("name").(string),
 		ContractID:        d.Get("contract_id").(string),
@@ -730,28 +730,28 @@ func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 	ContractID := d.Get("contract_id").(string)
 	GroupID := d.Get("group_id").(string)
 
-	var PropertyVersion int
+	var propertyVersion int
 	if v, ok := d.GetOk("read_version"); ok && v.(int) != 0 {
-		PropertyVersion = v.(int)
+		propertyVersion = v.(int)
 	} else {
-		PropertyVersion = Property.LatestVersion
+		propertyVersion = property.LatestVersion
 	}
 
-	resp, err := fetchPropertyVersion(ctx, client, PropertyID, GroupID, ContractID, PropertyVersion)
+	resp, err := fetchPropertyVersion(ctx, client, PropertyID, GroupID, ContractID, propertyVersion)
 	if err != nil {
 		d.Partial(true)
 		return diag.FromErr(err)
 	}
 
-	// check latest version is editable
-	if resp.Version.ProductionStatus != papi.VersionStatusInactive || resp.Version.StagingStatus != papi.VersionStatusInactive {
+	// if read_version is not the latest version or not editable then create a new version from it before proceeding
+	if (propertyVersion != property.LatestVersion) || (resp.Version.ProductionStatus != papi.VersionStatusInactive || resp.Version.StagingStatus != papi.VersionStatusInactive) {
 		// The latest version has been activated on either production or staging, so we need to create a new version to apply changes on
-		VersionID, err := createPropertyVersion(ctx, client, Property)
+		versionID, err := createPropertyVersion(ctx, client, property, propertyVersion)
 		if err != nil {
 			d.Partial(true)
 			return diag.FromErr(err)
 		}
-		Property.LatestVersion = VersionID
+		property.LatestVersion = versionID
 		if err = d.Set("read_version", 0); err != nil {
 			return diag.FromErr(err)
 		}
@@ -763,7 +763,7 @@ func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 		if err == nil {
 			Hostnames := mapToHostnames(HostnameVal.List())
 			if len(Hostnames) > 0 {
-				if err := updatePropertyHostnames(ctx, client, Property, Hostnames); err != nil {
+				if err := updatePropertyHostnames(ctx, client, property, Hostnames); err != nil {
 					d.Partial(true)
 					return diag.FromErr(err)
 				}
@@ -789,7 +789,7 @@ func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 		h := http.Header{"Content-Type": []string{MIME}}
 		ctx := session.ContextWithOptions(ctx, session.WithContextHeaders(h))
 
-		if err := updatePropertyRules(ctx, client, Property, Rules); err != nil {
+		if err := updatePropertyRules(ctx, client, property, Rules); err != nil {
 			d.Partial(true)
 			return diag.FromErr(err)
 		}
@@ -1233,19 +1233,19 @@ func updatePropertyRules(ctx context.Context, client papi.PAPI, Property papi.Pr
 }
 
 // Create a new property version based on the latest version of the given property
-func createPropertyVersion(ctx context.Context, client papi.PAPI, Property papi.Property) (NewVersion int, err error) {
+func createPropertyVersion(ctx context.Context, client papi.PAPI, property papi.Property, version int) (NewVersion int, err error) {
 	req := papi.CreatePropertyVersionRequest{
-		PropertyID: Property.PropertyID,
-		ContractID: Property.ContractID,
-		GroupID:    Property.GroupID,
+		PropertyID: property.PropertyID,
+		ContractID: property.ContractID,
+		GroupID:    property.GroupID,
 		Version: papi.PropertyVersionCreate{
-			CreateFromVersion: Property.LatestVersion,
+			CreateFromVersion: version,
 		},
 	}
 
 	logger := log.FromContext(ctx).WithFields(logFields(req))
 
-	logger.Debug("creating new property version")
+	logger.Debug(fmt.Sprintf("creating new property version from previous version %d", version))
 	res, err := client.CreatePropertyVersion(ctx, req)
 	if err != nil {
 		logger.WithError(err).Error("could not create new property version")

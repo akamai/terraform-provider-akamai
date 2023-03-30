@@ -1,7 +1,7 @@
 module github.com/akamai/terraform-provider-akamai/v3
 
 require (
-	github.com/akamai/AkamaiOPEN-edgegrid-golang/v4 v4.1.0
+	github.com/akamai/AkamaiOPEN-edgegrid-golang/v5 v5.0.0
 	github.com/allegro/bigcache/v2 v2.2.5
 	github.com/apex/log v1.9.0
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
@@ -22,9 +22,11 @@ require (
 
 require (
 	github.com/agext/levenshtein v1.2.2 // indirect
+	github.com/andres-erbsen/clock v0.0.0-20160526145045-9e14626cd129 // indirect
 	github.com/apparentlymart/go-textseg/v13 v13.0.0 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20200108200545-475eaeb16496 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/dlclark/regexp2 v1.8.1
 	github.com/fatih/color v1.13.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/gopherjs/gopherjs v0.0.0-20220221023154-0b2280d3ff96 // indirect
@@ -43,6 +45,7 @@ require (
 	github.com/hashicorp/terraform-registry-address v0.0.0-20220623143253-7d51757b572c // indirect
 	github.com/hashicorp/terraform-svchost v0.0.0-20200729002733-f050f53b9734 // indirect
 	github.com/hashicorp/yamux v0.0.0-20181012175058-2f1d1f20f75d // indirect
+	github.com/iancoleman/strcase v0.2.0
 	github.com/jtolds/gls v4.20.0+incompatible // indirect
 	github.com/mattn/go-colorable v0.1.12 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect
@@ -61,6 +64,7 @@ require (
 	github.com/vmihailenco/msgpack/v4 v4.3.12 // indirect
 	github.com/vmihailenco/tagparser v0.1.1 // indirect
 	github.com/zclconf/go-cty v1.12.1 // indirect
+	go.uber.org/ratelimit v0.2.0 // indirect
 	golang.org/x/crypto v0.0.0-20220517005047-85d78b3ac167 // indirect
 	golang.org/x/net v0.7.0 // indirect
 	golang.org/x/sys v0.5.0 // indirect
@@ -72,6 +76,6 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-//replace github.com/akamai/AkamaiOPEN-edgegrid-golang/v4 => ../AkamaiOPEN-edgegrid-golang
+//replace github.com/akamai/AkamaiOPEN-edgegrid-golang/v5 => ../AkamaiOPEN-edgegrid-golang
 
 go 1.18

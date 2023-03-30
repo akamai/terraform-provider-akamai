@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/imaging"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v4/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/imaging"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -535,6 +535,8 @@ func getOutputImage(d *schema.ResourceData, key string) *imaging.OutputImage {
 	if exist {
 		result := imaging.OutputImage{
 			AdaptiveQuality:        intReaderPtr(d, getKey(key, 0, "adaptive_quality")),
+			AllowedFormats:         interfaceSliceToImagingOutputImageAllowedFormatsSlice(d, getKey(key, 0, "allowed_formats")),
+			ForcedFormats:          interfaceSliceToImagingOutputImageForcedFormatsSlice(d, getKey(key, 0, "forced_formats")),
 			PerceptualQuality:      outputImagePerceptualQualityVariableInline(d, getKey(key, 0, "perceptual_quality")),
 			PerceptualQualityFloor: intReaderPtr(d, getKey(key, 0, "perceptual_quality_floor")),
 			Quality:                integerVariableInline(d, getKey(key, 0, "quality")),
@@ -1817,6 +1819,36 @@ func interfaceSliceToImagingImQueryAllowedTransformationsSlice(d *schema.Resourc
 			result := make([]imaging.ImQueryAllowedTransformations, len(l))
 			for i, v := range l {
 				result[i] = imaging.ImQueryAllowedTransformations(v.(string))
+			}
+			return result
+		}
+	}
+	return nil
+}
+
+func interfaceSliceToImagingOutputImageAllowedFormatsSlice(d *schema.ResourceData, key string) []imaging.OutputImageAllowedFormats {
+	list, exist := extract(d, key)
+	if exist {
+		l := list.([]interface{})
+		if len(l) > 0 {
+			result := make([]imaging.OutputImageAllowedFormats, len(l))
+			for i, v := range l {
+				result[i] = imaging.OutputImageAllowedFormats(v.(string))
+			}
+			return result
+		}
+	}
+	return nil
+}
+
+func interfaceSliceToImagingOutputImageForcedFormatsSlice(d *schema.ResourceData, key string) []imaging.OutputImageForcedFormats {
+	list, exist := extract(d, key)
+	if exist {
+		l := list.([]interface{})
+		if len(l) > 0 {
+			result := make([]imaging.OutputImageForcedFormats, len(l))
+			for i, v := range l {
+				result[i] = imaging.OutputImageForcedFormats(v.(string))
 			}
 			return result
 		}
