@@ -1,5 +1,21 @@
 # RELEASE NOTES
 
+## X.X.X (X X, 2023)
+
+#### BUG FIXES:
+
+* Image and Video Manager:
+  * Fixed diff in `akamai_imaging_policy_image` resource for image policy attributes:
+    * `Breakpoints.Widths`
+    * `Hosts`
+    * `Output.AllowedFormats`
+    * `Output.ForcedFormats`
+    * `Variables`
+  * Fixed diff in `akamai_imaging_policy_video` resource for video policy attributes:
+    * `Breakpoints.Widths`
+    * `Hosts`
+    * `Variables`
+
 ## 3.5.0 (March 30, 2023)
 
 #### FEATURES/ENHANCEMENTS:

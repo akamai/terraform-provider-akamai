@@ -48,6 +48,39 @@ func TestResourcePolicyVideo(t *testing.T) {
 			Version: 1,
 			Video:   tools.BoolPtr(true),
 		}
+		defaultBreakpointsWidths = &imaging.Breakpoints{
+			Widths: []int{320, 640, 1024, 2048, 5000},
+		}
+		defaultHosts     = []string{"test1", "test2", "test3"}
+		defaultVariables = []imaging.Variable{
+			{
+				DefaultValue: "test1",
+				Name:         "var1",
+				Type:         "string",
+			},
+			{
+				DefaultValue: "test2",
+				Name:         "var2",
+				Type:         "string",
+			},
+			{
+				DefaultValue: "test3",
+				Name:         "var3",
+				Type:         "string",
+			},
+		}
+		policyInputDiff = imaging.PolicyInputVideo{
+			Breakpoints: defaultBreakpointsWidths,
+			Hosts:       defaultHosts,
+			Variables:   defaultVariables,
+		}
+		policyOutputDiff = imaging.PolicyOutputVideo{
+			Breakpoints: defaultBreakpointsWidths,
+			Hosts:       defaultHosts,
+			Variables:   defaultVariables,
+			Version:     1,
+			Video:       tools.BoolPtr(true),
+		}
 
 		expectUpsertPolicy = func(_ *testing.T, client *imaging.Mock, policyID string, network imaging.PolicyNetwork, contractID string, policySetID string, policy imaging.PolicyInput) {
 			policyResponse := &imaging.PolicyResponse{
@@ -431,6 +464,42 @@ func TestResourcePolicyVideo(t *testing.T) {
 		})
 		client.AssertExpectations(t)
 	})
+	t.Run("regular policy create, check diff for breakpoints.Widths, hosts, variables", func(t *testing.T) {
+		testDir := "testdata/TestResPolicyVideo/diff_suppress/fields"
+
+		client := new(imaging.Mock)
+		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyInputDiff)
+		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyOutputDiff, 2)
+
+		// remove original policy
+		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set")
+		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkProduction, "test_contract", "test_policy_set")
+
+		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyOutputDiff, 2)
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProviderFactories: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString(fmt.Sprintf("%s/default.tf", testDir)),
+						Check: checkPolicyAttributes(policyAttributes{
+							version:              "1",
+							policyID:             "test_policy",
+							policySetID:          "test_policy_set",
+							activateOnProduction: "false",
+							policyPath:           fmt.Sprintf("%s/policy.json", testDir),
+						}),
+					},
+					{
+						Config:             loadFixtureString(fmt.Sprintf("%s/diff_order.tf", testDir)),
+						ExpectNonEmptyPlan: false,
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
 	t.Run("import policy with activate_on_production=false", func(t *testing.T) {
 		testDir := "testdata/TestResPolicyVideo/regular_policy"
 		policyOutputV2 := getPolicyOutputVideoV2(policyOutput)
@@ -647,6 +716,11 @@ func TestDiffSuppressPolicyVideo(t *testing.T) {
 			oldPath:  "policy.json",
 			newPath:  "invalid.json",
 			expected: false,
+		},
+		"different order of breakpoints.Widths, hosts, variables - no diff": {
+			oldPath:  "/fields/policy.json",
+			newPath:  "/fields/policy_diff_order.json",
+			expected: true,
 		},
 	}
 
