@@ -203,14 +203,13 @@ func resourceGTMv1Property() *schema.Resource {
 							Optional: true,
 						},
 						"name": {
-							Type:     schema.TypeString,
-							Optional: true,
-							//Default:  "",
+							Type:       schema.TypeString,
+							Optional:   true,
+							Deprecated: "The attribute `name` has been deprecated. Any reads or writes on this attribute are ignored",
 						},
 						"handout_cname": {
 							Type:     schema.TypeString,
 							Optional: true,
-							//Default:  "",
 						},
 					},
 				},
@@ -929,7 +928,6 @@ func populateTrafficTargetObject(ctx context.Context, d *schema.ResourceData, pr
 				}
 				trafficTarget.Servers = ls
 			}
-			trafficTarget.Name = ttMap["name"].(string)
 			trafficTarget.HandoutCName = ttMap["handout_cname"].(string)
 			trafficObjList[i] = trafficTarget
 		}
@@ -960,7 +958,6 @@ func populateTerraformTrafficTargetState(d *schema.ResourceData, prop *gtm.Prope
 			continue
 		}
 		tt["datacenter_id"] = ttObject.DatacenterId
-		tt["name"] = ttObject.Name
 		tt["enabled"] = ttObject.Enabled
 		tt["weight"] = ttObject.Weight
 		tt["handout_cname"] = ttObject.HandoutCName
@@ -976,7 +973,6 @@ func populateTerraformTrafficTargetState(d *schema.ResourceData, prop *gtm.Prope
 				"datacenter_id": mttObj.DatacenterId,
 				"enabled":       mttObj.Enabled,
 				"weight":        mttObj.Weight,
-				"name":          mttObj.Name,
 				"handout_cname": mttObj.HandoutCName,
 				"servers":       mttObj.Servers,
 			}

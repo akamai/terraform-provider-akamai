@@ -4,6 +4,11 @@
 
 #### BUG FIXES:
 
+### Fixes
+
+* GTM
+  * Deprecated field `name` of `traffic_target` under `akamai_gtm_property` resource ([I#374](https://github.com/akamai/terraform-provider-akamai/issues/374))
+
 * Image and Video Manager:
   * Fixed diff in `akamai_imaging_policy_image` resource for image policy attributes:
     * `Breakpoints.Widths`
