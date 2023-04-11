@@ -128,20 +128,9 @@ func resourceEdgeKVGroupItemsRead(ctx context.Context, rd *schema.ResourceData, 
 		return diag.Errorf("could not list items: %s", err)
 	}
 
-	itemsMap := make(map[string]string)
-	for _, itemKey := range []string(*items) {
-		itemValue, err := client.GetItem(ctx, edgeworkers.GetItemRequest{
-			ItemID: itemKey,
-			ItemsRequestParams: edgeworkers.ItemsRequestParams{
-				Network:     edgeworkers.ItemNetwork(network),
-				NamespaceID: namespace,
-				GroupID:     groupName,
-			},
-		})
-		if err != nil {
-			return diag.Errorf("could not get an item with key '%s': %s", itemKey, err)
-		}
-		itemsMap[itemKey] = string(*itemValue)
+	itemsMap, err := getItems(ctx, items, client, network, namespace, groupName)
+	if err != nil {
+		return diag.FromErr(err)
 	}
 
 	attrs := make(map[string]interface{})
@@ -470,4 +459,23 @@ func getAttributes(rd *schema.ResourceData) (*edgeKVGroupItemsAttrs, error) {
 func getEdgeKVItemPtr(value string) *edgeworkers.Item {
 	itemVal := edgeworkers.Item(value)
 	return &itemVal
+}
+
+func getItems(ctx context.Context, items *edgeworkers.ListItemsResponse, client edgeworkers.Edgeworkers, network, namespace, groupName string) (map[string]string, error) {
+	itemsMap := make(map[string]string)
+	for _, itemKey := range *items {
+		itemValue, err := client.GetItem(ctx, edgeworkers.GetItemRequest{
+			ItemID: itemKey,
+			ItemsRequestParams: edgeworkers.ItemsRequestParams{
+				Network:     edgeworkers.ItemNetwork(network),
+				NamespaceID: namespace,
+				GroupID:     groupName,
+			},
+		})
+		if err != nil {
+			return nil, fmt.Errorf("could not get an item with key '%s': %s", itemKey, err)
+		}
+		itemsMap[itemKey] = string(*itemValue)
+	}
+	return itemsMap, nil
 }
