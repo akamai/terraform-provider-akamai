@@ -21,6 +21,9 @@
     * `Hosts`
     * `Variables`
 
+* PAPI
+  * `is_secure` and `variable` fields can only be used with `default` rule in `akamai_property_rules_builder` data source
+
 ## 3.5.0 (March 30, 2023)
 
 #### FEATURES/ENHANCEMENTS:
