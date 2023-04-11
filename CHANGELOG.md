@@ -3,16 +3,16 @@
 ## X.X.X (X X, 2023)
 
 #### FEATURES/ENHANCEMENTS:
+
 * EdgeKV
   * Added resource:
-    * [akamai_edgekv_group_items](x.md) - create, read, update, delete and import
+    * `akamai_edgekv_group_items` - create, read, update, delete and import
+  * Deprecated field `initial_data` under `akamai_edgekv` resource
 
 #### BUG FIXES:
 
 * Cloudlets
   * In some cases `akamai_cloudlets_application_load_balancer_activation` or `akamai_cloudlets_policy_activation` were not activating due to verification delay with property resource.
-
-### Fixes
 
 * GTM
   * Deprecated field `name` of `traffic_target` under `akamai_gtm_property` resource ([I#374](https://github.com/akamai/terraform-provider-akamai/issues/374))

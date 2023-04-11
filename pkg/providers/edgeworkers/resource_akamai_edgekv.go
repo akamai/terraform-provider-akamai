@@ -81,6 +81,7 @@ func resourceEdgeKV() *schema.Resource {
 			"initial_data": {
 				Type:        schema.TypeList,
 				Optional:    true,
+				Deprecated:  "The attribute 'initial_data' has been deprecated. To manage edgeKV items use 'akamai_edgekv_group_items' resource instead.",
 				Description: "List of pairs to initialize the namespace. Just meaningful for creation, updates will be ignored.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
