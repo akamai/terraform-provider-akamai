@@ -678,7 +678,6 @@ func appendType(depth int) map[string]*schema.Schema {
 			Type:             schema.TypeString,
 			Optional:         true,
 			Description:      "Specifies where to place the `image` relative to the source image. The available values represent the eight cardinal directions (`North`, `South`, `East`, `West`, `NorthEast`, `NorthWest`, `SouthEast`, `SouthWest`) and a `Center` by default.",
-			Default:          "Center",
 			ValidateDiagFunc: validateGravity(),
 		},
 		"gravity_priority": {
@@ -1113,7 +1112,6 @@ func composite(depth int) map[string]*schema.Schema {
 			Type:             schema.TypeString,
 			Optional:         true,
 			Description:      "Compass direction indicating the corner or edge of the base image to place the applied image. Use Horizontal and Vertical Offset to adjust the applied image's gravity position",
-			Default:          "Center",
 			ValidateDiagFunc: validateGravity(),
 		},
 		"gravity_var": {
@@ -1193,7 +1191,6 @@ func compositePost(depth int) map[string]*schema.Schema {
 			Type:             schema.TypeString,
 			Optional:         true,
 			Description:      "Compass direction indicating the corner or edge of the base image to place the applied image. Use Horizontal and Vertical Offset to adjust the applied image's gravity position",
-			Default:          "NorthWest",
 			ValidateDiagFunc: validateGravityPost(),
 		},
 		"gravity_var": {
@@ -1335,7 +1332,6 @@ func crop(_ int) map[string]*schema.Schema {
 			Type:             schema.TypeString,
 			Optional:         true,
 			Description:      "Frame of reference for X and Y Positions.",
-			Default:          "Center",
 			ValidateDiagFunc: validateGravity(),
 		},
 		"gravity_var": {
@@ -1433,7 +1429,6 @@ func faceCrop(_ int) map[string]*schema.Schema {
 			Type:             schema.TypeString,
 			Optional:         true,
 			Description:      "Controls placement of the crop if Image and Video Manager does not detect any faces in the image. Directions are relative to the edges of the image being transformed.",
-			Default:          "Center",
 			ValidateDiagFunc: validateGravity(),
 		},
 		"fail_gravity_var": {
@@ -1456,7 +1451,6 @@ func faceCrop(_ int) map[string]*schema.Schema {
 			Type:             schema.TypeString,
 			Optional:         true,
 			Description:      "Controls placement of the crop. Directions are relative to the face(s) plus padding.",
-			Default:          "Center",
 			ValidateDiagFunc: validateGravity(),
 		},
 		"gravity_var": {
@@ -1517,7 +1511,6 @@ func featureCrop(_ int) map[string]*schema.Schema {
 			Type:             schema.TypeString,
 			Optional:         true,
 			Description:      "Controls placement of the crop if Image and Video Manager does not detect any features in the image. Directions are relative to the edges of the image being transformed.",
-			Default:          "Center",
 			ValidateDiagFunc: validateGravity(),
 		},
 		"fail_gravity_var": {
@@ -1540,7 +1533,6 @@ func featureCrop(_ int) map[string]*schema.Schema {
 			Type:             schema.TypeString,
 			Optional:         true,
 			Description:      "Controls placement of the crop. Directions are relative to the region of interest plus padding.",
-			Default:          "Center",
 			ValidateDiagFunc: validateGravity(),
 		},
 		"gravity_var": {
@@ -1707,7 +1699,6 @@ func grayscale(_ int) map[string]*schema.Schema {
 			Type:             schema.TypeString,
 			Optional:         true,
 			Description:      "The algorithm used to transform colors to grays, either `Brightness`, `Lightness`, `Rec601`, or the default `Rec709`.",
-			Default:          "Rec709",
 			ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"Rec601", "Rec709", "Brightness", "Lightness"}, false)),
 		},
 		"type_var": {
@@ -2208,7 +2199,6 @@ func regionOfInterestCrop(depth int) map[string]*schema.Schema {
 			Type:             schema.TypeString,
 			Optional:         true,
 			Description:      "The placement of the crop area relative to the specified area of interest.",
-			Default:          "Center",
 			ValidateDiagFunc: validateGravity(),
 		},
 		"gravity_var": {
