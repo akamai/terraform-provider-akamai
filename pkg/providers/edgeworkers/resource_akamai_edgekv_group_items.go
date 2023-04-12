@@ -40,7 +40,7 @@ func resourceEdgeKVGroupItems() *schema.Resource {
 					string(edgeworkers.NamespaceStagingNetwork),
 					string(edgeworkers.NamespaceProductionNetwork),
 				}, false)),
-				Description: "The network on which the namespace will be activated.",
+				Description: "The network against which to execute the API request.",
 			},
 			"group_name": {
 				Type:        schema.TypeString,
@@ -52,7 +52,7 @@ func resourceEdgeKVGroupItems() *schema.Resource {
 				Type:             schema.TypeMap,
 				Required:         true,
 				ValidateDiagFunc: tools.ValidateMapMinimalLength(1),
-				Description:      "The map of items under specific EdgeKV group. Each item consists of item key and value.",
+				Description:      "A map of items within the specified group. Each item consists of an item key and a value.",
 				Elem:             &schema.Schema{Type: schema.TypeString},
 			},
 		},

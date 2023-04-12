@@ -18,14 +18,14 @@ func TestEdgeKVGroups(t *testing.T) {
 		client.On("ListGroupsWithinNamespace", mock.Anything, edgeworkers.ListGroupsWithinNamespaceRequest{
 			Network:     "staging",
 			NamespaceID: "test_namespace"}).
-			Return([]string{"TestImportGroup", "TestGroup1", "TestGroup2", "TestGroup3", "TestGroup4"}, nil)
+			Return([]string{"TestImportGroup", "TestGroup1", "TestGroup2", "TestGroup3", "TestGroup4"}, nil).Times(5)
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				ProviderFactories: testAccProviders,
 				IsUnitTest:        true,
 				Steps: []resource.TestStep{
 					{
-						Config: test.Fixture("testdata/TestDataNamespaceGroups/basic.tf"),
+						Config: test.Fixture("testdata/TestDataEdgeKVNamespaceGroups/basic.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttrSet("data.akamai_edgekv_groups.test", "id"),
 							resource.TestCheckResourceAttr("data.akamai_edgekv_groups.test", "id", "test_namespace:staging"),
@@ -51,8 +51,8 @@ func TestEdgeKVGroups(t *testing.T) {
 				IsUnitTest:        true,
 				Steps: []resource.TestStep{
 					{
-						Config:      test.Fixture("testdata/TestDataNamespaceGroups/missed_namespace_name.tf"),
-						ExpectError: regexp.MustCompile("The argument \"namespace_name\" is required, but no definition was found."),
+						Config:      test.Fixture("testdata/TestDataEdgeKVNamespaceGroups/missed_namespace_name.tf"),
+						ExpectError: regexp.MustCompile(`The argument "namespace_name" is required, but no definition was found.`),
 					},
 				},
 			})
@@ -68,8 +68,8 @@ func TestEdgeKVGroups(t *testing.T) {
 				IsUnitTest:        true,
 				Steps: []resource.TestStep{
 					{
-						Config:      test.Fixture("testdata/TestDataNamespaceGroups/missed_network.tf"),
-						ExpectError: regexp.MustCompile("The argument \"network\" is required, but no definition was found."),
+						Config:      test.Fixture("testdata/TestDataEdgeKVNamespaceGroups/missed_network.tf"),
+						ExpectError: regexp.MustCompile(`The argument "network" is required, but no definition was found.`),
 					},
 				},
 			})
@@ -85,7 +85,7 @@ func TestEdgeKVGroups(t *testing.T) {
 				IsUnitTest:        true,
 				Steps: []resource.TestStep{
 					{
-						Config:      test.Fixture("testdata/TestDataNamespaceGroups/incorrect_network.tf"),
+						Config:      test.Fixture("testdata/TestDataEdgeKVNamespaceGroups/incorrect_network.tf"),
 						ExpectError: regexp.MustCompile("expected network to be one of \\[staging production], got incorrect_network"),
 					},
 				},
