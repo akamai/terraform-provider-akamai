@@ -2,6 +2,8 @@
 layout: "akamai"
 ---
 
+# Akamai data sources
+
 We’ve moved our documentation to the Akamai TechDocs site. Use the table to find the subprovider data sources you need.
 
 |Subprovider|Description|

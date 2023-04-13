@@ -2,6 +2,8 @@
 layout: "akamai"
 ---
 
+# Akamai resources
+
 We’ve moved our documentation to the Akamai TechDocs site. Use the table to find the subprovider resources you need.
 
 |Subprovider|Description|
