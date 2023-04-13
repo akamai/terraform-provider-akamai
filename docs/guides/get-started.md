@@ -91,7 +91,7 @@ To install our provider and begin a Terraform session, run `terraform init`. The
 
 Each of our subproviders use a set of resource objects that build out infrastructure components and data sources that provide information to and about those resources. Add these to your configurations manually or import them.
 
-- Copy/paste or pull in our [examples](https://github.com/akamai/examples-terraform.git).
+- Copy/paste or pull in our [examples](https://github.com/akamai/terraform-provider-akamai/tree/master/examples).
 - Import a set of components using our [CLI for Terraform Provider](https://github.com/akamai/cli-terraform).
 - Export and use your company's existing configurations.
 
