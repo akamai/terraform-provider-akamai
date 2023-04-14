@@ -8,28 +8,28 @@ data "akamai_property_rules_builder" "default" {
     is_secure = false
     behavior {
       m_pulse {
-        config_override = <<EOT
+        config_override = trimsuffix(<<EOT
 no new line
-%{~if false}trim redundant new line%{endif~}
 EOT
+        , "\n")
       }
     }
     behavior {
       m_pulse {
-        config_override = <<EOT
+        config_override = trimsuffix(<<EOT
 
-%{~if false}trim redundant new line%{endif~}
 EOT
+        , "\n")
       }
     }
     behavior {
       m_pulse {
-        config_override = <<EOT
+        config_override = trimsuffix(<<EOT
 
 	line with new line before and after + tab
 
-%{~if false}trim redundant new line%{endif~}
 EOT
+        , "\n")
       }
     }
   }
