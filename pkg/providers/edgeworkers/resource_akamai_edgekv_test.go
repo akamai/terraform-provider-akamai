@@ -199,6 +199,30 @@ func TestResourceEdgeKV(t *testing.T) {
 				},
 			},
 		},
+		"basic - retention 0": {
+			init: func(m *edgeworkers.Mock) {
+				// create
+				retention := tools.IntPtr(0)
+				stubResourceEdgeKVCreatePhase(m, namespaceName, net, retention, groupID, "", "",
+					initStatusOneAttempt, initNoErrorsOneAttempt, noData)
+				// read
+				stubResourceEdgeKVReadPhase(m, namespaceName, net, retention, groupID, "")
+				// read
+				stubResourceEdgeKVReadPhase(m, namespaceName, net, retention, groupID, "")
+			},
+			steps: []resource.TestStep{
+				{
+					Config: loadFixtureString("./testdata/TestResourceEdgeWorkersEdgeKV/basic_retention_0.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "id", id),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "namespace_name", namespaceName),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "network", net),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "group_id", fmt.Sprintf("%d", *groupID)),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "retention_in_seconds", fmt.Sprintf("%d", 0)),
+					),
+				},
+			},
+		},
 		"with some data to upsert": {
 			init: func(m *edgeworkers.Mock) {
 				// create

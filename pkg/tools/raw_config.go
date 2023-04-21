@@ -1,11 +1,10 @@
-package ruleformats
+package tools
 
 import (
 	"math/big"
 	"strconv"
 	"strings"
 
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/go-cty/cty/gocty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -23,12 +22,11 @@ func NewRawConfig(data *schema.ResourceData) *RawConfig {
 
 // GetOk returns the data for the given key and whether or not the key was set to a non-zero value.
 func (rc RawConfig) GetOk(key string) (any, bool) {
-	log := akamai.Log()
 	path := rc.buildPath(key)
 
 	val, err := path.Apply(rc.data)
 	if err != nil {
-		log.Fatalf("reading attribute '%s' failed: %s", key, err)
+		return nil, false
 	}
 
 	return rc.transform(val)

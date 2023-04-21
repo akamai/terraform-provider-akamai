@@ -112,11 +112,11 @@ func resourceEdgeKVCreate(ctx context.Context, rd *schema.ResourceData, m interf
 	client := inst.Client(meta)
 	logger.Debug("Creating EdgeKV namespace configuration")
 
-	retention, err := tools.GetIntValue("retention_in_seconds", rd)
+	retention64, err := tools.GetInt64Value("retention_in_seconds", tools.NewRawConfig(rd))
 	if err != nil {
 		return diag.FromErr(err)
 	}
-
+	retention := int(retention64)
 	geoLocation, err := tools.GetStringValue("geo_location", rd)
 	if err != nil && !errors.Is(err, tools.ErrNotFound) {
 		return diag.FromErr(err)
@@ -254,11 +254,11 @@ func resourceEdgeKVUpdate(ctx context.Context, rd *schema.ResourceData, m interf
 
 	// at this point, just retention_in_seconds may be updated
 
-	retention, err := tools.GetIntValue("retention_in_seconds", rd)
+	retention64, err := tools.GetInt64Value("retention_in_seconds", tools.NewRawConfig(rd))
 	if err != nil {
 		return diag.FromErr(err)
 	}
-
+	retention := int(retention64)
 	// ignore group_id changes
 	// changes on this field are not supported by current EdgeKV API version
 	if diagnostics := diag.FromErr(tools.RestoreOldValues(rd, []string{"group_id"})); diagnostics != nil {
