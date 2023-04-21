@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"regexp"
 	"sort"
 	"strings"
 	"time"
@@ -77,8 +78,16 @@ var (
 	// PolicyActivationResourceTimeout is the default timeout for the resource operations
 	PolicyActivationResourceTimeout = time.Minute * 90
 
+	// PolicyActivationRetryPollMinimum is the minimum polling interval for retrying policy activation
+	PolicyActivationRetryPollMinimum = time.Second * 15
+
+	// PolicyActivationRetryTimeout is the default timeout for the policy activation retries
+	PolicyActivationRetryTimeout = time.Minute * 10
+
 	// ErrNetworkName is used when the user inputs an invalid network name
 	ErrNetworkName = errors.New("invalid network name")
+
+	policyActivationRetryRegexp = regexp.MustCompile(`requested propertyname "[A-Za-z0-9.\-_]+" does not exist`)
 )
 
 func resourcePolicyActivationDelete(ctx context.Context, rd *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -321,17 +330,40 @@ func resourcePolicyActivationCreate(ctx context.Context, rd *schema.ResourceData
 
 	// at this point, we are sure that the given version is not active
 	logger.Debugf("activating policy %d version %d, network %s and properties [%s]", policyID, version, string(versionActivationNetwork), strings.Join(associatedProperties, ", "))
-	err = client.ActivatePolicyVersion(ctx, cloudlets.ActivatePolicyVersionRequest{
-		PolicyID: int64(policyID),
-		Version:  version,
-		Async:    true,
-		PolicyVersionActivation: cloudlets.PolicyVersionActivation{
-			Network:                 versionActivationNetwork,
-			AdditionalPropertyNames: associatedProperties,
-		},
-	})
-	if err != nil {
-		return diag.Errorf("%v create: %s", ErrPolicyActivation, err.Error())
+	pollingActivationTries := PolicyActivationRetryPollMinimum
+
+	for {
+		err = client.ActivatePolicyVersion(ctx, cloudlets.ActivatePolicyVersionRequest{
+			PolicyID: int64(policyID),
+			Version:  version,
+			Async:    true,
+			PolicyVersionActivation: cloudlets.PolicyVersionActivation{
+				Network:                 versionActivationNetwork,
+				AdditionalPropertyNames: associatedProperties,
+			},
+		})
+		if err == nil {
+			break
+		}
+
+		select {
+		case <-time.After(pollingActivationTries):
+			logger.Debugf("retrying policy activation after %d minutes", pollingActivationTries.Minutes())
+			if pollingActivationTries > PolicyActivationRetryTimeout || !policyActivationRetryRegexp.MatchString(strings.ToLower(err.Error())) {
+				return diag.Errorf("%v create: %s", ErrPolicyActivation, err.Error())
+			}
+
+			pollingActivationTries = 2 * pollingActivationTries
+			continue
+		case <-ctx.Done():
+			if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+				return diag.Errorf("timeout waiting for retrying policy activation: last error: %s", err)
+			}
+			if errors.Is(ctx.Err(), context.Canceled) {
+				return diag.Errorf("operation canceled while waiting for retrying policy activation, last error: %s", err)
+			}
+			return diag.FromErr(fmt.Errorf("operation context terminated: %w", ctx.Err()))
+		}
 	}
 
 	// wait until policy activation is done

@@ -4,6 +4,9 @@
 
 #### BUG FIXES:
 
+* Cloudlets
+  * In some cases `akamai_cloudlets_application_load_balancer_activation` or `akamai_cloudlets_policy_activation` were not activating due to verification delay with property resource.
+
 ### Fixes
 
 * GTM
