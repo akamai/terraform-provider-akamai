@@ -54,3 +54,6 @@ linters-settings:
     - name: unused-parameter
     - name: var-declaration
     - name: var-naming
+
+run:
+  timeout: 3m
