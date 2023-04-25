@@ -7,7 +7,7 @@ Use our Terraform provider to provision and manage your Akamai configurations in
 
 ## How it works
 
-![Terraform overview](https://techdocs.akamai.com/terraform-images/img/overview2.png)
+![Terraform overview](https://techdocs.akamai.com/terraform-images/img/ext-tf-gs.png)
 
 ## Start your configuration
 
@@ -33,7 +33,7 @@ Your Akamai Terraform configuration starts with listing us as a required provide
 
 ~> If you choose to use multiple configuration files to limit the scope of work or to share work across teams, our provider information only needs to be in one.
 
-## Add authentication
+## Get authenticated
 
 Authentication credentials for the majority of our API use a hash-based message authentication code or HMAC-SHA-256 created through an API client. We recommend each member of your team use their own client set up locally to prevent accidental exposure of credentials.
 
@@ -87,7 +87,7 @@ There are different types of API clients that grant access based on your need, r
 
 To install our provider and begin a Terraform session, run `terraform init`. The response log verifies your initialization along with a notice that the rest of the `terraform` commands should work.
 
-## Set up resources
+## Add subprovider resources
 
 Each of our subproviders use a set of resource objects that build out infrastructure components and data sources that provide information to and about those resources. Add these to your configurations manually or import them.
 
