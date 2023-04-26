@@ -1,0 +1,26 @@
+{
+  "definitions": {
+    "criteriaMustSatisfy": {
+      "type": "criteria",
+      "default": "all"
+    },
+    "name": {
+      "type": "string",
+      "default": null
+    },
+    "enabled": {
+      "type": "bool",
+      "default": false
+    },
+    "options": {
+      "type": "json",
+      "default": {
+        "enabled": false
+      }
+    },
+    "domain": {
+      "type": "json",
+      "default": []
+    }
+  }
+}

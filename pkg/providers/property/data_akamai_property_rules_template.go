@@ -32,7 +32,7 @@ func dataSourcePropertyRulesTemplate() *schema.Resource {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ExactlyOneOf: []string{"template", "template_file"},
-				Description:  "File path to the template file inside 'property-snippets' subfolder",
+				Description:  "File path to the template file",
 			},
 			"template": {
 				Type: schema.TypeSet,
@@ -48,7 +48,7 @@ func dataSourcePropertyRulesTemplate() *schema.Resource {
 							Type:             schema.TypeString,
 							Required:         true,
 							ValidateDiagFunc: tf.IsNotBlank,
-							Description:      "Directory points to a folder ending with 'property-snippets', which contains snippets to include into template.",
+							Description:      "Directory points to a folder, which contains snippets to include into template.",
 						},
 					},
 				},
@@ -133,9 +133,9 @@ func dataPropertyRulesTemplateRead(_ context.Context, d *schema.ResourceData, m 
 		}
 
 		dir = filepath.Dir(file)
-		if filepath.Base(dir) != "property-snippets" || filepath.Ext(file) != ".json" || !json.Valid(fileData) {
-			logger.Errorf("snippets file should be under 'property-snippets' folder with .json extension and valid json data: %s", file)
-			return diag.FromErr(fmt.Errorf("snippets file should be under 'property-snippets' folder with .json extension and valid json data. Invalid file: %s ", file))
+		if filepath.Ext(file) != ".json" || !json.Valid(fileData) {
+			logger.Errorf("snippets file should be with .json extension and valid json data: %s", file)
+			return diag.Errorf("snippets file should be with .json extension and valid json data. Invalid file: %s ", file)
 		}
 	}
 
@@ -152,11 +152,6 @@ func dataPropertyRulesTemplateRead(_ context.Context, d *schema.ResourceData, m 
 
 		if _, err := os.Stat(dir); err != nil {
 			return diag.FromErr(err)
-		}
-
-		if filepath.Base(dir) != "property-snippets" {
-			logger.Errorf("'template_dir' should points to 'property-snippets' folder: %s", dir)
-			return diag.Errorf("'template_dir' should points to 'property-snippets' folder: %s", dir)
 		}
 	}
 
@@ -243,7 +238,7 @@ func dataPropertyRulesTemplateRead(_ context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 	if file != "" && !jsonFileRegexp.MatchString(file) {
-		return diag.Errorf("snippets file under 'property-snippets' folder should have .json files. Invalid file %s ", file)
+		return diag.Errorf("snippets file should have .json files. Invalid file %s ", file)
 	}
 
 	// Create a new SHA1 hash based on templateDataStr

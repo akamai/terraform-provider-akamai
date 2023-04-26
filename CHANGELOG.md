@@ -1,5 +1,12 @@
 # RELEASE NOTES
 
+## 3.7.0 (May xx, 2023)
+
+#### FEATURES/ENHANCEMENTS:
+
+* PAPI
+  * Remove enforce `property-snippets` directory check ([I#378](https://github.com/akamai/terraform-provider-akamai/issues/378))
+
 ## 3.6.0 (April 27, 2023)
 
 #### FEATURES/ENHANCEMENTS:
