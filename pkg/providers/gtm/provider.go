@@ -61,6 +61,7 @@ func Provider() *schema.Provider {
 			},
 		},
 		DataSourcesMap: map[string]*schema.Resource{
+			"akamai_gtm_datacenter":         dataSourceGTMDatacenter(),
 			"akamai_gtm_default_datacenter": dataSourceGTMDefaultDatacenter(),
 		},
 		ResourcesMap: map[string]*schema.Resource{

@@ -59,6 +59,14 @@
     * `akamai_edgekv_groups` - reads groups associated with namespace and network
   * Deprecated field `initial_data` under `akamai_edgekv` resource
 
+####  FEATURES/ENHANCEMENTS:
+
+* GTM
+  * New data sources:
+      * `akamai_gtm_datacenter` - get datacenter information
+
+## X.X.X (X X, 2023)
+
 #### BUG FIXES:
 
 * Cloudlets
