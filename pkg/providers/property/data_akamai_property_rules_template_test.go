@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/require"
 	"github.com/tj/assert"
@@ -392,43 +392,43 @@ func TestConvertToTypedMap(t *testing.T) {
 		},
 		"invalid values slice": {
 			givenVars: []interface{}{"test"},
-			withError: tools.ErrInvalidType,
+			withError: tf.ErrInvalidType,
 		},
 		"missing 'name' in map": {
 			givenVars: []interface{}{
 				map[string]interface{}{"type": "string", "value": "test"},
 			},
-			withError: tools.ErrNotFound,
+			withError: tf.ErrNotFound,
 		},
 		"missing 'type' in map": {
 			givenVars: []interface{}{
 				map[string]interface{}{"name": "testString", "value": "test"},
 			},
-			withError: tools.ErrNotFound,
+			withError: tf.ErrNotFound,
 		},
 		"missing 'value' in map": {
 			givenVars: []interface{}{
 				map[string]interface{}{"type": "string", "name": "test"},
 			},
-			withError: tools.ErrNotFound,
+			withError: tf.ErrNotFound,
 		},
 		"'name' is of invalid type": {
 			givenVars: []interface{}{
 				map[string]interface{}{"name": 123, "type": "string", "value": "test"},
 			},
-			withError: tools.ErrInvalidType,
+			withError: tf.ErrInvalidType,
 		},
 		"'type' is of invalid type": {
 			givenVars: []interface{}{
 				map[string]interface{}{"name": "test", "type": 123, "value": "test"},
 			},
-			withError: tools.ErrInvalidType,
+			withError: tf.ErrInvalidType,
 		},
 		"'value' is of invalid type": {
 			givenVars: []interface{}{
 				map[string]interface{}{"name": "test", "type": "string", "value": 123},
 			},
-			withError: tools.ErrInvalidType,
+			withError: tf.ErrInvalidType,
 		},
 		"jsonBlock has invalid json": {
 			givenVars: []interface{}{
@@ -440,13 +440,13 @@ func TestConvertToTypedMap(t *testing.T) {
 			givenVars: []interface{}{
 				map[string]interface{}{"name": "test", "type": "number", "value": "abc"},
 			},
-			withError: tools.ErrInvalidType,
+			withError: tf.ErrInvalidType,
 		},
 		"bool has invalid json": {
 			givenVars: []interface{}{
 				map[string]interface{}{"name": "test", "type": "bool", "value": "abc"},
 			},
-			withError: tools.ErrInvalidType,
+			withError: tf.ErrInvalidType,
 		},
 		"unknown type passed": {
 			givenVars: []interface{}{
@@ -497,7 +497,7 @@ func TestFlattenTemplate(t *testing.T) {
 					"template_dir":  "testdata/TestDSRulesTemplate/rules/property-snippets",
 				},
 			},
-			withError: tools.ErrInvalidType,
+			withError: tf.ErrInvalidType,
 		},
 		"missing 'template_data' in list": {
 			givenList: []interface{}{
@@ -505,7 +505,7 @@ func TestFlattenTemplate(t *testing.T) {
 					"template_dir": "testdata/TestDSRulesTemplate/rules/property-snippets/",
 				},
 			},
-			withError: tools.ErrNotFound,
+			withError: tf.ErrNotFound,
 		},
 		"missing 'template_dir' in list": {
 			givenList: []interface{}{
@@ -513,7 +513,7 @@ func TestFlattenTemplate(t *testing.T) {
 					"template_data": loadFixtureString("testdata/TestDSRulesTemplate/rules/property-snippets/template_in.json"),
 				},
 			},
-			withError: tools.ErrNotFound,
+			withError: tf.ErrNotFound,
 		},
 		"invalid 'template_data' in list": {
 			givenList: []interface{}{
@@ -522,7 +522,7 @@ func TestFlattenTemplate(t *testing.T) {
 					"template_dir":  "testdata/TestDSRulesTemplate/rules/property-snippets/",
 				},
 			},
-			withError: tools.ErrInvalidType,
+			withError: tf.ErrInvalidType,
 		},
 		"invalid 'template_dir' in list": {
 			givenList: []interface{}{
@@ -531,7 +531,7 @@ func TestFlattenTemplate(t *testing.T) {
 					"template_dir":  true,
 				},
 			},
-			withError: tools.ErrInvalidType,
+			withError: tf.ErrInvalidType,
 		},
 	}
 

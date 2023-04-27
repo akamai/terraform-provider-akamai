@@ -7,8 +7,7 @@ import (
 	"fmt"
 
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
-
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
@@ -248,7 +247,7 @@ func populateSchemaFieldsWithPolicy(p *cloudlets.Policy, d *schema.ResourceData)
 		"api_version":   p.APIVersion,
 	}
 
-	err := tools.SetAttrs(d, fields)
+	err := tf.SetAttrs(d, fields)
 	if err != nil {
 		return fmt.Errorf("could not set schema attributes: %s", err)
 	}
@@ -277,7 +276,7 @@ func populateSchemaFieldsWithPolicyVersion(p *cloudlets.PolicyVersion, d *schema
 		"activations":         getSchemaActivationsFrom(p.Activations),
 	}
 
-	err = tools.SetAttrs(d, fields)
+	err = tf.SetAttrs(d, fields)
 	if err != nil {
 		return fmt.Errorf("could not set schema attributes: %s", err)
 	}
@@ -290,14 +289,14 @@ func dataSourceCloudletsPolicyRead(ctx context.Context, d *schema.ResourceData, 
 	log := meta.Log("Cloudlets", "dataSourceCloudletsPolicyRead")
 	client := inst.Client(meta)
 
-	policyID, err := tools.GetIntValue("policy_id", d)
+	policyID, err := tf.GetIntValue("policy_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	var version int64
-	if v, err := tools.GetIntValue("version", d); err != nil {
-		if !errors.Is(err, tools.ErrNotFound) {
+	if v, err := tf.GetIntValue("version", d); err != nil {
+		if !errors.Is(err, tf.ErrNotFound) {
 			return diag.FromErr(err)
 		}
 		version, err = findLatestPolicyVersion(ctx, int64(policyID), client)

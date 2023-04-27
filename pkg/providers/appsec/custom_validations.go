@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
@@ -16,7 +16,7 @@ import (
 // ValidateActions ensure actions are correct for API call
 func ValidateActions(v interface{}, path cty.Path) diag.Diagnostics {
 	value := v.(string)
-	schemaFieldName, err := tools.GetSchemaFieldNameFromPath(path)
+	schemaFieldName, err := tf.GetSchemaFieldNameFromPath(path)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -37,7 +37,7 @@ func ValidateActions(v interface{}, path cty.Path) diag.Diagnostics {
 
 // ValidateWithBotManActions ensure actions are correct for API call
 func validateWithBotManActions(v interface{}, path cty.Path) diag.Diagnostics {
-	schemaFieldName, err := tools.GetSchemaFieldNameFromPath(path)
+	schemaFieldName, err := tf.GetSchemaFieldNameFromPath(path)
 	if err != nil {
 		return diag.FromErr(err)
 	}

@@ -8,7 +8,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/session"
 
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/apex/log"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -55,7 +55,7 @@ func dataSourceGTMDefaultDatacenterRead(ctx context.Context, d *schema.ResourceD
 		session.WithContextLog(logger),
 	)
 
-	domain, err := tools.GetStringValue("domain", d)
+	domain, err := tf.GetStringValue("domain", d)
 	if err != nil {
 		logger.Errorf("[Error] GTM dataSourceGTMDefaultDatacenterRead: Domain not initialized")
 

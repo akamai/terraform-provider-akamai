@@ -11,6 +11,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/papi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
 	"github.com/apex/log"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -94,7 +95,7 @@ var akamaiPropertyActivationSchema = map[string]*schema.Schema{
 	"version": {
 		Type:             schema.TypeInt,
 		Required:         true,
-		ValidateDiagFunc: tools.IsNotBlank,
+		ValidateDiagFunc: tf.IsNotBlank,
 	},
 	"network": {
 		Type:     schema.TypeString,
@@ -126,7 +127,7 @@ var akamaiPropertyActivationSchema = map[string]*schema.Schema{
 					Type:             schema.TypeString,
 					Required:         true,
 					Description:      fmt.Sprintf("Specifies the reason for the expedited activation on production network. Valid noncompliance reasons are: %s", strings.Join(validComplianceRecords, ", ")),
-					ValidateDiagFunc: tools.ValidateStringInSlice(validComplianceRecords),
+					ValidateDiagFunc: tf.ValidateStringInSlice(validComplianceRecords),
 				},
 				"ticket_id": {
 					Type:        schema.TypeString,
@@ -192,7 +193,7 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 	if err := d.Set("property_id", propertyID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 	}
 
 	network, err := networkAlias(d)
@@ -225,8 +226,8 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 		return diags
 	}
 
-	complianceRecord, err := tools.GetListValue("compliance_record", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	complianceRecord, err := tf.GetListValue("compliance_record", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 
@@ -245,7 +246,7 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 
 	// we create a new property activation in case of no previous activation, or deleted activation
 	if activation == nil || activation.ActivationType == papi.ActivationTypeDeactivate {
-		notifySet, err := tools.GetSetValue("contact", d)
+		notifySet, err := tf.GetSetValue("contact", d)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -254,8 +255,8 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 			notify = append(notify, cast.ToString(contact))
 		}
 
-		note, err := tools.GetStringValue("note", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		note, err := tf.GetStringValue("note", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return diag.FromErr(err)
 		}
 
@@ -334,7 +335,7 @@ func resourcePropertyActivationDelete(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 	if err := d.Set("property_id", propertyID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 	}
 
 	version, err := resolveVersion(ctx, d, client, propertyID, network)
@@ -342,8 +343,8 @@ func resourcePropertyActivationDelete(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 
-	complianceRecord, err := tools.GetListValue("compliance_record", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	complianceRecord, err := tf.GetListValue("compliance_record", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 
@@ -364,7 +365,7 @@ func resourcePropertyActivationDelete(ctx context.Context, d *schema.ResourceDat
 	}
 
 	if activation == nil || activation.ActivationType == papi.ActivationTypeActivate {
-		notifySet, err := tools.GetSetValue("contact", d)
+		notifySet, err := tf.GetSetValue("contact", d)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -372,8 +373,8 @@ func resourcePropertyActivationDelete(ctx context.Context, d *schema.ResourceDat
 		for _, contact := range notifySet.List() {
 			notify = append(notify, cast.ToString(contact))
 		}
-		note, err := tools.GetStringValue("note", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		note, err := tf.GetStringValue("note", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return diag.FromErr(err)
 		}
 
@@ -409,7 +410,7 @@ func resourcePropertyActivationDelete(ctx context.Context, d *schema.ResourceDat
 		activation = act.Activation
 
 		if err := d.Set("activation_id", activation.ActivationID); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 		}
 
 		if err = setErrorsAndWarnings(d, flattenErrorArray(act.Errors), flattenErrorArray(act.Warnings)); err != nil {
@@ -426,7 +427,7 @@ func resourcePropertyActivationDelete(ctx context.Context, d *schema.ResourceDat
 			return diag.FromErr(fmt.Errorf("deactivation request failed in downstream system"))
 		}
 		select {
-		case <-time.After(tools.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
+		case <-time.After(tf.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
 			act, err := client.GetActivation(ctx, papi.GetActivationRequest{
 				ActivationID: activation.ActivationID,
 				PropertyID:   propertyID,
@@ -476,7 +477,7 @@ func resourcePropertyActivationRead(ctx context.Context, d *schema.ResourceData,
 		return diag.FromErr(err)
 	}
 	if err := d.Set("property_id", propertyID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 	}
 
 	network, err := networkAlias(d)
@@ -497,10 +498,10 @@ func resourcePropertyActivationRead(ctx context.Context, d *schema.ResourceData,
 	}
 
 	if err := d.Set("errors", flattenErrorArray(resp.Errors)); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 	}
 	if err := d.Set("warnings", flattenErrorArray(resp.Warnings)); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 	}
 
 	for _, act := range resp.Activations.Items {
@@ -509,19 +510,19 @@ func resourcePropertyActivationRead(ctx context.Context, d *schema.ResourceData,
 			logger.Debugf("Found Existing Activation %s version %d", network, version)
 
 			if err := d.Set("status", string(act.Status)); err != nil {
-				return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+				return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 			}
 			if err := d.Set("version", act.PropertyVersion); err != nil {
-				return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+				return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 			}
 
 			d.SetId(act.PropertyID + ":" + string(network))
 
 			if err := d.Set("version", version); err != nil {
-				return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+				return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 			}
 			if err := d.Set("activation_id", act.ActivationID); err != nil {
-				return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+				return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 			}
 
 			break
@@ -533,7 +534,7 @@ func resourcePropertyActivationRead(ctx context.Context, d *schema.ResourceData,
 
 func resolveVersion(ctx context.Context, d *schema.ResourceData, client papi.PAPI, propertyID string, network papi.ActivationNetwork) (int, error) {
 
-	version, err := tools.GetIntValue("version", d)
+	version, err := tf.GetIntValue("version", d)
 	if err != nil {
 		var resp *papi.GetPropertyVersionsResponse
 		// use the latest version for the property
@@ -567,7 +568,7 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 	if err := d.Set("property_id", propertyID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 	}
 
 	network, err := networkAlias(d)
@@ -580,8 +581,8 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 
-	complianceRecord, err := tools.GetListValue("compliance_record", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	complianceRecord, err := tf.GetListValue("compliance_record", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 
@@ -589,8 +590,8 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 	acknowledgeRuleWarnings := d.Get("auto_acknowledge_rule_warnings").(bool)
 
 	// Assigns a log message to the activation request
-	note, err := tools.GetStringValue("note", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	note, err := tf.GetStringValue("note", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 
@@ -630,7 +631,7 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 	}
 
 	if propertyActivation == nil || versionStatus == papi.VersionStatusDeactivated {
-		notifySet, err := tools.GetSetValue("contact", d)
+		notifySet, err := tf.GetSetValue("contact", d)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -764,7 +765,7 @@ func checkRuleTreeErrorsAndWarnings(rules *papi.GetRuleTreeResponse, d *schema.R
 	var diags diag.Diagnostics
 	if len(rules.Errors) > 0 {
 		if err := d.Set("rule_errors", papiErrorsToList(rules.Errors)); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 		}
 		msg, err := json.MarshalIndent(papiErrorsToList(rules.Errors), "", "\t")
 		if err != nil {
@@ -785,19 +786,19 @@ func checkRuleTreeErrorsAndWarnings(rules *papi.GetRuleTreeResponse, d *schema.R
 
 func setErrorsAndWarnings(d *schema.ResourceData, errors, warnings string) error {
 	if err := d.Set("errors", errors); err != nil {
-		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("warnings", warnings); err != nil {
-		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 	}
 	return nil
 }
 
 func resolvePropertyID(d *schema.ResourceData) (string, error) {
-	propertyID, err := tools.GetStringValue("property_id", d)
-	if errors.Is(err, tools.ErrNotFound) {
+	propertyID, err := tf.GetStringValue("property_id", d)
+	if errors.Is(err, tf.ErrNotFound) {
 		// use legacy property as fallback option
-		propertyID, err = tools.GetStringValue("property", d)
+		propertyID, err = tf.GetStringValue("property", d)
 	}
 	return tools.AddPrefix(propertyID, "prp_"), err
 }
@@ -864,9 +865,9 @@ func lookupActivation(ctx context.Context, client papi.PAPI, query lookupActivat
 }
 
 func networkAlias(d *schema.ResourceData) (papi.ActivationNetwork, error) {
-	network, err := tools.GetStringValue("network", d)
+	network, err := tf.GetStringValue("network", d)
 	if err != nil {
-		if errors.Is(err, tools.ErrNotFound) {
+		if errors.Is(err, tf.ErrNotFound) {
 			network = "STAGING"
 		} else {
 			return "", err
@@ -890,7 +891,7 @@ func pollActivation(ctx context.Context, client papi.PAPI, activation *papi.Acti
 			return nil, diag.FromErr(fmt.Errorf("activation request failed in downstream system"))
 		}
 		select {
-		case <-time.After(tools.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
+		case <-time.After(tf.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
 			act, err := client.GetActivation(ctx, papi.GetActivationRequest{
 				ActivationID: activation.ActivationID,
 				PropertyID:   propertyID,

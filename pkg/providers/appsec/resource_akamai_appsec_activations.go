@@ -9,8 +9,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
-
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -104,26 +103,26 @@ func resourceActivationsCreate(ctx context.Context, d *schema.ResourceData, m in
 	logger := meta.Log("APPSEC", "resourceActivationsCreate")
 	logger.Debug("in resourceActivationsCreate")
 
-	configID, err := tools.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := tools.GetIntValue("version", d)
+	version, err := tf.GetIntValue("version", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	network, err := tools.GetStringValue("network", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	network, err := tf.GetStringValue("network", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 	var note string
-	note, err = tools.GetStringValue("note", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	note, err = tf.GetStringValue("note", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 	if note == "" {
-		note, err = tools.GetStringValue("notes", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		note, err = tf.GetStringValue("notes", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return diag.FromErr(err)
 		}
 	}
@@ -133,11 +132,11 @@ func resourceActivationsCreate(ctx context.Context, d *schema.ResourceData, m in
 			return diag.FromErr(err)
 		}
 	}
-	notificationEmailsSet, err := tools.GetSetValue("notification_emails", d)
+	notificationEmailsSet, err := tf.GetSetValue("notification_emails", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	notificationEmails := tools.SetToStringSlice(notificationEmailsSet)
+	notificationEmails := tf.SetToStringSlice(notificationEmailsSet)
 
 	createActivationRequest := appsec.CreateActivationsRequest{
 		Action:             "ACTIVATE",
@@ -159,7 +158,7 @@ func resourceActivationsCreate(ctx context.Context, d *schema.ResourceData, m in
 	d.SetId(strconv.Itoa(postresp.ActivationID))
 
 	if err := d.Set("status", postresp.Status); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	getActivationRequest := appsec.GetActivationsRequest{
@@ -172,7 +171,7 @@ func resourceActivationsCreate(ctx context.Context, d *schema.ResourceData, m in
 	}
 	for activation.Status != appsec.StatusActive {
 		select {
-		case <-time.After(tools.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
+		case <-time.After(tf.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
 			act, err := client.GetActivations(ctx, getActivationRequest)
 			if err != nil {
 				return diag.FromErr(err)
@@ -209,7 +208,7 @@ func resourceActivationsRead(ctx context.Context, d *schema.ResourceData, m inte
 	}
 
 	if err := d.Set("status", activations.Status); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	return nil
@@ -221,26 +220,26 @@ func resourceActivationsUpdate(ctx context.Context, d *schema.ResourceData, m in
 	logger := meta.Log("APPSEC", "resourceActivationsUpdate")
 	logger.Debug("in resourceActivationsUpdate")
 
-	configID, err := tools.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := tools.GetIntValue("version", d)
+	version, err := tf.GetIntValue("version", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	network, err := tools.GetStringValue("network", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	network, err := tf.GetStringValue("network", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 	var note string
-	note, err = tools.GetStringValue("note", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	note, err = tf.GetStringValue("note", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	if errors.Is(err, tools.ErrNotFound) {
-		note, err = tools.GetStringValue("notes", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if errors.Is(err, tf.ErrNotFound) {
+		note, err = tf.GetStringValue("notes", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return diag.FromErr(err)
 		}
 	}
@@ -250,11 +249,11 @@ func resourceActivationsUpdate(ctx context.Context, d *schema.ResourceData, m in
 			return diag.FromErr(err)
 		}
 	}
-	notificationEmailsSet, err := tools.GetSetValue("notification_emails", d)
+	notificationEmailsSet, err := tf.GetSetValue("notification_emails", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	notificationEmails := tools.SetToStringSlice(notificationEmailsSet)
+	notificationEmails := tf.SetToStringSlice(notificationEmailsSet)
 
 	createActivationRequest := appsec.CreateActivationsRequest{
 		Action:             "ACTIVATE",
@@ -276,7 +275,7 @@ func resourceActivationsUpdate(ctx context.Context, d *schema.ResourceData, m in
 	d.SetId(strconv.Itoa(postresp.ActivationID))
 
 	if err := d.Set("status", postresp.Status); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	getActivationRequest := appsec.GetActivationsRequest{
@@ -289,7 +288,7 @@ func resourceActivationsUpdate(ctx context.Context, d *schema.ResourceData, m in
 	}
 	for activation.Status != appsec.StatusActive {
 		select {
-		case <-time.After(tools.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
+		case <-time.After(tf.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
 			act, err := client.GetActivations(ctx, getActivationRequest)
 
 			if err != nil {
@@ -316,26 +315,26 @@ func resourceActivationsDelete(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(err)
 	}
 
-	configID, err := tools.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := tools.GetIntValue("version", d)
+	version, err := tf.GetIntValue("version", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	network, err := tools.GetStringValue("network", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	network, err := tf.GetStringValue("network", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 	var note string
-	note, err = tools.GetStringValue("note", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	note, err = tf.GetStringValue("note", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 	if note == "" {
-		note, err = tools.GetStringValue("notes", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		note, err = tf.GetStringValue("notes", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return diag.FromErr(err)
 		}
 	}
@@ -345,11 +344,11 @@ func resourceActivationsDelete(ctx context.Context, d *schema.ResourceData, m in
 			return diag.FromErr(err)
 		}
 	}
-	notificationEmailsSet, err := tools.GetSetValue("notification_emails", d)
+	notificationEmailsSet, err := tf.GetSetValue("notification_emails", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	notificationEmails := tools.SetToStringSlice(notificationEmailsSet)
+	notificationEmails := tf.SetToStringSlice(notificationEmailsSet)
 
 	removeActivationRequest := appsec.RemoveActivationsRequest{
 		ActivationID:       activationID,
@@ -372,7 +371,7 @@ func resourceActivationsDelete(ctx context.Context, d *schema.ResourceData, m in
 	d.SetId(strconv.Itoa(postresp.ActivationID))
 
 	if err := d.Set("status", postresp.Status); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	getActivationRequest := appsec.GetActivationsRequest{
@@ -385,7 +384,7 @@ func resourceActivationsDelete(ctx context.Context, d *schema.ResourceData, m in
 	}
 	for activation.Status != appsec.StatusDeactivated {
 		select {
-		case <-time.After(tools.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
+		case <-time.After(tf.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
 			act, err := client.GetActivations(ctx, getActivationRequest)
 
 			if err != nil {
@@ -399,7 +398,7 @@ func resourceActivationsDelete(ctx context.Context, d *schema.ResourceData, m in
 	}
 
 	if err := d.Set("status", activation.Status); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	return nil
 }

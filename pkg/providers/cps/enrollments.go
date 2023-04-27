@@ -12,6 +12,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/cps"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	cpstools "github.com/akamai/terraform-provider-akamai/v3/pkg/providers/cps/tools"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
 	"github.com/apex/log"
@@ -377,8 +378,8 @@ func readAttrs(enrollment *cps.Enrollment, d *schema.ResourceData) (map[string]i
 	adminContact := cpstools.ContactInfoToMap(*enrollment.AdminContact)
 	attrs["common_name"] = enrollment.CSR.CN
 	sans := make([]string, 0)
-	sansFromSchema, err := tools.GetSetValue("sans", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	sansFromSchema, err := tf.GetSetValue("sans", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return nil, err
 	}
 	for _, san := range enrollment.CSR.SANS {

@@ -19,6 +19,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/session"
 
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
 	"github.com/apex/log"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -392,8 +393,8 @@ func dnsRecordTypeValueSuppress(_, _, _ string, d *schema.ResourceData) bool {
 		logger.Warnf("value is of invalid type: should be int: %v", newv)
 		return false
 	}
-	mnemonicType, err := tools.GetStringValue("type_mnemonic", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	mnemonicType, err := tf.GetStringValue("type_mnemonic", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		logger.Warnf("Error looking up 'type_mnemonic': %s", err)
 		return false
 	}
@@ -417,7 +418,7 @@ func dnsRecordTypeValueSuppress(_, _, _ string, d *schema.ResourceData) bool {
 func dnsRecordTargetSuppress(_, old, new string, d *schema.ResourceData) bool {
 	logger := akamai.Log("[Akamai DNS]", "dnsRecordTargetSuppress")
 
-	recordType, err := tools.GetStringValue("recordtype", d)
+	recordType, err := tf.GetStringValue("recordtype", d)
 	if err != nil {
 		logger.Warnf("fetching `recordtype`: %s", err)
 		return false
@@ -593,10 +594,10 @@ func bumpSoaSerial(ctx context.Context, d *schema.ResourceData, meta akamai.Oper
 
 	serial, ok := rdataFieldMap["serial"].(int)
 	if !ok {
-		return nil, fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "seral", "string")
+		return nil, fmt.Errorf("%w: %s, %q", tf.ErrInvalidType, "seral", "string")
 	}
 	if err := d.Set("serial", serial+1); err != nil {
-		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return nil, fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 	}
 	newRecord, err := bindRecord(ctx, meta, d, logger)
 	if err != nil {
@@ -689,16 +690,16 @@ func resourceDNSRecordCreate(ctx context.Context, d *schema.ResourceData, m inte
 	var err error
 	var diags diag.Diagnostics
 
-	zone, err = tools.GetStringValue("zone", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	zone, err = tf.GetStringValue("zone", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	host, err = tools.GetStringValue("name", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	host, err = tf.GetStringValue("name", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	recordType, err = tools.GetStringValue("recordtype", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	recordType, err = tf.GetStringValue("recordtype", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 
@@ -721,19 +722,19 @@ func resourceDNSRecordCreate(ctx context.Context, d *schema.ResourceData, m inte
 		// A default SOA is created automagically when the primary zone is created ...
 		if _, err := inst.Client(meta).GetRecord(ctx, zone, host, recordType); err == nil {
 			// Record exists
-			serial, err := tools.GetIntValue("serial", d)
-			if err != nil && !errors.Is(err, tools.ErrNotFound) {
+			serial, err := tf.GetIntValue("serial", d)
+			if err != nil && !errors.Is(err, tf.ErrNotFound) {
 				return diag.FromErr(err)
 			}
 			if err := d.Set("serial", serial+1); err != nil {
-				return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+				return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 			}
 		} else {
 			apiError, ok := err.(*dns.Error)
 			if ok && apiError.StatusCode == http.StatusNotFound {
 				logger.Debug("SOA Record not found. Initialize serial")
 				if err := d.Set("serial", 1); err != nil {
-					return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+					return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 				}
 			}
 		}
@@ -809,7 +810,7 @@ func resourceDNSRecordCreate(ctx context.Context, d *schema.ResourceData, m inte
 	}
 	// save hash
 	if err := d.Set("record_sha", sha1hash); err != nil {
-		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
 	// Give terraform the ID
 	if d.Id() == "" || strings.Contains(d.Id(), "#") {
@@ -840,24 +841,24 @@ func resourceDNSRecordUpdate(ctx context.Context, d *schema.ResourceData, m inte
 
 	var zone, host, recordType string
 	var err error
-	zone, err = tools.GetStringValue("zone", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	zone, err = tf.GetStringValue("zone", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 	var diags diag.Diagnostics
-	host, err = tools.GetStringValue("name", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	host, err = tf.GetStringValue("name", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	recordType, err = tools.GetStringValue("recordtype", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	recordType, err = tf.GetStringValue("recordtype", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	target, err := tools.GetListValue("target", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	target, err := tf.GetListValue("target", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	if errors.Is(err, tools.ErrNotFound) {
+	if errors.Is(err, tf.ErrNotFound) {
 		records := make([]string, 0, len(target))
 		for _, recContent := range target {
 			rec, ok := recContent.(string)
@@ -906,10 +907,10 @@ func resourceDNSRecordUpdate(ctx context.Context, d *schema.ResourceData, m inte
 		// Parse Rdata
 		serial, ok := inst.Client(meta).ParseRData(ctx, recordType, record.Target)["serial"].(int)
 		if !ok {
-			return diag.Errorf("%v: %s, %q", tools.ErrInvalidType, "seral", "string")
+			return diag.Errorf("%v: %s, %q", tf.ErrInvalidType, "seral", "string")
 		}
 		if err := d.Set("serial", serial+1); err != nil {
-			return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+			return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 		}
 	}
 
@@ -970,7 +971,7 @@ func resourceDNSRecordUpdate(ctx context.Context, d *schema.ResourceData, m inte
 	}
 	// save hash
 	if err := d.Set("record_sha", sha1hash); err != nil {
-		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
 	// Give terraform the ID
 	if d.Id() == "" || strings.Contains(d.Id(), "#") {
@@ -997,16 +998,16 @@ func resourceDNSRecordRead(ctx context.Context, d *schema.ResourceData, m interf
 	var err error
 	var diags diag.Diagnostics
 
-	zone, err = tools.GetStringValue("zone", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	zone, err = tf.GetStringValue("zone", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	host, err = tools.GetStringValue("name", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	host, err = tf.GetStringValue("name", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	recordType, err = tools.GetStringValue("recordtype", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	recordType, err = tf.GetStringValue("recordtype", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 
@@ -1083,9 +1084,9 @@ func resourceDNSRecordRead(ctx context.Context, d *schema.ResourceData, m interf
 	case RRTypeMx:
 		// calc rdata sha from read record
 		rdataString := strings.Join(record.Target, " ")
-		recordSHA, err := tools.GetStringValue("record_sha", d)
+		recordSHA, err := tf.GetStringValue("record_sha", d)
 		sort.Strings(recordCreate.Target)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return diag.FromErr(err)
 		}
 		shaRdata := tools.GetSHAString(rdataString)
@@ -1106,8 +1107,8 @@ func resourceDNSRecordRead(ctx context.Context, d *schema.ResourceData, m interf
 			// has remote changed independently of TF?
 			if recordSHA != shaRdata && len(recordSHA) > 0 {
 				// another special case ... for instances record sha might not be representative of full resource
-				target, err := tools.GetListValue("target", d)
-				if err != nil && !errors.Is(err, tools.ErrNotFound) {
+				target, err := tf.GetListValue("target", d)
+				if err != nil && !errors.Is(err, tf.ErrNotFound) {
 					return diag.FromErr(err)
 				}
 				if len(target) != 1 || sha1hash != shaRdata {
@@ -1128,14 +1129,14 @@ func resourceDNSRecordRead(ctx context.Context, d *schema.ResourceData, m interf
 			newrdata = append(newrdata, rcontent)
 		}
 		if err := d.Set("target", newrdata); err != nil {
-			return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+			return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 		}
 		targets = newrdata
 	default:
 		// Parse Rdata. MX special
 		for fname, fvalue := range rdataFieldMap {
 			if err := d.Set(fname, fvalue); err != nil {
-				return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+				return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 			}
 		}
 	}
@@ -1151,8 +1152,8 @@ func resourceDNSRecordRead(ctx context.Context, d *schema.ResourceData, m interf
 		if !ok {
 			return diag.Errorf("'serial' is of invalid type; should be 'int'")
 		}
-		serial, err := tools.GetIntValue("serial", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		serial, err := tf.GetIntValue("serial", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return diag.FromErr(err)
 		}
 		if rdataSerial >= serial {
@@ -1169,7 +1170,7 @@ func resourceDNSRecordRead(ctx context.Context, d *schema.ResourceData, m interf
 		sha1hash = tools.GetSHAString(extractTlcString)
 	}
 	if err := d.Set("record_sha", sha1hash); err != nil {
-		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
 	// Give terraform the ID
 	if strings.Contains(d.Id(), "#") {
@@ -1244,29 +1245,29 @@ func resourceDNSRecordImport(d *schema.ResourceData, m interface{}) ([]*schema.R
 	}
 
 	if err := d.Set("zone", zone); err != nil {
-		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return nil, fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("name", recordset.Name); err != nil {
-		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return nil, fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("recordtype", recordset.RecordType); err != nil {
-		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return nil, fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("ttl", recordset.TTL); err != nil {
-		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return nil, fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 	}
 	targets := inst.Client(meta).ProcessRdata(ctx, recordset.Target, recordType)
 	if recordset.RecordType == "MX" {
 		// can't guarantee order of MX records. Forced to set pri, incr to 0 and targets as is
 		if err := d.Set("target", targets); err != nil {
-			return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+			return nil, fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 		}
 	} else {
 		// Parse Rdata
 		rdataFieldMap := inst.Client(meta).ParseRData(ctx, recordset.RecordType, recordset.Target) // returns map[string]interface{}
 		for fname, fvalue := range rdataFieldMap {
 			if err := d.Set(fname, fvalue); err != nil {
-				return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+				return nil, fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 			}
 		}
 	}
@@ -1283,7 +1284,7 @@ func resourceDNSRecordImport(d *schema.ResourceData, m interface{}) ([]*schema.R
 	importTargetString = strings.Join(targets, " ")
 	sha1hash := tools.GetSHAString(importTargetString)
 	if err := d.Set("record_sha", sha1hash); err != nil {
-		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return nil, fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 	}
 	d.SetId(fmt.Sprintf("%s#%s#%s", zone, recordName, recordType))
 	return []*schema.ResourceData{d}, nil
@@ -1298,19 +1299,19 @@ func resourceDNSRecordDelete(ctx context.Context, d *schema.ResourceData, m inte
 		session.WithContextLog(logger),
 	)
 
-	zone, err := tools.GetStringValue("zone", d)
+	zone, err := tf.GetStringValue("zone", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	host, err := tools.GetStringValue("name", d)
+	host, err := tf.GetStringValue("name", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	recordType, err := tools.GetStringValue("recordtype", d)
+	recordType, err := tf.GetStringValue("recordtype", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	ttl, err := tools.GetIntValue("ttl", d)
+	ttl, err := tf.GetIntValue("ttl", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -1320,8 +1321,8 @@ func resourceDNSRecordDelete(ctx context.Context, d *schema.ResourceData, m inte
 	getRecordLock(recordType).Lock()
 	defer getRecordLock(recordType).Unlock()
 
-	target, err := tools.GetListValue("target", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	target, err := tf.GetListValue("target", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 
@@ -1390,21 +1391,21 @@ func bindRecord(ctx context.Context, meta akamai.OperationMeta, d *schema.Resour
 
 	var host, recordType string
 	var err error
-	host, err = tools.GetStringValue("name", d)
+	host, err = tf.GetStringValue("name", d)
 	if err != nil {
 		return dns.RecordBody{}, err
 	}
-	recordType, err = tools.GetStringValue("recordtype", d)
+	recordType, err = tf.GetStringValue("recordtype", d)
 	if err != nil {
 		return dns.RecordBody{}, err
 	}
-	ttl, err := tools.GetIntValue("ttl", d)
+	ttl, err := tf.GetIntValue("ttl", d)
 	if err != nil {
 		return dns.RecordBody{}, err
 	}
 
-	target, err := tools.GetListValue("target", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	target, err := tf.GetListValue("target", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return dns.RecordBody{}, err
 	}
 	records, err := buildRecordsList(target, recordType, logger)
@@ -1426,8 +1427,8 @@ func newRecordCreate(ctx context.Context, meta akamai.OperationMeta, d *schema.R
 	switch recordType {
 	case RRTypeAfsdb:
 		records := make([]string, 0, len(target))
-		subtype, err := tools.GetIntValue("subtype", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		subtype, err := tf.GetIntValue("subtype", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
 		for _, recContent := range target {
@@ -1446,52 +1447,52 @@ func newRecordCreate(ctx context.Context, meta akamai.OperationMeta, d *schema.R
 		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
 
 	case RRTypeDnskey:
-		flags, err := tools.GetIntValue("flags", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		flags, err := tf.GetIntValue("flags", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
-		protocol, err := tools.GetIntValue("protocol", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		protocol, err := tf.GetIntValue("protocol", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
-		algorithm, err := tools.GetIntValue("algorithm", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		algorithm, err := tf.GetIntValue("algorithm", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
-		key, err := tools.GetStringValue("key", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		key, err := tf.GetStringValue("key", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
 		records := []string{strconv.Itoa(flags) + " " + strconv.Itoa(protocol) + " " + strconv.Itoa(algorithm) + " " + key}
 		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
 
 	case RRTypeDs:
-		digestType, err := tools.GetIntValue("digest_type", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		digestType, err := tf.GetIntValue("digest_type", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
-		keytag, err := tools.GetIntValue("keytag", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		keytag, err := tf.GetIntValue("keytag", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
-		algorithm, err := tools.GetIntValue("algorithm", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		algorithm, err := tf.GetIntValue("algorithm", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
-		digest, err := tools.GetStringValue("digest", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		digest, err := tf.GetStringValue("digest", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
 		records := []string{strconv.Itoa(keytag) + " " + strconv.Itoa(algorithm) + " " + strconv.Itoa(digestType) + " " + digest}
 		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
 
 	case RRTypeHinfo:
-		hardware, err := tools.GetStringValue("hardware", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		hardware, err := tf.GetStringValue("hardware", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
-		software, err := tools.GetStringValue("software", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		software, err := tf.GetStringValue("software", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
 
@@ -1521,8 +1522,8 @@ func newRecordCreate(ctx context.Context, meta akamai.OperationMeta, d *schema.R
 		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
 
 	case RRTypeMx:
-		zone, err := tools.GetStringValue("zone", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		zone, err := tf.GetStringValue("zone", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
 		logger.Debugf("MX record targets to process: %v", target)
@@ -1613,12 +1614,12 @@ func newRecordCreate(ctx context.Context, meta akamai.OperationMeta, d *schema.R
 		}
 		records := make([]string, 0, len(target)+len(rdata))
 
-		priority, err := tools.GetIntValue("priority", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		priority, err := tf.GetIntValue("priority", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
-		increment, err := tools.GetIntValue("priority_increment", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		increment, err := tf.GetIntValue("priority_increment", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
 		logger.Debugf("MX BIND Priority: %d ; Increment: %d", priority, increment)
@@ -1711,29 +1712,29 @@ func newRecordCreate(ctx context.Context, meta akamai.OperationMeta, d *schema.R
 		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
 
 	case RRTypeNaptr:
-		flagsnaptr, err := tools.GetStringValue("flagsnaptr", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		flagsnaptr, err := tf.GetStringValue("flagsnaptr", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
-		order, err := tools.GetIntValue("order", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		order, err := tf.GetIntValue("order", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
-		preference, err := tools.GetIntValue("preference", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		preference, err := tf.GetIntValue("preference", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
-		regexp, err := tools.GetStringValue("regexp", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		regexp, err := tf.GetStringValue("regexp", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
-		replacement, err := tools.GetStringValue("replacement", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		replacement, err := tf.GetStringValue("replacement", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
 		// Following three fields may have embedded backslash
-		service, err := tools.GetStringValue("service", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		service, err := tf.GetStringValue("service", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
 		if !strings.HasPrefix(service, `"`) {
@@ -1749,63 +1750,63 @@ func newRecordCreate(ctx context.Context, meta akamai.OperationMeta, d *schema.R
 		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
 
 	case RRTypeNsec3:
-		flags, err := tools.GetIntValue("flags", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		flags, err := tf.GetIntValue("flags", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
-		algorithm, err := tools.GetIntValue("algorithm", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		algorithm, err := tf.GetIntValue("algorithm", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
-		iterations, err := tools.GetIntValue("iterations", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		iterations, err := tf.GetIntValue("iterations", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
-		nextHashedOwnerName, err := tools.GetStringValue("next_hashed_owner_name", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		nextHashedOwnerName, err := tf.GetStringValue("next_hashed_owner_name", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
-		salt, err := tools.GetStringValue("salt", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		salt, err := tf.GetStringValue("salt", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
-		typeBitmaps, err := tools.GetStringValue("type_bitmaps", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		typeBitmaps, err := tf.GetStringValue("type_bitmaps", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
 		records := []string{strconv.Itoa(algorithm) + " " + strconv.Itoa(flags) + " " + strconv.Itoa(iterations) + " " + salt + " " + nextHashedOwnerName + " " + typeBitmaps}
 		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
 
 	case RRTypeNsec3Param:
-		flags, err := tools.GetIntValue("flags", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		flags, err := tf.GetIntValue("flags", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
-		algorithm, err := tools.GetIntValue("algorithm", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		algorithm, err := tf.GetIntValue("algorithm", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
-		iterations, err := tools.GetIntValue("iterations", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		iterations, err := tf.GetIntValue("iterations", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
-		salt, err := tools.GetStringValue("salt", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		salt, err := tf.GetStringValue("salt", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
 		records := []string{strconv.Itoa(algorithm) + " " + strconv.Itoa(flags) + " " + strconv.Itoa(iterations) + " " + salt}
 		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
 
 	case RRTypeRp:
-		mailbox, err := tools.GetStringValue("mailbox", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		mailbox, err := tf.GetStringValue("mailbox", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
 		if !strings.HasSuffix(mailbox, ".") {
 			mailbox = mailbox + "."
 		}
-		txt, err := tools.GetStringValue("txt", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		txt, err := tf.GetStringValue("txt", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
 		if !strings.HasSuffix(txt, ".") {
@@ -1815,40 +1816,40 @@ func newRecordCreate(ctx context.Context, meta akamai.OperationMeta, d *schema.R
 		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
 
 	case RRTypeRrsig:
-		expiration, err := tools.GetStringValue("expiration", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		expiration, err := tf.GetStringValue("expiration", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
-		inception, err := tools.GetStringValue("inception", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		inception, err := tf.GetStringValue("inception", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
-		originalTTL, err := tools.GetIntValue("original_ttl", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		originalTTL, err := tf.GetIntValue("original_ttl", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
-		algorithm, err := tools.GetIntValue("algorithm", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		algorithm, err := tf.GetIntValue("algorithm", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
-		labels, err := tools.GetIntValue("labels", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		labels, err := tf.GetIntValue("labels", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
-		keytag, err := tools.GetIntValue("keytag", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		keytag, err := tf.GetIntValue("keytag", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
-		signature, err := tools.GetStringValue("signature", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		signature, err := tf.GetStringValue("signature", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
-		signer, err := tools.GetStringValue("signer", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		signer, err := tf.GetStringValue("signer", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
-		typeCovered, err := tools.GetStringValue("type_covered", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		typeCovered, err := tf.GetStringValue("type_covered", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
 		records := []string{typeCovered + " " + strconv.Itoa(algorithm) + " " + strconv.Itoa(labels) + " " + strconv.Itoa(originalTTL) + " " + expiration + " " + inception + " " + strconv.Itoa(keytag) + " " + signer + " " + signature}
@@ -1856,16 +1857,16 @@ func newRecordCreate(ctx context.Context, meta akamai.OperationMeta, d *schema.R
 
 	case RRTypeSrv:
 		records := make([]string, 0, len(target))
-		priority, err := tools.GetIntValue("priority", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		priority, err := tf.GetIntValue("priority", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
-		weight, err := tools.GetIntValue("weight", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		weight, err := tf.GetIntValue("weight", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
-		port, err := tools.GetIntValue("port", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		port, err := tf.GetIntValue("port", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
 		for _, recContent := range target {
@@ -1884,51 +1885,51 @@ func newRecordCreate(ctx context.Context, meta akamai.OperationMeta, d *schema.R
 		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
 
 	case RRTypeSshfp:
-		algorithm, err := tools.GetIntValue("algorithm", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		algorithm, err := tf.GetIntValue("algorithm", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
-		fingerprintType, err := tools.GetIntValue("fingerprint_type", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		fingerprintType, err := tf.GetIntValue("fingerprint_type", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
-		fingerprint, err := tools.GetStringValue("fingerprint", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		fingerprint, err := tf.GetStringValue("fingerprint", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
 		records := []string{strconv.Itoa(algorithm) + " " + strconv.Itoa(fingerprintType) + " " + fingerprint}
 		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
 
 	case RRTypeSoa:
-		nameserver, err := tools.GetStringValue("name_server", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		nameserver, err := tf.GetStringValue("name_server", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
-		emailaddr, err := tools.GetStringValue("email_address", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		emailaddr, err := tf.GetStringValue("email_address", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
 		if !strings.HasSuffix(emailaddr, ".") {
 			emailaddr += "."
 		}
-		serial, err := tools.GetIntValue("serial", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		serial, err := tf.GetIntValue("serial", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
-		refresh, err := tools.GetIntValue("refresh", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		refresh, err := tf.GetIntValue("refresh", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
-		retry, err := tools.GetIntValue("retry", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		retry, err := tf.GetIntValue("retry", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
-		expiry, err := tools.GetIntValue("expiry", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		expiry, err := tf.GetIntValue("expiry", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
-		nxdomainttl, err := tools.GetIntValue("nxdomain_ttl", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		nxdomainttl, err := tf.GetIntValue("nxdomain_ttl", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
 
@@ -1936,36 +1937,36 @@ func newRecordCreate(ctx context.Context, meta akamai.OperationMeta, d *schema.R
 		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
 
 	case RRTypeAkamaiTlc:
-		dnsname, err := tools.GetStringValue("dns_name", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		dnsname, err := tf.GetStringValue("dns_name", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
-		answtype, err := tools.GetStringValue("answer_type", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		answtype, err := tf.GetStringValue("answer_type", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
 		records := []string{answtype + " " + dnsname}
 		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
 
 	case RRTypeCert:
-		certtype, err := tools.GetStringValue("type_mnemonic", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		certtype, err := tf.GetStringValue("type_mnemonic", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
-		typevalue, err := tools.GetIntValue("type_value", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		typevalue, err := tf.GetIntValue("type_value", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
-		keytag, err := tools.GetIntValue("keytag", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		keytag, err := tf.GetIntValue("keytag", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
-		algorithm, err := tools.GetIntValue("algorithm", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		algorithm, err := tf.GetIntValue("algorithm", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
-		certificate, err := tools.GetStringValue("certificate", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		certificate, err := tf.GetStringValue("certificate", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
 		// value or mnemonic type?
@@ -1976,36 +1977,36 @@ func newRecordCreate(ctx context.Context, meta akamai.OperationMeta, d *schema.R
 		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
 
 	case RRTypeTlsa:
-		usage, err := tools.GetIntValue("usage", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		usage, err := tf.GetIntValue("usage", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
-		selector, err := tools.GetIntValue("selector", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		selector, err := tf.GetIntValue("selector", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
-		matchtype, err := tools.GetIntValue("match_type", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		matchtype, err := tf.GetIntValue("match_type", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
-		certificate, err := tools.GetStringValue("certificate", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		certificate, err := tf.GetStringValue("certificate", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
 		records := []string{strconv.Itoa(usage) + " " + strconv.Itoa(selector) + " " + strconv.Itoa(matchtype) + " " + certificate}
 		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
 
 	case RRTypeSvcb, RRTypeHTTPS:
-		pri, err := tools.GetIntValue("svc_priority", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		pri, err := tf.GetIntValue("svc_priority", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
-		tname, err := tools.GetStringValue("target_name", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		tname, err := tf.GetStringValue("target_name", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
-		params, err := tools.GetStringValue("svc_params", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		params, err := tf.GetStringValue("svc_params", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
 		records := []string{strconv.Itoa(pri) + " " + tname + " " + params}
@@ -2078,8 +2079,8 @@ func buildRecordsList(target []interface{}, recordType string, logger log.Interf
 }
 
 func validateRecord(d *schema.ResourceData) error {
-	recordType, err := tools.GetStringValue("recordtype", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	recordType, err := tf.GetStringValue("recordtype", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
 
@@ -2133,23 +2134,23 @@ func validateRecord(d *schema.ResourceData) error {
 }
 
 func checkBasicRecordTypes(d *schema.ResourceData) error {
-	_, err := tools.GetStringValue("name", d)
+	_, err := tf.GetStringValue("name", d)
 	if err != nil {
-		if !errors.Is(err, tools.ErrNotFound) {
+		if !errors.Is(err, tf.ErrNotFound) {
 			return err
 		}
 		return fmt.Errorf("configuration argument host must be set")
 	}
-	_, err = tools.GetStringValue("recordtype", d)
+	_, err = tf.GetStringValue("recordtype", d)
 	if err != nil {
-		if !errors.Is(err, tools.ErrNotFound) {
+		if !errors.Is(err, tf.ErrNotFound) {
 			return err
 		}
 		return fmt.Errorf("configuration argument recordtype must be set")
 	}
-	_, err = tools.GetIntValue("ttl", d)
+	_, err = tf.GetIntValue("ttl", d)
 	if err != nil {
-		if !errors.Is(err, tools.ErrNotFound) {
+		if !errors.Is(err, tf.ErrNotFound) {
 			return err
 		}
 		return fmt.Errorf("configuration argument ttl must be set")
@@ -2158,8 +2159,8 @@ func checkBasicRecordTypes(d *schema.ResourceData) error {
 }
 
 func checkTargets(d *schema.ResourceData) error {
-	target, err := tools.GetListValue("target", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	target, err := tf.GetListValue("target", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
 	if len(target) == 0 {
@@ -2175,8 +2176,8 @@ func checkTargets(d *schema.ResourceData) error {
 }
 
 func checkAsdfRecord(d *schema.ResourceData) error {
-	subtype, err := tools.GetIntValue("subtype", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	subtype, err := tf.GetIntValue("subtype", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
 	if subtype == 0 {
@@ -2187,24 +2188,24 @@ func checkAsdfRecord(d *schema.ResourceData) error {
 }
 
 func checkDnskeyRecord(d *schema.ResourceData) error {
-	flags, err := tools.GetIntValue("flags", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	flags, err := tf.GetIntValue("flags", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
-	protocol, err := tools.GetIntValue("protocol", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	protocol, err := tf.GetIntValue("protocol", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
-	algorithm, err := tools.GetIntValue("algorithm", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	algorithm, err := tf.GetIntValue("algorithm", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
-	key, err := tools.GetStringValue("key", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	key, err := tf.GetStringValue("key", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
-	ttl, err := tools.GetIntValue("ttl", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	ttl, err := tf.GetIntValue("ttl", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
 
@@ -2233,20 +2234,20 @@ func checkDnskeyRecord(d *schema.ResourceData) error {
 }
 
 func checkDsRecord(d *schema.ResourceData) error {
-	digestType, err := tools.GetIntValue("digest_type", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	digestType, err := tf.GetIntValue("digest_type", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
-	keytag, err := tools.GetIntValue("keytag", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	keytag, err := tf.GetIntValue("keytag", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
-	algorithm, err := tools.GetIntValue("algorithm", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	algorithm, err := tf.GetIntValue("algorithm", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
-	digest, err := tools.GetStringValue("digest", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	digest, err := tf.GetStringValue("digest", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
 
@@ -2270,12 +2271,12 @@ func checkDsRecord(d *schema.ResourceData) error {
 }
 
 func checkHinfoRecord(d *schema.ResourceData) error {
-	hardware, err := tools.GetStringValue("hardware", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	hardware, err := tf.GetStringValue("hardware", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
-	software, err := tools.GetStringValue("software", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	software, err := tf.GetStringValue("software", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
 
@@ -2291,8 +2292,8 @@ func checkHinfoRecord(d *schema.ResourceData) error {
 }
 
 func checkMxRecord(d *schema.ResourceData) error {
-	priority, err := tools.GetIntValue("priority", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	priority, err := tf.GetIntValue("priority", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
 
@@ -2308,28 +2309,28 @@ func checkMxRecord(d *schema.ResourceData) error {
 }
 
 func checkNaptrRecord(d *schema.ResourceData) error {
-	flagsnaptr, err := tools.GetStringValue("flagsnaptr", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	flagsnaptr, err := tf.GetStringValue("flagsnaptr", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
-	order, err := tools.GetIntValue("order", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	order, err := tf.GetIntValue("order", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
-	preference, err := tools.GetIntValue("preference", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	preference, err := tf.GetIntValue("preference", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
-	regexp, err := tools.GetStringValue("regexp", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	regexp, err := tf.GetStringValue("regexp", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
-	replacement, err := tools.GetStringValue("replacement", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	replacement, err := tf.GetStringValue("replacement", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
-	service, err := tools.GetStringValue("service", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	service, err := tf.GetStringValue("service", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
 
@@ -2365,28 +2366,28 @@ func checkNaptrRecord(d *schema.ResourceData) error {
 }
 
 func checkNsec3Record(d *schema.ResourceData) error {
-	flags, err := tools.GetIntValue("flags", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	flags, err := tf.GetIntValue("flags", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
-	algorithm, err := tools.GetIntValue("algorithm", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	algorithm, err := tf.GetIntValue("algorithm", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
-	iterations, err := tools.GetIntValue("iterations", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	iterations, err := tf.GetIntValue("iterations", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
-	nextHashedOwnerName, err := tools.GetStringValue("next_hashed_owner_name", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	nextHashedOwnerName, err := tf.GetStringValue("next_hashed_owner_name", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
-	salt, err := tools.GetStringValue("salt", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	salt, err := tf.GetStringValue("salt", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
-	typeBitmaps, err := tools.GetStringValue("type_bitmaps", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	typeBitmaps, err := tf.GetStringValue("type_bitmaps", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
 
@@ -2417,20 +2418,20 @@ func checkNsec3Record(d *schema.ResourceData) error {
 }
 
 func checkNsec3ParamRecord(d *schema.ResourceData) error {
-	flags, err := tools.GetIntValue("flags", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	flags, err := tf.GetIntValue("flags", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
-	algorithm, err := tools.GetIntValue("algorithm", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	algorithm, err := tf.GetIntValue("algorithm", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
-	iterations, err := tools.GetIntValue("iterations", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	iterations, err := tf.GetIntValue("iterations", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
-	salt, err := tools.GetStringValue("salt", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	salt, err := tf.GetStringValue("salt", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
 
@@ -2458,12 +2459,12 @@ func checkNsec3ParamRecord(d *schema.ResourceData) error {
 }
 
 func checkRpRecord(d *schema.ResourceData) error {
-	mailbox, err := tools.GetStringValue("mailbox", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	mailbox, err := tf.GetStringValue("mailbox", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
-	txt, err := tools.GetStringValue("txt", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	txt, err := tf.GetStringValue("txt", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
 
@@ -2483,40 +2484,40 @@ func checkRpRecord(d *schema.ResourceData) error {
 }
 
 func checkRrsigRecord(d *schema.ResourceData) error {
-	expiration, err := tools.GetStringValue("expiration", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	expiration, err := tf.GetStringValue("expiration", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
-	inception, err := tools.GetStringValue("inception", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	inception, err := tf.GetStringValue("inception", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
-	originalTTL, err := tools.GetIntValue("original_ttl", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	originalTTL, err := tf.GetIntValue("original_ttl", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
-	algorithm, err := tools.GetIntValue("algorithm", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	algorithm, err := tf.GetIntValue("algorithm", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
-	labels, err := tools.GetIntValue("labels", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	labels, err := tf.GetIntValue("labels", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
-	keytag, err := tools.GetIntValue("keytag", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	keytag, err := tf.GetIntValue("keytag", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
-	signature, err := tools.GetStringValue("signature", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	signature, err := tf.GetStringValue("signature", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
-	signer, err := tools.GetStringValue("signer", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	signer, err := tf.GetStringValue("signer", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
-	typeCovered, err := tools.GetStringValue("type_covered", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	typeCovered, err := tf.GetStringValue("type_covered", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
 
@@ -2564,16 +2565,16 @@ func checkRrsigRecord(d *schema.ResourceData) error {
 }
 
 func checkSrvRecord(d *schema.ResourceData) error {
-	priority, err := tools.GetIntValue("priority", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	priority, err := tf.GetIntValue("priority", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
-	weight, err := tools.GetIntValue("weight", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	weight, err := tf.GetIntValue("weight", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
-	port, err := tools.GetIntValue("port", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	port, err := tf.GetIntValue("port", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
 
@@ -2601,16 +2602,16 @@ func checkSrvRecord(d *schema.ResourceData) error {
 }
 
 func checkSshfpRecord(d *schema.ResourceData) error {
-	algorithm, err := tools.GetIntValue("algorithm", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	algorithm, err := tf.GetIntValue("algorithm", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
-	fingerprintType, err := tools.GetIntValue("fingerprint_type", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	fingerprintType, err := tf.GetIntValue("fingerprint_type", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
-	fingerprint, err := tools.GetStringValue("fingerprint", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	fingerprint, err := tf.GetStringValue("fingerprint", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
 
@@ -2635,28 +2636,28 @@ func checkSshfpRecord(d *schema.ResourceData) error {
 
 func checkSoaRecord(d *schema.ResourceData) error {
 
-	nameserver, err := tools.GetStringValue("name_server", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	nameserver, err := tf.GetStringValue("name_server", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
-	emailaddr, err := tools.GetStringValue("email_address", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	emailaddr, err := tf.GetStringValue("email_address", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
-	refresh, err := tools.GetIntValue("refresh", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	refresh, err := tf.GetIntValue("refresh", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
-	retry, err := tools.GetIntValue("retry", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	retry, err := tf.GetIntValue("retry", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
-	expiry, err := tools.GetIntValue("expiry", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	expiry, err := tf.GetIntValue("expiry", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
-	nxdomainttl, err := tools.GetIntValue("nxdomain_ttl", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	nxdomainttl, err := tf.GetIntValue("nxdomain_ttl", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
 
@@ -2728,16 +2729,16 @@ func checkCaaRecord(d *schema.ResourceData) error {
 }
 
 func checkCertRecord(d *schema.ResourceData) error {
-	typemnemonic, err := tools.GetStringValue("type_mnemonic", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	typemnemonic, err := tf.GetStringValue("type_mnemonic", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
-	typevalue, err := tools.GetIntValue("type_value", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	typevalue, err := tf.GetIntValue("type_value", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
-	certificate, err := tools.GetStringValue("certificate", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	certificate, err := tf.GetStringValue("certificate", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
 
@@ -2762,12 +2763,12 @@ func checkCertRecord(d *schema.ResourceData) error {
 
 func checkTlsaRecord(d *schema.ResourceData) error {
 
-	usage, err := tools.GetIntValue("usage", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	usage, err := tf.GetIntValue("usage", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
-	certificate, err := tools.GetStringValue("certificate", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	certificate, err := tf.GetStringValue("certificate", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
 
@@ -2799,16 +2800,16 @@ func checkHTTPSRecord(d *schema.ResourceData) error {
 
 func checkServiceRecord(d *schema.ResourceData, rtype string) error {
 
-	pri, err := tools.GetIntValue("svc_priority", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	pri, err := tf.GetIntValue("svc_priority", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
-	tname, err := tools.GetStringValue("target_name", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	tname, err := tf.GetStringValue("target_name", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
-	params, err := tools.GetStringValue("svc_params", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	params, err := tf.GetStringValue("svc_params", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
 

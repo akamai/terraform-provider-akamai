@@ -9,7 +9,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -71,7 +71,7 @@ func resourceAttackGroupCreate(ctx context.Context, d *schema.ResourceData, m in
 	logger := meta.Log("APPSEC", "resourceAttackGroupCreate")
 	logger.Debugf(" in resourceAttackGroupCreate")
 
-	configID, err := tools.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -79,20 +79,20 @@ func resourceAttackGroupCreate(ctx context.Context, d *schema.ResourceData, m in
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	policyID, err := tools.GetStringValue("security_policy_id", d)
+	policyID, err := tf.GetStringValue("security_policy_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	attackgroup, err := tools.GetStringValue("attack_group", d)
+	attackgroup, err := tf.GetStringValue("attack_group", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	action, err := tools.GetStringValue("attack_group_action", d)
+	action, err := tf.GetStringValue("attack_group_action", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	conditionexception, err := tools.GetStringValue("condition_exception", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	conditionexception, err := tf.GetStringValue("condition_exception", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 	jsonPayloadRaw := []byte(conditionexception)
@@ -155,16 +155,16 @@ func resourceAttackGroupRead(ctx context.Context, d *schema.ResourceData, m inte
 	}
 
 	if err := d.Set("config_id", getAttackGroup.ConfigID); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("security_policy_id", getAttackGroup.PolicyID); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("attack_group", getAttackGroup.Group); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("attack_group_action", string(attackgroup.Action)); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	if !attackgroup.IsEmptyConditionException() {
@@ -173,7 +173,7 @@ func resourceAttackGroupRead(ctx context.Context, d *schema.ResourceData, m inte
 			return diag.Errorf("%s", "Error Marshalling condition exception")
 		}
 		if err := d.Set("condition_exception", string(jsonBody)); err != nil {
-			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 		}
 	}
 
@@ -201,12 +201,12 @@ func resourceAttackGroupUpdate(ctx context.Context, d *schema.ResourceData, m in
 	policyID := iDParts[1]
 	group := iDParts[2]
 
-	action, err := tools.GetStringValue("attack_group_action", d)
+	action, err := tf.GetStringValue("attack_group_action", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	conditionexception, err := tools.GetStringValue("condition_exception", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	conditionexception, err := tf.GetStringValue("condition_exception", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 

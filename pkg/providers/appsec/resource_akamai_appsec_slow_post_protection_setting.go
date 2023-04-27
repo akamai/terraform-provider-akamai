@@ -8,7 +8,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -78,7 +78,7 @@ func resourceSlowPostProtectionSettingCreate(ctx context.Context, d *schema.Reso
 	logger := meta.Log("APPSEC", "resourceSlowPostProtectionSettingCreate")
 	logger.Debugf("in resourceSlowPostProtectionSettingCreate")
 
-	configID, err := tools.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -86,24 +86,24 @@ func resourceSlowPostProtectionSettingCreate(ctx context.Context, d *schema.Reso
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	policyID, err := tools.GetStringValue("security_policy_id", d)
+	policyID, err := tf.GetStringValue("security_policy_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	slowrateaction, err := tools.GetStringValue("slow_rate_action", d)
+	slowrateaction, err := tf.GetStringValue("slow_rate_action", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	slowratethresholdrate, err := tools.GetIntValue("slow_rate_threshold_rate", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	slowratethresholdrate, err := tf.GetIntValue("slow_rate_threshold_rate", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	slowratethresholdperiod, err := tools.GetIntValue("slow_rate_threshold_period", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	slowratethresholdperiod, err := tf.GetIntValue("slow_rate_threshold_period", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	durationthresholdtimeout, err := tools.GetIntValue("duration_threshold_timeout", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	durationthresholdtimeout, err := tf.GetIntValue("duration_threshold_timeout", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 
@@ -161,25 +161,25 @@ func resourceSlowPostProtectionSettingRead(ctx context.Context, d *schema.Resour
 	}
 
 	if err := d.Set("config_id", configID); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err = d.Set("security_policy_id", policyID); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err = d.Set("slow_rate_action", slowPostProtectionSettings.Action); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if slowPostProtectionSettings.SlowRateThreshold != nil {
 		if err := d.Set("slow_rate_threshold_rate", slowPostProtectionSettings.SlowRateThreshold.Rate); err != nil {
-			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 		}
 		if err := d.Set("slow_rate_threshold_period", slowPostProtectionSettings.SlowRateThreshold.Period); err != nil {
-			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 		}
 	}
 	if slowPostProtectionSettings.DurationThreshold != nil {
 		if err := d.Set("duration_threshold_timeout", slowPostProtectionSettings.DurationThreshold.Timeout); err != nil {
-			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 		}
 	}
 	return nil
@@ -204,20 +204,20 @@ func resourceSlowPostProtectionSettingUpdate(ctx context.Context, d *schema.Reso
 		return diag.FromErr(err)
 	}
 	policyID := iDParts[1]
-	slowrateaction, err := tools.GetStringValue("slow_rate_action", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	slowrateaction, err := tf.GetStringValue("slow_rate_action", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	slowratethresholdrate, err := tools.GetIntValue("slow_rate_threshold_rate", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	slowratethresholdrate, err := tf.GetIntValue("slow_rate_threshold_rate", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	slowratethresholdperiod, err := tools.GetIntValue("slow_rate_threshold_period", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	slowratethresholdperiod, err := tf.GetIntValue("slow_rate_threshold_period", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	durationthresholdtimeout, err := tools.GetIntValue("duration_threshold_timeout", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	durationthresholdtimeout, err := tf.GetIntValue("duration_threshold_timeout", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 

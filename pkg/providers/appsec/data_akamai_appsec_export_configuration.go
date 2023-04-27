@@ -7,8 +7,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
-
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -52,11 +51,11 @@ func dataSourceExportConfigurationRead(ctx context.Context, d *schema.ResourceDa
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "dataSourceExportConfigurationRead")
 
-	configID, err := tools.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := tools.GetIntValue("version", d)
+	version, err := tf.GetIntValue("version", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -73,7 +72,7 @@ func dataSourceExportConfigurationRead(ctx context.Context, d *schema.ResourceDa
 	}
 
 	if err := d.Set("json", string(jsonBody)); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	searchlist, ok := d.GetOk("search")
@@ -93,7 +92,7 @@ func dataSourceExportConfigurationRead(ctx context.Context, d *schema.ResourceDa
 
 		if len(outputtextresult) > 0 {
 			if err := d.Set("output_text", outputtextresult); err != nil {
-				return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+				return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 			}
 		}
 	}

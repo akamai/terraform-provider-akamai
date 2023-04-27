@@ -22,8 +22,8 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/edgegrid"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/config"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
 	"github.com/akamai/terraform-provider-akamai/v3/version"
 )
 
@@ -168,35 +168,35 @@ func configureContext(ctx context.Context, d *schema.ResourceData) (interface{},
 		}
 	}
 
-	cacheEnabled, err := tools.GetBoolValue("cache_enabled", d)
+	cacheEnabled, err := tf.GetBoolValue("cache_enabled", d)
 	if err != nil && !IsNotFoundError(err) {
 		return nil, diag.FromErr(err)
 	}
 
 	edgercOps := []edgegrid.Option{edgegrid.WithEnv(true)}
 
-	edgercPath, err := tools.GetStringValue("edgerc", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	edgercPath, err := tf.GetStringValue("edgerc", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return nil, diag.FromErr(err)
 	}
 	edgercPath = getEdgercPath(edgercPath)
 
 	edgercOps = append(edgercOps, edgegrid.WithFile(edgercPath))
-	edgercSection, err := tools.GetStringValue("config_section", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	edgercSection, err := tf.GetStringValue("config_section", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return nil, diag.FromErr(err)
 	}
 	if err == nil {
 		edgercOps = append(edgercOps, edgegrid.WithSection(edgercSection))
 	}
-	envs, err := tools.GetSetValue("config", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	envs, err := tf.GetSetValue("config", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return nil, diag.FromErr(err)
 	}
 	if err == nil && len(envs.List()) > 0 {
 		envsMap, ok := envs.List()[0].(map[string]interface{})
 		if !ok {
-			return nil, diag.FromErr(fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "config", "map[string]interface{}"))
+			return nil, diag.FromErr(fmt.Errorf("%w: %s, %q", tf.ErrInvalidType, "config", "map[string]interface{}"))
 		}
 		err = setEdgegridEnvs(envsMap, edgercSection)
 		if err != nil {
@@ -204,8 +204,8 @@ func configureContext(ctx context.Context, d *schema.ResourceData) (interface{},
 		}
 	}
 
-	requestLimit, err := tools.GetIntValue("request_limit", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	requestLimit, err := tf.GetIntValue("request_limit", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return nil, diag.FromErr(err)
 	}
 
@@ -265,27 +265,27 @@ func setEdgegridEnvs(envsMap map[string]interface{}, section string) error {
 		case "ACCESS_TOKEN":
 			value, ok = envsMap["access_token"].(string)
 			if !ok {
-				return fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "access_token", "string")
+				return fmt.Errorf("%w: %s, %q", tf.ErrInvalidType, "access_token", "string")
 			}
 		case "CLIENT_TOKEN":
 			value, ok = envsMap["client_token"].(string)
 			if !ok {
-				return fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "client_token", "string")
+				return fmt.Errorf("%w: %s, %q", tf.ErrInvalidType, "client_token", "string")
 			}
 		case "HOST":
 			value, ok = envsMap["host"].(string)
 			if !ok {
-				return fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "host", "string")
+				return fmt.Errorf("%w: %s, %q", tf.ErrInvalidType, "host", "string")
 			}
 		case "CLIENT_SECRET":
 			value, ok = envsMap["client_secret"].(string)
 			if !ok {
-				return fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "client_secret", "string")
+				return fmt.Errorf("%w: %s, %q", tf.ErrInvalidType, "client_secret", "string")
 			}
 		case "MAX_BODY":
 			maxBody, ok := envsMap["max_body"].(int)
 			if !ok {
-				return fmt.Errorf("%w: %s, %q", tools.ErrInvalidType, "max_body", "int")
+				return fmt.Errorf("%w: %s, %q", tf.ErrInvalidType, "max_body", "int")
 			}
 			value = strconv.Itoa(maxBody)
 		}

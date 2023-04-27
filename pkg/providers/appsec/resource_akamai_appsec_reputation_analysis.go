@@ -8,7 +8,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -60,7 +60,7 @@ func resourceReputationAnalysisCreate(ctx context.Context, d *schema.ResourceDat
 	logger := meta.Log("APPSEC", "resourceReputationAnalysisCreate")
 	logger.Debugf("in resourceReputationAnalysisCreate")
 
-	configID, err := tools.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -68,15 +68,15 @@ func resourceReputationAnalysisCreate(ctx context.Context, d *schema.ResourceDat
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	policyID, err := tools.GetStringValue("security_policy_id", d)
+	policyID, err := tf.GetStringValue("security_policy_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	forwardToHTTPHeader, err := tools.GetBoolValue("forward_to_http_header", d)
+	forwardToHTTPHeader, err := tf.GetBoolValue("forward_to_http_header", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	forwardSharedIPToHTTPHeaderSiem, err := tools.GetBoolValue("forward_shared_ip_to_http_header_siem", d)
+	forwardSharedIPToHTTPHeaderSiem, err := tf.GetBoolValue("forward_shared_ip_to_http_header_siem", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -133,16 +133,16 @@ func resourceReputationAnalysisRead(ctx context.Context, d *schema.ResourceData,
 	}
 
 	if err := d.Set("config_id", getReputationAnalysis.ConfigID); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("security_policy_id", getReputationAnalysis.PolicyID); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("forward_to_http_header", resp.ForwardToHTTPHeader); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("forward_shared_ip_to_http_header_siem", resp.ForwardSharedIPToHTTPHeaderAndSIEM); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	return nil
@@ -167,12 +167,12 @@ func resourceReputationAnalysisUpdate(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 	policyID := iDParts[1]
-	forwardToHTTPHeader, err := tools.GetBoolValue("forward_to_http_header", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	forwardToHTTPHeader, err := tf.GetBoolValue("forward_to_http_header", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	forwardSharedIPToHTTPHeaderSiem, err := tools.GetBoolValue("forward_shared_ip_to_http_header_siem", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	forwardSharedIPToHTTPHeaderSiem, err := tf.GetBoolValue("forward_shared_ip_to_http_header_siem", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 

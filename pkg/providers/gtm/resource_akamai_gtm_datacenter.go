@@ -8,12 +8,11 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
-
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/gtm"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/session"
 
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -172,12 +171,12 @@ func resourceGTMv1DatacenterCreate(ctx context.Context, d *schema.ResourceData, 
 	datacenterCreateLock.Lock()
 	defer datacenterCreateLock.Unlock()
 
-	domain, err := tools.GetStringValue("domain", d)
+	domain, err := tf.GetStringValue("domain", d)
 	if err != nil {
 		logger.Errorf("Domain not initialized")
 		return diag.FromErr(err)
 	}
-	datacenterName, err := tools.GetStringValue("nickname", d)
+	datacenterName, err := tf.GetStringValue("nickname", d)
 	if err != nil {
 		logger.Errorf("nickname not initialized")
 		return diag.FromErr(err)
@@ -206,7 +205,7 @@ func resourceGTMv1DatacenterCreate(ctx context.Context, d *schema.ResourceData, 
 			Summary:  cStatus.Status.Message,
 		})
 	}
-	waitOnComplete, err := tools.GetBoolValue("wait_on_complete", d)
+	waitOnComplete, err := tf.GetBoolValue("wait_on_complete", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -326,7 +325,7 @@ func resourceGTMv1DatacenterUpdate(ctx context.Context, d *schema.ResourceData, 
 
 	}
 
-	waitOnComplete, err := tools.GetBoolValue("wait_on_complete", d)
+	waitOnComplete, err := tf.GetBoolValue("wait_on_complete", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -431,7 +430,7 @@ func resourceGTMv1DatacenterDelete(ctx context.Context, d *schema.ResourceData, 
 		})
 	}
 
-	waitOnComplete, err := tools.GetBoolValue("wait_on_complete", d)
+	waitOnComplete, err := tf.GetBoolValue("wait_on_complete", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -475,62 +474,62 @@ func populateDatacenterObject(d *schema.ResourceData, dc *gtm.Datacenter, m inte
 	meta := akamai.Meta(m)
 	logger := meta.Log("Akamai GTM", "populateDatacenterObject")
 
-	vstr, err := tools.GetStringValue("nickname", d)
+	vstr, err := tf.GetStringValue("nickname", d)
 	if err == nil {
 		dc.Nickname = vstr
 	}
-	vstr, err = tools.GetStringValue("city", d)
+	vstr, err = tf.GetStringValue("city", d)
 	if err == nil || d.HasChange("city") {
 		dc.City = vstr
 	}
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		logger.Errorf("populateDataCenterObject() city failed: %v", err.Error())
 		return fmt.Errorf("Datacenter Object could not be populated: %v", err.Error())
 	}
 
-	vint, err := tools.GetIntValue("clone_of", d)
+	vint, err := tf.GetIntValue("clone_of", d)
 	if err == nil || d.HasChange("clone_of") {
 		dc.CloneOf = vint
 	}
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		logger.Errorf("populateDataCenterObject() clone_of failed: %v", err.Error())
 		return fmt.Errorf("Datacenter Object could not be populated: %v", err.Error())
 	}
 
-	cloudServerHostHeaderOverride, err := tools.GetBoolValue("cloud_server_host_header_override", d)
+	cloudServerHostHeaderOverride, err := tf.GetBoolValue("cloud_server_host_header_override", d)
 	if err != nil {
 		logger.Errorf("populateDataCenterObject() failed: cloud_server_host_header_override not set: %v", err.Error())
 		return fmt.Errorf("Datacenter Object could not be populated: %v", err.Error())
 	}
 	dc.CloudServerHostHeaderOverride = cloudServerHostHeaderOverride
 
-	cloudServerTargeting, err := tools.GetBoolValue("cloud_server_targeting", d)
+	cloudServerTargeting, err := tf.GetBoolValue("cloud_server_targeting", d)
 	if err != nil {
 		logger.Errorf("cloud_server_targeting cloud_server_targeting not set: %s", err.Error())
 		return fmt.Errorf("Datacenter Object could not be populated: %v", err.Error())
 	}
 	dc.CloudServerTargeting = cloudServerTargeting
 
-	vstr, err = tools.GetStringValue("continent", d)
+	vstr, err = tf.GetStringValue("continent", d)
 	if err == nil || d.HasChange("continent") {
 		dc.Continent = vstr
 	}
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		logger.Errorf("populateDataCenterObject() continent failed: %v", err.Error())
 		return fmt.Errorf("Datacenter Object could not be populated: %v", err.Error())
 	}
 
-	vstr, err = tools.GetStringValue("country", d)
+	vstr, err = tf.GetStringValue("country", d)
 	if err == nil || d.HasChange("country") {
 		dc.Country = vstr
 	}
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		logger.Errorf("populateDataCenterObject() country failed: %v", err.Error())
 		return fmt.Errorf("Datacenter Object could not be populated: %v", err.Error())
 	}
 
 	// pull apart Set
-	if dloList, err := tools.GetInterfaceArrayValue("default_load_object", d); err != nil || len(dloList) == 0 {
+	if dloList, err := tf.GetInterfaceArrayValue("default_load_object", d); err != nil || len(dloList) == 0 {
 		dc.DefaultLoadObject = nil
 	} else {
 		dloObject := gtm.NewLoadObject()
@@ -571,71 +570,71 @@ func populateDatacenterObject(d *schema.ResourceData, dc *gtm.Datacenter, m inte
 		dc.DefaultLoadObject = dloObject
 	}
 
-	vfloat, err := tools.GetFloat64Value("latitude", d)
+	vfloat, err := tf.GetFloat64Value("latitude", d)
 	if err == nil || d.HasChange("latitude") {
 		dc.Latitude = vfloat
 	}
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		logger.Errorf("populateDataCenterObject() latitude failed: %v", err.Error())
 		return fmt.Errorf("Datacenter Object could not be populated: %v", err.Error())
 	}
 
-	vfloat, err = tools.GetFloat64Value("longitude", d)
+	vfloat, err = tf.GetFloat64Value("longitude", d)
 	if err == nil || d.HasChange("longitude") {
 		dc.Longitude = vfloat
 	}
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		logger.Errorf("populateDataCenterObject() longitude failed: %v", err.Error())
 		return fmt.Errorf("Datacenter Object could not be populated: %v", err.Error())
 	}
 
-	vint, err = tools.GetIntValue("ping_interval", d)
+	vint, err = tf.GetIntValue("ping_interval", d)
 	if err == nil {
 		dc.PingInterval = vint
 	}
-	vint, err = tools.GetIntValue("ping_packet_size", d)
+	vint, err = tf.GetIntValue("ping_packet_size", d)
 	if err == nil {
 		dc.PingPacketSize = vint
 	}
-	vint, err = tools.GetIntValue("datacenter_id", d)
+	vint, err = tf.GetIntValue("datacenter_id", d)
 	if err == nil {
 		dc.DatacenterId = vint
 	}
-	vint, err = tools.GetIntValue("score_penalty", d)
+	vint, err = tf.GetIntValue("score_penalty", d)
 	if err == nil {
 		dc.ScorePenalty = vint
 	}
-	vint, err = tools.GetIntValue("servermonitor_liveness_count", d)
+	vint, err = tf.GetIntValue("servermonitor_liveness_count", d)
 	if err == nil || d.HasChange("servermonitor_liveness_count") {
 		dc.ServermonitorLivenessCount = vint
 		if err != nil {
 			logger.Warnf("populateDataCenterObject() failed: %v", err.Error())
 		}
 	}
-	vint, err = tools.GetIntValue("servermonitor_load_count", d)
+	vint, err = tf.GetIntValue("servermonitor_load_count", d)
 	if err == nil || d.HasChange("servermonitor_load_count") {
 		dc.ServermonitorLoadCount = vint
 		if err != nil {
 			logger.Warnf("populateDataCenterObject() failed: %v", err.Error())
 		}
 	}
-	vstr, err = tools.GetStringValue("servermonitor_pool", d)
+	vstr, err = tf.GetStringValue("servermonitor_pool", d)
 	if err == nil || d.HasChange("servermonitor_pool") {
 		dc.ServermonitorPool = vstr
 		if err != nil {
 			logger.Warnf("populateDataCenterObject() failed: %v", err.Error())
 		}
 	}
-	vstr, err = tools.GetStringValue("state_or_province", d)
+	vstr, err = tf.GetStringValue("state_or_province", d)
 	if err == nil || d.HasChange("state_or_province") {
 		dc.StateOrProvince = vstr
 	}
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		logger.Warnf("populateDataCenterObject() state_or_province failed: %v", err.Error())
 		return fmt.Errorf("Datacenter Object could not be populated: %v", err.Error())
 	}
 
-	virtual, err := tools.GetBoolValue("virtual", d)
+	virtual, err := tf.GetBoolValue("virtual", d)
 	dc.Virtual = virtual
 	if err != nil {
 		logger.Warnf("virtual not set: %s", err.Error())
@@ -664,7 +663,7 @@ func populateTerraformDCState(d *schema.ResourceData, dc *gtm.Datacenter, m inte
 			logger.Errorf("populateTerraformDCState failed: %s", err.Error())
 		}
 	}
-	dloStateList, err := tools.GetInterfaceArrayValue("default_load_object", d)
+	dloStateList, err := tf.GetInterfaceArrayValue("default_load_object", d)
 	if err != nil {
 		dloStateList = make([]interface{}, 0, 1)
 	}

@@ -8,6 +8,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/datastream"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -87,8 +88,8 @@ func dataSourceDatasetFieldsRead(ctx context.Context, rd *schema.ResourceData, m
 	logger.Debug("Listing dataset fields")
 	client := inst.Client(meta)
 
-	template, err := tools.GetStringValue("template_name", rd)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	template, err := tf.GetStringValue("template_name", rd)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 	getDatasetFieldsRequest := datastream.GetDatasetFieldsRequest{
@@ -102,7 +103,7 @@ func dataSourceDatasetFieldsRead(ctx context.Context, rd *schema.ResourceData, m
 	fields := parseFields(dataSets)
 
 	if err := rd.Set("fields", fields); err != nil {
-		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
 
 	// ignoring the GetMd5Sum error, because `fields` is already initialized

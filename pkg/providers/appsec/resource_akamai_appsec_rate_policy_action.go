@@ -7,8 +7,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
-
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -68,7 +67,7 @@ func resourceRatePolicyActionCreate(ctx context.Context, d *schema.ResourceData,
 	logger := meta.Log("APPSEC", "resourceRatePolicyActionCreate")
 	logger.Debugf("in resourceRatePolicyActionCreate")
 
-	configID, err := tools.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -76,19 +75,19 @@ func resourceRatePolicyActionCreate(ctx context.Context, d *schema.ResourceData,
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	securityPolicyID, err := tools.GetStringValue("security_policy_id", d)
+	securityPolicyID, err := tf.GetStringValue("security_policy_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	ratePolicyID, err := tools.GetIntValue("rate_policy_id", d)
+	ratePolicyID, err := tf.GetIntValue("rate_policy_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	ipv4action, err := tools.GetStringValue("ipv4_action", d)
+	ipv4action, err := tf.GetStringValue("ipv4_action", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	ipv6action, err := tools.GetStringValue("ipv6_action", d)
+	ipv6action, err := tf.GetStringValue("ipv6_action", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -151,21 +150,21 @@ func resourceRatePolicyActionRead(ctx context.Context, d *schema.ResourceData, m
 	}
 
 	if err := d.Set("config_id", configID); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("security_policy_id", securityPolicyID); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("rate_policy_id", ratePolicyID); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	for _, action := range ratepolicyactions.RatePolicyActions {
 		if action.ID == ratePolicyID {
 			if err := d.Set("ipv4_action", action.Ipv4Action); err != nil {
-				return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+				return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 			}
 			if err := d.Set("ipv6_action", action.Ipv6Action); err != nil {
-				return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+				return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 			}
 			break
 		}
@@ -197,11 +196,11 @@ func resourceRatePolicyActionUpdate(ctx context.Context, d *schema.ResourceData,
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	ipv4action, err := tools.GetStringValue("ipv4_action", d)
+	ipv4action, err := tf.GetStringValue("ipv4_action", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	ipv6action, err := tools.GetStringValue("ipv6_action", d)
+	ipv6action, err := tf.GetStringValue("ipv6_action", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}

@@ -9,7 +9,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -58,12 +58,12 @@ func resourceCustomRuleCreate(ctx context.Context, d *schema.ResourceData, m int
 	logger := meta.Log("APPSEC", "resourceCustomRuleCreate")
 	logger.Debugf("in resourceCustomRuleCreate")
 
-	configID, err := tools.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	jsonpostpayload, err := tools.GetStringValue("custom_rule", d)
+	jsonpostpayload, err := tf.GetStringValue("custom_rule", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -82,7 +82,7 @@ func resourceCustomRuleCreate(ctx context.Context, d *schema.ResourceData, m int
 	}
 
 	if err := d.Set("custom_rule_id", customrule.ID); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	d.SetId(fmt.Sprintf("%d:%d", createCustomRule.ConfigID, customrule.ID))
@@ -122,11 +122,11 @@ func resourceCustomRuleRead(ctx context.Context, d *schema.ResourceData, m inter
 	}
 
 	if err := d.Set("config_id", getCustomRule.ConfigID); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	if err := d.Set("custom_rule_id", getCustomRule.ID); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	jsonBody, err := json.Marshal(customrule)
@@ -135,7 +135,7 @@ func resourceCustomRuleRead(ctx context.Context, d *schema.ResourceData, m inter
 	}
 
 	if err := d.Set("custom_rule", string(jsonBody)); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	return nil
 }

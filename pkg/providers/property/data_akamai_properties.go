@@ -9,6 +9,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/papi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
 )
 
@@ -19,12 +20,12 @@ func dataSourceProperties() *schema.Resource {
 			"group_id": {
 				Type:             schema.TypeString,
 				Required:         true,
-				ValidateDiagFunc: tools.IsNotBlank,
+				ValidateDiagFunc: tf.IsNotBlank,
 			},
 			"contract_id": {
 				Type:             schema.TypeString,
 				Required:         true,
-				ValidateDiagFunc: tools.IsNotBlank,
+				ValidateDiagFunc: tf.IsNotBlank,
 			},
 			"properties": {
 				Type:        schema.TypeList,
@@ -60,12 +61,12 @@ func dataPropertiesRead(ctx context.Context, d *schema.ResourceData, m interface
 	log.Debug("Listing Properties")
 
 	// groupID / contractID is string as per schema.
-	groupID, err := tools.GetStringValue("group_id", d)
+	groupID, err := tf.GetStringValue("group_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	groupID = tools.AddPrefix(groupID, "grp_")
-	contractID, err := tools.GetStringValue("contract_id", d)
+	contractID, err := tf.GetStringValue("contract_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}

@@ -15,7 +15,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/session"
 
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -34,7 +34,7 @@ func resourceDNSv2Zone() *schema.Resource {
 			"contract": {
 				Type:             schema.TypeString,
 				Required:         true,
-				DiffSuppressFunc: tools.FieldPrefixSuppress("ctr_"),
+				DiffSuppressFunc: tf.FieldPrefixSuppress("ctr_"),
 			},
 			"zone": {
 				Type:     schema.TypeString,
@@ -63,7 +63,7 @@ func resourceDNSv2Zone() *schema.Resource {
 			"group": {
 				Type:             schema.TypeString,
 				Optional:         true,
-				DiffSuppressFunc: tools.FieldPrefixSuppress("grp_"),
+				DiffSuppressFunc: tf.FieldPrefixSuppress("grp_"),
 			},
 			"sign_and_serve": {
 				Type:     schema.TypeBool,
@@ -131,28 +131,28 @@ func resourceDNSv2ZoneCreate(ctx context.Context, d *schema.ResourceData, m inte
 	if err := checkDNSv2Zone(d); err != nil {
 		return diag.FromErr(err)
 	}
-	hostname, err := tools.GetStringValue("zone", d)
+	hostname, err := tf.GetStringValue("zone", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	logger.WithField("zone", hostname).Info("Zone Create")
-	zoneType, err := tools.GetStringValue("type", d)
+	zoneType, err := tf.GetStringValue("type", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	masterSet, err := tools.GetSetValue("masters", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	masterSet, err := tf.GetSetValue("masters", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 	masterlist := masterSet.List()
 	if strings.ToUpper(zoneType) == "SECONDARY" && len(masterlist) == 0 {
 		return diag.Errorf("DNS Secondary zone requires masters for zone %v", hostname)
 	}
-	contractStr, err := tools.GetStringValue("contract", d)
+	contractStr, err := tf.GetStringValue("contract", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	groupStr, err := tools.GetStringValue("group", d)
+	groupStr, err := tf.GetStringValue("group", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -240,13 +240,13 @@ func resourceDNSv2ZoneRead(ctx context.Context, d *schema.ResourceData, m interf
 		ctx,
 		session.WithContextLog(logger),
 	)
-	hostname, err := tools.GetStringValue("zone", d)
+	hostname, err := tf.GetStringValue("zone", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	logger.WithField("zone", hostname).Info("Zone Read")
-	masterSet, err := tools.GetSetValue("masters", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	masterSet, err := tf.GetSetValue("masters", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 	masterlist := masterSet.List()
@@ -277,7 +277,7 @@ func resourceDNSv2ZoneRead(ctx context.Context, d *schema.ResourceData, m interf
 		})
 	}
 	// Populate state with returned field values ... except zone and type
-	zoneType, err := tools.GetStringValue("type", d)
+	zoneType, err := tf.GetStringValue("type", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -334,19 +334,19 @@ func resourceDNSv2ZoneUpdate(ctx context.Context, d *schema.ResourceData, m inte
 	if err := checkDNSv2Zone(d); err != nil {
 		return diag.FromErr(err)
 	}
-	hostname, err := tools.GetStringValue("zone", d)
+	hostname, err := tf.GetStringValue("zone", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	contract, err := tools.GetStringValue("contract", d)
+	contract, err := tf.GetStringValue("contract", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	group, err := tools.GetStringValue("group", d)
+	group, err := tf.GetStringValue("group", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	zoneType, err := tools.GetStringValue("type", d)
+	zoneType, err := tf.GetStringValue("type", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -428,10 +428,10 @@ func resourceDNSv2ZoneImport(d *schema.ResourceData, m interface{}) ([]*schema.R
 	}
 
 	if err := d.Set("zone", zone.Zone); err != nil {
-		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return nil, fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("type", zone.Type); err != nil {
-		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return nil, fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := populateDNSv2ZoneState(d, zone); err != nil {
 		return nil, err
@@ -444,7 +444,7 @@ func resourceDNSv2ZoneImport(d *schema.ResourceData, m interface{}) ([]*schema.R
 }
 
 func resourceDNSv2ZoneDelete(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	hostname, err := tools.GetStringValue("zone", d)
+	hostname, err := tf.GetStringValue("zone", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -475,25 +475,25 @@ func validateZoneType(v interface{}, _ cty.Path) diag.Diagnostics {
 func populateDNSv2ZoneState(d *schema.ResourceData, zoneresp *dns.ZoneResponse) error {
 
 	if err := d.Set("contract", zoneresp.ContractID); err != nil {
-		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("masters", zoneresp.Masters); err != nil {
-		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("comment", zoneresp.Comment); err != nil {
-		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("sign_and_serve", zoneresp.SignAndServe); err != nil {
-		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("sign_and_serve_algorithm", zoneresp.SignAndServeAlgorithm); err != nil {
-		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("target", zoneresp.Target); err != nil {
-		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("end_customer_id", zoneresp.EndCustomerID); err != nil {
-		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 	}
 	tsigListNew := make([]interface{}, 0)
 	if zoneresp.TsigKey != nil {
@@ -505,24 +505,24 @@ func populateDNSv2ZoneState(d *schema.ResourceData, zoneresp *dns.ZoneResponse) 
 		tsigListNew = append(tsigListNew, tsigNew)
 	}
 	if err := d.Set("tsig_key", tsigListNew); err != nil {
-		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("activation_state", zoneresp.ActivationState); err != nil {
-		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("alias_count", zoneresp.AliasCount); err != nil {
-		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("version_id", zoneresp.VersionId); err != nil {
-		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 	}
 	return nil
 }
 
 // populate zone object based on current config.
 func populateDNSv2ZoneObject(d *schema.ResourceData, zone *dns.ZoneCreate, logger log.Interface) error {
-	masterSet, err := tools.GetSetValue("masters", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	masterSet, err := tf.GetSetValue("masters", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
 	masterlist := masterSet.List()
@@ -535,42 +535,42 @@ func populateDNSv2ZoneObject(d *schema.ResourceData, zone *dns.ZoneCreate, logge
 		masters = append(masters, masterStr)
 	}
 	zone.Masters = masters
-	comment, err := tools.GetStringValue("comment", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	comment, err := tf.GetStringValue("comment", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
 	if err == nil || d.HasChange("comment") {
 		zone.Comment = comment
 	}
-	signAndServe, err := tools.GetBoolValue("sign_and_serve", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	signAndServe, err := tf.GetBoolValue("sign_and_serve", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
 	zone.SignAndServe = signAndServe
-	signAndServeAlgorithm, err := tools.GetStringValue("sign_and_serve_algorithm", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	signAndServeAlgorithm, err := tf.GetStringValue("sign_and_serve_algorithm", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
 	if err == nil || d.HasChange("sign_and_serve_algorithm") {
 		zone.SignAndServeAlgorithm = signAndServeAlgorithm
 	}
-	target, err := tools.GetStringValue("target", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	target, err := tf.GetStringValue("target", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
 	if err == nil || d.HasChange("target") {
 		zone.Target = target
 	}
-	endCustomerID, err := tools.GetStringValue("end_customer_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	endCustomerID, err := tf.GetStringValue("end_customer_id", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
 	if err == nil || d.HasChange("end_customer_id") {
 		zone.EndCustomerID = endCustomerID
 	}
-	tsigKey, err := tools.GetListValue("tsig_key", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		if !errors.Is(err, tools.ErrNotFound) {
+	tsigKey, err := tf.GetListValue("tsig_key", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
+		if !errors.Is(err, tf.ErrNotFound) {
 			return err
 		}
 		zone.TsigKey = nil
@@ -593,29 +593,29 @@ func populateDNSv2ZoneObject(d *schema.ResourceData, zone *dns.ZoneCreate, logge
 }
 
 // utility method to verify zone config fields based on type. not worrying about required fields ....
-func checkDNSv2Zone(d tools.ResourceDataFetcher) error {
-	zone, err := tools.GetStringValue("zone", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+func checkDNSv2Zone(d tf.ResourceDataFetcher) error {
+	zone, err := tf.GetStringValue("zone", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
-	zoneType, err := tools.GetStringValue("type", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	zoneType, err := tf.GetStringValue("type", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
-	mastersSet, err := tools.GetSetValue("masters", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	mastersSet, err := tf.GetSetValue("masters", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
-	target, err := tools.GetStringValue("target", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	target, err := tf.GetStringValue("target", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
-	tsig, err := tools.GetListValue("tsig_key", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	tsig, err := tf.GetListValue("tsig_key", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
-	signandserve, err := tools.GetBoolValue("sign_and_serve", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	signandserve, err := tf.GetBoolValue("sign_and_serve", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
 	ztype := strings.ToUpper(zoneType)

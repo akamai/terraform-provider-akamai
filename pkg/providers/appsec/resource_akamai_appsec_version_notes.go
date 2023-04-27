@@ -8,7 +8,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -55,7 +55,7 @@ func resourceVersionNotesCreate(ctx context.Context, d *schema.ResourceData, m i
 	logger := meta.Log("APPSEC", "resourceVersionNotesCreate")
 	logger.Debugf("in resourceVersionNotesCreate")
 
-	configID, err := tools.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -63,7 +63,7 @@ func resourceVersionNotesCreate(ctx context.Context, d *schema.ResourceData, m i
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	notes, err := tools.GetStringValue("version_notes", d)
+	notes, err := tf.GetStringValue("version_notes", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -112,10 +112,10 @@ func resourceVersionNotesRead(ctx context.Context, d *schema.ResourceData, m int
 	}
 
 	if err := d.Set("config_id", getVersionNotes.ConfigID); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("version_notes", versionnotes.Notes); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	ots := OutputTemplates{}
 	InitTemplates(ots)
@@ -124,7 +124,7 @@ func resourceVersionNotesRead(ctx context.Context, d *schema.ResourceData, m int
 		return diag.FromErr(err)
 	}
 	if err = d.Set("output_text", outputtext); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	return nil
@@ -144,8 +144,8 @@ func resourceVersionNotesUpdate(ctx context.Context, d *schema.ResourceData, m i
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	notes, err := tools.GetStringValue("version_notes", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	notes, err := tf.GetStringValue("version_notes", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 

@@ -6,8 +6,8 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/cps"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	cpstools "github.com/akamai/terraform-provider-akamai/v3/pkg/providers/cps/tools"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -273,7 +273,7 @@ func dataCPSEnrollmentsRead(ctx context.Context, d *schema.ResourceData, m inter
 
 	logger.Debug("Fetching enrollments")
 
-	contractID, err := tools.GetStringValue("contract_id", d)
+	contractID, err := tf.GetStringValue("contract_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -307,7 +307,7 @@ func dataCPSEnrollmentsRead(ctx context.Context, d *schema.ResourceData, m inter
 
 	attrs := map[string]interface{}{"enrollments": enrollmentsAttrs}
 
-	if err = tools.SetAttrs(d, attrs); err != nil {
+	if err = tf.SetAttrs(d, attrs); err != nil {
 		return diag.FromErr(err)
 	}
 

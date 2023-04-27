@@ -8,6 +8,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/papi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -20,7 +21,7 @@ func dataSourcePropertyProducts() *schema.Resource {
 			"contract_id": {
 				Type:             schema.TypeString,
 				Required:         true,
-				ValidateDiagFunc: tools.IsNotBlank,
+				ValidateDiagFunc: tf.IsNotBlank,
 			},
 			"products": {
 				Type:        schema.TypeList,
@@ -46,7 +47,7 @@ func dataPropertyProductsRead(ctx context.Context, d *schema.ResourceData, m int
 
 	client := inst.Client(meta)
 
-	contractID, err := tools.GetStringValue("contract_id", d)
+	contractID, err := tf.GetStringValue("contract_id", d)
 	if err != nil {
 		return diag.FromErr(err) // fixme kind of error
 	}
@@ -66,7 +67,7 @@ func dataPropertyProductsRead(ctx context.Context, d *schema.ResourceData, m int
 	}
 
 	if err := d.Set("products", products); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %q", tools.ErrValueSet, err.Error()))
+		return diag.FromErr(fmt.Errorf("%w: %q", tf.ErrValueSet, err.Error()))
 	}
 
 	jsonBody, err := json.Marshal(products)

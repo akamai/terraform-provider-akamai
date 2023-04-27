@@ -9,7 +9,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -52,15 +52,15 @@ func dataSourceDNSRecordSetRead(ctx context.Context, d *schema.ResourceData, m i
 		session.WithContextLog(logger),
 	)
 
-	zone, err := tools.GetStringValue("zone", d)
+	zone, err := tf.GetStringValue("zone", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	host, err := tools.GetStringValue("host", d)
+	host, err := tf.GetStringValue("host", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	recordType, err := tools.GetStringValue("record_type", d)
+	recordType, err := tf.GetStringValue("record_type", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -84,7 +84,7 @@ func dataSourceDNSRecordSetRead(ctx context.Context, d *schema.ResourceData, m i
 	sort.Strings(rdata)
 
 	if err := d.Set("rdata", rdata); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 	}
 	d.SetId(host)
 	return nil

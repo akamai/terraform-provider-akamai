@@ -6,8 +6,8 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/networklists"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/config"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
 	"github.com/apex/log"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -90,7 +90,7 @@ func (p *provider) Client(meta akamai.OperationMeta) networklists.NTWRKLISTS {
 func getNetworkListV1Service(d *schema.ResourceData) error {
 	var section string
 
-	for _, s := range tools.FindStringValues(d, "networklist_section", "config_section") {
+	for _, s := range tf.FindStringValues(d, "networklist_section", "config_section") {
 		if s != "default" {
 			section = s
 			break

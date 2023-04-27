@@ -9,7 +9,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -71,7 +71,7 @@ func resourceEvalRuleCreate(ctx context.Context, d *schema.ResourceData, m inter
 	logger := meta.Log("APPSEC", "resourceEvalRuleCreate")
 	logger.Debugf("in resourceEvalRuleCreate")
 
-	configID, err := tools.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -79,20 +79,20 @@ func resourceEvalRuleCreate(ctx context.Context, d *schema.ResourceData, m inter
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	policyID, err := tools.GetStringValue("security_policy_id", d)
+	policyID, err := tf.GetStringValue("security_policy_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	ruleID, err := tools.GetIntValue("rule_id", d)
+	ruleID, err := tf.GetIntValue("rule_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	action, err := tools.GetStringValue("rule_action", d)
+	action, err := tf.GetStringValue("rule_action", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	conditionexception, err := tools.GetStringValue("condition_exception", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	conditionexception, err := tf.GetStringValue("condition_exception", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 	jsonPayloadRaw := []byte(conditionexception)
@@ -158,16 +158,16 @@ func resourceEvalRuleRead(ctx context.Context, d *schema.ResourceData, m interfa
 	}
 
 	if err := d.Set("config_id", getEvalRule.ConfigID); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("security_policy_id", getEvalRule.PolicyID); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("rule_id", getEvalRule.RuleID); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("rule_action", string(evalrule.Action)); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	if !evalrule.IsEmptyConditionException() {
@@ -176,7 +176,7 @@ func resourceEvalRuleRead(ctx context.Context, d *schema.ResourceData, m interfa
 			return diag.Errorf("%s", "Error Marshalling condition exception")
 		}
 		if err := d.Set("condition_exception", string(jsonBody)); err != nil {
-			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 		}
 	}
 
@@ -206,12 +206,12 @@ func resourceEvalRuleUpdate(ctx context.Context, d *schema.ResourceData, m inter
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	action, err := tools.GetStringValue("rule_action", d)
+	action, err := tf.GetStringValue("rule_action", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	conditionexception, err := tools.GetStringValue("condition_exception", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	conditionexception, err := tf.GetStringValue("condition_exception", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 

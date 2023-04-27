@@ -9,7 +9,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/networklists"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -89,16 +89,16 @@ func resourceActivationsCreate(ctx context.Context, d *schema.ResourceData, m in
 	logger := meta.Log("NETWORKLIST", "resourceActivationsCreate")
 	logger.Debug("Creating resource activation")
 
-	networkListID, err := tools.GetStringValue("network_list_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	networkListID, err := tf.GetStringValue("network_list_id", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	network, err := tools.GetStringValue("network", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	network, err := tf.GetStringValue("network", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	comments, err := tools.GetStringValue("notes", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	comments, err := tf.GetStringValue("notes", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 	notificationEmails, ok := d.Get("notification_emails").(*schema.Set)
@@ -111,7 +111,7 @@ func resourceActivationsCreate(ctx context.Context, d *schema.ResourceData, m in
 		Network:                network,
 		Comments:               comments,
 		Action:                 "ACTIVATE",
-		NotificationRecipients: tools.SetToStringSlice(notificationEmails),
+		NotificationRecipients: tf.SetToStringSlice(notificationEmails),
 	})
 	if err != nil {
 		return diag.FromErr(err)
@@ -128,7 +128,7 @@ func resourceActivationsCreate(ctx context.Context, d *schema.ResourceData, m in
 
 	for lookupResponse.ActivationStatus != "ACTIVATED" {
 		select {
-		case <-time.After(tools.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
+		case <-time.After(tf.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
 			act, err := client.GetActivation(ctx, networklists.GetActivationRequest{ActivationID: createResponse.ActivationID})
 
 			if err != nil {
@@ -195,19 +195,19 @@ func resourceActivationsUpdate(ctx context.Context, d *schema.ResourceData, m in
 	logger := meta.Log("NETWORKLIST", "resourceActivationsUpdate")
 	logger.Debug("Updating resource activation")
 
-	networkListID, err := tools.GetStringValue("network_list_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	networkListID, err := tf.GetStringValue("network_list_id", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	network, err := tools.GetStringValue("network", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	network, err := tf.GetStringValue("network", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	comments, err := tools.GetStringValue("notes", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	comments, err := tf.GetStringValue("notes", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	notificationEmails, err := tools.GetSetValue("notification_emails", d)
+	notificationEmails, err := tf.GetSetValue("notification_emails", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -217,7 +217,7 @@ func resourceActivationsUpdate(ctx context.Context, d *schema.ResourceData, m in
 		Network:                network,
 		Comments:               comments,
 		Action:                 "ACTIVATE",
-		NotificationRecipients: tools.SetToStringSlice(notificationEmails),
+		NotificationRecipients: tf.SetToStringSlice(notificationEmails),
 	})
 	if err != nil {
 		return diag.FromErr(err)
@@ -235,7 +235,7 @@ func resourceActivationsUpdate(ctx context.Context, d *schema.ResourceData, m in
 
 	for lookupResponse.ActivationStatus != "ACTIVATED" {
 		select {
-		case <-time.After(tools.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
+		case <-time.After(tf.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
 			act, err := client.GetActivation(ctx, lookupRequest)
 
 			if err != nil {

@@ -11,7 +11,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/cloudlets"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/apex/log"
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -118,11 +118,11 @@ func resourceApplicationLoadBalancerActivationCreate(ctx context.Context, rd *sc
 }
 
 func resourceApplicationLoadBalancerActivationChange(ctx context.Context, rd *schema.ResourceData, logger log.Interface, client cloudlets.Cloudlets) (*cloudlets.LoadBalancerActivation, error) {
-	originID, err := tools.GetStringValue("origin_id", rd)
+	originID, err := tf.GetStringValue("origin_id", rd)
 	if err != nil {
 		return nil, err
 	}
-	network, err := tools.GetStringValue("network", rd)
+	network, err := tf.GetStringValue("network", rd)
 	if err != nil {
 		return nil, err
 	}
@@ -130,7 +130,7 @@ func resourceApplicationLoadBalancerActivationChange(ctx context.Context, rd *sc
 	if err != nil {
 		return nil, err
 	}
-	v, err := tools.GetIntValue("version", rd)
+	v, err := tf.GetIntValue("version", rd)
 	if err != nil {
 		return nil, err
 	}
@@ -177,7 +177,7 @@ func resourceApplicationLoadBalancerActivationChange(ctx context.Context, rd *sc
 			pollingActivationTries = 2 * pollingActivationTries
 			if pollingActivationTries > ApplicationLoadBalancerActivationRetryTimeout ||
 				!strings.Contains(strings.ToLower(err.Error()), ErrApplicationLoadBalancerActivationOriginNotDefined.Error()) {
-				if errOnRestore := tools.RestoreOldValues(rd, []string{"network", "version"}); errOnRestore != nil {
+				if errOnRestore := tf.RestoreOldValues(rd, []string{"network", "version"}); errOnRestore != nil {
 					return activation, fmt.Errorf(`%w failed. No changes were written to server:
 %s
 
@@ -221,11 +221,11 @@ func resourceApplicationLoadBalancerActivationRead(ctx context.Context, rd *sche
 
 	logger.Debug("Reading application load balancer activations")
 
-	originID, err := tools.GetStringValue("origin_id", rd)
+	originID, err := tf.GetStringValue("origin_id", rd)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	network, err := tools.GetStringValue("network", rd)
+	network, err := tf.GetStringValue("network", rd)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -234,7 +234,7 @@ func resourceApplicationLoadBalancerActivationRead(ctx context.Context, rd *sche
 		return diag.FromErr(err)
 	}
 	var version int64
-	v, err := tools.GetIntValue("version", rd)
+	v, err := tf.GetIntValue("version", rd)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -298,7 +298,7 @@ func waitForLoadBalancerActivation(ctx context.Context, client cloudlets.Cloudle
 			return nil, fmt.Errorf("%v: originID: %s, status: %s", ErrApplicationLoadBalancerActivation, activation.OriginID, activation.Status)
 		}
 		select {
-		case <-time.After(tools.MaxDuration(ALBActivationPollInterval, ALBActivationPollMinimum)):
+		case <-time.After(tf.MaxDuration(ALBActivationPollInterval, ALBActivationPollMinimum)):
 			activation, err = getApplicationLoadBalancerActivation(ctx, client, originID, version, network)
 			if err != nil {
 				return nil, err

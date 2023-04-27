@@ -8,6 +8,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/cps"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	toolsCPS "github.com/akamai/terraform-provider-akamai/v3/pkg/providers/cps/tools"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -46,7 +47,7 @@ func dataCPSCSRRead(ctx context.Context, d *schema.ResourceData, m interface{}) 
 
 	logger.Debug("Fetching a CSR")
 
-	enrollmentID, err := tools.GetIntValue("enrollment_id", d)
+	enrollmentID, err := tf.GetIntValue("enrollment_id", d)
 	if err != nil {
 		return diag.Errorf("could not get an enrollment_id: %s", err)
 	}
@@ -94,7 +95,7 @@ func dataCPSCSRRead(ctx context.Context, d *schema.ResourceData, m interface{}) 
 			}
 		}
 	}
-	if err = tools.SetAttrs(d, attrs); err != nil {
+	if err = tf.SetAttrs(d, attrs); err != nil {
 		return diag.Errorf("could not set attributes: %s", err)
 	}
 	d.SetId(fmt.Sprintf("%d:%d", enrollmentID, changeID))

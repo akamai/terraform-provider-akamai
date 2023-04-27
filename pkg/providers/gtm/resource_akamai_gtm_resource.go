@@ -9,7 +9,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/gtm"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -125,12 +125,12 @@ func resourceGTMv1ResourceCreate(ctx context.Context, d *schema.ResourceData, m 
 		session.WithContextLog(logger),
 	)
 
-	domain, err := tools.GetStringValue("domain", d)
+	domain, err := tf.GetStringValue("domain", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	name, err := tools.GetStringValue("name", d)
+	name, err := tf.GetStringValue("name", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -159,7 +159,7 @@ func resourceGTMv1ResourceCreate(ctx context.Context, d *schema.ResourceData, m 
 		})
 	}
 
-	waitOnComplete, err := tools.GetBoolValue("wait_on_complete", d)
+	waitOnComplete, err := tf.GetBoolValue("wait_on_complete", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -273,7 +273,7 @@ func resourceGTMv1ResourceUpdate(ctx context.Context, d *schema.ResourceData, m 
 		})
 	}
 
-	waitOnComplete, err := tools.GetBoolValue("wait_on_complete", d)
+	waitOnComplete, err := tf.GetBoolValue("wait_on_complete", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -325,7 +325,7 @@ func resourceGTMv1ResourceImport(d *schema.ResourceData, m interface{}) ([]*sche
 	populateTerraformResourceState(d, rsrc, m)
 
 	// use same Id as passed in
-	name, _ := tools.GetStringValue("name", d)
+	name, _ := tf.GetStringValue("name", d)
 	logger.Infof("Resource [%s] [%s] Imported", d.Id(), name)
 	return []*schema.ResourceData{d}, nil
 }
@@ -376,7 +376,7 @@ func resourceGTMv1ResourceDelete(ctx context.Context, d *schema.ResourceData, m 
 		})
 	}
 
-	waitOnComplete, err := tools.GetBoolValue("wait_on_complete", d)
+	waitOnComplete, err := tf.GetBoolValue("wait_on_complete", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -407,7 +407,7 @@ func resourceGTMv1ResourceDelete(ctx context.Context, d *schema.ResourceData, m 
 // Create and populate a new resource object from resource data
 func populateNewResourceObject(ctx context.Context, meta akamai.OperationMeta, d *schema.ResourceData, m interface{}) (*gtm.Resource, error) {
 
-	name, _ := tools.GetStringValue("name", d)
+	name, _ := tf.GetStringValue("name", d)
 	rsrcObj := inst.Client(meta).NewResource(ctx, name)
 	rsrcObj.ResourceInstances = make([]*gtm.ResourceInstance, 0)
 	err := populateResourceObject(ctx, d, rsrcObj, m)
@@ -422,96 +422,96 @@ func populateResourceObject(ctx context.Context, d *schema.ResourceData, rsrc *g
 	meta := akamai.Meta(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1ResourceDelete")
 
-	vstr, err := tools.GetStringValue("name", d)
+	vstr, err := tf.GetStringValue("name", d)
 	if err == nil {
 		rsrc.Name = vstr
 	}
-	vstr, err = tools.GetStringValue("type", d)
+	vstr, err = tf.GetStringValue("type", d)
 	if err == nil {
 		rsrc.Type = vstr
 	}
-	vstr, err = tools.GetStringValue("host_header", d)
+	vstr, err = tf.GetStringValue("host_header", d)
 	if err == nil || d.HasChange("host_header") {
 		rsrc.HostHeader = vstr
 	}
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		logger.Errorf("populateResourceObject() host_header failed: %v", err.Error())
 		return fmt.Errorf("Resource Object could not be populated: %v", err.Error())
 	}
 
-	vfloat, err := tools.GetFloat64Value("least_squares_decay", d)
+	vfloat, err := tf.GetFloat64Value("least_squares_decay", d)
 	if err == nil || d.HasChange("least_squares_decay") {
 		rsrc.LeastSquaresDecay = vfloat
 	}
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		logger.Errorf("populateResourceObject() least_squares_decay failed: %v", err.Error())
 		return fmt.Errorf("Resource Object could not be populated: %v", err.Error())
 	}
 
-	vint, err := tools.GetIntValue("upper_bound", d)
+	vint, err := tf.GetIntValue("upper_bound", d)
 	if err == nil || d.HasChange("upper_bound") {
 		rsrc.UpperBound = vint
 	}
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		logger.Errorf("populateResourceObject() upper_bound failed: %v", err.Error())
 		return fmt.Errorf("Resource Object could not be populated: %v", err.Error())
 	}
 
-	vstr, err = tools.GetStringValue("description", d)
+	vstr, err = tf.GetStringValue("description", d)
 	if err == nil || d.HasChange("description") {
 		rsrc.Description = vstr
 	}
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		logger.Errorf("populateResourceObject() description failed: %v", err.Error())
 		return fmt.Errorf("Resource Object could not be populated: %v", err.Error())
 	}
 
-	vstr, err = tools.GetStringValue("leader_string", d)
+	vstr, err = tf.GetStringValue("leader_string", d)
 	if err == nil || d.HasChange("leader_string") {
 		rsrc.LeaderString = vstr
 	}
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		logger.Errorf("populateResourceObject() leader_string failed: %v", err.Error())
 		return fmt.Errorf("Resource Object could not be populated: %v", err.Error())
 	}
 
-	vstr, err = tools.GetStringValue("constrained_property", d)
+	vstr, err = tf.GetStringValue("constrained_property", d)
 	if err == nil || d.HasChange("constrained_property") {
 		rsrc.ConstrainedProperty = vstr
 	}
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		logger.Errorf("populateResourceObject() constrained_property failed: %v", err.Error())
 		return fmt.Errorf("Resource Object could not be populated: %v", err.Error())
 	}
 
-	vstr, err = tools.GetStringValue("aggregation_type", d)
+	vstr, err = tf.GetStringValue("aggregation_type", d)
 	if err == nil {
 		rsrc.AggregationType = vstr
 	}
 
-	vfloat, err = tools.GetFloat64Value("load_imbalance_percentage", d)
+	vfloat, err = tf.GetFloat64Value("load_imbalance_percentage", d)
 	if err == nil || d.HasChange("load_imbalance_percentage") {
 		rsrc.LoadImbalancePercentage = vfloat
 	}
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		logger.Errorf("populateResourceObject() load_imbalance_percentage failed: %v", err.Error())
 		return fmt.Errorf("Resource Object could not be populated: %v", err.Error())
 	}
 
-	vfloat, err = tools.GetFloat64Value("max_u_multiplicative_increment", d)
+	vfloat, err = tf.GetFloat64Value("max_u_multiplicative_increment", d)
 	if err == nil || d.HasChange("max_u_multiplicative_increment") {
 		rsrc.MaxUMultiplicativeIncrement = vfloat
 	}
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		logger.Errorf("populateResourceObject() max_u_multiplicative_increment failed: %v", err.Error())
 		return fmt.Errorf("Resource Object could not be populated: %v", err.Error())
 	}
 
-	vfloat, err = tools.GetFloat64Value("decay_rate", d)
+	vfloat, err = tf.GetFloat64Value("decay_rate", d)
 	if err == nil || d.HasChange("decay_rate") {
 		rsrc.DecayRate = vfloat
 	}
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		logger.Errorf("populateResourceObject() decay_rate failed: %v", err.Error())
 		return fmt.Errorf("Resource Object could not be populated: %v", err.Error())
 	}
@@ -559,7 +559,7 @@ func populateResourceInstancesObject(ctx context.Context, meta akamai.OperationM
 	logger := meta.Log("Akamai GTM", "populateResourceInstancesObject")
 
 	// pull apart List
-	rsrcInstances, err := tools.GetListValue("resource_instance", d)
+	rsrcInstances, err := tf.GetListValue("resource_instance", d)
 	if err == nil {
 		rsrcInstanceObjList := make([]*gtm.ResourceInstance, len(rsrcInstances)) // create new object list
 		for i, v := range rsrcInstances {
@@ -596,7 +596,7 @@ func populateTerraformResourceInstancesState(d *schema.ResourceData, rsrc *gtm.R
 			riObjectInventory[riObj.DatacenterId] = riObj
 		}
 	}
-	riStateList, _ := tools.GetInterfaceArrayValue("resource_instance", d)
+	riStateList, _ := tf.GetInterfaceArrayValue("resource_instance", d)
 	for _, riMap := range riStateList {
 		ri := riMap.(map[string]interface{})
 		objIndex := ri["datacenter_id"].(int)

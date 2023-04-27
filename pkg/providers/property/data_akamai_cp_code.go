@@ -9,7 +9,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 )
 
 func dataSourceCPCode() *schema.Resource {
@@ -19,7 +19,7 @@ func dataSourceCPCode() *schema.Resource {
 			"name": {
 				Type:             schema.TypeString,
 				Required:         true,
-				ValidateDiagFunc: tools.IsNotBlank,
+				ValidateDiagFunc: tf.IsNotBlank,
 			},
 			"contract": {
 				Type:         schema.TypeString,
@@ -69,32 +69,32 @@ func dataCPCodeRead(ctx context.Context, d *schema.ResourceData, m interface{}) 
 	var name, groupID, contractID string
 	var err error
 
-	if name, err = tools.GetStringValue("name", d); err != nil {
+	if name, err = tf.GetStringValue("name", d); err != nil {
 		return diag.FromErr(err)
 	}
 
 	// load group_id, if not exists, then load group.
-	if groupID, err = tools.ResolveKeyStringState(d, "group_id", "group"); err != nil {
+	if groupID, err = tf.ResolveKeyStringState(d, "group_id", "group"); err != nil {
 		return diag.FromErr(err)
 	}
 	// set group_id/group in state.
 	if err := d.Set("group_id", groupID); err != nil {
-		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("group", groupID); err != nil {
-		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
 
 	// load contract_id, if not exists, then load contract.
-	if contractID, err = tools.ResolveKeyStringState(d, "contract_id", "contract"); err != nil {
+	if contractID, err = tf.ResolveKeyStringState(d, "contract_id", "contract"); err != nil {
 		return diag.FromErr(err)
 	}
 	// set contract_id/contract in state.
 	if err := d.Set("contract_id", contractID); err != nil {
-		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("contract", contractID); err != nil {
-		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
 
 	cpCode, err := findCPCode(ctx, name, contractID, groupID, meta)
@@ -107,7 +107,7 @@ func dataCPCodeRead(ctx context.Context, d *schema.ResourceData, m interface{}) 
 	}
 
 	if err := d.Set("product_ids", cpCode.ProductIDs); err != nil {
-		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
 	d.SetId(cpCode.ID)
 

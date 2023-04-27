@@ -7,7 +7,7 @@ import (
 	"reflect"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/iancoleman/strcase"
 )
@@ -109,7 +109,7 @@ func (r RulesBuilder) Build() (*papi.Rules, error) {
 	}
 
 	children, err := r.ruleChildren()
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return nil, err
 	}
 

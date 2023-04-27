@@ -8,7 +8,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/papi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -77,21 +77,21 @@ func dataPropertyIncludeRulesRead(ctx context.Context, d *schema.ResourceData, m
 	log := meta.Log("PAPI", "dataPropertyIncludeRulesRead")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(log))
 
-	groupID, err := tools.GetStringValue("group_id", d)
+	groupID, err := tf.GetStringValue("group_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	contractID, err := tools.GetStringValue("contract_id", d)
+	contractID, err := tf.GetStringValue("contract_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	includeID, err := tools.GetStringValue("include_id", d)
+	includeID, err := tf.GetStringValue("include_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	includeVersion, err := tools.GetIntValue("version", d)
+	includeVersion, err := tf.GetIntValue("version", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -142,7 +142,7 @@ func dataPropertyIncludeRulesRead(ctx context.Context, d *schema.ResourceData, m
 	}
 	attrs["rule_warnings"] = ruleWarnings
 
-	if err := tools.SetAttrs(d, attrs); err != nil {
+	if err := tf.SetAttrs(d, attrs); err != nil {
 		return diag.FromErr(err)
 	}
 

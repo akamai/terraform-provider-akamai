@@ -6,7 +6,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -64,7 +64,7 @@ func dataSourceIPGeoRead(ctx context.Context, d *schema.ResourceData, m interfac
 
 	getIPGeo := appsec.GetIPGeoRequest{}
 
-	configID, err := tools.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -74,7 +74,7 @@ func dataSourceIPGeoRead(ctx context.Context, d *schema.ResourceData, m interfac
 		return diag.FromErr(err)
 	}
 
-	policyID, err := tools.GetStringValue("security_policy_id", d)
+	policyID, err := tf.GetStringValue("security_policy_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -94,43 +94,43 @@ func dataSourceIPGeoRead(ctx context.Context, d *schema.ResourceData, m interfac
 		return diag.FromErr(err)
 	}
 	if err := d.Set("output_text", outputtext); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	if ipgeo.Block == "blockAllTrafficExceptAllowedIPs" {
 		if err := d.Set("mode", Allow); err != nil {
-			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 		}
 		if ipgeo.IPControls != nil && ipgeo.IPControls.AllowedIPNetworkLists != nil && ipgeo.IPControls.AllowedIPNetworkLists.NetworkList != nil {
 			if err := d.Set("exception_ip_network_lists", ipgeo.IPControls.AllowedIPNetworkLists.NetworkList); err != nil {
-				return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+				return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 			}
 		} else {
 			if err := d.Set("exception_ip_network_lists", []string{}); err != nil {
-				return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+				return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 			}
 		}
 	}
 	if ipgeo.Block == "blockSpecificIPGeo" {
 		if err := d.Set("mode", Block); err != nil {
-			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 		}
 		if ipgeo.GeoControls != nil && ipgeo.GeoControls.BlockedIPNetworkLists != nil && ipgeo.GeoControls.BlockedIPNetworkLists.NetworkList != nil {
 			if err := d.Set("geo_network_lists", ipgeo.GeoControls.BlockedIPNetworkLists.NetworkList); err != nil {
-				return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+				return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 			}
 		} else {
 			if err := d.Set("geo_network_lists", []string{}); err != nil {
-				return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+				return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 			}
 		}
 		if ipgeo.IPControls != nil && ipgeo.IPControls.BlockedIPNetworkLists != nil && ipgeo.IPControls.BlockedIPNetworkLists.NetworkList != nil {
 			if err := d.Set("ip_network_lists", ipgeo.IPControls.BlockedIPNetworkLists.NetworkList); err != nil {
-				return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+				return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 			}
 		} else {
 			if err := d.Set("ip_network_lists", []string{}); err != nil {
-				return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+				return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 			}
 		}
 	}

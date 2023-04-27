@@ -19,6 +19,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/papi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
 )
 
@@ -150,7 +151,7 @@ func resourceProperty() *schema.Resource {
 				Optional:         true,
 				Computed:         true,
 				Description:      "Specify the rule format version (defaults to latest version available when created)",
-				ValidateDiagFunc: tools.ValidateRuleFormatAcceptLatest,
+				ValidateDiagFunc: tf.ValidateRuleFormatAcceptLatest,
 			},
 			"rules": {
 				Type:             schema.TypeString,
@@ -428,7 +429,7 @@ func versionsComputedValuesCustomDiff(_ context.Context, d *schema.ResourceDiff,
 			err := d.SetNewComputed(key)
 			if err != nil {
 				logger.Errorf("%s state failed to update with new value from server", key)
-				return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+				return fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 			}
 			logger.Debugf("%s state will be updated with new value from server", key)
 		}
@@ -452,7 +453,7 @@ func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m inter
 	// Schema guarantees these types
 	PropertyName := d.Get("name").(string)
 
-	GroupID, err := tools.ResolveKeyStringState(d, "group_id", "group")
+	GroupID, err := tf.ResolveKeyStringState(d, "group_id", "group")
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -521,7 +522,7 @@ func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m inter
 		ProductID:     ProductID,
 		LatestVersion: 1,
 	}
-	HostnameVal, err := tools.GetSetValue("hostnames", d)
+	HostnameVal, err := tf.GetSetValue("hostnames", d)
 	if err == nil {
 		Hostnames := mapToHostnames(HostnameVal.List())
 		if len(Hostnames) > 0 {
@@ -608,7 +609,7 @@ func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interfa
 	}
 	if len(RuleErrors) > 0 {
 		if err := d.Set("rule_errors", papiErrorsToList(RuleErrors)); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 		}
 		msg, err := json.MarshalIndent(papiErrorsToList(RuleErrors), "", "\t")
 		if err != nil {
@@ -759,7 +760,7 @@ func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 
 	// Hostnames
 	if d.HasChange("hostnames") {
-		HostnameVal, err := tools.GetSetValue("hostnames", d)
+		HostnameVal, err := tf.GetSetValue("hostnames", d)
 		if err == nil {
 			Hostnames := mapToHostnames(HostnameVal.List())
 			if len(Hostnames) > 0 {

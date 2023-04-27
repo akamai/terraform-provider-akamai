@@ -14,6 +14,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/cloudlets"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -135,16 +136,16 @@ func resourcePolicyCreate(ctx context.Context, d *schema.ResourceData, m interfa
 	)
 	client := inst.Client(meta)
 	logger.Debug("Creating policy")
-	cloudletCode, err := tools.GetStringValue("cloudlet_code", d)
+	cloudletCode, err := tf.GetStringValue("cloudlet_code", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	cloudletID := cloudletIDs[cloudletCode]
-	name, err := tools.GetStringValue("name", d)
+	name, err := tf.GetStringValue("name", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	groupID, err := tools.GetStringValue("group_id", d)
+	groupID, err := tf.GetStringValue("group_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -163,15 +164,15 @@ func resourcePolicyCreate(ctx context.Context, d *schema.ResourceData, m interfa
 	}
 	d.SetId(strconv.FormatInt(createPolicyResp.PolicyID, 10))
 	if err := d.Set("version", 1); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 	}
-	matchRuleFormat, err := tools.GetStringValue("match_rule_format", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	matchRuleFormat, err := tf.GetStringValue("match_rule_format", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	matchRulesJSON, err := tools.GetStringValue("match_rules", d)
+	matchRulesJSON, err := tf.GetStringValue("match_rules", d)
 	if err != nil {
-		if errors.Is(err, tools.ErrNotFound) {
+		if errors.Is(err, tf.ErrNotFound) {
 			return resourcePolicyRead(ctx, d, m)
 		}
 		return diag.FromErr(err)
@@ -181,8 +182,8 @@ func resourcePolicyCreate(ctx context.Context, d *schema.ResourceData, m interfa
 		return diag.Errorf("unmarshalling match rules JSON: %s", err)
 	}
 
-	description, err := tools.GetStringValue("description", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	description, err := tf.GetStringValue("description", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 	updateVersionRequest := cloudlets.UpdatePolicyVersionRequest{
@@ -225,7 +226,7 @@ func resourcePolicyRead(ctx context.Context, d *schema.ResourceData, m interface
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := tools.GetIntValue("version", d)
+	version, err := tf.GetIntValue("version", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -252,7 +253,7 @@ func resourcePolicyRead(ctx context.Context, d *schema.ResourceData, m interface
 	}
 	attrs["match_rules"] = string(matchRulesJSON)
 	attrs["version"] = policyVersion.Version
-	if err := tools.SetAttrs(d, attrs); err != nil {
+	if err := tf.SetAttrs(d, attrs); err != nil {
 		return diag.FromErr(err)
 	}
 	return nil
@@ -272,11 +273,11 @@ func resourcePolicyUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 		return diag.FromErr(err)
 	}
 	if d.HasChanges("name", "group_id") {
-		name, err := tools.GetStringValue("name", d)
+		name, err := tf.GetStringValue("name", d)
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		groupID, err := tools.GetStringValue("group_id", d)
+		groupID, err := tf.GetStringValue("group_id", d)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -297,7 +298,7 @@ func resourcePolicyUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 		}
 	}
 	if d.HasChanges("description", "match_rules", "match_rule_format") {
-		version, err := tools.GetIntValue("version", d)
+		version, err := tf.GetIntValue("version", d)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -309,12 +310,12 @@ func resourcePolicyUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		matchRuleFormat, err := tools.GetStringValue("match_rule_format", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		matchRuleFormat, err := tf.GetStringValue("match_rule_format", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return diag.FromErr(err)
 		}
-		matchRulesJSON, err := tools.GetStringValue("match_rules", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		matchRulesJSON, err := tf.GetStringValue("match_rules", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return diag.FromErr(err)
 		}
 		matchRules := make(cloudlets.MatchRules, 0)
@@ -323,8 +324,8 @@ func resourcePolicyUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 				return diag.FromErr(err)
 			}
 		}
-		description, err := tools.GetStringValue("description", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		description, err := tf.GetStringValue("description", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return diag.FromErr(err)
 		}
 		if len(versionResp.Activations) > 0 {
@@ -341,7 +342,7 @@ func resourcePolicyUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 				return diag.FromErr(err)
 			}
 			if err := d.Set("version", createVersionResp.Version); err != nil {
-				return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+				return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 			}
 			if err := setWarnings(d, createVersionResp.Warnings); err != nil {
 				return err

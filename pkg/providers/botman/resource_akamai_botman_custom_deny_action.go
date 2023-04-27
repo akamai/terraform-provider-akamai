@@ -8,6 +8,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/botman"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -53,7 +54,7 @@ func resourceCustomDenyActionCreate(ctx context.Context, d *schema.ResourceData,
 	logger := meta.Log("botman", "resourceCustomDenyActionCreateAction")
 	logger.Debugf("in resourceCustomDenyActionCreateAction")
 
-	configID, err := tools.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -63,7 +64,7 @@ func resourceCustomDenyActionCreate(ctx context.Context, d *schema.ResourceData,
 		return diag.FromErr(err)
 	}
 
-	jsonPayloadString, err := tools.GetStringValue("custom_deny_action", d)
+	jsonPayloadString, err := tf.GetStringValue("custom_deny_action", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -133,8 +134,8 @@ func resourceCustomDenyActionRead(ctx context.Context, d *schema.ResourceData, m
 		"action_id":          actionID,
 		"custom_deny_action": string(jsonBody),
 	}
-	if err := tools.SetAttrs(d, fields); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+	if err := tf.SetAttrs(d, fields); err != nil {
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	return nil

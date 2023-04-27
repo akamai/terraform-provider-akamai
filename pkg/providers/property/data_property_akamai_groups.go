@@ -10,6 +10,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
 )
 
@@ -81,7 +82,7 @@ func dataPropertyMultipleGroupsRead(ctx context.Context, d *schema.ResourceData,
 	}
 
 	if err := d.Set("groups", grpList); err != nil {
-		return diag.FromErr(fmt.Errorf("%w:%q", tools.ErrValueSet, err.Error()))
+		return diag.FromErr(fmt.Errorf("%w:%q", tf.ErrValueSet, err.Error()))
 	}
 
 	jsonBody, err := json.Marshal(grpList)

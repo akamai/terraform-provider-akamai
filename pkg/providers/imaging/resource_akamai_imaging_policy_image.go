@@ -13,7 +13,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/imaging"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -97,21 +97,21 @@ func resourcePolicyImageCreate(ctx context.Context, d *schema.ResourceData, m in
 }
 
 func upsertPolicyImage(ctx context.Context, d *schema.ResourceData, m interface{}, client imaging.Imaging) diag.Diagnostics {
-	policyID, err := tools.GetStringValue("policy_id", d)
+	policyID, err := tf.GetStringValue("policy_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	contractID, err := tools.GetStringValue("contract_id", d)
+	contractID, err := tf.GetStringValue("contract_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	policySetID, err := tools.GetStringValue("policyset_id", d)
+	policySetID, err := tf.GetStringValue("policyset_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	var policy imaging.PolicyInputImage
-	policyJSON, err := tools.GetStringValue("json", d)
+	policyJSON, err := tf.GetStringValue("json", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -133,8 +133,8 @@ func upsertPolicyImage(ctx context.Context, d *schema.ResourceData, m interface{
 		}
 		d.SetId(fmt.Sprintf("%s:%s", policySetID, createPolicyResp.ID))
 	}
-	activateOnProduction, err := tools.GetBoolValue("activate_on_production", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	activateOnProduction, err := tf.GetBoolValue("activate_on_production", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 	if activateOnProduction {
@@ -164,15 +164,15 @@ func resourcePolicyImageRead(ctx context.Context, d *schema.ResourceData, m inte
 	client := inst.Client(meta)
 
 	logger.Debug("Reading policy")
-	policyID, err := tools.GetStringValue("policy_id", d)
+	policyID, err := tf.GetStringValue("policy_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	contractID, err := tools.GetStringValue("contract_id", d)
+	contractID, err := tf.GetStringValue("contract_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	policysetID, err := tools.GetStringValue("policyset_id", d)
+	policysetID, err := tf.GetStringValue("policyset_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -199,7 +199,7 @@ func resourcePolicyImageRead(ctx context.Context, d *schema.ResourceData, m inte
 	attrs := make(map[string]interface{})
 	attrs["json"] = policyJSON
 	attrs["version"] = policy.Version
-	if err := tools.SetAttrs(d, attrs); err != nil {
+	if err := tf.SetAttrs(d, attrs); err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -269,7 +269,7 @@ func resourcePolicyImageDelete(ctx context.Context, d *schema.ResourceData, m in
 	client := inst.Client(meta)
 	logger.Debug("Deleting policy")
 
-	policyID, err := tools.GetStringValue("policy_id", d)
+	policyID, err := tf.GetStringValue("policy_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -284,11 +284,11 @@ func resourcePolicyImageDelete(ctx context.Context, d *schema.ResourceData, m in
 		}
 	}
 
-	contractID, err := tools.GetStringValue("contract_id", d)
+	contractID, err := tf.GetStringValue("contract_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	policySetID, err := tools.GetStringValue("policyset_id", d)
+	policySetID, err := tf.GetStringValue("policyset_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -372,7 +372,7 @@ func resourcePolicyImageImport(ctx context.Context, d *schema.ResourceData, m in
 	attrs["contract_id"] = contractID
 	attrs["policyset_id"] = policySetID
 	attrs["activate_on_production"] = activateOnProduction
-	if err := tools.SetAttrs(d, attrs); err != nil {
+	if err := tf.SetAttrs(d, attrs); err != nil {
 		return nil, err
 	}
 
@@ -425,8 +425,8 @@ func enforcePolicyImageVersionChange(_ context.Context, diff *schema.ResourceDif
 }
 
 func getRolloutDuration(d *schema.ResourceData) (*int, error) {
-	inputJSON, err := tools.GetStringValue("json", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	inputJSON, err := tf.GetStringValue("json", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return nil, err
 	}
 	if err == nil {

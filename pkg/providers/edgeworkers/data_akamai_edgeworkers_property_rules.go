@@ -7,7 +7,7 @@ import (
 	"strconv"
 
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -35,7 +35,7 @@ func dataEdgeworkersPropertyRulesRead(_ context.Context, d *schema.ResourceData,
 	log := meta.Log("Edgeworkers", "dataEdgeworkersPropertyRulesRead")
 	log.Debug("Generating EdgeWorker rules JSON")
 
-	ewID, err := tools.GetIntValue("edgeworker_id", d)
+	ewID, err := tf.GetIntValue("edgeworker_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -61,7 +61,7 @@ func dataEdgeworkersPropertyRulesRead(_ context.Context, d *schema.ResourceData,
 		return diag.FromErr(err)
 	}
 	if err := d.Set("json", formatted.String()); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	d.SetId(strconv.Itoa(ewID))
 	return nil

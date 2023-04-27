@@ -9,8 +9,8 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/imaging"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/providers/imaging/imagewriter"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -41,7 +41,7 @@ func dataSourceImagingPolicyImageRead(_ context.Context, d *schema.ResourceData,
 	meta := akamai.Meta(m)
 	logger := meta.Log("Imaging", "dataPolicyImageRead")
 	logger.Debug("Creating image policy json from schema")
-	policy, err := tools.GetListValue("policy", d)
+	policy, err := tf.GetListValue("policy", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -59,7 +59,7 @@ func dataSourceImagingPolicyImageRead(_ context.Context, d *schema.ResourceData,
 		return diag.FromErr(err)
 	}
 	if err := d.Set("json", string(jsonBody)); err != nil {
-		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
 
 	id, err := getPolicyJSONHashID(string(jsonBody))

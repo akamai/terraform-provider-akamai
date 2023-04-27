@@ -7,8 +7,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
-
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -58,14 +57,14 @@ func dataSourceContractsGroupsRead(ctx context.Context, d *schema.ResourceData, 
 
 	getContractsGroups := appsec.GetContractsGroupsRequest{}
 
-	contractID, err := tools.GetStringValue("contractid", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	contractID, err := tf.GetStringValue("contractid", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 	getContractsGroups.ContractID = contractID
 
-	group, err := tools.GetIntValue("groupid", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	group, err := tf.GetIntValue("groupid", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 	getContractsGroups.GroupID = group
@@ -84,7 +83,7 @@ func dataSourceContractsGroupsRead(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 	if err := d.Set("output_text", outputtext); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	jsonBody, err := json.Marshal(contractsgroups)
@@ -93,17 +92,17 @@ func dataSourceContractsGroupsRead(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	if err := d.Set("json", string(jsonBody)); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	for _, configval := range contractsgroups.ContractGroups {
 
 		if configval.ContractID == contractID && configval.GroupID == group {
 			if err := d.Set("default_contractid", contractID); err != nil {
-				return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+				return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 			}
 			if err := d.Set("default_groupid", group); err != nil {
-				return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+				return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 			}
 		}
 	}

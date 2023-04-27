@@ -9,8 +9,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
-
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -76,7 +75,7 @@ func resourceSecurityPolicyCreate(ctx context.Context, d *schema.ResourceData, m
 	logger := meta.Log("APPSEC", "resourceSecurityPolicyCreate")
 	logger.Debugf("in resourceSecurityPolicyCreate")
 
-	configID, err := tools.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -84,20 +83,20 @@ func resourceSecurityPolicyCreate(ctx context.Context, d *schema.ResourceData, m
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	policyname, err := tools.GetStringValue("security_policy_name", d)
+	policyname, err := tf.GetStringValue("security_policy_name", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	policyprefix, err := tools.GetStringValue("security_policy_prefix", d)
+	policyprefix, err := tf.GetStringValue("security_policy_prefix", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	defaultSettings, err := tools.GetBoolValue("default_settings", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	defaultSettings, err := tf.GetBoolValue("default_settings", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	createfromsecuritypolicy, err := tools.GetStringValue("create_from_security_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	createfromsecuritypolicy, err := tf.GetStringValue("create_from_security_policy_id", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 
@@ -133,10 +132,10 @@ func resourceSecurityPolicyCreate(ctx context.Context, d *schema.ResourceData, m
 			return diag.FromErr(err)
 		}
 		if err := d.Set("security_policy_id", spcr.PolicyID); err != nil {
-			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 		}
 		if err := d.Set("security_policy_name", spcr.PolicyName); err != nil {
-			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 		}
 
 		d.SetId(fmt.Sprintf("%d:%s", createSecurityPolicy.ConfigID, spcr.PolicyID))
@@ -179,20 +178,20 @@ func resourceSecurityPolicyRead(ctx context.Context, d *schema.ResourceData, m i
 	}
 
 	if err := d.Set("config_id", getSecurityPolicy.ConfigID); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("security_policy_name", securitypolicy.PolicyName); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	policyparts := strings.Split(securitypolicy.PolicyID, "_")
 	if err := d.Set("security_policy_prefix", policyparts[0]); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("security_policy_id", securitypolicy.PolicyID); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("default_settings", true); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	return nil
@@ -224,8 +223,8 @@ func resourceSecurityPolicyUpdate(ctx context.Context, d *schema.ResourceData, m
 		return resourceSecurityPolicyRead(ctx, d, m)
 	}
 
-	policyname, err := tools.GetStringValue("security_policy_name", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	policyname, err := tf.GetStringValue("security_policy_name", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 

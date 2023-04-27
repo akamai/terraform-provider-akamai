@@ -9,9 +9,8 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/config"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -187,7 +186,7 @@ func (p *provider) Client(meta akamai.OperationMeta) appsec.APPSEC {
 func getAPPSECV1Service(d *schema.ResourceData) (interface{}, error) {
 	var section string
 
-	for _, s := range tools.FindStringValues(d, "appsec_section", "config_section") {
+	for _, s := range tf.FindStringValues(d, "appsec_section", "config_section") {
 		if s != "default" {
 			section = s
 			break
@@ -196,7 +195,7 @@ func getAPPSECV1Service(d *schema.ResourceData) (interface{}, error) {
 
 	if section != "" {
 		if err := d.Set("config_section", section); err != nil {
-			return nil, fmt.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+			return nil, fmt.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 		}
 	}
 

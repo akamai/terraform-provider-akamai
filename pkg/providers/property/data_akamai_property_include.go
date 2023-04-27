@@ -8,7 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 )
 
 func dataSourcePropertyInclude() *schema.Resource {
@@ -65,17 +65,17 @@ func dataPropertyIncludeRead(ctx context.Context, d *schema.ResourceData, m inte
 	log := meta.Log("PAPI", "dataPropertyIncludeRead")
 	log.Debug("Reading Property Include")
 
-	contractID, err := tools.GetStringValue("contract_id", d)
+	contractID, err := tf.GetStringValue("contract_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	groupID, err := tools.GetStringValue("group_id", d)
+	groupID, err := tf.GetStringValue("group_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	includeID, err := tools.GetStringValue("include_id", d)
+	includeID, err := tf.GetStringValue("include_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -106,7 +106,7 @@ func dataPropertyIncludeRead(ctx context.Context, d *schema.ResourceData, m inte
 	if item.ProductionVersion != nil {
 		attrs["production_version"] = item.ProductionVersion
 	}
-	if err = tools.SetAttrs(d, attrs); err != nil {
+	if err = tf.SetAttrs(d, attrs); err != nil {
 		return diag.FromErr(err)
 	}
 

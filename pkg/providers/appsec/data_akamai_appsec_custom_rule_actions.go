@@ -7,7 +7,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -47,7 +47,7 @@ func dataSourceCustomRuleActionsRead(ctx context.Context, d *schema.ResourceData
 
 	getCustomRuleActions := appsec.GetCustomRuleActionsRequest{}
 
-	configID, err := tools.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -57,14 +57,14 @@ func dataSourceCustomRuleActionsRead(ctx context.Context, d *schema.ResourceData
 		return diag.FromErr(err)
 	}
 
-	policyID, err := tools.GetStringValue("security_policy_id", d)
+	policyID, err := tf.GetStringValue("security_policy_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	getCustomRuleActions.PolicyID = policyID
 
-	customRuleID, err := tools.GetIntValue("custom_rule_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	customRuleID, err := tf.GetIntValue("custom_rule_id", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 	getCustomRuleActions.RuleID = customRuleID
@@ -83,7 +83,7 @@ func dataSourceCustomRuleActionsRead(ctx context.Context, d *schema.ResourceData
 		return diag.FromErr(err)
 	}
 	if err := d.Set("output_text", outputtext); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	d.SetId(strconv.Itoa(getCustomRuleActions.ConfigID))

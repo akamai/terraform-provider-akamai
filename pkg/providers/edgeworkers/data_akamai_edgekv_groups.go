@@ -7,7 +7,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/edgeworkers"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -50,11 +50,11 @@ func dataEdgeKVGroupsRead(ctx context.Context, d *schema.ResourceData, m interfa
 	client := inst.Client(meta)
 	logger.Debug("Reading EdgeKV namespace groups")
 
-	namespaceName, err := tools.GetStringValue("namespace_name", d)
+	namespaceName, err := tf.GetStringValue("namespace_name", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	network, err := tools.GetStringValue("network", d)
+	network, err := tf.GetStringValue("network", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}

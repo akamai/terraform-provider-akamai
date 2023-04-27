@@ -13,6 +13,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
 )
 
@@ -33,7 +34,7 @@ func resourceCPCode() *schema.Resource {
 			"name": {
 				Type:             schema.TypeString,
 				Required:         true,
-				ValidateDiagFunc: tools.IsNotBlank,
+				ValidateDiagFunc: tf.IsNotBlank,
 			},
 			"contract": {
 				Type:       schema.TypeString,
@@ -143,17 +144,17 @@ func resourceCPCodeRead(ctx context.Context, d *schema.ResourceData, m interface
 	contractID, groupID := getContractIDAndGroupID(d)
 
 	if err := d.Set("group_id", groupID); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("group", groupID); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	if err := d.Set("contract_id", contractID); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("contract", contractID); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	cpCodeResp, err := client.GetCPCode(ctx, papi.GetCPCodeRequest{
 		CPCodeID:   d.Id(),
@@ -167,17 +168,17 @@ func resourceCPCodeRead(ctx context.Context, d *schema.ResourceData, m interface
 	cpCode := cpCodeResp.CPCode
 
 	if err := d.Set("name", cpCode.Name); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	// we use the first value returned.  Most cpcodes have but a single product and we need to pick one for comparison.
 	if len(cpCode.ProductIDs) == 0 {
 		return diag.Errorf("Couldn't find product id on the CP Code")
 	}
 	if err := d.Set("product", cpCode.ProductIDs[0]); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("product_id", cpCode.ProductIDs[0]); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	d.SetId(cpCode.ID)
 	logger.Debugf("Read CP Code: %+v", cpCode)
@@ -202,7 +203,7 @@ func resourceCPCodeUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 		return diag.FromErr(err)
 	}
 
-	name, err := tools.GetStringValue("name", d)
+	name, err := tf.GetStringValue("name", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -265,22 +266,22 @@ func resourceCPCodeImport(ctx context.Context, d *schema.ResourceData, m interfa
 	cpCode := cpCodeResp.CPCode
 
 	if err := d.Set("name", cpCode.Name); err != nil {
-		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return nil, fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("contract_id", contractID); err != nil {
-		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return nil, fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("group_id", groupID); err != nil {
-		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return nil, fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 	}
 	if len(cpCode.ProductIDs) == 0 {
 		return nil, fmt.Errorf("could not find product id on the CP Code")
 	}
 	if err := d.Set("product_id", cpCode.ProductIDs[0]); err != nil {
-		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return nil, fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("product", cpCode.ProductIDs[0]); err != nil {
-		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return nil, fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 	}
 	d.SetId(cpCode.ID)
 	logger.Debugf("Import CP Code: %+v", cpCode)
@@ -353,7 +354,7 @@ func waitForCPCodeNameUpdate(ctx context.Context, client papi.PAPI, contractID, 
 
 	for CPCodeResp.CPCode.Name != updatedName {
 		select {
-		case <-time.After(tools.MaxDuration(updatePollInterval, updatePollMinimum)):
+		case <-time.After(tf.MaxDuration(updatePollInterval, updatePollMinimum)):
 			CPCodeResp, err = client.GetCPCode(ctx, req)
 			if err != nil {
 				return err

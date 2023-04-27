@@ -3,7 +3,7 @@ package ruleformats
 import (
 	"fmt"
 
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/dlclark/regexp2"
 
 	"github.com/hashicorp/go-cty/cty"
@@ -18,7 +18,7 @@ func validateRegex(pattern string) schema.SchemaValidateDiagFunc {
 		matchString, err := re.MatchString(value)
 		if value != "" && (err != nil || !matchString) {
 			errorSummary := fmt.Sprintf("value %q does not match the pattern %q", value, pattern)
-			schemaField, err := tools.GetSchemaFieldNameFromPath(path)
+			schemaField, err := tf.GetSchemaFieldNameFromPath(path)
 			if err == nil {
 				errorSummary = fmt.Sprintf("value %s: %q does not match the pattern %q", schemaField, value, pattern)
 			}

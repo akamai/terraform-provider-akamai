@@ -1,3 +1,4 @@
+// Package tools is where some legacy provider functions were dropped
 package tools
 
 import (

@@ -6,7 +6,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -79,17 +79,17 @@ func dataPropertyIncludeParentsRead(ctx context.Context, d *schema.ResourceData,
 	log := meta.Log("PAPI", "dataPropertyIncludeParentsRead")
 	log.Debug("Reading Property Include Parents")
 
-	contractID, err := tools.GetStringValue("contract_id", d)
+	contractID, err := tf.GetStringValue("contract_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	groupID, err := tools.GetStringValue("group_id", d)
+	groupID, err := tf.GetStringValue("group_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	includeID, err := tools.GetStringValue("include_id", d)
+	includeID, err := tf.GetStringValue("include_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}

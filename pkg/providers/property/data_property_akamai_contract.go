@@ -9,6 +9,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
 )
 
@@ -50,13 +51,13 @@ func dataPropertyContractRead(ctx context.Context, d *schema.ResourceData, m int
 	)
 
 	// check if one of group_id/group_name exists.
-	group, err := tools.ResolveKeyStringState(d, "group_id", "group_name")
+	group, err := tf.ResolveKeyStringState(d, "group_id", "group_name")
 	if err != nil {
 		// if both group_id/group_name not present in the state, check for group.
-		group, err = tools.GetStringValue("group", d)
+		group, err = tf.GetStringValue("group", d)
 		// If no group found, just return the first contract
 		if err != nil {
-			if !errors.Is(err, tools.ErrNotFound) {
+			if !errors.Is(err, tf.ErrNotFound) {
 				return diag.FromErr(err)
 			}
 			contracts, err := inst.Client(meta).GetContracts(ctx)
@@ -89,10 +90,10 @@ func dataPropertyContractRead(ctx context.Context, d *schema.ResourceData, m int
 
 		// set group_id/group_name/group in state.
 		if err := d.Set("group_id", tools.AddPrefix(g.GroupID, "grp_")); err != nil {
-			return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+			return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 		}
 		if err := d.Set("group_name", g.GroupName); err != nil {
-			return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+			return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 		}
 		d.SetId(g.ContractIDs[0])
 		return nil

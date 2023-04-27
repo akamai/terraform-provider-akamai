@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/stretchr/testify/assert"
@@ -74,9 +75,9 @@ func TestResolveVersion(t *testing.T) {
 				m.On("GetLatestVersion", mock.Anything, papi.GetLatestVersionRequest{
 					PropertyID:  "prp_id",
 					ActivatedOn: fmt.Sprintf("%v", papi.ActivationNetworkProduction),
-				}).Return(nil, tools.ErrNotFound).Once()
+				}).Return(nil, tf.ErrNotFound).Once()
 			},
-			withError: tools.ErrNotFound,
+			withError: tf.ErrNotFound,
 		},
 	}
 	for name, test := range tests {

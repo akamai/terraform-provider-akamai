@@ -8,7 +8,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -61,7 +61,7 @@ func resourceCustomRuleActionCreate(ctx context.Context, d *schema.ResourceData,
 	logger := meta.Log("APPSEC", "resourceCustomRuleActionCreate")
 	logger.Debugf("in resourceCustomRuleActionCreate")
 
-	configID, err := tools.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -69,16 +69,16 @@ func resourceCustomRuleActionCreate(ctx context.Context, d *schema.ResourceData,
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	policyID, err := tools.GetStringValue("security_policy_id", d)
+	policyID, err := tf.GetStringValue("security_policy_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	ruleID, err := tools.GetIntValue("custom_rule_id", d)
+	ruleID, err := tf.GetIntValue("custom_rule_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	customruleaction, err := tools.GetStringValue("custom_rule_action", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	customruleaction, err := tf.GetStringValue("custom_rule_action", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 
@@ -139,16 +139,16 @@ func resourceCustomRuleActionRead(ctx context.Context, d *schema.ResourceData, m
 	}
 
 	if err := d.Set("config_id", getCustomRuleAction.ConfigID); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("security_policy_id", getCustomRuleAction.PolicyID); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("custom_rule_id", getCustomRuleAction.RuleID); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("custom_rule_action", customruleaction.Action); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	return nil
 }
@@ -176,8 +176,8 @@ func resourceCustomRuleActionUpdate(ctx context.Context, d *schema.ResourceData,
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	customruleaction, err := tools.GetStringValue("custom_rule_action", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	customruleaction, err := tf.GetStringValue("custom_rule_action", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 

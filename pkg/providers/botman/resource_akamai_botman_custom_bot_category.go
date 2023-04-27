@@ -8,6 +8,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/botman"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -53,7 +54,7 @@ func resourceCustomBotCategoryCreate(ctx context.Context, d *schema.ResourceData
 	logger := meta.Log("botman", "resourceCustomBotCategoryCreateAction")
 	logger.Debugf("in resourceCustomBotCategoryCreateAction")
 
-	configID, err := tools.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -63,7 +64,7 @@ func resourceCustomBotCategoryCreate(ctx context.Context, d *schema.ResourceData
 		return diag.FromErr(err)
 	}
 
-	jsonPayloadString, err := tools.GetStringValue("custom_bot_category", d)
+	jsonPayloadString, err := tf.GetStringValue("custom_bot_category", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -136,8 +137,8 @@ func resourceCustomBotCategoryRead(ctx context.Context, d *schema.ResourceData, 
 		"category_id":         categoryID,
 		"custom_bot_category": string(jsonBody),
 	}
-	if err := tools.SetAttrs(d, fields); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+	if err := tf.SetAttrs(d, fields); err != nil {
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	return nil

@@ -10,7 +10,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/gtm"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -351,7 +351,7 @@ func parseResourceStringID(id string) (string, string, error) {
 
 // validateTTL is a SchemaValidateDiagFunc to validate dynamic_ttl and static_ttl.
 func validateTTL(v interface{}, path cty.Path) diag.Diagnostics {
-	schemaFieldName, err := tools.GetSchemaFieldNameFromPath(path)
+	schemaFieldName, err := tf.GetSchemaFieldNameFromPath(path)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -384,22 +384,22 @@ func resourceGTMv1PropertyCreate(ctx context.Context, d *schema.ResourceData, m 
 		session.WithContextLog(logger),
 	)
 
-	domain, err := tools.GetStringValue("domain", d)
+	domain, err := tf.GetStringValue("domain", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	propertyName, err := tools.GetStringValue("name", d)
+	propertyName, err := tf.GetStringValue("name", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	propertyType, err := tools.GetStringValue("type", d)
+	propertyType, err := tf.GetStringValue("type", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	// Static properties cannot have traffic_targets. Non Static properties must
-	traffTargList, err := tools.GetInterfaceArrayValue("traffic_target", d)
+	traffTargList, err := tf.GetInterfaceArrayValue("traffic_target", d)
 	if strings.ToUpper(propertyType) == "STATIC" && err == nil && (traffTargList != nil && len(traffTargList) > 0) {
 		logger.Errorf("Property %s Create failed. Static property cannot have traffic targets", propertyName)
 		return diag.Errorf("property Create failed. Static property cannot have traffic targets")
@@ -427,7 +427,7 @@ func resourceGTMv1PropertyCreate(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(fmt.Errorf(cStatus.Status.Message))
 	}
 
-	waitOnComplete, err := tools.GetBoolValue("wait_on_complete", d)
+	waitOnComplete, err := tf.GetBoolValue("wait_on_complete", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -520,7 +520,7 @@ func resourceGTMv1PropertyUpdate(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(fmt.Errorf(uStat.Message))
 	}
 
-	waitOnComplete, err := tools.GetBoolValue("wait_on_complete", d)
+	waitOnComplete, err := tf.GetBoolValue("wait_on_complete", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -608,7 +608,7 @@ func resourceGTMv1PropertyDelete(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(fmt.Errorf(uStat.Message))
 	}
 
-	waitOnComplete, err := tools.GetBoolValue("wait_on_complete", d)
+	waitOnComplete, err := tf.GetBoolValue("wait_on_complete", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -638,195 +638,195 @@ func populatePropertyObject(ctx context.Context, d *schema.ResourceData, prop *g
 	meta := akamai.Meta(m)
 	logger := meta.Log("Akamai GTM", "populatePropertyObject")
 
-	vstr, err := tools.GetStringValue("name", d)
+	vstr, err := tf.GetStringValue("name", d)
 	if err == nil {
 		prop.Name = vstr
 	}
-	ptype, err := tools.GetStringValue("type", d)
+	ptype, err := tf.GetStringValue("type", d)
 	if err == nil {
 		prop.Type = ptype
 	}
-	vstr, err = tools.GetStringValue("score_aggregation_type", d)
+	vstr, err = tf.GetStringValue("score_aggregation_type", d)
 	if err == nil {
 		prop.ScoreAggregationType = vstr
 	}
-	vint, err := tools.GetIntValue("stickiness_bonus_percentage", d)
+	vint, err := tf.GetIntValue("stickiness_bonus_percentage", d)
 	if err == nil || d.HasChange("stickiness_bonus_percentage") {
 		prop.StickinessBonusPercentage = vint
 	}
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		logger.Errorf("populateResourceObject() stickiness_bonus_percentage failed: %v", err.Error())
 		return fmt.Errorf("property Object could not be populated: %v", err.Error())
 	}
 
-	vint, err = tools.GetIntValue("stickiness_bonus_constant", d)
+	vint, err = tf.GetIntValue("stickiness_bonus_constant", d)
 	if err == nil || d.HasChange("stickiness_bonus_constant") {
 		prop.StickinessBonusConstant = vint
 	}
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		logger.Errorf("populateResourceObject() stickiness_bonus_constant failed: %v", err.Error())
 		return fmt.Errorf("property Object could not be populated: %v", err.Error())
 	}
 
-	vfloat, err := tools.GetFloat64Value("health_threshold", d)
+	vfloat, err := tf.GetFloat64Value("health_threshold", d)
 	if err == nil || d.HasChange("health_threshold") {
 		prop.HealthThreshold = vfloat
 	}
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		logger.Errorf("populateResourceObject() health_threshold failed: %v", err.Error())
 		return fmt.Errorf("property Object could not be populated: %v", err.Error())
 	}
 
-	if ipv6, err := tools.GetBoolValue("ipv6", d); err == nil {
+	if ipv6, err := tf.GetBoolValue("ipv6", d); err == nil {
 		prop.Ipv6 = ipv6
 	}
-	if uct, err := tools.GetBoolValue("use_computed_targets", d); err == nil {
+	if uct, err := tf.GetBoolValue("use_computed_targets", d); err == nil {
 		prop.UseComputedTargets = uct
 	}
 
-	vstr, err = tools.GetStringValue("backup_ip", d)
+	vstr, err = tf.GetStringValue("backup_ip", d)
 	if err == nil || d.HasChange("backup_ip") {
 		prop.BackupIp = vstr
 	}
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		logger.Errorf("populateResourceObject() backup_ip failed: %v", err.Error())
 		return fmt.Errorf("property Object could not be populated: %v", err.Error())
 	}
 
-	if bbds, err := tools.GetBoolValue("balance_by_download_score", d); err == nil {
+	if bbds, err := tf.GetBoolValue("balance_by_download_score", d); err == nil {
 		prop.BalanceByDownloadScore = bbds
 	}
 
-	vfloat, err = tools.GetFloat64Value("unreachable_threshold", d)
+	vfloat, err = tf.GetFloat64Value("unreachable_threshold", d)
 	if err == nil || d.HasChange("unreachable_threshold") {
 		prop.UnreachableThreshold = vfloat
 	}
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		logger.Errorf("populateResourceObject() unreachable_threshold failed: %v", err.Error())
 		return fmt.Errorf("property Object could not be populated: %v", err.Error())
 	}
 
-	vfloat, err = tools.GetFloat64Value("min_live_fraction", d)
+	vfloat, err = tf.GetFloat64Value("min_live_fraction", d)
 	if err == nil || d.HasChange("min_live_fraction") {
 		prop.MinLiveFraction = vfloat
 	}
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		logger.Errorf("populateResourceObject() min_live_fraction failed: %v", err.Error())
 		return fmt.Errorf("property Object could not be populated: %v", err.Error())
 	}
 
-	vfloat, err = tools.GetFloat64Value("health_multiplier", d)
+	vfloat, err = tf.GetFloat64Value("health_multiplier", d)
 	if err == nil || d.HasChange("health_multiplier") {
 		prop.HealthMultiplier = vfloat
 	}
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		logger.Errorf("populateResourceObject() health_multiplier failed: %v", err.Error())
 		return fmt.Errorf("property Object could not be populated: %v", err.Error())
 	}
 
-	vint, err = tools.GetIntValue("dynamic_ttl", d)
+	vint, err = tf.GetIntValue("dynamic_ttl", d)
 	if err == nil || d.HasChange("dynamic_ttl") {
 		prop.DynamicTTL = vint
 	}
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		logger.Errorf("populateResourceObject() dynamic_ttl failed: %v", err.Error())
 		return fmt.Errorf("property Object could not be populated: %v", err.Error())
 	}
 
-	vint, err = tools.GetIntValue("max_unreachable_penalty", d)
+	vint, err = tf.GetIntValue("max_unreachable_penalty", d)
 	if err == nil || d.HasChange("max_unreachable_penalty") {
 		prop.MaxUnreachablePenalty = vint
 	}
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		logger.Errorf("populateResourceObject() max_unreachable_penalty failed: %v", err.Error())
 		return fmt.Errorf("property Object could not be populated: %v", err.Error())
 	}
 
-	vstr, err = tools.GetStringValue("map_name", d)
+	vstr, err = tf.GetStringValue("map_name", d)
 	if err == nil || d.HasChange("map_name") {
 		prop.MapName = vstr
 	}
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		logger.Errorf("populateResourceObject() map_name failed: %v", err.Error())
 		return fmt.Errorf("property Object could not be populated: %v", err.Error())
 	}
 
-	if vint, err = tools.GetIntValue("handout_limit", d); err == nil || d.HasChange("handout_limit") {
+	if vint, err = tf.GetIntValue("handout_limit", d); err == nil || d.HasChange("handout_limit") {
 		prop.HandoutLimit = vint
 	}
-	if vstr, err = tools.GetStringValue("handout_mode", d); err == nil {
+	if vstr, err = tf.GetStringValue("handout_mode", d); err == nil {
 		prop.HandoutMode = vstr
 	}
 
-	vfloat, err = tools.GetFloat64Value("load_imbalance_percentage", d)
+	vfloat, err = tf.GetFloat64Value("load_imbalance_percentage", d)
 	if err == nil || d.HasChange("load_imbalance_percentage") {
 		prop.LoadImbalancePercentage = vfloat
 	}
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		logger.Errorf("populateResourceObject() load_imbalance_percentage failed: %v", err.Error())
 		return fmt.Errorf("property Object could not be populated: %v", err.Error())
 	}
 
-	vint, err = tools.GetIntValue("failover_delay", d)
+	vint, err = tf.GetIntValue("failover_delay", d)
 	if err == nil || d.HasChange("failover_delay") {
 		prop.FailoverDelay = vint
 	}
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		logger.Errorf("populateResourceObject() failover_delay failed: %v", err.Error())
 		return fmt.Errorf("property Object could not be populated: %v", err.Error())
 	}
 
-	vstr, err = tools.GetStringValue("backup_cname", d)
+	vstr, err = tf.GetStringValue("backup_cname", d)
 	if err == nil || d.HasChange("backup_cname") {
 		prop.BackupCName = vstr
 	}
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		logger.Errorf("populateResourceObject() backup_cname failed: %v", err.Error())
 		return fmt.Errorf("property Object could not be populated: %v", err.Error())
 	}
 
-	vint, err = tools.GetIntValue("failback_delay", d)
+	vint, err = tf.GetIntValue("failback_delay", d)
 	if err == nil || d.HasChange("failback_delay") {
 		prop.FailbackDelay = vint
 	}
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		logger.Errorf("populateResourceObject() failback_delay failed: %v", err.Error())
 		return fmt.Errorf("property Object could not be populated: %v", err.Error())
 	}
 
-	vfloat, err = tools.GetFloat64Value("health_max", d)
+	vfloat, err = tf.GetFloat64Value("health_max", d)
 	if err == nil || d.HasChange("health_max") {
 		prop.HealthMax = vfloat
 	}
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		logger.Errorf("populateResourceObject() health_max failed: %v", err.Error())
 		return fmt.Errorf("property Object could not be populated: %v", err.Error())
 	}
 
-	if gdr, err := tools.GetBoolValue("ghost_demand_reporting", d); err == nil {
+	if gdr, err := tf.GetBoolValue("ghost_demand_reporting", d); err == nil {
 		prop.GhostDemandReporting = gdr
 	}
-	if vint, err = tools.GetIntValue("weighted_hash_bits_for_ipv4", d); err == nil {
+	if vint, err = tf.GetIntValue("weighted_hash_bits_for_ipv4", d); err == nil {
 		prop.WeightedHashBitsForIPv4 = vint
 	}
-	if vint, err = tools.GetIntValue("weighted_hash_bits_for_ipv6", d); err == nil {
+	if vint, err = tf.GetIntValue("weighted_hash_bits_for_ipv6", d); err == nil {
 		prop.WeightedHashBitsForIPv6 = vint
 	}
 
-	vstr, err = tools.GetStringValue("cname", d)
+	vstr, err = tf.GetStringValue("cname", d)
 	if err == nil || d.HasChange("cname") {
 		prop.CName = vstr
 	}
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		logger.Errorf("populateResourceObject() cname failed: %v", err.Error())
 		return fmt.Errorf("property Object could not be populated: %v", err.Error())
 	}
 
-	vstr, err = tools.GetStringValue("comments", d)
+	vstr, err = tf.GetStringValue("comments", d)
 	if err == nil || d.HasChange("comments") {
 		prop.Comments = vstr
 	}
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		logger.Errorf("populateResourceObject() comments failed: %v", err.Error())
 		return fmt.Errorf("property Object could not be populated: %v", err.Error())
 	}
@@ -843,7 +843,7 @@ func populatePropertyObject(ctx context.Context, d *schema.ResourceData, prop *g
 // Create and populate a new property object from resource data
 func populateNewPropertyObject(ctx context.Context, meta akamai.OperationMeta, d *schema.ResourceData, m interface{}) (*gtm.Property, error) {
 
-	name, _ := tools.GetStringValue("name", d)
+	name, _ := tf.GetStringValue("name", d)
 	propObj := inst.Client(meta).NewProperty(ctx, name)
 	propObj.TrafficTargets = make([]*gtm.TrafficTarget, 0)
 	propObj.LivenessTests = make([]*gtm.LivenessTest, 0)
@@ -912,7 +912,7 @@ func populateTrafficTargetObject(ctx context.Context, d *schema.ResourceData, pr
 	logger := meta.Log("Akamai GTM", "populateTrafficTargetObject")
 
 	// pull apart List
-	traffTargList, err := tools.GetInterfaceArrayValue("traffic_target", d)
+	traffTargList, err := tf.GetInterfaceArrayValue("traffic_target", d)
 	if err == nil {
 		trafficObjList := make([]*gtm.TrafficTarget, len(traffTargList)) // create new object list
 		for i, v := range traffTargList {
@@ -948,7 +948,7 @@ func populateTerraformTrafficTargetState(d *schema.ResourceData, prop *gtm.Prope
 			objectInventory[aObj.DatacenterId] = aObj
 		}
 	}
-	ttStateList, _ := tools.GetInterfaceArrayValue("traffic_target", d)
+	ttStateList, _ := tf.GetInterfaceArrayValue("traffic_target", d)
 	for _, ttMap := range ttStateList {
 		tt := ttMap.(map[string]interface{})
 		objIndex := tt["datacenter_id"].(int)
@@ -986,7 +986,7 @@ func populateTerraformTrafficTargetState(d *schema.ResourceData, prop *gtm.Prope
 func populateStaticRRSetObject(ctx context.Context, meta akamai.OperationMeta, d *schema.ResourceData, prop *gtm.Property) {
 
 	// pull apart List
-	staticSetList, err := tools.GetInterfaceArrayValue("static_rr_set", d)
+	staticSetList, err := tf.GetInterfaceArrayValue("static_rr_set", d)
 	if err == nil {
 		staticObjList := make([]*gtm.StaticRRSet, len(staticSetList)) // create new object list
 		for i, v := range staticSetList {
@@ -1018,7 +1018,7 @@ func populateTerraformStaticRRSetState(d *schema.ResourceData, prop *gtm.Propert
 			objectInventory[aObj.Type] = aObj
 		}
 	}
-	rrStateList, _ := tools.GetInterfaceArrayValue("static_rr_set", d)
+	rrStateList, _ := tf.GetInterfaceArrayValue("static_rr_set", d)
 	for _, rrMap := range rrStateList {
 		rr := rrMap.(map[string]interface{})
 		objIndex := rr["type"].(string)
@@ -1052,7 +1052,7 @@ func populateTerraformStaticRRSetState(d *schema.ResourceData, prop *gtm.Propert
 // Populate existing Liveness test  object from resource data
 func populateLivenessTestObject(ctx context.Context, meta akamai.OperationMeta, d *schema.ResourceData, prop *gtm.Property) {
 
-	liveTestList, err := tools.GetInterfaceArrayValue("liveness_test", d)
+	liveTestList, err := tf.GetInterfaceArrayValue("liveness_test", d)
 	if err == nil {
 		liveTestObjList := make([]*gtm.LivenessTest, len(liveTestList)) // create new object list
 		for i, l := range liveTestList {
@@ -1109,7 +1109,7 @@ func populateTerraformLivenessTestState(d *schema.ResourceData, prop *gtm.Proper
 			objectInventory[aObj.Name] = aObj
 		}
 	}
-	ltStateList, _ := tools.GetInterfaceArrayValue("liveness_test", d)
+	ltStateList, _ := tf.GetInterfaceArrayValue("liveness_test", d)
 	for _, ltMap := range ltStateList {
 		lt := ltMap.(map[string]interface{})
 		objIndex := lt["name"].(string)

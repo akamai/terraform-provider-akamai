@@ -5,8 +5,7 @@ import (
 	"fmt"
 
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
-
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
@@ -79,7 +78,7 @@ func populateSchemaFieldsWithActivationHistory(ac []datastream.ActivationHistory
 		"activations": activations,
 	}
 
-	err := tools.SetAttrs(d, fields)
+	err := tf.SetAttrs(d, fields)
 	if err != nil {
 		return fmt.Errorf("could not set schema attributes: %s", err)
 	}
@@ -92,7 +91,7 @@ func dataAkamaiDatastreamActivationHistoryRead(ctx context.Context, d *schema.Re
 	log := meta.Log("DataStream", "dataAkamaiDatastreamActivationHistoryRead")
 	client := inst.Client(meta)
 
-	streamID, err := tools.GetIntValue("stream_id", d)
+	streamID, err := tf.GetIntValue("stream_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}

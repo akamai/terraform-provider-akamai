@@ -9,7 +9,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/botman"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -48,7 +48,7 @@ func resourceChallengeInterceptionRulesCreate(ctx context.Context, d *schema.Res
 	logger := meta.Log("botman", "resourceChallengeInterceptionRulesCreate")
 	logger.Debugf("in resourceChallengeInterceptionRulesCreate")
 
-	configID, err := tools.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -58,7 +58,7 @@ func resourceChallengeInterceptionRulesCreate(ctx context.Context, d *schema.Res
 		return diag.FromErr(err)
 	}
 
-	jsonPayloadString, err := tools.GetStringValue("challenge_interception_rules", d)
+	jsonPayloadString, err := tf.GetStringValue("challenge_interception_rules", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -115,8 +115,8 @@ func resourceChallengeInterceptionRulesRead(ctx context.Context, d *schema.Resou
 		"config_id":                    configID,
 		"challenge_interception_rules": string(jsonBody),
 	}
-	if err := tools.SetAttrs(d, fields); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+	if err := tf.SetAttrs(d, fields); err != nil {
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	d.SetId(strconv.Itoa(configID))
@@ -139,7 +139,7 @@ func resourceChallengeInterceptionRulesUpdate(ctx context.Context, d *schema.Res
 		return diag.FromErr(err)
 	}
 
-	jsonPayloadString, err := tools.GetStringValue("challenge_interception_rules", d)
+	jsonPayloadString, err := tf.GetStringValue("challenge_interception_rules", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}

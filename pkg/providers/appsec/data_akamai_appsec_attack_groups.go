@@ -8,7 +8,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -63,7 +63,7 @@ func dataSourceAttackGroupsRead(ctx context.Context, d *schema.ResourceData, m i
 
 	getAttackGroups := appsec.GetAttackGroupsRequest{}
 
-	configID, err := tools.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -73,14 +73,14 @@ func dataSourceAttackGroupsRead(ctx context.Context, d *schema.ResourceData, m i
 		return diag.FromErr(err)
 	}
 
-	policyID, err := tools.GetStringValue("security_policy_id", d)
+	policyID, err := tf.GetStringValue("security_policy_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	getAttackGroups.PolicyID = policyID
 
-	attackgroup, err := tools.GetStringValue("attack_group", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	attackgroup, err := tf.GetStringValue("attack_group", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 	getAttackGroups.Group = attackgroup
@@ -99,7 +99,7 @@ func dataSourceAttackGroupsRead(ctx context.Context, d *schema.ResourceData, m i
 		return diag.FromErr(err)
 	}
 	if err := d.Set("output_text", outputtext); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	jsonBody, err := json.Marshal(attackgroups)
@@ -108,12 +108,12 @@ func dataSourceAttackGroupsRead(ctx context.Context, d *schema.ResourceData, m i
 	}
 
 	if err := d.Set("json", string(jsonBody)); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	if len(attackgroups.AttackGroups) == 1 {
 		if err := d.Set("attack_group_action", attackgroups.AttackGroups[0].Action); err != nil {
-			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 		}
 
 		conditionException, err := json.Marshal(attackgroups.AttackGroups[0].ConditionException)
@@ -122,7 +122,7 @@ func dataSourceAttackGroupsRead(ctx context.Context, d *schema.ResourceData, m i
 		}
 
 		if err := d.Set("condition_exception", string(conditionException)); err != nil {
-			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 		}
 	}
 

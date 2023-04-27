@@ -8,8 +8,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/botman"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
-
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -44,12 +43,12 @@ func dataSourceTransactionalEndpointRead(ctx context.Context, d *schema.Resource
 	logger := meta.Log("botman", "dataSourceTransactionalEndpointRead")
 	logger.Debugf("in dataSourceTransactionalEndpointRead")
 
-	configID, err := tools.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	securityPolicyID, err := tools.GetStringValue("security_policy_id", d)
+	securityPolicyID, err := tf.GetStringValue("security_policy_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -59,8 +58,8 @@ func dataSourceTransactionalEndpointRead(ctx context.Context, d *schema.Resource
 		return diag.FromErr(err)
 	}
 
-	operationID, err := tools.GetStringValue("operation_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	operationID, err := tf.GetStringValue("operation_id", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 
@@ -83,7 +82,7 @@ func dataSourceTransactionalEndpointRead(ctx context.Context, d *schema.Resource
 		return diag.FromErr(err)
 	}
 	if err := d.Set("json", string(jsonBody)); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	d.SetId(fmt.Sprintf("%d:%s", configID, securityPolicyID))

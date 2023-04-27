@@ -7,8 +7,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
-
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -53,15 +52,15 @@ func resourceBypassNetworkListsCreate(ctx context.Context, d *schema.ResourceDat
 	logger := meta.Log("APPSEC", "resourceBypassNetworkListsCreate")
 	logger.Debug("in resourceBypassNetworkListsCreate")
 
-	configID, err := tools.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	policyID, err := tools.GetStringValue("security_policy_id", d)
+	policyID, err := tf.GetStringValue("security_policy_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	networkListIDSet, err := tools.GetSetValue("bypass_network_list", d)
+	networkListIDSet, err := tf.GetSetValue("bypass_network_list", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -102,7 +101,7 @@ func resourceBypassNetworkListsRead(ctx context.Context, d *schema.ResourceData,
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	policyID, err := tools.GetStringValue("security_policy_id", d)
+	policyID, err := tf.GetStringValue("security_policy_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -123,14 +122,14 @@ func resourceBypassNetworkListsRead(ctx context.Context, d *schema.ResourceData,
 	}
 
 	if err := d.Set("config_id", configID); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	networkListIDSet := schema.Set{F: schema.HashString}
 	for _, networkList := range bypassNetworkListsResponse.NetworkLists {
 		networkListIDSet.Add(networkList.ID)
 	}
 	if err := d.Set("bypass_network_list", networkListIDSet.List()); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	return nil
@@ -142,15 +141,15 @@ func resourceBypassNetworkListsUpdate(ctx context.Context, d *schema.ResourceDat
 	logger := meta.Log("APPSEC", "resourceBypassNetworkListsUpdate")
 	logger.Debug("in resourceBypassNetworkListsUpdate")
 
-	configID, err := tools.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	policyID, err := tools.GetStringValue("security_policy_id", d)
+	policyID, err := tf.GetStringValue("security_policy_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	networkListIDSet, err := tools.GetSetValue("bypass_network_list", d)
+	networkListIDSet, err := tf.GetSetValue("bypass_network_list", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -192,7 +191,7 @@ func resourceBypassNetworkListsDelete(ctx context.Context, d *schema.ResourceDat
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	policyID, err := tools.GetStringValue("security_policy_id", d)
+	policyID, err := tf.GetStringValue("security_policy_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}

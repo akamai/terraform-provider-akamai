@@ -9,6 +9,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/datastream"
@@ -24,7 +25,7 @@ func dataAkamaiDatastreamStreams() *schema.Resource {
 			"group_id": {
 				Type:             schema.TypeString,
 				Optional:         true,
-				DiffSuppressFunc: tools.FieldPrefixSuppress("grp_"),
+				DiffSuppressFunc: tf.FieldPrefixSuppress("grp_"),
 				Description:      "Limits the returned set to streams belonging to the specified group.",
 			},
 			"streams": {
@@ -159,8 +160,8 @@ func dataDatastreamStreamsRead(ctx context.Context, d *schema.ResourceData, m in
 
 	client := inst.Client(meta)
 
-	groupIDStr, err := tools.GetStringValue("group_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	groupIDStr, err := tf.GetStringValue("group_id", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 
@@ -183,7 +184,7 @@ func dataDatastreamStreamsRead(ctx context.Context, d *schema.ResourceData, m in
 
 	logger.Debugf("Fetched %d streams", len(streams))
 	attrs := map[string]interface{}{"streams": createStreamsAttrs(streams)}
-	if err = tools.SetAttrs(d, attrs); err != nil {
+	if err = tf.SetAttrs(d, attrs); err != nil {
 		return diag.FromErr(err)
 	}
 

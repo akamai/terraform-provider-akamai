@@ -11,8 +11,8 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/cps"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	toolsCPS "github.com/akamai/terraform-provider-akamai/v3/pkg/providers/cps/tools"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
 	"github.com/apex/log"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -127,7 +127,7 @@ func resourceCPSUploadCertificateRead(ctx context.Context, d *schema.ResourceDat
 	if err != nil {
 		return diag.Errorf("could not get resource id: %s", err)
 	}
-	waitForDeployment, err := tools.GetBoolValue("wait_for_deployment", d)
+	waitForDeployment, err := tf.GetBoolValue("wait_for_deployment", d)
 	if err != nil {
 		return diag.Errorf("could not get `wait for deployment` attribute: %s", err)
 	}
@@ -144,7 +144,7 @@ func resourceCPSUploadCertificateRead(ctx context.Context, d *schema.ResourceDat
 
 	var attrs map[string]interface{}
 	if waitForDeployment && len(enrollment.PendingChanges) != 0 {
-		ackChangeManagement, err := tools.GetBoolValue("acknowledge_change_management", d)
+		ackChangeManagement, err := tf.GetBoolValue("acknowledge_change_management", d)
 		if err != nil {
 			return diag.Errorf("could not get `acknowledge change management` attribute: %s", err)
 		}
@@ -174,7 +174,7 @@ func resourceCPSUploadCertificateRead(ctx context.Context, d *schema.ResourceDat
 	}
 	attrs = createAttrsFromChangeHistory(changeHistory)
 
-	if err = tools.SetAttrs(d, attrs); err != nil {
+	if err = tf.SetAttrs(d, attrs); err != nil {
 		return diag.Errorf("could not set attributes: %s", err)
 	}
 
@@ -188,7 +188,7 @@ func resourceCPSUploadCertificateUpdate(ctx context.Context, d *schema.ResourceD
 	client := inst.Client(meta)
 	logger.Debug("Updating upload certificate")
 
-	enrollmentID, err := tools.GetIntValue("enrollment_id", d)
+	enrollmentID, err := tf.GetIntValue("enrollment_id", d)
 	if err != nil {
 		return diag.Errorf("could not get `enrollment_id` attribute: %s", err)
 	}
@@ -225,7 +225,7 @@ func resourceCPSUploadCertificateUpdate(ctx context.Context, d *schema.ResourceD
 		}
 
 		if d.HasChanges("acknowledge_change_management") && enrollment.ChangeManagement {
-			ackChangeManagement, err := tools.GetBoolValue("acknowledge_change_management", d)
+			ackChangeManagement, err := tf.GetBoolValue("acknowledge_change_management", d)
 			if err != nil {
 				return diag.Errorf("could not get `acknowledge_change_management` attribute: %s", err)
 			}
@@ -486,13 +486,13 @@ func processPostVerificationWarnings(ctx context.Context, client cps.CPS, d *sch
 
 	logger.Debugf("Post-verification warnings: %s", warnings.Warnings)
 
-	acceptAllWarnings, err := tools.GetBoolValue("acknowledge_post_verification_warnings", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	acceptAllWarnings, err := tf.GetBoolValue("acknowledge_post_verification_warnings", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return fmt.Errorf("could not get `acknowledge_post_verification_warnings` attribute: %s", err)
 	}
 
-	autoApproveWarnings, err := tools.GetSetValue("auto_approve_warnings", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	autoApproveWarnings, err := tf.GetSetValue("auto_approve_warnings", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return fmt.Errorf("could not get `auto_approve_warnings` attribute: %s", err)
 	}
 
@@ -604,36 +604,36 @@ func createAttrsFromChangeHistory(changeHistory *cps.GetChangeHistoryResponse) m
 
 // getCPSUploadCertificateAttrs returns struct holding attributes from schema
 func getCPSUploadCertificateAttrs(d *schema.ResourceData) (*attributes, error) {
-	enrollmentID, err := tools.GetIntValue("enrollment_id", d)
+	enrollmentID, err := tf.GetIntValue("enrollment_id", d)
 	if err != nil {
 		return nil, fmt.Errorf("could not get `enrollment_id` attribute: %s", err)
 	}
 
-	certificateECDSA, err := tools.GetStringValue("certificate_ecdsa_pem", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	certificateECDSA, err := tf.GetStringValue("certificate_ecdsa_pem", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return nil, fmt.Errorf("could not get `certificate_ecdsa_pem` attribute: %s", err)
 	}
-	certificateRSA, err := tools.GetStringValue("certificate_rsa_pem", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	certificateRSA, err := tf.GetStringValue("certificate_rsa_pem", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return nil, fmt.Errorf("could not get `certificate_rsa_pem` attribute: %s", err)
 	}
 
-	trustChainECDSA, err := tools.GetStringValue("trust_chain_ecdsa_pem", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	trustChainECDSA, err := tf.GetStringValue("trust_chain_ecdsa_pem", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return nil, fmt.Errorf("could not get `trust_chain_ecdsa_pem` attribute: %s", err)
 	}
-	trustChainRSA, err := tools.GetStringValue("trust_chain_rsa_pem", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	trustChainRSA, err := tf.GetStringValue("trust_chain_rsa_pem", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return nil, fmt.Errorf("could not get `trust_chain_rsa_pem` attribute: %s", err)
 	}
 
-	ackChangeManagement, err := tools.GetBoolValue("acknowledge_change_management", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	ackChangeManagement, err := tf.GetBoolValue("acknowledge_change_management", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return nil, fmt.Errorf("could not get `acknowledge_change_management` attribute: %s", err)
 	}
 
-	waitForDeployment, err := tools.GetBoolValue("wait_for_deployment", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	waitForDeployment, err := tf.GetBoolValue("wait_for_deployment", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return nil, fmt.Errorf("could not get `wait_for_deployment` attribute: %s", err)
 	}
 
@@ -692,7 +692,7 @@ func resourceCPSUploadCertificateImport(ctx context.Context, d *schema.ResourceD
 	attrs["wait_for_deployment"] = false
 	attrs["enrollment_id"] = enrollmentID
 
-	if err = tools.SetAttrs(d, attrs); err != nil {
+	if err = tf.SetAttrs(d, attrs); err != nil {
 		return nil, fmt.Errorf("could not set attributes: %s", err)
 	}
 

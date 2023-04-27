@@ -8,7 +8,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -52,7 +52,7 @@ func resourceSecurityPolicyRenameCreate(ctx context.Context, d *schema.ResourceD
 	logger := meta.Log("APPSEC", "resourceSecurityPolicyRenameCreate")
 	logger.Debugf("in resourceSecurityPolicyRenameCreate")
 
-	configID, err := tools.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -60,11 +60,11 @@ func resourceSecurityPolicyRenameCreate(ctx context.Context, d *schema.ResourceD
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	policyID, err := tools.GetStringValue("security_policy_id", d)
+	policyID, err := tf.GetStringValue("security_policy_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	policyname, err := tools.GetStringValue("security_policy_name", d)
+	policyname, err := tf.GetStringValue("security_policy_name", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -119,13 +119,13 @@ func resourceSecurityPolicyRenameRead(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 	if err := d.Set("config_id", getSecurityPolicy.ConfigID); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("security_policy_id", getSecurityPolicy.PolicyID); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("security_policy_name", securitypolicy.PolicyName); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	return nil
@@ -150,8 +150,8 @@ func resourceSecurityPolicyRenameUpdate(ctx context.Context, d *schema.ResourceD
 		return diag.FromErr(err)
 	}
 	policyID := iDParts[1]
-	policyname, err := tools.GetStringValue("security_policy_name", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	policyname, err := tf.GetStringValue("security_policy_name", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 

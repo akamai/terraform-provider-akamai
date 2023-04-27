@@ -9,8 +9,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
-
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -63,7 +62,7 @@ func resourceAPIRequestConstraintsCreate(ctx context.Context, d *schema.Resource
 	logger := meta.Log("APPSEC", "resourceAPIRequestConstraintsCreate")
 	logger.Debugf("in resourceAPIRequestConstraintsCreate")
 
-	configID, err := tools.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -71,15 +70,15 @@ func resourceAPIRequestConstraintsCreate(ctx context.Context, d *schema.Resource
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	policyID, err := tools.GetStringValue("security_policy_id", d)
+	policyID, err := tf.GetStringValue("security_policy_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	apiEndpointID, err := tools.GetIntValue("api_endpoint_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	apiEndpointID, err := tf.GetIntValue("api_endpoint_id", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	action, err := tools.GetStringValue("action", d)
+	action, err := tf.GetStringValue("action", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -145,15 +144,15 @@ func resourceAPIRequestConstraintsRead(ctx context.Context, d *schema.ResourceDa
 	}
 
 	if err := d.Set("config_id", configID); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	if err := d.Set("security_policy_id", policyID); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	if err := d.Set("api_endpoint_id", apiID); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	if apiID != 0 {
@@ -161,7 +160,7 @@ func resourceAPIRequestConstraintsRead(ctx context.Context, d *schema.ResourceDa
 			for _, val := range response.APIEndpoints {
 				if val.ID == apiID {
 					if err := d.Set("action", val.Action); err != nil {
-						return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+						return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 					}
 				}
 			}
@@ -195,8 +194,8 @@ func resourceAPIRequestConstraintsUpdate(ctx context.Context, d *schema.Resource
 			return diag.FromErr(errconv)
 		}
 	}
-	action, err := tools.GetStringValue("action", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	action, err := tf.GetStringValue("action", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 

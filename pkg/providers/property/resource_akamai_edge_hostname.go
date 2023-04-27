@@ -13,6 +13,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/hapi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
 )
 
@@ -77,7 +78,7 @@ var akamaiSecureEdgeHostNameSchema = map[string]*schema.Schema{
 		Required:         true,
 		ForceNew:         true,
 		DiffSuppressFunc: diffSuppressEdgeHostname,
-		ValidateDiagFunc: tools.IsNotBlank,
+		ValidateDiagFunc: tf.IsNotBlank,
 		StateFunc:        appendDefaultSuffixToEdgeHostname,
 	},
 	"ip_behavior": {
@@ -120,10 +121,10 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 	groupID = tools.AddPrefix(groupID, "grp_")
 	// set group/groupID into ResourceData
 	if err := d.Set("group_id", groupID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 	}
 	if err := d.Set("group", groupID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 	}
 
 	// Schema guarantees contract_id/contract are strings and one or the other is set
@@ -136,27 +137,27 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 	contractID = tools.AddPrefix(contractID, "ctr_")
 	// set contract/contract_id into ResourceData
 	if err := d.Set("contract_id", contractID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 	}
 	if err := d.Set("contract", contractID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 	}
 
 	logger.Debugf("Edgehostnames GROUP = %v", groupID)
 	logger.Debugf("Edgehostnames CONTRACT = %v", contractID)
 
 	// Schema no longer guarantees that product_id/product are set, one of them is required only for creation
-	productID, err := tools.ResolveKeyStringState(d, "product_id", "product")
+	productID, err := tf.ResolveKeyStringState(d, "product_id", "product")
 	if err != nil {
 		return diag.Errorf("one of `%s` must be specified for creation", strings.Join([]string{"product_id", "product"}, ", "))
 	}
 	productID = tools.AddPrefix(productID, "prd_")
 	// set product/product_id into ResourceData
 	if err := d.Set("product_id", productID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 	}
 	if err := d.Set("product", productID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 	}
 
 	edgeHostnames, err := client.GetEdgeHostnames(ctx, papi.GetEdgeHostnamesRequest{
@@ -186,9 +187,9 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 			ehnID = h.ID
 		}
 	}
-	certEnrollmentID, err := tools.GetIntValue("certificate", d)
+	certEnrollmentID, err := tf.GetIntValue("certificate", d)
 	if err != nil {
-		if !errors.Is(err, tools.ErrNotFound) {
+		if !errors.Is(err, tf.ErrNotFound) {
 			return diag.FromErr(err)
 		}
 		if newHostname.SecureNetwork == papi.EHSecureNetworkEnhancedTLS {
@@ -198,8 +199,8 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 	newHostname.CertEnrollmentID = certEnrollmentID
 	newHostname.SlotNumber = certEnrollmentID
 
-	useCasesJSON, err := tools.GetStringValue("use_cases", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	useCasesJSON, err := tf.GetStringValue("use_cases", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 	if useCasesJSON != "" {
@@ -245,10 +246,10 @@ func resourceSecureEdgeHostNameRead(ctx context.Context, d *schema.ResourceData,
 	groupID = tools.AddPrefix(groupID, "grp_")
 	// set group/groupID into ResourceData
 	if err := d.Set("group_id", groupID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 	}
 	if err := d.Set("group", groupID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 	}
 
 	// Schema guarantees contract_id/contract are strings and one or the other is set
@@ -261,10 +262,10 @@ func resourceSecureEdgeHostNameRead(ctx context.Context, d *schema.ResourceData,
 	contractID = tools.AddPrefix(contractID, "ctr_")
 	// set contract/contract_id into ResourceData
 	if err := d.Set("contract_id", contractID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 	}
 	if err := d.Set("contract", contractID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 	}
 
 	// Schema guarantees product_id/product are strings and one or the other is set
@@ -277,10 +278,10 @@ func resourceSecureEdgeHostNameRead(ctx context.Context, d *schema.ResourceData,
 	productID = tools.AddPrefix(productID, "prd_")
 	// set product/product_id into ResourceData
 	if err := d.Set("product_id", productID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 	}
 	if err := d.Set("product", productID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 	}
 
 	logger.Debugf("Edgehostnames GROUP = %v", groupID)
@@ -309,11 +310,11 @@ func resourceSecureEdgeHostNameRead(ctx context.Context, d *schema.ResourceData,
 		return diag.FromErr(err)
 	}
 	if err := d.Set("use_cases", string(useCasesJSON)); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 	}
 
 	if err := d.Set("edge_hostname", foundEdgeHostname.Domain); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 	}
 	d.SetId(foundEdgeHostname.ID)
 
@@ -325,17 +326,17 @@ func resourceSecureEdgeHostNameUpdate(ctx context.Context, d *schema.ResourceDat
 	logger := meta.Log("PAPI", "resourceSecureEdgeHostNameUpdate")
 
 	if d.HasChange("ip_behavior") {
-		edgeHostname, err := tools.GetStringValue("edge_hostname", d)
+		edgeHostname, err := tf.GetStringValue("edge_hostname", d)
 		if err != nil {
 			return diag.FromErr(err)
 		}
 		dnsZone, _ := parseEdgeHostname(edgeHostname)
-		ipBehavior, err := tools.GetStringValue("ip_behavior", d)
+		ipBehavior, err := tf.GetStringValue("ip_behavior", d)
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		emails, err := tools.GetListValue("status_update_email", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		emails, err := tf.GetListValue("status_update_email", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return diag.FromErr(err)
 		}
 		if len(emails) == 0 {
@@ -365,7 +366,7 @@ func resourceSecureEdgeHostNameUpdate(ctx context.Context, d *schema.ResourceDat
 				},
 			},
 		}); err != nil {
-			if err2 := tools.RestoreOldValues(d, []string{"ip_behavior"}); err2 != nil {
+			if err2 := tf.RestoreOldValues(d, []string{"ip_behavior"}); err2 != nil {
 				return diag.Errorf(`%s failed. No changes were written to server:
 %s
 
@@ -412,29 +413,29 @@ func resourceSecureEdgeHostNameImport(ctx context.Context, d *schema.ResourceDat
 	}
 
 	if err := d.Set("contract", edgehostnameDetails.ContractID); err != nil {
-		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return nil, fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("contract_id", edgehostnameDetails.ContractID); err != nil {
-		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return nil, fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("group", edgehostnameDetails.GroupID); err != nil {
-		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return nil, fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("group_id", edgehostnameDetails.GroupID); err != nil {
-		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return nil, fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 	}
 	useCasesJSON, err := useCases2JSON(edgehostnameDetails.EdgeHostname.UseCases)
 	if err != nil {
 		return nil, err
 	}
 	if err := d.Set("use_cases", string(useCasesJSON)); err != nil {
-		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return nil, fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("edge_hostname", edgehostnameDetails.EdgeHostname.Domain); err != nil {
-		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return nil, fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("ip_behavior", edgehostnameDetails.EdgeHostname.IPVersionBehavior); err != nil {
-		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return nil, fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 	}
 	d.SetId(edgehostID)
 

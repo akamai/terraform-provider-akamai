@@ -21,7 +21,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 )
 
 func dataSourcePropertyRulesTemplate() *schema.Resource {
@@ -41,13 +41,13 @@ func dataSourcePropertyRulesTemplate() *schema.Resource {
 						"template_data": {
 							Type:             schema.TypeString,
 							Required:         true,
-							ValidateDiagFunc: tools.IsNotBlank,
+							ValidateDiagFunc: tf.IsNotBlank,
 							Description:      "Content of the template as string",
 						},
 						"template_dir": {
 							Type:             schema.TypeString,
 							Required:         true,
-							ValidateDiagFunc: tools.IsNotBlank,
+							ValidateDiagFunc: tf.IsNotBlank,
 							Description:      "Directory points to a folder ending with 'property-snippets', which contains snippets to include into template.",
 						},
 					},
@@ -61,7 +61,7 @@ func dataSourcePropertyRulesTemplate() *schema.Resource {
 						"name": {
 							Type:             schema.TypeString,
 							Required:         true,
-							ValidateDiagFunc: tools.IsNotBlank,
+							ValidateDiagFunc: tf.IsNotBlank,
 						},
 						"type": {
 							Type:     schema.TypeString,
@@ -117,8 +117,8 @@ func dataPropertyRulesTemplateRead(_ context.Context, d *schema.ResourceData, m 
 	meta := akamai.Meta(m)
 	logger := meta.Log("PAPI", "dataPropertyRulesTemplateRead")
 
-	file, err := tools.GetStringValue("template_file", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	file, err := tf.GetStringValue("template_file", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 
@@ -141,7 +141,7 @@ func dataPropertyRulesTemplateRead(_ context.Context, d *schema.ResourceData, m 
 
 	var templateDataStr string
 	if dir == "" {
-		templateSet, err := tools.GetSetValue("template", d)
+		templateSet, err := tf.GetSetValue("template", d)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -179,8 +179,8 @@ func dataPropertyRulesTemplateRead(_ context.Context, d *schema.ResourceData, m 
 	}
 
 	varsMap := make(map[string]interface{})
-	vars, err := tools.GetSetValue("variables", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	vars, err := tf.GetSetValue("variables", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 	if err == nil {
@@ -189,14 +189,14 @@ func dataPropertyRulesTemplateRead(_ context.Context, d *schema.ResourceData, m 
 			return diag.FromErr(err)
 		}
 	}
-	varsDefinitionFile, err := tools.GetStringValue("var_definition_file", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	varsDefinitionFile, err := tf.GetStringValue("var_definition_file", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 	if err == nil {
 		logger.Debugf("Fetching variable definitions from file: %s", varsDefinitionFile)
-		varsValuesFile, err := tools.GetStringValue("var_values_file", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		varsValuesFile, err := tf.GetStringValue("var_values_file", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return diag.FromErr(err)
 		}
 		varsMap, err = getVarsFromFile(varsDefinitionFile, varsValuesFile)
@@ -260,7 +260,7 @@ func dataPropertyRulesTemplateRead(_ context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(fmt.Errorf("invalid JSON result: %w", err))
 	}
 	if err := d.Set("json", formatted.String()); err != nil {
-		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
 	return nil
 }
@@ -285,31 +285,31 @@ var (
 // flattenTemplate formats the template schema into a couple of strings holding template_data and template_dir values
 func flattenTemplate(templateList []interface{}) (string, string, error) {
 	if len(templateList) != 1 {
-		return "", "", fmt.Errorf("%w: only single entry of template<template_data, template_dir> is allowed. Invalid template: %v ", tools.ErrInvalidType, templateList)
+		return "", "", fmt.Errorf("%w: only single entry of template<template_data, template_dir> is allowed. Invalid template: %v ", tf.ErrInvalidType, templateList)
 	}
 	templateMap, ok := templateList[0].(map[string]interface{})
 	if !ok {
-		return "", "", fmt.Errorf("%w: unable to convert map entry to data object: %v", tools.ErrInvalidType, templateMap)
+		return "", "", fmt.Errorf("%w: unable to convert map entry to data object: %v", tf.ErrInvalidType, templateMap)
 	}
 
 	templateData, ok := templateMap["template_data"]
 	if !ok {
-		return "", "", fmt.Errorf("%w: 'template_data' argument is required in template definition", tools.ErrNotFound)
+		return "", "", fmt.Errorf("%w: 'template_data' argument is required in template definition", tf.ErrNotFound)
 	}
 
 	templateDataStr, ok := templateData.(string)
 	if !ok {
-		return "", "", fmt.Errorf("%w: 'template_data' argument should be a string: %v", tools.ErrInvalidType, templateData)
+		return "", "", fmt.Errorf("%w: 'template_data' argument should be a string: %v", tf.ErrInvalidType, templateData)
 	}
 
 	templateDir, ok := templateMap["template_dir"]
 	if !ok {
-		return "", "", fmt.Errorf("%w: 'template_dir' argument is required in template definition", tools.ErrNotFound)
+		return "", "", fmt.Errorf("%w: 'template_dir' argument is required in template definition", tf.ErrNotFound)
 	}
 
 	templateDirStr, ok := templateDir.(string)
 	if !ok {
-		return "", "", fmt.Errorf("%w: 'template_dir' argument should be a string: %v", tools.ErrInvalidType, templateDir)
+		return "", "", fmt.Errorf("%w: 'template_dir' argument should be a string: %v", tf.ErrInvalidType, templateDir)
 	}
 
 	return templateDataStr, filepath.Clean(templateDirStr), nil
@@ -353,31 +353,31 @@ func convertToTypedMap(vars []interface{}) (map[string]interface{}, error) {
 	for _, variable := range vars {
 		varInfo, ok := variable.(map[string]interface{})
 		if !ok {
-			return nil, fmt.Errorf("%w: unable to convert map entry to data object: %v", tools.ErrInvalidType, variable)
+			return nil, fmt.Errorf("%w: unable to convert map entry to data object: %v", tf.ErrInvalidType, variable)
 		}
 		varName, ok := varInfo["name"]
 		if !ok {
-			return nil, fmt.Errorf("%w: 'name' argument is required in variable definition", tools.ErrNotFound)
+			return nil, fmt.Errorf("%w: 'name' argument is required in variable definition", tf.ErrNotFound)
 		}
 		varNameStr, ok := varName.(string)
 		if !ok {
-			return nil, fmt.Errorf("%w: 'name' argument should be a string: %v", tools.ErrInvalidType, varName)
+			return nil, fmt.Errorf("%w: 'name' argument should be a string: %v", tf.ErrInvalidType, varName)
 		}
 		varType, ok := varInfo["type"]
 		if !ok {
-			return nil, fmt.Errorf("%w: 'type' argument is required in variable definition: %s", tools.ErrNotFound, varNameStr)
+			return nil, fmt.Errorf("%w: 'type' argument is required in variable definition: %s", tf.ErrNotFound, varNameStr)
 		}
 		varTypeStr, ok := varType.(string)
 		if !ok {
-			return nil, fmt.Errorf("%w: 'type' argument should be a string: %s", tools.ErrInvalidType, varNameStr)
+			return nil, fmt.Errorf("%w: 'type' argument should be a string: %s", tf.ErrInvalidType, varNameStr)
 		}
 		value, ok := varInfo["value"]
 		if !ok {
-			return nil, fmt.Errorf("%w: 'value' argument is required in variable definition: %s", tools.ErrNotFound, varNameStr)
+			return nil, fmt.Errorf("%w: 'value' argument is required in variable definition: %s", tf.ErrNotFound, varNameStr)
 		}
 		valueStr, ok := value.(string)
 		if !ok {
-			return nil, fmt.Errorf("%w: 'value' argument should be a string: %s", tools.ErrInvalidType, varNameStr)
+			return nil, fmt.Errorf("%w: 'value' argument should be a string: %s", tf.ErrInvalidType, varNameStr)
 		}
 		switch varTypeStr {
 		case "string":
@@ -398,13 +398,13 @@ func convertToTypedMap(vars []interface{}) (map[string]interface{}, error) {
 		case "number":
 			num, err := strconv.ParseFloat(valueStr, 64)
 			if err != nil {
-				return nil, fmt.Errorf("%w: value could not be represented as number: %s", tools.ErrInvalidType, err)
+				return nil, fmt.Errorf("%w: value could not be represented as number: %s", tf.ErrInvalidType, err)
 			}
 			result[varNameStr] = num
 		case "bool":
 			boolean, err := strconv.ParseBool(valueStr)
 			if err != nil {
-				return nil, fmt.Errorf("%w: value could not be represented as boolean: %s", tools.ErrInvalidType, err)
+				return nil, fmt.Errorf("%w: value could not be represented as boolean: %s", tf.ErrInvalidType, err)
 			}
 			result[varNameStr] = boolean
 		default:

@@ -8,7 +8,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -36,7 +36,7 @@ func dataSourcePropertyIncludeActivation() *schema.Resource {
 				Type:             schema.TypeString,
 				Required:         true,
 				Description:      "The network for which the activation is to be found",
-				ValidateDiagFunc: tools.ValidateStringInSlice([]string{string(papi.ActivationNetworkProduction), string(papi.ActivationNetworkStaging)}),
+				ValidateDiagFunc: tf.ValidateStringInSlice([]string{string(papi.ActivationNetworkProduction), string(papi.ActivationNetworkStaging)}),
 			},
 			"version": {
 				Type:        schema.TypeString,
@@ -100,7 +100,7 @@ func dataPropertyIncludeActivationRead(ctx context.Context, d *schema.ResourceDa
 
 	attributes := createIncludeActivationAttrs(latestActivation)
 
-	if err = tools.SetAttrs(d, attributes); err != nil {
+	if err = tf.SetAttrs(d, attributes); err != nil {
 		return diag.Errorf("could not set attributes: %s", err)
 	}
 	d.SetId(attrs.includeID + ":" + attrs.network)
@@ -165,22 +165,22 @@ func filterIncludeActivationsByNetwork(activations []papi.IncludeActivation, net
 }
 
 func getIncludeActivationAttrs(d *schema.ResourceData) (*includeActivationAttrs, error) {
-	contractID, err := tools.GetStringValue("contract_id", d)
+	contractID, err := tf.GetStringValue("contract_id", d)
 	if err != nil {
 		return nil, fmt.Errorf("could not get `contract_id` attribute: %s", err)
 	}
 
-	groupID, err := tools.GetStringValue("group_id", d)
+	groupID, err := tf.GetStringValue("group_id", d)
 	if err != nil {
 		return nil, fmt.Errorf("could not get `group_id` attribute: %s", err)
 	}
 
-	includeID, err := tools.GetStringValue("include_id", d)
+	includeID, err := tf.GetStringValue("include_id", d)
 	if err != nil {
 		return nil, fmt.Errorf("could not get `include_id` attribute: %s", err)
 	}
 
-	network, err := tools.GetStringValue("network", d)
+	network, err := tf.GetStringValue("network", d)
 	if err != nil {
 		return nil, fmt.Errorf("could not get `network` attribute: %s", err)
 	}

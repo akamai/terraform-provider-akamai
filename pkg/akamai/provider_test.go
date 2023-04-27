@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/edgegrid"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/stretchr/testify/require"
@@ -166,7 +166,7 @@ func TestSetWrongTypeForEdgegridEnvs(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			err := setEdgegridEnvs(test.environmentVars, "some section")
-			assert.True(t, errors.Is(err, tools.ErrInvalidType))
+			assert.True(t, errors.Is(err, tf.ErrInvalidType))
 		})
 	}
 }

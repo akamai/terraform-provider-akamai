@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/cps"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -57,11 +57,11 @@ func GetContactInfo(set *schema.Set) (*cps.Contact, error) {
 
 // GetCSR returns Certificate Signing Request object from ResourceData object
 func GetCSR(d *schema.ResourceData) (*cps.CSR, error) {
-	csrSet, err := tools.GetSetValue("csr", d)
+	csrSet, err := tf.GetSetValue("csr", d)
 	if err != nil {
 		return nil, err
 	}
-	commonName, err := tools.GetStringValue("common_name", d)
+	commonName, err := tf.GetStringValue("common_name", d)
 	if err != nil {
 		return nil, err
 	}
@@ -73,8 +73,8 @@ func GetCSR(d *schema.ResourceData) (*cps.CSR, error) {
 
 	var csr cps.CSR
 
-	sansList, err := tools.GetSetValue("sans", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	sansList, err := tf.GetSetValue("sans", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return nil, err
 	}
 	var sans []string
@@ -98,15 +98,15 @@ func GetCSR(d *schema.ResourceData) (*cps.CSR, error) {
 
 // GetNetworkConfig returns Network Configuration settings from ResourceData object
 func GetNetworkConfig(d *schema.ResourceData) (*cps.NetworkConfiguration, error) {
-	networkConfigSet, err := tools.GetSetValue("network_configuration", d)
+	networkConfigSet, err := tf.GetSetValue("network_configuration", d)
 	if err != nil {
 		return nil, err
 	}
-	sniOnly, err := tools.GetBoolValue("sni_only", d)
+	sniOnly, err := tf.GetBoolValue("sni_only", d)
 	if err != nil {
 		return nil, err
 	}
-	secureNetwork, err := tools.GetStringValue("secure_network", d)
+	secureNetwork, err := tf.GetStringValue("secure_network", d)
 	if err != nil {
 		return nil, err
 	}
@@ -139,8 +139,8 @@ func GetNetworkConfig(d *schema.ResourceData) (*cps.NetworkConfiguration, error)
 			networkConfig.ClientMutualAuthentication = mutualAuth
 		}
 	}
-	sansList, err := tools.GetSetValue("sans", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	sansList, err := tf.GetSetValue("sans", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return nil, err
 	}
 	var dnsNames []string
@@ -172,7 +172,7 @@ func GetNetworkConfig(d *schema.ResourceData) (*cps.NetworkConfiguration, error)
 
 // GetOrg returns organization information from ResourceData object
 func GetOrg(d *schema.ResourceData) (*cps.Org, error) {
-	orgSet, err := tools.GetSetValue("organization", d)
+	orgSet, err := tf.GetSetValue("organization", d)
 	if err != nil {
 		return nil, err
 	}

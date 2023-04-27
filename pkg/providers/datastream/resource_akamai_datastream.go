@@ -11,6 +11,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/datastream"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
 	"github.com/apex/log"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -97,7 +98,7 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 	"contract_id": {
 		Type:             schema.TypeString,
 		Required:         true,
-		DiffSuppressFunc: tools.FieldPrefixSuppress("ctr_"),
+		DiffSuppressFunc: tf.FieldPrefixSuppress("ctr_"),
 		Description:      "Identifies the contract that has access to the product",
 	},
 	"created_by": {
@@ -124,14 +125,14 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 		Optional: true,
 		Elem: &schema.Schema{
 			Type:             schema.TypeString,
-			ValidateDiagFunc: tools.ValidateEmail,
+			ValidateDiagFunc: tf.ValidateEmail,
 		},
 		Description: "List of email addresses where the system sends notifications about activations and deactivations of the stream",
 	},
 	"group_id": {
 		Type:             schema.TypeString,
 		Required:         true,
-		DiffSuppressFunc: tools.FieldPrefixSuppress("grp_"),
+		DiffSuppressFunc: tf.FieldPrefixSuppress("grp_"),
 		Description:      "Identifies the group that has access to the product and for which the stream configuration was created",
 	},
 	"group_name": {
@@ -169,7 +170,7 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 		Required: true,
 		Elem: &schema.Schema{
 			Type:             schema.TypeString,
-			DiffSuppressFunc: tools.FieldPrefixSuppress("prp_"),
+			DiffSuppressFunc: tf.FieldPrefixSuppress("prp_"),
 		},
 		Description: "Identifies the properties monitored in the stream",
 	},
@@ -907,12 +908,12 @@ func resourceDatastreamCreate(ctx context.Context, d *schema.ResourceData, m int
 	client := inst.Client(meta)
 	logger.Debug("Creating stream")
 
-	active, err := tools.GetBoolValue("active", d)
+	active, err := tf.GetBoolValue("active", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	configSet, err := tools.GetSetValue("config", d)
+	configSet, err := tf.GetSetValue("config", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -921,27 +922,27 @@ func resourceDatastreamCreate(ctx context.Context, d *schema.ResourceData, m int
 		return diag.FromErr(err)
 	}
 
-	contractID, err := tools.GetStringValue("contract_id", d)
+	contractID, err := tf.GetStringValue("contract_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	contractID = strings.TrimPrefix(contractID, "ctr_")
 
-	datasetFieldsIDsList, err := tools.GetListValue("dataset_fields_ids", d)
+	datasetFieldsIDsList, err := tf.GetListValue("dataset_fields_ids", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	datasetFieldsIDs := InterfaceSliceToIntSlice(datasetFieldsIDsList)
 
-	emailIDsList, err := tools.GetListValue("email_ids", d)
+	emailIDsList, err := tf.GetListValue("email_ids", d)
 	if err != nil {
-		if !errors.Is(err, tools.ErrNotFound) {
+		if !errors.Is(err, tf.ErrNotFound) {
 			return diag.FromErr(err)
 		}
 	}
 	emailIDs := strings.Join(InterfaceSliceToStringSlice(emailIDsList), ",")
 
-	groupIDStr, err := tools.GetStringValue("group_id", d)
+	groupIDStr, err := tf.GetStringValue("group_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -950,7 +951,7 @@ func resourceDatastreamCreate(ctx context.Context, d *schema.ResourceData, m int
 		return diag.FromErr(err)
 	}
 
-	propertyIDsList, err := tools.GetListValue("property_ids", d)
+	propertyIDsList, err := tf.GetListValue("property_ids", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -959,18 +960,18 @@ func resourceDatastreamCreate(ctx context.Context, d *schema.ResourceData, m int
 		return diag.FromErr(err)
 	}
 
-	streamName, err := tools.GetStringValue("stream_name", d)
+	streamName, err := tf.GetStringValue("stream_name", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	streamTypeStr, err := tools.GetStringValue("stream_type", d)
+	streamTypeStr, err := tf.GetStringValue("stream_type", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	streamType := datastream.StreamType(streamTypeStr)
 
-	templateNameStr, err := tools.GetStringValue("template_name", d)
+	templateNameStr, err := tf.GetStringValue("template_name", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -1090,7 +1091,7 @@ func resourceDatastreamRead(ctx context.Context, d *schema.ResourceData, m inter
 
 	attrs["config"] = ConfigToSet(streamDetails.Config)
 
-	err = tools.SetAttrs(d, attrs)
+	err = tf.SetAttrs(d, attrs)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -1131,7 +1132,7 @@ func resourceDatastreamUpdate(ctx context.Context, d *schema.ResourceData, m int
 		_, newActiveValue := d.GetChange("active")
 		newActive = newActiveValue.(bool)
 	} else {
-		oldActiveValue, err := tools.GetBoolValue("active", d)
+		oldActiveValue, err := tf.GetBoolValue("active", d)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -1207,7 +1208,7 @@ func resourceDatastreamUpdate(ctx context.Context, d *schema.ResourceData, m int
 func updateStream(ctx context.Context, client datastream.DS, logger log.Interface, streamID int64, d *schema.ResourceData) error {
 	// if some configuration details changed
 	if d.HasChangeExcept("active") {
-		configSet, err := tools.GetSetValue("config", d)
+		configSet, err := tf.GetSetValue("config", d)
 		if err != nil {
 			return err
 		}
@@ -1216,26 +1217,26 @@ func updateStream(ctx context.Context, client datastream.DS, logger log.Interfac
 			return err
 		}
 
-		contractID, err := tools.GetStringValue("contract_id", d)
+		contractID, err := tf.GetStringValue("contract_id", d)
 		if err != nil {
 			return err
 		}
 
-		datasetFieldsIDsList, err := tools.GetListValue("dataset_fields_ids", d)
+		datasetFieldsIDsList, err := tf.GetListValue("dataset_fields_ids", d)
 		if err != nil {
 			return err
 		}
 		datasetFieldsIDs := InterfaceSliceToIntSlice(datasetFieldsIDsList)
 
-		emailIDsList, err := tools.GetListValue("email_ids", d)
+		emailIDsList, err := tf.GetListValue("email_ids", d)
 		if err != nil {
-			if !errors.Is(err, tools.ErrNotFound) {
+			if !errors.Is(err, tf.ErrNotFound) {
 				return err
 			}
 		}
 		emailIDs := strings.Join(InterfaceSliceToStringSlice(emailIDsList), ",")
 
-		propertyIDsList, err := tools.GetListValue("property_ids", d)
+		propertyIDsList, err := tf.GetListValue("property_ids", d)
 		if err != nil {
 			return err
 		}
@@ -1244,18 +1245,18 @@ func updateStream(ctx context.Context, client datastream.DS, logger log.Interfac
 			return err
 		}
 
-		streamName, err := tools.GetStringValue("stream_name", d)
+		streamName, err := tf.GetStringValue("stream_name", d)
 		if err != nil {
 			return err
 		}
 
-		streamTypeStr, err := tools.GetStringValue("stream_type", d)
+		streamTypeStr, err := tf.GetStringValue("stream_type", d)
 		if err != nil {
 			return err
 		}
 		streamType := datastream.StreamType(streamTypeStr)
 
-		templateNameStr, err := tools.GetStringValue("template_name", d)
+		templateNameStr, err := tf.GetStringValue("template_name", d)
 		if err != nil {
 			return err
 		}
@@ -1502,7 +1503,7 @@ func isOrderDifferent(_, oldIDValue, newIDValue string, d *schema.ResourceData) 
 		return oldIDValue == newIDValue
 	}
 
-	configSet, err := tools.GetSetValue("config", d)
+	configSet, err := tf.GetSetValue("config", d)
 	if err != nil {
 		logger.Warn("unable to get config for datastream")
 		return defaultDiff()

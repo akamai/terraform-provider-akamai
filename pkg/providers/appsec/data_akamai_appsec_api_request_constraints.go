@@ -8,8 +8,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
-
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -54,7 +53,7 @@ func dataSourceAPIRequestConstraintsRead(ctx context.Context, d *schema.Resource
 
 	getAPIiRequestConstraints := appsec.GetApiRequestConstraintsRequest{}
 
-	configID, err := tools.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -64,14 +63,14 @@ func dataSourceAPIRequestConstraintsRead(ctx context.Context, d *schema.Resource
 		return diag.FromErr(err)
 	}
 
-	policyID, err := tools.GetStringValue("security_policy_id", d)
+	policyID, err := tf.GetStringValue("security_policy_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	getAPIiRequestConstraints.PolicyID = policyID
 
-	apiID, err := tools.GetIntValue("api_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	apiID, err := tf.GetIntValue("api_id", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 	getAPIiRequestConstraints.ApiID = apiID
@@ -90,7 +89,7 @@ func dataSourceAPIRequestConstraintsRead(ctx context.Context, d *schema.Resource
 		return diag.FromErr(err)
 	}
 	if err = d.Set("output_text", outputtext); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	jsonBody, err := json.Marshal(apirequestconstraints)
@@ -99,7 +98,7 @@ func dataSourceAPIRequestConstraintsRead(ctx context.Context, d *schema.Resource
 	}
 
 	if err := d.Set("json", string(jsonBody)); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	d.SetId(strconv.Itoa(getAPIiRequestConstraints.ConfigID))

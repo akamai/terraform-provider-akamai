@@ -11,7 +11,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/iam"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/hashicorp/go-cty/cty"
@@ -242,8 +242,8 @@ func resourceIAMUserCreate(ctx context.Context, d *schema.ResourceData, m interf
 	}
 
 	// lock the user's account
-	lock, err := tools.GetBoolValue("lock", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	lock, err := tf.GetBoolValue("lock", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 
@@ -290,7 +290,7 @@ func resourceIAMUserRead(ctx context.Context, d *schema.ResourceData, m interfac
 		}
 	}
 
-	err = tools.SetAttrs(d, map[string]interface{}{
+	err = tf.SetAttrs(d, map[string]interface{}{
 		"first_name":             user.FirstName,
 		"last_name":              user.LastName,
 		"user_name":              user.UserName,
@@ -428,8 +428,8 @@ func resourceIAMUserUpdate(ctx context.Context, d *schema.ResourceData, m interf
 
 	// lock the user
 	if d.HasChange("lock") {
-		lock, err := tools.GetBoolValue("lock", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		lock, err := tf.GetBoolValue("lock", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return diag.FromErr(err)
 		}
 

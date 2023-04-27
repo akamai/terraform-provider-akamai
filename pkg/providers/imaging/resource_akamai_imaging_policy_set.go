@@ -8,7 +8,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/imaging"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -66,7 +66,7 @@ func resourceImagingPolicySetImport(_ context.Context, rd *schema.ResourceData, 
 	contractID := parts[1]
 
 	if err := rd.Set("contract_id", contractID); err != nil {
-		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return nil, fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 	}
 
 	rd.SetId(policySetID)
@@ -85,19 +85,19 @@ func resourceImagingPolicySetCreate(ctx context.Context, rd *schema.ResourceData
 
 	logger.Debug("Creating Policy Set")
 
-	contractID, err := tools.GetStringValue("contract_id", rd)
+	contractID, err := tf.GetStringValue("contract_id", rd)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	name, err := tools.GetStringValue("name", rd)
+	name, err := tf.GetStringValue("name", rd)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	regionStr, err := tools.GetStringValue("region", rd)
+	regionStr, err := tf.GetStringValue("region", rd)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	mediaTypeStr, err := tools.GetStringValue("type", rd)
+	mediaTypeStr, err := tf.GetStringValue("type", rd)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -130,7 +130,7 @@ func resourceImagingPolicySetRead(ctx context.Context, rd *schema.ResourceData, 
 
 	logger.Debugf("Reading Policy Set with ID==%s", rd.Id())
 
-	contractID, err := tools.GetStringValue("contract_id", rd)
+	contractID, err := tf.GetStringValue("contract_id", rd)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -148,7 +148,7 @@ func resourceImagingPolicySetRead(ctx context.Context, rd *schema.ResourceData, 
 		"region": policySet.Region,
 		"type":   policySet.Type,
 	}
-	if err = tools.SetAttrs(rd, attrs); err != nil {
+	if err = tf.SetAttrs(rd, attrs); err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -166,15 +166,15 @@ func resourceImagingPolicySetUpdate(ctx context.Context, rd *schema.ResourceData
 
 	logger.Debugf("Updating Policy Set with ID==%s", rd.Id())
 
-	contractID, err := tools.GetStringValue("contract_id", rd)
+	contractID, err := tf.GetStringValue("contract_id", rd)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	name, err := tools.GetStringValue("name", rd)
+	name, err := tf.GetStringValue("name", rd)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	regionStr, err := tools.GetStringValue("region", rd)
+	regionStr, err := tf.GetStringValue("region", rd)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -205,7 +205,7 @@ func resourceImagingPolicySetDelete(ctx context.Context, rd *schema.ResourceData
 
 	logger.Debugf("Deleting policy set with ID==%s", rd.Id())
 
-	contractID, err := tools.GetStringValue("contract_id", rd)
+	contractID, err := tf.GetStringValue("contract_id", rd)
 	if err != nil {
 		return diag.FromErr(err)
 	}

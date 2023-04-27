@@ -14,6 +14,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/papi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -102,7 +103,7 @@ func resourcePropertyIncludeActivation() *schema.Resource {
 							Type:             schema.TypeString,
 							Required:         true,
 							Description:      fmt.Sprintf("Specifies the reason for the expedited activation on production network. Valid noncompliance reasons are: %s", strings.Join(validComplianceRecords, ", ")),
-							ValidateDiagFunc: tools.ValidateStringInSlice(validComplianceRecords),
+							ValidateDiagFunc: tf.ValidateStringInSlice(validComplianceRecords),
 						},
 						"ticket_id": {
 							Type:        schema.TypeString,
@@ -224,7 +225,7 @@ func resourcePropertyIncludeActivationRead(ctx context.Context, d *schema.Resour
 	}
 
 	// it is impossible to fetch compliance_record and auto_acknowledge_rule_warnings attributes from server
-	if err = tools.SetAttrs(d, attrs); err != nil {
+	if err = tf.SetAttrs(d, attrs); err != nil {
 		return diag.FromErr(err)
 	}
 	return nil
@@ -310,7 +311,7 @@ func resourcePropertyIncludeActivationImport(_ context.Context, d *schema.Resour
 	// it is impossible to fetch auto_acknowledge_rule_warnings from server
 	attrs["auto_acknowledge_rule_warnings"] = false
 
-	if err := tools.SetAttrs(d, attrs); err != nil {
+	if err := tf.SetAttrs(d, attrs); err != nil {
 		return nil, err
 	}
 
@@ -370,45 +371,45 @@ type propertyIncludeActivationData struct {
 }
 
 func (p *propertyIncludeActivationData) populateFromResource(d *schema.ResourceData) error {
-	includeID, err := tools.GetStringValue("include_id", d)
+	includeID, err := tf.GetStringValue("include_id", d)
 	if err != nil {
 		return err
 	}
 	p.includeID = tools.AddPrefix(includeID, "inc_")
 
-	contractID, err := tools.GetStringValue("contract_id", d)
+	contractID, err := tf.GetStringValue("contract_id", d)
 	if err != nil {
 		return err
 	}
 	p.contractID = tools.AddPrefix(contractID, "ctr_")
-	groupID, err := tools.GetStringValue("group_id", d)
+	groupID, err := tf.GetStringValue("group_id", d)
 	if err != nil {
 		return err
 	}
 	p.groupID = tools.AddPrefix(groupID, "grp_")
-	p.network, err = tools.GetStringValue("network", d)
+	p.network, err = tf.GetStringValue("network", d)
 	if err != nil {
 		return err
 	}
-	p.version, err = tools.GetIntValue("version", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	p.version, err = tf.GetIntValue("version", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
-	notifyEmailsSet, err := tools.GetSetValue("notify_emails", d)
+	notifyEmailsSet, err := tf.GetSetValue("notify_emails", d)
 	if err != nil {
 		return err
 	}
-	p.notifyEmails = tools.SetToStringSlice(notifyEmailsSet)
-	p.note, err = tools.GetStringValue("note", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	p.notifyEmails = tf.SetToStringSlice(notifyEmailsSet)
+	p.note, err = tf.GetStringValue("note", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
-	p.acknowledgement, err = tools.GetBoolValue("auto_acknowledge_rule_warnings", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	p.acknowledgement, err = tf.GetBoolValue("auto_acknowledge_rule_warnings", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
-	p.complianceRecord, err = tools.GetListValue("compliance_record", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	p.complianceRecord, err = tf.GetListValue("compliance_record", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
 	return nil

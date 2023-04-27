@@ -8,7 +8,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -66,7 +66,7 @@ func resourceAdvancedSettingsPrefetchCreate(ctx context.Context, d *schema.Resou
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsPrefetchCreate")
 	logger.Debugf("in resourceAdvancedSettingsPrefetchCreate")
 
-	configID, err := tools.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -74,11 +74,11 @@ func resourceAdvancedSettingsPrefetchCreate(ctx context.Context, d *schema.Resou
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	enableAppLayer, err := tools.GetBoolValue("enable_app_layer", d)
+	enableAppLayer, err := tf.GetBoolValue("enable_app_layer", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	allExtensions, err := tools.GetBoolValue("all_extensions", d)
+	allExtensions, err := tf.GetBoolValue("all_extensions", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -91,7 +91,7 @@ func resourceAdvancedSettingsPrefetchCreate(ctx context.Context, d *schema.Resou
 		exts = append(exts, h.(string))
 
 	}
-	enableRateControls, err := tools.GetBoolValue("enable_rate_controls", d)
+	enableRateControls, err := tf.GetBoolValue("enable_rate_controls", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -143,19 +143,19 @@ func resourceAdvancedSettingsPrefetchRead(ctx context.Context, d *schema.Resourc
 	}
 
 	if err := d.Set("config_id", getAdvancedSettingsPrefetch.ConfigID); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("enable_app_layer", prefetchget.EnableAppLayer); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("all_extensions", prefetchget.AllExtensions); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("extensions", prefetchget.Extensions); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("enable_rate_controls", prefetchget.EnableRateControls); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	return nil
@@ -175,16 +175,16 @@ func resourceAdvancedSettingsPrefetchUpdate(ctx context.Context, d *schema.Resou
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	enableAppLayer, err := tools.GetBoolValue("enable_app_layer", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	enableAppLayer, err := tf.GetBoolValue("enable_app_layer", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	allExtensions, err := tools.GetBoolValue("all_extensions", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	allExtensions, err := tf.GetBoolValue("all_extensions", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 	extensions := d.Get("extensions").(*schema.Set)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 	exts := make([]string, 0, len(extensions.List()))
@@ -192,8 +192,8 @@ func resourceAdvancedSettingsPrefetchUpdate(ctx context.Context, d *schema.Resou
 		exts = append(exts, h.(string))
 
 	}
-	enableRateControls, err := tools.GetBoolValue("enable_rate_controls", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	enableRateControls, err := tf.GetBoolValue("enable_rate_controls", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 

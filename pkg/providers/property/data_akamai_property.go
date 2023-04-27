@@ -11,7 +11,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 )
 
 func dataSourceProperty() *schema.Resource {
@@ -39,7 +39,7 @@ func dataPropertyRead(ctx context.Context, d *schema.ResourceData, m interface{}
 	log := meta.Log("PAPI", "dataPropertyRead")
 	log.Debug("Reading Property")
 
-	name, err := tools.GetStringValue("name", d)
+	name, err := tf.GetStringValue("name", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -48,8 +48,8 @@ func dataPropertyRead(ctx context.Context, d *schema.ResourceData, m interface{}
 		return diag.FromErr(err)
 	}
 
-	version, err := tools.GetIntValue("version", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	version, err := tf.GetIntValue("version", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 	if err == nil {
@@ -66,7 +66,7 @@ func dataPropertyRead(ctx context.Context, d *schema.ResourceData, m interface{}
 		return diag.FromErr(err)
 	}
 	if err := d.Set("rules", string(body)); err != nil {
-		return diag.FromErr(fmt.Errorf("%w:%q", tools.ErrValueSet, err.Error()))
+		return diag.FromErr(fmt.Errorf("%w:%q", tf.ErrValueSet, err.Error()))
 	}
 	d.SetId(prop.PropertyID)
 	return nil

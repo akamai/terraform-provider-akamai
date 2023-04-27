@@ -9,7 +9,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/gtm"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -132,13 +132,13 @@ func resourceGTMv1ASmapCreate(ctx context.Context, d *schema.ResourceData, m int
 		session.WithContextLog(logger),
 	)
 
-	domain, err := tools.GetStringValue("domain", d)
+	domain, err := tf.GetStringValue("domain", d)
 	if err != nil {
 		logger.Errorf("Domain not initialized: %s", err.Error())
 		return diag.FromErr(err)
 	}
 
-	name, err := tools.GetStringValue("name", d)
+	name, err := tf.GetStringValue("name", d)
 	if err != nil {
 		logger.Errorf("asMap name not initialized: %s", err.Error())
 		return diag.FromErr(err)
@@ -146,7 +146,7 @@ func resourceGTMv1ASmapCreate(ctx context.Context, d *schema.ResourceData, m int
 	logger.Infof("Creating asMap [%s] in domain [%s]", name, domain)
 
 	// Make sure Default Datacenter exists
-	interfaceArray, err := tools.GetInterfaceArrayValue("default_datacenter", d)
+	interfaceArray, err := tf.GetInterfaceArrayValue("default_datacenter", d)
 	if err != nil {
 		logger.Errorf("Default datacenter not initialized: %s", err.Error())
 		return diag.FromErr(err)
@@ -178,7 +178,7 @@ func resourceGTMv1ASmapCreate(ctx context.Context, d *schema.ResourceData, m int
 			Summary:  cStatus.Status.Message,
 		})
 	}
-	waitOnComplete, err := tools.GetBoolValue("wait_on_complete", d)
+	waitOnComplete, err := tf.GetBoolValue("wait_on_complete", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -287,7 +287,7 @@ func resourceGTMv1ASmapUpdate(ctx context.Context, d *schema.ResourceData, m int
 		})
 	}
 
-	waitOnComplete, err := tools.GetBoolValue("wait_on_complete", d)
+	waitOnComplete, err := tf.GetBoolValue("wait_on_complete", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -390,7 +390,7 @@ func resourceGTMv1ASmapDelete(ctx context.Context, d *schema.ResourceData, m int
 		})
 	}
 
-	waitOnComplete, err := tools.GetBoolValue("wait_on_complete", d)
+	waitOnComplete, err := tf.GetBoolValue("wait_on_complete", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -420,7 +420,7 @@ func resourceGTMv1ASmapDelete(ctx context.Context, d *schema.ResourceData, m int
 // Create and populate a new asMap object from asMap data
 func populateNewASmapObject(ctx context.Context, meta akamai.OperationMeta, d *schema.ResourceData, m interface{}) *gtm.AsMap {
 
-	asMapName, _ := tools.GetStringValue("name", d)
+	asMapName, _ := tf.GetStringValue("name", d)
 	asObj := inst.Client(meta).NewAsMap(ctx, asMapName)
 	asObj.DefaultDatacenter = &gtm.DatacenterBase{}
 	asObj.Assignments = make([]*gtm.AsAssignment, 1)
@@ -434,7 +434,7 @@ func populateNewASmapObject(ctx context.Context, meta akamai.OperationMeta, d *s
 // Populate existing asMap object from asMap data
 func populateASmapObject(d *schema.ResourceData, as *gtm.AsMap, m interface{}) {
 
-	if v, err := tools.GetStringValue("name", d); err == nil {
+	if v, err := tf.GetStringValue("name", d); err == nil {
 		as.Name = v
 	}
 	populateAsAssignmentsObject(d, as, m)
@@ -461,7 +461,7 @@ func populateAsAssignmentsObject(d *schema.ResourceData, as *gtm.AsMap, m interf
 	logger := meta.Log("Akamai GTM", "populateAsAssignmentsObject")
 
 	// pull apart List
-	if asAssignmentsList, err := tools.GetListValue("assignment", d); err != nil {
+	if asAssignmentsList, err := tf.GetListValue("assignment", d); err != nil {
 		logger.Errorf("Assignment not set: %s", err.Error())
 	} else {
 		asAssignmentsObjList := make([]*gtm.AsAssignment, len(asAssignmentsList)) // create new object list
@@ -513,7 +513,7 @@ func populateAsDefaultDCObject(d *schema.ResourceData, as *gtm.AsMap, m interfac
 	logger := meta.Log("Akamai GTMv1", "resourceGTMv1ASmapDelete")
 
 	// pull apart List
-	if asDefaultDCList, err := tools.GetInterfaceArrayValue("default_datacenter", d); err != nil {
+	if asDefaultDCList, err := tf.GetInterfaceArrayValue("default_datacenter", d); err != nil {
 		logger.Infof("No default datacenter specified: %s", err.Error())
 	} else {
 		if len(asDefaultDCList) > 0 {

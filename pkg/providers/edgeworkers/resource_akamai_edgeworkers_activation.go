@@ -12,6 +12,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/edgeworkers"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -51,7 +52,7 @@ func resourceEdgeworkersActivationSchema() map[string]*schema.Schema {
 		"network": {
 			Type:             schema.TypeString,
 			Required:         true,
-			ValidateDiagFunc: tools.ValidateStringInSlice(validEdgeworkerActivationNetworks),
+			ValidateDiagFunc: tf.ValidateStringInSlice(validEdgeworkerActivationNetworks),
 			Description:      "The network on which the version will be activated",
 		},
 		"activation_id": {
@@ -95,12 +96,12 @@ func resourceEdgeworkersActivationRead(ctx context.Context, rd *schema.ResourceD
 
 	logger.Debug("Reading edgeworker activations")
 
-	edgeworkerID, err := tools.GetIntValue("edgeworker_id", rd)
+	edgeworkerID, err := tf.GetIntValue("edgeworker_id", rd)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	network, err := tools.GetStringValue("network", rd)
+	network, err := tf.GetStringValue("network", rd)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -115,11 +116,11 @@ func resourceEdgeworkersActivationRead(ctx context.Context, rd *schema.ResourceD
 	}
 
 	if err := rd.Set("version", activation.Version); err != nil {
-		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
 
 	if err := rd.Set("activation_id", activation.ActivationID); err != nil {
-		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
 	return nil
 }
@@ -143,17 +144,17 @@ func resourceEdgeworkersActivationDelete(ctx context.Context, rd *schema.Resourc
 
 	logger.Debug("Deactivating edgeworker")
 
-	edgeworkerID, err := tools.GetIntValue("edgeworker_id", rd)
+	edgeworkerID, err := tf.GetIntValue("edgeworker_id", rd)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	version, err := tools.GetStringValue("version", rd)
+	version, err := tf.GetStringValue("version", rd)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	network, err := tools.GetStringValue("network", rd)
+	network, err := tf.GetStringValue("network", rd)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -222,28 +223,28 @@ func resourceEdgeworkersActivationImport(_ context.Context, rd *schema.ResourceD
 	}
 
 	if err := rd.Set("edgeworker_id", edgeworkerID); err != nil {
-		return nil, fmt.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+		return nil, fmt.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
 
 	if err := rd.Set("network", network); err != nil {
-		return nil, fmt.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+		return nil, fmt.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
 
 	return []*schema.ResourceData{rd}, nil
 }
 
 func upsertActivation(ctx context.Context, rd *schema.ResourceData, m interface{}, client edgeworkers.Edgeworkers) diag.Diagnostics {
-	edgeworkerID, err := tools.GetIntValue("edgeworker_id", rd)
+	edgeworkerID, err := tf.GetIntValue("edgeworker_id", rd)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	version, err := tools.GetStringValue("version", rd)
+	version, err := tf.GetStringValue("version", rd)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	network, err := tools.GetStringValue("network", rd)
+	network, err := tf.GetStringValue("network", rd)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -398,7 +399,7 @@ func waitForEdgeworkerActivation(ctx context.Context, client edgeworkers.Edgewor
 			return nil, ErrEdgeworkerActivationFailure
 		}
 		select {
-		case <-time.After(tools.MaxDuration(activationPollInterval, activationPollMinimum)):
+		case <-time.After(tf.MaxDuration(activationPollInterval, activationPollMinimum)):
 			activation, err = client.GetActivation(ctx, edgeworkers.GetActivationRequest{
 				EdgeWorkerID: edgeworkerID,
 				ActivationID: activationID,
@@ -432,7 +433,7 @@ func waitForEdgeworkerDeactivation(ctx context.Context, client edgeworkers.Edgew
 			return nil, ErrEdgeworkerDeactivationFailure
 		}
 		select {
-		case <-time.After(tools.MaxDuration(activationPollInterval, activationPollMinimum)):
+		case <-time.After(tf.MaxDuration(activationPollInterval, activationPollMinimum)):
 			deactivation, err = client.GetDeactivation(ctx, edgeworkers.GetDeactivationRequest{
 				EdgeWorkerID:   edgeworkerID,
 				DeactivationID: deactivationID,
@@ -523,7 +524,7 @@ func checkEdgeworkerExistsOnDiff(ctx context.Context, rd *schema.ResourceDiff, m
 		return fmt.Errorf("%w: %s", ErrEdgeworkerActivation, err)
 	}
 
-	edgeworkerID, err := tools.GetIntValue("edgeworker_id", rd)
+	edgeworkerID, err := tf.GetIntValue("edgeworker_id", rd)
 	if err != nil {
 		return err
 	}
