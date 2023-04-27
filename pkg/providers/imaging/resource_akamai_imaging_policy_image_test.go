@@ -64,6 +64,66 @@ func TestResourcePolicyImage(t *testing.T) {
 			Version: 1,
 			Video:   tools.BoolPtr(false),
 		}
+		defaultAllowedFormats = []imaging.OutputImageAllowedFormats{
+			imaging.OutputImageAllowedFormats("jpeg"),
+			imaging.OutputImageAllowedFormats("webp"),
+			imaging.OutputImageAllowedFormats("avif"),
+			imaging.OutputImageAllowedFormats("png"),
+			imaging.OutputImageAllowedFormats("gif"),
+		}
+		defaultForcedFormats = []imaging.OutputImageForcedFormats{
+			imaging.OutputImageForcedFormats("jpeg"),
+			imaging.OutputImageForcedFormats("webp"),
+			imaging.OutputImageForcedFormats("avif"),
+			imaging.OutputImageForcedFormats("png"),
+			imaging.OutputImageForcedFormats("gif"),
+		}
+		perceptualQualityMediumHigh = &imaging.OutputImagePerceptualQualityVariableInline{
+			Value: imaging.OutputImagePerceptualQualityPtr(imaging.OutputImagePerceptualQualityMediumHigh),
+		}
+		defaultHosts     = []string{"test1", "test2", "test3"}
+		defaultVariables = []imaging.Variable{
+			{
+				DefaultValue: "test1",
+				Name:         "var1",
+				Type:         "string",
+			},
+			{
+				DefaultValue: "test2",
+				Name:         "var2",
+				Type:         "string",
+			},
+			{
+				DefaultValue: "test3",
+				Name:         "var3",
+				Type:         "string",
+			},
+		}
+		defaultBreakpointsWidths = &imaging.Breakpoints{
+			Widths: []int{320, 640, 1024, 2048, 5000},
+		}
+		policyInputDiff = imaging.PolicyInputImage{
+			Breakpoints: defaultBreakpointsWidths,
+			Hosts:       defaultHosts,
+			Output: &imaging.OutputImage{
+				AllowedFormats:    defaultAllowedFormats,
+				ForcedFormats:     defaultForcedFormats,
+				PerceptualQuality: perceptualQualityMediumHigh,
+			},
+			Variables: defaultVariables,
+		}
+		policyOutputDiff = imaging.PolicyOutputImage{
+			Breakpoints: defaultBreakpointsWidths,
+			Hosts:       defaultHosts,
+			Output: &imaging.OutputImage{
+				AllowedFormats:    defaultAllowedFormats,
+				ForcedFormats:     defaultForcedFormats,
+				PerceptualQuality: perceptualQualityMediumHigh,
+			},
+			Variables: defaultVariables,
+			Version:   1,
+			Video:     tools.BoolPtr(false),
+		}
 
 		expectUpsertPolicy = func(_ *testing.T, client *imaging.Mock, policyID string, network imaging.PolicyNetwork, contractID string, policySetID string, policy imaging.PolicyInput) {
 			policyResponse := &imaging.PolicyResponse{
@@ -406,6 +466,42 @@ func TestResourcePolicyImage(t *testing.T) {
 							activateOnProduction: "true",
 							policyPath:           fmt.Sprintf("%s/policy/policy_update.json", testDir),
 						}),
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
+	t.Run("create policy, check diff in order of output.allowedFormats, output.forcedFormats, breakpoints.Widths, hosts, variables - no diff", func(t *testing.T) {
+		testDir := "testdata/TestResPolicyImage/diff_suppress/fields"
+
+		client := new(imaging.Mock)
+		expectUpsertPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyInputDiff)
+		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyOutputDiff, 2)
+
+		// remove original policy
+		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set")
+		expectDeletePolicy(t, client, "test_policy", imaging.PolicyNetworkProduction, "test_contract", "test_policy_set")
+
+		expectReadPolicy(t, client, "test_policy", imaging.PolicyNetworkStaging, "test_contract", "test_policy_set", &policyOutputDiff, 2)
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProviderFactories: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString(fmt.Sprintf("%s/default.tf", testDir)),
+						Check: checkPolicyAttributes(policyAttributes{
+							version:              "1",
+							policyID:             "test_policy",
+							policySetID:          "test_policy_set",
+							activateOnProduction: "false",
+							policyPath:           fmt.Sprintf("%s/policy.json", testDir),
+						}),
+					},
+					{
+						Config:             loadFixtureString(fmt.Sprintf("%s/diff_order.tf", testDir)),
+						ExpectNonEmptyPlan: false,
 					},
 				},
 			})
@@ -784,6 +880,11 @@ func TestDiffSuppressPolicy(t *testing.T) {
 			oldPath:  "policy.json",
 			newPath:  "invalid.json",
 			expected: false,
+		},
+		"policy diff in output.allowedFormats, output.forcedFormats, breakpoints.Widths, hosts, variables": {
+			oldPath:  "fields/policy.json",
+			newPath:  "fields/policy_diff_order.json",
+			expected: true,
 		},
 	}
 

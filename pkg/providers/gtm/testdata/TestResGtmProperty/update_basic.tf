@@ -18,7 +18,6 @@ resource "akamai_gtm_property" "tfexample_prop_1" {
     enabled       = true
     weight        = 200
     servers       = ["1.2.3.5"]
-    name          = ""
     handout_cname = "test"
   }
 

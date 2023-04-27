@@ -572,7 +572,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"allow_delete": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Allow HTTP requests using the DELETE method. By default, GET, HEAD, and OPTIONS requests are allowed, and all other methods result in a 403 error. Such content does not cache, and any DELETE requests pass to the origin. See also the `allowOptions`, `allowPatch`, `allowPost`, and `allowPut` behaviors. This behavior can be used in includes.",
+			Description: "Allow HTTP requests using the DELETE method. By default, GET, HEAD, and OPTIONS requests are allowed, and all other methods result in a 501 error. Such content does not cache, and any DELETE requests pass to the origin. See also the `allowOptions`, `allowPatch`, `allowPost`, and `allowPut` behaviors. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -670,7 +670,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"allow_options": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "GET, HEAD, and OPTIONS requests are allowed by default. All other HTTP methods result in a 403 error. For full support of Cross-Origin Resource Sharing (CORS), you need to allow requests that use the OPTIONS method. If you're using the `corsSupport` behavior, do not disable OPTIONS requests. The response to an OPTIONS request is not cached, so the request always goes through the Akamai network to your origin, unless you use the `constructResponse` behavior to send responses directly from the Akamai network. See also the `allowDelete`, `allowPatch`, `allowPost`, and `allowPut` behaviors. This behavior can be used in includes.",
+			Description: "GET, HEAD, and OPTIONS requests are allowed by default. All other HTTP methods result in a 501 error. For full support of Cross-Origin Resource Sharing (CORS), you need to allow requests that use the OPTIONS method. If you're using the `corsSupport` behavior, do not disable OPTIONS requests. The response to an OPTIONS request is not cached, so the request always goes through the Akamai network to your origin, unless you use the `constructResponse` behavior to send responses directly from the Akamai network. See also the `allowDelete`, `allowPatch`, `allowPost`, and `allowPut` behaviors. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -692,7 +692,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 					},
 					"enabled": {
 						Optional:    true,
-						Description: "Allows OPTIONS requests. Content does `not` cache.",
+						Description: "Set this to `true` to reflect the default policy where edge servers allow the OPTIONS method, without caching the response. Set this to `false` to deny OPTIONS requests and respond with a 501 error.",
 						Type:        schema.TypeBool,
 					},
 				},
@@ -701,7 +701,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"allow_patch": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Allow HTTP requests using the PATCH method. By default, GET, HEAD, and OPTIONS requests are allowed, and all other methods result in a 403 error. Such content does not cache, and any PATCH requests pass to the origin. See also the `allowDelete`, `allowOptions`, `allowPost`, and `allowPut` behaviors. This behavior can be used in includes.",
+			Description: "Allow HTTP requests using the PATCH method. By default, GET, HEAD, and OPTIONS requests are allowed, and all other methods result in a 501 error. Such content does not cache, and any PATCH requests pass to the origin. See also the `allowDelete`, `allowOptions`, `allowPost`, and `allowPut` behaviors. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -732,7 +732,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"allow_post": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Allow HTTP requests using the POST method. By default, GET, HEAD, and OPTIONS requests are allowed, and all other methods result in a 403 error. See also the `allowDelete`, `allowOptions`, `allowPatch`, and `allowPut` behaviors. This behavior can be used in includes.",
+			Description: "Allow HTTP requests using the POST method. By default, GET, HEAD, and OPTIONS requests are allowed, and POST requests are denied with 403 error. All other methods result in a 501 error. See also the `allowDelete`, `allowOptions`, `allowPatch`, and `allowPut` behaviors. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -768,7 +768,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"allow_put": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Allow HTTP requests using the PUT method.  By default, GET, HEAD, and OPTIONS requests are allowed, and all other methods result in a 403 error. Such content does not cache, and any PUT requests pass to the origin. See also the `allowDelete`, `allowOptions`, `allowPatch`, and `allowPost` behaviors. This behavior can be used in includes.",
+			Description: "Allow HTTP requests using the PUT method.  By default, GET, HEAD, and OPTIONS requests are allowed, and all other methods result in a 501 error. Such content does not cache, and any PUT requests pass to the origin. See also the `allowDelete`, `allowOptions`, `allowPatch`, and `allowPost` behaviors. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -4720,7 +4720,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"edge_redirector": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "This behavior enables the `Edge Redirector Cloudlet` application, which helps you manage large numbers of redirects. With Cloudlets available on your contract, choose `Your services`, `Edge logic Cloudlets` to control the Edge Redirector within `Control Center`. Otherwise use the `Cloudlets API` to configure it programmatically. This behavior cannot be used in includes.",
+			Description: "This behavior enables the `Edge Redirector Cloudlet` application, which helps you manage large numbers of redirects. With Cloudlets available on your contract, choose `Your services` > `Edge logic Cloudlets` to control the Edge Redirector within `Control Center`. Otherwise use the `Cloudlets API` to configure it programmatically. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -5665,7 +5665,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"forward_rewrite": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "The Forward Rewrite Cloudlet allows you to conditionally modify the forward path in edge content without affecting the URL that displays in the user's address bar. If Cloudlets are available on your contract, choose `Your services`, `Edge logic Cloudlets` to control how this feature works within `Control Center`, or use the `Cloudlets API` to configure it programmatically. This behavior cannot be used in includes.",
+			Description: "The Forward Rewrite Cloudlet allows you to conditionally modify the forward path in edge content without affecting the URL that displays in the user's address bar. If Cloudlets are available on your contract, choose `Your services` > `Edge logic Cloudlets` to control how this feature works within `Control Center`, or use the `Cloudlets API` to configure it programmatically. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -6993,7 +6993,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"input_validation": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "The Input Validation Cloudlet detects anomalous edge requests and helps mitigate repeated invalid requests.  You can configure it using either the Cloudlets Policy Manager application, available within `Control Center` under `Your services`, `Edge logic Cloudlets`, or the `Cloudlets API`. This behavior cannot be used in includes.",
+			Description: "The Input Validation Cloudlet detects anomalous edge requests and helps mitigate repeated invalid requests.  You can configure it using either the Cloudlets Policy Manager application, available within `Control Center` under `Your services` > `Edge logic Cloudlets`, or the `Cloudlets API`. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -10416,7 +10416,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"request_control": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "The Request Control Cloudlet allows you to control access to your web content based on the incoming request's IP or geographic location.  With Cloudlets available on your contract, choose `Your services`, `Edge logic Cloudlets` to control how the feature works within `Control Center`, or use the `Cloudlets API` to configure it programmatically. This behavior cannot be used in includes.",
+			Description: "The Request Control Cloudlet allows you to control access to your web content based on the incoming request's IP or geographic location.  With Cloudlets available on your contract, choose `Your services` > `Edge logic Cloudlets` to control how the feature works within `Control Center`, or use the `Cloudlets API` to configure it programmatically. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -10584,7 +10584,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"resource_optimizer_extended_compatibility": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "The Resource Optimizer helps compress and cache web resources such as JavaScript, CSS, and font files. This behavior can be used in includes.",
+			Description: "This enhances the standard version of the `resourceOptimizer` behavior to support the compression of additional file formats and address some compatibility issues. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -10611,7 +10611,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 					},
 					"enable_all_features": {
 						Optional:    true,
-						Description: "Enables the full set of Resource Optimizer feature.",
+						Description: "Enables `additional support` and error handling.",
 						Type:        schema.TypeBool,
 					},
 				},
@@ -12964,7 +12964,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"virtual_waiting_room": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "This behavior helps you maintain business continuity for dynamic applications in high-demand situations such as flash sales. It decreases abandonment by providing a user-friendly waiting room experience. FIFO (First-in First-out) is a request processing mechanism that prioritizes the first requests that enter the waiting room to send them first to the origin. Users can see both their estimated arrival time and position in the line. With Cloudlets available on your contract, choose `Your services`, `Edge logic Cloudlets` to control Virtual Waitig Room within `Control Center`. Otherwise use the `Cloudlets API` to configure it programmatically. This behavior cannot be used in includes.",
+			Description: "This behavior helps you maintain business continuity for dynamic applications in high-demand situations such as flash sales. It decreases abandonment by providing a user-friendly waiting room experience. FIFO (First-in First-out) is a request processing mechanism that prioritizes the first requests that enter the waiting room to send them first to the origin. Users can see both their estimated arrival time and position in the line. With Cloudlets available on your contract, choose `Your services` > `Edge logic Cloudlets` to control Virtual Waitig Room within `Control Center`. Otherwise use the `Cloudlets API` to configure it programmatically. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -13067,7 +13067,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"visitor_prioritization": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "The `Visitor Prioritization Cloudlet` decreases abandonment by providing a user-friendly waiting room experience.  With Cloudlets available on your contract, choose `Your services`, `Edge logic Cloudlets` to control Visitor Prioritization within `Control Center`. Otherwise use the `Cloudlets API` to configure it programmatically.  To serve non-HTML API content such as JSON blocks, see the `apiPrioritization` behavior. This behavior cannot be used in includes.",
+			Description: "The `Visitor Prioritization Cloudlet` decreases abandonment by providing a user-friendly waiting room experience.  With Cloudlets available on your contract, choose `Your services` > `Edge logic Cloudlets` to control Visitor Prioritization within `Control Center`. Otherwise use the `Cloudlets API` to configure it programmatically.  To serve non-HTML API content such as JSON blocks, see the `apiPrioritization` behavior. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -13401,7 +13401,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"visitor_prioritization_fifo": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "(**BETA**) The `Visitor Prioritization Cloudlet (FIFO)` decreases abandonment by providing a user-friendly waiting room experience. FIFO (First-in First-out) is a fair request processing mechanism, which prioritizes the first requests that enter the waiting room to send them first to the origin. Users can see both their estimated arrival time and position in the line. With Cloudlets available on your contract, choose `Your services`, `Edge logic Cloudlets` to control Visitor Prioritization (FIFO) within `Control Center`. Otherwise use the `Cloudlets API` to configure it programmatically. To serve non-HTML API content such as JSON blocks, see the `apiPrioritization` behavior. This behavior cannot be used in includes.",
+			Description: "(**BETA**) The `Visitor Prioritization Cloudlet (FIFO)` decreases abandonment by providing a user-friendly waiting room experience. FIFO (First-in First-out) is a fair request processing mechanism, which prioritizes the first requests that enter the waiting room to send them first to the origin. Users can see both their estimated arrival time and position in the line. With Cloudlets available on your contract, choose `Your services` > `Edge logic Cloudlets` to control Visitor Prioritization (FIFO) within `Control Center`. Otherwise use the `Cloudlets API` to configure it programmatically. To serve non-HTML API content such as JSON blocks, see the `apiPrioritization` behavior. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
+	"sort"
 	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/imaging"
@@ -396,6 +397,8 @@ func equalPolicyVideo(old, new string) bool {
 		return false
 	}
 
+	sortPolicyVideoFields(&oldPolicy, &newPolicy)
+
 	return reflect.DeepEqual(oldPolicy, newPolicy)
 }
 
@@ -413,4 +416,41 @@ func enforcePolicyVideoVersionChange(_ context.Context, diff *schema.ResourceDif
 		return diff.SetNewComputed("version")
 	}
 	return nil
+}
+
+// sortPolicyVideoFields sorts any fields that are present in video policy and might cause diffs
+func sortPolicyVideoFields(oldPolicy, newPolicy *imaging.PolicyInputVideo) {
+	sortPolicyVideoBreakpointsWidths(oldPolicy)
+	sortPolicyVideoBreakpointsWidths(newPolicy)
+
+	sortPolicyVideoHosts(oldPolicy)
+	sortPolicyVideoHosts(newPolicy)
+
+	sortPolicyVideoVariables(oldPolicy)
+	sortPolicyVideoVariables(newPolicy)
+}
+
+// sortPolicyVideoBreakpointsWidths sorts PolicyInputVideo's breakpoints.Widths
+func sortPolicyVideoBreakpointsWidths(policy *imaging.PolicyInputVideo) {
+	if policy.Breakpoints != nil && policy.Breakpoints.Widths != nil {
+		sort.Ints(policy.Breakpoints.Widths)
+	}
+}
+
+// sortPolicyVideoHosts sorts PolicyInputVideo's hosts
+func sortPolicyVideoHosts(policy *imaging.PolicyInputVideo) {
+	if policy.Hosts != nil {
+		sort.Strings(policy.Hosts)
+	}
+}
+
+// sortPolicyVideoVariables sorts PolicyInputVideo's variables
+func sortPolicyVideoVariables(policy *imaging.PolicyInputVideo) {
+	if policy.Variables != nil {
+		variables := policy.Variables
+		sort.Slice(variables, func(i, j int) bool {
+			return variables[i].Name < variables[j].Name
+		})
+		policy.Variables = variables
+	}
 }

@@ -20,6 +20,8 @@ type RulesBuilder struct {
 	shouldFlatten func(string) bool
 }
 
+const defaultRule = "default"
+
 // NewBuilder returns a new RulesBuilder that uses the provided schema.ResourceData to construct papi.Rules.
 func NewBuilder(d *schema.ResourceData) *RulesBuilder {
 	schemaReader := NewRulesSchemaReader(d)
@@ -44,6 +46,9 @@ func (r RulesBuilder) Build() (*papi.Rules, error) {
 	if err != nil {
 		return nil, err
 	}
+	if name != defaultRule && len(variables) > 0 {
+		return nil, fmt.Errorf("%w: %s", ErrOnlyForDefault, "variable")
+	}
 
 	criteriaMustSatisfy, err := r.ruleCriteriaMustSatisfy()
 	if err != nil && !errors.Is(err, ErrNotFound) {
@@ -51,6 +56,9 @@ func (r RulesBuilder) Build() (*papi.Rules, error) {
 	}
 
 	isSecure, err := r.ruleIsSecure()
+	if name != defaultRule && err == nil {
+		return nil, fmt.Errorf("%w: %s", ErrOnlyForDefault, "is_secure")
+	}
 	if err != nil && !errors.Is(err, ErrNotFound) {
 		return nil, err
 	}

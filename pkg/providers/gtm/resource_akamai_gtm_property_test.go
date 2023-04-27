@@ -64,7 +64,6 @@ var prop = gtm.Property{
 			DatacenterId: 3131,
 			Enabled:      true,
 			HandoutCName: "",
-			Name:         "",
 			Servers: []string{
 				"1.2.3.4",
 				"1.2.3.5",

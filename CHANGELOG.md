@@ -1,5 +1,45 @@
 # RELEASE NOTES
 
+## 3.6.0 (April 27, 2023)
+
+#### FEATURES/ENHANCEMENTS:
+
+* EdgeKV
+  * Added resource:
+    * `akamai_edgekv_group_items` - create, read, update, delete and import
+  * Added data sources:
+    * `akamai_edgekv_group_items` - reads group items associated with namespace and network
+    * `akamai_edgekv_groups` - reads groups associated with namespace and network
+  * Deprecated field `initial_data` under `akamai_edgekv` resource
+
+#### BUG FIXES:
+
+* Cloudlets
+  * In some cases `akamai_cloudlets_application_load_balancer_activation` or `akamai_cloudlets_policy_activation` were not activating due to verification delay with property resource.
+
+* CPS
+  * Get CSR from long history ([I#403](https://github.com/akamai/terraform-provider-akamai/issues/403))
+
+* GTM
+  * Deprecated field `name` of `traffic_target` under `akamai_gtm_property` resource ([I#374](https://github.com/akamai/terraform-provider-akamai/issues/374))
+
+* Image and Video Manager:
+  * Fixed diff in `akamai_imaging_policy_image` resource for image policy attributes ([I#383](https://github.com/akamai/terraform-provider-akamai/issues/383)):
+    * `Breakpoints.Widths`
+    * `Hosts`
+    * `Output.AllowedFormats`
+    * `Output.ForcedFormats`
+    * `Variables`
+  * Fixed diff in `akamai_imaging_policy_video` resource for video policy attributes:
+    * `Breakpoints.Widths`
+    * `Hosts`
+    * `Variables`
+  * Fixed diff seen in exported imaging policy set - removed default values
+
+* PAPI
+  * `is_secure` and `variable` fields can only be used with `default` rule in `akamai_property_rules_builder` data source
+  * Delete `product_id` from import of `akamai_edge_hostname`
+
 ## 3.5.0 (March 30, 2023)
 
 #### FEATURES/ENHANCEMENTS:

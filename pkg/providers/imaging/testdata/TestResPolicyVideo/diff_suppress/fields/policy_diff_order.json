@@ -1,0 +1,33 @@
+{
+  "breakpoints": {
+    "widths": [
+      5000,
+      1024,
+      640,
+      2048,
+      320
+    ]
+  },
+  "hosts": [
+    "test2",
+    "test3",
+    "test1"
+  ],
+  "variables": [
+    {
+      "defaultValue": "test2",
+      "name": "var2",
+      "type": "string"
+    },
+    {
+      "defaultValue": "test3",
+      "name": "var3",
+      "type": "string"
+    },
+    {
+      "defaultValue": "test1",
+      "name": "var1",
+      "type": "string"
+    }
+  ]
+}

@@ -31,18 +31,18 @@ func resourceSecureEdgeHostName() *schema.Resource {
 
 var akamaiSecureEdgeHostNameSchema = map[string]*schema.Schema{
 	"product": {
-		Type:       schema.TypeString,
-		Optional:   true,
-		Computed:   true,
-		Deprecated: akamai.NoticeDeprecatedUseAlias("product"),
-		StateFunc:  addPrefixToState("prd_"),
+		Type:          schema.TypeString,
+		Optional:      true,
+		Computed:      true,
+		Deprecated:    akamai.NoticeDeprecatedUseAlias("product"),
+		ConflictsWith: []string{"product_id"},
+		StateFunc:     addPrefixToState("prd_"),
 	},
 	"product_id": {
-		Type:         schema.TypeString,
-		Optional:     true,
-		Computed:     true,
-		ExactlyOneOf: []string{"product", "product_id"},
-		StateFunc:    addPrefixToState("prd_"),
+		Type:      schema.TypeString,
+		Optional:  true,
+		Computed:  true,
+		StateFunc: addPrefixToState("prd_"),
 	},
 	"contract": {
 		Type:       schema.TypeString,
@@ -145,10 +145,10 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 	logger.Debugf("Edgehostnames GROUP = %v", groupID)
 	logger.Debugf("Edgehostnames CONTRACT = %v", contractID)
 
-	// Schema guarantees product_id/product are strings and one or the other is set
+	// Schema no longer guarantees that product_id/product are set, one of them is required only for creation
 	productID, err := tools.ResolveKeyStringState(d, "product_id", "product")
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("%v: %s, %s", tools.ErrNotFound, "product_id", "product"))
+		return diag.Errorf("one of `%s` must be specified for creation", strings.Join([]string{"product_id", "product"}, ", "))
 	}
 	productID = tools.AddPrefix(productID, "prd_")
 	// set product/product_id into ResourceData
@@ -421,13 +421,6 @@ func resourceSecureEdgeHostNameImport(ctx context.Context, d *schema.ResourceDat
 		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
 	}
 	if err := d.Set("group_id", edgehostnameDetails.GroupID); err != nil {
-		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
-	}
-	productID := edgehostnameDetails.EdgeHostname.ProductID
-	if err := d.Set("product", productID); err != nil {
-		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
-	}
-	if err := d.Set("product_id", productID); err != nil {
 		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
 	}
 	useCasesJSON, err := useCases2JSON(edgehostnameDetails.EdgeHostname.UseCases)

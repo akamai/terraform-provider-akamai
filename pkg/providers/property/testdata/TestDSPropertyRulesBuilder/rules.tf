@@ -144,7 +144,6 @@ EOT
 data "akamai_property_rules_builder" "content_compression" {
   rules_v2023_01_05 {
     name                  = "Content Compression"
-    is_secure             = false
     criteria_must_satisfy = "all"
     criterion {
       content_type {
@@ -183,7 +182,6 @@ data "akamai_property_rules_builder" "content_compression" {
 data "akamai_property_rules_builder" "static_content" {
   rules_v2023_01_05 {
     name                  = "Static Content"
-    is_secure             = false
     criteria_must_satisfy = "all"
     criterion {
       file_extension {
@@ -217,7 +215,6 @@ data "akamai_property_rules_builder" "static_content" {
 data "akamai_property_rules_builder" "dynamic_content" {
   rules_v2023_01_05 {
     name                  = "Dynamic Content"
-    is_secure             = false
     criteria_must_satisfy = "all"
     criterion {
       cacheability {

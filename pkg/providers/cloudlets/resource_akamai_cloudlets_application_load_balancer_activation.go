@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/cloudlets"
@@ -66,6 +67,8 @@ var (
 
 	// ApplicationLoadBalancerActivationResourceTimeout is the default timeout for the resource operations
 	ApplicationLoadBalancerActivationResourceTimeout = time.Minute * 20
+	// ApplicationLoadBalancerActivationRetryTimeout is the default timeout for the resource activation retries
+	ApplicationLoadBalancerActivationRetryTimeout = time.Minute * 10
 )
 
 func resourceApplicationLoadBalancerActivationDelete(_ context.Context, rd *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -152,24 +155,47 @@ func resourceApplicationLoadBalancerActivationChange(ctx context.Context, rd *sc
 
 	// at this point, we are sure that the given version is not active
 	logger.Debugf("activating application load balancer version %d", version)
+	pollingActivationTries := ALBActivationPollMinimum
+	var activation *cloudlets.LoadBalancerActivation
 
-	activation, err := client.ActivateLoadBalancerVersion(ctx, cloudlets.ActivateLoadBalancerVersionRequest{
-		OriginID: originID,
-		Async:    true,
-		LoadBalancerVersionActivation: cloudlets.LoadBalancerVersionActivation{
-			Network: activationNetwork,
-			Version: version,
-		},
-	})
-	if err != nil {
-		if err2 := tools.RestoreOldValues(rd, []string{"network", "version"}); err2 != nil {
-			return activation, fmt.Errorf(`%w failed. No changes were written to server:
+	for {
+		activation, err = client.ActivateLoadBalancerVersion(ctx, cloudlets.ActivateLoadBalancerVersionRequest{
+			OriginID: originID,
+			Async:    true,
+			LoadBalancerVersionActivation: cloudlets.LoadBalancerVersionActivation{
+				Network: activationNetwork,
+				Version: version,
+			},
+		})
+		if err == nil {
+			break
+		}
+
+		select {
+		case <-time.After(pollingActivationTries):
+			logger.Debugf("retrying ALB activation after %d minutes", pollingActivationTries.Minutes())
+			pollingActivationTries = 2 * pollingActivationTries
+			if pollingActivationTries > ApplicationLoadBalancerActivationRetryTimeout ||
+				!strings.Contains(strings.ToLower(err.Error()), ErrApplicationLoadBalancerActivationOriginNotDefined.Error()) {
+				if errOnRestore := tools.RestoreOldValues(rd, []string{"network", "version"}); errOnRestore != nil {
+					return activation, fmt.Errorf(`%w failed. No changes were written to server:
 %s
 
 Failed to restore previous local schema values. The schema will remain in tainted state:
-%s`, ErrApplicationLoadBalancerActivation, err.Error(), err2.Error())
+%s`, ErrApplicationLoadBalancerActivation, err.Error(), errOnRestore.Error())
+				}
+				return activation, fmt.Errorf("%w failed. No changes were written to server:\n%s", ErrApplicationLoadBalancerActivation, err.Error())
+			}
+			continue
+		case <-ctx.Done():
+			if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+				return nil, fmt.Errorf("timeout waiting for retrying activation: last error: %s", err)
+			}
+			if errors.Is(ctx.Err(), context.Canceled) {
+				return nil, fmt.Errorf("operation canceled while waiting for retrying activation, last error: %s", err)
+			}
+			return nil, fmt.Errorf("operation context terminated: %w", ctx.Err())
 		}
-		return activation, fmt.Errorf("%w failed. No changes were written to server:\n%s", ErrApplicationLoadBalancerActivation, err.Error())
 	}
 
 	// wait until application load balancer activation is done

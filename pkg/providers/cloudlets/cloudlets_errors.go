@@ -19,6 +19,8 @@ var (
 	ErrApplicationLoadBalancerActivation = errors.New("application load balancer activation")
 	// ErrApplicationLoadBalancerActivationTimeout is returned when application load balancer activation fails due to a timeout
 	ErrApplicationLoadBalancerActivationTimeout = errors.New("application load balancer activation timeout")
+	// ErrApplicationLoadBalancerActivationOriginNotDefined is returned when load balancer activation fails due to origin not defined
+	ErrApplicationLoadBalancerActivationOriginNotDefined = errors.New("not defined in property manager for this network")
 
 	// ErrApplicationLoadBalancerActivationCanceled is returned on activation poll cancel
 	ErrApplicationLoadBalancerActivationCanceled = errors.New("operation canceled while waiting for application load balancer activation status")

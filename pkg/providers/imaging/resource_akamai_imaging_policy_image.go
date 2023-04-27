@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
+	"sort"
 	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/imaging"
@@ -402,6 +403,8 @@ func equalPolicyImage(old, new string) bool {
 		return false
 	}
 
+	sortPolicyImageFields(&oldPolicy, &newPolicy)
+
 	return reflect.DeepEqual(oldPolicy, newPolicy)
 }
 
@@ -435,4 +438,65 @@ func getRolloutDuration(d *schema.ResourceData) (*int, error) {
 		return input.RolloutDuration, nil
 	}
 	return nil, nil
+}
+
+// sortPolicyImageFields sorts any fields that are present in image policy and might cause diffs
+func sortPolicyImageFields(oldPolicy, newPolicy *imaging.PolicyInputImage) {
+	sortPolicyImageOutput(oldPolicy)
+	sortPolicyImageOutput(newPolicy)
+
+	sortPolicyHosts(oldPolicy)
+	sortPolicyHosts(newPolicy)
+
+	sortPolicyVariables(oldPolicy)
+	sortPolicyVariables(newPolicy)
+
+	sortPolicyBreakpointsWidths(oldPolicy)
+	sortPolicyBreakpointsWidths(newPolicy)
+}
+
+// sortPolicyImageOutput sorts PolicyInputImage's output allowedFormats and forcedFormats
+func sortPolicyImageOutput(policy *imaging.PolicyInputImage) {
+	if policy.Output != nil {
+		if policy.Output.AllowedFormats != nil {
+			allowedFormats := policy.Output.AllowedFormats
+			sort.Slice(allowedFormats, func(i, j int) bool {
+				return allowedFormats[i] < allowedFormats[j]
+			})
+			policy.Output.AllowedFormats = allowedFormats
+		}
+
+		if policy.Output.ForcedFormats != nil {
+			forcedFormats := policy.Output.ForcedFormats
+			sort.Slice(forcedFormats, func(i, j int) bool {
+				return forcedFormats[i] < forcedFormats[j]
+			})
+			policy.Output.ForcedFormats = forcedFormats
+		}
+	}
+}
+
+// sortPolicyHosts sorts PolicyInputImage's hosts
+func sortPolicyHosts(policy *imaging.PolicyInputImage) {
+	if policy.Hosts != nil {
+		sort.Strings(policy.Hosts)
+	}
+}
+
+// sortPolicyVariables sorts PolicyInputImage's variables
+func sortPolicyVariables(policy *imaging.PolicyInputImage) {
+	if policy.Variables != nil {
+		variables := policy.Variables
+		sort.Slice(variables, func(i, j int) bool {
+			return variables[i].Name < variables[j].Name
+		})
+		policy.Variables = variables
+	}
+}
+
+// sortPolicyBreakpointsWidths sorts PolicyInputImage's breakpoints.Widths
+func sortPolicyBreakpointsWidths(policy *imaging.PolicyInputImage) {
+	if policy.Breakpoints != nil && policy.Breakpoints.Widths != nil {
+		sort.Ints(policy.Breakpoints.Widths)
+	}
 }

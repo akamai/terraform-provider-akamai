@@ -199,6 +199,25 @@ func GetListValue(key string, rd ResourceDataFetcher) ([]interface{}, error) {
 	return val, nil
 }
 
+// GetMapValue fetches value with given key from ResourceData object and attempts type cast to map[string]interface{}
+//
+// if value is not present on provided resource, ErrNotFound is returned
+// if casting is not successful, ErrInvalidType is returned
+func GetMapValue(key string, rd ResourceDataFetcher) (map[string]interface{}, error) {
+	if key == "" {
+		return nil, fmt.Errorf("%w: %s", ErrEmptyKey, key)
+	}
+	val := make(map[string]interface{}, 0)
+	value, ok := rd.GetOk(key)
+	if !ok {
+		return val, fmt.Errorf("%w: %s", ErrNotFound, key)
+	}
+	if val, ok = value.(map[string]interface{}); !ok {
+		return nil, fmt.Errorf("%w: %s, %q", ErrInvalidType, key, "map[string]interface{}")
+	}
+	return val, nil
+}
+
 // FindStringValues searches the ResourceData for the list of keys and returns the array of values
 //
 // if the value does not exist it is skipped

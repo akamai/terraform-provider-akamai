@@ -7,7 +7,7 @@ Use our Terraform provider to provision and manage your Akamai configurations in
 
 ## How it works
 
-![Terraform overview](https://techdocs.akamai.com/terraform-images/img/overview2.png)
+![Terraform overview](https://techdocs.akamai.com/terraform-images/img/ext-tf-gs.png)
 
 ## Start your configuration
 
@@ -21,7 +21,7 @@ Your Akamai Terraform configuration starts with listing us as a required provide
      required_providers {
        akamai = {
          source = "akamai/akamai"
-         version = "3.5.0"
+         version = "3.6.0"
        }
      }
    }
@@ -33,7 +33,7 @@ Your Akamai Terraform configuration starts with listing us as a required provide
 
 ~> If you choose to use multiple configuration files to limit the scope of work or to share work across teams, our provider information only needs to be in one.
 
-## Add authentication
+## Get authenticated
 
 Authentication credentials for the majority of our API use a hash-based message authentication code or HMAC-SHA-256 created through an API client. We recommend each member of your team use their own client set up locally to prevent accidental exposure of credentials.
 
@@ -87,11 +87,11 @@ There are different types of API clients that grant access based on your need, r
 
 To install our provider and begin a Terraform session, run `terraform init`. The response log verifies your initialization along with a notice that the rest of the `terraform` commands should work.
 
-## Set up resources
+## Add subprovider resources
 
 Each of our subproviders use a set of resource objects that build out infrastructure components and data sources that provide information to and about those resources. Add these to your configurations manually or import them.
 
-- Copy/paste or pull in our [examples](https://github.com/akamai/examples-terraform.git).
+- Copy/paste or pull in our [examples](https://github.com/akamai/terraform-provider-akamai/tree/master/examples).
 - Import a set of components using our [CLI for Terraform Provider](https://github.com/akamai/cli-terraform).
 - Export and use your company's existing configurations.
 
@@ -99,18 +99,18 @@ Use the table to find information about the subprovider you’re using.
 
 |Subprovider|Description|
 |---|---|
-|[Application Security](https://techdocs.akamai.com/terraform/v3.5/docs/configure-appsec)|Manage security configurations, security policies, match targets, rate policies, and firewall rules.|
-|[Bot Manager](https://techdocs.akamai.com/terraform/v3.5/docs/set-up-botman)|Identify, track, and respond to bot activity on your domain or in your app.|
-|[Certificates](https://techdocs.akamai.com/terraform/v3.5/docs/cps-integration-guide)|Full life cycle management of SSL certificates for your ​Akamai​ CDN applications.|
-|[Cloudlets](https://techdocs.akamai.com/terraform/v3.5/docs/set-up-cloudlets)|Solve specific business challenges using value-added apps that complement ​Akamai​'s core solutions.|
-|[DataStream](https://techdocs.akamai.com/terraform/v3.5/docs/set-up-datastream)|Monitor activity on the ​Akamai​ platform and send live log data to a destination of your choice.|
-|[Edge DNS](https://techdocs.akamai.com/terraform/v3.5/docs/set-up-edgedns)|Replace or augment your DNS infrastructure with a cloud-based authoritative DNS solution.|
-|[EdgeWorkers](https://techdocs.akamai.com/terraform/v3.5/docs/set-up-edgeworkers)|Execute JavaScript functions at the edge to optimize site performance and customize web experiences.|
-|[Global Traffic Management](https://techdocs.akamai.com/terraform/v3.5/docs/set-up-gtm)|Use load balancing to manage website and mobile performance demands.|
-|[Identity and Access Management](https://techdocs.akamai.com/terraform/v3.5/docs/set-up-iam)|Create users and groups, and define policies that manage access to your Akamai applications.|
-|[Image and Video Manager](https://techdocs.akamai.com/terraform/v3.5/docs/set-up-ivm)|Automate image and video delivery optimizations for your website visitors.|
-|[Network Lists](https://techdocs.akamai.com/terraform/v3.5/docs/set-up-network-lists)|Automate the creation, deployment, and management of lists used in ​Akamai​ security products.|
-|[Property](https://techdocs.akamai.com/terraform/v3.5/docs/set-up-property-provisioning)|Define rules and behaviors that govern your website delivery based on match criteria.|
+|[Application Security](https://techdocs.akamai.com/terraform/v3.6/docs/configure-appsec)|Manage security configurations, security policies, match targets, rate policies, and firewall rules.|
+|[Bot Manager](https://techdocs.akamai.com/terraform/v3.6/docs/set-up-botman)|Identify, track, and respond to bot activity on your domain or in your app.|
+|[Certificates](https://techdocs.akamai.com/terraform/v3.6/docs/cps-integration-guide)|Full life cycle management of SSL certificates for your ​Akamai​ CDN applications.|
+|[Cloudlets](https://techdocs.akamai.com/terraform/v3.6/docs/set-up-cloudlets)|Solve specific business challenges using value-added apps that complement ​Akamai​'s core solutions.|
+|[DataStream](https://techdocs.akamai.com/terraform/v3.6/docs/set-up-datastream)|Monitor activity on the ​Akamai​ platform and send live log data to a destination of your choice.|
+|[Edge DNS](https://techdocs.akamai.com/terraform/v3.6/docs/set-up-edgedns)|Replace or augment your DNS infrastructure with a cloud-based authoritative DNS solution.|
+|[EdgeWorkers](https://techdocs.akamai.com/terraform/v3.6/docs/set-up-edgeworkers)|Execute JavaScript functions at the edge to optimize site performance and customize web experiences.|
+|[Global Traffic Management](https://techdocs.akamai.com/terraform/v3.6/docs/set-up-gtm)|Use load balancing to manage website and mobile performance demands.|
+|[Identity and Access Management](https://techdocs.akamai.com/terraform/v3.6/docs/set-up-iam)|Create users and groups, and define policies that manage access to your Akamai applications.|
+|[Image and Video Manager](https://techdocs.akamai.com/terraform/v3.6/docs/set-up-ivm)|Automate image and video delivery optimizations for your website visitors.|
+|[Network Lists](https://techdocs.akamai.com/terraform/v3.6/docs/set-up-network-lists)|Automate the creation, deployment, and management of lists used in ​Akamai​ security products.|
+|[Property](https://techdocs.akamai.com/terraform/v3.6/docs/set-up-property-provisioning)|Define rules and behaviors that govern your website delivery based on match criteria.|
 
 ### Get contract and group IDs
 

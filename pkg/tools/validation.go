@@ -144,3 +144,19 @@ func validateRuleFormat(v interface{}, acceptLatest bool) error {
 
 	return nil
 }
+
+// ValidateMapMinimalLength validates the map by checking if it contains at least provided number of entries
+func ValidateMapMinimalLength(min int) schema.SchemaValidateDiagFunc {
+	return func(i interface{}, _ cty.Path) diag.Diagnostics {
+		v, ok := i.(map[string]interface{})
+		if !ok {
+			return diag.Errorf("expected type of %s to be map[string]interface{}", i)
+		}
+
+		if len(v) < min {
+			return diag.Errorf("map must contain at least %d element(s), but has %d", min, len(v))
+		}
+
+		return nil
+	}
+}

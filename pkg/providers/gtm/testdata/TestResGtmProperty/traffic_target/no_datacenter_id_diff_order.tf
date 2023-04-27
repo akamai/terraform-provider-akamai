@@ -13,7 +13,6 @@ resource "akamai_gtm_property" "tfexample_prop_1" {
     enabled       = true
     weight        = 200
     servers       = ["1.2.3.7", "1.2.3.8"]
-    name          = "test3"
     handout_cname = "test"
   }
 
@@ -22,7 +21,6 @@ resource "akamai_gtm_property" "tfexample_prop_1" {
     enabled       = true
     weight        = 200
     servers       = ["1.2.3.6"]
-    name          = "test2"
     handout_cname = "test"
   }
 
@@ -31,7 +29,6 @@ resource "akamai_gtm_property" "tfexample_prop_1" {
     enabled       = true
     weight        = 200
     servers       = ["1.2.3.4", "1.2.3.5"]
-    name          = "test1"
     handout_cname = "test"
   }
 
