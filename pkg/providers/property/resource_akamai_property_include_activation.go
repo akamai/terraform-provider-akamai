@@ -623,8 +623,11 @@ func waitForActivationCreation(ctx context.Context, client papi.PAPI, includeID,
 		if err == nil {
 			return activation, nil
 		}
-		if !(strings.Contains(err.Error(), papi.ErrNotFound.Error()) &&
-			strings.Contains(err.Error(), papi.ErrGetIncludeActivation.Error())) {
+
+		if errors.Is(err, papi.ErrMissingComplianceRecord) {
+			return nil, fmt.Errorf("for 'PRODUCTION' network, 'compliance_record' must be specified: %s", err)
+		}
+		if !errors.Is(err, papi.ErrNotFound) {
 			// return in case we get unexpected error
 			return nil, err
 		}
