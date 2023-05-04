@@ -555,9 +555,8 @@ func populateDomainObject(d *schema.ResourceData, dom *gtm.Domain, m interface{}
 	}
 
 	if domainName != dom.Name {
-		dom.Name = domainName
 		logger.Errorf("Domain [%s] state and GTM names inconsistent!", dom.Name)
-		return fmt.Errorf("Domain Object could not be populated: %v", err.Error())
+		return fmt.Errorf("once the domain is created, updating its name is not allowed")
 	}
 
 	vstr, err := tf.GetStringValue("type", d)
