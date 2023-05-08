@@ -1,7 +1,6 @@
 package tf
 
 import (
-	"math/big"
 	"strconv"
 	"strings"
 
@@ -66,10 +65,8 @@ func (rc RawConfig) transform(val cty.Value) (any, bool) {
 			i64, _ := fv.Int64()
 			return i64, true
 		}
-		if rfv, accuracy := fv.Float64(); accuracy == big.Exact {
-			return rfv, true
-		}
-		return nil, false
+		rfv, _ := fv.Float64()
+		return rfv, true
 	case cty.String:
 		return val.AsString(), true
 	}

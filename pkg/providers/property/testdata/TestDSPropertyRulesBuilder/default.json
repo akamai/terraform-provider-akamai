@@ -3,6 +3,30 @@
     "advancedOverride": "test",
     "behaviors": [
       {
+        "name": "contentCharacteristicsAMD",
+        "options": {
+          "catalogSize": "SMALL",
+          "contentType": "ULTRA_HD",
+          "dash": true,
+          "hds": true,
+          "hls": true,
+          "popularityDistribution": "UNKNOWN",
+          "segmentDurationDASH": "SEGMENT_DURATION_10S",
+          "segmentDurationDASHCustom": 100,
+          "segmentDurationHDS": "SEGMENT_DURATION_2S",
+          "segmentDurationHDSCustom": 100,
+          "segmentDurationHLS": "SEGMENT_DURATION_4S",
+          "segmentDurationHLSCustom": 3.14,
+          "segmentDurationSmooth": "SEGMENT_DURATION_8S",
+          "segmentDurationSmoothCustom": 3.14,
+          "segmentSizeDASH": "GREATER_THAN_100MB",
+          "segmentSizeHDS": "TEN_MB_TO_100_MB",
+          "segmentSizeHLS": "GREATER_THAN_100MB",
+          "segmentSizeSmooth": "UNKNOWN",
+          "smooth": true
+        }
+      },
+      {
         "name": "origin",
         "options": {
           "cacheKeyHostname": "ORIGIN_HOSTNAME",
