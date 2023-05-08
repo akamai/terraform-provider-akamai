@@ -47,6 +47,11 @@
   * Add validation for hostnames `cname_from` field in `akamai_property` resource
   * Assign only active property activation version in `akamai_property_activation` resource on read
 
+* GTM
+  * New data sources:
+    * `akamai_gtm_datacenter` - get datacenter information
+    * `akamai_gtm_datacenters` - get datacenters information
+
 ## 3.6.0 (April 27, 2023)
 
 #### FEATURES/ENHANCEMENTS:
@@ -58,12 +63,6 @@
     * `akamai_edgekv_group_items` - reads group items associated with namespace and network
     * `akamai_edgekv_groups` - reads groups associated with namespace and network
   * Deprecated field `initial_data` under `akamai_edgekv` resource
-
-####  FEATURES/ENHANCEMENTS:
-
-* GTM
-  * New data sources:
-      * `akamai_gtm_datacenter` - get datacenter information
 
 ## X.X.X (X X, 2023)
 

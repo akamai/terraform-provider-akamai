@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/gtm"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
+
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -148,12 +150,12 @@ func dataGTMDatacenterRead(ctx context.Context, d *schema.ResourceData, m interf
 
 	logger.Debug("Fetching a datacenter")
 
-	domain, err := tools.GetStringValue("domain", d)
+	domain, err := tf.GetStringValue("domain", d)
 	if err != nil {
 		return diag.Errorf("could not get 'domain' attribute: %s", err)
 	}
 
-	dcID, err := tools.GetIntValue("datacenter_id", d)
+	dcID, err := tf.GetIntValue("datacenter_id", d)
 	if err != nil {
 		return diag.Errorf("could not get 'datacenter_id' attribute: %s", err)
 	}
@@ -163,6 +165,16 @@ func dataGTMDatacenterRead(ctx context.Context, d *schema.ResourceData, m interf
 		return diag.Errorf("could not get datacenter: %s", err)
 	}
 
+	if err = tf.SetAttrs(d, getDatacenterAttributes(dc)); err != nil {
+		return diag.Errorf("could not set attributes: %s", err)
+	}
+
+	d.SetId(fmt.Sprintf("%s:%d", domain, dcID))
+
+	return nil
+}
+
+func getDatacenterAttributes(dc *gtm.Datacenter) map[string]interface{} {
 	var defaultLoadObject []map[string]interface{}
 	if dc.DefaultLoadObject != nil {
 		defaultLoadObject = []map[string]interface{}{
@@ -200,11 +212,5 @@ func dataGTMDatacenterRead(ctx context.Context, d *schema.ResourceData, m interf
 		"links":                             links,
 	}
 
-	if err = tools.SetAttrs(d, attrs); err != nil {
-		return diag.Errorf("could not set attributes: %s", err)
-	}
-
-	d.SetId(fmt.Sprintf("%s:%d", domain, dcID))
-
-	return nil
+	return attrs
 }
