@@ -28,7 +28,7 @@ func resourcePropertyInclude() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			StateContext: resourcePropertyIncludeImport,
 		},
-		CustomizeDiff: setVersionComputedOnRulesChange,
+		CustomizeDiff: setIncludeVersionsComputedOnRulesChange,
 		Schema: map[string]*schema.Schema{
 			"contract_id": {
 				Type:        schema.TypeString,
@@ -490,18 +490,27 @@ func suppressDefaultRules(_, oldValue, newValue string, _ *schema.ResourceData) 
 	return reflect.DeepEqual(rules, defaultRules)
 }
 
-func setVersionComputedOnRulesChange(_ context.Context, d *schema.ResourceDiff, _ interface{}) error {
-	o, n := d.GetChange("rules")
-	oldRules, newRules := o.(string), n.(string)
+// setIncludeVersionsComputedOnRulesChange is a schema.CustomizeDiffFunc for akamai_property_include resource,
+// which sets latest_version, staging_version and production_version fields as computed
+// if a new version of the include is expected to be created.
+func setIncludeVersionsComputedOnRulesChange(_ context.Context, rd *schema.ResourceDiff, _ interface{}) error {
+	ruleFormatChanged := rd.HasChange("rule_format")
 
-	if compareRulesJSON(oldRules, newRules) {
+	oldRules, newRules := rd.GetChange("rules")
+	rulesEqual, err := rulesJSONEqual(oldRules.(string), newRules.(string))
+	if err != nil {
+		return err
+	}
+
+	if !ruleFormatChanged && rulesEqual {
 		return nil
 	}
 
 	for _, key := range []string{"latest_version", "staging_version", "production_version"} {
-		if err := d.SetNewComputed(key); err != nil {
+		if err := rd.SetNewComputed(key); err != nil {
 			return fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 		}
 	}
+
 	return nil
 }

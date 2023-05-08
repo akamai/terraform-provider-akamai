@@ -76,7 +76,7 @@ func resourceProperty() *schema.Resource {
 		CustomizeDiff: customdiff.All(
 			rulesCustomDiff,
 			hostNamesCustomDiff,
-			versionsComputedValuesCustomDiff,
+			setPropertyVersionsComputedOnRulesChange,
 		),
 		Importer: &schema.ResourceImporter{
 			StateContext: resourcePropertyImport,
@@ -414,29 +414,33 @@ func hostNamesCustomDiff(_ context.Context, d *schema.ResourceDiff, m interface{
 	return nil
 }
 
-// versionsComputedValuesCustomDiff sets `latest_version`, `staging_version` and `production_version` fields as computed
-// if a new version of property is expected to be created
-func versionsComputedValuesCustomDiff(_ context.Context, d *schema.ResourceDiff, m interface{}) error {
-	meta := akamai.Meta(m)
-	logger := meta.Log("PAPI", "versionsComputedValuesCustomDiff")
-	oldRules, newRules := d.GetChange("rules")
-	o, n := d.GetChange("hostnames")
-	oldSet := o.(*schema.Set)
-	equal := oldSet.HashEqual(n.(*schema.Set))
-	if !equal || !compareRulesJSON(oldRules.(string), newRules.(string)) {
-		// These computed attributes can be changed on server through other clients and the state needs to be synced to local
-		for _, key := range []string{"latest_version", "staging_version", "production_version"} {
-			err := d.SetNewComputed(key)
-			if err != nil {
-				logger.Errorf("%s state failed to update with new value from server", key)
-				return fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
-			}
-			logger.Debugf("%s state will be updated with new value from server", key)
+// setPropertyVersionsComputedOnRulesChange is a schema.CustomizeDiffFunc for akamai_property resource,
+// which sets latest_version, staging_version and production_version fields as computed
+// if a new version of the property is expected to be created.
+func setPropertyVersionsComputedOnRulesChange(_ context.Context, rd *schema.ResourceDiff, _ interface{}) error {
+	oldHostnames, newHostnames := rd.GetChange("hostnames")
+	hostnamesEqual := oldHostnames.(*schema.Set).HashEqual(newHostnames.(*schema.Set))
+	ruleFormatChanged := rd.HasChange("rule_format")
+
+	oldRules, newRules := rd.GetChange("rules")
+	rulesEqual, err := rulesJSONEqual(oldRules.(string), newRules.(string))
+	if err != nil {
+		return err
+	}
+
+	if !ruleFormatChanged && hostnamesEqual && rulesEqual {
+		return nil
+	}
+
+	for _, key := range []string{"latest_version", "staging_version", "production_version"} {
+		if err := rd.SetNewComputed(key); err != nil {
+			return fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 		}
 	}
 
 	return nil
 }
+
 func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	logger := meta.Log("PAPI", "resourcePropertyCreate")

@@ -7,7 +7,7 @@ import (
 	"github.com/tj/assert"
 )
 
-func TestCompareRules(t *testing.T) {
+func TestRulesEqual(t *testing.T) {
 	tests := map[string]struct {
 		old      *papi.Rules
 		new      *papi.Rules
@@ -259,7 +259,7 @@ func TestCompareRules(t *testing.T) {
 					},
 				},
 			},
-			expected: true,
+			expected: false,
 		},
 
 		"equal rules, with children": {
@@ -338,7 +338,7 @@ func TestCompareRules(t *testing.T) {
 						Behaviors: []papi.RuleBehavior{
 							{
 								Locked: false,
-								Name:   "BEH2",
+								Name:   "BEH1",
 								Options: map[string]interface{}{
 									"opt1": 123,
 									"opt2": 321,
@@ -347,7 +347,7 @@ func TestCompareRules(t *testing.T) {
 							},
 							{
 								Locked: false,
-								Name:   "BEH1",
+								Name:   "BEH2",
 								Options: map[string]interface{}{
 									"opt1": 123,
 									"opt2": 321,
@@ -362,7 +362,7 @@ func TestCompareRules(t *testing.T) {
 						Behaviors: []papi.RuleBehavior{
 							{
 								Locked: false,
-								Name:   "BEH2",
+								Name:   "BEH1",
 								Options: map[string]interface{}{
 									"opt1": 123,
 									"opt2": 321,
@@ -371,7 +371,7 @@ func TestCompareRules(t *testing.T) {
 							},
 							{
 								Locked: false,
-								Name:   "BEH1",
+								Name:   "BEH2",
 								Options: map[string]interface{}{
 									"opt1": 123,
 									"opt2": 321,
@@ -601,7 +601,7 @@ func TestCompareRules(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			res := compareRules(test.old, test.new)
+			res := rulesEqual(test.old, test.new)
 			assert.Equal(t, test.expected, res)
 		})
 	}

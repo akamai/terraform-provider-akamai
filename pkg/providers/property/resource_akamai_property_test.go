@@ -30,7 +30,7 @@ func TestResProperty(t *testing.T) {
 	type BehaviorFunc = func(*TestState)
 
 	// Combines many BehaviorFuncs into one
-	ComposeBehaviors := func(behaviors ...BehaviorFunc) BehaviorFunc {
+	composeBehaviors := func(behaviors ...BehaviorFunc) BehaviorFunc {
 		return func(State *TestState) {
 			for _, behave := range behaviors {
 				behave(State)
@@ -38,7 +38,7 @@ func TestResProperty(t *testing.T) {
 		}
 	}
 
-	UpdateRuleTree := func(propertyID, contractID, groupID string, version int, rulesUpdate *papi.RulesUpdate) BehaviorFunc {
+	updateRuleTree := func(propertyID, contractID, groupID string, version int, rulesUpdate *papi.RulesUpdate) BehaviorFunc {
 		return func(state *TestState) {
 			ExpectUpdateRuleTree(
 				state.Client, propertyID, groupID, contractID, version,
@@ -49,20 +49,20 @@ func TestResProperty(t *testing.T) {
 		}
 	}
 
-	SetHostnames := func(PropertyID string, Version int, CnameTo string) BehaviorFunc {
-		return func(State *TestState) {
-			NewHostnames := []papi.Hostname{{
+	setHostnames := func(propertyID string, version int, cnameTo string) BehaviorFunc {
+		return func(state *TestState) {
+			newHostnames := []papi.Hostname{{
 				CnameType:            "EDGE_HOSTNAME",
 				CnameFrom:            "from.test.domain",
-				CnameTo:              CnameTo,
+				CnameTo:              cnameTo,
 				CertProvisioningType: "DEFAULT",
 			}}
 
-			ExpectUpdatePropertyVersionHostnames(State.Client, PropertyID, "grp_0", "ctr_0", Version, NewHostnames, nil).Once().Run(func(mock.Arguments) {
-				NewResponseHostnames := []papi.Hostname{{
+			ExpectUpdatePropertyVersionHostnames(state.Client, propertyID, "grp_0", "ctr_0", version, newHostnames, nil).Once().Run(func(mock.Arguments) {
+				newResponseHostnames := []papi.Hostname{{
 					CnameType:            "EDGE_HOSTNAME",
 					CnameFrom:            "from.test.domain",
-					CnameTo:              CnameTo,
+					CnameTo:              cnameTo,
 					CertProvisioningType: "DEFAULT",
 					EdgeHostnameID:       "ehn_123",
 					CertStatus: papi.CertStatusItem{
@@ -77,30 +77,30 @@ func TestResProperty(t *testing.T) {
 						},
 					},
 				}}
-				State.Hostnames = append([]papi.Hostname{}, NewResponseHostnames...)
+				state.Hostnames = append([]papi.Hostname{}, newResponseHostnames...)
 			})
 		}
 	}
 
-	SetTwoHostnames := func(PropertyID string, Version int, CnameFrom1, CnameTo1, CnameFrom2, CnameTo2 string) BehaviorFunc {
-		return func(State *TestState) {
-			NewHostnames := []papi.Hostname{{
+	setTwoHostnames := func(propertyID string, version int, cnameFrom1, cnameTo1, cnameFrom2, cnameTo2 string) BehaviorFunc {
+		return func(state *TestState) {
+			newHostnames := []papi.Hostname{{
 				CnameType:            "EDGE_HOSTNAME",
-				CnameFrom:            CnameFrom1,
-				CnameTo:              CnameTo1,
+				CnameFrom:            cnameFrom1,
+				CnameTo:              cnameTo1,
 				CertProvisioningType: "DEFAULT",
 			}, {
 				CnameType:            "EDGE_HOSTNAME",
-				CnameFrom:            CnameFrom2,
-				CnameTo:              CnameTo2,
+				CnameFrom:            cnameFrom2,
+				CnameTo:              cnameTo2,
 				CertProvisioningType: "DEFAULT",
 			}}
 
-			ExpectUpdatePropertyVersionHostnames(State.Client, PropertyID, "grp_0", "ctr_0", Version, NewHostnames, nil).Once().Run(func(mock.Arguments) {
+			ExpectUpdatePropertyVersionHostnames(state.Client, propertyID, "grp_0", "ctr_0", version, newHostnames, nil).Once().Run(func(mock.Arguments) {
 				NewResponseHostnames := []papi.Hostname{{
 					CnameType:            "EDGE_HOSTNAME",
-					CnameFrom:            CnameFrom1,
-					CnameTo:              CnameTo1,
+					CnameFrom:            cnameFrom1,
+					CnameTo:              cnameTo1,
 					CertProvisioningType: "DEFAULT",
 					EdgeHostnameID:       "ehn_123",
 					CertStatus: papi.CertStatusItem{
@@ -116,8 +116,8 @@ func TestResProperty(t *testing.T) {
 					},
 				}, {
 					CnameType:            "EDGE_HOSTNAME",
-					CnameFrom:            CnameFrom2,
-					CnameTo:              CnameTo2,
+					CnameFrom:            cnameFrom2,
+					CnameTo:              cnameTo2,
 					CertProvisioningType: "DEFAULT",
 					EdgeHostnameID:       "ehn_123",
 					CertStatus: papi.CertStatusItem{
@@ -132,114 +132,114 @@ func TestResProperty(t *testing.T) {
 						},
 					},
 				}}
-				State.Hostnames = append([]papi.Hostname{}, NewResponseHostnames...)
+				state.Hostnames = append([]papi.Hostname{}, NewResponseHostnames...)
 			})
 		}
 	}
 
-	GetPropertyVersions := func(PropertyID, PropertyName, ContractID, GroupID string, items ...papi.PropertyVersionItems) BehaviorFunc {
-		return func(State *TestState) {
-			versionItems := &State.VersionItems
+	getPropertyVersions := func(propertyID, propertyName, contractID, groupID string, items ...papi.PropertyVersionItems) BehaviorFunc {
+		return func(state *TestState) {
+			versionItems := &state.VersionItems
 			if len(items) > 0 {
 				versionItems = &items[0]
 			}
-			ExpectGetPropertyVersions(State.Client, PropertyID, PropertyName, ContractID, GroupID, &State.Property, versionItems)
+			ExpectGetPropertyVersions(state.Client, propertyID, propertyName, contractID, groupID, &state.Property, versionItems)
 		}
 	}
 
-	GetPropertyVersionResources := func(PropertyID, GroupID, ContractID string, Version int, StagStatus, ProdStatus papi.VersionStatus) BehaviorFunc {
-		return func(State *TestState) {
-			ExpectGetPropertyVersion(State.Client, PropertyID, GroupID, ContractID, Version, StagStatus, ProdStatus)
+	getPropertyVersionResources := func(propertyID, groupID, contractID string, version int, stagStatus, prodStatus papi.VersionStatus) BehaviorFunc {
+		return func(state *TestState) {
+			ExpectGetPropertyVersion(state.Client, propertyID, groupID, contractID, version, stagStatus, prodStatus)
 		}
 	}
 
-	GetVersionResources := func(PropertyID, ContractID, GroupID string, Version int) BehaviorFunc {
-		return func(State *TestState) {
-			ExpectGetPropertyVersionHostnames(State.Client, PropertyID, GroupID, ContractID, Version, &State.Hostnames)
-			ExpectGetRuleTree(State.Client, PropertyID, GroupID, ContractID, Version, &State.Rules, &State.RuleFormat)
+	GetVersionResources := func(propertyID, contractID, groupID string, version int) BehaviorFunc {
+		return func(state *TestState) {
+			ExpectGetPropertyVersionHostnames(state.Client, propertyID, groupID, contractID, version, &state.Hostnames)
+			ExpectGetRuleTree(state.Client, propertyID, groupID, contractID, version, &state.Rules, &state.RuleFormat)
 		}
 	}
 
-	DeleteProperty := func(PropertyID string) BehaviorFunc {
-		return func(State *TestState) {
-			ExpectRemoveProperty(State.Client, PropertyID, "ctr_0", "grp_0").Once().Run(func(mock.Arguments) {
-				State.Property = papi.Property{}
-				State.Rules = papi.RulesUpdate{}
-				State.Hostnames = nil
-				State.RuleFormat = ""
-				State.VersionItems = papi.PropertyVersionItems{}
+	DeleteProperty := func(propertyID string) BehaviorFunc {
+		return func(state *TestState) {
+			ExpectRemoveProperty(state.Client, propertyID, "ctr_0", "grp_0").Once().Run(func(mock.Arguments) {
+				state.Property = papi.Property{}
+				state.Rules = papi.RulesUpdate{}
+				state.Hostnames = nil
+				state.RuleFormat = ""
+				state.VersionItems = papi.PropertyVersionItems{}
 			})
 		}
 	}
 
-	GetProperty := func(PropertyID string) BehaviorFunc {
-		return func(State *TestState) {
-			ExpectGetProperty(State.Client, PropertyID, "grp_0", "ctr_0", &State.Property)
+	getProperty := func(propertyID string) BehaviorFunc {
+		return func(state *TestState) {
+			ExpectGetProperty(state.Client, propertyID, "grp_0", "ctr_0", &state.Property)
 		}
 	}
 
-	CreateProperty := func(PropertyName, PropertyID string, rules papi.RulesUpdate) BehaviorFunc {
-		return func(State *TestState) {
-			ExpectCreateProperty(State.Client, PropertyName, "grp_0", "ctr_0", "prd_0", PropertyID).Run(func(mock.Arguments) {
-				State.Property = papi.Property{
-					PropertyName:  PropertyName,
-					PropertyID:    PropertyID,
+	createProperty := func(propertyName, propertyID string, rules papi.RulesUpdate) BehaviorFunc {
+		return func(state *TestState) {
+			ExpectCreateProperty(state.Client, propertyName, "grp_0", "ctr_0", "prd_0", propertyID).Run(func(mock.Arguments) {
+				state.Property = papi.Property{
+					PropertyName:  propertyName,
+					PropertyID:    propertyID,
 					GroupID:       "grp_0",
 					ContractID:    "ctr_0",
 					ProductID:     "prd_0",
 					LatestVersion: 1,
 				}
 
-				State.Rules = rules
-				State.RuleFormat = "v2020-01-01"
-				GetProperty(PropertyID)(State)
-				GetVersionResources(PropertyID, "ctr_0", "grp_0", 1)(State)
+				state.Rules = rules
+				state.RuleFormat = "v2020-01-01"
+				getProperty(propertyID)(state)
+				GetVersionResources(propertyID, "ctr_0", "grp_0", 1)(state)
 			}).Once()
 		}
 	}
 
-	PropertyLifecycle := func(PropertyName, PropertyID, GroupID string, rules papi.RulesUpdate) BehaviorFunc {
-		return func(State *TestState) {
-			CreateProperty(PropertyName, PropertyID, rules)(State)
-			GetVersionResources(PropertyID, "ctr_0", "grp_0", 1)(State)
-			DeleteProperty(PropertyID)(State)
+	propertyLifecycle := func(propertyName, propertyID, groupID string, rules papi.RulesUpdate) BehaviorFunc {
+		return func(state *TestState) {
+			createProperty(propertyName, propertyID, rules)(state)
+			GetVersionResources(propertyID, "ctr_0", "grp_0", 1)(state)
+			DeleteProperty(propertyID)(state)
 		}
 	}
 
-	ImportProperty := func(PropertyID string) BehaviorFunc {
-		return func(State *TestState) {
+	importProperty := func(propertyID string) BehaviorFunc {
+		return func(state *TestState) {
 			// Depending on how much of the import ID is given, the initial property lookup may not have group/contract
-			ExpectGetProperty(State.Client, "prp_0", "grp_0", "", &State.Property).Maybe()
-			ExpectGetProperty(State.Client, "prp_0", "", "", &State.Property).Maybe()
+			ExpectGetProperty(state.Client, "prp_0", "grp_0", "", &state.Property).Maybe()
+			ExpectGetProperty(state.Client, "prp_0", "", "", &state.Property).Maybe()
 		}
 	}
 
-	AdvanceVersion := func(PropertyID string, FromVersion, ToVersion int) BehaviorFunc {
-		return func(State *TestState) {
-			ExpectCreatePropertyVersion(State.Client, PropertyID, "grp_0", "ctr_0", FromVersion, ToVersion).Once().Run(func(mock.Arguments) {
-				State.Property.LatestVersion = ToVersion
+	advanceVersion := func(propertyID string, fromVersion, toVersion int) BehaviorFunc {
+		return func(state *TestState) {
+			ExpectCreatePropertyVersion(state.Client, propertyID, "grp_0", "ctr_0", fromVersion, toVersion).Once().Run(func(mock.Arguments) {
+				state.Property.LatestVersion = toVersion
 			}).Run(func(args mock.Arguments) {
-				State.Property.LatestVersion = ToVersion
-				State.VersionItems.Items = append(State.VersionItems.Items,
+				state.Property.LatestVersion = toVersion
+				state.VersionItems.Items = append(state.VersionItems.Items,
 					papi.PropertyVersionGetItem{
 						ProductionStatus: papi.VersionStatusInactive,
-						PropertyVersion:  ToVersion,
+						PropertyVersion:  toVersion,
 						StagingStatus:    papi.VersionStatusInactive,
 					})
 			})
-			GetVersionResources(PropertyID, "ctr_0", "grp_0", ToVersion)(State)
+			GetVersionResources(propertyID, "ctr_0", "grp_0", toVersion)(state)
 		}
 	}
 
 	// TestCheckFunc to verify all standard attributes (for Lifecycle tests)
-	CheckAttrs := func(PropertyID, CnameTo, LatestVersion, StagingVersion, ProductionVersion, EdgeHostnameId, rules string) resource.TestCheckFunc {
+	checkAttrs := func(propertyID, cnameTo, latestVersion, stagingVersion, productionVersion, edgeHostnameId, rules string) resource.TestCheckFunc {
 		return resource.ComposeAggregateTestCheckFunc(
-			resource.TestCheckResourceAttr("akamai_property.test", "id", PropertyID),
-			resource.TestCheckResourceAttr("akamai_property.test", "hostnames.0.cname_to", CnameTo),
-			resource.TestCheckResourceAttr("akamai_property.test", "hostnames.0.edge_hostname_id", EdgeHostnameId),
-			resource.TestCheckResourceAttr("akamai_property.test", "latest_version", LatestVersion),
-			resource.TestCheckResourceAttr("akamai_property.test", "staging_version", StagingVersion),
-			resource.TestCheckResourceAttr("akamai_property.test", "production_version", ProductionVersion),
+			resource.TestCheckResourceAttr("akamai_property.test", "id", propertyID),
+			resource.TestCheckResourceAttr("akamai_property.test", "hostnames.0.cname_to", cnameTo),
+			resource.TestCheckResourceAttr("akamai_property.test", "hostnames.0.edge_hostname_id", edgeHostnameId),
+			resource.TestCheckResourceAttr("akamai_property.test", "latest_version", latestVersion),
+			resource.TestCheckResourceAttr("akamai_property.test", "staging_version", stagingVersion),
+			resource.TestCheckResourceAttr("akamai_property.test", "production_version", productionVersion),
 			resource.TestCheckResourceAttr("akamai_property.test", "name", "test_property"),
 			resource.TestCheckResourceAttr("akamai_property.test", "contract_id", "ctr_0"),
 			resource.TestCheckResourceAttr("akamai_property.test", "contract", "ctr_0"),
@@ -262,16 +262,16 @@ func TestResProperty(t *testing.T) {
 	}
 
 	// Standard test behavior for cases where the property's latest version is deactivated in staging network
-	LatestVersionDeactivatedInStaging := LifecycleTestCase{
+	latestVersionDeactivatedInStaging := LifecycleTestCase{
 		Name: "Latest version is active in staging",
-		ClientSetup: ComposeBehaviors(
-			PropertyLifecycle("test_property", "prp_0", "grp_0",
+		ClientSetup: composeBehaviors(
+			propertyLifecycle("test_property", "prp_0", "grp_0",
 				papi.RulesUpdate{Rules: papi.Rules{Name: "default"}}),
-			GetPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusDeactivated, papi.VersionStatusInactive),
-			SetHostnames("prp_0", 1, "to.test.domain"),
-			AdvanceVersion("prp_0", 1, 2),
-			GetPropertyVersionResources("prp_0", "grp_0", "ctr_0", 2, papi.VersionStatusDeactivated, papi.VersionStatusInactive),
-			SetHostnames("prp_0", 2, "to2.test.domain"),
+			getPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusDeactivated, papi.VersionStatusInactive),
+			setHostnames("prp_0", 1, "to.test.domain"),
+			advanceVersion("prp_0", 1, 2),
+			getPropertyVersionResources("prp_0", "grp_0", "ctr_0", 2, papi.VersionStatusDeactivated, papi.VersionStatusInactive),
+			setHostnames("prp_0", 2, "to2.test.domain"),
 		),
 		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
 			return []resource.TestStep{
@@ -286,7 +286,7 @@ func TestResProperty(t *testing.T) {
 						}
 					},
 					Config: loadFixtureString("%s/step0.tf", FixturePath),
-					Check: CheckAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
+					Check: checkAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
 						"{\"rules\":{\"name\":\"default\",\"options\":{}}}"),
 				},
 				{
@@ -295,7 +295,7 @@ func TestResProperty(t *testing.T) {
 						State.Property.StagingVersion = &StagingVersion
 					},
 					Config: loadFixtureString("%s/step1.tf", FixturePath),
-					Check: CheckAttrs("prp_0", "to2.test.domain", "2", "1", "0", "ehn_123",
+					Check: checkAttrs("prp_0", "to2.test.domain", "2", "1", "0", "ehn_123",
 						"{\"rules\":{\"name\":\"default\",\"options\":{}}}"),
 				},
 			}
@@ -303,16 +303,16 @@ func TestResProperty(t *testing.T) {
 	}
 
 	// Standard test behavior for cases where the property's latest version is deactivated in production network
-	LatestVersionDeactivatedInProd := LifecycleTestCase{
+	latestVersionDeactivatedInProd := LifecycleTestCase{
 		Name: "Latest version is active in production",
-		ClientSetup: ComposeBehaviors(
-			PropertyLifecycle("test_property", "prp_0", "grp_0",
+		ClientSetup: composeBehaviors(
+			propertyLifecycle("test_property", "prp_0", "grp_0",
 				papi.RulesUpdate{Rules: papi.Rules{Name: "default"}}),
-			GetPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusDeactivated),
-			SetHostnames("prp_0", 1, "to.test.domain"),
-			AdvanceVersion("prp_0", 1, 2),
-			GetPropertyVersionResources("prp_0", "grp_0", "ctr_0", 2, papi.VersionStatusInactive, papi.VersionStatusDeactivated),
-			SetHostnames("prp_0", 2, "to2.test.domain"),
+			getPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusDeactivated),
+			setHostnames("prp_0", 1, "to.test.domain"),
+			advanceVersion("prp_0", 1, 2),
+			getPropertyVersionResources("prp_0", "grp_0", "ctr_0", 2, papi.VersionStatusInactive, papi.VersionStatusDeactivated),
+			setHostnames("prp_0", 2, "to2.test.domain"),
 		),
 		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
 			return []resource.TestStep{
@@ -327,7 +327,7 @@ func TestResProperty(t *testing.T) {
 						}
 					},
 					Config: loadFixtureString("%s/step0.tf", FixturePath),
-					Check: CheckAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
+					Check: checkAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
 						"{\"rules\":{\"name\":\"default\",\"options\":{}}}"),
 				},
 				{
@@ -336,7 +336,7 @@ func TestResProperty(t *testing.T) {
 						State.Property.ProductionVersion = &ProductionVersion
 					},
 					Config: loadFixtureString("%s/step1.tf", FixturePath),
-					Check: CheckAttrs("prp_0", "to2.test.domain", "2", "0", "1", "ehn_123",
+					Check: checkAttrs("prp_0", "to2.test.domain", "2", "0", "1", "ehn_123",
 						"{\"rules\":{\"name\":\"default\",\"options\":{}}}"),
 				},
 			}
@@ -344,16 +344,16 @@ func TestResProperty(t *testing.T) {
 	}
 
 	// Standard test behavior for cases where the property's latest version is active in staging network
-	LatestVersionActiveInStaging := LifecycleTestCase{
+	latestVersionActiveInStaging := LifecycleTestCase{
 		Name: "Latest version is active in staging",
-		ClientSetup: ComposeBehaviors(
-			PropertyLifecycle("test_property", "prp_0", "grp_0",
+		ClientSetup: composeBehaviors(
+			propertyLifecycle("test_property", "prp_0", "grp_0",
 				papi.RulesUpdate{Rules: papi.Rules{Name: "default"}}),
-			GetPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusActive, papi.VersionStatusInactive),
-			SetHostnames("prp_0", 1, "to.test.domain"),
-			AdvanceVersion("prp_0", 1, 2),
-			GetPropertyVersionResources("prp_0", "grp_0", "ctr_0", 2, papi.VersionStatusInactive, papi.VersionStatusActive),
-			SetHostnames("prp_0", 2, "to2.test.domain"),
+			getPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusActive, papi.VersionStatusInactive),
+			setHostnames("prp_0", 1, "to.test.domain"),
+			advanceVersion("prp_0", 1, 2),
+			getPropertyVersionResources("prp_0", "grp_0", "ctr_0", 2, papi.VersionStatusInactive, papi.VersionStatusActive),
+			setHostnames("prp_0", 2, "to2.test.domain"),
 		),
 		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
 			return []resource.TestStep{
@@ -368,7 +368,7 @@ func TestResProperty(t *testing.T) {
 						}
 					},
 					Config: loadFixtureString("%s/step0.tf", FixturePath),
-					Check: CheckAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
+					Check: checkAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
 						"{\"rules\":{\"name\":\"default\",\"options\":{}}}"),
 				},
 				{
@@ -377,7 +377,7 @@ func TestResProperty(t *testing.T) {
 						State.Property.StagingVersion = &StagingVersion
 					},
 					Config: loadFixtureString("%s/step1.tf", FixturePath),
-					Check: CheckAttrs("prp_0", "to2.test.domain", "2", "1", "0", "ehn_123",
+					Check: checkAttrs("prp_0", "to2.test.domain", "2", "1", "0", "ehn_123",
 						"{\"rules\":{\"name\":\"default\",\"options\":{}}}"),
 				},
 			}
@@ -385,16 +385,16 @@ func TestResProperty(t *testing.T) {
 	}
 
 	// Standard test behavior for cases where the property's latest version is active in production network
-	LatestVersionActiveInProd := LifecycleTestCase{
+	latestVersionActiveInProd := LifecycleTestCase{
 		Name: "Latest version is active in production",
-		ClientSetup: ComposeBehaviors(
-			PropertyLifecycle("test_property", "prp_0", "grp_0",
+		ClientSetup: composeBehaviors(
+			propertyLifecycle("test_property", "prp_0", "grp_0",
 				papi.RulesUpdate{Rules: papi.Rules{Name: "default"}}),
-			GetPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusActive),
-			SetHostnames("prp_0", 1, "to.test.domain"),
-			AdvanceVersion("prp_0", 1, 2),
-			GetPropertyVersionResources("prp_0", "grp_0", "ctr_0", 2, papi.VersionStatusInactive, papi.VersionStatusActive),
-			SetHostnames("prp_0", 2, "to2.test.domain"),
+			getPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusActive),
+			setHostnames("prp_0", 1, "to.test.domain"),
+			advanceVersion("prp_0", 1, 2),
+			getPropertyVersionResources("prp_0", "grp_0", "ctr_0", 2, papi.VersionStatusInactive, papi.VersionStatusActive),
+			setHostnames("prp_0", 2, "to2.test.domain"),
 		),
 		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
 			return []resource.TestStep{
@@ -409,7 +409,7 @@ func TestResProperty(t *testing.T) {
 						}
 					},
 					Config: loadFixtureString("%s/step0.tf", FixturePath),
-					Check: CheckAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
+					Check: checkAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
 						"{\"rules\":{\"name\":\"default\",\"options\":{}}}"),
 				},
 				{
@@ -418,7 +418,7 @@ func TestResProperty(t *testing.T) {
 						State.Property.ProductionVersion = &ProductionVersion
 					},
 					Config: loadFixtureString("%s/step1.tf", FixturePath),
-					Check: CheckAttrs("prp_0", "to2.test.domain", "2", "0", "1", "ehn_123",
+					Check: checkAttrs("prp_0", "to2.test.domain", "2", "0", "1", "ehn_123",
 						"{\"rules\":{\"name\":\"default\",\"options\":{}}}"),
 				},
 			}
@@ -426,14 +426,14 @@ func TestResProperty(t *testing.T) {
 	}
 
 	// Standard test behavior for cases where the property's latest version is not active
-	LatestVersionNotActive := LifecycleTestCase{
+	latestVersionNotActive := LifecycleTestCase{
 		Name: "Latest version not active",
-		ClientSetup: ComposeBehaviors(
-			PropertyLifecycle("test_property", "prp_0", "grp_0",
+		ClientSetup: composeBehaviors(
+			propertyLifecycle("test_property", "prp_0", "grp_0",
 				papi.RulesUpdate{Rules: papi.Rules{Name: "default"}}),
-			GetPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive),
-			SetHostnames("prp_0", 1, "to.test.domain"),
-			SetHostnames("prp_0", 1, "to2.test.domain"),
+			getPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive),
+			setHostnames("prp_0", 1, "to.test.domain"),
+			setHostnames("prp_0", 1, "to2.test.domain"),
 		),
 		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
 			return []resource.TestStep{
@@ -442,12 +442,12 @@ func TestResProperty(t *testing.T) {
 						State.VersionItems = papi.PropertyVersionItems{Items: []papi.PropertyVersionGetItem{{PropertyVersion: 1, ProductionStatus: papi.VersionStatusInactive}}}
 					},
 					Config: loadFixtureString("%s/step0.tf", FixturePath),
-					Check: CheckAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
+					Check: checkAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
 						"{\"rules\":{\"name\":\"default\",\"options\":{}}}"),
 				},
 				{
 					Config: loadFixtureString("%s/step1.tf", FixturePath),
-					Check: CheckAttrs("prp_0", "to2.test.domain", "1", "0", "0", "ehn_123",
+					Check: checkAttrs("prp_0", "to2.test.domain", "1", "0", "0", "ehn_123",
 						"{\"rules\":{\"name\":\"default\",\"options\":{}}}"),
 				},
 			}
@@ -455,16 +455,16 @@ func TestResProperty(t *testing.T) {
 	}
 
 	// This scenario simulates a new version being created outside of terraform and returned on read after the first step (update should be triggered)
-	ChangesMadeOutsideOfTerraform := LifecycleTestCase{
+	changesMadeOutsideOfTerraform := LifecycleTestCase{
 		Name: "Latest version not active",
-		ClientSetup: ComposeBehaviors(
-			PropertyLifecycle("test_property", "prp_0", "grp_0",
+		ClientSetup: composeBehaviors(
+			propertyLifecycle("test_property", "prp_0", "grp_0",
 				papi.RulesUpdate{Rules: papi.Rules{Name: "default"}}),
-			GetPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive),
-			SetHostnames("prp_0", 1, "to.test.domain"),
-			GetPropertyVersionResources("prp_0", "grp_0", "ctr_0", 2, papi.VersionStatusInactive, papi.VersionStatusInactive),
+			getPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive),
+			setHostnames("prp_0", 1, "to.test.domain"),
+			getPropertyVersionResources("prp_0", "grp_0", "ctr_0", 2, papi.VersionStatusInactive, papi.VersionStatusInactive),
 			GetVersionResources("prp_0", "ctr_0", "grp_0", 2),
-			SetHostnames("prp_0", 2, "to.test.domain"),
+			setHostnames("prp_0", 2, "to.test.domain"),
 		),
 		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
 			return []resource.TestStep{
@@ -473,7 +473,7 @@ func TestResProperty(t *testing.T) {
 						State.VersionItems = papi.PropertyVersionItems{Items: []papi.PropertyVersionGetItem{{PropertyVersion: 1, ProductionStatus: papi.VersionStatusInactive}}}
 					},
 					Config: loadFixtureString("%s/step0.tf", FixturePath),
-					Check: CheckAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
+					Check: checkAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
 						"{\"rules\":{\"name\":\"default\",\"options\":{}}}"),
 				},
 				{
@@ -482,7 +482,7 @@ func TestResProperty(t *testing.T) {
 						State.Hostnames[0].CnameTo = "changed.test.domain"
 					},
 					Config: loadFixtureString("%s/step0.tf", FixturePath),
-					Check: CheckAttrs("prp_0", "to.test.domain", "2", "0", "0", "ehn_123",
+					Check: checkAttrs("prp_0", "to.test.domain", "2", "0", "0", "ehn_123",
 						"{\"rules\":{\"name\":\"default\",\"options\":{}}}"),
 				},
 			}
@@ -490,14 +490,14 @@ func TestResProperty(t *testing.T) {
 	}
 
 	// Standard test behavior for cases where the property's latest version is active in staging network
-	NoDiff := LifecycleTestCase{
+	noDiff := LifecycleTestCase{
 		Name: "No diff found in update",
-		ClientSetup: ComposeBehaviors(
-			PropertyLifecycle("test_property", "prp_0", "grp_0",
+		ClientSetup: composeBehaviors(
+			propertyLifecycle("test_property", "prp_0", "grp_0",
 				papi.RulesUpdate{Rules: papi.Rules{Children: []papi.Rules{{Name: "Default CORS Policy", CriteriaMustSatisfy: papi.RuleCriteriaMustSatisfyAll}}}}),
-			GetPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive),
-			SetHostnames("prp_0", 1, "to.test.domain"),
-			UpdateRuleTree("prp_0", "ctr_0", "grp_0", 1,
+			getPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive),
+			setHostnames("prp_0", 1, "to.test.domain"),
+			updateRuleTree("prp_0", "ctr_0", "grp_0", 1,
 				&papi.RulesUpdate{Rules: papi.Rules{Children: []papi.Rules{{CriteriaMustSatisfy: papi.RuleCriteriaMustSatisfyAll, Name: "Default CORS Policy"}}}}),
 		),
 		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
@@ -507,12 +507,12 @@ func TestResProperty(t *testing.T) {
 						State.VersionItems = papi.PropertyVersionItems{Items: []papi.PropertyVersionGetItem{{PropertyVersion: 1, ProductionStatus: papi.VersionStatusInactive}}}
 					},
 					Config: loadFixtureString("%s/step0.tf", FixturePath),
-					Check: CheckAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
+					Check: checkAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
 						`{"rules":{"children":[{"name":"Default CORS Policy","options":{},"criteriaMustSatisfy":"all"}],"name":"","options":{}}}`),
 				},
 				{
 					Config: loadFixtureString("%s/step1.tf", FixturePath),
-					Check: CheckAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
+					Check: checkAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
 						`{"rules":{"children":[{"name":"Default CORS Policy","options":{},"criteriaMustSatisfy":"all"}],"name":"","options":{}}}`),
 				},
 			}
@@ -520,24 +520,24 @@ func TestResProperty(t *testing.T) {
 	}
 
 	/*
-		RulesCustomDiff tests rulesCustomDiff function which is in resource_akamai_property.go file.
+		rulesCustomDiff tests rulesCustomDiff function which is in resource_akamai_property.go file.
 		There is an additional field "options":{} in expected attributes, because with UpdateRuleTree(ctx, req) function
 		this field added automatically into response, even if it does not exist in rules.
 	*/
-	RulesCustomDiff := LifecycleTestCase{
+	rulesCustomDiff := LifecycleTestCase{
 		Name: "Diff is only in behaviours.options.ttl",
-		ClientSetup: ComposeBehaviors(
-			PropertyLifecycle("test_property", "prp_0", "grp_0",
+		ClientSetup: composeBehaviors(
+			propertyLifecycle("test_property", "prp_0", "grp_0",
 				papi.RulesUpdate{Rules: papi.Rules{Behaviors: []papi.RuleBehavior{{Name: "caching",
 					Options: papi.RuleOptionsMap{"behavior": "MAX_AGE", "mustRevalidate": false, "ttl": "12d"}}},
 					Name: "default"}}),
-			GetPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive),
-			SetHostnames("prp_0", 1, "to.test.domain"),
-			UpdateRuleTree("prp_0", "ctr_0", "grp_0", 1,
+			getPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive),
+			setHostnames("prp_0", 1, "to.test.domain"),
+			updateRuleTree("prp_0", "ctr_0", "grp_0", 1,
 				&papi.RulesUpdate{Rules: papi.Rules{Behaviors: []papi.RuleBehavior{{Name: "caching",
 					Options: papi.RuleOptionsMap{"behavior": "MAX_AGE", "mustRevalidate": false, "ttl": "12d"}}},
 					Name: "default"}}),
-			UpdateRuleTree("prp_0", "ctr_0", "grp_0", 1,
+			updateRuleTree("prp_0", "ctr_0", "grp_0", 1,
 				&papi.RulesUpdate{Rules: papi.Rules{Behaviors: []papi.RuleBehavior{{Name: "caching",
 					Options: papi.RuleOptionsMap{"behavior": "MAX_AGE", "mustRevalidate": false, "ttl": "13d"}}},
 					Name: "default"}}),
@@ -549,26 +549,26 @@ func TestResProperty(t *testing.T) {
 						State.VersionItems = papi.PropertyVersionItems{Items: []papi.PropertyVersionGetItem{{PropertyVersion: 1, ProductionStatus: papi.VersionStatusInactive}}}
 					},
 					Config: loadFixtureString("%s/step0.tf", FixturePath),
-					Check: CheckAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
+					Check: checkAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
 						`{"rules":{"behaviors":[{"name":"caching","options":{"behavior":"MAX_AGE","mustRevalidate":false,"ttl":"12d"}}],"name":"default","options":{}}}`),
 				},
 				{
 					Config: loadFixtureString("%s/step1.tf", FixturePath),
-					Check: CheckAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
+					Check: checkAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
 						`{"rules":{"behaviors":[{"name":"caching","options":{"behavior":"MAX_AGE","mustRevalidate":false,"ttl":"13d"}}],"name":"default","options":{}}}`),
 				},
 			}
 		},
 	}
 
-	NoDiffForHostnames := LifecycleTestCase{
+	noDiffForHostnames := LifecycleTestCase{
 		Name: "No diff found in update",
-		ClientSetup: ComposeBehaviors(
-			PropertyLifecycle("test_property", "prp_0", "grp_0",
+		ClientSetup: composeBehaviors(
+			propertyLifecycle("test_property", "prp_0", "grp_0",
 				papi.RulesUpdate{Rules: papi.Rules{Children: []papi.Rules{{Name: "Default CORS Policy", CriteriaMustSatisfy: papi.RuleCriteriaMustSatisfyAll}}}}),
-			GetPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive),
-			SetTwoHostnames("prp_0", 1, "from1.test.domain", "to1.test.domain", "from2.test.domain", "to2.test.domain"),
-			UpdateRuleTree("prp_0", "ctr_0", "grp_0", 1,
+			getPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive),
+			setTwoHostnames("prp_0", 1, "from1.test.domain", "to1.test.domain", "from2.test.domain", "to2.test.domain"),
+			updateRuleTree("prp_0", "ctr_0", "grp_0", 1,
 				&papi.RulesUpdate{Rules: papi.Rules{Children: []papi.Rules{{CriteriaMustSatisfy: papi.RuleCriteriaMustSatisfyAll, Name: "Default CORS Policy"}}}}),
 		),
 		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
@@ -578,12 +578,12 @@ func TestResProperty(t *testing.T) {
 						State.VersionItems = papi.PropertyVersionItems{Items: []papi.PropertyVersionGetItem{{PropertyVersion: 1, ProductionStatus: papi.VersionStatusInactive}}}
 					},
 					Config: loadFixtureString("%s/step0.tf", FixturePath),
-					Check: CheckAttrs("prp_0", "to1.test.domain", "1", "0", "0", "ehn_123",
+					Check: checkAttrs("prp_0", "to1.test.domain", "1", "0", "0", "ehn_123",
 						`{"rules":{"children":[{"name":"Default CORS Policy","options":{},"criteriaMustSatisfy":"all"}],"name":"","options":{}}}`),
 				},
 				{
 					Config: loadFixtureString("%s/step1.tf", FixturePath),
-					Check: CheckAttrs("prp_0", "to1.test.domain", "1", "0", "0", "ehn_123",
+					Check: checkAttrs("prp_0", "to1.test.domain", "1", "0", "0", "ehn_123",
 						`{"rules":{"children":[{"name":"Default CORS Policy","options":{},"criteriaMustSatisfy":"all"}],"name":"","options":{}}}`),
 				},
 			}
@@ -593,7 +593,7 @@ func TestResProperty(t *testing.T) {
 	// Test Schema Configuration
 
 	// Run a test case to verify schema validations
-	AssertConfigError := func(t *testing.T, flaw, rx string) func(t *testing.T) {
+	assertConfigError := func(t *testing.T, flaw, rx string) func(t *testing.T) {
 
 		fixtureName := strings.ReplaceAll(flaw, " ", "_")
 
@@ -611,7 +611,7 @@ func TestResProperty(t *testing.T) {
 	// Test Deprecated Schema Option
 
 	// Run a test case to verify schema attribute deprecation
-	AssertDeprecated := func(t *testing.T, attribute string) func(t *testing.T) {
+	assertDeprecated := func(t *testing.T, attribute string) func(t *testing.T) {
 		return func(t *testing.T) {
 			if resourceProperty().Schema[attribute].Deprecated == "" {
 				t.Fatalf(`%q attribute is not marked deprecated`, attribute)
@@ -622,7 +622,7 @@ func TestResProperty(t *testing.T) {
 	// Test Forbidden Schema Option
 
 	// Run a test case to confirm that the user is prompted to read the upgrade guide
-	AssertForbiddenAttr := func(t *testing.T, fixtureName string) func(t *testing.T) {
+	assertForbiddenAttr := func(t *testing.T, fixtureName string) func(t *testing.T) {
 
 		fixtureName = strings.ReplaceAll(fixtureName, " ", "_")
 
@@ -647,7 +647,7 @@ func TestResProperty(t *testing.T) {
 	// Test Lifecycle
 
 	// Run a happy-path test case that goes through a complete create-update-destroy cycle
-	AssertLifecycle := func(t *testing.T, name, variant string, kase LifecycleTestCase) func(t *testing.T) {
+	assertLifecycle := func(t *testing.T, name, variant string, tc LifecycleTestCase) func(t *testing.T) {
 
 		fixturePrefix := fmt.Sprintf("testdata/%s/Lifecycle/%s", t.Name(), variant)
 
@@ -655,13 +655,13 @@ func TestResProperty(t *testing.T) {
 			client := &papi.Mock{}
 			client.Test(T{t})
 			State := &TestState{Client: client}
-			kase.ClientSetup(State)
+			tc.ClientSetup(State)
 
 			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
 					ProviderFactories: testAccProviders,
 					IsUnitTest:        true,
-					Steps:             kase.Steps(State, fixturePrefix),
+					Steps:             tc.Steps(State, fixturePrefix),
 				})
 			})
 
@@ -671,7 +671,7 @@ func TestResProperty(t *testing.T) {
 
 	// Test Import
 	// Run a test case that verifies the resource can be imported by the given ID
-	AssertImportableWithOptions := func(t *testing.T, TestName, ImportID, fileName, Rules string, Setup []BehaviorFunc) func(t *testing.T) {
+	assertImportableWithOptions := func(t *testing.T, testName, importID, fileName, rules string, setup []BehaviorFunc) func(t *testing.T) {
 
 		fixturePath := fmt.Sprintf("testdata/%s/Importable/%s", t.Name(), fileName)
 
@@ -680,36 +680,36 @@ func TestResProperty(t *testing.T) {
 			client := &papi.Mock{}
 			client.Test(T{t})
 
-			parameters := strings.Split(ImportID, ",")
+			parameters := strings.Split(importID, ",")
 			numberParameters := len(parameters)
 			lastParameter := parameters[len(parameters)-1]
-			Setup = append(Setup,
-				PropertyLifecycle("test_property", "prp_0", "grp_0",
+			setup = append(setup,
+				propertyLifecycle("test_property", "prp_0", "grp_0",
 					papi.RulesUpdate{Rules: papi.Rules{Name: "default"}}),
-				GetPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive),
-				SetHostnames("prp_0", 1, "to.test.domain"),
-				ImportProperty("prp_0"),
+				getPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive),
+				setHostnames("prp_0", 1, "to.test.domain"),
+				importProperty("prp_0"),
 			)
 			if (numberParameters == 2 || numberParameters == 4) && !isDefaultVersion(lastParameter) {
-				var ContractID, GroupID string
+				var contractID, groupID string
 				if numberParameters == 4 {
-					ContractID = "ctr_0"
-					GroupID = "grp_0"
+					contractID = "ctr_0"
+					groupID = "grp_0"
 				}
 				if numberParameters == 2 {
-					Setup = append(Setup, GetPropertyVersions("prp_0", "test_property", "ctr_0", "grp_0"))
+					setup = append(setup, getPropertyVersions("prp_0", "test_property", "ctr_0", "grp_0"))
 				}
-				Setup = append(Setup, GetPropertyVersions("prp_0", "test_property", ContractID, GroupID))
+				setup = append(setup, getPropertyVersions("prp_0", "test_property", contractID, groupID))
 			}
-			s := ComposeBehaviors(Setup...)
-			kase := LifecycleTestCase{
+			s := composeBehaviors(setup...)
+			tc := LifecycleTestCase{
 				Name:        "Importable",
 				ClientSetup: s,
 				Steps: func(State *TestState, _ string) []resource.TestStep {
 					return []resource.TestStep{
 						{
 							Config: loadFixtureString(fixturePath),
-							Check:  CheckAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123", Rules),
+							Check:  checkAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123", rules),
 						},
 						// this step is used to refresh state with updated staging/production statuses
 						{
@@ -726,26 +726,26 @@ func TestResProperty(t *testing.T) {
 
 							},
 							Config: loadFixtureString(fixturePath),
-							Check:  CheckAttrs("prp_0", "to.test.domain", "1", "1", "0", "ehn_123", Rules),
+							Check:  checkAttrs("prp_0", "to.test.domain", "1", "1", "0", "ehn_123", rules),
 						},
 						{
 							ImportState:             true,
 							ImportStateVerify:       true,
-							ImportStateId:           ImportID,
+							ImportStateId:           importID,
 							ResourceName:            "akamai_property.test",
 							Config:                  loadFixtureString(fixturePath),
 							ImportStateVerifyIgnore: []string{"product", "read_version"},
-							Check:                   CheckAttrs("prp_0", "to.test.domain", "1", "1", "0", "ehn_123", Rules),
+							Check:                   checkAttrs("prp_0", "to.test.domain", "1", "1", "0", "ehn_123", rules),
 						},
 					}
 				},
 			}
 			State := &TestState{Client: client}
-			kase.ClientSetup(State)
+			tc.ClientSetup(State)
 			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
 					ProviderFactories: testAccProviders,
-					Steps:             kase.Steps(State, ""),
+					Steps:             tc.Steps(State, ""),
 				})
 			})
 
@@ -753,82 +753,82 @@ func TestResProperty(t *testing.T) {
 		}
 	}
 
-	AssertImportable := func(t *testing.T, TestName, ImportID string) func(t *testing.T) {
-		return AssertImportableWithOptions(t, TestName, ImportID, "importable.tf", "{\"rules\":{\"name\":\"default\",\"options\":{}}}", []BehaviorFunc{})
+	assertImportable := func(t *testing.T, testName, importID string) func(t *testing.T) {
+		return assertImportableWithOptions(t, testName, importID, "importable.tf", "{\"rules\":{\"name\":\"default\",\"options\":{}}}", []BehaviorFunc{})
 	}
 
 	suppressLogging(t, func() {
 
 		// Test Schema Configuration
 
-		t.Run("Schema Configuration Error: name not given", AssertConfigError(t, "name not given", `"name" is required`))
-		t.Run("Schema Configuration Error: neither contract nor contract_id given", AssertConfigError(t, "neither contract nor contract_id given", `one of .contract,contract_id. must be specified`))
-		t.Run("Schema Configuration Error: both contract and contract_id given", AssertConfigError(t, "both contract and contract_id given", `only one of .contract,contract_id. can be specified`))
-		t.Run("Schema Configuration Error: neither group nor group_id given", AssertConfigError(t, "neither group nor group_id given", `one of .group,group_id. must be specified`))
-		t.Run("Schema Configuration Error: both group and group_id given", AssertConfigError(t, "both group and group_id given", `only one of .group,group_id. can be specified`))
-		t.Run("Schema Configuration Error: neither product nor product_id given", AssertConfigError(t, "neither product nor product_id given", `one of .product,product_id. must be specified`))
-		t.Run("Schema Configuration Error: both product and product_id given", AssertConfigError(t, "both product and product_id given", `only one of .product,product_id. can be specified`))
-		t.Run("Schema Configuration Error: invalid json rules", AssertConfigError(t, "invalid json rules", `rules are not valid JSON`))
-		t.Run("Schema Configuration Error: invalid name given", AssertConfigError(t, "invalid name given", `a name must only contain letters, numbers, and these characters: . _ -`))
-		t.Run("Schema Configuration Error: name given too long", AssertConfigError(t, "name given too long", `a name must be shorter than 86 characters`))
+		t.Run("Schema Configuration Error: name not given", assertConfigError(t, "name not given", `"name" is required`))
+		t.Run("Schema Configuration Error: neither contract nor contract_id given", assertConfigError(t, "neither contract nor contract_id given", `one of .contract,contract_id. must be specified`))
+		t.Run("Schema Configuration Error: both contract and contract_id given", assertConfigError(t, "both contract and contract_id given", `only one of .contract,contract_id. can be specified`))
+		t.Run("Schema Configuration Error: neither group nor group_id given", assertConfigError(t, "neither group nor group_id given", `one of .group,group_id. must be specified`))
+		t.Run("Schema Configuration Error: both group and group_id given", assertConfigError(t, "both group and group_id given", `only one of .group,group_id. can be specified`))
+		t.Run("Schema Configuration Error: neither product nor product_id given", assertConfigError(t, "neither product nor product_id given", `one of .product,product_id. must be specified`))
+		t.Run("Schema Configuration Error: both product and product_id given", assertConfigError(t, "both product and product_id given", `only one of .product,product_id. can be specified`))
+		t.Run("Schema Configuration Error: invalid json rules", assertConfigError(t, "invalid json rules", `rules are not valid JSON`))
+		t.Run("Schema Configuration Error: invalid name given", assertConfigError(t, "invalid name given", `a name must only contain letters, numbers, and these characters: . _ -`))
+		t.Run("Schema Configuration Error: name given too long", assertConfigError(t, "name given too long", `a name must be shorter than 86 characters`))
 
 		// Test Deprecated Schema Option
 
-		t.Run("Schema deprecation: contract", AssertDeprecated(t, "contract"))
-		t.Run("Schema deprecation: group", AssertDeprecated(t, "group"))
-		t.Run("Schema deprecation: product", AssertDeprecated(t, "product"))
-		t.Run("Schema deprecation: cp_code", AssertDeprecated(t, "cp_code"))
-		t.Run("Schema deprecation: contact", AssertDeprecated(t, "contact"))
-		t.Run("Schema deprecation: origin", AssertDeprecated(t, "origin"))
-		t.Run("Schema deprecation: is_secure", AssertDeprecated(t, "is_secure"))
-		t.Run("Schema deprecation: variables", AssertDeprecated(t, "variables"))
+		t.Run("Schema deprecation: contract", assertDeprecated(t, "contract"))
+		t.Run("Schema deprecation: group", assertDeprecated(t, "group"))
+		t.Run("Schema deprecation: product", assertDeprecated(t, "product"))
+		t.Run("Schema deprecation: cp_code", assertDeprecated(t, "cp_code"))
+		t.Run("Schema deprecation: contact", assertDeprecated(t, "contact"))
+		t.Run("Schema deprecation: origin", assertDeprecated(t, "origin"))
+		t.Run("Schema deprecation: is_secure", assertDeprecated(t, "is_secure"))
+		t.Run("Schema deprecation: variables", assertDeprecated(t, "variables"))
 
 		// Test Forbidden Schema Option
 
-		t.Run("Schema forbidden attribute: cp_code", AssertForbiddenAttr(t, "cp_code"))
-		t.Run("Schema forbidden attribute: contact", AssertForbiddenAttr(t, "contact"))
-		t.Run("Schema forbidden attribute: origin", AssertForbiddenAttr(t, "origin"))
-		t.Run("Schema forbidden attribute: is_secure", AssertForbiddenAttr(t, "is_secure"))
-		t.Run("Schema forbidden attribute: variables", AssertForbiddenAttr(t, "variables"))
+		t.Run("Schema forbidden attribute: cp_code", assertForbiddenAttr(t, "cp_code"))
+		t.Run("Schema forbidden attribute: contact", assertForbiddenAttr(t, "contact"))
+		t.Run("Schema forbidden attribute: origin", assertForbiddenAttr(t, "origin"))
+		t.Run("Schema forbidden attribute: is_secure", assertForbiddenAttr(t, "is_secure"))
+		t.Run("Schema forbidden attribute: variables", assertForbiddenAttr(t, "variables"))
 
 		// Test Lifecycle
 
-		t.Run("Lifecycle: latest version is not active (normal)", AssertLifecycle(t, t.Name(), "normal", LatestVersionNotActive))
-		t.Run("Lifecycle: latest version is active in staging (normal)", AssertLifecycle(t, t.Name(), "normal", LatestVersionActiveInStaging))
-		t.Run("Lifecycle: latest version is active in production (normal)", AssertLifecycle(t, t.Name(), "normal", LatestVersionActiveInProd))
-		t.Run("Lifecycle: latest version is deactivated in staging (normal)", AssertLifecycle(t, t.Name(), "normal", LatestVersionDeactivatedInStaging))
-		t.Run("Lifecycle: latest version is deactivated in production (normal)", AssertLifecycle(t, t.Name(), "normal", LatestVersionDeactivatedInProd))
-		t.Run("Lifecycle: latest version is not active (contract_id without prefix)", AssertLifecycle(t, t.Name(), "contract_id without prefix", LatestVersionNotActive))
-		t.Run("Lifecycle: latest version active in staging (contract_id without prefix)", AssertLifecycle(t, t.Name(), "contract_id without prefix", LatestVersionActiveInStaging))
-		t.Run("Lifecycle: latest version active in production (contract_id without prefix)", AssertLifecycle(t, t.Name(), "contract_id without prefix", LatestVersionActiveInProd))
-		t.Run("Lifecycle: latest version is not active (contract without prefix)", AssertLifecycle(t, t.Name(), "contract without prefix", LatestVersionNotActive))
-		t.Run("Lifecycle: latest version is active in staging (contract without prefix)", AssertLifecycle(t, t.Name(), "contract without prefix", LatestVersionActiveInStaging))
-		t.Run("Lifecycle: latest version is active in production (contract without prefix)", AssertLifecycle(t, t.Name(), "contract without prefix", LatestVersionActiveInProd))
-		t.Run("Lifecycle: latest version is not active (group_id without prefix)", AssertLifecycle(t, t.Name(), "group_id without prefix", LatestVersionNotActive))
-		t.Run("Lifecycle: latest version is active in staging (group_id without prefix)", AssertLifecycle(t, t.Name(), "group_id without prefix", LatestVersionActiveInStaging))
-		t.Run("Lifecycle: latest version is active in production (group_id without prefix)", AssertLifecycle(t, t.Name(), "group_id without prefix", LatestVersionActiveInProd))
-		t.Run("Lifecycle: latest version is not active (group without prefix)", AssertLifecycle(t, t.Name(), "group without prefix", LatestVersionNotActive))
-		t.Run("Lifecycle: latest version is active in staging (group without prefix)", AssertLifecycle(t, t.Name(), "group without prefix", LatestVersionActiveInStaging))
-		t.Run("Lifecycle: latest version is active in production (group without prefix)", AssertLifecycle(t, t.Name(), "group without prefix", LatestVersionActiveInProd))
-		t.Run("Lifecycle: latest version is not active (product_id without prefix)", AssertLifecycle(t, t.Name(), "product_id without prefix", LatestVersionNotActive))
-		t.Run("Lifecycle: latest version is active in staging (product_id without prefix)", AssertLifecycle(t, t.Name(), "product_id without prefix", LatestVersionActiveInStaging))
-		t.Run("Lifecycle: latest version is active in production (product_id without prefix)", AssertLifecycle(t, t.Name(), "product_id without prefix", LatestVersionActiveInProd))
-		t.Run("Lifecycle: latest version is not active (product without prefix)", AssertLifecycle(t, t.Name(), "product without prefix", LatestVersionNotActive))
-		t.Run("Lifecycle: latest version is active in staging (product without prefix)", AssertLifecycle(t, t.Name(), "product without prefix", LatestVersionActiveInStaging))
-		t.Run("Lifecycle: latest version is active in production (product without prefix)", AssertLifecycle(t, t.Name(), "product without prefix", LatestVersionActiveInProd))
-		t.Run("Lifecycle: no diff", AssertLifecycle(t, t.Name(), "no diff", NoDiff))
-		t.Run("Lifecycle: no diff (product to product_id)", AssertLifecycle(t, t.Name(), "product to product_id", NoDiff))
-		t.Run("Lifecycle: no diff (product_id to product)", AssertLifecycle(t, t.Name(), "product_id to product", NoDiff))
-		t.Run("Lifecycle: rules custom diff", AssertLifecycle(t, t.Name(), "rules custom diff", RulesCustomDiff))
-		t.Run("Lifecycle: no diff for hostnames (hostnames)", AssertLifecycle(t, t.Name(), "hostnames", NoDiffForHostnames))
-		t.Run("Lifecycle: new version changed on server", AssertLifecycle(t, t.Name(), "new version changed on server", ChangesMadeOutsideOfTerraform))
+		t.Run("Lifecycle: latest version is not active (normal)", assertLifecycle(t, t.Name(), "normal", latestVersionNotActive))
+		t.Run("Lifecycle: latest version is active in staging (normal)", assertLifecycle(t, t.Name(), "normal", latestVersionActiveInStaging))
+		t.Run("Lifecycle: latest version is active in production (normal)", assertLifecycle(t, t.Name(), "normal", latestVersionActiveInProd))
+		t.Run("Lifecycle: latest version is deactivated in staging (normal)", assertLifecycle(t, t.Name(), "normal", latestVersionDeactivatedInStaging))
+		t.Run("Lifecycle: latest version is deactivated in production (normal)", assertLifecycle(t, t.Name(), "normal", latestVersionDeactivatedInProd))
+		t.Run("Lifecycle: latest version is not active (contract_id without prefix)", assertLifecycle(t, t.Name(), "contract_id without prefix", latestVersionNotActive))
+		t.Run("Lifecycle: latest version active in staging (contract_id without prefix)", assertLifecycle(t, t.Name(), "contract_id without prefix", latestVersionActiveInStaging))
+		t.Run("Lifecycle: latest version active in production (contract_id without prefix)", assertLifecycle(t, t.Name(), "contract_id without prefix", latestVersionActiveInProd))
+		t.Run("Lifecycle: latest version is not active (contract without prefix)", assertLifecycle(t, t.Name(), "contract without prefix", latestVersionNotActive))
+		t.Run("Lifecycle: latest version is active in staging (contract without prefix)", assertLifecycle(t, t.Name(), "contract without prefix", latestVersionActiveInStaging))
+		t.Run("Lifecycle: latest version is active in production (contract without prefix)", assertLifecycle(t, t.Name(), "contract without prefix", latestVersionActiveInProd))
+		t.Run("Lifecycle: latest version is not active (group_id without prefix)", assertLifecycle(t, t.Name(), "group_id without prefix", latestVersionNotActive))
+		t.Run("Lifecycle: latest version is active in staging (group_id without prefix)", assertLifecycle(t, t.Name(), "group_id without prefix", latestVersionActiveInStaging))
+		t.Run("Lifecycle: latest version is active in production (group_id without prefix)", assertLifecycle(t, t.Name(), "group_id without prefix", latestVersionActiveInProd))
+		t.Run("Lifecycle: latest version is not active (group without prefix)", assertLifecycle(t, t.Name(), "group without prefix", latestVersionNotActive))
+		t.Run("Lifecycle: latest version is active in staging (group without prefix)", assertLifecycle(t, t.Name(), "group without prefix", latestVersionActiveInStaging))
+		t.Run("Lifecycle: latest version is active in production (group without prefix)", assertLifecycle(t, t.Name(), "group without prefix", latestVersionActiveInProd))
+		t.Run("Lifecycle: latest version is not active (product_id without prefix)", assertLifecycle(t, t.Name(), "product_id without prefix", latestVersionNotActive))
+		t.Run("Lifecycle: latest version is active in staging (product_id without prefix)", assertLifecycle(t, t.Name(), "product_id without prefix", latestVersionActiveInStaging))
+		t.Run("Lifecycle: latest version is active in production (product_id without prefix)", assertLifecycle(t, t.Name(), "product_id without prefix", latestVersionActiveInProd))
+		t.Run("Lifecycle: latest version is not active (product without prefix)", assertLifecycle(t, t.Name(), "product without prefix", latestVersionNotActive))
+		t.Run("Lifecycle: latest version is active in staging (product without prefix)", assertLifecycle(t, t.Name(), "product without prefix", latestVersionActiveInStaging))
+		t.Run("Lifecycle: latest version is active in production (product without prefix)", assertLifecycle(t, t.Name(), "product without prefix", latestVersionActiveInProd))
+		t.Run("Lifecycle: no diff", assertLifecycle(t, t.Name(), "no diff", noDiff))
+		t.Run("Lifecycle: no diff (product to product_id)", assertLifecycle(t, t.Name(), "product to product_id", noDiff))
+		t.Run("Lifecycle: no diff (product_id to product)", assertLifecycle(t, t.Name(), "product_id to product", noDiff))
+		t.Run("Lifecycle: rules custom diff", assertLifecycle(t, t.Name(), "rules custom diff", rulesCustomDiff))
+		t.Run("Lifecycle: no diff for hostnames (hostnames)", assertLifecycle(t, t.Name(), "hostnames", noDiffForHostnames))
+		t.Run("Lifecycle: new version changed on server", assertLifecycle(t, t.Name(), "new version changed on server", changesMadeOutsideOfTerraform))
 
 		// Test Import
 
-		t.Run("Importable: property_id with ds", AssertImportableWithOptions(t, "property_id", "prp_0", "importable_with_property_rules_builder.tf",
+		t.Run("Importable: property_id with ds", assertImportableWithOptions(t, "property_id", "prp_0", "importable_with_property_rules_builder.tf",
 			"{\"rules\":{\"behaviors\":[{\"name\":\"mPulse\",\"options\":{\"configOverride\":\"no new line\"}},{\"name\":\"mPulse\",\"options\":{\"configOverride\":\"\"}},{\"name\":\"mPulse\",\"options\":{\"configOverride\":\"\\n\\tline with new line before and after + tab\\n\"}}],\"name\":\"default\",\"options\":{}}}",
 			[]BehaviorFunc{
-				UpdateRuleTree("prp_0", "ctr_0", "grp_0", 1,
+				updateRuleTree("prp_0", "ctr_0", "grp_0", 1,
 					&papi.RulesUpdate{
 						Rules: papi.Rules{
 							Name: "default",
@@ -839,26 +839,26 @@ func TestResProperty(t *testing.T) {
 							},
 						}})},
 		))
-		t.Run("Importable: property_id", AssertImportable(t, "property_id", "prp_0"))
-		t.Run("Importable: property_id and ver_# version", AssertImportable(t, "property_id and ver_# version", "prp_0,ver_1"))
-		t.Run("Importable: property_id and # version", AssertImportable(t, "property_id and # version", "prp_0,1"))
-		t.Run("Importable: property_id and latest", AssertImportable(t, "property_id and latest", "prp_0,latest"))
-		t.Run("Importable: property_id and network", AssertImportable(t, "property_id and network", "prp_0,staging"))
-		t.Run("Importable: unprefixed property_id", AssertImportable(t, "unprefixed property_id", "0"))
-		t.Run("Importable: unprefixed property_id and # version", AssertImportable(t, "unprefixed property_id and # version", "0,1"))
-		t.Run("Importable: unprefixed property_id and ver_# version", AssertImportable(t, "unprefixed property_id and ver_# version", "0,ver_1"))
-		t.Run("Importable: unprefixed property_id and network", AssertImportable(t, "unprefixed property_id and network", "0,p"))
-		t.Run("Importable: property_id and contract_id and group_id", AssertImportable(t, "property_id and contract_id and group_id", "prp_0,ctr_0,grp_0"))
-		t.Run("Importable: property_id, contract_id, group_id and empty version", AssertImportable(t, "property_id, contract_id, group_id and empty version", "prp_0,ctr_0,grp_0,"))
-		t.Run("Importable: property_id, contract_id, group_id and latest", AssertImportable(t, "property_id, contract_id, group_id and latest", "prp_0,ctr_0,grp_0,latest"))
-		t.Run("Importable: property_id, contract_id, group_id and ver_# version", AssertImportable(t, "property_id, contract_id, group_id and ver_# version", "prp_0,ctr_0,grp_0,ver_1"))
-		t.Run("Importable: property_id, contract_id, group_id and # version", AssertImportable(t, "property_id, contract_id, group_id and # version", "prp_0,ctr_0,grp_0,1"))
-		t.Run("Importable: property_id, contract_id, group_id and network", AssertImportable(t, "property_id, contract_id, group_id and network", "prp_0,ctr_0,grp_0,staging"))
-		t.Run("Importable: unprefixed property_id and contract_id and group_id", AssertImportable(t, "unprefixed property_id and contract_id and group_id", "0,0,0"))
-		t.Run("Importable: unprefixed property_id and contract_id, group_id and # version", AssertImportable(t, "unprefixed property_id and contract_id, group_id and # version", "0,0,0,1"))
-		t.Run("Importable: unprefixed property_id and contract_id, group_id and ver_# version", AssertImportable(t, "unprefixed property_id and contract_id, group_id and ver_# version", "0,0,0,ver_1"))
-		t.Run("Importable: unprefixed property_id and contract_id, group_id and latest", AssertImportable(t, "unprefixed property_id and contract_id, group_id and latest", "0,0,0,latest"))
-		t.Run("Importable: unprefixed property_id and contract_id, group_id and network", AssertImportable(t, "unprefixed property_id and contract_id, group_id and network", "0,0,0,production"))
+		t.Run("Importable: property_id", assertImportable(t, "property_id", "prp_0"))
+		t.Run("Importable: property_id and ver_# version", assertImportable(t, "property_id and ver_# version", "prp_0,ver_1"))
+		t.Run("Importable: property_id and # version", assertImportable(t, "property_id and # version", "prp_0,1"))
+		t.Run("Importable: property_id and latest", assertImportable(t, "property_id and latest", "prp_0,latest"))
+		t.Run("Importable: property_id and network", assertImportable(t, "property_id and network", "prp_0,staging"))
+		t.Run("Importable: unprefixed property_id", assertImportable(t, "unprefixed property_id", "0"))
+		t.Run("Importable: unprefixed property_id and # version", assertImportable(t, "unprefixed property_id and # version", "0,1"))
+		t.Run("Importable: unprefixed property_id and ver_# version", assertImportable(t, "unprefixed property_id and ver_# version", "0,ver_1"))
+		t.Run("Importable: unprefixed property_id and network", assertImportable(t, "unprefixed property_id and network", "0,p"))
+		t.Run("Importable: property_id and contract_id and group_id", assertImportable(t, "property_id and contract_id and group_id", "prp_0,ctr_0,grp_0"))
+		t.Run("Importable: property_id, contract_id, group_id and empty version", assertImportable(t, "property_id, contract_id, group_id and empty version", "prp_0,ctr_0,grp_0,"))
+		t.Run("Importable: property_id, contract_id, group_id and latest", assertImportable(t, "property_id, contract_id, group_id and latest", "prp_0,ctr_0,grp_0,latest"))
+		t.Run("Importable: property_id, contract_id, group_id and ver_# version", assertImportable(t, "property_id, contract_id, group_id and ver_# version", "prp_0,ctr_0,grp_0,ver_1"))
+		t.Run("Importable: property_id, contract_id, group_id and # version", assertImportable(t, "property_id, contract_id, group_id and # version", "prp_0,ctr_0,grp_0,1"))
+		t.Run("Importable: property_id, contract_id, group_id and network", assertImportable(t, "property_id, contract_id, group_id and network", "prp_0,ctr_0,grp_0,staging"))
+		t.Run("Importable: unprefixed property_id and contract_id and group_id", assertImportable(t, "unprefixed property_id and contract_id and group_id", "0,0,0"))
+		t.Run("Importable: unprefixed property_id and contract_id, group_id and # version", assertImportable(t, "unprefixed property_id and contract_id, group_id and # version", "0,0,0,1"))
+		t.Run("Importable: unprefixed property_id and contract_id, group_id and ver_# version", assertImportable(t, "unprefixed property_id and contract_id, group_id and ver_# version", "0,0,0,ver_1"))
+		t.Run("Importable: unprefixed property_id and contract_id, group_id and latest", assertImportable(t, "unprefixed property_id and contract_id, group_id and latest", "0,0,0,latest"))
+		t.Run("Importable: unprefixed property_id and contract_id, group_id and network", assertImportable(t, "unprefixed property_id and contract_id, group_id and network", "0,0,0,production"))
 
 		// Test Delete
 
@@ -866,15 +866,15 @@ func TestResProperty(t *testing.T) {
 			client := &papi.Mock{}
 			client.Test(T{t})
 
-			setup := ComposeBehaviors(
-				PropertyLifecycle("test_property", "prp_0", "grp_0",
+			setup := composeBehaviors(
+				propertyLifecycle("test_property", "prp_0", "grp_0",
 					papi.RulesUpdate{Rules: papi.Rules{Name: "default"}}),
-				GetPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive),
-				PropertyLifecycle("renamed_property", "prp_1", "grp_0",
+				getPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive),
+				propertyLifecycle("renamed_property", "prp_1", "grp_0",
 					papi.RulesUpdate{Rules: papi.Rules{Name: "default"}}),
-				GetPropertyVersionResources("prp_1", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive),
-				SetHostnames("prp_0", 1, "to.test.domain"),
-				SetHostnames("prp_1", 1, "to2.test.domain"),
+				getPropertyVersionResources("prp_1", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive),
+				setHostnames("prp_0", 1, "to.test.domain"),
+				setHostnames("prp_1", 1, "to2.test.domain"),
 			)
 			setup(&TestState{Client: client})
 
@@ -884,7 +884,7 @@ func TestResProperty(t *testing.T) {
 					Steps: []resource.TestStep{
 						{
 							Config: loadFixtureString("testdata/%s-step0.tf", t.Name()),
-							Check: CheckAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
+							Check: checkAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
 								"{\"rules\":{\"name\":\"default\",\"options\":{}}}"),
 						},
 						{
@@ -905,12 +905,12 @@ func TestResProperty(t *testing.T) {
 			client := &papi.Mock{}
 			client.Test(T{t})
 
-			setup := ComposeBehaviors(
-				CreateProperty("test_property", "prp_0", papi.RulesUpdate{Rules: papi.Rules{Name: "default"}}),
-				GetProperty("prp_0"),
+			setup := composeBehaviors(
+				createProperty("test_property", "prp_0", papi.RulesUpdate{Rules: papi.Rules{Name: "default"}}),
+				getProperty("prp_0"),
 				GetVersionResources("prp_0", "ctr_0", "grp_0", 1),
-				GetPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, "ctr_0", "grp_0"),
-				SetHostnames("prp_0", 1, "to.test.domain"),
+				getPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, "ctr_0", "grp_0"),
+				setHostnames("prp_0", 1, "to.test.domain"),
 			)
 			setup(&TestState{Client: client})
 
@@ -933,7 +933,7 @@ func TestResProperty(t *testing.T) {
 					Steps: []resource.TestStep{
 						{
 							Config: loadFixtureString("testdata/%s/step0.tf", t.Name()),
-							Check: CheckAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
+							Check: checkAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
 								"{\"rules\":{\"name\":\"default\",\"options\":{}}}"),
 						},
 						{
