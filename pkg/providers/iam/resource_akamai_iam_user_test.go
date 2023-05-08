@@ -50,12 +50,41 @@ func TestResourceUser(t *testing.T) {
 			GroupName: "group",
 		},
 	}
-
 	authGrantsCreateRequest := []iam.AuthGrantRequest{
 		{
 			GroupID: 0,
 		},
 	}
+
+	authGrantsSubgroupCreate := []iam.AuthGrant{
+		{
+			Subgroups: []iam.AuthGrant{
+				{
+					GroupID:   2,
+					IsBlocked: false,
+				},
+				{
+					GroupID:   1,
+					IsBlocked: false,
+				},
+			},
+		},
+	}
+	authGrantsSubgroupCreateRequest := []iam.AuthGrantRequest{
+		{
+			Subgroups: []iam.AuthGrantRequest{
+				{
+					GroupID:   2,
+					IsBlocked: false,
+				},
+				{
+					GroupID:   1,
+					IsBlocked: false,
+				},
+			},
+		},
+	}
+
 	authGrantsUpdate := []iam.AuthGrant{
 		{
 			GroupID:   1,
@@ -142,9 +171,27 @@ func TestResourceUser(t *testing.T) {
 		Notifications:      notifications,
 	}
 
+	userSubgroupCreate := iam.User{
+		UserBasicInfo:      basicUserInfo,
+		IdentityID:         id,
+		IsLocked:           false,
+		LastLoginDate:      "last login",
+		PasswordExpiryDate: "password expired after",
+		TFAConfigured:      true,
+		EmailUpdatePending: true,
+		AuthGrants:         authGrantsSubgroupCreate,
+		Notifications:      notifications,
+	}
+
 	userCreateRequest := iam.CreateUserRequest{
 		UserBasicInfo: basicUserInfo,
 		AuthGrants:    authGrantsCreateRequest,
+		Notifications: notifications,
+	}
+
+	userSubgroupCreateRequest := iam.CreateUserRequest{
+		UserBasicInfo: basicUserInfo,
+		AuthGrants:    authGrantsSubgroupCreateRequest,
 		Notifications: notifications,
 	}
 
@@ -397,6 +444,29 @@ func TestResourceUser(t *testing.T) {
 				{
 					Config: loadFixtureString("./testdata/TestResourceUserLifecycle/update_auth_grants.tf"),
 					Check:  checkUserAttributes(userUpdateGrants),
+				},
+			},
+		},
+		"update swap user auth grants subgroups": {
+			init: func(m *iam.Mock) {
+				// create
+				expectResourceIAMUserCreatePhase(m, userSubgroupCreateRequest, userSubgroupCreate, false, nil, nil)
+				expectResourceIAMUserReadPhase(m, userSubgroupCreate, nil).Times(2)
+
+				// plan
+				expectResourceIAMUserReadPhase(m, userSubgroupCreate, nil).Times(2)
+
+				// delete
+				expectResourceIAMUserDeletePhase(m, userUpdateGrants, nil).Once()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: loadFixtureString("./testdata/TestResourceUserLifecycle/create_basic_grants.tf"),
+					Check:  checkUserAttributes(userSubgroupCreate),
+				},
+				{
+					Config: loadFixtureString("./testdata/TestResourceUserLifecycle/create_basic_grants_swap.tf"),
+					Check:  checkUserAttributes(userSubgroupCreate),
 				},
 			},
 		},

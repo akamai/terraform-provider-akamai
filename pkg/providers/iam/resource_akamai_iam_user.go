@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/iam"
@@ -565,7 +566,20 @@ func suppressAuthGrantsJS(k, oldVal, newVal string, _ *schema.ResourceData) bool
 		}
 	}
 
+	// sort grants before comparing; swaping grants order should not cause update
+	sortAuthGrants(oldAuthGrants)
+	sortAuthGrants(newAuthGrants)
+
 	return cmp.Equal(oldAuthGrants, newAuthGrants, cmpopts.EquateEmpty())
+}
+
+func sortAuthGrants(grants []iam.AuthGrantRequest) {
+	sort.Slice(grants, func(i, j int) bool {
+		return grants[i].GroupID < grants[j].GroupID
+	})
+	for _, g := range grants {
+		sortAuthGrants(g.Subgroups)
+	}
 }
 
 func statePhone(v interface{}) string {
