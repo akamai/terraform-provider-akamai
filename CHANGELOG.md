@@ -23,6 +23,11 @@
 * Appsec
   * Fixed issue that in some cases allowed `terraform plan` to create a new config version as a side-effect of reading the current config.
 
+#### BUG FIXES:
+
+* Appsec
+  * Fixed issue that in some cases allowed `terraform plan` to create a new config version as a side-effect of reading the current config.
+
 ## 3.6.0 (April 27, 2023)
 
 #### FEATURES/ENHANCEMENTS:
