@@ -165,7 +165,7 @@ func resourceAdvancedSettingsAttackPayloadLoggingRead(ctx context.Context, d *sc
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "attackPayloadLoggingSetting", m)
+	version, err := getLatestConfigVersion(ctx, configID, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}

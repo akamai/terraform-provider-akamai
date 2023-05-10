@@ -20,6 +20,9 @@
   * Fixed bug related with regex validation for handling property delay in `akamai_cloudlets_policy_activation`
   * Fixed sporadic issue with `akamai_cloudlets_policy_activation` due to network delay 
   
+* Appsec
+  * Fixed issue that in some cases allowed `terraform plan` to create a new config version as a side-effect of reading the current config.
+
 ## 3.6.0 (April 27, 2023)
 
 #### FEATURES/ENHANCEMENTS:
