@@ -1,0 +1,37 @@
+{
+  "rules": {
+    "name": "default",
+    "children": [
+      {
+        "name": "Static Content",
+        "children": [],
+        "behaviors": [
+          {
+            "name": "prefetch",
+            "options": {
+              "enabled": false
+            }
+          }
+        ]
+      }
+    ],
+    "behaviors": [
+      {
+        "name": "cpCode",
+        "options": {
+          "value": {
+            "id": 12345,
+            "description": "WAA Example.com",
+            "products": [
+              "Web_App_Accel"
+            ],
+            "name": "WAA Example.com"
+          }
+        }
+      }
+    ],
+    "options": {
+      "is_secure": false
+    }
+  }
+}

@@ -122,6 +122,22 @@ func ExpectUpdatePropertyVersionHostnames(client *papi.Mock, PropertyID, GroupID
 	return call.Return(&res, nil)
 }
 
+func ExpectGetEdgeHostnames(client *papi.Mock, contractID, groupID string, edgehostnames papi.EdgeHostnameItems) *mock.Call {
+	req := papi.GetEdgeHostnamesRequest{
+		ContractID: contractID,
+		GroupID:    groupID,
+	}
+	call := client.On("GetEdgeHostnames", AnyCTX, req)
+
+	res := papi.GetEdgeHostnamesResponse{
+		ContractID:    contractID,
+		GroupID:       groupID,
+		EdgeHostnames: edgehostnames,
+	}
+
+	return call.Return(&res, nil)
+}
+
 // Sets up an expected call to papi.GetPropertyVersions()
 func ExpectGetPropertyVersions(client *papi.Mock, PropertyID, PropertyName, ContractID, GroupID string, property *papi.Property, versionItems *papi.PropertyVersionItems) *mock.Call {
 	req := papi.GetPropertyVersionsRequest{

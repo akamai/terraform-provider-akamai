@@ -137,6 +137,12 @@ func TestResProperty(t *testing.T) {
 		}
 	}
 
+	getEdgeHostnames := func(contractID, groupID string, edgehostnames papi.EdgeHostnameItems) BehaviorFunc {
+		return func(state *TestState) {
+			ExpectGetEdgeHostnames(state.Client, contractID, groupID, edgehostnames).Once()
+		}
+	}
+
 	getPropertyVersions := func(propertyID, propertyName, contractID, groupID string, items ...papi.PropertyVersionItems) BehaviorFunc {
 		return func(state *TestState) {
 			versionItems := &state.VersionItems
@@ -272,6 +278,7 @@ func TestResProperty(t *testing.T) {
 			advanceVersion("prp_0", 1, 2),
 			getPropertyVersionResources("prp_0", "grp_0", "ctr_0", 2, papi.VersionStatusDeactivated, papi.VersionStatusInactive),
 			setHostnames("prp_0", 2, "to2.test.domain"),
+			getEdgeHostnames("ctr_0", "grp_0", papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{{DomainPrefix: "from.test.domain"}}}),
 		),
 		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
 			return []resource.TestStep{
@@ -313,6 +320,7 @@ func TestResProperty(t *testing.T) {
 			advanceVersion("prp_0", 1, 2),
 			getPropertyVersionResources("prp_0", "grp_0", "ctr_0", 2, papi.VersionStatusInactive, papi.VersionStatusDeactivated),
 			setHostnames("prp_0", 2, "to2.test.domain"),
+			getEdgeHostnames("ctr_0", "grp_0", papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{{DomainPrefix: "from.test.domain"}}}),
 		),
 		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
 			return []resource.TestStep{
@@ -354,6 +362,7 @@ func TestResProperty(t *testing.T) {
 			advanceVersion("prp_0", 1, 2),
 			getPropertyVersionResources("prp_0", "grp_0", "ctr_0", 2, papi.VersionStatusInactive, papi.VersionStatusActive),
 			setHostnames("prp_0", 2, "to2.test.domain"),
+			getEdgeHostnames("ctr_0", "grp_0", papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{{DomainPrefix: "from.test.domain"}}}),
 		),
 		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
 			return []resource.TestStep{
@@ -395,6 +404,7 @@ func TestResProperty(t *testing.T) {
 			advanceVersion("prp_0", 1, 2),
 			getPropertyVersionResources("prp_0", "grp_0", "ctr_0", 2, papi.VersionStatusInactive, papi.VersionStatusActive),
 			setHostnames("prp_0", 2, "to2.test.domain"),
+			getEdgeHostnames("ctr_0", "grp_0", papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{{DomainPrefix: "from.test.domain"}}}),
 		),
 		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
 			return []resource.TestStep{
@@ -434,6 +444,7 @@ func TestResProperty(t *testing.T) {
 			getPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive),
 			setHostnames("prp_0", 1, "to.test.domain"),
 			setHostnames("prp_0", 1, "to2.test.domain"),
+			getEdgeHostnames("ctr_0", "grp_0", papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{{DomainPrefix: "from.test.domain"}}}),
 		),
 		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
 			return []resource.TestStep{
@@ -465,6 +476,7 @@ func TestResProperty(t *testing.T) {
 			getPropertyVersionResources("prp_0", "grp_0", "ctr_0", 2, papi.VersionStatusInactive, papi.VersionStatusInactive),
 			GetVersionResources("prp_0", "ctr_0", "grp_0", 2),
 			setHostnames("prp_0", 2, "to.test.domain"),
+			getEdgeHostnames("ctr_0", "grp_0", papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{{DomainPrefix: "from.test.domain"}}}),
 		),
 		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
 			return []resource.TestStep{
@@ -1241,6 +1253,214 @@ func TestResProperty(t *testing.T) {
 							Config:      loadFixtureString("testdata/%s.tf", t.Name()),
 							Check:       resource.TestCheckNoResourceAttr("akamai_property.test", "id"),
 							ExpectError: regexp.MustCompile(`property name is not unique`),
+						},
+					},
+				})
+			})
+
+			client.AssertExpectations(t)
+		})
+
+		ruleTreeRes := papi.GetRuleTreeResponse{
+			Rules: papi.Rules{
+				Name: "default",
+				Children: []papi.Rules{
+					{
+						Name: "Static Content",
+						Behaviors: []papi.RuleBehavior{
+							{
+								Name:    "prefetch",
+								Options: papi.RuleOptionsMap{"enabled": false},
+							},
+						},
+					},
+				},
+				Behaviors: []papi.RuleBehavior{
+					{
+						Name: "cpCode",
+						Options: papi.RuleOptionsMap{
+							"value": map[string]interface{}{
+								"id":          float64(12345),
+								"description": "WAA Example.com",
+								"products": []interface{}{
+									"Web_App_Accel",
+								},
+								"name": "WAA Example.com",
+							},
+						},
+					},
+				},
+				Options: papi.RuleOptions{IsSecure: true},
+			},
+		}
+
+		propertyReadCtx := func(client *papi.Mock, stagStatus, prodStatus papi.VersionStatus) {
+			ExpectGetProperty(
+				client, "prp_0", "grp_0", "ctr_0",
+				&papi.Property{
+					PropertyID: "prp_0", GroupID: "grp_0", ContractID: "ctr_0", LatestVersion: 1,
+					PropertyName: "dxe-2406-issue-example",
+				},
+			).Once()
+			ExpectGetPropertyVersionHostnames(
+				client, "prp_0", "grp_0", "ctr_0", 1,
+				&[]papi.Hostname{
+					{
+						CnameFrom:            "dxe-2406-issue-example-second.com",
+						CnameTo:              "dxe-2406-issue-example-second.com.example.net",
+						CertProvisioningType: "CPS_MANAGED",
+					},
+					{
+						CnameFrom:            "dxe-2406-issue.com",
+						CnameTo:              "dxe-2406-issue.com.example.net",
+						CertProvisioningType: "CPS_MANAGED",
+					},
+				},
+			).Once()
+			client.On("GetRuleTree", mock.Anything, papi.GetRuleTreeRequest{
+				PropertyID:      "prp_0",
+				GroupID:         "grp_0",
+				ContractID:      "ctr_0",
+				PropertyVersion: 1,
+				ValidateMode:    "full",
+				ValidateRules:   true,
+			}).Return(&ruleTreeRes, nil).Once()
+			ExpectGetPropertyVersion(client, "prp_0", "grp_0", "ctr_0", 1, stagStatus, prodStatus).Once()
+		}
+
+		getActivations := func(client *papi.Mock) {
+			expectGetActivations(client, "prp_0", papi.GetActivationsResponse{
+				Activations: papi.ActivationsItems{
+					Items: []*papi.Activation{
+						{
+							ActivationID:    "act_123",
+							PropertyID:      "prp_0",
+							PropertyVersion: 1,
+							Network:         papi.ActivationNetworkStaging,
+							Status:          papi.ActivationStatusActive,
+						},
+					},
+				},
+			}, nil).Once()
+		}
+
+		t.Run("error update property version with incorrect edgehostname and update in rule tree", func(t *testing.T) {
+			client := &papi.Mock{}
+			client.Test(T{t})
+			ruleFormat := ""
+
+			// first step
+			// create property
+			ExpectCreateProperty(client, "dxe-2406-issue-example", "grp_0", "ctr_0", "prd_0", "prp_0").Once()
+			ExpectUpdatePropertyVersionHostnames(
+				client, "prp_0", "grp_0", "ctr_0", 1,
+				[]papi.Hostname{
+					{
+						CnameType:            "EDGE_HOSTNAME",
+						CnameFrom:            "dxe-2406-issue-example-second.com",
+						CnameTo:              "dxe-2406-issue-example-second.com.example.net",
+						CertProvisioningType: "CPS_MANAGED",
+					},
+					{
+						CnameType:            "EDGE_HOSTNAME",
+						CnameFrom:            "dxe-2406-issue.com",
+						CnameTo:              "dxe-2406-issue.com.example.net",
+						CertProvisioningType: "CPS_MANAGED",
+					}}, nil,
+			).Once()
+			ExpectUpdateRuleTree(client, "prp_0", "grp_0", "ctr_0", 1,
+				&papi.RulesUpdate{
+					Rules: papi.Rules{
+						Name: "default",
+						Children: []papi.Rules{
+							{
+								Name: "Static Content",
+								Behaviors: []papi.RuleBehavior{
+									{
+										Name:    "prefetch",
+										Options: papi.RuleOptionsMap{"enabled": false},
+									},
+								},
+							},
+						},
+						Behaviors: []papi.RuleBehavior{
+							{
+								Name: "cpCode",
+								Options: papi.RuleOptionsMap{
+									"value": map[string]interface{}{
+										"id":          float64(12345),
+										"description": "WAA Example.com",
+										"products": []interface{}{
+											"Web_App_Accel",
+										},
+										"name": "WAA Example.com",
+									},
+								},
+							},
+						},
+						Options: papi.RuleOptions{IsSecure: true},
+					}}, ruleFormat, []papi.RuleError{}).Once()
+
+			// read property
+			propertyReadCtx(client, papi.VersionStatusInactive, papi.VersionStatusInactive)
+
+			// create activation
+			expectGetRuleTree(client, "prp_0", 1, ruleTreeRes, nil).Once()
+			expectGetActivations(client, "prp_0", papi.GetActivationsResponse{
+				Activations: papi.ActivationsItems{
+					Items: []*papi.Activation{},
+				},
+			}, nil).Once()
+			client.On("CreateActivation", mock.Anything, mock.Anything).Return(&papi.CreateActivationResponse{ActivationID: "act_123"}, nil).Once()
+			expectGetActivation(client, "prp_0", "act_123", 1, papi.ActivationNetworkStaging, papi.ActivationStatusActive, nil).Once()
+
+			// read property
+			propertyReadCtx(client, papi.VersionStatusActive, papi.VersionStatusActive)
+
+			// activation read
+			getActivations(client)
+
+			// read property
+			propertyReadCtx(client, papi.VersionStatusActive, papi.VersionStatusActive)
+
+			// activation read
+			getActivations(client)
+
+			// second step
+			// property update returns an error on the invalid edgehostname
+			ExpectGetPropertyVersion(client, "prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusActive, papi.VersionStatusActive).Once()
+			ExpectGetEdgeHostnames(client, "ctr_0", "grp_0", papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
+				{DomainPrefix: "dxe-2406-issue-example-second.com"}, {DomainPrefix: "dxe-2406-issue.com"}}}).Once()
+
+			// terraform clean up - terraform test framework attempts to run destroy plan, if an error is returned on second step
+			// activation and property deletion
+			getActivations(client)
+			client.On("CreateActivation", mock.Anything, mock.Anything).Return(&papi.CreateActivationResponse{
+				ActivationID: "act_123",
+			}, nil).Once()
+			expectGetActivation(client, "prp_0", "act_123", 1, papi.ActivationNetworkStaging, papi.ActivationStatusActive, nil).Once()
+			client.On("RemoveProperty", mock.Anything, mock.Anything).Return(&papi.RemovePropertyResponse{
+				Message: "removed",
+			}, nil).Once()
+
+			useClient(client, nil, func() {
+				resource.UnitTest(t, resource.TestCase{
+					ProviderFactories: testAccProviders,
+					Steps: []resource.TestStep{
+						{
+							Config: loadFixtureString("testdata/TestResProperty/CreationUpdateIncorrectEdgeHostname/create/property.tf"),
+							Check: resource.ComposeAggregateTestCheckFunc(
+								resource.TestCheckResourceAttr("akamai_property.akaproperty", "id", "prp_0"),
+								resource.TestCheckResourceAttr("akamai_property.akaproperty", "hostnames.#", "2"),
+							),
+						},
+						{
+							Config: loadFixtureString("testdata/TestResProperty/CreationUpdateIncorrectEdgeHostname/update/property.tf"),
+							Check: resource.ComposeAggregateTestCheckFunc(
+								resource.TestCheckResourceAttr("akamai_property.akaproperty", "id", "prp_0"),
+								resource.TestCheckResourceAttr("akamai_property.akaproperty", "hostnames.#", "3"),
+							),
+							ExpectError: regexp.MustCompile("hostnames with 'cname_from' containing \\[does-not-exist.com] do not exist under this account, you need to remove or replace invalid hostnames entries in your configuration to proceed with property version update"),
 						},
 					},
 				})
