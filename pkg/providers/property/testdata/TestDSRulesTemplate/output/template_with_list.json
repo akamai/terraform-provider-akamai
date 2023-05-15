@@ -1,0 +1,9 @@
+{
+  "rules": {
+    "name": "Rules with list",
+    "somelist": [
+      "abc",
+      "def"
+    ]
+  }
+}

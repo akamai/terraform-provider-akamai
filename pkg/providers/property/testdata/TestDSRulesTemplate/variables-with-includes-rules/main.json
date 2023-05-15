@@ -1,0 +1,6 @@
+{
+  "rules": {
+    "name": "${env.variableName}",
+    "children": ["#include:${env.includeName}"]
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "rules": {
+    "name": "root",
+    "children": [
+      {
+        "rules": {
+          "name": "firstsecond",
+          "tricky": "wow"
+        }
+      }
+    ]
+  }
+}

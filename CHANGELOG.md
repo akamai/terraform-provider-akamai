@@ -23,6 +23,9 @@
 
 * PAPI
   * Remove enforce `property-snippets` directory check ([I#378](https://github.com/akamai/terraform-provider-akamai/issues/378))
+  * Improved variable evaluation logic in `akamai_property_rules_template` data source ([I#324](https://github.com/akamai/terraform-provider-akamai/issues/324), [I#385](https://github.com/akamai/terraform-provider-akamai/issues/385), [I#386](https://github.com/akamai/terraform-provider-akamai/issues/386))
+    * Include path can now be provided using data source `variables`
+    * `variables` can now reference each other and be used to build other `variables` e.g. `${env.abc} = "${env.prefix} cba"`
   * (Internal usage only) Improved `compliance_record` attribute's syntax for `akamai_property_activation` and `akamai_property_include_activation`
 
 ### BUG FIXES:

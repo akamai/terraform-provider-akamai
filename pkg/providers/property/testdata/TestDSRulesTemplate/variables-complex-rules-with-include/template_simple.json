@@ -1,0 +1,6 @@
+{
+  "rules": {
+    "name": "root",
+    "children": ["#include:include.json"]
+  }
+}

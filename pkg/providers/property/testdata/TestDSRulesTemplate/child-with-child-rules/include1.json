@@ -1,0 +1,6 @@
+{
+  "rules": {
+    "name": "fromInclude1",
+    "children": ["#include:${env.include2Name}"]
+  }
+}

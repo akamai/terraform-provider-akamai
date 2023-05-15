@@ -16,6 +16,7 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/apex/log"
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -112,6 +113,43 @@ const (
 	rightDelim = "#+@"
 )
 
+type variablePopulator struct {
+	regex          *regexp.Regexp
+	valueExtractor func(any) string
+}
+
+var (
+	quotedVariablePopulator = variablePopulator{
+		regex: regexp.MustCompile(`"\${env\.([^$}]+?)}"`),
+		valueExtractor: func(input any) string {
+			return fmt.Sprintf("%v", input)
+		}}
+	partialVariablePopulator = variablePopulator{
+		regex: partialVariableRegexp,
+		valueExtractor: func(input any) string {
+			return strings.TrimSuffix(strings.TrimPrefix(fmt.Sprintf("%v", input), "\""), "\"")
+		}}
+)
+
+func (v variablePopulator) hasMatch(template string) bool {
+	return v.regex.MatchString(template)
+}
+
+func (v variablePopulator) replaceMatchWithVar(template string, varMap map[string]any) (string, error) {
+	matchingVariable := v.regex.FindString(template)
+
+	submatch := v.regex.FindStringSubmatch(template)
+	if len(submatch) < 2 {
+		return "", fmt.Errorf(matchingErrorMessage, matchingVariable)
+	}
+
+	varName := submatch[1]
+	if varVal, ok := varMap[varName]; ok {
+		return strings.ReplaceAll(template, matchingVariable, v.valueExtractor(varVal)), nil
+	}
+	return "", fmt.Errorf(variableNotFound, varName)
+}
+
 //nolint:gocyclo
 func dataPropertyRulesTemplateRead(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
@@ -155,17 +193,19 @@ func dataPropertyRulesTemplateRead(_ context.Context, d *schema.ResourceData, m 
 		}
 	}
 
+	varsMap, err := getVariables(d, logger)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	var templateStr string
 	if templateDataStr == "" {
-		templateStr, err = convertToTemplate(file)
-		if err != nil {
-			return diag.FromErr(err)
-		}
+		templateStr, err = convertToTemplate(file, varsMap)
 	} else {
-		templateStr, err = stringToTemplate(templateDataStr)
-		if err != nil {
-			return diag.FromErr(err)
-		}
+		templateStr, err = stringToTemplate(templateDataStr, varsMap, "main")
+	}
+	if err != nil {
+		return diag.FromErr(err)
 	}
 
 	tmpl, err := template.New("main").Delims(leftDelim, rightDelim).Option("missingkey=error").Parse(templateStr)
@@ -173,32 +213,6 @@ func dataPropertyRulesTemplateRead(_ context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 
-	varsMap := make(map[string]interface{})
-	vars, err := tf.GetSetValue("variables", d)
-	if err != nil && !errors.Is(err, tf.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	if err == nil {
-		varsMap, err = convertToTypedMap(vars.List())
-		if err != nil {
-			return diag.FromErr(err)
-		}
-	}
-	varsDefinitionFile, err := tf.GetStringValue("var_definition_file", d)
-	if err != nil && !errors.Is(err, tf.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	if err == nil {
-		logger.Debugf("Fetching variable definitions from file: %s", varsDefinitionFile)
-		varsValuesFile, err := tf.GetStringValue("var_values_file", d)
-		if err != nil && !errors.Is(err, tf.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		varsMap, err = getVarsFromFile(varsDefinitionFile, varsValuesFile)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-	}
 	templateFiles := make(map[string]string)
 	err = filepath.Walk(dir,
 		func(path string, info os.FileInfo, err error) error {
@@ -223,7 +237,7 @@ func dataPropertyRulesTemplateRead(_ context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 	for name, f := range templateFiles {
-		templateStr, err := convertToTemplate(f)
+		templateStr, err := convertToTemplate(f, varsMap)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -260,10 +274,77 @@ func dataPropertyRulesTemplateRead(_ context.Context, d *schema.ResourceData, m 
 	return nil
 }
 
+func getVariables(d *schema.ResourceData, logger log.Interface) (map[string]interface{}, error) {
+	varsMap := make(map[string]interface{})
+	vars, err := tf.GetSetValue("variables", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
+		return nil, err
+	}
+	if err == nil {
+		varsMap, err = convertToTypedMap(vars.List())
+		if err != nil {
+			return nil, err
+		}
+	}
+	varsDefinitionFile, err := tf.GetStringValue("var_definition_file", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
+		return nil, err
+	}
+	if err == nil {
+		logger.Debugf("Fetching variable definitions from file: %s", varsDefinitionFile)
+		varsValuesFile, err := tf.GetStringValue("var_values_file", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
+			return nil, err
+		}
+		varsMap, err = getVarsFromFile(varsDefinitionFile, varsValuesFile)
+		if err != nil {
+			return nil, err
+		}
+	}
+	for k, v := range varsMap {
+		if _, err := checkCircularDependency(fmt.Sprintf("%v", v), []string{k}, varsMap); err != nil {
+			return nil, err
+		}
+	}
+	return varsMap, nil
+}
+
+// that implementation has problem evaluating in template correctly following cases:
+// "${env.a}" as `true` (for env.a is true of type bool)
+// "${env.a} " as `"true "` (for env.a is "true" of type string)
+// "${env.a}" as `"true"` (for env.a is true of type string)
+// and hence should not be used for actual value evaluation
+func checkCircularDependency(input string, seenVariables []string, varsMap map[string]interface{}) (string, error) {
+	matchedVariable := partialVariableRegexp.FindString(input)
+	for matchedVariable != "" {
+		submatch := partialVariableRegexp.FindStringSubmatch(input)
+		if len(submatch) < 2 {
+			return "", fmt.Errorf(matchingErrorMessage, matchedVariable)
+		}
+		varName := submatch[1]
+		for _, seenVariable := range seenVariables {
+			if varName == seenVariable {
+				return "", fmt.Errorf("hit cyclic dependency ending at %q", varName)
+			}
+		}
+		varVal, ok := varsMap[varName]
+		if !ok {
+			return "", fmt.Errorf(variableNotFound, varVal)
+		}
+		evaluatedVarVal, err := checkCircularDependency(fmt.Sprintf("%v", varVal), append(seenVariables, varName), varsMap)
+		if err != nil {
+			return "", err
+		}
+		input = strings.ReplaceAll(input, matchedVariable, evaluatedVarVal)
+		matchedVariable = partialVariableRegexp.FindString(input)
+	}
+	return strings.TrimSuffix(strings.TrimPrefix(input, `"`), `"`), nil
+}
+
 var (
-	includeRegexp  = regexp.MustCompile(`"#include:.+?"`)
-	varRegexp      = regexp.MustCompile(`"\${.+?}"`)
-	jsonFileRegexp = regexp.MustCompile(`\.json+$`)
+	includeRegexp         = regexp.MustCompile(`"#include:.+?"`)
+	partialVariableRegexp = regexp.MustCompile(`\${env\.([^$}]+?)}`)
+	jsonFileRegexp        = regexp.MustCompile(`\.json+$`)
 )
 
 var (
@@ -274,7 +355,9 @@ var (
 	// ErrFormatValue is used to specify formatting error.
 	ErrFormatValue = errors.New("formatting value")
 	// ErrUnknownType is used to specify unknown error.
-	ErrUnknownType = errors.New("unknown 'type' value")
+	ErrUnknownType       = errors.New("unknown 'type' value")
+	matchingErrorMessage = "there was a problem matching %q"
+	variableNotFound     = "could not find variable %q"
 )
 
 // flattenTemplate formats the template schema into a couple of strings holding template_data and template_dir values
@@ -311,19 +394,17 @@ func flattenTemplate(templateList []interface{}) (string, string, error) {
 }
 
 // stringToTemplate takes a large string (templateDataStr) and formats include/variable statements.
-func stringToTemplate(templateDataStr string) (string, error) {
+func stringToTemplate(templateDataStr string, varsMap map[string]interface{}, templatePath string) (string, error) {
+	templateDataStr, err := evaluateVariables(templateDataStr, varsMap, templatePath)
+	if err != nil {
+		return "", err
+	}
+
 	includeStatement := includeRegexp.FindString(templateDataStr)
 	for len(includeStatement) > 0 {
 		templateName := strings.TrimPrefix(strings.TrimSuffix(includeStatement, `"`), `"#include:`)
 		templateDataStr = strings.ReplaceAll(templateDataStr, includeStatement, fmt.Sprintf(`%stemplate "%s" .%s`, leftDelim, templateName, rightDelim))
 		includeStatement = includeRegexp.FindString(templateDataStr)
-	}
-
-	varStatement := varRegexp.FindString(templateDataStr)
-	for len(varStatement) > 0 {
-		varName := strings.TrimPrefix(strings.TrimSuffix(varStatement, `}"`), `"${env`)
-		templateDataStr = strings.ReplaceAll(templateDataStr, varStatement, fmt.Sprintf("%s%s%s", leftDelim, varName, rightDelim))
-		varStatement = varRegexp.FindString(templateDataStr)
 	}
 
 	if string(templateDataStr[len(templateDataStr)-1]) != "\n" {
@@ -333,14 +414,38 @@ func stringToTemplate(templateDataStr string) (string, error) {
 	return templateDataStr, nil
 }
 
+func evaluateVariables(template string, varsMap map[string]interface{}, templatePath string) (string, error) {
+	var err error
+
+	for {
+		for quotedVariablePopulator.hasMatch(template) {
+			template, err = quotedVariablePopulator.replaceMatchWithVar(template, varsMap)
+			if err != nil {
+				return "", fmt.Errorf("error replacing variable at %q: %w", templatePath, err)
+			}
+		}
+
+		if partialVariablePopulator.hasMatch(template) {
+			template, err = partialVariablePopulator.replaceMatchWithVar(template, varsMap)
+			if err != nil {
+				return "", fmt.Errorf("error replacing variable at %q: %w", templatePath, err)
+			}
+		} else {
+			break
+		}
+	}
+
+	return template, nil
+}
+
 // convertToTemplate passes the string data to stringToTemplate after reading it from given path.
-func convertToTemplate(path string) (string, error) {
+func convertToTemplate(path string, varsMap map[string]interface{}) (string, error) {
 	b, err := ioutil.ReadFile(path)
 	if err != nil {
 		return "", fmt.Errorf("%w: %s", ErrReadFile, err)
 	}
 
-	return stringToTemplate(string(b))
+	return stringToTemplate(string(b), varsMap, path)
 }
 
 func convertToTypedMap(vars []interface{}) (map[string]interface{}, error) {
