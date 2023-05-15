@@ -19,11 +19,11 @@ func TestGetConfig(t *testing.T) {
 	tests := map[string]struct {
 		configElements   *schema.Set
 		expectedErrorMsg string
-		expectedResult   datastream.Config
+		expectedResult   datastream.DeliveryConfiguration
 	}{
 		"empty set": {
 			configElements:   newSet(),
-			expectedErrorMsg: "missing config",
+			expectedErrorMsg: "missing delivery configuration",
 		},
 		"invalid config type": {
 			configElements:   newSet(1),
@@ -32,7 +32,7 @@ func TestGetConfig(t *testing.T) {
 		"missing frequency": {
 			configElements: newSet(
 				map[string]interface{}{
-					"delimiter":          "SPACE",
+					"field_delimiter":    "SPACE",
 					"format":             "STRUCTURED",
 					"upload_file_prefix": "pre",
 					"upload_file_suffix": "suf",
@@ -42,22 +42,22 @@ func TestGetConfig(t *testing.T) {
 		"proper config": {
 			configElements: newSet(
 				map[string]interface{}{
-					"delimiter": "SPACE",
-					"format":    "STRUCTURED",
+					"field_delimiter": "SPACE",
+					"format":          "STRUCTURED",
 					"frequency": newSet(
 						map[string]interface{}{
-							"time_in_sec": 30,
+							"interval_in_secs": 30,
 						},
 					),
 					"upload_file_prefix": "pre",
 					"upload_file_suffix": "suf",
 				},
 			),
-			expectedResult: datastream.Config{
+			expectedResult: datastream.DeliveryConfiguration{
 				Delimiter: datastream.DelimiterTypePtr(datastream.DelimiterTypeSpace),
 				Format:    datastream.FormatTypeStructured,
 				Frequency: datastream.Frequency{
-					TimeInSec: datastream.TimeInSec30,
+					IntervalInSeconds: datastream.IntervalInSeconds30,
 				},
 				UploadFilePrefix: "pre",
 				UploadFileSuffix: "suf",
@@ -79,22 +79,22 @@ func TestGetConfig(t *testing.T) {
 }
 
 func TestConfigToSet(t *testing.T) {
-	config := datastream.Config{
+	config := datastream.DeliveryConfiguration{
 		Delimiter: datastream.DelimiterTypePtr(datastream.DelimiterTypeSpace),
 		Format:    datastream.FormatTypeStructured,
 		Frequency: datastream.Frequency{
-			TimeInSec: datastream.TimeInSec30,
+			IntervalInSeconds: datastream.IntervalInSeconds30,
 		},
 		UploadFilePrefix: "pre",
 		UploadFileSuffix: "suf",
 	}
 	expected := []map[string]interface{}{
 		{
-			"delimiter": "SPACE",
-			"format":    "STRUCTURED",
+			"field_delimiter": "SPACE",
+			"format":          "STRUCTURED",
 			"frequency": []map[string]interface{}{
 				{
-					"time_in_sec": 30,
+					"interval_in_secs": 30,
 				},
 			},
 			"upload_file_prefix": "pre",
@@ -123,11 +123,11 @@ func TestGetFrequency(t *testing.T) {
 		"proper frequency": {
 			frequencyElements: newSet(
 				map[string]interface{}{
-					"time_in_sec": 60,
+					"interval_in_secs": 60,
 				},
 			),
 			expectedResult: datastream.Frequency{
-				TimeInSec: datastream.TimeInSec60,
+				IntervalInSeconds: datastream.IntervalInSeconds60,
 			},
 		},
 	}
@@ -147,11 +147,11 @@ func TestGetFrequency(t *testing.T) {
 
 func TestFrequencyToSet(t *testing.T) {
 	frequency := datastream.Frequency{
-		TimeInSec: datastream.TimeInSec60,
+		IntervalInSeconds: datastream.IntervalInSeconds60,
 	}
 	expected := []map[string]interface{}{
 		{
-			"time_in_sec": 60,
+			"interval_in_secs": 60,
 		},
 	}
 
@@ -204,44 +204,30 @@ func TestInterfaceSliceToStringSlice(t *testing.T) {
 }
 
 func TestDataSetFieldsToList(t *testing.T) {
-	datasets := []datastream.DataSets{
-		{
-			DatasetGroupName: "group1",
-			DatasetFields: []datastream.DatasetFields{
-				{
-					DatasetFieldID: 1000,
-					Order:          3,
-				},
-				{
-					DatasetFieldID: 1002,
-					Order:          5,
-				},
-				{
-					DatasetFieldID: 1100,
-					Order:          1,
-				},
+
+	datasets := datastream.DataSets{
+		DataSetFields: []datastream.DataSetField{
+			{
+				DatasetFieldID: 1000,
 			},
-		},
-		{
-			DatasetGroupName: "group2",
-			DatasetFields: []datastream.DatasetFields{
-				{
-					DatasetFieldID: 2000,
-					Order:          4,
-				},
-				{
-					DatasetFieldID: 2002,
-					Order:          0,
-				},
-				{
-					DatasetFieldID: 2100,
-					Order:          2,
-				},
+			{
+				DatasetFieldID: 1002,
+			},
+			{
+				DatasetFieldID: 1100,
+			},
+			{
+				DatasetFieldID: 2000,
+			},
+			{
+				DatasetFieldID: 2002,
+			},
+			{
+				DatasetFieldID: 2100,
 			},
 		},
 	}
-
-	assert.Equal(t, []int{2002, 1100, 2100, 1000, 2000, 1002}, DataSetFieldsToList(datasets))
+	assert.Equal(t, []int{1000, 1002, 1100, 2000, 2002, 2100}, DataSetFieldsToList(datasets.DataSetFields))
 }
 
 func TestPropertyToList(t *testing.T) {
@@ -275,5 +261,9 @@ func TestGetPropertiesList(t *testing.T) {
 	result, err := GetPropertiesList(properties)
 	require.NoError(t, err)
 
-	assert.Equal(t, []int{1, 2, 3, 4, 5}, result)
+	propertyIds := make([]int, len(result))
+	for i := 0; i < len(result); i++ {
+		propertyIds[i] = result[i].PropertyID
+	}
+	assert.Equal(t, []int{1, 2, 3, 4, 5}, propertyIds)
 }

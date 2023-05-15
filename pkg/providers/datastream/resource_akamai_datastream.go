@@ -87,7 +87,12 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 		Required:    true,
 		Description: "Defining if stream should be active or not",
 	},
-	"config": {
+	"collect_midgress": {
+		Type:        schema.TypeBool,
+		Optional:    true,
+		Description: "Identifies if stream needs to collect midgress data",
+	},
+	"delivery_configuration": {
 		Type:        schema.TypeSet,
 		MinItems:    1,
 		MaxItems:    1,
@@ -111,7 +116,7 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 		Computed:    true,
 		Description: "The date and time when the stream was created",
 	},
-	"dataset_fields_ids": {
+	"dataset_fields": {
 		Type:             schema.TypeList,
 		Required:         true,
 		DiffSuppressFunc: isOrderDifferent,
@@ -120,7 +125,7 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 		},
 		Description: "A list of data set fields selected from the associated template that the stream monitors in logs. The order of the identifiers define how the value for these fields appear in the log lines",
 	},
-	"email_ids": {
+	"notification_emails": {
 		Type:     schema.TypeList,
 		Optional: true,
 		Elem: &schema.Schema{
@@ -134,11 +139,6 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 		Required:         true,
 		DiffSuppressFunc: tf.FieldPrefixSuppress("grp_"),
 		Description:      "Identifies the group that has access to the product and for which the stream configuration was created",
-	},
-	"group_name": {
-		Type:        schema.TypeString,
-		Computed:    true,
-		Description: "The name of the user group for which the stream was created",
 	},
 	"modified_by": {
 		Type:        schema.TypeString,
@@ -160,12 +160,7 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 		Computed:    true,
 		Description: "The ID of the product for which the stream was created",
 	},
-	"product_name": {
-		Type:        schema.TypeString,
-		Computed:    true,
-		Description: "The name of the product for which the stream was created",
-	},
-	"property_ids": {
+	"properties": {
 		Type:     schema.TypeList,
 		Required: true,
 		Elem: &schema.Schema{
@@ -179,26 +174,21 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 		Required:    true,
 		Description: "The name of the stream",
 	},
-	"stream_type": {
-		Type:        schema.TypeString,
-		Required:    true,
-		Description: "Specifies the type of the data stream",
-	},
-	"stream_version_id": {
+	"stream_version": {
 		Type:        schema.TypeInt,
 		Computed:    true,
 		Description: "Identifies the configuration version of the stream",
 	},
-	"template_name": {
-		Type:        schema.TypeString,
-		Required:    true,
-		Description: "The name of the template associated with the stream",
+	"latest_version": {
+		Type:        schema.TypeInt,
+		Computed:    true,
+		Description: "Identifies the latest active configuration version of the stream",
 	},
 	"s3_connector": {
 		Type:         schema.TypeSet,
 		MaxItems:     1,
 		ExactlyOneOf: ExactlyOneConnectorRule,
-		Optional:     true,
+		Optional:     true, //To DO it should be mandatory
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				"access_key": {
@@ -217,12 +207,7 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 					Computed:    true,
 					Description: "Indicates whether the logs should be compressed",
 				},
-				"connector_id": {
-					Type:        schema.TypeInt,
-					Computed:    true,
-					Description: "Identifies the connector associated with the stream",
-				},
-				"connector_name": {
+				"display_name": {
 					Type:        schema.TypeString,
 					Required:    true,
 					Description: "The name of the connector",
@@ -268,12 +253,7 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 					Computed:    true,
 					Description: "Indicates whether the logs should be compressed",
 				},
-				"connector_id": {
-					Type:        schema.TypeInt,
-					Computed:    true,
-					Description: "Identifies the connector associated with the stream",
-				},
-				"connector_name": {
+				"display_name": {
 					Type:        schema.TypeString,
 					Required:    true,
 					Description: "The name of the connector",
@@ -309,12 +289,7 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 					Optional:    true,
 					Description: "Indicates whether the logs should be compressed",
 				},
-				"connector_id": {
-					Type:        schema.TypeInt,
-					Computed:    true,
-					Description: "Identifies the connector associated with the stream",
-				},
-				"connector_name": {
+				"display_name": {
 					Type:        schema.TypeString,
 					Required:    true,
 					Description: "The name of the connector",
@@ -337,7 +312,7 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 					Optional:    true,
 					Description: "The tags of the Datadog connector",
 				},
-				"url": {
+				"endpoint": {
 					Type:        schema.TypeString,
 					Required:    true,
 					Description: "The Datadog endpoint where logs will be stored",
@@ -357,12 +332,7 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 					Optional:    true,
 					Description: "Indicates whether the logs should be compressed",
 				},
-				"connector_id": {
-					Type:        schema.TypeInt,
-					Computed:    true,
-					Description: "Identifies the connector associated with the stream",
-				},
-				"connector_name": {
+				"display_name": {
 					Type:        schema.TypeString,
 					Required:    true,
 					Description: "The name of the connector",
@@ -383,7 +353,7 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 					Sensitive:   true,
 					Description: "The Event Collector token associated with Splunk account",
 				},
-				"url": {
+				"endpoint": {
 					Type:        schema.TypeString,
 					Required:    true,
 					Description: "The raw event Splunk URL where logs will be stored",
@@ -439,12 +409,7 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 					Computed:    true,
 					Description: "Indicates whether the logs should be compressed",
 				},
-				"connector_id": {
-					Type:        schema.TypeInt,
-					Computed:    true,
-					Description: "Identifies the connector associated with the stream",
-				},
-				"connector_name": {
+				"display_name": {
 					Type:        schema.TypeString,
 					Required:    true,
 					Description: "The name of the connector",
@@ -495,12 +460,7 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 					Optional:    true,
 					Description: "Indicates whether the logs should be compressed",
 				},
-				"connector_id": {
-					Type:        schema.TypeInt,
-					Computed:    true,
-					Description: "Identifies the connector associated with the stream",
-				},
-				"connector_name": {
+				"display_name": {
 					Type:        schema.TypeString,
 					Required:    true,
 					Description: "The name of the connector",
@@ -527,7 +487,7 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 					Sensitive:   true,
 					Description: "Password set for custom HTTPS endpoint for authentication",
 				},
-				"url": {
+				"endpoint": {
 					Type:        schema.TypeString,
 					Required:    true,
 					Description: "URL where logs will be stored",
@@ -575,10 +535,9 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 		},
 	},
 	"sumologic_connector": {
-		Type:             schema.TypeSet,
-		MaxItems:         1,
-		Optional:         true,
-		DiffSuppressFunc: urlSuppressor("endpoint"),
+		Type:     schema.TypeSet,
+		MaxItems: 1,
+		Optional: true,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				"collector_code": {
@@ -592,11 +551,6 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 					Default:     true,
 					Optional:    true,
 					Description: "Indicates whether the logs should be compressed",
-				},
-				"connector_id": {
-					Type:        schema.TypeInt,
-					Computed:    true,
-					Description: "Identifies the connector associated with the stream",
 				},
 				"content_type": {
 					Type:        schema.TypeString,
@@ -613,7 +567,7 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 					Optional:    true,
 					Description: "The custom header's contents passed with the request to the destination",
 				},
-				"connector_name": {
+				"display_name": {
 					Type:        schema.TypeString,
 					Required:    true,
 					Description: "The name of the connector",
@@ -648,12 +602,7 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 					Computed:    true,
 					Description: "Indicates whether the logs should be compressed",
 				},
-				"connector_id": {
-					Type:        schema.TypeInt,
-					Computed:    true,
-					Description: "Identifies the connector associated with the stream",
-				},
-				"connector_name": {
+				"display_name": {
 					Type:        schema.TypeString,
 					Required:    true,
 					Description: "The name of the connector",
@@ -688,7 +637,7 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 		Optional: true,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
-				"connector_name": {
+				"display_name": {
 					Type:        schema.TypeString,
 					Required:    true,
 					Description: "The name of the connector.",
@@ -733,7 +682,7 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 		Optional: true,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
-				"connector_name": {
+				"display_name": {
 					Type:        schema.TypeString,
 					Required:    true,
 					Description: "The name of the connector.",
@@ -773,7 +722,7 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 		Optional: true,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
-				"connector_name": {
+				"display_name": {
 					Type:        schema.TypeString,
 					Required:    true,
 					Description: "The name of the connector.",
@@ -855,7 +804,7 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 
 var configResource = &schema.Resource{
 	Schema: map[string]*schema.Schema{
-		"delimiter": {
+		"field_delimiter": {
 			Type:        schema.TypeString,
 			Optional:    true,
 			Description: "A delimiter that you use to separate data set fields in log lines",
@@ -872,7 +821,7 @@ var configResource = &schema.Resource{
 			Required: true,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
-					"time_in_sec": {
+					"interval_in_secs": {
 						Type:        schema.TypeInt,
 						Required:    true,
 						Description: "The time in seconds after which the system bundles log lines into a file and sends it to a destination",
@@ -896,6 +845,41 @@ var configResource = &schema.Resource{
 	},
 }
 
+var datasetFieldResource = &schema.Resource{
+	Schema: map[string]*schema.Schema{
+		"dataset_fields": {
+			Type: schema.TypeList,
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"dataset_field_id": {
+						Type:     schema.TypeString,
+						Required: true,
+					},
+				},
+			},
+			Required: true,
+		},
+	},
+}
+
+var propertyResource = &schema.Resource{
+	Schema: map[string]*schema.Schema{
+		"properties": {
+			Type: schema.TypeList,
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"property_id": {
+						Type:             schema.TypeString,
+						Required:         true,
+						DiffSuppressFunc: tf.FieldPrefixSuppress("prp_"),
+					},
+				},
+			},
+			Required: true,
+		},
+	},
+}
+
 func resourceDatastreamCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	logger := meta.Log("Datastream", "resourceDatastreamCreate")
@@ -913,11 +897,7 @@ func resourceDatastreamCreate(ctx context.Context, d *schema.ResourceData, m int
 		return diag.FromErr(err)
 	}
 
-	configSet, err := tf.GetSetValue("config", d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	config, err := GetConfig(configSet)
+	collectMidgress, err := tf.GetBoolValue("collect_midgress", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -928,19 +908,23 @@ func resourceDatastreamCreate(ctx context.Context, d *schema.ResourceData, m int
 	}
 	contractID = strings.TrimPrefix(contractID, "ctr_")
 
-	datasetFieldsIDsList, err := tf.GetListValue("dataset_fields_ids", d)
+	datasetFieldsIDsList, err := tf.GetListValue("dataset_fields", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	datasetFieldsIDs := InterfaceSliceToIntSlice(datasetFieldsIDsList)
+	datasetFieldsIDs := DatasetFieldListToDatasetFields(datasetFieldsIDsList)
 
-	emailIDsList, err := tf.GetListValue("email_ids", d)
+	emailIDsList, err := tf.GetListValue("notification_emails", d)
 	if err != nil {
 		if !errors.Is(err, tf.ErrNotFound) {
 			return diag.FromErr(err)
 		}
 	}
-	emailIDs := strings.Join(InterfaceSliceToStringSlice(emailIDsList), ",")
+	emailIDs := InterfaceSliceToStringSlice(emailIDsList)
+
+	if len(emailIDs) == 0 {
+		emailIDs = nil
+	}
 
 	groupIDStr, err := tf.GetStringValue("group_id", d)
 	if err != nil {
@@ -951,7 +935,7 @@ func resourceDatastreamCreate(ctx context.Context, d *schema.ResourceData, m int
 		return diag.FromErr(err)
 	}
 
-	propertyIDsList, err := tf.GetListValue("property_ids", d)
+	propertyIDsList, err := tf.GetListValue("properties", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -965,37 +949,39 @@ func resourceDatastreamCreate(ctx context.Context, d *schema.ResourceData, m int
 		return diag.FromErr(err)
 	}
 
-	streamTypeStr, err := tf.GetStringValue("stream_type", d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	streamType := datastream.StreamType(streamTypeStr)
-
-	templateNameStr, err := tf.GetStringValue("template_name", d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	templateName := datastream.TemplateName(templateNameStr)
-
 	connectors, err := GetConnectors(d, ExactlyOneConnectorRule)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	deliveryConfigSet, err := tf.GetSetValue("delivery_configuration", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	config, err := GetConfig(deliveryConfigSet)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	var httpsBaseConnectorName = GetConnectorNameWithOutFilePrefixSuffix(d, ConnectorsWithoutFilenameOptionsConfig)
+
+	config, err = FilePrefixSuffixSet(httpsBaseConnectorName, config)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	req := datastream.CreateStreamRequest{
 		StreamConfiguration: datastream.StreamConfiguration{
-			ActivateNow:     active,
-			Config:          *config,
-			Connectors:      connectors,
-			ContractID:      contractID,
-			DatasetFieldIDs: datasetFieldsIDs,
-			EmailIDs:        emailIDs,
-			GroupID:         &groupID,
-			PropertyIDs:     propertyIDs,
-			StreamName:      streamName,
-			StreamType:      streamType,
-			TemplateName:    templateName,
+			CollectMidgress:       collectMidgress,
+			DeliveryConfiguration: *config,
+			Destination:           connectors,
+			ContractID:            contractID,
+			DatasetFields:         datasetFieldsIDs,
+			NotificationEmails:    emailIDs,
+			GroupID:               groupID,
+			Properties:            propertyIDs,
+			StreamName:            streamName,
 		},
+		Activate: active,
 	}
 
 	res, err := client.CreateStream(ctx, req)
@@ -1003,17 +989,27 @@ func resourceDatastreamCreate(ctx context.Context, d *schema.ResourceData, m int
 		return diag.FromErr(err)
 	}
 
-	streamID := res.StreamVersionKey.StreamID
+	streamID := res.StreamID
 	d.SetId(strconv.FormatInt(streamID, 10))
 
 	if active {
-		_, err = waitForStreamStatusChange(ctx, client, streamID, datastream.ActivationStatusActivated)
+		_, err = waitForStreamStatusChange(ctx, client, streamID, datastream.StreamStatusActivated)
 		if err != nil {
 			return diag.FromErr(err)
 		}
 	}
 
 	return resourceDatastreamRead(ctx, d, m)
+}
+
+func FilePrefixSuffixSet(httpsBaseConnectorName string, config *datastream.DeliveryConfiguration) (*datastream.DeliveryConfiguration, error) {
+
+	if tools.ContainsString(ConnectorsWithoutFilenameOptionsConfig, httpsBaseConnectorName) {
+
+		config.UploadFilePrefix = ""
+		config.UploadFileSuffix = ""
+	}
+	return config, nil
 }
 
 func resourceDatastreamRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -1042,33 +1038,26 @@ func resourceDatastreamRead(ctx context.Context, d *schema.ResourceData, m inter
 
 	attrs := make(map[string]interface{})
 
-	attrs["active"] = streamDetails.ActivationStatus == datastream.ActivationStatusActivated
+	attrs["active"] = streamDetails.StreamStatus == datastream.StreamStatusActivated
+	attrs["collect_midgress"] = streamDetails.CollectMidgress
 	attrs["contract_id"] = streamDetails.ContractID
 	attrs["created_by"] = streamDetails.CreatedBy
 	attrs["created_date"] = streamDetails.CreatedDate
-	attrs["dataset_fields_ids"] = DataSetFieldsToList(streamDetails.Datasets)
+	attrs["dataset_fields"] = DataSetFieldsToList(streamDetails.DatasetFields)
 	attrs["contract_id"] = streamDetails.ContractID
-	attrs["email_ids"] = strings.Split(streamDetails.EmailIDs, ",")
-	var emailIDs []string
-	if streamDetails.EmailIDs != "" {
-		emailIDs = strings.Split(streamDetails.EmailIDs, ",")
-	}
-	attrs["email_ids"] = emailIDs
+	attrs["notification_emails"] = streamDetails.NotificationEmails
+	attrs["latest_version"] = streamDetails.LatestVersion
 
 	attrs["group_id"] = strconv.Itoa(streamDetails.GroupID)
-	attrs["group_name"] = streamDetails.GroupName
 	attrs["modified_by"] = streamDetails.ModifiedBy
 	attrs["modified_date"] = streamDetails.ModifiedDate
 	attrs["papi_json"] = StreamIDToPapiJSON(streamDetails.StreamID)
 	attrs["product_id"] = streamDetails.ProductID
-	attrs["product_name"] = streamDetails.ProductName
-	attrs["property_ids"] = PropertyToList(streamDetails.Properties)
+	attrs["properties"] = PropertyToList(streamDetails.Properties)
 	attrs["stream_name"] = streamDetails.StreamName
-	attrs["stream_type"] = streamDetails.StreamType
-	attrs["stream_version_id"] = streamDetails.StreamVersionID
-	attrs["template_name"] = streamDetails.TemplateName
+	attrs["stream_version"] = streamDetails.StreamVersion
 
-	connectorKey, connectorProps, err := ConnectorToMap(streamDetails.Connectors, d)
+	connectorKey, connectorProps, err := ConnectorToMap(streamDetails.Destination, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -1084,12 +1073,12 @@ func resourceDatastreamRead(ctx context.Context, d *schema.ResourceData, m inter
 			// we have to take into account the fact that terraform would still see the change between remote (no prefixes set)
 			// and local state (default prefixes set), so we have to ensure that local state has the default prefix/suffix set as well
 			// here we insert default values to satisfy terraform diff
-			streamDetails.Config.UploadFilePrefix = DefaultUploadFilePrefix
-			streamDetails.Config.UploadFileSuffix = DefaultUploadFileSuffix
+			streamDetails.DeliveryConfiguration.UploadFilePrefix = DefaultUploadFilePrefix
+			streamDetails.DeliveryConfiguration.UploadFileSuffix = DefaultUploadFileSuffix
 		}
 	}
 
-	attrs["config"] = ConfigToSet(streamDetails.Config)
+	attrs["delivery_configuration"] = ConfigToSet(streamDetails.DeliveryConfiguration)
 
 	err = tf.SetAttrs(d, attrs)
 	if err != nil {
@@ -1118,14 +1107,14 @@ func resourceDatastreamUpdate(ctx context.Context, d *schema.ResourceData, m int
 
 	// it is not possible to edit stream while it is (de)activating
 	currentStreamStatus, err := waitForStreamStatusChange(ctx, client, streamID,
-		datastream.ActivationStatusDeactivated,
-		datastream.ActivationStatusActivated,
-		datastream.ActivationStatusInactive,
+		datastream.StreamStatusDeactivated,
+		datastream.StreamStatusActivated,
+		datastream.StreamStatusInactive,
 	)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	isStreamActive := *currentStreamStatus == datastream.ActivationStatusActivated
+	isStreamActive := *currentStreamStatus == datastream.StreamStatusActivated
 
 	var newActive bool
 	if d.HasChange("active") {
@@ -1144,14 +1133,14 @@ func resourceDatastreamUpdate(ctx context.Context, d *schema.ResourceData, m int
 			// stream is active and should be still active
 
 			// update details
-			err = updateStream(ctx, client, logger, streamID, d)
+			err = updateStream(ctx, client, logger, streamID, d, isStreamActive)
 			if err != nil {
 				return diag.FromErr(err)
 			}
 
 			// wait until stream is activated because updating active stream causes its reactivation
 			logger.Debugf("waiting for stream #%d activation", streamID)
-			_, err = waitForStreamStatusChange(ctx, client, streamID, datastream.ActivationStatusActivated)
+			_, err = waitForStreamStatusChange(ctx, client, streamID, datastream.StreamStatusActivated)
 			if err != nil {
 				return diag.FromErr(err)
 			}
@@ -1166,20 +1155,21 @@ func resourceDatastreamUpdate(ctx context.Context, d *schema.ResourceData, m int
 
 			// wait until stream is deactivated
 			logger.Debugf("waiting for stream #%d deactivation", streamID)
-			_, err = waitForStreamStatusChange(ctx, client, streamID, datastream.ActivationStatusDeactivated)
+			_, err = waitForStreamStatusChange(ctx, client, streamID, datastream.StreamStatusDeactivated)
 			if err != nil {
 				return diag.FromErr(err)
 			}
 
 			// update details (no waiting needed because stream is inactive)
-			err = updateStream(ctx, client, logger, streamID, d)
+			err = updateStream(ctx, client, logger, streamID, d, false)
 			if err != nil {
 				return diag.FromErr(err)
 			}
 		}
 	} else {
 		// update details (no waiting needed because stream is inactive)
-		err = updateStream(ctx, client, logger, streamID, d)
+
+		err = updateStream(ctx, client, logger, streamID, d, isStreamActive)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -1195,7 +1185,7 @@ func resourceDatastreamUpdate(ctx context.Context, d *schema.ResourceData, m int
 
 			// wait until stream is deactivated
 			logger.Debugf("waiting for stream #%d activation", streamID)
-			_, err = waitForStreamStatusChange(ctx, client, streamID, datastream.ActivationStatusActivated)
+			_, err = waitForStreamStatusChange(ctx, client, streamID, datastream.StreamStatusActivated)
 			if err != nil {
 				return diag.FromErr(err)
 			}
@@ -1205,38 +1195,30 @@ func resourceDatastreamUpdate(ctx context.Context, d *schema.ResourceData, m int
 	return resourceDatastreamRead(ctx, d, m)
 }
 
-func updateStream(ctx context.Context, client datastream.DS, logger log.Interface, streamID int64, d *schema.ResourceData) error {
+func updateStream(ctx context.Context, client datastream.DS, logger log.Interface, streamID int64, d *schema.ResourceData, isStreamActive bool) error {
 	// if some configuration details changed
 	if d.HasChangeExcept("active") {
-		configSet, err := tf.GetSetValue("config", d)
-		if err != nil {
-			return err
-		}
-		config, err := GetConfig(configSet)
-		if err != nil {
-			return err
-		}
 
 		contractID, err := tf.GetStringValue("contract_id", d)
 		if err != nil {
 			return err
 		}
 
-		datasetFieldsIDsList, err := tf.GetListValue("dataset_fields_ids", d)
+		datasetFieldsIDsList, err := tf.GetListValue("dataset_fields", d)
 		if err != nil {
 			return err
 		}
-		datasetFieldsIDs := InterfaceSliceToIntSlice(datasetFieldsIDsList)
+		datasetFieldsIDs := DatasetFieldListToDatasetFields(datasetFieldsIDsList)
 
-		emailIDsList, err := tf.GetListValue("email_ids", d)
+		emailIDsList, err := tf.GetListValue("notification_emails", d)
 		if err != nil {
 			if !errors.Is(err, tf.ErrNotFound) {
 				return err
 			}
 		}
-		emailIDs := strings.Join(InterfaceSliceToStringSlice(emailIDsList), ",")
+		emailIDs := InterfaceSliceToStringSlice(emailIDsList)
 
-		propertyIDsList, err := tf.GetListValue("property_ids", d)
+		propertyIDsList, err := tf.GetListValue("properties", d)
 		if err != nil {
 			return err
 		}
@@ -1250,19 +1232,28 @@ func updateStream(ctx context.Context, client datastream.DS, logger log.Interfac
 			return err
 		}
 
-		streamTypeStr, err := tf.GetStringValue("stream_type", d)
+		collectMidgress, err := tf.GetBoolValue("collect_midgress", d)
 		if err != nil {
 			return err
 		}
-		streamType := datastream.StreamType(streamTypeStr)
-
-		templateNameStr, err := tf.GetStringValue("template_name", d)
-		if err != nil {
-			return err
-		}
-		templateName := datastream.TemplateName(templateNameStr)
 
 		connectors, err := GetConnectors(d, ExactlyOneConnectorRule)
+		if err != nil {
+			return err
+		}
+
+		configSet, err := tf.GetSetValue("delivery_configuration", d)
+		if err != nil {
+			return err
+		}
+		config, err := GetConfig(configSet)
+		if err != nil {
+			return err
+		}
+
+		var httpsBaseConnectorName = GetConnectorNameWithOutFilePrefixSuffix(d, ConnectorsWithoutFilenameOptionsConfig)
+
+		config, err = FilePrefixSuffixSet(httpsBaseConnectorName, config)
 		if err != nil {
 			return err
 		}
@@ -1270,17 +1261,16 @@ func updateStream(ctx context.Context, client datastream.DS, logger log.Interfac
 		req := datastream.UpdateStreamRequest{
 			StreamID: streamID,
 			StreamConfiguration: datastream.StreamConfiguration{
-				ActivateNow:     false,
-				Config:          *config,
-				Connectors:      connectors,
-				ContractID:      contractID,
-				DatasetFieldIDs: datasetFieldsIDs,
-				EmailIDs:        emailIDs,
-				PropertyIDs:     propertyIDs,
-				StreamName:      streamName,
-				StreamType:      streamType,
-				TemplateName:    templateName,
+				CollectMidgress:       collectMidgress,
+				DeliveryConfiguration: *config,
+				Destination:           connectors,
+				ContractID:            contractID,
+				DatasetFields:         datasetFieldsIDs,
+				NotificationEmails:    emailIDs,
+				Properties:            propertyIDs,
+				StreamName:            streamName,
 			},
+			Activate: isStreamActive,
 		}
 
 		_, err = client.UpdateStream(ctx, req)
@@ -1302,12 +1292,12 @@ func deactivateStream(ctx context.Context, client datastream.DS, logger log.Inte
 	}
 
 	logger.Debugf("waiting for the stream #%d to be deactivated", streamID)
-	_, err = waitForStreamStatusChange(ctx, client, streamID, datastream.ActivationStatusDeactivated)
+	_, err = waitForStreamStatusChange(ctx, client, streamID, datastream.StreamStatusDeactivated)
 	return err
 }
 
 func activateStream(ctx context.Context, client datastream.DS, logger log.Interface, streamID int64) error {
-	logger.Debug("activating stream")
+	logger.Info("activating stream")
 	_, err := client.ActivateStream(ctx, datastream.ActivateStreamRequest{
 		StreamID: streamID,
 	})
@@ -1316,7 +1306,7 @@ func activateStream(ctx context.Context, client datastream.DS, logger log.Interf
 	}
 
 	logger.Debugf("waiting for the stream #%d to be activated", streamID)
-	_, err = waitForStreamStatusChange(ctx, client, streamID, datastream.ActivationStatusActivated)
+	_, err = waitForStreamStatusChange(ctx, client, streamID, datastream.StreamStatusActivated)
 	return err
 }
 
@@ -1344,7 +1334,7 @@ func resourceDatastreamDelete(ctx context.Context, d *schema.ResourceData, m int
 		return diag.FromErr(err)
 	}
 
-	activationStatus := streamDetails.ActivationStatus
+	activationStatus := streamDetails.StreamStatus
 
 	// if status == activating             - wait, deactivate, wait, delete
 	// if status == activated              - deactivate, wait, delete
@@ -1352,17 +1342,17 @@ func resourceDatastreamDelete(ctx context.Context, d *schema.ResourceData, m int
 	// if status == deactivated/inactive   - delete
 
 	// if stream is activating we have to wait until activation finishes
-	if activationStatus == datastream.ActivationStatusActivating {
-		_, err := waitForStreamStatusChange(ctx, client, streamID, datastream.ActivationStatusActivated)
+	if activationStatus == datastream.StreamStatusActivating {
+		_, err := waitForStreamStatusChange(ctx, client, streamID, datastream.StreamStatusActivated)
 		if err != nil {
 			return diag.FromErr(err)
 		}
 
-		activationStatus = datastream.ActivationStatusActivated
+		activationStatus = datastream.StreamStatusActivated
 	}
 
 	// if stream is active - deactivate it
-	if activationStatus == datastream.ActivationStatusActivated {
+	if activationStatus == datastream.StreamStatusActivated {
 		_, err := client.DeactivateStream(ctx, datastream.DeactivateStreamRequest{
 			StreamID: streamID,
 		})
@@ -1370,22 +1360,22 @@ func resourceDatastreamDelete(ctx context.Context, d *schema.ResourceData, m int
 			return diag.FromErr(err)
 		}
 
-		activationStatus = datastream.ActivationStatusDeactivating
+		activationStatus = datastream.StreamStatusDeactivating
 	}
 
 	// if stream is deactivating phase - wait until it completes
-	if activationStatus == datastream.ActivationStatusDeactivating {
-		_, err := waitForStreamStatusChange(ctx, client, streamID, datastream.ActivationStatusDeactivated)
+	if activationStatus == datastream.StreamStatusDeactivating {
+		_, err := waitForStreamStatusChange(ctx, client, streamID, datastream.StreamStatusDeactivated)
 		if err != nil {
 			return diag.FromErr(err)
 		}
 
-		activationStatus = datastream.ActivationStatusDeactivated
+		activationStatus = datastream.StreamStatusDeactivated
 	}
 
 	// if stream is inactive - delete it
-	if activationStatus == datastream.ActivationStatusDeactivated || activationStatus == datastream.ActivationStatusInactive {
-		_, err := client.DeleteStream(ctx, datastream.DeleteStreamRequest{
+	if activationStatus == datastream.StreamStatusDeactivated || activationStatus == datastream.StreamStatusInactive {
+		err := client.DeleteStream(ctx, datastream.DeleteStreamRequest{
 			StreamID: streamID,
 		})
 
@@ -1398,8 +1388,8 @@ func resourceDatastreamDelete(ctx context.Context, d *schema.ResourceData, m int
 	return nil
 }
 
-func waitForStreamStatusChange(ctx context.Context, client datastream.DS, streamID int64, expectedStatuses ...datastream.ActivationStatus) (*datastream.ActivationStatus, error) {
-	expectedStatusesMap := map[datastream.ActivationStatus]bool{}
+func waitForStreamStatusChange(ctx context.Context, client datastream.DS, streamID int64, expectedStatuses ...datastream.StreamStatus) (*datastream.StreamStatus, error) {
+	expectedStatusesMap := map[datastream.StreamStatus]bool{}
 	for _, status := range expectedStatuses {
 		expectedStatusesMap[status] = true
 	}
@@ -1413,8 +1403,8 @@ func waitForStreamStatusChange(ctx context.Context, client datastream.DS, stream
 		return nil, err
 	}
 
-	_, ok := expectedStatusesMap[streamDetails.ActivationStatus]
-	for ; !ok; _, ok = expectedStatusesMap[streamDetails.ActivationStatus] {
+	_, ok := expectedStatusesMap[streamDetails.StreamStatus]
+	for ; !ok; _, ok = expectedStatusesMap[streamDetails.StreamStatus] {
 		select {
 		case <-time.After(PollForActivationStatusChangeInterval):
 			streamDetails, err = client.GetStream(ctx, getStreamReq)
@@ -1427,10 +1417,10 @@ func waitForStreamStatusChange(ctx context.Context, client datastream.DS, stream
 		}
 	}
 
-	return &streamDetails.ActivationStatus, nil
+	return &streamDetails.StreamStatus, nil
 }
 
-func urlSuppressor(keyToSuppress string) schema.SchemaDiffSuppressFunc {
+/*func urlSuppressor(keyToSuppress string) schema.SchemaDiffSuppressFunc {
 	return func(resourceKey string, _, _ string, d *schema.ResourceData) bool {
 		logger := akamai.Log("DataStream", "urlSuppressor")
 
@@ -1492,10 +1482,10 @@ func urlSuppressor(keyToSuppress string) schema.SchemaDiffSuppressFunc {
 		logger.Debug("No change detected")
 		return true
 	}
-}
+}*/
 
 func isOrderDifferent(_, oldIDValue, newIDValue string, d *schema.ResourceData) bool {
-	key := "dataset_fields_ids"
+	key := "dataset_fields"
 
 	logger := akamai.Log("DataStream", "isOrderDifferent")
 
@@ -1503,7 +1493,7 @@ func isOrderDifferent(_, oldIDValue, newIDValue string, d *schema.ResourceData) 
 		return oldIDValue == newIDValue
 	}
 
-	configSet, err := tf.GetSetValue("config", d)
+	configSet, err := tf.GetSetValue("delivery_configuration", d)
 	if err != nil {
 		logger.Warn("unable to get config for datastream")
 		return defaultDiff()
@@ -1586,7 +1576,7 @@ func validateConfig(_ context.Context, d *schema.ResourceDiff, _ interface{}) er
 		return nil
 	}
 
-	configResource, exists := d.GetOkExists("config")
+	configResource, exists := d.GetOkExists("delivery_configuration")
 	if !exists {
 		return nil
 	}

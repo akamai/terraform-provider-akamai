@@ -22,35 +22,36 @@ func dataAkamaiDatastreamActivationHistory() *schema.Resource {
 				Description: "Identifies the stream",
 			},
 			"activations": {
-				Type:        schema.TypeSet,
+				Type:        schema.TypeList,
 				Computed:    true,
-				Description: "Provides detailed information about an activation status change for a version of a stream",
+				Description: "Provides detailed information about an activation history for a version of a stream",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"created_by": {
+
+						"stream_id": {
+							Type:        schema.TypeInt,
+							Required:    true,
+							Description: "Identifies the stream",
+						},
+						"modified_by": {
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "The username who activated or deactivated the stream",
 						},
-						"created_date": {
+						"modified_date": {
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "The date and time when activation status was modified",
 						},
-						"stream_id": {
-							Type:        schema.TypeInt,
-							Computed:    true,
-							Description: "Identifies the stream",
-						},
-						"stream_version_id": {
+						"stream_version": {
 							Type:        schema.TypeInt,
 							Computed:    true,
 							Description: "Identifies the version of the stream",
 						},
-						"is_active": {
-							Type:        schema.TypeBool,
+						"status": {
+							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "Whether the version of the stream is active",
+							Description: "Stream Status",
 						},
 					},
 				},
@@ -59,22 +60,21 @@ func dataAkamaiDatastreamActivationHistory() *schema.Resource {
 	}
 }
 
-func populateSchemaFieldsWithActivationHistory(ac []datastream.ActivationHistoryEntry, d *schema.ResourceData, streamID int) error {
+func populateSchemaFieldsWithActivationHistory(ac []datastream.ActivationHistoryEntry, d *schema.ResourceData, stream_id int) error {
 
 	var activations []map[string]interface{}
 	for _, a := range ac {
 		v := map[string]interface{}{
-			"stream_id":         a.StreamID,
-			"stream_version_id": a.StreamVersionID,
-			"created_by":        a.CreatedBy,
-			"created_date":      a.CreatedDate,
-			"is_active":         a.IsActive,
+			"stream_id":      a.StreamID,
+			"stream_version": a.StreamVersion,
+			"modified_by":    a.ModifiedBy,
+			"modified_date":  a.ModifiedDate,
+			"status":         a.Status,
 		}
 		activations = append(activations, v)
 	}
 
 	fields := map[string]interface{}{
-		"stream_id":   streamID,
 		"activations": activations,
 	}
 

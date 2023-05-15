@@ -2,13 +2,11 @@ package datastream
 
 import (
 	"fmt"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/tools"
+	"github.com/stretchr/testify/mock"
 	"regexp"
 	"strconv"
 	"testing"
-
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/tools"
-
-	"github.com/stretchr/testify/mock"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/datastream"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -17,44 +15,34 @@ import (
 var (
 	streamList = []datastream.StreamDetails{
 		{
-			ActivationStatus: datastream.ActivationStatusDeactivated,
-			Archived:         false,
-			Connectors:       "S3-S1",
-			ContractID:       "1-ABCDE",
-			CreatedBy:        "user1",
-			CreatedDate:      "14-07-2020 07:07:40 GMT",
-			CurrentVersionID: 2,
-			Errors: []datastream.Errors{
-				{
-					Detail: "Contact technical support.",
-					Title:  "Activation/Deactivation Error",
-					Type:   "ACTIVATION_ERROR",
-				},
-			},
-			GroupID:   1234,
-			GroupName: "Default Group",
+			StreamID:      1,
+			StreamName:    "Stream1",
+			StreamStatus:  datastream.StreamStatusDeactivated,
+			StreamVersion: 2,
+			LatestVersion: 2,
+			GroupID:       1234,
+			ContractID:    "1-ABCDE",
+			ProductID:     "P-1234",
+			CreatedBy:     "user1",
+			CreatedDate:   "14-07-2020 07:07:40 GMT",
 			Properties: []datastream.Property{
 				{
 					PropertyID:   13371337,
 					PropertyName: "property_name_1",
 				},
 			},
-			StreamID:        1,
-			StreamName:      "Stream1",
-			StreamTypeName:  "Logs - Raw",
-			StreamVersionID: 2,
 		},
 		{
-			ActivationStatus: datastream.ActivationStatusActivated,
-			Archived:         true,
-			Connectors:       "S3-S2",
-			ContractID:       "2-ABCDE",
-			CreatedBy:        "user2",
-			CreatedDate:      "24-07-2020 07:07:40 GMT",
-			CurrentVersionID: 3,
-			Errors:           nil,
-			GroupID:          4321,
-			GroupName:        "Default Group",
+			StreamID:      2,
+			StreamName:    "Stream2",
+			StreamStatus:  datastream.StreamStatusActivated,
+			StreamVersion: 3,
+			LatestVersion: 3,
+			GroupID:       4321,
+			ContractID:    "2-ABCDE",
+			ProductID:     "P-1234",
+			CreatedBy:     "user2",
+			CreatedDate:   "24-07-2020 07:07:40 GMT",
 			Properties: []datastream.Property{
 				{
 					PropertyID:   23372337,
@@ -65,10 +53,6 @@ var (
 					PropertyName: "property_name_3",
 				},
 			},
-			StreamID:        2,
-			StreamName:      "Stream2",
-			StreamTypeName:  "Logs - Raw",
-			StreamVersionID: 3,
 		},
 	}
 
@@ -82,7 +66,7 @@ func TestDataDatastreams(t *testing.T) {
 	}{
 		"list streams": {
 			init: func(t *testing.T, m *datastream.Mock) {
-				m.On("ListStreams", mock.Anything, datastream.ListStreamsRequest{}).
+				m.On("ListStreams", mock.Anything, mock.Anything).
 					Return(streamList, nil)
 			},
 			steps: []resource.TestStep{
@@ -123,7 +107,7 @@ func TestDataDatastreams(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config:      loadFixtureString("testdata/TestDataDatastreams/list_streams_with_groupid_with_invalid_prefix.tf"),
-					ExpectError: regexp.MustCompile("invalid syntax"),
+					ExpectError: regexp.MustCompile("Invalid reference"),
 				},
 			},
 		},
@@ -141,7 +125,7 @@ func TestDataDatastreams(t *testing.T) {
 		},
 		"could not fetch stream list": {
 			init: func(t *testing.T, m *datastream.Mock) {
-				m.On("ListStreams", mock.Anything, datastream.ListStreamsRequest{}).
+				m.On("ListStreams", mock.Anything, mock.Anything).
 					Return(nil, fmt.Errorf("failed to get stream list")).Once()
 			},
 			steps: []resource.TestStep{
@@ -171,44 +155,24 @@ func TestDataDatastreams(t *testing.T) {
 
 func streamsChecks(details []datastream.StreamDetails) resource.TestCheckFunc {
 	checks := []resource.TestCheckFunc{
-		resource.TestCheckResourceAttr("data.akamai_datastreams.test", "streams.#", strconv.Itoa(len(details))),
+		resource.TestCheckResourceAttr("data.akamai_datastreams.test", "streams_details.#", strconv.Itoa(len(details))),
 	}
 	for idx, stream := range details {
-		attrName := func(attr string) string { return fmt.Sprintf("streams.%d.%s", idx, attr) }
+		attrName := func(attr string) string { return fmt.Sprintf("streams_details.%d.%s", idx, attr) }
 		testCheck := resource.ComposeAggregateTestCheckFunc(
-			resource.TestCheckResourceAttr("data.akamai_datastreams.test", attrName("activation_status"), string(stream.ActivationStatus)),
-			resource.TestCheckResourceAttr("data.akamai_datastreams.test", attrName("archived"), strconv.FormatBool(stream.Archived)),
-			resource.TestCheckResourceAttr("data.akamai_datastreams.test", attrName("connectors"), stream.Connectors),
-			resource.TestCheckResourceAttr("data.akamai_datastreams.test", attrName("contract_id"), stream.ContractID),
-			resource.TestCheckResourceAttr("data.akamai_datastreams.test", attrName("created_by"), stream.CreatedBy),
-			resource.TestCheckResourceAttr("data.akamai_datastreams.test", attrName("created_date"), stream.CreatedDate),
-			resource.TestCheckResourceAttr("data.akamai_datastreams.test", attrName("current_version_id"), strconv.FormatInt(stream.CurrentVersionID, 10)),
-			errorChecks(attrName("errors"), stream.Errors),
-			resource.TestCheckResourceAttr("data.akamai_datastreams.test", attrName("group_id"), strconv.Itoa(stream.GroupID)),
-			resource.TestCheckResourceAttr("data.akamai_datastreams.test", attrName("group_name"), stream.GroupName),
-			propertiesCheck(attrName("properties"), stream.Properties),
 			resource.TestCheckResourceAttr("data.akamai_datastreams.test", attrName("stream_id"), strconv.FormatInt(stream.StreamID, 10)),
 			resource.TestCheckResourceAttr("data.akamai_datastreams.test", attrName("stream_name"), stream.StreamName),
-			resource.TestCheckResourceAttr("data.akamai_datastreams.test", attrName("stream_type_name"), stream.StreamTypeName),
-			resource.TestCheckResourceAttr("data.akamai_datastreams.test", attrName("stream_version_id"), strconv.FormatInt(stream.StreamVersionID, 10)),
+			resource.TestCheckResourceAttr("data.akamai_datastreams.test", attrName("stream_version"), strconv.FormatInt(stream.StreamVersion, 10)),
+			resource.TestCheckResourceAttr("data.akamai_datastreams.test", attrName("group_id"), strconv.Itoa(stream.GroupID)),
+			resource.TestCheckResourceAttr("data.akamai_datastreams.test", attrName("contract_id"), stream.ContractID),
+			propertiesCheck(attrName("properties"), stream.Properties),
+			resource.TestCheckResourceAttr("data.akamai_datastreams.test", attrName("latest_version"), strconv.FormatInt(stream.LatestVersion, 10)),
+			resource.TestCheckResourceAttr("data.akamai_datastreams.test", attrName("product_id"), stream.ProductID),
+			resource.TestCheckResourceAttr("data.akamai_datastreams.test", attrName("stream_status"), string(stream.StreamStatus)),
+			resource.TestCheckResourceAttr("data.akamai_datastreams.test", attrName("created_by"), stream.CreatedBy),
+			resource.TestCheckResourceAttr("data.akamai_datastreams.test", attrName("created_date"), stream.CreatedDate),
 		)
 		checks = append(checks, testCheck)
-	}
-	return resource.ComposeAggregateTestCheckFunc(checks...)
-}
-
-func errorChecks(key string, errors []datastream.Errors) resource.TestCheckFunc {
-	checks := []resource.TestCheckFunc{
-		resource.TestCheckResourceAttr("data.akamai_datastreams.test", fmt.Sprintf("%s.#", key), strconv.Itoa(len(errors))),
-	}
-	for idx, errDetails := range errors {
-		attrName := func(attr string) string { return fmt.Sprintf("%s.%d.%s", key, idx, attr) }
-		testCheck := []resource.TestCheckFunc{
-			resource.TestCheckResourceAttr("data.akamai_datastreams.test", attrName("detail"), errDetails.Detail),
-			resource.TestCheckResourceAttr("data.akamai_datastreams.test", attrName("title"), errDetails.Title),
-			resource.TestCheckResourceAttr("data.akamai_datastreams.test", attrName("type"), errDetails.Type),
-		}
-		checks = append(checks, testCheck...)
 	}
 	return resource.ComposeAggregateTestCheckFunc(checks...)
 }

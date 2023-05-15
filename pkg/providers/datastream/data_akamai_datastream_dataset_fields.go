@@ -1,12 +1,7 @@
 package datastream
 
 import (
-	"context"
-	"errors"
 	"fmt"
-
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/datastream"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/tools"
@@ -14,63 +9,57 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
+import (
+	"context"
+	"errors"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/datastream"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
+)
+
 func dataSourceDatasetFields() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataSourceDatasetFieldsRead,
 		Schema: map[string]*schema.Schema{
-			"fields": {
-				Type:        schema.TypeSet,
+			"product_id": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Identifies the stream",
+			},
+			"dataset_fields": {
+				Type:        schema.TypeList,
 				Computed:    true,
 				Description: "Provides information about groups of dataset fields available in a given template",
+
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"dataset_group_name": {
+
+						"dataset_field_id": {
+							Type:        schema.TypeInt,
+							Computed:    true,
+							Description: "Identifies the field",
+						},
+						"dataset_field_description": {
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "A name of the dataset group",
+							Description: "Describes the data set field",
 						},
-						"dataset_group_description": {
+						"dataset_field_json_key": {
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "Describes the dataset group",
+							Description: "Specifies the JSON key for the field in a log line",
 						},
-						"dataset_fields": {
-							Type:        schema.TypeList,
+						"dataset_field_name": {
+							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "A list of data set fields available within the data set group",
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"dataset_field_description": {
-										Type:        schema.TypeString,
-										Computed:    true,
-										Description: "Describes the data set field",
-									},
-									"dataset_field_id": {
-										Type:        schema.TypeInt,
-										Computed:    true,
-										Description: "Identifies the field",
-									},
-									"dataset_field_json_key": {
-										Type:        schema.TypeString,
-										Computed:    true,
-										Description: "Specifies the JSON key for the field in a log line",
-									},
-									"dataset_field_name": {
-										Type:        schema.TypeString,
-										Computed:    true,
-										Description: "A name of the data set field",
-									},
-								},
-							},
+							Description: "A name of the data set field",
+						},
+						"dataset_field_group": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "A name of the group for data set field",
 						},
 					},
 				},
-			},
-			"template_name": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Default:     "EDGE_LOGS",
-				Description: "The name of the data set template that you want to use in your stream configuration",
 			},
 		},
 	}
@@ -88,13 +77,18 @@ func dataSourceDatasetFieldsRead(ctx context.Context, rd *schema.ResourceData, m
 	logger.Debug("Listing dataset fields")
 	client := inst.Client(meta)
 
-	template, err := tf.GetStringValue("template_name", rd)
+	productId, err := tf.GetStringValue("product_id", rd)
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getDatasetFieldsRequest := datastream.GetDatasetFieldsRequest{
-		TemplateName: datastream.TemplateName(template),
+
+	var getDatasetFieldsRequest datastream.GetDatasetFieldsRequest
+	if productId != "" {
+		getDatasetFieldsRequest = datastream.GetDatasetFieldsRequest{
+			ProductID: &productId,
+		}
 	}
+
 	dataSets, err := client.GetDatasetFields(ctx, getDatasetFieldsRequest)
 	if err != nil {
 		return diag.FromErr(err)
@@ -102,7 +96,7 @@ func dataSourceDatasetFieldsRead(ctx context.Context, rd *schema.ResourceData, m
 
 	fields := parseFields(dataSets)
 
-	if err := rd.Set("fields", fields); err != nil {
+	if err := rd.Set("dataset_fields", fields); err != nil {
 		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
 
@@ -113,21 +107,13 @@ func dataSourceDatasetFieldsRead(ctx context.Context, rd *schema.ResourceData, m
 	return nil
 }
 
-func parseFields(dataSets []datastream.DataSets) []map[string]interface{} {
-	fields := make([]map[string]interface{}, 0, len(dataSets))
+func parseFields(dataSets *datastream.DataSets) []map[string]interface{} {
 
-	for _, dataSet := range dataSets {
-		data := map[string]interface{}{}
-		data["dataset_group_name"] = dataSet.DatasetGroupName
-		data["dataset_group_description"] = dataSet.DatasetGroupDescription
-		data["dataset_fields"] = parseDatasetFields(dataSet.DatasetFields)
-		fields = append(fields, data)
-	}
-
-	return fields
+	var datasetFields = dataSets.DataSetFields
+	return parseDatasetFields(datasetFields)
 }
 
-func parseDatasetFields(datasetFields []datastream.DatasetFields) []map[string]interface{} {
+func parseDatasetFields(datasetFields []datastream.DataSetField) []map[string]interface{} {
 	dSFields := make([]map[string]interface{}, 0, len(datasetFields))
 	for _, dataSetFields := range datasetFields {
 		dataSetFieldsData := map[string]interface{}{}
@@ -135,6 +121,7 @@ func parseDatasetFields(datasetFields []datastream.DatasetFields) []map[string]i
 		dataSetFieldsData["dataset_field_id"] = dataSetFields.DatasetFieldID
 		dataSetFieldsData["dataset_field_json_key"] = dataSetFields.DatasetFieldJsonKey
 		dataSetFieldsData["dataset_field_name"] = dataSetFields.DatasetFieldName
+		dataSetFieldsData["dataset_field_group"] = dataSetFields.DatasetFieldGroup
 		dSFields = append(dSFields, dataSetFieldsData)
 	}
 	return dSFields

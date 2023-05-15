@@ -4,9 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strconv"
-	"strings"
-
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
@@ -23,85 +20,40 @@ func dataAkamaiDatastreamStreams() *schema.Resource {
 		ReadContext: dataDatastreamStreamsRead,
 		Schema: map[string]*schema.Schema{
 			"group_id": {
-				Type:             schema.TypeString,
-				Optional:         true,
-				DiffSuppressFunc: tf.FieldPrefixSuppress("grp_"),
-				Description:      "Limits the returned set to streams belonging to the specified group.",
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Description: "Identifies the group where the stream is created.",
 			},
-			"streams": {
+			"streams_details": {
 				Type:        schema.TypeList,
 				Computed:    true,
-				Description: "The latest versions of the stream configurations.",
+				Description: "List of streams",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"activation_status": {
+						"stream_name": {
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "The activation status of the stream.",
+							Description: "The name of the stream.",
 						},
-						"archived": {
-							Type:        schema.TypeBool,
+						"stream_id": {
+							Type:        schema.TypeInt,
 							Computed:    true,
-							Description: "Whether the stream is archived.",
+							Description: "Identifies the stream.",
 						},
-						"connectors": {
-							Type:        schema.TypeString,
-							Computed:    true,
-							Description: "The connector where the stream sends logs.",
-						},
-						"contract_id": {
-							Type:        schema.TypeString,
-							Computed:    true,
-							Description: "Identifies the contract that the stream is associated with.",
-						},
-						"created_by": {
-							Type:        schema.TypeString,
-							Computed:    true,
-							Description: "The username who created the stream.",
-						},
-						"created_date": {
-							Type:        schema.TypeString,
-							Computed:    true,
-							Description: "The date and time when the stream was created.",
-						},
-						"current_version_id": {
+						"stream_version": {
 							Type:        schema.TypeInt,
 							Computed:    true,
 							Description: "Identifies the current version of the stream.",
-						},
-						"errors": {
-							Type:        schema.TypeList,
-							Computed:    true,
-							Description: "Objects that may indicate stream failure errors",
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"detail": {
-										Type:        schema.TypeString,
-										Computed:    true,
-										Description: "A message informing about the status of the failed stream.",
-									},
-									"title": {
-										Type:        schema.TypeString,
-										Computed:    true,
-										Description: "A descriptive label for the type of error.",
-									},
-									"type": {
-										Type:        schema.TypeString,
-										Computed:    true,
-										Description: "Identifies the error type.",
-									},
-								},
-							},
 						},
 						"group_id": {
 							Type:        schema.TypeInt,
 							Computed:    true,
 							Description: "Identifies the group where the stream is created.",
 						},
-						"group_name": {
+						"contract_id": {
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "The group name where the stream is created.",
+							Description: "Identifies the contract that the stream is associated with.",
 						},
 						"properties": {
 							Type:        schema.TypeList,
@@ -122,25 +74,41 @@ func dataAkamaiDatastreamStreams() *schema.Resource {
 								},
 							},
 						},
-						"stream_id": {
+						"latest_version": {
 							Type:        schema.TypeInt,
 							Computed:    true,
-							Description: "Identifies the stream.",
+							Description: "Identifies the latestVersion version of the stream.",
 						},
-						"stream_name": {
+						"product_id": {
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "The name of the stream.",
+							Description: "The productId.",
 						},
-						"stream_type_name": {
+						"stream_status": {
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "Specifies the type of the data stream.",
+							Description: "The activation status of the stream.",
 						},
-						"stream_version_id": {
-							Type:        schema.TypeInt,
+
+						"created_by": {
+							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "Identifies the version of the stream.",
+							Description: "The username who created the stream.",
+						},
+						"created_date": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The date and time when the stream was created.",
+						},
+						"modified_by": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The username who activated or deactivated the stream",
+						},
+						"modified_date": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The date and time when activation status was modified",
 						},
 					},
 				},
@@ -160,21 +128,17 @@ func dataDatastreamStreamsRead(ctx context.Context, d *schema.ResourceData, m in
 
 	client := inst.Client(meta)
 
-	groupIDStr, err := tf.GetStringValue("group_id", d)
+	groupIDInt, err := tf.GetIntValue("group_id", d)
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 
 	req := datastream.ListStreamsRequest{}
 	resID := "akamai_datastreams"
-	if groupIDStr != "" {
-		groupID, err := strconv.Atoi(strings.TrimPrefix(groupIDStr, "grp_"))
-		if err != nil {
-			return diag.FromErr(err)
-		}
+	if groupIDInt != 0 {
 
-		req.GroupID = tools.IntPtr(groupID)
-		resID = fmt.Sprintf("%s_%d", resID, groupID)
+		req.GroupID = tools.IntPtr(groupIDInt)
+		resID = fmt.Sprintf("%s_%d", resID, groupIDInt)
 	}
 
 	streams, err := client.ListStreams(ctx, req)
@@ -183,9 +147,11 @@ func dataDatastreamStreamsRead(ctx context.Context, d *schema.ResourceData, m in
 	}
 
 	logger.Debugf("Fetched %d streams", len(streams))
-	attrs := map[string]interface{}{"streams": createStreamsAttrs(streams)}
-	if err = tf.SetAttrs(d, attrs); err != nil {
-		return diag.FromErr(err)
+
+	attrs := createStreamsAttrs(streams)
+
+	if err := d.Set("streams_details", attrs); err != nil {
+		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
 
 	d.SetId(resID)
@@ -196,39 +162,23 @@ func createStreamsAttrs(streams []datastream.StreamDetails) []interface{} {
 	streamsAttrs := make([]interface{}, 0, len(streams))
 	for _, stream := range streams {
 		streamsAttrs = append(streamsAttrs, map[string]interface{}{
-			"activation_status":  stream.ActivationStatus,
-			"archived":           stream.Archived,
-			"connectors":         stream.Connectors,
-			"contract_id":        stream.ContractID,
-			"created_by":         stream.CreatedBy,
-			"created_date":       stream.CreatedDate,
-			"current_version_id": stream.CurrentVersionID,
-			"errors":             createErrorsAttrs(stream.Errors),
-			"group_id":           stream.GroupID,
-			"group_name":         stream.GroupName,
-			"properties":         createPropertiesAttrs(stream.Properties),
-			"stream_id":          stream.StreamID,
-			"stream_name":        stream.StreamName,
-			"stream_type_name":   stream.StreamTypeName,
-			"stream_version_id":  stream.StreamVersionID,
+			"stream_status":  stream.StreamStatus,
+			"contract_id":    stream.ContractID,
+			"created_by":     stream.CreatedBy,
+			"created_date":   stream.CreatedDate,
+			"modified_by":    stream.ModifiedBy,
+			"modified_date":  stream.ModifiedDate,
+			"group_id":       stream.GroupID,
+			"latest_version": stream.LatestVersion,
+			"product_id":     stream.ProductID,
+			"properties":     createPropertiesAttrs(stream.Properties),
+			"stream_id":      stream.StreamID,
+			"stream_name":    stream.StreamName,
+			"stream_version": stream.StreamVersion,
 		})
 	}
 
 	return streamsAttrs
-}
-
-func createErrorsAttrs(errors []datastream.Errors) []interface{} {
-	errorAttrs := make([]interface{}, 0, len(errors))
-
-	for _, errDetails := range errors {
-		errorAttrs = append(errorAttrs, map[string]interface{}{
-			"detail": errDetails.Detail,
-			"title":  errDetails.Title,
-			"type":   errDetails.Type,
-		})
-	}
-
-	return errorAttrs
 }
 
 func createPropertiesAttrs(properties []datastream.Property) []interface{} {

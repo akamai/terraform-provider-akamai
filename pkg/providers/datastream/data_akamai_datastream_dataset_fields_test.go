@@ -1,8 +1,6 @@
 package datastream
 
 import (
-	"errors"
-	"fmt"
 	"regexp"
 	"testing"
 
@@ -13,114 +11,84 @@ import (
 
 func TestDataSourceDatasetFieldsRead(t *testing.T) {
 
-	normalServerResponse := []datastream.DataSets{
-		{
-			DatasetGroupName:        "Log information",
-			DatasetGroupDescription: "Contains fields that can be used to identify or tag a log line",
-			DatasetFields: []datastream.DatasetFields{
-				{
-					DatasetFieldID:          1000,
-					DatasetFieldName:        "CP code",
-					DatasetFieldDescription: "The Content Provider code associated with the request.",
-					DatasetFieldJsonKey:     "cp",
-				},
-				{
-					DatasetFieldID:          1002,
-					DatasetFieldName:        "Request ID",
-					DatasetFieldDescription: "The identifier of the request.",
-					DatasetFieldJsonKey:     "reqId",
-				},
-				{
-					DatasetFieldID:          1100,
-					DatasetFieldName:        "Request time",
-					DatasetFieldDescription: "The time when the edge server accepted the request from the client.",
-					DatasetFieldJsonKey:     "reqTimeSec",
-				},
-			},
-		},
-		{
-			DatasetGroupName:        "Message exchange data",
-			DatasetGroupDescription: "Contains fields representing the exchange of data between Akamai & end user",
-			DatasetFields: []datastream.DatasetFields{
-				{
-					DatasetFieldID:          1005,
-					DatasetFieldName:        "Bytes",
-					DatasetFieldDescription: "The content bytes served in the response.",
-					DatasetFieldJsonKey:     "bytes",
-				},
-				{
-					DatasetFieldID:          1006,
-					DatasetFieldName:        "Client IP",
-					DatasetFieldDescription: "The IP address of the client.",
-					DatasetFieldJsonKey:     "cliIP",
-				},
-			},
-		},
-	}
-	normalChecks := []resource.TestCheckFunc{
-		resource.TestCheckResourceAttr("data.akamai_datastream_dataset_fields.test", "fields.#", "2"),
-
-		resource.TestCheckResourceAttr("data.akamai_datastream_dataset_fields.test", "fields.0.dataset_group_name", "Log information"),
-		resource.TestCheckResourceAttr("data.akamai_datastream_dataset_fields.test", "fields.0.dataset_group_description", "Contains fields that can be used to identify or tag a log line"),
-		resource.TestCheckResourceAttr("data.akamai_datastream_dataset_fields.test", "fields.0.dataset_fields.0.dataset_field_description", "The Content Provider code associated with the request."),
-		resource.TestCheckResourceAttr("data.akamai_datastream_dataset_fields.test", "fields.0.dataset_fields.0.dataset_field_id", "1000"),
-		resource.TestCheckResourceAttr("data.akamai_datastream_dataset_fields.test", "fields.0.dataset_fields.0.dataset_field_json_key", "cp"),
-		resource.TestCheckResourceAttr("data.akamai_datastream_dataset_fields.test", "fields.0.dataset_fields.0.dataset_field_name", "CP code"),
-		resource.TestCheckResourceAttr("data.akamai_datastream_dataset_fields.test", "fields.0.dataset_fields.1.dataset_field_description", "The identifier of the request."),
-		resource.TestCheckResourceAttr("data.akamai_datastream_dataset_fields.test", "fields.0.dataset_fields.1.dataset_field_id", "1002"),
-		resource.TestCheckResourceAttr("data.akamai_datastream_dataset_fields.test", "fields.0.dataset_fields.1.dataset_field_json_key", "reqId"),
-		resource.TestCheckResourceAttr("data.akamai_datastream_dataset_fields.test", "fields.0.dataset_fields.1.dataset_field_name", "Request ID"),
-		resource.TestCheckResourceAttr("data.akamai_datastream_dataset_fields.test", "fields.0.dataset_fields.2.dataset_field_description", "The time when the edge server accepted the request from the client."),
-		resource.TestCheckResourceAttr("data.akamai_datastream_dataset_fields.test", "fields.0.dataset_fields.2.dataset_field_id", "1100"),
-		resource.TestCheckResourceAttr("data.akamai_datastream_dataset_fields.test", "fields.0.dataset_fields.2.dataset_field_json_key", "reqTimeSec"),
-		resource.TestCheckResourceAttr("data.akamai_datastream_dataset_fields.test", "fields.0.dataset_fields.2.dataset_field_name", "Request time"),
-		resource.TestCheckResourceAttr("data.akamai_datastream_dataset_fields.test", "fields.1.dataset_group_name", "Message exchange data"),
-		resource.TestCheckResourceAttr("data.akamai_datastream_dataset_fields.test", "fields.1.dataset_group_description", "Contains fields representing the exchange of data between Akamai & end user"),
-		resource.TestCheckResourceAttr("data.akamai_datastream_dataset_fields.test", "fields.1.dataset_fields.0.dataset_field_description", "The content bytes served in the response."),
-		resource.TestCheckResourceAttr("data.akamai_datastream_dataset_fields.test", "fields.1.dataset_fields.0.dataset_field_id", "1005"),
-		resource.TestCheckResourceAttr("data.akamai_datastream_dataset_fields.test", "fields.1.dataset_fields.0.dataset_field_json_key", "bytes"),
-		resource.TestCheckResourceAttr("data.akamai_datastream_dataset_fields.test", "fields.1.dataset_fields.0.dataset_field_name", "Bytes"),
-		resource.TestCheckResourceAttr("data.akamai_datastream_dataset_fields.test", "fields.1.dataset_fields.1.dataset_field_description", "The IP address of the client."),
-		resource.TestCheckResourceAttr("data.akamai_datastream_dataset_fields.test", "fields.1.dataset_fields.1.dataset_field_id", "1006"),
-		resource.TestCheckResourceAttr("data.akamai_datastream_dataset_fields.test", "fields.1.dataset_fields.1.dataset_field_json_key", "cliIP"),
-		resource.TestCheckResourceAttr("data.akamai_datastream_dataset_fields.test", "fields.1.dataset_fields.1.dataset_field_name", "Client IP"),
-	}
 	tests := map[string]struct {
-		configPath    string
-		edgegridData  []datastream.DataSets
-		edgegridError error
-		checks        []resource.TestCheckFunc
-		withError     error
+		configPath             string
+		getDatasetFieldsReturn *datastream.DataSets
+		checkFuncs             []resource.TestCheckFunc
+		edgegridError          error
+		withError              *regexp.Regexp
 	}{
-		"EDGE_LOGS template": {
-			configPath:   "testdata/TestDataSourceDatasetFieldsRead/edge_logs.tf",
-			edgegridData: normalServerResponse,
-			checks:       normalChecks,
+
+		"validate dataset fields response": {
+			configPath: "testdata/TestDataSourceDatasetFieldsRead/list_dataset_fields_with_product.tf",
+			getDatasetFieldsReturn: &datastream.DataSets{
+				DataSetFields: []datastream.DataSetField{
+					{
+						DatasetFieldID:          1000,
+						DatasetFieldName:        "datasetFieldName_1",
+						DatasetFieldJsonKey:     "datasetFieldJsonKey_1",
+						DatasetFieldGroup:       "datasetFieldGroup_1",
+						DatasetFieldDescription: "datasetFieldDescription_1",
+					},
+					{
+						DatasetFieldID:          1001,
+						DatasetFieldName:        "datasetFieldName_2",
+						DatasetFieldJsonKey:     "datasetFieldJsonKey_2",
+						DatasetFieldGroup:       "datasetFieldGroup_2",
+						DatasetFieldDescription: "datasetFieldDescription_2",
+					},
+					{
+						DatasetFieldID:          1002,
+						DatasetFieldName:        "datasetFieldName_3",
+						DatasetFieldJsonKey:     "datasetFieldJsonKey_3",
+						DatasetFieldGroup:       "datasetFieldGroup_3",
+						DatasetFieldDescription: "datasetFieldDescription_3",
+					},
+				},
+			},
+
+			checkFuncs: []resource.TestCheckFunc{
+				resource.TestCheckResourceAttr("data.akamai_datastream_dataset_fields.test", "dataset_fields.#", "3"),
+				resource.TestCheckResourceAttr("data.akamai_datastream_dataset_fields.test", "dataset_fields.0.dataset_field_description", "datasetFieldDescription_1"),
+				resource.TestCheckResourceAttr("data.akamai_datastream_dataset_fields.test", "dataset_fields.0.dataset_field_id", "1000"),
+				resource.TestCheckResourceAttr("data.akamai_datastream_dataset_fields.test", "dataset_fields.0.dataset_field_json_key", "datasetFieldJsonKey_1"),
+				resource.TestCheckResourceAttr("data.akamai_datastream_dataset_fields.test", "dataset_fields.0.dataset_field_name", "datasetFieldName_1"),
+				resource.TestCheckResourceAttr("data.akamai_datastream_dataset_fields.test", "dataset_fields.0.dataset_field_group", "datasetFieldGroup_1"),
+
+				resource.TestCheckResourceAttr("data.akamai_datastream_dataset_fields.test", "dataset_fields.1.dataset_field_description", "datasetFieldDescription_2"),
+				resource.TestCheckResourceAttr("data.akamai_datastream_dataset_fields.test", "dataset_fields.1.dataset_field_id", "1001"),
+				resource.TestCheckResourceAttr("data.akamai_datastream_dataset_fields.test", "dataset_fields.1.dataset_field_json_key", "datasetFieldJsonKey_2"),
+				resource.TestCheckResourceAttr("data.akamai_datastream_dataset_fields.test", "dataset_fields.1.dataset_field_name", "datasetFieldName_2"),
+				resource.TestCheckResourceAttr("data.akamai_datastream_dataset_fields.test", "dataset_fields.1.dataset_field_group", "datasetFieldGroup_2"),
+
+				resource.TestCheckResourceAttr("data.akamai_datastream_dataset_fields.test", "dataset_fields.2.dataset_field_description", "datasetFieldDescription_3"),
+				resource.TestCheckResourceAttr("data.akamai_datastream_dataset_fields.test", "dataset_fields.2.dataset_field_id", "1002"),
+				resource.TestCheckResourceAttr("data.akamai_datastream_dataset_fields.test", "dataset_fields.2.dataset_field_json_key", "datasetFieldJsonKey_3"),
+				resource.TestCheckResourceAttr("data.akamai_datastream_dataset_fields.test", "dataset_fields.2.dataset_field_name", "datasetFieldName_3"),
+				resource.TestCheckResourceAttr("data.akamai_datastream_dataset_fields.test", "dataset_fields.2.dataset_field_group", "datasetFieldGroup_3"),
+			},
 		},
-		"no template, EDGE_LOGS by default": {
-			configPath:   "testdata/TestDataSourceDatasetFieldsRead/edge_logs_no_template.tf",
-			edgegridData: normalServerResponse,
-			checks:       normalChecks,
+		"no template EDGE_LOGS by default": {
+			configPath: "testdata/TestDataSourceDatasetFieldsRead/list_dataset_fields_default_product.tf",
+			getDatasetFieldsReturn: &datastream.DataSets{
+				DataSetFields: []datastream.DataSetField{},
+			},
+			checkFuncs: []resource.TestCheckFunc{},
 		},
 		"empty server response": {
-			configPath:   "testdata/TestDataSourceDatasetFieldsRead/edge_logs.tf",
-			edgegridData: []datastream.DataSets{},
-			checks: []resource.TestCheckFunc{
-				resource.TestCheckResourceAttr("data.akamai_datastream_dataset_fields.test", "fields.#", "0"),
+			configPath: "testdata/TestDataSourceDatasetFieldsRead/list_dataset_fields_with_product.tf",
+			getDatasetFieldsReturn: &datastream.DataSets{
+				DataSetFields: []datastream.DataSetField{},
 			},
-		},
-		"EDGE_LOGS template: edgegrid error": {
-			configPath:    "testdata/TestDataSourceDatasetFieldsRead/edge_logs.tf",
-			edgegridError: fmt.Errorf("%w: request failed: %s", datastream.ErrGetDatasetFields, errors.New("500")),
-			withError:     datastream.ErrGetDatasetFields,
+			checkFuncs: []resource.TestCheckFunc{
+				resource.TestCheckResourceAttr("data.akamai_datastream_dataset_fields.test", "dataset_fields.#", "0"),
+			},
 		},
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			client := &datastream.Mock{}
-			client.On("GetDatasetFields", mock.Anything, datastream.GetDatasetFieldsRequest{
-				TemplateName: datastream.TemplateNameEdgeLogs,
-			}).Return(test.edgegridData, test.edgegridError)
+			client.On("GetDatasetFields", mock.Anything, mock.Anything).Return(test.getDatasetFieldsReturn, test.edgegridError)
 			useClient(client, func() {
 				if test.withError == nil {
 					resource.UnitTest(t, resource.TestCase{
@@ -129,7 +97,7 @@ func TestDataSourceDatasetFieldsRead(t *testing.T) {
 							{
 								Config: loadFixtureString(test.configPath),
 								Check: resource.ComposeAggregateTestCheckFunc(
-									test.checks...,
+									test.checkFuncs...,
 								),
 							},
 						},
@@ -140,7 +108,7 @@ func TestDataSourceDatasetFieldsRead(t *testing.T) {
 						Steps: []resource.TestStep{
 							{
 								Config:      loadFixtureString(test.configPath),
-								ExpectError: regexp.MustCompile(test.withError.Error()),
+								ExpectError: test.withError,
 							},
 						},
 					})

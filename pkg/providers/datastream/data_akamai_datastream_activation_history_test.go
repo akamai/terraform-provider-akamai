@@ -24,36 +24,32 @@ func TestDataAkamaiDatastreamActivationHistoryRead(t *testing.T) {
 			configPath: "testdata/TestDataAkamaiDatastreamActivationHistoryRead/activation_history.tf",
 			getActivationHistoryReturn: []datastream.ActivationHistoryEntry{
 				{
-					CreatedBy:       "user1",
-					CreatedDate:     "16-01-2020 11:07:12 GMT",
-					IsActive:        false,
-					StreamID:        7050,
-					StreamVersionID: 2,
+					ModifiedBy:    "user1",
+					ModifiedDate:  "16-01-2020 11:07:12 GMT",
+					Status:        datastream.StreamStatusDeactivated,
+					StreamID:      7050,
+					StreamVersion: 2,
 				},
 				{
-					CreatedBy:       "user2",
-					CreatedDate:     "16-01-2020 09:31:02 GMT",
-					IsActive:        true,
-					StreamID:        7050,
-					StreamVersionID: 2,
+					ModifiedBy:    "user2",
+					ModifiedDate:  "16-01-2020 09:31:02 GMT",
+					Status:        datastream.StreamStatusActivated,
+					StreamID:      7050,
+					StreamVersion: 2,
 				},
 			},
 			checkFuncs: []resource.TestCheckFunc{
-				resource.TestCheckResourceAttr("data.akamai_datastream_activation_history.test", "stream_id", "7050"),
-
-				resource.TestCheckResourceAttr("data.akamai_datastream_activation_history.test", "activations.#", "2"),
-
-				resource.TestCheckResourceAttr("data.akamai_datastream_activation_history.test", "activations.0.created_by", "user1"),
-				resource.TestCheckResourceAttr("data.akamai_datastream_activation_history.test", "activations.0.created_date", "16-01-2020 11:07:12 GMT"),
+				resource.TestCheckResourceAttr("data.akamai_datastream_activation_history.test", "activations.0.modified_by", "user1"),
+				resource.TestCheckResourceAttr("data.akamai_datastream_activation_history.test", "activations.0.modified_date", "16-01-2020 11:07:12 GMT"),
 				resource.TestCheckResourceAttr("data.akamai_datastream_activation_history.test", "activations.0.stream_id", "7050"),
-				resource.TestCheckResourceAttr("data.akamai_datastream_activation_history.test", "activations.0.stream_version_id", "2"),
-				resource.TestCheckResourceAttr("data.akamai_datastream_activation_history.test", "activations.0.is_active", "false"),
+				resource.TestCheckResourceAttr("data.akamai_datastream_activation_history.test", "activations.0.stream_version", "2"),
+				resource.TestCheckResourceAttr("data.akamai_datastream_activation_history.test", "activations.0.status", "DEACTIVATED"),
 
-				resource.TestCheckResourceAttr("data.akamai_datastream_activation_history.test", "activations.1.created_by", "user2"),
-				resource.TestCheckResourceAttr("data.akamai_datastream_activation_history.test", "activations.1.created_date", "16-01-2020 09:31:02 GMT"),
+				resource.TestCheckResourceAttr("data.akamai_datastream_activation_history.test", "activations.1.modified_by", "user2"),
+				resource.TestCheckResourceAttr("data.akamai_datastream_activation_history.test", "activations.1.modified_date", "16-01-2020 09:31:02 GMT"),
 				resource.TestCheckResourceAttr("data.akamai_datastream_activation_history.test", "activations.1.stream_id", "7050"),
-				resource.TestCheckResourceAttr("data.akamai_datastream_activation_history.test", "activations.1.stream_version_id", "2"),
-				resource.TestCheckResourceAttr("data.akamai_datastream_activation_history.test", "activations.1.is_active", "true"),
+				resource.TestCheckResourceAttr("data.akamai_datastream_activation_history.test", "activations.1.stream_version", "2"),
+				resource.TestCheckResourceAttr("data.akamai_datastream_activation_history.test", "activations.1.status", "ACTIVATED"),
 			},
 		},
 		"validate empty response": {
@@ -61,7 +57,6 @@ func TestDataAkamaiDatastreamActivationHistoryRead(t *testing.T) {
 			getActivationHistoryReturn: []datastream.ActivationHistoryEntry{},
 			checkFuncs: []resource.TestCheckFunc{
 				resource.TestCheckResourceAttr("data.akamai_datastream_activation_history.test", "stream_id", "7051"),
-				resource.TestCheckResourceAttr("data.akamai_datastream_activation_history.test", "activations.#", "0"),
 			},
 		},
 		"edgegrid error": {
