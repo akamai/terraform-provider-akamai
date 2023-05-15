@@ -348,7 +348,6 @@
       }
     ],
     "comments": "test",
-    "criteriaLocked": true,
     "customOverride": {
       "name": "test",
       "overrideId": "test"
@@ -357,7 +356,6 @@
     "options": {},
     "uuid": "test",
     "templateUuid": "test",
-    "templateLink": "test",
-    "criteriaMustSatisfy": "test"
+    "templateLink": "test"
   }
 }

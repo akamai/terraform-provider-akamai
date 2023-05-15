@@ -36,6 +36,8 @@ func NewBuilder(d *schema.ResourceData) *RulesBuilder {
 }
 
 // Build returns papi.Rules built from the terraform schema.
+//
+//nolint:gocyclo
 func (r RulesBuilder) Build() (*papi.Rules, error) {
 	name, err := r.ruleName()
 	if err != nil {
@@ -51,6 +53,9 @@ func (r RulesBuilder) Build() (*papi.Rules, error) {
 	}
 
 	criteriaMustSatisfy, err := r.ruleCriteriaMustSatisfy()
+	if name == defaultRule && err == nil {
+		return nil, fmt.Errorf("%w: %s", ErrNotForDefault, "criteria_must_satisfy")
+	}
 	if err != nil && !errors.Is(err, ErrNotFound) {
 		return nil, err
 	}
@@ -64,6 +69,9 @@ func (r RulesBuilder) Build() (*papi.Rules, error) {
 	}
 
 	advancedOverride, err := r.ruleAdvancedOverride()
+	if name != defaultRule && err == nil {
+		return nil, fmt.Errorf("%w: %s", ErrOnlyForDefault, "advanced_override")
+	}
 	if err != nil && !errors.Is(err, ErrNotFound) {
 		return nil, err
 	}
@@ -74,11 +82,17 @@ func (r RulesBuilder) Build() (*papi.Rules, error) {
 	}
 
 	criteriaLocked, err := r.ruleCriteriaLocked()
+	if name == defaultRule && err == nil {
+		return nil, fmt.Errorf("%w: %s", ErrNotForDefault, "criteria_locked")
+	}
 	if err != nil && !errors.Is(err, ErrNotFound) {
 		return nil, err
 	}
 
 	customOverride, err := r.ruleCustomOverride()
+	if name != defaultRule && err == nil {
+		return nil, fmt.Errorf("%w: %s", ErrOnlyForDefault, "custom_override")
+	}
 	if err != nil && !errors.Is(err, ErrNotFound) {
 		return nil, err
 	}
@@ -99,12 +113,15 @@ func (r RulesBuilder) Build() (*papi.Rules, error) {
 	}
 
 	criteria, err := r.ruleCriteria()
-	if err != nil {
+	if name == defaultRule && err == nil {
+		return nil, fmt.Errorf("%w: %s", ErrNotForDefault, "criterion")
+	}
+	if err != nil && !errors.Is(err, ErrNotFound) {
 		return nil, err
 	}
 
 	behaviors, err := r.ruleBehaviors()
-	if err != nil {
+	if err != nil && !errors.Is(err, ErrNotFound) {
 		return nil, err
 	}
 
@@ -211,9 +228,6 @@ func (r RulesBuilder) ruleTemplateLink() (string, error) {
 func (r RulesBuilder) ruleBehaviors() ([]papi.RuleBehavior, error) {
 	behaviorsList, err := r.schemaReader.GetBehaviorsList()
 	if err != nil {
-		if errors.Is(err, ErrNotFound) {
-			return []papi.RuleBehavior{}, nil
-		}
 		return nil, err
 	}
 	return r.buildRuleBehaviors(behaviorsList)
@@ -222,9 +236,6 @@ func (r RulesBuilder) ruleBehaviors() ([]papi.RuleBehavior, error) {
 func (r RulesBuilder) ruleCriteria() ([]papi.RuleBehavior, error) {
 	criteriaMap, err := r.schemaReader.GetCriteriaList()
 	if err != nil {
-		if errors.Is(err, ErrNotFound) {
-			return []papi.RuleBehavior{}, nil
-		}
 		return nil, err
 	}
 	return r.buildRuleBehaviors(criteriaMap)

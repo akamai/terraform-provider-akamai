@@ -10,15 +10,11 @@ data "akamai_property_rules_builder" "default" {
       name        = "test"
       override_id = "test"
     }
-    advanced_override     = "test"
-    comments              = "test"
-    criteria_must_satisfy = "test"
-    uuid                  = "test"
-    template_uuid         = "test"
-    template_link         = "test"
-    criteria_locked       = true
-    criterion {
-    }
+    advanced_override = "test"
+    comments          = "test"
+    uuid              = "test"
+    template_uuid     = "test"
+    template_link     = "test"
 
     behavior {
       content_characteristics_amd {

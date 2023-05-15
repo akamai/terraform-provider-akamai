@@ -67,7 +67,7 @@ func dataSourcePropertyRulesBuilderRead(_ context.Context, d *schema.ResourceDat
 		return diag.Errorf("setting rule_format in schema %s", err)
 	}
 
-	sum := md5.Sum([]byte(JSON))
+	sum := md5.Sum(JSON)
 	hexsum := hex.EncodeToString(sum[:])
 	d.SetId(hexsum)
 	return nil
