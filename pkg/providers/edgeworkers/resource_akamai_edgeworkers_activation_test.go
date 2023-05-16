@@ -48,7 +48,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", "STAGING"),
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
 					),
 				},
 			},
@@ -102,7 +102,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "8"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", "STAGING"),
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
 					),
 				},
 			},
@@ -138,7 +138,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", "STAGING"),
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
 					),
 				},
 			},
@@ -178,7 +178,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", "STAGING"),
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
 					),
 				},
 			},
@@ -216,7 +216,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", "STAGING"),
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
 					),
 				},
 			},
@@ -259,7 +259,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", "STAGING"),
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
 					),
 				},
 				{
@@ -267,7 +267,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "2"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", "PRODUCTION"),
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", productionNetwork),
 					),
 				},
 			},
@@ -311,7 +311,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", "STAGING"),
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
 					),
 				},
 				{
@@ -319,7 +319,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "2"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test1"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", "STAGING"),
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
 					),
 				},
 			},
@@ -371,7 +371,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", "STAGING"),
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
 					),
 				},
 				{
@@ -379,7 +379,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "3"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test1"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", "STAGING"),
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
 					),
 				},
 			},
@@ -419,7 +419,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", "STAGING"),
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
 					),
 				},
 				{
@@ -427,7 +427,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "2"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test1"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", "STAGING"),
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
 					),
 				},
 			},
@@ -474,7 +474,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", "STAGING"),
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
 					),
 				},
 				{
@@ -482,7 +482,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "2"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", "PRODUCTION"),
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", productionNetwork),
 					),
 				},
 			},
@@ -535,7 +535,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "edgeworker_id", "1234"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", "STAGING"),
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
 					),
 				},
 				{
@@ -544,7 +544,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "edgeworker_id", "4321"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", "STAGING"),
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
 					),
 				},
 			},
@@ -579,7 +579,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", "STAGING"),
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
 					),
 				},
 			},
@@ -618,7 +618,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", "STAGING"),
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
 					),
 				},
 			},
@@ -655,7 +655,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", "STAGING"),
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
 					),
 				},
 			},
@@ -693,7 +693,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", "STAGING"),
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
 					),
 				},
 			},
@@ -904,7 +904,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", "STAGING"),
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
 					),
 				},
 				{
@@ -941,7 +941,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", "STAGING"),
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
 					),
 				},
 				{
@@ -986,7 +986,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", "STAGING"),
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
 					),
 				},
 				{
@@ -1033,7 +1033,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", "STAGING"),
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
 					),
 				},
 				{

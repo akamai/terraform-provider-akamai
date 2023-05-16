@@ -22,6 +22,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"golang.org/x/sync/errgroup"
 )
 
 var (
@@ -327,6 +328,15 @@ func resourceEdgeWorkerDelete(ctx context.Context, d *schema.ResourceData, m int
 		return diag.FromErr(err)
 	}
 
+	activations, err := checkEdgeWorkerActivations(ctx, client, edgeWorkerIDReq)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err = deactivateEdgeWorkerVersions(ctx, client, activations); err != nil {
+		return diag.FromErr(err)
+	}
+
 	versions, err := client.ListEdgeWorkerVersions(ctx, edgeworkers.ListEdgeWorkerVersionsRequest{
 		EdgeWorkerID: edgeWorkerIDReq,
 	})
@@ -348,6 +358,59 @@ func resourceEdgeWorkerDelete(ctx context.Context, d *schema.ResourceData, m int
 	if err != nil {
 		return diag.FromErr(err)
 	}
+	return nil
+}
+
+// checkEdgeWorkerActivations checks if there are any completed activations on staging or production networks
+func checkEdgeWorkerActivations(ctx context.Context, client edgeworkers.Edgeworkers, edgeWorkerID int) ([]*edgeworkers.Activation, error) {
+	var activations []*edgeworkers.Activation
+
+	for _, network := range validEdgeworkerActivationNetworks {
+		act, err := getCurrentActivation(ctx, client, edgeWorkerID, network, false)
+		if err != nil {
+			return nil, err
+		}
+		if act != nil {
+			activations = append(activations, act)
+		}
+	}
+	return activations, nil
+}
+
+// deactivateEdgeWorkerVersions loops through activations and deactivates versions in order to delete the edgeworker
+func deactivateEdgeWorkerVersions(ctx context.Context, client edgeworkers.Edgeworkers, activations []*edgeworkers.Activation) error {
+	g, ctxGroup := errgroup.WithContext(ctx)
+	for _, act := range activations {
+		act := act
+		g.Go(func() error {
+			return deactivateEdgeWorkerVersion(ctxGroup, client, act.EdgeWorkerID, act.Network, act.Version)
+		})
+	}
+
+	if err := g.Wait(); err != nil {
+		return fmt.Errorf("error deactivating edgeworker version: %s", err)
+	}
+
+	return nil
+}
+
+// deactivateEdgeWorkerVersion deactivates edgeworker version and waits for its completion
+func deactivateEdgeWorkerVersion(ctx context.Context, client edgeworkers.Edgeworkers, edgeworkerID int, network, version string) error {
+	deactivation, err := client.DeactivateVersion(ctx, edgeworkers.DeactivateVersionRequest{
+		EdgeWorkerID: edgeworkerID,
+		DeactivateVersion: edgeworkers.DeactivateVersion{
+			Network: edgeworkers.ActivationNetwork(network),
+			Version: version,
+		},
+	})
+	if err != nil {
+		return err
+	}
+	_, err = waitForEdgeworkerDeactivation(ctx, client, edgeworkerID, deactivation.DeactivationID)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 

@@ -237,6 +237,12 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 				Version:      "1.0",
 				CreatedTime:  timeForCreation,
 			}
+			edgeWorkerActivationsReq := edgeworkers.ListActivationsRequest{
+				EdgeWorkerID: edgeWorkerID,
+			}
+			edgeWorkerActivationsResp := edgeworkers.ListActivationsResponse{
+				Activations: []edgeworkers.Activation{},
+			}
 			edgeWorkerVersionsReq := edgeworkers.ListEdgeWorkerVersionsRequest{
 				EdgeWorkerID: edgeWorkerID,
 			}
@@ -252,6 +258,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 			edgeWorkerDeleteReq := edgeworkers.DeleteEdgeWorkerIDRequest{
 				EdgeWorkerID: edgeWorkerID,
 			}
+			client.On("ListActivations", mock.Anything, edgeWorkerActivationsReq).Return(&edgeWorkerActivationsResp, nil).Times(2)
 			client.On("ListEdgeWorkerVersions", mock.Anything, edgeWorkerVersionsReq).Return(&edgeWorkerVersionResp, nil).Once()
 			client.On("DeleteEdgeWorkerVersion", mock.Anything, edgeWorkerVersionsDeleteReq).Return(nil).Once()
 			client.On("DeleteEdgeWorkerID", mock.Anything, edgeWorkerDeleteReq).Return(nil).Once()
@@ -267,6 +274,12 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 				EdgeWorkerID: edgeWorkerID,
 				Version:      "2.0",
 				CreatedTime:  timeForUpdate,
+			}
+			edgeWorkerActivationsReq := edgeworkers.ListActivationsRequest{
+				EdgeWorkerID: edgeWorkerID,
+			}
+			edgeWorkerActivationsResp := edgeworkers.ListActivationsResponse{
+				Activations: []edgeworkers.Activation{},
 			}
 			edgeWorkerVersionsReq := edgeworkers.ListEdgeWorkerVersionsRequest{
 				EdgeWorkerID: edgeWorkerID,
@@ -288,6 +301,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 			edgeWorkerDeleteReq := edgeworkers.DeleteEdgeWorkerIDRequest{
 				EdgeWorkerID: edgeWorkerID,
 			}
+			client.On("ListActivations", mock.Anything, edgeWorkerActivationsReq).Return(&edgeWorkerActivationsResp, nil).Times(2)
 			client.On("ListEdgeWorkerVersions", mock.Anything, edgeWorkerVersionsReq).Return(&edgeWorkerVersionResp, nil).Once()
 			client.On("DeleteEdgeWorkerVersion", mock.Anything, edgeWorkerFirstVersionsDeleteReq).Return(nil).Once()
 			client.On("DeleteEdgeWorkerVersion", mock.Anything, edgeWorkerSecondVersionsDeleteReq).Return(nil).Once()
@@ -685,6 +699,143 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 
+	t.Run("delete activation upon edgeworker deletion - activations on staging and production", func(t *testing.T) {
+		testDir := "testdata/TestResEdgeWorkersEdgeWorker/edgeworker_lifecycle"
+		client := new(edgeworkers.Mock)
+
+		timeForCreation := time.Now().Format(time.RFC3339)
+
+		edgeWorker, edgeWorkerVersion := expectCreateEdgeWorkerWithVersion(t, client, "example", bundlePathForCreate, timeForCreation, 12345, 54321, 123)
+		expectReadEdgeWorkerWithOneVersion(t, client, edgeWorker.Name, bundlePathForCreate, edgeWorkerVersion.Version, timeForCreation, int(edgeWorker.GroupID), edgeWorker.ResourceTierID, edgeWorkerVersion.EdgeWorkerID, 2)
+
+		// mock two activations for edgeworker version - on staging and production
+		actStaging := expectActivation(123, edgeWorker.EdgeWorkerID, "123", "", "", "", stagingNetwork, activationStatusComplete, edgeWorkerVersion.Version)
+		actProduction := expectActivation(123, edgeWorker.EdgeWorkerID, "123", "", "", "", productionNetwork, activationStatusComplete, edgeWorkerVersion.Version)
+		edgeWorkerActivationsReq := expectListActivationsRequest(edgeWorker.EdgeWorkerID, "")
+		edgeWorkerActivationsStagingResp := expectListActivationsResponse([]edgeworkers.Activation{actStaging})
+		edgeWorkerActivationsProductionResp := expectListActivationsResponse([]edgeworkers.Activation{actProduction})
+
+		// mock two empty list deactivations calls
+		edgeWorkerListDeactivationsReq := expectListDeactivationsRequest(edgeWorker.EdgeWorkerID, edgeWorkerVersion.Version)
+		edgeWorkerListDeactivationsResp := expectListDeactivationsResponse([]edgeworkers.Deactivation{})
+
+		// mock deactivate version on staging and production calls
+		deactIDStaging := 321
+		deactIDProduction := 322
+		edgeWorkerDeactivateVersionStagingReq := expectDeactivateVersionRequest(edgeWorker.EdgeWorkerID, stagingNetwork, "", edgeWorkerVersion.Version)
+		edgeWorkerDeactivateVersionProductionReq := expectDeactivateVersionRequest(edgeWorker.EdgeWorkerID, productionNetwork, "", edgeWorkerVersion.Version)
+		edgeWorkerDeactivateVersionStagingResp := expectDeactivation(edgeWorker.EdgeWorkerID, deactIDStaging, edgeWorkerVersion.Version, "", activationStatusPending, stagingNetwork, "", "", "", "")
+		edgeWorkerDeactivateVersionProductionResp := expectDeactivation(edgeWorker.EdgeWorkerID, deactIDProduction, edgeWorkerVersion.Version, "", activationStatusPending, productionNetwork, "", "", "", "")
+
+		// mock get deactivation calls for staging and production
+		edgeWorkerGetDeactivationStagingReq := expectGetDeactivationRequest(edgeWorker.EdgeWorkerID, deactIDStaging)
+		edgeWorkerGetDeactivationProductionReq := expectGetDeactivationRequest(edgeWorker.EdgeWorkerID, deactIDProduction)
+		edgeWorkerGetDeactivationStagingResp := expectDeactivation(edgeWorker.EdgeWorkerID, deactIDStaging, edgeWorkerVersion.Version, "", activationStatusComplete, stagingNetwork, "", "", "", "")
+		edgeWorkerGetDeactivationProductionResp := expectDeactivation(edgeWorker.EdgeWorkerID, deactIDProduction, edgeWorkerVersion.Version, "", activationStatusComplete, productionNetwork, "", "", "", "")
+
+		// mock list edgeworker versions call
+		edgeWorkerVersionsReq := expectListEdgeWorkerVersionsRequest(edgeWorker.EdgeWorkerID)
+		edgeWorkerVersionResp := expectListEdgeWorkerVersionsResponse([]edgeworkers.EdgeWorkerVersion{*edgeWorkerVersion})
+
+		// mock edgeworker version and edgeworkerID deletions
+		edgeWorkerVersionsDeleteReq := expectDeleteEdgeWorkerVersionRequest(edgeWorker.EdgeWorkerID, edgeWorkerVersion.Version)
+		edgeWorkerDeleteReq := expectDeleteEdgeWorkerRequest(edgeWorker.EdgeWorkerID)
+
+		client.On("ListActivations", mock.Anything, edgeWorkerActivationsReq).Return(&edgeWorkerActivationsStagingResp, nil).Once()
+		client.On("ListActivations", mock.Anything, edgeWorkerActivationsReq).Return(&edgeWorkerActivationsProductionResp, nil).Once()
+		client.On("ListDeactivations", mock.Anything, edgeWorkerListDeactivationsReq).Return(&edgeWorkerListDeactivationsResp, nil).Times(2)
+		client.On("DeactivateVersion", mock.Anything, edgeWorkerDeactivateVersionProductionReq).Return(&edgeWorkerDeactivateVersionProductionResp, nil).Once()
+		client.On("DeactivateVersion", mock.Anything, edgeWorkerDeactivateVersionStagingReq).Return(&edgeWorkerDeactivateVersionStagingResp, nil).Once()
+		client.On("GetDeactivation", mock.Anything, edgeWorkerGetDeactivationProductionReq).Return(&edgeWorkerGetDeactivationProductionResp, nil).Once()
+		client.On("GetDeactivation", mock.Anything, edgeWorkerGetDeactivationStagingReq).Return(&edgeWorkerGetDeactivationStagingResp, nil).Once()
+		client.On("ListEdgeWorkerVersions", mock.Anything, edgeWorkerVersionsReq).Return(&edgeWorkerVersionResp, nil).Once()
+		client.On("DeleteEdgeWorkerVersion", mock.Anything, edgeWorkerVersionsDeleteReq).Return(nil).Once()
+		client.On("DeleteEdgeWorkerID", mock.Anything, edgeWorkerDeleteReq).Return(nil).Once()
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProviderFactories: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString(fmt.Sprintf("%s/edgeworker_create.tf", testDir)),
+						Check: checkAttributes(edgeWorkerAttributes{
+							name:            "example",
+							groupID:         "12345",
+							resourceTierID:  54321,
+							localBundle:     bundlePathForCreate,
+							localBundleHash: bundleHashForCreate,
+							version:         "1.0",
+						}),
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
+
+	t.Run("delete activation upon edgeworker deletion - only on one network - staging", func(t *testing.T) {
+		testDir := "testdata/TestResEdgeWorkersEdgeWorker/edgeworker_lifecycle"
+		client := new(edgeworkers.Mock)
+
+		timeForCreation := time.Now().Format(time.RFC3339)
+
+		edgeWorker, edgeWorkerVersion := expectCreateEdgeWorkerWithVersion(t, client, "example", bundlePathForCreate, timeForCreation, 12345, 54321, 123)
+		expectReadEdgeWorkerWithOneVersion(t, client, edgeWorker.Name, bundlePathForCreate, edgeWorkerVersion.Version, timeForCreation, int(edgeWorker.GroupID), edgeWorker.ResourceTierID, edgeWorkerVersion.EdgeWorkerID, 2)
+
+		// mock one activation for edgeworker version - on staging
+		actStaging := expectActivation(123, edgeWorker.EdgeWorkerID, "123", "", "", "", stagingNetwork, activationStatusComplete, edgeWorkerVersion.Version)
+		edgeWorkerActivationsReq := expectListActivationsRequest(edgeWorker.EdgeWorkerID, "")
+		edgeWorkerActivationsStagingResp := expectListActivationsResponse([]edgeworkers.Activation{actStaging})
+
+		// mock one empty list deactivations call
+		edgeWorkerListDeactivationsReq := expectListDeactivationsRequest(edgeWorker.EdgeWorkerID, edgeWorkerVersion.Version)
+		edgeWorkerListDeactivationsResp := expectListDeactivationsResponse([]edgeworkers.Deactivation{})
+
+		// mock deactivate version on staging call
+		deactIDStaging := 321
+		edgeWorkerDeactivateVersionStagingReq := expectDeactivateVersionRequest(edgeWorker.EdgeWorkerID, stagingNetwork, "", edgeWorkerVersion.Version)
+		edgeWorkerDeactivateVersionStagingResp := expectDeactivation(edgeWorker.EdgeWorkerID, deactIDStaging, edgeWorkerVersion.Version, "", activationStatusPending, stagingNetwork, "", "", "", "")
+
+		// mock get deactivation call for staging
+		edgeWorkerGetDeactivationStagingReq := expectGetDeactivationRequest(edgeWorker.EdgeWorkerID, deactIDStaging)
+		edgeWorkerGetDeactivationStagingResp := expectDeactivation(edgeWorker.EdgeWorkerID, deactIDStaging, edgeWorkerVersion.Version, "", activationStatusComplete, stagingNetwork, "", "", "", "")
+
+		// mock list edgeworker versions call
+		edgeWorkerVersionsReq := expectListEdgeWorkerVersionsRequest(edgeWorker.EdgeWorkerID)
+		edgeWorkerVersionResp := expectListEdgeWorkerVersionsResponse([]edgeworkers.EdgeWorkerVersion{*edgeWorkerVersion})
+
+		// mock edgeworker version and edgeworkerID deletions
+		edgeWorkerVersionsDeleteReq := expectDeleteEdgeWorkerVersionRequest(edgeWorker.EdgeWorkerID, edgeWorkerVersion.Version)
+		edgeWorkerDeleteReq := expectDeleteEdgeWorkerRequest(edgeWorker.EdgeWorkerID)
+
+		client.On("ListActivations", mock.Anything, edgeWorkerActivationsReq).Return(&edgeWorkerActivationsStagingResp, nil).Times(1)
+		client.On("ListActivations", mock.Anything, edgeWorkerActivationsReq).Return(&edgeworkers.ListActivationsResponse{}, nil).Times(1)
+		client.On("ListDeactivations", mock.Anything, edgeWorkerListDeactivationsReq).Return(&edgeWorkerListDeactivationsResp, nil).Times(1)
+		client.On("DeactivateVersion", mock.Anything, edgeWorkerDeactivateVersionStagingReq).Return(&edgeWorkerDeactivateVersionStagingResp, nil).Once()
+		client.On("GetDeactivation", mock.Anything, edgeWorkerGetDeactivationStagingReq).Return(&edgeWorkerGetDeactivationStagingResp, nil).Once()
+		client.On("ListEdgeWorkerVersions", mock.Anything, edgeWorkerVersionsReq).Return(&edgeWorkerVersionResp, nil).Once()
+		client.On("DeleteEdgeWorkerVersion", mock.Anything, edgeWorkerVersionsDeleteReq).Return(nil).Once()
+		client.On("DeleteEdgeWorkerID", mock.Anything, edgeWorkerDeleteReq).Return(nil).Once()
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProviderFactories: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString(fmt.Sprintf("%s/edgeworker_create.tf", testDir)),
+						Check: checkAttributes(edgeWorkerAttributes{
+							name:            "example",
+							groupID:         "12345",
+							resourceTierID:  54321,
+							localBundle:     bundlePathForCreate,
+							localBundleHash: bundleHashForCreate,
+							version:         "1.0",
+						}),
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
+
 	t.Run("import", func(t *testing.T) {
 		testDir := "testdata/TestResEdgeWorkersEdgeWorker/edgeworker_lifecycle"
 		client := new(edgeworkers.Mock)
@@ -842,3 +993,92 @@ func TestConvertLocalBundleFileIntoBytes(t *testing.T) {
 		})
 	}
 }
+
+var (
+	expectActivation = func(actID, edgeWorkerID int, accountID, createdBy, createdTime, lastModifiedTime, network, status, version string) edgeworkers.Activation {
+		return edgeworkers.Activation{
+			AccountID:        accountID,
+			ActivationID:     actID,
+			CreatedBy:        createdBy,
+			CreatedTime:      createdTime,
+			EdgeWorkerID:     edgeWorkerID,
+			LastModifiedTime: lastModifiedTime,
+			Network:          network,
+			Status:           status,
+			Version:          version,
+		}
+	}
+	expectListActivationsRequest = func(edgeWorkerID int, version string) edgeworkers.ListActivationsRequest {
+		return edgeworkers.ListActivationsRequest{
+			EdgeWorkerID: edgeWorkerID,
+			Version:      version,
+		}
+	}
+	expectListActivationsResponse = func(activations []edgeworkers.Activation) edgeworkers.ListActivationsResponse {
+		return edgeworkers.ListActivationsResponse{
+			Activations: activations,
+		}
+	}
+	expectListDeactivationsRequest = func(edgeWorkerID int, version string) edgeworkers.ListDeactivationsRequest {
+		return edgeworkers.ListDeactivationsRequest{
+			EdgeWorkerID: edgeWorkerID,
+			Version:      version,
+		}
+	}
+	expectListDeactivationsResponse = func(deactivations []edgeworkers.Deactivation) edgeworkers.ListDeactivationsResponse {
+		return edgeworkers.ListDeactivationsResponse{
+			Deactivations: deactivations,
+		}
+	}
+	expectDeactivateVersionRequest = func(edgeWorkerID int, network, note, version string) edgeworkers.DeactivateVersionRequest {
+		return edgeworkers.DeactivateVersionRequest{
+			EdgeWorkerID: edgeWorkerID,
+			DeactivateVersion: edgeworkers.DeactivateVersion{
+				Network: edgeworkers.ActivationNetwork(network),
+				Note:    note,
+				Version: version,
+			},
+		}
+	}
+	expectDeactivation = func(edgeWorkerID, deactID int, version, accountID, status, network, note, createdBy, createdTime, lastModifiedTime string) edgeworkers.Deactivation {
+		return edgeworkers.Deactivation{
+			EdgeWorkerID:     edgeWorkerID,
+			Version:          version,
+			DeactivationID:   deactID,
+			AccountID:        accountID,
+			Status:           status,
+			Network:          edgeworkers.ActivationNetwork(network),
+			Note:             note,
+			CreatedBy:        createdBy,
+			CreatedTime:      createdTime,
+			LastModifiedTime: lastModifiedTime,
+		}
+	}
+	expectGetDeactivationRequest = func(edgeWorkerID, deactID int) edgeworkers.GetDeactivationRequest {
+		return edgeworkers.GetDeactivationRequest{
+			EdgeWorkerID:   edgeWorkerID,
+			DeactivationID: deactID,
+		}
+	}
+	expectListEdgeWorkerVersionsRequest = func(edgeWorkerID int) edgeworkers.ListEdgeWorkerVersionsRequest {
+		return edgeworkers.ListEdgeWorkerVersionsRequest{
+			EdgeWorkerID: edgeWorkerID,
+		}
+	}
+	expectListEdgeWorkerVersionsResponse = func(versions []edgeworkers.EdgeWorkerVersion) edgeworkers.ListEdgeWorkerVersionsResponse {
+		return edgeworkers.ListEdgeWorkerVersionsResponse{
+			EdgeWorkerVersions: versions,
+		}
+	}
+	expectDeleteEdgeWorkerVersionRequest = func(edgeWorkerID int, version string) edgeworkers.DeleteEdgeWorkerVersionRequest {
+		return edgeworkers.DeleteEdgeWorkerVersionRequest{
+			EdgeWorkerID: edgeWorkerID,
+			Version:      version,
+		}
+	}
+	expectDeleteEdgeWorkerRequest = func(edgeWorkerID int) edgeworkers.DeleteEdgeWorkerIDRequest {
+		return edgeworkers.DeleteEdgeWorkerIDRequest{
+			EdgeWorkerID: edgeWorkerID,
+		}
+	}
+)

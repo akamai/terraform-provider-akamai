@@ -63,18 +63,23 @@ func resourceEdgeworkersActivationSchema() map[string]*schema.Schema {
 	}
 }
 
+const (
+	stagingNetwork                     = "STAGING"
+	productionNetwork                  = "PRODUCTION"
+	activationStatusComplete           = "COMPLETE"
+	activationStatusPresubmit          = "PRESUBMIT"
+	activationStatusPending            = "PENDING"
+	activationStatusInProgress         = "IN_PROGRESS"
+	errorCodeVersionIsBeingDeactivated = "EW1031"
+	errorCodeVersionAlreadyDeactivated = "EW1032"
+)
+
 var (
-	activationStatusComplete                    = "COMPLETE"
-	activationStatusPresubmit                   = "PRESUBMIT"
-	activationStatusPending                     = "PENDING"
-	activationStatusInProgress                  = "IN_PROGRESS"
-	errorCodeVersionIsBeingDeactivated          = "EW1031"
-	errorCodeVersionAlreadyDeactivated          = "EW1032"
 	activationPollMinimum                       = time.Minute
 	activationPollInterval                      = activationPollMinimum
 	edgeworkersActivationResourceDefaultTimeout = time.Minute * 30
 	edgeworkersActivationResourceDeleteTimeout  = time.Minute * 60
-	validEdgeworkerActivationNetworks           = []string{"STAGING", "PRODUCTION"}
+	validEdgeworkerActivationNetworks           = []string{stagingNetwork, productionNetwork}
 )
 
 func resourceEdgeworkersActivationCreate(ctx context.Context, rd *schema.ResourceData, m interface{}) diag.Diagnostics {
