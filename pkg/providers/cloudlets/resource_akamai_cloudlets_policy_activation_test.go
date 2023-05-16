@@ -47,7 +47,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 		"create and read activation, version == 1, failed with property error -> retry -> activate": {
 			init: func(m *cloudlets.Mock) {
 				policyID, version, network, properties := int64(1234), int64(1), cloudlets.PolicyActivationNetworkStaging, []string{"prp_0", "prp_1"}
-				propertyNotFoundError := fmt.Errorf(`"detail": "Requested propertyName "test.property.name" does not exist"`)
+				propertyNotFoundError := fmt.Errorf(`"detail": "Requested propertyName \"test.property.name\" does not exist"`)
 				// create
 				activations := make([]cloudlets.PolicyActivation, len(properties))
 				for _, p := range properties {

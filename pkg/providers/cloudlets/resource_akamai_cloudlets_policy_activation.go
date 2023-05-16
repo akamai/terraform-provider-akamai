@@ -87,7 +87,7 @@ var (
 	// ErrNetworkName is used when the user inputs an invalid network name
 	ErrNetworkName = errors.New("invalid network name")
 
-	policyActivationRetryRegexp = regexp.MustCompile(`requested propertyname "[A-Za-z0-9.\-_]+" does not exist`)
+	policyActivationRetryRegexp = regexp.MustCompile(`requested propertyname \\"[A-Za-z0-9.\-_]+\\" does not exist`)
 )
 
 func resourcePolicyActivationDelete(ctx context.Context, rd *schema.ResourceData, m interface{}) diag.Diagnostics {

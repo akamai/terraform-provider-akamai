@@ -10,6 +10,11 @@
   * Remove enforce `property-snippets` directory check ([I#378](https://github.com/akamai/terraform-provider-akamai/issues/378))
   * Fixed reading float values in `akamai_property_rules_builder`
 
+#### BUG FIXES:
+
+* Cloudlets
+  * Fixed bug related with regex validation for handling property delay in `akamai_cloudlets_policy_activation`
+
 ## 3.6.0 (April 27, 2023)
 
 #### FEATURES/ENHANCEMENTS:
