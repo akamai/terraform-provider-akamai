@@ -14,5 +14,7 @@ resource "akamai_property_activation" "test" {
       customer_email   = "user@example.com"
       unit_tested      = true
     }
+    noncompliance_reason_other {
+    }
   }
 }

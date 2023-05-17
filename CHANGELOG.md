@@ -9,6 +9,7 @@
 * PAPI
   * Remove enforce `property-snippets` directory check ([I#378](https://github.com/akamai/terraform-provider-akamai/issues/378))
   * Fixed reading float values in `akamai_property_rules_builder`
+  * (Internal usage only) Improved `compliance_record` attribute's syntax for `akamai_property_activation` and `akamai_property_include_activation`
 
 * EdgeWorkers
   * Deactivate EdgeWorker versions upon EdgeWorker deletion([I#331](https://github.com/akamai/terraform-provider-akamai/issues/331))

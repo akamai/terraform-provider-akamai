@@ -86,7 +86,11 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 							Network:                "STAGING",
 							NotifyEmails:           []string{"user@example.com"},
 							Note:                   "property activation note for creating",
-							ComplianceRecord:       &papi.ComplianceRecordOther{},
+							ComplianceRecord: &papi.ComplianceRecordNone{
+								CustomerEmail:  "user@example.com",
+								PeerReviewedBy: "user1@example.com",
+								UnitTested:     true,
+							},
 						},
 					},
 				).Return(&papi.CreateActivationResponse{
@@ -110,7 +114,7 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_property_activation.test", "errors", ""),
 						resource.TestCheckResourceAttr("akamai_property_activation.test", "activation_id", "atv_activation1"),
 						resource.TestCheckResourceAttr("akamai_property_activation.test", "status", "ACTIVE"),
-						resource.TestCheckResourceAttr("akamai_property_activation.test", "compliance_record.0.noncompliance_reason", "OTHER"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "compliance_record.0.noncompliance_reason_none.0.unit_tested", "true"),
 						resource.TestCheckResourceAttr("akamai_property_activation.test", "note", "property activation note for creating"),
 					),
 				},
@@ -168,6 +172,23 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 				},
 			},
 		},
+		"check schema property activation compliance record - error empty compliance_record block": {
+			steps: []resource.TestStep{
+				{
+					Config:      loadFixtureString("./testdata/TestPropertyActivation/cr_validation/resource_property_activation_with_empty_cr.tf"),
+					ExpectError: regexp.MustCompile("one of\n`compliance_record.0.noncompliance_reason_emergency,compliance_record.0.noncompliance_reason_no_production_traffic,compliance_record.0.noncompliance_reason_none,compliance_record.0.noncompliance_reason_other`\nmust be specified"),
+				},
+			},
+		},
+		"check schema property activation compliance record - error more than one cr type": {
+			steps: []resource.TestStep{
+				{
+					Config:      loadFixtureString("./testdata/TestPropertyActivation/cr_validation/resource_property_activation_with_more_than_one_cr.tf"),
+					ExpectError: regexp.MustCompile("only one of\n`compliance_record.0.noncompliance_reason_emergency,compliance_record.0.noncompliance_reason_no_production_traffic,compliance_record.0.noncompliance_reason_none,compliance_record.0.noncompliance_reason_other`\ncan be specified"),
+				},
+			},
+		},
+
 		"check schema property activation - papi error": {
 			init: func(m *papi.Mock) {
 				expectGetRuleTree(m, "prp_test", 1, papi.GetRuleTreeResponse{}, fmt.Errorf("failed to create request")).Once()

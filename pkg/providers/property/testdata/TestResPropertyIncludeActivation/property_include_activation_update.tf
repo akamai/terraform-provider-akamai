@@ -7,7 +7,7 @@ resource "akamai_property_include_activation" "activation" {
   notify_emails = ["jbond@example.com"]
   note          = "test activation"
   compliance_record {
-    noncompliance_reason = "OTHER"
+    noncompliance_reason_other {}
   }
   auto_acknowledge_rule_warnings = true
 }

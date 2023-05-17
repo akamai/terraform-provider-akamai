@@ -121,41 +121,7 @@ var akamaiPropertyActivationSchema = map[string]*schema.Schema{
 		Optional:    true,
 		MaxItems:    1,
 		Description: "Provides an audit record when activating on a production network",
-		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
-				"noncompliance_reason": {
-					Type:             schema.TypeString,
-					Required:         true,
-					Description:      fmt.Sprintf("Specifies the reason for the expedited activation on production network. Valid noncompliance reasons are: %s", strings.Join(validComplianceRecords, ", ")),
-					ValidateDiagFunc: tf.ValidateStringInSlice(validComplianceRecords),
-				},
-				"ticket_id": {
-					Type:        schema.TypeString,
-					Optional:    true,
-					Description: "Identifies the ticket that describes the need for the activation",
-				},
-				"other_noncompliance_reason": {
-					Type:        schema.TypeString,
-					Optional:    true,
-					Description: "Describes the reason why the activation must occur immediately, out of compliance with the standard procedure",
-				},
-				"customer_email": {
-					Type:        schema.TypeString,
-					Optional:    true,
-					Description: "Identifies the customer",
-				},
-				"peer_reviewed_by": {
-					Type:        schema.TypeString,
-					Optional:    true,
-					Description: "Identifies person who has independently approved the activation request",
-				},
-				"unit_tested": {
-					Type:        schema.TypeBool,
-					Optional:    true,
-					Description: "Whether the metadata to activate has been fully tested",
-				},
-			},
-		},
+		Elem:        complianceRecordSchema,
 	},
 }
 
@@ -706,41 +672,50 @@ func addPropertyComplianceRecord(complianceRecord []interface{}, activatePAPIReq
 	if len(complianceRecord) == 0 {
 		return activatePAPIRequest
 	}
-
 	crMap := complianceRecord[0].(map[string]interface{})
-	noncomplianceReason := crMap["noncompliance_reason"].(string)
-	ticketID := crMap["ticket_id"].(string)
-	otherNoncomplianceReason := crMap["other_noncompliance_reason"].(string)
-	customerEmail := crMap["customer_email"].(string)
-	peerReviewedBy := crMap["peer_reviewed_by"].(string)
-	unitTested := crMap["unit_tested"].(bool)
 
-	switch noncomplianceReason {
-	case papi.NoncomplianceReasonOther:
-		complianceRecordOther := &papi.ComplianceRecordOther{
-			TicketID:                 ticketID,
-			OtherNoncomplianceReason: otherNoncomplianceReason,
-		}
-		activatePAPIRequest.Activation.ComplianceRecord = complianceRecordOther
-	case papi.NoncomplianceReasonNone:
-		complianceRecordNone := &papi.ComplianceRecordNone{
-			CustomerEmail:  customerEmail,
-			PeerReviewedBy: peerReviewedBy,
-			TicketID:       ticketID,
-			UnitTested:     unitTested,
+	if len(crMap["noncompliance_reason_none"].([]interface{})) != 0 {
+		complianceRecordNone := &papi.ComplianceRecordNone{}
+		if crMap["noncompliance_reason_none"].([]interface{})[0] != nil {
+			crNoneMap := crMap["noncompliance_reason_none"].([]interface{})[0].(map[string]interface{})
+			complianceRecordNone = &papi.ComplianceRecordNone{
+				CustomerEmail:  crNoneMap["customer_email"].(string),
+				PeerReviewedBy: crNoneMap["peer_reviewed_by"].(string),
+				TicketID:       crNoneMap["ticket_id"].(string),
+				UnitTested:     crNoneMap["unit_tested"].(bool),
+			}
 		}
 		activatePAPIRequest.Activation.ComplianceRecord = complianceRecordNone
-	case papi.NoncomplianceReasonNoProductionTraffic:
-		complianceRecordNoProductionTraffic := &papi.ComplianceRecordNoProductionTraffic{
-			TicketID: ticketID,
+	} else if len(crMap["noncompliance_reason_other"].([]interface{})) != 0 {
+		complianceRecordOther := &papi.ComplianceRecordOther{}
+		if crMap["noncompliance_reason_other"].([]interface{})[0] != nil {
+			crOtherMap := crMap["noncompliance_reason_other"].([]interface{})[0].(map[string]interface{})
+			complianceRecordOther = &papi.ComplianceRecordOther{
+				TicketID:                 crOtherMap["ticket_id"].(string),
+				OtherNoncomplianceReason: crOtherMap["other_noncompliance_reason"].(string),
+			}
+		}
+		activatePAPIRequest.Activation.ComplianceRecord = complianceRecordOther
+	} else if len(crMap["noncompliance_reason_no_production_traffic"].([]interface{})) != 0 {
+		complianceRecordNoProductionTraffic := &papi.ComplianceRecordNoProductionTraffic{}
+		if crMap["noncompliance_reason_no_production_traffic"].([]interface{})[0] != nil {
+			crNoProdTrafficMap := crMap["noncompliance_reason_no_production_traffic"].([]interface{})[0].(map[string]interface{})
+			complianceRecordNoProductionTraffic = &papi.ComplianceRecordNoProductionTraffic{
+				TicketID: crNoProdTrafficMap["ticket_id"].(string),
+			}
 		}
 		activatePAPIRequest.Activation.ComplianceRecord = complianceRecordNoProductionTraffic
-	case papi.NoncomplianceReasonEmergency:
-		complianceRecordEmergency := &papi.ComplianceRecordEmergency{
-			TicketID: ticketID,
+	} else if len(crMap["noncompliance_reason_emergency"].([]interface{})) != 0 {
+		complianceRecordEmergency := &papi.ComplianceRecordEmergency{}
+		if crMap["noncompliance_reason_emergency"].([]interface{})[0] != nil {
+			crEmergencyMap := crMap["noncompliance_reason_emergency"].([]interface{})[0].(map[string]interface{})
+			complianceRecordEmergency = &papi.ComplianceRecordEmergency{
+				TicketID: crEmergencyMap["ticket_id"].(string),
+			}
 		}
 		activatePAPIRequest.Activation.ComplianceRecord = complianceRecordEmergency
 	}
+
 	return activatePAPIRequest
 }
 
