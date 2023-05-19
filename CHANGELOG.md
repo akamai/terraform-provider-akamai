@@ -6,6 +6,9 @@
 
 * Migrate to Terraform 1.3.7 version
 
+* DNS
+  * Fixed TXT record characters escaping issue in akamai_dns_record resource ([I#137](https://github.com/akamai/terraform-provider-akamai/issues/137))
+
 * PAPI
   * Remove enforce `property-snippets` directory check ([I#378](https://github.com/akamai/terraform-provider-akamai/issues/378))
   * Fixed reading float values in `akamai_property_rules_builder`

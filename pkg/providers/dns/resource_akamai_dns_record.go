@@ -513,7 +513,7 @@ func diffQuotedDNSRecord(oldTargetList []string, newTargetList []string, old str
 
 	if recordType == RRTypeMx {
 
-		// lists are same length
+		// lists are same length
 		for i := 0; i < len(oldTargetList); i++ {
 			oldTargetList[i] = strings.TrimRight(oldTargetList[i], ".")
 			newTargetList[i] = strings.TrimRight(newTargetList[i], ".")
@@ -1132,6 +1132,20 @@ func resourceDNSRecordRead(ctx context.Context, d *schema.ResourceData, m interf
 			return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 		}
 		targets = newrdata
+	case RRTypeTxt:
+		for fname, fvalue := range rdataFieldMap {
+			if fvalue, ok := fvalue.([]string); ok {
+				for i, v := range fvalue {
+					fvalue[i] = txtRecordUnescape(v)
+				}
+				if err := d.Set(fname, fvalue); err != nil {
+					return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
+				}
+			} else {
+				return diag.Errorf("Invalid type conversion")
+			}
+		}
+
 	default:
 		// Parse Rdata. MX special
 		for fname, fvalue := range rdataFieldMap {
@@ -2051,9 +2065,7 @@ func buildRecordsList(target []interface{}, recordType string, logger log.Interf
 		case RRTypeTxt:
 			logger.Debugf("Bind TXT Data IN: [%s]", recContentStr)
 			recContentStr = strings.Trim(recContentStr, `"`)
-			// look for and replace escaped embedded quotes
-			recContentStr = strings.ReplaceAll(recContentStr, `\\\"`, `\"`)
-			recContentStr = "\"" + recContentStr + "\""
+			recContentStr = txtRecordEscape(recContentStr)
 
 			logger.Debugf("Bind TXT Data %s", recContentStr)
 			logger.Debugf("Bind TXT Data OUT: [%s]", recContentStr)
@@ -2785,7 +2797,18 @@ func checkTlsaRecord(d *schema.ResourceData) error {
 	}
 
 	return nil
+}
 
+func txtRecordEscape(s string) string {
+	s = strings.ReplaceAll(s, "\\", "\\\\")
+	s = strings.ReplaceAll(s, "\"", "\\\"")
+	return "\"" + s + "\""
+}
+
+func txtRecordUnescape(s string) string {
+	s = s[1 : len(s)-1]
+	s = strings.ReplaceAll(s, "\\\"", "\"")
+	return strings.ReplaceAll(s, "\\\\", "\\")
 }
 
 func checkSvcbRecord(d *schema.ResourceData) error {

@@ -104,4 +104,113 @@ func TestResDnsRecord(t *testing.T) {
 
 		client.AssertExpectations(t)
 	})
+
+	t.Run("TXT record test", func(t *testing.T) {
+		client := &dns.Mock{}
+
+		escapedTarget := "\"Hel\\\\lo\\\"world\""
+
+		client.On("GetRecord",
+			mock.Anything, // ctx is irrelevant for this test
+			"exampleterraform.io",
+			"exampleterraform.io",
+			"TXT",
+		).Return(nil, notFound).Once()
+
+		client.On("CreateRecord",
+			mock.Anything, // ctx is irrelevant for this test
+			&dns.RecordBody{
+				Name:       "exampleterraform.io",
+				RecordType: "TXT",
+				TTL:        300,
+				Active:     false,
+				Target:     []string{escapedTarget},
+			},
+			"exampleterraform.io",
+			[]bool{false},
+		).Return(nil)
+
+		client.On("GetRecord",
+			mock.Anything, // ctx is irrelevant for this test
+			"exampleterraform.io",
+			"exampleterraform.io",
+			"TXT",
+		).Return(&dns.RecordBody{
+			Name:       "exampleterraform.io",
+			RecordType: "TXT",
+			TTL:        300,
+			Active:     false,
+			Target:     []string{escapedTarget},
+		}, nil).Once()
+
+		client.On("ParseRData",
+			mock.Anything,
+			"TXT",
+			[]string{escapedTarget},
+		).Return(map[string]interface{}{
+			"target": []string{escapedTarget},
+		}).Once()
+
+		client.On("ProcessRdata",
+			mock.Anything, // ctx is irrelevant for this test
+			[]string{escapedTarget},
+			"TXT",
+		).Return([]string{escapedTarget}).Once()
+
+		client.On("GetRecord",
+			mock.Anything, // ctx is irrelevant for this test
+			"exampleterraform.io",
+			"exampleterraform.io",
+			"TXT",
+		).Return(&dns.RecordBody{
+			Name:       "exampleterraform.io",
+			RecordType: "TXT",
+			TTL:        300,
+			Active:     false,
+			Target:     []string{escapedTarget},
+		}, nil).Once()
+
+		client.On("ProcessRdata",
+			mock.Anything, // ctx is irrelevant for this test
+			[]string{escapedTarget},
+			"TXT",
+		).Return([]string{escapedTarget}).Once()
+
+		client.On("ParseRData",
+			mock.Anything,
+			"TXT",
+			[]string{escapedTarget},
+		).Return(
+			map[string]interface{}{
+				"target": []string{escapedTarget},
+			}).Once()
+
+		client.On("DeleteRecord",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("*dns.RecordBody"),
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("[]bool"),
+		).Return(nil)
+
+		dataSourceName := "akamai_dns_record.txt_record"
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				PreCheck:          func() { testAccPreCheck(t) },
+				ProviderFactories: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString("testdata/TestResDnsRecord/create_basic_txt.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr(dataSourceName, "recordtype", "TXT"),
+							resource.TestCheckResourceAttr(dataSourceName, "target.#", "1"),
+							resource.TestCheckResourceAttr(dataSourceName, "target.0", "Hel\\lo\"world"),
+						),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
 }
