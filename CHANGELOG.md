@@ -18,6 +18,7 @@
 
 * Cloudlets
   * Fixed bug related with regex validation for handling property delay in `akamai_cloudlets_policy_activation`
+  * Fixed sporadic issue with `akamai_cloudlets_policy_activation` due to network delay 
   
 ## 3.6.0 (April 27, 2023)
 

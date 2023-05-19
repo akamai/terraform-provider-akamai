@@ -95,6 +95,21 @@ docker exec akatf-container sh -c 'cd edgegrid; git checkout ${EDGEGRID_BRANCH_N
                                    go mod edit -replace github.com/akamai/AkamaiOPEN-edgegrid-golang/v5=../edgegrid;
                                    go mod tidy -compat=1.18'
 
+echo "Running golangci-lint"
+docker exec akatf-container sh -c 'cd terraform-provider-akamai; golangci-lint run'
+
+echo "Running gofmt check"
+if ! docker exec akatf-container sh -c 'cd terraform-provider-akamai; test -z $(gofmt -l .)'; then
+  echo "gofmt check failed"
+  exit 1
+fi
+
+echo "Running terraform fmt"
+docker exec akatf-container sh -c 'cd terraform-provider-akamai; terraform fmt -recursive -check'
+
+echo "Running tflint on examples"
+docker exec akatf-container sh -c 'cd terraform-provider-akamai; find ./examples -type f -name "*.tf" | xargs -I % dirname % | sort -u | xargs -I @ sh -c "echo @ && tflint @"'
+
 echo "Running tests with xUnit output"
 docker exec akatf-container sh -c 'cd terraform-provider-akamai; go mod tidy -compat=1.18;
                                    2>&1 go test -timeout $TIMEOUT -v -coverpkg=./... -coverprofile=../profile.out -covermode=$COVERMODE ./... | tee ../tests.output'
@@ -113,20 +128,5 @@ echo "Creating docker build"
 docker exec akatf-container sh -c 'cd terraform-provider-akamai; go install -tags all;
                                    mkdir -p /root/.terraform.d/plugins/registry.terraform.io/akamai/akamai/${PROVIDER_VERSION}/linux_amd64;
                                    cp /root/go/bin/terraform-provider-akamai /root/.terraform.d/plugins/registry.terraform.io/akamai/akamai/${PROVIDER_VERSION}/linux_amd64/terraform-provider-akamai_v${PROVIDER_VERSION}'
-
-echo "Running golangci-lint"
-docker exec akatf-container sh -c 'cd terraform-provider-akamai; golangci-lint run'
-
-echo "Running gofmt check"
-if ! docker exec akatf-container sh -c 'cd terraform-provider-akamai; test -z $(gofmt -l .)'; then
-  echo "gofmt check failed"
-  exit 1
-fi
-
-echo "Running terraform fmt"
-docker exec akatf-container sh -c 'cd terraform-provider-akamai; terraform fmt -recursive -check'
-
-echo "Running tflint on examples"
-docker exec akatf-container sh -c 'cd terraform-provider-akamai; find ./examples -type f -name "*.tf" | xargs -I % dirname % | sort -u | xargs -I @ sh -c "echo @ && tflint @"'
 
 docker rm -f akatf-container 2> /dev/null || true
