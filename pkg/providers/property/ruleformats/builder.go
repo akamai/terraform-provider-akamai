@@ -8,6 +8,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/iancoleman/strcase"
 )
@@ -165,8 +166,8 @@ func (r RulesBuilder) ruleVariables() ([]papi.RuleVariable, error) {
 	for _, variable := range variableList {
 		variables = append(variables, papi.RuleVariable{
 			Name:        variable["name"].(string),
-			Description: variable["description"].(string),
-			Value:       variable["value"].(string),
+			Description: tools.StringPtr(variable["description"].(string)),
+			Value:       tools.StringPtr(variable["value"].(string)),
 			Sensitive:   variable["sensitive"].(bool),
 			Hidden:      variable["hidden"].(bool),
 		})

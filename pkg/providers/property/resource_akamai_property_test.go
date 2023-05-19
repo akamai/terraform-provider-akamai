@@ -602,6 +602,39 @@ func TestResProperty(t *testing.T) {
 		},
 	}
 
+	variablesInRuleTree := LifecycleTestCase{
+		Name: "Variables in property rule tree",
+		ClientSetup: composeBehaviors(
+			propertyLifecycle("test_property", "prp_0", "grp_0", papi.RulesUpdate{Rules: papi.Rules{Name: "default"}}),
+			getPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive),
+			setHostnames("prp_0", 1, "to.test.domain"),
+			getPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive),
+			GetVersionResources("prp_0", "ctr_0", "grp_0", 1),
+			updateRuleTree("prp_0", "ctr_0", "grp_0", 1, updateRuleTreeWithVariablesStep0()),
+			updateRuleTree("prp_0", "ctr_0", "grp_0", 1, updateRuleTreeWithVariablesStep1()),
+		),
+		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
+			return []resource.TestStep{
+				{
+					PreConfig: func() {
+						State.VersionItems = papi.PropertyVersionItems{Items: []papi.PropertyVersionGetItem{{PropertyVersion: 1, ProductionStatus: papi.VersionStatusInactive}}}
+					},
+					Config: loadFixtureString("%s/step0.tf", FixturePath),
+					Check: checkAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
+						"{\"rules\":{\"behaviors\":[{\"name\":\"origin\",\"options\":{\"cacheKeyHostname\":\"REQUEST_HOST_HEADER\",\"compress\":true,\"enableTrueClientIp\":true,\"forwardHostHeader\":\"REQUEST_HOST_HEADER\",\"hostname\":\"test.domain\",\"httpPort\":80,\"httpsPort\":443,\"originCertificate\":\"\",\"originSni\":true,\"originType\":\"CUSTOMER\",\"ports\":\"\",\"trueClientIpClientSetting\":false,\"trueClientIpHeader\":\"True-Client-IP\",\"verificationMode\":\"PLATFORM_SETTINGS\"}}],\"children\":[{\"behaviors\":[{\"name\":\"baseDirectory\",\"options\":{\"value\":\"/smth/\"}}],\"criteria\":[{\"name\":\"requestHeader\",\"options\":{\"headerName\":\"Accept-Encoding\",\"matchCaseSensitiveValue\":true,\"matchOperator\":\"IS_ONE_OF\",\"matchWildcardName\":false,\"matchWildcardValue\":false}}],\"name\":\"change fwd path\",\"options\":{},\"criteriaMustSatisfy\":\"all\"},{\"behaviors\":[{\"name\":\"caching\",\"options\":{\"behavior\":\"MAX_AGE\",\"mustRevalidate\":false,\"ttl\":\"1m\"}}],\"name\":\"caching\",\"options\":{},\"criteriaMustSatisfy\":\"any\"}],\"comments\":\"The behaviors in the Default Rule apply to all requests for the property hostname(s) unless another rule overrides the Default Rule settings.\",\"name\":\"default\",\"options\":{},\"variables\":[{\"description\":\"\",\"hidden\":true,\"name\":\"TEST_EMPTY_FIELDS\",\"sensitive\":false,\"value\":\"\"},{\"description\":null,\"hidden\":true,\"name\":\"TEST_NIL_FIELD\",\"sensitive\":false,\"value\":\"\"}]}}"),
+				},
+				{
+					PreConfig: func() {
+						State.Property.LatestVersion = 1
+					},
+					Config: loadFixtureString("%s/step1.tf", FixturePath),
+					Check: checkAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
+						"{\"rules\":{\"behaviors\":[{\"name\":\"origin\",\"options\":{\"cacheKeyHostname\":\"REQUEST_HOST_HEADER\",\"compress\":true,\"enableTrueClientIp\":true,\"forwardHostHeader\":\"REQUEST_HOST_HEADER\",\"hostname\":\"test.domain\",\"httpPort\":80,\"httpsPort\":443,\"originCertificate\":\"\",\"originSni\":true,\"originType\":\"CUSTOMER\",\"ports\":\"\",\"trueClientIpClientSetting\":false,\"trueClientIpHeader\":\"True-Client-IP\",\"verificationMode\":\"PLATFORM_SETTINGS\"}}],\"children\":[{\"behaviors\":[{\"name\":\"baseDirectory\",\"options\":{\"value\":\"/smth/\"}}],\"criteria\":[{\"name\":\"requestHeader\",\"options\":{\"headerName\":\"Accept-Encoding\",\"matchCaseSensitiveValue\":true,\"matchOperator\":\"IS_ONE_OF\",\"matchWildcardName\":false,\"matchWildcardValue\":false}}],\"name\":\"change fwd path\",\"options\":{},\"criteriaMustSatisfy\":\"all\"},{\"behaviors\":[{\"name\":\"caching\",\"options\":{\"behavior\":\"MAX_AGE\",\"mustRevalidate\":false,\"ttl\":\"1m\"}}],\"name\":\"caching\",\"options\":{},\"criteriaMustSatisfy\":\"any\"}],\"comments\":\"The behaviors in the Default Rule apply to all requests for the property hostname(s) unless another rule overrides the Default Rule settings.\",\"name\":\"default\",\"options\":{},\"variables\":[{\"description\":\"\",\"hidden\":true,\"name\":\"TEST_EMPTY_FIELDS\",\"sensitive\":false,\"value\":\"\"},{\"description\":\"\",\"hidden\":true,\"name\":\"TEST_NIL_FIELD\",\"sensitive\":false,\"value\":\"\"}]}}"),
+				},
+			}
+		},
+	}
+
 	// Test Schema Configuration
 
 	// Run a test case to verify schema validations
@@ -834,6 +867,7 @@ func TestResProperty(t *testing.T) {
 		t.Run("Lifecycle: rules custom diff", assertLifecycle(t, t.Name(), "rules custom diff", rulesCustomDiff))
 		t.Run("Lifecycle: no diff for hostnames (hostnames)", assertLifecycle(t, t.Name(), "hostnames", noDiffForHostnames))
 		t.Run("Lifecycle: new version changed on server", assertLifecycle(t, t.Name(), "new version changed on server", changesMadeOutsideOfTerraform))
+		t.Run("Lifecycle: rules with variables", assertLifecycle(t, t.Name(), "rules with variables", variablesInRuleTree))
 
 		// Test Import
 
