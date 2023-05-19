@@ -24,6 +24,7 @@
   * Fixed issue that in some cases allowed `terraform plan` to create a new config version as a side-effect of reading the current config.
 
 #### BREAKING CHANGES:
+
 * Appsec
   * Update malware policy `ContentTypes` to include `EncodedContentAttributes`.
   * Malware policy's `ContentTypes` is reported as part of an individual policy but is no longer included in the bulk report of all policies.
