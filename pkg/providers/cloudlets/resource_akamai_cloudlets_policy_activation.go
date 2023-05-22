@@ -76,7 +76,7 @@ var (
 	ActivationPollInterval = ActivationPollMinimum
 
 	// MaxListActivationsPollRetries is the maximum number of retries for calling ListActivations request in case of returning empty list
-	MaxListActivationsPollRetries = 3
+	MaxListActivationsPollRetries = 5
 
 	// PolicyActivationResourceTimeout is the default timeout for the resource operations
 	PolicyActivationResourceTimeout = time.Minute * 90
@@ -115,7 +115,7 @@ func resourcePolicyActivationDelete(ctx context.Context, rd *schema.ResourceData
 	if err != nil {
 		return diag.Errorf("%s: cannot find policy %d properties: %s", ErrPolicyActivation.Error(), policyID, err.Error())
 	}
-	activations, err := client.ListPolicyActivations(ctx, cloudlets.ListPolicyActivationsRequest{
+	activations, err := waitForListPolicyActivations(ctx, client, cloudlets.ListPolicyActivationsRequest{
 		PolicyID: policyID,
 		Network:  network,
 	})
@@ -207,7 +207,7 @@ func resourcePolicyActivationUpdate(ctx context.Context, rd *schema.ResourceData
 	sort.Strings(newPolicyProperties)
 
 	// 3. look for activations with this version which is active in the given network
-	activations, err := client.ListPolicyActivations(ctx, cloudlets.ListPolicyActivationsRequest{
+	activations, err := waitForListPolicyActivations(ctx, client, cloudlets.ListPolicyActivationsRequest{
 		PolicyID: int64(policyID),
 		Network:  activationNetwork,
 	})
@@ -236,7 +236,7 @@ func resourcePolicyActivationUpdate(ctx context.Context, rd *schema.ResourceData
 	logger.Debugf("Proceeding to activate the policy ID=%d (version=%d, properties=[%s], network='%s') is not active.",
 		policyID, version, strings.Join(newPolicyProperties, ", "), activationNetwork)
 
-	activations, err = client.ActivatePolicyVersion(ctx, cloudlets.ActivatePolicyVersionRequest{
+	_, err = client.ActivatePolicyVersion(ctx, cloudlets.ActivatePolicyVersionRequest{
 		PolicyID: int64(policyID),
 		Async:    true,
 		Version:  version,
@@ -259,7 +259,7 @@ func resourcePolicyActivationUpdate(ctx context.Context, rd *schema.ResourceData
 	}
 
 	// 7. poll until active
-	_, err = waitForPolicyActivation(ctx, client, int64(policyID), version, activations, activationNetwork, newPolicyProperties, removedProperties)
+	_, err = waitForPolicyActivation(ctx, client, int64(policyID), version, activationNetwork, newPolicyProperties, removedProperties)
 	if err != nil {
 		return diag.Errorf("%v update: %s", ErrPolicyActivation, err.Error())
 	}
@@ -335,9 +335,8 @@ func resourcePolicyActivationCreate(ctx context.Context, rd *schema.ResourceData
 	logger.Debugf("activating policy %d version %d, network %s and properties [%s]", policyID, version, string(versionActivationNetwork), strings.Join(associatedProperties, ", "))
 	pollingActivationTries := PolicyActivationRetryPollMinimum
 
-	var activations []cloudlets.PolicyActivation
 	for {
-		activations, err = client.ActivatePolicyVersion(ctx, cloudlets.ActivatePolicyVersionRequest{
+		_, err = client.ActivatePolicyVersion(ctx, cloudlets.ActivatePolicyVersionRequest{
 			PolicyID: int64(policyID),
 			Version:  version,
 			Async:    true,
@@ -371,7 +370,7 @@ func resourcePolicyActivationCreate(ctx context.Context, rd *schema.ResourceData
 	}
 
 	// wait until policy activation is done
-	act, err := waitForPolicyActivation(ctx, client, int64(policyID), version, activations, versionActivationNetwork, associatedProperties, nil)
+	act, err := waitForPolicyActivation(ctx, client, int64(policyID), version, versionActivationNetwork, associatedProperties, nil)
 	if err != nil {
 		return diag.Errorf("%v create: %s", ErrPolicyActivation, err.Error())
 	}
@@ -402,7 +401,7 @@ func resourcePolicyActivationRead(ctx context.Context, rd *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 
-	activations, err := client.ListPolicyActivations(ctx, cloudlets.ListPolicyActivationsRequest{
+	activations, err := waitForListPolicyActivations(ctx, client, cloudlets.ListPolicyActivationsRequest{
 		PolicyID: int64(policyID),
 		Network:  net,
 	})
@@ -447,12 +446,17 @@ func getActiveProperties(policyActivations []cloudlets.PolicyActivation) []strin
 }
 
 // waitForPolicyActivation polls server until the activation has active status or until context is closed (because of timeout, cancellation or context termination)
-func waitForPolicyActivation(ctx context.Context, client cloudlets.Cloudlets, policyID, version int64, activations []cloudlets.PolicyActivation, network cloudlets.PolicyActivationNetwork, additionalProps, removedProperties []string) ([]cloudlets.PolicyActivation, error) {
-	listActivationsPollRetries := MaxListActivationsPollRetries
+func waitForPolicyActivation(ctx context.Context, client cloudlets.Cloudlets, policyID, version int64, network cloudlets.PolicyActivationNetwork, additionalProps, removedProperties []string) ([]cloudlets.PolicyActivation, error) {
+	activations, err := waitForListPolicyActivations(ctx, client, cloudlets.ListPolicyActivationsRequest{
+		PolicyID: policyID,
+		Network:  network,
+	})
+	if err != nil {
+		return nil, err
+	}
 	activations = filterActivations(activations, version, additionalProps)
 
-	var err error
-	for len(activations) > 0 || listActivationsPollRetries > 0 {
+	for len(activations) > 0 {
 		allActive, allRemoved := true, true
 	activations:
 		for _, act := range activations {
@@ -473,19 +477,18 @@ func waitForPolicyActivation(ctx context.Context, client cloudlets.Cloudlets, po
 				}
 			}
 		}
-		if len(activations) > 0 && allActive && allRemoved {
+		if allActive && allRemoved {
 			return activations, nil
 		}
 		select {
 		case <-time.After(tf.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
-			activations, err = client.ListPolicyActivations(ctx, cloudlets.ListPolicyActivationsRequest{
+			activations, err = waitForListPolicyActivations(ctx, client, cloudlets.ListPolicyActivationsRequest{
 				PolicyID: policyID,
 				Network:  network,
 			})
 			if err != nil {
 				return nil, err
 			}
-			listActivationsPollRetries--
 			activations = filterActivations(activations, version, additionalProps)
 
 		case <-ctx.Done():
@@ -625,7 +628,7 @@ activePropertiesLoop:
 
 func waitForNotPendingPolicyActivation(ctx context.Context, logger log.Interface, client cloudlets.Cloudlets, policyID int64, network cloudlets.PolicyActivationNetwork) error {
 	logger.Debugf("waiting until there none of the policy (ID=%d) activations are in pending state", policyID)
-	activations, err := client.ListPolicyActivations(ctx, cloudlets.ListPolicyActivationsRequest{PolicyID: policyID})
+	activations, err := waitForListPolicyActivations(ctx, client, cloudlets.ListPolicyActivationsRequest{PolicyID: policyID})
 	if err != nil {
 		return fmt.Errorf("%w: failed to list policy activations for policy %d: %s", ErrPolicyActivation, policyID, err.Error())
 	}
@@ -645,7 +648,7 @@ func waitForNotPendingPolicyActivation(ctx context.Context, logger log.Interface
 		}
 		select {
 		case <-time.After(tf.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
-			activations, err = client.ListPolicyActivations(ctx, cloudlets.ListPolicyActivationsRequest{
+			activations, err = waitForListPolicyActivations(ctx, client, cloudlets.ListPolicyActivationsRequest{
 				PolicyID: policyID,
 				Network:  network,
 			})
@@ -665,4 +668,35 @@ func waitForNotPendingPolicyActivation(ctx context.Context, logger log.Interface
 	}
 
 	return nil
+}
+
+// waitForListPolicyActivations polls server until the ListPolicyActivations returns non-empty list
+func waitForListPolicyActivations(ctx context.Context, client cloudlets.Cloudlets, listPolicyActivationsRequest cloudlets.ListPolicyActivationsRequest) ([]cloudlets.PolicyActivation, error) {
+	listActivationsPollRetries := MaxListActivationsPollRetries
+	activations, err := client.ListPolicyActivations(ctx, listPolicyActivationsRequest)
+	if err != nil {
+		return nil, err
+	}
+
+	for len(activations) == 0 && listActivationsPollRetries > 0 {
+		select {
+		case <-time.After(tf.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
+			activations, err = client.ListPolicyActivations(ctx, listPolicyActivationsRequest)
+			if err != nil {
+				return nil, err
+			}
+			listActivationsPollRetries--
+
+		case <-ctx.Done():
+			if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+				return nil, ErrPolicyActivationTimeout
+			}
+			if errors.Is(ctx.Err(), context.Canceled) {
+				return nil, ErrPolicyActivationCanceled
+			}
+			return nil, fmt.Errorf("%v: %w", ErrPolicyActivationContextTerminated, ctx.Err())
+		}
+	}
+
+	return activations, nil
 }
