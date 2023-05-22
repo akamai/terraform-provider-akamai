@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/cps"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/cps"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )

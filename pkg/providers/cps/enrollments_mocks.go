@@ -1,6 +1,6 @@
 package cps
 
-import "github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/cps"
+import "github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/cps"
 
 func mockLetsEncryptChallenges() *cps.Change {
 	allowedInput := cps.AllowedInput{

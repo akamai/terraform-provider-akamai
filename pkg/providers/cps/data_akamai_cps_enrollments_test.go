@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/cps"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/cps"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/providers/cps/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"

@@ -9,8 +9,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/iam"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/session"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/iam"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/google/go-cmp/cmp"

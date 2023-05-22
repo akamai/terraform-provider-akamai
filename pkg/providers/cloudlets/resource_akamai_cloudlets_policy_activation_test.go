@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/cloudlets"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/cloudlets"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 )

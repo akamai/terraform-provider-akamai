@@ -3,8 +3,8 @@ package property
 import (
 	"context"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/papi"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/tools"
 	"github.com/stretchr/testify/mock"
 )
 

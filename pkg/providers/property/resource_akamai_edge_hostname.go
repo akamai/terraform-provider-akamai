@@ -10,8 +10,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/hapi"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/hapi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"

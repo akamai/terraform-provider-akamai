@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/cloudlets"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/cloudlets"
 
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"

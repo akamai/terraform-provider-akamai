@@ -7,8 +7,8 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/hapi"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/hapi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/test"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/assert"

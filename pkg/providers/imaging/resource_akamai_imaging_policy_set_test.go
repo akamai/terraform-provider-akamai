@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/tj/assert"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/imaging"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/imaging"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 

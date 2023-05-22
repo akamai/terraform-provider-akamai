@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/appsec"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
 )
 

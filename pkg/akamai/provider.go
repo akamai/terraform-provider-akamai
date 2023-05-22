@@ -11,12 +11,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/edgegrid"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/config"
-	"github.com/akamai/terraform-provider-akamai/v3/version"
-	"github.com/allegro/bigcache/v2"
 	"github.com/apex/log"
 	"github.com/google/uuid"
 	"github.com/hashicorp/go-hclog"
@@ -24,6 +18,12 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
 	"github.com/spf13/cast"
+
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/edgegrid"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/config"
+	"github.com/akamai/terraform-provider-akamai/v3/version"
 )
 
 const (
