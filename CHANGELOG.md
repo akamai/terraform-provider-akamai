@@ -6,6 +6,9 @@
 
 * Migrate to Terraform 1.3.7 version
 
+* Akamai
+  * Reword returned error when reading edgerc configuration encounters problems ([I#411](https://github.com/akamai/terraform-provider-akamai/issues/411))
+
 * DNS
   * Fixed TXT record characters escaping issue in akamai_dns_record resource ([I#137](https://github.com/akamai/terraform-provider-akamai/issues/137))
 

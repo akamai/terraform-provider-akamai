@@ -11,6 +11,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/edgegrid"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v3/pkg/config"
+	"github.com/akamai/terraform-provider-akamai/v3/version"
 	"github.com/allegro/bigcache/v2"
 	"github.com/apex/log"
 	"github.com/google/uuid"
@@ -19,12 +24,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
 	"github.com/spf13/cast"
-
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/edgegrid"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/config"
-	"github.com/akamai/terraform-provider-akamai/v3/version"
 )
 
 const (
@@ -34,10 +33,10 @@ const (
 	// ProviderName is the legacy name of the provider
 	// Deprecated: terrform now uses registry paths, the shortest of which would be akamai/akamai"
 	ProviderName = "terraform-provider-akamai"
-
-	// ConfigurationIsNotSpecified is the message for when EdgeGrid configuration is not specified
-	ConfigurationIsNotSpecified = "Akamai EdgeGrid configuration was not specified. Specify the configuration using system environment variables or the location and file name containing the edgerc configuration. Default location the provider checks for is the current user’s home directory. Default configuration file name the provider checks for is .edgerc."
 )
+
+// ErrWrongEdgeGridConfiguration is returned when the configuration could not be read
+var ErrWrongEdgeGridConfiguration = errors.New("error reading Akamai EdgeGrid configuration")
 
 type (
 	// Subprovider is the interface implemented by the sub providers
@@ -211,7 +210,7 @@ func configureContext(ctx context.Context, d *schema.ResourceData) (interface{},
 
 	edgerc, err := edgegrid.New(edgercOps...)
 	if err != nil {
-		return nil, diag.Errorf(ConfigurationIsNotSpecified)
+		return nil, diag.Errorf("%s: %s", ErrWrongEdgeGridConfiguration, err.Error())
 	}
 
 	if err := edgerc.Validate(); err != nil {
