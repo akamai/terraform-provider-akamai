@@ -41,7 +41,7 @@ There are different types of API clients that grant access based on your need, r
 
 | API client type                                                                                | Description                                                                                                                                       |
 | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [Basic](#create-a-basic-api-client)                                                            | Access all API associated with your account without any specific configuration. Individual service read/write permissions are based on your role. |
+| [Basic](#create-a-basic-api-client)                                                            | Access the first 99 API associated with your account without any specific configuration. Individual service read/write permissions are based on your role. |
 | [Advanced](https://techdocs.akamai.com/developer/docs/create-a-client-with-custom-permissions) | Configurable permissions to limit or narrow down scope of the API associated with your account.                                                   |
 | [Managed](https://techdocs.akamai.com/developer/docs/manage-many-accounts-with-one-api-client) | Configurable permissions that work for multiple accounts.                                                                                         |
 
