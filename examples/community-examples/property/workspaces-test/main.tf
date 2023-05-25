@@ -118,7 +118,7 @@ data "template_file" "rules" {
     ns_download_domain = var.ns_download_domain
     ns_cpcode_id       = var.ns_cpcode_id
     cpcode_name        = var.cpcode_name
-    cpcode             = parseint(replace(data.akamai_cp_code.default.id, "cpc_", ""), 10)
+    cpcode             = data.akamai_cp_code.default.id
     product            = var.product
   }
 }

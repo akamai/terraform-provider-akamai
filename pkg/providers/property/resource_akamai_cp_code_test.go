@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -25,8 +24,7 @@ func TestResCPCode(t *testing.T) {
 	// Helper to set up an expected call to mock papi.GetCPCode
 	expectGetCPCode := func(m *papi.Mock, contractID, groupID string, CPCodeID int, CPCodes *[]papi.CPCode, err error) *mock.Call {
 		var call *mock.Call
-		CPCodeIDStr := tools.AddPrefix(strconv.Itoa(CPCodeID), "cpc_")
-		req := papi.GetCPCodeRequest{CPCodeID: CPCodeIDStr, ContractID: contractID, GroupID: groupID}
+		req := papi.GetCPCodeRequest{CPCodeID: strconv.Itoa(CPCodeID), ContractID: contractID, GroupID: groupID}
 
 		call = m.On("GetCPCode", AnyCTX, req).Run(func(args mock.Arguments) {
 			if err != nil {
@@ -160,7 +158,7 @@ func TestResCPCode(t *testing.T) {
 				Steps: []resource.TestStep{{
 					Config: loadFixtureString("testdata/TestResCPCode/create_new_cp_code.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "cpc_0"),
+						resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "0"),
 						resource.TestCheckResourceAttr("akamai_cp_code.test", "name", "test cpcode"),
 						resource.TestCheckResourceAttr("akamai_cp_code.test", "group", "grp_1"),
 						resource.TestCheckResourceAttr("akamai_cp_code.test", "group_id", "grp_1"),
@@ -194,7 +192,7 @@ func TestResCPCode(t *testing.T) {
 				Steps: []resource.TestStep{{
 					Config: loadFixtureString("testdata/TestResCPCode/create_new_cp_code_deprecated_attrs.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "cpc_0"),
+						resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "0"),
 						resource.TestCheckResourceAttr("akamai_cp_code.test", "name", "test cpcode"),
 						resource.TestCheckResourceAttr("akamai_cp_code.test", "group", "grp_1"),
 						resource.TestCheckResourceAttr("akamai_cp_code.test", "group_id", "grp_1"),
@@ -214,7 +212,7 @@ func TestResCPCode(t *testing.T) {
 
 		// Contains CP Codes known to mock PAPI
 		CPCodes := []papi.CPCode{
-			{ID: "cpc_0", Name: "test cpcode", ProductIDs: []string{"prd_test", "prd_wrong", "another_wrong"}}, // Matches name from fixture
+			{ID: "0", Name: "test cpcode", ProductIDs: []string{"prd_test", "prd_wrong", "another_wrong"}}, // Matches name from fixture
 		}
 
 		// Values are from fixture:
@@ -232,7 +230,7 @@ func TestResCPCode(t *testing.T) {
 				Steps: []resource.TestStep{{
 					Config: loadFixtureString("testdata/TestResCPCode/use_existing_cp_code.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "cpc_0"),
+						resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "0"),
 						resource.TestCheckResourceAttr("akamai_cp_code.test", "name", "test cpcode"),
 						resource.TestCheckResourceAttr("akamai_cp_code.test", "group", "grp_test"),
 						resource.TestCheckResourceAttr("akamai_cp_code.test", "group_id", "grp_test"),
@@ -252,7 +250,7 @@ func TestResCPCode(t *testing.T) {
 
 		// Contains CP Codes known to mock PAPI
 		CPCodes := []papi.CPCode{
-			{ID: "cpc_0", Name: "wrong CP code", ProductIDs: []string{"prd_test"}},
+			{ID: "0", Name: "wrong CP code", ProductIDs: []string{"prd_test"}},
 			{ID: "cpc_1", Name: "test cpcode", ProductIDs: []string{"prd_test"}}, // Matches name from fixture
 		}
 
@@ -271,7 +269,7 @@ func TestResCPCode(t *testing.T) {
 				Steps: []resource.TestStep{{
 					Config: loadFixtureString("testdata/TestResCPCode/use_existing_cp_code.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "cpc_1"),
+						resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "1"),
 						resource.TestCheckResourceAttr("akamai_cp_code.test", "name", "test cpcode"),
 						resource.TestCheckResourceAttr("akamai_cp_code.test", "group", "grp_test"),
 						resource.TestCheckResourceAttr("akamai_cp_code.test", "group_id", "grp_test"),
@@ -291,7 +289,7 @@ func TestResCPCode(t *testing.T) {
 
 		// Contains CP Codes known to mock PAPI
 		CPCodes := []papi.CPCode{
-			{ID: "cpc_0", Name: "wrong CP code", ProductIDs: []string{"prd_test"}},
+			{ID: "0", Name: "wrong CP code", ProductIDs: []string{"prd_test"}},
 			{ID: "cpc_1", Name: "test cpcode"}, // Matches name from fixture
 		}
 
@@ -342,14 +340,14 @@ func TestResCPCode(t *testing.T) {
 					{
 						Config: loadFixtureString("testdata/TestResCPCode/change_name_step0.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "cpc_0"),
+							resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "0"),
 							resource.TestCheckResourceAttr("akamai_cp_code.test", "name", "test cpcode"),
 						),
 					},
 					{
 						Config: loadFixtureString("testdata/TestResCPCode/change_name_step1.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "cpc_0"),
+							resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "0"),
 							resource.TestCheckResourceAttr("akamai_cp_code.test", "name", "renamed cpcode"),
 						),
 					},
@@ -362,7 +360,7 @@ func TestResCPCode(t *testing.T) {
 		client := &papi.Mock{}
 		id := "0,1,2"
 
-		CPCodes := []papi.CPCode{{ID: "cpc_0", Name: "test cpcode", ProductIDs: []string{"prd_Web_Accel"}}}
+		CPCodes := []papi.CPCode{{ID: "0", Name: "test cpcode", ProductIDs: []string{"prd_Web_Accel"}}}
 		expectGetCPCodes(client, "ctr_1", "grp_2", &CPCodes)
 		expectGetCPCode(client, "ctr_1", "grp_2", 0, &CPCodes, nil).Times(4)
 		useClient(client, nil, func() {
@@ -385,7 +383,7 @@ func TestResCPCode(t *testing.T) {
 							assert.Equal(t, "ctr_1", rs.Attributes["contract"])
 							assert.Equal(t, "prd_Web_Accel", rs.Attributes["product_id"])
 							assert.Equal(t, "prd_Web_Accel", rs.Attributes["product"])
-							assert.Equal(t, "cpc_0", rs.Attributes["id"])
+							assert.Equal(t, "0", rs.Attributes["id"])
 							assert.Equal(t, "test cpcode", rs.Attributes["name"])
 							return nil
 						},
@@ -460,7 +458,7 @@ func TestResCPCode(t *testing.T) {
 					{
 						Config: loadFixtureString("testdata/TestResCPCode/change_name_step0.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "cpc_0"),
+							resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "0"),
 							resource.TestCheckResourceAttr("akamai_cp_code.test", "name", "test cpcode"),
 							resource.TestCheckResourceAttr("akamai_cp_code.test", "group_id", "grp_1"),
 							resource.TestCheckResourceAttr("akamai_cp_code.test", "contract", "ctr_1"),
@@ -471,7 +469,7 @@ func TestResCPCode(t *testing.T) {
 						Config:      loadFixtureString("testdata/TestResCPCode/change_immutable.tf"),
 						ExpectError: regexp.MustCompile(`cp code attribute 'contract' cannot be changed after creation \(immutable\)`),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "cpc_0"),
+							resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "0"),
 							resource.TestCheckResourceAttr("akamai_cp_code.test", "name", "test cpcode"),
 							resource.TestCheckResourceAttr("akamai_cp_code.test", "group_id", "grp_1"),
 							resource.TestCheckResourceAttr("akamai_cp_code.test", "contract", "ctr_1"),
@@ -482,7 +480,7 @@ func TestResCPCode(t *testing.T) {
 						Config:      loadFixtureString("testdata/TestResCPCode/change_immutable.tf"),
 						ExpectError: regexp.MustCompile(`cp code attribute 'product' cannot be changed after creation \(immutable\)`),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "cpc_0"),
+							resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "0"),
 							resource.TestCheckResourceAttr("akamai_cp_code.test", "name", "test cpcode"),
 							resource.TestCheckResourceAttr("akamai_cp_code.test", "group_id", "grp_1"),
 							resource.TestCheckResourceAttr("akamai_cp_code.test", "contract", "ctr_1"),
@@ -493,7 +491,7 @@ func TestResCPCode(t *testing.T) {
 						Config:      loadFixtureString("testdata/TestResCPCode/change_immutable.tf"),
 						ExpectError: regexp.MustCompile(`cp code attribute 'group_id' cannot be changed after creation \(immutable\)`),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "cpc_0"),
+							resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "0"),
 							resource.TestCheckResourceAttr("akamai_cp_code.test", "name", "test cpcode"),
 							resource.TestCheckResourceAttr("akamai_cp_code.test", "group_id", "grp_1"),
 							resource.TestCheckResourceAttr("akamai_cp_code.test", "contract", "ctr_1"),
@@ -528,7 +526,7 @@ func TestResCPCode(t *testing.T) {
 					{
 						Config: loadFixtureString("testdata/TestResCPCode/change_name_step0.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "cpc_0"),
+							resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "0"),
 							resource.TestCheckResourceAttr("akamai_cp_code.test", "name", "test cpcode"),
 						),
 					},
@@ -565,7 +563,7 @@ func TestResCPCode(t *testing.T) {
 					{
 						Config: loadFixtureString("testdata/TestResCPCode/change_name_step0.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "cpc_0"),
+							resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "0"),
 							resource.TestCheckResourceAttr("akamai_cp_code.test", "name", "test cpcode"),
 						),
 					},
@@ -581,9 +579,12 @@ func TestResCPCode(t *testing.T) {
 	t.Run("timeout waiting for update", func(t *testing.T) {
 		timeoutVal := cpCodeResourceUpdateTimeout
 		oldInterval := cpCodeResourceUpdateTimeout
+
 		cpCodeResourceUpdateTimeout = time.Millisecond * 6
 		updatePollInterval = time.Millisecond * 4
+
 		client := &papi.Mock{}
+
 		defer func() {
 			cpCodeResourceUpdateTimeout = timeoutVal
 			updatePollInterval = oldInterval
@@ -612,7 +613,7 @@ func TestResCPCode(t *testing.T) {
 					{
 						Config: loadFixtureString("testdata/TestResCPCode/change_name_step0.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "cpc_0"),
+							resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "0"),
 							resource.TestCheckResourceAttr("akamai_cp_code.test", "name", "test cpcode"),
 						),
 					},

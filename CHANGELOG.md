@@ -7,6 +7,9 @@
 * Appsec
   * Update malware policy `ContentTypes` to include `EncodedContentAttributes`.
   * Malware policy's `ContentTypes` is reported as part of an individual policy but is no longer included in the bulk report of all policies.
+  
+* PAPI
+  * Remove `cpc_` prefix in `akamai_cp_code` resource and data source IDs
 
 ### FEATURES/ENHANCEMENTS:
 
@@ -34,6 +37,8 @@
 * Cloudlets
   * Fixed bug related with regex validation for handling property delay in `akamai_cloudlets_policy_activation`
   * Fixed sporadic issue with `akamai_cloudlets_policy_activation` due to network delay
+
+#### BUG FIXES:
 
 * PAPI 
   * Fixed reading float values in `akamai_property_rules_builder`
