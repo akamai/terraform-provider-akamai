@@ -8,6 +8,8 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/dns"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -212,5 +214,12 @@ func TestResDnsRecord(t *testing.T) {
 		})
 
 		client.AssertExpectations(t)
+	})
+}
+
+func TestTargetDiffSuppress(t *testing.T) {
+	t.Run("target is computed and recordType is AAAA", func(t *testing.T) {
+		config := schema.TestResourceDataRaw(t, getResourceDNSRecordSchema(), map[string]interface{}{"recordtype": "AAAA"})
+		assert.False(t, dnsRecordTargetSuppress("target.#", "0", "", config))
 	})
 }

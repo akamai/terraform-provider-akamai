@@ -2,43 +2,41 @@
 
 ## 3.7.0 (May xx, 2023)
 
-#### FEATURES/ENHANCEMENTS:
+### BREAKING CHANGES:
+
+* Appsec
+  * Update malware policy `ContentTypes` to include `EncodedContentAttributes`.
+  * Malware policy's `ContentTypes` is reported as part of an individual policy but is no longer included in the bulk report of all policies.
+
+### FEATURES/ENHANCEMENTS:
 
 * Migrate to Terraform 1.3.7 version
 
 * Akamai
   * Reword returned error when reading edgerc configuration encounters problems ([I#411](https://github.com/akamai/terraform-provider-akamai/issues/411))
 
-* DNS
-  * Fixed TXT record characters escaping issue in akamai_dns_record resource ([I#137](https://github.com/akamai/terraform-provider-akamai/issues/137))
-
-* PAPI
-  * Remove enforce `property-snippets` directory check ([I#378](https://github.com/akamai/terraform-provider-akamai/issues/378))
-  * Fixed reading float values in `akamai_property_rules_builder`
-  * (Internal usage only) Improved `compliance_record` attribute's syntax for `akamai_property_activation` and `akamai_property_include_activation`
-
 * EdgeWorkers
   * Deactivate EdgeWorker versions upon EdgeWorker deletion([I#331](https://github.com/akamai/terraform-provider-akamai/issues/331))
 
-#### BUG FIXES:
+* PAPI
+  * Remove enforce `property-snippets` directory check ([I#378](https://github.com/akamai/terraform-provider-akamai/issues/378))
+  * (Internal usage only) Improved `compliance_record` attribute's syntax for `akamai_property_activation` and `akamai_property_include_activation`
+
+### BUG FIXES:
+
+* Appsec
+  * Fixed issue that in some cases allowed `terraform plan` to create a new config version as a side-effect of reading the current config.
+
+* DNS
+  * Fixed TXT record characters escaping issue in akamai_dns_record resource ([I#137](https://github.com/akamai/terraform-provider-akamai/issues/137))
+  * Fixed issue when `target` in `akamai_dns_record` resource was not known during plan, the plan failed ([I#410](https://github.com/akamai/terraform-provider-akamai/issues/410))
 
 * Cloudlets
   * Fixed bug related with regex validation for handling property delay in `akamai_cloudlets_policy_activation`
-  * Fixed sporadic issue with `akamai_cloudlets_policy_activation` due to network delay 
-  
-* Appsec
-  * Fixed issue that in some cases allowed `terraform plan` to create a new config version as a side-effect of reading the current config.
+  * Fixed sporadic issue with `akamai_cloudlets_policy_activation` due to network delay
 
-#### BREAKING CHANGES:
-
-* Appsec
-  * Update malware policy `ContentTypes` to include `EncodedContentAttributes`.
-  * Malware policy's `ContentTypes` is reported as part of an individual policy but is no longer included in the bulk report of all policies.
-
-#### BUG FIXES:
-
-* Appsec
-  * Fixed issue that in some cases allowed `terraform plan` to create a new config version as a side-effect of reading the current config.
+* PAPI 
+  * Fixed reading float values in `akamai_property_rules_builder`
 
 ## 3.6.0 (April 27, 2023)
 

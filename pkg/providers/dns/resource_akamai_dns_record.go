@@ -39,292 +39,296 @@ func resourceDNSv2Record() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			State: resourceDNSRecordImport,
 		},
-		Schema: map[string]*schema.Schema{
-			"zone": {
-				Type:             schema.TypeString,
-				Required:         true,
-				ForceNew:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(validation.NoZeroValues),
-			},
-			"name": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
-			},
-			"recordtype": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
-				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{
-					RRTypeA,
-					RRTypeAaaa,
-					RRTypeCname,
-					RRTypeLoc,
-					RRTypeNs,
-					RRTypePtr,
-					RRTypeSpf,
-					RRTypeTxt,
-					RRTypeAfsdb,
-					RRTypeDnskey,
-					RRTypeDs,
-					RRTypeHinfo,
-					RRTypeMx,
-					RRTypeNaptr,
-					RRTypeNsec3,
-					RRTypeNsec3Param,
-					RRTypeRp,
-					RRTypeRrsig,
-					RRTypeSrv,
-					RRTypeSshfp,
-					RRTypeSoa,
-					RRTypeAkamaiCdn,
-					RRTypeAkamaiTlc,
-					RRTypeCaa,
-					RRTypeCert,
-					RRTypeTlsa,
-					RRTypeSvcb,
-					RRTypeHTTPS,
-				}, false)),
-			},
-			"ttl": {
-				Type:     schema.TypeInt,
-				Required: true,
-			},
-			"active": {
-				Type:     schema.TypeBool,
-				Optional: true,
-			},
-			"target": {
-				Type:             schema.TypeList,
-				Elem:             &schema.Schema{Type: schema.TypeString},
-				Optional:         true,
-				DiffSuppressFunc: dnsRecordTargetSuppress,
-			},
-			"subtype": {
-				Type:     schema.TypeInt,
-				Optional: true,
-			},
-			"flags": {
-				Type:     schema.TypeInt,
-				Optional: true,
-			},
-			"protocol": {
-				Type:     schema.TypeInt,
-				Optional: true,
-			},
-			"algorithm": {
-				Type:     schema.TypeInt,
-				Optional: true,
-			},
-			"key": {
-				Type:     schema.TypeString,
-				Optional: true,
-			},
-			"keytag": {
-				Type:     schema.TypeInt,
-				Optional: true,
-			},
-			"digest_type": {
-				Type:     schema.TypeInt,
-				Optional: true,
-			},
-			"digest": {
-				Type:     schema.TypeString,
-				Optional: true,
-			},
-			"hardware": {
-				Type:             schema.TypeString,
-				Optional:         true,
-				DiffSuppressFunc: dnsRecordFieldTrimQuoteSuppress,
-			},
-			"software": {
-				Type:             schema.TypeString,
-				Optional:         true,
-				DiffSuppressFunc: dnsRecordFieldTrimQuoteSuppress,
-			},
-			"priority": {
-				Type:     schema.TypeInt,
-				Optional: true,
-			},
-			"order": {
-				Type:     schema.TypeInt,
-				Optional: true,
-			},
-			"preference": {
-				Type:     schema.TypeInt,
-				Optional: true,
-			},
-			"flagsnaptr": {
-				Type:             schema.TypeString,
-				Optional:         true,
-				DiffSuppressFunc: dnsRecordFieldTrimQuoteSuppress,
-			},
-			"service": {
-				Type:             schema.TypeString,
-				Optional:         true,
-				DiffSuppressFunc: dnsRecordFieldTrimQuoteSuppress,
-			},
-			"regexp": {
-				Type:             schema.TypeString,
-				Optional:         true,
-				DiffSuppressFunc: dnsRecordFieldTrimQuoteSuppress,
-			},
-			"replacement": {
-				Type:     schema.TypeString,
-				Optional: true,
-			},
-			"iterations": {
-				Type:     schema.TypeInt,
-				Optional: true,
-			},
-			"salt": {
-				Type:     schema.TypeString,
-				Optional: true,
-			},
-			"next_hashed_owner_name": {
-				Type:     schema.TypeString,
-				Optional: true,
-			},
-			"type_bitmaps": {
-				Type:     schema.TypeString,
-				Optional: true,
-			},
-			"mailbox": {
-				Type:             schema.TypeString,
-				Optional:         true,
-				DiffSuppressFunc: dnsRecordFieldDotSuffixSuppress,
-			},
-			"txt": {
-				Type:             schema.TypeString,
-				Optional:         true,
-				DiffSuppressFunc: dnsRecordFieldDotSuffixSuppress,
-			},
-			"type_covered": {
-				Type:     schema.TypeString,
-				Optional: true,
-			},
-			"original_ttl": {
-				Type:     schema.TypeInt,
-				Optional: true,
-			},
-			"expiration": {
-				Type:     schema.TypeString,
-				Optional: true,
-			},
-			"inception": {
-				Type:     schema.TypeString,
-				Optional: true,
-			},
-			"signer": {
-				Type:     schema.TypeString,
-				Optional: true,
-			},
-			"signature": {
-				Type:     schema.TypeString,
-				Optional: true,
-			},
-			"labels": {
-				Type:     schema.TypeInt,
-				Optional: true,
-			},
-			"weight": {
-				Type:     schema.TypeInt,
-				Optional: true,
-			},
-			"port": {
-				Type:     schema.TypeInt,
-				Optional: true,
-			},
-			"fingerprint_type": {
-				Type:     schema.TypeInt,
-				Optional: true,
-			},
-			"fingerprint": {
-				Type:     schema.TypeString,
-				Optional: true,
-			},
-			"priority_increment": {
-				Type:     schema.TypeInt,
-				Optional: true,
-			},
-			"dns_name": {
-				Type:     schema.TypeString,
-				Computed: true,
-			},
-			"answer_type": {
-				Type:     schema.TypeString,
-				Computed: true,
-			},
-			"name_server": {
-				Type:     schema.TypeString,
-				Optional: true,
-			},
-			"email_address": {
-				Type:             schema.TypeString,
-				Optional:         true,
-				DiffSuppressFunc: dnsRecordFieldDotSuffixSuppress,
-			},
-			"serial": {
-				Type:     schema.TypeInt,
-				Computed: true,
-			},
-			"refresh": {
-				Type:     schema.TypeInt,
-				Optional: true,
-			},
-			"retry": {
-				Type:     schema.TypeInt,
-				Optional: true,
-			},
-			"expiry": {
-				Type:     schema.TypeInt,
-				Optional: true,
-			},
-			"nxdomain_ttl": {
-				Type:     schema.TypeInt,
-				Optional: true,
-			},
-			"usage": {
-				Type:     schema.TypeInt,
-				Optional: true,
-			},
-			"selector": {
-				Type:     schema.TypeInt,
-				Optional: true,
-			},
-			"match_type": {
-				Type:     schema.TypeInt,
-				Optional: true,
-			},
-			"certificate": {
-				Type:     schema.TypeString,
-				Optional: true,
-			},
-			"type_value": {
-				Type:             schema.TypeInt,
-				Optional:         true,
-				DiffSuppressFunc: dnsRecordTypeValueSuppress,
-			},
-			"type_mnemonic": {
-				Type:     schema.TypeString,
-				Optional: true,
-			},
-			"record_sha": {
-				Type:     schema.TypeString,
-				Computed: true,
-			},
-			"svc_priority": {
-				Type:     schema.TypeInt,
-				Optional: true,
-			},
-			"svc_params": {
-				Type:     schema.TypeString,
-				Optional: true,
-			},
-			"target_name": {
-				Type:     schema.TypeString,
-				Optional: true,
-			},
+		Schema: getResourceDNSRecordSchema(),
+	}
+}
+
+func getResourceDNSRecordSchema() map[string]*schema.Schema {
+	return map[string]*schema.Schema{
+		"zone": {
+			Type:             schema.TypeString,
+			Required:         true,
+			ForceNew:         true,
+			ValidateDiagFunc: validation.ToDiagFunc(validation.NoZeroValues),
+		},
+		"name": {
+			Type:     schema.TypeString,
+			Required: true,
+			ForceNew: true,
+		},
+		"recordtype": {
+			Type:     schema.TypeString,
+			Required: true,
+			ForceNew: true,
+			ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{
+				RRTypeA,
+				RRTypeAaaa,
+				RRTypeCname,
+				RRTypeLoc,
+				RRTypeNs,
+				RRTypePtr,
+				RRTypeSpf,
+				RRTypeTxt,
+				RRTypeAfsdb,
+				RRTypeDnskey,
+				RRTypeDs,
+				RRTypeHinfo,
+				RRTypeMx,
+				RRTypeNaptr,
+				RRTypeNsec3,
+				RRTypeNsec3Param,
+				RRTypeRp,
+				RRTypeRrsig,
+				RRTypeSrv,
+				RRTypeSshfp,
+				RRTypeSoa,
+				RRTypeAkamaiCdn,
+				RRTypeAkamaiTlc,
+				RRTypeCaa,
+				RRTypeCert,
+				RRTypeTlsa,
+				RRTypeSvcb,
+				RRTypeHTTPS,
+			}, false)),
+		},
+		"ttl": {
+			Type:     schema.TypeInt,
+			Required: true,
+		},
+		"active": {
+			Type:     schema.TypeBool,
+			Optional: true,
+		},
+		"target": {
+			Type:             schema.TypeList,
+			Elem:             &schema.Schema{Type: schema.TypeString},
+			Optional:         true,
+			DiffSuppressFunc: dnsRecordTargetSuppress,
+		},
+		"subtype": {
+			Type:     schema.TypeInt,
+			Optional: true,
+		},
+		"flags": {
+			Type:     schema.TypeInt,
+			Optional: true,
+		},
+		"protocol": {
+			Type:     schema.TypeInt,
+			Optional: true,
+		},
+		"algorithm": {
+			Type:     schema.TypeInt,
+			Optional: true,
+		},
+		"key": {
+			Type:     schema.TypeString,
+			Optional: true,
+		},
+		"keytag": {
+			Type:     schema.TypeInt,
+			Optional: true,
+		},
+		"digest_type": {
+			Type:     schema.TypeInt,
+			Optional: true,
+		},
+		"digest": {
+			Type:     schema.TypeString,
+			Optional: true,
+		},
+		"hardware": {
+			Type:             schema.TypeString,
+			Optional:         true,
+			DiffSuppressFunc: dnsRecordFieldTrimQuoteSuppress,
+		},
+		"software": {
+			Type:             schema.TypeString,
+			Optional:         true,
+			DiffSuppressFunc: dnsRecordFieldTrimQuoteSuppress,
+		},
+		"priority": {
+			Type:     schema.TypeInt,
+			Optional: true,
+		},
+		"order": {
+			Type:     schema.TypeInt,
+			Optional: true,
+		},
+		"preference": {
+			Type:     schema.TypeInt,
+			Optional: true,
+		},
+		"flagsnaptr": {
+			Type:             schema.TypeString,
+			Optional:         true,
+			DiffSuppressFunc: dnsRecordFieldTrimQuoteSuppress,
+		},
+		"service": {
+			Type:             schema.TypeString,
+			Optional:         true,
+			DiffSuppressFunc: dnsRecordFieldTrimQuoteSuppress,
+		},
+		"regexp": {
+			Type:             schema.TypeString,
+			Optional:         true,
+			DiffSuppressFunc: dnsRecordFieldTrimQuoteSuppress,
+		},
+		"replacement": {
+			Type:     schema.TypeString,
+			Optional: true,
+		},
+		"iterations": {
+			Type:     schema.TypeInt,
+			Optional: true,
+		},
+		"salt": {
+			Type:     schema.TypeString,
+			Optional: true,
+		},
+		"next_hashed_owner_name": {
+			Type:     schema.TypeString,
+			Optional: true,
+		},
+		"type_bitmaps": {
+			Type:     schema.TypeString,
+			Optional: true,
+		},
+		"mailbox": {
+			Type:             schema.TypeString,
+			Optional:         true,
+			DiffSuppressFunc: dnsRecordFieldDotSuffixSuppress,
+		},
+		"txt": {
+			Type:             schema.TypeString,
+			Optional:         true,
+			DiffSuppressFunc: dnsRecordFieldDotSuffixSuppress,
+		},
+		"type_covered": {
+			Type:     schema.TypeString,
+			Optional: true,
+		},
+		"original_ttl": {
+			Type:     schema.TypeInt,
+			Optional: true,
+		},
+		"expiration": {
+			Type:     schema.TypeString,
+			Optional: true,
+		},
+		"inception": {
+			Type:     schema.TypeString,
+			Optional: true,
+		},
+		"signer": {
+			Type:     schema.TypeString,
+			Optional: true,
+		},
+		"signature": {
+			Type:     schema.TypeString,
+			Optional: true,
+		},
+		"labels": {
+			Type:     schema.TypeInt,
+			Optional: true,
+		},
+		"weight": {
+			Type:     schema.TypeInt,
+			Optional: true,
+		},
+		"port": {
+			Type:     schema.TypeInt,
+			Optional: true,
+		},
+		"fingerprint_type": {
+			Type:     schema.TypeInt,
+			Optional: true,
+		},
+		"fingerprint": {
+			Type:     schema.TypeString,
+			Optional: true,
+		},
+		"priority_increment": {
+			Type:     schema.TypeInt,
+			Optional: true,
+		},
+		"dns_name": {
+			Type:     schema.TypeString,
+			Computed: true,
+		},
+		"answer_type": {
+			Type:     schema.TypeString,
+			Computed: true,
+		},
+		"name_server": {
+			Type:     schema.TypeString,
+			Optional: true,
+		},
+		"email_address": {
+			Type:             schema.TypeString,
+			Optional:         true,
+			DiffSuppressFunc: dnsRecordFieldDotSuffixSuppress,
+		},
+		"serial": {
+			Type:     schema.TypeInt,
+			Computed: true,
+		},
+		"refresh": {
+			Type:     schema.TypeInt,
+			Optional: true,
+		},
+		"retry": {
+			Type:     schema.TypeInt,
+			Optional: true,
+		},
+		"expiry": {
+			Type:     schema.TypeInt,
+			Optional: true,
+		},
+		"nxdomain_ttl": {
+			Type:     schema.TypeInt,
+			Optional: true,
+		},
+		"usage": {
+			Type:     schema.TypeInt,
+			Optional: true,
+		},
+		"selector": {
+			Type:     schema.TypeInt,
+			Optional: true,
+		},
+		"match_type": {
+			Type:     schema.TypeInt,
+			Optional: true,
+		},
+		"certificate": {
+			Type:     schema.TypeString,
+			Optional: true,
+		},
+		"type_value": {
+			Type:             schema.TypeInt,
+			Optional:         true,
+			DiffSuppressFunc: dnsRecordTypeValueSuppress,
+		},
+		"type_mnemonic": {
+			Type:     schema.TypeString,
+			Optional: true,
+		},
+		"record_sha": {
+			Type:     schema.TypeString,
+			Computed: true,
+		},
+		"svc_priority": {
+			Type:     schema.TypeInt,
+			Optional: true,
+		},
+		"svc_params": {
+			Type:     schema.TypeString,
+			Optional: true,
+		},
+		"target_name": {
+			Type:     schema.TypeString,
+			Optional: true,
 		},
 	}
 }
@@ -415,8 +419,13 @@ func dnsRecordTypeValueSuppress(_, _, _ string, d *schema.ResourceData) bool {
 }
 
 // DiffSuppresFunc to handle quoted TXT Rdata strings possibly containing escaped quotes
-func dnsRecordTargetSuppress(_, old, new string, d *schema.ResourceData) bool {
+func dnsRecordTargetSuppress(key, oldTarget, newTarget string, d *schema.ResourceData) bool {
 	logger := akamai.Log("[Akamai DNS]", "dnsRecordTargetSuppress")
+
+	//new value (and length) for target is not known during plan
+	if strings.HasSuffix(key, ".#") && newTarget == "" {
+		return false
+	}
 
 	recordType, err := tf.GetStringValue("recordtype", d)
 	if err != nil {
@@ -451,7 +460,7 @@ func dnsRecordTargetSuppress(_, old, new string, d *schema.ResourceData) bool {
 		}
 		newStrList = append(newStrList, item)
 	}
-	return diffQuotedDNSRecord(oldStrList, newStrList, old, new, recordType, logger)
+	return diffQuotedDNSRecord(oldStrList, newStrList, oldTarget, newTarget, recordType, logger)
 }
 
 func diffQuotedDNSRecord(oldTargetList []string, newTargetList []string, old string, new string, recordType string, logger log.Interface) bool {
