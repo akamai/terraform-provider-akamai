@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/iam"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/test"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/test"
 )
 
 func TestDataGroups(t *testing.T) {

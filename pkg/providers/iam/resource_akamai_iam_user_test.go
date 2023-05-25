@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/tools"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/iam"

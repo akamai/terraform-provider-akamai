@@ -5,7 +5,7 @@ import (
 	"sync"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/imaging"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
 	"github.com/apex/log"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"

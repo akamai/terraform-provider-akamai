@@ -5,9 +5,9 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/cps"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
-	cpstools "github.com/akamai/terraform-provider-akamai/v3/pkg/providers/cps/tools"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	cpstools "github.com/akamai/terraform-provider-akamai/v4/pkg/providers/cps/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )

@@ -8,9 +8,9 @@ import (
 	"github.com/apex/log"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/config"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/config"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )

@@ -1,4 +1,4 @@
-module github.com/akamai/terraform-provider-akamai/v3
+module github.com/akamai/terraform-provider-akamai/v4
 
 require (
 	github.com/akamai/AkamaiOPEN-edgegrid-golang/v6 v6.0.0
@@ -77,6 +77,6 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-//replace github.com/akamai/AkamaiOPEN-edgegrid-golang/v6 => ../AkamaiOPEN-edgegrid-golang
+// replace github.com/akamai/AkamaiOPEN-edgegrid-golang/v6 => ../AkamaiOPEN-edgegrid-golang
 
 go 1.18

@@ -22,9 +22,9 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/edgegrid"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/config"
-	"github.com/akamai/terraform-provider-akamai/v3/version"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/config"
+	"github.com/akamai/terraform-provider-akamai/v4/version"
 )
 
 const (

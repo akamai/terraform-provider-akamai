@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/tools"
 
 	"github.com/stretchr/testify/mock"
 

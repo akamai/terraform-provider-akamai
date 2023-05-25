@@ -8,8 +8,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 )
 
 func dataSourcePropertiesSearch() *schema.Resource {

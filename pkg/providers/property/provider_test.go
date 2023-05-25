@@ -8,7 +8,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/hapi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/papi"

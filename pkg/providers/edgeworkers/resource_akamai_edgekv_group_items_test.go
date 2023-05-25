@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/edgeworkers"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
