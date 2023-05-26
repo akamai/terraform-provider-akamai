@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -450,12 +451,6 @@ func resourcePropertyActivationRead(ctx context.Context, d *schema.ResourceData,
 	if err != nil {
 		return diag.FromErr(err)
 	}
-
-	version, err := resolveVersion(ctx, d, client, propertyID, network)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
 	resp, err := client.GetActivations(ctx, papi.GetActivationsRequest{
 		PropertyID: propertyID,
 	})
@@ -470,32 +465,54 @@ func resourcePropertyActivationRead(ctx context.Context, d *schema.ResourceData,
 		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 	}
 
-	for _, act := range resp.Activations.Items {
+	activation, err := findLatestActive(resp.Activations.Items, network)
+	if err != nil && !errors.Is(err, errNoActiveVersionFound) {
+		return diag.Errorf("unexpected error searching for latest activation: %s", err)
+	}
+	if errors.Is(err, errNoActiveVersionFound) {
+		d.SetId("")
+		return nil
+	}
 
-		if act.Network == network && act.PropertyVersion == version {
-			logger.Debugf("Found Existing Activation %s version %d", network, version)
+	attrs := map[string]interface{}{
+		"status":        string(activation.Status),
+		"version":       activation.PropertyVersion,
+		"network":       network,
+		"activation_id": activation.ActivationID,
+	}
+	if err = tf.SetAttrs(d, attrs); err != nil {
+		return diag.FromErr(err)
+	}
+	d.SetId(activation.PropertyID + ":" + string(network))
 
-			if err := d.Set("status", string(act.Status)); err != nil {
-				return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
-			}
-			if err := d.Set("version", act.PropertyVersion); err != nil {
-				return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
-			}
+	return nil
+}
 
-			d.SetId(act.PropertyID + ":" + string(network))
+var errNoActiveVersionFound = errors.New("activation not found")
 
-			if err := d.Set("version", version); err != nil {
-				return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
-			}
-			if err := d.Set("activation_id", act.ActivationID); err != nil {
-				return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
-			}
+func findLatestActive(activations []*papi.Activation, network papi.ActivationNetwork) (*papi.Activation, error) {
+	if len(activations) == 0 {
+		return nil, errNoActiveVersionFound
+	}
 
-			break
+	sort.Slice(activations, func(i, j int) bool {
+		return activations[i].UpdateDate > activations[j].UpdateDate
+	})
+
+	for _, activation := range activations {
+		if activation.ActivationType == papi.ActivationTypeActivate &&
+			activation.Network == network &&
+			activation.Status == papi.ActivationStatusActive {
+			return activation, nil
+		}
+		if activation.ActivationType == papi.ActivationTypeDeactivate &&
+			activation.Network == network &&
+			(activation.Status == papi.ActivationStatusActive) {
+			return nil, errNoActiveVersionFound
 		}
 	}
 
-	return nil
+	return nil, errNoActiveVersionFound
 }
 
 func resolveVersion(ctx context.Context, d *schema.ResourceData, client papi.PAPI, propertyID string, network papi.ActivationNetwork) (int, error) {

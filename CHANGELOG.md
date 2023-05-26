@@ -2,7 +2,7 @@
 
 ## 3.7.0 (May xx, 2023)
 
-### BREAKING CHANGES:
+#### BREAKING CHANGES:
 
 * Appsec
   * Update malware policy `ContentTypes` to include `EncodedContentAttributes`.
@@ -11,7 +11,7 @@
 * PAPI
   * Remove `cpc_` prefix in `akamai_cp_code` resource and data source IDs
 
-### FEATURES/ENHANCEMENTS:
+#### FEATURES/ENHANCEMENTS:
 
 * Migrate to Terraform 1.3.7 version
 
@@ -28,7 +28,7 @@
     * `variables` can now reference each other and be used to build other `variables` e.g. `${env.abc} = "${env.prefix} cba"`
   * (Internal usage only) Improved `compliance_record` attribute's syntax for `akamai_property_activation` and `akamai_property_include_activation`
 
-### BUG FIXES:
+#### BUG FIXES:
 
 * Appsec
   * Fixed issue that in some cases allowed `terraform plan` to create a new config version as a side-effect of reading the current config.
@@ -41,10 +41,10 @@
   * Fixed bug related with regex validation for handling property delay in `akamai_cloudlets_policy_activation`
   * Fixed sporadic issue with `akamai_cloudlets_policy_activation` due to network delay
 
-#### BUG FIXES:
-
 * PAPI 
   * Fixed reading float values in `akamai_property_rules_builder`
+  * Add validation for hostnames `cname_from` field in `akamai_property` resource
+  * Assign only active property activation version in `akamai_property_activation` resource on read
 
 ## 3.6.0 (April 27, 2023)
 
