@@ -1,6 +1,6 @@
 # RELEASE NOTES
 
-## 3.7.0 (May xx, 2023)
+## 4.0.0 (May 30, 2023)
 
 #### BREAKING CHANGES:
 
@@ -38,7 +38,7 @@
   * Fixed issue when `target` in `akamai_dns_record` resource was not known during plan, the plan failed ([I#410](https://github.com/akamai/terraform-provider-akamai/issues/410))
 
 * Cloudlets
-  * Fixed bug related with regex validation for handling property delay in `akamai_cloudlets_policy_activation`
+  * Fixed bug related to regex validation for handling property delay in `akamai_cloudlets_policy_activation`
   * Fixed sporadic issue with `akamai_cloudlets_policy_activation` due to network delay
 
 * PAPI 

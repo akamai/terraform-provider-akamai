@@ -1,4 +1,4 @@
-v4.0Use our Terraform provider to provision and manage your Akamai configurations in Terraform.  
+Use our Terraform provider to provision and manage your Akamai configurations in Terraform.  
 
 ## Before you begin
 
