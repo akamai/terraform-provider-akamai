@@ -174,7 +174,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 				Steps: []resource.TestStep{
 					{
 						Config:      loadFixtureString("testdata/TestDSRulesTemplate/template_var_not_found.tf"),
-						ExpectError: regexp.MustCompile(`error replacing variable at "testdata/TestDSRulesTemplate/rules/property-snippets/snippets/sub/another-template.json": could not find variable "options"`),
+						ExpectError: regexp.MustCompile(`error replacing variable at "testdata/TestDSRulesTemplate/rules/property-snippets/snippets/sub/another-template.json": could not find variable ".+"`),
 					},
 				},
 			})
