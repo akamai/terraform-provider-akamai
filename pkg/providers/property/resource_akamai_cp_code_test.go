@@ -625,4 +625,18 @@ func TestResCPCode(t *testing.T) {
 			})
 		})
 	})
+
+	t.Run("error when no product and product_id provided", func(t *testing.T) {
+		expectedErr := regexp.MustCompile("one of `product,product_id` must be specified")
+
+		resource.UnitTest(t, resource.TestCase{
+			ProviderFactories: testAccProviders,
+			Steps: []resource.TestStep{
+				{
+					Config:      loadFixtureString("testdata/TestResCPCode/missing_product.tf"),
+					ExpectError: expectedErr,
+				},
+			},
+		})
+	})
 }
