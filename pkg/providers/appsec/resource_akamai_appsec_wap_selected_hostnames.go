@@ -7,8 +7,8 @@ import (
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -58,7 +58,7 @@ func resourceWAPSelectedHostnames() *schema.Resource {
 }
 
 func resourceWAPSelectedHostnamesCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceWAPSelectedHostnamesCreate")
 	logger.Debugf("in resourceWAPSelectedHostnamesCreate")
@@ -130,7 +130,7 @@ func resourceWAPSelectedHostnamesCreate(ctx context.Context, d *schema.ResourceD
 }
 
 func resourceWAPSelectedHostnamesRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceWAPSelectedHostnamesRead")
 	logger.Debugf("in resourceWAPSelectedHostnamesRead")
@@ -178,7 +178,7 @@ func resourceWAPSelectedHostnamesRead(ctx context.Context, d *schema.ResourceDat
 }
 
 func resourceWAPSelectedHostnamesUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceWAPSelectedHostnamesUpdate")
 	logger.Debugf("in resourceWAPSelectedHostnamesUpdate")

@@ -7,8 +7,8 @@ import (
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -45,7 +45,7 @@ func resourceMatchTargetSequence() *schema.Resource {
 }
 
 func resourceMatchTargetSequenceCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceMatchTargetSequenceCreate")
 	logger.Debugf("in resourceMatchTargetSequenceCreate")
@@ -78,7 +78,7 @@ func resourceMatchTargetSequenceCreate(ctx context.Context, d *schema.ResourceDa
 }
 
 func resourceMatchTargetSequenceRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceMatchTargetSequenceRead")
 	logger.Debugf("in resourceMatchTargetSequenceRead")
@@ -126,7 +126,7 @@ func resourceMatchTargetSequenceRead(ctx context.Context, d *schema.ResourceData
 }
 
 func resourceMatchTargetSequenceUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceMatchTargetSequenceUpdate")
 	logger.Debugf("in resourceMatchTargetSequenceUpdate")

@@ -7,8 +7,9 @@ import (
 	"github.com/apex/log"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/botman"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/providers/appsec"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/subprovider"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -34,7 +35,7 @@ var (
 )
 
 // Subprovider returns a core sub provider
-func Subprovider(opts ...Option) akamai.Subprovider {
+func Subprovider(opts ...Option) subprovider.Subprovider {
 	once.Do(func() {
 		inst = &provider{Provider: Provider()}
 
@@ -111,7 +112,7 @@ func WithClient(c botman.BotMan) Option {
 }
 
 // Client returns the PAPI interface
-func (p *provider) Client(meta akamai.OperationMeta) botman.BotMan {
+func (p *provider) Client(meta meta.Meta) botman.BotMan {
 	if p.client != nil {
 		return p.client
 	}

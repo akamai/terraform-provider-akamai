@@ -9,7 +9,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/cloudlets"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/subprovider"
 )
 
 type (
@@ -30,7 +31,7 @@ var (
 )
 
 // Subprovider returns a core sub provider
-func Subprovider(opts ...Option) akamai.Subprovider {
+func Subprovider(opts ...Option) subprovider.Subprovider {
 	once.Do(func() {
 		inst = &provider{Provider: Provider()}
 
@@ -75,7 +76,7 @@ func WithClient(c cloudlets.Cloudlets) Option {
 }
 
 // Client returns the Cloudlets interface
-func (p *provider) Client(meta akamai.OperationMeta) cloudlets.Cloudlets {
+func (p *provider) Client(meta meta.Meta) cloudlets.Cloudlets {
 	if p.client != nil {
 		return p.client
 	}

@@ -7,8 +7,8 @@ import (
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/botman"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/tools"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -49,7 +49,7 @@ func resourceChallengeAction() *schema.Resource {
 }
 
 func resourceChallengeActionCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("botman", "resourceChallengeActionCreateAction")
 	logger.Debugf("in resourceChallengeActionCreateAction")
@@ -87,7 +87,7 @@ func resourceChallengeActionCreate(ctx context.Context, d *schema.ResourceData, 
 }
 
 func resourceChallengeActionRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("botman", "resourceChallengeActionRead")
 	logger.Debugf("in resourceChallengeActionRead")
@@ -142,7 +142,7 @@ func resourceChallengeActionRead(ctx context.Context, d *schema.ResourceData, m 
 }
 
 func resourceChallengeActionUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("botman", "resourceChallengeActionUpdate")
 	logger.Debugf("in resourceChallengeActionUpdate")
@@ -186,7 +186,7 @@ func resourceChallengeActionUpdate(ctx context.Context, d *schema.ResourceData, 
 }
 
 func resourceChallengeActionDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("botman", "resourceChallengeActionDelete")
 	logger.Debugf("in resourceChallengeActionDelete")

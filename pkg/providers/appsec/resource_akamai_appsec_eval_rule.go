@@ -8,8 +8,8 @@ import (
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -66,7 +66,7 @@ func resourceEvalRule() *schema.Resource {
 }
 
 func resourceEvalRuleCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceEvalRuleCreate")
 	logger.Debugf("in resourceEvalRuleCreate")
@@ -122,7 +122,7 @@ func resourceEvalRuleCreate(ctx context.Context, d *schema.ResourceData, m inter
 }
 
 func resourceEvalRuleRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceEvalRuleRead")
 	logger.Debugf("in resourceEvalRuleRead")
@@ -184,7 +184,7 @@ func resourceEvalRuleRead(ctx context.Context, d *schema.ResourceData, m interfa
 }
 
 func resourceEvalRuleUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceEvalRuleUpdate")
 	logger.Debugf("in resourceEvalRuleUpdate")
@@ -240,7 +240,7 @@ func resourceEvalRuleUpdate(ctx context.Context, d *schema.ResourceData, m inter
 }
 
 func resourceEvalRuleDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceEvalRuleDelete")
 	logger.Debugf("in resourceEvalRuleDelete")

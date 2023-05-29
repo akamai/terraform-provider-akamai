@@ -7,8 +7,8 @@ import (
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -56,7 +56,7 @@ func resourceCustomRuleAction() *schema.Resource {
 }
 
 func resourceCustomRuleActionCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceCustomRuleActionCreate")
 	logger.Debugf("in resourceCustomRuleActionCreate")
@@ -102,7 +102,7 @@ func resourceCustomRuleActionCreate(ctx context.Context, d *schema.ResourceData,
 }
 
 func resourceCustomRuleActionRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceCustomRuleActionRead")
 	logger.Debugf("in resourceCustomRuleActionRead")
@@ -154,7 +154,7 @@ func resourceCustomRuleActionRead(ctx context.Context, d *schema.ResourceData, m
 }
 
 func resourceCustomRuleActionUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceCustomRuleActionUpdate")
 	logger.Debugf("in resourceCustomRuleActionUpdate")
@@ -199,7 +199,7 @@ func resourceCustomRuleActionUpdate(ctx context.Context, d *schema.ResourceData,
 }
 
 func resourceCustomRuleActionDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceCustomRuleActionDelete")
 	logger.Debugf("in resourceCustomRuleActionDelete")

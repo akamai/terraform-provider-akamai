@@ -7,8 +7,8 @@ import (
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -53,7 +53,7 @@ func resourceRatePolicy() *schema.Resource {
 }
 
 func resourceRatePolicyCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceRatePolicyCreate")
 	logger.Debugf("in resourceRatePolicyCreate")
@@ -88,7 +88,7 @@ func resourceRatePolicyCreate(ctx context.Context, d *schema.ResourceData, m int
 }
 
 func resourceRatePolicyRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceRatePolicyRead")
 	logger.Debugf("in resourceRatePolicyRead")
@@ -141,7 +141,7 @@ func resourceRatePolicyRead(ctx context.Context, d *schema.ResourceData, m inter
 }
 
 func resourceRatePolicyUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceRatePolicyUpdate")
 	logger.Debugf("in resourceRatePolicy`Update")
@@ -185,7 +185,7 @@ func resourceRatePolicyUpdate(ctx context.Context, d *schema.ResourceData, m int
 }
 
 func resourceRatePolicyDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceRatePolicyDelete")
 	logger.Debugf("in resourceRatePolicyDelete")

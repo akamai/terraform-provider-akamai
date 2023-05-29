@@ -2,11 +2,13 @@ package property
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/papi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/cache"
+	akameta "github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -30,7 +32,7 @@ func dataSourceContracts() *schema.Resource {
 }
 
 func dataContractsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := akameta.Must(m)
 	log := meta.Log("PAPI", "dataContractsRead")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
@@ -67,18 +69,20 @@ func dataContractsRead(ctx context.Context, d *schema.ResourceData, m interface{
 }
 
 // Reusable function to fetch all the contracts accessible through a API token
-func getContracts(ctx context.Context, meta akamai.OperationMeta) (*papi.GetContractsResponse, error) {
+func getContracts(ctx context.Context, meta akameta.Meta) (*papi.GetContractsResponse, error) {
 	contracts := &papi.GetContractsResponse{}
-	if err := meta.CacheGet(inst, "contracts", contracts); err != nil {
-		if !akamai.IsNotFoundError(err) {
+	if err := cache.Get(inst, "contracts", contracts); err != nil {
+		if !errors.Is(err, cache.ErrEntryNotFound) && !errors.Is(err, cache.ErrDisabled) {
 			return nil, err
 		}
 		contracts, err = inst.Client(meta).GetContracts(ctx)
 		if err != nil {
 			return nil, err
 		}
-		if err := meta.CacheSet(inst, "contracts", contracts); err != nil {
-			return nil, err
+		if err := cache.Set(inst, "contracts", contracts); err != nil {
+			if !errors.Is(err, cache.ErrDisabled) {
+				return nil, err
+			}
 		}
 	}
 	return contracts, nil

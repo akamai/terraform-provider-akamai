@@ -6,8 +6,8 @@ import (
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -62,7 +62,7 @@ func resourceRatePolicyAction() *schema.Resource {
 }
 
 func resourceRatePolicyActionCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceRatePolicyActionCreate")
 	logger.Debugf("in resourceRatePolicyActionCreate")
@@ -113,7 +113,7 @@ func resourceRatePolicyActionCreate(ctx context.Context, d *schema.ResourceData,
 }
 
 func resourceRatePolicyActionRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceRatePolicyActionRead")
 	logger.Debugf("in resourceRatePolicyActionRead")
@@ -174,7 +174,7 @@ func resourceRatePolicyActionRead(ctx context.Context, d *schema.ResourceData, m
 }
 
 func resourceRatePolicyActionUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceRatePolicyActionUpdate")
 	logger.Debugf("in resourceRatePolicyActionUpdate")
@@ -224,7 +224,7 @@ func resourceRatePolicyActionUpdate(ctx context.Context, d *schema.ResourceData,
 }
 
 func resourceRatePolicyActionDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceRatePolicyActionDelete")
 	logger.Debugf("in resourceRatePolicyActionDelete")

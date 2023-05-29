@@ -7,8 +7,8 @@ import (
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/botman"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/tools"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -49,7 +49,7 @@ func resourceCustomBotCategory() *schema.Resource {
 }
 
 func resourceCustomBotCategoryCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("botman", "resourceCustomBotCategoryCreateAction")
 	logger.Debugf("in resourceCustomBotCategoryCreateAction")
@@ -87,7 +87,7 @@ func resourceCustomBotCategoryCreate(ctx context.Context, d *schema.ResourceData
 }
 
 func resourceCustomBotCategoryRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("botman", "resourceCustomBotCategoryRead")
 	logger.Debugf("in resourceCustomBotCategoryRead")
@@ -145,7 +145,7 @@ func resourceCustomBotCategoryRead(ctx context.Context, d *schema.ResourceData, 
 }
 
 func resourceCustomBotCategoryUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("botman", "resourceCustomBotCategoryUpdate")
 	logger.Debugf("in resourceCustomBotCategoryUpdate")
@@ -189,7 +189,7 @@ func resourceCustomBotCategoryUpdate(ctx context.Context, d *schema.ResourceData
 }
 
 func resourceCustomBotCategoryDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("botman", "resourceCustomBotCategoryDelete")
 	logger.Debugf("in resourceCustomBotCategoryDelete")

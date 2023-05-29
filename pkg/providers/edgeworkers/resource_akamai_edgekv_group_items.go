@@ -9,8 +9,8 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/edgeworkers"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -61,7 +61,7 @@ func resourceEdgeKVGroupItems() *schema.Resource {
 }
 
 func resourceEdgeKVGroupItemsCreate(ctx context.Context, rd *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("EdgeKV", "resourceEdgeKVGroupItemsCreate")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
 	client := inst.Client(meta)
@@ -104,7 +104,7 @@ func resourceEdgeKVGroupItemsCreate(ctx context.Context, rd *schema.ResourceData
 }
 
 func resourceEdgeKVGroupItemsRead(ctx context.Context, rd *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("EdgeKV", "resourceEdgeKVGroupItemsRead")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
 	client := inst.Client(meta)
@@ -148,7 +148,7 @@ func resourceEdgeKVGroupItemsRead(ctx context.Context, rd *schema.ResourceData, 
 }
 
 func resourceEdgeKVGroupItemsUpdate(ctx context.Context, rd *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("EdgeKV", "resourceEdgeKVGroupItemsUpdate")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
 	client := inst.Client(meta)
@@ -243,7 +243,7 @@ func resourceEdgeKVGroupItemsUpdate(ctx context.Context, rd *schema.ResourceData
 }
 
 func resourceEdgeKVGroupItemsDelete(ctx context.Context, rd *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("EdgeKV", "resourceEdgeKVGroupItemsDelete")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
 	client := inst.Client(meta)

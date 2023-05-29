@@ -9,8 +9,8 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/cloudlets"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
 	ozzo "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
 	"github.com/hashicorp/go-cty/cty"
@@ -296,7 +296,7 @@ func validateLivenessHosts(ctx context.Context, client cloudlets.Cloudlets, d *s
 }
 
 func resourceALBCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Cloudlets", "resourceLoadBalancerConfigurationCreate")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
@@ -336,7 +336,7 @@ func resourceALBCreate(ctx context.Context, d *schema.ResourceData, m interface{
 }
 
 func resourceALBRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Cloudlets", "resourceLoadBalancerConfigurationRead")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
@@ -387,7 +387,7 @@ func resourceALBRead(ctx context.Context, d *schema.ResourceData, m interface{})
 }
 
 func resourceALBUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Cloudlets", "resourceLoadBalancerConfigurationUpdate")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
@@ -449,7 +449,7 @@ func resourceALBUpdate(ctx context.Context, d *schema.ResourceData, m interface{
 // resource will simply be removed from state in that case
 // to allow re-using existing config, create function also covers the import functionality, saving the existing origin and version in state
 func resourceALBDelete(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Cloudlets", "resourceLoadBalancerConfigurationDelete")
 	logger.Debug("Deleting load balancer configuration")
 	logger.Info("Cloudlets API does not support load balancer configuration and load balancer configuration version deletion - resource will only be removed from state")
@@ -459,7 +459,7 @@ func resourceALBDelete(_ context.Context, d *schema.ResourceData, m interface{})
 
 // resourceALBImport does a basic import based on the originID specified it imports the latest version
 func resourceALBImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Cloudlets", "resourceALBImport")
 	logger.Debug("Import ALB")
 

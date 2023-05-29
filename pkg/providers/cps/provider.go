@@ -9,7 +9,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/cps"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/subprovider"
 )
 
 type (
@@ -30,7 +31,7 @@ var (
 )
 
 // Subprovider returns a core sub provider
-func Subprovider(opts ...Option) akamai.Subprovider {
+func Subprovider(opts ...Option) subprovider.Subprovider {
 	once.Do(func() {
 		inst = &provider{Provider: Provider()}
 
@@ -70,7 +71,7 @@ func WithClient(c cps.CPS) Option {
 }
 
 // Client returns the CPS interface
-func (p *provider) Client(meta akamai.OperationMeta) cps.CPS {
+func (p *provider) Client(meta meta.Meta) cps.CPS {
 	if p.client != nil {
 		return p.client
 	}

@@ -9,8 +9,8 @@ import (
 	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -55,7 +55,7 @@ func resourceAdvancedSettingsLogging() *schema.Resource {
 }
 
 func resourceAdvancedSettingsLoggingCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsLoggingCreate")
 	logger.Debugf("in resourceAdvancedSettingsLoggingCreate")
@@ -99,7 +99,7 @@ func resourceAdvancedSettingsLoggingCreate(ctx context.Context, d *schema.Resour
 }
 
 func resourceAdvancedSettingsLoggingRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsLoggingRead")
 	logger.Debugf("in resourceAdvancedSettingsLoggingRead")
@@ -161,7 +161,7 @@ func resourceAdvancedSettingsLoggingRead(ctx context.Context, d *schema.Resource
 }
 
 func resourceAdvancedSettingsLoggingUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsLoggingUpdate")
 	logger.Debugf("in resourceAdvancedSettingsLoggingUpdate")
@@ -214,7 +214,7 @@ func resourceAdvancedSettingsLoggingUpdate(ctx context.Context, d *schema.Resour
 }
 
 func resourceAdvancedSettingsLoggingDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsLoggingDelete")
 	logger.Debugf("in resourceAdvancedSettingsLoggingDelete")

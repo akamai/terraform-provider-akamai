@@ -12,8 +12,9 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/papi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/logger"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -108,7 +109,7 @@ func resourcePropertyInclude() *schema.Resource {
 }
 
 func resourcePropertyIncludeCreate(ctx context.Context, rd *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourcePropertyIncludeCreate")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
 	client := inst.Client(meta)
@@ -171,7 +172,7 @@ func resourcePropertyIncludeCreate(ctx context.Context, rd *schema.ResourceData,
 }
 
 func resourcePropertyIncludeRead(ctx context.Context, rd *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourcePropertyIncludeRead")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
 	client := inst.Client(meta)
@@ -272,7 +273,7 @@ func resourcePropertyIncludeRead(ctx context.Context, rd *schema.ResourceData, m
 }
 
 func resourcePropertyIncludeUpdate(ctx context.Context, rd *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourcePropertyIncludeUpdate")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
 	client := inst.Client(meta)
@@ -328,7 +329,7 @@ func resourcePropertyIncludeUpdate(ctx context.Context, rd *schema.ResourceData,
 }
 
 func resourcePropertyIncludeDelete(ctx context.Context, rd *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourcePropertyIncludeDelete")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
 	client := inst.Client(meta)
@@ -373,7 +374,7 @@ func resourcePropertyIncludeDelete(ctx context.Context, rd *schema.ResourceData,
 }
 
 func resourcePropertyIncludeImport(_ context.Context, rd *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourcePropertyIncludeImport")
 
 	logger.Debug("Importing property include")
@@ -474,7 +475,7 @@ func buildRuleFormatHeader(ruleFormat string) http.Header {
 }
 
 func suppressDefaultRules(_, oldValue, newValue string, _ *schema.ResourceData) bool {
-	logger := akamai.Log("PAPI", "suppressDefaultRules")
+	logger := logger.Get("PAPI", "suppressDefaultRules")
 	if len(newValue) > 0 || len(oldValue) == 0 {
 		return false
 	}

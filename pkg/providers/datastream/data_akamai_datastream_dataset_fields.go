@@ -7,8 +7,8 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/datastream"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -64,7 +64,7 @@ func dataSourceDatasetFields() *schema.Resource {
 }
 
 func dataSourceDatasetFieldsRead(ctx context.Context, rd *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("datastream", "dataSourceDatasetFieldsRead")
 
 	ctx = session.ContextWithOptions(

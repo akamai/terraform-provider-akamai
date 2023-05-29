@@ -6,8 +6,8 @@ import (
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/botman"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -42,7 +42,7 @@ func resourceBotAnalyticsCookie() *schema.Resource {
 }
 
 func resourceBotAnalyticsCookieCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("botman", "resourceBotAnalyticsCookieCreate")
 	logger.Debugf("in resourceBotAnalyticsCookieCreate")
@@ -80,7 +80,7 @@ func resourceBotAnalyticsCookieCreate(ctx context.Context, d *schema.ResourceDat
 }
 
 func resourceBotAnalyticsCookieRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("botman", "resourceBotAnalyticsCookieRead")
 	logger.Debugf("in resourceBotAnalyticsCookieRead")
@@ -122,7 +122,7 @@ func resourceBotAnalyticsCookieRead(ctx context.Context, d *schema.ResourceData,
 }
 
 func resourceBotAnalyticsCookieUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("botman", "resourceBotAnalyticsCookieUpdate")
 	logger.Debugf("in resourceBotAnalyticsCookieUpdate")
@@ -158,7 +158,7 @@ func resourceBotAnalyticsCookieUpdate(ctx context.Context, d *schema.ResourceDat
 }
 
 func resourceBotAnalyticsDelete(_ context.Context, _ *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("botman", "resourceBotAnalyticsDelete")
 	logger.Debugf("in resourceBotAnalyticsDelete")
 	logger.Info("Botman API does not support bot analytics cookie settings deletion - resource will only be removed from state")

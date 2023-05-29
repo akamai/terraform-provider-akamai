@@ -12,9 +12,12 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/cloudlets"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/logger"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/tools"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -135,7 +138,7 @@ func EnforceMatchRulesChange(_ context.Context, diff *schema.ResourceDiff, _ int
 }
 
 func resourcePolicyCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Cloudlets", "resourcePolicyCreate")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
@@ -218,7 +221,7 @@ func resourcePolicyCreate(ctx context.Context, d *schema.ResourceData, m interfa
 }
 
 func resourcePolicyRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Cloudlets", "resourcePolicyRead")
 	ctx = session.ContextWithOptions(
 		ctx,
@@ -268,7 +271,7 @@ func resourcePolicyRead(ctx context.Context, d *schema.ResourceData, m interface
 }
 
 func resourcePolicyUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Cloudlets", "resourcePolicyUpdate")
 	ctx = session.ContextWithOptions(
 		ctx,
@@ -381,7 +384,7 @@ func resourcePolicyUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 }
 
 func resourcePolicyDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Cloudlets", "resourcePolicyDelete")
 	ctx = session.ContextWithOptions(
 		ctx,
@@ -432,7 +435,7 @@ func resourcePolicyDelete(ctx context.Context, d *schema.ResourceData, m interfa
 }
 
 func resourcePolicyImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Cloudlets", "resourcePolicyImport")
 	logger.Debugf("Import Policy")
 
@@ -501,7 +504,7 @@ func diffSuppressMatchRules(_, old, new string, _ *schema.ResourceData) bool {
 }
 
 func diffMatchRules(old, new string) bool {
-	logger := akamai.Log("Cloudlets", "diffMatchRules")
+	logger := logger.Get("Cloudlets", "diffMatchRules")
 	if old == new {
 		return true
 	}

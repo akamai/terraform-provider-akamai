@@ -8,8 +8,8 @@ import (
 	"github.com/apex/log"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -44,7 +44,7 @@ func dataSourceDNSRecordSet() *schema.Resource {
 }
 
 func dataSourceDNSRecordSetRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("AkamaiDNS", "dataSourceDNSRecordSetRead")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(

@@ -10,8 +10,9 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/datastream"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/logger"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/tools"
 	"github.com/apex/log"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -846,7 +847,7 @@ var configResource = &schema.Resource{
 }
 
 func resourceDatastreamCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Datastream", "resourceDatastreamCreate")
 
 	ctx = session.ContextWithOptions(
@@ -981,7 +982,7 @@ func FilePrefixSuffixSet(httpsBaseConnectorName string, config *datastream.Deliv
 }
 
 func resourceDatastreamRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Datastream", "resourceDatastreamRead")
 
 	ctx = session.ContextWithOptions(
@@ -1057,7 +1058,7 @@ func resourceDatastreamRead(ctx context.Context, d *schema.ResourceData, m inter
 }
 
 func resourceDatastreamUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Datastream", "resourceDatastreamUpdate")
 
 	ctx = session.ContextWithOptions(
@@ -1280,7 +1281,7 @@ func activateStream(ctx context.Context, client datastream.DS, logger log.Interf
 }
 
 func resourceDatastreamDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Datastream", "resourceDatastreamDelete")
 
 	ctx = session.ContextWithOptions(
@@ -1392,7 +1393,7 @@ func waitForStreamStatusChange(ctx context.Context, client datastream.DS, stream
 func isOrderDifferent(_, oldIDValue, newIDValue string, d *schema.ResourceData) bool {
 	key := "dataset_fields"
 
-	logger := akamai.Log("DataStream", "isOrderDifferent")
+	logger := logger.Get("DataStream", "isOrderDifferent")
 
 	defaultDiff := func() bool {
 		return oldIDValue == newIDValue

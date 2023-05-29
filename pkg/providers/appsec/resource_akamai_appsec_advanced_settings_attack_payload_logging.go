@@ -9,8 +9,8 @@ import (
 	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -52,7 +52,7 @@ func resourceAdvancedSettingsAttackPayloadLogging() *schema.Resource {
 }
 
 func resourceAdvancedSettingsAttackPayloadLoggingImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsAttackPayloadLoggingImport")
 	logger.Debugf("Import AdvancedSettingsAttackPayloadLogging")
 
@@ -117,7 +117,7 @@ func resourceAdvancedSettingsAttackPayloadLoggingImport(ctx context.Context, d *
 }
 
 func resourceAdvancedSettingsAttackPayloadLoggingCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsAttackPayloadLoggingCreate")
 	logger.Debugf("in resourceAdvancedSettingsAttackPayloadLoggingCreate")
@@ -156,7 +156,7 @@ func resourceAdvancedSettingsAttackPayloadLoggingCreate(ctx context.Context, d *
 }
 
 func resourceAdvancedSettingsAttackPayloadLoggingRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsAttackPayloadLoggingRead")
 	logger.Debugf("in resourceAdvancedSettingsLoggingRead")
@@ -202,7 +202,7 @@ func resourceAdvancedSettingsAttackPayloadLoggingRead(ctx context.Context, d *sc
 }
 
 func resourceAdvancedSettingsAttackPayloadLoggingUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsAttackPayloadLoggingUpdate")
 	logger.Debugf("in resourceAdvancedSettingsAttackPayloadLoggingUpdate")
@@ -238,7 +238,7 @@ func resourceAdvancedSettingsAttackPayloadLoggingUpdate(ctx context.Context, d *
 }
 
 func resourceAdvancedSettingsAttackPayloadLoggingDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsAttackPayloadLoggingDelete")
 	logger.Debugf("in resourceAdvancedSettingsAttackPayloadLoggingDelete")

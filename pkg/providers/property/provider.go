@@ -13,7 +13,8 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/hapi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/subprovider"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/tools"
 )
 
@@ -37,7 +38,7 @@ var (
 )
 
 // Subprovider returns a core sub provider
-func Subprovider(opts ...Option) akamai.Subprovider {
+func Subprovider(opts ...Option) subprovider.Subprovider {
 	once.Do(func() {
 		inst = &provider{Provider: Provider()}
 
@@ -95,7 +96,7 @@ func WithClient(c papi.PAPI) Option {
 }
 
 // Client returns the PAPI interface
-func (p *provider) Client(meta akamai.OperationMeta) papi.PAPI {
+func (p *provider) Client(meta meta.Meta) papi.PAPI {
 	if p.client != nil {
 		return p.client
 	}
@@ -103,7 +104,7 @@ func (p *provider) Client(meta akamai.OperationMeta) papi.PAPI {
 }
 
 // HapiClient returns the HAPI interface
-func (p *provider) HapiClient(meta akamai.OperationMeta) hapi.HAPI {
+func (p *provider) HapiClient(meta meta.Meta) hapi.HAPI {
 	if p.hapiClient != nil {
 		return p.hapiClient
 	}

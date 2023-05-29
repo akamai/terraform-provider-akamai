@@ -11,8 +11,8 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/iam"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/hashicorp/go-cty/cty"
@@ -184,7 +184,7 @@ func resourceIAMUser() *schema.Resource {
 }
 
 func resourceIAMUserCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("IAM", "resourceIAMUserCreate")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
 	client := inst.Client(meta)
@@ -259,7 +259,7 @@ func resourceIAMUserCreate(ctx context.Context, d *schema.ResourceData, m interf
 }
 
 func resourceIAMUserRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("IAM", "resourceIAMUserRead")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
 	client := inst.Client(meta)
@@ -327,7 +327,7 @@ func resourceIAMUserRead(ctx context.Context, d *schema.ResourceData, m interfac
 }
 
 func resourceIAMUserUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("IAM", "resourceIAMUserUpdate")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
 	client := inst.Client(meta)
@@ -454,7 +454,7 @@ func resourceIAMUserUpdate(ctx context.Context, d *schema.ResourceData, m interf
 }
 
 func resourceIAMUserDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("IAM", "resourceIAMUserDelete")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
 	client := inst.Client(meta)

@@ -6,10 +6,10 @@ import (
 	"strings"
 
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -59,7 +59,7 @@ func validateWithBotManActions(v interface{}, path cty.Path) diag.Diagnostics {
 // specified in the resources's ID, to ensure that the user has not inadvertently modified the configuration's value;
 // any such modifications indicate an incorrect understanding of the Update operation.
 func VerifyIDUnchanged(_ context.Context, d *schema.ResourceDiff, m interface{}) error {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("APPSEC", "VerifyIDUnchanged")
 
 	if d.HasChange("config_id") {

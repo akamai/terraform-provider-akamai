@@ -11,8 +11,8 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/gtm"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
 
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -159,7 +159,7 @@ var (
 
 // Create a new GTM Datacenter
 func resourceGTMv1DatacenterCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1DatacenterCreate")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
@@ -239,7 +239,7 @@ func resourceGTMv1DatacenterCreate(ctx context.Context, d *schema.ResourceData, 
 // Only ever save data from the tf config in the tf state file, to help with
 // api issues. See func unmarshalResourceData for more info.
 func resourceGTMv1DatacenterRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1DatacenterRead")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
@@ -275,7 +275,7 @@ func resourceGTMv1DatacenterRead(ctx context.Context, d *schema.ResourceData, m 
 
 // Update GTM Datacenter
 func resourceGTMv1DatacenterUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1DatacenterUpdate")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
@@ -348,7 +348,7 @@ func resourceGTMv1DatacenterUpdate(ctx context.Context, d *schema.ResourceData, 
 }
 
 func resourceGTMv1DatacenterImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTMv1", "resourceGTMv1DatacenterImport")
 	// create a context with logging for api calls
 	ctx := context.Background()
@@ -382,7 +382,7 @@ func resourceGTMv1DatacenterImport(d *schema.ResourceData, m interface{}) ([]*sc
 
 // Delete GTM Datacenter.
 func resourceGTMv1DatacenterDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1DatacenterDelete")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
@@ -459,7 +459,7 @@ func resourceGTMv1DatacenterDelete(ctx context.Context, d *schema.ResourceData, 
 }
 
 // Create and populate a new datacenter object from resource data
-func populateNewDatacenterObject(ctx context.Context, meta akamai.OperationMeta, d *schema.ResourceData, m interface{}) (*gtm.Datacenter, error) {
+func populateNewDatacenterObject(ctx context.Context, meta meta.Meta, d *schema.ResourceData, m interface{}) (*gtm.Datacenter, error) {
 
 	dcObj := inst.Client(meta).NewDatacenter(ctx)
 	dcObj.DefaultLoadObject = gtm.NewLoadObject()
@@ -471,7 +471,7 @@ func populateNewDatacenterObject(ctx context.Context, meta akamai.OperationMeta,
 // nolint:gocyclo
 // Populate existing datacenter object from resource data
 func populateDatacenterObject(d *schema.ResourceData, dc *gtm.Datacenter, m interface{}) error {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "populateDatacenterObject")
 
 	vstr, err := tf.GetStringValue("nickname", d)
@@ -645,7 +645,7 @@ func populateDatacenterObject(d *schema.ResourceData, dc *gtm.Datacenter, m inte
 
 // Populate Terraform state from provided Datacenter object
 func populateTerraformDCState(d *schema.ResourceData, dc *gtm.Datacenter, m interface{}) {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "populateTerrafomDCState")
 
 	// walk through all state elements

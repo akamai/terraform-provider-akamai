@@ -9,8 +9,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/botman"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -49,7 +49,7 @@ func resourceBotManagementSettings() *schema.Resource {
 }
 
 func resourceBotManagementSettingsCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("botman", "resourceBotManagementSettingsCreate")
 	logger.Debugf("in resourceBotManagementSettingsCreate")
@@ -93,7 +93,7 @@ func resourceBotManagementSettingsCreate(ctx context.Context, d *schema.Resource
 }
 
 func resourceBotManagementSettingsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("botman", "resourceBotManagementSettingsRead")
 	logger.Debugf("in resourceBotManagementSettingsRead")
@@ -145,7 +145,7 @@ func resourceBotManagementSettingsRead(ctx context.Context, d *schema.ResourceDa
 }
 
 func resourceBotManagementSettingsUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("botman", "resourceBotManagementSettingsUpdate")
 	logger.Debugf("in resourceBotManagementSettingsUpdate")
@@ -189,7 +189,7 @@ func resourceBotManagementSettingsUpdate(ctx context.Context, d *schema.Resource
 }
 
 func resourceBotManagementSettingsDelete(_ context.Context, _ *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("botman", "resourceBotManagementSettingsDelete")
 	logger.Debugf("in resourceBotManagementSettingsDelete")
 	logger.Info("Botman API does not support bot management settings deletion - resource will only be removed from state")

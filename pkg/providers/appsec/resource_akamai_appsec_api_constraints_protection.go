@@ -7,8 +7,8 @@ import (
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -55,7 +55,7 @@ func resourceAPIConstraintsProtection() *schema.Resource {
 }
 
 func resourceAPIConstraintsProtectionCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceAPIConstraintsProtectionCreate")
 	logger.Debugf("in resourceAPIConstraintsProtectionCreate")
@@ -94,7 +94,7 @@ func resourceAPIConstraintsProtectionCreate(ctx context.Context, d *schema.Resou
 }
 
 func resourceAPIConstraintsProtectionRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceAPIConstraintsProtectionRead")
 	logger.Debugf("in resourceAPIConstraintsProtectionRead")
@@ -149,7 +149,7 @@ func resourceAPIConstraintsProtectionRead(ctx context.Context, d *schema.Resourc
 }
 
 func resourceAPIConstraintsProtectionUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceAPIConstraintsProtectionUpdate")
 	logger.Debugf("in resourceAPIConstraintsProtectionUpdate")
@@ -188,7 +188,7 @@ func resourceAPIConstraintsProtectionUpdate(ctx context.Context, d *schema.Resou
 }
 
 func resourceAPIConstraintsProtectionDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceAPIConstraintsProtectionDelete")
 	logger.Debugf("in resourceAPIConstraintsProtectionDelete")

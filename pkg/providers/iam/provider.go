@@ -5,7 +5,8 @@ import (
 	"sync"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/iam"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/subprovider"
 	"github.com/apex/log"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -29,7 +30,7 @@ var (
 )
 
 // Subprovider returns a core sub provider
-func Subprovider() akamai.Subprovider {
+func Subprovider() subprovider.Subprovider {
 	once.Do(func() {
 		inst = &provider{Provider: Provider()}
 	})
@@ -69,7 +70,7 @@ func WithClient(c iam.IAM) Option {
 }
 
 // Client returns the DNS interface
-func (p *provider) Client(meta akamai.OperationMeta) iam.IAM {
+func (p *provider) Client(meta meta.Meta) iam.IAM {
 	if p.client != nil {
 		return p.client
 	}

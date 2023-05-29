@@ -6,9 +6,10 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/gtm"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/logger"
 
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -81,7 +82,7 @@ func resourceGTMv1Cidrmap() *schema.Resource {
 
 // Create a new GTM CidrMap
 func resourceGTMv1CidrMapCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMCidrMapCreate")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
@@ -165,7 +166,7 @@ func resourceGTMv1CidrMapCreate(ctx context.Context, d *schema.ResourceData, m i
 
 // read cidrMap. updates state with entire API result configuration.
 func resourceGTMv1CidrMapRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMCidrMapRead")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
@@ -197,7 +198,7 @@ func resourceGTMv1CidrMapRead(ctx context.Context, d *schema.ResourceData, m int
 
 // Update GTM CidrMap
 func resourceGTMv1CidrMapUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMCidrMapUpdate")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
@@ -269,7 +270,7 @@ func resourceGTMv1CidrMapUpdate(ctx context.Context, d *schema.ResourceData, m i
 
 // Import GTM CidrMap.
 func resourceGTMv1CidrMapImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMCidrMapImport")
 	// create a context with logging for api calls
 	ctx := context.Background()
@@ -303,7 +304,7 @@ func resourceGTMv1CidrMapImport(d *schema.ResourceData, m interface{}) ([]*schem
 
 // Delete GTM CidrMap.
 func resourceGTMv1CidrMapDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMCidrMapDelete")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
@@ -373,7 +374,7 @@ func resourceGTMv1CidrMapDelete(ctx context.Context, d *schema.ResourceData, m i
 }
 
 // Create and populate a new cidrMap object from cidrMap data
-func populateNewCidrMapObject(ctx context.Context, meta akamai.OperationMeta, d *schema.ResourceData, m interface{}) *gtm.CidrMap {
+func populateNewCidrMapObject(ctx context.Context, meta meta.Meta, d *schema.ResourceData, m interface{}) *gtm.CidrMap {
 	logger := meta.Log("Akamai GTM", "populateNewCidrMapObject")
 
 	cidrMapName, err := tf.GetStringValue("name", d)
@@ -404,7 +405,7 @@ func populateCidrMapObject(d *schema.ResourceData, cidr *gtm.CidrMap, m interfac
 
 // Populate Terraform state from provided CidrMap object
 func populateTerraformCidrMapState(d *schema.ResourceData, cidr *gtm.CidrMap, m interface{}) {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "populateTerraformCidrMapState")
 
 	// walk through all state elements
@@ -418,7 +419,7 @@ func populateTerraformCidrMapState(d *schema.ResourceData, cidr *gtm.CidrMap, m 
 
 // create and populate GTM CidrMap Assignments object
 func populateCidrAssignmentsObject(d *schema.ResourceData, cidr *gtm.CidrMap, m interface{}) {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "populateCidrAssignmentsObject")
 
 	// pull apart List
@@ -449,7 +450,7 @@ func populateCidrAssignmentsObject(d *schema.ResourceData, cidr *gtm.CidrMap, m 
 
 // create and populate Terraform cidrMap assignments schema
 func populateTerraformCidrAssignmentsState(d *schema.ResourceData, cidr *gtm.CidrMap, m interface{}) {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "populateTerraformCidrAssignmentsState")
 
 	objectInventory := make(map[int]*gtm.CidrAssignment, len(cidr.Assignments))
@@ -495,7 +496,7 @@ func populateTerraformCidrAssignmentsState(d *schema.ResourceData, cidr *gtm.Cid
 
 // create and populate GTM CidrMap DefaultDatacenter object
 func populateCidrDefaultDCObject(d *schema.ResourceData, cidr *gtm.CidrMap, m interface{}) {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "populateCidrDefaultDCObject")
 
 	// pull apart List
@@ -521,7 +522,7 @@ func populateCidrDefaultDCObject(d *schema.ResourceData, cidr *gtm.CidrMap, m in
 
 // create and populate Terraform cidrMap default_datacenter schema
 func populateTerraformCidrDefaultDCState(d *schema.ResourceData, cidr *gtm.CidrMap, m interface{}) {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "populateTerraformCidrDefaultDCState")
 
 	ddcListNew := make([]interface{}, 1)
@@ -537,7 +538,7 @@ func populateTerraformCidrDefaultDCState(d *schema.ResourceData, cidr *gtm.CidrM
 
 // blocksEqual checks whether blocks are equal
 func blocksEqual(old, new interface{}) bool {
-	logger := akamai.Log("Akamai GTM", "blocksEqual")
+	logger := logger.Get("Akamai GTM", "blocksEqual")
 
 	oldBlocks, ok := old.(*schema.Set)
 	if !ok {

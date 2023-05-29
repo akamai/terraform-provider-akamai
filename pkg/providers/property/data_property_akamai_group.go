@@ -12,7 +12,9 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/papi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/cache"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	akameta "github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
 )
 
 func dataSourcePropertyGroup() *schema.Resource {
@@ -50,7 +52,7 @@ func dataSourcePropertyGroup() *schema.Resource {
 }
 
 func dataPropertyGroupRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := akameta.Must(m)
 	log := meta.Log("PAPI", "dataPropertyGroupRead")
 
 	// create a context with logging for api calls
@@ -173,18 +175,18 @@ func findGroupByName(name, contract string, groups *papi.GetGroupsResponse, isDe
 	return nil, fmt.Errorf("%v: %s", ErrGroupNotInContract, contract)
 }
 
-func getGroups(ctx context.Context, meta akamai.OperationMeta) (*papi.GetGroupsResponse, error) {
+func getGroups(ctx context.Context, meta akameta.Meta) (*papi.GetGroupsResponse, error) {
 	groups := &papi.GetGroupsResponse{}
-	if err := meta.CacheGet(inst, "groups", groups); err != nil {
-		if !akamai.IsNotFoundError(err) && !errors.Is(err, akamai.ErrCacheDisabled) {
+	if err := cache.Get(inst, "groups", groups); err != nil {
+		if !errors.Is(err, cache.ErrEntryNotFound) && !errors.Is(err, cache.ErrDisabled) {
 			return nil, err
 		}
 		groups, err = inst.Client(meta).GetGroups(ctx)
 		if err != nil {
 			return nil, err
 		}
-		if err := meta.CacheSet(inst, "groups", groups); err != nil {
-			if !errors.Is(err, akamai.ErrCacheDisabled) {
+		if err := cache.Set(inst, "groups", groups); err != nil {
+			if !errors.Is(err, cache.ErrDisabled) {
 				return nil, err
 			}
 		}

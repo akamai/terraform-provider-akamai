@@ -5,7 +5,8 @@ import (
 	"sync"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/imaging"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/subprovider"
 	"github.com/apex/log"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -29,7 +30,7 @@ var (
 )
 
 // Subprovider returns a core sub provider
-func Subprovider(opts ...Option) akamai.Subprovider {
+func Subprovider(opts ...Option) subprovider.Subprovider {
 	once.Do(func() {
 		inst = &provider{Provider: Provider()}
 
@@ -65,7 +66,7 @@ func WithClient(i imaging.Imaging) Option {
 }
 
 // Client returns the Imaging interface
-func (p *provider) Client(meta akamai.OperationMeta) imaging.Imaging {
+func (p *provider) Client(meta meta.Meta) imaging.Imaging {
 	if p.client != nil {
 		return p.client
 	}

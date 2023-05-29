@@ -7,14 +7,17 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/hapi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/papi"
+
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/logger"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/tools"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func resourceSecureEdgeHostName() *schema.Resource {
@@ -106,7 +109,7 @@ var akamaiSecureEdgeHostNameSchema = map[string]*schema.Schema{
 }
 
 func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourceSecureEdgeHostNameCreate")
 
 	client := inst.Client(meta)
@@ -231,7 +234,7 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 }
 
 func resourceSecureEdgeHostNameRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourceSecureEdgeHostNameRead")
 
 	client := inst.Client(meta)
@@ -322,7 +325,7 @@ func resourceSecureEdgeHostNameRead(ctx context.Context, d *schema.ResourceData,
 }
 
 func resourceSecureEdgeHostNameUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourceSecureEdgeHostNameUpdate")
 
 	if d.HasChange("ip_behavior") {
@@ -381,7 +384,7 @@ Failed to restore previous local schema values. The schema will remain in tainte
 }
 
 func resourceSecureEdgeHostNameDelete(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourceSecureEdgeHostNameDelete")
 	logger.Debug("DELETING")
 	logger.Info("PAPI does not support edge hostname deletion - resource will only be removed from state")
@@ -391,7 +394,7 @@ func resourceSecureEdgeHostNameDelete(_ context.Context, d *schema.ResourceData,
 }
 
 func resourceSecureEdgeHostNameImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 
 	parts := strings.Split(d.Id(), ",")
@@ -458,7 +461,7 @@ func diffSuppressEdgeHostname(_, oldVal, newVal string, _ *schema.ResourceData) 
 }
 
 func suppressEdgeHostnameUseCases(_, oldVal, newVal string, _ *schema.ResourceData) bool {
-	logger := akamai.Log("PAPI", "suppressEdgeHostnameUseCases")
+	logger := logger.Get("PAPI", "suppressEdgeHostnameUseCases")
 	if oldVal == newVal {
 		return true
 	}

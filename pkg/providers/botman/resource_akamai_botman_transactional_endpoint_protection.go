@@ -8,8 +8,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/botman"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -43,7 +43,7 @@ func resourceTransactionalEndpointProtection() *schema.Resource {
 }
 
 func resourceTransactionalEndpointProtectionCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("botman", "resourceTransactionalEndpointProtectionCreate")
 	logger.Debugf("in resourceTransactionalEndpointProtectionCreate")
@@ -81,7 +81,7 @@ func resourceTransactionalEndpointProtectionCreate(ctx context.Context, d *schem
 }
 
 func resourceTransactionalEndpointProtectionRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("botman", "resourceTransactionalEndpointProtectionRead")
 	logger.Debugf("in resourceTransactionalEndpointProtectionRead")
@@ -126,7 +126,7 @@ func resourceTransactionalEndpointProtectionRead(ctx context.Context, d *schema.
 }
 
 func resourceTransactionalEndpointProtectionUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("botman", "resourceTransactionalEndpointProtectionUpdate")
 	logger.Debugf("in resourceTransactionalEndpointProtectionUpdate")
@@ -162,7 +162,7 @@ func resourceTransactionalEndpointProtectionUpdate(ctx context.Context, d *schem
 }
 
 func resourceTransactionEndpointProtectionDelete(_ context.Context, _ *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("botman", "resourceTransactionEndpointProtectionDelete")
 	logger.Debugf("in resourceTransactionEndpointProtectionDelete")
 	logger.Info("Botman API does not support transactional endpoint protection deletion - resource will only be removed from state")

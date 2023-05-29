@@ -9,11 +9,12 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/edgegrid"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/cache"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/tj/assert"
 )
 
 func unsetEnvs(t *testing.T) map[string]string {
@@ -174,37 +175,27 @@ func TestSetWrongTypeForEdgegridEnvs(t *testing.T) {
 
 func TestConfigureCache_EnabledInContext(t *testing.T) {
 	tests := map[string]struct {
-		resourceLocalData   *schema.ResourceData
-		expectedMeta        meta
-		expectedDiagnostics diag.Diagnostics
+		resourceLocalData         *schema.ResourceData
+		expectedCacheEnabledState bool
 	}{
 		"cache is enabled": {
-			resourceLocalData: getResourceLocalDataWithBoolValue(t, "cache_enabled", true),
-			expectedMeta: meta{
-				cacheEnabled: true,
-			},
-			expectedDiagnostics: diag.Diagnostics(nil),
+			resourceLocalData:         getResourceLocalDataWithBoolValue(t, "cache_enabled", true),
+			expectedCacheEnabledState: true,
 		},
 		"cache is not enabled": {
-			resourceLocalData: getResourceLocalDataWithBoolValue(t, "cache_enabled", false),
-			expectedMeta: meta{
-				cacheEnabled: false,
-			},
-			expectedDiagnostics: diag.Diagnostics(nil),
+			resourceLocalData:         getResourceLocalDataWithBoolValue(t, "cache_enabled", false),
+			expectedCacheEnabledState: false,
 		},
 	}
 	for name, test := range tests {
 		ctx := context.Background()
 		t.Run(name, func(t *testing.T) {
 
-			configuredContext, diagnostics := configureContext(ctx, test.resourceLocalData)
-			metaCtx := configuredContext.(*meta)
+			prov := Provider()
+			_, diagnostics := prov().ConfigureContextFunc(ctx, test.resourceLocalData)
+			require.False(t, diagnostics.HasError())
 
-			assert.Equal(t, test.expectedDiagnostics, diagnostics)
-			assert.Equal(t, test.expectedMeta.cacheEnabled, metaCtx.cacheEnabled)
-			assert.NotEmpty(t, metaCtx.log)
-			assert.NotEmpty(t, metaCtx.operationID)
-			assert.NotEmpty(t, metaCtx.sess)
+			assert.Equal(t, test.expectedCacheEnabledState, cache.IsEnabled())
 		})
 	}
 }
@@ -238,7 +229,9 @@ func TestConfigureEdgercInContext(t *testing.T) {
 			existingEnvs := unsetEnvs(t)
 			defer restoreEnvs(t, existingEnvs)
 
-			meta, diagnostics := configureContext(ctx, test.resourceLocalData)
+			prov := Provider()
+			meta, diagnostics := prov().ConfigureContextFunc(ctx, test.resourceLocalData)
+
 			if test.withError {
 				assert.Nil(t, meta)
 			} else {
@@ -347,7 +340,9 @@ func TestEdgercValidate(t *testing.T) {
 				"config_section": test.configSection,
 			}
 			resourceData := schema.TestResourceDataRaw(t, resourceSchema, resourceDataMap)
-			configuredContext, diagnostics := configureContext(ctx, resourceData)
+
+			prov := Provider()
+			configuredContext, diagnostics := prov().ConfigureContextFunc(ctx, resourceData)
 
 			assert.Nil(t, configuredContext)
 			assert.Contains(t, diagnostics[0].Summary, test.expectedError.Error())

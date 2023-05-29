@@ -7,8 +7,8 @@ import (
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/botman"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/tools"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -49,7 +49,7 @@ func resourceConditionalAction() *schema.Resource {
 }
 
 func resourceConditionalActionCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("botman", "resourceConditionalActionCreateAction")
 	logger.Debugf("in resourceConditionalActionCreateAction")
@@ -87,7 +87,7 @@ func resourceConditionalActionCreate(ctx context.Context, d *schema.ResourceData
 }
 
 func resourceConditionalActionRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("botman", "resourceConditionalActionRead")
 	logger.Debugf("in resourceConditionalActionRead")
@@ -142,7 +142,7 @@ func resourceConditionalActionRead(ctx context.Context, d *schema.ResourceData, 
 }
 
 func resourceConditionalActionUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("botman", "resourceConditionalActionUpdate")
 	logger.Debugf("in resourceConditionalActionUpdate")
@@ -186,7 +186,7 @@ func resourceConditionalActionUpdate(ctx context.Context, d *schema.ResourceData
 }
 
 func resourceConditionalActionDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("botman", "resourceConditionalActionDelete")
 	logger.Debugf("in resourceConditionalActionDelete")

@@ -7,8 +7,8 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/imaging"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -52,7 +52,7 @@ func resourceImagingPolicySet() *schema.Resource {
 }
 
 func resourceImagingPolicySetImport(_ context.Context, rd *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Imaging", "resourceImagingPolicySetImport")
 	logger.Debugf("Import Policy Set")
 
@@ -75,7 +75,7 @@ func resourceImagingPolicySetImport(_ context.Context, rd *schema.ResourceData, 
 }
 
 func resourceImagingPolicySetCreate(ctx context.Context, rd *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Imaging", "resourceImagingPolicySetCreate")
 	ctx = session.ContextWithOptions(
 		ctx,
@@ -120,7 +120,7 @@ func resourceImagingPolicySetCreate(ctx context.Context, rd *schema.ResourceData
 }
 
 func resourceImagingPolicySetRead(ctx context.Context, rd *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Imaging", "resourceImagingPolicySetRead")
 	ctx = session.ContextWithOptions(
 		ctx,
@@ -156,7 +156,7 @@ func resourceImagingPolicySetRead(ctx context.Context, rd *schema.ResourceData, 
 }
 
 func resourceImagingPolicySetUpdate(ctx context.Context, rd *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Imaging", "resourceImagingPolicySetUpdate")
 	ctx = session.ContextWithOptions(
 		ctx,
@@ -195,7 +195,7 @@ func resourceImagingPolicySetUpdate(ctx context.Context, rd *schema.ResourceData
 }
 
 func resourceImagingPolicySetDelete(ctx context.Context, rd *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Imaging", "resourceImagingPolicySetDelete")
 	ctx = session.ContextWithOptions(
 		ctx,

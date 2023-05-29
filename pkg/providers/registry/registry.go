@@ -4,17 +4,17 @@ package registry
 import (
 	"sync"
 
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/subprovider"
 )
 
 var (
 	lock sync.Mutex
 
-	allProviders []akamai.Subprovider
+	allProviders []subprovider.Subprovider
 )
 
 // RegisterProvider simply adds the provider to the array
-func RegisterProvider(p akamai.Subprovider) {
+func RegisterProvider(p subprovider.Subprovider) {
 	lock.Lock()
 	defer lock.Unlock()
 
@@ -22,11 +22,11 @@ func RegisterProvider(p akamai.Subprovider) {
 }
 
 // AllProviders returns all of the registered providers
-func AllProviders() []akamai.Subprovider {
+func AllProviders() []subprovider.Subprovider {
 	lock.Lock()
 	defer lock.Unlock()
 
-	out := make([]akamai.Subprovider, len(allProviders))
+	out := make([]subprovider.Subprovider, len(allProviders))
 
 	copy(out, allProviders)
 

@@ -7,8 +7,8 @@ import (
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -87,7 +87,7 @@ func resourceEval() *schema.Resource {
 }
 
 func resourceEvalCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceEvalCreate")
 	logger.Debugf(" in resourceEvalCreate")
@@ -134,7 +134,7 @@ func resourceEvalCreate(ctx context.Context, d *schema.ResourceData, m interface
 }
 
 func resourceEvalRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceEvalRead")
 	logger.Debugf(" in resourceEvalRead")
@@ -188,7 +188,7 @@ func resourceEvalRead(ctx context.Context, d *schema.ResourceData, m interface{}
 }
 
 func resourceEvalUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceEvalUpdate")
 	logger.Debugf(" in resourceEvalUpdate")
@@ -233,7 +233,7 @@ func resourceEvalUpdate(ctx context.Context, d *schema.ResourceData, m interface
 }
 
 func resourceEvalDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceEvalDelete")
 	logger.Debugf(" in resourceEvalDelete")

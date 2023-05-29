@@ -8,8 +8,9 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/gtm"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/logger"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -117,7 +118,7 @@ func resourceGTMv1Resource() *schema.Resource {
 
 // Create a new GTM Resource
 func resourceGTMv1ResourceCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1ResourceCreate")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
@@ -192,7 +193,7 @@ func resourceGTMv1ResourceCreate(ctx context.Context, d *schema.ResourceData, m 
 
 // read resource. updates state with entire API result configuration.
 func resourceGTMv1ResourceRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1ResourceRead")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
@@ -224,7 +225,7 @@ func resourceGTMv1ResourceRead(ctx context.Context, d *schema.ResourceData, m in
 
 // Update GTM Resource
 func resourceGTMv1ResourceUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1ResourceUpdate")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
@@ -301,7 +302,7 @@ func resourceGTMv1ResourceUpdate(ctx context.Context, d *schema.ResourceData, m 
 
 // Import GTM Resource.
 func resourceGTMv1ResourceImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1ResourceImport")
 	// create a context with logging for api calls
 	ctx := context.Background()
@@ -332,7 +333,7 @@ func resourceGTMv1ResourceImport(d *schema.ResourceData, m interface{}) ([]*sche
 
 // Delete GTM Resource.
 func resourceGTMv1ResourceDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1ResourceDelete")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
@@ -405,7 +406,7 @@ func resourceGTMv1ResourceDelete(ctx context.Context, d *schema.ResourceData, m 
 }
 
 // Create and populate a new resource object from resource data
-func populateNewResourceObject(ctx context.Context, meta akamai.OperationMeta, d *schema.ResourceData, m interface{}) (*gtm.Resource, error) {
+func populateNewResourceObject(ctx context.Context, meta meta.Meta, d *schema.ResourceData, m interface{}) (*gtm.Resource, error) {
 
 	name, _ := tf.GetStringValue("name", d)
 	rsrcObj := inst.Client(meta).NewResource(ctx, name)
@@ -419,7 +420,7 @@ func populateNewResourceObject(ctx context.Context, meta akamai.OperationMeta, d
 // nolint:gocyclo
 // Populate existing resource object from resource data
 func populateResourceObject(ctx context.Context, d *schema.ResourceData, rsrc *gtm.Resource, m interface{}) error {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1ResourceDelete")
 
 	vstr, err := tf.GetStringValue("name", d)
@@ -527,7 +528,7 @@ func populateResourceObject(ctx context.Context, d *schema.ResourceData, rsrc *g
 
 // Populate Terraform state from provided Resource object
 func populateTerraformResourceState(d *schema.ResourceData, rsrc *gtm.Resource, m interface{}) {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "populateTerraformResourceState")
 
 	logger.Debugf("Entering populateTerraformResourceState")
@@ -555,7 +556,7 @@ func populateTerraformResourceState(d *schema.ResourceData, rsrc *gtm.Resource, 
 }
 
 // create and populate GTM Resource ResourceInstances object
-func populateResourceInstancesObject(ctx context.Context, meta akamai.OperationMeta, d *schema.ResourceData, rsrc *gtm.Resource) {
+func populateResourceInstancesObject(ctx context.Context, meta meta.Meta, d *schema.ResourceData, rsrc *gtm.Resource) {
 	logger := meta.Log("Akamai GTM", "populateResourceInstancesObject")
 
 	// pull apart List
@@ -587,7 +588,7 @@ func populateResourceInstancesObject(ctx context.Context, meta akamai.OperationM
 
 // create and populate Terraform resource_instances schema
 func populateTerraformResourceInstancesState(d *schema.ResourceData, rsrc *gtm.Resource, m interface{}) {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "populateTerraformResourceInstancesState")
 
 	riObjectInventory := make(map[int]*gtm.ResourceInstance, len(rsrc.ResourceInstances))
@@ -638,7 +639,7 @@ func populateTerraformResourceInstancesState(d *schema.ResourceData, rsrc *gtm.R
 }
 
 func resourceInstanceDiffSuppress(_, _, _ string, d *schema.ResourceData) bool {
-	logger := akamai.Log("Akamai GTM", "resourceInstanceDiffSuppress")
+	logger := logger.Get("Akamai GTM", "resourceInstanceDiffSuppress")
 	oldRes, newRes := d.GetChange("resource_instance")
 
 	oldList, ok := oldRes.([]interface{})
@@ -690,7 +691,7 @@ func resourceInstanceDiffSuppress(_, _, _ string, d *schema.ResourceData) bool {
 
 // loadServersEqual checks whether load_servers are equal
 func loadServersEqual(oldVal, newVal interface{}) bool {
-	logger := akamai.Log("Akamai GTM", "loadServersEqual")
+	logger := logger.Get("Akamai GTM", "loadServersEqual")
 
 	oldServers, ok := oldVal.(*schema.Set)
 	if !ok {

@@ -7,7 +7,8 @@ import (
 	"github.com/apex/log"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/subprovider"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -29,7 +30,7 @@ var (
 )
 
 // Subprovider returns a core sub provider
-func Subprovider(opts ...Option) akamai.Subprovider {
+func Subprovider(opts ...Option) subprovider.Subprovider {
 	once.Do(func() {
 		inst = &provider{Provider: Provider()}
 
@@ -161,7 +162,7 @@ func WithClient(c appsec.APPSEC) Option {
 }
 
 // Client returns the PAPI interface
-func (p *provider) Client(meta akamai.OperationMeta) appsec.APPSEC {
+func (p *provider) Client(meta meta.Meta) appsec.APPSEC {
 	if p.client != nil {
 		return p.client
 	}

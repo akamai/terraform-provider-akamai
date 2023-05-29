@@ -8,8 +8,8 @@ import (
 	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -70,7 +70,7 @@ func resourceSecurityPolicy() *schema.Resource {
 }
 
 func resourceSecurityPolicyCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceSecurityPolicyCreate")
 	logger.Debugf("in resourceSecurityPolicyCreate")
@@ -145,7 +145,7 @@ func resourceSecurityPolicyCreate(ctx context.Context, d *schema.ResourceData, m
 }
 
 func resourceSecurityPolicyRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceSecurityPolicyRead")
 	logger.Debugf("in resourceSecurityPolicyRead")
@@ -198,7 +198,7 @@ func resourceSecurityPolicyRead(ctx context.Context, d *schema.ResourceData, m i
 }
 
 func resourceSecurityPolicyUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceSecurityPolicyUpdate")
 	logger.Debugf("in resourceSecurityPolicyUpdate")
@@ -245,7 +245,7 @@ func resourceSecurityPolicyUpdate(ctx context.Context, d *schema.ResourceData, m
 }
 
 func resourceSecurityPolicyDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceSecurityPolicyDelete")
 	logger.Debugf("in resourceSecurityPolicyDelete")

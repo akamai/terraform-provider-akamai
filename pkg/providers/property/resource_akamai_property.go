@@ -20,6 +20,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/tools"
 )
 
@@ -390,7 +391,7 @@ func compareFields(old, new *papi.RulesUpdate) (string, error) {
 }
 
 func hostNamesCustomDiff(_ context.Context, d *schema.ResourceDiff, m interface{}) error {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "hostNamesCustomDiff")
 
 	o, n := d.GetChange("hostnames")
@@ -442,7 +443,7 @@ func setPropertyVersionsComputedOnRulesChange(_ context.Context, rd *schema.Reso
 }
 
 func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourcePropertyCreate")
 	client := inst.Client(meta)
 	ctx = log.NewContext(ctx, logger)
@@ -564,9 +565,9 @@ func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m inter
 }
 
 func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	ctx = log.NewContext(ctx, akamai.Meta(m).Log("PAPI", "resourcePropertyRead"))
+	ctx = log.NewContext(ctx, meta.Must(m).Log("PAPI", "resourcePropertyRead"))
 	logger := log.FromContext(ctx)
-	client := inst.Client(akamai.Meta(m))
+	client := inst.Client(meta.Must(m))
 
 	// Schema guarantees group_id, and contract_id are strings
 	propertyID := d.Id()
@@ -667,9 +668,9 @@ func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interfa
 }
 
 func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	ctx = log.NewContext(ctx, akamai.Meta(m).Log("PAPI", "resourcePropertyUpdate"))
+	ctx = log.NewContext(ctx, meta.Must(m).Log("PAPI", "resourcePropertyUpdate"))
 	logger := log.FromContext(ctx)
-	client := inst.Client(akamai.Meta(m))
+	client := inst.Client(meta.Must(m))
 
 	// Block changes to hard-deprecated attributes
 	for _, attr := range resPropForbiddenAttrs() {
@@ -791,8 +792,8 @@ func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 }
 
 func resourcePropertyDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	ctx = log.NewContext(ctx, akamai.Meta(m).Log("PAPI", "resourcePropertyDelete"))
-	client := inst.Client(akamai.Meta(m))
+	ctx = log.NewContext(ctx, meta.Must(m).Log("PAPI", "resourcePropertyDelete"))
+	client := inst.Client(meta.Must(m))
 
 	propertyID := d.Id()
 	contractID := tools.AddPrefix(d.Get("contract_id").(string), "ctr_")
@@ -806,7 +807,7 @@ func resourcePropertyDelete(ctx context.Context, d *schema.ResourceData, m inter
 }
 
 func resourcePropertyImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
-	ctx = log.NewContext(ctx, akamai.Meta(m).Log("PAPI", "resourcePropertyImport"))
+	ctx = log.NewContext(ctx, meta.Must(m).Log("PAPI", "resourcePropertyImport"))
 
 	// User-supplied import ID is a comma-separated list of propertyID[,groupID[,contractID]]
 	// contractID and groupID are optional as long as the propertyID is sufficient to fetch the property
@@ -846,7 +847,7 @@ func resourcePropertyImport(ctx context.Context, d *schema.ResourceData, m inter
 					return nil, ErrPropertyVersionNotFound
 				}
 				// if we ran validation and we actually have a network name, we still need to fetch the desired version number
-				_, attrs["read_version"], err = fetchProperty(ctx, inst.Client(akamai.Meta(m)), propertyID, groupID, contractID, version)
+				_, attrs["read_version"], err = fetchProperty(ctx, inst.Client(meta.Must(m)), propertyID, groupID, contractID, version)
 				if err != nil {
 					return nil, err
 				}
@@ -867,9 +868,9 @@ func resourcePropertyImport(ctx context.Context, d *schema.ResourceData, m inter
 	var property *papi.Property
 	var v int
 	if !isDefaultVersion(version) {
-		property, v, err = fetchProperty(ctx, inst.Client(akamai.Meta(m)), propertyID, groupID, contractID, version)
+		property, v, err = fetchProperty(ctx, inst.Client(meta.Must(m)), propertyID, groupID, contractID, version)
 	} else {
-		property, err = fetchLatestProperty(ctx, inst.Client(akamai.Meta(m)), propertyID, groupID, contractID)
+		property, err = fetchLatestProperty(ctx, inst.Client(meta.Must(m)), propertyID, groupID, contractID)
 	}
 	if err != nil {
 		return nil, err

@@ -3,7 +3,7 @@ package cps
 import (
 	"context"
 
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -24,7 +24,7 @@ func dataSourceCPSWarnings() *schema.Resource {
 }
 
 func dataCPSWarningsRead(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("CPS", "dataCPSWarningsRead")
 
 	if err := d.Set("warnings", warningMap); err != nil {

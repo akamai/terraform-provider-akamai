@@ -9,10 +9,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"time"
 
-	"github.com/allegro/bigcache/v2"
-	"github.com/apex/log"
 	"github.com/google/uuid"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -22,8 +19,12 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/edgegrid"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/cache"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/config"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/logger"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/subprovider"
 	"github.com/akamai/terraform-provider-akamai/v4/version"
 )
 
@@ -40,31 +41,8 @@ const (
 var ErrWrongEdgeGridConfiguration = errors.New("error reading Akamai EdgeGrid configuration")
 
 type (
-	// Subprovider is the interface implemented by the sub providers
-	Subprovider interface {
-		// Name should return the name of the subprovider
-		Name() string
-
-		// Version returns the version of the subprovider
-		Version() string
-
-		// Schema returns the schemas for the subprovider
-		Schema() map[string]*schema.Schema
-
-		// Resources returns the resources for the subprovider
-		Resources() map[string]*schema.Resource
-
-		// DataSources returns the datasources for the subprovider
-		DataSources() map[string]*schema.Resource
-
-		// Configure returns the subprovider opaque state object
-		Configure(log.Interface, *schema.ResourceData) diag.Diagnostics
-	}
-
 	provider struct {
 		schema.Provider
-		subs  map[string]Subprovider
-		cache *bigcache.BigCache
 	}
 )
 
@@ -75,7 +53,7 @@ var (
 )
 
 // Provider returns the provider function to terraform
-func Provider(provs ...Subprovider) plugin.ProviderFunc {
+func Provider(provs ...subprovider.Subprovider) plugin.ProviderFunc {
 	once.Do(func() {
 		instance = &provider{
 			Provider: schema.Provider{
@@ -112,15 +90,7 @@ func Provider(provs ...Subprovider) plugin.ProviderFunc {
 				DataSourcesMap:     make(map[string]*schema.Resource),
 				ProviderMetaSchema: make(map[string]*schema.Schema),
 			},
-			subs: make(map[string]Subprovider),
 		}
-
-		cache, err := bigcache.NewBigCache(bigcache.DefaultConfig(10 * time.Minute))
-		if err != nil {
-			panic(err)
-		}
-
-		instance.cache = cache
 
 		for _, p := range provs {
 			resources, err := mergeResource(p.Resources(), instance.ResourcesMap)
@@ -133,13 +103,9 @@ func Provider(provs ...Subprovider) plugin.ProviderFunc {
 				panic(err)
 			}
 			instance.DataSourcesMap = dataSources
-
-			instance.subs[p.Name()] = p
 		}
 
-		instance.ConfigureContextFunc = func(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
-			return configureContext(ctx, d)
-		}
+		instance.ConfigureContextFunc = configureProviderContext(&instance.Provider)
 	})
 
 	return func() *schema.Provider {
@@ -147,90 +113,91 @@ func Provider(provs ...Subprovider) plugin.ProviderFunc {
 	}
 }
 
-func configureContext(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
-	// generate an operation id so we can correlate all calls to this provider
-	opid := uuid.Must(uuid.NewRandom()).String()
+func configureProviderContext(p *schema.Provider) schema.ConfigureContextFunc {
+	return func(ctx context.Context, d *schema.ResourceData) (any, diag.Diagnostics) {
+		// generate an operation id so we can correlate all calls to this provider
+		opid := uuid.Must(uuid.NewRandom()).String()
 
-	// create a log from the hclog in the context
-	log := hclog.FromContext(ctx).With(
-		"OperationID", opid,
-	)
+		// create a log from the hclog in the context
+		log := hclog.FromContext(ctx).With(
+			"OperationID", opid,
+		)
 
-	cacheEnabled, err := tf.GetBoolValue("cache_enabled", d)
-	if err != nil && !IsNotFoundError(err) {
-		return nil, diag.FromErr(err)
-	}
-
-	edgercOps := []edgegrid.Option{edgegrid.WithEnv(true)}
-
-	edgercPath, err := tf.GetStringValue("edgerc", d)
-	if err != nil && !errors.Is(err, tf.ErrNotFound) {
-		return nil, diag.FromErr(err)
-	}
-	edgercPath = getEdgercPath(edgercPath)
-
-	edgercOps = append(edgercOps, edgegrid.WithFile(edgercPath))
-	edgercSection, err := tf.GetStringValue("config_section", d)
-	if err != nil && !errors.Is(err, tf.ErrNotFound) {
-		return nil, diag.FromErr(err)
-	}
-	if err == nil {
-		edgercOps = append(edgercOps, edgegrid.WithSection(edgercSection))
-	}
-	envs, err := tf.GetSetValue("config", d)
-	if err != nil && !errors.Is(err, tf.ErrNotFound) {
-		return nil, diag.FromErr(err)
-	}
-	if err == nil && len(envs.List()) > 0 {
-		envsMap, ok := envs.List()[0].(map[string]interface{})
-		if !ok {
-			return nil, diag.FromErr(fmt.Errorf("%w: %s, %q", tf.ErrInvalidType, "config", "map[string]interface{}"))
+		cacheEnabled, err := tf.GetBoolValue("cache_enabled", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
+			return nil, diag.FromErr(err)
 		}
-		err = setEdgegridEnvs(envsMap, edgercSection)
+		cache.Enable(cacheEnabled)
+
+		edgercOps := []edgegrid.Option{edgegrid.WithEnv(true)}
+
+		edgercPath, err := tf.GetStringValue("edgerc", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
+			return nil, diag.FromErr(err)
+		}
+		edgercPath = getEdgercPath(edgercPath)
+
+		edgercOps = append(edgercOps, edgegrid.WithFile(edgercPath))
+		edgercSection, err := tf.GetStringValue("config_section", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
+			return nil, diag.FromErr(err)
+		}
+		if err == nil {
+			edgercOps = append(edgercOps, edgegrid.WithSection(edgercSection))
+		}
+		envs, err := tf.GetSetValue("config", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
+			return nil, diag.FromErr(err)
+		}
+		if err == nil && len(envs.List()) > 0 {
+			envsMap, ok := envs.List()[0].(map[string]interface{})
+			if !ok {
+				return nil, diag.FromErr(fmt.Errorf("%w: %s, %q", tf.ErrInvalidType, "config", "map[string]interface{}"))
+			}
+			err = setEdgegridEnvs(envsMap, edgercSection)
+			if err != nil {
+				return nil, diag.FromErr(err)
+			}
+		}
+
+		requestLimit, err := tf.GetIntValue("request_limit", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
+			return nil, diag.FromErr(err)
+		}
+
+		edgerc, err := edgegrid.New(edgercOps...)
+		if err != nil {
+			return nil, diag.Errorf("%s: %s", ErrWrongEdgeGridConfiguration, err.Error())
+		}
+
+		if err := edgerc.Validate(); err != nil {
+			return nil, diag.Errorf(err.Error())
+		}
+
+		// PROVIDER_VERSION env value must be updated in version file, for every new release.
+		userAgent := p.UserAgent(ProviderName, version.ProviderVersion)
+		logger := logger.FromHCLog(log)
+		logger.Infof("Provider version: %s", version.ProviderVersion)
+
+		logger.Debugf("Using request_limit value %d", requestLimit)
+		sess, err := session.New(
+			session.WithSigner(edgerc),
+			session.WithUserAgent(userAgent),
+			session.WithLog(logger),
+			session.WithHTTPTracing(cast.ToBool(os.Getenv("AKAMAI_HTTP_TRACE_ENABLED"))),
+			session.WithRequestLimit(requestLimit),
+		)
 		if err != nil {
 			return nil, diag.FromErr(err)
 		}
+
+		meta, err := meta.New(sess, log, opid)
+		if err != nil {
+			return nil, diag.FromErr(err)
+		}
+
+		return meta, nil
 	}
-
-	requestLimit, err := tf.GetIntValue("request_limit", d)
-	if err != nil && !errors.Is(err, tf.ErrNotFound) {
-		return nil, diag.FromErr(err)
-	}
-
-	edgerc, err := edgegrid.New(edgercOps...)
-	if err != nil {
-		return nil, diag.Errorf("%s: %s", ErrWrongEdgeGridConfiguration, err.Error())
-	}
-
-	if err := edgerc.Validate(); err != nil {
-		return nil, diag.Errorf(err.Error())
-	}
-
-	// PROVIDER_VERSION env value must be updated in version file, for every new release.
-	userAgent := instance.UserAgent(ProviderName, version.ProviderVersion)
-	logger := LogFromHCLog(log)
-	logger.Infof("Provider version: %s", version.ProviderVersion)
-
-	logger.Debugf("Using request_limit value %d", requestLimit)
-	sess, err := session.New(
-		session.WithSigner(edgerc),
-		session.WithUserAgent(userAgent),
-		session.WithLog(logger),
-		session.WithHTTPTracing(cast.ToBool(os.Getenv("AKAMAI_HTTP_TRACE_ENABLED"))),
-		session.WithRequestLimit(requestLimit),
-	)
-	if err != nil {
-		return nil, diag.FromErr(err)
-	}
-
-	meta := &meta{
-		log:          log,
-		operationID:  opid,
-		sess:         sess,
-		cacheEnabled: cacheEnabled,
-	}
-
-	return meta, nil
 }
 
 func getEdgercPath(edgercPath string) string {

@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -98,7 +98,7 @@ var (
 )
 
 func resourceActivationsCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceActivationsCreate")
 	logger.Debug("in resourceActivationsCreate")
@@ -187,7 +187,7 @@ func resourceActivationsCreate(ctx context.Context, d *schema.ResourceData, m in
 }
 
 func resourceActivationsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceActivationsRead")
 	logger.Debug("in resourceActivationsRead")
@@ -215,7 +215,7 @@ func resourceActivationsRead(ctx context.Context, d *schema.ResourceData, m inte
 }
 
 func resourceActivationsUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceActivationsUpdate")
 	logger.Debug("in resourceActivationsUpdate")
@@ -305,7 +305,7 @@ func resourceActivationsUpdate(ctx context.Context, d *schema.ResourceData, m in
 }
 
 func resourceActivationsDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceActivationsRemove")
 	logger.Debug("in resourceActivationsDelete")
@@ -404,7 +404,7 @@ func resourceActivationsDelete(ctx context.Context, d *schema.ResourceData, m in
 }
 
 func resourceImporter(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceActivationsImport")
 	logger.Debug("in appsec_activation resource's resourceImporter")

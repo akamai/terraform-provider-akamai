@@ -11,8 +11,8 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/cps"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
 	cpstools "github.com/akamai/terraform-provider-akamai/v4/pkg/providers/cps/tools"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/tools"
 	"github.com/apex/log"
@@ -350,7 +350,7 @@ func newChallenge(c *cps.Challenge, dv *cps.DV) challenge {
 }
 
 func enrollmentDelete(ctx context.Context, d *schema.ResourceData, m interface{}, functionName string) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("CPS", functionName)
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(

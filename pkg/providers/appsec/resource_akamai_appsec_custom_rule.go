@@ -8,8 +8,8 @@ import (
 	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -53,7 +53,7 @@ func resourceCustomRule() *schema.Resource {
 }
 
 func resourceCustomRuleCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceCustomRuleCreate")
 	logger.Debugf("in resourceCustomRuleCreate")
@@ -91,7 +91,7 @@ func resourceCustomRuleCreate(ctx context.Context, d *schema.ResourceData, m int
 }
 
 func resourceCustomRuleRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceCustomRuleRead")
 	logger.Debugf("in resourceCustomRuleRead")
@@ -141,7 +141,7 @@ func resourceCustomRuleRead(ctx context.Context, d *schema.ResourceData, m inter
 }
 
 func resourceCustomRuleUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceCustomRuleUpdate")
 	logger.Debugf("in resourceCustomRuleUpdate")
@@ -181,7 +181,7 @@ func resourceCustomRuleUpdate(ctx context.Context, d *schema.ResourceData, m int
 }
 
 func resourceCustomRuleDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceCustomRuleDelete")
 	logger.Debugf("in resourceCustomRuleDelete")

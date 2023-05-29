@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -63,7 +63,7 @@ func verifyOperationIDUnchanged(c context.Context, d *schema.ResourceDiff, m int
 }
 
 func verifyIDUnchanged(_ context.Context, d *schema.ResourceDiff, m interface{}, key string) error {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("botman", "verifyIDUnchanged")
 
 	if d.Id() == "" {

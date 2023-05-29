@@ -21,8 +21,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
 )
 
 func dataSourcePropertyRulesTemplate() *schema.Resource {
@@ -152,7 +152,7 @@ func (v variablePopulator) replaceMatchWithVar(template string, varMap map[strin
 
 //nolint:gocyclo
 func dataPropertyRulesTemplateRead(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "dataPropertyRulesTemplateRead")
 
 	file, err := tf.GetStringValue("template_file", d)

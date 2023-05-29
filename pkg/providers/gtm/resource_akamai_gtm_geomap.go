@@ -6,9 +6,10 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/gtm"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/logger"
 
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -82,7 +83,7 @@ func resourceGTMv1Geomap() *schema.Resource {
 
 // Create a new GTM GeoMap
 func resourceGTMv1GeomapCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1GeomapCreate")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
@@ -170,7 +171,7 @@ func resourceGTMv1GeomapCreate(ctx context.Context, d *schema.ResourceData, m in
 
 // read geoMap. updates state with entire API result configuration.
 func resourceGTMv1GeomapRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1GeomapRead")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
@@ -202,7 +203,7 @@ func resourceGTMv1GeomapRead(ctx context.Context, d *schema.ResourceData, m inte
 
 // Update GTM GeoMap
 func resourceGTMv1GeomapUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1GeomapUpdate")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
@@ -278,7 +279,7 @@ func resourceGTMv1GeomapUpdate(ctx context.Context, d *schema.ResourceData, m in
 
 // Import GTM GeoMap.
 func resourceGTMv1GeomapImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1GeomapImport")
 	// create a context with logging for api calls
 	ctx := context.Background()
@@ -313,7 +314,7 @@ func resourceGTMv1GeomapImport(d *schema.ResourceData, m interface{}) ([]*schema
 
 // Delete GTM GeoMap.
 func resourceGTMv1GeomapDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1GeomapDelete")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
@@ -386,7 +387,7 @@ func resourceGTMv1GeomapDelete(ctx context.Context, d *schema.ResourceData, m in
 }
 
 // Create and populate a new geoMap object from geoMap data
-func populateNewGeoMapObject(ctx context.Context, meta akamai.OperationMeta, d *schema.ResourceData, m interface{}) *gtm.GeoMap {
+func populateNewGeoMapObject(ctx context.Context, meta meta.Meta, d *schema.ResourceData, m interface{}) *gtm.GeoMap {
 
 	name, _ := tf.GetStringValue("name", d)
 	geoObj := inst.Client(meta).NewGeoMap(ctx, name)
@@ -410,7 +411,7 @@ func populateGeoMapObject(d *schema.ResourceData, geo *gtm.GeoMap, m interface{}
 
 // Populate Terraform state from provided GeoMap object
 func populateTerraformGeoMapState(d *schema.ResourceData, geo *gtm.GeoMap, m interface{}) {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "populateTerraformGeoMapState")
 
 	// walk through all state elements
@@ -423,7 +424,7 @@ func populateTerraformGeoMapState(d *schema.ResourceData, geo *gtm.GeoMap, m int
 
 // create and populate GTM GeoMap Assignments object
 func populateGeoAssignmentsObject(d *schema.ResourceData, geo *gtm.GeoMap, m interface{}) {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "populateGeoAssignmentsObject")
 
 	// pull apart List
@@ -458,7 +459,7 @@ func populateGeoAssignmentsObject(d *schema.ResourceData, geo *gtm.GeoMap, m int
 
 // create and populate Terraform geoMap assignments schema
 func populateTerraformGeoAssignmentsState(d *schema.ResourceData, geo *gtm.GeoMap, m interface{}) {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "populateTerraformGeoAssignmentsState")
 
 	objectInventory := make(map[int]*gtm.GeoAssignment, len(geo.Assignments))
@@ -505,7 +506,7 @@ func populateTerraformGeoAssignmentsState(d *schema.ResourceData, geo *gtm.GeoMa
 
 // create and populate GTM GeoMap DefaultDatacenter object
 func populateGeoDefaultDCObject(d *schema.ResourceData, geo *gtm.GeoMap, m interface{}) {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "populateGeoDefaultDCObject")
 
 	// pull apart List
@@ -528,7 +529,7 @@ func populateGeoDefaultDCObject(d *schema.ResourceData, geo *gtm.GeoMap, m inter
 
 // create and populate Terraform geoMap default_datacenter schema
 func populateTerraformGeoDefaultDCState(d *schema.ResourceData, geo *gtm.GeoMap, m interface{}) {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "populateTerraformGeoDefault")
 
 	ddcListNew := make([]interface{}, 1)
@@ -544,7 +545,7 @@ func populateTerraformGeoDefaultDCState(d *schema.ResourceData, geo *gtm.GeoMap,
 
 // countriesEqual checks whether countries are equal
 func countriesEqual(old, new interface{}) bool {
-	logger := akamai.Log("Akamai GTM", "countriesEqual")
+	logger := logger.Get("Akamai GTM", "countriesEqual")
 
 	oldCountries, ok := old.(*schema.Set)
 	if !ok {

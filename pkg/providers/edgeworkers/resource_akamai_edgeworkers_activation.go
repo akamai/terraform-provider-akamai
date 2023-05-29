@@ -11,8 +11,8 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/edgeworkers"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -83,7 +83,7 @@ var (
 )
 
 func resourceEdgeworkersActivationCreate(ctx context.Context, rd *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Edgeworkers", "resourceEdgeworkersActivationCreate")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
 	client := inst.Client(meta)
@@ -94,7 +94,7 @@ func resourceEdgeworkersActivationCreate(ctx context.Context, rd *schema.Resourc
 }
 
 func resourceEdgeworkersActivationRead(ctx context.Context, rd *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Edgeworkers", "resourceEdgeworkersActivationRead")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
 	client := inst.Client(meta)
@@ -131,7 +131,7 @@ func resourceEdgeworkersActivationRead(ctx context.Context, rd *schema.ResourceD
 }
 
 func resourceEdgeworkersActivationUpdate(ctx context.Context, rd *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Edgeworkers", "resourceEdgeworkersActivationUpdate")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
 	client := inst.Client(meta)
@@ -142,7 +142,7 @@ func resourceEdgeworkersActivationUpdate(ctx context.Context, rd *schema.Resourc
 }
 
 func resourceEdgeworkersActivationDelete(ctx context.Context, rd *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Edgeworkers", "resourceEdgeworkersActivationDelete")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
 	client := inst.Client(meta)
@@ -207,7 +207,7 @@ func resourceEdgeworkersActivationDelete(ctx context.Context, rd *schema.Resourc
 }
 
 func resourceEdgeworkersActivationImport(_ context.Context, rd *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Edgeworkers", "resourceEdgeworkersActivationImport")
 
 	logger.Debug("Importing edgeworker")
@@ -513,7 +513,7 @@ func sortDeactivationsByDate(deactivations []edgeworkers.Deactivation) []edgewor
 // it checks if edgeworker with provided edgeworker_id exists on ForceNew
 // to avoid deactivating and then failing to activate
 func checkEdgeworkerExistsOnDiff(ctx context.Context, rd *schema.ResourceDiff, m interface{}) error {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Edgeworkers", "checkEdgeworkerExistsOnDiff")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
 	client := inst.Client(meta)

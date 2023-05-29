@@ -13,6 +13,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/tools"
 	"github.com/apex/log"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -142,7 +143,7 @@ func papiError() *schema.Resource {
 }
 
 func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourcePropertyActivationCreate")
 	client := inst.Client(meta)
 
@@ -283,7 +284,7 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 }
 
 func resourcePropertyActivationDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourcePropertyActivationDelete")
 	client := inst.Client(meta)
 
@@ -431,7 +432,7 @@ func flattenErrorArray(errors []*papi.Error) string {
 }
 
 func resourcePropertyActivationRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourcePropertyActivationRead")
 	client := inst.Client(meta)
 
@@ -540,7 +541,7 @@ func resolveVersion(ctx context.Context, d *schema.ResourceData, client papi.PAP
 }
 
 func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourcePropertyActivationUpdate")
 	client := inst.Client(meta)
 

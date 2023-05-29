@@ -18,12 +18,6 @@ var (
 	// ErrDuplicateSchemaKey is returned when a duplicate schema key is detected during merge
 	ErrDuplicateSchemaKey = &Error{"duplicate schema key", false}
 
-	// ErrCacheEntryNotFound returns a cache entry error
-	ErrCacheEntryNotFound = &Error{"cache entry not found", true}
-
-	// ErrCacheDisabled is returned when the cache is disabled
-	ErrCacheDisabled = &Error{"cache is disabled", false}
-
 	// ErrProviderNotLoaded returned and panic'd when a requested provider is not loaded
 	// Users should never see this, unit tests and sanity checks should pick this up
 	ErrProviderNotLoaded = &Error{"provider not loaded", false}
@@ -62,10 +56,10 @@ func (e Error) Error() string {
 }
 
 // IsNotFoundError is returned if the error has the notFound flag set
-func IsNotFoundError(e error) bool {
-	if e, ok := e.(*Error); ok {
-		return e.notFound
-	}
+// func IsNotFoundError(e error) bool {
+// 	if e, ok := e.(*Error); ok {
+// 		return e.notFound
+// 	}
 
-	return false
-}
+// 	return false
+// }

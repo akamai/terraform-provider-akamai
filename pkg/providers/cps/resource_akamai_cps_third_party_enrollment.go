@@ -9,8 +9,8 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/cps"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
 	cpstools "github.com/akamai/terraform-provider-akamai/v4/pkg/providers/cps/tools"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -170,7 +170,7 @@ func supressSignatureAlgorithm(_ string, oldValue, newValue string, d *schema.Re
 }
 
 func resourceCPSThirdPartyEnrollmentCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("CPS", "resourceCPSThirdPartyEnrollmentCreate")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
@@ -242,7 +242,7 @@ func resourceCPSThirdPartyEnrollmentCreate(ctx context.Context, d *schema.Resour
 }
 
 func resourceCPSThirdPartyEnrollmentRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("CPS", "resourceCPSThirdPartyEnrollmentRead")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
@@ -281,7 +281,7 @@ func resourceCPSThirdPartyEnrollmentRead(ctx context.Context, d *schema.Resource
 }
 
 func resourceCPSThirdPartyEnrollmentUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("CPS", "resourceCPSThirdPartyEnrollmentUpdate")
 	ctx = session.ContextWithOptions(
 		ctx,
@@ -420,7 +420,7 @@ func resourceCPSThirdPartyEnrollmentDelete(ctx context.Context, d *schema.Resour
 }
 
 func resourceCPSThirdPartyEnrollmentImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("CPS", "resourceCPSThirdPartyEnrollmentImport")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(

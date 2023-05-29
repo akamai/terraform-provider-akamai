@@ -10,8 +10,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
 )
 
 func dataSourceProperty() *schema.Resource {
@@ -35,7 +35,7 @@ func dataSourceProperty() *schema.Resource {
 }
 
 func dataPropertyRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	log := meta.Log("PAPI", "dataPropertyRead")
 	log.Debug("Reading Property")
 
@@ -72,7 +72,7 @@ func dataPropertyRead(ctx context.Context, d *schema.ResourceData, m interface{}
 	return nil
 }
 
-func getRulesForProperty(ctx context.Context, property *papi.Property, meta akamai.OperationMeta) (*papi.GetRuleTreeResponse, error) {
+func getRulesForProperty(ctx context.Context, property *papi.Property, meta meta.Meta) (*papi.GetRuleTreeResponse, error) {
 	client := inst.Client(meta)
 	req := papi.GetRuleTreeRequest{
 		PropertyID:      property.PropertyID,

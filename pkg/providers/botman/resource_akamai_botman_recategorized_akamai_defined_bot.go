@@ -6,8 +6,8 @@ import (
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/botman"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -44,7 +44,7 @@ func resourceRecategorizedAkamaiDefinedBot() *schema.Resource {
 }
 
 func resourceRecategorizedAkamaiDefinedBotCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("botman", "resourceRecategorizedAkamaiDefinedBotCreateAction")
 	logger.Debugf("in resourceRecategorizedAkamaiDefinedBotCreateAction")
@@ -88,7 +88,7 @@ func resourceRecategorizedAkamaiDefinedBotCreate(ctx context.Context, d *schema.
 }
 
 func resourceRecategorizedAkamaiDefinedBotRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("botman", "resourceRecategorizedAkamaiDefinedBotReadAction")
 	logger.Debugf("in resourceRecategorizedAkamaiDefinedBotReadAction")
@@ -136,7 +136,7 @@ func resourceRecategorizedAkamaiDefinedBotRead(ctx context.Context, d *schema.Re
 }
 
 func resourceRecategorizedAkamaiDefinedBotUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("botman", "resourceRecategorizedAkamaiDefinedBotUpdateAction")
 	logger.Debugf("in resourceRecategorizedAkamaiDefinedBotUpdateAction")
@@ -180,7 +180,7 @@ func resourceRecategorizedAkamaiDefinedBotUpdate(ctx context.Context, d *schema.
 }
 
 func resourceRecategorizedAkamaiDefinedBotDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("botman", "resourceRecategorizedAkamaiDefinedBotDeleteAction")
 	logger.Debugf("in resourceRecategorizedAkamaiDefinedBotDeleteAction")
