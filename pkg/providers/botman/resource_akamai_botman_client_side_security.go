@@ -7,9 +7,9 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/botman"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/botman"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -48,7 +48,7 @@ func resourceClientSideSecurityCreate(ctx context.Context, d *schema.ResourceDat
 	logger := meta.Log("botman", "resourceClientSideSecurityCreate")
 	logger.Debugf("in resourceClientSideSecurityCreate")
 
-	configID, err := tools.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -58,7 +58,7 @@ func resourceClientSideSecurityCreate(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 
-	jsonPayloadString, err := tools.GetStringValue("client_side_security", d)
+	jsonPayloadString, err := tf.GetStringValue("client_side_security", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -115,8 +115,8 @@ func resourceClientSideSecurityRead(ctx context.Context, d *schema.ResourceData,
 		"config_id":            configID,
 		"client_side_security": string(jsonBody),
 	}
-	if err := tools.SetAttrs(d, fields); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+	if err := tf.SetAttrs(d, fields); err != nil {
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	d.SetId(strconv.Itoa(configID))
@@ -139,7 +139,7 @@ func resourceClientSideSecurityUpdate(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 
-	jsonPayloadString, err := tools.GetStringValue("client_side_security", d)
+	jsonPayloadString, err := tf.GetStringValue("client_side_security", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}

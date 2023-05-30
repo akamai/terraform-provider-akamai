@@ -1,5 +1,52 @@
 # RELEASE NOTES
 
+## 4.0.0 (May 30, 2023)
+
+#### BREAKING CHANGES:
+
+* Appsec
+  * Update malware policy `ContentTypes` to include `EncodedContentAttributes`.
+  * Malware policy's `ContentTypes` is reported as part of an individual policy but is no longer included in the bulk report of all policies.
+  
+* PAPI
+  * Remove `cpc_` prefix in `akamai_cp_code` resource and data source IDs
+
+#### FEATURES/ENHANCEMENTS:
+
+* Migrate to Terraform 1.3.7 version
+
+* Akamai
+  * Reword returned error when reading edgerc configuration encounters problems ([I#411](https://github.com/akamai/terraform-provider-akamai/issues/411))
+
+* EdgeWorkers
+  * Deactivate EdgeWorker versions upon EdgeWorker deletion([I#331](https://github.com/akamai/terraform-provider-akamai/issues/331))
+
+* PAPI
+  * Remove enforce `property-snippets` directory check ([I#378](https://github.com/akamai/terraform-provider-akamai/issues/378))
+  * Improved variable evaluation logic in `akamai_property_rules_template` data source ([I#324](https://github.com/akamai/terraform-provider-akamai/issues/324), [I#385](https://github.com/akamai/terraform-provider-akamai/issues/385), [I#386](https://github.com/akamai/terraform-provider-akamai/issues/386))
+    * Include path can now be provided using data source `variables`
+    * `variables` can now reference each other and be used to build other `variables` e.g. `${env.abc} = "${env.prefix} cba"`
+    * Variables existence is now verified early across all snippets inside the snippets directory - if variable is used in a snippet which is not included in final template and the variable is not defined, the processing will fail (previously variables were verified only when the snippet was loaded into final result)
+  * (Internal usage only) Improved `compliance_record` attribute's syntax for `akamai_property_activation` and `akamai_property_include_activation`
+
+#### BUG FIXES:
+
+* Appsec
+  * Fixed issue that in some cases allowed `terraform plan` to create a new config version as a side-effect of reading the current config.
+
+* DNS
+  * Fixed TXT record characters escaping issue in akamai_dns_record resource ([I#137](https://github.com/akamai/terraform-provider-akamai/issues/137))
+  * Fixed issue when `target` in `akamai_dns_record` resource was not known during plan, the plan failed ([I#410](https://github.com/akamai/terraform-provider-akamai/issues/410))
+
+* Cloudlets
+  * Fixed bug related to regex validation for handling property delay in `akamai_cloudlets_policy_activation`
+  * Fixed sporadic issue with `akamai_cloudlets_policy_activation` due to network delay
+
+* PAPI 
+  * Fixed reading float values in `akamai_property_rules_builder`
+  * Add validation for hostnames `cname_from` field in `akamai_property` resource
+  * Assign only active property activation version in `akamai_property_activation` resource on read
+
 ## 3.6.0 (April 27, 2023)
 
 #### FEATURES/ENHANCEMENTS:

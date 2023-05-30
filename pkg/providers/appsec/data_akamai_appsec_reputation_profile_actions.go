@@ -6,9 +6,9 @@ import (
 	"errors"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -58,7 +58,7 @@ func dataSourceReputationProfileActionsRead(ctx context.Context, d *schema.Resou
 
 	getReputationProfileActions := appsec.GetReputationProfileActionsRequest{}
 
-	configID, err := tools.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -68,14 +68,14 @@ func dataSourceReputationProfileActionsRead(ctx context.Context, d *schema.Resou
 		return diag.FromErr(err)
 	}
 
-	policyID, err := tools.GetStringValue("security_policy_id", d)
+	policyID, err := tf.GetStringValue("security_policy_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	getReputationProfileActions.PolicyID = policyID
 
-	reputationProfileID, err := tools.GetIntValue("reputation_profile_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	reputationProfileID, err := tf.GetIntValue("reputation_profile_id", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 	getReputationProfileActions.ReputationProfileID = reputationProfileID
@@ -94,7 +94,7 @@ func dataSourceReputationProfileActionsRead(ctx context.Context, d *schema.Resou
 		return diag.FromErr(err)
 	}
 	if err := d.Set("output_text", outputtext); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	jsonBody, err := json.Marshal(reputationprofileactions)
@@ -103,12 +103,12 @@ func dataSourceReputationProfileActionsRead(ctx context.Context, d *schema.Resou
 	}
 
 	if err := d.Set("json", string(jsonBody)); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	if len(reputationprofileactions.ReputationProfiles) > 0 {
 		if err := d.Set("action", reputationprofileactions.ReputationProfiles[0].Action); err != nil {
-			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 		}
 	}
 

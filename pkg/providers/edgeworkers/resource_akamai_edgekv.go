@@ -7,10 +7,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/edgeworkers"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/edgeworkers"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/tools"
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -53,7 +54,7 @@ func resourceEdgeKV() *schema.Resource {
 				Type:        schema.TypeInt,
 				Required:    true,
 				Description: "Namespace ACC group ID. It will be used in EdgeKV API v2. Not updatable.",
-				ValidateDiagFunc: tools.AggregateValidations(
+				ValidateDiagFunc: tf.AggregateValidations(
 					validation.ToDiagFunc(validation.IntAtLeast(0)),
 					displayGroupIDWarning(),
 				),
@@ -112,27 +113,27 @@ func resourceEdgeKVCreate(ctx context.Context, rd *schema.ResourceData, m interf
 	client := inst.Client(meta)
 	logger.Debug("Creating EdgeKV namespace configuration")
 
-	retention, err := tools.GetIntValue("retention_in_seconds", rd)
+	retention64, err := tf.GetInt64Value("retention_in_seconds", tf.NewRawConfig(rd))
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	retention := int(retention64)
+	geoLocation, err := tf.GetStringValue("geo_location", rd)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+
+	groupID, err := tf.GetIntValue("group_id", rd)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	geoLocation, err := tools.GetStringValue("geo_location", rd)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-
-	groupID, err := tools.GetIntValue("group_id", rd)
+	name, err := tf.GetStringValue("namespace_name", rd)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	name, err := tools.GetStringValue("namespace_name", rd)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	network, err := tools.GetStringValue("network", rd)
+	network, err := tf.GetStringValue("network", rd)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -174,8 +175,8 @@ func resourceEdgeKVCreate(ctx context.Context, rd *schema.ResourceData, m interf
 		return diag.FromErr(err)
 	}
 
-	data, err := tools.GetListValue("initial_data", rd)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	data, err := tf.GetListValue("initial_data", rd)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 
@@ -245,7 +246,7 @@ func resourceEdgeKVUpdate(ctx context.Context, rd *schema.ResourceData, m interf
 
 	if rd.HasChanges("initial_data") {
 		err := diag.Errorf("the field \"initial_data\" cannot be updated after resource creation")
-		if diagnostics := diag.FromErr(tools.RestoreOldValues(rd, []string{"initial_data"})); diagnostics != nil {
+		if diagnostics := diag.FromErr(tf.RestoreOldValues(rd, []string{"initial_data"})); diagnostics != nil {
 			diagnostics = append(diagnostics, err[0])
 			return diagnostics
 		}
@@ -254,27 +255,27 @@ func resourceEdgeKVUpdate(ctx context.Context, rd *schema.ResourceData, m interf
 
 	// at this point, just retention_in_seconds may be updated
 
-	retention, err := tools.GetIntValue("retention_in_seconds", rd)
+	retention64, err := tf.GetInt64Value("retention_in_seconds", tf.NewRawConfig(rd))
 	if err != nil {
 		return diag.FromErr(err)
 	}
-
+	retention := int(retention64)
 	// ignore group_id changes
 	// changes on this field are not supported by current EdgeKV API version
-	if diagnostics := diag.FromErr(tools.RestoreOldValues(rd, []string{"group_id"})); diagnostics != nil {
+	if diagnostics := diag.FromErr(tf.RestoreOldValues(rd, []string{"group_id"})); diagnostics != nil {
 		return diagnostics
 	}
-	groupID, err := tools.GetIntValue("group_id", rd)
+	groupID, err := tf.GetIntValue("group_id", rd)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	name, err := tools.GetStringValue("namespace_name", rd)
+	name, err := tf.GetStringValue("namespace_name", rd)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	network, err := tools.GetStringValue("network", rd)
+	network, err := tf.GetStringValue("network", rd)
 	if err != nil {
 		return diag.FromErr(err)
 	}

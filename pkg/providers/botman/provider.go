@@ -5,14 +5,12 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/providers/appsec"
-
 	"github.com/apex/log"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/botman"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
-
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/botman"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/providers/appsec"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -125,7 +123,7 @@ func (p *provider) Client(meta akamai.OperationMeta) botman.BotMan {
 func getBotmanService(d *schema.ResourceData) (interface{}, error) {
 	var section string
 
-	for _, s := range tools.FindStringValues(d, "botman_section", "config_section") {
+	for _, s := range tf.FindStringValues(d, "botman_section", "config_section") {
 		if s != "default" {
 			section = s
 			break
@@ -134,7 +132,7 @@ func getBotmanService(d *schema.ResourceData) (interface{}, error) {
 
 	if section != "" {
 		if err := d.Set("config_section", section); err != nil {
-			return nil, fmt.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+			return nil, fmt.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 		}
 	}
 

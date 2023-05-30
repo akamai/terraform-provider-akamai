@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -60,7 +60,7 @@ func resourceThreatIntelCreate(ctx context.Context, d *schema.ResourceData, m in
 	logger := meta.Log("APPSEC", "resourceThreatIntelCreate")
 	logger.Debugf("in resourceThreatIntelCreate")
 
-	configID, err := tools.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -68,11 +68,11 @@ func resourceThreatIntelCreate(ctx context.Context, d *schema.ResourceData, m in
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	policyID, err := tools.GetStringValue("security_policy_id", d)
+	policyID, err := tf.GetStringValue("security_policy_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	threatintel, err := tools.GetStringValue("threat_intel", d)
+	threatintel, err := tf.GetStringValue("threat_intel", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -127,14 +127,14 @@ func resourceThreatIntelRead(ctx context.Context, d *schema.ResourceData, m inte
 	}
 
 	if err := d.Set("config_id", getThreatIntel.ConfigID); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("security_policy_id", getThreatIntel.PolicyID); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	if err := d.Set("threat_intel", threatintel.ThreatIntel); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	return nil
@@ -160,7 +160,7 @@ func resourceThreatIntelUpdate(ctx context.Context, d *schema.ResourceData, m in
 	}
 	policyID := iDParts[1]
 
-	threatintel, err := tools.GetStringValue("threat_intel", d)
+	threatintel, err := tf.GetStringValue("threat_intel", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}

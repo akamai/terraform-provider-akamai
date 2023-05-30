@@ -5,9 +5,9 @@ import (
 	"errors"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -57,14 +57,14 @@ func dataSourceConfigurationVersionRead(ctx context.Context, d *schema.ResourceD
 
 	getConfigurationVersion := appsec.GetConfigurationVersionsRequest{}
 
-	configID, err := tools.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	getConfigurationVersion.ConfigID = configID
 
-	version, err := tools.GetIntValue("version", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	version, err := tf.GetIntValue("version", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 	getConfigurationVersion.ConfigVersion = version
@@ -76,7 +76,7 @@ func dataSourceConfigurationVersionRead(ctx context.Context, d *schema.ResourceD
 	}
 
 	if err := d.Set("latest_version", configurationversion.LastCreatedVersion); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	for _, configval := range configurationversion.VersionList {
@@ -84,15 +84,15 @@ func dataSourceConfigurationVersionRead(ctx context.Context, d *schema.ResourceD
 		if configval.Version == version {
 
 			if err := d.Set("config_id", configval.ConfigID); err != nil {
-				return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+				return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 			}
 
 			if err := d.Set("staging_status", configval.Staging.Status); err != nil {
-				return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+				return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 			}
 
 			if err := d.Set("production_status", configval.Production.Status); err != nil {
-				return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+				return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 			}
 
 			d.SetId(strconv.Itoa(configval.ConfigID))
@@ -107,7 +107,7 @@ func dataSourceConfigurationVersionRead(ctx context.Context, d *schema.ResourceD
 		return diag.FromErr(err)
 	}
 	if err := d.Set("output_text", outputtext); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	d.SetId(strconv.Itoa(configurationversion.ConfigID))
 

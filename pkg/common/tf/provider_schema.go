@@ -1,4 +1,4 @@
-package tools
+package tf
 
 import (
 	"errors"
@@ -102,6 +102,25 @@ func GetIntValue(key string, rd ResourceDataFetcher) (int, error) {
 	var num int
 	if num, ok = value.(int); !ok {
 		return 0, fmt.Errorf("%w: %s, %q", ErrInvalidType, key, "int")
+	}
+	return num, nil
+}
+
+// GetInt64Value fetches value with given key from ResourceData object and attempts type cast to int64
+//
+// if value is not present on provided resource, ErrNotFound is returned
+// if casting is not successful, ErrInvalidType is returned
+func GetInt64Value(key string, rd ResourceDataFetcher) (int64, error) {
+	if key == "" {
+		return 0, fmt.Errorf("%w: %s", ErrEmptyKey, key)
+	}
+	value, ok := rd.GetOk(key)
+	if !ok {
+		return 0, fmt.Errorf("%w: %s", ErrNotFound, key)
+	}
+	var num int64
+	if num, ok = value.(int64); !ok {
+		return 0, fmt.Errorf("%w: %s, %q", ErrInvalidType, key, "int64")
 	}
 	return num, nil
 }

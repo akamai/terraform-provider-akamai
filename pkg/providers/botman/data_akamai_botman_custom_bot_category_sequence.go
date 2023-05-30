@@ -4,9 +4,9 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/botman"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/botman"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -34,7 +34,7 @@ func dataSourceCustomBotCategorySequenceRead(ctx context.Context, d *schema.Reso
 	logger := meta.Log("botman", "dataSourceCustomBotCategorySequenceRead")
 	logger.Debugf("in dataSourceCustomBotCategorySequenceRead")
 
-	configID, err := tools.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -56,7 +56,7 @@ func dataSourceCustomBotCategorySequenceRead(ctx context.Context, d *schema.Reso
 	}
 
 	if err := d.Set("category_ids", response.Sequence); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	d.SetId(strconv.Itoa(configID))

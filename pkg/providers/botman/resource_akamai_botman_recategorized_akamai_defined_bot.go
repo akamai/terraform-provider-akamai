@@ -5,10 +5,9 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/botman"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
-
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/botman"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -50,7 +49,7 @@ func resourceRecategorizedAkamaiDefinedBotCreate(ctx context.Context, d *schema.
 	logger := meta.Log("botman", "resourceRecategorizedAkamaiDefinedBotCreateAction")
 	logger.Debugf("in resourceRecategorizedAkamaiDefinedBotCreateAction")
 
-	configID, err := tools.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -60,12 +59,12 @@ func resourceRecategorizedAkamaiDefinedBotCreate(ctx context.Context, d *schema.
 		return diag.FromErr(err)
 	}
 
-	botID, err := tools.GetStringValue("bot_id", d)
+	botID, err := tf.GetStringValue("bot_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	categoryID, err := tools.GetStringValue("category_id", d)
+	categoryID, err := tf.GetStringValue("category_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -129,8 +128,8 @@ func resourceRecategorizedAkamaiDefinedBotRead(ctx context.Context, d *schema.Re
 		"bot_id":      botID,
 		"category_id": response.CategoryID,
 	}
-	if err := tools.SetAttrs(d, fields); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+	if err := tf.SetAttrs(d, fields); err != nil {
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	return nil
@@ -159,7 +158,7 @@ func resourceRecategorizedAkamaiDefinedBotUpdate(ctx context.Context, d *schema.
 
 	botID := iDParts[1]
 
-	categoryID, err := tools.GetStringValue("category_id", d)
+	categoryID, err := tf.GetStringValue("category_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}

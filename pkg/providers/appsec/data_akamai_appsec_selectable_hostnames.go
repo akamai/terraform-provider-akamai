@@ -6,9 +6,9 @@ import (
 	"errors"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -70,16 +70,16 @@ func dataSourceSelectableHostnamesRead(ctx context.Context, d *schema.ResourceDa
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "dataSourceSelectableHostnamesRead")
 
-	configID, err := tools.GetIntValue("config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	configID, err := tf.GetIntValue("config_id", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	contractID, err := tools.GetStringValue("contractid", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	contractID, err := tf.GetStringValue("contractid", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	group, err := tools.GetIntValue("groupid", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	group, err := tf.GetIntValue("groupid", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 	validParams := configID != 0 || (contractID != "" && group != 0)
@@ -112,7 +112,7 @@ func dataSourceSelectableHostnamesRead(ctx context.Context, d *schema.ResourceDa
 	}
 
 	if err := d.Set("hostnames_json", string(jsonBody)); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	var flagsetstg, flagsetprod string
@@ -156,7 +156,7 @@ func dataSourceSelectableHostnamesRead(ctx context.Context, d *schema.ResourceDa
 	}
 
 	if err := d.Set("hostnames", newhdata); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	ots := OutputTemplates{}
@@ -167,7 +167,7 @@ func dataSourceSelectableHostnamesRead(ctx context.Context, d *schema.ResourceDa
 		return diag.FromErr(err)
 	}
 	if err := d.Set("output_text", outputtext); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	d.SetId(strconv.Itoa(selectablehostnames.ConfigID))

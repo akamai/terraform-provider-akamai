@@ -7,10 +7,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/cloudlets"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/cloudlets"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 	ozzo "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
 	"github.com/hashicorp/go-cty/cty"
@@ -305,7 +305,7 @@ func resourceALBCreate(ctx context.Context, d *schema.ResourceData, m interface{
 	)
 	client := inst.Client(meta)
 	logger.Debug("Creating load balancer configuration")
-	originID, err := tools.GetStringValue("origin_id", d)
+	originID, err := tf.GetStringValue("origin_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -330,7 +330,7 @@ func resourceALBCreate(ctx context.Context, d *schema.ResourceData, m interface{
 		return diag.FromErr(err)
 	}
 	if err := d.Set("version", createVersionResp.Version); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 	}
 	return resourceALBRead(ctx, d, m)
 }
@@ -349,10 +349,10 @@ func resourceALBRead(ctx context.Context, d *schema.ResourceData, m interface{})
 	loadBalancerConfigAttrs := map[string]interface{}{
 		"origin_id": originID,
 	}
-	if err := tools.SetAttrs(d, loadBalancerConfigAttrs); err != nil {
+	if err := tf.SetAttrs(d, loadBalancerConfigAttrs); err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := tools.GetIntValue("version", d)
+	version, err := tf.GetIntValue("version", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -380,7 +380,7 @@ func resourceALBRead(ctx context.Context, d *schema.ResourceData, m interface{})
 		}
 	}
 	attrs["warnings"] = string(warningsJSON)
-	if err := tools.SetAttrs(d, attrs); err != nil {
+	if err := tf.SetAttrs(d, attrs); err != nil {
 		return diag.FromErr(err)
 	}
 	return nil
@@ -398,7 +398,7 @@ func resourceALBUpdate(ctx context.Context, d *schema.ResourceData, m interface{
 	logger.Debug("Updating load balancer configuration")
 	originID := d.Id()
 
-	version, err := tools.GetIntValue("version", d)
+	version, err := tf.GetIntValue("version", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -439,7 +439,7 @@ func resourceALBUpdate(ctx context.Context, d *schema.ResourceData, m interface{
 			return diag.FromErr(err)
 		}
 		if err := d.Set("version", loadBalancerVersionResp.Version); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 		}
 	}
 	return resourceALBRead(ctx, d, m)
@@ -595,7 +595,7 @@ func getDataCenters(d *schema.ResourceData) []cloudlets.DataCenter {
 }
 
 func getLivenessSettings(d *schema.ResourceData) *cloudlets.LivenessSettings {
-	lsList, err := tools.GetListValue("liveness_settings", d)
+	lsList, err := tf.GetListValue("liveness_settings", d)
 	if err != nil {
 		return nil
 	}

@@ -9,10 +9,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/papi"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 )
 
 func dataSourcePropertyGroup() *schema.Resource {
@@ -65,9 +65,9 @@ func dataPropertyGroupRead(ctx context.Context, d *schema.ResourceData, m interf
 	)
 
 	// check and load group_name, if not exists then check group.
-	name, err := tools.ResolveKeyStringState(d, "group_name", "name")
+	name, err := tf.ResolveKeyStringState(d, "group_name", "name")
 	if err != nil {
-		if !errors.Is(err, tools.ErrNotFound) {
+		if !errors.Is(err, tf.ErrNotFound) {
 			return diag.FromErr(err)
 		}
 		name = "default"
@@ -82,8 +82,8 @@ func dataPropertyGroupRead(ctx context.Context, d *schema.ResourceData, m interf
 	}
 
 	// check and load contract_id, if not exists then check contract.
-	contractID, err := tools.ResolveKeyStringState(d, "contract_id", "contract")
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	contractID, err := tf.ResolveKeyStringState(d, "contract_id", "contract")
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 
@@ -94,10 +94,10 @@ func dataPropertyGroupRead(ctx context.Context, d *schema.ResourceData, m interf
 
 	// set group_name/name in state.
 	if err := d.Set("group_name", group.GroupName); err != nil {
-		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("name", group.GroupName); err != nil {
-		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
 
 	if len(group.ContractIDs) != 0 {
@@ -105,10 +105,10 @@ func dataPropertyGroupRead(ctx context.Context, d *schema.ResourceData, m interf
 	}
 	// set contract/contract_id in state.
 	if err := d.Set("contract", contractID); err != nil {
-		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("contract_id", contractID); err != nil {
-		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
 
 	d.SetId(group.GroupID)

@@ -5,11 +5,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/edgeworkers"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/edgeworkers"
 
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
-
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -22,7 +21,7 @@ func dataSourceEdgeworkersResourceTier() *schema.Resource {
 				Type:             schema.TypeString,
 				Required:         true,
 				Description:      "Unique identifier of a contract",
-				DiffSuppressFunc: tools.FieldPrefixSuppress("ctr_"),
+				DiffSuppressFunc: tf.FieldPrefixSuppress("ctr_"),
 			},
 			"resource_tier_name": {
 				Type:        schema.TypeString,
@@ -44,11 +43,11 @@ func dataEdgeworkersResourceTierRead(ctx context.Context, d *schema.ResourceData
 	log := meta.Log("Edgeworkers", "dataEdgeworkersResourceTierRead")
 	log.Debug("Reading Resource Tier")
 
-	contractID, err := tools.GetStringValue("contract_id", d)
+	contractID, err := tf.GetStringValue("contract_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	resourceTierName, err := tools.GetStringValue("resource_tier_name", d)
+	resourceTierName, err := tf.GetStringValue("resource_tier_name", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}

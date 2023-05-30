@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/datastream"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/datastream"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -70,8 +70,8 @@ func ConnectorToMap(connectors []datastream.ConnectorDetails, d *schema.Resource
 
 	// get connector set from .tf file (needed for secrets, keys)
 	// when importing the resource, local configuration is initially empty
-	localConnectorSet, err := tools.GetSetValue(resourceKey, d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	localConnectorSet, err := tf.GetSetValue(resourceKey, d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return "", nil, err
 	}
 
@@ -93,7 +93,7 @@ func ConnectorToMap(connectors []datastream.ConnectorDetails, d *schema.Resource
 // GetConnectors builds Connectors list
 func GetConnectors(d *schema.ResourceData, keys []string) ([]datastream.AbstractConnector, error) {
 	// check which connector is present in .tf file
-	connectorName, connectorResource, err := tools.GetExactlyOneOf(d, keys)
+	connectorName, connectorResource, err := tf.GetExactlyOneOf(d, keys)
 	if err != nil {
 		return nil, fmt.Errorf("missing connector definition")
 	}

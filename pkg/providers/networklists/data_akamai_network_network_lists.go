@@ -6,9 +6,9 @@ import (
 	"errors"
 	"fmt"
 
-	network "github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/networklists"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	network "github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/networklists"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -69,16 +69,16 @@ func dataSourceNetworkListRead(ctx context.Context, d *schema.ResourceData, m in
 	client := inst.Client(meta)
 	logger := meta.Log("NETWORKLIST", "dataSourceNetworkListRead")
 
-	name, err := tools.GetStringValue("name", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	name, err := tf.GetStringValue("name", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	networkListType, err := tools.GetStringValue("type", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	networkListType, err := tf.GetStringValue("type", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	networkListID, err := tools.GetStringValue("network_list_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	networkListID, err := tf.GetStringValue("network_list_id", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 
@@ -93,13 +93,13 @@ func dataSourceNetworkListRead(ctx context.Context, d *schema.ResourceData, m in
 		d.SetId(networkList.UniqueID)
 
 		if err := d.Set("network_list_id", networkList.UniqueID); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 		}
 		if err := d.Set("group_id", networkList.GroupID); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 		}
 		if err := d.Set("contract_id", networkList.ContractID); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 		}
 
 		jsonBody, err := json.MarshalIndent(networkList, "", "  ")
@@ -107,12 +107,12 @@ func dataSourceNetworkListRead(ctx context.Context, d *schema.ResourceData, m in
 			return diag.FromErr(err)
 		}
 		if err := d.Set("json", string(jsonBody)); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 		}
 
 		if err := d.Set("list", []string{networkList.UniqueID}); err != nil {
 			logger.Errorf("error setting 'list': %s", err.Error())
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 		}
 
 		getNetworkListsResponse := network.GetNetworkListsResponse{
@@ -132,10 +132,10 @@ func dataSourceNetworkListRead(ctx context.Context, d *schema.ResourceData, m in
 		InitTemplates(ots)
 		outputText, err := RenderTemplates(ots, "networkListsDS", getNetworkListsResponse)
 		if err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 		}
 		if err := d.Set("output_text", outputText); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 		}
 	} else {
 		networkLists, err := client.GetNetworkLists(ctx, network.GetNetworkListsRequest{
@@ -154,7 +154,7 @@ func dataSourceNetworkListRead(ctx context.Context, d *schema.ResourceData, m in
 			return diag.FromErr(err)
 		}
 		if err := d.Set("json", string(jsonBody)); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 		}
 		IDs := make([]string, 0, len(networkLists.NetworkLists))
 		for _, networkList := range networkLists.NetworkLists {
@@ -162,7 +162,7 @@ func dataSourceNetworkListRead(ctx context.Context, d *schema.ResourceData, m in
 		}
 		if err := d.Set("list", IDs); err != nil {
 			logger.Errorf("error setting 'list': %s", err.Error())
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 		}
 
 		ots := OutputTemplates{}
@@ -173,7 +173,7 @@ func dataSourceNetworkListRead(ctx context.Context, d *schema.ResourceData, m in
 			return diag.FromErr(err)
 		}
 		if err := d.Set("output_text", outputText); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 		}
 	}
 

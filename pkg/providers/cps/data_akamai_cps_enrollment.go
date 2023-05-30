@@ -4,11 +4,11 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/cps"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	cpstools "github.com/akamai/terraform-provider-akamai/v3/pkg/providers/cps/tools"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/cps"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	cpstools "github.com/akamai/terraform-provider-akamai/v4/pkg/providers/cps/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -310,7 +310,7 @@ func dataCPSEnrollmentRead(ctx context.Context, d *schema.ResourceData, m interf
 
 	logger.Debug("Fetching an enrollment")
 
-	enrollmentID, err := tools.GetIntValue("enrollment_id", d)
+	enrollmentID, err := tf.GetIntValue("enrollment_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -324,7 +324,7 @@ func dataCPSEnrollmentRead(ctx context.Context, d *schema.ResourceData, m interf
 
 	attrs := createAttrs(enrollment, enrollmentID)
 
-	if err = tools.SetAttrs(d, attrs); err != nil {
+	if err = tf.SetAttrs(d, attrs); err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -333,7 +333,7 @@ func dataCPSEnrollmentRead(ctx context.Context, d *schema.ResourceData, m interf
 		return diag.FromErr(err)
 	}
 
-	if err = tools.SetAttrs(d, challengesAttrs); err != nil {
+	if err = tf.SetAttrs(d, challengesAttrs); err != nil {
 		return diag.FromErr(err)
 	}
 

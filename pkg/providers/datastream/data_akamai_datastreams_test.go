@@ -6,11 +6,11 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/tools"
 
 	"github.com/stretchr/testify/mock"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/datastream"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/datastream"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 

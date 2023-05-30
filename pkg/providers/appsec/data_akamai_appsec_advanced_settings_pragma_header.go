@@ -6,10 +6,9 @@ import (
 	"errors"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
-
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -49,7 +48,7 @@ func dataSourceAdvancedSettingsPragmaHeaderRead(ctx context.Context, d *schema.R
 
 	getAdvancedSettingsPragma := appsec.GetAdvancedSettingsPragmaRequest{}
 
-	configID, err := tools.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -59,8 +58,8 @@ func dataSourceAdvancedSettingsPragmaHeaderRead(ctx context.Context, d *schema.R
 		return diag.FromErr(err)
 	}
 
-	policyID, err := tools.GetStringValue("security_policy_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	policyID, err := tf.GetStringValue("security_policy_id", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 	getAdvancedSettingsPragma.PolicyID = policyID
@@ -79,7 +78,7 @@ func dataSourceAdvancedSettingsPragmaHeaderRead(ctx context.Context, d *schema.R
 		return diag.FromErr(err)
 	}
 	if err := d.Set("output_text", outputtext); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	jsonBody, err := json.Marshal(advancedsettingspragma)
@@ -88,7 +87,7 @@ func dataSourceAdvancedSettingsPragmaHeaderRead(ctx context.Context, d *schema.R
 	}
 
 	if err := d.Set("json", string(jsonBody)); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	d.SetId(strconv.Itoa(getAdvancedSettingsPragma.ConfigID))

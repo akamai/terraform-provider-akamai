@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/gtm"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/config"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/gtm"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/config"
 	"github.com/apex/log"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -94,9 +94,9 @@ func (p *provider) Client(meta akamai.OperationMeta) gtm.GTM {
 func getConfigGTMV1Service(d *schema.ResourceData) error {
 	var inlineConfig *schema.Set
 	for _, key := range []string{"gtm", "config"} {
-		opt, err := tools.GetSetValue(key, d)
+		opt, err := tf.GetSetValue(key, d)
 		if err != nil {
-			if !errors.Is(err, tools.ErrNotFound) {
+			if !errors.Is(err, tf.ErrNotFound) {
 				return err
 			}
 			continue
@@ -107,13 +107,13 @@ func getConfigGTMV1Service(d *schema.ResourceData) error {
 		inlineConfig = opt
 	}
 	if err := d.Set("config", inlineConfig); err != nil {
-		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 	}
 
-	for _, s := range tools.FindStringValues(d, "gtm_section", "config_section") {
+	for _, s := range tf.FindStringValues(d, "gtm_section", "config_section") {
 		if s != "default" && s != "" {
 			if err := d.Set("config_section", s); err != nil {
-				return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+				return fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 			}
 			break
 		}

@@ -6,11 +6,10 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/cloudlets"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/cloudlets"
 
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
-
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -234,7 +233,7 @@ func dataApplicationLoadBalancerRead(ctx context.Context, d *schema.ResourceData
 	log := meta.Log("Cloudlets", "dataApplicationLoadBalancerRead")
 	log.Debug("Reading Load Balancer")
 
-	originID, err := tools.GetStringValue("origin_id", d)
+	originID, err := tf.GetStringValue("origin_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -245,8 +244,8 @@ func dataApplicationLoadBalancerRead(ctx context.Context, d *schema.ResourceData
 	}
 
 	var version int64
-	if v, err := tools.GetIntValue("version", d); err != nil {
-		if !errors.Is(err, tools.ErrNotFound) {
+	if v, err := tf.GetIntValue("version", d); err != nil {
+		if !errors.Is(err, tf.ErrNotFound) {
 			return diag.FromErr(err)
 		}
 		version, err = getLatestVersionOfApplicationLoadBalancer(ctx, originID, client)
@@ -277,7 +276,7 @@ func dataApplicationLoadBalancerRead(ctx context.Context, d *schema.ResourceData
 		return diag.FromErr(err)
 	}
 
-	err = tools.SetAttrs(d, fields)
+	err = tf.SetAttrs(d, fields)
 	if err != nil {
 		return diag.FromErr(err)
 	}

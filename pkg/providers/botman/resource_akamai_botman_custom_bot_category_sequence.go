@@ -4,9 +4,9 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/botman"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/botman"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -44,7 +44,7 @@ func resourceCustomBotCategorySequenceCreate(ctx context.Context, d *schema.Reso
 	logger := meta.Log("botman", "resourceCustomBotCategorySequenceCreate")
 	logger.Debugf("in resourceCustomBotCategorySequenceCreate")
 
-	configID, err := tools.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -54,7 +54,7 @@ func resourceCustomBotCategorySequenceCreate(ctx context.Context, d *schema.Reso
 		return diag.FromErr(err)
 	}
 
-	sequence, err := tools.GetListValue("category_ids", d)
+	sequence, err := tf.GetListValue("category_ids", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -86,7 +86,7 @@ func resourceCustomBotCategorySequenceUpdate(ctx context.Context, d *schema.Reso
 	logger := meta.Log("botman", "resourceCustomBotCategorySequenceUpdate")
 	logger.Debugf("in resourceCustomBotCategorySequenceUpdate")
 
-	configID, err := tools.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -96,7 +96,7 @@ func resourceCustomBotCategorySequenceUpdate(ctx context.Context, d *schema.Reso
 		return diag.FromErr(err)
 	}
 
-	sequence, err := tools.GetListValue("category_ids", d)
+	sequence, err := tf.GetListValue("category_ids", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -151,8 +151,8 @@ func resourceCustomBotCategorySequenceRead(ctx context.Context, d *schema.Resour
 		"config_id":    configID,
 		"category_ids": response.Sequence,
 	}
-	if err := tools.SetAttrs(d, fields); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+	if err := tf.SetAttrs(d, fields); err != nil {
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	return nil
 }

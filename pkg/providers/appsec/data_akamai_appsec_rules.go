@@ -6,9 +6,9 @@ import (
 	"errors"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -63,7 +63,7 @@ func dataSourceRulesRead(ctx context.Context, d *schema.ResourceData, m interfac
 
 	getRules := appsec.GetRulesRequest{}
 
-	configID, err := tools.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -73,14 +73,14 @@ func dataSourceRulesRead(ctx context.Context, d *schema.ResourceData, m interfac
 		return diag.FromErr(err)
 	}
 
-	policyID, err := tools.GetStringValue("security_policy_id", d)
+	policyID, err := tf.GetStringValue("security_policy_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	getRules.PolicyID = policyID
 
-	ruleID, err := tools.GetIntValue("rule_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	ruleID, err := tf.GetIntValue("rule_id", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 	getRules.RuleID = ruleID
@@ -116,12 +116,12 @@ func dataSourceRulesRead(ctx context.Context, d *schema.ResourceData, m interfac
 		return diag.FromErr(err)
 	}
 	if err := d.Set("output_text", outputtext); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	if len(rules.Rules) == 1 {
 		if err := d.Set("rule_action", rules.Rules[0].Action); err != nil {
-			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 		}
 
 		conditionException, err := json.Marshal(rules.Rules[0].ConditionException)
@@ -130,7 +130,7 @@ func dataSourceRulesRead(ctx context.Context, d *schema.ResourceData, m interfac
 		}
 
 		if err := d.Set("condition_exception", string(conditionException)); err != nil {
-			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 		}
 
 		jsonBody, err := json.Marshal(rules)
@@ -139,7 +139,7 @@ func dataSourceRulesRead(ctx context.Context, d *schema.ResourceData, m interfac
 		}
 
 		if err := d.Set("json", string(jsonBody)); err != nil {
-			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 		}
 	}
 

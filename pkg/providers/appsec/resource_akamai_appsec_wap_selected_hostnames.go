@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -63,32 +63,32 @@ func resourceWAPSelectedHostnamesCreate(ctx context.Context, d *schema.ResourceD
 	logger := meta.Log("APPSEC", "resourceWAPSelectedHostnamesCreate")
 	logger.Debugf("in resourceWAPSelectedHostnamesCreate")
 
-	configID, err := tools.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	securityPolicyID, err := tools.GetStringValue("security_policy_id", d)
+	securityPolicyID, err := tf.GetStringValue("security_policy_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	protectedHosts, err := tools.GetSetValue("protected_hosts", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	protectedHosts, err := tf.GetSetValue("protected_hosts", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	evaluatedHosts, err := tools.GetSetValue("evaluated_hosts", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	evaluatedHosts, err := tf.GetSetValue("evaluated_hosts", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 
 	// convert to lists of strings
 	var protectedHostnames, evalHostnames []string
 	if (*protectedHosts).Len() > 0 {
-		protectedHostnames = tools.SetToStringSlice(protectedHosts)
+		protectedHostnames = tf.SetToStringSlice(protectedHosts)
 	} else {
 		protectedHostnames = make([]string, 0)
 	}
 	if (*evaluatedHosts).Len() > 0 {
-		evalHostnames = tools.SetToStringSlice(evaluatedHosts)
+		evalHostnames = tf.SetToStringSlice(evaluatedHosts)
 	} else {
 		evalHostnames = make([]string, 0)
 	}
@@ -108,20 +108,20 @@ func resourceWAPSelectedHostnamesCreate(ctx context.Context, d *schema.ResourceD
 	_, err = client.UpdateWAPSelectedHostnames(ctx, updateWAPSelectedHostnames)
 	if err != nil {
 		logger.Errorf("calling 'UpdateWAPSelectedHostnames': %s", err.Error())
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	if err := d.Set("config_id", configID); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("security_policy_id", securityPolicyID); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("protected_hosts", protectedHosts); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("evaluated_hosts", evaluatedHosts); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	d.SetId(fmt.Sprintf("%d:%s", configID, securityPolicyID))
@@ -162,16 +162,16 @@ func resourceWAPSelectedHostnamesRead(ctx context.Context, d *schema.ResourceDat
 	}
 
 	if err := d.Set("config_id", configID); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("security_policy_id", securityPolicyID); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("protected_hosts", wapSelectedHostnames.ProtectedHosts); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("evaluated_hosts", wapSelectedHostnames.EvaluatedHosts); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	return nil
@@ -183,32 +183,32 @@ func resourceWAPSelectedHostnamesUpdate(ctx context.Context, d *schema.ResourceD
 	logger := meta.Log("APPSEC", "resourceWAPSelectedHostnamesUpdate")
 	logger.Debugf("in resourceWAPSelectedHostnamesUpdate")
 
-	configID, err := tools.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	securityPolicyID, err := tools.GetStringValue("security_policy_id", d)
+	securityPolicyID, err := tf.GetStringValue("security_policy_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	protectedHosts, err := tools.GetSetValue("protected_hosts", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	protectedHosts, err := tf.GetSetValue("protected_hosts", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	evaluatedHosts, err := tools.GetSetValue("evaluated_hosts", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	evaluatedHosts, err := tf.GetSetValue("evaluated_hosts", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 
 	// convert to lists of strings
 	var protectedHostnames, evalHostnames []string
 	if (*protectedHosts).Len() > 0 {
-		protectedHostnames = tools.SetToStringSlice(protectedHosts)
+		protectedHostnames = tf.SetToStringSlice(protectedHosts)
 	} else {
 		protectedHostnames = make([]string, 0)
 	}
 	if (*evaluatedHosts).Len() > 0 {
-		evalHostnames = tools.SetToStringSlice(evaluatedHosts)
+		evalHostnames = tf.SetToStringSlice(evaluatedHosts)
 	} else {
 		evalHostnames = make([]string, 0)
 	}
@@ -228,20 +228,20 @@ func resourceWAPSelectedHostnamesUpdate(ctx context.Context, d *schema.ResourceD
 	_, err = client.UpdateWAPSelectedHostnames(ctx, updateWAPSelectedHostnames)
 	if err != nil {
 		logger.Errorf("calling 'UpdateWAPSelectedHostnames': %s", err.Error())
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	if err := d.Set("config_id", configID); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("security_policy_id", securityPolicyID); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("protected_hosts", protectedHosts); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("evaluated_hosts", evaluatedHosts); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	return resourceWAPSelectedHostnamesRead(ctx, d, m)
@@ -252,12 +252,12 @@ func resourceWAPSelectedHostnamesDelete(ctx context.Context, d *schema.ResourceD
 }
 
 func verifyHostNotInBothLists(_ context.Context, d *schema.ResourceDiff, _ interface{}) error {
-	protectedHostsSet, err := tools.GetSetValue("protected_hosts", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	protectedHostsSet, err := tf.GetSetValue("protected_hosts", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
-	evaluatedHostsSet, err := tools.GetSetValue("evaluated_hosts", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	evaluatedHostsSet, err := tf.GetSetValue("evaluated_hosts", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
 

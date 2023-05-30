@@ -6,10 +6,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/iam"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/iam"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -55,11 +55,11 @@ func resourceIAMBlockedUserPropertiesCreate(ctx context.Context, d *schema.Resou
 
 	logger.Debug("Creating blocked user properties")
 
-	identityID, err := tools.GetStringValue("identity_id", d)
+	identityID, err := tf.GetStringValue("identity_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	groupID, err := tools.GetIntValue("group_id", d)
+	groupID, err := tf.GetIntValue("group_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -79,7 +79,7 @@ func resourceIAMBlockedUserPropertiesCreate(ctx context.Context, d *schema.Resou
 		return diag.Errorf("there are already blocked properties on server, please import resource first")
 	}
 
-	blockedProperties, err := tools.GetInterfaceArrayValue("blocked_properties", d)
+	blockedProperties, err := tf.GetInterfaceArrayValue("blocked_properties", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -87,7 +87,7 @@ func resourceIAMBlockedUserPropertiesCreate(ctx context.Context, d *schema.Resou
 	request := iam.UpdateBlockedPropertiesRequest{
 		IdentityID: identityID,
 		GroupID:    int64(groupID),
-		Properties: tools.ConvertListOfIntToInt64(blockedProperties),
+		Properties: tf.ConvertListOfIntToInt64(blockedProperties),
 	}
 
 	_, err = client.UpdateBlockedProperties(ctx, request)
@@ -131,13 +131,13 @@ func resourceIAMBlockedUserPropertiesRead(ctx context.Context, d *schema.Resourc
 	}
 
 	if err = d.Set("identity_id", identityID); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err = d.Set("group_id", groupID); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err = d.Set("blocked_properties", blockedProperties); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	return nil
@@ -151,15 +151,15 @@ func resourceIAMBlockedUserPropertiesUpdate(ctx context.Context, d *schema.Resou
 
 	logger.Debug("Updating blocked user properties")
 
-	identityID, err := tools.GetStringValue("identity_id", d)
+	identityID, err := tf.GetStringValue("identity_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	groupID, err := tools.GetIntValue("group_id", d)
+	groupID, err := tf.GetIntValue("group_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	blockedProperties, err := tools.GetInterfaceArrayValue("blocked_properties", d)
+	blockedProperties, err := tf.GetInterfaceArrayValue("blocked_properties", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -167,7 +167,7 @@ func resourceIAMBlockedUserPropertiesUpdate(ctx context.Context, d *schema.Resou
 	request := iam.UpdateBlockedPropertiesRequest{
 		IdentityID: identityID,
 		GroupID:    int64(groupID),
-		Properties: tools.ConvertListOfIntToInt64(blockedProperties),
+		Properties: tf.ConvertListOfIntToInt64(blockedProperties),
 	}
 
 	_, err = client.UpdateBlockedProperties(ctx, request)

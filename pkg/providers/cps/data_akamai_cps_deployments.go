@@ -4,10 +4,10 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/cps"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/cps"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -64,7 +64,7 @@ func dataSourceDeploymentsRead(ctx context.Context, d *schema.ResourceData, m in
 
 	logger.Debug("Fetching deployed certificates")
 
-	enrollmentID, err := tools.GetIntValue("enrollment_id", d)
+	enrollmentID, err := tf.GetIntValue("enrollment_id", d)
 	if err != nil {
 		return diag.Errorf("could not get an enrollment_id: %s", err)
 	}
@@ -121,7 +121,7 @@ func dataSourceDeploymentsRead(ctx context.Context, d *schema.ResourceData, m in
 		}
 	}
 
-	if err = tools.SetAttrs(d, attrs); err != nil {
+	if err = tf.SetAttrs(d, attrs); err != nil {
 		return diag.Errorf("could not set attributes: %s", err)
 	}
 

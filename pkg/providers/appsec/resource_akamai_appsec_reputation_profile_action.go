@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -61,7 +61,7 @@ func resourceReputationProfileActionCreate(ctx context.Context, d *schema.Resour
 	logger := meta.Log("APPSEC", "resourceReputationProfileActionCreate")
 	logger.Debugf("in resourceReputationProfileActionCreate")
 
-	configID, err := tools.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -69,15 +69,15 @@ func resourceReputationProfileActionCreate(ctx context.Context, d *schema.Resour
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	policyID, err := tools.GetStringValue("security_policy_id", d)
+	policyID, err := tf.GetStringValue("security_policy_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	reputationProfileID, err := tools.GetIntValue("reputation_profile_id", d)
+	reputationProfileID, err := tf.GetIntValue("reputation_profile_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	action, err := tools.GetStringValue("action", d)
+	action, err := tf.GetStringValue("action", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -140,16 +140,16 @@ func resourceReputationProfileActionRead(ctx context.Context, d *schema.Resource
 	}
 
 	if err := d.Set("config_id", getReputationProfileAction.ConfigID); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("security_policy_id", getReputationProfileAction.PolicyID); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("reputation_profile_id", getReputationProfileAction.ReputationProfileID); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("action", resp.Action); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	return nil
@@ -178,8 +178,8 @@ func resourceReputationProfileActionUpdate(ctx context.Context, d *schema.Resour
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	action, err := tools.GetStringValue("action", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	action, err := tf.GetStringValue("action", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 

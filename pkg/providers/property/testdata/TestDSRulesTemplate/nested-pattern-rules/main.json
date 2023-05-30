@@ -1,0 +1,6 @@
+{
+  "rules": {
+    "name": "nested-pattern",
+    "children": "${env.includesBundle}"
+  }
+}

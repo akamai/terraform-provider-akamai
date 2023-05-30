@@ -1,5 +1,5 @@
-// Package tools is where some legacy provider functions were dropped
-package tools
+// Package tf is where provider functions were dropped
+package tf
 
 import (
 	"time"

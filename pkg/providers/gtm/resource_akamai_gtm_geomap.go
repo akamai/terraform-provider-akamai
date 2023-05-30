@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/gtm"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/session"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/gtm"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
 
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -90,19 +90,19 @@ func resourceGTMv1GeomapCreate(ctx context.Context, d *schema.ResourceData, m in
 		session.WithContextLog(logger),
 	)
 
-	domain, err := tools.GetStringValue("domain", d)
+	domain, err := tf.GetStringValue("domain", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	name, _ := tools.GetStringValue("name", d)
+	name, _ := tf.GetStringValue("name", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	logger.Infof("[Akamai GTM] Creating geoMap [%s] in domain [%s]", name, domain)
 	// Make sure Default Datacenter exists
-	geoDefaultDCList, err := tools.GetInterfaceArrayValue("default_datacenter", d)
+	geoDefaultDCList, err := tf.GetInterfaceArrayValue("default_datacenter", d)
 	if err != nil {
 		logger.Errorf("Default datacenter not initialized: %s", err.Error())
 		return diag.FromErr(err)
@@ -136,7 +136,7 @@ func resourceGTMv1GeomapCreate(ctx context.Context, d *schema.ResourceData, m in
 		})
 	}
 
-	waitOnComplete, err := tools.GetBoolValue("wait_on_complete", d)
+	waitOnComplete, err := tf.GetBoolValue("wait_on_complete", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -249,7 +249,7 @@ func resourceGTMv1GeomapUpdate(ctx context.Context, d *schema.ResourceData, m in
 		})
 	}
 
-	waitOnComplete, err := tools.GetBoolValue("wait_on_complete", d)
+	waitOnComplete, err := tf.GetBoolValue("wait_on_complete", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -306,7 +306,7 @@ func resourceGTMv1GeomapImport(d *schema.ResourceData, m interface{}) ([]*schema
 	populateTerraformGeoMapState(d, geo, m)
 
 	// use same Id as passed in
-	name, _ := tools.GetStringValue("name", d)
+	name, _ := tf.GetStringValue("name", d)
 	logger.Infof("[Akamai GTM] geoMap [%s] [%s] Imported", d.Id(), name)
 	return []*schema.ResourceData{d}, nil
 }
@@ -357,7 +357,7 @@ func resourceGTMv1GeomapDelete(ctx context.Context, d *schema.ResourceData, m in
 		})
 	}
 
-	waitOnComplete, err := tools.GetBoolValue("wait_on_complete", d)
+	waitOnComplete, err := tf.GetBoolValue("wait_on_complete", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -388,7 +388,7 @@ func resourceGTMv1GeomapDelete(ctx context.Context, d *schema.ResourceData, m in
 // Create and populate a new geoMap object from geoMap data
 func populateNewGeoMapObject(ctx context.Context, meta akamai.OperationMeta, d *schema.ResourceData, m interface{}) *gtm.GeoMap {
 
-	name, _ := tools.GetStringValue("name", d)
+	name, _ := tf.GetStringValue("name", d)
 	geoObj := inst.Client(meta).NewGeoMap(ctx, name)
 	geoObj.DefaultDatacenter = &gtm.DatacenterBase{}
 	geoObj.Assignments = make([]*gtm.GeoAssignment, 1)
@@ -401,7 +401,7 @@ func populateNewGeoMapObject(ctx context.Context, meta akamai.OperationMeta, d *
 // Populate existing geoMap object from geoMap data
 func populateGeoMapObject(d *schema.ResourceData, geo *gtm.GeoMap, m interface{}) {
 
-	if v, err := tools.GetStringValue("name", d); err == nil {
+	if v, err := tf.GetStringValue("name", d); err == nil {
 		geo.Name = v
 	}
 	populateGeoAssignmentsObject(d, geo, m)
@@ -427,7 +427,7 @@ func populateGeoAssignmentsObject(d *schema.ResourceData, geo *gtm.GeoMap, m int
 	logger := meta.Log("Akamai GTM", "populateGeoAssignmentsObject")
 
 	// pull apart List
-	geoAssignmentsList, err := tools.GetListValue("assignment", d)
+	geoAssignmentsList, err := tf.GetListValue("assignment", d)
 	if err == nil {
 		geoAssignmentsObjList := make([]*gtm.GeoAssignment, len(geoAssignmentsList)) // create new object list
 		for i, v := range geoAssignmentsList {
@@ -467,7 +467,7 @@ func populateTerraformGeoAssignmentsState(d *schema.ResourceData, geo *gtm.GeoMa
 			objectInventory[aObj.DatacenterId] = aObj
 		}
 	}
-	aStateList, _ := tools.GetInterfaceArrayValue("assignment", d)
+	aStateList, _ := tf.GetInterfaceArrayValue("assignment", d)
 	for _, aMap := range aStateList {
 		a := aMap.(map[string]interface{})
 		objIndex := a["datacenter_id"].(int)
@@ -509,7 +509,7 @@ func populateGeoDefaultDCObject(d *schema.ResourceData, geo *gtm.GeoMap, m inter
 	logger := meta.Log("Akamai GTM", "populateGeoDefaultDCObject")
 
 	// pull apart List
-	geoDefaultDCList, err := tools.GetInterfaceArrayValue("default_datacenter", d)
+	geoDefaultDCList, err := tf.GetInterfaceArrayValue("default_datacenter", d)
 	if err == nil && len(geoDefaultDCList) > 0 {
 		geoDefaultDCObj := gtm.DatacenterBase{} // create new object
 		geoMap := geoDefaultDCList[0].(map[string]interface{})

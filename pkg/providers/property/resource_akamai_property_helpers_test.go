@@ -3,7 +3,8 @@ package property
 import (
 	"context"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/tools"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -117,6 +118,22 @@ func ExpectUpdatePropertyVersionHostnames(client *papi.Mock, PropertyID, GroupID
 		PropertyID:      PropertyID,
 		PropertyVersion: PropertyVersion,
 		Hostnames:       papi.HostnameResponseItems{Items: Hostnames},
+	}
+
+	return call.Return(&res, nil)
+}
+
+func ExpectGetEdgeHostnames(client *papi.Mock, contractID, groupID string, edgehostnames papi.EdgeHostnameItems) *mock.Call {
+	req := papi.GetEdgeHostnamesRequest{
+		ContractID: contractID,
+		GroupID:    groupID,
+	}
+	call := client.On("GetEdgeHostnames", AnyCTX, req)
+
+	res := papi.GetEdgeHostnamesResponse{
+		ContractID:    contractID,
+		GroupID:       groupID,
+		EdgeHostnames: edgehostnames,
 	}
 
 	return call.Return(&res, nil)
@@ -275,4 +292,115 @@ func ExpectUpdateRuleTree(client *papi.Mock, PropertyID, GroupID, ContractID str
 	}
 
 	return client.OnUpdateRuleTree(AnyCTX, req, fn).Return(&res, nil)
+}
+
+func updateRuleTreeWithVariables(variables []papi.RuleVariable) *papi.RulesUpdate {
+	return &papi.RulesUpdate{
+		Rules: papi.Rules{
+			Name: "default",
+			Children: []papi.Rules{
+				{
+					Name: "change fwd path",
+					Behaviors: []papi.RuleBehavior{
+						{
+							Name: "baseDirectory",
+							Options: papi.RuleOptionsMap{
+								"value": "/smth/",
+							},
+						},
+					},
+					Criteria: []papi.RuleBehavior{
+						{
+							Name:   "requestHeader",
+							Locked: false,
+							Options: papi.RuleOptionsMap{
+								"headerName":              "Accept-Encoding",
+								"matchCaseSensitiveValue": true,
+								"matchOperator":           "IS_ONE_OF",
+								"matchWildcardName":       false,
+								"matchWildcardValue":      false,
+							},
+						},
+					},
+					CriteriaMustSatisfy: papi.RuleCriteriaMustSatisfyAll,
+				},
+				{
+					Name: "caching",
+					Behaviors: []papi.RuleBehavior{
+						{
+							Name: "caching",
+							Options: papi.RuleOptionsMap{
+								"behavior":       "MAX_AGE",
+								"mustRevalidate": false,
+								"ttl":            "1m",
+							},
+						},
+					},
+					CriteriaMustSatisfy: papi.RuleCriteriaMustSatisfyAny,
+				},
+			},
+			Behaviors: []papi.RuleBehavior{
+				{
+					Name: "origin",
+					Options: papi.RuleOptionsMap{
+						"cacheKeyHostname":          "REQUEST_HOST_HEADER",
+						"compress":                  true,
+						"enableTrueClientIp":        true,
+						"forwardHostHeader":         "REQUEST_HOST_HEADER",
+						"hostname":                  "test.domain",
+						"httpPort":                  float64(80),
+						"httpsPort":                 float64(443),
+						"originCertificate":         "",
+						"originSni":                 true,
+						"originType":                "CUSTOMER",
+						"ports":                     "",
+						"trueClientIpClientSetting": false,
+						"trueClientIpHeader":        "True-Client-IP",
+						"verificationMode":          "PLATFORM_SETTINGS",
+					},
+				},
+			},
+			Options:   papi.RuleOptions{},
+			Variables: variables,
+			Comments:  "The behaviors in the Default Rule apply to all requests for the property hostname(s) unless another rule overrides the Default Rule settings.",
+		},
+	}
+}
+
+func updateRuleTreeWithVariablesStep1() *papi.RulesUpdate {
+	return updateRuleTreeWithVariables([]papi.RuleVariable{
+		{
+			Name:        "TEST_EMPTY_FIELDS",
+			Value:       tools.StringPtr(""),
+			Description: tools.StringPtr(""),
+			Hidden:      true,
+			Sensitive:   false,
+		},
+		{
+			Name:        "TEST_NIL_FIELD",
+			Description: tools.StringPtr(""),
+			Value:       tools.StringPtr(""),
+			Hidden:      true,
+			Sensitive:   false,
+		},
+	})
+}
+
+func updateRuleTreeWithVariablesStep0() *papi.RulesUpdate {
+	return updateRuleTreeWithVariables([]papi.RuleVariable{
+		{
+			Name:        "TEST_EMPTY_FIELDS",
+			Value:       tools.StringPtr(""),
+			Description: tools.StringPtr(""),
+			Hidden:      true,
+			Sensitive:   false,
+		},
+		{
+			Name:        "TEST_NIL_FIELD",
+			Description: nil,
+			Value:       tools.StringPtr(""),
+			Hidden:      true,
+			Sensitive:   false,
+		},
+	})
 }

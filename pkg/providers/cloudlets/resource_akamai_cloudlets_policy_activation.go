@@ -12,10 +12,10 @@ import (
 
 	"github.com/apex/log"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/cloudlets"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/cloudlets"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -49,7 +49,7 @@ func resourceCloudletsPolicyActivationSchema() map[string]*schema.Schema {
 		"network": {
 			Type:             schema.TypeString,
 			Required:         true,
-			ValidateDiagFunc: tools.ValidateNetwork,
+			ValidateDiagFunc: tf.ValidateNetwork,
 			StateFunc:        statePolicyActivationNetwork,
 			Description:      "The network you want to activate the policy version on (options are Staging and Production)",
 		},
@@ -75,6 +75,9 @@ var (
 	// ActivationPollInterval is the interval for polling an activation status on creation
 	ActivationPollInterval = ActivationPollMinimum
 
+	// MaxListActivationsPollRetries is the maximum number of retries for calling ListActivations request in case of returning empty list
+	MaxListActivationsPollRetries = 5
+
 	// PolicyActivationResourceTimeout is the default timeout for the resource operations
 	PolicyActivationResourceTimeout = time.Minute * 90
 
@@ -87,7 +90,7 @@ var (
 	// ErrNetworkName is used when the user inputs an invalid network name
 	ErrNetworkName = errors.New("invalid network name")
 
-	policyActivationRetryRegexp = regexp.MustCompile(`requested propertyname "[A-Za-z0-9.\-_]+" does not exist`)
+	policyActivationRetryRegexp = regexp.MustCompile(`requested propertyname \\"[A-Za-z0-9.\-_]+\\" does not exist`)
 )
 
 func resourcePolicyActivationDelete(ctx context.Context, rd *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -97,7 +100,7 @@ func resourcePolicyActivationDelete(ctx context.Context, rd *schema.ResourceData
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
 	client := inst.Client(meta)
 
-	pID, err := tools.GetIntValue("policy_id", rd)
+	pID, err := tf.GetIntValue("policy_id", rd)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -112,7 +115,7 @@ func resourcePolicyActivationDelete(ctx context.Context, rd *schema.ResourceData
 	if err != nil {
 		return diag.Errorf("%s: cannot find policy %d properties: %s", ErrPolicyActivation.Error(), policyID, err.Error())
 	}
-	activations, err := client.ListPolicyActivations(ctx, cloudlets.ListPolicyActivationsRequest{
+	activations, err := waitForListPolicyActivations(ctx, client, cloudlets.ListPolicyActivationsRequest{
 		PolicyID: policyID,
 		Network:  network,
 	})
@@ -161,12 +164,12 @@ func resourcePolicyActivationUpdate(ctx context.Context, rd *schema.ResourceData
 	client := inst.Client(meta)
 
 	// 2. In such case, create a new version to activate (for creation, look into resource policy)
-	policyID, err := tools.GetIntValue("policy_id", rd)
+	policyID, err := tf.GetIntValue("policy_id", rd)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	network, err := tools.GetStringValue("network", rd)
+	network, err := tf.GetStringValue("network", rd)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -175,7 +178,7 @@ func resourcePolicyActivationUpdate(ctx context.Context, rd *schema.ResourceData
 		return diag.FromErr(err)
 	}
 
-	v, err := tools.GetIntValue("version", rd)
+	v, err := tf.GetIntValue("version", rd)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -187,13 +190,13 @@ func resourcePolicyActivationUpdate(ctx context.Context, rd *schema.ResourceData
 		OmitRules: true,
 	})
 	if err != nil {
-		if diagnostics := diag.FromErr(tools.RestoreOldValues(rd, []string{"version", "associated_properties"})); diagnostics != nil {
+		if diagnostics := diag.FromErr(tf.RestoreOldValues(rd, []string{"version", "associated_properties"})); diagnostics != nil {
 			return diagnostics
 		}
 		return diag.Errorf("%s: cannot find the given policy version (%d): %s", ErrPolicyActivation.Error(), version, err.Error())
 	}
 
-	associatedProps, err := tools.GetSetValue("associated_properties", rd)
+	associatedProps, err := tf.GetSetValue("associated_properties", rd)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -204,7 +207,7 @@ func resourcePolicyActivationUpdate(ctx context.Context, rd *schema.ResourceData
 	sort.Strings(newPolicyProperties)
 
 	// 3. look for activations with this version which is active in the given network
-	activations, err := client.ListPolicyActivations(ctx, cloudlets.ListPolicyActivationsRequest{
+	activations, err := waitForListPolicyActivations(ctx, client, cloudlets.ListPolicyActivationsRequest{
 		PolicyID: int64(policyID),
 		Network:  activationNetwork,
 	})
@@ -233,7 +236,7 @@ func resourcePolicyActivationUpdate(ctx context.Context, rd *schema.ResourceData
 	logger.Debugf("Proceeding to activate the policy ID=%d (version=%d, properties=[%s], network='%s') is not active.",
 		policyID, version, strings.Join(newPolicyProperties, ", "), activationNetwork)
 
-	err = client.ActivatePolicyVersion(ctx, cloudlets.ActivatePolicyVersionRequest{
+	_, err = client.ActivatePolicyVersion(ctx, cloudlets.ActivatePolicyVersionRequest{
 		PolicyID: int64(policyID),
 		Async:    true,
 		Version:  version,
@@ -243,7 +246,7 @@ func resourcePolicyActivationUpdate(ctx context.Context, rd *schema.ResourceData
 		},
 	})
 	if err != nil {
-		if diagnostics := diag.FromErr(tools.RestoreOldValues(rd, []string{"version", "associated_properties"})); diagnostics != nil {
+		if diagnostics := diag.FromErr(tf.RestoreOldValues(rd, []string{"version", "associated_properties"})); diagnostics != nil {
 			return diagnostics
 		}
 		return diag.Errorf("%v update: %s", ErrPolicyActivation, err.Error())
@@ -273,11 +276,11 @@ func resourcePolicyActivationCreate(ctx context.Context, rd *schema.ResourceData
 
 	logger.Debug("Creating policy activation")
 
-	policyID, err := tools.GetIntValue("policy_id", rd)
+	policyID, err := tf.GetIntValue("policy_id", rd)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	network, err := tools.GetStringValue("network", rd)
+	network, err := tf.GetStringValue("network", rd)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -285,7 +288,7 @@ func resourcePolicyActivationCreate(ctx context.Context, rd *schema.ResourceData
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	associatedProps, err := tools.GetSetValue("associated_properties", rd)
+	associatedProps, err := tf.GetSetValue("associated_properties", rd)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -295,7 +298,7 @@ func resourcePolicyActivationCreate(ctx context.Context, rd *schema.ResourceData
 	}
 	sort.Strings(associatedProperties)
 
-	v, err := tools.GetIntValue("version", rd)
+	v, err := tf.GetIntValue("version", rd)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -333,7 +336,7 @@ func resourcePolicyActivationCreate(ctx context.Context, rd *schema.ResourceData
 	pollingActivationTries := PolicyActivationRetryPollMinimum
 
 	for {
-		err = client.ActivatePolicyVersion(ctx, cloudlets.ActivatePolicyVersionRequest{
+		_, err = client.ActivatePolicyVersion(ctx, cloudlets.ActivatePolicyVersionRequest{
 			PolicyID: int64(policyID),
 			Version:  version,
 			Async:    true,
@@ -384,12 +387,12 @@ func resourcePolicyActivationRead(ctx context.Context, rd *schema.ResourceData, 
 
 	logger.Debug("Reading policy activations")
 
-	policyID, err := tools.GetIntValue("policy_id", rd)
+	policyID, err := tf.GetIntValue("policy_id", rd)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	network, err := tools.GetStringValue("network", rd)
+	network, err := tf.GetStringValue("network", rd)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -398,7 +401,7 @@ func resourcePolicyActivationRead(ctx context.Context, rd *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 
-	activations, err := client.ListPolicyActivations(ctx, cloudlets.ListPolicyActivationsRequest{
+	activations, err := waitForListPolicyActivations(ctx, client, cloudlets.ListPolicyActivationsRequest{
 		PolicyID: int64(policyID),
 		Network:  net,
 	})
@@ -413,15 +416,15 @@ func resourcePolicyActivationRead(ctx context.Context, rd *schema.ResourceData, 
 	activations = sortPolicyActivationsByDate(activations)
 
 	if err := rd.Set("status", activations[0].PolicyInfo.Status); err != nil {
-		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := rd.Set("version", activations[0].PolicyInfo.Version); err != nil {
-		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
 
 	associatedProperties := getActiveProperties(activations)
 	if err := rd.Set("associated_properties", associatedProperties); err != nil {
-		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
 
 	return nil
@@ -444,7 +447,7 @@ func getActiveProperties(policyActivations []cloudlets.PolicyActivation) []strin
 
 // waitForPolicyActivation polls server until the activation has active status or until context is closed (because of timeout, cancellation or context termination)
 func waitForPolicyActivation(ctx context.Context, client cloudlets.Cloudlets, policyID, version int64, network cloudlets.PolicyActivationNetwork, additionalProps, removedProperties []string) ([]cloudlets.PolicyActivation, error) {
-	activations, err := client.ListPolicyActivations(ctx, cloudlets.ListPolicyActivationsRequest{
+	activations, err := waitForListPolicyActivations(ctx, client, cloudlets.ListPolicyActivationsRequest{
 		PolicyID: policyID,
 		Network:  network,
 	})
@@ -452,6 +455,7 @@ func waitForPolicyActivation(ctx context.Context, client cloudlets.Cloudlets, po
 		return nil, err
 	}
 	activations = filterActivations(activations, version, additionalProps)
+
 	for len(activations) > 0 {
 		allActive, allRemoved := true, true
 	activations:
@@ -477,8 +481,8 @@ func waitForPolicyActivation(ctx context.Context, client cloudlets.Cloudlets, po
 			return activations, nil
 		}
 		select {
-		case <-time.After(tools.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
-			activations, err = client.ListPolicyActivations(ctx, cloudlets.ListPolicyActivationsRequest{
+		case <-time.After(tf.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
+			activations, err = waitForListPolicyActivations(ctx, client, cloudlets.ListPolicyActivationsRequest{
 				PolicyID: policyID,
 				Network:  network,
 			})
@@ -552,7 +556,7 @@ func sortPolicyActivationsByDate(activations []cloudlets.PolicyActivation) []clo
 
 func getPolicyActivationNetwork(net string) (cloudlets.PolicyActivationNetwork, error) {
 
-	net = tools.StateNetwork(net)
+	net = tf.StateNetwork(net)
 
 	switch net {
 	case "production":
@@ -566,7 +570,7 @@ func getPolicyActivationNetwork(net string) (cloudlets.PolicyActivationNetwork, 
 
 func statePolicyActivationNetwork(i interface{}) string {
 
-	net := tools.StateNetwork(i)
+	net := tf.StateNetwork(i)
 
 	switch net {
 	case "production":
@@ -624,7 +628,7 @@ activePropertiesLoop:
 
 func waitForNotPendingPolicyActivation(ctx context.Context, logger log.Interface, client cloudlets.Cloudlets, policyID int64, network cloudlets.PolicyActivationNetwork) error {
 	logger.Debugf("waiting until there none of the policy (ID=%d) activations are in pending state", policyID)
-	activations, err := client.ListPolicyActivations(ctx, cloudlets.ListPolicyActivationsRequest{PolicyID: policyID})
+	activations, err := waitForListPolicyActivations(ctx, client, cloudlets.ListPolicyActivationsRequest{PolicyID: policyID})
 	if err != nil {
 		return fmt.Errorf("%w: failed to list policy activations for policy %d: %s", ErrPolicyActivation, policyID, err.Error())
 	}
@@ -643,8 +647,8 @@ func waitForNotPendingPolicyActivation(ctx context.Context, logger log.Interface
 			break
 		}
 		select {
-		case <-time.After(tools.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
-			activations, err = client.ListPolicyActivations(ctx, cloudlets.ListPolicyActivationsRequest{
+		case <-time.After(tf.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
+			activations, err = waitForListPolicyActivations(ctx, client, cloudlets.ListPolicyActivationsRequest{
 				PolicyID: policyID,
 				Network:  network,
 			})
@@ -664,4 +668,35 @@ func waitForNotPendingPolicyActivation(ctx context.Context, logger log.Interface
 	}
 
 	return nil
+}
+
+// waitForListPolicyActivations polls server until the ListPolicyActivations returns non-empty list
+func waitForListPolicyActivations(ctx context.Context, client cloudlets.Cloudlets, listPolicyActivationsRequest cloudlets.ListPolicyActivationsRequest) ([]cloudlets.PolicyActivation, error) {
+	listActivationsPollRetries := MaxListActivationsPollRetries
+	activations, err := client.ListPolicyActivations(ctx, listPolicyActivationsRequest)
+	if err != nil {
+		return nil, err
+	}
+
+	for len(activations) == 0 && listActivationsPollRetries > 0 {
+		select {
+		case <-time.After(tf.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
+			activations, err = client.ListPolicyActivations(ctx, listPolicyActivationsRequest)
+			if err != nil {
+				return nil, err
+			}
+			listActivationsPollRetries--
+
+		case <-ctx.Done():
+			if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+				return nil, ErrPolicyActivationTimeout
+			}
+			if errors.Is(ctx.Err(), context.Canceled) {
+				return nil, ErrPolicyActivationCanceled
+			}
+			return nil, fmt.Errorf("%v: %w", ErrPolicyActivationContextTerminated, ctx.Err())
+		}
+	}
+
+	return activations, nil
 }

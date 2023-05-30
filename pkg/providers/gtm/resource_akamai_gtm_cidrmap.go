@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/gtm"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/session"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/gtm"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
 
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -89,12 +89,12 @@ func resourceGTMv1CidrMapCreate(ctx context.Context, d *schema.ResourceData, m i
 		session.WithContextLog(logger),
 	)
 
-	domain, err := tools.GetStringValue("domain", d)
+	domain, err := tf.GetStringValue("domain", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	name, err := tools.GetStringValue("name", d)
+	name, err := tf.GetStringValue("name", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -102,7 +102,7 @@ func resourceGTMv1CidrMapCreate(ctx context.Context, d *schema.ResourceData, m i
 	logger.Infof("Creating cidrMap [%s] in domain [%s]", name, domain)
 	var diags diag.Diagnostics
 	// Make sure Default Datacenter exists
-	defaultDatacenter, err := tools.GetInterfaceArrayValue("default_datacenter", d)
+	defaultDatacenter, err := tf.GetInterfaceArrayValue("default_datacenter", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -133,7 +133,7 @@ func resourceGTMv1CidrMapCreate(ctx context.Context, d *schema.ResourceData, m i
 			Summary:  cStatus.Status.Message,
 		})
 	}
-	waitOnComplete, err := tools.GetBoolValue("wait_on_complete", d)
+	waitOnComplete, err := tf.GetBoolValue("wait_on_complete", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -242,7 +242,7 @@ func resourceGTMv1CidrMapUpdate(ctx context.Context, d *schema.ResourceData, m i
 			Summary:  uStat.Message,
 		})
 	}
-	waitOnComplete, err := tools.GetBoolValue("wait_on_complete", d)
+	waitOnComplete, err := tf.GetBoolValue("wait_on_complete", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -345,7 +345,7 @@ func resourceGTMv1CidrMapDelete(ctx context.Context, d *schema.ResourceData, m i
 			Summary:  uStat.Message,
 		})
 	}
-	waitOnComplete, err := tools.GetBoolValue("wait_on_complete", d)
+	waitOnComplete, err := tf.GetBoolValue("wait_on_complete", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -376,7 +376,7 @@ func resourceGTMv1CidrMapDelete(ctx context.Context, d *schema.ResourceData, m i
 func populateNewCidrMapObject(ctx context.Context, meta akamai.OperationMeta, d *schema.ResourceData, m interface{}) *gtm.CidrMap {
 	logger := meta.Log("Akamai GTM", "populateNewCidrMapObject")
 
-	cidrMapName, err := tools.GetStringValue("name", d)
+	cidrMapName, err := tf.GetStringValue("name", d)
 	if err != nil {
 		logger.Errorf("cidrMap name not found in ResourceData: %s", err.Error())
 	}
@@ -394,7 +394,7 @@ func populateNewCidrMapObject(ctx context.Context, meta akamai.OperationMeta, d 
 // Populate existing cidrMap object from cidrMap data
 func populateCidrMapObject(d *schema.ResourceData, cidr *gtm.CidrMap, m interface{}) {
 
-	if v, err := tools.GetStringValue("name", d); err == nil {
+	if v, err := tf.GetStringValue("name", d); err == nil {
 		cidr.Name = v
 	}
 	populateCidrAssignmentsObject(d, cidr, m)
@@ -458,7 +458,7 @@ func populateTerraformCidrAssignmentsState(d *schema.ResourceData, cidr *gtm.Cid
 			objectInventory[aObj.DatacenterId] = aObj
 		}
 	}
-	aStateList, err := tools.GetInterfaceArrayValue("assignment", d)
+	aStateList, err := tf.GetInterfaceArrayValue("assignment", d)
 	if err != nil {
 		logger.Errorf("Cidr Assignment list NOT FOUND in ResourceData: %s", err.Error())
 	}
@@ -499,7 +499,7 @@ func populateCidrDefaultDCObject(d *schema.ResourceData, cidr *gtm.CidrMap, m in
 	logger := meta.Log("Akamai GTM", "populateCidrDefaultDCObject")
 
 	// pull apart List
-	if cidrDefaultDCList, err := tools.GetInterfaceArrayValue("default_datacenter", d); err != nil {
+	if cidrDefaultDCList, err := tf.GetInterfaceArrayValue("default_datacenter", d); err != nil {
 		logger.Infof("No default datacenter specified: %s", err.Error())
 	} else {
 		if len(cidrDefaultDCList) > 0 {

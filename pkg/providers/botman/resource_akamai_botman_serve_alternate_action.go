@@ -6,9 +6,10 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/botman"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/botman"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/tools"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
@@ -53,7 +54,7 @@ func resourceServeAlternateActionCreate(ctx context.Context, d *schema.ResourceD
 	logger := meta.Log("botman", "resourceServeAlternateActionCreateAction")
 	logger.Debugf("in resourceServeAlternateActionCreateAction")
 
-	configID, err := tools.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -63,7 +64,7 @@ func resourceServeAlternateActionCreate(ctx context.Context, d *schema.ResourceD
 		return diag.FromErr(err)
 	}
 
-	jsonPayloadString, err := tools.GetStringValue("serve_alternate_action", d)
+	jsonPayloadString, err := tf.GetStringValue("serve_alternate_action", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -133,8 +134,8 @@ func resourceServeAlternateActionRead(ctx context.Context, d *schema.ResourceDat
 		"action_id":              actionID,
 		"serve_alternate_action": string(jsonBody),
 	}
-	if err := tools.SetAttrs(d, fields); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+	if err := tf.SetAttrs(d, fields); err != nil {
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	return nil

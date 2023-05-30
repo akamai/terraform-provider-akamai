@@ -2,89 +2,68 @@ package property
 
 import (
 	"encoding/json"
+	"fmt"
 	"reflect"
 	"sort"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func diffSuppressRules(_, oldVal, newVal string, _ *schema.ResourceData) bool {
-	logger := akamai.Log("PAPI", "diffSuppressRules")
-
-	if oldVal == "" || newVal == "" {
-		return oldVal == newVal
+func diffSuppressRules(_, oldRules, newRules string, _ *schema.ResourceData) bool {
+	rulesEqual, err := rulesJSONEqual(oldRules, newRules)
+	if err != nil {
+		akamai.Log("PAPI", "diffSuppressRules").Error(err.Error())
 	}
 
-	var oldRules, newRules papi.RulesUpdate
-	if err := json.Unmarshal([]byte(oldVal), &oldRules); err != nil {
-		logger.Errorf("Unable to unmarshal 'old' JSON rules: %s", err)
-		return false
-	}
-
-	if err := json.Unmarshal([]byte(newVal), &newRules); err != nil {
-		logger.Errorf("Unable to unmarshal 'new' JSON rules: %s", err)
-		return false
-	}
-
-	res := compareRuleTree(&oldRules, &newRules)
-	return res
+	return rulesEqual
 }
 
-// compareRulesJSON handles comparison between two papi.Rules JSON representations
-// true: deeply equals
-// false: not deeply equals
-func compareRulesJSON(old, new string) bool {
-	var oldRules, newRules papi.GetRuleTreeResponse
+// rulesJSONEqual handles comparison between two papi.RulesUpdate JSON representations.
+func rulesJSONEqual(old, new string) (bool, error) {
+	if old == "" || new == "" {
+		return old == new, nil
+	}
+
 	if old == new {
-		return true
+		return true, nil
 	}
+
+	var oldRules papi.RulesUpdate
 	if err := json.Unmarshal([]byte(old), &oldRules); err != nil {
-		return false
+		return false, fmt.Errorf("'old' = %s, unmarshal: %w", old, err)
 	}
+
+	var newRules papi.RulesUpdate
 	if err := json.Unmarshal([]byte(new), &newRules); err != nil {
-		return false
+		return false, fmt.Errorf("'new' = %s, unmarshal: %w", new, err)
 	}
-	diff := compareRules(&oldRules.Rules, &newRules.Rules)
-	return diff
+
+	return ruleTreesEqual(&oldRules, &newRules), nil
 }
 
-func compareRuleTree(old, new *papi.RulesUpdate) bool {
+func ruleTreesEqual(old, new *papi.RulesUpdate) bool {
 	if old.Comments != new.Comments {
 		return false
 	}
-	diff := compareRules(&old.Rules, &new.Rules)
-	return diff
+
+	return rulesEqual(&old.Rules, &new.Rules)
 }
 
-// compareRules handles comparison between two papi.Rules objects
-// due to an issue in PAPI we need to compare collections of behaviors, criteria and variables discarding the order from JSON
-// true: deeply equals
-// false: not deeply equals
-func compareRules(old, new *papi.Rules) bool {
+// rulesEqual handles comparison between two papi.Rules objects ignoring the order in
+// collection of variables.
+func rulesEqual(old, new *papi.Rules) bool {
 	if len(old.Behaviors) != len(new.Behaviors) ||
 		len(old.Criteria) != len(new.Criteria) ||
 		len(old.Variables) != len(new.Variables) ||
 		len(old.Children) != len(new.Children) {
 		return false
 	}
-	if new.CriteriaMustSatisfy == papi.RuleCriteriaMustSatisfyAll {
-		new.CriteriaMustSatisfy = ""
-	}
-	if old.CriteriaMustSatisfy == papi.RuleCriteriaMustSatisfyAll {
-		old.CriteriaMustSatisfy = ""
-	}
+
 	if len(old.Children) > 0 {
 		for i := range old.Children {
-			// currently the provider uses "all" as default value for criteriaMustSatisfy field but the API does not return it, so we have to ignore it in the comparison
-			if old.Children[i].CriteriaMustSatisfy == papi.RuleCriteriaMustSatisfyAll {
-				old.Children[i].CriteriaMustSatisfy = ""
-			}
-			if new.Children[i].CriteriaMustSatisfy == papi.RuleCriteriaMustSatisfyAll {
-				new.Children[i].CriteriaMustSatisfy = ""
-			}
-			if !compareRules(&old.Children[i], &new.Children[i]) {
+			if !rulesEqual(&old.Children[i], &new.Children[i]) {
 				return false
 			}
 		}
@@ -93,26 +72,24 @@ func compareRules(old, new *papi.Rules) bool {
 		new.Children = nil
 	}
 
-	old.Behaviors = orderBehaviors(old.Behaviors)
-	new.Behaviors = orderBehaviors(new.Behaviors)
+	if len(old.Behaviors) == 0 {
+		old.Behaviors = nil
+	}
+	if len(new.Behaviors) == 0 {
+		new.Behaviors = nil
+	}
 
-	old.Criteria = orderBehaviors(old.Criteria)
-	new.Criteria = orderBehaviors(new.Criteria)
+	if len(old.Criteria) == 0 {
+		old.Criteria = nil
+	}
+	if len(new.Criteria) == 0 {
+		new.Criteria = nil
+	}
 
 	old.Variables = orderVariables(old.Variables)
 	new.Variables = orderVariables(new.Variables)
 
 	return reflect.DeepEqual(old, new)
-}
-
-func orderBehaviors(behaviors []papi.RuleBehavior) []papi.RuleBehavior {
-	if len(behaviors) == 0 {
-		return nil
-	}
-	sort.Slice(behaviors, func(i, j int) bool {
-		return behaviors[i].Name < behaviors[j].Name
-	})
-	return behaviors
 }
 
 func orderVariables(variables []papi.RuleVariable) []papi.RuleVariable {

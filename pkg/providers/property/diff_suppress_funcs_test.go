@@ -3,11 +3,12 @@ package property
 import (
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/tools"
 	"github.com/tj/assert"
 )
 
-func TestCompareRules(t *testing.T) {
+func TestRulesEqual(t *testing.T) {
 	tests := map[string]struct {
 		old      *papi.Rules
 		new      *papi.Rules
@@ -55,18 +56,18 @@ func TestCompareRules(t *testing.T) {
 				UUID: "43242",
 				Variables: []papi.RuleVariable{
 					{
-						Description: "var1",
+						Description: tools.StringPtr("var1"),
 						Hidden:      true,
 						Name:        "VAR1",
 						Sensitive:   true,
-						Value:       "value 1",
+						Value:       tools.StringPtr("value 1"),
 					},
 					{
-						Description: "var1",
+						Description: tools.StringPtr("var1"),
 						Hidden:      true,
 						Name:        "VAR2",
 						Sensitive:   true,
-						Value:       "value 1",
+						Value:       tools.StringPtr("value 1"),
 					}},
 			},
 			new: &papi.Rules{
@@ -110,18 +111,18 @@ func TestCompareRules(t *testing.T) {
 				UUID: "43242",
 				Variables: []papi.RuleVariable{
 					{
-						Description: "var1",
+						Description: tools.StringPtr("var1"),
 						Hidden:      true,
 						Name:        "VAR1",
 						Sensitive:   true,
-						Value:       "value 1",
+						Value:       tools.StringPtr("value 1"),
 					},
 					{
-						Description: "var1",
+						Description: tools.StringPtr("var1"),
 						Hidden:      true,
 						Name:        "VAR2",
 						Sensitive:   true,
-						Value:       "value 1",
+						Value:       tools.StringPtr("value 1"),
 					},
 				},
 			},
@@ -179,18 +180,18 @@ func TestCompareRules(t *testing.T) {
 				UUID: "43242",
 				Variables: []papi.RuleVariable{
 					{
-						Description: "var1",
+						Description: tools.StringPtr("var1"),
 						Hidden:      true,
 						Name:        "VAR2",
 						Sensitive:   true,
-						Value:       "value 1",
+						Value:       tools.StringPtr("value 1"),
 					},
 					{
-						Description: "var1",
+						Description: tools.StringPtr("var1"),
 						Hidden:      true,
 						Name:        "VAR1",
 						Sensitive:   true,
-						Value:       "value 1",
+						Value:       tools.StringPtr("value 1"),
 					},
 				},
 			},
@@ -244,22 +245,22 @@ func TestCompareRules(t *testing.T) {
 				UUID: "43242",
 				Variables: []papi.RuleVariable{
 					{
-						Description: "var1",
+						Description: tools.StringPtr("var1"),
 						Hidden:      true,
 						Name:        "VAR1",
 						Sensitive:   true,
-						Value:       "value 1",
+						Value:       tools.StringPtr("value 1"),
 					},
 					{
-						Description: "var1",
+						Description: tools.StringPtr("var1"),
 						Hidden:      true,
 						Name:        "VAR2",
 						Sensitive:   true,
-						Value:       "value 1",
+						Value:       tools.StringPtr("value 1"),
 					},
 				},
 			},
-			expected: true,
+			expected: false,
 		},
 
 		"equal rules, with children": {
@@ -338,7 +339,7 @@ func TestCompareRules(t *testing.T) {
 						Behaviors: []papi.RuleBehavior{
 							{
 								Locked: false,
-								Name:   "BEH2",
+								Name:   "BEH1",
 								Options: map[string]interface{}{
 									"opt1": 123,
 									"opt2": 321,
@@ -347,7 +348,7 @@ func TestCompareRules(t *testing.T) {
 							},
 							{
 								Locked: false,
-								Name:   "BEH1",
+								Name:   "BEH2",
 								Options: map[string]interface{}{
 									"opt1": 123,
 									"opt2": 321,
@@ -362,7 +363,7 @@ func TestCompareRules(t *testing.T) {
 						Behaviors: []papi.RuleBehavior{
 							{
 								Locked: false,
-								Name:   "BEH2",
+								Name:   "BEH1",
 								Options: map[string]interface{}{
 									"opt1": 123,
 									"opt2": 321,
@@ -371,7 +372,7 @@ func TestCompareRules(t *testing.T) {
 							},
 							{
 								Locked: false,
-								Name:   "BEH1",
+								Name:   "BEH2",
 								Options: map[string]interface{}{
 									"opt1": 123,
 									"opt2": 321,
@@ -601,7 +602,7 @@ func TestCompareRules(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			res := compareRules(test.old, test.new)
+			res := rulesEqual(test.old, test.new)
 			assert.Equal(t, test.expected, res)
 		})
 	}

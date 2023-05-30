@@ -2,9 +2,10 @@ package property
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/papi"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -25,6 +26,96 @@ var certStatus = &schema.Resource{
 		"staging_status": {
 			Type:     schema.TypeString,
 			Computed: true,
+		},
+	},
+}
+
+var complianceRecordSchema = &schema.Resource{
+	Schema: map[string]*schema.Schema{
+		"noncompliance_reason_none": {
+			Type:     schema.TypeList,
+			Optional: true,
+			MaxItems: 1,
+			ExactlyOneOf: []string{
+				"compliance_record.0.noncompliance_reason_other",
+				"compliance_record.0.noncompliance_reason_no_production_traffic",
+				"compliance_record.0.noncompliance_reason_emergency",
+			},
+			Description: fmt.Sprintf("Provides an audit record when activating on a production network with noncompliance reason as `%s`", papi.NoncomplianceReasonNone),
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"ticket_id": {
+						Type:        schema.TypeString,
+						Optional:    true,
+						Description: "Identifies the ticket that describes the need for the activation",
+					},
+					"customer_email": {
+						Type:        schema.TypeString,
+						Optional:    true,
+						Description: "Identifies the customer",
+					},
+					"peer_reviewed_by": {
+						Type:        schema.TypeString,
+						Optional:    true,
+						Description: "Identifies person who has independently approved the activation request",
+					},
+					"unit_tested": {
+						Type:        schema.TypeBool,
+						Optional:    true,
+						Description: "Whether the metadata to activate has been fully tested",
+					},
+				},
+			},
+		},
+		"noncompliance_reason_other": {
+			Type:        schema.TypeList,
+			Optional:    true,
+			MaxItems:    1,
+			Description: fmt.Sprintf("Provides an audit record when activating on a production network with noncompliance reason as `%s`", papi.NoncomplianceReasonOther),
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"ticket_id": {
+						Type:        schema.TypeString,
+						Optional:    true,
+						Description: "Identifies the ticket that describes the need for the activation",
+					},
+					"other_noncompliance_reason": {
+						Type:        schema.TypeString,
+						Optional:    true,
+						Description: "Describes the reason why the activation must occur immediately, out of compliance with the standard procedure",
+					},
+				},
+			},
+		},
+		"noncompliance_reason_no_production_traffic": {
+			Type:        schema.TypeList,
+			Optional:    true,
+			MaxItems:    1,
+			Description: fmt.Sprintf("Provides an audit record when activating on a production network with noncompliance reason as `%s`", papi.NoncomplianceReasonNoProductionTraffic),
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"ticket_id": {
+						Type:        schema.TypeString,
+						Optional:    true,
+						Description: "Identifies the ticket that describes the need for the activation",
+					},
+				},
+			},
+		},
+		"noncompliance_reason_emergency": {
+			Type:        schema.TypeList,
+			Optional:    true,
+			MaxItems:    1,
+			Description: fmt.Sprintf("Provides an audit record when activating on a production network with noncompliance reason as `%s`", papi.NoncomplianceReasonEmergency),
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"ticket_id": {
+						Type:        schema.TypeString,
+						Optional:    true,
+						Description: "Identifies the ticket that describes the need for the activation",
+					},
+				},
+			},
 		},
 	},
 }

@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -61,15 +61,15 @@ func resourceSelectedHostnameCreate(ctx context.Context, d *schema.ResourceData,
 	logger := meta.Log("APPSEC", "resourceSelectedHostnameCreate")
 	logger.Debugf("in resourceSelectedHostnameCreate")
 
-	configID, err := tools.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	hostnames, err := tools.GetSetValue("hostnames", d)
+	hostnames, err := tf.GetSetValue("hostnames", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	mode, err := tools.GetStringValue("mode", d)
+	mode, err := tf.GetStringValue("mode", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -129,13 +129,13 @@ func resourceSelectedHostnameCreate(ctx context.Context, d *schema.ResourceData,
 	_, err = client.UpdateSelectedHostnames(ctx, updateSelectedHostnames)
 	if err != nil {
 		logger.Errorf("calling 'UpdateSelectedHostnames': %s", err.Error())
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	// normally we don't set any attributes of the resource in Create, but for this resource we're not using the
 	// supplied hostnames as is, rather we're combining them with the existing hostnames according to the value of mode
 	if err := d.Set("hostnames", desiredhostnameset.List()); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	d.SetId(fmt.Sprintf("%d", configID))
@@ -169,19 +169,19 @@ func resourceSelectedHostnameRead(ctx context.Context, d *schema.ResourceData, m
 	}
 
 	if err := d.Set("config_id", configID); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	selectedhostnameset := schema.Set{F: schema.HashString}
 	for _, hostname := range getSelectedHostnamesResponse.HostnameList {
 		selectedhostnameset.Add(hostname.Hostname)
 	}
 	if err := d.Set("hostnames", selectedhostnameset.List()); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	// mode is not returned by API, so synthesize an appropriate value if we have none
 	if _, ok := d.GetOk("mode"); !ok {
 		if err := d.Set("mode", "REPLACE"); err != nil {
-			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 		}
 	}
 
@@ -194,15 +194,15 @@ func resourceSelectedHostnameUpdate(ctx context.Context, d *schema.ResourceData,
 	logger := meta.Log("APPSEC", "resourceSelectedHostnameUpdate")
 	logger.Debugf("in resourceSelectedHostnameUpdate")
 
-	configID, err := tools.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	mode, err := tools.GetStringValue("mode", d)
+	mode, err := tf.GetStringValue("mode", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	hostnames, err := tools.GetSetValue("hostnames", d)
+	hostnames, err := tf.GetSetValue("hostnames", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -277,7 +277,7 @@ func resourceSelectedHostnameUpdate(ctx context.Context, d *schema.ResourceData,
 	_, err = client.UpdateSelectedHostnames(ctx, updateSelectedHostnames)
 	if err != nil {
 		logger.Errorf("calling 'UpdateSelectedHostnames': %s", err.Error())
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	return resourceSelectedHostnameRead(ctx, d, m)

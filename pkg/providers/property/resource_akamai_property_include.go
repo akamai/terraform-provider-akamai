@@ -10,10 +10,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/papi"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -28,7 +28,7 @@ func resourcePropertyInclude() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			StateContext: resourcePropertyIncludeImport,
 		},
-		CustomizeDiff: setVersionComputedOnRulesChange,
+		CustomizeDiff: setIncludeVersionsComputedOnRulesChange,
 		Schema: map[string]*schema.Schema{
 			"contract_id": {
 				Type:        schema.TypeString,
@@ -61,7 +61,7 @@ func resourcePropertyInclude() *schema.Resource {
 				Type:             schema.TypeString,
 				Required:         true,
 				Description:      "Indicates the versioned set of features and criteria",
-				ValidateDiagFunc: tools.AggregateValidations(tools.IsNotBlank, tools.ValidateRuleFormat),
+				ValidateDiagFunc: tf.AggregateValidations(tf.IsNotBlank, tf.ValidateRuleFormat),
 			},
 			"type": {
 				Type:         schema.TypeString,
@@ -76,7 +76,7 @@ func resourcePropertyInclude() *schema.Resource {
 				Computed:         true,
 				Description:      "Property Rules as JSON",
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsJSON),
-				DiffSuppressFunc: tools.ComposeDiffSuppress(suppressDefaultRules, diffSuppressRules),
+				DiffSuppressFunc: tf.ComposeDiffSuppress(suppressDefaultRules, diffSuppressRules),
 			},
 			"rule_errors": {
 				Type:        schema.TypeString,
@@ -115,35 +115,35 @@ func resourcePropertyIncludeCreate(ctx context.Context, rd *schema.ResourceData,
 
 	logger.Debug("Creating property include")
 
-	contractID, err := tools.GetStringValue("contract_id", rd)
+	contractID, err := tf.GetStringValue("contract_id", rd)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	groupID, err := tools.GetStringValue("group_id", rd)
+	groupID, err := tf.GetStringValue("group_id", rd)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	productID, err := tools.GetStringValue("product_id", rd)
+	productID, err := tf.GetStringValue("product_id", rd)
 	if err != nil {
-		if errors.Is(err, tools.ErrNotFound) {
+		if errors.Is(err, tf.ErrNotFound) {
 			return diag.Errorf(`The argument "product_id" is required during create, but no definition was found`)
 		}
 		return diag.FromErr(err)
 	}
 
-	name, err := tools.GetStringValue("name", rd)
+	name, err := tf.GetStringValue("name", rd)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	ruleFormat, err := tools.GetStringValue("rule_format", rd)
+	ruleFormat, err := tf.GetStringValue("rule_format", rd)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	includeType, err := tools.GetStringValue("type", rd)
+	includeType, err := tf.GetStringValue("type", rd)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -180,12 +180,12 @@ func resourcePropertyIncludeRead(ctx context.Context, rd *schema.ResourceData, m
 
 	includeID := rd.Id()
 
-	contractID, err := tools.GetStringValue("contract_id", rd)
+	contractID, err := tf.GetStringValue("contract_id", rd)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	groupID, err := tools.GetStringValue("group_id", rd)
+	groupID, err := tf.GetStringValue("group_id", rd)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -264,8 +264,8 @@ func resourcePropertyIncludeRead(ctx context.Context, rd *schema.ResourceData, m
 	}
 	attrs["rule_warnings"] = rulesWarnings
 
-	if err = tools.SetAttrs(rd, attrs); err != nil {
-		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+	if err = tf.SetAttrs(rd, attrs); err != nil {
+		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
 
 	return nil
@@ -281,17 +281,17 @@ func resourcePropertyIncludeUpdate(ctx context.Context, rd *schema.ResourceData,
 
 	includeID := rd.Id()
 
-	contractID, err := tools.GetStringValue("contract_id", rd)
+	contractID, err := tf.GetStringValue("contract_id", rd)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	groupID, err := tools.GetStringValue("group_id", rd)
+	groupID, err := tf.GetStringValue("group_id", rd)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	latestVersion, err := tools.GetIntValue("latest_version", rd)
+	latestVersion, err := tf.GetIntValue("latest_version", rd)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -337,12 +337,12 @@ func resourcePropertyIncludeDelete(ctx context.Context, rd *schema.ResourceData,
 
 	includeID := rd.Id()
 
-	contractID, err := tools.GetStringValue("contract_id", rd)
+	contractID, err := tf.GetStringValue("contract_id", rd)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	groupID, err := tools.GetStringValue("group_id", rd)
+	groupID, err := tf.GetStringValue("group_id", rd)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -388,11 +388,11 @@ func resourcePropertyIncludeImport(_ context.Context, rd *schema.ResourceData, m
 	contractID, groupID, includeID := parts[0], parts[1], parts[2]
 
 	if err := rd.Set("contract_id", contractID); err != nil {
-		return nil, fmt.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+		return nil, fmt.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
 
 	if err := rd.Set("group_id", groupID); err != nil {
-		return nil, fmt.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+		return nil, fmt.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
 
 	rd.SetId(includeID)
@@ -401,8 +401,8 @@ func resourcePropertyIncludeImport(_ context.Context, rd *schema.ResourceData, m
 }
 
 func updateRules(ctx context.Context, client papi.PAPI, rd *schema.ResourceData, version int) error {
-	rulesJSON, err := tools.GetStringValue("rules", rd)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	rulesJSON, err := tf.GetStringValue("rules", rd)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
 
@@ -411,17 +411,17 @@ func updateRules(ctx context.Context, client papi.PAPI, rd *schema.ResourceData,
 	}
 
 	includeID := rd.Id()
-	contractID, err := tools.GetStringValue("contract_id", rd)
+	contractID, err := tf.GetStringValue("contract_id", rd)
 	if err != nil {
 		return err
 	}
 
-	groupID, err := tools.GetStringValue("group_id", rd)
+	groupID, err := tf.GetStringValue("group_id", rd)
 	if err != nil {
 		return err
 	}
 
-	ruleFormat, err := tools.GetStringValue("rule_format", rd)
+	ruleFormat, err := tf.GetStringValue("rule_format", rd)
 	if err != nil {
 		return err
 	}
@@ -490,18 +490,27 @@ func suppressDefaultRules(_, oldValue, newValue string, _ *schema.ResourceData) 
 	return reflect.DeepEqual(rules, defaultRules)
 }
 
-func setVersionComputedOnRulesChange(_ context.Context, d *schema.ResourceDiff, _ interface{}) error {
-	o, n := d.GetChange("rules")
-	oldRules, newRules := o.(string), n.(string)
+// setIncludeVersionsComputedOnRulesChange is a schema.CustomizeDiffFunc for akamai_property_include resource,
+// which sets latest_version, staging_version and production_version fields as computed
+// if a new version of the include is expected to be created.
+func setIncludeVersionsComputedOnRulesChange(_ context.Context, rd *schema.ResourceDiff, _ interface{}) error {
+	ruleFormatChanged := rd.HasChange("rule_format")
 
-	if compareRulesJSON(oldRules, newRules) {
+	oldRules, newRules := rd.GetChange("rules")
+	rulesEqual, err := rulesJSONEqual(oldRules.(string), newRules.(string))
+	if err != nil {
+		return err
+	}
+
+	if !ruleFormatChanged && rulesEqual {
 		return nil
 	}
 
 	for _, key := range []string{"latest_version", "staging_version", "production_version"} {
-		if err := d.SetNewComputed(key); err != nil {
-			return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		if err := rd.SetNewComputed(key); err != nil {
+			return fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 		}
 	}
+
 	return nil
 }

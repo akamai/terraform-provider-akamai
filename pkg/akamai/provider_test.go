@@ -3,12 +3,13 @@ package akamai
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"strings"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/edgegrid"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/edgegrid"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/stretchr/testify/require"
@@ -166,7 +167,7 @@ func TestSetWrongTypeForEdgegridEnvs(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			err := setEdgegridEnvs(test.environmentVars, "some section")
-			assert.True(t, errors.Is(err, tools.ErrInvalidType))
+			assert.True(t, errors.Is(err, tf.ErrInvalidType))
 		})
 	}
 }
@@ -216,7 +217,12 @@ func TestConfigureEdgercInContext(t *testing.T) {
 	}{
 		"file with EdgeGrid configuration does not exist": {
 			resourceLocalData:   getResourceLocalData(t, "edgerc", "not_existing_file_path"),
-			expectedDiagnostics: diag.Errorf(ConfigurationIsNotSpecified),
+			expectedDiagnostics: diag.Errorf("%s: %s: %s: %s", ErrWrongEdgeGridConfiguration, "unable to load config from environment or .edgerc file", edgegrid.ErrLoadingFile, "open not_existing_file_path: no such file or directory"),
+			withError:           true,
+		},
+		"config section does not exist": {
+			resourceLocalData:   getResourceLocalData(t, "config_section", "not_existing_config_section"),
+			expectedDiagnostics: diag.Errorf("%s: %s: %s: %s", ErrWrongEdgeGridConfiguration, "unable to load config from environment or .edgerc file", edgegrid.ErrSectionDoesNotExist, "section \"not_existing_config_section\" does not exist"),
 			withError:           true,
 		},
 		"with empty edgerc path, default path is used": {
@@ -238,7 +244,7 @@ func TestConfigureEdgercInContext(t *testing.T) {
 			} else {
 				assert.NotEmpty(t, meta)
 			}
-			assert.Equal(t, diagnostics, test.expectedDiagnostics)
+			assert.Equal(t, test.expectedDiagnostics, diagnostics)
 		})
 	}
 }
@@ -307,20 +313,46 @@ func TestEdgercValidate(t *testing.T) {
 			Type: schema.TypeString,
 		},
 	}
-
-	resourceDataMap := map[string]interface{}{
-		"cache_enabled":  true,
-		"edgerc":         "testdata/edgerc",
-		"config_section": "validate_edgerc",
+	tests := map[string]struct {
+		expectedError error
+		configSection string
+	}{
+		"no host": {
+			configSection: "no_host",
+			expectedError: fmt.Errorf("%s: \"host\"", edgegrid.ErrRequiredOptionEdgerc),
+		},
+		"no client_secret": {
+			configSection: "no_client_secret",
+			expectedError: fmt.Errorf("%s: \"client_secret\"", edgegrid.ErrRequiredOptionEdgerc),
+		},
+		"no access_token": {
+			configSection: "no_access_token",
+			expectedError: fmt.Errorf("%s: \"access_token\"", edgegrid.ErrRequiredOptionEdgerc),
+		},
+		"no client_token": {
+			configSection: "no_client_token",
+			expectedError: fmt.Errorf("%s: \"client_token\"", edgegrid.ErrRequiredOptionEdgerc),
+		},
+		"wrong format of host": {
+			configSection: "validate_edgerc",
+			expectedError: fmt.Errorf("host must not contain '/' at the end: \"host.com/\""),
+		},
 	}
 
-	wrongHostFromFile := "\"akaa-ay3i6htctb4uuahh-tklu4vvwja5wzytu.luna-dev.akamaiapis.net/\""
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			resourceDataMap := map[string]interface{}{
+				"cache_enabled":  true,
+				"edgerc":         "testdata/edgerc",
+				"config_section": test.configSection,
+			}
+			resourceData := schema.TestResourceDataRaw(t, resourceSchema, resourceDataMap)
+			configuredContext, diagnostics := configureContext(ctx, resourceData)
 
-	resourceData := schema.TestResourceDataRaw(t, resourceSchema, resourceDataMap)
-	configuredContext, diagnostics := configureContext(ctx, resourceData)
-
-	assert.Nil(t, configuredContext)
-	assert.Contains(t, diagnostics[0].Summary, wrongHostFromFile)
+			assert.Nil(t, configuredContext)
+			assert.Contains(t, diagnostics[0].Summary, test.expectedError.Error())
+		})
+	}
 }
 
 func Test_mergeSchema(t *testing.T) {

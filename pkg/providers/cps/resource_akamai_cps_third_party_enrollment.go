@@ -7,11 +7,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/cps"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	cpstools "github.com/akamai/terraform-provider-akamai/v3/pkg/providers/cps/tools"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/cps"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	cpstools "github.com/akamai/terraform-provider-akamai/v4/pkg/providers/cps/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -130,7 +130,7 @@ func resourceCPSThirdPartyEnrollment() *schema.Resource {
 				Type:             schema.TypeString,
 				ForceNew:         true,
 				Required:         true,
-				DiffSuppressFunc: tools.FieldPrefixSuppress("ctr_"),
+				DiffSuppressFunc: tf.FieldPrefixSuppress("ctr_"),
 				Description:      "Contract ID for which enrollment is retrieved",
 			},
 			"change_management": {
@@ -179,11 +179,11 @@ func resourceCPSThirdPartyEnrollmentCreate(ctx context.Context, d *schema.Resour
 	client := inst.Client(meta)
 	logger.Debug("Creating enrollment")
 
-	contractID, err := tools.GetStringValue("contract_id", d)
+	contractID, err := tf.GetStringValue("contract_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	allowDuplicateCN, err := tools.GetBoolValue("allow_duplicate_common_name", d)
+	allowDuplicateCN, err := tf.GetBoolValue("allow_duplicate_common_name", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -204,12 +204,12 @@ func resourceCPSThirdPartyEnrollmentCreate(ctx context.Context, d *schema.Resour
 	}
 	d.SetId(strconv.Itoa(res.ID))
 
-	acknowledgeWarnings, err := tools.GetBoolValue("acknowledge_pre_verification_warnings", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	acknowledgeWarnings, err := tf.GetBoolValue("acknowledge_pre_verification_warnings", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	autoApproveWarnings, err := tools.GetSetValue("auto_approve_warnings", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	autoApproveWarnings, err := tf.GetSetValue("auto_approve_warnings", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 	autoApproveWarningsAsString := convertUserWarningsToStringSlice(autoApproveWarnings.List())
@@ -250,7 +250,7 @@ func resourceCPSThirdPartyEnrollmentRead(ctx context.Context, d *schema.Resource
 	attrs["exclude_sans"] = excludeSANS
 	attrs["change_management"] = enrollment.ChangeManagement
 
-	if err = tools.SetAttrs(d, attrs); err != nil {
+	if err = tf.SetAttrs(d, attrs); err != nil {
 		return diag.FromErr(err)
 	}
 	if err != nil {
@@ -269,12 +269,12 @@ func resourceCPSThirdPartyEnrollmentUpdate(ctx context.Context, d *schema.Resour
 	client := inst.Client(meta)
 	logger.Debug("Updating enrollment")
 
-	acknowledgeWarnings, err := tools.GetBoolValue("acknowledge_pre_verification_warnings", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	acknowledgeWarnings, err := tf.GetBoolValue("acknowledge_pre_verification_warnings", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	autoApproveWarnings, err := tools.GetSetValue("auto_approve_warnings", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	autoApproveWarnings, err := tf.GetSetValue("auto_approve_warnings", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 	autoApproveWarningsAsString := convertUserWarningsToStringSlice(autoApproveWarnings.List())
@@ -329,7 +329,7 @@ func prepareThirdPartyEnrollment(d *schema.ResourceData) (*cps.Enrollment, error
 		RA:              "third-party",
 	}
 
-	adminContactSet, err := tools.GetSetValue("admin_contact", d)
+	adminContactSet, err := tf.GetSetValue("admin_contact", d)
 	if err != nil {
 		return nil, err
 	}
@@ -338,7 +338,7 @@ func prepareThirdPartyEnrollment(d *schema.ResourceData) (*cps.Enrollment, error
 		return nil, fmt.Errorf("'admin_contact' - %s", err)
 	}
 	enrollment.AdminContact = adminContact
-	techContactSet, err := tools.GetSetValue("tech_contact", d)
+	techContactSet, err := tf.GetSetValue("tech_contact", d)
 	if err != nil {
 		return nil, err
 	}
@@ -348,8 +348,8 @@ func prepareThirdPartyEnrollment(d *schema.ResourceData) (*cps.Enrollment, error
 	}
 	enrollment.TechContact = techContact
 
-	certificateChainType, err := tools.GetStringValue("certificate_chain_type", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	certificateChainType, err := tf.GetStringValue("certificate_chain_type", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return nil, err
 	}
 	enrollment.CertificateChainType = certificateChainType
@@ -368,8 +368,8 @@ func prepareThirdPartyEnrollment(d *schema.ResourceData) (*cps.Enrollment, error
 		return nil, err
 	}
 	enrollment.NetworkConfiguration = networkConfig
-	signatureAlgorithm, err := tools.GetStringValue("signature_algorithm", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	signatureAlgorithm, err := tf.GetStringValue("signature_algorithm", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return nil, err
 	}
 	enrollment.SignatureAlgorithm = signatureAlgorithm
@@ -379,12 +379,12 @@ func prepareThirdPartyEnrollment(d *schema.ResourceData) (*cps.Enrollment, error
 		return nil, err
 	}
 	enrollment.Org = organization
-	changeManagement, err := tools.GetBoolValue("change_management", d)
+	changeManagement, err := tf.GetBoolValue("change_management", d)
 	if err != nil {
 		return nil, err
 	}
 	enrollment.ChangeManagement = changeManagement
-	excludeSANS, err := tools.GetBoolValue("exclude_sans", d)
+	excludeSANS, err := tf.GetBoolValue("exclude_sans", d)
 	if err != nil {
 		return nil, err
 	}
@@ -432,16 +432,16 @@ func resourceCPSThirdPartyEnrollmentImport(ctx context.Context, d *schema.Resour
 	}
 
 	if err := d.Set("allow_duplicate_common_name", false); err != nil {
-		return nil, fmt.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+		return nil, fmt.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("acknowledge_pre_verification_warnings", false); err != nil {
-		return nil, fmt.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+		return nil, fmt.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("auto_approve_warnings", []string{}); err != nil {
-		return nil, fmt.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+		return nil, fmt.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("contract_id", contractID); err != nil {
-		return nil, fmt.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+		return nil, fmt.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
 	d.SetId(enrollmentID)
 	return []*schema.ResourceData{d}, nil

@@ -11,9 +11,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/tools"
 )
 
 // PAPI CP Code
@@ -33,7 +34,7 @@ func resourceCPCode() *schema.Resource {
 			"name": {
 				Type:             schema.TypeString,
 				Required:         true,
-				ValidateDiagFunc: tools.IsNotBlank,
+				ValidateDiagFunc: tf.IsNotBlank,
 			},
 			"contract": {
 				Type:       schema.TypeString,
@@ -64,19 +65,18 @@ func resourceCPCode() *schema.Resource {
 				StateFunc:    addPrefixToState("grp_"),
 			},
 			"product": {
-				Type:          schema.TypeString,
-				Optional:      true,
-				Computed:      true,
-				Deprecated:    akamai.NoticeDeprecatedUseAlias("product"),
-				StateFunc:     addPrefixToState("prd_"),
-				ConflictsWith: []string{"product_id"},
+				Type:       schema.TypeString,
+				Optional:   true,
+				Computed:   true,
+				Deprecated: akamai.NoticeDeprecatedUseAlias("product"),
+				StateFunc:  addPrefixToState("prd_"),
 			},
 			"product_id": {
-				Type:          schema.TypeString,
-				Optional:      true,
-				Computed:      true,
-				ConflictsWith: []string{"product"},
-				StateFunc:     addPrefixToState("prd_"),
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ExactlyOneOf: []string{"product"},
+				StateFunc:    addPrefixToState("prd_"),
 			},
 		},
 		Timeouts: &schema.ResourceTimeout{
@@ -91,8 +91,11 @@ var (
 	cpCodeResourceUpdateTimeout = time.Minute * 30
 )
 
+const cpCodePrefix = "cpc_"
+
 func resourceCPCodeCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
+	client := inst.Client(meta)
 	logger := meta.Log("PAPI", "resourceCPCodeCreate")
 	logger.Debugf("Creating CP Code")
 
@@ -102,35 +105,33 @@ func resourceCPCodeCreate(ctx context.Context, d *schema.ResourceData, m interfa
 	}
 
 	// Schema guarantees product_id/product are strings and one or the other is set
-	productID := d.Get("product_id").(string)
-	if productID == "" {
+	var productID string
+	if got, ok := d.GetOk("product_id"); ok {
+		productID = got.(string)
+	} else {
 		productID = d.Get("product").(string)
-		if productID == "" {
-			return diag.Errorf("one of product,product_id must be specified")
-		}
 	}
 	productID = tools.AddPrefix(productID, "prd_")
 
 	contractID, groupID := getContractIDAndGroupID(d)
 
+	var cpCodeID string
 	// Because CPCodes can't be deleted, we re-use an existing CPCode if it's there
-	cpCode, err := findCPCode(ctx, name, contractID, groupID, meta)
+	cpCode, err := findCPCode(ctx, client, name, contractID, groupID)
 	if err != nil && !errors.Is(err, ErrCpCodeNotFound) {
 		return diag.Errorf("%s: %s", ErrLookingUpCPCode, err)
 	}
 
-	if cpCode == nil {
-		cpcID, err := createCPCode(ctx, name, productID, contractID, groupID, meta)
+	if errors.Is(err, ErrCpCodeNotFound) {
+		cpCodeID, err = createCPCode(ctx, client, name, productID, contractID, groupID)
 		if err != nil {
 			return diag.FromErr(err)
 		}
-
-		d.SetId(cpcID)
 	} else {
-		d.SetId(cpCode.ID)
+		cpCodeID = cpCode.ID
 	}
 
-	logger.Debugf("Resulting CP Code: %#v", cpCode)
+	d.SetId(strings.TrimPrefix(cpCodeID, cpCodePrefix))
 	return resourceCPCodeRead(ctx, d, m)
 }
 
@@ -143,17 +144,17 @@ func resourceCPCodeRead(ctx context.Context, d *schema.ResourceData, m interface
 	contractID, groupID := getContractIDAndGroupID(d)
 
 	if err := d.Set("group_id", groupID); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("group", groupID); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	if err := d.Set("contract_id", contractID); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("contract", contractID); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	cpCodeResp, err := client.GetCPCode(ctx, papi.GetCPCodeRequest{
 		CPCodeID:   d.Id(),
@@ -167,19 +168,19 @@ func resourceCPCodeRead(ctx context.Context, d *schema.ResourceData, m interface
 	cpCode := cpCodeResp.CPCode
 
 	if err := d.Set("name", cpCode.Name); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	// we use the first value returned.  Most cpcodes have but a single product and we need to pick one for comparison.
 	if len(cpCode.ProductIDs) == 0 {
 		return diag.Errorf("Couldn't find product id on the CP Code")
 	}
 	if err := d.Set("product", cpCode.ProductIDs[0]); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("product_id", cpCode.ProductIDs[0]); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
-	d.SetId(cpCode.ID)
+
 	logger.Debugf("Read CP Code: %+v", cpCode)
 	return nil
 }
@@ -197,12 +198,13 @@ func resourceCPCodeUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 
 	contractID, groupID := getContractIDAndGroupID(d)
 
-	cpCodeID, err := strconv.Atoi(strings.TrimPrefix(d.Id(), "cpc_"))
+	// trimCPCodeID is needed here for backwards compatibility
+	cpCodeID, err := strconv.Atoi(strings.TrimPrefix(d.Id(), cpCodePrefix))
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	name, err := tools.GetStringValue("name", d)
+	name, err := tf.GetStringValue("name", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -249,7 +251,7 @@ func resourceCPCodeImport(ctx context.Context, d *schema.ResourceData, m interfa
 	if parts[0] == "" {
 		return nil, errors.New("CP Code is a mandatory parameter")
 	}
-	cpCodeID := tools.AddPrefix(parts[0], "cpc_")
+	cpCodeID := parts[0]
 	contractID := tools.AddPrefix(parts[1], "ctr_")
 	groupID := tools.AddPrefix(parts[2], "grp_")
 
@@ -265,31 +267,31 @@ func resourceCPCodeImport(ctx context.Context, d *schema.ResourceData, m interfa
 	cpCode := cpCodeResp.CPCode
 
 	if err := d.Set("name", cpCode.Name); err != nil {
-		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return nil, fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("contract_id", contractID); err != nil {
-		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return nil, fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("group_id", groupID); err != nil {
-		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return nil, fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 	}
 	if len(cpCode.ProductIDs) == 0 {
 		return nil, fmt.Errorf("could not find product id on the CP Code")
 	}
 	if err := d.Set("product_id", cpCode.ProductIDs[0]); err != nil {
-		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return nil, fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("product", cpCode.ProductIDs[0]); err != nil {
-		return nil, fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return nil, fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 	}
-	d.SetId(cpCode.ID)
+
+	d.SetId(strings.TrimPrefix(cpCode.ID, cpCodePrefix))
 	logger.Debugf("Import CP Code: %+v", cpCode)
 	return []*schema.ResourceData{d}, nil
 }
 
 // createCPCode attempts to create a CP Code and returns the CP Code ID
-func createCPCode(ctx context.Context, name, productID, contractID, groupID string, meta akamai.OperationMeta) (string, error) {
-	client := inst.Client(meta)
+func createCPCode(ctx context.Context, client papi.PAPI, name, productID, contractID, groupID string) (string, error) {
 	r, err := client.CreateCPCode(ctx, papi.CreateCPCodeRequest{
 		ContractID: contractID,
 		GroupID:    groupID,
@@ -353,7 +355,7 @@ func waitForCPCodeNameUpdate(ctx context.Context, client papi.PAPI, contractID, 
 
 	for CPCodeResp.CPCode.Name != updatedName {
 		select {
-		case <-time.After(tools.MaxDuration(updatePollInterval, updatePollMinimum)):
+		case <-time.After(tf.MaxDuration(updatePollInterval, updatePollMinimum)):
 			CPCodeResp, err = client.GetCPCode(ctx, req)
 			if err != nil {
 				return err

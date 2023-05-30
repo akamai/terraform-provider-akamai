@@ -4,10 +4,10 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/iam"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/iam"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -51,12 +51,12 @@ func resourceIAMGroupCreate(ctx context.Context, rd *schema.ResourceData, m inte
 
 	logger.Debug("Creating group")
 
-	parentGroupID, err := tools.GetIntValue("parent_group_id", rd)
+	parentGroupID, err := tf.GetIntValue("parent_group_id", rd)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	groupName, err := tools.GetStringValue("name", rd)
+	groupName, err := tf.GetStringValue("name", rd)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -97,7 +97,7 @@ func resourceIAMGroupRead(ctx context.Context, rd *schema.ResourceData, m interf
 		"name":            group.GroupName,
 		"sub_groups":      subGroups,
 	}
-	if err = tools.SetAttrs(rd, data); err != nil {
+	if err = tf.SetAttrs(rd, data); err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -114,13 +114,13 @@ func resourceIAMGroupUpdate(ctx context.Context, rd *schema.ResourceData, m inte
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	parentGroupID, err := tools.GetIntValue("parent_group_id", rd)
+	parentGroupID, err := tf.GetIntValue("parent_group_id", rd)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	if rd.HasChange("name") {
-		groupName, err := tools.GetStringValue("name", rd)
+		groupName, err := tf.GetStringValue("name", rd)
 		if err != nil {
 			return diag.FromErr(err)
 		}

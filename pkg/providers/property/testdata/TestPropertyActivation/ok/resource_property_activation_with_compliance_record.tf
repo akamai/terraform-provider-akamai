@@ -9,6 +9,10 @@ resource "akamai_property_activation" "test" {
   auto_acknowledge_rule_warnings = true
   note                           = "property activation note for creating"
   compliance_record {
-    noncompliance_reason = "OTHER"
+    noncompliance_reason_none {
+      peer_reviewed_by = "user1@example.com"
+      customer_email   = "user@example.com"
+      unit_tested      = true
+    }
   }
 }

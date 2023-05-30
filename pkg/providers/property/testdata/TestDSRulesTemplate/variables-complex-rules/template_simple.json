@@ -1,0 +1,15 @@
+{
+  "rules": {
+    "name": "${env.variableName}",
+    "nameWithSpace": "${env.variableNameWithSpace}",
+    "enabled": "${env.enabled}",
+    "enabledString": "${env.enabledString}",
+    "enabledString2": "${env.enabledString} ",
+    "tricky": "${env.${env.trickier}}",
+    "trickyBro": "${env.${env.trickier}Bro}",
+    "secondName": "${env.firstVariable} jr",
+    "someNumber": "${env.someNumber}",
+    "simpleJSON": "${env.simpleJSON}",
+    "nestedJSON": "${env.nestedJSON}"
+  }
+}

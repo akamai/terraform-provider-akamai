@@ -4,7 +4,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -43,7 +44,7 @@ func NewRulesSchemaReader(d *schema.ResourceData) *RulesSchemaReader {
 	rfVersion := GetUsedRuleFormat(d)
 
 	reader := RulesSchemaReader{
-		data:          NewRawConfig(d),
+		data:          tf.NewRawConfig(d),
 		ruleFormatKey: rfVersion.SchemaKey(),
 	}
 	return &reader
@@ -54,7 +55,7 @@ func (r *RulesSchemaReader) GetRuleFormat() string {
 	return r.ruleFormatKey
 }
 
-// GetBehaviorsList reads and returns a slice of RuleItem, which are bahaviors.
+// GetBehaviorsList reads and returns a slice of RuleItem, which are behaviors.
 func (r *RulesSchemaReader) GetBehaviorsList() ([]RuleItem, error) {
 	return r.getRuleItems(r.behaviorsKey())
 }

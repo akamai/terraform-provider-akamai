@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/cloudlets"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/cloudlets"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -59,7 +59,7 @@ func dataSourceCloudletsApplicationLoadBalancerMatchRule() *schema.Resource {
 										Type:        schema.TypeString,
 										Optional:    true,
 										Description: "The type of match used",
-										ValidateDiagFunc: tools.ValidateStringInSlice([]string{"header", "hostname", "path", "extension", "query",
+										ValidateDiagFunc: tf.ValidateStringInSlice([]string{"header", "hostname", "path", "extension", "query",
 											"cookie", "deviceCharacteristics", "clientip", "continent", "countrycode", "regioncode", "protocol", "method", "proxy", "range"}),
 									},
 									"match_value": {
@@ -72,7 +72,7 @@ func dataSourceCloudletsApplicationLoadBalancerMatchRule() *schema.Resource {
 										Type:             schema.TypeString,
 										Optional:         true,
 										Description:      "Valid entries for this property: contains, exists, and equals",
-										ValidateDiagFunc: tools.ValidateStringInSlice([]string{"contains", "exists", "equals", ""}),
+										ValidateDiagFunc: tf.ValidateStringInSlice([]string{"contains", "exists", "equals", ""}),
 									},
 									"case_sensitive": {
 										Type:        schema.TypeBool,
@@ -88,7 +88,7 @@ func dataSourceCloudletsApplicationLoadBalancerMatchRule() *schema.Resource {
 										Type:             schema.TypeString,
 										Optional:         true,
 										Description:      "For clientip, continent, countrycode, proxy, and regioncode match types, the part of the request that determines the IP address to use",
-										ValidateDiagFunc: tools.ValidateStringInSlice([]string{"CONNECTING_IP", "XFF_HEADERS", "CONNECTING_IP XFF_HEADERS", ""}),
+										ValidateDiagFunc: tf.ValidateStringInSlice([]string{"CONNECTING_IP", "XFF_HEADERS", "CONNECTING_IP XFF_HEADERS", ""}),
 									},
 									"object_match_value": {
 										Type:        schema.TypeSet,
@@ -108,7 +108,7 @@ func dataSourceCloudletsApplicationLoadBalancerMatchRule() *schema.Resource {
 													Required: true,
 													Description: "The array type, which can be one of the following: object, range, or simple. " +
 														"Use the simple option when adding only an array of string-based values",
-													ValidateDiagFunc: tools.ValidateStringInSlice([]string{"simple", "object", "range"}),
+													ValidateDiagFunc: tf.ValidateStringInSlice([]string{"simple", "object", "range"}),
 												},
 												"name_case_sensitive": {
 													Type:        schema.TypeBool,
@@ -208,7 +208,7 @@ func dataSourceCloudletsApplicationLoadBalancerMatchRule() *schema.Resource {
 }
 
 func dataSourceCloudletsLoadBalancerMatchRuleRead(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
-	matchRules, err := tools.GetListValue("match_rules", d)
+	matchRules, err := tf.GetListValue("match_rules", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -242,7 +242,7 @@ func dataSourceCloudletsLoadBalancerMatchRuleRead(_ context.Context, d *schema.R
 		// Schema guarantees that "forward_settings" will be present and of type *schema.Set
 		settings, ok := rawRule["forward_settings"].(*schema.Set)
 		if !ok {
-			return diag.Errorf("%v: 'forward_settings' should be an *schema.Set", tools.ErrInvalidType)
+			return diag.Errorf("%v: 'forward_settings' should be an *schema.Set", tf.ErrInvalidType)
 		}
 		for _, element := range settings.List() {
 			entries := element.(map[string]interface{})
@@ -265,7 +265,7 @@ func dataSourceCloudletsLoadBalancerMatchRuleRead(_ context.Context, d *schema.R
 	}
 
 	if err := d.Set("json", string(rulesJSON)); err != nil {
-		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
 
 	hashID, err := getMatchRulesHashID(rules)

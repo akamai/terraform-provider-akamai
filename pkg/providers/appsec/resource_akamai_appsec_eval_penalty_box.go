@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -65,7 +65,7 @@ func resourceEvalPenaltyBoxCreate(ctx context.Context, d *schema.ResourceData, m
 	logger := meta.Log("APPSEC", "resourceEvalPenaltyBoxCreate")
 	logger.Debugf("in resourceEvalPenaltyBoxCreate")
 
-	configID, err := tools.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -73,15 +73,15 @@ func resourceEvalPenaltyBoxCreate(ctx context.Context, d *schema.ResourceData, m
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	policyID, err := tools.GetStringValue("security_policy_id", d)
+	policyID, err := tf.GetStringValue("security_policy_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	penaltyboxprotection, err := tools.GetBoolValue("penalty_box_protection", d)
+	penaltyboxprotection, err := tf.GetBoolValue("penalty_box_protection", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	penaltyboxaction, err := tools.GetStringValue("penalty_box_action", d)
+	penaltyboxaction, err := tf.GetStringValue("penalty_box_action", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -138,16 +138,16 @@ func resourceEvalPenaltyBoxRead(ctx context.Context, d *schema.ResourceData, m i
 	}
 
 	if err := d.Set("config_id", getPenaltyBox.ConfigID); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("security_policy_id", getPenaltyBox.PolicyID); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("penalty_box_protection", penaltybox.PenaltyBoxProtection); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("penalty_box_action", penaltybox.Action); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	return nil
@@ -172,11 +172,11 @@ func resourceEvalPenaltyBoxUpdate(ctx context.Context, d *schema.ResourceData, m
 		return diag.FromErr(err)
 	}
 	policyID := iDParts[1]
-	penaltyboxprotection, err := tools.GetBoolValue("penalty_box_protection", d)
+	penaltyboxprotection, err := tf.GetBoolValue("penalty_box_protection", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	penaltyboxaction, err := tools.GetStringValue("penalty_box_action", d)
+	penaltyboxaction, err := tf.GetStringValue("penalty_box_action", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}

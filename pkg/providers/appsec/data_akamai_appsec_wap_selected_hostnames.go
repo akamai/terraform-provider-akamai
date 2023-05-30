@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -74,7 +74,7 @@ func dataSourceWAPSelectedHostnamesRead(ctx context.Context, d *schema.ResourceD
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "dataSourceWAPSelectedHostnamesRead")
 
-	configID, err := tools.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -82,7 +82,7 @@ func dataSourceWAPSelectedHostnamesRead(ctx context.Context, d *schema.ResourceD
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	securityPolicyID, err := tools.GetStringValue("security_policy_id", d)
+	securityPolicyID, err := tf.GetStringValue("security_policy_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -111,7 +111,7 @@ func dataSourceWAPSelectedHostnamesRead(ctx context.Context, d *schema.ResourceD
 			newhdata = append(newhdata, hosts.Hostname)
 		}
 		if err := d.Set("selected_hosts", newhdata); err != nil {
-			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 		}
 
 		getMatchTargets := appsec.GetMatchTargetsRequest{
@@ -131,7 +131,7 @@ func dataSourceWAPSelectedHostnamesRead(ctx context.Context, d *schema.ResourceD
 			return diag.FromErr(err)
 		}
 		if err := d.Set("match_targets", string(jsonBody)); err != nil {
-			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 		}
 
 		ots := OutputTemplates{}
@@ -150,7 +150,7 @@ func dataSourceWAPSelectedHostnamesRead(ctx context.Context, d *schema.ResourceD
 			return diag.FromErr(err)
 		}
 		if err := d.Set("output_text", websiteMatchTargetsText); err != nil {
-			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 		}
 	} else { // WAP_AAG and WAP_PLUS accounts
 		getWAPSelectedHostnamesRequest := appsec.GetWAPSelectedHostnamesRequest{
@@ -166,10 +166,10 @@ func dataSourceWAPSelectedHostnamesRead(ctx context.Context, d *schema.ResourceD
 		}
 
 		if err := d.Set("protected_hosts", WAPSelectedHostnames.ProtectedHosts); err != nil {
-			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 		}
 		if err := d.Set("evaluated_hosts", WAPSelectedHostnames.EvaluatedHosts); err != nil {
-			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 		}
 
 		jsonBody, err := json.Marshal(WAPSelectedHostnames)
@@ -177,7 +177,7 @@ func dataSourceWAPSelectedHostnamesRead(ctx context.Context, d *schema.ResourceD
 			return diag.FromErr(err)
 		}
 		if err := d.Set("json", string(jsonBody)); err != nil {
-			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 		}
 
 		ots := OutputTemplates{}
@@ -195,10 +195,10 @@ func dataSourceWAPSelectedHostnamesRead(ctx context.Context, d *schema.ResourceD
 		}
 		outputtext, err := RenderTemplates(ots, "WAPSelectedHostsDS", textOutputEntries)
 		if err != nil {
-			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 		}
 		if err := d.Set("output_text", outputtext); err != nil {
-			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 		}
 	}
 

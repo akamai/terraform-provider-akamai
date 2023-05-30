@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -120,7 +120,7 @@ func resourceIPGeoCreate(ctx context.Context, d *schema.ResourceData, m interfac
 	logger := meta.Log("APPSEC", "resourceIPGeoCreate")
 	logger.Debugf("in resourceIPGeoCreate")
 
-	configID, err := tools.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -128,24 +128,24 @@ func resourceIPGeoCreate(ctx context.Context, d *schema.ResourceData, m interfac
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	policyID, err := tools.GetStringValue("security_policy_id", d)
+	policyID, err := tf.GetStringValue("security_policy_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	mode, err := tools.GetStringValue("mode", d)
+	mode, err := tf.GetStringValue("mode", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	blockedGeoLists, err := tools.GetListValue("geo_network_lists", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	blockedGeoLists, err := tf.GetListValue("geo_network_lists", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	blockedIPLists, err := tools.GetListValue("ip_network_lists", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	blockedIPLists, err := tf.GetListValue("ip_network_lists", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	exceptionIPLists, err := tools.GetListValue("exception_ip_network_lists", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	exceptionIPLists, err := tf.GetListValue("exception_ip_network_lists", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 
@@ -209,22 +209,22 @@ func resourceIPGeoRead(ctx context.Context, d *schema.ResourceData, m interface{
 	}
 
 	if err := d.Set("config_id", getIPGeo.ConfigID); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("security_policy_id", getIPGeo.PolicyID); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if ipgeo.Block == "blockAllTrafficExceptAllowedIPs" {
 		if err := d.Set("mode", Allow); err != nil {
-			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 		}
 		if ipgeo.IPControls != nil && ipgeo.IPControls.AllowedIPNetworkLists != nil && ipgeo.IPControls.AllowedIPNetworkLists.NetworkList != nil {
 			if err := d.Set("exception_ip_network_lists", ipgeo.IPControls.AllowedIPNetworkLists.NetworkList); err != nil {
-				return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+				return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 			}
 		} else {
 			if err := d.Set("exception_ip_network_lists", make([]string, 0)); err != nil {
-				return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+				return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 			}
 		}
 	}
@@ -240,33 +240,33 @@ func resourceIPGeoRead(ctx context.Context, d *schema.ResourceData, m interface{
 
 func readForBlockSpecificIPGeo(d *schema.ResourceData, ipgeo *appsec.GetIPGeoResponse) diag.Diagnostics {
 	if err := d.Set("mode", Block); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if ipgeo.GeoControls != nil && ipgeo.GeoControls.BlockedIPNetworkLists != nil && ipgeo.GeoControls.BlockedIPNetworkLists.NetworkList != nil {
 		if err := d.Set("geo_network_lists", ipgeo.GeoControls.BlockedIPNetworkLists.NetworkList); err != nil {
-			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 		}
 	} else {
 		if err := d.Set("geo_network_lists", make([]string, 0)); err != nil {
-			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 		}
 	}
 	if ipgeo.IPControls != nil && ipgeo.IPControls.BlockedIPNetworkLists != nil && ipgeo.IPControls.BlockedIPNetworkLists.NetworkList != nil {
 		if err := d.Set("ip_network_lists", ipgeo.IPControls.BlockedIPNetworkLists.NetworkList); err != nil {
-			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 		}
 	} else {
 		if err := d.Set("ip_network_lists", make([]string, 0)); err != nil {
-			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 		}
 	}
 	if ipgeo.IPControls != nil && ipgeo.IPControls.AllowedIPNetworkLists != nil && ipgeo.IPControls.AllowedIPNetworkLists.NetworkList != nil {
 		if err := d.Set("exception_ip_network_lists", ipgeo.IPControls.AllowedIPNetworkLists.NetworkList); err != nil {
-			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 		}
 	} else {
 		if err := d.Set("exception_ip_network_lists", make([]string, 0)); err != nil {
-			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 		}
 	}
 	return nil
@@ -291,20 +291,20 @@ func resourceIPGeoUpdate(ctx context.Context, d *schema.ResourceData, m interfac
 		return diag.FromErr(err)
 	}
 	policyID := iDParts[1]
-	mode, err := tools.GetStringValue("mode", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	mode, err := tf.GetStringValue("mode", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	blockedGeoLists, err := tools.GetListValue("geo_network_lists", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	blockedGeoLists, err := tf.GetListValue("geo_network_lists", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	blockedIPLists, err := tools.GetListValue("ip_network_lists", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	blockedIPLists, err := tf.GetListValue("ip_network_lists", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	exceptionIPLists, err := tools.GetListValue("exception_ip_network_lists", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	exceptionIPLists, err := tf.GetListValue("exception_ip_network_lists", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 

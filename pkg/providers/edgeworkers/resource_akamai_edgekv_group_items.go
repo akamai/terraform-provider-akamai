@@ -7,10 +7,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/edgeworkers"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/edgeworkers"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -51,7 +52,7 @@ func resourceEdgeKVGroupItems() *schema.Resource {
 			"items": {
 				Type:             schema.TypeMap,
 				Required:         true,
-				ValidateDiagFunc: tools.ValidateMapMinimalLength(1),
+				ValidateDiagFunc: tf.ValidateMapMinimalLength(1),
 				Description:      "A map of items within the specified group. Each item consists of an item key and a value.",
 				Elem:             &schema.Schema{Type: schema.TypeString},
 			},
@@ -139,7 +140,7 @@ func resourceEdgeKVGroupItemsRead(ctx context.Context, rd *schema.ResourceData, 
 	attrs["group_name"] = groupName
 	attrs["items"] = itemsMap
 
-	if err = tools.SetAttrs(rd, attrs); err != nil {
+	if err = tf.SetAttrs(rd, attrs); err != nil {
 		return diag.Errorf("could not set attributes: %s", err)
 	}
 
@@ -427,22 +428,22 @@ type edgeKVGroupItemsAttrs struct {
 
 // getAttributes retrieves edgeKV_group_items attributes from config
 func getAttributes(rd *schema.ResourceData) (*edgeKVGroupItemsAttrs, error) {
-	namespace, err := tools.GetStringValue("namespace_name", rd)
+	namespace, err := tf.GetStringValue("namespace_name", rd)
 	if err != nil {
 		return nil, fmt.Errorf("could not get 'namespace_name' attribute: %s", err)
 	}
 
-	network, err := tools.GetStringValue("network", rd)
+	network, err := tf.GetStringValue("network", rd)
 	if err != nil {
 		return nil, fmt.Errorf("could not get 'network' attribute: %s", err)
 	}
 
-	groupName, err := tools.GetStringValue("group_name", rd)
+	groupName, err := tf.GetStringValue("group_name", rd)
 	if err != nil {
 		return nil, fmt.Errorf("could not get 'group_name' attribute: %s", err)
 	}
 
-	items, err := tools.GetMapValue("items", rd)
+	items, err := tf.GetMapValue("items", rd)
 	if err != nil {
 		return nil, fmt.Errorf("could not get 'items' attribute: %s", err)
 	}

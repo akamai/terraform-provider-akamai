@@ -5,11 +5,11 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/iam"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/iam"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/test"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/test"
 )
 
 func TestDataCountries(t *testing.T) {

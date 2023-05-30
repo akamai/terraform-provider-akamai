@@ -6,8 +6,9 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/iancoleman/strcase"
 )
@@ -36,6 +37,8 @@ func NewBuilder(d *schema.ResourceData) *RulesBuilder {
 }
 
 // Build returns papi.Rules built from the terraform schema.
+//
+//nolint:gocyclo
 func (r RulesBuilder) Build() (*papi.Rules, error) {
 	name, err := r.ruleName()
 	if err != nil {
@@ -51,6 +54,9 @@ func (r RulesBuilder) Build() (*papi.Rules, error) {
 	}
 
 	criteriaMustSatisfy, err := r.ruleCriteriaMustSatisfy()
+	if name == defaultRule && err == nil {
+		return nil, fmt.Errorf("%w: %s", ErrNotForDefault, "criteria_must_satisfy")
+	}
 	if err != nil && !errors.Is(err, ErrNotFound) {
 		return nil, err
 	}
@@ -64,6 +70,9 @@ func (r RulesBuilder) Build() (*papi.Rules, error) {
 	}
 
 	advancedOverride, err := r.ruleAdvancedOverride()
+	if name != defaultRule && err == nil {
+		return nil, fmt.Errorf("%w: %s", ErrOnlyForDefault, "advanced_override")
+	}
 	if err != nil && !errors.Is(err, ErrNotFound) {
 		return nil, err
 	}
@@ -74,11 +83,17 @@ func (r RulesBuilder) Build() (*papi.Rules, error) {
 	}
 
 	criteriaLocked, err := r.ruleCriteriaLocked()
+	if name == defaultRule && err == nil {
+		return nil, fmt.Errorf("%w: %s", ErrNotForDefault, "criteria_locked")
+	}
 	if err != nil && !errors.Is(err, ErrNotFound) {
 		return nil, err
 	}
 
 	customOverride, err := r.ruleCustomOverride()
+	if name != defaultRule && err == nil {
+		return nil, fmt.Errorf("%w: %s", ErrOnlyForDefault, "custom_override")
+	}
 	if err != nil && !errors.Is(err, ErrNotFound) {
 		return nil, err
 	}
@@ -99,17 +114,20 @@ func (r RulesBuilder) Build() (*papi.Rules, error) {
 	}
 
 	criteria, err := r.ruleCriteria()
-	if err != nil {
+	if name == defaultRule && err == nil {
+		return nil, fmt.Errorf("%w: %s", ErrNotForDefault, "criterion")
+	}
+	if err != nil && !errors.Is(err, ErrNotFound) {
 		return nil, err
 	}
 
 	behaviors, err := r.ruleBehaviors()
-	if err != nil {
+	if err != nil && !errors.Is(err, ErrNotFound) {
 		return nil, err
 	}
 
 	children, err := r.ruleChildren()
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return nil, err
 	}
 
@@ -148,8 +166,8 @@ func (r RulesBuilder) ruleVariables() ([]papi.RuleVariable, error) {
 	for _, variable := range variableList {
 		variables = append(variables, papi.RuleVariable{
 			Name:        variable["name"].(string),
-			Description: variable["description"].(string),
-			Value:       variable["value"].(string),
+			Description: tools.StringPtr(variable["description"].(string)),
+			Value:       tools.StringPtr(variable["value"].(string)),
 			Sensitive:   variable["sensitive"].(bool),
 			Hidden:      variable["hidden"].(bool),
 		})
@@ -211,9 +229,6 @@ func (r RulesBuilder) ruleTemplateLink() (string, error) {
 func (r RulesBuilder) ruleBehaviors() ([]papi.RuleBehavior, error) {
 	behaviorsList, err := r.schemaReader.GetBehaviorsList()
 	if err != nil {
-		if errors.Is(err, ErrNotFound) {
-			return []papi.RuleBehavior{}, nil
-		}
 		return nil, err
 	}
 	return r.buildRuleBehaviors(behaviorsList)
@@ -222,9 +237,6 @@ func (r RulesBuilder) ruleBehaviors() ([]papi.RuleBehavior, error) {
 func (r RulesBuilder) ruleCriteria() ([]papi.RuleBehavior, error) {
 	criteriaMap, err := r.schemaReader.GetCriteriaList()
 	if err != nil {
-		if errors.Is(err, ErrNotFound) {
-			return []papi.RuleBehavior{}, nil
-		}
 		return nil, err
 	}
 	return r.buildRuleBehaviors(criteriaMap)

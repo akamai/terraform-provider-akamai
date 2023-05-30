@@ -7,9 +7,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/tools"
 )
 
 func dataSourcePropertyRules() *schema.Resource {
@@ -32,7 +33,7 @@ var dataAkamaiPropertyRuleSchema = map[string]*schema.Schema{
 		Computed:         true,
 		StateFunc:        addPrefixToState("ctr_"),
 		RequiredWith:     []string{"group_id"},
-		ValidateDiagFunc: tools.IsNotBlank,
+		ValidateDiagFunc: tf.IsNotBlank,
 	},
 	"group_id": {
 		Type:             schema.TypeString,
@@ -40,13 +41,13 @@ var dataAkamaiPropertyRuleSchema = map[string]*schema.Schema{
 		Computed:         true,
 		StateFunc:        addPrefixToState("grp_"),
 		RequiredWith:     []string{"contract_id"},
-		ValidateDiagFunc: tools.IsNotBlank,
+		ValidateDiagFunc: tf.IsNotBlank,
 	},
 	"property_id": {
 		Type:             schema.TypeString,
 		Required:         true,
 		StateFunc:        addPrefixToState("prp_"),
-		ValidateDiagFunc: tools.IsNotBlank,
+		ValidateDiagFunc: tf.IsNotBlank,
 	},
 	"version": {
 		Type:        schema.TypeInt,
@@ -98,10 +99,10 @@ func dataPropertyRulesRead(ctx context.Context, d *schema.ResourceData, m interf
 	)
 
 	// since contractID && groupID is optional, we should not return an error.
-	contractID, _ = tools.GetStringValue("contract_id", d)
-	groupID, _ = tools.GetStringValue("group_id", d)
+	contractID, _ = tf.GetStringValue("contract_id", d)
+	groupID, _ = tf.GetStringValue("group_id", d)
 
-	ruleFormat, _ = tools.GetStringValue("rule_format", d)
+	ruleFormat, _ = tf.GetStringValue("rule_format", d)
 	ok, err := isValidRuleFormat(ctx, client, ruleFormat)
 	if err != nil {
 		return diag.FromErr(err)
@@ -110,24 +111,24 @@ func dataPropertyRulesRead(ctx context.Context, d *schema.ResourceData, m interf
 		return diag.Errorf("given 'rule_format' is not supported: %q", ruleFormat)
 	}
 
-	if propertyID, err = tools.GetStringValue("property_id", d); err != nil {
+	if propertyID, err = tf.GetStringValue("property_id", d); err != nil {
 		return diag.FromErr(err)
 	}
 
 	if contractID != "" {
 		contractID = tools.AddPrefix(contractID, "ctr_")
 		if err := d.Set("contract_id", contractID); err != nil {
-			return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+			return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 		}
 	}
 	if groupID != "" {
 		groupID = tools.AddPrefix(groupID, "grp_")
 		if err := d.Set("group_id", groupID); err != nil {
-			return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+			return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 		}
 	}
 
-	if version, err = tools.GetIntValue("version", d); err != nil {
+	if version, err = tf.GetIntValue("version", d); err != nil {
 		latestVersion, err := client.GetLatestVersion(ctx, papi.GetLatestVersionRequest{
 			PropertyID: propertyID,
 			ContractID: contractID,

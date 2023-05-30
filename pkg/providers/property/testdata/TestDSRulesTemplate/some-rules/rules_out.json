@@ -1,0 +1,60 @@
+{
+  "rules": {
+    "name": "test",
+    "children": [
+      {
+        "name": "RUM",
+        "children": [
+          {
+            "name": "ANOTHER",
+            "children": [],
+            "behaviors": [
+              {
+                "name": "test",
+                "options": {
+                  "enabled": true
+                }
+              }
+            ],
+            "criteria": []
+          },
+          {
+            "name": "LIST",
+            "children": [],
+            "behaviors": [
+              {
+                "name": "test",
+                "options": {
+                  "action": "MODIFY",
+                  "avoidDuplicateHeaders": false,
+                  "newHeaderValue": [
+                    "a",
+                    "b",
+                    "c"
+                  ],
+                  "standardModifyHeaderName": "ACCESS_CONTROL_ALLOW_ORIGIN"
+                }
+              }
+            ],
+            "criteria": []
+          }
+        ],
+        "behaviors": [
+          {
+            "name": "mPulse",
+            "options": {
+              "enabled": true,
+              "requirePci": false,
+              "titleOptional": "",
+              "apiKey": "",
+              "bufferSize": "",
+              "configOverride": ""
+            }
+          }
+        ],
+        "criteria": [],
+        "criteriaMustSatisfy": "all"
+      }
+    ]
+  }
+}

@@ -3337,7 +3337,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 					"stream_type": {
 						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"BEACON", "LOG", "BEACON_AND_LOG"}, false)),
 						Optional:         true,
-						Description:      "Specify the DataStream type.",
+						Description:      "Specify the DataStream type. `LOG` is the only value currently available, corresponding to DataStream 2.",
 						Type:             schema.TypeString,
 					},
 					"beacon_stream_title": {
@@ -5539,7 +5539,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"first_party_marketing": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Enables the `Cloud Marketing Cloudlet`, which helps MediaMath customers collect usage data and place corresponding tags for use in online advertising.  You can configure tags using either the Cloudlets Policy Manager application or the `Cloudlets API`. See also the `firstPartyMarketingPlus` behavior, which integrates better with both MediaMath and its partners. Both behaviors support the same set of options. This behavior cannot be used in includes.",
+			Description: "Enables the Cloud Marketing Cloudlet, which helps MediaMath customers collect usage data and place corresponding tags for use in online advertising.  You can configure tags using either the Cloudlets Policy Manager application or the `Cloudlets API`. See also the `firstPartyMarketingPlus` behavior, which integrates better with both MediaMath and its partners. Both behaviors support the same set of options. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -5602,7 +5602,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"first_party_marketing_plus": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Enables the `Cloud Marketing Plus Cloudlet`, which helps MediaMath customers collect usage data and place corresponding tags for use in online advertising.  You can configure tags using either the Cloudlets Policy Manager application or the `Cloudlets API`. See also the `firstPartyMarketing` behavior, which integrates with MediaMath but not its partners. Both behaviors support the same set of options. This behavior cannot be used in includes.",
+			Description: "Enables the Cloud Marketing Plus Cloudlet, which helps MediaMath customers collect usage data and place corresponding tags for use in online advertising.  You can configure tags using either the Cloudlets Policy Manager application or the `Cloudlets API`. See also the `firstPartyMarketing` behavior, which integrates with MediaMath but not its partners. Both behaviors support the same set of options. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -6282,9 +6282,9 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Type:        schema.TypeString,
 					},
 					"format": {
-						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"CHROME", "IE", "SAFARI", "GENERIC"}, false)),
+						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"CHROME", "IE", "SAFARI", "GENERIC", "AVIF_WEBP_JPEG_PNG_GIF", "JP2_WEBP_JPEG_PNG_GIF", "WEBP_JPEG_PNG_GIF", "JPEG_PNG_GIF"}, false)),
 						Optional:         true,
-						Description:      "Specifies the type of the browser you want to optimize images for.",
+						Description:      "Specifies the type of the browser, or the encodings passed in the `Accept` header, that you want to optimize images for.",
 						Type:             schema.TypeString,
 					},
 					"dprvar": {
@@ -7329,7 +7329,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 					"maximum_size": {
 						ValidateDiagFunc: validateRegex("^\\d+[K,M,G,T]B$"),
 						Optional:         true,
-						Description:      "Optimization does not apply to files larger than this, expressed as a number suffixed with a unit string such as `MB` or `GB`. This option is for internal usage only.",
+						Description:      "Optimization does not apply to files larger than this, expressed as a number suffixed with a unit string such as `MB` or `GB`. The size of a file can't be greater than 323 GB. If you need to optimize a larger file, contact Akamai Professional Services for help. This option is for internal usage only.",
 						Type:             schema.TypeString,
 					},
 					"use_versioning": {
@@ -11931,7 +11931,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"site_shield": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "This behavior implements the `Site Shield` feature, which helps prevent non-Akamai machines from contacting your origin. Your service representative periodically sends you a list of Akamai servers allowed to contact your origin, with which you establish an Access Control List on your firewall to prevent any other requests. This behavior cannot be used in includes.",
+			Description: "This behavior implements the `Site Shield` feature, which helps prevent non-Akamai machines from contacting your origin. You get an email with a list of Akamai servers allowed to contact your origin, with which you establish an Access Control List on your firewall to prevent any other requests. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -11953,7 +11953,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 					},
 					"ssmap": {
 						Optional:    true,
-						Description: "Identifies the hostname for the Site Shield map, available from your Akamai representative. Form an object with a `value` key that references the hostname, for example: `\"ssmap\":{\"value\":\"ss.akamai.net\"}`.",
+						Description: "Identifies the hostname for the Site Shield map. See `Create a Site Shield map` for more details. Form an object with a `value` key that references the hostname, for example: `\"ssmap\":{\"value\":\"ss.akamai.net\"}`.",
 						Type:        schema.TypeList,
 						MaxItems:    1,
 						Elem: &schema.Resource{

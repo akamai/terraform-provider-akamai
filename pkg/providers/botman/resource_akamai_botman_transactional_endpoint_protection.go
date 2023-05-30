@@ -7,9 +7,9 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/botman"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/botman"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -48,7 +48,7 @@ func resourceTransactionalEndpointProtectionCreate(ctx context.Context, d *schem
 	logger := meta.Log("botman", "resourceTransactionalEndpointProtectionCreate")
 	logger.Debugf("in resourceTransactionalEndpointProtectionCreate")
 
-	configID, err := tools.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -58,7 +58,7 @@ func resourceTransactionalEndpointProtectionCreate(ctx context.Context, d *schem
 		return diag.FromErr(err)
 	}
 
-	jsonPayloadString, err := tools.GetStringValue("transactional_endpoint_protection", d)
+	jsonPayloadString, err := tf.GetStringValue("transactional_endpoint_protection", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -109,7 +109,7 @@ func resourceTransactionalEndpointProtectionRead(ctx context.Context, d *schema.
 	}
 
 	if err := d.Set("config_id", request.ConfigID); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	jsonBody, err := json.Marshal(response)
 	if err != nil {
@@ -119,8 +119,8 @@ func resourceTransactionalEndpointProtectionRead(ctx context.Context, d *schema.
 		"config_id":                         configID,
 		"transactional_endpoint_protection": string(jsonBody),
 	}
-	if err := tools.SetAttrs(d, fields); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+	if err := tf.SetAttrs(d, fields); err != nil {
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	return nil
 }
@@ -141,7 +141,7 @@ func resourceTransactionalEndpointProtectionUpdate(ctx context.Context, d *schem
 		return diag.FromErr(err)
 	}
 
-	jsonPayloadString, err := tools.GetStringValue("transactional_endpoint_protection", d)
+	jsonPayloadString, err := tf.GetStringValue("transactional_endpoint_protection", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}

@@ -7,10 +7,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/papi"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/tools"
 )
 
 func dataSourcePropertyHostnames() *schema.Resource {
@@ -20,18 +21,18 @@ func dataSourcePropertyHostnames() *schema.Resource {
 			"group_id": {
 				Type:             schema.TypeString,
 				Required:         true,
-				ValidateDiagFunc: tools.IsNotBlank,
+				ValidateDiagFunc: tf.IsNotBlank,
 			},
 			"contract_id": {
 				Type:             schema.TypeString,
 				Required:         true,
-				ValidateDiagFunc: tools.IsNotBlank,
+				ValidateDiagFunc: tf.IsNotBlank,
 			},
 			"property_id": {
 				Type:             schema.TypeString,
 				Required:         true,
 				StateFunc:        addPrefixToState("prp_"),
-				ValidateDiagFunc: tools.IsNotBlank,
+				ValidateDiagFunc: tf.IsNotBlank,
 			},
 			"version": {
 				Type:        schema.TypeInt,
@@ -73,18 +74,18 @@ func dataPropertyHostnamesRead(ctx context.Context, d *schema.ResourceData, m in
 	log.Debug("Listing Property Hostnames")
 
 	// groupID / contractID is string as per schema.
-	groupID, err := tools.GetStringValue("group_id", d)
+	groupID, err := tf.GetStringValue("group_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	groupID = tools.AddPrefix(groupID, "grp_")
-	contractID, err := tools.GetStringValue("contract_id", d)
+	contractID, err := tf.GetStringValue("contract_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	contractID = tools.AddPrefix(contractID, "ctr_")
 
-	propertyID, err := tools.GetStringValue("property_id", d)
+	propertyID, err := tf.GetStringValue("property_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}

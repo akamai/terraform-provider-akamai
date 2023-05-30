@@ -6,9 +6,9 @@ import (
 	"errors"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -63,23 +63,23 @@ func dataSourceTuningRecommendationsRead(ctx context.Context, d *schema.Resource
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "dataSourceTuningRecommendationsRead")
 
-	configID, err := tools.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	policyID, err := tools.GetStringValue("security_policy_id", d)
+	policyID, err := tf.GetStringValue("security_policy_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	group, err := tools.GetStringValue("attack_group", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	group, err := tf.GetStringValue("attack_group", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 
-	ruleID, err := tools.GetIntValue("rule_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	ruleID, err := tf.GetIntValue("rule_id", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 
@@ -94,8 +94,8 @@ func dataSourceTuningRecommendationsRead(ctx context.Context, d *schema.Resource
 		return diags
 	}
 
-	rulesetType, err := tools.GetStringValue("ruleset_type", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	rulesetType, err := tf.GetStringValue("ruleset_type", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 
@@ -165,7 +165,7 @@ func dataSourceTuningRecommendationsRead(ctx context.Context, d *schema.Resource
 	}
 
 	if err := d.Set("json", string(jsonBody)); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	d.SetId(strconv.Itoa(configID))

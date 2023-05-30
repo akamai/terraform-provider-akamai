@@ -6,10 +6,9 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/botman"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
-
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/botman"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -59,7 +58,7 @@ func resourceTransactionalEndpointCreate(ctx context.Context, d *schema.Resource
 	logger := meta.Log("botman", "resourceTransactionalEndpointCreateAction")
 	logger.Debugf("in resourceTransactionalEndpointCreateAction")
 
-	configID, err := tools.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -69,12 +68,12 @@ func resourceTransactionalEndpointCreate(ctx context.Context, d *schema.Resource
 		return diag.FromErr(err)
 	}
 
-	securityPolicyID, err := tools.GetStringValue("security_policy_id", d)
+	securityPolicyID, err := tf.GetStringValue("security_policy_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	operationID, err := tools.GetStringValue("operation_id", d)
+	operationID, err := tf.GetStringValue("operation_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -155,13 +154,13 @@ func transactionalEndpointRead(ctx context.Context, d *schema.ResourceData, m in
 	delete(response, "operationId")
 
 	if err := d.Set("config_id", configID); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("security_policy_id", securityPolicyID); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("operation_id", operationID); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	jsonBody, err := json.Marshal(response)
@@ -174,8 +173,8 @@ func transactionalEndpointRead(ctx context.Context, d *schema.ResourceData, m in
 		"operation_id":           operationID,
 		"transactional_endpoint": string(jsonBody),
 	}
-	if err := tools.SetAttrs(d, fields); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+	if err := tf.SetAttrs(d, fields); err != nil {
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	return nil

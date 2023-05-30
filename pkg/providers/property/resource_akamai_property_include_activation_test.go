@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/papi"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -473,6 +473,48 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 							note:         note,
 							notifyEmails: []string{email},
 						}),
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
+
+	t.Run("missing compliance record error when network is PRODUCTION", func(t *testing.T) {
+		client := new(papi.Mock)
+		state := State{}
+
+		// create
+		req := papi.ActivateIncludeRequest{
+			IncludeID:              includeID,
+			Version:                3,
+			Network:                "PRODUCTION",
+			Note:                   note,
+			NotifyEmails:           []string{email},
+			AcknowledgeAllWarnings: false,
+		}
+		state = expectWaitPending(client, state, req.Network, 2)
+		expectAssertState(client, state)
+		newIncludeActivation := getExpectedActivationBasedOnRequest(req)
+
+		client.On("ActivateInclude", mock.Anything, req).
+			Return(&papi.ActivationIncludeResponse{
+				ActivationID: newIncludeActivation.ActivationID,
+			}, nil).Once()
+
+		// GetIncludeActivation returns error about missing_compliance_record. TFP checks for that error and returns it
+		client.On("GetIncludeActivation", mock.Anything, papi.GetIncludeActivationRequest{
+			IncludeID:    includeID,
+			ActivationID: newIncludeActivation.ActivationID,
+		}).Return(nil, papi.ErrMissingComplianceRecord).Once()
+
+		useClient(client, nil, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProviderFactories: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config:      loadFixtureString(fmt.Sprintf("%s/no_compliance_record_on_production.tf", testDir)),
+						ExpectError: regexp.MustCompile(`Error: for 'PRODUCTION' network, 'compliance_record' must be specified`),
 					},
 				},
 			})

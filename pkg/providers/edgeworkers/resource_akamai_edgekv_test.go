@@ -11,13 +11,13 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/tools"
 
 	"github.com/stretchr/testify/mock"
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/edgeworkers"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/edgeworkers"
 )
 
 func Test_populateEKV(t *testing.T) {
@@ -195,6 +195,30 @@ func TestResourceEdgeKV(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_edgekv.test", "network", net),
 						resource.TestCheckResourceAttr("akamai_edgekv.test", "group_id", fmt.Sprintf("%d", *groupID)),
 						resource.TestCheckResourceAttr("akamai_edgekv.test", "retention_in_seconds", fmt.Sprintf("%d", *retention)),
+					),
+				},
+			},
+		},
+		"basic - retention 0": {
+			init: func(m *edgeworkers.Mock) {
+				// create
+				retention := tools.IntPtr(0)
+				stubResourceEdgeKVCreatePhase(m, namespaceName, net, retention, groupID, "", "",
+					initStatusOneAttempt, initNoErrorsOneAttempt, noData)
+				// read
+				stubResourceEdgeKVReadPhase(m, namespaceName, net, retention, groupID, "")
+				// read
+				stubResourceEdgeKVReadPhase(m, namespaceName, net, retention, groupID, "")
+			},
+			steps: []resource.TestStep{
+				{
+					Config: loadFixtureString("./testdata/TestResourceEdgeWorkersEdgeKV/basic_retention_0.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "id", id),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "namespace_name", namespaceName),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "network", net),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "group_id", fmt.Sprintf("%d", *groupID)),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "retention_in_seconds", fmt.Sprintf("%d", 0)),
 					),
 				},
 			},

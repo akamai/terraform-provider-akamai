@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -77,23 +77,23 @@ func resourceConfigurationCreate(ctx context.Context, d *schema.ResourceData, m 
 	logger := meta.Log("APPSEC", "resourceConfigurationCreate")
 	logger.Debug("in resourceConfigurationCreate")
 
-	name, err := tools.GetStringValue("name", d)
+	name, err := tf.GetStringValue("name", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	description, err := tools.GetStringValue("description", d)
+	description, err := tf.GetStringValue("description", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	contractID, err := tools.GetStringValue("contract_id", d)
+	contractID, err := tf.GetStringValue("contract_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	groupID, err := tools.GetIntValue("group_id", d)
+	groupID, err := tf.GetIntValue("group_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	hostnameset, err := tools.GetSetValue("host_names", d)
+	hostnameset, err := tf.GetSetValue("host_names", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -101,12 +101,12 @@ func resourceConfigurationCreate(ctx context.Context, d *schema.ResourceData, m 
 	for _, h := range hostnameset.List() {
 		hostnames = append(hostnames, h.(string))
 	}
-	createFromConfigID, err := tools.GetIntValue("create_from_config_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	createFromConfigID, err := tf.GetIntValue("create_from_config_id", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	createFromVersion, err := tools.GetIntValue("create_from_version", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	createFromVersion, err := tf.GetIntValue("create_from_version", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 
@@ -127,7 +127,7 @@ func resourceConfigurationCreate(ctx context.Context, d *schema.ResourceData, m 
 			return diag.FromErr(err)
 		}
 		if err := d.Set("config_id", response.ConfigID); err != nil {
-			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 		}
 
 		d.SetId(fmt.Sprintf("%d", response.ConfigID))
@@ -147,7 +147,7 @@ func resourceConfigurationCreate(ctx context.Context, d *schema.ResourceData, m 
 			return diag.FromErr(err)
 		}
 		if err := d.Set("config_id", response.ConfigID); err != nil {
-			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 		}
 		d.SetId(fmt.Sprintf("%d", response.ConfigID))
 	}
@@ -177,13 +177,13 @@ func resourceConfigurationRead(ctx context.Context, d *schema.ResourceData, m in
 	}
 
 	if err = d.Set("name", configuration.Name); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err = d.Set("description", configuration.Description); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err = d.Set("config_id", configuration.ID); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	version, err := getLatestConfigVersion(ctx, configID, m)
@@ -206,7 +206,7 @@ func resourceConfigurationRead(ctx context.Context, d *schema.ResourceData, m in
 	}
 
 	if err = d.Set("host_names", selectedhostnameset.List()); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	return nil
@@ -223,11 +223,11 @@ func resourceConfigurationUpdate(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 
-	name, err := tools.GetStringValue("name", d)
+	name, err := tf.GetStringValue("name", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	description, err := tools.GetStringValue("description", d)
+	description, err := tf.GetStringValue("description", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -245,11 +245,11 @@ func resourceConfigurationUpdate(ctx context.Context, d *schema.ResourceData, m 
 	}
 
 	if d.HasChange("host_names") {
-		hostnameset, err := tools.GetSetValue("host_names", d)
+		hostnameset, err := tf.GetSetValue("host_names", d)
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		hostnamelist := tools.SetToStringSlice(hostnameset)
+		hostnamelist := tf.SetToStringSlice(hostnameset)
 		hostnames := make([]appsec.Hostname, 0, len(hostnamelist))
 		for _, name := range hostnamelist {
 			hostname := appsec.Hostname{Hostname: name}
@@ -269,7 +269,7 @@ func resourceConfigurationUpdate(ctx context.Context, d *schema.ResourceData, m 
 		_, err = client.UpdateSelectedHostnames(ctx, updateSelectedHostnames)
 		if err != nil {
 			logger.Errorf("calling 'UpdateSelectedHostnames': %s", err.Error())
-			return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 		}
 	}
 

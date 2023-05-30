@@ -7,8 +7,8 @@ import (
 	"io"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/cloudlets"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/cloudlets"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -135,7 +135,7 @@ func parseOMVOptions(omvOptions map[string]interface{}) (*cloudlets.Options, err
 
 	optionFields, ok := options[0].(map[string]interface{})
 	if !ok {
-		return nil, fmt.Errorf("%w: 'options' should be an object", tools.ErrInvalidType)
+		return nil, fmt.Errorf("%w: 'options' should be an object", tf.ErrInvalidType)
 	}
 	option := cloudlets.Options{
 		Value:              getListOfStringsValue(optionFields, "value"),
@@ -167,7 +167,7 @@ func parseObjectMatchValue(criteriaMap map[string]interface{}, handler objectMat
 	if len(rawObjects) != 0 {
 		omv, ok := rawObjects[0].(map[string]interface{})
 		if !ok {
-			return nil, fmt.Errorf("%w: 'object_match_value' should be an object", tools.ErrInvalidType)
+			return nil, fmt.Errorf("%w: 'object_match_value' should be an object", tf.ErrInvalidType)
 		}
 		if omvType, ok := omv["type"]; ok {
 			return handler(omv, omvType.(string))

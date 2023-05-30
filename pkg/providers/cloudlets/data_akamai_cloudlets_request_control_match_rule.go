@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/cloudlets"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/cloudlets"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -55,7 +55,7 @@ func dataSourceCloudletsRequestControlMatchRule() *schema.Resource {
 										Type:        schema.TypeString,
 										Optional:    true,
 										Description: "The type of match used",
-										ValidateDiagFunc: tools.ValidateStringInSlice([]string{"header", "hostname", "path", "extension", "query", "cookie",
+										ValidateDiagFunc: tf.ValidateStringInSlice([]string{"header", "hostname", "path", "extension", "query", "cookie",
 											"deviceCharacteristics", "clientip", "continent", "countrycode", "regioncode", "protocol", "method", "proxy",
 										}),
 									},
@@ -69,7 +69,7 @@ func dataSourceCloudletsRequestControlMatchRule() *schema.Resource {
 										Type:             schema.TypeString,
 										Optional:         true,
 										Description:      "Valid entries for this property: contains, exists, and equals",
-										ValidateDiagFunc: tools.ValidateStringInSlice([]string{"contains", "exists", "equals", ""}),
+										ValidateDiagFunc: tf.ValidateStringInSlice([]string{"contains", "exists", "equals", ""}),
 									},
 									"case_sensitive": {
 										Type:        schema.TypeBool,
@@ -85,7 +85,7 @@ func dataSourceCloudletsRequestControlMatchRule() *schema.Resource {
 										Type:             schema.TypeString,
 										Optional:         true,
 										Description:      "For clientip, continent, countrycode, proxy, and regioncode match types, the part of the request that determines the IP address to use",
-										ValidateDiagFunc: tools.ValidateStringInSlice([]string{"CONNECTING_IP", "XFF_HEADERS", "CONNECTING_IP XFF_HEADERS", ""}),
+										ValidateDiagFunc: tf.ValidateStringInSlice([]string{"CONNECTING_IP", "XFF_HEADERS", "CONNECTING_IP XFF_HEADERS", ""}),
 									},
 									"object_match_value": {
 										Type:        schema.TypeSet,
@@ -105,7 +105,7 @@ func dataSourceCloudletsRequestControlMatchRule() *schema.Resource {
 													Required: true,
 													Description: "The array type, which can be one of the following: object or simple. " +
 														"Use the simple option when adding only an array of string-based values",
-													ValidateDiagFunc: tools.ValidateStringInSlice([]string{"simple", "object"}),
+													ValidateDiagFunc: tf.ValidateStringInSlice([]string{"simple", "object"}),
 												},
 												"name_case_sensitive": {
 													Type:        schema.TypeBool,
@@ -166,7 +166,7 @@ func dataSourceCloudletsRequestControlMatchRule() *schema.Resource {
 							Description: "If set to allow, the request is sent to origin when all conditions are true. " +
 								"If deny, the request is denied when all conditions are true. " +
 								"If denybranded, the request is denied and rerouted according to the configuration of the Request Control behavior",
-							ValidateDiagFunc: tools.ValidateStringInSlice([]string{"allow", "deny", "denybranded"}),
+							ValidateDiagFunc: tf.ValidateStringInSlice([]string{"allow", "deny", "denybranded"}),
 						},
 						"matches_always": {
 							Type:        schema.TypeBool,
@@ -191,7 +191,7 @@ func dataSourceCloudletsRequestControlMatchRule() *schema.Resource {
 }
 
 func dataSourceCloudletsRequestControlMatchRuleRead(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
-	matchRulesList, err := tools.GetListValue("match_rules", d)
+	matchRulesList, err := tf.GetListValue("match_rules", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -214,7 +214,7 @@ func dataSourceCloudletsRequestControlMatchRuleRead(_ context.Context, d *schema
 		return diag.FromErr(err)
 	}
 	if err := d.Set("json", string(jsonBody)); err != nil {
-		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
 
 	hashID, err := getMatchRulesHashID(matchRules)

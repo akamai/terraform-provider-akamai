@@ -10,14 +10,34 @@ data "akamai_property_rules_builder" "default" {
       name        = "test"
       override_id = "test"
     }
-    advanced_override     = "test"
-    comments              = "test"
-    criteria_must_satisfy = "test"
-    uuid                  = "test"
-    template_uuid         = "test"
-    template_link         = "test"
-    criteria_locked       = true
-    criterion {
+    advanced_override = "test"
+    comments          = "test"
+    uuid              = "test"
+    template_uuid     = "test"
+    template_link     = "test"
+
+    behavior {
+      content_characteristics_amd {
+        catalog_size                   = "SMALL"
+        content_type                   = "ULTRA_HD"
+        dash                           = true
+        hds                            = true
+        hls                            = true
+        popularity_distribution        = "UNKNOWN"
+        segment_duration_dash          = "SEGMENT_DURATION_10S"
+        segment_duration_dash_custom   = 100
+        segment_duration_hds           = "SEGMENT_DURATION_2S"
+        segment_duration_hds_custom    = 100
+        segment_duration_hls           = "SEGMENT_DURATION_4S"
+        segment_duration_hls_custom    = 3.14
+        segment_duration_smooth        = "SEGMENT_DURATION_8S"
+        segment_duration_smooth_custom = 3.14
+        segment_size_dash              = "GREATER_THAN_100MB"
+        segment_size_hds               = "TEN_MB_TO_100_MB"
+        segment_size_hls               = "GREATER_THAN_100MB"
+        segment_size_smooth            = "UNKNOWN"
+        smooth                         = true
+      }
     }
     behavior {
       origin {

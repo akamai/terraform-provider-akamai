@@ -6,8 +6,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -21,7 +22,7 @@ func splitID(id string, expectedNum int, example string) ([]string, error) {
 
 // getJSONPayload adds ID to JSON payload for update operations
 func getJSONPayload(d *schema.ResourceData, key string, idName string, idValue interface{}) (json.RawMessage, error) {
-	jsonPayloadString, err := tools.GetStringValue(key, d)
+	jsonPayloadString, err := tf.GetStringValue(key, d)
 	if err != nil {
 		return nil, err
 	}

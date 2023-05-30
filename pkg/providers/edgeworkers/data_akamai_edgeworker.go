@@ -10,10 +10,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/edgeworkers"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/edgeworkers"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -81,7 +81,7 @@ func dataEdgeWorkerRead(ctx context.Context, d *schema.ResourceData, m interface
 	client := inst.Client(meta)
 	logger.Debug("Reading EdgeWorker")
 
-	edgeWorkerID, err := tools.GetIntValue("edgeworker_id", d)
+	edgeWorkerID, err := tf.GetIntValue("edgeworker_id", d)
 	if err != nil {
 		return diag.Errorf("could not get value: %s", err)
 	}
@@ -130,7 +130,7 @@ func dataEdgeWorkerRead(ctx context.Context, d *schema.ResourceData, m interface
 			return diag.Errorf("could not calculate bundle hash:  %s", err)
 		}
 
-		localBundlePath, err := tools.GetStringValue("local_bundle", d)
+		localBundlePath, err := tf.GetStringValue("local_bundle", d)
 		if err != nil {
 			return diag.Errorf("could not get local bundle: %s", err)
 		}
@@ -171,7 +171,7 @@ func dataEdgeWorkerRead(ctx context.Context, d *schema.ResourceData, m interface
 	}
 
 	attrs := createAttrs(edgeWorker, version, bundleContentHash, warnings, allAttrs)
-	if err = tools.SetAttrs(d, attrs); err != nil {
+	if err = tf.SetAttrs(d, attrs); err != nil {
 		return diag.Errorf("could not set attributes: %s:", err)
 	}
 

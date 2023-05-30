@@ -7,9 +7,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 )
 
 func dataSourcePropertiesSearch() *schema.Resource {
@@ -20,13 +20,13 @@ func dataSourcePropertiesSearch() *schema.Resource {
 				Type:             schema.TypeString,
 				Required:         true,
 				Description:      "Key must have one of three values: 'edgeHostname', 'hostname' or 'propertyName'",
-				ValidateDiagFunc: tools.ValidateStringInSlice([]string{papi.SearchKeyEdgeHostname, papi.SearchKeyHostname, papi.SearchKeyPropertyName}),
+				ValidateDiagFunc: tf.ValidateStringInSlice([]string{papi.SearchKeyEdgeHostname, papi.SearchKeyHostname, papi.SearchKeyPropertyName}),
 			},
 			"value": {
 				Type:             schema.TypeString,
 				Required:         true,
 				Description:      "Value of Search",
-				ValidateDiagFunc: tools.IsNotBlank,
+				ValidateDiagFunc: tf.IsNotBlank,
 			},
 			"properties": {
 				Type:        schema.TypeList,
@@ -65,10 +65,10 @@ func dataPropertiesSearchRead(ctx context.Context, d *schema.ResourceData, m int
 	var key, value string
 	var err error
 
-	if key, err = tools.GetStringValue("key", d); err != nil {
+	if key, err = tf.GetStringValue("key", d); err != nil {
 		return diag.FromErr(err)
 	}
-	if value, err = tools.GetStringValue("value", d); err != nil {
+	if value, err = tf.GetStringValue("value", d); err != nil {
 		return diag.FromErr(err)
 	}
 

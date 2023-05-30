@@ -1,5 +1,25 @@
 [validate_edgerc]
-client_secret = G+fuksEzNHDGMVpomTXiQ+M9U3buHv/bM2rhd0uYWTs=
-host = akaa-ay3i6htctb4uuahh-tklu4vvwja5wzytu.luna-dev.akamaiapis.net/
-access_token = akaa-tfr4pm3c2y7o7enc-di4s4ocwatq4voyl
-client_token = akaa-a7j5l53v47dnyfsc-ibtjaor6htazvsqq
+client_secret = client_secret
+host = host.com/
+access_token = access_token
+client_token = client_token
+
+[no_access_token]
+client_secret = client_secret
+host = host.com/
+client_token = client_token
+
+[no_client_secret]
+host = host.com/
+access_token = access_token
+client_token = client_token
+
+[no_client_token]
+client_secret = client_secret
+host = host.com/
+access_token = access_token
+
+[no_host]
+client_secret = client_secret
+access_token = access_token
+client_token = client_token

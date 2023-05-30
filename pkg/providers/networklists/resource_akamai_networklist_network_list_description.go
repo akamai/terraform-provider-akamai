@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/networklists"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/networklists"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -72,20 +72,20 @@ func resourceNetworkListDescriptionUpdate(ctx context.Context, d *schema.Resourc
 
 	updateNetworkListDescriptionRequest := networklists.UpdateNetworkListDescriptionRequest{}
 
-	uniqueID, err := tools.GetStringValue("network_list_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	uniqueID, err := tf.GetStringValue("network_list_id", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 	updateNetworkListDescriptionRequest.UniqueID = uniqueID
 
-	name, err := tools.GetStringValue("name", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	name, err := tf.GetStringValue("name", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 	updateNetworkListDescriptionRequest.Name = name
 
-	description, err := tools.GetStringValue("description", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	description, err := tf.GetStringValue("description", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 	updateNetworkListDescriptionRequest.Description = description

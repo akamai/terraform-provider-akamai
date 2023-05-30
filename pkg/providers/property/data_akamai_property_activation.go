@@ -3,10 +3,10 @@ package property
 import (
 	"context"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/papi"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -28,7 +28,7 @@ var dataSourcePropertyActivationSchema = map[string]*schema.Schema{
 	"version": {
 		Type:             schema.TypeInt,
 		Required:         true,
-		ValidateDiagFunc: tools.IsNotBlank,
+		ValidateDiagFunc: tf.IsNotBlank,
 		Description:      "The activated property version. To always use the latest version, enter this value `{resource}.{resource identifier}.{field name}`",
 	},
 	"network": {
@@ -82,7 +82,7 @@ func dataSourcePropertyActivationRead(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 	if err := d.Set("property_id", propertyID); err != nil {
-		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
 
 	network, err := networkAlias(d)
@@ -103,10 +103,10 @@ func dataSourcePropertyActivationRead(ctx context.Context, d *schema.ResourceDat
 	}
 
 	if err := d.Set("errors", flattenErrorArray(resp.Errors)); err != nil {
-		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("warnings", flattenErrorArray(resp.Warnings)); err != nil {
-		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
 
 	for _, act := range resp.Activations.Items {
@@ -115,19 +115,19 @@ func dataSourcePropertyActivationRead(ctx context.Context, d *schema.ResourceDat
 			logger.Debugf("Found Existing Activation %s version %d", network, version)
 
 			if err := d.Set("status", string(act.Status)); err != nil {
-				return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+				return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 			}
 			if err := d.Set("version", act.PropertyVersion); err != nil {
-				return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+				return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 			}
 			if err := d.Set("activation_id", act.ActivationID); err != nil {
-				return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+				return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 			}
 			if err := d.Set("note", act.Note); err != nil {
-				return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+				return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 			}
 			if err := d.Set("contact", act.NotifyEmails); err != nil {
-				return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+				return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 			}
 
 			d.SetId(act.PropertyID + ":" + string(network))

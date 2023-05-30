@@ -1,0 +1,36 @@
+{
+  "rules": {
+    "name": "firstsecond",
+    "nameWithSpace": "first second",
+    "enabled": true,
+    "enabledString": "true",
+    "enabledString2": "true ",
+    "tricky": "wow",
+    "trickyBro": true,
+    "secondName": "first jr",
+    "someNumber": 25,
+    "simpleJSON": {
+      "allowSampling": true,
+      "cookies": {
+        "type": "all"
+      },
+      "customHeaders": {
+        "type": "all"
+      }
+    },
+    "nestedJSON": {
+      "andJSON": {
+        "allowSampling": true,
+        "cookies": {
+          "type": "all"
+        },
+        "customHeaders": {
+          "type": "all"
+        }
+      },
+      "enabled": true,
+      "name": "firstsecond",
+      "someNumber": 25
+    }
+  }
+}

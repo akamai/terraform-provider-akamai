@@ -7,9 +7,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -50,7 +50,7 @@ func dataSourcePropertyIncludes() *schema.Resource {
 			"type": {
 				Type:             schema.TypeString,
 				Optional:         true,
-				ValidateDiagFunc: tools.ValidateStringInSlice([]string{string(papi.IncludeTypeMicroServices), string(papi.IncludeTypeCommonSettings)}),
+				ValidateDiagFunc: tf.ValidateStringInSlice([]string{string(papi.IncludeTypeMicroServices), string(papi.IncludeTypeCommonSettings)}),
 				Description:      "Specifies the type of the include, either `MICROSERVICES` or `COMMON_SETTINGS`. Use this field for filtering",
 			},
 			"includes": {
@@ -181,17 +181,17 @@ func sendListIncludesRequest(ctx context.Context, client papi.PAPI, attrs *prope
 }
 
 func getPropertyIncludesAttrs(d *schema.ResourceData) (*propertyIncludesAttrs, error) {
-	contractID, err := tools.GetStringValue("contract_id", d)
+	contractID, err := tf.GetStringValue("contract_id", d)
 	if err != nil {
 		return nil, fmt.Errorf("could not get `contract_id` attribute: %s", err)
 	}
-	groupID, err := tools.GetStringValue("group_id", d)
+	groupID, err := tf.GetStringValue("group_id", d)
 	if err != nil {
 		return nil, fmt.Errorf("could not get `group_id` attribute: %s", err)
 	}
 
-	parentPropertyList, err := tools.GetListValue("parent_property", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	parentPropertyList, err := tf.GetListValue("parent_property", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return nil, fmt.Errorf("could not get `parent_property` attribute: %s", err)
 	}
 
@@ -216,8 +216,8 @@ func getPropertyIncludesAttrs(d *schema.ResourceData) (*propertyIncludesAttrs, e
 		}
 	}
 
-	includeType, err := tools.GetStringValue("type", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	includeType, err := tf.GetStringValue("type", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return nil, fmt.Errorf("could not get `type` attribute: %s", err)
 	}
 

@@ -5,10 +5,10 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/iam"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/iam"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -60,15 +60,15 @@ func resourceIAMRoleCreate(ctx context.Context, d *schema.ResourceData, m interf
 	client := inst.Client(meta)
 	logger.Debug("Creating Role")
 
-	name, err := tools.GetStringValue("name", d)
+	name, err := tf.GetStringValue("name", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	description, err := tools.GetStringValue("description", d)
+	description, err := tf.GetStringValue("description", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	grantedRoles, err := tools.GetListValue("granted_roles", d)
+	grantedRoles, err := tf.GetListValue("granted_roles", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -99,7 +99,7 @@ func resourceIAMRoleRead(ctx context.Context, d *schema.ResourceData, m interfac
 
 	roleID, err := strconv.Atoi(d.Id())
 	if err != nil {
-		return diag.Errorf("%s: %s", tools.ErrInvalidType, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrInvalidType, err.Error())
 	}
 	role, err := client.GetRole(ctx, iam.GetRoleRequest{
 		ID:           int64(roleID),
@@ -119,7 +119,7 @@ func resourceIAMRoleRead(ctx context.Context, d *schema.ResourceData, m interfac
 	attrs["description"] = role.RoleDescription
 	attrs["type"] = role.RoleType
 	attrs["granted_roles"] = grantedRolesIDs
-	if err = tools.SetAttrs(d, attrs); err != nil {
+	if err = tf.SetAttrs(d, attrs); err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -138,18 +138,18 @@ func resourceIAMRoleUpdate(ctx context.Context, d *schema.ResourceData, m interf
 	roleID := d.Id()
 	roleIDReq, err := strconv.Atoi(roleID)
 	if err != nil {
-		return diag.Errorf("%s: %s", tools.ErrInvalidType, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrInvalidType, err.Error())
 	}
 
-	name, err := tools.GetStringValue("name", d)
+	name, err := tf.GetStringValue("name", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	description, err := tools.GetStringValue("description", d)
+	description, err := tf.GetStringValue("description", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	grantedRoles, err := tools.GetListValue("granted_roles", d)
+	grantedRoles, err := tf.GetListValue("granted_roles", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -185,7 +185,7 @@ func resourceIAMRoleDelete(ctx context.Context, d *schema.ResourceData, m interf
 	roleID := d.Id()
 	roleIDReq, err := strconv.Atoi(roleID)
 	if err != nil {
-		return diag.Errorf("%s: %s", tools.ErrInvalidType, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrInvalidType, err.Error())
 	}
 
 	err = client.DeleteRole(ctx, iam.DeleteRoleRequest{

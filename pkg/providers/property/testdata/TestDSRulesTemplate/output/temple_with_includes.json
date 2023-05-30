@@ -1,0 +1,12 @@
+{
+  "rules": {
+    "name": "simpleName",
+    "children": [
+      {
+        "rules": {
+          "name": "simpleName"
+        }
+      }
+    ]
+  }
+}

@@ -3,9 +3,8 @@ package property
 import (
 	"context"
 
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
-
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -30,7 +29,7 @@ func resourcePropertyVariables() *schema.Resource {
 							Optional: true,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
-									"name":        {Type: schema.TypeString, Required: true, ValidateDiagFunc: tools.IsNotBlank},
+									"name":        {Type: schema.TypeString, Required: true, ValidateDiagFunc: tf.IsNotBlank},
 									"hidden":      {Type: schema.TypeBool, Required: true},
 									"sensitive":   {Type: schema.TypeBool, Required: true},
 									"description": {Type: schema.TypeString, Optional: true},

@@ -6,9 +6,9 @@ import (
 	"errors"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -43,8 +43,8 @@ func dataSourceSiemDefinitionsRead(ctx context.Context, d *schema.ResourceData, 
 
 	getSiemDefinitions := appsec.GetSiemDefinitionsRequest{}
 
-	siemDdefinitionName, err := tools.GetStringValue("siem_definition_name", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	siemDdefinitionName, err := tf.GetStringValue("siem_definition_name", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 	getSiemDefinitions.SiemDefinitionName = siemDdefinitionName
@@ -63,7 +63,7 @@ func dataSourceSiemDefinitionsRead(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 	if err := d.Set("output_text", outputtext); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	jsonBody, err := json.Marshal(siemdefinitions)
@@ -72,7 +72,7 @@ func dataSourceSiemDefinitionsRead(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	if err := d.Set("json", string(jsonBody)); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	if len(siemdefinitions.SiemDefinitions) > 0 {

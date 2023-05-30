@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/edgeworkers"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/edgeworkers"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -59,65 +59,65 @@ var (
 
 	oneActivationData = testDataForEdgeWorkersActivation{
 		EdgeWorkerID: 1,
-		Network:      "STAGING",
+		Network:      stagingNetwork,
 		Activations: []edgeworkers.Activation{
 			{
 				ActivationID: 11,
-				Network:      "STAGING",
+				Network:      stagingNetwork,
 				Version:      "1.0",
-				Status:       "COMPLETE",
+				Status:       activationStatusComplete,
 			},
 		},
 	}
 
 	threeActivationsData = testDataForEdgeWorkersActivation{
 		EdgeWorkerID: 2,
-		Network:      "PRODUCTION",
+		Network:      productionNetwork,
 		Activations: []edgeworkers.Activation{
 			{
 				ActivationID: 21,
-				Network:      "PRODUCTION",
+				Network:      productionNetwork,
 				Version:      "1.0",
 				CreatedTime:  "2022-04-25T12:30:06Z",
-				Status:       "COMPLETE",
+				Status:       activationStatusComplete,
 			},
 			{
 				ActivationID: 22,
-				Network:      "PRODUCTION",
+				Network:      productionNetwork,
 				Version:      "2.0",
 				CreatedTime:  "2022-08-25T12:30:06Z",
-				Status:       "COMPLETE",
+				Status:       activationStatusComplete,
 			},
 			{
 				ActivationID: 23,
-				Network:      "PRODUCTION",
+				Network:      productionNetwork,
 				Version:      "3.0",
 				CreatedTime:  "2022-05-25T12:30:06Z",
-				Status:       "COMPLETE",
+				Status:       activationStatusComplete,
 			},
 		},
 	}
 
 	noActivationsData = testDataForEdgeWorkersActivation{
 		EdgeWorkerID: 3,
-		Network:      "PRODUCTION",
+		Network:      productionNetwork,
 		Activations:  []edgeworkers.Activation{},
 	}
 
 	wrongStatusData = testDataForEdgeWorkersActivation{
 		EdgeWorkerID: 4,
-		Network:      "STAGING",
+		Network:      stagingNetwork,
 		Activations: []edgeworkers.Activation{
 			{
 				ActivationID: 21,
-				Network:      "STAGING",
+				Network:      stagingNetwork,
 				Version:      "1.0",
 				CreatedTime:  "2022-05-25T12:30:06Z",
 				Status:       "ABORTED",
 			},
 			{
 				ActivationID: 22,
-				Network:      "STAGING",
+				Network:      stagingNetwork,
 				Version:      "2.0",
 				CreatedTime:  "2022-07-25T12:30:06Z",
 				Status:       "EXPIRED",
@@ -215,7 +215,7 @@ func checkAttrsForEdgeWorkerActivation(data testDataForEdgeWorkersActivation) re
 	}
 	activations := sortActivationsByDate(filterActivationsByNetwork(data.Activations, data.Network))
 	latestActivation := &activations[0]
-	if latestActivation.Status != "COMPLETE" {
+	if latestActivation.Status != activationStatusComplete {
 		return checkAttrsForEmptyEdgeWorkerActivation(data)
 	}
 	return resource.ComposeAggregateTestCheckFunc(

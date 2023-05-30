@@ -6,10 +6,9 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
-
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -40,7 +39,7 @@ func dataSourceAuthoritiesSetRead(ctx context.Context, d *schema.ResourceData, m
 		session.WithContextLog(logger),
 	)
 
-	contract, err := tools.GetStringValue("contract", d)
+	contract, err := tf.GetStringValue("contract", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -62,7 +61,7 @@ func dataSourceAuthoritiesSetRead(ctx context.Context, d *schema.ResourceData, m
 
 	sort.Strings(ns)
 	if err := d.Set("authorities", ns); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 	}
 	d.SetId(contractID)
 	return diags

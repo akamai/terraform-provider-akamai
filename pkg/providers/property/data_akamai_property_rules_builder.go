@@ -7,9 +7,9 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/providers/property/ruleformats"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/providers/property/ruleformats"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -67,7 +67,7 @@ func dataSourcePropertyRulesBuilderRead(_ context.Context, d *schema.ResourceDat
 		return diag.Errorf("setting rule_format in schema %s", err)
 	}
 
-	sum := md5.Sum([]byte(JSON))
+	sum := md5.Sum(JSON)
 	hexsum := hex.EncodeToString(sum[:])
 	d.SetId(hexsum)
 	return nil

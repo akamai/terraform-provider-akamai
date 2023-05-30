@@ -12,11 +12,12 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/hapi"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/config"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/hapi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/config"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/tools"
 )
 
 type (
@@ -136,9 +137,9 @@ func (p *provider) HapiClient(meta akamai.OperationMeta) hapi.HAPI {
 func getPAPIV1Service(d *schema.ResourceData) error {
 	var inlineConfig *schema.Set
 	for _, key := range []string{"property", "config"} {
-		opt, err := tools.GetSetValue(key, d)
+		opt, err := tf.GetSetValue(key, d)
 		if err != nil {
-			if !errors.Is(err, tools.ErrNotFound) {
+			if !errors.Is(err, tf.ErrNotFound) {
 				return err
 			}
 			continue
@@ -149,12 +150,12 @@ func getPAPIV1Service(d *schema.ResourceData) error {
 		inlineConfig = opt
 	}
 	if err := d.Set("config", inlineConfig); err != nil {
-		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 	}
-	for _, s := range tools.FindStringValues(d, "property_section", "papi_section", "config_section") {
+	for _, s := range tf.FindStringValues(d, "property_section", "papi_section", "config_section") {
 		if s != "default" && s != "" {
 			if err := d.Set("config_section", s); err != nil {
-				return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+				return fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 			}
 			break
 		}

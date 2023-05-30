@@ -5,13 +5,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/papi"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/tools"
 	"github.com/apex/log"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -94,7 +96,7 @@ var akamaiPropertyActivationSchema = map[string]*schema.Schema{
 	"version": {
 		Type:             schema.TypeInt,
 		Required:         true,
-		ValidateDiagFunc: tools.IsNotBlank,
+		ValidateDiagFunc: tf.IsNotBlank,
 	},
 	"network": {
 		Type:     schema.TypeString,
@@ -120,41 +122,7 @@ var akamaiPropertyActivationSchema = map[string]*schema.Schema{
 		Optional:    true,
 		MaxItems:    1,
 		Description: "Provides an audit record when activating on a production network",
-		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
-				"noncompliance_reason": {
-					Type:             schema.TypeString,
-					Required:         true,
-					Description:      fmt.Sprintf("Specifies the reason for the expedited activation on production network. Valid noncompliance reasons are: %s", strings.Join(validComplianceRecords, ", ")),
-					ValidateDiagFunc: tools.ValidateStringInSlice(validComplianceRecords),
-				},
-				"ticket_id": {
-					Type:        schema.TypeString,
-					Optional:    true,
-					Description: "Identifies the ticket that describes the need for the activation",
-				},
-				"other_noncompliance_reason": {
-					Type:        schema.TypeString,
-					Optional:    true,
-					Description: "Describes the reason why the activation must occur immediately, out of compliance with the standard procedure",
-				},
-				"customer_email": {
-					Type:        schema.TypeString,
-					Optional:    true,
-					Description: "Identifies the customer",
-				},
-				"peer_reviewed_by": {
-					Type:        schema.TypeString,
-					Optional:    true,
-					Description: "Identifies person who has independently approved the activation request",
-				},
-				"unit_tested": {
-					Type:        schema.TypeBool,
-					Optional:    true,
-					Description: "Whether the metadata to activate has been fully tested",
-				},
-			},
-		},
+		Elem:        complianceRecordSchema,
 	},
 }
 
@@ -192,7 +160,7 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 	if err := d.Set("property_id", propertyID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 	}
 
 	network, err := networkAlias(d)
@@ -225,8 +193,8 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 		return diags
 	}
 
-	complianceRecord, err := tools.GetListValue("compliance_record", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	complianceRecord, err := tf.GetListValue("compliance_record", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 
@@ -245,7 +213,7 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 
 	// we create a new property activation in case of no previous activation, or deleted activation
 	if activation == nil || activation.ActivationType == papi.ActivationTypeDeactivate {
-		notifySet, err := tools.GetSetValue("contact", d)
+		notifySet, err := tf.GetSetValue("contact", d)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -254,8 +222,8 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 			notify = append(notify, cast.ToString(contact))
 		}
 
-		note, err := tools.GetStringValue("note", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		note, err := tf.GetStringValue("note", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return diag.FromErr(err)
 		}
 
@@ -334,7 +302,7 @@ func resourcePropertyActivationDelete(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 	if err := d.Set("property_id", propertyID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 	}
 
 	version, err := resolveVersion(ctx, d, client, propertyID, network)
@@ -342,8 +310,8 @@ func resourcePropertyActivationDelete(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 
-	complianceRecord, err := tools.GetListValue("compliance_record", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	complianceRecord, err := tf.GetListValue("compliance_record", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 
@@ -364,7 +332,7 @@ func resourcePropertyActivationDelete(ctx context.Context, d *schema.ResourceDat
 	}
 
 	if activation == nil || activation.ActivationType == papi.ActivationTypeActivate {
-		notifySet, err := tools.GetSetValue("contact", d)
+		notifySet, err := tf.GetSetValue("contact", d)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -372,8 +340,8 @@ func resourcePropertyActivationDelete(ctx context.Context, d *schema.ResourceDat
 		for _, contact := range notifySet.List() {
 			notify = append(notify, cast.ToString(contact))
 		}
-		note, err := tools.GetStringValue("note", d)
-		if err != nil && !errors.Is(err, tools.ErrNotFound) {
+		note, err := tf.GetStringValue("note", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return diag.FromErr(err)
 		}
 
@@ -409,7 +377,7 @@ func resourcePropertyActivationDelete(ctx context.Context, d *schema.ResourceDat
 		activation = act.Activation
 
 		if err := d.Set("activation_id", activation.ActivationID); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 		}
 
 		if err = setErrorsAndWarnings(d, flattenErrorArray(act.Errors), flattenErrorArray(act.Warnings)); err != nil {
@@ -426,7 +394,7 @@ func resourcePropertyActivationDelete(ctx context.Context, d *schema.ResourceDat
 			return diag.FromErr(fmt.Errorf("deactivation request failed in downstream system"))
 		}
 		select {
-		case <-time.After(tools.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
+		case <-time.After(tf.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
 			act, err := client.GetActivation(ctx, papi.GetActivationRequest{
 				ActivationID: activation.ActivationID,
 				PropertyID:   propertyID,
@@ -476,19 +444,13 @@ func resourcePropertyActivationRead(ctx context.Context, d *schema.ResourceData,
 		return diag.FromErr(err)
 	}
 	if err := d.Set("property_id", propertyID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 	}
 
 	network, err := networkAlias(d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-
-	version, err := resolveVersion(ctx, d, client, propertyID, network)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
 	resp, err := client.GetActivations(ctx, papi.GetActivationsRequest{
 		PropertyID: propertyID,
 	})
@@ -497,43 +459,65 @@ func resourcePropertyActivationRead(ctx context.Context, d *schema.ResourceData,
 	}
 
 	if err := d.Set("errors", flattenErrorArray(resp.Errors)); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 	}
 	if err := d.Set("warnings", flattenErrorArray(resp.Warnings)); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 	}
 
-	for _, act := range resp.Activations.Items {
-
-		if act.Network == network && act.PropertyVersion == version {
-			logger.Debugf("Found Existing Activation %s version %d", network, version)
-
-			if err := d.Set("status", string(act.Status)); err != nil {
-				return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-			}
-			if err := d.Set("version", act.PropertyVersion); err != nil {
-				return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-			}
-
-			d.SetId(act.PropertyID + ":" + string(network))
-
-			if err := d.Set("version", version); err != nil {
-				return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-			}
-			if err := d.Set("activation_id", act.ActivationID); err != nil {
-				return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
-			}
-
-			break
-		}
+	activation, err := findLatestActive(resp.Activations.Items, network)
+	if err != nil && !errors.Is(err, errNoActiveVersionFound) {
+		return diag.Errorf("unexpected error searching for latest activation: %s", err)
 	}
+	if errors.Is(err, errNoActiveVersionFound) {
+		d.SetId("")
+		return nil
+	}
+
+	attrs := map[string]interface{}{
+		"status":        string(activation.Status),
+		"version":       activation.PropertyVersion,
+		"network":       network,
+		"activation_id": activation.ActivationID,
+	}
+	if err = tf.SetAttrs(d, attrs); err != nil {
+		return diag.FromErr(err)
+	}
+	d.SetId(activation.PropertyID + ":" + string(network))
 
 	return nil
 }
 
+var errNoActiveVersionFound = errors.New("activation not found")
+
+func findLatestActive(activations []*papi.Activation, network papi.ActivationNetwork) (*papi.Activation, error) {
+	if len(activations) == 0 {
+		return nil, errNoActiveVersionFound
+	}
+
+	sort.Slice(activations, func(i, j int) bool {
+		return activations[i].UpdateDate > activations[j].UpdateDate
+	})
+
+	for _, activation := range activations {
+		if activation.ActivationType == papi.ActivationTypeActivate &&
+			activation.Network == network &&
+			activation.Status == papi.ActivationStatusActive {
+			return activation, nil
+		}
+		if activation.ActivationType == papi.ActivationTypeDeactivate &&
+			activation.Network == network &&
+			(activation.Status == papi.ActivationStatusActive) {
+			return nil, errNoActiveVersionFound
+		}
+	}
+
+	return nil, errNoActiveVersionFound
+}
+
 func resolveVersion(ctx context.Context, d *schema.ResourceData, client papi.PAPI, propertyID string, network papi.ActivationNetwork) (int, error) {
 
-	version, err := tools.GetIntValue("version", d)
+	version, err := tf.GetIntValue("version", d)
 	if err != nil {
 		var resp *papi.GetPropertyVersionsResponse
 		// use the latest version for the property
@@ -567,7 +551,7 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 	if err := d.Set("property_id", propertyID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 	}
 
 	network, err := networkAlias(d)
@@ -580,8 +564,8 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 
-	complianceRecord, err := tools.GetListValue("compliance_record", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	complianceRecord, err := tf.GetListValue("compliance_record", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 
@@ -589,8 +573,8 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 	acknowledgeRuleWarnings := d.Get("auto_acknowledge_rule_warnings").(bool)
 
 	// Assigns a log message to the activation request
-	note, err := tools.GetStringValue("note", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	note, err := tf.GetStringValue("note", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 
@@ -630,7 +614,7 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 	}
 
 	if propertyActivation == nil || versionStatus == papi.VersionStatusDeactivated {
-		notifySet, err := tools.GetSetValue("contact", d)
+		notifySet, err := tf.GetSetValue("contact", d)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -705,41 +689,50 @@ func addPropertyComplianceRecord(complianceRecord []interface{}, activatePAPIReq
 	if len(complianceRecord) == 0 {
 		return activatePAPIRequest
 	}
-
 	crMap := complianceRecord[0].(map[string]interface{})
-	noncomplianceReason := crMap["noncompliance_reason"].(string)
-	ticketID := crMap["ticket_id"].(string)
-	otherNoncomplianceReason := crMap["other_noncompliance_reason"].(string)
-	customerEmail := crMap["customer_email"].(string)
-	peerReviewedBy := crMap["peer_reviewed_by"].(string)
-	unitTested := crMap["unit_tested"].(bool)
 
-	switch noncomplianceReason {
-	case papi.NoncomplianceReasonOther:
-		complianceRecordOther := &papi.ComplianceRecordOther{
-			TicketID:                 ticketID,
-			OtherNoncomplianceReason: otherNoncomplianceReason,
-		}
-		activatePAPIRequest.Activation.ComplianceRecord = complianceRecordOther
-	case papi.NoncomplianceReasonNone:
-		complianceRecordNone := &papi.ComplianceRecordNone{
-			CustomerEmail:  customerEmail,
-			PeerReviewedBy: peerReviewedBy,
-			TicketID:       ticketID,
-			UnitTested:     unitTested,
+	if len(crMap["noncompliance_reason_none"].([]interface{})) != 0 {
+		complianceRecordNone := &papi.ComplianceRecordNone{}
+		if crMap["noncompliance_reason_none"].([]interface{})[0] != nil {
+			crNoneMap := crMap["noncompliance_reason_none"].([]interface{})[0].(map[string]interface{})
+			complianceRecordNone = &papi.ComplianceRecordNone{
+				CustomerEmail:  crNoneMap["customer_email"].(string),
+				PeerReviewedBy: crNoneMap["peer_reviewed_by"].(string),
+				TicketID:       crNoneMap["ticket_id"].(string),
+				UnitTested:     crNoneMap["unit_tested"].(bool),
+			}
 		}
 		activatePAPIRequest.Activation.ComplianceRecord = complianceRecordNone
-	case papi.NoncomplianceReasonNoProductionTraffic:
-		complianceRecordNoProductionTraffic := &papi.ComplianceRecordNoProductionTraffic{
-			TicketID: ticketID,
+	} else if len(crMap["noncompliance_reason_other"].([]interface{})) != 0 {
+		complianceRecordOther := &papi.ComplianceRecordOther{}
+		if crMap["noncompliance_reason_other"].([]interface{})[0] != nil {
+			crOtherMap := crMap["noncompliance_reason_other"].([]interface{})[0].(map[string]interface{})
+			complianceRecordOther = &papi.ComplianceRecordOther{
+				TicketID:                 crOtherMap["ticket_id"].(string),
+				OtherNoncomplianceReason: crOtherMap["other_noncompliance_reason"].(string),
+			}
+		}
+		activatePAPIRequest.Activation.ComplianceRecord = complianceRecordOther
+	} else if len(crMap["noncompliance_reason_no_production_traffic"].([]interface{})) != 0 {
+		complianceRecordNoProductionTraffic := &papi.ComplianceRecordNoProductionTraffic{}
+		if crMap["noncompliance_reason_no_production_traffic"].([]interface{})[0] != nil {
+			crNoProdTrafficMap := crMap["noncompliance_reason_no_production_traffic"].([]interface{})[0].(map[string]interface{})
+			complianceRecordNoProductionTraffic = &papi.ComplianceRecordNoProductionTraffic{
+				TicketID: crNoProdTrafficMap["ticket_id"].(string),
+			}
 		}
 		activatePAPIRequest.Activation.ComplianceRecord = complianceRecordNoProductionTraffic
-	case papi.NoncomplianceReasonEmergency:
-		complianceRecordEmergency := &papi.ComplianceRecordEmergency{
-			TicketID: ticketID,
+	} else if len(crMap["noncompliance_reason_emergency"].([]interface{})) != 0 {
+		complianceRecordEmergency := &papi.ComplianceRecordEmergency{}
+		if crMap["noncompliance_reason_emergency"].([]interface{})[0] != nil {
+			crEmergencyMap := crMap["noncompliance_reason_emergency"].([]interface{})[0].(map[string]interface{})
+			complianceRecordEmergency = &papi.ComplianceRecordEmergency{
+				TicketID: crEmergencyMap["ticket_id"].(string),
+			}
 		}
 		activatePAPIRequest.Activation.ComplianceRecord = complianceRecordEmergency
 	}
+
 	return activatePAPIRequest
 }
 
@@ -764,7 +757,7 @@ func checkRuleTreeErrorsAndWarnings(rules *papi.GetRuleTreeResponse, d *schema.R
 	var diags diag.Diagnostics
 	if len(rules.Errors) > 0 {
 		if err := d.Set("rule_errors", papiErrorsToList(rules.Errors)); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error()))
+			return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 		}
 		msg, err := json.MarshalIndent(papiErrorsToList(rules.Errors), "", "\t")
 		if err != nil {
@@ -785,19 +778,19 @@ func checkRuleTreeErrorsAndWarnings(rules *papi.GetRuleTreeResponse, d *schema.R
 
 func setErrorsAndWarnings(d *schema.ResourceData, errors, warnings string) error {
 	if err := d.Set("errors", errors); err != nil {
-		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("warnings", warnings); err != nil {
-		return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+		return fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 	}
 	return nil
 }
 
 func resolvePropertyID(d *schema.ResourceData) (string, error) {
-	propertyID, err := tools.GetStringValue("property_id", d)
-	if errors.Is(err, tools.ErrNotFound) {
+	propertyID, err := tf.GetStringValue("property_id", d)
+	if errors.Is(err, tf.ErrNotFound) {
 		// use legacy property as fallback option
-		propertyID, err = tools.GetStringValue("property", d)
+		propertyID, err = tf.GetStringValue("property", d)
 	}
 	return tools.AddPrefix(propertyID, "prp_"), err
 }
@@ -864,9 +857,9 @@ func lookupActivation(ctx context.Context, client papi.PAPI, query lookupActivat
 }
 
 func networkAlias(d *schema.ResourceData) (papi.ActivationNetwork, error) {
-	network, err := tools.GetStringValue("network", d)
+	network, err := tf.GetStringValue("network", d)
 	if err != nil {
-		if errors.Is(err, tools.ErrNotFound) {
+		if errors.Is(err, tf.ErrNotFound) {
 			network = "STAGING"
 		} else {
 			return "", err
@@ -890,7 +883,7 @@ func pollActivation(ctx context.Context, client papi.PAPI, activation *papi.Acti
 			return nil, diag.FromErr(fmt.Errorf("activation request failed in downstream system"))
 		}
 		select {
-		case <-time.After(tools.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
+		case <-time.After(tf.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
 			act, err := client.GetActivation(ctx, papi.GetActivationRequest{
 				ActivationID: activation.ActivationID,
 				PropertyID:   propertyID,

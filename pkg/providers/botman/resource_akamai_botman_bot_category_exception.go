@@ -8,9 +8,9 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/botman"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/botman"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -54,7 +54,7 @@ func resourceBotCategoryExceptionCreate(ctx context.Context, d *schema.ResourceD
 	logger := meta.Log("botman", "resourceBotCategoryExceptionCreate")
 	logger.Debugf("in resourceBotCategoryExceptionCreate")
 
-	configID, err := tools.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -64,12 +64,12 @@ func resourceBotCategoryExceptionCreate(ctx context.Context, d *schema.ResourceD
 		return diag.FromErr(err)
 	}
 
-	securityPolicyID, err := tools.GetStringValue("security_policy_id", d)
+	securityPolicyID, err := tf.GetStringValue("security_policy_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	jsonPayloadString, err := tools.GetStringValue("bot_category_exception", d)
+	jsonPayloadString, err := tf.GetStringValue("bot_category_exception", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -137,8 +137,8 @@ func resourceBotCategoryExceptionRead(ctx context.Context, d *schema.ResourceDat
 		"security_policy_id":     securityPolicyID,
 		"bot_category_exception": string(jsonBody),
 	}
-	if err = tools.SetAttrs(d, fields); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+	if err = tf.SetAttrs(d, fields); err != nil {
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	return nil
@@ -167,7 +167,7 @@ func resourceBotCategoryExceptionUpdate(ctx context.Context, d *schema.ResourceD
 
 	securityPolicyID := iDParts[1]
 
-	jsonPayloadString, err := tools.GetStringValue("bot_category_exception", d)
+	jsonPayloadString, err := tf.GetStringValue("bot_category_exception", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}

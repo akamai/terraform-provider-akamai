@@ -8,7 +8,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/appsec"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/appsec"
 	"github.com/jedib0t/go-pretty/v6/table"
 )
 
@@ -318,6 +318,7 @@ func InitTemplates(otm map[string]*OutputTemplate) {
 	otm["EvalDS"] = &OutputTemplate{TemplateName: "evalDS", TableTitle: "Current|Eval Status|Evaluation Mode|Mode", TemplateType: "TABULAR", TemplateString: "{{.Current}}|{{.Eval}}|{{.Evaluating}}|{{.Mode}}"}
 	otm["malwareContentTypesDS"] = &OutputTemplate{TemplateName: "malwareContentTypesDS", TableTitle: "Malware Content Types", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .ContentTypes}}{{if $index}},{{end}}{{.}}{{end}}"}
 	otm["malwarePolicies"] = &OutputTemplate{TemplateName: "malwarePolicies", TableTitle: "MalwarePolicyID|Name", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .MalwarePolicies}}{{if $index}},{{end}}{{.MalwarePolicyID}}|{{.Name}}{{end}}"}
+	otm["malwarePolicy"] = &OutputTemplate{TemplateName: "malwarePolicy", TableTitle: "MalwarePolicyID|Name|AllowListID|BlockListID|LogFilename", TemplateType: "TABULAR", TemplateString: "{{.MalwarePolicyID}}|{{.Name}}|{{.AllowListID}}|{{.BlockListID}}|{{.LogFilename}}"}
 	otm["malwarePolicyActions"] = &OutputTemplate{TemplateName: "malwarePolicyActions", TableTitle: "ID|Action|UnscannedAction", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .MalwarePolicyActions}}{{if $index}},{{end}}{{.MalwarePolicyID}}| {{.Action}}|{{.UnscannedAction}}{{end}}"}
 	otm["IPGeoDS"] = &OutputTemplate{TemplateName: "IP/Geo Firewall", TableTitle: "Block", TemplateType: "TABULAR", TemplateString: "{{.Block}}"}
 

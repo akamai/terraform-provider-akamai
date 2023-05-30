@@ -6,8 +6,8 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/require"
 	"github.com/tj/assert"
@@ -28,6 +28,28 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 					},
 					{
 						Config: loadFixtureString("testdata/TestDSRulesTemplate/template_vars_map_with_data.tf"),
+						Check: resource.ComposeAggregateTestCheckFunc(
+							resource.TestCheckResourceAttr("data.akamai_property_rules_template.test", "json", loadFixtureString("testdata/TestDSRulesTemplate/rules/rules_out.json")),
+						),
+					},
+				},
+			})
+		})
+	})
+	t.Run("valid nested template with vars map and non-standard property-snippets folder", func(t *testing.T) {
+		client := papi.Mock{}
+		useClient(&client, nil, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProviderFactories: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString("testdata/TestDSRulesTemplate/template_vars_map_ns.tf"),
+						Check: resource.ComposeAggregateTestCheckFunc(
+							resource.TestCheckResourceAttr("data.akamai_property_rules_template.test", "json", loadFixtureString("testdata/TestDSRulesTemplate/rules/rules_out.json")),
+						),
+					},
+					{
+						Config: loadFixtureString("testdata/TestDSRulesTemplate/template_vars_map_with_data_ns.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("data.akamai_property_rules_template.test", "json", loadFixtureString("testdata/TestDSRulesTemplate/rules/rules_out.json")),
 						),
@@ -152,7 +174,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 				Steps: []resource.TestStep{
 					{
 						Config:      loadFixtureString("testdata/TestDSRulesTemplate/template_var_not_found.tf"),
-						ExpectError: regexp.MustCompile(`executing "snippets/sub/another-template.json" at <.options>: map has no entry for key "options"`),
+						ExpectError: regexp.MustCompile(`error replacing variable at ".+": could not find variable ".+"`),
 					},
 				},
 			})
@@ -194,7 +216,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 				Steps: []resource.TestStep{
 					{
 						Config:      loadFixtureString("testdata/TestDSRulesTemplate/template_invalid_json.tf"),
-						ExpectError: regexp.MustCompile(`snippets file should be under 'property-snippets' folder with .json extension and valid json data. Invalid file: testdata/TestDSRulesTemplate/property-snippets/template_invalid_json.json`),
+						ExpectError: regexp.MustCompile(`snippets file should be with .json extension and valid json data. Invalid file: testdata/TestDSRulesTemplate/property-snippets/template_invalid_json.json`),
 					},
 				},
 			})
@@ -223,7 +245,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 				Steps: []resource.TestStep{
 					{
 						Config:      loadFixtureString("testdata/TestDSRulesTemplate/template_file_is_empty.tf"),
-						ExpectError: regexp.MustCompile(`Error: snippets file should be under 'property-snippets' folder with .json extension and valid json data. Invalid file: testdata/TestDSRulesTemplate/property-snippets/empty_json.json`),
+						ExpectError: regexp.MustCompile(`Error: snippets file should be with .json extension and valid json data. Invalid file: testdata/TestDSRulesTemplate/property-snippets/empty_json.json`),
 					},
 				},
 			})
@@ -238,7 +260,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 				Steps: []resource.TestStep{
 					{
 						Config:      loadFixtureString("testdata/TestDSRulesTemplate/template_invalid_snippets_folder_json.tf"),
-						ExpectError: regexp.MustCompile(`Error: snippets file should be under 'property-snippets' folder with .json extension and valid json data. Invalid file: testdata/TestDSRulesTemplate/output/template_invalid_json.json`),
+						ExpectError: regexp.MustCompile(`Error: snippets file should be with .json extension and valid json data. Invalid file: testdata/TestDSRulesTemplate/output/template_invalid_json.json`),
 					},
 				},
 			})
@@ -253,7 +275,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 				Steps: []resource.TestStep{
 					{
 						Config:      loadFixtureString("testdata/TestDSRulesTemplate/template_invalid_snippets_only_one_folder_json.tf"),
-						ExpectError: regexp.MustCompile(`Error: snippets file should be under 'property-snippets' folder with .json extension and valid json data. Invalid file: property-snippet/template_invalid_json.json`),
+						ExpectError: regexp.MustCompile(`Error: snippets file should be with .json extension and valid json data. Invalid file: property-snippet/template_invalid_json.json`),
 					},
 				},
 			})
@@ -392,43 +414,43 @@ func TestConvertToTypedMap(t *testing.T) {
 		},
 		"invalid values slice": {
 			givenVars: []interface{}{"test"},
-			withError: tools.ErrInvalidType,
+			withError: tf.ErrInvalidType,
 		},
 		"missing 'name' in map": {
 			givenVars: []interface{}{
 				map[string]interface{}{"type": "string", "value": "test"},
 			},
-			withError: tools.ErrNotFound,
+			withError: tf.ErrNotFound,
 		},
 		"missing 'type' in map": {
 			givenVars: []interface{}{
 				map[string]interface{}{"name": "testString", "value": "test"},
 			},
-			withError: tools.ErrNotFound,
+			withError: tf.ErrNotFound,
 		},
 		"missing 'value' in map": {
 			givenVars: []interface{}{
 				map[string]interface{}{"type": "string", "name": "test"},
 			},
-			withError: tools.ErrNotFound,
+			withError: tf.ErrNotFound,
 		},
 		"'name' is of invalid type": {
 			givenVars: []interface{}{
 				map[string]interface{}{"name": 123, "type": "string", "value": "test"},
 			},
-			withError: tools.ErrInvalidType,
+			withError: tf.ErrInvalidType,
 		},
 		"'type' is of invalid type": {
 			givenVars: []interface{}{
 				map[string]interface{}{"name": "test", "type": 123, "value": "test"},
 			},
-			withError: tools.ErrInvalidType,
+			withError: tf.ErrInvalidType,
 		},
 		"'value' is of invalid type": {
 			givenVars: []interface{}{
 				map[string]interface{}{"name": "test", "type": "string", "value": 123},
 			},
-			withError: tools.ErrInvalidType,
+			withError: tf.ErrInvalidType,
 		},
 		"jsonBlock has invalid json": {
 			givenVars: []interface{}{
@@ -440,13 +462,13 @@ func TestConvertToTypedMap(t *testing.T) {
 			givenVars: []interface{}{
 				map[string]interface{}{"name": "test", "type": "number", "value": "abc"},
 			},
-			withError: tools.ErrInvalidType,
+			withError: tf.ErrInvalidType,
 		},
 		"bool has invalid json": {
 			givenVars: []interface{}{
 				map[string]interface{}{"name": "test", "type": "bool", "value": "abc"},
 			},
-			withError: tools.ErrInvalidType,
+			withError: tf.ErrInvalidType,
 		},
 		"unknown type passed": {
 			givenVars: []interface{}{
@@ -497,7 +519,7 @@ func TestFlattenTemplate(t *testing.T) {
 					"template_dir":  "testdata/TestDSRulesTemplate/rules/property-snippets",
 				},
 			},
-			withError: tools.ErrInvalidType,
+			withError: tf.ErrInvalidType,
 		},
 		"missing 'template_data' in list": {
 			givenList: []interface{}{
@@ -505,7 +527,7 @@ func TestFlattenTemplate(t *testing.T) {
 					"template_dir": "testdata/TestDSRulesTemplate/rules/property-snippets/",
 				},
 			},
-			withError: tools.ErrNotFound,
+			withError: tf.ErrNotFound,
 		},
 		"missing 'template_dir' in list": {
 			givenList: []interface{}{
@@ -513,7 +535,7 @@ func TestFlattenTemplate(t *testing.T) {
 					"template_data": loadFixtureString("testdata/TestDSRulesTemplate/rules/property-snippets/template_in.json"),
 				},
 			},
-			withError: tools.ErrNotFound,
+			withError: tf.ErrNotFound,
 		},
 		"invalid 'template_data' in list": {
 			givenList: []interface{}{
@@ -522,7 +544,7 @@ func TestFlattenTemplate(t *testing.T) {
 					"template_dir":  "testdata/TestDSRulesTemplate/rules/property-snippets/",
 				},
 			},
-			withError: tools.ErrInvalidType,
+			withError: tf.ErrInvalidType,
 		},
 		"invalid 'template_dir' in list": {
 			givenList: []interface{}{
@@ -531,7 +553,7 @@ func TestFlattenTemplate(t *testing.T) {
 					"template_dir":  true,
 				},
 			},
-			withError: tools.ErrInvalidType,
+			withError: tf.ErrInvalidType,
 		},
 	}
 
@@ -556,10 +578,12 @@ func TestConvertToTemplate(t *testing.T) {
 		givenFile    string
 		expectedFile string
 		withError    error
+		varMaps      map[string]interface{}
 	}{
 		"valid conversion": {
 			givenFile:    "template_in.json",
 			expectedFile: "template_out.json",
+			varMaps:      map[string]interface{}{"name": `"templateName"`},
 		},
 		"plain JSON passed": {
 			givenFile:    "plain_json.json",
@@ -572,11 +596,12 @@ func TestConvertToTemplate(t *testing.T) {
 		"multiple vars": {
 			givenFile:    "/snippets/some-template.json",
 			expectedFile: "/property-snippets/some-template-out.json",
+			varMaps:      map[string]interface{}{"enabled": true, "criteriaMustSatisfy": `"all"`},
 		},
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			res, err := convertToTemplate(fmt.Sprintf("%s/%s", templates, test.givenFile))
+			res, err := convertToTemplate(fmt.Sprintf("%s/%s", templates, test.givenFile), test.varMaps)
 			if test.withError != nil {
 				assert.True(t, errors.Is(err, test.withError), "want: %s; got: %s", test.withError, err)
 				return
@@ -595,14 +620,17 @@ func TestStringToTemplate(t *testing.T) {
 		givenFile    string
 		expectedFile string
 		withError    error
+		varMaps      map[string]interface{}
 	}{
 		"valid conversion": {
 			givenFile:    "template_in.json",
 			expectedFile: "template_out.json",
+			varMaps:      map[string]interface{}{"name": `"templateName"`},
 		},
 		"multiple includes in array": {
 			givenFile:    "template_in_with_array.json",
 			expectedFile: "template_out_with_array.json",
+			varMaps:      map[string]interface{}{"name": `"templateName"`},
 		},
 		"plain JSON passed": {
 			givenFile:    "plain_json.json",
@@ -612,7 +640,7 @@ func TestStringToTemplate(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			givenString := loadFixtureString(fmt.Sprintf("%s/%s", templates, test.givenFile))
-			res, err := stringToTemplate(givenString)
+			res, err := stringToTemplate(givenString, test.varMaps, "main")
 			fmt.Println(res)
 			if test.withError != nil {
 				assert.True(t, errors.Is(err, test.withError), "want: %s; got: %s", test.withError, err)
@@ -621,6 +649,88 @@ func TestStringToTemplate(t *testing.T) {
 			require.NoError(t, err)
 			expected := loadFixtureString(fmt.Sprintf("%s/%s", templatesOut, test.expectedFile))
 			assert.Equal(t, expected, res)
+		})
+	}
+}
+
+func TestVariablesNesting(t *testing.T) {
+	tests := map[string]struct {
+		configPath   string
+		expectedPath string
+	}{
+		"variable is build of other variables": {
+			configPath:   "testdata/TestDSRulesTemplate/template_variables_build.tf",
+			expectedPath: "testdata/TestDSRulesTemplate/output/template_simple.json",
+		},
+		"simple include with variables": {
+			configPath:   "testdata/TestDSRulesTemplate/template_include_with_variables.tf",
+			expectedPath: "testdata/TestDSRulesTemplate/output/temple_with_includes.json",
+		},
+		"multiple includes on the same level": {
+			configPath:   "testdata/TestDSRulesTemplate/template_nested_includes.tf",
+			expectedPath: "testdata/TestDSRulesTemplate/output/template_with_nested_includes.json",
+		},
+		"json list": {
+			configPath:   "testdata/TestDSRulesTemplate/template_with_list.tf",
+			expectedPath: "testdata/TestDSRulesTemplate/output/template_with_list.json",
+		},
+		"variable in include": {
+			configPath:   "testdata/TestDSRulesTemplate/template_variable_building_in_include.tf",
+			expectedPath: "testdata/TestDSRulesTemplate/output/template_include_with_variables.json",
+		},
+		"include child has child": {
+			configPath:   "testdata/TestDSRulesTemplate/template_child_with_childs.tf",
+			expectedPath: "testdata/TestDSRulesTemplate/output/template_with_includes_has_includes.json",
+		},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			client := papi.Mock{}
+			useClient(&client, nil, func() {
+				resource.UnitTest(t, resource.TestCase{
+					ProviderFactories: testAccProviders,
+					Steps: []resource.TestStep{
+						{
+							Config: loadFixtureString(test.configPath),
+							Check: resource.ComposeAggregateTestCheckFunc(
+								resource.TestCheckResourceAttr("data.akamai_property_rules_template.test", "json", loadFixtureString(test.expectedPath)),
+							),
+						},
+					},
+				})
+			})
+		})
+	}
+}
+
+func TestVariablesAndIncludesNestingCyclicDependency(t *testing.T) {
+	tests := map[string]struct {
+		configPath string
+		withError  string
+	}{
+		"simple variable cyclic dependency": {
+			configPath: "testdata/TestDSRulesTemplate/template_simple_cyclic_dependency.tf",
+			withError:  "hit cyclic dependency ending at .+",
+		},
+		"tricky variable cyclic dependency": {
+			configPath: "testdata/TestDSRulesTemplate/template_tricky_cyclic_dependency.tf",
+			withError:  "hit cyclic dependency ending at .+",
+		},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			client := papi.Mock{}
+			useClient(&client, nil, func() {
+				resource.UnitTest(t, resource.TestCase{
+					ProviderFactories: testAccProviders,
+					Steps: []resource.TestStep{
+						{
+							Config:      loadFixtureString(test.configPath),
+							ExpectError: regexp.MustCompile(test.withError),
+						},
+					},
+				})
+			})
 		})
 	}
 }

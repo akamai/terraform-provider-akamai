@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -71,7 +71,7 @@ func resourceSiemSettingsCreate(ctx context.Context, d *schema.ResourceData, m i
 	logger := meta.Log("APPSEC", "resourceSiemSettingsCreate")
 	logger.Debugf("in resourceSiemSettingsCreate")
 
-	configID, err := tools.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -79,16 +79,16 @@ func resourceSiemSettingsCreate(ctx context.Context, d *schema.ResourceData, m i
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	enableSiem, err := tools.GetBoolValue("enable_siem", d)
+	enableSiem, err := tf.GetBoolValue("enable_siem", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	enableForAllPolicies, err := tools.GetBoolValue("enable_for_all_policies", d)
+	enableForAllPolicies, err := tf.GetBoolValue("enable_for_all_policies", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	securityPolicyIDs, err := tools.GetSetValue("security_policy_ids", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	securityPolicyIDs, err := tf.GetSetValue("security_policy_ids", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 	spIDs := make([]string, 0, len(securityPolicyIDs.List()))
@@ -96,11 +96,11 @@ func resourceSiemSettingsCreate(ctx context.Context, d *schema.ResourceData, m i
 		spIDs = append(spIDs, h.(string))
 
 	}
-	enableBotmanSiem, err := tools.GetBoolValue("enable_botman_siem", d)
+	enableBotmanSiem, err := tf.GetBoolValue("enable_botman_siem", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	siemID, err := tools.GetIntValue("siem_id", d)
+	siemID, err := tf.GetIntValue("siem_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -153,22 +153,22 @@ func resourceSiemSettingsRead(ctx context.Context, d *schema.ResourceData, m int
 	}
 
 	if err := d.Set("config_id", getSiemSettings.ConfigID); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("enable_siem", siemsettings.EnableSiem); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("enable_for_all_policies", siemsettings.EnableForAllPolicies); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("security_policy_ids", siemsettings.FirewallPolicyIds); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("enable_botman_siem", siemsettings.EnabledBotmanSiemEvents); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("siem_id", siemsettings.SiemDefinitionID); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	return nil
@@ -188,16 +188,16 @@ func resourceSiemSettingsUpdate(ctx context.Context, d *schema.ResourceData, m i
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	enableSiem, err := tools.GetBoolValue("enable_siem", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	enableSiem, err := tf.GetBoolValue("enable_siem", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	enableForAllPolicies, err := tools.GetBoolValue("enable_for_all_policies", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	enableForAllPolicies, err := tf.GetBoolValue("enable_for_all_policies", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	securityPolicyIDs, err := tools.GetSetValue("security_policy_ids", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	securityPolicyIDs, err := tf.GetSetValue("security_policy_ids", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 	spIDs := make([]string, 0, len(securityPolicyIDs.List()))
@@ -205,12 +205,12 @@ func resourceSiemSettingsUpdate(ctx context.Context, d *schema.ResourceData, m i
 		spIDs = append(spIDs, h.(string))
 
 	}
-	enableBotmanSiem, err := tools.GetBoolValue("enable_botman_siem", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	enableBotmanSiem, err := tf.GetBoolValue("enable_botman_siem", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	siemID, err := tools.GetIntValue("siem_id", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	siemID, err := tf.GetIntValue("siem_id", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 

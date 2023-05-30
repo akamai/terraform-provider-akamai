@@ -6,10 +6,9 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/botman"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
-
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/botman"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -53,7 +52,7 @@ func resourceCustomDefinedBotCreate(ctx context.Context, d *schema.ResourceData,
 	logger := meta.Log("botman", "resourceCustomDefinedBotCreate")
 	logger.Debugf("in resourceCustomDefinedBotCreate")
 
-	configID, err := tools.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -63,7 +62,7 @@ func resourceCustomDefinedBotCreate(ctx context.Context, d *schema.ResourceData,
 		return diag.FromErr(err)
 	}
 
-	jsonPayloadString, err := tools.GetStringValue("custom_defined_bot", d)
+	jsonPayloadString, err := tf.GetStringValue("custom_defined_bot", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -132,8 +131,8 @@ func resourceCustomDefinedBotRead(ctx context.Context, d *schema.ResourceData, m
 		"bot_id":             botID,
 		"custom_defined_bot": string(jsonBody),
 	}
-	if err := tools.SetAttrs(d, fields); err != nil {
-		return diag.Errorf("%s: %s", tools.ErrValueSet, err.Error())
+	if err := tf.SetAttrs(d, fields); err != nil {
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	return nil

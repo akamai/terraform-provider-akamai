@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/edgeworkers"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/edgeworkers"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -55,15 +55,15 @@ func dataEdgeKVGroupItems(ctx context.Context, d *schema.ResourceData, m interfa
 	client := inst.Client(meta)
 	logger.Debug("Reading EdgeKV group items")
 
-	namespace, err := tools.GetStringValue("namespace_name", d)
+	namespace, err := tf.GetStringValue("namespace_name", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	network, err := tools.GetStringValue("network", d)
+	network, err := tf.GetStringValue("network", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	groupName, err := tools.GetStringValue("group_name", d)
+	groupName, err := tf.GetStringValue("group_name", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}

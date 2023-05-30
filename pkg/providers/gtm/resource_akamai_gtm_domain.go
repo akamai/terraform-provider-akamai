@@ -10,11 +10,10 @@ import (
 
 	"github.com/hashicorp/go-cty/cty"
 
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
-
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/gtm"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/session"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/gtm"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -37,13 +36,13 @@ func resourceGTMv1Domain() *schema.Resource {
 				Type:             schema.TypeString,
 				Optional:         true,
 				Default:          "",
-				DiffSuppressFunc: tools.FieldPrefixSuppress("ctr_"),
+				DiffSuppressFunc: tf.FieldPrefixSuppress("ctr_"),
 			},
 			"group": {
 				Type:             schema.TypeString,
 				Optional:         true,
 				Default:          "",
-				DiffSuppressFunc: tools.FieldPrefixSuppress("grp_"),
+				DiffSuppressFunc: tf.FieldPrefixSuppress("grp_"),
 			},
 			"wait_on_complete": {
 				Type:     schema.TypeBool,
@@ -187,7 +186,7 @@ func resourceGTMv1Domain() *schema.Resource {
 func GetQueryArgs(d *schema.ResourceData) (map[string]string, error) {
 
 	qArgs := make(map[string]string)
-	contractName, err := tools.GetStringValue("contract", d)
+	contractName, err := tf.GetStringValue("contract", d)
 	if err != nil {
 		return nil, fmt.Errorf("contract not present in resource data: %v", err.Error())
 	}
@@ -195,7 +194,7 @@ func GetQueryArgs(d *schema.ResourceData) (map[string]string, error) {
 	if contract != "" && len(contract) > 0 {
 		qArgs["contractId"] = contract
 	}
-	groupName, err := tools.GetStringValue("group", d)
+	groupName, err := tf.GetStringValue("group", d)
 	if err != nil {
 		return nil, fmt.Errorf("group not present in resource data: %v", err.Error())
 	}
@@ -217,7 +216,7 @@ func resourceGTMv1DomainCreate(ctx context.Context, d *schema.ResourceData, m in
 		session.WithContextLog(logger),
 	)
 
-	dname, err := tools.GetStringValue("name", d)
+	dname, err := tf.GetStringValue("name", d)
 	if err != nil {
 		logger.Errorf("Domain name not found in ResourceData")
 		return diag.FromErr(err)
@@ -279,7 +278,7 @@ func resourceGTMv1DomainCreate(ctx context.Context, d *schema.ResourceData, m in
 			})
 		}
 
-		waitOnComplete, err := tools.GetBoolValue("wait_on_complete", d)
+		waitOnComplete, err := tf.GetBoolValue("wait_on_complete", d)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -392,7 +391,7 @@ func resourceGTMv1DomainUpdate(ctx context.Context, d *schema.ResourceData, m in
 		})
 	}
 
-	waitOnComplete, err := tools.GetBoolValue("wait_on_complete", d)
+	waitOnComplete, err := tf.GetBoolValue("wait_on_complete", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -482,7 +481,7 @@ func resourceGTMv1DomainDelete(ctx context.Context, d *schema.ResourceData, m in
 			})
 		}
 
-		waitOnComplete, err := tools.GetBoolValue("wait_on_complete", d)
+		waitOnComplete, err := tf.GetBoolValue("wait_on_complete", d)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -535,7 +534,7 @@ func validateDomainType(v interface{}, _ cty.Path) diag.Diagnostics {
 // Create and populate a new domain object from resource data
 func populateNewDomainObject(ctx context.Context, meta akamai.OperationMeta, d *schema.ResourceData, m interface{}) (*gtm.Domain, error) {
 
-	name, _ := tools.GetStringValue("name", d)
+	name, _ := tf.GetStringValue("name", d)
 	domObj := inst.Client(meta).NewDomain(ctx, name, d.Get("type").(string))
 	err := populateDomainObject(d, domObj, m)
 
@@ -549,29 +548,28 @@ func populateDomainObject(d *schema.ResourceData, dom *gtm.Domain, m interface{}
 	meta := akamai.Meta(m)
 	logger := meta.Log("Akamai GTM", "populateDomainObject")
 
-	domainName, err := tools.GetStringValue("name", d)
+	domainName, err := tf.GetStringValue("name", d)
 	if err != nil {
 		// Should be caught earlier ...
 		logger.Warnf("Domain name not set: %s", err.Error())
 	}
 
 	if domainName != dom.Name {
-		dom.Name = domainName
 		logger.Errorf("Domain [%s] state and GTM names inconsistent!", dom.Name)
-		return fmt.Errorf("Domain Object could not be populated: %v", err.Error())
+		return fmt.Errorf("once the domain is created, updating its name is not allowed")
 	}
 
-	vstr, err := tools.GetStringValue("type", d)
+	vstr, err := tf.GetStringValue("type", d)
 	if err == nil {
 		if vstr != dom.Type {
 			dom.Type = vstr
 		}
 	}
-	vfl32, err := tools.GetFloat32Value("default_unreachable_threshold", d)
+	vfl32, err := tf.GetFloat32Value("default_unreachable_threshold", d)
 	if err == nil {
 		dom.DefaultUnreachableThreshold = vfl32
 	}
-	vlist, err := tools.GetSetValue("email_notification_list", d)
+	vlist, err := tf.GetSetValue("email_notification_list", d)
 	if err == nil {
 		ls := make([]string, vlist.Len())
 		for i, sl := range vlist.List() {
@@ -581,139 +579,139 @@ func populateDomainObject(d *schema.ResourceData, dom *gtm.Domain, m interface{}
 	} else if d.HasChange("email_notification_list") {
 		dom.EmailNotificationList = make([]string, 0)
 	}
-	vfl32, err = tools.GetFloat32Value("min_pingable_region_fraction", d)
+	vfl32, err = tf.GetFloat32Value("min_pingable_region_fraction", d)
 	if err == nil {
 		dom.MinPingableRegionFraction = vfl32
 	}
-	vint, err := tools.GetIntValue("default_timeout_penalty", d)
+	vint, err := tf.GetIntValue("default_timeout_penalty", d)
 	if err == nil || d.HasChange("default_timeout_penalty") {
 		dom.DefaultTimeoutPenalty = vint
 	}
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		logger.Errorf("populateResourceObject() default_timeout_penalty failed: %v", err.Error())
 		return fmt.Errorf("Domain Object could not be populated: %v", err.Error())
 	}
 
-	vint, err = tools.GetIntValue("servermonitor_liveness_count", d)
+	vint, err = tf.GetIntValue("servermonitor_liveness_count", d)
 	if err == nil {
 		dom.ServermonitorLivenessCount = vint
 	}
-	vstr, err = tools.GetStringValue("round_robin_prefix", d)
+	vstr, err = tf.GetStringValue("round_robin_prefix", d)
 	if err == nil {
 		dom.RoundRobinPrefix = vstr
 	}
-	vint, err = tools.GetIntValue("servermonitor_load_count", d)
+	vint, err = tf.GetIntValue("servermonitor_load_count", d)
 	if err == nil {
 		dom.ServermonitorLoadCount = vint
 	}
-	vint, err = tools.GetIntValue("ping_interval", d)
+	vint, err = tf.GetIntValue("ping_interval", d)
 	if err == nil {
 		dom.PingInterval = vint
 	}
-	vint, err = tools.GetIntValue("max_ttl", d)
+	vint, err = tf.GetIntValue("max_ttl", d)
 	if err == nil {
 		dom.MaxTTL = int64(vint)
 	}
-	vfloat, err := tools.GetFloat64Value("load_imbalance_percentage", d)
+	vfloat, err := tf.GetFloat64Value("load_imbalance_percentage", d)
 	if err == nil {
 		dom.LoadImbalancePercentage = vfloat
 	}
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		logger.Errorf("populateResourceObject() load_imbalance_percentage failed: %v", err.Error())
 		return fmt.Errorf("Domain Object could not be populated: %v", err.Error())
 	}
 
-	vfloat, err = tools.GetFloat64Value("default_health_max", d)
+	vfloat, err = tf.GetFloat64Value("default_health_max", d)
 	if err == nil {
 		dom.DefaultHealthMax = vfloat
 	}
-	vint, err = tools.GetIntValue("map_update_interval", d)
+	vint, err = tf.GetIntValue("map_update_interval", d)
 	if err == nil {
 		dom.MapUpdateInterval = vint
 	}
-	vint, err = tools.GetIntValue("max_properties", d)
+	vint, err = tf.GetIntValue("max_properties", d)
 	if err == nil {
 		dom.MaxProperties = vint
 	}
-	vint, err = tools.GetIntValue("max_resources", d)
+	vint, err = tf.GetIntValue("max_resources", d)
 	if err == nil {
 		dom.MaxResources = vint
 	}
-	vstr, err = tools.GetStringValue("default_ssl_client_private_key", d)
+	vstr, err = tf.GetStringValue("default_ssl_client_private_key", d)
 	if err == nil || d.HasChange("default_ssl_client_private_key") {
 		dom.DefaultSslClientPrivateKey = vstr
 	}
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		logger.Errorf("populateResourceObject() default_ssl_client_private_key failed: %v", err.Error())
 		return fmt.Errorf("Domain Object could not be populated: %v", err.Error())
 	}
 
-	vint, err = tools.GetIntValue("default_error_penalty", d)
+	vint, err = tf.GetIntValue("default_error_penalty", d)
 	if err == nil || d.HasChange("default_error_penalty") {
 		dom.DefaultErrorPenalty = vint
 	}
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		logger.Errorf("populateResourceObject() default_error_penalty failed: %v", err.Error())
 		return fmt.Errorf("Domain Object could not be populated: %v", err.Error())
 	}
 
-	vfloat, err = tools.GetFloat64Value("max_test_timeout", d)
+	vfloat, err = tf.GetFloat64Value("max_test_timeout", d)
 	if err == nil {
 		dom.MaxTestTimeout = vfloat
 	}
-	if cnameCoalescingEnabled, err := tools.GetBoolValue("cname_coalescing_enabled", d); err == nil {
+	if cnameCoalescingEnabled, err := tf.GetBoolValue("cname_coalescing_enabled", d); err == nil {
 		dom.CnameCoalescingEnabled = cnameCoalescingEnabled
 	}
-	vfloat, err = tools.GetFloat64Value("default_health_multiplier", d)
+	vfloat, err = tf.GetFloat64Value("default_health_multiplier", d)
 	if err == nil {
 		dom.DefaultHealthMultiplier = vfloat
 	}
-	vstr, err = tools.GetStringValue("servermonitor_pool", d)
+	vstr, err = tf.GetStringValue("servermonitor_pool", d)
 	if err == nil {
 		dom.ServermonitorPool = vstr
 	}
-	if loadFeedback, err := tools.GetBoolValue("load_feedback", d); err == nil {
+	if loadFeedback, err := tf.GetBoolValue("load_feedback", d); err == nil {
 		dom.LoadFeedback = loadFeedback
 	}
-	vint, err = tools.GetIntValue("min_ttl", d)
+	vint, err = tf.GetIntValue("min_ttl", d)
 	if err == nil {
 		dom.MinTTL = int64(vint)
 	}
-	vint, err = tools.GetIntValue("default_max_unreachable_penalty", d)
+	vint, err = tf.GetIntValue("default_max_unreachable_penalty", d)
 	if err == nil {
 		dom.DefaultMaxUnreachablePenalty = vint
 	}
-	vfloat, err = tools.GetFloat64Value("default_health_threshold", d)
+	vfloat, err = tf.GetFloat64Value("default_health_threshold", d)
 	if err == nil {
 		dom.DefaultHealthThreshold = vfloat
 	}
-	vstr, err = tools.GetStringValue("comment", d)
+	vstr, err = tf.GetStringValue("comment", d)
 	if err == nil || d.HasChange("comment") {
 		dom.ModificationComments = vstr
 	}
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		logger.Errorf("populateResourceObject() comment failed: %v", err.Error())
 		return fmt.Errorf("Domain Object could not be populated: %v", err.Error())
 	}
 
-	vint, err = tools.GetIntValue("min_test_interval", d)
+	vint, err = tf.GetIntValue("min_test_interval", d)
 	if err == nil {
 		dom.MinTestInterval = vint
 	}
-	vint, err = tools.GetIntValue("ping_packet_size", d)
+	vint, err = tf.GetIntValue("ping_packet_size", d)
 	if err == nil {
 		dom.PingPacketSize = vint
 	}
-	vstr, err = tools.GetStringValue("default_ssl_client_certificate", d)
+	vstr, err = tf.GetStringValue("default_ssl_client_certificate", d)
 	if err == nil || d.HasChange("default_ssl_client_certificate") {
 		dom.DefaultSslClientCertificate = vstr
 	}
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		logger.Errorf("populateResourceObject() default_ssl_client_certificate failed: %v", err.Error())
 		return fmt.Errorf("Domain Object could not be populated: %v", err.Error())
 	}
 
-	if vbool, err := tools.GetBoolValue("end_user_mapping_enabled", d); err == nil {
+	if vbool, err := tf.GetBoolValue("end_user_mapping_enabled", d); err == nil {
 		dom.EndUserMappingEnabled = vbool
 	}
 

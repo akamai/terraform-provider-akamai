@@ -1,0 +1,22 @@
+{
+  "rules": {
+    "name": "nested-pattern",
+    "children": [
+      {
+        "rules": {
+          "name": "include1"
+        }
+      },
+      {
+        "rules": {
+          "name": "include2"
+        }
+      },
+      {
+        "rules": {
+          "name": "include2"
+        }
+      }
+    ]
+  }
+}

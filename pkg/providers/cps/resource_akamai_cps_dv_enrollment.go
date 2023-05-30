@@ -8,11 +8,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/cps"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v5/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/akamai"
-	cpstools "github.com/akamai/terraform-provider-akamai/v3/pkg/providers/cps/tools"
-	"github.com/akamai/terraform-provider-akamai/v3/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/cps"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	cpstools "github.com/akamai/terraform-provider-akamai/v4/pkg/providers/cps/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -130,7 +130,7 @@ func resourceCPSDVEnrollment() *schema.Resource {
 				Type:             schema.TypeString,
 				ForceNew:         true,
 				Required:         true,
-				DiffSuppressFunc: tools.FieldPrefixSuppress("ctr_"),
+				DiffSuppressFunc: tf.FieldPrefixSuppress("ctr_"),
 				Description:      "Contract ID for which enrollment is retrieved",
 			},
 			"certificate_type": {
@@ -212,10 +212,10 @@ func resourceCPSDVEnrollment() *schema.Resource {
 					}
 				}
 				if err := diff.SetNew("http_challenges", schema.NewSet(cpstools.HashFromChallengesMap, domainsToValidate)); err != nil {
-					return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+					return fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 				}
 				if err := diff.SetNew("dns_challenges", schema.NewSet(cpstools.HashFromChallengesMap, domainsToValidate)); err != nil {
-					return fmt.Errorf("%w: %s", tools.ErrValueSet, err.Error())
+					return fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 				}
 				return nil
 			}),
@@ -239,15 +239,15 @@ func resourceCPSDVEnrollmentCreate(ctx context.Context, d *schema.ResourceData, 
 		RA:              "lets-encrypt",
 	}
 	if err := d.Set("certificate_type", enrollment.CertificateType); err != nil {
-		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("validation_type", enrollment.ValidationType); err != nil {
-		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("registration_authority", enrollment.RA); err != nil {
-		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
-	adminContactSet, err := tools.GetSetValue("admin_contact", d)
+	adminContactSet, err := tf.GetSetValue("admin_contact", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -256,7 +256,7 @@ func resourceCPSDVEnrollmentCreate(ctx context.Context, d *schema.ResourceData, 
 		return diag.Errorf("'admin_contact' - %s", err)
 	}
 	enrollment.AdminContact = adminContact
-	techContactSet, err := tools.GetSetValue("tech_contact", d)
+	techContactSet, err := tf.GetSetValue("tech_contact", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -266,8 +266,8 @@ func resourceCPSDVEnrollmentCreate(ctx context.Context, d *schema.ResourceData, 
 	}
 	enrollment.TechContact = techContact
 
-	certificateChainType, err := tools.GetStringValue("certificate_chain_type", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	certificateChainType, err := tf.GetStringValue("certificate_chain_type", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 	enrollment.CertificateChainType = certificateChainType
@@ -286,7 +286,7 @@ func resourceCPSDVEnrollmentCreate(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 	enrollment.NetworkConfiguration = networkConfig
-	signatureAlgorithm, err := tools.GetStringValue("signature_algorithm", d)
+	signatureAlgorithm, err := tf.GetStringValue("signature_algorithm", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -298,11 +298,11 @@ func resourceCPSDVEnrollmentCreate(ctx context.Context, d *schema.ResourceData, 
 	}
 	enrollment.Org = organization
 
-	contractID, err := tools.GetStringValue("contract_id", d)
+	contractID, err := tf.GetStringValue("contract_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	allowDuplicateCN, err := tools.GetBoolValue("allow_duplicate_common_name", d)
+	allowDuplicateCN, err := tf.GetBoolValue("allow_duplicate_common_name", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -318,8 +318,8 @@ func resourceCPSDVEnrollmentCreate(ctx context.Context, d *schema.ResourceData, 
 	}
 	d.SetId(strconv.Itoa(res.ID))
 
-	acknowledgeWarnings, err := tools.GetBoolValue("acknowledge_pre_verification_warnings", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	acknowledgeWarnings, err := tf.GetBoolValue("acknowledge_pre_verification_warnings", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 	if err = waitForVerification(ctx, logger, client, res.ID, acknowledgeWarnings, nil); err != nil {
@@ -358,7 +358,7 @@ func resourceCPSDVEnrollmentRead(ctx context.Context, d *schema.ResourceData, m 
 	attrs["validation_type"] = enrollment.ValidationType
 	attrs["registration_authority"] = enrollment.RA
 
-	err = tools.SetAttrs(d, attrs)
+	err = tf.SetAttrs(d, attrs)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -369,10 +369,10 @@ func resourceCPSDVEnrollmentRead(ctx context.Context, d *schema.ResourceData, m 
 		if errors.Is(err, cpstools.ErrNoPendingChanges) {
 			logger.Debugf("No pending changes found on the enrollment")
 			if err := d.Set("http_challenges", httpChallenges); err != nil {
-				return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+				return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 			}
 			if err := d.Set("dns_challenges", schema.NewSet(cpstools.HashFromChallengesMap, dnsChallenges)); err != nil {
-				return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+				return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 			}
 			return nil
 		}
@@ -388,10 +388,10 @@ func resourceCPSDVEnrollmentRead(ctx context.Context, d *schema.ResourceData, m 
 	}
 	if len(status.AllowedInput) < 1 || status.AllowedInput[0].Type != "lets-encrypt-challenges" {
 		if err := d.Set("http_challenges", httpChallenges); err != nil {
-			return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+			return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 		}
 		if err := d.Set("dns_challenges", schema.NewSet(cpstools.HashFromChallengesMap, dnsChallenges)); err != nil {
-			return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+			return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 		}
 		return nil
 	}
@@ -428,10 +428,10 @@ func resourceCPSDVEnrollmentRead(ctx context.Context, d *schema.ResourceData, m 
 		}
 	}
 	if err := d.Set("http_challenges", httpChallenges); err != nil {
-		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("dns_challenges", schema.NewSet(cpstools.HashFromChallengesMap, dnsChallenges)); err != nil {
-		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
 	return nil
 }
@@ -446,8 +446,8 @@ func resourceCPSDVEnrollmentUpdate(ctx context.Context, d *schema.ResourceData, 
 	client := inst.Client(meta)
 	logger.Debug("Updating enrollment")
 
-	acknowledgeWarnings, err := tools.GetBoolValue("acknowledge_pre_verification_warnings", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	acknowledgeWarnings, err := tf.GetBoolValue("acknowledge_pre_verification_warnings", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 	enrollmentID, err := strconv.Atoi(d.Id())
@@ -476,16 +476,16 @@ func resourceCPSDVEnrollmentUpdate(ctx context.Context, d *schema.ResourceData, 
 		RA:              "lets-encrypt",
 	}
 	if err := d.Set("certificate_type", "san"); err != nil {
-		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("validation_type", "dv"); err != nil {
-		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("registration_authority", "lets-encrypt"); err != nil {
-		return diag.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
 
-	adminContactSet, err := tools.GetSetValue("admin_contact", d)
+	adminContactSet, err := tf.GetSetValue("admin_contact", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -494,7 +494,7 @@ func resourceCPSDVEnrollmentUpdate(ctx context.Context, d *schema.ResourceData, 
 		return diag.Errorf("'admin_contact' - %s", err)
 	}
 	enrollment.AdminContact = adminContact
-	techContactSet, err := tools.GetSetValue("tech_contact", d)
+	techContactSet, err := tf.GetSetValue("tech_contact", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -504,8 +504,8 @@ func resourceCPSDVEnrollmentUpdate(ctx context.Context, d *schema.ResourceData, 
 	}
 	enrollment.TechContact = techContact
 
-	certificateChainType, err := tools.GetStringValue("certificate_chain_type", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	certificateChainType, err := tf.GetStringValue("certificate_chain_type", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 	enrollment.CertificateChainType = certificateChainType
@@ -524,8 +524,8 @@ func resourceCPSDVEnrollmentUpdate(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 	enrollment.NetworkConfiguration = networkConfig
-	signatureAlgorithm, err := tools.GetStringValue("signature_algorithm", d)
-	if err != nil && !errors.Is(err, tools.ErrNotFound) {
+	signatureAlgorithm, err := tf.GetStringValue("signature_algorithm", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 	enrollment.SignatureAlgorithm = signatureAlgorithm
@@ -592,13 +592,13 @@ func resourceCPSDVEnrollmentImport(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	if err := d.Set("allow_duplicate_common_name", false); err != nil {
-		return nil, fmt.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+		return nil, fmt.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("acknowledge_pre_verification_warnings", false); err != nil {
-		return nil, fmt.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+		return nil, fmt.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("contract_id", contractID); err != nil {
-		return nil, fmt.Errorf("%v: %s", tools.ErrValueSet, err.Error())
+		return nil, fmt.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
 	d.SetId(enrollmentID)
 	return []*schema.ResourceData{d}, nil

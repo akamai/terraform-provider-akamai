@@ -31,8 +31,10 @@ var (
 	ErrTypeAssertion = errors.New("type assertion")
 	// ErrTooManyElements is used when too many elements were found in a list.
 	ErrTooManyElements = errors.New("too many elements")
-	// ErrOnlyForDefault is used when some fields (variables and is_secure) are used outside "default" rules in data source
+	// ErrOnlyForDefault is used when some fields are used outside "default" rules in data source
 	ErrOnlyForDefault = errors.New("cannot be used outside 'default' rule")
+	// ErrNotForDefault is used when some fields cannot be used in "default" rules in data source
+	ErrNotForDefault = errors.New("cannot be used in 'default' rule")
 )
 
 // Error returns NotFoundError as a string.
