@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"sync"
 
 	"github.com/google/uuid"
 	"github.com/hashicorp/go-hclog"
@@ -34,77 +33,61 @@ const (
 	ProviderName = "terraform-provider-akamai"
 )
 
-type (
-	provider struct {
-		schema.Provider
-	}
-)
-
-var (
-	once sync.Once
-
-	instance *provider
-)
-
 // Provider returns the provider function to terraform
-func Provider(provs ...subprovider.Subprovider) plugin.ProviderFunc {
-	once.Do(func() {
-		instance = &provider{
-			Provider: schema.Provider{
-				Schema: map[string]*schema.Schema{
-					"edgerc": {
-						Optional:    true,
-						Type:        schema.TypeString,
-						DefaultFunc: schema.EnvDefaultFunc("EDGERC", nil),
-					},
-					"config_section": {
-						Description: "The section of the edgerc file to use for configuration",
-						Optional:    true,
-						Type:        schema.TypeString,
-					},
-					"config": {
-						Optional:      true,
-						Type:          schema.TypeSet,
-						Elem:          config.Options("config"),
-						MaxItems:      1,
-						ConflictsWith: []string{"edgerc", "config_section"},
-					},
-					"cache_enabled": {
-						Optional: true,
-						Default:  true,
-						Type:     schema.TypeBool,
-					},
-					"request_limit": {
-						Optional:    true,
-						DefaultFunc: schema.EnvDefaultFunc("AKAMAI_REQUEST_LIMIT", 0),
-						Type:        schema.TypeInt,
-						Description: "The maximum number of API requests to be made per second (0 for no limit)",
-					},
-				},
-				ResourcesMap:       make(map[string]*schema.Resource),
-				DataSourcesMap:     make(map[string]*schema.Resource),
-				ProviderMetaSchema: make(map[string]*schema.Schema),
+func Provider(subprovs ...subprovider.Subprovider) plugin.ProviderFunc {
+	prov := &schema.Provider{
+		Schema: map[string]*schema.Schema{
+			"edgerc": {
+				Optional:    true,
+				Type:        schema.TypeString,
+				DefaultFunc: schema.EnvDefaultFunc("EDGERC", nil),
 			},
-		}
+			"config_section": {
+				Description: "The section of the edgerc file to use for configuration",
+				Optional:    true,
+				Type:        schema.TypeString,
+			},
+			"config": {
+				Optional:      true,
+				Type:          schema.TypeSet,
+				Elem:          config.Options("config"),
+				MaxItems:      1,
+				ConflictsWith: []string{"edgerc", "config_section"},
+			},
+			"cache_enabled": {
+				Optional: true,
+				Default:  true,
+				Type:     schema.TypeBool,
+			},
+			"request_limit": {
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("AKAMAI_REQUEST_LIMIT", 0),
+				Type:        schema.TypeInt,
+				Description: "The maximum number of API requests to be made per second (0 for no limit)",
+			},
+		},
+		ResourcesMap:       make(map[string]*schema.Resource),
+		DataSourcesMap:     make(map[string]*schema.Resource),
+		ProviderMetaSchema: make(map[string]*schema.Schema),
+	}
 
-		for _, p := range provs {
-			resources, err := mergeResource(p.Resources(), instance.ResourcesMap)
-			if err != nil {
-				panic(err)
-			}
-			instance.ResourcesMap = resources
-			dataSources, err := mergeResource(p.DataSources(), instance.DataSourcesMap)
-			if err != nil {
-				panic(err)
-			}
-			instance.DataSourcesMap = dataSources
+	for _, subprov := range subprovs {
+		resources, err := mergeResource(subprov.Resources(), prov.ResourcesMap)
+		if err != nil {
+			panic(err)
 		}
+		prov.ResourcesMap = resources
+		dataSources, err := mergeResource(subprov.DataSources(), prov.DataSourcesMap)
+		if err != nil {
+			panic(err)
+		}
+		prov.DataSourcesMap = dataSources
+	}
 
-		instance.ConfigureContextFunc = configureProviderContext(&instance.Provider)
-	})
+	prov.ConfigureContextFunc = configureProviderContext(prov)
 
 	return func() *schema.Provider {
-		return &instance.Provider
+		return prov
 	}
 }
 
