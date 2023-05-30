@@ -4,7 +4,6 @@ package property
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"sync"
 
@@ -15,8 +14,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/hapi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/config"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/tools"
 )
 
@@ -55,27 +52,6 @@ func Subprovider(opts ...Option) akamai.Subprovider {
 // Provider returns the Akamai terraform.Resource provider.
 func Provider() *schema.Provider {
 	provider := &schema.Provider{
-		Schema: map[string]*schema.Schema{
-			"papi_section": {
-				Optional:   true,
-				Type:       schema.TypeString,
-				Default:    "default",
-				Deprecated: akamai.NoticeDeprecatedUseAlias("papi_section"),
-			},
-			"property_section": {
-				Optional:   true,
-				Type:       schema.TypeString,
-				Default:    "default",
-				Deprecated: akamai.NoticeDeprecatedUseAlias("property_section"),
-			},
-			"property": {
-				Optional:   true,
-				Type:       schema.TypeSet,
-				Elem:       config.Options("property"),
-				MaxItems:   1,
-				Deprecated: akamai.NoticeDeprecatedUseAlias("property"),
-			},
-		},
 		DataSourcesMap: map[string]*schema.Resource{
 			"akamai_contract":                    dataSourcePropertyContract(),
 			"akamai_contracts":                   dataSourceContracts(),
@@ -134,36 +110,6 @@ func (p *provider) HapiClient(meta akamai.OperationMeta) hapi.HAPI {
 	return hapi.Client(meta.Session())
 }
 
-func getPAPIV1Service(d *schema.ResourceData) error {
-	var inlineConfig *schema.Set
-	for _, key := range []string{"property", "config"} {
-		opt, err := tf.GetSetValue(key, d)
-		if err != nil {
-			if !errors.Is(err, tf.ErrNotFound) {
-				return err
-			}
-			continue
-		}
-		if inlineConfig != nil {
-			return fmt.Errorf("only one inline config section can be defined")
-		}
-		inlineConfig = opt
-	}
-	if err := d.Set("config", inlineConfig); err != nil {
-		return fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
-	}
-	for _, s := range tf.FindStringValues(d, "property_section", "papi_section", "config_section") {
-		if s != "default" && s != "" {
-			if err := d.Set("config_section", s); err != nil {
-				return fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
-			}
-			break
-		}
-	}
-
-	return nil
-}
-
 func (p *provider) Name() string {
 	return "property"
 }
@@ -187,13 +133,8 @@ func (p *provider) DataSources() map[string]*schema.Resource {
 	return p.Provider.DataSourcesMap
 }
 
-func (p *provider) Configure(log log.Interface, d *schema.ResourceData) diag.Diagnostics {
+func (p *provider) Configure(log log.Interface, _ *schema.ResourceData) diag.Diagnostics {
 	log.Debug("START Configure")
-
-	if err := getPAPIV1Service(d); err != nil {
-		return diag.FromErr(err)
-	}
-
 	return nil
 }
 

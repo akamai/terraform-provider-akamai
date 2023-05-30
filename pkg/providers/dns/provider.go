@@ -2,14 +2,10 @@
 package dns
 
 import (
-	"errors"
-	"fmt"
 	"sync"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/dns"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/config"
 	"github.com/apex/log"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -43,23 +39,7 @@ func Subprovider() akamai.Subprovider {
 
 // Provider returns the Akamai terraform.Resource provider.
 func Provider() *schema.Provider {
-
 	provider := &schema.Provider{
-		Schema: map[string]*schema.Schema{
-			"dns_section": {
-				Optional:   true,
-				Type:       schema.TypeString,
-				Default:    "default",
-				Deprecated: akamai.NoticeDeprecatedUseAlias("dns_section"),
-			},
-			"dns": {
-				Optional:   true,
-				Type:       schema.TypeSet,
-				Elem:       config.Options("dns"),
-				MaxItems:   1,
-				Deprecated: akamai.NoticeDeprecatedUseAlias("dns"),
-			},
-		},
 		DataSourcesMap: map[string]*schema.Resource{
 			"akamai_authorities_set": dataSourceAuthoritiesSet(),
 			"akamai_dns_record_set":  dataSourceDNSRecordSet(),
@@ -87,37 +67,6 @@ func (p *provider) Client(meta akamai.OperationMeta) dns.DNS {
 	return dns.Client(meta.Session())
 }
 
-func getConfigDNSV2Service(d *schema.ResourceData) error {
-	var inlineConfig *schema.Set
-	for _, key := range []string{"dns", "config"} {
-		opt, err := tf.GetSetValue(key, d)
-		if err != nil {
-			if !errors.Is(err, tf.ErrNotFound) {
-				return err
-			}
-			continue
-		}
-		if inlineConfig != nil {
-			return fmt.Errorf("only one inline config section can be defined")
-		}
-		inlineConfig = opt
-	}
-	if err := d.Set("config", inlineConfig); err != nil {
-		return fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
-	}
-
-	for _, s := range tf.FindStringValues(d, "dns_section", "config_section") {
-		if s != "default" && s != "" {
-			if err := d.Set("config_section", s); err != nil {
-				return fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
-			}
-			break
-		}
-	}
-
-	return nil
-}
-
 func (p *provider) Name() string {
 	return "dns"
 }
@@ -141,11 +90,7 @@ func (p *provider) DataSources() map[string]*schema.Resource {
 	return p.Provider.DataSourcesMap
 }
 
-func (p *provider) Configure(log log.Interface, d *schema.ResourceData) diag.Diagnostics {
+func (p *provider) Configure(log log.Interface, _ *schema.ResourceData) diag.Diagnostics {
 	log.Debug("START Configure")
-
-	if err := getConfigDNSV2Service(d); err != nil {
-		return diag.FromErr(err)
-	}
 	return nil
 }

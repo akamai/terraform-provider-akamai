@@ -6,8 +6,6 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/networklists"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/config"
 	"github.com/apex/log"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -46,19 +44,6 @@ func Subprovider(opts ...Option) akamai.Subprovider {
 // Provider returns the Akamai terraform.Resource provider.
 func Provider() *schema.Provider {
 	provider := &schema.Provider{
-		Schema: map[string]*schema.Schema{
-			"networklist_section": {
-				Optional:   true,
-				Type:       schema.TypeString,
-				Default:    "default",
-				Deprecated: akamai.NoticeDeprecatedUseAlias("networklist_section"),
-			},
-			"network": {
-				Optional: true,
-				Type:     schema.TypeSet,
-				Elem:     config.Options("network"),
-			},
-		},
 		DataSourcesMap: map[string]*schema.Resource{
 			"akamai_networklist_network_lists": dataSourceNetworkList(),
 		},
@@ -87,25 +72,6 @@ func (p *provider) Client(meta akamai.OperationMeta) networklists.NTWRKLISTS {
 	return networklists.Client(meta.Session())
 }
 
-func getNetworkListV1Service(d *schema.ResourceData) error {
-	var section string
-
-	for _, s := range tf.FindStringValues(d, "networklist_section", "config_section") {
-		if s != "default" {
-			section = s
-			break
-		}
-	}
-
-	if section != "" {
-		if err := d.Set("config_section", section); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
 func (p *provider) Name() string {
 	return "networklists"
 }
@@ -129,13 +95,7 @@ func (p *provider) DataSources() map[string]*schema.Resource {
 	return p.Provider.DataSourcesMap
 }
 
-func (p *provider) Configure(log log.Interface, d *schema.ResourceData) diag.Diagnostics {
+func (p *provider) Configure(log log.Interface, _ *schema.ResourceData) diag.Diagnostics {
 	log.Debug("START Configure")
-
-	err := getNetworkListV1Service(d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
 	return nil
 }

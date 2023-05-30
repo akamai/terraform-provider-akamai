@@ -123,11 +123,6 @@ func Provider(provs ...Subprovider) plugin.ProviderFunc {
 		instance.cache = cache
 
 		for _, p := range provs {
-			subSchema, err := mergeSchema(p.Schema(), instance.Schema)
-			if err != nil {
-				panic(err)
-			}
-			instance.Schema = subSchema
 			resources, err := mergeResource(p.Resources(), instance.ResourcesMap)
 			if err != nil {
 				panic(err)
@@ -160,13 +155,6 @@ func configureContext(ctx context.Context, d *schema.ResourceData) (interface{},
 	log := hclog.FromContext(ctx).With(
 		"OperationID", opid,
 	)
-
-	// configure sub-providers
-	for _, p := range instance.subs {
-		if err := p.Configure(LogFromHCLog(log), d); err != nil {
-			return nil, err
-		}
-	}
 
 	cacheEnabled, err := tf.GetBoolValue("cache_enabled", d)
 	if err != nil && !IsNotFoundError(err) {

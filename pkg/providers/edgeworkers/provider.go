@@ -44,7 +44,6 @@ func Subprovider(opts ...Option) akamai.Subprovider {
 // Provider returns the Akamai terraform.Resource provider.
 func Provider() *schema.Provider {
 	provider := &schema.Provider{
-		Schema: map[string]*schema.Schema{},
 		DataSourcesMap: map[string]*schema.Resource{
 			"akamai_edgekv_group_items":         dataSourceEdgeKVGroupItems(),
 			"akamai_edgekv_groups":              dataSourceEdgeKVGroups(),
