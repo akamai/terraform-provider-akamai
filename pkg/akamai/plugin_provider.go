@@ -1,4 +1,3 @@
-// Package akamai allows to initialize and set up Akamai Provider
 package akamai
 
 import (
@@ -6,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strconv"
 
 	"github.com/google/uuid"
 	"github.com/hashicorp/go-hclog"
@@ -24,23 +24,13 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v4/version"
 )
 
-const (
-	// ProviderRegistryPath is the path for the provider in the terraform registry
-	ProviderRegistryPath = "registry.terraform.io/akamai/akamai"
-
-	// ProviderName is the legacy name of the provider
-	// Deprecated: terrform now uses registry paths, the shortest of which would be akamai/akamai"
-	ProviderName = "terraform-provider-akamai"
-)
-
-// Provider returns the provider function to terraform
-func Provider(subprovs ...subprovider.Subprovider) plugin.ProviderFunc {
+// NewPluginProvider returns the provider function to terraform
+func NewPluginProvider(subprovs ...subprovider.Subprovider) plugin.ProviderFunc {
 	prov := &schema.Provider{
 		Schema: map[string]*schema.Schema{
 			"edgerc": {
-				Optional:    true,
-				Type:        schema.TypeString,
-				DefaultFunc: schema.EnvDefaultFunc("EDGERC", nil),
+				Optional: true,
+				Type:     schema.TypeString,
 			},
 			"config_section": {
 				Description: "The section of the edgerc file to use for configuration",
@@ -50,18 +40,16 @@ func Provider(subprovs ...subprovider.Subprovider) plugin.ProviderFunc {
 			"config": {
 				Optional:      true,
 				Type:          schema.TypeSet,
-				Elem:          config.Options("config"),
+				Elem:          config.PluginOptions(),
 				MaxItems:      1,
 				ConflictsWith: []string{"edgerc", "config_section"},
 			},
 			"cache_enabled": {
 				Optional: true,
-				Default:  true,
 				Type:     schema.TypeBool,
 			},
 			"request_limit": {
 				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("AKAMAI_REQUEST_LIMIT", 0),
 				Type:        schema.TypeInt,
 				Description: "The maximum number of API requests to be made per second (0 for no limit)",
 			},
@@ -94,7 +82,7 @@ func Provider(subprovs ...subprovider.Subprovider) plugin.ProviderFunc {
 func configureProviderContext(p *schema.Provider) schema.ConfigureContextFunc {
 	return func(ctx context.Context, d *schema.ResourceData) (any, diag.Diagnostics) {
 		// generate an operation id so we can correlate all calls to this provider
-		opid := uuid.Must(uuid.NewRandom()).String()
+		opid := uuid.NewString()
 
 		// create a log from the hclog in the context
 		log := hclog.FromContext(ctx).With(
@@ -102,14 +90,22 @@ func configureProviderContext(p *schema.Provider) schema.ConfigureContextFunc {
 		)
 
 		cacheEnabled, err := tf.GetBoolValue("cache_enabled", d)
-		if err != nil && !errors.Is(err, tf.ErrNotFound) {
-			return nil, diag.FromErr(err)
+		if err != nil {
+			if !errors.Is(err, tf.ErrNotFound) {
+				return nil, diag.FromErr(err)
+			}
+			cacheEnabled = true
 		}
 		cache.Enable(cacheEnabled)
 
 		edgercPath, err := tf.GetStringValue("edgerc", d)
-		if err != nil && !errors.Is(err, tf.ErrNotFound) {
-			return nil, diag.FromErr(err)
+		if err != nil {
+			if !errors.Is(err, tf.ErrNotFound) {
+				return nil, diag.FromErr(err)
+			}
+			if v := os.Getenv("EDGERC"); v != "" {
+				edgercPath = v
+			}
 		}
 
 		edgercSection, err := tf.GetStringValue("config_section", d)
@@ -132,8 +128,16 @@ func configureProviderContext(p *schema.Provider) schema.ConfigureContextFunc {
 		}
 
 		requestLimit, err := tf.GetIntValue("request_limit", d)
-		if err != nil && !errors.Is(err, tf.ErrNotFound) {
-			return nil, diag.FromErr(err)
+		if err != nil {
+			if !errors.Is(err, tf.ErrNotFound) {
+				return nil, diag.FromErr(err)
+			}
+			if v := os.Getenv("AKAMAI_REQUEST_LIMIT"); v != "" {
+				requestLimit, err = strconv.Atoi(v)
+				if err != nil {
+					return nil, diag.FromErr(err)
+				}
+			}
 		}
 
 		edgerc, err := newEdgegridConfig(edgercPath, edgercSection, edgercConfig)
@@ -142,7 +146,7 @@ func configureProviderContext(p *schema.Provider) schema.ConfigureContextFunc {
 		}
 
 		// PROVIDER_VERSION env value must be updated in version file, for every new release.
-		userAgent := p.UserAgent(ProviderName, version.ProviderVersion)
+		userAgent := userAgent(p.TerraformVersion)
 		logger := logger.FromHCLog(log)
 		logger.Infof("Provider version: %s", version.ProviderVersion)
 

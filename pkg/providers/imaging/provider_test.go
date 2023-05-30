@@ -21,7 +21,7 @@ var testAccProvider *schema.Provider
 
 func TestMain(m *testing.M) {
 	PolicyDepth = 4
-	testAccProvider = akamai.Provider(Subprovider())()
+	testAccProvider = akamai.NewPluginProvider(Subprovider())()
 	testAccProviders = map[string]func() (*schema.Provider, error){
 		"akamai": func() (*schema.Provider, error) {
 			return testAccProvider, nil

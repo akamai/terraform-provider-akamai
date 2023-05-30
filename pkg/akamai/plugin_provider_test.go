@@ -32,7 +32,7 @@ func TestConfigureCache_EnabledInContext(t *testing.T) {
 		ctx := context.Background()
 		t.Run(name, func(t *testing.T) {
 
-			prov := Provider()
+			prov := NewPluginProvider()
 			_, diagnostics := prov().ConfigureContextFunc(ctx, test.resourceLocalData)
 			require.False(t, diagnostics.HasError())
 
@@ -67,7 +67,7 @@ func TestConfigureEdgercInContext(t *testing.T) {
 	for name, test := range tests {
 		ctx := context.Background()
 		t.Run(name, func(t *testing.T) {
-			prov := Provider()
+			prov := NewPluginProvider()
 			meta, diagnostics := prov().ConfigureContextFunc(ctx, test.resourceLocalData)
 
 			if test.withError {
@@ -157,7 +157,7 @@ func TestEdgercValidate(t *testing.T) {
 			}
 			resourceData := schema.TestResourceDataRaw(t, resourceSchema, resourceDataMap)
 
-			prov := Provider()
+			prov := NewPluginProvider()
 			configuredContext, diagnostics := prov().ConfigureContextFunc(ctx, resourceData)
 
 			assert.Nil(t, configuredContext)

@@ -2,36 +2,65 @@
 package config
 
 import (
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	frameworkSchema "github.com/hashicorp/terraform-plugin-framework/provider/schema"
+	pluginSchema "github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-// Options initializes and returns terraform.Resource with credentials
-func Options(_ string) *schema.Resource {
-	return &schema.Resource{
-		Schema: map[string]*schema.Schema{
+// PluginOptions returns edgegrid config schema for terraform-plugin-sdk
+func PluginOptions() *pluginSchema.Resource {
+	return &pluginSchema.Resource{
+		Schema: map[string]*pluginSchema.Schema{
 			"host": {
-				Type:     schema.TypeString,
+				Type:     pluginSchema.TypeString,
 				Required: true,
 			},
 			"access_token": {
-				Type:     schema.TypeString,
+				Type:     pluginSchema.TypeString,
 				Required: true,
 			},
 			"client_token": {
-				Type:     schema.TypeString,
+				Type:     pluginSchema.TypeString,
 				Required: true,
 			},
 			"client_secret": {
-				Type:     schema.TypeString,
+				Type:     pluginSchema.TypeString,
 				Required: true,
 			},
 			"max_body": {
-				Type:     schema.TypeInt,
+				Type:     pluginSchema.TypeInt,
 				Optional: true,
 			},
 			"account_key": {
-				Type:     schema.TypeString,
+				Type:     pluginSchema.TypeString,
 				Optional: true,
+			},
+		},
+	}
+}
+
+// FrameworkOptions returns edgegrid config schema for terraform-plugin-framework
+func FrameworkOptions() frameworkSchema.SetNestedBlock {
+	return frameworkSchema.SetNestedBlock{
+		NestedObject: frameworkSchema.NestedBlockObject{
+			Attributes: map[string]frameworkSchema.Attribute{
+				"host": frameworkSchema.StringAttribute{
+					Required: true,
+				},
+				"access_token": frameworkSchema.StringAttribute{
+					Required: true,
+				},
+				"client_token": frameworkSchema.StringAttribute{
+					Required: true,
+				},
+				"client_secret": frameworkSchema.StringAttribute{
+					Required: true,
+				},
+				"max_body": frameworkSchema.Int64Attribute{
+					Optional: true,
+				},
+				"account_key": frameworkSchema.StringAttribute{
+					Optional: true,
+				},
 			},
 		},
 	}

@@ -4,27 +4,21 @@ package main
 import (
 	"context"
 	"flag"
+	"log"
 
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
 	// Load the providers
 	_ "github.com/akamai/terraform-provider-akamai/v4/pkg/providers"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/providers/registry"
-	goplugin "github.com/hashicorp/go-plugin"
+	"github.com/hashicorp/go-hclog"
+	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov5"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov5/tf5server"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"google.golang.org/grpc"
-
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
-	"github.com/hashicorp/go-hclog"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
+	"github.com/hashicorp/terraform-plugin-mux/tf5muxserver"
 )
-
-// gRPC message limit of 64MB
-const gRPCLimit = 64 << 20
 
 func main() {
 	var debugMode bool
-
 	flag.BoolVar(&debugMode, "debug", false, "set to true to run the provider with support for debuggers like delve")
 	flag.Parse()
 
@@ -32,38 +26,25 @@ func main() {
 	// Anything lower and we risk losing those values to the ether
 	hclog.Default().SetLevel(hclog.Trace)
 
-	prov := akamai.Provider(
-		registry.AllProviders()...,
-	)
+	providers := []func() tfprotov5.ProviderServer{
+		akamai.NewPluginProvider(registry.AllProviders()...)().GRPCProvider,
+		providerserver.NewProtocol5(
+			akamai.NewFrameworkProvider()(),
+		),
+	}
+
+	muxServer, err := tf5muxserver.NewMuxServer(context.Background(), providers...)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var serveOpts []tf5server.ServeOpt
 
 	if debugMode {
-		err := plugin.Debug(context.Background(), akamai.ProviderRegistryPath,
-			&plugin.ServeOpts{
-				ProviderFunc: prov,
-			})
-		if err != nil {
-			panic(err)
-		}
-	} else {
-		// modified implementation of plugin.Serve() method from terraform SDK
-		// this is done in order to increase the max GRPC limit from 4MB to 64MB
-		serveConfig := goplugin.ServeConfig{
-			HandshakeConfig: plugin.Handshake,
-			GRPCServer: func(opts []grpc.ServerOption) *grpc.Server {
-				return grpc.NewServer(append(opts,
-					grpc.MaxSendMsgSize(gRPCLimit),
-					grpc.MaxRecvMsgSize(gRPCLimit))...)
-			},
-			VersionedPlugins: map[int]goplugin.PluginSet{
-				5: {
-					akamai.ProviderRegistryPath: &tf5server.GRPCProviderPlugin{
-						GRPCProvider: func() tfprotov5.ProviderServer {
-							return schema.NewGRPCProviderServer(prov())
-						},
-					},
-				},
-			},
-		}
-		goplugin.Serve(&serveConfig)
+		serveOpts = append(serveOpts, tf5server.WithManagedDebug())
+	}
+
+	if err = tf5server.Serve(akamai.ProviderRegistryPath, muxServer.ProviderServer, serveOpts...); err != nil {
+		log.Fatal(err)
 	}
 }
