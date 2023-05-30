@@ -9,6 +9,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -22,11 +23,11 @@ func TestMain(m *testing.M) {
 			return testAccProvider, nil
 		},
 	}
-	if err := akamai.TFTestSetup(); err != nil {
+	if err := testutils.TFTestSetup(); err != nil {
 		log.Fatal(err)
 	}
 	exitCode := m.Run()
-	if err := akamai.TFTestTeardown(); err != nil {
+	if err := testutils.TFTestTeardown(); err != nil {
 		log.Fatal(err)
 	}
 	os.Exit(exitCode)
