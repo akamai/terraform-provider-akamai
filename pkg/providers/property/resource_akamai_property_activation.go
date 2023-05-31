@@ -11,7 +11,6 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/papi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/tools"
@@ -54,7 +53,7 @@ var akamaiPropertyActivationSchema = map[string]*schema.Schema{
 	"property": {
 		Type:       schema.TypeString,
 		Optional:   true,
-		Deprecated: akamai.NoticeDeprecatedUseAlias("property"),
+		Deprecated: "property is deprecated, use property_id instead",
 		Computed:   true,
 		StateFunc:  addPrefixToState("prp_"),
 	},

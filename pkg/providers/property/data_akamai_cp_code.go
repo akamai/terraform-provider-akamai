@@ -9,7 +9,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
 )
@@ -29,7 +28,7 @@ func dataSourceCPCode() *schema.Resource {
 				Computed:     true,
 				ExactlyOneOf: []string{"contract", "contract_id"},
 				ForceNew:     true,
-				Deprecated:   akamai.NoticeDeprecatedUseAlias("contract"),
+				Deprecated:   "contract is deprecated, use contract_id instead",
 			},
 			"contract_id": {
 				Type:         schema.TypeString,
@@ -44,7 +43,7 @@ func dataSourceCPCode() *schema.Resource {
 				Computed:     true,
 				ExactlyOneOf: []string{"group", "group_id"},
 				ForceNew:     true,
-				Deprecated:   akamai.NoticeDeprecatedUseAlias("group"),
+				Deprecated:   "group is deprecated, use group_id instead",
 			},
 			"group_id": {
 				Type:         schema.TypeString,

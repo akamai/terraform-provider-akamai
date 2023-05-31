@@ -10,7 +10,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/hapi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/papi"
 
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/logger"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
@@ -38,7 +37,7 @@ var akamaiSecureEdgeHostNameSchema = map[string]*schema.Schema{
 		Type:          schema.TypeString,
 		Optional:      true,
 		Computed:      true,
-		Deprecated:    akamai.NoticeDeprecatedUseAlias("product"),
+		Deprecated:    "product is deprecated, use product_id instead",
 		ConflictsWith: []string{"product_id"},
 		StateFunc:     addPrefixToState("prd_"),
 	},
@@ -52,7 +51,7 @@ var akamaiSecureEdgeHostNameSchema = map[string]*schema.Schema{
 		Type:       schema.TypeString,
 		Optional:   true,
 		Computed:   true,
-		Deprecated: akamai.NoticeDeprecatedUseAlias("contract"),
+		Deprecated: "contract is deprecated, use contract_id instead",
 		StateFunc:  addPrefixToState("ctr_"),
 	},
 	"contract_id": {
@@ -66,7 +65,7 @@ var akamaiSecureEdgeHostNameSchema = map[string]*schema.Schema{
 		Type:       schema.TypeString,
 		Optional:   true,
 		Computed:   true,
-		Deprecated: akamai.NoticeDeprecatedUseAlias("group"),
+		Deprecated: "group is deprecated, use group_id instead",
 		StateFunc:  addPrefixToState("grp_"),
 	},
 	"group_id": {

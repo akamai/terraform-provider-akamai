@@ -12,7 +12,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/tools"
@@ -41,7 +40,7 @@ func resourceCPCode() *schema.Resource {
 				Type:       schema.TypeString,
 				Optional:   true,
 				Computed:   true,
-				Deprecated: akamai.NoticeDeprecatedUseAlias("contract"),
+				Deprecated: "contract is deprecated, use contract_id instead",
 				StateFunc:  addPrefixToState("ctr_"),
 			},
 			"contract_id": {
@@ -55,7 +54,7 @@ func resourceCPCode() *schema.Resource {
 				Type:       schema.TypeString,
 				Optional:   true,
 				Computed:   true,
-				Deprecated: akamai.NoticeDeprecatedUseAlias("group"),
+				Deprecated: "group is deprecated, use group_id instead",
 				StateFunc:  addPrefixToState("grp_"),
 			},
 			"group_id": {
@@ -69,7 +68,7 @@ func resourceCPCode() *schema.Resource {
 				Type:       schema.TypeString,
 				Optional:   true,
 				Computed:   true,
-				Deprecated: akamai.NoticeDeprecatedUseAlias("product"),
+				Deprecated: "product is deprecated, use product_id instead",
 				StateFunc:  addPrefixToState("prd_"),
 			},
 			"product_id": {

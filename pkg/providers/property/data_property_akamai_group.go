@@ -11,7 +11,6 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/papi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/cache"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 	akameta "github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
@@ -26,7 +25,7 @@ func dataSourcePropertyGroup() *schema.Resource {
 				Optional:     true,
 				Computed:     true,
 				ExactlyOneOf: []string{"name", "group_name"},
-				Deprecated:   akamai.NoticeDeprecatedUseAlias("name"),
+				Deprecated:   "name is deprecated, use group_name instead",
 			},
 			"group_name": {
 				Type:         schema.TypeString,
@@ -39,7 +38,7 @@ func dataSourcePropertyGroup() *schema.Resource {
 				Optional:     true,
 				Computed:     true,
 				ExactlyOneOf: []string{"contract", "contract_id"},
-				Deprecated:   akamai.NoticeDeprecatedUseAlias("contract"),
+				Deprecated:   "contract is deprecated, use contract_id instead",
 			},
 			"contract_id": {
 				Type:         schema.TypeString,

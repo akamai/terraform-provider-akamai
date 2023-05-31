@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/networklists"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -52,7 +51,7 @@ func resourceActivations() *schema.Resource {
 				Type:       schema.TypeBool,
 				Optional:   true,
 				Default:    true,
-				Deprecated: akamai.NoticeDeprecatedUseAlias("activate"),
+				Deprecated: "activate is deprecated, using this attribute has no impact on your configuration",
 			},
 			"notification_emails": {
 				Type:        schema.TypeSet,

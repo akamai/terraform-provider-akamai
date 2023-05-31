@@ -18,7 +18,6 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/papi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/tools"
@@ -110,7 +109,7 @@ func resourceProperty() *schema.Resource {
 				Type:       schema.TypeString,
 				Optional:   true,
 				Computed:   true,
-				Deprecated: akamai.NoticeDeprecatedUseAlias("group"),
+				Deprecated: "group is deprecated, use group_id instead",
 				StateFunc:  addPrefixToState("grp_"),
 			},
 
@@ -126,7 +125,7 @@ func resourceProperty() *schema.Resource {
 				Type:       schema.TypeString,
 				Optional:   true,
 				Computed:   true,
-				Deprecated: akamai.NoticeDeprecatedUseAlias("contract"),
+				Deprecated: "contract is deprecated, use contract_id instead",
 				StateFunc:  addPrefixToState("ctr_"),
 			},
 
@@ -142,7 +141,7 @@ func resourceProperty() *schema.Resource {
 				Optional:     true,
 				Computed:     true,
 				ExactlyOneOf: []string{"product_id"},
-				Deprecated:   akamai.NoticeDeprecatedUseAlias("product"),
+				Deprecated:   "product is deprecated, use product_id instead",
 				StateFunc:    addPrefixToState("prd_"),
 			},
 
@@ -262,13 +261,13 @@ func resourceProperty() *schema.Resource {
 			"cp_code": {
 				Type:       schema.TypeString,
 				Optional:   true,
-				Deprecated: akamai.NoticeDeprecatedUseAlias("cp_code"),
+				Deprecated: "cp_code is deprecated, using this attribute has no impact on your configuration",
 			},
 			"contact": {
 				Type:       schema.TypeSet,
 				Optional:   true,
 				Elem:       &schema.Schema{Type: schema.TypeString},
-				Deprecated: akamai.NoticeDeprecatedUseAlias("contact"),
+				Deprecated: "contact is deprecated, using this attribute has no impact on your configuration",
 			},
 			"origin": {
 				Type:     schema.TypeSet,
@@ -283,17 +282,17 @@ func resourceProperty() *schema.Resource {
 						"enable_true_client_ip": {Type: schema.TypeBool, Optional: true},
 					},
 				},
-				Deprecated: akamai.NoticeDeprecatedUseAlias("origin"),
+				Deprecated: "origin is deprecated, using this attribute has no impact on your configuration",
 			},
 			"is_secure": {
 				Type:       schema.TypeBool,
 				Optional:   true,
-				Deprecated: akamai.NoticeDeprecatedUseAlias("is_secure"),
+				Deprecated: "is_secure is deprecated, using this attribute has no impact on your configuration",
 			},
 			"variables": {
 				Type:       schema.TypeString,
 				Optional:   true,
-				Deprecated: akamai.NoticeDeprecatedUseAlias("variables"),
+				Deprecated: "variables is deprecated, using this attribute has no impact on your configuration",
 			},
 		},
 	}
