@@ -5,21 +5,14 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/cache"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/config"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/logger"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v4/version"
-	"github.com/google/uuid"
-	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/spf13/cast"
 )
 
 var _ provider.Provider = &Provider{}
@@ -29,11 +22,11 @@ type Provider struct{}
 
 // ProviderModel represents the model of Provider configuration
 type ProviderModel struct {
-	Edgerc       types.String `tfsdk:"edgerc"`
-	Section      types.String `tfsdk:"config_section"`
-	Config       types.Set    `tfsdk:"config"`
-	CacheEnabled types.Bool   `tfsdk:"cache_enabled"`
-	RequestLimit types.Int64  `tfsdk:"request_limit"`
+	EdgercPath    types.String `tfsdk:"edgerc"`
+	EdgercSection types.String `tfsdk:"config_section"`
+	EdgercConfig  types.Set    `tfsdk:"config"`
+	CacheEnabled  types.Bool   `tfsdk:"cache_enabled"`
+	RequestLimit  types.Int64  `tfsdk:"request_limit"`
 }
 
 // NewFrameworkProvider returns a function returning Provider as provider.Provider
@@ -84,9 +77,9 @@ func (p *Provider) Configure(ctx context.Context, req provider.ConfigureRequest,
 		return
 	}
 
-	if data.Edgerc.IsNull() {
+	if data.EdgercPath.IsNull() {
 		if v := os.Getenv("EDGERC"); v != "" {
-			data.Edgerc = types.StringValue(v)
+			data.EdgercPath = types.StringValue(v)
 		}
 	}
 
@@ -109,38 +102,20 @@ func (p *Provider) Configure(ctx context.Context, req provider.ConfigureRequest,
 	}
 
 	var edgercConfig map[string]any
-	resp.Diagnostics.Append(data.Config.ElementsAs(ctx, &edgercConfig, false)...)
+	resp.Diagnostics.Append(data.EdgercConfig.ElementsAs(ctx, &edgercConfig, false)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	cache.Enable(data.CacheEnabled.ValueBool())
-	edgerc, err := newEdgegridConfig(data.Edgerc.ValueString(), data.Section.ValueString(), edgercConfig)
-	if err != nil {
-		resp.Diagnostics.Append(diag.NewErrorDiagnostic("configuring context failed", err.Error()))
-		return
-	}
-
-	opid := uuid.NewString()
-	log := hclog.FromContext(ctx).With(
-		"OperationID", opid,
-	)
-	logger := logger.FromHCLog(log)
-	userAgent := userAgent(req.TerraformVersion)
-
-	sess, err := session.New(
-		session.WithSigner(edgerc),
-		session.WithUserAgent(userAgent),
-		session.WithLog(logger),
-		session.WithHTTPTracing(cast.ToBool(os.Getenv("AKAMAI_HTTP_TRACE_ENABLED"))),
-		session.WithRequestLimit(int(data.RequestLimit.ValueInt64())),
-	)
-	if err != nil {
-		resp.Diagnostics.Append(diag.NewErrorDiagnostic("configuring context failed", err.Error()))
-		return
-	}
-
-	meta, err := meta.New(sess, log, opid)
+	meta, err := configureContext(contextConfig{
+		edgercPath:    data.EdgercPath.ValueString(),
+		edgercSection: data.EdgercSection.ValueString(),
+		edgercConfig:  edgercConfig,
+		userAgent:     userAgent(req.TerraformVersion),
+		ctx:           ctx,
+		requestLimit:  int(data.RequestLimit.ValueInt64()),
+		enableCache:   data.CacheEnabled.ValueBool(),
+	})
 	if err != nil {
 		resp.Diagnostics.Append(diag.NewErrorDiagnostic("configuring context failed", err.Error()))
 		return

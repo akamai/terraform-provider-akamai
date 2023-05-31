@@ -27,6 +27,11 @@ func init() {
 	}
 }
 
+// HCLog returns Logger's hclog
+func (l *Logger) HCLog() hclog.Logger {
+	return l.hclog
+}
+
 // FromHCLog returns a new Logger from a hclog.Logger
 func FromHCLog(hclog hclog.Logger) *Logger {
 	const (

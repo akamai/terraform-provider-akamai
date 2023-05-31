@@ -7,21 +7,15 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/google/uuid"
-	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
-	"github.com/spf13/cast"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/cache"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/collections"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/config"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/logger"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/subprovider"
-	"github.com/akamai/terraform-provider-akamai/v4/version"
 )
 
 // NewPluginProvider returns the provider function to terraform
@@ -54,22 +48,18 @@ func NewPluginProvider(subprovs ...subprovider.Subprovider) plugin.ProviderFunc 
 				Description: "The maximum number of API requests to be made per second (0 for no limit)",
 			},
 		},
-		ResourcesMap:       make(map[string]*schema.Resource),
-		DataSourcesMap:     make(map[string]*schema.Resource),
-		ProviderMetaSchema: make(map[string]*schema.Schema),
+		ResourcesMap:   make(map[string]*schema.Resource),
+		DataSourcesMap: make(map[string]*schema.Resource),
 	}
 
 	for _, subprov := range subprovs {
-		resources, err := mergeResource(subprov.Resources(), prov.ResourcesMap)
-		if err != nil {
+		if err := collections.AddMap(prov.ResourcesMap, subprov.Resources()); err != nil {
 			panic(err)
 		}
-		prov.ResourcesMap = resources
-		dataSources, err := mergeResource(subprov.DataSources(), prov.DataSourcesMap)
-		if err != nil {
+
+		if err := collections.AddMap(prov.DataSourcesMap, subprov.DataSources()); err != nil {
 			panic(err)
 		}
-		prov.DataSourcesMap = dataSources
 	}
 
 	prov.ConfigureContextFunc = configureProviderContext(prov)
@@ -81,14 +71,6 @@ func NewPluginProvider(subprovs ...subprovider.Subprovider) plugin.ProviderFunc 
 
 func configureProviderContext(p *schema.Provider) schema.ConfigureContextFunc {
 	return func(ctx context.Context, d *schema.ResourceData) (any, diag.Diagnostics) {
-		// generate an operation id so we can correlate all calls to this provider
-		opid := uuid.NewString()
-
-		// create a log from the hclog in the context
-		log := hclog.FromContext(ctx).With(
-			"OperationID", opid,
-		)
-
 		cacheEnabled, err := tf.GetBoolValue("cache_enabled", d)
 		if err != nil {
 			if !errors.Is(err, tf.ErrNotFound) {
@@ -140,53 +122,19 @@ func configureProviderContext(p *schema.Provider) schema.ConfigureContextFunc {
 			}
 		}
 
-		edgerc, err := newEdgegridConfig(edgercPath, edgercSection, edgercConfig)
-		if err != nil {
-			return nil, diag.FromErr(err)
-		}
-
-		// PROVIDER_VERSION env value must be updated in version file, for every new release.
-		userAgent := userAgent(p.TerraformVersion)
-		logger := logger.FromHCLog(log)
-		logger.Infof("Provider version: %s", version.ProviderVersion)
-
-		logger.Debugf("Using request_limit value %d", requestLimit)
-		sess, err := session.New(
-			session.WithSigner(edgerc),
-			session.WithUserAgent(userAgent),
-			session.WithLog(logger),
-			session.WithHTTPTracing(cast.ToBool(os.Getenv("AKAMAI_HTTP_TRACE_ENABLED"))),
-			session.WithRequestLimit(requestLimit),
-		)
-		if err != nil {
-			return nil, diag.FromErr(err)
-		}
-
-		meta, err := meta.New(sess, log, opid)
+		meta, err := configureContext(contextConfig{
+			edgercPath:    edgercPath,
+			edgercSection: edgercSection,
+			edgercConfig:  edgercConfig,
+			userAgent:     userAgent(p.TerraformVersion),
+			ctx:           ctx,
+			requestLimit:  requestLimit,
+			enableCache:   cacheEnabled,
+		})
 		if err != nil {
 			return nil, diag.FromErr(err)
 		}
 
 		return meta, nil
 	}
-}
-
-func mergeSchema(from, to map[string]*schema.Schema) (map[string]*schema.Schema, error) {
-	for k, v := range from {
-		if _, ok := to[k]; ok {
-			return nil, fmt.Errorf("%w: %s", ErrDuplicateSchemaKey, k)
-		}
-		to[k] = v
-	}
-	return to, nil
-}
-
-func mergeResource(from, to map[string]*schema.Resource) (map[string]*schema.Resource, error) {
-	for k, v := range from {
-		if _, ok := to[k]; ok {
-			return nil, fmt.Errorf("%w: %s", ErrDuplicateSchemaKey, k)
-		}
-		to[k] = v
-	}
-	return to, nil
 }
