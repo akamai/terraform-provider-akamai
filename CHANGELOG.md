@@ -2,6 +2,10 @@
 
 ## x.x.x (x x, 2023)
 
+#### FEATURES/ENHANCEMENTS:
+
+* Provider tested and now supports Terraform 1.4.6
+
 #### DEPRECATIONS
 
 * Deprecate `active` field in `akamai_dns_record` resource

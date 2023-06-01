@@ -26,7 +26,7 @@ COVERAGE_HTML="$COVERAGE_DIR"/index.html
 
 WORKDIR="${WORKDIR-$(pwd)}"
 echo "WORKDIR is $WORKDIR"
-TERRAFORM_VERSION="1.3.7"
+TERRAFORM_VERSION="1.4.6"
 
 STASH_SERVER=git.source.akamai.com
 GIT_IP=$(dig +short $STASH_SERVER)
