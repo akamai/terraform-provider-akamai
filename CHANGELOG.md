@@ -1,5 +1,14 @@
 # RELEASE NOTES
 
+## 4.1.0 (Jun 1, 2023)
+
+#### FEATURES/ENHANCEMENTS:
+
+* GTM
+  * New data sources:
+    * `akamai_gtm_datacenter` - get datacenter information
+    * `akamai_gtm_datacenters` - get datacenters information
+    
 ## 4.0.0 (May 30, 2023)
 
 #### BREAKING CHANGES:
