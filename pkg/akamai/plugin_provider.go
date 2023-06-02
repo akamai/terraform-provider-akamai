@@ -19,7 +19,7 @@ import (
 )
 
 // NewPluginProvider returns the provider function to terraform
-func NewPluginProvider(subprovs ...subprovider.Subprovider) plugin.ProviderFunc {
+func NewPluginProvider(subprovs ...subprovider.Plugin) plugin.ProviderFunc {
 	prov := &schema.Provider{
 		Schema: map[string]*schema.Schema{
 			"edgerc": {

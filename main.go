@@ -27,9 +27,9 @@ func main() {
 	hclog.Default().SetLevel(hclog.Trace)
 
 	providers := []func() tfprotov5.ProviderServer{
-		akamai.NewPluginProvider(registry.AllProviders()...)().GRPCProvider,
+		akamai.NewPluginProvider(registry.PluginSubproviders()...)().GRPCProvider,
 		providerserver.NewProtocol5(
-			akamai.NewFrameworkProvider()(),
+			akamai.NewFrameworkProvider(registry.FrameworkSubproviders()...)(),
 		),
 	}
 

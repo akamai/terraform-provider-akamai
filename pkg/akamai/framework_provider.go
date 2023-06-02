@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/config"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/subprovider"
 	"github.com/akamai/terraform-provider-akamai/v4/version"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -18,7 +19,9 @@ import (
 var _ provider.Provider = &Provider{}
 
 // Provider is the implementation of akamai terraform provider which uses terraform-plugin-framework
-type Provider struct{}
+type Provider struct {
+	subproviders []subprovider.Framework
+}
 
 // ProviderModel represents the model of Provider configuration
 type ProviderModel struct {
@@ -30,9 +33,11 @@ type ProviderModel struct {
 }
 
 // NewFrameworkProvider returns a function returning Provider as provider.Provider
-func NewFrameworkProvider() func() provider.Provider {
+func NewFrameworkProvider(subproviders ...subprovider.Framework) func() provider.Provider {
 	return func() provider.Provider {
-		return &Provider{}
+		return &Provider{
+			subproviders: subproviders,
+		}
 	}
 }
 
@@ -127,10 +132,22 @@ func (p *Provider) Configure(ctx context.Context, req provider.ConfigureRequest,
 
 // Resources returns slice of fuctions used to instantiate resource implementations
 func (p *Provider) Resources(_ context.Context) []func() resource.Resource {
-	return []func() resource.Resource{}
+	resources := make([]func() resource.Resource, 0)
+
+	for _, subprovider := range p.subproviders {
+		resources = append(resources, subprovider.Resources()...)
+	}
+
+	return resources
 }
 
 // DataSources returns slice of fuctions used to instantiate data source implementations
 func (p *Provider) DataSources(_ context.Context) []func() datasource.DataSource {
-	return []func() datasource.DataSource{}
+	dataSources := make([]func() datasource.DataSource, 0)
+
+	for _, subprovider := range p.subproviders {
+		dataSources = append(dataSources, subprovider.DataSources()...)
+	}
+
+	return dataSources
 }

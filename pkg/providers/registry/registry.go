@@ -10,25 +10,44 @@ import (
 var (
 	lock sync.Mutex
 
-	allProviders []subprovider.Subprovider
+	pluginSubproviders    []subprovider.Plugin
+	frameworkSubproviders []subprovider.Framework
 )
 
-// RegisterProvider simply adds the provider to the array
-func RegisterProvider(p subprovider.Subprovider) {
+// RegisterPluginSubprovider registers a terraform-plugin-sdk sub-provider
+func RegisterPluginSubprovider(p subprovider.Plugin) {
 	lock.Lock()
 	defer lock.Unlock()
 
-	allProviders = append(allProviders, p)
+	pluginSubproviders = append(pluginSubproviders, p)
 }
 
-// AllProviders returns all of the registered providers
-func AllProviders() []subprovider.Subprovider {
+// PluginSubproviders returns all of the registered terraform-plugin-sdk sub-providers
+func PluginSubproviders() []subprovider.Plugin {
 	lock.Lock()
 	defer lock.Unlock()
 
-	out := make([]subprovider.Subprovider, len(allProviders))
+	out := make([]subprovider.Plugin, len(pluginSubproviders))
+	copy(out, pluginSubproviders)
 
-	copy(out, allProviders)
+	return out
+}
+
+// RegisterFrameworkSubprovider registers a terraform-plugin-framework sub-provider
+func RegisterFrameworkSubprovider(p subprovider.Framework) {
+	lock.Lock()
+	defer lock.Unlock()
+
+	frameworkSubproviders = append(frameworkSubproviders, p)
+}
+
+// FrameworkSubproviders returns all of the registered terraform-plugin-framework sub-providers
+func FrameworkSubproviders() []subprovider.Framework {
+	lock.Lock()
+	defer lock.Unlock()
+
+	out := make([]subprovider.Framework, len(frameworkSubproviders))
+	copy(out, frameworkSubproviders)
 
 	return out
 }

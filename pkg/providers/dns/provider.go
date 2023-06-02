@@ -25,7 +25,7 @@ var (
 	inst *Subprovider
 )
 
-var _ subprovider.Subprovider = &Subprovider{}
+var _ subprovider.Plugin = &Subprovider{}
 
 func newSubprovider() *Subprovider {
 	once.Do(func() {

@@ -23,7 +23,7 @@ func TestMain(m *testing.M) {
 			return testAccProvider, nil
 		},
 	}
-	
+
 	if err := testutils.TFTestSetup(); err != nil {
 		log.Fatal(err)
 	}

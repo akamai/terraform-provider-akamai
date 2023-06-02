@@ -32,7 +32,7 @@ var (
 	inst *Subprovider
 )
 
-var _ subprovider.Subprovider = &Subprovider{}
+var _ subprovider.Plugin = &Subprovider{}
 
 func newSubprovider(opts ...option) *Subprovider {
 	once.Do(func() {

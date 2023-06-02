@@ -21,7 +21,7 @@ import (
 func TestPluginProvider(t *testing.T) {
 	t.Parallel()
 
-	provider := akamai.NewPluginProvider(registry.AllProviders()...)()
+	provider := akamai.NewPluginProvider(registry.PluginSubproviders()...)()
 	err := provider.InternalValidate()
 	assert.NoError(t, err)
 }
