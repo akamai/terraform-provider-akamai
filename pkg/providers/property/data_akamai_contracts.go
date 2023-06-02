@@ -71,7 +71,7 @@ func dataContractsRead(ctx context.Context, d *schema.ResourceData, m interface{
 // Reusable function to fetch all the contracts accessible through a API token
 func getContracts(ctx context.Context, meta akameta.Meta) (*papi.GetContractsResponse, error) {
 	contracts := &papi.GetContractsResponse{}
-	if err := cache.Get(inst, "contracts", contracts); err != nil {
+	if err := cache.Get(cache.BucketName(SubproviderName), "contracts", contracts); err != nil {
 		if !errors.Is(err, cache.ErrEntryNotFound) && !errors.Is(err, cache.ErrDisabled) {
 			return nil, err
 		}
@@ -79,7 +79,7 @@ func getContracts(ctx context.Context, meta akameta.Meta) (*papi.GetContractsRes
 		if err != nil {
 			return nil, err
 		}
-		if err := cache.Set(inst, "contracts", contracts); err != nil {
+		if err := cache.Set(cache.BucketName(SubproviderName), "contracts", contracts); err != nil {
 			if !errors.Is(err, cache.ErrDisabled) {
 				return nil, err
 			}

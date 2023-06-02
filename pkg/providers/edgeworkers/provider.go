@@ -7,32 +7,29 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/edgeworkers"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/subprovider"
-	"github.com/apex/log"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 type (
-	provider struct {
-		*schema.Provider
-
+	// Subprovider gathers edgeworkers resources and data sources
+	Subprovider struct {
 		client edgeworkers.Edgeworkers
 	}
 
-	// Option is a edgeworkers provider option
-	Option func(p *provider)
+	option func(p *Subprovider)
 )
 
 var (
 	once sync.Once
 
-	inst *provider
+	inst *Subprovider
 )
 
-// Subprovider returns a core sub provider
-func Subprovider(opts ...Option) subprovider.Subprovider {
+var _ subprovider.Subprovider = &Subprovider{}
+
+func newSubprovider(opts ...option) *Subprovider {
 	once.Do(func() {
-		inst = &provider{Provider: Provider()}
+		inst = &Subprovider{}
 
 		for _, opt := range opts {
 			opt(inst)
@@ -42,65 +39,38 @@ func Subprovider(opts ...Option) subprovider.Subprovider {
 	return inst
 }
 
-// Provider returns the Akamai terraform.Resource provider.
-func Provider() *schema.Provider {
-	provider := &schema.Provider{
-		DataSourcesMap: map[string]*schema.Resource{
-			"akamai_edgekv_group_items":         dataSourceEdgeKVGroupItems(),
-			"akamai_edgekv_groups":              dataSourceEdgeKVGroups(),
-			"akamai_edgeworkers_resource_tier":  dataSourceEdgeworkersResourceTier(),
-			"akamai_edgeworkers_property_rules": dataSourceEdgeworkersPropertyRules(),
-			"akamai_edgeworker":                 dataSourceEdgeWorker(),
-			"akamai_edgeworker_activation":      dataSourceEdgeWorkerActivation(),
-		},
-		ResourcesMap: map[string]*schema.Resource{
-			"akamai_edgekv":                 resourceEdgeKV(),
-			"akamai_edgekv_group_items":     resourceEdgeKVGroupItems(),
-			"akamai_edgeworkers_activation": resourceEdgeworkersActivation(),
-			"akamai_edgeworker":             resourceEdgeWorker(),
-		},
-	}
-	return provider
-}
-
-// WithClient sets the client interface function, used for mocking and testing
-func WithClient(c edgeworkers.Edgeworkers) Option {
-	return func(p *provider) {
+func withClient(c edgeworkers.Edgeworkers) option {
+	return func(p *Subprovider) {
 		p.client = c
 	}
 }
 
 // Client returns the edgeworkers interface
-func (p *provider) Client(meta meta.Meta) edgeworkers.Edgeworkers {
+func (p *Subprovider) Client(meta meta.Meta) edgeworkers.Edgeworkers {
 	if p.client != nil {
 		return p.client
 	}
 	return edgeworkers.Client(meta.Session())
 }
 
-func (p *provider) Name() string {
-	return "edgeworkers"
+// Resources returns terraform resources for edgeworkers
+func (p *Subprovider) Resources() map[string]*schema.Resource {
+	return map[string]*schema.Resource{
+		"akamai_edgekv":                 resourceEdgeKV(),
+		"akamai_edgekv_group_items":     resourceEdgeKVGroupItems(),
+		"akamai_edgeworkers_activation": resourceEdgeworkersActivation(),
+		"akamai_edgeworker":             resourceEdgeWorker(),
+	}
 }
 
-// ProviderVersion update version string anytime provider adds new features
-const ProviderVersion string = "v0.0.1"
-
-func (p *provider) Version() string {
-	return ProviderVersion
-}
-
-func (p *provider) Schema() map[string]*schema.Schema {
-	return p.Provider.Schema
-}
-
-func (p *provider) Resources() map[string]*schema.Resource {
-	return p.Provider.ResourcesMap
-}
-
-func (p *provider) DataSources() map[string]*schema.Resource {
-	return p.Provider.DataSourcesMap
-}
-
-func (p *provider) Configure(_ log.Interface, _ *schema.ResourceData) diag.Diagnostics {
-	return nil
+// DataSources returns terraform data sources for edgeworkers
+func (p *Subprovider) DataSources() map[string]*schema.Resource {
+	return map[string]*schema.Resource{
+		"akamai_edgekv_group_items":         dataSourceEdgeKVGroupItems(),
+		"akamai_edgekv_groups":              dataSourceEdgeKVGroups(),
+		"akamai_edgeworkers_resource_tier":  dataSourceEdgeworkersResourceTier(),
+		"akamai_edgeworkers_property_rules": dataSourceEdgeworkersPropertyRules(),
+		"akamai_edgeworker":                 dataSourceEdgeWorker(),
+		"akamai_edgeworker_activation":      dataSourceEdgeWorkerActivation(),
+	}
 }

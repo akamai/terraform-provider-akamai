@@ -88,7 +88,6 @@ func TestAkamaiIPGeoProtection_res_basic(t *testing.T) {
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
-				PreCheck:          func() { testAccPreCheck(t) },
 				IsUnitTest:        true,
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{

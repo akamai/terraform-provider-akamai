@@ -7,32 +7,30 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/networklists"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/subprovider"
-	"github.com/apex/log"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 type (
-	provider struct {
-		*schema.Provider
-
+	// Subprovider gathers networklists resources and data sources
+	Subprovider struct {
 		client networklists.NTWRKLISTS
 	}
-	// Option is a networklist provider option
-	Option func(p *provider)
+
+	option func(p *Subprovider)
 )
 
 var (
 	once sync.Once
 
-	inst *provider
+	inst *Subprovider
 )
 
-// Subprovider returns a core sub provider
-func Subprovider(opts ...Option) subprovider.Subprovider {
+var _ subprovider.Subprovider = &Subprovider{}
+
+func newSubprovider(opts ...option) *Subprovider {
 	once.Do(func() {
-		inst = &provider{Provider: Provider()}
+		inst = &Subprovider{}
 
 		for _, opt := range opts {
 			opt(inst)
@@ -42,61 +40,33 @@ func Subprovider(opts ...Option) subprovider.Subprovider {
 	return inst
 }
 
-// Provider returns the Akamai terraform.Resource provider.
-func Provider() *schema.Provider {
-	provider := &schema.Provider{
-		DataSourcesMap: map[string]*schema.Resource{
-			"akamai_networklist_network_lists": dataSourceNetworkList(),
-		},
-		ResourcesMap: map[string]*schema.Resource{
-			"akamai_networklist_activations":  resourceActivations(),
-			"akamai_networklist_description":  resourceNetworkListDescription(),
-			"akamai_networklist_subscription": resourceNetworkListSubscription(),
-			"akamai_networklist_network_list": resourceNetworkList(),
-		},
-	}
-	return provider
-}
-
-// WithClient sets the client interface function, used for mocking and testing
-func WithClient(c networklists.NTWRKLISTS) Option {
-	return func(p *provider) {
+func withClient(c networklists.NTWRKLISTS) option {
+	return func(p *Subprovider) {
 		p.client = c
 	}
 }
 
 // Client returns the PAPI interface
-func (p *provider) Client(meta meta.Meta) networklists.NTWRKLISTS {
+func (p *Subprovider) Client(meta meta.Meta) networklists.NTWRKLISTS {
 	if p.client != nil {
 		return p.client
 	}
 	return networklists.Client(meta.Session())
 }
 
-func (p *provider) Name() string {
-	return "networklists"
+// Resources returns terraform resources for networklists
+func (p *Subprovider) Resources() map[string]*schema.Resource {
+	return map[string]*schema.Resource{
+		"akamai_networklist_activations":  resourceActivations(),
+		"akamai_networklist_description":  resourceNetworkListDescription(),
+		"akamai_networklist_subscription": resourceNetworkListSubscription(),
+		"akamai_networklist_network_list": resourceNetworkList(),
+	}
 }
 
-// NetworkProviderVersion update version string anytime provider adds new features
-const NetworkProviderVersion string = "v1.0.0"
-
-func (p *provider) Version() string {
-	return NetworkProviderVersion
-}
-
-func (p *provider) Schema() map[string]*schema.Schema {
-	return p.Provider.Schema
-}
-
-func (p *provider) Resources() map[string]*schema.Resource {
-	return p.Provider.ResourcesMap
-}
-
-func (p *provider) DataSources() map[string]*schema.Resource {
-	return p.Provider.DataSourcesMap
-}
-
-func (p *provider) Configure(log log.Interface, _ *schema.ResourceData) diag.Diagnostics {
-	log.Debug("START Configure")
-	return nil
+// DataSources returns terraform data sources for networklists
+func (p *Subprovider) DataSources() map[string]*schema.Resource {
+	return map[string]*schema.Resource{
+		"akamai_networklist_network_lists": dataSourceNetworkList(),
+	}
 }

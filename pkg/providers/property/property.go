@@ -1,10 +1,10 @@
-//go:build all || property
-// +build all property
-
 package property
 
 import "github.com/akamai/terraform-provider-akamai/v4/pkg/providers/registry"
 
+// SubproviderName defines name of the property subprovider
+const SubproviderName = "property"
+
 func init() {
-	registry.RegisterProvider(Subprovider())
+	registry.RegisterProvider(newSubprovider())
 }

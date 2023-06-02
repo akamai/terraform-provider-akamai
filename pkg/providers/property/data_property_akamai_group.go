@@ -176,7 +176,7 @@ func findGroupByName(name, contract string, groups *papi.GetGroupsResponse, isDe
 
 func getGroups(ctx context.Context, meta akameta.Meta) (*papi.GetGroupsResponse, error) {
 	groups := &papi.GetGroupsResponse{}
-	if err := cache.Get(inst, "groups", groups); err != nil {
+	if err := cache.Get(cache.BucketName(SubproviderName), "groups", groups); err != nil {
 		if !errors.Is(err, cache.ErrEntryNotFound) && !errors.Is(err, cache.ErrDisabled) {
 			return nil, err
 		}
@@ -184,7 +184,7 @@ func getGroups(ctx context.Context, meta akameta.Meta) (*papi.GetGroupsResponse,
 		if err != nil {
 			return nil, err
 		}
-		if err := cache.Set(inst, "groups", groups); err != nil {
+		if err := cache.Set(cache.BucketName(SubproviderName), "groups", groups); err != nil {
 			if !errors.Is(err, cache.ErrDisabled) {
 				return nil, err
 			}

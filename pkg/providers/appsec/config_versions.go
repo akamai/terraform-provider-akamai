@@ -44,7 +44,7 @@ func getModifiableConfigVersion(ctx context.Context, configID int, resource stri
 	// If the version info is in the cache, return it immediately.
 	cacheKey := fmt.Sprintf("%s:%d", "getModifiableConfigVersion", configID)
 	configuration := &appsec.GetConfigurationResponse{}
-	if err := cache.Get(inst, cacheKey, configuration); err == nil {
+	if err := cache.Get(cache.BucketName(SubproviderName), cacheKey, configuration); err == nil {
 		logger.Debugf("Resource %s returning modifiable version %d from cache", resource, configuration.LatestVersion)
 		return configuration.LatestVersion, nil
 	}
@@ -57,7 +57,7 @@ func getModifiableConfigVersion(ctx context.Context, configID int, resource stri
 	}()
 
 	// If the version info is in the cache, return it immediately.
-	err := cache.Get(inst, cacheKey, configuration)
+	err := cache.Get(cache.BucketName(SubproviderName), cacheKey, configuration)
 	if err == nil {
 		logger.Debugf("Resource %s returning modifiable version %d from cache", resource, configuration.LatestVersion)
 		return configuration.LatestVersion, nil
@@ -81,7 +81,7 @@ func getModifiableConfigVersion(ctx context.Context, configID int, resource stri
 	stagingVersion := configuration.StagingVersion
 	productionVersion := configuration.ProductionVersion
 	if latestVersion != stagingVersion && latestVersion != productionVersion {
-		if err := cache.Set(inst, cacheKey, configuration); err != nil {
+		if err := cache.Set(cache.BucketName(SubproviderName), cacheKey, configuration); err != nil {
 			if !errors.Is(err, cache.ErrDisabled) {
 				logger.Errorf("unable to set latestVersion %d into cache")
 			}
@@ -103,7 +103,7 @@ func getModifiableConfigVersion(ctx context.Context, configID int, resource stri
 	}
 
 	configuration.LatestVersion = ccr.Version
-	if err := cache.Set(inst, cacheKey, configuration); err != nil && !errors.Is(err, cache.ErrDisabled) {
+	if err := cache.Set(cache.BucketName(SubproviderName), cacheKey, configuration); err != nil && !errors.Is(err, cache.ErrDisabled) {
 		logger.Errorf("unable to set latestVersion %d into cache: %s", err.Error())
 	}
 
@@ -122,7 +122,7 @@ func getLatestConfigVersion(ctx context.Context, configID int, m interface{}) (i
 	// Return the cached value if we have one
 	cacheKey := fmt.Sprintf("%s:%d", "getLatestConfigVersion", configID)
 	configuration := &appsec.GetConfigurationResponse{}
-	if err := cache.Get(inst, cacheKey, configuration); err == nil {
+	if err := cache.Get(cache.BucketName(SubproviderName), cacheKey, configuration); err == nil {
 		logger.Debugf("Found config %d, returning %d as its latest version", configuration.ID, configuration.LatestVersion)
 		return configuration.LatestVersion, nil
 	}
@@ -134,7 +134,7 @@ func getLatestConfigVersion(ctx context.Context, configID int, m interface{}) (i
 		latestVersionMutex.Unlock()
 	}()
 
-	err := cache.Get(inst, cacheKey, configuration)
+	err := cache.Get(cache.BucketName(SubproviderName), cacheKey, configuration)
 	if err == nil {
 		logger.Debugf("Found config %d, returning %d as its latest version", configuration.ID, configuration.LatestVersion)
 		return configuration.LatestVersion, nil
@@ -150,7 +150,7 @@ func getLatestConfigVersion(ctx context.Context, configID int, m interface{}) (i
 		logger.Errorf("error calling GetConfiguration: %s", err.Error())
 		return 0, err
 	}
-	if err := cache.Set(inst, cacheKey, configuration); err != nil && !errors.Is(err, cache.ErrDisabled) {
+	if err := cache.Set(cache.BucketName(SubproviderName), cacheKey, configuration); err != nil && !errors.Is(err, cache.ErrDisabled) {
 		logger.Errorf("error caching latestVersion into cache: %s", err.Error())
 	}
 

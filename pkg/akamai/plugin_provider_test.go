@@ -1,4 +1,4 @@
-package akamai
+package akamai_test
 
 import (
 	"context"
@@ -6,12 +6,25 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/edgegrid"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/cache"
+
+	// Load the providers
+	_ "github.com/akamai/terraform-provider-akamai/v4/pkg/providers"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/providers/registry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestPluginProvider(t *testing.T) {
+	t.Parallel()
+
+	provider := akamai.NewPluginProvider(registry.AllProviders()...)()
+	err := provider.InternalValidate()
+	assert.NoError(t, err)
+}
 
 func TestConfigureCache_EnabledInContext(t *testing.T) {
 	tests := map[string]struct {
@@ -31,7 +44,7 @@ func TestConfigureCache_EnabledInContext(t *testing.T) {
 		ctx := context.Background()
 		t.Run(name, func(t *testing.T) {
 
-			prov := NewPluginProvider()
+			prov := akamai.NewPluginProvider()
 			_, diagnostics := prov().ConfigureContextFunc(ctx, test.resourceLocalData)
 			require.False(t, diagnostics.HasError())
 
@@ -48,12 +61,12 @@ func TestConfigureEdgercInContext(t *testing.T) {
 	}{
 		"file with EdgeGrid configuration does not exist": {
 			resourceLocalData:   getResourceLocalData(t, "edgerc", "not_existing_file_path"),
-			expectedDiagnostics: diag.Errorf("%s: %s: %s", ErrWrongEdgeGridConfiguration, edgegrid.ErrLoadingFile, "open not_existing_file_path: no such file or directory"),
+			expectedDiagnostics: diag.Errorf("%s: %s: %s", akamai.ErrWrongEdgeGridConfiguration, edgegrid.ErrLoadingFile, "open not_existing_file_path: no such file or directory"),
 			withError:           true,
 		},
 		"config section does not exist": {
 			resourceLocalData:   getResourceLocalData(t, "config_section", "not_existing_config_section"),
-			expectedDiagnostics: diag.Errorf("%s: %s: %s", ErrWrongEdgeGridConfiguration, edgegrid.ErrSectionDoesNotExist, "section \"not_existing_config_section\" does not exist"),
+			expectedDiagnostics: diag.Errorf("%s: %s: %s", akamai.ErrWrongEdgeGridConfiguration, edgegrid.ErrSectionDoesNotExist, "section \"not_existing_config_section\" does not exist"),
 			withError:           true,
 		},
 		"with empty edgerc path, default path is used": {
@@ -66,7 +79,7 @@ func TestConfigureEdgercInContext(t *testing.T) {
 	for name, test := range tests {
 		ctx := context.Background()
 		t.Run(name, func(t *testing.T) {
-			prov := NewPluginProvider()
+			prov := akamai.NewPluginProvider()
 			meta, diagnostics := prov().ConfigureContextFunc(ctx, test.resourceLocalData)
 
 			if test.withError {
@@ -156,7 +169,7 @@ func TestEdgercValidate(t *testing.T) {
 			}
 			resourceData := schema.TestResourceDataRaw(t, resourceSchema, resourceDataMap)
 
-			prov := NewPluginProvider()
+			prov := akamai.NewPluginProvider()
 			configuredContext, diagnostics := prov().ConfigureContextFunc(ctx, resourceData)
 
 			assert.Nil(t, configuredContext)

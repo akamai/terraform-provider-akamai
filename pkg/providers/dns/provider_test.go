@@ -17,7 +17,7 @@ var testAccProviders map[string]func() (*schema.Provider, error)
 var testAccProvider *schema.Provider
 
 func TestMain(m *testing.M) {
-	testAccProvider = akamai.NewPluginProvider(Subprovider())()
+	testAccProvider = akamai.NewPluginProvider(newSubprovider())()
 	testAccProviders = map[string]func() (*schema.Provider, error){
 		"akamai": func() (*schema.Provider, error) {
 			return testAccProvider, nil
@@ -48,16 +48,6 @@ func useClient(client dns.DNS, f func()) {
 	}()
 
 	f()
-}
-
-func TestProvider(t *testing.T) {
-	if err := inst.Provider.InternalValidate(); err != nil {
-		t.Fatalf("err: %s", err)
-	}
-}
-
-func testAccPreCheck(_ *testing.T) {
-
 }
 
 type data struct {

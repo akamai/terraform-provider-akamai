@@ -85,7 +85,6 @@ func TestResDnsRecord(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				PreCheck:          func() { testAccPreCheck(t) },
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
@@ -198,7 +197,6 @@ func TestResDnsRecord(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				PreCheck:          func() { testAccPreCheck(t) },
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{

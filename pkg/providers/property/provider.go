@@ -7,8 +7,6 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/apex/log"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/hapi"
@@ -19,28 +17,26 @@ import (
 )
 
 type (
-	provider struct {
-		*schema.Provider
-
-		client papi.PAPI
-
+	// Subprovider gathers property resources and data sources
+	Subprovider struct {
+		client     papi.PAPI
 		hapiClient hapi.HAPI
 	}
 
-	// Option is a papi provider option
-	Option func(p *provider)
+	option func(p *Subprovider)
 )
 
 var (
 	once sync.Once
 
-	inst *provider
+	inst *Subprovider
 )
 
-// Subprovider returns a core sub provider
-func Subprovider(opts ...Option) subprovider.Subprovider {
+var _ subprovider.Subprovider = &Subprovider{}
+
+func newSubprovider(opts ...option) *Subprovider {
 	once.Do(func() {
-		inst = &provider{Provider: Provider()}
+		inst = &Subprovider{}
 
 		for _, opt := range opts {
 			opt(inst)
@@ -50,53 +46,14 @@ func Subprovider(opts ...Option) subprovider.Subprovider {
 	return inst
 }
 
-// Provider returns the Akamai terraform.Resource provider.
-func Provider() *schema.Provider {
-	provider := &schema.Provider{
-		DataSourcesMap: map[string]*schema.Resource{
-			"akamai_contract":                    dataSourcePropertyContract(),
-			"akamai_contracts":                   dataSourceContracts(),
-			"akamai_cp_code":                     dataSourceCPCode(),
-			"akamai_group":                       dataSourcePropertyGroup(),
-			"akamai_groups":                      dataSourcePropertyMultipleGroups(),
-			"akamai_properties":                  dataSourceProperties(),
-			"akamai_properties_search":           dataSourcePropertiesSearch(),
-			"akamai_property":                    dataSourceProperty(),
-			"akamai_property_activation":         dataSourcePropertyActivation(),
-			"akamai_property_hostnames":          dataSourcePropertyHostnames(),
-			"akamai_property_include":            dataSourcePropertyInclude(),
-			"akamai_property_include_activation": dataSourcePropertyIncludeActivation(),
-			"akamai_property_include_parents":    dataSourcePropertyIncludeParents(),
-			"akamai_property_include_rules":      dataSourcePropertyIncludeRules(),
-			"akamai_property_includes":           dataSourcePropertyIncludes(),
-			"akamai_property_products":           dataSourcePropertyProducts(),
-			"akamai_property_rule_formats":       dataSourcePropertyRuleFormats(),
-			"akamai_property_rules":              dataSourcePropertyRules(),
-			"akamai_property_rules_builder":      dataSourcePropertyRulesBuilder(),
-			"akamai_property_rules_template":     dataSourcePropertyRulesTemplate(),
-		},
-		ResourcesMap: map[string]*schema.Resource{
-			"akamai_cp_code":                     resourceCPCode(),
-			"akamai_edge_hostname":               resourceSecureEdgeHostName(),
-			"akamai_property":                    resourceProperty(),
-			"akamai_property_activation":         resourcePropertyActivation(),
-			"akamai_property_include":            resourcePropertyInclude(),
-			"akamai_property_include_activation": resourcePropertyIncludeActivation(),
-			"akamai_property_variables":          resourcePropertyVariables(),
-		},
-	}
-	return provider
-}
-
-// WithClient sets the client interface function, used for mocking and testing
-func WithClient(c papi.PAPI) Option {
-	return func(p *provider) {
+func withClient(c papi.PAPI) option {
+	return func(p *Subprovider) {
 		p.client = c
 	}
 }
 
 // Client returns the PAPI interface
-func (p *provider) Client(meta meta.Meta) papi.PAPI {
+func (p *Subprovider) Client(meta meta.Meta) papi.PAPI {
 	if p.client != nil {
 		return p.client
 	}
@@ -104,39 +61,50 @@ func (p *provider) Client(meta meta.Meta) papi.PAPI {
 }
 
 // HapiClient returns the HAPI interface
-func (p *provider) HapiClient(meta meta.Meta) hapi.HAPI {
+func (p *Subprovider) HapiClient(meta meta.Meta) hapi.HAPI {
 	if p.hapiClient != nil {
 		return p.hapiClient
 	}
 	return hapi.Client(meta.Session())
 }
 
-func (p *provider) Name() string {
-	return "property"
+// Resources returns terraform resources for property
+func (p *Subprovider) Resources() map[string]*schema.Resource {
+	return map[string]*schema.Resource{
+		"akamai_cp_code":                     resourceCPCode(),
+		"akamai_edge_hostname":               resourceSecureEdgeHostName(),
+		"akamai_property":                    resourceProperty(),
+		"akamai_property_activation":         resourcePropertyActivation(),
+		"akamai_property_include":            resourcePropertyInclude(),
+		"akamai_property_include_activation": resourcePropertyIncludeActivation(),
+		"akamai_property_variables":          resourcePropertyVariables(),
+	}
 }
 
-// ProviderVersion update version string anytime provider adds new features
-const ProviderVersion string = "v0.8.3"
-
-func (p *provider) Version() string {
-	return ProviderVersion
-}
-
-func (p *provider) Schema() map[string]*schema.Schema {
-	return p.Provider.Schema
-}
-
-func (p *provider) Resources() map[string]*schema.Resource {
-	return p.Provider.ResourcesMap
-}
-
-func (p *provider) DataSources() map[string]*schema.Resource {
-	return p.Provider.DataSourcesMap
-}
-
-func (p *provider) Configure(log log.Interface, _ *schema.ResourceData) diag.Diagnostics {
-	log.Debug("START Configure")
-	return nil
+// DataSources returns terraform data sources for property
+func (p *Subprovider) DataSources() map[string]*schema.Resource {
+	return map[string]*schema.Resource{
+		"akamai_contract":                    dataSourcePropertyContract(),
+		"akamai_contracts":                   dataSourceContracts(),
+		"akamai_cp_code":                     dataSourceCPCode(),
+		"akamai_group":                       dataSourcePropertyGroup(),
+		"akamai_groups":                      dataSourcePropertyMultipleGroups(),
+		"akamai_properties":                  dataSourceProperties(),
+		"akamai_properties_search":           dataSourcePropertiesSearch(),
+		"akamai_property":                    dataSourceProperty(),
+		"akamai_property_activation":         dataSourcePropertyActivation(),
+		"akamai_property_hostnames":          dataSourcePropertyHostnames(),
+		"akamai_property_include":            dataSourcePropertyInclude(),
+		"akamai_property_include_activation": dataSourcePropertyIncludeActivation(),
+		"akamai_property_include_parents":    dataSourcePropertyIncludeParents(),
+		"akamai_property_include_rules":      dataSourcePropertyIncludeRules(),
+		"akamai_property_includes":           dataSourcePropertyIncludes(),
+		"akamai_property_products":           dataSourcePropertyProducts(),
+		"akamai_property_rule_formats":       dataSourcePropertyRuleFormats(),
+		"akamai_property_rules":              dataSourcePropertyRules(),
+		"akamai_property_rules_builder":      dataSourcePropertyRulesBuilder(),
+		"akamai_property_rules_template":     dataSourcePropertyRulesTemplate(),
+	}
 }
 
 // compactJSON converts a JSON-encoded byte slice to a compact form (so our JSON fixtures can be readable)

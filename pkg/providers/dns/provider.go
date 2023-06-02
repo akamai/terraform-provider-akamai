@@ -7,91 +7,60 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/dns"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/subprovider"
-	"github.com/apex/log"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 type (
-	provider struct {
-		*schema.Provider
-
+	// Subprovider gathers dns resources and data sources
+	Subprovider struct {
 		client dns.DNS
 	}
 
-	// Option is a dns provider option
-	Option func(p *provider)
+	option func(p *Subprovider)
 )
 
 var (
 	once sync.Once
 
-	inst *provider
+	inst *Subprovider
 )
 
-// Subprovider returns a core sub provider
-func Subprovider() subprovider.Subprovider {
+var _ subprovider.Subprovider = &Subprovider{}
+
+func newSubprovider() *Subprovider {
 	once.Do(func() {
-		inst = &provider{Provider: Provider()}
+		inst = &Subprovider{}
 	})
 
 	return inst
 }
 
-// Provider returns the Akamai terraform.Resource provider.
-func Provider() *schema.Provider {
-	provider := &schema.Provider{
-		DataSourcesMap: map[string]*schema.Resource{
-			"akamai_authorities_set": dataSourceAuthoritiesSet(),
-			"akamai_dns_record_set":  dataSourceDNSRecordSet(),
-		},
-		ResourcesMap: map[string]*schema.Resource{
-			"akamai_dns_zone":   resourceDNSv2Zone(),
-			"akamai_dns_record": resourceDNSv2Record(),
-		},
-	}
-	return provider
-}
-
-// WithClient sets the client interface function, used for mocking and testing
-func WithClient(c dns.DNS) Option {
-	return func(p *provider) {
+func withClient(c dns.DNS) option {
+	return func(p *Subprovider) {
 		p.client = c
 	}
 }
 
 // Client returns the DNS interface
-func (p *provider) Client(meta meta.Meta) dns.DNS {
+func (p *Subprovider) Client(meta meta.Meta) dns.DNS {
 	if p.client != nil {
 		return p.client
 	}
 	return dns.Client(meta.Session())
 }
 
-func (p *provider) Name() string {
-	return "dns"
+// Resources returns terraform resources for imadnsging
+func (p *Subprovider) Resources() map[string]*schema.Resource {
+	return map[string]*schema.Resource{
+		"akamai_dns_zone":   resourceDNSv2Zone(),
+		"akamai_dns_record": resourceDNSv2Record(),
+	}
 }
 
-// DNSProviderVersion update version string anytime provider adds new features
-const DNSProviderVersion string = "v0.8.3"
-
-func (p *provider) Version() string {
-	return DNSProviderVersion
-}
-
-func (p *provider) Schema() map[string]*schema.Schema {
-	return p.Provider.Schema
-}
-
-func (p *provider) Resources() map[string]*schema.Resource {
-	return p.Provider.ResourcesMap
-}
-
-func (p *provider) DataSources() map[string]*schema.Resource {
-	return p.Provider.DataSourcesMap
-}
-
-func (p *provider) Configure(log log.Interface, _ *schema.ResourceData) diag.Diagnostics {
-	log.Debug("START Configure")
-	return nil
+// DataSources returns terraform data sources for dns
+func (p *Subprovider) DataSources() map[string]*schema.Resource {
+	return map[string]*schema.Resource{
+		"akamai_authorities_set": dataSourceAuthoritiesSet(),
+		"akamai_dns_record_set":  dataSourceDNSRecordSet(),
+	}
 }

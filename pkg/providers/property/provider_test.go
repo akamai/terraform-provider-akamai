@@ -22,12 +22,13 @@ var testAccProviders map[string]func() (*schema.Provider, error)
 var testAccProvider *schema.Provider
 
 func TestMain(m *testing.M) {
-	testAccProvider = akamai.NewPluginProvider(Subprovider())()
+	testAccProvider = akamai.NewPluginProvider(newSubprovider())()
 	testAccProviders = map[string]func() (*schema.Provider, error){
 		"akamai": func() (*schema.Provider, error) {
 			return testAccProvider, nil
 		},
 	}
+
 	if err := testutils.TFTestSetup(); err != nil {
 		log.Fatal(err)
 	}
@@ -36,12 +37,6 @@ func TestMain(m *testing.M) {
 		log.Fatal(err)
 	}
 	os.Exit(exitCode)
-}
-
-func TestProvider(t *testing.T) {
-	if err := Provider().InternalValidate(); err != nil {
-		t.Fatalf("err: %s", err)
-	}
 }
 
 // Only allow one test at a time to patch the client via useClient()

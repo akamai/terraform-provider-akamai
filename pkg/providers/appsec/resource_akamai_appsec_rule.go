@@ -139,7 +139,7 @@ func getWAFMode(ctx context.Context, m interface{}, configID int, version int, p
 
 	cacheKey := fmt.Sprintf("%s:%d:%d:%s", "getWAFMode", configID, version, policyID)
 	getWAFModeResponse := &appsec.GetWAFModeResponse{}
-	if err := cache.Get(inst, cacheKey, getWAFModeResponse); err == nil {
+	if err := cache.Get(cache.BucketName(SubproviderName), cacheKey, getWAFModeResponse); err == nil {
 		logger.Debugf("returning wafMode %s for config/version/policy %d/%d/%s",
 			getWAFModeResponse.Mode, configID, version, policyID)
 		return getWAFModeResponse.Mode, nil
@@ -152,7 +152,7 @@ func getWAFMode(ctx context.Context, m interface{}, configID int, version int, p
 		getWAFModeMutex.Unlock()
 	}()
 
-	err := cache.Get(inst, cacheKey, getWAFModeResponse)
+	err := cache.Get(cache.BucketName(SubproviderName), cacheKey, getWAFModeResponse)
 	if err == nil {
 		logger.Debugf("returning wafMode %s for config/version/policy %d/%d/%s",
 			getWAFModeResponse.Mode, configID, version, policyID)
@@ -174,7 +174,7 @@ func getWAFMode(ctx context.Context, m interface{}, configID int, version int, p
 		logger.Errorf("calling 'GetWAFMode': %s", err.Error())
 		return "", err
 	}
-	if err := cache.Set(inst, cacheKey, wafMode); err != nil {
+	if err := cache.Set(cache.BucketName(SubproviderName), cacheKey, wafMode); err != nil {
 		if !errors.Is(err, cache.ErrDisabled) {
 			logger.Errorf("error caching WAFMode: %s", err.Error())
 		}
