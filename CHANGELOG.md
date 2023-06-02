@@ -1,5 +1,11 @@
 # RELEASE NOTES
 
+## x.x.x (x x, 2023)
+
+#### DEPRECATIONS
+
+* Deprecate `active` field in `akamai_dns_record` resource
+
 ## 4.1.0 (Jun 1, 2023)
 
 #### FEATURES/ENHANCEMENTS:

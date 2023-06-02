@@ -96,8 +96,9 @@ func getResourceDNSRecordSchema() map[string]*schema.Schema {
 			Required: true,
 		},
 		"active": {
-			Type:     schema.TypeBool,
-			Optional: true,
+			Type:       schema.TypeBool,
+			Optional:   true,
+			Deprecated: "Field 'active' has been deprecated. Setting it has no effect",
 		},
 		"target": {
 			Type:             schema.TypeList,
