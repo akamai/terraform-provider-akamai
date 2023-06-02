@@ -205,10 +205,12 @@ func resourceCPSDVEnrollment() *schema.Resource {
 				if !diff.HasChange("sans") {
 					return nil
 				}
-				domainsToValidate := []interface{}{map[string]interface{}{"domain": diff.Get("common_name").(string)}}
+				domainsToValidate := []interface{}{map[string]interface{}{
+					"domain": strings.ToLower(diff.Get("common_name").(string)),
+				}}
 				if sans, ok := diff.Get("sans").(*schema.Set); ok {
 					for _, san := range sans.List() {
-						domain := map[string]interface{}{"domain": san.(string)}
+						domain := map[string]interface{}{"domain": strings.ToLower(san.(string))}
 						domainsToValidate = append(domainsToValidate, domain)
 					}
 				}
