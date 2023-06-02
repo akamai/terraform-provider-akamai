@@ -2,14 +2,14 @@ package datastream
 
 import (
 	"fmt"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/tools"
-	"github.com/stretchr/testify/mock"
 	"regexp"
 	"strconv"
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/datastream"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/stretchr/testify/mock"
 )
 
 var (

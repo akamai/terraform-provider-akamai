@@ -100,7 +100,7 @@ func DatasetFieldListToDatasetFields(list []interface{}) []datastream.DatasetFie
 	datasetFields := make([]datastream.DatasetFieldID, 0)
 
 	for _, v := range list {
-		datasetFields = append(datasetFields, datastream.DatasetFieldID{v.(int)})
+		datasetFields = append(datasetFields, datastream.DatasetFieldID{DatasetFieldID: v.(int)})
 	}
 	return datasetFields
 }
@@ -146,7 +146,7 @@ func GetPropertiesList(properties []interface{}) ([]datastream.PropertyID, error
 		if err != nil {
 			return nil, err
 		}
-		ids = append(ids, datastream.PropertyID{propertyID})
+		ids = append(ids, datastream.PropertyID{PropertyID: propertyID})
 	}
 
 	return ids, nil

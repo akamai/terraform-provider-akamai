@@ -8,6 +8,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+	"github.com/tj/assert"
+
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/datastream"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
@@ -2214,4 +2217,38 @@ func TestConnectors(t *testing.T) {
 			})
 		})
 	}
+}
+
+func TestEmptyFilePrefixSuffixSetForHttpsDestination(t *testing.T) {
+
+	configurationOfPrefixSuffixNotSupportedDest := datastream.DeliveryConfiguration{
+		Format: datastream.FormatTypeJson,
+		Frequency: datastream.Frequency{
+			IntervalInSeconds: datastream.IntervalInSeconds30,
+		},
+		UploadFilePrefix: DefaultUploadFilePrefix,
+		UploadFileSuffix: DefaultUploadFileSuffix,
+	}
+
+	result, err := FilePrefixSuffixSet(`splunk_connector`, &configurationOfPrefixSuffixNotSupportedDest)
+	require.NoError(t, err)
+	assert.Equal(t, "", result.UploadFilePrefix)
+	assert.Equal(t, "", result.UploadFileSuffix)
+}
+
+func TestFilePrefixSuffixSetForObjectStorageDestination(t *testing.T) {
+
+	configurationOfPrefixSuffixSupportedDest := datastream.DeliveryConfiguration{
+		Format: datastream.FormatTypeJson,
+		Frequency: datastream.Frequency{
+			IntervalInSeconds: datastream.IntervalInSeconds30,
+		},
+		UploadFilePrefix: "pre",
+		UploadFileSuffix: "suf",
+	}
+
+	result, err := FilePrefixSuffixSet(`azure_connector`, &configurationOfPrefixSuffixSupportedDest)
+	require.NoError(t, err)
+	assert.Equal(t, configurationOfPrefixSuffixSupportedDest.UploadFilePrefix, result.UploadFilePrefix)
+	assert.Equal(t, configurationOfPrefixSuffixSupportedDest.UploadFileSuffix, result.UploadFileSuffix)
 }

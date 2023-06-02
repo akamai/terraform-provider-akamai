@@ -1,19 +1,17 @@
 package datastream
 
 import (
+	"context"
+	"errors"
 	"fmt"
+
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/datastream"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-)
-
-import (
-	"context"
-	"errors"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/datastream"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
 )
 
 func dataSourceDatasetFields() *schema.Resource {
@@ -77,15 +75,15 @@ func dataSourceDatasetFieldsRead(ctx context.Context, rd *schema.ResourceData, m
 	logger.Debug("Listing dataset fields")
 	client := inst.Client(meta)
 
-	productId, err := tf.GetStringValue("product_id", rd)
+	productID, err := tf.GetStringValue("product_id", rd)
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 
 	var getDatasetFieldsRequest datastream.GetDatasetFieldsRequest
-	if productId != "" {
+	if productID != "" {
 		getDatasetFieldsRequest = datastream.GetDatasetFieldsRequest{
-			ProductID: &productId,
+			ProductID: &productID,
 		}
 	}
 

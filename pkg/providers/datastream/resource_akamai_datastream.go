@@ -845,41 +845,6 @@ var configResource = &schema.Resource{
 	},
 }
 
-var datasetFieldResource = &schema.Resource{
-	Schema: map[string]*schema.Schema{
-		"dataset_fields": {
-			Type: schema.TypeList,
-			Elem: &schema.Resource{
-				Schema: map[string]*schema.Schema{
-					"dataset_field_id": {
-						Type:     schema.TypeString,
-						Required: true,
-					},
-				},
-			},
-			Required: true,
-		},
-	},
-}
-
-var propertyResource = &schema.Resource{
-	Schema: map[string]*schema.Schema{
-		"properties": {
-			Type: schema.TypeList,
-			Elem: &schema.Resource{
-				Schema: map[string]*schema.Schema{
-					"property_id": {
-						Type:             schema.TypeString,
-						Required:         true,
-						DiffSuppressFunc: tf.FieldPrefixSuppress("prp_"),
-					},
-				},
-			},
-			Required: true,
-		},
-	},
-}
-
 func resourceDatastreamCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akamai.Meta(m)
 	logger := meta.Log("Datastream", "resourceDatastreamCreate")
@@ -909,12 +874,14 @@ func resourceDatastreamCreate(ctx context.Context, d *schema.ResourceData, m int
 	contractID = strings.TrimPrefix(contractID, "ctr_")
 
 	datasetFieldsIDsList, err := tf.GetListValue("dataset_fields", d)
+
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	datasetFieldsIDs := DatasetFieldListToDatasetFields(datasetFieldsIDsList)
 
 	emailIDsList, err := tf.GetListValue("notification_emails", d)
+
 	if err != nil {
 		if !errors.Is(err, tf.ErrNotFound) {
 			return diag.FromErr(err)
@@ -1002,6 +969,7 @@ func resourceDatastreamCreate(ctx context.Context, d *schema.ResourceData, m int
 	return resourceDatastreamRead(ctx, d, m)
 }
 
+// FilePrefixSuffixSet is used to set the blank value for prefix and suffix for https based destination as https based destination does not support prefix and suffix
 func FilePrefixSuffixSet(httpsBaseConnectorName string, config *datastream.DeliveryConfiguration) (*datastream.DeliveryConfiguration, error) {
 
 	if tools.ContainsString(ConnectorsWithoutFilenameOptionsConfig, httpsBaseConnectorName) {
@@ -1219,6 +1187,7 @@ func updateStream(ctx context.Context, client datastream.DS, logger log.Interfac
 		emailIDs := InterfaceSliceToStringSlice(emailIDsList)
 
 		propertyIDsList, err := tf.GetListValue("properties", d)
+
 		if err != nil {
 			return err
 		}
@@ -1419,70 +1388,6 @@ func waitForStreamStatusChange(ctx context.Context, client datastream.DS, stream
 
 	return &streamDetails.StreamStatus, nil
 }
-
-/*func urlSuppressor(keyToSuppress string) schema.SchemaDiffSuppressFunc {
-	return func(resourceKey string, _, _ string, d *schema.ResourceData) bool {
-		logger := akamai.Log("DataStream", "urlSuppressor")
-
-		// do not suppress when creating the resource
-		if d.Id() == "" {
-			logger.Infof("%s creating resource", resourceKey)
-			return false
-		}
-
-		resourceKeyTokens := strings.Split(resourceKey, ".") // connector_name.ID.propertyName
-		connectorName := resourceKeyTokens[0]
-		if !d.HasChange(connectorName) {
-			logger.Infof("%s hasn't changed", connectorName)
-			return false
-		}
-
-		oldConnectorObj, newConnectorObj := d.GetChange(connectorName)
-		oldSet, newSet := oldConnectorObj.(*schema.Set), newConnectorObj.(*schema.Set)
-		if oldSet.Len() != 1 || newSet.Len() != 1 {
-			return false
-		}
-
-		oldElem, oldOk := oldSet.List()[0].(map[string]interface{})
-		newElem, newOk := newSet.List()[0].(map[string]interface{})
-		if !newOk || !oldOk {
-			return false
-		}
-
-		// trim url
-		newElem[keyToSuppress] = strings.TrimRight(newElem[keyToSuppress].(string), "/?")
-
-		// skip computed properties because they cannot be set
-		propertiesToSkip := map[string]bool{
-			"connector_id": true,
-		}
-
-		// do the comparison
-		for propertyName, oldVal := range oldElem {
-			if _, ok := propertiesToSkip[propertyName]; ok {
-				continue
-			}
-			newVal, ok := newElem[propertyName]
-			// if property does not exist in old element, do not suppress change
-			if !ok {
-				logger.Debug("Change detected")
-				return false
-			}
-
-			logger.Debugf("Comparing %s - [%v] and [%v]", propertyName, newVal, oldVal)
-
-			// if values are different, do not suppress change
-			if newVal != oldVal {
-				logger.Debug("Change detected")
-				return false
-			}
-		}
-
-		// all values are the same, suppress the change
-		logger.Debug("No change detected")
-		return true
-	}
-}*/
 
 func isOrderDifferent(_, oldIDValue, newIDValue string, d *schema.ResourceData) bool {
 	key := "dataset_fields"

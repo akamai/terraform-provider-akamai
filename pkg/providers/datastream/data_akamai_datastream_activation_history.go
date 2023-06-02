@@ -60,7 +60,7 @@ func dataAkamaiDatastreamActivationHistory() *schema.Resource {
 	}
 }
 
-func populateSchemaFieldsWithActivationHistory(ac []datastream.ActivationHistoryEntry, d *schema.ResourceData, stream_id int) error {
+func populateSchemaFieldsWithActivationHistory(ac []datastream.ActivationHistoryEntry, d *schema.ResourceData) error {
 
 	var activations []map[string]interface{}
 	for _, a := range ac {
@@ -104,7 +104,7 @@ func dataAkamaiDatastreamActivationHistoryRead(ctx context.Context, d *schema.Re
 		return diag.FromErr(err)
 	}
 
-	err = populateSchemaFieldsWithActivationHistory(activationHistory, d, streamID)
+	err = populateSchemaFieldsWithActivationHistory(activationHistory, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}

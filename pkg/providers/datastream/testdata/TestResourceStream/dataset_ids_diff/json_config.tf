@@ -4,26 +4,24 @@ provider "akamai" {
 
 resource "akamai_datastream" "splunk_stream" {
   active = false
-  config {
+  delivery_configuration {
     format = "JSON"
     frequency {
-      time_in_sec = 30
+      interval_in_secs = 30
     }
   }
 
-  contract_id        = "test_contract"
-  dataset_fields_ids = [1001, 1002]
+  contract_id    = "test_contract"
+  dataset_fields = [1001, 1002]
 
-  group_id      = 1337
-  property_ids  = [1]
-  stream_name   = "test_stream"
-  stream_type   = "RAW_LOGS"
-  template_name = "EDGE_LOGS"
+  group_id    = 1337
+  properties  = [1]
+  stream_name = "test_stream"
 
   splunk_connector {
     compress_logs         = false
-    connector_name        = "splunk_test_connector_name"
+    display_name          = "splunk_test_connector_name"
     event_collector_token = "splunk_event_collector_token"
-    url                   = "splunk_url"
+    endpoint              = "splunk_url"
   }
 }

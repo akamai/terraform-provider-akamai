@@ -2,6 +2,11 @@
 
 ## x.x.x (x x, 2023)
 
+#### BREAKING CHANGES:
+
+* Datastream
+  * Change in `akamai_datastreams` resource schema payload related to migration to v2 of DataStream API
+
 #### FEATURES/ENHANCEMENTS:
 
 * Provider tested and now supports Terraform 1.4.6
@@ -9,7 +14,7 @@
 #### DEPRECATIONS
 
 * Deprecate `active` field in `akamai_dns_record` resource
-`
+
 #### BUG FIXES:
 
 * CPS
@@ -34,7 +39,7 @@
   * New data sources:
     * `akamai_gtm_datacenter` - get datacenter information
     * `akamai_gtm_datacenters` - get datacenters information
-    
+
 ## 4.0.0 (May 30, 2023)
 
 #### BREAKING CHANGES:
@@ -885,8 +890,8 @@ These are the operations supported in the Network Lists API v2:
 These are the operations supported in the Identity Management: User Administration API v2:
 
 * Create a new user
-* Update a user’s profile
-* Update a user’s role assignments
+* Update a userâs profile
+* Update a userâs role assignments
 * Delete a user
 
 ## 1.1.1 (Jan 8, 2021)

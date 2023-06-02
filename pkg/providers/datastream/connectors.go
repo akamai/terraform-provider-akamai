@@ -56,7 +56,6 @@ var (
 
 // ConnectorToMap converts ConnectorDetails struct to map of properties
 func ConnectorToMap(connector datastream.Destination, d *schema.ResourceData) (string, map[string]interface{}, error) {
-	// api returned empty list of connector
 
 	connectorDetails := connector
 	connectorType := connectorDetails.DestinationType
@@ -464,9 +463,9 @@ func setNonNilItemsFromState(state map[string]interface{}, target map[string]int
 	}
 }
 
+// GetConnectorNameWithOutFilePrefixSuffix Returns destination name which does not contain the file prefix and suffix
 func GetConnectorNameWithOutFilePrefixSuffix(d *schema.ResourceData, keys []string) string {
 
 	connectorName, _, _ := tf.GetExactlyOneOf(d, keys)
-
 	return connectorName
 }
