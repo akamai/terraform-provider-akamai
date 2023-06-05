@@ -2,114 +2,144 @@ package property
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/papi"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
 )
 
-func dataSourcePropertyInclude() *schema.Resource {
-	return &schema.Resource{
-		ReadContext: dataPropertyIncludeRead,
-		Schema: map[string]*schema.Schema{
-			"contract_id": {
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "Identifies the contract under which the include was created",
+var _ datasource.DataSource = &IncludeDataSource{}
+
+// NewIncludeDataSource returns a new property include data source
+func NewIncludeDataSource() datasource.DataSource {
+	return &IncludeDataSource{}
+}
+
+// IncludeDataSource defines the data source implementation for fetching property include information.
+type IncludeDataSource struct {
+	meta meta.Meta
+}
+
+// IncludeDataSourceModel describes the data source data model for PropertyIncludeDataSource.
+type IncludeDataSourceModel struct {
+	ContractID        types.String `tfsdk:"contract_id"`
+	GroupID           types.String `tfsdk:"group_id"`
+	IncludeID         types.String `tfsdk:"include_id"`
+	Name              types.String `tfsdk:"name"`
+	Type              types.String `tfsdk:"type"`
+	LatestVersion     types.Int64  `tfsdk:"latest_version"`
+	StagingVersion    types.Int64  `tfsdk:"staging_version"`
+	ProductionVersion types.Int64  `tfsdk:"production_version"`
+	ID                types.String `tfsdk:"id"`
+}
+
+// Metadata configures data source's meta information
+func (d *IncludeDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+	resp.TypeName = "akamai_property_include"
+}
+
+// Schema is used to define data source's terraform schema
+func (d *IncludeDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+	resp.Schema = schema.Schema{
+		MarkdownDescription: "Property Include data source",
+		Attributes: map[string]schema.Attribute{
+			"contract_id": schema.StringAttribute{
+				MarkdownDescription: "Identifies the contract under which the include was created",
+				Required:            true,
 			},
-			"group_id": {
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "Identifies the group under which the include was created",
+			"group_id": schema.StringAttribute{
+				MarkdownDescription: "Identifies the group under which the include was created",
+				Required:            true,
 			},
-			"include_id": {
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "The unique identifier of the property include",
+			"include_id": schema.StringAttribute{
+				MarkdownDescription: "Identifies the group under which the include was created",
+				Required:            true,
 			},
-			"name": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "A descriptive name for the include",
+			"name": schema.StringAttribute{
+				MarkdownDescription: "A descriptive name for the include",
+				Computed:            true,
 			},
-			"type": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Specifies the type of the include, either 'MICROSERVICES' or 'COMMON_SETTINGS'",
+			"type": schema.StringAttribute{
+				MarkdownDescription: "Specifies the type of the include, either 'MICROSERVICES' or 'COMMON_SETTINGS'",
+				Computed:            true,
 			},
-			"latest_version": {
-				Type:        schema.TypeInt,
-				Computed:    true,
-				Description: "Specifies the most recent version of the include",
+			"latest_version": schema.Int64Attribute{
+				MarkdownDescription: "Specifies the most recent version of the include",
+				Computed:            true,
 			},
-			"staging_version": {
-				Type:        schema.TypeInt,
-				Computed:    true,
-				Description: "The most recent version which was activated to the test network",
+			"staging_version": schema.Int64Attribute{
+				MarkdownDescription: "The most recent version which was activated to the test network",
+				Computed:            true,
 			},
-			"production_version": {
-				Type:        schema.TypeInt,
-				Computed:    true,
-				Description: "The most recent version which was activated to the production network",
+			"production_version": schema.Int64Attribute{
+				MarkdownDescription: "The most recent version which was activated to the production network",
+				Computed:            true,
+			},
+			"id": schema.StringAttribute{
+				MarkdownDescription: "Identifier of the data source",
+				Computed:            true,
 			},
 		},
 	}
 }
 
-func dataPropertyIncludeRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := meta.Must(m)
-	client := Client(meta)
-	log := meta.Log("PAPI", "dataPropertyIncludeRead")
-	log.Debug("Reading Property Include")
-
-	contractID, err := tf.GetStringValue("contract_id", d)
-	if err != nil {
-		return diag.FromErr(err)
+// Configure  configures data source at the beginning of the lifecycle
+func (d *IncludeDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+	if req.ProviderData == nil {
+		return
 	}
 
-	groupID, err := tf.GetStringValue("group_id", d)
-	if err != nil {
-		return diag.FromErr(err)
+	defer func() {
+		if r := recover(); r != nil {
+			resp.Diagnostics.AddError(
+				"Unexpected Data Source Configure Type",
+				fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			)
+		}
+	}()
+
+	d.meta = meta.Must(req.ProviderData)
+}
+
+// Read is called when the provider must read data source values in order to update state
+func (d *IncludeDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+	tflog.Trace(ctx, "PropertyIncludeDataSource Read")
+
+	var data IncludeDataSourceModel
+	if resp.Diagnostics.Append(req.Config.Get(ctx, &data)...); resp.Diagnostics.HasError() {
+		return
 	}
 
-	includeID, err := tf.GetStringValue("include_id", d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	include, err := client.GetInclude(ctx, papi.GetIncludeRequest{
-		ContractID: contractID,
-		GroupID:    groupID,
-		IncludeID:  includeID,
+	client := Client(d.meta)
+	getIncludeResp, err := client.GetInclude(ctx, papi.GetIncludeRequest{
+		ContractID: data.ContractID.ValueString(),
+		GroupID:    data.GroupID.ValueString(),
+		IncludeID:  data.IncludeID.ValueString(),
 	})
 	if err != nil {
-		return diag.FromErr(err)
+		resp.Diagnostics.AddError("fetching property include failed", err.Error())
+		return
 	}
 
-	if len(include.Includes.Items) == 0 {
-		// this one probably shouldn't ever happen,
-		return diag.Errorf("empty include response from api")
-	}
-	item := include.Includes.Items[0]
+	include := getIncludeResp.Include
 
-	attrs := map[string]interface{}{
-		"name":           item.IncludeName,
-		"type":           item.IncludeType,
-		"latest_version": item.LatestVersion,
-	}
-	if item.StagingVersion != nil {
-		attrs["staging_version"] = item.StagingVersion
-	}
-	if item.ProductionVersion != nil {
-		attrs["production_version"] = item.ProductionVersion
-	}
-	if err = tf.SetAttrs(d, attrs); err != nil {
-		return diag.FromErr(err)
+	data.Name = types.StringValue(include.IncludeName)
+	data.Type = types.StringValue(string(include.IncludeType))
+	data.LatestVersion = types.Int64Value(int64(include.LatestVersion))
+
+	if include.StagingVersion != nil {
+		data.StagingVersion = types.Int64Value(int64(*include.StagingVersion))
 	}
 
-	d.SetId(includeID)
-	return nil
+	if include.ProductionVersion != nil {
+		data.ProductionVersion = types.Int64Value(int64(*include.ProductionVersion))
+	}
+
+	data.ID = data.IncludeID
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

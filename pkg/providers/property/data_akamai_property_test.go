@@ -243,8 +243,8 @@ func TestDataProperty(t *testing.T) {
 			}
 			useClient(client, nil, func() {
 				resource.Test(t, resource.TestCase{
-					IsUnitTest:        true,
-					ProviderFactories: testAccProviders,
+					IsUnitTest:               true,
+					ProtoV5ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{{
 						Config:      loadFixtureString(fmt.Sprintf("testdata/TestDataProperty/%s", test.givenTF)),
 						Check:       resource.ComposeAggregateTestCheckFunc(checkFuncs...),

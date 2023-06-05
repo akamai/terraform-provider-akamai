@@ -1,6 +1,7 @@
 package property
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -8,24 +9,43 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/testutils"
-
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/hapi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/testutils"
 	"github.com/hashicorp/go-hclog"
+	"github.com/hashicorp/terraform-plugin-framework/provider"
+	"github.com/hashicorp/terraform-plugin-framework/providerserver"
+	"github.com/hashicorp/terraform-plugin-go/tfprotov5"
+	"github.com/hashicorp/terraform-plugin-mux/tf5muxserver"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-var testAccProviders map[string]func() (*schema.Provider, error)
+var testAccProviders map[string]func() (tfprotov5.ProviderServer, error)
 
-var testAccProvider *schema.Provider
+var testAccPluginProvider *schema.Provider
+var testAccFrameworkProvider provider.Provider
 
 func TestMain(m *testing.M) {
-	testAccProvider = akamai.NewPluginProvider(newSubprovider())()
-	testAccProviders = map[string]func() (*schema.Provider, error){
-		"akamai": func() (*schema.Provider, error) {
-			return testAccProvider, nil
+	testAccPluginProvider = akamai.NewPluginProvider(newPluginSubprovider())()
+	testAccFrameworkProvider = akamai.NewFrameworkProvider(newFrameworkSubprovider())()
+
+	testAccProviders = map[string]func() (tfprotov5.ProviderServer, error){
+		"akamai": func() (tfprotov5.ProviderServer, error) {
+			ctx := context.Background()
+			providers := []func() tfprotov5.ProviderServer{
+				testAccPluginProvider.GRPCProvider,
+				providerserver.NewProtocol5(
+					testAccFrameworkProvider,
+				),
+			}
+
+			muxServer, err := tf5muxserver.NewMuxServer(ctx, providers...)
+			if err != nil {
+				return nil, err
+			}
+
+			return muxServer.ProviderServer(), nil
 		},
 	}
 

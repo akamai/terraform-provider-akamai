@@ -6,18 +6,22 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/hapi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/subprovider"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/tools"
+	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 type (
-	// Subprovider gathers property resources and data sources
-	Subprovider struct{}
+	// PluginSubprovider gathers property resources and data sources written using terraform-plugin-sdk
+	PluginSubprovider struct{}
+
+	// FrameworkSubprovider gathers property resources and data sources written using terraform-plugin-framework
+	FrameworkSubprovider struct{}
 )
 
 var (
@@ -25,10 +29,15 @@ var (
 	hapiClient hapi.HAPI
 )
 
-var _ subprovider.Plugin = &Subprovider{}
+var _ subprovider.Plugin = &PluginSubprovider{}
+var _ subprovider.Framework = &FrameworkSubprovider{}
 
-func newSubprovider() *Subprovider {
-	return &Subprovider{}
+func newPluginSubprovider() *PluginSubprovider {
+	return &PluginSubprovider{}
+}
+
+func newFrameworkSubprovider() *FrameworkSubprovider {
+	return &FrameworkSubprovider{}
 }
 
 // Client returns the PAPI interface
@@ -48,7 +57,7 @@ func HapiClient(meta meta.Meta) hapi.HAPI {
 }
 
 // Resources returns terraform resources for property
-func (p *Subprovider) Resources() map[string]*schema.Resource {
+func (p *PluginSubprovider) Resources() map[string]*schema.Resource {
 	return map[string]*schema.Resource{
 		"akamai_cp_code":                     resourceCPCode(),
 		"akamai_edge_hostname":               resourceSecureEdgeHostName(),
@@ -61,7 +70,7 @@ func (p *Subprovider) Resources() map[string]*schema.Resource {
 }
 
 // DataSources returns terraform data sources for property
-func (p *Subprovider) DataSources() map[string]*schema.Resource {
+func (p *PluginSubprovider) DataSources() map[string]*schema.Resource {
 	return map[string]*schema.Resource{
 		"akamai_contract":                    dataSourcePropertyContract(),
 		"akamai_contracts":                   dataSourceContracts(),
@@ -73,7 +82,6 @@ func (p *Subprovider) DataSources() map[string]*schema.Resource {
 		"akamai_property":                    dataSourceProperty(),
 		"akamai_property_activation":         dataSourcePropertyActivation(),
 		"akamai_property_hostnames":          dataSourcePropertyHostnames(),
-		"akamai_property_include":            dataSourcePropertyInclude(),
 		"akamai_property_include_activation": dataSourcePropertyIncludeActivation(),
 		"akamai_property_include_parents":    dataSourcePropertyIncludeParents(),
 		"akamai_property_include_rules":      dataSourcePropertyIncludeRules(),
@@ -83,6 +91,18 @@ func (p *Subprovider) DataSources() map[string]*schema.Resource {
 		"akamai_property_rules":              dataSourcePropertyRules(),
 		"akamai_property_rules_builder":      dataSourcePropertyRulesBuilder(),
 		"akamai_property_rules_template":     dataSourcePropertyRulesTemplate(),
+	}
+}
+
+// Resources returns terraform resources for property
+func (p *FrameworkSubprovider) Resources() []func() resource.Resource {
+	return []func() resource.Resource{}
+}
+
+// DataSources returns terraform data sources for property
+func (p *FrameworkSubprovider) DataSources() []func() datasource.DataSource {
+	return []func() datasource.DataSource{
+		NewIncludeDataSource,
 	}
 }
 

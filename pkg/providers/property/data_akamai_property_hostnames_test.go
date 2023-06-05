@@ -47,7 +47,7 @@ func TestDataPropertyHostnames(t *testing.T) {
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{{
 					Config: loadFixtureString("testdata/TestDataPropertyHostnames/property_hostnames.tf"),
 					Check:  buildAggregatedHostnamesTest(hostnameItems, "prp_test1", "grp_test", "ctr_test", "prp_test"),
@@ -94,7 +94,7 @@ func TestDataPropertyHostnames(t *testing.T) {
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{{
 					Config: loadFixtureString("testdata/TestDataPropertyHostnames/property_hostnames_no_group_prefix.tf"),
 					Check:  buildAggregatedHostnamesTest(hostnameItems, "prp_test1", "test", "ctr_test", "prp_test"),
@@ -141,7 +141,7 @@ func TestDataPropertyHostnames(t *testing.T) {
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{{
 					Config: loadFixtureString("testdata/TestDataPropertyHostnames/property_hostnames_no_contract_prefix.tf"),
 					Check:  buildAggregatedHostnamesTest(hostnameItems, "prp_test1", "grp_test", "test", "prp_test"),
@@ -188,7 +188,7 @@ func TestDataPropertyHostnames(t *testing.T) {
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{{
 					Config: loadFixtureString("testdata/TestDataPropertyHostnames/property_hostnames_no_property_prefix.tf"),
 					Check:  buildAggregatedHostnamesTest(hostnameItems, "prp_test1", "grp_test", "ctr_test", "prp_test"),

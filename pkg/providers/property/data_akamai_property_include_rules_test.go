@@ -172,8 +172,8 @@ func TestDataPropertyIncludeRules(t *testing.T) {
 			test.init(t, client, test.mockData)
 			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProviderFactories: testAccProviders,
-					IsUnitTest:        true,
+					ProtoV5ProviderFactories: testAccProviders,
+					IsUnitTest:               true,
 					Steps: []resource.TestStep{
 						{
 							Config:      loadFixtureString(test.configPath),

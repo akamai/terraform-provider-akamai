@@ -27,7 +27,7 @@ func TestDSCPCode(t *testing.T) {
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{{
 					Config: loadFixtureString("testdata/TestDSCPCode/match_by_name.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
@@ -59,7 +59,7 @@ func TestDSCPCode(t *testing.T) {
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{{
 					Config: loadFixtureString("testdata/TestDSCPCode/match_by_name_output_products.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
@@ -93,7 +93,7 @@ func TestDSCPCode(t *testing.T) {
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{{
 					Config: loadFixtureString("testdata/TestDSCPCode/match_by_full_id.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
@@ -125,7 +125,7 @@ func TestDSCPCode(t *testing.T) {
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{{
 					Config: loadFixtureString("testdata/TestDSCPCode/match_by_unprefixed_id.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
@@ -154,7 +154,7 @@ func TestDSCPCode(t *testing.T) {
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{{
 					Config:      loadFixtureString("testdata/TestDSCPCode/match_by_unprefixed_id.tf"),
 					ExpectError: regexp.MustCompile(`cp code not found`),
@@ -167,8 +167,8 @@ func TestDSCPCode(t *testing.T) {
 
 	t.Run("contract collides with contract ID", func(t *testing.T) {
 		resource.UnitTest(t, resource.TestCase{
-			ProviderFactories: testAccProviders,
-			IsUnitTest:        true,
+			ProtoV5ProviderFactories: testAccProviders,
+			IsUnitTest:               true,
 			Steps: []resource.TestStep{{
 				Config:      loadFixtureString("testdata/TestDSCPCode/contract_collides_with_id.tf"),
 				ExpectError: regexp.MustCompile("only one of `contract,contract_id` can be specified"),
@@ -180,8 +180,8 @@ func TestDSCPCode(t *testing.T) {
 		client := &papi.Mock{}
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
-				IsUnitTest:        true,
+				ProtoV5ProviderFactories: testAccProviders,
+				IsUnitTest:               true,
 				Steps: []resource.TestStep{{
 					Config:      loadFixtureString("testdata/TestDSCPCode/group_collides_with_id.tf"),
 					ExpectError: regexp.MustCompile("only one of `group,group_id` can be specified"),
@@ -203,8 +203,8 @@ func TestDSCPCode(t *testing.T) {
 		}}, nil).Times(3)
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
-				IsUnitTest:        true,
+				ProtoV5ProviderFactories: testAccProviders,
+				IsUnitTest:               true,
 				Steps: []resource.TestStep{{
 					Config: loadFixtureString("testdata/TestDSGroupNotFound/cp_code.tf"),
 				}},

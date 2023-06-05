@@ -14,7 +14,7 @@ func TestDataPropertyRulesBuilder(t *testing.T) {
 	t.Run("valid rule with 3 children - v2023-01-05", func(t *testing.T) {
 		useClient(nil, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{{
 					Config: loadFixtureString("testdata/TestDSPropertyRulesBuilder/rules_v2023_01_05.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
@@ -92,7 +92,7 @@ func TestDataPropertyRulesBuilder(t *testing.T) {
 	t.Run("fails on rule with more than one behavior in one block", func(t *testing.T) {
 		useClient(nil, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{{
 					Config:      loadFixtureString("testdata/TestDSPropertyRulesBuilder/rules_error_too_many_elements.tf"),
 					ExpectError: regexp.MustCompile(`expected 1 element\(s\), got 2`),
@@ -103,7 +103,7 @@ func TestDataPropertyRulesBuilder(t *testing.T) {
 	t.Run("fails on rule with is_secure outside default rule", func(t *testing.T) {
 		useClient(nil, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{{
 					Config:      loadFixtureString("testdata/TestDSPropertyRulesBuilder/rules_with_is_secure_outside_default.tf"),
 					ExpectError: regexp.MustCompile(`cannot be used outside 'default' rule: is_secure`),
@@ -114,7 +114,7 @@ func TestDataPropertyRulesBuilder(t *testing.T) {
 	t.Run("fails on rule with variable outside default rule", func(t *testing.T) {
 		useClient(nil, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{{
 					Config:      loadFixtureString("testdata/TestDSPropertyRulesBuilder/rules_with_variable_outside_default.tf"),
 					ExpectError: regexp.MustCompile(`cannot be used outside 'default' rule: variable`),

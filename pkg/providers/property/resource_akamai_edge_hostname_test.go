@@ -1042,8 +1042,8 @@ func TestResourceEdgeHostname(t *testing.T) {
 			test.init(client, clientHapi)
 			useClient(client, clientHapi, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProviderFactories: testAccProviders,
-					Steps:             test.steps,
+					ProtoV5ProviderFactories: testAccProviders,
+					Steps:                    test.steps,
 				})
 			})
 			client.AssertExpectations(t)
@@ -1124,7 +1124,7 @@ func TestResourceEdgeHostnames_WithImport(t *testing.T) {
 		expectGetEdgeHostnames(client, "ctr_1", "grp_2")
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						// please note that import does not support product id, that why we only define it in config for creation

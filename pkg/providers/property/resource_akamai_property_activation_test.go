@@ -482,9 +482,9 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 			}
 			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProviderFactories: testAccProviders,
-					IsUnitTest:        true,
-					Steps:             test.steps,
+					ProtoV5ProviderFactories: testAccProviders,
+					IsUnitTest:               true,
+					Steps:                    test.steps,
 				})
 			})
 			client.AssertExpectations(t)

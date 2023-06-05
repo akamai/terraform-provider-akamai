@@ -29,7 +29,7 @@ func TestDataContracts(t *testing.T) {
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{{
 					Config: loadFixtureString("testdata/TestDataContracts/contracts.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(

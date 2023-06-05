@@ -154,7 +154,7 @@ func TestResCPCode(t *testing.T) {
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{{
 					Config: loadFixtureString("testdata/TestResCPCode/create_new_cp_code.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
@@ -188,7 +188,7 @@ func TestResCPCode(t *testing.T) {
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{{
 					Config: loadFixtureString("testdata/TestResCPCode/create_new_cp_code_deprecated_attrs.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
@@ -226,7 +226,7 @@ func TestResCPCode(t *testing.T) {
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{{
 					Config: loadFixtureString("testdata/TestResCPCode/use_existing_cp_code.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
@@ -265,7 +265,7 @@ func TestResCPCode(t *testing.T) {
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{{
 					Config: loadFixtureString("testdata/TestResCPCode/use_existing_cp_code.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
@@ -304,7 +304,7 @@ func TestResCPCode(t *testing.T) {
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{{
 					Config:      loadFixtureString("testdata/TestResCPCode/use_existing_cp_code.tf"),
 					ExpectError: regexp.MustCompile("Couldn't find product id on the CP Code"),
@@ -335,7 +335,7 @@ func TestResCPCode(t *testing.T) {
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString("testdata/TestResCPCode/change_name_step0.tf"),
@@ -365,7 +365,7 @@ func TestResCPCode(t *testing.T) {
 		expectGetCPCode(client, "ctr_1", "grp_2", 0, &CPCodes, nil).Times(4)
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString("testdata/TestResCPCode/import_cp_code.tf"),
@@ -401,7 +401,7 @@ func TestResCPCode(t *testing.T) {
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config:        loadFixtureString("testdata/TestResCPCode/import_cp_code.tf"),
@@ -422,7 +422,7 @@ func TestResCPCode(t *testing.T) {
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config:        loadFixtureString("testdata/TestResCPCode/import_cp_code.tf"),
@@ -453,7 +453,7 @@ func TestResCPCode(t *testing.T) {
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString("testdata/TestResCPCode/change_name_step0.tf"),
@@ -521,7 +521,7 @@ func TestResCPCode(t *testing.T) {
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString("testdata/TestResCPCode/change_name_step0.tf"),
@@ -558,7 +558,7 @@ func TestResCPCode(t *testing.T) {
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString("testdata/TestResCPCode/change_name_step0.tf"),
@@ -608,7 +608,7 @@ func TestResCPCode(t *testing.T) {
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString("testdata/TestResCPCode/change_name_step0.tf"),
@@ -630,7 +630,7 @@ func TestResCPCode(t *testing.T) {
 		expectedErr := regexp.MustCompile("one of `product,product_id` must be specified")
 
 		resource.UnitTest(t, resource.TestCase{
-			ProviderFactories: testAccProviders,
+			ProtoV5ProviderFactories: testAccProviders,
 			Steps: []resource.TestStep{
 				{
 					Config:      loadFixtureString("testdata/TestResCPCode/missing_product.tf"),
