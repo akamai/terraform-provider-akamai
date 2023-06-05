@@ -43,17 +43,17 @@ func TestMain(m *testing.M) {
 var clientLock sync.Mutex
 
 // useClient swaps out the client on the global instance for the duration of the given func
-func useClient(client papi.PAPI, hapiClient hapi.HAPI, f func()) {
+func useClient(papiCli papi.PAPI, hapiCli hapi.HAPI, f func()) {
 	clientLock.Lock()
-	orig := inst.client
-	inst.client = client
+	orig := client
+	client = papiCli
 
-	origHapi := inst.hapiClient
-	inst.hapiClient = hapiClient
+	origHapi := hapiClient
+	hapiClient = hapiCli
 
 	defer func() {
-		inst.client = orig
-		inst.hapiClient = origHapi
+		client = orig
+		hapiClient = origHapi
 		clientLock.Unlock()
 	}()
 

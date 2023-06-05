@@ -64,7 +64,7 @@ func dataSourcePropertyHostnames() *schema.Resource {
 
 func dataPropertyHostnamesRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := Client(meta)
 	log := meta.Log("PAPI", "dataPropertyHostnamesRead")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(

@@ -180,7 +180,7 @@ func getGroups(ctx context.Context, meta akameta.Meta) (*papi.GetGroupsResponse,
 		if !errors.Is(err, cache.ErrEntryNotFound) && !errors.Is(err, cache.ErrDisabled) {
 			return nil, err
 		}
-		groups, err = inst.Client(meta).GetGroups(ctx)
+		groups, err = Client(meta).GetGroups(ctx)
 		if err != nil {
 			return nil, err
 		}

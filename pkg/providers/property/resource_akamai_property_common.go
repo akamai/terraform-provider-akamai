@@ -14,7 +14,7 @@ import (
 
 func getGroup(ctx context.Context, meta meta.Meta, groupID string) (*papi.Group, error) {
 	logger := meta.Log("PAPI", "getGroup")
-	client := inst.Client(meta)
+	client := Client(meta)
 	logger.Debugf("Fetching groups")
 	res, err := client.GetGroups(ctx)
 	if err != nil {
@@ -40,7 +40,7 @@ func getGroup(ctx context.Context, meta meta.Meta, groupID string) (*papi.Group,
 
 func getContract(ctx context.Context, meta meta.Meta, contractID string) (*papi.Contract, error) {
 	logger := meta.Log("PAPI", "getContract")
-	client := inst.Client(meta)
+	client := Client(meta)
 	logger.Debugf("Fetching contract")
 	res, err := client.GetContracts(ctx)
 	if err != nil {
@@ -65,7 +65,7 @@ func getContract(ctx context.Context, meta meta.Meta, contractID string) (*papi.
 
 func getProduct(ctx context.Context, meta meta.Meta, productID, contractID string) (*papi.ProductItem, error) {
 	logger := meta.Log("PAPI", "getProduct")
-	client := inst.Client(meta)
+	client := Client(meta)
 	if contractID == "" {
 		return nil, ErrNoContractProvided
 	}
@@ -107,7 +107,7 @@ func convertString(v string) interface{} {
 }
 
 func findProperty(ctx context.Context, name string, meta meta.Meta) (*papi.Property, error) {
-	client := inst.Client(meta)
+	client := Client(meta)
 	results, err := client.SearchProperties(ctx, papi.SearchRequest{Key: papi.SearchKeyPropertyName, Value: name})
 	if err != nil {
 		return nil, err

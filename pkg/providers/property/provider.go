@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"sync"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
@@ -18,52 +17,32 @@ import (
 
 type (
 	// Subprovider gathers property resources and data sources
-	Subprovider struct {
-		client     papi.PAPI
-		hapiClient hapi.HAPI
-	}
-
-	option func(p *Subprovider)
+	Subprovider struct{}
 )
 
 var (
-	once sync.Once
-
-	inst *Subprovider
+	client     papi.PAPI
+	hapiClient hapi.HAPI
 )
 
 var _ subprovider.Plugin = &Subprovider{}
 
-func newSubprovider(opts ...option) *Subprovider {
-	once.Do(func() {
-		inst = &Subprovider{}
-
-		for _, opt := range opts {
-			opt(inst)
-		}
-	})
-
-	return inst
-}
-
-func withClient(c papi.PAPI) option {
-	return func(p *Subprovider) {
-		p.client = c
-	}
+func newSubprovider() *Subprovider {
+	return &Subprovider{}
 }
 
 // Client returns the PAPI interface
-func (p *Subprovider) Client(meta meta.Meta) papi.PAPI {
-	if p.client != nil {
-		return p.client
+func Client(meta meta.Meta) papi.PAPI {
+	if client != nil {
+		return client
 	}
 	return papi.Client(meta.Session())
 }
 
 // HapiClient returns the HAPI interface
-func (p *Subprovider) HapiClient(meta meta.Meta) hapi.HAPI {
-	if p.hapiClient != nil {
-		return p.hapiClient
+func HapiClient(meta meta.Meta) hapi.HAPI {
+	if hapiClient != nil {
+		return hapiClient
 	}
 	return hapi.Client(meta.Session())
 }

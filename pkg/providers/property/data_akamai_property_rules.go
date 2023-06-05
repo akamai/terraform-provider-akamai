@@ -89,7 +89,7 @@ func isValidRuleFormat(ctx context.Context, client papi.PAPI, format string) (bo
 
 func dataPropertyRulesRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := Client(meta)
 	logger := meta.Log("PAPI", "dataPropertyRulesRead")
 
 	var (

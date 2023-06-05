@@ -118,7 +118,7 @@ func decodeVersion(version interface{}) int {
 
 // Reusable function to fetch all the properties for a given group and contract
 func getProperties(ctx context.Context, groupID string, contractID string, meta meta.Meta) (*papi.GetPropertiesResponse, error) {
-	client := inst.Client(meta)
+	client := Client(meta)
 	req := papi.GetPropertiesRequest{
 		ContractID: contractID,
 		GroupID:    groupID,

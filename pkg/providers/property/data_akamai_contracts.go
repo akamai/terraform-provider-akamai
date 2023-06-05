@@ -75,7 +75,7 @@ func getContracts(ctx context.Context, meta akameta.Meta) (*papi.GetContractsRes
 		if !errors.Is(err, cache.ErrEntryNotFound) && !errors.Is(err, cache.ErrDisabled) {
 			return nil, err
 		}
-		contracts, err = inst.Client(meta).GetContracts(ctx)
+		contracts, err = Client(meta).GetContracts(ctx)
 		if err != nil {
 			return nil, err
 		}

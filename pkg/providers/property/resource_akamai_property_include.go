@@ -112,7 +112,7 @@ func resourcePropertyIncludeCreate(ctx context.Context, rd *schema.ResourceData,
 	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourcePropertyIncludeCreate")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	client := inst.Client(meta)
+	client := Client(meta)
 
 	logger.Debug("Creating property include")
 
@@ -175,7 +175,7 @@ func resourcePropertyIncludeRead(ctx context.Context, rd *schema.ResourceData, m
 	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourcePropertyIncludeRead")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	client := inst.Client(meta)
+	client := Client(meta)
 
 	logger.Debug("Reading property include")
 
@@ -276,7 +276,7 @@ func resourcePropertyIncludeUpdate(ctx context.Context, rd *schema.ResourceData,
 	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourcePropertyIncludeUpdate")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	client := inst.Client(meta)
+	client := Client(meta)
 
 	logger.Debug("Updating property include")
 
@@ -332,7 +332,7 @@ func resourcePropertyIncludeDelete(ctx context.Context, rd *schema.ResourceData,
 	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourcePropertyIncludeDelete")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	client := inst.Client(meta)
+	client := Client(meta)
 
 	logger.Debug("Deleting property include")
 

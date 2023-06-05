@@ -111,7 +111,7 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourceSecureEdgeHostNameCreate")
 
-	client := inst.Client(meta)
+	client := Client(meta)
 
 	// Schema guarantees group_id/group are strings and one or the other is set
 	var groupID string
@@ -236,7 +236,7 @@ func resourceSecureEdgeHostNameRead(ctx context.Context, d *schema.ResourceData,
 	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourceSecureEdgeHostNameRead")
 
-	client := inst.Client(meta)
+	client := Client(meta)
 
 	// Schema guarantees group_id/group are strings and one or the other is set
 	var groupID string
@@ -355,7 +355,7 @@ func resourceSecureEdgeHostNameUpdate(ctx context.Context, d *schema.ResourceDat
 			ipBehavior = "IPV6_IPV4_DUALSTACK"
 		}
 
-		if _, err = inst.HapiClient(meta).UpdateEdgeHostname(ctx, hapi.UpdateEdgeHostnameRequest{
+		if _, err = HapiClient(meta).UpdateEdgeHostname(ctx, hapi.UpdateEdgeHostnameRequest{
 			DNSZone:           dnsZone,
 			RecordName:        strings.ReplaceAll(edgeHostname, "."+dnsZone, ""),
 			Comments:          fmt.Sprintf("change /ipVersionBehavior to %s", ipBehavior),
@@ -394,7 +394,7 @@ func resourceSecureEdgeHostNameDelete(_ context.Context, d *schema.ResourceData,
 
 func resourceSecureEdgeHostNameImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := Client(meta)
 
 	parts := strings.Split(d.Id(), ",")
 	if len(parts) < 3 {

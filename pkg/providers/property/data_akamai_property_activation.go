@@ -73,7 +73,7 @@ var dataSourcePropertyActivationSchema = map[string]*schema.Schema{
 func dataSourcePropertyActivationRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "dataSourcePropertyActivationRead")
-	client := inst.Client(meta)
+	client := Client(meta)
 
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
 

@@ -144,7 +144,7 @@ func papiError() *schema.Resource {
 func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourcePropertyActivationCreate")
-	client := inst.Client(meta)
+	client := Client(meta)
 
 	logger.Debug("resourcePropertyActivationCreate call")
 
@@ -285,7 +285,7 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 func resourcePropertyActivationDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourcePropertyActivationDelete")
-	client := inst.Client(meta)
+	client := Client(meta)
 
 	logger.Debug("resourcePropertyActivationDelete call")
 
@@ -433,7 +433,7 @@ func flattenErrorArray(errors []*papi.Error) string {
 func resourcePropertyActivationRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourcePropertyActivationRead")
-	client := inst.Client(meta)
+	client := Client(meta)
 
 	logger.Debug("resourcePropertyActivationRead call")
 	// create a context with logging for api calls
@@ -542,7 +542,7 @@ func resolveVersion(ctx context.Context, d *schema.ResourceData, client papi.PAP
 func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourcePropertyActivationUpdate")
-	client := inst.Client(meta)
+	client := Client(meta)
 
 	logger.Debug("resourcePropertyActivationUpdate call")
 	// create a context with logging for api calls

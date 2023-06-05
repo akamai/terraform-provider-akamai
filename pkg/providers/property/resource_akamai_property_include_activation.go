@@ -133,7 +133,7 @@ func resourcePropertyIncludeActivationCreate(ctx context.Context, d *schema.Reso
 	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourcePropertyIncludeActivationCreate")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	client := inst.Client(meta)
+	client := Client(meta)
 
 	logger.Debug("Create property include activation")
 
@@ -149,7 +149,7 @@ func resourcePropertyIncludeActivationRead(ctx context.Context, d *schema.Resour
 	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourcePropertyIncludeActivationRead")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	client := inst.Client(meta)
+	client := Client(meta)
 	logger.Debug("Reading property include activation")
 
 	rd, err := parsePropertyIncludeActivationResourceID(d.Id())
@@ -201,7 +201,7 @@ func resourcePropertyIncludeActivationUpdate(ctx context.Context, d *schema.Reso
 	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourcePropertyIncludeActivationUpdate")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	client := inst.Client(meta)
+	client := Client(meta)
 	logger.Debug("Updating property include activation")
 
 	mutableAttrsHaveChanges := d.HasChanges("note", "notify_emails", "auto_acknowledge_rule_warnings", "compliance_record")
@@ -221,7 +221,7 @@ func resourcePropertyIncludeActivationDelete(ctx context.Context, d *schema.Reso
 	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourcePropertyIncludeActivationDelete")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	client := inst.Client(meta)
+	client := Client(meta)
 	logger.Debug("Deactivating property include")
 
 	activationResourceData := propertyIncludeActivationData{}

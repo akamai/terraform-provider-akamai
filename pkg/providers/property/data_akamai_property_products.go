@@ -45,7 +45,7 @@ func dataPropertyProductsRead(ctx context.Context, d *schema.ResourceData, m int
 	// create context with logging
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
 
-	client := inst.Client(meta)
+	client := Client(meta)
 
 	contractID, err := tf.GetStringValue("contract_id", d)
 	if err != nil {

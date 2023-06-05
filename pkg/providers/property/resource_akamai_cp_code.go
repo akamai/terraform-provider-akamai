@@ -95,7 +95,7 @@ const cpCodePrefix = "cpc_"
 
 func resourceCPCodeCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := Client(meta)
 	logger := meta.Log("PAPI", "resourceCPCodeCreate")
 	logger.Debugf("Creating CP Code")
 
@@ -138,7 +138,7 @@ func resourceCPCodeCreate(ctx context.Context, d *schema.ResourceData, m interfa
 func resourceCPCodeRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourceCPCodeRead")
-	client := inst.Client(meta)
+	client := Client(meta)
 	logger.Debugf("Read CP Code")
 
 	contractID, groupID := getContractIDAndGroupID(d)
@@ -188,7 +188,7 @@ func resourceCPCodeRead(ctx context.Context, d *schema.ResourceData, m interface
 func resourceCPCodeUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourceCPCodeUpdate")
-	client := inst.Client(meta)
+	client := Client(meta)
 	logger.Debugf("Update CP Code")
 
 	if diags := checkImmutableChanged(d); diags != nil {
@@ -240,7 +240,7 @@ func resourceCPCodeUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 func resourceCPCodeImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourceCPCodeImport")
-	client := inst.Client(meta)
+	client := Client(meta)
 	logger.Debugf("Import CP Code")
 
 	parts := strings.Split(d.Id(), ",")
