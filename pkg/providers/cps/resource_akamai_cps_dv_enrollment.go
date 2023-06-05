@@ -10,6 +10,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/cps"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/tools"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 	cpstools "github.com/akamai/terraform-provider-akamai/v4/pkg/providers/cps/tools"
@@ -307,6 +308,11 @@ func resourceCPSDVEnrollmentCreate(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 
+	// save ClientMutualAuthentication and unset it in enrollment request struct
+	// create request must not have it set; in case its not nil, we will run update later to add it
+	clientMutualAuthentication := enrollment.NetworkConfiguration.ClientMutualAuthentication
+	enrollment.NetworkConfiguration.ClientMutualAuthentication = nil
+
 	req := cps.CreateEnrollmentRequest{
 		Enrollment:       enrollment,
 		ContractID:       strings.TrimPrefix(contractID, "ctr_"),
@@ -322,10 +328,22 @@ func resourceCPSDVEnrollmentCreate(ctx context.Context, d *schema.ResourceData, 
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	if err = waitForVerification(ctx, logger, client, res.ID, acknowledgeWarnings, nil); err != nil {
-		return diag.FromErr(err)
+
+	// when clientMutualAuthentication was provided, insert it back to enrollment and send the update request
+	if clientMutualAuthentication != nil {
+		logger.Debug("Updating ClientMutualAuthentication configuration")
+		enrollment.NetworkConfiguration.ClientMutualAuthentication = clientMutualAuthentication
+		req := cps.UpdateEnrollmentRequest{
+			EnrollmentID:              res.ID,
+			Enrollment:                enrollment,
+			AllowCancelPendingChanges: tools.BoolPtr(true),
+		}
+		_, err := client.UpdateEnrollment(ctx, req)
+		if err != nil {
+			return diag.FromErr(err)
+		}
 	}
-	if err != nil {
+	if err = waitForVerification(ctx, logger, client, res.ID, acknowledgeWarnings, nil); err != nil {
 		return diag.FromErr(err)
 	}
 	return resourceCPSDVEnrollmentRead(ctx, d, m)

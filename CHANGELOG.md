@@ -5,6 +5,10 @@
 #### DEPRECATIONS
 
 * Deprecate `active` field in `akamai_dns_record` resource
+`
+#### BUG FIXES:
+
+* Fix bug in `akamai_cps_dv_enrollment` resource when MTLS settings are provided ([#339](https://github.com/akamai/terraform-provider-akamai/issues/339))
 
 ## 4.1.0 (Jun 1, 2023)
 
