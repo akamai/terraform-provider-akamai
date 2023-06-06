@@ -14,6 +14,7 @@ import (
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"golang.org/x/exp/slices"
 )
 
 func resourceGTMv1Property() *schema.Resource {
@@ -22,6 +23,7 @@ func resourceGTMv1Property() *schema.Resource {
 		ReadContext:   resourceGTMv1PropertyRead,
 		UpdateContext: resourceGTMv1PropertyUpdate,
 		DeleteContext: resourceGTMv1PropertyDelete,
+		CustomizeDiff: validateTestObject,
 		Importer: &schema.ResourceImporter{
 			State: resourceGTMv1PropertyImport,
 		},
@@ -239,7 +241,7 @@ func resourceGTMv1Property() *schema.Resource {
 						},
 						"test_object": {
 							Type:     schema.TypeString,
-							Required: true,
+							Optional: true,
 						},
 						"request_string": {
 							Type:     schema.TypeString,
@@ -347,6 +349,46 @@ func parseResourceStringID(id string) (string, string, error) {
 
 	return parts[0], parts[1], nil
 
+}
+
+// validateTestObject checks if `test_object` is provided when `test_object_protocol` is set to `HTTP`, `HTTPS` or `FTP`
+func validateTestObject(_ context.Context, d *schema.ResourceDiff, m interface{}) error {
+	meta := akamai.Meta(m)
+	logger := meta.Log("Akamai GTM", "validateTestObject")
+	logger.Debug("Validating test_object")
+
+	livenessTestRaw, ok := d.GetOkExists("liveness_test")
+	if !ok {
+		return nil
+	}
+
+	livenessTest, ok := livenessTestRaw.([]interface{})
+	if !ok {
+		return fmt.Errorf("could not cast the value of type %T to []interface{}", livenessTest)
+	}
+
+	requiredWith := []string{"HTTP", "HTTPS", "FTP"}
+
+	for _, itemRaw := range livenessTest {
+		item, ok := itemRaw.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("could not cast the value of type %T to map[string]interface{}", item)
+		}
+		testObjectProtocol, ok := item["test_object_protocol"].(string)
+		if !ok {
+			return fmt.Errorf("could not cast the value of type %T to string", testObjectProtocol)
+		}
+		testObject, ok := item["test_object"].(string)
+		if !ok {
+			return fmt.Errorf("could not cast the value of type %T to string", testObject)
+		}
+
+		if slices.Contains(requiredWith, testObjectProtocol) && testObject == "" {
+			return fmt.Errorf("attribute 'test_object' is required when 'test_object_protocol' is set to 'HTTP', 'HTTPS' or 'FTP'")
+		}
+	}
+
+	return nil
 }
 
 // validateTTL is a SchemaValidateDiagFunc to validate dynamic_ttl and static_ttl.
