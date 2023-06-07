@@ -6,8 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"strconv"
-	"strings"
 	"sync"
 
 	"github.com/google/uuid"
@@ -17,7 +15,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
 	"github.com/spf13/cast"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/edgegrid"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/cache"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
@@ -36,9 +33,6 @@ const (
 	// Deprecated: terrform now uses registry paths, the shortest of which would be akamai/akamai"
 	ProviderName = "terraform-provider-akamai"
 )
-
-// ErrWrongEdgeGridConfiguration is returned when the configuration could not be read
-var ErrWrongEdgeGridConfiguration = errors.New("error reading Akamai EdgeGrid configuration")
 
 type (
 	provider struct {
@@ -69,10 +63,11 @@ func Provider(provs ...subprovider.Subprovider) plugin.ProviderFunc {
 						Type:        schema.TypeString,
 					},
 					"config": {
-						Optional: true,
-						Type:     schema.TypeSet,
-						Elem:     config.Options("config"),
-						MaxItems: 1,
+						Optional:      true,
+						Type:          schema.TypeSet,
+						Elem:          config.Options("config"),
+						MaxItems:      1,
+						ConflictsWith: []string{"edgerc", "config_section"},
 					},
 					"cache_enabled": {
 						Optional: true,
@@ -129,35 +124,28 @@ func configureProviderContext(p *schema.Provider) schema.ConfigureContextFunc {
 		}
 		cache.Enable(cacheEnabled)
 
-		edgercOps := []edgegrid.Option{edgegrid.WithEnv(true)}
-
 		edgercPath, err := tf.GetStringValue("edgerc", d)
 		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return nil, diag.FromErr(err)
 		}
-		edgercPath = getEdgercPath(edgercPath)
 
-		edgercOps = append(edgercOps, edgegrid.WithFile(edgercPath))
 		edgercSection, err := tf.GetStringValue("config_section", d)
 		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return nil, diag.FromErr(err)
 		}
-		if err == nil {
-			edgercOps = append(edgercOps, edgegrid.WithSection(edgercSection))
-		}
+
 		envs, err := tf.GetSetValue("config", d)
 		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return nil, diag.FromErr(err)
 		}
+
+		var edgercConfig map[string]any
 		if err == nil && len(envs.List()) > 0 {
-			envsMap, ok := envs.List()[0].(map[string]interface{})
+			envsMap, ok := envs.List()[0].(map[string]any)
 			if !ok {
-				return nil, diag.FromErr(fmt.Errorf("%w: %s, %q", tf.ErrInvalidType, "config", "map[string]interface{}"))
+				return nil, diag.FromErr(fmt.Errorf("%w: %s, %q", tf.ErrInvalidType, "config", "map[string]any"))
 			}
-			err = setEdgegridEnvs(envsMap, edgercSection)
-			if err != nil {
-				return nil, diag.FromErr(err)
-			}
+			edgercConfig = envsMap
 		}
 
 		requestLimit, err := tf.GetIntValue("request_limit", d)
@@ -165,13 +153,9 @@ func configureProviderContext(p *schema.Provider) schema.ConfigureContextFunc {
 			return nil, diag.FromErr(err)
 		}
 
-		edgerc, err := edgegrid.New(edgercOps...)
+		edgerc, err := newEdgegridConfig(edgercPath, edgercSection, edgercConfig)
 		if err != nil {
-			return nil, diag.Errorf("%s: %s", ErrWrongEdgeGridConfiguration, err.Error())
-		}
-
-		if err := edgerc.Validate(); err != nil {
-			return nil, diag.Errorf(err.Error())
+			return nil, diag.FromErr(err)
 		}
 
 		// PROVIDER_VERSION env value must be updated in version file, for every new release.
@@ -198,61 +182,6 @@ func configureProviderContext(p *schema.Provider) schema.ConfigureContextFunc {
 
 		return meta, nil
 	}
-}
-
-func getEdgercPath(edgercPath string) string {
-	if edgercPath == "" {
-		edgercPath = edgegrid.DefaultConfigFile
-	}
-	return edgercPath
-}
-
-func setEdgegridEnvs(envsMap map[string]interface{}, section string) error {
-	configEnvs := []string{"ACCESS_TOKEN", "CLIENT_TOKEN", "HOST", "CLIENT_SECRET", "MAX_BODY"}
-	prefix := "AKAMAI"
-	if section != "" {
-		prefix = fmt.Sprintf("%s_%s", prefix, strings.ToUpper(section))
-	}
-	for _, env := range configEnvs {
-		var value string
-		var ok bool
-		switch env {
-		case "ACCESS_TOKEN":
-			value, ok = envsMap["access_token"].(string)
-			if !ok {
-				return fmt.Errorf("%w: %s, %q", tf.ErrInvalidType, "access_token", "string")
-			}
-		case "CLIENT_TOKEN":
-			value, ok = envsMap["client_token"].(string)
-			if !ok {
-				return fmt.Errorf("%w: %s, %q", tf.ErrInvalidType, "client_token", "string")
-			}
-		case "HOST":
-			value, ok = envsMap["host"].(string)
-			if !ok {
-				return fmt.Errorf("%w: %s, %q", tf.ErrInvalidType, "host", "string")
-			}
-		case "CLIENT_SECRET":
-			value, ok = envsMap["client_secret"].(string)
-			if !ok {
-				return fmt.Errorf("%w: %s, %q", tf.ErrInvalidType, "client_secret", "string")
-			}
-		case "MAX_BODY":
-			maxBody, ok := envsMap["max_body"].(int)
-			if !ok {
-				return fmt.Errorf("%w: %s, %q", tf.ErrInvalidType, "max_body", "int")
-			}
-			value = strconv.Itoa(maxBody)
-		}
-		env = fmt.Sprintf("%s_%s", prefix, env)
-		if os.Getenv(env) != "" {
-			continue
-		}
-		if err := os.Setenv(env, value); err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 func mergeSchema(from, to map[string]*schema.Schema) (map[string]*schema.Schema, error) {

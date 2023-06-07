@@ -4,174 +4,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
-	"strings"
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/cache"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-func unsetEnvs(t *testing.T) map[string]string {
-	configVars := map[string]struct{}{
-		"AKAMAI_ACCESS_TOKEN":  {},
-		"AKAMAI_CLIENT_TOKEN":  {},
-		"AKAMAI_CLIENT_SECRET": {},
-		"AKAMAI_HOST":          {},
-		"AKAMAI_MAX_BODY":      {},
-	}
-	existingEnvs := make(map[string]string)
-
-	globalEnvs := os.Environ()
-	for _, env := range globalEnvs {
-		envKeyValue := strings.SplitN(env, "=", 2)
-		if _, ok := configVars[envKeyValue[0]]; ok {
-			existingEnvs[envKeyValue[0]] = envKeyValue[1]
-		}
-	}
-	for key := range existingEnvs {
-		err := os.Unsetenv(key)
-		assert.NoError(t, err)
-	}
-	return existingEnvs
-}
-
-func restoreEnvs(t *testing.T, envs map[string]string) {
-	for k, v := range envs {
-		err := os.Setenv(k, v)
-		assert.NoError(t, err)
-	}
-}
-
-func TestSetEdgegridEnvs(t *testing.T) {
-	tests := map[string]struct {
-		givenMap     map[string]interface{}
-		givenSection string
-		setEnvs      map[string]string
-		expectedEnvs map[string]string
-	}{
-		"no section provided": {
-			givenMap: map[string]interface{}{
-				"access_token":  "test_access_token",
-				"client_token":  "test_client_token",
-				"client_secret": "test_client_secret",
-				"host":          "test_host",
-				"max_body":      123,
-			},
-			expectedEnvs: map[string]string{
-				"AKAMAI_ACCESS_TOKEN":  "test_access_token",
-				"AKAMAI_CLIENT_TOKEN":  "test_client_token",
-				"AKAMAI_CLIENT_SECRET": "test_client_secret",
-				"AKAMAI_HOST":          "test_host",
-				"AKAMAI_MAX_BODY":      "123",
-			},
-		},
-		"custom section provided": {
-			givenMap: map[string]interface{}{
-				"access_token":  "test_access_token",
-				"client_token":  "test_client_token",
-				"client_secret": "test_client_secret",
-				"host":          "test_host",
-				"max_body":      123,
-			},
-			givenSection: "test",
-			expectedEnvs: map[string]string{
-				"AKAMAI_TEST_ACCESS_TOKEN":  "test_access_token",
-				"AKAMAI_TEST_CLIENT_TOKEN":  "test_client_token",
-				"AKAMAI_TEST_CLIENT_SECRET": "test_client_secret",
-				"AKAMAI_TEST_HOST":          "test_host",
-				"AKAMAI_TEST_MAX_BODY":      "123",
-			},
-		},
-		"envs are already set": {
-			givenMap: map[string]interface{}{
-				"access_token":  "test_access_token",
-				"client_token":  "test_client_token",
-				"client_secret": "test_client_secret",
-				"host":          "test_host",
-				"max_body":      123,
-			},
-			givenSection: "test",
-			setEnvs: map[string]string{
-				"AKAMAI_TEST_ACCESS_TOKEN":  "existing_access_token",
-				"AKAMAI_TEST_CLIENT_TOKEN":  "existing_client_token",
-				"AKAMAI_TEST_CLIENT_SECRET": "existing_client_secret",
-				"AKAMAI_TEST_HOST":          "existing_host",
-				"AKAMAI_TEST_MAX_BODY":      "321",
-			},
-			expectedEnvs: map[string]string{
-				"AKAMAI_TEST_ACCESS_TOKEN":  "existing_access_token",
-				"AKAMAI_TEST_CLIENT_TOKEN":  "existing_client_token",
-				"AKAMAI_TEST_CLIENT_SECRET": "existing_client_secret",
-				"AKAMAI_TEST_HOST":          "existing_host",
-				"AKAMAI_TEST_MAX_BODY":      "321",
-			},
-		},
-	}
-
-	for name, test := range tests {
-		t.Run(name, func(t *testing.T) {
-			existingEnvs := unsetEnvs(t)
-			defer restoreEnvs(t, existingEnvs)
-
-			currentEnvs := make(map[string]string, len(test.expectedEnvs))
-			for k := range test.expectedEnvs {
-				currentEnvs[k] = os.Getenv(k)
-				err := os.Unsetenv(k)
-				require.NoError(t, err)
-			}
-			defer func() {
-				for k, v := range currentEnvs {
-					err := os.Setenv(k, v)
-					require.NoError(t, err)
-				}
-			}()
-			for k, v := range test.setEnvs {
-				require.NoError(t, os.Setenv(k, v))
-			}
-
-			err := setEdgegridEnvs(test.givenMap, test.givenSection)
-			require.NoError(t, err)
-			for k, v := range test.expectedEnvs {
-				assert.Equal(t, v, os.Getenv(k))
-			}
-		})
-	}
-}
-
-func TestSetWrongTypeForEdgegridEnvs(t *testing.T) {
-
-	tests := map[string]struct {
-		environmentVars map[string]interface{}
-	}{
-		"nil value for access_token": {
-			environmentVars: map[string]interface{}{"access_token": nil},
-		},
-		"nil value for client_token": {
-			environmentVars: map[string]interface{}{"client_token": nil},
-		},
-		"nil value for host": {
-			environmentVars: map[string]interface{}{"host": nil},
-		},
-		"nil value for client_secret": {
-			environmentVars: map[string]interface{}{"client_secret": nil},
-		},
-		"wrong type of max_body value": {
-			environmentVars: map[string]interface{}{"max_body": "not a number"},
-		},
-	}
-	for name, test := range tests {
-		t.Run(name, func(t *testing.T) {
-			err := setEdgegridEnvs(test.environmentVars, "some section")
-			assert.True(t, errors.Is(err, tf.ErrInvalidType))
-		})
-	}
-}
 
 func TestConfigureCache_EnabledInContext(t *testing.T) {
 	tests := map[string]struct {
@@ -208,12 +49,12 @@ func TestConfigureEdgercInContext(t *testing.T) {
 	}{
 		"file with EdgeGrid configuration does not exist": {
 			resourceLocalData:   getResourceLocalData(t, "edgerc", "not_existing_file_path"),
-			expectedDiagnostics: diag.Errorf("%s: %s: %s: %s", ErrWrongEdgeGridConfiguration, "unable to load config from environment or .edgerc file", edgegrid.ErrLoadingFile, "open not_existing_file_path: no such file or directory"),
+			expectedDiagnostics: diag.Errorf("%s: %s: %s", ErrWrongEdgeGridConfiguration, edgegrid.ErrLoadingFile, "open not_existing_file_path: no such file or directory"),
 			withError:           true,
 		},
 		"config section does not exist": {
 			resourceLocalData:   getResourceLocalData(t, "config_section", "not_existing_config_section"),
-			expectedDiagnostics: diag.Errorf("%s: %s: %s: %s", ErrWrongEdgeGridConfiguration, "unable to load config from environment or .edgerc file", edgegrid.ErrSectionDoesNotExist, "section \"not_existing_config_section\" does not exist"),
+			expectedDiagnostics: diag.Errorf("%s: %s: %s", ErrWrongEdgeGridConfiguration, edgegrid.ErrSectionDoesNotExist, "section \"not_existing_config_section\" does not exist"),
 			withError:           true,
 		},
 		"with empty edgerc path, default path is used": {
@@ -226,9 +67,6 @@ func TestConfigureEdgercInContext(t *testing.T) {
 	for name, test := range tests {
 		ctx := context.Background()
 		t.Run(name, func(t *testing.T) {
-			existingEnvs := unsetEnvs(t)
-			defer restoreEnvs(t, existingEnvs)
-
 			prov := Provider()
 			meta, diagnostics := prov().ConfigureContextFunc(ctx, test.resourceLocalData)
 
@@ -269,28 +107,6 @@ func getResourceLocalData(t *testing.T, key string, value interface{}) *schema.R
 		key:             value,
 	}
 	return schema.TestResourceDataRaw(t, resourceSchema, dataMap)
-}
-
-func TestGetEdgercPath(t *testing.T) {
-	tests := map[string]struct {
-		edgercPath         string
-		expectedEdgercPath string
-	}{
-		"empty edgerc path": {
-			edgercPath:         "",
-			expectedEdgercPath: edgegrid.DefaultConfigFile,
-		},
-		"existing edgerc path": {
-			edgercPath:         "../.edgerc",
-			expectedEdgercPath: "../.edgerc",
-		},
-	}
-	for name, test := range tests {
-		t.Run(name, func(t *testing.T) {
-			edgercPath := getEdgercPath(test.edgercPath)
-			assert.Equal(t, test.expectedEdgercPath, edgercPath)
-		})
-	}
 }
 
 func TestEdgercValidate(t *testing.T) {
