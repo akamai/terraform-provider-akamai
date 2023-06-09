@@ -1,11 +1,18 @@
 # RELEASE NOTES
 
-## x.x.x (x x, 2023)
+## 6.0.0 (XXX X, 2023) 
 
 #### BREAKING CHANGES:
 
-* Datastream
-  * Change in `akamai_datastreams` resource schema payload related to migration to v2 of DataStream API
+* DataStream
+  * Changes in the following data sources in DataStream 2 V2 API:
+    * `akamai_datastream_activation_history` - changes in schema and corresponding implementations.
+    * `akamai_datastream_dataset_fields` - changes in parameter, schema and corresponding implementations.
+    * `akamai_datastreams` - changes in parameter, schema and corresponding implementations. 
+  * Changes in the following resources in DataStream 2 V2 API:
+    * `akamai_datastreams` - changes in schema payload, response attributes and corresponding implementations. 
+  * Updated attribute names in `datastream.connectors`.
+  * Updated methods in `datastream.stream` for the above changes.
 
 #### FEATURES/ENHANCEMENTS:
 
