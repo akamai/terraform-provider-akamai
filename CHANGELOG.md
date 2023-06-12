@@ -18,6 +18,9 @@
 * GTM
   * Make `test_object` inside `liveness_test` required only for `test_object_protocol` values: `HTTP`, `HTTPS` or `FTP` ([I#408](https://github.com/akamai/terraform-provider-akamai/issues/408))
 
+* Cloudlets
+  * Wait for propagation of policy activation deletions, before removing the policy in `akamai_cloudlets_policy`
+
 ## 4.1.0 (Jun 1, 2023)
 
 #### FEATURES/ENHANCEMENTS:
