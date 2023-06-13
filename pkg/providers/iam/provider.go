@@ -27,7 +27,8 @@ var (
 
 var _ subprovider.Plugin = &Subprovider{}
 
-func newSubprovider() *Subprovider {
+// NewSubprovider returns a core sub provider
+func NewSubprovider() *Subprovider {
 	once.Do(func() {
 		inst = &Subprovider{}
 	})

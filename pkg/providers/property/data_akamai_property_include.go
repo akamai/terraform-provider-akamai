@@ -13,20 +13,21 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
 )
 
-var _ datasource.DataSource = &IncludeDataSource{}
+var _ datasource.DataSource = &includeDataSource{}
+var _ datasource.DataSourceWithConfigure = &includeDataSource{}
 
 // NewIncludeDataSource returns a new property include data source
 func NewIncludeDataSource() datasource.DataSource {
-	return &IncludeDataSource{}
+	return &includeDataSource{}
 }
 
-// IncludeDataSource defines the data source implementation for fetching property include information.
-type IncludeDataSource struct {
+// includeDataSource defines the data source implementation for fetching property include information.
+type includeDataSource struct {
 	meta meta.Meta
 }
 
-// IncludeDataSourceModel describes the data source data model for PropertyIncludeDataSource.
-type IncludeDataSourceModel struct {
+// includeDataSourceModel describes the data source data model for PropertyIncludeDataSource.
+type includeDataSourceModel struct {
 	ContractID        types.String `tfsdk:"contract_id"`
 	GroupID           types.String `tfsdk:"group_id"`
 	IncludeID         types.String `tfsdk:"include_id"`
@@ -39,12 +40,12 @@ type IncludeDataSourceModel struct {
 }
 
 // Metadata configures data source's meta information
-func (d *IncludeDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+func (d *includeDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = "akamai_property_include"
 }
 
 // Schema is used to define data source's terraform schema
-func (d *IncludeDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+func (d *includeDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Property Include data source",
 		Attributes: map[string]schema.Attribute{
@@ -89,8 +90,9 @@ func (d *IncludeDataSource) Schema(_ context.Context, _ datasource.SchemaRequest
 }
 
 // Configure  configures data source at the beginning of the lifecycle
-func (d *IncludeDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+func (d *includeDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
 	if req.ProviderData == nil {
+		// ProviderData is nil when Configure is run first time as part of ValidateDataSourceConfig in framework provider
 		return
 	}
 
@@ -107,10 +109,10 @@ func (d *IncludeDataSource) Configure(_ context.Context, req datasource.Configur
 }
 
 // Read is called when the provider must read data source values in order to update state
-func (d *IncludeDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	tflog.Trace(ctx, "PropertyIncludeDataSource Read")
+func (d *includeDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+	tflog.Debug(ctx, "PropertyIncludeDataSource Read")
 
-	var data IncludeDataSourceModel
+	var data includeDataSourceModel
 	if resp.Diagnostics.Append(req.Config.Get(ctx, &data)...); resp.Diagnostics.HasError() {
 		return
 	}

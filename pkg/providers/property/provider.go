@@ -32,11 +32,13 @@ var (
 var _ subprovider.Plugin = &PluginSubprovider{}
 var _ subprovider.Framework = &FrameworkSubprovider{}
 
-func newPluginSubprovider() *PluginSubprovider {
+// NewPluginSubprovider returns a core SDKv2 based sub provider
+func NewPluginSubprovider() *PluginSubprovider {
 	return &PluginSubprovider{}
 }
 
-func newFrameworkSubprovider() *FrameworkSubprovider {
+// NewFrameworkSubprovider returns a core Framework based sub provider
+func NewFrameworkSubprovider() *FrameworkSubprovider {
 	return &FrameworkSubprovider{}
 }
 

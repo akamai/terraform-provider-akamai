@@ -19,7 +19,7 @@ var testAccProviders map[string]func() (*schema.Provider, error)
 var testAccProvider *schema.Provider
 
 func TestMain(m *testing.M) {
-	testAccProvider = akamai.NewPluginProvider(newSubprovider())()
+	testAccProvider = akamai.NewPluginProvider(NewSubprovider())()
 	testAccProviders = map[string]func() (*schema.Provider, error){
 		"akamai": func() (*schema.Provider, error) {
 			return testAccProvider, nil

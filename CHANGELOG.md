@@ -17,14 +17,17 @@
 * PAPI
   * Change default value of `auto_acknowledge_rule_warnings` to `false` in `akamai_property_activation` resource
 
+* Removed undocumented support for configuring provider with environment variables (`AKAMAI_ACCESS_TOKEN`, `AKAMAI_CLIENT_TOKEN`, `AKAMAI_HOST`, `AKAMAI_CLIENT_SECRET`, `AKAMAI_MAX_BODY`, and their `AKAMAI_{section}_xxx` equivalents).
+  As an alternative users should now use provider's [config](https://techdocs.akamai.com/terraform/docs/gs-authentication#use-inline-credentials) block with [TF_VAR_](https://developer.hashicorp.com/terraform/language/values/variables#environment-variables) envs when wanting to provide configuration through enviroment variables.
+
 #### FEATURES/ENHANCEMENTS:
 
 * Provider tested and now supports Terraform 1.4.6
-* PAPI
-  * Extended `akamai_property_rules_builder` data source: now supporting rules frozen format `v2023-01-05` and `v2023-05-30`
+* Migrated `akamai_property_include` data source from SDKv2 to Framework.
 
 * PAPI
   * Add import to `akamai_property_activation` resource
+  * Extended `akamai_property_rules_builder` data source: now supporting rules frozen format `v2023-01-05` and `v2023-05-30`
 
 * Appsec
   * Update Geo control to include Action for Ukraine.

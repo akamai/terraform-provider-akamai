@@ -27,8 +27,8 @@ var testAccPluginProvider *schema.Provider
 var testAccFrameworkProvider provider.Provider
 
 func TestMain(m *testing.M) {
-	testAccPluginProvider = akamai.NewPluginProvider(newPluginSubprovider())()
-	testAccFrameworkProvider = akamai.NewFrameworkProvider(newFrameworkSubprovider())()
+	testAccPluginProvider = akamai.NewPluginProvider(NewPluginSubprovider())()
+	testAccFrameworkProvider = akamai.NewFrameworkProvider(NewFrameworkSubprovider())()
 
 	testAccProviders = map[string]func() (tfprotov5.ProviderServer, error){
 		"akamai": func() (tfprotov5.ProviderServer, error) {
