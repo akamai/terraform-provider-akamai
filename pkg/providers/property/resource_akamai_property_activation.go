@@ -26,7 +26,10 @@ func resourcePropertyActivation() *schema.Resource {
 		ReadContext:   resourcePropertyActivationRead,
 		UpdateContext: resourcePropertyActivationUpdate,
 		DeleteContext: resourcePropertyActivationDelete,
-		Schema:        akamaiPropertyActivationSchema,
+		Importer: &schema.ResourceImporter{
+			StateContext: resourcePropertyActivationImport,
+		},
+		Schema: akamaiPropertyActivationSchema,
 		Timeouts: &schema.ResourceTimeout{
 			Default: &PropertyResourceTimeout,
 		},
@@ -479,6 +482,8 @@ func resourcePropertyActivationRead(ctx context.Context, d *schema.ResourceData,
 		"version":       activation.PropertyVersion,
 		"network":       network,
 		"activation_id": activation.ActivationID,
+		"note":          activation.Note,
+		"contact":       activation.NotifyEmails,
 	}
 	if err = tf.SetAttrs(d, attrs); err != nil {
 		return diag.FromErr(err)
@@ -683,6 +688,29 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 	d.SetId(propertyID + ":" + string(network))
 
 	return nil
+}
+
+func resourcePropertyActivationImport(_ context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	meta := akamai.Meta(m)
+	logger := meta.Log("PAPI", "resourcePropertyActivationImport")
+
+	logger.Debug("Importing property activation")
+
+	parts := strings.Split(d.Id(), ":")
+	if len(parts) != 2 {
+		return nil, fmt.Errorf("invalid property activation identifier: %s", d.Id())
+	}
+
+	attrs := make(map[string]interface{}, 3)
+	attrs["property_id"] = parts[0]
+	attrs["network"] = parts[1]
+	attrs["auto_acknowledge_rule_warnings"] = false
+
+	if err := tf.SetAttrs(d, attrs); err != nil {
+		return nil, err
+	}
+
+	return []*schema.ResourceData{d}, nil
 }
 
 func addPropertyComplianceRecord(complianceRecord []interface{}, activatePAPIRequest papi.CreateActivationRequest) papi.CreateActivationRequest {

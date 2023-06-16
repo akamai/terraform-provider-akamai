@@ -1374,6 +1374,7 @@ func TestResProperty(t *testing.T) {
 							Status:          papi.ActivationStatusActive,
 							ActivationType:  papi.ActivationTypeActivate,
 							SubmitDate:      "2020-10-28T15:04:05Z",
+							NotifyEmails:    []string{"dummy-user@akamai.com"},
 						},
 					},
 				},
@@ -1444,7 +1445,7 @@ func TestResProperty(t *testing.T) {
 			expectGetRuleTree(client, "prp_0", 1, ruleTreeRes, nil).Once()
 			expectGetActivations(client, "prp_0", papi.GetActivationsResponse{}, nil).Once()
 			client.On("CreateActivation", mock.Anything, mock.Anything).Return(&papi.CreateActivationResponse{ActivationID: "act_123"}, nil).Once()
-			expectGetActivation(client, "prp_0", "act_123", 1, papi.ActivationNetworkStaging, papi.ActivationStatusActive, papi.ActivationTypeActivate, nil).Once()
+			expectGetActivation(client, "prp_0", "act_123", 1, papi.ActivationNetworkStaging, papi.ActivationStatusActive, papi.ActivationTypeActivate, "", []string{"dummy-user@akamai.com"}, nil).Once()
 
 			// read property
 			propertyReadCtx(client, papi.VersionStatusActive, papi.VersionStatusActive)
@@ -1470,7 +1471,7 @@ func TestResProperty(t *testing.T) {
 			client.On("CreateActivation", mock.Anything, mock.Anything).Return(&papi.CreateActivationResponse{
 				ActivationID: "act_123",
 			}, nil).Once()
-			expectGetActivation(client, "prp_0", "act_123", 1, papi.ActivationNetworkStaging, papi.ActivationStatusActive, papi.ActivationTypeDeactivate, nil).Once()
+			expectGetActivation(client, "prp_0", "act_123", 1, papi.ActivationNetworkStaging, papi.ActivationStatusActive, papi.ActivationTypeDeactivate, "", []string{"dummy-user@akamai.com"}, nil).Once()
 			client.On("RemoveProperty", mock.Anything, mock.Anything).Return(&papi.RemovePropertyResponse{
 				Message: "removed",
 			}, nil).Once()

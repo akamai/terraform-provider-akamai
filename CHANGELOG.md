@@ -21,6 +21,11 @@
 * Cloudlets
   * Wait for propagation of policy activation deletions, before removing the policy in `akamai_cloudlets_policy`
 
+#### FEATURES/ENHANCEMENTS:
+
+* PAPI
+  * Add import to `akamai_property_activation` resource
+
 ## 4.1.0 (Jun 1, 2023)
 
 #### FEATURES/ENHANCEMENTS:

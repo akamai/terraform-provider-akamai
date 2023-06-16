@@ -54,7 +54,7 @@ func TestDataSourcePAPIPropertyActivation(t *testing.T) {
 		},
 		"check schema property activation - OK": {
 			init: func(m *papi.Mock) {
-				expectGetActivations(m, "prp_test", activationsResponseActivated, nil).Times(5)
+				expectGetActivations(m, "prp_test", generateActivationResponseMock("atv_activation1", "", 1, papi.ActivationTypeActivate, "2020-10-28T14:04:05Z"), nil).Times(5)
 			},
 			steps: []resource.TestStep{
 				{
