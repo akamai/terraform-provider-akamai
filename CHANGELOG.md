@@ -24,6 +24,9 @@
 * PAPI
   * Add import to `akamai_property_activation` resource
 
+* Appsec
+  * Update Geo control to include Action for Ukraine.
+
 #### DEPRECATIONS
 
 * Deprecate `active` field in `akamai_dns_record` resource

@@ -68,6 +68,11 @@ func resourceIPGeo() *schema.Resource {
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "List of IDs of network list that are always allowed",
 			},
+			"ukraine_geo_control_action": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Action set for Ukraine geo control",
+			},
 		},
 	}
 }
@@ -148,6 +153,10 @@ func resourceIPGeoCreate(ctx context.Context, d *schema.ResourceData, m interfac
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
+	ukraineGeoControlAction, err := tf.GetStringValue("ukraine_geo_control_action", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
+		return diag.FromErr(err)
+	}
 
 	request := appsec.UpdateIPGeoRequest{
 		ConfigID: configID,
@@ -163,6 +172,9 @@ func resourceIPGeoCreate(ctx context.Context, d *schema.ResourceData, m interfac
 		request.Block = "blockSpecificIPGeo"
 		request.GeoControls = geoControlsFromBlockLists(blockedGeoLists)
 		request.IPControls = ipControlsFromBlockAndAllowLists(blockedIPLists, exceptionIPLists)
+		if ukraineGeoControlAction != "" {
+			request.UkraineGeoControls = &appsec.UkraineGeoControl{Action: ukraineGeoControlAction}
+		}
 	}
 
 	_, err = client.UpdateIPGeo(ctx, request)
@@ -269,6 +281,11 @@ func readForBlockSpecificIPGeo(d *schema.ResourceData, ipgeo *appsec.GetIPGeoRes
 			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 		}
 	}
+	if ipgeo.UkraineGeoControls != nil {
+		if err := d.Set("ukraine_geo_control_action", ipgeo.UkraineGeoControls.Action); err != nil {
+			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
+		}
+	}
 	return nil
 }
 
@@ -307,6 +324,10 @@ func resourceIPGeoUpdate(ctx context.Context, d *schema.ResourceData, m interfac
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
+	ukraineGeoControlAction, err := tf.GetStringValue("ukraine_geo_control_action", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
+		return diag.FromErr(err)
+	}
 
 	request := appsec.UpdateIPGeoRequest{
 		ConfigID: configID,
@@ -321,6 +342,9 @@ func resourceIPGeoUpdate(ctx context.Context, d *schema.ResourceData, m interfac
 		request.Block = "blockSpecificIPGeo"
 		request.GeoControls = geoControlsFromBlockLists(blockedGeoLists)
 		request.IPControls = ipControlsFromBlockAndAllowLists(blockedIPLists, exceptionIPLists)
+		if ukraineGeoControlAction != "" {
+			request.UkraineGeoControls = &appsec.UkraineGeoControl{Action: ukraineGeoControlAction}
+		}
 	}
 
 	_, err = client.UpdateIPGeo(ctx, request)

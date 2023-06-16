@@ -48,6 +48,11 @@ func dataSourceIPGeo() *schema.Resource {
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "List of unique identifiers of network lists allowed through the firewall regardless of mode, geo_network_lists and ip_network_lists values",
 			},
+			"ukraine_geo_control_action": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Action set for Ukraine geo control",
+			},
 			"output_text": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -130,6 +135,11 @@ func dataSourceIPGeoRead(ctx context.Context, d *schema.ResourceData, m interfac
 			}
 		} else {
 			if err := d.Set("ip_network_lists", []string{}); err != nil {
+				return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
+			}
+		}
+		if ipgeo.UkraineGeoControls != nil && ipgeo.UkraineGeoControls.Action != "" {
+			if err := d.Set("ukraine_geo_control_action", ipgeo.UkraineGeoControls.Action); err != nil {
 				return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 			}
 		}

@@ -3,19 +3,19 @@
     "geoControls": {
         "blockedIPNetworkLists": {
             "networkList": [
-                "72138_TEST1"
+                "40731_BMROLLOUTGEO","44831_ECSCGEOBLACKLIST"
             ]
         }
     },
     "ipControls": {
-        "allowedIPNetworkLists": {
-            "networkList": [
-                "56921_TEST"
-            ]
-        },
         "blockedIPNetworkLists": {
             "networkList": [
-                "53712_TESTLIST123"
+                "49181_ADTIPBLACKLIST","49185_ADTWAFBYPASSLIST"
+            ]
+        },
+        "allowedIPNetworkLists": {
+            "networkList": [
+                "68762_ADYEN", "69601_ADYENPRODWHITELIST"
             ]
         }
     },

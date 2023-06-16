@@ -11,72 +11,92 @@ import (
 )
 
 func TestAkamaiIPGeo_res_block(t *testing.T) {
+	var (
+		configVersion = func(t *testing.T, configId int, client *appsec.Mock) appsec.GetConfigurationResponse {
+			configResponse := appsec.GetConfigurationResponse{}
+			err := json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &configResponse)
+			require.NoError(t, err)
+
+			client.On("GetConfiguration",
+				mock.Anything,
+				appsec.GetConfigurationRequest{ConfigID: configId},
+			).Return(&configResponse, nil)
+
+			return configResponse
+		}
+
+		getIPGeoResponse = func(t *testing.T, configId int, version int, policyId string, path string, client *appsec.Mock) appsec.GetIPGeoResponse {
+			getIPGeoResponse := appsec.GetIPGeoResponse{}
+			err := json.Unmarshal(loadFixtureBytes(path), &getIPGeoResponse)
+			require.NoError(t, err)
+
+			client.On("GetIPGeo",
+				mock.Anything,
+				appsec.GetIPGeoRequest{ConfigID: configId, Version: version, PolicyID: policyId},
+			).Return(&getIPGeoResponse, nil)
+
+			return getIPGeoResponse
+		}
+
+		updateIPGeoResponse = func(t *testing.T, configId int, version int, policyId string, path string, request appsec.UpdateIPGeoRequest, client *appsec.Mock) appsec.UpdateIPGeoResponse {
+			updateIPGeoResponse := appsec.UpdateIPGeoResponse{}
+			err := json.Unmarshal(loadFixtureBytes(path), &updateIPGeoResponse)
+			require.NoError(t, err)
+
+			client.On("UpdateIPGeo",
+				mock.Anything,
+				request,
+			).Return(&updateIPGeoResponse, nil)
+			return updateIPGeoResponse
+		}
+
+		updateIPGeoProtectionResponseAllProtectionsFalse = func(t *testing.T, configId int, version int, policyId string, path string, client *appsec.Mock) appsec.UpdateIPGeoProtectionResponse {
+			updateIPGeoProtectionResponseAllProtectionsFalse := appsec.UpdateIPGeoProtectionResponse{}
+			err := json.Unmarshal(loadFixtureBytes(path), &updateIPGeoProtectionResponseAllProtectionsFalse)
+			require.NoError(t, err)
+
+			client.On("UpdateIPGeoProtection",
+				mock.Anything,
+				appsec.UpdateIPGeoProtectionRequest{ConfigID: configId, Version: version, PolicyID: policyId},
+			).Return(&updateIPGeoProtectionResponseAllProtectionsFalse, nil).Once()
+			return updateIPGeoProtectionResponseAllProtectionsFalse
+		}
+	)
 	t.Run("match by IPGeo ID", func(t *testing.T) {
 		client := &appsec.Mock{}
+		configVersion(t, 43253, client)
 
-		getConfigurationResponse := appsec.GetConfigurationResponse{}
-		err := json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &getConfigurationResponse)
-		require.NoError(t, err)
-		client.On("GetConfiguration",
-			mock.Anything,
-			appsec.GetConfigurationRequest{ConfigID: 43253},
-		).Return(&getConfigurationResponse, nil)
-
-		updateIPGeoResponse := appsec.UpdateIPGeoResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResIPGeo/IPGeo.json"), &updateIPGeoResponse)
-		require.NoError(t, err)
-		client.On("UpdateIPGeo",
-			mock.Anything,
-			appsec.UpdateIPGeoRequest{
-				ConfigID: 43253,
-				Version:  7,
-				PolicyID: "AAAA_81230",
-				Block:    "blockSpecificIPGeo",
-				GeoControls: &appsec.IPGeoGeoControls{
-					BlockedIPNetworkLists: &appsec.IPGeoNetworkLists{
-						NetworkList: []string{
-							"40731_BMROLLOUTGEO",
-							"44831_ECSCGEOBLACKLIST",
-						},
-					},
-				},
-				IPControls: &appsec.IPGeoIPControls{
-					BlockedIPNetworkLists: &appsec.IPGeoNetworkLists{
-						NetworkList: []string{
-							"49181_ADTIPBLACKLIST",
-							"49185_ADTWAFBYPASSLIST",
-						},
-					},
-					AllowedIPNetworkLists: &appsec.IPGeoNetworkLists{
-						NetworkList: []string{
-							"68762_ADYEN",
-							"69601_ADYENPRODWHITELIST",
-						},
+		updateRequest := appsec.UpdateIPGeoRequest{
+			ConfigID: 43253,
+			Version:  7,
+			PolicyID: "AAAA_81230",
+			Block:    "blockSpecificIPGeo",
+			GeoControls: &appsec.IPGeoGeoControls{
+				BlockedIPNetworkLists: &appsec.IPGeoNetworkLists{
+					NetworkList: []string{
+						"40731_BMROLLOUTGEO",
+						"44831_ECSCGEOBLACKLIST",
 					},
 				},
 			},
-		).Return(&updateIPGeoResponse, nil)
-
-		getIPGeoResponse := appsec.GetIPGeoResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResIPGeo/IPGeo.json"), &getIPGeoResponse)
-		require.NoError(t, err)
-		client.On("GetIPGeo",
-			mock.Anything,
-			appsec.GetIPGeoRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
-		).Return(&getIPGeoResponse, nil)
-
-		client.On("GetIPGeo",
-			mock.Anything,
-			appsec.GetIPGeoRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
-		).Return(&getIPGeoResponse, nil)
-
-		updateIPGeoProtectionResponseAllProtectionsFalse := appsec.UpdateIPGeoProtectionResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResIPGeoProtection/PolicyProtections.json"), &updateIPGeoProtectionResponseAllProtectionsFalse)
-		require.NoError(t, err)
-		client.On("UpdateIPGeoProtection",
-			mock.Anything,
-			appsec.UpdateIPGeoProtectionRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
-		).Return(&updateIPGeoProtectionResponseAllProtectionsFalse, nil).Once()
+			IPControls: &appsec.IPGeoIPControls{
+				BlockedIPNetworkLists: &appsec.IPGeoNetworkLists{
+					NetworkList: []string{
+						"49181_ADTIPBLACKLIST",
+						"49185_ADTWAFBYPASSLIST",
+					},
+				},
+				AllowedIPNetworkLists: &appsec.IPGeoNetworkLists{
+					NetworkList: []string{
+						"68762_ADYEN",
+						"69601_ADYENPRODWHITELIST",
+					},
+				},
+			},
+		}
+		getIPGeoResponse(t, 43253, 7, "AAAA_81230", "testdata/TestResIPGeo/IPGeo.json", client)
+		updateIPGeoResponse(t, 43253, 7, "AAAA_81230", "testdata/TestResIPGeo/IPGeo.json", updateRequest, client)
+		updateIPGeoProtectionResponseAllProtectionsFalse(t, 43253, 7, "AAAA_81230", "testdata/TestResIPGeoProtection/PolicyProtections.json", client)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
@@ -95,62 +115,86 @@ func TestAkamaiIPGeo_res_block(t *testing.T) {
 
 		client.AssertExpectations(t)
 	})
-}
-
-func TestAkamaiIPGeo_res_allow(t *testing.T) {
-	t.Run("match by IPGeo ID", func(t *testing.T) {
+	t.Run("match by Ukraine Geo ID", func(t *testing.T) {
 		client := &appsec.Mock{}
 
-		getConfigurationResponse := appsec.GetConfigurationResponse{}
-		err := json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &getConfigurationResponse)
-		require.NoError(t, err)
-		client.On("GetConfiguration",
-			mock.Anything,
-			appsec.GetConfigurationRequest{ConfigID: 43253},
-		).Return(&getConfigurationResponse, nil)
+		configVersion(t, 43253, client)
 
-		updateIPGeoResponse := appsec.UpdateIPGeoResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResIPGeo/IPGeoAllow.json"), &updateIPGeoResponse)
-		require.NoError(t, err)
-		client.On("UpdateIPGeo",
-			mock.Anything,
-			appsec.UpdateIPGeoRequest{
-				ConfigID: 43253,
-				Version:  7,
-				PolicyID: "AAAA_81230",
-				Block:    "blockAllTrafficExceptAllowedIPs",
-				IPControls: &appsec.IPGeoIPControls{
-					AllowedIPNetworkLists: &appsec.IPGeoNetworkLists{
-						NetworkList: []string{
-							"68762_ADYEN",
-							"69601_ADYENPRODWHITELIST",
-						},
+		updateRequest := appsec.UpdateIPGeoRequest{
+			ConfigID: 43253,
+			Version:  7,
+			PolicyID: "AAAA_81230",
+			Block:    "blockSpecificIPGeo",
+			GeoControls: &appsec.IPGeoGeoControls{
+				BlockedIPNetworkLists: &appsec.IPGeoNetworkLists{
+					NetworkList: []string{
+						"40731_BMROLLOUTGEO",
+						"44831_ECSCGEOBLACKLIST",
 					},
 				},
 			},
-		).Return(&updateIPGeoResponse, nil)
+			IPControls: &appsec.IPGeoIPControls{
+				BlockedIPNetworkLists: &appsec.IPGeoNetworkLists{
+					NetworkList: []string{
+						"49181_ADTIPBLACKLIST",
+						"49185_ADTWAFBYPASSLIST",
+					},
+				},
+				AllowedIPNetworkLists: &appsec.IPGeoNetworkLists{
+					NetworkList: []string{
+						"68762_ADYEN",
+						"69601_ADYENPRODWHITELIST",
+					},
+				},
+			},
+			UkraineGeoControls: &appsec.UkraineGeoControl{
+				Action: "alert",
+			},
+		}
+		getIPGeoResponse(t, 43253, 7, "AAAA_81230", "testdata/TestResIPGeo/IPGeo.json", client)
+		updateIPGeoResponse(t, 43253, 7, "AAAA_81230", "testdata/TestResIPGeo/IPGeo.json", updateRequest, client)
+		updateIPGeoProtectionResponseAllProtectionsFalse(t, 43253, 7, "AAAA_81230", "testdata/TestResIPGeoProtection/PolicyProtections.json", client)
+		useClient(client, func() {
+			resource.Test(t, resource.TestCase{
+				IsUnitTest:        true,
+				ProviderFactories: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString("testdata/TestResIPGeo/ukraine_match_by_id.tf"),
+						Check: resource.ComposeAggregateTestCheckFunc(
+							resource.TestCheckResourceAttr("akamai_appsec_ip_geo.test1", "id", "43253:AAAA_81230"),
+						),
+					},
+				},
+			})
+		})
 
-		getIPGeoResponse := appsec.GetIPGeoResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResIPGeo/IPGeoAllow.json"), &getIPGeoResponse)
-		require.NoError(t, err)
-		client.On("GetIPGeo",
-			mock.Anything,
-			appsec.GetIPGeoRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
-		).Return(&getIPGeoResponse, nil)
+		client.AssertExpectations(t)
+	})
 
-		client.On("GetIPGeo",
-			mock.Anything,
-			appsec.GetIPGeoRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
-		).Return(&getIPGeoResponse, nil)
+	t.Run("match by IPGeo Allow ID", func(t *testing.T) {
 
-		updateIPGeoProtectionResponseAllProtectionsFalse := appsec.UpdateIPGeoProtectionResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResIPGeoProtection/PolicyProtections.json"), &updateIPGeoProtectionResponseAllProtectionsFalse)
-		require.NoError(t, err)
-		client.On("UpdateIPGeoProtection",
-			mock.Anything,
-			appsec.UpdateIPGeoProtectionRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
-		).Return(&updateIPGeoProtectionResponseAllProtectionsFalse, nil).Once()
+		client := &appsec.Mock{}
 
+		configVersion(t, 43253, client)
+
+		updateRequest := appsec.UpdateIPGeoRequest{
+			ConfigID: 43253,
+			Version:  7,
+			PolicyID: "AAAA_81230",
+			Block:    "blockAllTrafficExceptAllowedIPs",
+			IPControls: &appsec.IPGeoIPControls{
+				AllowedIPNetworkLists: &appsec.IPGeoNetworkLists{
+					NetworkList: []string{
+						"68762_ADYEN",
+						"69601_ADYENPRODWHITELIST",
+					},
+				},
+			},
+		}
+		getIPGeoResponse(t, 43253, 7, "AAAA_81230", "testdata/TestResIPGeo/IPGeoAllow.json", client)
+		updateIPGeoResponse(t, 43253, 7, "AAAA_81230", "testdata/TestResIPGeo/IPGeoAllow.json", updateRequest, client)
+		updateIPGeoProtectionResponseAllProtectionsFalse(t, 43253, 7, "AAAA_81230", "testdata/TestResIPGeoProtection/PolicyProtections.json", client)
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
 				IsUnitTest:        true,
@@ -168,54 +212,22 @@ func TestAkamaiIPGeo_res_allow(t *testing.T) {
 
 		client.AssertExpectations(t)
 	})
-}
 
-func TestAkamaiIPGeo_res_block_with_empty_lists(t *testing.T) {
 	t.Run("block with empty lists", func(t *testing.T) {
+
 		client := &appsec.Mock{}
 
-		getConfigurationResponse := appsec.GetConfigurationResponse{}
-		err := json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &getConfigurationResponse)
-		require.NoError(t, err)
-		client.On("GetConfiguration",
-			mock.Anything,
-			appsec.GetConfigurationRequest{ConfigID: 43253},
-		).Return(&getConfigurationResponse, nil)
+		configVersion(t, 43253, client)
 
-		updateIPGeoResponse := appsec.UpdateIPGeoResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResIPGeo/IPGeoBlockOnly.json"), &updateIPGeoResponse)
-		require.NoError(t, err)
-		client.On("UpdateIPGeo",
-			mock.Anything,
-			appsec.UpdateIPGeoRequest{
-				ConfigID: 43253,
-				Version:  7,
-				PolicyID: "AAAA_81230",
-				Block:    "blockSpecificIPGeo",
-			},
-		).Return(&updateIPGeoResponse, nil)
-
-		getIPGeoResponse := appsec.GetIPGeoResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResIPGeo/IPGeoBlockOnly.json"), &getIPGeoResponse)
-		require.NoError(t, err)
-		client.On("GetIPGeo",
-			mock.Anything,
-			appsec.GetIPGeoRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
-		).Return(&getIPGeoResponse, nil)
-
-		client.On("GetIPGeo",
-			mock.Anything,
-			appsec.GetIPGeoRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
-		).Return(&getIPGeoResponse, nil)
-
-		updateIPGeoProtectionResponseAllProtectionsFalse := appsec.UpdateIPGeoProtectionResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResIPGeoProtection/PolicyProtections.json"), &updateIPGeoProtectionResponseAllProtectionsFalse)
-		require.NoError(t, err)
-		client.On("UpdateIPGeoProtection",
-			mock.Anything,
-			appsec.UpdateIPGeoProtectionRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
-		).Return(&updateIPGeoProtectionResponseAllProtectionsFalse, nil).Once()
-
+		updateRequest := appsec.UpdateIPGeoRequest{
+			ConfigID: 43253,
+			Version:  7,
+			PolicyID: "AAAA_81230",
+			Block:    "blockSpecificIPGeo",
+		}
+		getIPGeoResponse(t, 43253, 7, "AAAA_81230", "testdata/TestResIPGeo/IPGeoBlockOnly.json", client)
+		updateIPGeoResponse(t, 43253, 7, "AAAA_81230", "testdata/TestResIPGeo/IPGeoBlockOnly.json", updateRequest, client)
+		updateIPGeoProtectionResponseAllProtectionsFalse(t, 43253, 7, "AAAA_81230", "testdata/TestResIPGeoProtection/PolicyProtections.json", client)
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
 				IsUnitTest:        true,
@@ -233,54 +245,23 @@ func TestAkamaiIPGeo_res_block_with_empty_lists(t *testing.T) {
 
 		client.AssertExpectations(t)
 	})
-}
 
-func TestAkamaiIPGeo_res_allow_with_empty_lists(t *testing.T) {
 	t.Run("allow with empty lists", func(t *testing.T) {
+
 		client := &appsec.Mock{}
 
-		getConfigurationResponse := appsec.GetConfigurationResponse{}
-		err := json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &getConfigurationResponse)
-		require.NoError(t, err)
-		client.On("GetConfiguration",
-			mock.Anything,
-			appsec.GetConfigurationRequest{ConfigID: 43253},
-		).Return(&getConfigurationResponse, nil)
+		configVersion(t, 43253, client)
 
-		updateIPGeoResponse := appsec.UpdateIPGeoResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResIPGeo/IPGeoAllowOnly.json"), &updateIPGeoResponse)
-		require.NoError(t, err)
-		client.On("UpdateIPGeo",
-			mock.Anything,
-			appsec.UpdateIPGeoRequest{
-				ConfigID: 43253,
-				Version:  7,
-				PolicyID: "AAAA_81230",
-				Block:    "blockAllTrafficExceptAllowedIPs",
-			},
-		).Return(&updateIPGeoResponse, nil)
+		updateRequest := appsec.UpdateIPGeoRequest{
+			ConfigID: 43253,
+			Version:  7,
+			PolicyID: "AAAA_81230",
+			Block:    "blockAllTrafficExceptAllowedIPs",
+		}
 
-		getIPGeoResponse := appsec.GetIPGeoResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResIPGeo/IPGeoAllowOnly.json"), &getIPGeoResponse)
-		require.NoError(t, err)
-		client.On("GetIPGeo",
-			mock.Anything,
-			appsec.GetIPGeoRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
-		).Return(&getIPGeoResponse, nil)
-
-		client.On("GetIPGeo",
-			mock.Anything,
-			appsec.GetIPGeoRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
-		).Return(&getIPGeoResponse, nil)
-
-		updateIPGeoProtectionResponseAllProtectionsFalse := appsec.UpdateIPGeoProtectionResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResIPGeoProtection/PolicyProtections.json"), &updateIPGeoProtectionResponseAllProtectionsFalse)
-		require.NoError(t, err)
-		client.On("UpdateIPGeoProtection",
-			mock.Anything,
-			appsec.UpdateIPGeoProtectionRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
-		).Return(&updateIPGeoProtectionResponseAllProtectionsFalse, nil).Once()
-
+		getIPGeoResponse(t, 43253, 7, "AAAA_81230", "testdata/TestResIPGeo/IPGeoAllowOnly.json", client)
+		updateIPGeoResponse(t, 43253, 7, "AAAA_81230", "testdata/TestResIPGeo/IPGeoAllowOnly.json", updateRequest, client)
+		updateIPGeoProtectionResponseAllProtectionsFalse(t, 43253, 7, "AAAA_81230", "testdata/TestResIPGeoProtection/PolicyProtections.json", client)
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
 				IsUnitTest:        true,
