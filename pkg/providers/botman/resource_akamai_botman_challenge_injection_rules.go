@@ -5,21 +5,22 @@ import (
 	"encoding/json"
 	"strconv"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/botman"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-func resourceChallengeInterceptionRules() *schema.Resource {
+func resourceChallengeInjectionRules() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceChallengeInterceptionRulesCreate,
-		ReadContext:   resourceChallengeInterceptionRulesRead,
-		UpdateContext: resourceChallengeInterceptionRulesUpdate,
-		DeleteContext: resourceChallengeInterceptionRulesDelete,
+		CreateContext: resourceChallengeInjectionRulesCreate,
+		ReadContext:   resourceChallengeInjectionRulesRead,
+		UpdateContext: resourceChallengeInjectionRulesUpdate,
+		DeleteContext: resourceChallengeInjectionRulesDelete,
 		CustomizeDiff: customdiff.All(
 			verifyConfigIDUnchanged,
 		),
@@ -31,7 +32,7 @@ func resourceChallengeInterceptionRules() *schema.Resource {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
-			"challenge_interception_rules": {
+			"challenge_injection_rules": {
 				Type:             schema.TypeString,
 				Required:         true,
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsJSON),
@@ -41,34 +42,34 @@ func resourceChallengeInterceptionRules() *schema.Resource {
 	}
 }
 
-func resourceChallengeInterceptionRulesCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceChallengeInjectionRulesCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	client := inst.Client(meta)
-	logger := meta.Log("botman", "resourceChallengeInterceptionRulesCreate")
-	logger.Debugf("in resourceChallengeInterceptionRulesCreate")
+	logger := meta.Log("botman", "resourceChallengeInjectionRulesCreate")
+	logger.Debugf("in resourceChallengeInjectionRulesCreate")
 
 	configID, err := tf.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "challengeInterceptionRules", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "challengeInjectionRules", m)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	jsonPayloadString, err := tf.GetStringValue("challenge_interception_rules", d)
+	jsonPayloadString, err := tf.GetStringValue("challenge_injection_rules", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	request := botman.UpdateChallengeInterceptionRulesRequest{
+	request := botman.UpdateChallengeInjectionRulesRequest{
 		ConfigID:    int64(configID),
 		Version:     int64(version),
 		JsonPayload: json.RawMessage(jsonPayloadString),
 	}
 
-	_, err = client.UpdateChallengeInterceptionRules(ctx, request)
+	_, err = client.UpdateChallengeInjectionRules(ctx, request)
 	if err != nil {
 		logger.Errorf("calling 'request': %s", err.Error())
 		return diag.FromErr(err)
@@ -76,14 +77,14 @@ func resourceChallengeInterceptionRulesCreate(ctx context.Context, d *schema.Res
 
 	d.SetId(strconv.Itoa(configID))
 
-	return resourceChallengeInterceptionRulesRead(ctx, d, m)
+	return resourceChallengeInjectionRulesRead(ctx, d, m)
 }
 
-func resourceChallengeInterceptionRulesRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceChallengeInjectionRulesRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	client := inst.Client(meta)
-	logger := meta.Log("botman", "resourceChallengeInterceptionRulesRead")
-	logger.Debugf("in resourceChallengeInterceptionRulesRead")
+	logger := meta.Log("botman", "resourceChallengeInjectionRulesRead")
+	logger.Debugf("in resourceChallengeInjectionRulesRead")
 
 	configID, err := strconv.Atoi(d.Id())
 	if err != nil {
@@ -95,12 +96,12 @@ func resourceChallengeInterceptionRulesRead(ctx context.Context, d *schema.Resou
 		return diag.FromErr(err)
 	}
 
-	request := botman.GetChallengeInterceptionRulesRequest{
+	request := botman.GetChallengeInjectionRulesRequest{
 		ConfigID: int64(configID),
 		Version:  int64(version),
 	}
 
-	response, err := client.GetChallengeInterceptionRules(ctx, request)
+	response, err := client.GetChallengeInjectionRules(ctx, request)
 	if err != nil {
 		logger.Errorf("calling 'request': %s", err.Error())
 		return diag.FromErr(err)
@@ -111,8 +112,8 @@ func resourceChallengeInterceptionRulesRead(ctx context.Context, d *schema.Resou
 		return diag.FromErr(err)
 	}
 	fields := map[string]interface{}{
-		"config_id":                    configID,
-		"challenge_interception_rules": string(jsonBody),
+		"config_id":                 configID,
+		"challenge_injection_rules": string(jsonBody),
 	}
 	if err := tf.SetAttrs(d, fields); err != nil {
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
@@ -122,47 +123,47 @@ func resourceChallengeInterceptionRulesRead(ctx context.Context, d *schema.Resou
 	return nil
 }
 
-func resourceChallengeInterceptionRulesUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceChallengeInjectionRulesUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	client := inst.Client(meta)
-	logger := meta.Log("botman", "resourceChallengeInterceptionRulesUpdate")
-	logger.Debugf("in resourceChallengeInterceptionRulesUpdate")
+	logger := meta.Log("botman", "resourceChallengeInjectionRulesUpdate")
+	logger.Debugf("in resourceChallengeInjectionRulesUpdate")
 
 	configID, err := strconv.Atoi(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "challengeInterceptionRules", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "challengeInjectionRules", m)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	jsonPayloadString, err := tf.GetStringValue("challenge_interception_rules", d)
+	jsonPayloadString, err := tf.GetStringValue("challenge_injection_rules", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	request := botman.UpdateChallengeInterceptionRulesRequest{
+	request := botman.UpdateChallengeInjectionRulesRequest{
 		ConfigID:    int64(configID),
 		Version:     int64(version),
 		JsonPayload: json.RawMessage(jsonPayloadString),
 	}
 
-	_, err = client.UpdateChallengeInterceptionRules(ctx, request)
+	_, err = client.UpdateChallengeInjectionRules(ctx, request)
 	if err != nil {
-		logger.Errorf("calling 'UpdateChallengeInterceptionRules': %s", err.Error())
+		logger.Errorf("calling 'UpdateChallengeInjectionRules': %s", err.Error())
 		return diag.FromErr(err)
 	}
 
-	return resourceChallengeInterceptionRulesRead(ctx, d, m)
+	return resourceChallengeInjectionRulesRead(ctx, d, m)
 }
 
-func resourceChallengeInterceptionRulesDelete(_ context.Context, _ *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceChallengeInjectionRulesDelete(_ context.Context, _ *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	logger := meta.Log("botman", "resourceChallengeInterceptionRulesDelete")
-	logger.Debugf("in resourceChallengeInterceptionRulesDelete")
-	logger.Info("Botman API does not support challenge interception rules deletion - resource will only be removed from state")
+	logger := meta.Log("botman", "resourceChallengeInjectionRulesDelete")
+	logger.Debugf("in resourceChallengeInjectionRulesDelete")
+	logger.Info("Botman API does not support challenge injection rules deletion - resource will only be removed from state")
 
 	return nil
 }

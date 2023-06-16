@@ -11,11 +11,22 @@
 
 #### FEATURES/ENHANCEMENTS:
 
+* BOTMAN
+  * Added resource:
+    * `akamai_botman_challenge_injection_rules` - read and update
+  * Added data sources:
+    * `akamai_botman_challenge_injection_rules` - read
+
 * PAPI
   * Added verification to ensure that `akamai_property_rules_builder` data source
     has consistent frozen rule format between parent and it's child.
     Additionally `akamai_property_rules_builder.json` is returning artificial field `_ruleFormat_`.
   * Suppressed trigger of new activation for `note` field change in `akamai_property_activation` and `akamai_property_include_activation` resources.
+
+#### DEPRECATIONS
+
+* BOTMAN
+  * deprecated `akamai_botman_challenge_interception_rules` data source and resource; use `akamai_botman_challenge_injection_rules` instead.
 
 ## 5.0.1 (Jul 12, 2023)
 
