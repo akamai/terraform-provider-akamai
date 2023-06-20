@@ -1,6 +1,7 @@
 package property
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -134,12 +135,6 @@ func TestResProperty(t *testing.T) {
 				}}
 				state.Hostnames = append([]papi.Hostname{}, NewResponseHostnames...)
 			})
-		}
-	}
-
-	getEdgeHostnames := func(contractID, groupID string, edgehostnames papi.EdgeHostnameItems) BehaviorFunc {
-		return func(state *TestState) {
-			ExpectGetEdgeHostnames(state.Client, contractID, groupID, edgehostnames).Once()
 		}
 	}
 
@@ -278,7 +273,6 @@ func TestResProperty(t *testing.T) {
 			advanceVersion("prp_0", 1, 2),
 			getPropertyVersionResources("prp_0", "grp_0", "ctr_0", 2, papi.VersionStatusDeactivated, papi.VersionStatusInactive),
 			setHostnames("prp_0", 2, "to2.test.domain"),
-			getEdgeHostnames("ctr_0", "grp_0", papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{{DomainPrefix: "from.test.domain"}}}),
 		),
 		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
 			return []resource.TestStep{
@@ -320,7 +314,6 @@ func TestResProperty(t *testing.T) {
 			advanceVersion("prp_0", 1, 2),
 			getPropertyVersionResources("prp_0", "grp_0", "ctr_0", 2, papi.VersionStatusInactive, papi.VersionStatusDeactivated),
 			setHostnames("prp_0", 2, "to2.test.domain"),
-			getEdgeHostnames("ctr_0", "grp_0", papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{{DomainPrefix: "from.test.domain"}}}),
 		),
 		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
 			return []resource.TestStep{
@@ -362,7 +355,6 @@ func TestResProperty(t *testing.T) {
 			advanceVersion("prp_0", 1, 2),
 			getPropertyVersionResources("prp_0", "grp_0", "ctr_0", 2, papi.VersionStatusInactive, papi.VersionStatusActive),
 			setHostnames("prp_0", 2, "to2.test.domain"),
-			getEdgeHostnames("ctr_0", "grp_0", papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{{DomainPrefix: "from.test.domain"}}}),
 		),
 		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
 			return []resource.TestStep{
@@ -404,7 +396,6 @@ func TestResProperty(t *testing.T) {
 			advanceVersion("prp_0", 1, 2),
 			getPropertyVersionResources("prp_0", "grp_0", "ctr_0", 2, papi.VersionStatusInactive, papi.VersionStatusActive),
 			setHostnames("prp_0", 2, "to2.test.domain"),
-			getEdgeHostnames("ctr_0", "grp_0", papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{{DomainPrefix: "from.test.domain"}}}),
 		),
 		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
 			return []resource.TestStep{
@@ -444,7 +435,6 @@ func TestResProperty(t *testing.T) {
 			getPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive),
 			setHostnames("prp_0", 1, "to.test.domain"),
 			setHostnames("prp_0", 1, "to2.test.domain"),
-			getEdgeHostnames("ctr_0", "grp_0", papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{{DomainPrefix: "from.test.domain"}}}),
 		),
 		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
 			return []resource.TestStep{
@@ -476,7 +466,6 @@ func TestResProperty(t *testing.T) {
 			getPropertyVersionResources("prp_0", "grp_0", "ctr_0", 2, papi.VersionStatusInactive, papi.VersionStatusInactive),
 			GetVersionResources("prp_0", "ctr_0", "grp_0", 2),
 			setHostnames("prp_0", 2, "to.test.domain"),
-			getEdgeHostnames("ctr_0", "grp_0", papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{{DomainPrefix: "from.test.domain"}}}),
 		),
 		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
 			return []resource.TestStep{
@@ -1381,7 +1370,7 @@ func TestResProperty(t *testing.T) {
 			}, nil).Once()
 		}
 
-		t.Run("error update property version with incorrect edgehostname and update in rule tree", func(t *testing.T) {
+		t.Run("400 from UpdatePropertyVersionHostnames - incorrect/invalid edge hostname", func(t *testing.T) {
 			client := &papi.Mock{}
 			client.Test(T{t})
 			ruleFormat := ""
@@ -1462,8 +1451,30 @@ func TestResProperty(t *testing.T) {
 			// second step
 			// property update returns an error on the invalid edgehostname
 			ExpectGetPropertyVersion(client, "prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusActive, papi.VersionStatusActive).Once()
-			ExpectGetEdgeHostnames(client, "ctr_0", "grp_0", papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
-				{DomainPrefix: "dxe-2406-issue-example-second.com"}, {DomainPrefix: "dxe-2406-issue.com"}}}).Once()
+			ExpectCreatePropertyVersion(client, "prp_0", "grp_0", "ctr_0", 1, 2)
+
+			ExpectUpdatePropertyVersionHostnames(
+				client, "prp_0", "grp_0", "ctr_0", 2,
+				[]papi.Hostname{
+					{
+						CnameType:            "EDGE_HOSTNAME",
+						CnameFrom:            "dxe-2406-issue-example-second.com",
+						CnameTo:              "dxe-2406-issue-example-second.com.example.net",
+						CertProvisioningType: "CPS_MANAGED",
+					},
+					{
+						CnameType:            "EDGE_HOSTNAME",
+						CnameFrom:            "dxe-2406-issue.com",
+						CnameTo:              "dxe-2406-issue.com.example.net",
+						CertProvisioningType: "CPS_MANAGED",
+					},
+					{
+						CnameType:            "EDGE_HOSTNAME",
+						CnameFrom:            "does-not-exist.com",
+						CnameTo:              "does-not-exist.com.example.net",
+						CertProvisioningType: "CPS_MANAGED",
+					}}, fmt.Errorf("%w: request failed: %s", papi.ErrUpdatePropertyVersionHostnames, errors.New("{\n    \"type\": \"https://problems.luna.akamaiapis.net/papi/v0/property-version-hostname/bad-cnameto\",\n    \"title\": \"Bad `cnameTo`\",\n    \"detail\": \"The System could not find cnameTo value `does-not-exist.com.example.net`.\",\n    \"instance\": \"host/papi/v1/properties/prp_0/versions/2/hostnames?contractId=ctr_0&groupId=grp_0&includeCertStatus=false&validateHostnames=false#efba6490291100b1\",\n    \"status\": 400\n}")),
+			).Once()
 
 			// terraform clean up - terraform test framework attempts to run destroy plan, if an error is returned on second step
 			// activation and property deletion
@@ -1493,7 +1504,7 @@ func TestResProperty(t *testing.T) {
 								resource.TestCheckResourceAttr("akamai_property.akaproperty", "id", "prp_0"),
 								resource.TestCheckResourceAttr("akamai_property.akaproperty", "hostnames.#", "3"),
 							),
-							ExpectError: regexp.MustCompile("hostnames with 'cname_from' containing \\[does-not-exist.com] do not exist under this account, you need to remove or replace invalid hostnames entries in your configuration to proceed with property version update"),
+							ExpectError: regexp.MustCompile("Error: updating hostnames: request failed:"),
 						},
 					},
 				})
@@ -1501,7 +1512,6 @@ func TestResProperty(t *testing.T) {
 
 			client.AssertExpectations(t)
 		})
-
 	})
 }
 

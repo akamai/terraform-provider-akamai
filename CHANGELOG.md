@@ -18,6 +18,9 @@
 
 * Provider tested and now supports Terraform 1.4.6
 
+* PAPI
+  * Add import to `akamai_property_activation` resource
+
 #### DEPRECATIONS
 
 * Deprecate `active` field in `akamai_dns_record` resource
@@ -33,10 +36,8 @@
 * Cloudlets
   * Wait for propagation of policy activation deletions, before removing the policy in `akamai_cloudlets_policy`
 
-#### FEATURES/ENHANCEMENTS:
-
 * PAPI
-  * Add import to `akamai_property_activation` resource
+  * Removed hostname validation on `akamai_property` resource ([I#422](https://github.com/akamai/terraform-provider-akamai/issues/422))
 
 ## 4.1.0 (Jun 1, 2023)
 

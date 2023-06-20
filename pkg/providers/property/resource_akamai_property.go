@@ -748,11 +748,6 @@ func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 		return diag.FromErr(err)
 	}
 
-	hostnames, err := validateHostnames(ctx, d, client, contractID, groupID)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
 	// if read_version is not the latest version or not editable then create a new version from it before proceeding
 	if (propertyVersion != property.LatestVersion) || (resp.Version.ProductionStatus != papi.VersionStatusInactive || resp.Version.StagingStatus != papi.VersionStatusInactive) {
 		// The latest version has been activated on either production or staging, so we need to create a new version to apply changes on
@@ -769,7 +764,9 @@ func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 
 	// hostnames
 	if d.HasChange("hostnames") {
+		hostnamesVal, err := tf.GetSetValue("hostnames", d)
 		if err == nil {
+			hostnames := mapToHostnames(hostnamesVal.List())
 			if len(hostnames) > 0 {
 				if err := updatePropertyHostnames(ctx, client, property, hostnames); err != nil {
 					d.Partial(true)
@@ -1327,51 +1324,6 @@ func rdSetAttrs(ctx context.Context, d *schema.ResourceData, AttributeValues map
 	}
 
 	return nil
-}
-
-func contains(edgeHostnames *papi.GetEdgeHostnamesResponse, hostname papi.Hostname) bool {
-	for _, v := range edgeHostnames.EdgeHostnames.Items {
-		if hostname.CnameFrom == v.DomainPrefix {
-			return true
-		}
-	}
-	return false
-}
-
-func checkHostnames(hostnames []papi.Hostname, edgeHostnames *papi.GetEdgeHostnamesResponse) error {
-	invalidHostnames := make([]string, 0)
-	for _, v := range hostnames {
-		if !contains(edgeHostnames, v) {
-			invalidHostnames = append(invalidHostnames, v.CnameFrom)
-		}
-	}
-	if len(invalidHostnames) > 0 {
-		return fmt.Errorf("hostnames with 'cname_from' containing %s do not exist under this account, you need to remove or replace invalid hostnames entries in your configuration to proceed with property version update", invalidHostnames)
-	}
-	return nil
-}
-
-func validateHostnames(ctx context.Context, d *schema.ResourceData, client papi.PAPI, contractID, groupID string) ([]papi.Hostname, error) {
-	hostnames := make([]papi.Hostname, 0)
-	if d.HasChange("hostnames") {
-		hostnameVal, err := tf.GetSetValue("hostnames", d)
-		if err != nil {
-			return nil, err
-		}
-		edgeHostnames, err := client.GetEdgeHostnames(ctx, papi.GetEdgeHostnamesRequest{
-			ContractID: contractID,
-			GroupID:    groupID,
-		})
-		if err != nil {
-			return nil, err
-		}
-
-		hostnames = mapToHostnames(hostnameVal.List())
-		if err := checkHostnames(hostnames, edgeHostnames); err != nil {
-			return nil, err
-		}
-	}
-	return hostnames, nil
 }
 
 func needsUpdate(ctx context.Context, d *schema.ResourceData, formatNeedsUpdate, rulesNeedUpdate bool, rulesJSON []byte, ruleFormat string, client papi.PAPI, property papi.Property) error {
