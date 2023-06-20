@@ -1,0 +1,214 @@
+package clientlists
+
+import (
+	"context"
+	"encoding/json"
+
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/clientlists"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+)
+
+func dataSourceClientLists() *schema.Resource {
+	return &schema.Resource{
+		ReadContext: dataSourceClientListRead,
+		Schema: map[string]*schema.Schema{
+			"list_ids": {
+				Type:        schema.TypeList,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Computed:    true,
+				Description: "A set of client list ids.",
+			},
+			"lists": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "A set of client lists.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"name": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "The name of the client list",
+						},
+						"type": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "The type of the client list",
+						},
+						"notes": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The client list notes",
+						},
+						"tags": {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The client list tags",
+							Elem:        &schema.Schema{Type: schema.TypeString},
+						},
+						"list_id": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The ID of the client list.",
+						},
+						"version": {
+							Type:        schema.TypeInt,
+							Computed:    true,
+							Description: "The current version of the client list.",
+						},
+						"items_count": {
+							Type:        schema.TypeInt,
+							Computed:    true,
+							Description: "The number of items that a client list contains.",
+						},
+						"create_date": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The client list creation date.",
+						},
+						"created_by": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The username of the user who created the client list.",
+						},
+						"update_date": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The date of last update.",
+						},
+						"updated_by": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The username of the user that updated the client list last.",
+						},
+						"production_activation_status": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The activation status in production environment.",
+						},
+						"staging_activation_status": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The activation status in staging environment.",
+						},
+						"list_type": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The client list type.",
+						},
+						"shared": {
+							Type:        schema.TypeBool,
+							Computed:    true,
+							Description: "Whether the client list is shared.",
+						},
+						"read_only": {
+							Type:        schema.TypeBool,
+							Computed:    true,
+							Description: "Whether the client is editable for the authenticated user.",
+						},
+						"deprecated": {
+							Type:        schema.TypeBool,
+							Computed:    true,
+							Description: "Whether the client list was removed.",
+						},
+					},
+				},
+			},
+			"json": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "JSON representation of the client lists.",
+			},
+			"output_text": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Tabular representation of the client lists.",
+			},
+		},
+	}
+}
+
+func dataSourceClientListRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := akamai.Meta(m)
+	client := inst.Client(meta)
+	logger := meta.Log("CLIENTLIST", "dataSourceClientListRead")
+
+	lists, err := client.GetClientLists(ctx, clientlists.GetClientListsRequest{})
+	if err != nil {
+		logger.Errorf("calling 'GetClientLists': %s", err.Error())
+		return diag.FromErr(err)
+	}
+
+	if len(lists.Content) > 0 {
+		d.SetId(lists.Content[0].ListID)
+	}
+
+	mappedLists := mapClientListsToSchema(lists)
+	if err := d.Set("lists", mappedLists); err != nil {
+		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
+	}
+
+	jsonBody, err := json.MarshalIndent(lists.Content, "", "  ")
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if err := d.Set("json", string(jsonBody)); err != nil {
+		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
+	}
+
+	IDs := make([]string, 0, len(lists.Content))
+	for _, cl := range lists.Content {
+		IDs = append(IDs, cl.ListID)
+	}
+	if err := d.Set("list_ids", IDs); err != nil {
+		logger.Errorf("error setting 'list_ids': %s", err.Error())
+		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
+	}
+
+	ots := OutputTemplates{}
+	InitTemplates(ots)
+
+	outputText, err := RenderTemplates(ots, "clientListsDS", lists)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if err := d.Set("output_text", outputText); err != nil {
+		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
+	}
+
+	return nil
+}
+
+func mapClientListsToSchema(lists *clientlists.GetClientListsResponse) []interface{} {
+	if lists != nil && len(lists.Content) > 0 {
+		result := make([]interface{}, 0, len(lists.Content))
+
+		for _, list := range lists.Content {
+			result = append(result, map[string]interface{}{
+				"name":                         list.Name,
+				"type":                         list.Type,
+				"notes":                        list.Notes,
+				"tags":                         list.Tags,
+				"list_id":                      list.ListID,
+				"version":                      list.Version,
+				"items_count":                  list.ItemsCount,
+				"create_date":                  list.CreateDate,
+				"created_by":                   list.CreatedBy,
+				"update_date":                  list.UpdateDate,
+				"updated_by":                   list.UpdatedBy,
+				"production_activation_status": list.ProductionActivationStatus,
+				"staging_activation_status":    list.StagingActivationStatus,
+				"list_type":                    list.ListType,
+				"shared":                       list.Shared,
+				"read_only":                    list.ReadOnly,
+				"deprecated":                   list.Deprecated,
+			})
+		}
+
+		return result
+	}
+
+	return make([]interface{}, 0)
+}

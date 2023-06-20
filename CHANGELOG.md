@@ -129,6 +129,11 @@
   * Updated Geo control to include Action for Ukraine.
   * Added `akamai_appsec_advanced_settings_pii_learning` data source and resource for managing the PII learning advanced setting.
 
+* CLIENTLISTS
+* [IMPORTANT] Added Client Lists API Support
+  *  Added data source:
+     *  `akamai_clientlist_lists` get list of Client Lists
+
 #### DEPRECATIONS
 
 * Deprecated `active` field in `akamai_dns_record` resource
@@ -165,7 +170,7 @@
 * Appsec
   * Update malware policy `ContentTypes` to include `EncodedContentAttributes`.
   * Malware policy's `ContentTypes` is reported as part of an individual policy but is no longer included in the bulk report of all policies.
-  
+
 * PAPI
   * Remove `cpc_` prefix in `akamai_cp_code` resource and data source IDs
 
@@ -200,7 +205,7 @@
   * Fixed bug related to regex validation for handling property delay in `akamai_cloudlets_policy_activation`
   * Fixed sporadic issue with `akamai_cloudlets_policy_activation` due to network delay
 
-* PAPI 
+* PAPI
   * Fixed reading float values in `akamai_property_rules_builder`
   * Add validation for hostnames `cname_from` field in `akamai_property` resource
   * Assign only active property activation version in `akamai_property_activation` resource on read
@@ -313,7 +318,7 @@
 
 * GTM
   * Fixed diff in resources:
-    * `resource_akamai_gtm_asmap` for field `assignment.as_numbers` 
+    * `resource_akamai_gtm_asmap` for field `assignment.as_numbers`
     * `resource_akamai_gtm_cidrmap` for field `assignment.blocks`
     * `resource_akamai_gtm_geomap` for field `assignment.countries`
     * `resource_akamai_gtm_domain` for field `email_notification_list`
@@ -932,7 +937,7 @@
 #### BREAKING CHANGES:
 * PAPI - `resource_akamai_property:` Changed hostnames field to a block type syntax to support additional user inputs. Refer to [Property Resource](docs/resources/property.md) for new syntax.
 
-**Important Note**  
+**Important Note**
 Existing terraform users with hostnames defined in older syntax need to manually fix their hostnames configuration and existing state if needed. Additional info in [Property Resource](docs/resources/property.md)
 
 #### BUG FIXES:
