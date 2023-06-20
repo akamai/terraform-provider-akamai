@@ -5,7 +5,7 @@ provider "akamai" {
 resource "akamai_cp_code" "akacpcode" {
   contract_id = var.contractid
   group_id    = var.groupid
-  product     = var.product
+  product_id  = var.product
   name        = var.cp_code
 }
 
@@ -23,7 +23,7 @@ output "aka_cp_code" {
   value = data.akamai_cp_code.akacpcodeq.id
 }
 output "aka_cp_contract" {
-  value = data.akamai_cp_code.akacpcodeq.contract
+  value = data.akamai_cp_code.akacpcodeq.contract_id
 }
 
 variable "groupid" {

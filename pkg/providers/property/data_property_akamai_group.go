@@ -20,31 +20,13 @@ func dataSourcePropertyGroup() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataPropertyGroupRead,
 		Schema: map[string]*schema.Schema{
-			"name": {
-				Type:         schema.TypeString,
-				Optional:     true,
-				Computed:     true,
-				ExactlyOneOf: []string{"name", "group_name"},
-				Deprecated:   "name is deprecated, use group_name instead",
-			},
 			"group_name": {
-				Type:         schema.TypeString,
-				Optional:     true,
-				Computed:     true,
-				ExactlyOneOf: []string{"name", "group_name"},
-			},
-			"contract": {
-				Type:         schema.TypeString,
-				Optional:     true,
-				Computed:     true,
-				ExactlyOneOf: []string{"contract", "contract_id"},
-				Deprecated:   "contract is deprecated, use contract_id instead",
+				Type:     schema.TypeString,
+				Required: true,
 			},
 			"contract_id": {
-				Type:         schema.TypeString,
-				Optional:     true,
-				Computed:     true,
-				ExactlyOneOf: []string{"contract", "contract_id"},
+				Type:     schema.TypeString,
+				Required: true,
 			},
 		},
 	}
@@ -60,53 +42,38 @@ func dataPropertyGroupRead(ctx context.Context, d *schema.ResourceData, m interf
 		session.WithContextLog(log),
 	)
 
-	var (
-		name       string
-		getDefault bool
-	)
+	var getDefault bool
 
-	// check and load group_name, if not exists then check group.
-	name, err := tf.ResolveKeyStringState(d, "group_name", "name")
+	groupName, err := tf.GetStringValue("group_name", d)
 	if err != nil {
 		if !errors.Is(err, tf.ErrNotFound) {
 			return diag.FromErr(err)
 		}
-		name = "default"
+		groupName = "default"
 		getDefault = true
 	}
 
-	log.Debugf("[Akamai Property Group] Start Searching for property group records %s ", name)
+	log.Debugf("[Akamai Property Group] Start Searching for property group records %s ", groupName)
 
 	groups, err := getGroups(ctx, meta)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-
-	// check and load contract_id, if not exists then check contract.
-	contractID, err := tf.ResolveKeyStringState(d, "contract_id", "contract")
+	contractID, err := tf.GetStringValue("contract_id", d)
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-
-	group, err := findGroupByName(name, contractID, groups, getDefault)
+	group, err := findGroupByName(groupName, contractID, groups, getDefault)
 	if err != nil {
-		return diag.Errorf("%v: %v: %v", ErrLookingUpGroupByName, name, err)
+		return diag.Errorf("%v: %v: %v", ErrLookingUpGroupByName, groupName, err)
 	}
 
-	// set group_name/name in state.
 	if err := d.Set("group_name", group.GroupName); err != nil {
-		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
-	}
-	if err := d.Set("name", group.GroupName); err != nil {
 		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
 
 	if len(group.ContractIDs) != 0 {
 		contractID = group.ContractIDs[0]
-	}
-	// set contract/contract_id in state.
-	if err := d.Set("contract", contractID); err != nil {
-		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("contract_id", contractID); err != nil {
 		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())

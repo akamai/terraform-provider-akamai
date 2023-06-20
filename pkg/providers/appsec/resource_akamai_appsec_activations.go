@@ -47,25 +47,10 @@ func resourceActivations() *schema.Resource {
 				Default:     "STAGING",
 				Description: "Network on which to activate the configuration version (STAGING or PRODUCTION)",
 			},
-			"activate": {
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Default:     true,
-				Description: "Whether to activate or deactivate the specified security configuration and version",
-				Deprecated:  `The setting activate has been deprecated; "terraform apply" will always perform activation. (Use "terraform destroy" for deactivation.)`,
-			},
 			"note": {
-				Type:          schema.TypeString,
-				Optional:      true,
-				Description:   "Note describing the activation. Will use timestamp if omitted.",
-				ConflictsWith: []string{"notes"},
-			},
-			"notes": {
-				Type:          schema.TypeString,
-				Optional:      true,
-				Description:   "Note describing the activation",
-				Deprecated:    `The setting notes has been deprecated. Use "note" instead.`,
-				ConflictsWith: []string{"note"},
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Note describing the activation. Will use timestamp if omitted.",
 			},
 			"notification_emails": {
 				Type:        schema.TypeSet,
@@ -119,12 +104,6 @@ func resourceActivationsCreate(ctx context.Context, d *schema.ResourceData, m in
 	note, err = tf.GetStringValue("note", d)
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
-	}
-	if note == "" {
-		note, err = tf.GetStringValue("notes", d)
-		if err != nil && !errors.Is(err, tf.ErrNotFound) {
-			return diag.FromErr(err)
-		}
 	}
 	if note == "" {
 		note, err = defaultActivationNote(false)
@@ -237,12 +216,6 @@ func resourceActivationsUpdate(ctx context.Context, d *schema.ResourceData, m in
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	if errors.Is(err, tf.ErrNotFound) {
-		note, err = tf.GetStringValue("notes", d)
-		if err != nil && !errors.Is(err, tf.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-	}
 	if note == "" {
 		note, err = defaultActivationNote(false)
 		if err != nil {
@@ -331,12 +304,6 @@ func resourceActivationsDelete(ctx context.Context, d *schema.ResourceData, m in
 	note, err = tf.GetStringValue("note", d)
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
-	}
-	if note == "" {
-		note, err = tf.GetStringValue("notes", d)
-		if err != nil && !errors.Is(err, tf.ErrNotFound) {
-			return diag.FromErr(err)
-		}
 	}
 	if note == "" {
 		note, err = defaultActivationNote(true)
@@ -438,9 +405,6 @@ func resourceImporter(ctx context.Context, d *schema.ResourceData, m interface{}
 	for _, activation := range response.ActivationHistory {
 		if activation.Version == version && activation.Network == network {
 			d.SetId(strconv.Itoa(activation.ActivationID))
-			if err = d.Set("activate", true); err != nil {
-				return nil, err
-			}
 			if err = d.Set("config_id", configID); err != nil {
 				return nil, err
 			}

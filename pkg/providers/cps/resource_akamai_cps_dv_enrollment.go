@@ -92,12 +92,6 @@ func resourceCPSDVEnrollment() *schema.Resource {
 				Elem:        csr,
 				Description: "Certificate signing request generated during enrollment creation",
 			},
-			"enable_multi_stacked_certificates": {
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Deprecated:  "Deprecated, don't use; always false",
-				Description: "Enable Dual-Stacked certificate deployment for enrollment",
-			},
 			"network_configuration": {
 				Type:        schema.TypeSet,
 				Required:    true,

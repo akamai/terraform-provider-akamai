@@ -3,10 +3,10 @@ provider "akamai" {
 }
 
 resource "akamai_property" "test" {
-  name       = "test_property"
-  contract   = "0"
-  group_id   = "grp_0"
-  product_id = "prd_0"
+  name        = "test_property"
+  contract_id = "0"
+  group_id    = "grp_0"
+  product_id  = "prd_0"
 
   hostnames {
     cname_to               = "to.test.domain"

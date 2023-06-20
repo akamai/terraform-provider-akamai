@@ -67,7 +67,6 @@ func (p *PluginSubprovider) Resources() map[string]*schema.Resource {
 		"akamai_property_activation":         resourcePropertyActivation(),
 		"akamai_property_include":            resourcePropertyInclude(),
 		"akamai_property_include_activation": resourcePropertyIncludeActivation(),
-		"akamai_property_variables":          resourcePropertyVariables(),
 	}
 }
 

@@ -160,45 +160,8 @@ func TestResCPCode(t *testing.T) {
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "0"),
 						resource.TestCheckResourceAttr("akamai_cp_code.test", "name", "test cpcode"),
-						resource.TestCheckResourceAttr("akamai_cp_code.test", "group", "grp_1"),
 						resource.TestCheckResourceAttr("akamai_cp_code.test", "group_id", "grp_1"),
-						resource.TestCheckResourceAttr("akamai_cp_code.test", "contract", "ctr_1"),
 						resource.TestCheckResourceAttr("akamai_cp_code.test", "contract_id", "ctr_1"),
-						resource.TestCheckResourceAttr("akamai_cp_code.test", "product", "prd_1"),
-						resource.TestCheckResourceAttr("akamai_cp_code.test", "product_id", "prd_1"),
-					),
-				}},
-			})
-		})
-	})
-
-	t.Run("create new CP Code with deprecated attributes", func(t *testing.T) {
-		client := &papi.Mock{}
-		defer client.AssertExpectations(t)
-
-		// Contains CP Codes known to mock PAPI
-		CPCodes := []papi.CPCode{}
-
-		// Values are from fixture:
-		expectGetCPCodes(client, "ctr_1", "grp_1", &CPCodes).Once()
-		expectCreateCPCode(client, "test cpcode", "prd_1", "ctr_1", "grp_1", &CPCodes)
-		expectGetCPCode(client, "ctr_1", "grp_1", 0, &CPCodes, nil).Times(2)
-
-		// No mock behavior for delete because there is no delete operation for CP Codes
-
-		useClient(client, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
-				Steps: []resource.TestStep{{
-					Config: loadFixtureString("testdata/TestResCPCode/create_new_cp_code_deprecated_attrs.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "0"),
-						resource.TestCheckResourceAttr("akamai_cp_code.test", "name", "test cpcode"),
-						resource.TestCheckResourceAttr("akamai_cp_code.test", "group", "grp_1"),
-						resource.TestCheckResourceAttr("akamai_cp_code.test", "group_id", "grp_1"),
-						resource.TestCheckResourceAttr("akamai_cp_code.test", "contract", "ctr_1"),
-						resource.TestCheckResourceAttr("akamai_cp_code.test", "contract_id", "ctr_1"),
-						resource.TestCheckResourceAttr("akamai_cp_code.test", "product", "prd_1"),
 						resource.TestCheckResourceAttr("akamai_cp_code.test", "product_id", "prd_1"),
 					),
 				}},
@@ -232,11 +195,8 @@ func TestResCPCode(t *testing.T) {
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "0"),
 						resource.TestCheckResourceAttr("akamai_cp_code.test", "name", "test cpcode"),
-						resource.TestCheckResourceAttr("akamai_cp_code.test", "group", "grp_test"),
 						resource.TestCheckResourceAttr("akamai_cp_code.test", "group_id", "grp_test"),
-						resource.TestCheckResourceAttr("akamai_cp_code.test", "contract", "ctr_test"),
 						resource.TestCheckResourceAttr("akamai_cp_code.test", "contract_id", "ctr_test"),
-						resource.TestCheckResourceAttr("akamai_cp_code.test", "product", "prd_test"),
 						resource.TestCheckResourceAttr("akamai_cp_code.test", "product_id", "prd_test"),
 					),
 				}},
@@ -271,11 +231,8 @@ func TestResCPCode(t *testing.T) {
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "1"),
 						resource.TestCheckResourceAttr("akamai_cp_code.test", "name", "test cpcode"),
-						resource.TestCheckResourceAttr("akamai_cp_code.test", "group", "grp_test"),
 						resource.TestCheckResourceAttr("akamai_cp_code.test", "group_id", "grp_test"),
-						resource.TestCheckResourceAttr("akamai_cp_code.test", "contract", "ctr_test"),
 						resource.TestCheckResourceAttr("akamai_cp_code.test", "contract_id", "ctr_test"),
-						resource.TestCheckResourceAttr("akamai_cp_code.test", "product", "prd_test"),
 						resource.TestCheckResourceAttr("akamai_cp_code.test", "product_id", "prd_test"),
 					),
 				}},
@@ -378,11 +335,8 @@ func TestResCPCode(t *testing.T) {
 							assert.Len(t, s, 1)
 							rs := s[0]
 							assert.Equal(t, "grp_2", rs.Attributes["group_id"])
-							assert.Equal(t, "grp_2", rs.Attributes["group"])
 							assert.Equal(t, "ctr_1", rs.Attributes["contract_id"])
-							assert.Equal(t, "ctr_1", rs.Attributes["contract"])
 							assert.Equal(t, "prd_Web_Accel", rs.Attributes["product_id"])
-							assert.Equal(t, "prd_Web_Accel", rs.Attributes["product"])
 							assert.Equal(t, "0", rs.Attributes["id"])
 							assert.Equal(t, "test cpcode", rs.Attributes["name"])
 							return nil
@@ -461,30 +415,30 @@ func TestResCPCode(t *testing.T) {
 							resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "0"),
 							resource.TestCheckResourceAttr("akamai_cp_code.test", "name", "test cpcode"),
 							resource.TestCheckResourceAttr("akamai_cp_code.test", "group_id", "grp_1"),
-							resource.TestCheckResourceAttr("akamai_cp_code.test", "contract", "ctr_1"),
-							resource.TestCheckResourceAttr("akamai_cp_code.test", "product", "prd_1"),
+							resource.TestCheckResourceAttr("akamai_cp_code.test", "contract_id", "ctr_1"),
+							resource.TestCheckResourceAttr("akamai_cp_code.test", "product_id", "prd_1"),
 						),
 					},
 					{
 						Config:      loadFixtureString("testdata/TestResCPCode/change_immutable.tf"),
-						ExpectError: regexp.MustCompile(`cp code attribute 'contract' cannot be changed after creation \(immutable\)`),
+						ExpectError: regexp.MustCompile(`cp code attribute 'contract_id' cannot be changed after creation \(immutable\)`),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "0"),
 							resource.TestCheckResourceAttr("akamai_cp_code.test", "name", "test cpcode"),
 							resource.TestCheckResourceAttr("akamai_cp_code.test", "group_id", "grp_1"),
-							resource.TestCheckResourceAttr("akamai_cp_code.test", "contract", "ctr_1"),
-							resource.TestCheckResourceAttr("akamai_cp_code.test", "product", "prd_1"),
+							resource.TestCheckResourceAttr("akamai_cp_code.test", "contract_id", "ctr_1"),
+							resource.TestCheckResourceAttr("akamai_cp_code.test", "product_id", "prd_1"),
 						),
 					},
 					{
 						Config:      loadFixtureString("testdata/TestResCPCode/change_immutable.tf"),
-						ExpectError: regexp.MustCompile(`cp code attribute 'product' cannot be changed after creation \(immutable\)`),
+						ExpectError: regexp.MustCompile(`cp code attribute 'product_id' cannot be changed after creation \(immutable\)`),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "0"),
 							resource.TestCheckResourceAttr("akamai_cp_code.test", "name", "test cpcode"),
 							resource.TestCheckResourceAttr("akamai_cp_code.test", "group_id", "grp_1"),
-							resource.TestCheckResourceAttr("akamai_cp_code.test", "contract", "ctr_1"),
-							resource.TestCheckResourceAttr("akamai_cp_code.test", "product", "prd_1"),
+							resource.TestCheckResourceAttr("akamai_cp_code.test", "contract_id", "ctr_1"),
+							resource.TestCheckResourceAttr("akamai_cp_code.test", "product_id", "prd_1"),
 						),
 					},
 					{
@@ -494,8 +448,8 @@ func TestResCPCode(t *testing.T) {
 							resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "0"),
 							resource.TestCheckResourceAttr("akamai_cp_code.test", "name", "test cpcode"),
 							resource.TestCheckResourceAttr("akamai_cp_code.test", "group_id", "grp_1"),
-							resource.TestCheckResourceAttr("akamai_cp_code.test", "contract", "ctr_1"),
-							resource.TestCheckResourceAttr("akamai_cp_code.test", "product", "prd_1"),
+							resource.TestCheckResourceAttr("akamai_cp_code.test", "contract_id", "ctr_1"),
+							resource.TestCheckResourceAttr("akamai_cp_code.test", "product_id", "prd_1"),
 						),
 					},
 				},
@@ -627,7 +581,7 @@ func TestResCPCode(t *testing.T) {
 	})
 
 	t.Run("error when no product and product_id provided", func(t *testing.T) {
-		expectedErr := regexp.MustCompile("one of `product,product_id` must be specified")
+		expectedErr := regexp.MustCompile("`product_id` must be specified for creation")
 
 		resource.UnitTest(t, resource.TestCase{
 			ProtoV5ProviderFactories: testAccProviders,

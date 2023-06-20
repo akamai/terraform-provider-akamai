@@ -61,7 +61,6 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_property_activation.test", "errors", ""),
 						resource.TestCheckNoResourceAttr("akamai_property_activation.test", "rule_errors"),
 						resource.TestCheckResourceAttr("akamai_property_activation.test", "auto_acknowledge_rule_warnings", "true"),
-						resource.TestCheckNoResourceAttr("akamai_property_activation.test", "rule_warnings"),
 						resource.TestCheckResourceAttr("akamai_property_activation.test", "activation_id", "atv_activation1"),
 						resource.TestCheckResourceAttr("akamai_property_activation.test", "status", "ACTIVE"),
 						resource.TestCheckResourceAttr("akamai_property_activation.test", "note", "property activation note for creating"),
@@ -193,7 +192,6 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_property_activation.test", "version", "1"),
 						resource.TestCheckResourceAttr("akamai_property_activation.test", "auto_acknowledge_rule_warnings", "true"),
 						resource.TestCheckResourceAttr("akamai_property_activation.test", "warnings", ""),
-						resource.TestCheckNoResourceAttr("akamai_property_activation.test", "rule_warnings"),
 						resource.TestCheckResourceAttr("akamai_property_activation.test", "errors", ""),
 						resource.TestCheckResourceAttr("akamai_property_activation.test", "activation_id", "atv_activation1"),
 						resource.TestCheckResourceAttr("akamai_property_activation.test", "status", "ACTIVE"),
@@ -202,7 +200,7 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 				},
 			},
 		},
-		"schema with `property` instead of `property_id` - OK": {
+		"schema with minimum attributes - OK": {
 			init: func(m *papi.Mock) {
 				// create
 				expectGetRuleTree(m, "prp_test", 1, ruleTreeResponseValid, nil).Once()
@@ -220,7 +218,7 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("testdata/TestPropertyActivation/ok/resource_property_activation_deprecated_arg.tf"),
+					Config: loadFixtureString("testdata/TestPropertyActivation/ok/resource_property_activation_minimum_args.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_property_activation.test", "id", "prp_test:STAGING"),
 						resource.TestCheckResourceAttr("akamai_property_activation.test", "property_id", "prp_test"),
@@ -308,7 +306,7 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config:      loadFixtureString("./testdata/TestPropertyActivation/no_propertyId/resource_property_activation.tf"),
-					ExpectError: regexp.MustCompile("one of `property,property_id` must be specified"),
+					ExpectError: regexp.MustCompile("Missing required argument"),
 				},
 			},
 		},

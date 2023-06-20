@@ -33,8 +33,8 @@ func TestDSCPCode(t *testing.T) {
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "id", "234"),
 						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "name", "test cpcode"),
-						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "group", "grp_test"),
-						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "contract", "ctr_test"),
+						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "group_id", "grp_test"),
+						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "contract_id", "ctr_test"),
 					),
 				}},
 			})
@@ -65,8 +65,8 @@ func TestDSCPCode(t *testing.T) {
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "id", "234"),
 						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "name", "test cpcode"),
-						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "group", "grp_test"),
-						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "contract", "ctr_test"),
+						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "group_id", "grp_test"),
+						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "contract_id", "ctr_test"),
 						resource.TestCheckOutput("product1", "prd_test1"),
 						resource.TestCheckOutput("product2", "prd_test2"),
 					),
@@ -99,8 +99,8 @@ func TestDSCPCode(t *testing.T) {
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "id", "234"),
 						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "name", "cpc_234"),
-						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "group", "grp_test"),
-						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "contract", "ctr_test"),
+						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "group_id", "grp_test"),
+						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "contract_id", "ctr_test"),
 					),
 				}},
 			})
@@ -163,31 +163,6 @@ func TestDSCPCode(t *testing.T) {
 		})
 
 		client.AssertExpectations(t)
-	})
-
-	t.Run("contract collides with contract ID", func(t *testing.T) {
-		resource.UnitTest(t, resource.TestCase{
-			ProtoV5ProviderFactories: testAccProviders,
-			IsUnitTest:               true,
-			Steps: []resource.TestStep{{
-				Config:      loadFixtureString("testdata/TestDSCPCode/contract_collides_with_id.tf"),
-				ExpectError: regexp.MustCompile("only one of `contract,contract_id` can be specified"),
-			}},
-		})
-	})
-
-	t.Run("group collides with group ID", func(t *testing.T) {
-		client := &papi.Mock{}
-		useClient(client, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
-				IsUnitTest:               true,
-				Steps: []resource.TestStep{{
-					Config:      loadFixtureString("testdata/TestDSCPCode/group_collides_with_id.tf"),
-					ExpectError: regexp.MustCompile("only one of `group,group_id` can be specified"),
-				}},
-			})
-		})
 	})
 
 	t.Run("group not found in state", func(t *testing.T) {

@@ -8,7 +8,6 @@ resource "akamai_appsec_activations" "test" {
   version             = 7
   network             = "STAGING"
   note                = "TEST Notes"
-  activate            = true
   notification_emails = ["martin@email.io"]
 }
 

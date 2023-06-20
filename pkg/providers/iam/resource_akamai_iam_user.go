@@ -147,12 +147,6 @@ func resourceIAMUser() *schema.Resource {
 				Computed:    true,
 				Description: "A user's `loginId`. Typically, a user's email address",
 			},
-			"is_locked": {
-				Type:        schema.TypeBool,
-				Computed:    true,
-				Description: "The user's lock status",
-				Deprecated:  fmt.Sprintf("The setting %q has been deprecated. Please use %q setting instead", "is_locked", "lock"),
-			},
 			"last_login": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -309,7 +303,6 @@ func resourceIAMUserRead(ctx context.Context, d *schema.ResourceData, m interfac
 		"country":                user.Country,
 		"contact_type":           user.ContactType,
 		"preferred_language":     user.PreferredLanguage,
-		"is_locked":              user.IsLocked,
 		"last_login":             user.LastLoginDate,
 		"password_expired_after": user.PasswordExpiryDate,
 		"tfa_configured":         user.TFAConfigured,

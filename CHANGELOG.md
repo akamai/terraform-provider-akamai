@@ -20,6 +20,43 @@
 * Removed undocumented support for configuring provider with environment variables (`AKAMAI_ACCESS_TOKEN`, `AKAMAI_CLIENT_TOKEN`, `AKAMAI_HOST`, `AKAMAI_CLIENT_SECRET`, `AKAMAI_MAX_BODY`, and their `AKAMAI_{section}_xxx` equivalents).
   As an alternative users should now use provider's [config](https://techdocs.akamai.com/terraform/docs/gs-authentication#use-inline-credentials) block with [TF_VAR_](https://developer.hashicorp.com/terraform/language/values/variables#environment-variables) envs when wanting to provide configuration through enviroment variables.
 
+### Removed deprecated schema fields
+
+* Appsec
+  * `notes` and `activate` fields in `akamai_appsec_activations` resource
+  * `appsec_section` and `appsec` fields in provider schema
+
+* CPS
+  * `enable_multi_stacked_certificates` field in `akamai_cps_dv_enrollment` resource
+  
+* DNS
+  * `dns_section` and `dns` fields in provider schema
+
+* GTM
+  * `gtm_section` and `gtm` fields in provider schema
+
+* IAM
+  * `is_locked` field in `akamai_iam_user` resource
+
+* Network Lists
+  * `activate` field in `akamai_networklist_activations` resource
+  * `networklist_section` and `network` fields in provider schema
+
+* PAPI
+  * `contract` and `group` fields in `akamai_cp_code` data source
+  * `group` field in `akamai_contract` data source
+  * `name` and `contract` fields in `akamai_group` data source
+  * `contract`, `group` and `product` fields in `akamai_cp_code` resource
+  * `contract`, `group` and `product` fields in `akamai_edge_hostname` resource
+  * `property` and `rule_warnings` fields in `akamai_property_activation` resource
+  * `contract`, `group` and `product` fields in `akamai_property` resource
+  * `papi_section`, `property_section` and `property` fields in provider schema
+
+### Removed deprecated resource
+
+* PAPI
+  * `akamai_property_variables`
+
 #### FEATURES/ENHANCEMENTS:
 
 * Provider tested and now supports Terraform 1.4.6

@@ -50,19 +50,10 @@ var (
 )
 
 var akamaiPropertyActivationSchema = map[string]*schema.Schema{
-	"property": {
-		Type:       schema.TypeString,
-		Optional:   true,
-		Deprecated: "property is deprecated, use property_id instead",
-		Computed:   true,
-		StateFunc:  addPrefixToState("prp_"),
-	},
 	"property_id": {
-		Type:         schema.TypeString,
-		Optional:     true,
-		ExactlyOneOf: []string{"property_id", "property"},
-		Computed:     true,
-		StateFunc:    addPrefixToState("prp_"),
+		Type:      schema.TypeString,
+		Required:  true,
+		StateFunc: addPrefixToState("prp_"),
 	},
 	"activation_id": {
 		Type:     schema.TypeString,
@@ -82,13 +73,6 @@ var akamaiPropertyActivationSchema = map[string]*schema.Schema{
 		Optional: true,
 		Computed: true,
 		Elem:     papiError(),
-	},
-	"rule_warnings": {
-		Type:       schema.TypeList,
-		Optional:   true,
-		Computed:   true,
-		Elem:       papiError(),
-		Deprecated: "Rule warnings will not be set in state anymore",
 	},
 	"auto_acknowledge_rule_warnings": {
 		Type:        schema.TypeBool,
@@ -816,10 +800,6 @@ func setErrorsAndWarnings(d *schema.ResourceData, errors, warnings string) error
 
 func resolvePropertyID(d *schema.ResourceData) (string, error) {
 	propertyID, err := tf.GetStringValue("property_id", d)
-	if errors.Is(err, tf.ErrNotFound) {
-		// use legacy property as fallback option
-		propertyID, err = tf.GetStringValue("property", d)
-	}
 	return tools.AddPrefix(propertyID, "prp_"), err
 }
 

@@ -3,8 +3,8 @@ provider "akamai" {
 }
 
 resource "akamai_edge_hostname" "importedgehostname" {
-  contract      = "ctr_1"
-  group         = "grp_2"
+  contract_id   = "ctr_1"
+  group_id      = "grp_2"
   edge_hostname = "test.akamaized.net"
   ip_behavior   = "IPV4"
 }

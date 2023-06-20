@@ -3,7 +3,7 @@ provider "akamai" {
 }
 
 resource "akamai_property_activation" "test" {
-  property = "test"
-  contact  = ["user@example.com"]
-  version  = 1
+  property_id = "test"
+  contact     = ["user@example.com"]
+  version     = 1
 }

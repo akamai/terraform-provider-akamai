@@ -47,12 +47,6 @@ func resourceActivations() *schema.Resource {
 				Default:     "Activation Comments",
 				Description: "Descriptive text to accompany the activation",
 			},
-			"activate": {
-				Type:       schema.TypeBool,
-				Optional:   true,
-				Default:    true,
-				Deprecated: "activate is deprecated, using this attribute has no impact on your configuration",
-			},
 			"notification_emails": {
 				Type:        schema.TypeSet,
 				Required:    true,

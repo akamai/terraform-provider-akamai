@@ -17,23 +17,17 @@ func dataSourcePropertyContract() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataPropertyContractRead,
 		Schema: map[string]*schema.Schema{
-			"group": {
-				Type:         schema.TypeString,
-				Optional:     true,
-				ExactlyOneOf: []string{"group", "group_id", "group_name"},
-				Deprecated:   "group is deprecated, use group_id instead",
-			},
 			"group_id": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				Computed:     true,
-				ExactlyOneOf: []string{"group", "group_id", "group_name"},
+				ExactlyOneOf: []string{"group_id", "group_name"},
 			},
 			"group_name": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				Computed:     true,
-				ExactlyOneOf: []string{"group", "group_id", "group_name"},
+				ExactlyOneOf: []string{"group_id", "group_name"},
 			},
 		},
 	}
@@ -53,23 +47,19 @@ func dataPropertyContractRead(ctx context.Context, d *schema.ResourceData, m int
 	// check if one of group_id/group_name exists.
 	group, err := tf.ResolveKeyStringState(d, "group_id", "group_name")
 	if err != nil {
-		// if both group_id/group_name not present in the state, check for group.
-		group, err = tf.GetStringValue("group", d)
 		// If no group found, just return the first contract
-		if err != nil {
-			if !errors.Is(err, tf.ErrNotFound) {
-				return diag.FromErr(err)
-			}
-			contracts, err := Client(meta).GetContracts(ctx)
-			if err != nil {
-				return diag.Errorf("error looking up Contracts for group %v: %s", group, err)
-			}
-			if len(contracts.Contracts.Items) == 0 {
-				return diag.Errorf("%v", ErrNoContractsFound)
-			}
-			d.SetId(contracts.Contracts.Items[0].ContractID)
-			return nil
+		if !errors.Is(err, tf.ErrNotFound) {
+			return diag.FromErr(err)
 		}
+		contracts, err := Client(meta).GetContracts(ctx)
+		if err != nil {
+			return diag.Errorf("error looking up Contracts for group %v: %s", group, err)
+		}
+		if len(contracts.Contracts.Items) == 0 {
+			return diag.Errorf("%v", ErrNoContractsFound)
+		}
+		d.SetId(contracts.Contracts.Items[0].ContractID)
+		return nil
 	}
 
 	// Otherwise find the group and return it's first contract

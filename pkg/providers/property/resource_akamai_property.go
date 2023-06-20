@@ -96,53 +96,23 @@ func resourceProperty() *schema.Resource {
 				ValidateDiagFunc: validatePropertyName,
 				Description:      "Name to give to the Property (must be unique)",
 			},
-
 			"group_id": {
-				Type:         schema.TypeString,
-				Optional:     true,
-				Computed:     true,
-				ExactlyOneOf: []string{"group_id", "group"},
-				StateFunc:    addPrefixToState("grp_"),
-				Description:  "Group ID to be assigned to the Property",
+				Type:        schema.TypeString,
+				Required:    true,
+				StateFunc:   addPrefixToState("grp_"),
+				Description: "Group ID to be assigned to the Property",
 			},
-			"group": {
-				Type:       schema.TypeString,
-				Optional:   true,
-				Computed:   true,
-				Deprecated: "group is deprecated, use group_id instead",
-				StateFunc:  addPrefixToState("grp_"),
-			},
-
 			"contract_id": {
-				Type:         schema.TypeString,
-				Optional:     true,
-				Computed:     true,
-				ExactlyOneOf: []string{"contract_id", "contract"},
-				StateFunc:    addPrefixToState("ctr_"),
-				Description:  "Contract ID to be assigned to the Property",
+				Type:        schema.TypeString,
+				Required:    true,
+				StateFunc:   addPrefixToState("ctr_"),
+				Description: "Contract ID to be assigned to the Property",
 			},
-			"contract": {
-				Type:       schema.TypeString,
-				Optional:   true,
-				Computed:   true,
-				Deprecated: "contract is deprecated, use contract_id instead",
-				StateFunc:  addPrefixToState("ctr_"),
-			},
-
 			"product_id": {
 				Type:        schema.TypeString,
-				Optional:    true,
-				Computed:    true,
+				Required:    true,
 				Description: "Product ID to be assigned to the Property",
 				StateFunc:   addPrefixToState("prd_"),
-			},
-			"product": {
-				Type:         schema.TypeString,
-				Optional:     true,
-				Computed:     true,
-				ExactlyOneOf: []string{"product_id"},
-				Deprecated:   "product is deprecated, use product_id instead",
-				StateFunc:    addPrefixToState("prd_"),
 			},
 
 			// Optional
@@ -248,51 +218,6 @@ func resourceProperty() *schema.Resource {
 				Type:     schema.TypeList,
 				Computed: true,
 				Elem:     papiError(),
-			},
-			"rule_warnings": {
-				Type:       schema.TypeList,
-				Optional:   true,
-				Computed:   true,
-				Elem:       papiError(),
-				Deprecated: "Rule warnings will not be set in state anymore",
-			},
-
-			// Hard-deprecated attributes: These are effectively removed, but we wanted to refer users to the upgrade guide
-			"cp_code": {
-				Type:       schema.TypeString,
-				Optional:   true,
-				Deprecated: "cp_code is deprecated, using this attribute has no impact on your configuration",
-			},
-			"contact": {
-				Type:       schema.TypeSet,
-				Optional:   true,
-				Elem:       &schema.Schema{Type: schema.TypeString},
-				Deprecated: "contact is deprecated, using this attribute has no impact on your configuration",
-			},
-			"origin": {
-				Type:     schema.TypeSet,
-				Optional: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"hostname":              {Type: schema.TypeString, Optional: true},
-						"port":                  {Type: schema.TypeInt, Optional: true},
-						"forward_hostname":      {Type: schema.TypeString, Optional: true},
-						"cache_key_hostname":    {Type: schema.TypeString, Optional: true},
-						"compress":              {Type: schema.TypeBool, Optional: true},
-						"enable_true_client_ip": {Type: schema.TypeBool, Optional: true},
-					},
-				},
-				Deprecated: "origin is deprecated, using this attribute has no impact on your configuration",
-			},
-			"is_secure": {
-				Type:       schema.TypeBool,
-				Optional:   true,
-				Deprecated: "is_secure is deprecated, using this attribute has no impact on your configuration",
-			},
-			"variables": {
-				Type:       schema.TypeString,
-				Optional:   true,
-				Deprecated: "variables is deprecated, using this attribute has no impact on your configuration",
 			},
 		},
 	}
@@ -447,31 +372,24 @@ func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m inter
 	client := Client(meta)
 	ctx = log.NewContext(ctx, logger)
 
-	// Block creation if user has set any hard-deprecated attributes
-	for _, attr := range resPropForbiddenAttrs() {
-		if _, ok := d.GetOk(attr); ok {
-			return diag.Errorf("unsupported attribute: %q See the Akamai Terraform Upgrade Guide", attr)
-		}
-	}
-
 	// Schema guarantees these types
 	propertyName := d.Get("name").(string)
 
-	groupID, err := tf.ResolveKeyStringState(d, "group_id", "group")
+	groupID, err := tf.GetStringValue("group_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	groupID = tools.AddPrefix(groupID, "grp_")
 
-	contractID := d.Get("contract_id").(string)
-	if contractID == "" {
-		contractID = d.Get("contract").(string)
+	contractID, err := tf.GetStringValue("contract_id", d)
+	if err != nil {
+		return diag.FromErr(err)
 	}
 	contractID = tools.AddPrefix(contractID, "ctr_")
 
-	productID := d.Get("product_id").(string)
-	if productID == "" {
-		productID = d.Get("product").(string)
+	productID, err := tf.GetStringValue("product_id", d)
+	if err != nil {
+		return diag.FromErr(err)
 	}
 	productID = tools.AddPrefix(productID, "prd_")
 
@@ -512,7 +430,6 @@ func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m inter
 		"group_id":    groupID,
 		"contract_id": contractID,
 		"product_id":  productID,
-		"product":     productID,
 	}
 	if err := rdSetAttrs(ctx, d, attrs); err != nil {
 		return diag.FromErr(err)
@@ -643,9 +560,7 @@ func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interfa
 	attrs := map[string]interface{}{
 		"name":               property.PropertyName,
 		"group_id":           property.GroupID,
-		"group":              property.GroupID,
 		"contract_id":        property.ContractID,
-		"contract":           property.ContractID,
 		"latest_version":     property.LatestVersion,
 		"staging_version":    stagingVersion,
 		"production_version": productionVersion,
@@ -657,7 +572,6 @@ func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interfa
 	}
 	if property.ProductID != "" {
 		attrs["product_id"] = property.ProductID
-		attrs["product"] = property.ProductID
 	}
 	if err := rdSetAttrs(ctx, d, attrs); err != nil {
 		return diag.FromErr(err)
@@ -671,23 +585,12 @@ func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 	logger := log.FromContext(ctx)
 	client := Client(meta.Must(m))
 
-	// Block changes to hard-deprecated attributes
-	for _, attr := range resPropForbiddenAttrs() {
-		if _, ok := d.GetOk(attr); ok && d.HasChange(attr) {
-			d.Partial(true)
-			return diag.Errorf("unsupported attribute: %q See the Akamai Terraform Upgrade Guide", attr)
-		}
-	}
-
 	diags := diag.Diagnostics{}
 
 	immutable := []string{
 		"group_id",
-		"group",
 		"contract_id",
-		"contract",
 		"product_id",
-		"product",
 	}
 	for _, attr := range immutable {
 		if d.HasChange(attr) {
@@ -904,16 +807,6 @@ func parseVersionNumber(version string) (int, error) {
 	}
 	versionNumber, err := strconv.Atoi(matches[1])
 	return versionNumber, err
-}
-
-func resPropForbiddenAttrs() []string {
-	return []string{
-		"cp_code",
-		"contact",
-		"origin",
-		"is_secure",
-		"variables",
-	}
 }
 
 func createProperty(ctx context.Context, client papi.PAPI, propertyName, groupID, contractID, productID, ruleFormat string) (propertyID string, err error) {

@@ -148,7 +148,6 @@ func TestResourceUser(t *testing.T) {
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "state", user.State),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "zip_code", user.ZipCode),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "preferred_language", user.PreferredLanguage),
-			resource.TestCheckResourceAttr("akamai_iam_user.test", "is_locked", fmt.Sprintf("%t", user.IsLocked)),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "last_login", user.LastLoginDate),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "password_expired_after", user.PasswordExpiryDate),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "tfa_configured", fmt.Sprintf("%t", user.TFAConfigured)),

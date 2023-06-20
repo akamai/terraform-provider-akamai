@@ -243,10 +243,7 @@ func TestResProperty(t *testing.T) {
 			resource.TestCheckResourceAttr("akamai_property.test", "production_version", productionVersion),
 			resource.TestCheckResourceAttr("akamai_property.test", "name", "test_property"),
 			resource.TestCheckResourceAttr("akamai_property.test", "contract_id", "ctr_0"),
-			resource.TestCheckResourceAttr("akamai_property.test", "contract", "ctr_0"),
 			resource.TestCheckResourceAttr("akamai_property.test", "group_id", "grp_0"),
-			resource.TestCheckResourceAttr("akamai_property.test", "group", "grp_0"),
-			resource.TestCheckResourceAttr("akamai_property.test", "product", "prd_0"),
 			resource.TestCheckResourceAttr("akamai_property.test", "product_id", "prd_0"),
 			resource.TestCheckResourceAttr("akamai_property.test", "rule_warnings.#", "0"),
 			resource.TestCheckResourceAttr("akamai_property.test", "rules", rules),
@@ -642,42 +639,6 @@ func TestResProperty(t *testing.T) {
 		}
 	}
 
-	// Test Deprecated Schema Option
-
-	// Run a test case to verify schema attribute deprecation
-	assertDeprecated := func(t *testing.T, attribute string) func(t *testing.T) {
-		return func(t *testing.T) {
-			if resourceProperty().Schema[attribute].Deprecated == "" {
-				t.Fatalf(`%q attribute is not marked deprecated`, attribute)
-			}
-		}
-	}
-
-	// Test Forbidden Schema Option
-
-	// Run a test case to confirm that the user is prompted to read the upgrade guide
-	assertForbiddenAttr := func(t *testing.T, fixtureName string) func(t *testing.T) {
-
-		fixtureName = strings.ReplaceAll(fixtureName, " ", "_")
-
-		return func(t *testing.T) {
-			client := &papi.Mock{}
-			client.Test(T{t})
-
-			useClient(client, nil, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV5ProviderFactories: testAccProviders,
-					Steps: []resource.TestStep{{
-						Config:      loadFixtureString("testdata/TestResProperty/ForbiddenAttr/%s.tf", fixtureName),
-						ExpectError: regexp.MustCompile("See the Akamai Terraform Upgrade Guide"),
-					}},
-				})
-			})
-
-			client.AssertExpectations(t)
-		}
-	}
-
 	// Test Lifecycle
 
 	// Run a happy-path test case that goes through a complete create-update-destroy cycle
@@ -796,34 +757,12 @@ func TestResProperty(t *testing.T) {
 		// Test Schema Configuration
 
 		t.Run("Schema Configuration Error: name not given", assertConfigError(t, "name not given", `"name" is required`))
-		t.Run("Schema Configuration Error: neither contract nor contract_id given", assertConfigError(t, "neither contract nor contract_id given", `one of .contract,contract_id. must be specified`))
-		t.Run("Schema Configuration Error: both contract and contract_id given", assertConfigError(t, "both contract and contract_id given", `only one of .contract,contract_id. can be specified`))
-		t.Run("Schema Configuration Error: neither group nor group_id given", assertConfigError(t, "neither group nor group_id given", `one of .group,group_id. must be specified`))
-		t.Run("Schema Configuration Error: both group and group_id given", assertConfigError(t, "both group and group_id given", `only one of .group,group_id. can be specified`))
-		t.Run("Schema Configuration Error: neither product nor product_id given", assertConfigError(t, "neither product nor product_id given", `one of .product,product_id. must be specified`))
-		t.Run("Schema Configuration Error: both product and product_id given", assertConfigError(t, "both product and product_id given", `only one of .product,product_id. can be specified`))
+		t.Run("Schema Configuration Error: contract_id not given", assertConfigError(t, "contract_id not given", `Missing required argument`))
+		t.Run("Schema Configuration Error: group_id not given", assertConfigError(t, "group_id not given", `Missing required argument`))
+		t.Run("Schema Configuration Error: product_id not given", assertConfigError(t, "product_id not given", `Missing required argument`))
 		t.Run("Schema Configuration Error: invalid json rules", assertConfigError(t, "invalid json rules", `rules are not valid JSON`))
 		t.Run("Schema Configuration Error: invalid name given", assertConfigError(t, "invalid name given", `a name must only contain letters, numbers, and these characters: . _ -`))
 		t.Run("Schema Configuration Error: name given too long", assertConfigError(t, "name given too long", `a name must be shorter than 86 characters`))
-
-		// Test Deprecated Schema Option
-
-		t.Run("Schema deprecation: contract", assertDeprecated(t, "contract"))
-		t.Run("Schema deprecation: group", assertDeprecated(t, "group"))
-		t.Run("Schema deprecation: product", assertDeprecated(t, "product"))
-		t.Run("Schema deprecation: cp_code", assertDeprecated(t, "cp_code"))
-		t.Run("Schema deprecation: contact", assertDeprecated(t, "contact"))
-		t.Run("Schema deprecation: origin", assertDeprecated(t, "origin"))
-		t.Run("Schema deprecation: is_secure", assertDeprecated(t, "is_secure"))
-		t.Run("Schema deprecation: variables", assertDeprecated(t, "variables"))
-
-		// Test Forbidden Schema Option
-
-		t.Run("Schema forbidden attribute: cp_code", assertForbiddenAttr(t, "cp_code"))
-		t.Run("Schema forbidden attribute: contact", assertForbiddenAttr(t, "contact"))
-		t.Run("Schema forbidden attribute: origin", assertForbiddenAttr(t, "origin"))
-		t.Run("Schema forbidden attribute: is_secure", assertForbiddenAttr(t, "is_secure"))
-		t.Run("Schema forbidden attribute: variables", assertForbiddenAttr(t, "variables"))
 
 		// Test Lifecycle
 
@@ -835,24 +774,13 @@ func TestResProperty(t *testing.T) {
 		t.Run("Lifecycle: latest version is not active (contract_id without prefix)", assertLifecycle(t, t.Name(), "contract_id without prefix", latestVersionNotActive))
 		t.Run("Lifecycle: latest version active in staging (contract_id without prefix)", assertLifecycle(t, t.Name(), "contract_id without prefix", latestVersionActiveInStaging))
 		t.Run("Lifecycle: latest version active in production (contract_id without prefix)", assertLifecycle(t, t.Name(), "contract_id without prefix", latestVersionActiveInProd))
-		t.Run("Lifecycle: latest version is not active (contract without prefix)", assertLifecycle(t, t.Name(), "contract without prefix", latestVersionNotActive))
-		t.Run("Lifecycle: latest version is active in staging (contract without prefix)", assertLifecycle(t, t.Name(), "contract without prefix", latestVersionActiveInStaging))
-		t.Run("Lifecycle: latest version is active in production (contract without prefix)", assertLifecycle(t, t.Name(), "contract without prefix", latestVersionActiveInProd))
 		t.Run("Lifecycle: latest version is not active (group_id without prefix)", assertLifecycle(t, t.Name(), "group_id without prefix", latestVersionNotActive))
 		t.Run("Lifecycle: latest version is active in staging (group_id without prefix)", assertLifecycle(t, t.Name(), "group_id without prefix", latestVersionActiveInStaging))
 		t.Run("Lifecycle: latest version is active in production (group_id without prefix)", assertLifecycle(t, t.Name(), "group_id without prefix", latestVersionActiveInProd))
-		t.Run("Lifecycle: latest version is not active (group without prefix)", assertLifecycle(t, t.Name(), "group without prefix", latestVersionNotActive))
-		t.Run("Lifecycle: latest version is active in staging (group without prefix)", assertLifecycle(t, t.Name(), "group without prefix", latestVersionActiveInStaging))
-		t.Run("Lifecycle: latest version is active in production (group without prefix)", assertLifecycle(t, t.Name(), "group without prefix", latestVersionActiveInProd))
 		t.Run("Lifecycle: latest version is not active (product_id without prefix)", assertLifecycle(t, t.Name(), "product_id without prefix", latestVersionNotActive))
 		t.Run("Lifecycle: latest version is active in staging (product_id without prefix)", assertLifecycle(t, t.Name(), "product_id without prefix", latestVersionActiveInStaging))
 		t.Run("Lifecycle: latest version is active in production (product_id without prefix)", assertLifecycle(t, t.Name(), "product_id without prefix", latestVersionActiveInProd))
-		t.Run("Lifecycle: latest version is not active (product without prefix)", assertLifecycle(t, t.Name(), "product without prefix", latestVersionNotActive))
-		t.Run("Lifecycle: latest version is active in staging (product without prefix)", assertLifecycle(t, t.Name(), "product without prefix", latestVersionActiveInStaging))
-		t.Run("Lifecycle: latest version is active in production (product without prefix)", assertLifecycle(t, t.Name(), "product without prefix", latestVersionActiveInProd))
 		t.Run("Lifecycle: no diff", assertLifecycle(t, t.Name(), "no diff", noDiff))
-		t.Run("Lifecycle: no diff (product to product_id)", assertLifecycle(t, t.Name(), "product to product_id", noDiff))
-		t.Run("Lifecycle: no diff (product_id to product)", assertLifecycle(t, t.Name(), "product_id to product", noDiff))
 		t.Run("Lifecycle: rules custom diff", assertLifecycle(t, t.Name(), "rules custom diff", rulesCustomDiff))
 		t.Run("Lifecycle: no diff for hostnames (hostnames)", assertLifecycle(t, t.Name(), "hostnames", noDiffForHostnames))
 		t.Run("Lifecycle: new version changed on server", assertLifecycle(t, t.Name(), "new version changed on server", changesMadeOutsideOfTerraform))

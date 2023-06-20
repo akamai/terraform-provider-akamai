@@ -33,47 +33,21 @@ func resourceSecureEdgeHostName() *schema.Resource {
 }
 
 var akamaiSecureEdgeHostNameSchema = map[string]*schema.Schema{
-	"product": {
-		Type:          schema.TypeString,
-		Optional:      true,
-		Computed:      true,
-		Deprecated:    "product is deprecated, use product_id instead",
-		ConflictsWith: []string{"product_id"},
-		StateFunc:     addPrefixToState("prd_"),
-	},
 	"product_id": {
 		Type:      schema.TypeString,
 		Optional:  true,
 		Computed:  true,
 		StateFunc: addPrefixToState("prd_"),
 	},
-	"contract": {
-		Type:       schema.TypeString,
-		Optional:   true,
-		Computed:   true,
-		Deprecated: "contract is deprecated, use contract_id instead",
-		StateFunc:  addPrefixToState("ctr_"),
-	},
 	"contract_id": {
-		Type:         schema.TypeString,
-		Optional:     true,
-		Computed:     true,
-		ExactlyOneOf: []string{"contract_id", "contract"},
-		StateFunc:    addPrefixToState("ctr_"),
-	},
-	"group": {
-		Type:       schema.TypeString,
-		Optional:   true,
-		Computed:   true,
-		Deprecated: "group is deprecated, use group_id instead",
-		StateFunc:  addPrefixToState("grp_"),
+		Type:      schema.TypeString,
+		Required:  true,
+		StateFunc: addPrefixToState("ctr_"),
 	},
 	"group_id": {
-		Type:         schema.TypeString,
-		Optional:     true,
-		Computed:     true,
-		ExactlyOneOf: []string{"group_id", "group"},
-		StateFunc:    addPrefixToState("grp_"),
+		Type:      schema.TypeString,
+		Required:  true,
+		StateFunc: addPrefixToState("grp_"),
 	},
 	"edge_hostname": {
 		Type:             schema.TypeString,
@@ -113,52 +87,34 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 
 	client := Client(meta)
 
-	// Schema guarantees group_id/group are strings and one or the other is set
-	var groupID string
-	if got, ok := d.GetOk("group_id"); ok {
-		groupID = got.(string)
-	} else {
-		groupID = d.Get("group").(string)
+	groupID, err := tf.GetStringValue("group_id", d)
+	if err != nil {
+		return diag.FromErr(err)
 	}
 	groupID = tools.AddPrefix(groupID, "grp_")
-	// set group/groupID into ResourceData
 	if err := d.Set("group_id", groupID); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 	}
-	if err := d.Set("group", groupID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
-	}
 
-	// Schema guarantees contract_id/contract are strings and one or the other is set
-	var contractID string
-	if got, ok := d.GetOk("contract_id"); ok {
-		contractID = got.(string)
-	} else {
-		contractID = d.Get("contract").(string)
+	contractID, err := tf.GetStringValue("contract_id", d)
+	if err != nil {
+		return diag.FromErr(err)
 	}
 	contractID = tools.AddPrefix(contractID, "ctr_")
-	// set contract/contract_id into ResourceData
 	if err := d.Set("contract_id", contractID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
-	}
-	if err := d.Set("contract", contractID); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 	}
 
 	logger.Debugf("Edgehostnames GROUP = %v", groupID)
 	logger.Debugf("Edgehostnames CONTRACT = %v", contractID)
 
-	// Schema no longer guarantees that product_id/product are set, one of them is required only for creation
-	productID, err := tf.ResolveKeyStringState(d, "product_id", "product")
+	// Schema no longer guarantees that product_id is set, this field is required only for creation
+	productID, err := tf.GetStringValue("product_id", d)
 	if err != nil {
-		return diag.Errorf("one of `%s` must be specified for creation", strings.Join([]string{"product_id", "product"}, ", "))
+		return diag.Errorf("`product_id` must be specified for creation")
 	}
 	productID = tools.AddPrefix(productID, "prd_")
-	// set product/product_id into ResourceData
 	if err := d.Set("product_id", productID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
-	}
-	if err := d.Set("product", productID); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 	}
 
@@ -238,35 +194,22 @@ func resourceSecureEdgeHostNameRead(ctx context.Context, d *schema.ResourceData,
 
 	client := Client(meta)
 
-	// Schema guarantees group_id/group are strings and one or the other is set
-	var groupID string
-	if got, ok := d.GetOk("group_id"); ok {
-		groupID = got.(string)
-	} else {
-		groupID = d.Get("group").(string)
+	groupID, err := tf.GetStringValue("group_id", d)
+	if err != nil {
+		return diag.FromErr(err)
 	}
 	groupID = tools.AddPrefix(groupID, "grp_")
-	// set group/groupID into ResourceData
 	if err := d.Set("group_id", groupID); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 	}
-	if err := d.Set("group", groupID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
-	}
 
-	// Schema guarantees contract_id/contract are strings and one or the other is set
-	var contractID string
-	if got, ok := d.GetOk("contract_id"); ok {
-		contractID = got.(string)
-	} else {
-		contractID = d.Get("contract").(string)
+	contractID, err := tf.GetStringValue("contract_id", d)
+	if err != nil {
+		return diag.FromErr(err)
 	}
 	contractID = tools.AddPrefix(contractID, "ctr_")
 	// set contract/contract_id into ResourceData
 	if err := d.Set("contract_id", contractID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
-	}
-	if err := d.Set("contract", contractID); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 	}
 
@@ -274,15 +217,9 @@ func resourceSecureEdgeHostNameRead(ctx context.Context, d *schema.ResourceData,
 	var productID string
 	if got, ok := d.GetOk("product_id"); ok {
 		productID = got.(string)
-	} else {
-		productID = d.Get("product").(string)
 	}
 	productID = tools.AddPrefix(productID, "prd_")
-	// set product/product_id into ResourceData
 	if err := d.Set("product_id", productID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
-	}
-	if err := d.Set("product", productID); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 	}
 
@@ -414,13 +351,7 @@ func resourceSecureEdgeHostNameImport(ctx context.Context, d *schema.ResourceDat
 		return nil, err
 	}
 
-	if err := d.Set("contract", edgehostnameDetails.ContractID); err != nil {
-		return nil, fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
-	}
 	if err := d.Set("contract_id", edgehostnameDetails.ContractID); err != nil {
-		return nil, fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
-	}
-	if err := d.Set("group", edgehostnameDetails.GroupID); err != nil {
 		return nil, fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("group_id", edgehostnameDetails.GroupID); err != nil {
