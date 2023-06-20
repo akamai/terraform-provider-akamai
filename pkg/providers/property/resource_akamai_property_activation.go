@@ -675,7 +675,7 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 }
 
 func resourcePropertyActivationImport(_ context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourcePropertyActivationImport")
 
 	logger.Debug("Importing property activation")

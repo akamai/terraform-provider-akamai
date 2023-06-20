@@ -20,7 +20,7 @@
 * Removed undocumented support for configuring provider with environment variables (`AKAMAI_ACCESS_TOKEN`, `AKAMAI_CLIENT_TOKEN`, `AKAMAI_HOST`, `AKAMAI_CLIENT_SECRET`, `AKAMAI_MAX_BODY`, and their `AKAMAI_{section}_xxx` equivalents).
   As an alternative users should now use provider's [config](https://techdocs.akamai.com/terraform/docs/gs-authentication#use-inline-credentials) block with [TF_VAR_](https://developer.hashicorp.com/terraform/language/values/variables#environment-variables) envs when wanting to provide configuration through enviroment variables.
 
-### Removed deprecated schema fields
+##### Removed deprecated schema fields
 
 * Appsec
   * `notes` and `activate` fields in `akamai_appsec_activations` resource
@@ -52,7 +52,7 @@
   * `contract`, `group` and `product` fields in `akamai_property` resource
   * `papi_section`, `property_section` and `property` fields in provider schema
 
-### Removed deprecated resource
+##### Removed deprecated resource
 
 * PAPI
   * `akamai_property_variables`

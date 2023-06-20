@@ -354,7 +354,7 @@ func parseResourceStringID(id string) (string, string, error) {
 
 // validateTestObject checks if `test_object` is provided when `test_object_protocol` is set to `HTTP`, `HTTPS` or `FTP`
 func validateTestObject(_ context.Context, d *schema.ResourceDiff, m interface{}) error {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "validateTestObject")
 	logger.Debug("Validating test_object")
 

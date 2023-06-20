@@ -225,7 +225,6 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_property_activation.test", "contact.#", "1"),
 						resource.TestCheckResourceAttrSet("akamai_property_activation.test", "contact.0"),
 						resource.TestCheckResourceAttr("akamai_property_activation.test", "contact.0", "user@example.com"),
-						resource.TestCheckResourceAttr("akamai_property_activation.test", "property", "prp_test"),
 						resource.TestCheckResourceAttr("akamai_property_activation.test", "network", "STAGING"),
 						resource.TestCheckResourceAttr("akamai_property_activation.test", "version", "1"),
 						resource.TestCheckResourceAttr("akamai_property_activation.test", "warnings", ""),
