@@ -26,6 +26,7 @@
 
 * Appsec
   * Update Geo control to include Action for Ukraine.
+  * Add `akamai_appsec_advanced_settings_pii_learning` data source and resource for managing the PII learning advanced setting.
 
 #### DEPRECATIONS
 
