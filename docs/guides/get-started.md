@@ -5,9 +5,9 @@ Use our Terraform provider to provision and manage your Akamai configurations in
 - Understand the [basics of Terraform](https://learn.hashicorp.com/terraform?utm_source=terraform_io).
 - Install our [Terraform CLI](https://github.com/akamai/cli-terraform) to export your Akamai configurations.
 
-## How it works
+## What you'll do
 
-![Terraform overview](https://techdocs.akamai.com/terraform-images/img/ext-tf-gs.png)
+Initialize our provider, set up basic authentication, and begin your Akamai configuration set up.
 
 ## Start your configuration
 
