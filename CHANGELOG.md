@@ -14,6 +14,9 @@
   * Updated attribute names in `datastream.connectors`.
   * Updated methods in `datastream.stream` for the above changes.
 
+* PAPI
+  * Change default value of `auto_acknowledge_rule_warnings` to `false` in `akamai_property_activation` resource
+
 #### FEATURES/ENHANCEMENTS:
 
 * Provider tested and now supports Terraform 1.4.6
@@ -39,6 +42,7 @@
 
 * PAPI
   * Removed hostname validation on `akamai_property` resource ([I#422](https://github.com/akamai/terraform-provider-akamai/issues/422))
+
 
 ## 4.1.0 (Jun 1, 2023)
 

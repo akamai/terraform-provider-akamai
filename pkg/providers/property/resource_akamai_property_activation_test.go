@@ -208,14 +208,14 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 				expectGetRuleTree(m, "prp_test", 1, ruleTreeResponseValid, nil).Once()
 				expectGetActivations(m, "prp_test", papi.GetActivationsResponse{}, nil).Once()
 				expectCreateActivation(m, "prp_test", papi.ActivationTypeActivate, 1, "STAGING",
-					[]string{"user@example.com"}, "", "atv_activation1", true, nil).Once()
+					[]string{"user@example.com"}, "", "atv_activation1", false, nil).Once()
 				expectGetActivation(m, "prp_test", "atv_activation1", 1, "STAGING", papi.ActivationStatusActive, papi.ActivationTypeActivate, "", []string{"user@example.com"}, nil).Once()
 				// read
 				expectGetActivations(m, "prp_test", generateActivationResponseMock("atv_activation1", "", 1, papi.ActivationTypeActivate, "2020-10-28T15:04:05Z"), nil).Once()
 				// delete
 				expectGetActivations(m, "prp_test", generateActivationResponseMock("atv_activation1", "", 1, papi.ActivationTypeActivate, "2020-10-28T15:04:05Z"), nil).Once()
 				expectCreateActivation(m, "prp_test", papi.ActivationTypeDeactivate, 1, "STAGING",
-					[]string{"user@example.com"}, "", "atv_update", true, nil).Once()
+					[]string{"user@example.com"}, "", "atv_update", false, nil).Once()
 				expectGetActivation(m, "prp_test", "atv_update", 1, "STAGING", papi.ActivationStatusActive, papi.ActivationTypeDeactivate, "", []string{"user@example.com"}, nil).Once()
 			},
 			steps: []resource.TestStep{

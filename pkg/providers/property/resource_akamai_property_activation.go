@@ -93,8 +93,8 @@ var akamaiPropertyActivationSchema = map[string]*schema.Schema{
 	"auto_acknowledge_rule_warnings": {
 		Type:        schema.TypeBool,
 		Optional:    true,
-		Default:     true,
-		Description: "automatically acknowledge all rule warnings for activation to continue. default is true",
+		Default:     false,
+		Description: "Automatically acknowledge all rule warnings for activation to continue. Default is false",
 	},
 	"version": {
 		Type:             schema.TypeInt,
