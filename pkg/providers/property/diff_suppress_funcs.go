@@ -89,7 +89,41 @@ func rulesEqual(old, new *papi.Rules) bool {
 	old.Variables = orderVariables(old.Variables)
 	new.Variables = orderVariables(new.Variables)
 
+	removeNilOptions2(old)
+	removeNilOptions2(new)
+
 	return reflect.DeepEqual(old, new)
+}
+
+func removeNilOptions(rules *papi.Rules) {
+	//for _, b := range rules.Behaviors {
+	//	for k, v := range b.Options {
+	//		if v == nil {
+	//			delete(b.Options, k)
+	//		} else if vv, ok := v.(map[string]interface{}); ok {
+	//			for k, v := range vv {
+	//				if v == nil {
+	//					delete(vv, k)
+	//				}
+	//			}
+	//		}
+	//	}
+	//}
+}
+func removeNilOptions2(rules *papi.Rules) {
+	for _, b := range rules.Behaviors {
+		for k, v := range b.Options {
+			if v == nil {
+				delete(b.Options, k)
+			} else if vv, ok := v.(map[string]interface{}); ok {
+				for k, v := range vv {
+					if v == nil {
+						delete(vv, k)
+					}
+				}
+			}
+		}
+	}
 }
 
 func orderVariables(variables []papi.RuleVariable) []papi.RuleVariable {
