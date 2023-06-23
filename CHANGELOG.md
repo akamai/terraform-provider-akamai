@@ -20,6 +20,8 @@
 #### FEATURES/ENHANCEMENTS:
 
 * Provider tested and now supports Terraform 1.4.6
+* PAPI
+  * Extended `akamai_property_rules_builder` data source: now supporting rules frozen format `v2023-01-05` and `v2023-05-30`
 
 * PAPI
   * Add import to `akamai_property_activation` resource

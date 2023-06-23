@@ -7,16 +7,16 @@ import (
 
 func init() {
 	schemasRegistry.register(RuleFormat{
-		version:          "rules_v2023_01_05",
-		behaviorsSchemas: getBehaviorsSchemaV20230105(),
-		criteriaSchemas:  getCriteriaSchemaV20230105(),
+		version:          "rules_v2023_05_30",
+		behaviorsSchemas: getBehaviorsSchemaV20230530(),
+		criteriaSchemas:  getCriteriaSchemaV20230530(),
 		typeMappings:     map[string]interface{}{"adScalerCircuitBreaker.returnErrorResponseCodeBased.408": 408, "adScalerCircuitBreaker.returnErrorResponseCodeBased.500": 500, "adScalerCircuitBreaker.returnErrorResponseCodeBased.502": 502, "adScalerCircuitBreaker.returnErrorResponseCodeBased.504": 504},
-		nameMappings:     map[string]string{"allowFcmParentOverride": "allowFCMParentOverride", "allowHttpsCacheKeySharing": "allowHTTPSCacheKeySharing", "allowHttpsDowngrade": "allowHTTPSDowngrade", "allowHttpsUpgrade": "allowHTTPSUpgrade", "conditionalHttpStatus": "conditionalHTTPStatus", "contentCharacteristicsAmd": "contentCharacteristicsAMD", "contentCharacteristicsDd": "contentCharacteristicsDD", "dcpAuthHmacTransformation": "dcpAuthHMACTransformation", "detectSmartDnsProxy": "detectSmartDNSProxy", "detectSmartDnsProxyAction": "detectSmartDNSProxyAction", "detectSmartDnsProxyRedirecturl": "detectSmartDNSProxyRedirecturl", "enableEs256": "enableES256", "enableIpAvoidance": "enableIPAvoidance", "enableIpProtection": "enableIPProtection", "enableIpRedirectOnDeny": "enableIPRedirectOnDeny", "enableRs256": "enableRS256", "enableTokenInUri": "enableTokenInURI", "g2OToken": "g2oToken", "g2Oheader": "g2oheader", "i18NCharset": "i18nCharset", "i18NStatus": "i18nStatus", "isCertificateSniOnly": "isCertificateSNIOnly", "logEdgeIp": "logEdgeIP", "originSettings": "origin_settings", "overrideIpAddresses": "overrideIPAddresses", "segmentDurationDash": "segmentDurationDASH", "segmentDurationDashCustom": "segmentDurationDASHCustom", "segmentDurationHds": "segmentDurationHDS", "segmentDurationHdsCustom": "segmentDurationHDSCustom", "segmentDurationHls": "segmentDurationHLS", "segmentDurationHlsCustom": "segmentDurationHLSCustom", "segmentSizeDash": "segmentSizeDASH", "segmentSizeHds": "segmentSizeHDS", "segmentSizeHls": "segmentSizeHLS", "sf3COriginHost": "sf3cOriginHost", "sf3COriginHostHeader": "sf3cOriginHostHeader", "smartDnsProxy": "smartDNSProxy", "standardTlsMigration": "standardTLSMigration", "standardTlsMigrationOverride": "standardTLSMigrationOverride", "titleAicMobile": "title_aic_mobile", "titleAicNonmobile": "title_aic_nonmobile", "tokenAuthHlsTitle": "tokenAuthHLSTitle"},
-		shouldFlatten:    []string{"apiPrioritization.cloudletPolicy", "apiPrioritization.throttledCpCode", "apiPrioritization.throttledCpCode.cpCodeLimits", "apiPrioritization.netStorage", "applicationLoadBalancer.cloudletPolicy", "applicationLoadBalancer.allDownNetStorage", "audienceSegmentation.cloudletPolicy", "cpCode.value", "cpCode.value.cpCodeLimits", "edgeRedirector.cloudletPolicy", "failAction.netStorageHostname", "failAction.cpCode", "failAction.cpCode.cpCodeLimits", "firstPartyMarketing.cloudletPolicy", "firstPartyMarketingPlus.cloudletPolicy", "forwardRewrite.cloudletPolicy", "imageAndVideoManager.cpCodeOriginal", "imageAndVideoManager.cpCodeOriginal.cpCodeLimits", "imageAndVideoManager.cpCodeTransformed", "imageAndVideoManager.cpCodeTransformed.cpCodeLimits", "imageManager.cpCodeOriginal", "imageManager.cpCodeOriginal.cpCodeLimits", "imageManager.cpCodeTransformed", "imageManager.cpCodeTransformed.cpCodeLimits", "imageManagerVideo.cpCodeOriginal", "imageManagerVideo.cpCodeOriginal.cpCodeLimits", "imageManagerVideo.cpCodeTransformed", "imageManagerVideo.cpCodeTransformed.cpCodeLimits", "inputValidation.cloudletPolicy", "inputValidation.penaltyNetStorage", "origin.netStorage", "phasedRelease.cloudletPolicy", "requestControl.cloudletPolicy", "requestControl.netStorage", "siteShield.ssmap", "visitorPrioritization.cloudletPolicy", "visitorPrioritization.waitingRoomCpCode", "visitorPrioritization.waitingRoomCpCode.cpCodeLimits", "visitorPrioritization.waitingRoomNetStorage", "webApplicationFirewall.firewallConfiguration", "matchCpCode.value", "matchCpCode.value.cpCodeLimits"},
+		nameMappings:     map[string]string{"allowFcmParentOverride": "allowFCMParentOverride", "allowHttpsCacheKeySharing": "allowHTTPSCacheKeySharing", "allowHttpsDowngrade": "allowHTTPSDowngrade", "allowHttpsUpgrade": "allowHTTPSUpgrade", "conditionalHttpStatus": "conditionalHTTPStatus", "contentCharacteristicsAmd": "contentCharacteristicsAMD", "contentCharacteristicsDd": "contentCharacteristicsDD", "dcpAuthHmacTransformation": "dcpAuthHMACTransformation", "detectSmartDnsProxy": "detectSmartDNSProxy", "detectSmartDnsProxyAction": "detectSmartDNSProxyAction", "detectSmartDnsProxyRedirecturl": "detectSmartDNSProxyRedirecturl", "enableCmcdSegmentPrefetch": "enableCMCDSegmentPrefetch", "enableEs256": "enableES256", "enableIpAvoidance": "enableIPAvoidance", "enableIpProtection": "enableIPProtection", "enableIpRedirectOnDeny": "enableIPRedirectOnDeny", "enableRs256": "enableRS256", "enableTokenInUri": "enableTokenInURI", "g2OToken": "g2oToken", "g2Oheader": "g2oheader", "i18NCharset": "i18nCharset", "i18NStatus": "i18nStatus", "isCertificateSniOnly": "isCertificateSNIOnly", "logEdgeIp": "logEdgeIP", "originSettings": "origin_settings", "overrideIpAddresses": "overrideIPAddresses", "segmentDurationDash": "segmentDurationDASH", "segmentDurationDashCustom": "segmentDurationDASHCustom", "segmentDurationHds": "segmentDurationHDS", "segmentDurationHdsCustom": "segmentDurationHDSCustom", "segmentDurationHls": "segmentDurationHLS", "segmentDurationHlsCustom": "segmentDurationHLSCustom", "segmentSizeDash": "segmentSizeDASH", "segmentSizeHds": "segmentSizeHDS", "segmentSizeHls": "segmentSizeHLS", "sf3COriginHost": "sf3cOriginHost", "sf3COriginHostHeader": "sf3cOriginHostHeader", "smartDnsProxy": "smartDNSProxy", "standardTlsMigration": "standardTLSMigration", "standardTlsMigrationOverride": "standardTLSMigrationOverride", "titleAicMobile": "title_aic_mobile", "titleAicNonmobile": "title_aic_nonmobile", "tokenAuthHlsTitle": "tokenAuthHLSTitle"},
+		shouldFlatten:    []string{"apiPrioritization.cloudletPolicy", "apiPrioritization.throttledCpCode", "apiPrioritization.throttledCpCode.cpCodeLimits", "apiPrioritization.netStorage", "applicationLoadBalancer.cloudletPolicy", "applicationLoadBalancer.allDownNetStorage", "audienceSegmentation.cloudletPolicy", "cpCode.value", "cpCode.value.cpCodeLimits", "edgeRedirector.cloudletPolicy", "failAction.netStorageHostname", "failAction.cpCode", "failAction.cpCode.cpCodeLimits", "firstPartyMarketing.cloudletPolicy", "firstPartyMarketingPlus.cloudletPolicy", "forwardRewrite.cloudletPolicy", "imageAndVideoManager.cpCodeOriginal", "imageAndVideoManager.cpCodeOriginal.cpCodeLimits", "imageAndVideoManager.cpCodeTransformed", "imageAndVideoManager.cpCodeTransformed.cpCodeLimits", "imageManager.cpCodeOriginal", "imageManager.cpCodeOriginal.cpCodeLimits", "imageManager.cpCodeTransformed", "imageManager.cpCodeTransformed.cpCodeLimits", "imageManagerVideo.cpCodeOriginal", "imageManagerVideo.cpCodeOriginal.cpCodeLimits", "imageManagerVideo.cpCodeTransformed", "imageManagerVideo.cpCodeTransformed.cpCodeLimits", "origin.netStorage", "phasedRelease.cloudletPolicy", "requestControl.cloudletPolicy", "requestControl.netStorage", "siteShield.ssmap", "visitorPrioritization.cloudletPolicy", "visitorPrioritization.waitingRoomCpCode", "visitorPrioritization.waitingRoomCpCode.cpCodeLimits", "visitorPrioritization.waitingRoomNetStorage", "webApplicationFirewall.firewallConfiguration", "matchCpCode.value", "matchCpCode.value.cpCodeLimits"},
 	})
 }
 
-func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
+func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"ad_scaler_circuit_breaker": {
 			Optional:    true,
@@ -886,6 +886,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Description: "Activates the API Prioritization feature.",
 						Type:        schema.TypeBool,
 					},
+					"is_shared_policy": {
+						Optional:    true,
+						Description: "Whether you want to apply the Cloudlet shared policy to an unlimited number of properties within your account. Learn more about shared policies and how to create them in `Cloudlets Policy Manager`.",
+						Type:        schema.TypeBool,
+					},
 					"cloudlet_policy": {
 						Optional:    true,
 						Description: "Identifies the Cloudlet policy.",
@@ -905,6 +910,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 								},
 							},
 						},
+					},
+					"cloudlet_shared_policy": {
+						Optional:    true,
+						Description: "Identifies the Cloudlet shared policy to use with this behavior. Use the `Cloudlets API` to list available shared policies.",
+						Type:        schema.TypeInt,
 					},
 					"label": {
 						ValidateDiagFunc: validateRegex("^[a-zA-Z0-9_\\-*\\.]+$"),
@@ -2300,6 +2310,37 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 				},
 			},
 		},
+		"common_media_client_data": {
+			Optional:    true,
+			Type:        schema.TypeList,
+			Description: "This behavior can be used in includes.",
+			MaxItems:    1,
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"locked": {
+						Optional:    true,
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
+						Type:        schema.TypeBool,
+					},
+					"uuid": {
+						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
+						Optional:         true,
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
+						Type:             schema.TypeString,
+					},
+					"template_uuid": {
+						Optional:    true,
+						Description: "This option is for internal usage only.",
+						Type:        schema.TypeString,
+					},
+					"enable_cmcd_segment_prefetch": {
+						Optional:    true,
+						Description: "",
+						Type:        schema.TypeBool,
+					},
+				},
+			},
+		},
 		"conditional_origin": {
 			Optional:    true,
 			Type:        schema.TypeList,
@@ -3369,7 +3410,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 					"log_stream_name": {
 						Optional:    true,
 						Description: "Specifies the unique IDs of streams configured for the property. For properties created with the previous version of the rule format, this option contains a string instead of an array of strings. You can use the `List streams` operation to get stream IDs.",
-						Type:        schema.TypeInt,
+						Type:        schema.TypeString,
 					},
 					"sampling_percentage": {
 						Optional:    true,
@@ -5723,37 +5764,6 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 				},
 			},
 		},
-		"front_end_optimization": {
-			Optional:    true,
-			Type:        schema.TypeList,
-			Description: "This behavior is deprecated, but you should not disable or remove it if present. This behavior cannot be used in includes.",
-			MaxItems:    1,
-			Elem: &schema.Resource{
-				Schema: map[string]*schema.Schema{
-					"locked": {
-						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
-						Type:        schema.TypeBool,
-					},
-					"uuid": {
-						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
-						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
-						Type:             schema.TypeString,
-					},
-					"template_uuid": {
-						Optional:    true,
-						Description: "This option is for internal usage only.",
-						Type:        schema.TypeString,
-					},
-					"enabled": {
-						Optional:    true,
-						Description: "Enables the front-end optimization behavior.",
-						Type:        schema.TypeBool,
-					},
-				},
-			},
-		},
 		"g2oheader": {
 			Optional:    true,
 			Type:        schema.TypeList,
@@ -6986,214 +6996,6 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Optional:    true,
 						Description: "Identifies the include you want to add to your rule tree. You can get the include ID using `PAPI`. This option only accepts digits, without the `inc_` ID prefix.",
 						Type:        schema.TypeString,
-					},
-				},
-			},
-		},
-		"input_validation": {
-			Optional:    true,
-			Type:        schema.TypeList,
-			Description: "This behavior is deprecated, but you should not disable or remove it if present. This behavior cannot be used in includes.",
-			MaxItems:    1,
-			Elem: &schema.Resource{
-				Schema: map[string]*schema.Schema{
-					"locked": {
-						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
-						Type:        schema.TypeBool,
-					},
-					"uuid": {
-						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
-						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
-						Type:             schema.TypeString,
-					},
-					"template_uuid": {
-						Optional:    true,
-						Description: "This option is for internal usage only.",
-						Type:        schema.TypeString,
-					},
-					"enabled": {
-						Optional:    true,
-						Description: "Applies the Input Validation Cloudlet behavior.",
-						Type:        schema.TypeBool,
-					},
-					"cloudlet_policy": {
-						Optional:    true,
-						Description: "Identifies the Cloudlet policy.",
-						Type:        schema.TypeList,
-						MaxItems:    1,
-						Elem: &schema.Resource{
-							Schema: map[string]*schema.Schema{
-								"id": {
-									Optional:    true,
-									Description: "",
-									Type:        schema.TypeInt,
-								},
-								"name": {
-									Optional:    true,
-									Description: "",
-									Type:        schema.TypeString,
-								},
-							},
-						},
-					},
-					"label": {
-						ValidateDiagFunc: validateRegex("^[a-zA-Z0-9_\\-*\\.]+$"),
-						Optional:         true,
-						Description:      "Distinguishes this Input Validation policy from any others within the same property.",
-						Type:             schema.TypeString,
-					},
-					"user_identification_title": {
-						Optional:    true,
-						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
-						Type:        schema.TypeString,
-					},
-					"user_identification_by_cookie": {
-						Optional:    true,
-						Description: "When enabled, identifies users by the value of a cookie.",
-						Type:        schema.TypeBool,
-					},
-					"user_identification_key_cookie": {
-						ValidateDiagFunc: validateRegex("^[a-zA-Z0-9_\\-*\\.]+$"),
-						Optional:         true,
-						Description:      "This specifies the cookie name whose value needs to remain constant across requests to identify a user.",
-						Type:             schema.TypeString,
-					},
-					"user_identification_by_ip": {
-						Optional:    true,
-						Description: "When enabled, identifies users by specific IP address. Do not enable this if you are concerned about DDoS attacks from many different IP addresses.",
-						Type:        schema.TypeBool,
-					},
-					"user_identification_by_headers": {
-						Optional:    true,
-						Description: "When enabled, identifies users by specific HTTP headers on GET or POST requests.",
-						Type:        schema.TypeBool,
-					},
-					"user_identification_key_headers": {
-						Optional:    true,
-						Description: "This specifies the HTTP headers whose combined set of values identify each end user.",
-						Type:        schema.TypeList,
-						Elem: &schema.Schema{
-							Type: schema.TypeString,
-						},
-					},
-					"user_identification_by_params": {
-						Optional:    true,
-						Description: "When enabled, identifies users by specific query parameters on GET or POST requests.",
-						Type:        schema.TypeBool,
-					},
-					"user_identification_key_params": {
-						Optional:    true,
-						Description: "This specifies the query parameters whose combined set of values identify each end user.",
-						Type:        schema.TypeList,
-						Elem: &schema.Schema{
-							Type: schema.TypeString,
-						},
-					},
-					"validation_title": {
-						Optional:    true,
-						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
-						Type:        schema.TypeString,
-					},
-					"allow_large_post_body": {
-						Optional:    true,
-						Description: "Fails POST request bodies that exceed 16 KB when enabled, otherwise allows them to pass with no validation for policy compliance.",
-						Type:        schema.TypeBool,
-					},
-					"reset_on_valid": {
-						Optional:    true,
-						Description: "Upon receiving a valid request, enabling this resets the `penaltyThreshold` counter to zero.  Otherwise, even those series of invalid requests that are interrupted by valid requests may trigger the `penaltyAction`.",
-						Type:        schema.TypeBool,
-					},
-					"validate_on_origin_with": {
-						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"DISABLED", "RESPONSE_CODE", "RESPONSE_CODE_AND_HEADER"}, false)),
-						Optional:         true,
-						Description:      "For any validation that edge servers can't perform alone, this specifies additional validation steps based on how the origin identifies an invalid request.  If a request is invalid, the origin can indicate this to the edge server.",
-						Type:             schema.TypeString,
-					},
-					"validate_on_origin_header_name": {
-						ValidateDiagFunc: validateRegex("^[^()<>@,;:\\\"/\\[\\]?{}\\s]+$"),
-						Optional:         true,
-						Description:      "If `validateOnOriginWith` is set to `RESPONSE_CODE_AND_HEADER`, this specifies the header name for a request that the origin identifies as invalid.",
-						Type:             schema.TypeString,
-					},
-					"validate_on_origin_header_value": {
-						ValidateDiagFunc: validateRegex("^[a-zA-Z0-9_\\-*\\.]+$"),
-						Optional:         true,
-						Description:      "If `validateOnOriginWith` is set to `RESPONSE_CODE_AND_HEADER`, this specifies an invalid request's header value that corresponds to the `validateOnOriginHeaderName`.",
-						Type:             schema.TypeString,
-					},
-					"validate_on_origin_response_code": {
-						ValidateDiagFunc: validateRegex("^\\d{3}$"),
-						Optional:         true,
-						Description:      "Unless `validateOnOriginWith` is `DISABLED`, this identifies the integer response code for requests the origin identifies as invalid.",
-						Type:             schema.TypeInt,
-					},
-					"failure302_uri": {
-						ValidateDiagFunc: validateRegex("^[^\\s]+$"),
-						Optional:         true,
-						Description:      "Specifies the redirect link for invalid requests that have not yet triggered a penalty.",
-						Type:             schema.TypeString,
-					},
-					"penalty_title": {
-						Optional:    true,
-						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
-						Type:        schema.TypeString,
-					},
-					"penalty_threshold": {
-						Optional:    true,
-						Description: "Specifies the number of invalid requests permitted before executing the `penaltyAction`.",
-						Type:        schema.TypeInt,
-					},
-					"penalty_action": {
-						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"REDIRECT_302", "BLANK_403", "BRANDED_403"}, false)),
-						Optional:         true,
-						Description:      "Once the `penaltyThreshold` of invalid requests is met, this specifies the response.",
-						Type:             schema.TypeString,
-					},
-					"penalty302_uri": {
-						ValidateDiagFunc: validateRegex("^[^\\s]+$"),
-						Optional:         true,
-						Description:      "Specifies the redirect link for end users who trigger the penalty.",
-						Type:             schema.TypeString,
-					},
-					"penalty_net_storage": {
-						Optional:    true,
-						Description: "Specifies the NetStorage account that serves out the penalty's static 403 response content. Details appear in an object featuring a `downloadDomainName` string member that identifies the NetStorage hostname, and an integer `cpCode` to track the traffic.",
-						Type:        schema.TypeList,
-						MaxItems:    1,
-						Elem: &schema.Resource{
-							Schema: map[string]*schema.Schema{
-								"cp_code": {
-									Optional:    true,
-									Description: "",
-									Type:        schema.TypeInt,
-								},
-								"download_domain_name": {
-									Optional:    true,
-									Description: "",
-									Type:        schema.TypeString,
-								},
-								"g2o_token": {
-									Optional:    true,
-									Description: "",
-									Type:        schema.TypeString,
-								},
-							},
-						},
-					},
-					"penalty403_net_storage_path": {
-						ValidateDiagFunc: validateRegex("^[^#\\[\\]@]+$"),
-						Optional:         true,
-						Description:      "Specifies the full path to the static 403 response content relative to the `downloadDomainName` in the `penaltyNetStorage` object.",
-						Type:             schema.TypeString,
-					},
-					"penalty_branded_deny_cache_ttl": {
-						ValidateDiagFunc: validation.ToDiagFunc(validation.IntBetween(5, 30)),
-						Optional:         true,
-						Description:      "Specifies the penalty response's time to live in the cache, `5` minutes by default.",
-						Type:             schema.TypeInt,
 					},
 				},
 			},
@@ -8908,29 +8710,13 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
-					"country": {
-						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"EUROPE", "NORTH_AMERICA", "LATIN_AMERICA", "SOUTH_AMERICA", "NORDICS", "ASIA_PACIFIC", "OTHER_AMERICAS", "OTHER_APJ", "OTHER_EMEA", "AUSTRALIA", "GERMANY", "INDIA", "ITALY", "JAPAN", "MEXICO", "TAIWAN", "UNITED_KINGDOM", "US_EAST", "US_CENTRAL", "US_WEST", "GLOBAL_MULTI_GEO", "OTHER", "UNKNOWN", "ADC"}, false)),
-						Optional:         true,
-						Description:      "Specifies the origin's geographic region.",
-						Type:             schema.TypeString,
-					},
-					"adc_title": {
-						Optional:    true,
-						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
-						Type:        schema.TypeString,
-					},
-					"direct_connect_geo": {
-						Optional:    true,
-						Description: "Provides a region used by Akamai Direct Connection.",
-						Type:        schema.TypeString,
-					},
 					"authentication_method_title": {
 						Optional:    true,
 						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
 						Type:        schema.TypeString,
 					},
 					"authentication_method": {
-						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"AUTOMATIC", "SIGNATURE_HEADER_AUTHENTICATION", "MSL_AUTHENTICATION", "AWS", "GCS_HMAC_AUTHENTICATION"}, false)),
+						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"AUTOMATIC", "SIGNATURE_HEADER_AUTHENTICATION", "MSL_AUTHENTICATION", "AWS", "GCS_HMAC_AUTHENTICATION", "AWS_STS"}, false)),
 						Optional:         true,
 						Description:      "Specifies the authentication method.",
 						Type:             schema.TypeString,
@@ -9032,6 +8818,55 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 					"aws_service": {
 						Optional:    true,
 						Description: "This specifies the subdomain of your AWS service. It precedes `amazonaws.com` or the region code in the AWS hostname. For example, `s3.amazonaws.com`.",
+						Type:        schema.TypeString,
+					},
+					"property_id_tag": {
+						Optional:    true,
+						Description: "Whether to include the property identifier for this delivery configuration as an additional identifier tag in the Assume Role verification call to AWS. You'll need to include the property identifier (`AK_ARLID`) in a condition in your `AWS IAM policy` for validation.",
+						Type:        schema.TypeBool,
+					},
+					"hostname_tag": {
+						Optional:    true,
+						Description: "Whether to include the hostname used to access this delivery configuration as an additional identifier tag in the Assume Role verification call to AWS. You'll need to include this hostname (`AK_HOST`) in a condition in your `AWS IAM policy` for validation.",
+						Type:        schema.TypeBool,
+					},
+					"role_arn": {
+						ValidateDiagFunc: validateRegex("^[a-zA-Z0-9][a-zA-Z0-9_\\+=,.@\\-:/]{0,2047}$"),
+						Optional:         true,
+						Description:      "The Amazon Resource Name (ARN) of the `AWS IAM role` you want to use. This role needs to be configured with the proper permissions for your target resources. The `AWS IAM policy` needs to contain the trust relationships defining other users that can assume this role.",
+						Type:             schema.TypeString,
+					},
+					"aws_ar_region": {
+						ValidateDiagFunc: validateRegex("^[a-zA-Z0-9][a-zA-Z0-9\\-]{0,63}$"),
+						Optional:         true,
+						Description:      "Specifies the AWS region code that represents the location of your AWS bucket.",
+						Type:             schema.TypeString,
+					},
+					"end_point_service": {
+						ValidateDiagFunc: validateRegex("^[a-zA-Z0-9][a-zA-Z0-9\\-]{0,63}$"),
+						Optional:         true,
+						Description:      "Specifies the code of your AWS service. It precedes `.amazonaws.com` or the region code in your AWS hostname.",
+						Type:             schema.TypeString,
+					},
+					"origin_location_title": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
+					},
+					"country": {
+						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"EUROPE", "NORTH_AMERICA", "LATIN_AMERICA", "SOUTH_AMERICA", "NORDICS", "ASIA_PACIFIC", "OTHER_AMERICAS", "OTHER_APJ", "OTHER_EMEA", "AUSTRALIA", "GERMANY", "INDIA", "ITALY", "JAPAN", "MEXICO", "TAIWAN", "UNITED_KINGDOM", "US_EAST", "US_CENTRAL", "US_WEST", "GLOBAL_MULTI_GEO", "OTHER", "UNKNOWN", "ADC"}, false)),
+						Optional:         true,
+						Description:      "Specifies the origin's geographic region.",
+						Type:             schema.TypeString,
+					},
+					"adc_title": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
+					},
+					"direct_connect_geo": {
+						Optional:    true,
+						Description: "Provides a region used by Akamai Direct Connection.",
 						Type:        schema.TypeString,
 					},
 				},
@@ -9461,6 +9296,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Description: "Enables the Phased Release Cloudlet.",
 						Type:        schema.TypeBool,
 					},
+					"is_shared_policy": {
+						Optional:    true,
+						Description: "Whether you want to apply the Cloudlet shared policy to an unlimited number of properties within your account. Learn more about shared policies and how to create them in `Cloudlets Policy Manager`.",
+						Type:        schema.TypeBool,
+					},
 					"cloudlet_policy": {
 						Optional:    true,
 						Description: "Specifies the Cloudlet policy as an object.",
@@ -9480,6 +9320,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 								},
 							},
 						},
+					},
+					"cloudlet_shared_policy": {
+						Optional:    true,
+						Description: "Identifies the Cloudlet shared policy to use with this behavior. Use the `Cloudlets API` to list available shared policies.",
+						Type:        schema.TypeInt,
 					},
 					"label": {
 						ValidateDiagFunc: validateRegex("^[a-zA-Z0-9_\\-*\\.]+$"),
@@ -10441,6 +10286,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Description: "Enables the Request Control Cloudlet.",
 						Type:        schema.TypeBool,
 					},
+					"is_shared_policy": {
+						Optional:    true,
+						Description: "Whether you want to apply the Cloudlet shared policy to an unlimited number of properties within your account. Learn more about shared policies and how to create them in `Cloudlets Policy Manager`.",
+						Type:        schema.TypeBool,
+					},
 					"cloudlet_policy": {
 						Optional:    true,
 						Description: "Identifies the Cloudlet policy.",
@@ -10460,6 +10310,11 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 								},
 							},
 						},
+					},
+					"cloudlet_shared_policy": {
+						Optional:    true,
+						Description: "Identifies the Cloudlet shared policy to use with this behavior. Use the `Cloudlets API` to list available shared policies.",
+						Type:        schema.TypeInt,
 					},
 					"enable_branded403": {
 						Optional:    true,
@@ -11600,7 +11455,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"set_variable": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Modify a variable to insert into subsequent fields within the rule tree.  Use this behavior to specify the predeclared `variableName` and determine from where to derive its new value. Based on this `valueSource`, you can either generate the value, extract it from some part of the incoming request, assign it from another variable (including a set of built-in system variables), or directly specify its text.  Optionally choose a `transform` function to modify the value once. See `Support for variables` for more information. This behavior can be used in includes.",
+			Description: "Modify a variable to insert into subsequent fields within the rule tree.  Use this behavior to specify the predeclared `variableName` and determine from where to derive its new value. Based on this `valueSource`, you can either generate the value, extract it from some part of the incoming request, assign it from another variable (including a set of built-in system variables), or directly specify its text.  Optionally choose a `transform` function to modify the value once. See `Support for variables` for more information. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -11707,7 +11562,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Type:        schema.TypeString,
 					},
 					"transform": {
-						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"NONE", "ADD", "BASE_64_DECODE", "BASE_64_ENCODE", "BITWISE_AND", "BITWISE_NOT", "BITWISE_OR", "BITWISE_XOR", "DECIMAL_TO_HEX", "DECRYPT", "DIVIDE", "ENCRYPT", "EPOCH_TO_STRING", "EXTRACT_PARAM", "HASH", "HEX_TO_DECIMAL", "HEX_DECODE", "HEX_ENCODE", "HMAC", "LOWER", "MD5", "MINUS", "MODULO", "MULTIPLY", "NORMALIZE_PATH_WIN", "REMOVE_WHITESPACE", "SHA_1", "SHA_256", "STRING_INDEX", "STRING_LENGTH", "STRING_TO_EPOCH", "SUBSTITUTE", "SUBSTRING", "SUBTRACT", "TRIM", "UPPER", "URL_DECODE", "URL_ENCODE", "URL_DECODE_UNI", "UTC_SECONDS", "XML_DECODE", "XML_ENCODE"}, false)),
+						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"NONE", "ADD", "BASE_64_DECODE", "BASE_64_ENCODE", "BASE_32_DECODE", "BASE_32_ENCODE", "BITWISE_AND", "BITWISE_NOT", "BITWISE_OR", "BITWISE_XOR", "DECIMAL_TO_HEX", "DECRYPT", "DIVIDE", "ENCRYPT", "EPOCH_TO_STRING", "EXTRACT_PARAM", "HASH", "JSON_EXTRACT", "HEX_TO_DECIMAL", "HEX_DECODE", "HEX_ENCODE", "HMAC", "LOWER", "MD5", "MINUS", "MODULO", "MULTIPLY", "NORMALIZE_PATH_WIN", "REMOVE_WHITESPACE", "COMPRESS_WHITESPACE", "SHA_1", "SHA_256", "STRING_INDEX", "STRING_LENGTH", "STRING_TO_EPOCH", "SUBSTITUTE", "SUBSTRING", "SUBTRACT", "TRIM", "UPPER", "BASE_64_URL_DECODE", "BASE_64_URL_ENCODE", "URL_DECODE", "URL_ENCODE", "URL_DECODE_UNI", "UTC_SECONDS", "XML_DECODE", "XML_ENCODE"}, false)),
 						Optional:         true,
 						Description:      "Specifies a function to transform the value. For more details on each transform function, see `Set Variable: Operations`.",
 						Type:             schema.TypeString,
@@ -11855,37 +11710,6 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Optional:         true,
 						Description:      "Specifies the client device attribute. Possible values specify information about the client device, including device type, size and browser. For details on fields, see `Device Characterization`.",
 						Type:             schema.TypeString,
-					},
-				},
-			},
-		},
-		"shutr": {
-			Optional:    true,
-			Type:        schema.TypeList,
-			Description: "This behavior is deprecated, but you should not disable or remove it if present. This behavior can be used in includes.",
-			MaxItems:    1,
-			Elem: &schema.Resource{
-				Schema: map[string]*schema.Schema{
-					"locked": {
-						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
-						Type:        schema.TypeBool,
-					},
-					"uuid": {
-						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
-						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
-						Type:             schema.TypeString,
-					},
-					"template_uuid": {
-						Optional:    true,
-						Description: "This option is for internal usage only.",
-						Type:        schema.TypeString,
-					},
-					"status": {
-						Optional:    true,
-						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
-						Type:        schema.TypeString,
 					},
 				},
 			},
@@ -13739,7 +13563,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 	}
 }
 
-func getCriteriaSchemaV20230105() map[string]*schema.Schema {
+func getCriteriaSchemaV20230530() map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"advanced_im_match": {
 			Optional:    true,
@@ -15388,6 +15212,68 @@ func getCriteriaSchemaV20230105() map[string]*schema.Schema {
 						Optional:    true,
 						Description: "When enabled, the match is case-sensitive for the `value` field.",
 						Type:        schema.TypeBool,
+					},
+				},
+			},
+		},
+		"server_location": {
+			Optional:    true,
+			Type:        schema.TypeList,
+			Description: "The location of the Akamai server handling the request. This criterion can be used in includes.",
+			MaxItems:    1,
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"locked": {
+						Optional:    true,
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
+						Type:        schema.TypeBool,
+					},
+					"uuid": {
+						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
+						Optional:         true,
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
+						Type:             schema.TypeString,
+					},
+					"template_uuid": {
+						Optional:    true,
+						Description: "This option is for internal usage only.",
+						Type:        schema.TypeString,
+					},
+					"location_type": {
+						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"COUNTRY", "CONTINENT", "REGION"}, false)),
+						Optional:         true,
+						Description:      "Indicates the geographic scope.",
+						Type:             schema.TypeString,
+					},
+					"match_operator": {
+						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"IS_ONE_OF", "IS_NOT_ONE_OF"}, false)),
+						Optional:         true,
+						Description:      "Matches the specified set of values when set to `IS_ONE_OF`, otherwise `IS_NOT_ONE_OF` reverses the match.",
+						Type:             schema.TypeString,
+					},
+					"countries": {
+						Optional:    true,
+						Description: "ISO 3166-1 country codes, such as `US` or `CN`.",
+						Type:        schema.TypeList,
+						Elem: &schema.Schema{
+							Type: schema.TypeString,
+						},
+					},
+					"continents": {
+						Optional:    true,
+						Description: "Continent codes.",
+						Type:        schema.TypeList,
+						Elem: &schema.Schema{
+							Type: schema.TypeString,
+						},
+					},
+					"regions": {
+						Optional:    true,
+						Description: "ISO 3166 country and region codes, for example `US:MA` for Massachusetts or `JP:13` for Tokyo.",
+						Type:        schema.TypeList,
+						Elem: &schema.Schema{
+							Type: schema.TypeString,
+						},
 					},
 				},
 			},
