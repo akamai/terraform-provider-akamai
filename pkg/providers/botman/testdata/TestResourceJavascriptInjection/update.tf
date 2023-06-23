@@ -1,5 +1,5 @@
 provider "akamai" {
-  edgerc        = "../../test/edgerc"
+  edgerc        = "../../common/testutils/edgerc"
   cache_enabled = false
 }
 

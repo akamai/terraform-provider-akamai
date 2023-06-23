@@ -7,7 +7,6 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/iam"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/test"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/assert"
@@ -22,7 +21,7 @@ func TestDataGroups(t *testing.T) {
 
 	t.Run("happy path", func(t *testing.T) {
 		client := &iam.Mock{}
-		client.Test(test.TattleT{T: t})
+		client.Test(testutils.TattleT{T: t})
 
 		{
 			req := iam.ListGroupsRequest{}
@@ -42,7 +41,7 @@ func TestDataGroups(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: test.Fixture("testdata/%s/step0.tf", t.Name()),
+						Config: testutils.LoadFixtureString(t, "testdata/%s/step0.tf", t.Name()),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "id", "akamai_iam_groups"),
 
@@ -80,7 +79,7 @@ func TestDataGroups(t *testing.T) {
 	t.Run("fail path", func(t *testing.T) {
 
 		client := &iam.Mock{}
-		client.Test(test.TattleT{T: t})
+		client.Test(testutils.TattleT{T: t})
 
 		{
 			req := iam.ListGroupsRequest{}
@@ -93,7 +92,7 @@ func TestDataGroups(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config:      test.Fixture("testdata/%s/step0.tf", t.Name()),
+						Config:      testutils.LoadFixtureString(t, "testdata/%s/step0.tf", t.Name()),
 						ExpectError: regexp.MustCompile(`failed to list groups`),
 					},
 				},

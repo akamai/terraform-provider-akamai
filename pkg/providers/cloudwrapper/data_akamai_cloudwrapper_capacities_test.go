@@ -157,7 +157,7 @@ func dataCloudWrapperCapacityConfig(contracts []string) string {
 
 	return fmt.Sprintf(`
 provider "akamai" {
-	edgerc = "../../test/edgerc"
+	edgerc = "../../common/testutils/edgerc"
 }
 
 data "akamai_cloudwrapper_capacities" "test" {

@@ -5,7 +5,6 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/botman"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/test"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -28,7 +27,7 @@ func TestDataTransactionalEndpointProtection(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: test.Fixture("testdata/TestDataTransactionalEndpointProtection/basic.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestDataTransactionalEndpointProtection/basic.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("data.akamai_botman_transactional_endpoint_protection.test", "json", compactJSON(expectedJSON))),
 					},

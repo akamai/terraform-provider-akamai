@@ -11,7 +11,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/hapi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/test"
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -175,7 +174,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 		}
 	}
 
-	expectCreate := func(m *papi.Mock, testData *testData) test.MockCalls {
+	expectCreate := func(m *papi.Mock, testData *testData) testutils.MockCalls {
 		testData.latestVersion++
 
 		createIncludeCall := m.On("CreateInclude", mock.Anything, papi.CreateIncludeRequest{
@@ -189,13 +188,13 @@ func TestResourcePropertyInclude(t *testing.T) {
 
 		if len(testData.rulesPath) == 0 {
 			testData.rulesPath = "default_rules.json"
-			return test.MockCalls{createIncludeCall}
+			return testutils.MockCalls{createIncludeCall}
 		}
 
 		updateIncludeRuleTreeCall := m.On("UpdateIncludeRuleTree", mock.Anything,
 			newUpdateIncludeRuleTreeReq(testData)).Return(&papi.UpdateIncludeRuleTreeResponse{}, nil) // Return argument is ignored
 
-		return test.MockCalls{createIncludeCall, updateIncludeRuleTreeCall}
+		return testutils.MockCalls{createIncludeCall, updateIncludeRuleTreeCall}
 	}
 
 	expectGetIncludeRuleTree := func(m *papi.Mock, testData *testData) *mock.Call {
@@ -209,7 +208,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 		return call
 	}
 
-	expectRead := func(m *papi.Mock, testData *testData) test.MockCalls {
+	expectRead := func(m *papi.Mock, testData *testData) testutils.MockCalls {
 		getIncludeCall := m.On("GetInclude", mock.Anything, papi.GetIncludeRequest{
 			ContractID: testData.contractID,
 			GroupID:    testData.groupID,
@@ -218,10 +217,10 @@ func TestResourcePropertyInclude(t *testing.T) {
 
 		getIncludeRuleTreeCall := expectGetIncludeRuleTree(m, testData)
 
-		return test.MockCalls{getIncludeCall, getIncludeRuleTreeCall}
+		return testutils.MockCalls{getIncludeCall, getIncludeRuleTreeCall}
 	}
 
-	expectUpdate := func(m *papi.Mock, testData *testData) test.MockCalls {
+	expectUpdate := func(m *papi.Mock, testData *testData) testutils.MockCalls {
 		getIncludeVersionCall := m.On("GetIncludeVersion", mock.Anything, papi.GetIncludeVersionRequest{
 			Version:    testData.latestVersion,
 			GroupID:    testData.groupID,
@@ -229,7 +228,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 			ContractID: testData.contractID,
 		}).Return(newGetIncludeVersionResp(testData), nil)
 
-		calls := test.MockCalls{getIncludeVersionCall}
+		calls := testutils.MockCalls{getIncludeVersionCall}
 
 		if testData.stagingVersion != nil || testData.productionVersion != nil {
 			version := testData.latestVersion
@@ -251,7 +250,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 		return append(calls, updateIncludeRuleTreeCall)
 	}
 
-	expectDelete := func(m *papi.Mock, testData *testData) test.MockCalls {
+	expectDelete := func(m *papi.Mock, testData *testData) testutils.MockCalls {
 		getIncludeCall := m.On("GetInclude", mock.Anything, papi.GetIncludeRequest{
 			ContractID: testData.contractID,
 			GroupID:    testData.groupID,
@@ -264,7 +263,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 			ContractID: testData.contractID,
 		}).Return(&papi.DeleteIncludeResponse{}, nil)
 
-		return test.MockCalls{getIncludeCall, deleteCall}
+		return testutils.MockCalls{getIncludeCall, deleteCall}
 	}
 
 	simulateActivation := func(testData *testData, version int, network papi.ActivationNetwork) {

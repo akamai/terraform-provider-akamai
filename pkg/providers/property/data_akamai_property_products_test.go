@@ -55,7 +55,7 @@ func TestOutputProductsDataSource(t *testing.T) {
 func testConfig(contractIDConfig string) string {
 	return fmt.Sprintf(`
 	provider "akamai" {
-		edgerc = "../../test/edgerc"
+		edgerc = "../../common/testutils/edgerc"
 	}
 
 	data "akamai_property_products" "example" { %s }

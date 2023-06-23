@@ -82,7 +82,7 @@ func TestGroup_ContractNotFoundInState(t *testing.T) {
 func testAccDataSourceMultipleGroupsBasic() string {
 	return `
 		provider "akamai" {
-			edgerc = "../../test/edgerc"
+			edgerc = "../../common/testutils/edgerc"
 		}
 
 		data "akamai_groups" "test" {}

@@ -5,7 +5,6 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/botman"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/test"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -45,7 +44,7 @@ func TestDataAkamaiBotCategoryAction(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: test.Fixture("testdata/TestDataAkamaiBotCategoryAction/basic.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestDataAkamaiBotCategoryAction/basic.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("data.akamai_botman_akamai_bot_category_action.test", "json", compactJSON(expectedJSON))),
 					},
@@ -81,7 +80,7 @@ func TestDataAkamaiBotCategoryAction(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: test.Fixture("testdata/TestDataAkamaiBotCategoryAction/filter_by_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestDataAkamaiBotCategoryAction/filter_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("data.akamai_botman_akamai_bot_category_action.test", "json", compactJSON(expectedJSON))),
 					},

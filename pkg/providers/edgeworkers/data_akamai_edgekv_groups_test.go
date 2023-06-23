@@ -6,14 +6,13 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/edgeworkers"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/test"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
 
 func TestEdgeKVGroups(t *testing.T) {
 	client := &edgeworkers.Mock{}
-	client.Test(test.TattleT{T: t})
+	client.Test(testutils.TattleT{T: t})
 
 	t.Run("happy path", func(t *testing.T) {
 		client.On("ListGroupsWithinNamespace", mock.Anything, edgeworkers.ListGroupsWithinNamespaceRequest{
@@ -26,7 +25,7 @@ func TestEdgeKVGroups(t *testing.T) {
 				IsUnitTest:               true,
 				Steps: []resource.TestStep{
 					{
-						Config: test.Fixture("testdata/TestDataEdgeKVNamespaceGroups/basic.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestDataEdgeKVNamespaceGroups/basic.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttrSet("data.akamai_edgekv_groups.test", "id"),
 							resource.TestCheckResourceAttr("data.akamai_edgekv_groups.test", "id", "test_namespace:staging"),
@@ -52,7 +51,7 @@ func TestEdgeKVGroups(t *testing.T) {
 				IsUnitTest:               true,
 				Steps: []resource.TestStep{
 					{
-						Config:      test.Fixture("testdata/TestDataEdgeKVNamespaceGroups/missed_namespace_name.tf"),
+						Config:      testutils.LoadFixtureString(t, "testdata/TestDataEdgeKVNamespaceGroups/missed_namespace_name.tf"),
 						ExpectError: regexp.MustCompile(`The argument "namespace_name" is required, but no definition was found.`),
 					},
 				},
@@ -69,7 +68,7 @@ func TestEdgeKVGroups(t *testing.T) {
 				IsUnitTest:               true,
 				Steps: []resource.TestStep{
 					{
-						Config:      test.Fixture("testdata/TestDataEdgeKVNamespaceGroups/missed_network.tf"),
+						Config:      testutils.LoadFixtureString(t, "testdata/TestDataEdgeKVNamespaceGroups/missed_network.tf"),
 						ExpectError: regexp.MustCompile(`The argument "network" is required, but no definition was found.`),
 					},
 				},
@@ -86,7 +85,7 @@ func TestEdgeKVGroups(t *testing.T) {
 				IsUnitTest:               true,
 				Steps: []resource.TestStep{
 					{
-						Config:      test.Fixture("testdata/TestDataEdgeKVNamespaceGroups/incorrect_network.tf"),
+						Config:      testutils.LoadFixtureString(t, "testdata/TestDataEdgeKVNamespaceGroups/incorrect_network.tf"),
 						ExpectError: regexp.MustCompile("expected network to be one of \\[staging production], got incorrect_network"),
 					},
 				},

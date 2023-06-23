@@ -7,7 +7,6 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/iam"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/test"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -15,7 +14,7 @@ import (
 func TestDataTimeoutPolicies(t *testing.T) {
 	t.Run("happy path", func(t *testing.T) {
 		client := &iam.Mock{}
-		client.Test(test.TattleT{T: t})
+		client.Test(testutils.TattleT{T: t})
 
 		res := []iam.TimeoutPolicy{
 			{Name: "first", Value: 11},
@@ -30,7 +29,7 @@ func TestDataTimeoutPolicies(t *testing.T) {
 				IsUnitTest:               true,
 				Steps: []resource.TestStep{
 					{
-						Config: test.Fixture("testdata/%s/step0.tf", t.Name()),
+						Config: testutils.LoadFixtureString(t, "testdata/%s/step0.tf", t.Name()),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttrSet("data.akamai_iam_timeout_policies.test", "id"),
 							resource.TestCheckResourceAttr("data.akamai_iam_timeout_policies.test", "policies.%", "3"),
@@ -48,7 +47,7 @@ func TestDataTimeoutPolicies(t *testing.T) {
 
 	t.Run("fail path", func(t *testing.T) {
 		client := &iam.Mock{}
-		client.Test(test.TattleT{T: t})
+		client.Test(testutils.TattleT{T: t})
 		client.On("ListTimeoutPolicies", mock.Anything).Return(nil, errors.New("Could not get supported timeout policies"))
 
 		useClient(client, func() {
@@ -57,7 +56,7 @@ func TestDataTimeoutPolicies(t *testing.T) {
 				IsUnitTest:               true,
 				Steps: []resource.TestStep{
 					{
-						Config:      test.Fixture("testdata/%s/step0.tf", t.Name()),
+						Config:      testutils.LoadFixtureString(t, "testdata/%s/step0.tf", t.Name()),
 						ExpectError: regexp.MustCompile(`Could not get supported timeout policies`),
 					},
 				},

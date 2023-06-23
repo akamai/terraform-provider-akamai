@@ -5,7 +5,6 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/botman"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/test"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
@@ -60,7 +59,7 @@ func TestResourceCustomBotCategorySequence(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: test.Fixture("testdata/TestResourceCustomBotCategorySequence/create.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResourceCustomBotCategorySequence/create.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_botman_custom_bot_category_sequence.test", "id", "43253"),
 							resource.TestCheckResourceAttr("akamai_botman_custom_bot_category_sequence.test", "category_ids.#", tools.ConvertToString(len(createCategoryIds))),
@@ -69,7 +68,7 @@ func TestResourceCustomBotCategorySequence(t *testing.T) {
 							resource.TestCheckResourceAttr("akamai_botman_custom_bot_category_sequence.test", "category_ids.2", createCategoryIds[2])),
 					},
 					{
-						Config: test.Fixture("testdata/TestResourceCustomBotCategorySequence/update.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResourceCustomBotCategorySequence/update.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_botman_custom_bot_category_sequence.test", "id", "43253"),
 							resource.TestCheckResourceAttr("akamai_botman_custom_bot_category_sequence.test", "category_ids.#", tools.ConvertToString(len(updateCategoryIds))),
