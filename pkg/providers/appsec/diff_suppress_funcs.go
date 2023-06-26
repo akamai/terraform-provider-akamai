@@ -8,7 +8,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/appsec"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/appsec"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 

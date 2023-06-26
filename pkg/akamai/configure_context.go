@@ -4,7 +4,7 @@ import (
 	"context"
 	"os"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/cache"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/logger"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"

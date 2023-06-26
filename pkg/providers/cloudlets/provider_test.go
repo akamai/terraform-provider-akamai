@@ -11,7 +11,7 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/testutils"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/cloudlets"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cloudlets"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
