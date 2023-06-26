@@ -4,7 +4,7 @@ package registry
 import (
 	"sync"
 
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/subprovider"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/subprovider"
 )
 
 var (

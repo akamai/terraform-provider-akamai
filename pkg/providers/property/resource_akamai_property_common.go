@@ -8,8 +8,8 @@ import (
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/tools"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 )
 
 func getGroup(ctx context.Context, meta meta.Meta, groupID string) (*papi.Group, error) {

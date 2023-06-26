@@ -1,4 +1,4 @@
-module github.com/akamai/terraform-provider-akamai/v4
+module github.com/akamai/terraform-provider-akamai/v5
 
 require (
 	github.com/akamai/AkamaiOPEN-edgegrid-golang/v7 v7.0.0

@@ -7,8 +7,8 @@ import (
 	"sync"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/botman"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/cache"
-	akameta "github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/cache"
+	akameta "github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
 	"github.com/apex/log"
 )
 

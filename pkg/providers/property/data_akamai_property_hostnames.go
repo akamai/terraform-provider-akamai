@@ -9,9 +9,9 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/tools"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 )
 
 func dataSourcePropertyHostnames() *schema.Resource {

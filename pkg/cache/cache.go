@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/logger"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/logger"
 	"github.com/allegro/bigcache/v2"
 )
 

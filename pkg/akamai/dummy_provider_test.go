@@ -3,7 +3,7 @@ package akamai_test
 import (
 	"context"
 
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/subprovider"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/subprovider"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"

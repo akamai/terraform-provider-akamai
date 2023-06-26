@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/meta"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/tools"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
