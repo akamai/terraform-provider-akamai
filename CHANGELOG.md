@@ -1,21 +1,21 @@
 # RELEASE NOTES
 
-## 6.0.0 (XXX X, 2023) 
+## 5.0.0 (Jun 29, 2023)
 
 #### BREAKING CHANGES:
 
 * DataStream
-  * Changes in the following data sources in DataStream 2 V2 API:
-    * `akamai_datastream_activation_history` - changes in schema and corresponding implementations.
-    * `akamai_datastream_dataset_fields` - changes in parameter, schema and corresponding implementations.
-    * `akamai_datastreams` - changes in parameter, schema and corresponding implementations. 
-  * Changes in the following resources in DataStream 2 V2 API:
-    * `akamai_datastreams` - changes in schema payload, response attributes and corresponding implementations. 
+  * Changed the following data sources in DataStream 2 V2 API:
+    * `akamai_datastream_activation_history` - changed schema and corresponding implementations.
+    * `akamai_datastream_dataset_fields` - changed parameter, schema and corresponding implementations.
+    * `akamai_datastreams` - changed parameter, schema and corresponding implementations. 
+  * Changed the following resources in DataStream 2 V2 API:
+    * `akamai_datastreams` - changed in schema payload, response attributes and corresponding implementations. 
   * Updated attribute names in `datastream.connectors`.
   * Updated methods in `datastream.stream` for the above changes.
 
 * PAPI
-  * Change default value of `auto_acknowledge_rule_warnings` to `false` in `akamai_property_activation` resource
+  * Changed default value of `auto_acknowledge_rule_warnings` to `false` in `akamai_property_activation` resource
 
 * Removed undocumented support for configuring provider with environment variables (`AKAMAI_ACCESS_TOKEN`, `AKAMAI_CLIENT_TOKEN`, `AKAMAI_HOST`, `AKAMAI_CLIENT_SECRET`, `AKAMAI_MAX_BODY`, and their `AKAMAI_{section}_xxx` equivalents).
   As an alternative users should now use provider's [config](https://techdocs.akamai.com/terraform/docs/gs-authentication#use-inline-credentials) block with [TF_VAR_](https://developer.hashicorp.com/terraform/language/values/variables#environment-variables) envs when wanting to provide configuration through enviroment variables.
@@ -63,28 +63,28 @@
 * Migrated `akamai_property_include` data source from SDKv2 to Framework.
 
 * PAPI
-  * Add import to `akamai_property_activation` resource
-  * Extended `akamai_property_rules_builder` data source: now supporting rules frozen format `v2023-01-05` and `v2023-05-30`
+  * Added import to `akamai_property_activation` resource
+  * Extended `akamai_property_rules_builder` data source: added support for rules frozen format `v2023-01-05` and `v2023-05-30`
 
 * Appsec
-  * Update Geo control to include Action for Ukraine.
-  * Add `akamai_appsec_advanced_settings_pii_learning` data source and resource for managing the PII learning advanced setting.
+  * Updated Geo control to include Action for Ukraine.
+  * Added `akamai_appsec_advanced_settings_pii_learning` data source and resource for managing the PII learning advanced setting.
 
 #### DEPRECATIONS
 
-* Deprecate `active` field in `akamai_dns_record` resource
+* Deprecated `active` field in `akamai_dns_record` resource
 
 #### BUG FIXES:
 
 * CPS
-  * Fix bug in `akamai_cps_dv_enrollment` resource when MTLS settings are provided ([#339](https://github.com/akamai/terraform-provider-akamai/issues/339))
-  * Fix `sans` field causing perpetual in-place update in `akamai_cps_third_party_enrollment` ([#415](https://github.com/akamai/terraform-provider-akamai/issues/415))
+  * Fixed bug in `akamai_cps_dv_enrollment` resource when MTLS settings are provided ([#339](https://github.com/akamai/terraform-provider-akamai/issues/339))
+  * Fixed `sans` field causing perpetual in-place update in `akamai_cps_third_party_enrollment` ([#415](https://github.com/akamai/terraform-provider-akamai/issues/415))
 
 * GTM
-  * Make `test_object` inside `liveness_test` required only for `test_object_protocol` values: `HTTP`, `HTTPS` or `FTP` ([I#408](https://github.com/akamai/terraform-provider-akamai/issues/408))
+  * Made `test_object` inside `liveness_test` required only for `test_object_protocol` values: `HTTP`, `HTTPS` or `FTP` ([I#408](https://github.com/akamai/terraform-provider-akamai/issues/408))
 
 * Cloudlets
-  * Wait for propagation of policy activation deletions, before removing the policy in `akamai_cloudlets_policy`
+  * Added wait for propagation of policy activation deletions, before removing the policy in `akamai_cloudlets_policy` ([I#420](https://github.com/akamai/terraform-provider-akamai/issues/420))
 
 * PAPI
   * Removed hostname validation on `akamai_property` resource ([I#422](https://github.com/akamai/terraform-provider-akamai/issues/422))
