@@ -526,7 +526,7 @@ func resourceGTMv1DomainImport(_ context.Context, d *schema.ResourceData, m inte
 func validateDomainType(v interface{}, _ cty.Path) diag.Diagnostics {
 	value := strings.ToUpper(v.(string))
 	if value != "BASIC" && value != "FULL" && value != "WEIGHTED" && value != "STATIC" && value != "FAILOVER-ONLY" {
-		return diag.Errorf(("type must be basic, full, weighted, static, or failover-only"))
+		return diag.Errorf("type must be basic, full, weighted, static, or failover-only")
 	}
 	return nil
 }

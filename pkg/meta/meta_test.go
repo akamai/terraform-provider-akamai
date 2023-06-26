@@ -11,16 +11,13 @@ import (
 )
 
 func TestMeta(t *testing.T) {
-	var sess session.Session = session.Must(session.New())
-	var logger hclog.Logger = hclog.New(hclog.DefaultOptions)
+	var sess = session.Must(session.New())
+	var logger = hclog.New(hclog.DefaultOptions)
 	operationID := "opID"
 
 	meta, err := New(sess, logger, operationID)
 	assert.NoError(t, err)
 
-	t.Run("Log() result implements log.Interface", func(t *testing.T) {
-		var _ log.Interface = meta.Log()
-	})
 	t.Run("Session() return sess", func(t *testing.T) {
 		assert.Equal(t, sess, meta.Session())
 	})
@@ -30,8 +27,8 @@ func TestMeta(t *testing.T) {
 }
 
 func TestNew_err(t *testing.T) {
-	var sess session.Session = session.Must(session.New())
-	var logger hclog.Logger = hclog.New(hclog.DefaultOptions)
+	var sess = session.Must(session.New())
+	var logger = hclog.New(hclog.DefaultOptions)
 
 	t.Run("nil log", func(t *testing.T) {
 		_, err := New(sess, nil, "")
@@ -46,8 +43,8 @@ func TestNew_err(t *testing.T) {
 
 func TestMust(t *testing.T) {
 	t.Run("no panic", func(t *testing.T) {
-		var sess session.Session = session.Must(session.New())
-		var logger hclog.Logger = hclog.New(hclog.DefaultOptions)
+		var sess = session.Must(session.New())
+		var logger = hclog.New(hclog.DefaultOptions)
 
 		meta, err := New(sess, logger, "")
 		require.NoError(t, err)

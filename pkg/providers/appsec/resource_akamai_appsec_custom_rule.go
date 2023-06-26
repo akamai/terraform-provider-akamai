@@ -212,7 +212,7 @@ func resourceCustomRuleDelete(ctx context.Context, d *schema.ResourceData, m int
 		return diag.FromErr(err)
 	}
 
-	var status string = customrules.CustomRules[0].Status
+	var status = customrules.CustomRules[0].Status
 	if strings.Compare(status, "unused") == 0 {
 
 		removeCustomRule := appsec.RemoveCustomRuleRequest{
