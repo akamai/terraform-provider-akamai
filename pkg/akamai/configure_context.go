@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/edgegrid"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/cache"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/logger"
@@ -15,7 +16,7 @@ import (
 type contextConfig struct {
 	edgercPath    string
 	edgercSection string
-	edgercConfig  map[string]any
+	edgercConfig  *edgegrid.Config
 	userAgent     string
 	ctx           context.Context
 	requestLimit  int

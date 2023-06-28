@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
 
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/cache"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/collections"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
@@ -100,13 +101,20 @@ func configureProviderContext(p *schema.Provider) schema.ConfigureContextFunc {
 			return nil, diag.FromErr(err)
 		}
 
-		var edgercConfig map[string]any
+		var edgercConfig *edgegrid.Config
 		if err == nil && len(envs.List()) > 0 {
 			envsMap, ok := envs.List()[0].(map[string]any)
 			if !ok {
 				return nil, diag.FromErr(fmt.Errorf("%w: %s, %q", tf.ErrInvalidType, "config", "map[string]any"))
 			}
-			edgercConfig = envsMap
+			edgercConfig = &edgegrid.Config{
+				Host:         envsMap["host"].(string),
+				ClientToken:  envsMap["client_token"].(string),
+				ClientSecret: envsMap["client_secret"].(string),
+				AccessToken:  envsMap["access_token"].(string),
+				AccountKey:   envsMap["account_key"].(string),
+				MaxBody:      envsMap["max_body"].(int),
+			}
 		}
 
 		requestLimit, err := tf.GetIntValue("request_limit", d)

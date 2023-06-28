@@ -3,6 +3,7 @@ package akamai
 import (
 	"testing"
 
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/edgegrid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -12,14 +13,14 @@ func TestNewEdgegridConfig(t *testing.T) {
 
 	path := "testdata/edgerc"
 	section := "default"
-	config := func() map[string]any {
-		return map[string]any{
-			"host":          "host.com",
-			"access_token":  "access_token",
-			"client_token":  "client_token",
-			"client_secret": "client_secret",
-			"max_body":      0,
-			"account_key":   "",
+	config := func() *edgegrid.Config {
+		return &edgegrid.Config{
+			Host:         "host.com",
+			AccessToken:  "access_token",
+			ClientToken:  "client_token",
+			ClientSecret: "client_secret",
+			MaxBody:      0,
+			AccountKey:   "",
 		}
 	}
 
@@ -54,7 +55,7 @@ func TestNewEdgegridConfig(t *testing.T) {
 		t.Parallel()
 
 		cfg := config()
-		cfg["host"] = "host.com/"
+		cfg.Host = "host.com/"
 		_, err := newEdgegridConfig("", "", cfg)
 		assert.Error(t, err)
 	})

@@ -2,7 +2,9 @@
 package config
 
 import (
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf/validators"
 	frameworkSchema "github.com/hashicorp/terraform-plugin-framework/provider/schema"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	pluginSchema "github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -44,16 +46,20 @@ func FrameworkOptions() frameworkSchema.SetNestedBlock {
 		NestedObject: frameworkSchema.NestedBlockObject{
 			Attributes: map[string]frameworkSchema.Attribute{
 				"host": frameworkSchema.StringAttribute{
-					Required: true,
+					Required:   true,
+					Validators: []validator.String{validators.NotEmptyString()},
 				},
 				"access_token": frameworkSchema.StringAttribute{
-					Required: true,
+					Required:   true,
+					Validators: []validator.String{validators.NotEmptyString()},
 				},
 				"client_token": frameworkSchema.StringAttribute{
-					Required: true,
+					Required:   true,
+					Validators: []validator.String{validators.NotEmptyString()},
 				},
 				"client_secret": frameworkSchema.StringAttribute{
-					Required: true,
+					Required:   true,
+					Validators: []validator.String{validators.NotEmptyString()},
 				},
 				"max_body": frameworkSchema.Int64Attribute{
 					Optional: true,
