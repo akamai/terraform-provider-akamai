@@ -147,7 +147,7 @@ func (v variablePopulator) replaceMatchWithVar(template string, varMap map[strin
 	if varVal, ok := varMap[varName]; ok {
 		return strings.ReplaceAll(template, matchingVariable, v.valueExtractor(varVal)), nil
 	}
-	return "", fmt.Errorf(variableNotFound, varName)
+	return strings.ReplaceAll(template, matchingVariable, fmt.Sprintf("%s.%s%s", leftDelim, varName, rightDelim)), nil
 }
 
 //nolint:gocyclo
@@ -329,7 +329,7 @@ func checkCircularDependency(input string, seenVariables []string, varsMap map[s
 		}
 		varVal, ok := varsMap[varName]
 		if !ok {
-			return "", fmt.Errorf(variableNotFound, varVal)
+			return fmt.Sprintf("%s.%s%s", leftDelim, varName, rightDelim), nil
 		}
 		evaluatedVarVal, err := checkCircularDependency(fmt.Sprintf("%v", varVal), append(seenVariables, varName), varsMap)
 		if err != nil {
@@ -357,7 +357,6 @@ var (
 	// ErrUnknownType is used to specify unknown error.
 	ErrUnknownType       = errors.New("unknown 'type' value")
 	matchingErrorMessage = "there was a problem matching %q"
-	variableNotFound     = "could not find variable %q"
 )
 
 // flattenTemplate formats the template schema into a couple of strings holding template_data and template_dir values

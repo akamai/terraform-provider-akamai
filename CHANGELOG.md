@@ -1,5 +1,11 @@
 # RELEASE NOTES
 
+## X.X.X (XXX XX, 2023)
+
+#### BUG FIXES:
+* PAPI
+  * Dropped too strict early snippet validation ([#436](https://github.com/akamai/terraform-provider-akamai/issues/436))
+
 ## 5.0.1 (Jul 12, 2023)
 
 #### BUG FIXES:
