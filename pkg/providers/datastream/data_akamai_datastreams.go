@@ -26,7 +26,7 @@ func dataAkamaiDatastreamStreams() *schema.Resource {
 				Description: "Identifies the group where the stream is created.",
 			},
 			"streams_details": {
-				Type:        schema.TypeList,
+				Type:        schema.TypeSet,
 				Computed:    true,
 				Description: "List of streams",
 				Elem: &schema.Resource{
