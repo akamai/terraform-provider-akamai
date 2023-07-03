@@ -709,6 +709,32 @@ func TestResourcePropertyInclude(t *testing.T) {
 				},
 			},
 		},
+		"lifecycle with null in returned cpcode - expect no diff on refresh": {
+			testData: testData{
+				groupID:     "grp_123",
+				rulesPath:   "null_rules.json",
+				productID:   "prd_test",
+				includeID:   includeID,
+				ruleFormat:  "v2023-01-05",
+				contractID:  "ctr_123",
+				includeName: "test include",
+				includeType: papi.IncludeTypeMicroServices,
+			},
+			init: func(m *papi.Mock, testData *testData) {
+				expectCreate(m, testData).Once()
+				expectRead(m, testData).Times(2)
+				expectDelete(m, testData).Once()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: loadFixtureString("%s/property_include_null_cpcode.tf", workdir),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_property_include.test", "name", "test include"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "rules", loadFixtureString("%s/expected/rules_cpcode_null.json", workdir)),
+					),
+				},
+			},
+		},
 		"import include": {
 			testData: testData{
 				groupID:     "grp_123",

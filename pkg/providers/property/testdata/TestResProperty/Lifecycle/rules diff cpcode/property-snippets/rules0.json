@@ -5,7 +5,6 @@
         "name": "cpCode",
         "options": {
           "value": {
-            "cpCodeLimits": null,
             "description": "CliTerraformCPCode",
             "id": 1050269,
             "name": "DevExpCliTerraformPapiAsSchemaTest",

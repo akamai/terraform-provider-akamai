@@ -161,6 +161,13 @@ func TestResProperty(t *testing.T) {
 		}
 	}
 
+	GetVersionResourcesDrift := func(propertyID, contractID, groupID string, version int, rules papi.RulesUpdate) BehaviorFunc {
+		return func(state *TestState) {
+			ExpectGetPropertyVersionHostnames(state.Client, propertyID, groupID, contractID, version, &state.Hostnames)
+			ExpectGetRuleTree(state.Client, propertyID, groupID, contractID, version, &rules, &state.RuleFormat)
+		}
+	}
+
 	DeleteProperty := func(propertyID string) BehaviorFunc {
 		return func(state *TestState) {
 			ExpectRemoveProperty(state.Client, propertyID, "ctr_0", "grp_0").Once().Run(func(mock.Arguments) {
@@ -203,6 +210,14 @@ func TestResProperty(t *testing.T) {
 		return func(state *TestState) {
 			createProperty(propertyName, propertyID, rules)(state)
 			GetVersionResources(propertyID, "ctr_0", "grp_0", 1)(state)
+			DeleteProperty(propertyID)(state)
+		}
+	}
+
+	propertyLifecycleWithDrift := func(propertyName, propertyID, groupID string, rulesToSend, rulesToReceive papi.RulesUpdate) BehaviorFunc {
+		return func(state *TestState) {
+			createProperty(propertyName, propertyID, rulesToSend)(state)
+			GetVersionResourcesDrift(propertyID, "ctr_0", "grp_0", 1, rulesToReceive)(state)
 			DeleteProperty(propertyID)(state)
 		}
 	}
@@ -520,7 +535,22 @@ func TestResProperty(t *testing.T) {
 	diffCPCode := LifecycleTestCase{
 		Name: "Diff cpCode.cpCodeLimits",
 		ClientSetup: composeBehaviors(
-			propertyLifecycle("test_property", "prp_0", "grp_0",
+			propertyLifecycleWithDrift("test_property", "prp_0", "grp_0",
+				papi.RulesUpdate{
+					Rules: papi.Rules{Behaviors: []papi.RuleBehavior{
+						{
+							Name: "cpCode",
+							Options: papi.RuleOptionsMap{
+								"value": map[string]interface{}{
+									"description": "CliTerraformCPCode",
+									"id":          1.050269e+06,
+									"name":        "DevExpCliTerraformPapiAsSchemaTest",
+									"products":    []interface{}{"Web_App_Accel"},
+								},
+							},
+						},
+					},
+						Name: "default"}},
 				papi.RulesUpdate{
 					Rules: papi.Rules{Behaviors: []papi.RuleBehavior{
 						{
@@ -528,7 +558,7 @@ func TestResProperty(t *testing.T) {
 							Options: papi.RuleOptionsMap{
 								"value": map[string]interface{}{
 									"cpCodeLimits": nil,
-									"description":  "CliTerraformCPCode1",
+									"description":  "CliTerraformCPCode",
 									"id":           1.050269e+06,
 									"name":         "DevExpCliTerraformPapiAsSchemaTest",
 									"products":     []interface{}{"Web_App_Accel"},
@@ -536,15 +566,14 @@ func TestResProperty(t *testing.T) {
 							},
 						},
 					},
-						Name: "default"}}),
-			getPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive),
+						Name: "default"}},
+			),
 			setHostnames("prp_0", 1, "to.test.domain"),
 			updateRuleTree("prp_0", "ctr_0", "grp_0", 1,
 				&papi.RulesUpdate{Rules: papi.Rules{Behaviors: []papi.RuleBehavior{
 					{Name: "cpCode",
 						Options: papi.RuleOptionsMap{
 							"value": map[string]interface{}{
-								//"cpCodeLimits": nil,
 								"description": "CliTerraformCPCode",
 								"id":          1.050269e+06,
 								"name":        "DevExpCliTerraformPapiAsSchemaTest",
@@ -554,37 +583,14 @@ func TestResProperty(t *testing.T) {
 					},
 				},
 					Name: "default"}}),
-			//updateRuleTree("prp_0", "ctr_0", "grp_0", 1,
-			//	&papi.RulesUpdate{Rules: papi.Rules{Behaviors: []papi.RuleBehavior{
-			//		{Name: "cpCode",
-			//			Options: papi.RuleOptionsMap{
-			//				"value": map[string]interface{}{
-			//					//"cpCodeLimits": nil,
-			//					"description": "CliTerraformCPCode",
-			//					"id":          1.050269e+06,
-			//					"name":        "DevExpCliTerraformPapiAsSchemaTest",
-			//					"products":    []interface{}{"Web_App_Accel"},
-			//				},
-			//			},
-			//		},
-			//	},
-			//		Name: "default"}}),
+			getPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive),
 		),
 		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
 			return []resource.TestStep{
 				{
-					//PreConfig: func() {
-					//	State.VersionItems = papi.PropertyVersionItems{Items: []papi.PropertyVersionGetItem{{PropertyVersion: 1, ProductionStatus: papi.VersionStatusInactive}}}
-					//},
 					Config: loadFixtureString("%s/step0.tf", FixturePath),
 					Check: checkAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
-						`{"rules":{"behaviors":[{"name":"cpCode","options":{"value":{"description":"CliTerraformCPCode","id":1050269,"name":"DevExpCliTerraformPapiAsSchemaTest","products":["Web_App_Accel"]}}}],"name":"default","options":{}}}`),
-				},
-				{
-					Config:   loadFixtureString("%s/step1.tf", FixturePath),
-					PlanOnly: true,
-					Check: checkAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
-						`{"rules":{"behaviors":[{"name":"cpCode","options":{"value":{"description":"CliTerraformCPCode","id":1050269,"name":"DevExpCliTerraformPapiAsSchemaTest","products":["Web_App_Accel"]}}}],"name":"default","options":{}}}`),
+						`{"rules":{"behaviors":[{"name":"cpCode","options":{"value":{"cpCodeLimits":null,"description":"CliTerraformCPCode","id":1050269,"name":"DevExpCliTerraformPapiAsSchemaTest","products":["Web_App_Accel"]}}}],"name":"default","options":{}}}`),
 				},
 			}
 		},

@@ -78,6 +78,7 @@ func resourcePropertyInclude() *schema.Resource {
 				Description:      "Property Rules as JSON",
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsJSON),
 				DiffSuppressFunc: tf.ComposeDiffSuppress(suppressDefaultRules, diffSuppressRules),
+				StateFunc:        rulesStateFunc,
 			},
 			"rule_errors": {
 				Type:        schema.TypeString,
