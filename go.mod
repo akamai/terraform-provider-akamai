@@ -9,7 +9,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/hashicorp/go-cty v1.4.1-0.20200414143053-d3edf31b6320
 	github.com/hashicorp/go-hclog v1.5.0
-	github.com/hashicorp/terraform-plugin-framework v1.2.0
+	github.com/hashicorp/terraform-plugin-framework v1.3.2
 	github.com/hashicorp/terraform-plugin-go v0.18.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.27.0
 	github.com/jedib0t/go-pretty/v6 v6.0.4
@@ -51,6 +51,7 @@ require (
 	github.com/hashicorp/logutils v1.0.0 // indirect
 	github.com/hashicorp/terraform-exec v0.18.1 // indirect
 	github.com/hashicorp/terraform-json v0.17.1 // indirect
+	github.com/hashicorp/terraform-plugin-framework-timeouts v0.4.1
 	github.com/hashicorp/terraform-plugin-log v0.9.0
 	github.com/hashicorp/terraform-plugin-mux v0.10.0
 	github.com/hashicorp/terraform-registry-address v0.2.1 // indirect

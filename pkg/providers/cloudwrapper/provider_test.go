@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cloudwrapper"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/akamai"
@@ -21,10 +22,15 @@ type (
 		resources   []func() resource.Resource
 		datasources []func() datasource.DataSource
 		client      cloudwrapper.CloudWrapper
+		interval    time.Duration
 	}
 
 	clientSetter interface {
 		SetClient(cloudwrapper.CloudWrapper)
+	}
+
+	pollIntervalSetter interface {
+		SetPollInterval(time.Duration)
 	}
 
 	testSubproviderOption func(*TestSubprovider)
@@ -33,6 +39,7 @@ type (
 func withMockClient(mock cloudwrapper.CloudWrapper) testSubproviderOption {
 	return func(ts *TestSubprovider) {
 		ts.client = mock
+		ts.interval = time.Microsecond
 	}
 }
 
@@ -54,12 +61,15 @@ func newTestSubprovider(opts ...testSubproviderOption) *TestSubprovider {
 // Resources returns terraform resources for cloudwrapper
 func (ts *TestSubprovider) Resources() []func() resource.Resource {
 	for i, fn := range ts.resources {
-		fn := fn
 		// decorate
+		fn := fn
 		ts.resources[i] = func() resource.Resource {
 			res := fn()
 			if v, ok := res.(clientSetter); ok {
 				v.SetClient(ts.client)
+			}
+			if v, ok := res.(pollIntervalSetter); ok {
+				v.SetPollInterval(ts.interval)
 			}
 			return res
 		}

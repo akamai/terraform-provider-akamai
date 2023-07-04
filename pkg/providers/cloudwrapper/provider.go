@@ -23,7 +23,9 @@ func NewSubprovider() *Subprovider {
 
 // Resources returns terraform resources for cloudwrapper
 func (p *Subprovider) Resources() []func() resource.Resource {
-	return []func() resource.Resource{}
+	return []func() resource.Resource{
+		NewConfigurationResource,
+	}
 }
 
 // DataSources returns terraform data sources for cloudwrapper
