@@ -1,5 +1,95 @@
 # RELEASE NOTES
 
+## 5.0.0 (Jul 5, 2023)
+
+#### BREAKING CHANGES:
+
+* DataStream
+  * Changed the following data sources in DataStream 2 V2 API:
+    * `akamai_datastream_activation_history` - changed schema and corresponding implementations.
+    * `akamai_datastream_dataset_fields` - changed parameter, schema and corresponding implementations.
+    * `akamai_datastreams` - changed parameter, schema and corresponding implementations. 
+  * Changed the following resources in DataStream 2 V2 API:
+    * `akamai_datastreams` - changed in schema payload, response attributes and corresponding implementations. 
+  * Updated attribute names in `datastream.connectors`.
+  * Updated methods in `datastream.stream` for the above changes.
+
+* PAPI
+  * Changed default value of `auto_acknowledge_rule_warnings` to `false` in `akamai_property_activation` resource
+
+* Removed undocumented support for configuring provider with environment variables (`AKAMAI_ACCESS_TOKEN`, `AKAMAI_CLIENT_TOKEN`, `AKAMAI_HOST`, `AKAMAI_CLIENT_SECRET`, `AKAMAI_MAX_BODY`, and their `AKAMAI_{section}_xxx` equivalents).
+  As an alternative users should now use provider's [config](https://techdocs.akamai.com/terraform/docs/gs-authentication#use-inline-credentials) block with [TF_VAR_](https://developer.hashicorp.com/terraform/language/values/variables#environment-variables) envs when wanting to provide configuration through enviroment variables.
+
+##### Removed deprecated schema fields
+
+* Appsec
+  * `notes` and `activate` fields in `akamai_appsec_activations` resource
+  * `appsec_section` and `appsec` fields in provider schema
+
+* CPS
+  * `enable_multi_stacked_certificates` field in `akamai_cps_dv_enrollment` resource
+  
+* DNS
+  * `dns_section` and `dns` fields in provider schema
+
+* GTM
+  * `gtm_section` and `gtm` fields in provider schema
+
+* IAM
+  * `is_locked` field in `akamai_iam_user` resource
+
+* Network Lists
+  * `activate` field in `akamai_networklist_activations` resource
+  * `networklist_section` and `network` fields in provider schema
+
+* PAPI
+  * `contract` and `group` fields in `akamai_cp_code` data source
+  * `group` field in `akamai_contract` data source
+  * `name` and `contract` fields in `akamai_group` data source
+  * `contract`, `group` and `product` fields in `akamai_cp_code` resource
+  * `contract`, `group` and `product` fields in `akamai_edge_hostname` resource
+  * `property` and `rule_warnings` fields in `akamai_property_activation` resource
+  * `contract`, `group` and `product` fields in `akamai_property` resource
+  * `papi_section`, `property_section` and `property` fields in provider schema
+
+##### Removed deprecated resource
+
+* PAPI
+  * `akamai_property_variables`
+
+#### FEATURES/ENHANCEMENTS:
+
+* Provider tested and now supports Terraform 1.4.6
+* Migrated `akamai_property_include` data source from SDKv2 to Framework.
+
+* PAPI
+  * Added import to `akamai_property_activation` resource
+  * Extended `akamai_property_rules_builder` data source: added support for rules frozen format `v2023-01-05` and `v2023-05-30`
+
+* Appsec
+  * Updated Geo control to include Action for Ukraine.
+  * Added `akamai_appsec_advanced_settings_pii_learning` data source and resource for managing the PII learning advanced setting.
+
+#### DEPRECATIONS
+
+* Deprecated `active` field in `akamai_dns_record` resource
+
+#### BUG FIXES:
+
+* CPS
+  * Fixed bug in `akamai_cps_dv_enrollment` resource when MTLS settings are provided ([#339](https://github.com/akamai/terraform-provider-akamai/issues/339))
+  * Fixed `sans` field causing perpetual in-place update in `akamai_cps_third_party_enrollment` ([#415](https://github.com/akamai/terraform-provider-akamai/issues/415))
+
+* GTM
+  * Made `test_object` inside `liveness_test` required only for `test_object_protocol` values: `HTTP`, `HTTPS` or `FTP` ([I#408](https://github.com/akamai/terraform-provider-akamai/issues/408))
+
+* Cloudlets
+  * Added wait for propagation of policy activation deletions, before removing the policy in `akamai_cloudlets_policy` ([I#420](https://github.com/akamai/terraform-provider-akamai/issues/420))
+
+* PAPI
+  * Removed hostname validation on `akamai_property` resource ([I#422](https://github.com/akamai/terraform-provider-akamai/issues/422))
+
+
 ## 4.1.0 (Jun 1, 2023)
 
 #### FEATURES/ENHANCEMENTS:
@@ -8,7 +98,7 @@
   * New data sources:
     * `akamai_gtm_datacenter` - get datacenter information
     * `akamai_gtm_datacenters` - get datacenters information
-    
+
 ## 4.0.0 (May 30, 2023)
 
 #### BREAKING CHANGES:
@@ -859,8 +949,8 @@ These are the operations supported in the Network Lists API v2:
 These are the operations supported in the Identity Management: User Administration API v2:
 
 * Create a new user
-* Update a user’s profile
-* Update a user’s role assignments
+* Update a userâs profile
+* Update a userâs role assignments
 * Delete a user
 
 ## 1.1.1 (Jan 8, 2021)

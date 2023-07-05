@@ -7,7 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
 )
 
 func TestDataSourceMultipleGroups_basic(t *testing.T) {
@@ -30,9 +30,9 @@ func TestDataSourceMultipleGroups_basic(t *testing.T) {
 			}}}}, nil)
 		useClient(client, nil, func() {
 			resource.ParallelTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
-				CheckDestroy:      testAccCheckAkamaiMultipleGroupsDestroy,
-				IsUnitTest:        true,
+				ProtoV5ProviderFactories: testAccProviders,
+				CheckDestroy:             testAccCheckAkamaiMultipleGroupsDestroy,
+				IsUnitTest:               true,
 				Steps: []resource.TestStep{
 					{
 						Config: testAccDataSourceMultipleGroupsBasic(),
@@ -69,8 +69,8 @@ func TestGroup_ContractNotFoundInState(t *testing.T) {
 			}}}}, nil)
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
-				IsUnitTest:        true,
+				ProtoV5ProviderFactories: testAccProviders,
+				IsUnitTest:               true,
 				Steps: []resource.TestStep{{
 					Config: loadFixtureString("testdata/TestDSContractRequired/groups.tf"),
 				}},

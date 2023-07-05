@@ -8,7 +8,7 @@ import (
 
 	"github.com/stretchr/testify/mock"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
@@ -243,8 +243,8 @@ func TestDataProperty(t *testing.T) {
 			}
 			useClient(client, nil, func() {
 				resource.Test(t, resource.TestCase{
-					IsUnitTest:        true,
-					ProviderFactories: testAccProviders,
+					IsUnitTest:               true,
+					ProtoV5ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{{
 						Config:      loadFixtureString(fmt.Sprintf("testdata/TestDataProperty/%s", test.givenTF)),
 						Check:       resource.ComposeAggregateTestCheckFunc(checkFuncs...),

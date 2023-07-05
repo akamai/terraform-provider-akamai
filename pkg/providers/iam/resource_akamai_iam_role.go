@@ -5,10 +5,10 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/iam"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/iam"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -51,7 +51,7 @@ func resourceIAMRole() *schema.Resource {
 }
 
 func resourceIAMRoleCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("IAM", "resourceIAMRoleCreate")
 	ctx = session.ContextWithOptions(
 		ctx,
@@ -88,7 +88,7 @@ func resourceIAMRoleCreate(ctx context.Context, d *schema.ResourceData, m interf
 }
 
 func resourceIAMRoleRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("IAM", "resourceIAMRoleRead")
 	ctx = session.ContextWithOptions(
 		ctx,
@@ -127,7 +127,7 @@ func resourceIAMRoleRead(ctx context.Context, d *schema.ResourceData, m interfac
 }
 
 func resourceIAMRoleUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("IAM", "resourceIAMRoleUpdate")
 	ctx = session.ContextWithOptions(
 		ctx,
@@ -174,7 +174,7 @@ func resourceIAMRoleUpdate(ctx context.Context, d *schema.ResourceData, m interf
 }
 
 func resourceIAMRoleDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("IAM", "resourceIAMRoleDelete")
 	ctx = session.ContextWithOptions(
 		ctx,

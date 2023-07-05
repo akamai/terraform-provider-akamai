@@ -6,8 +6,9 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/botman"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/botman"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/cache"
+	akameta "github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
 	"github.com/apex/log"
 )
 
@@ -20,15 +21,15 @@ var (
 
 // getBotDetectionAction reads from the cache if present, or makes a getAll call to fetch all Bot Detection Actions for a security policy, stores in the cache and filters the required Bot Detection Action using ID.
 func getBotDetectionAction(ctx context.Context, request botman.GetBotDetectionActionRequest, m interface{}) (map[string]interface{}, error) {
-	meta := akamai.Meta(m)
+	meta := akameta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("BotMan", "getBotDetectionAction")
 
 	cacheKey := fmt.Sprintf("%s:%d:%d:%s", "getBotDetectionAction", request.ConfigID, request.Version, request.SecurityPolicyID)
 	botDetectionActions := &botman.GetBotDetectionActionListResponse{}
-	err := meta.CacheGet(inst, cacheKey, botDetectionActions)
+	err := cache.Get(cache.BucketName(SubproviderName), cacheKey, botDetectionActions)
 	// if cache is disabled use GetBotDetectionAction to fetch one action at a time
-	if errors.Is(err, akamai.ErrCacheDisabled) {
+	if errors.Is(err, cache.ErrDisabled) {
 		return client.GetBotDetectionAction(ctx, request)
 	}
 	if err == nil {
@@ -41,12 +42,12 @@ func getBotDetectionAction(ctx context.Context, request botman.GetBotDetectionAc
 		botDetectionActionMutex.Unlock()
 	}()
 
-	err = meta.CacheGet(inst, cacheKey, botDetectionActions)
+	err = cache.Get(cache.BucketName(SubproviderName), cacheKey, botDetectionActions)
 	if err == nil {
 		return filterBotDetectionAction(botDetectionActions, request, logger)
 	}
 
-	if !akamai.IsNotFoundError(err) && !errors.Is(err, akamai.ErrCacheDisabled) {
+	if !errors.Is(err, cache.ErrEntryNotFound) && !errors.Is(err, cache.ErrDisabled) {
 		logger.Errorf("error reading from cache: %s", err.Error())
 		return nil, err
 	}
@@ -61,8 +62,8 @@ func getBotDetectionAction(ctx context.Context, request botman.GetBotDetectionAc
 		return nil, err
 	}
 
-	err = meta.CacheSet(inst, cacheKey, botDetectionActions)
-	if err != nil && !errors.Is(err, akamai.ErrCacheDisabled) {
+	err = cache.Set(cache.BucketName(SubproviderName), cacheKey, botDetectionActions)
+	if err != nil && !errors.Is(err, cache.ErrDisabled) {
 		logger.Errorf("error caching botDetectionActions into cache: %s", err.Error())
 		return nil, err
 	}
@@ -82,15 +83,15 @@ func filterBotDetectionAction(botDetectionActions *botman.GetBotDetectionActionL
 
 // getCustomBotCategoryAction reads from the cache if present, or makes a getAll call to fetch all Custom Bot Category Actions for a security policy, stores in the cache and filters the required Custom Bot Category Action using ID.
 func getCustomBotCategoryAction(ctx context.Context, request botman.GetCustomBotCategoryActionRequest, m interface{}) (map[string]interface{}, error) {
-	meta := akamai.Meta(m)
+	meta := akameta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("BotMan", "getCustomBotCategoryAction")
 
 	cacheKey := fmt.Sprintf("%s:%d:%d:%s", "getCustomBotCategoryAction", request.ConfigID, request.Version, request.SecurityPolicyID)
 	customBotCategoryActions := &botman.GetCustomBotCategoryActionListResponse{}
-	err := meta.CacheGet(inst, cacheKey, customBotCategoryActions)
+	err := cache.Get(cache.BucketName(SubproviderName), cacheKey, customBotCategoryActions)
 	// if cache is disabled use GetCustomBotCategoryAction to fetch one action at a time
-	if errors.Is(err, akamai.ErrCacheDisabled) {
+	if errors.Is(err, cache.ErrDisabled) {
 		return client.GetCustomBotCategoryAction(ctx, request)
 	}
 	if err == nil {
@@ -103,12 +104,12 @@ func getCustomBotCategoryAction(ctx context.Context, request botman.GetCustomBot
 		customBotCategoryActionMutex.Unlock()
 	}()
 
-	err = meta.CacheGet(inst, cacheKey, customBotCategoryActions)
+	err = cache.Get(cache.BucketName(SubproviderName), cacheKey, customBotCategoryActions)
 	if err == nil {
 		return filterCustomBotCategoryAction(customBotCategoryActions, request, logger)
 	}
 
-	if !akamai.IsNotFoundError(err) && !errors.Is(err, akamai.ErrCacheDisabled) {
+	if !errors.Is(err, cache.ErrEntryNotFound) && !errors.Is(err, cache.ErrDisabled) {
 		logger.Errorf("error reading from cache: %s", err.Error())
 		return nil, err
 	}
@@ -123,8 +124,8 @@ func getCustomBotCategoryAction(ctx context.Context, request botman.GetCustomBot
 		return nil, err
 	}
 
-	err = meta.CacheSet(inst, cacheKey, customBotCategoryActions)
-	if err != nil && !errors.Is(err, akamai.ErrCacheDisabled) {
+	err = cache.Set(cache.BucketName(SubproviderName), cacheKey, customBotCategoryActions)
+	if err != nil && !errors.Is(err, cache.ErrDisabled) {
 		logger.Errorf("error caching customBotCategoryActions into cache: %s", err.Error())
 		return nil, err
 	}
@@ -144,15 +145,15 @@ func filterCustomBotCategoryAction(customBotCategoryActions *botman.GetCustomBot
 
 // getAkamaiBotCategoryAction reads from the cache if present, or makes a getAll call to fetch all Akamai Bot Category Actions for a security policy, stores in the cache and filters the required Akamai Bot Category Action using ID.
 func getAkamaiBotCategoryAction(ctx context.Context, request botman.GetAkamaiBotCategoryActionRequest, m interface{}) (map[string]interface{}, error) {
-	meta := akamai.Meta(m)
+	meta := akameta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("BotMan", "getAkamaiBotCategoryAction")
 
 	cacheKey := fmt.Sprintf("%s:%d:%d:%s", "getAkamaiBotCategoryAction", request.ConfigID, request.Version, request.SecurityPolicyID)
 	akamaiBotCategoryActions := &botman.GetAkamaiBotCategoryActionListResponse{}
-	err := meta.CacheGet(inst, cacheKey, akamaiBotCategoryActions)
+	err := cache.Get(cache.BucketName(SubproviderName), cacheKey, akamaiBotCategoryActions)
 	// if cache is disabled use GetAkamaiBotCategoryAction to fetch one action at a time
-	if errors.Is(err, akamai.ErrCacheDisabled) {
+	if errors.Is(err, cache.ErrDisabled) {
 		return client.GetAkamaiBotCategoryAction(ctx, request)
 	}
 	if err == nil {
@@ -165,12 +166,12 @@ func getAkamaiBotCategoryAction(ctx context.Context, request botman.GetAkamaiBot
 		akamaiBotCategoryActionMutex.Unlock()
 	}()
 
-	err = meta.CacheGet(inst, cacheKey, akamaiBotCategoryActions)
+	err = cache.Get(cache.BucketName(SubproviderName), cacheKey, akamaiBotCategoryActions)
 	if err == nil {
 		return filterAkamaiBotCategoryAction(akamaiBotCategoryActions, request, logger)
 	}
 
-	if !akamai.IsNotFoundError(err) && !errors.Is(err, akamai.ErrCacheDisabled) {
+	if !errors.Is(err, cache.ErrEntryNotFound) && !errors.Is(err, cache.ErrDisabled) {
 		logger.Errorf("error reading from cache: %s", err.Error())
 		return nil, err
 	}
@@ -185,8 +186,8 @@ func getAkamaiBotCategoryAction(ctx context.Context, request botman.GetAkamaiBot
 		return nil, err
 	}
 
-	err = meta.CacheSet(inst, cacheKey, akamaiBotCategoryActions)
-	if err != nil && !errors.Is(err, akamai.ErrCacheDisabled) {
+	err = cache.Set(cache.BucketName(SubproviderName), cacheKey, akamaiBotCategoryActions)
+	if err != nil && !errors.Is(err, cache.ErrDisabled) {
 		logger.Errorf("error caching akamaiBotCategoryActions into cache: %s", err.Error())
 		return nil, err
 	}
@@ -206,15 +207,15 @@ func filterAkamaiBotCategoryAction(akamaiBotCategoryActions *botman.GetAkamaiBot
 
 // getTransactionalEndpoint reads from the cache if present, or makes a getAll call to fetch all Transactional Endpoints for a security policy, stores in the cache and filters the required Transactional Endpoint using ID.
 func getTransactionalEndpoint(ctx context.Context, request botman.GetTransactionalEndpointRequest, m interface{}) (map[string]interface{}, error) {
-	meta := akamai.Meta(m)
+	meta := akameta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("BotMan", "getTransactionalEndpoint")
 
 	cacheKey := fmt.Sprintf("%s:%d:%d:%s", "getTransactionalEndpoint", request.ConfigID, request.Version, request.SecurityPolicyID)
 	transactionalEndpoints := &botman.GetTransactionalEndpointListResponse{}
-	err := meta.CacheGet(inst, cacheKey, transactionalEndpoints)
+	err := cache.Get(cache.BucketName(SubproviderName), cacheKey, transactionalEndpoints)
 	// if cache is disabled use GetTransactionalEndpoint to fetch one action at a time
-	if errors.Is(err, akamai.ErrCacheDisabled) {
+	if errors.Is(err, cache.ErrDisabled) {
 		return client.GetTransactionalEndpoint(ctx, request)
 	}
 	if err == nil {
@@ -227,12 +228,12 @@ func getTransactionalEndpoint(ctx context.Context, request botman.GetTransaction
 		transactionalEndpointMutex.Unlock()
 	}()
 
-	err = meta.CacheGet(inst, cacheKey, transactionalEndpoints)
+	err = cache.Get(cache.BucketName(SubproviderName), cacheKey, transactionalEndpoints)
 	if err == nil {
 		return filterTransactionalEndpoint(transactionalEndpoints, request, logger)
 	}
 
-	if !akamai.IsNotFoundError(err) && !errors.Is(err, akamai.ErrCacheDisabled) {
+	if !errors.Is(err, cache.ErrEntryNotFound) && !errors.Is(err, cache.ErrDisabled) {
 		logger.Errorf("error reading from cache: %s", err.Error())
 		return nil, err
 	}
@@ -247,8 +248,8 @@ func getTransactionalEndpoint(ctx context.Context, request botman.GetTransaction
 		return nil, err
 	}
 
-	err = meta.CacheSet(inst, cacheKey, transactionalEndpoints)
-	if err != nil && !errors.Is(err, akamai.ErrCacheDisabled) {
+	err = cache.Set(cache.BucketName(SubproviderName), cacheKey, transactionalEndpoints)
+	if err != nil && !errors.Is(err, cache.ErrDisabled) {
 		logger.Errorf("error caching transactionalEndpoints into cache: %s", err.Error())
 		return nil, err
 	}

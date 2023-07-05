@@ -8,9 +8,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
 )
 
 func dataSourceCPCode() *schema.Resource {
@@ -22,35 +22,15 @@ func dataSourceCPCode() *schema.Resource {
 				Required:         true,
 				ValidateDiagFunc: tf.IsNotBlank,
 			},
-			"contract": {
-				Type:         schema.TypeString,
-				Optional:     true,
-				Computed:     true,
-				ExactlyOneOf: []string{"contract", "contract_id"},
-				ForceNew:     true,
-				Deprecated:   akamai.NoticeDeprecatedUseAlias("contract"),
-			},
 			"contract_id": {
-				Type:         schema.TypeString,
-				Optional:     true,
-				Computed:     true,
-				ExactlyOneOf: []string{"contract", "contract_id"},
-				ForceNew:     true,
-			},
-			"group": {
-				Type:         schema.TypeString,
-				Optional:     true,
-				Computed:     true,
-				ExactlyOneOf: []string{"group", "group_id"},
-				ForceNew:     true,
-				Deprecated:   akamai.NoticeDeprecatedUseAlias("group"),
+				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: true,
 			},
 			"group_id": {
-				Type:         schema.TypeString,
-				Optional:     true,
-				Computed:     true,
-				ExactlyOneOf: []string{"group", "group_id"},
-				ForceNew:     true,
+				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: true,
 			},
 			"product_ids": {
 				Type:     schema.TypeList,
@@ -62,8 +42,8 @@ func dataSourceCPCode() *schema.Resource {
 }
 
 func dataCPCodeRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
-	client := inst.Client(meta)
+	meta := meta.Must(m)
+	client := Client(meta)
 	log := meta.Log("PAPI", "dataCPCodeRead")
 	log.Debug("Read CP Code")
 
@@ -74,27 +54,17 @@ func dataCPCodeRead(ctx context.Context, d *schema.ResourceData, m interface{}) 
 		return diag.FromErr(err)
 	}
 
-	// load group_id, if not exists, then load group.
-	if groupID, err = tf.ResolveKeyStringState(d, "group_id", "group"); err != nil {
+	if groupID, err = tf.GetStringValue("group_id", d); err != nil {
 		return diag.FromErr(err)
 	}
-	// set group_id/group in state.
 	if err := d.Set("group_id", groupID); err != nil {
 		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
-	if err := d.Set("group", groupID); err != nil {
-		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
-	}
 
-	// load contract_id, if not exists, then load contract.
-	if contractID, err = tf.ResolveKeyStringState(d, "contract_id", "contract"); err != nil {
+	if contractID, err = tf.GetStringValue("contract_id", d); err != nil {
 		return diag.FromErr(err)
 	}
-	// set contract_id/contract in state.
 	if err := d.Set("contract_id", contractID); err != nil {
-		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
-	}
-	if err := d.Set("contract", contractID); err != nil {
 		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
 

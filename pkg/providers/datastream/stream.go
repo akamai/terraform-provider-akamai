@@ -2,24 +2,23 @@ package datastream
 
 import (
 	"fmt"
-	"sort"
 	"strconv"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/datastream"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/datastream"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 // GetConfig builds Config structure
-func GetConfig(set *schema.Set) (*datastream.Config, error) {
+func GetConfig(set *schema.Set) (*datastream.DeliveryConfiguration, error) {
 	if set.Len() != 1 {
-		return nil, fmt.Errorf("missing config definition")
+		return nil, fmt.Errorf("missing delivery configuration definition")
 	}
 
 	configList := set.List()
 	configMap, ok := configList[0].(map[string]interface{})
 	if !ok {
-		return nil, fmt.Errorf("config has invalid structure")
+		return nil, fmt.Errorf("delivery configuration has invalid structure")
 	}
 
 	frequencySet, ok := configMap["frequency"]
@@ -33,11 +32,11 @@ func GetConfig(set *schema.Set) (*datastream.Config, error) {
 	}
 
 	var delimiterPtr *datastream.DelimiterType
-	if delimiterStr := configMap["delimiter"].(string); delimiterStr != "" {
+	if delimiterStr := configMap["field_delimiter"].(string); delimiterStr != "" {
 		delimiterPtr = datastream.DelimiterTypePtr(datastream.DelimiterType(delimiterStr))
 	}
 
-	return &datastream.Config{
+	return &datastream.DeliveryConfiguration{
 		Delimiter:        delimiterPtr,
 		Format:           datastream.FormatType(configMap["format"].(string)),
 		Frequency:        *frequency,
@@ -47,14 +46,14 @@ func GetConfig(set *schema.Set) (*datastream.Config, error) {
 }
 
 // ConfigToSet converts Config struct to set
-func ConfigToSet(cfg datastream.Config) []map[string]interface{} {
+func ConfigToSet(cfg datastream.DeliveryConfiguration) []map[string]interface{} {
 	delimiter := *datastream.DelimiterTypePtr("")
 	if cfg.Delimiter != nil {
 		delimiter = *cfg.Delimiter
 	}
 
 	return []map[string]interface{}{{
-		"delimiter":          string(delimiter),
+		"field_delimiter":    string(delimiter),
 		"format":             string(cfg.Format),
 		"frequency":          FrequencyToSet(cfg.Frequency),
 		"upload_file_prefix": cfg.UploadFilePrefix,
@@ -75,14 +74,14 @@ func GetFrequency(set *schema.Set) (*datastream.Frequency, error) {
 	}
 
 	return &datastream.Frequency{
-		TimeInSec: datastream.TimeInSec(freqMap["time_in_sec"].(int)),
+		IntervalInSeconds: datastream.IntervalInSeconds(freqMap["interval_in_secs"].(int)),
 	}, nil
 }
 
 // FrequencyToSet converts Frequency struct to map
 func FrequencyToSet(freq datastream.Frequency) []map[string]interface{} {
 	return []map[string]interface{}{{
-		"time_in_sec": int(freq.TimeInSec),
+		"interval_in_secs": int(freq.IntervalInSeconds),
 	}}
 }
 
@@ -95,7 +94,18 @@ func InterfaceSliceToIntSlice(list []interface{}) []int {
 	return intList
 }
 
-// InterfaceSliceToStringSlice converts schema.Set to slice of ints
+// DatasetFieldListToDatasetFields converts schema.Set to slice of DatasetFieldId
+func DatasetFieldListToDatasetFields(list []interface{}) []datastream.DatasetFieldID {
+
+	datasetFields := make([]datastream.DatasetFieldID, 0)
+
+	for _, v := range list {
+		datasetFields = append(datasetFields, datastream.DatasetFieldID{DatasetFieldID: v.(int)})
+	}
+	return datasetFields
+}
+
+// InterfaceSliceToStringSlice converts schema.Set to slice of string
 func InterfaceSliceToStringSlice(list []interface{}) []string {
 	stringList := make([]string, len(list))
 	for i, v := range list {
@@ -104,21 +114,12 @@ func InterfaceSliceToStringSlice(list []interface{}) []string {
 	return stringList
 }
 
-// DataSetFieldsToList converts slice of DataSets to slice of ints
-func DataSetFieldsToList(dataSets []datastream.DataSets) []int {
-	datasetFields := make([]datastream.DatasetFields, 0)
+// DataSetFieldsToList converts slice of dataSetFields to slice of ints
+func DataSetFieldsToList(dataSetFields []datastream.DataSetField) []int {
 
-	for _, datasetGroup := range dataSets {
-		datasetFields = append(datasetFields, datasetGroup.DatasetFields...)
-	}
+	ids := make([]int, 0, len(dataSetFields))
 
-	sort.Slice(datasetFields, func(i, j int) bool {
-		return datasetFields[i].Order < datasetFields[j].Order
-	})
-
-	ids := make([]int, 0, len(datasetFields))
-
-	for _, field := range datasetFields {
+	for _, field := range dataSetFields {
 		ids = append(ids, field.DatasetFieldID)
 	}
 
@@ -137,15 +138,15 @@ func PropertyToList(properties []datastream.Property) []string {
 }
 
 // GetPropertiesList converts propertyIDs with and without "prp_" prefix to slice of ints
-func GetPropertiesList(properties []interface{}) ([]int, error) {
-	ids := make([]int, 0, len(properties))
+func GetPropertiesList(properties []interface{}) ([]datastream.PropertyID, error) {
+	ids := make([]datastream.PropertyID, 0, len(properties))
 
 	for _, property := range properties {
 		propertyID, err := strconv.Atoi(strings.TrimPrefix(property.(string), "prp_"))
 		if err != nil {
 			return nil, err
 		}
-		ids = append(ids, propertyID)
+		ids = append(ids, datastream.PropertyID{PropertyID: propertyID})
 	}
 
 	return ids, nil

@@ -11,11 +11,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/papi"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/logger"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -107,7 +108,7 @@ func resourcePropertyIncludeActivation() *schema.Resource {
 }
 
 func readTimeoutFromEnvOrDefault(name string, timeout time.Duration) *time.Duration {
-	logger := akamai.Log("readTimeoutFromEnvOrDefault")
+	logger := logger.Get("readTimeoutFromEnvOrDefault")
 
 	value := os.Getenv(name)
 	if value != "" {
@@ -129,10 +130,10 @@ var (
 )
 
 func resourcePropertyIncludeActivationCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourcePropertyIncludeActivationCreate")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	client := inst.Client(meta)
+	client := Client(meta)
 
 	logger.Debug("Create property include activation")
 
@@ -145,10 +146,10 @@ func resourcePropertyIncludeActivationCreate(ctx context.Context, d *schema.Reso
 }
 
 func resourcePropertyIncludeActivationRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourcePropertyIncludeActivationRead")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	client := inst.Client(meta)
+	client := Client(meta)
 	logger.Debug("Reading property include activation")
 
 	rd, err := parsePropertyIncludeActivationResourceID(d.Id())
@@ -197,10 +198,10 @@ func resourcePropertyIncludeActivationRead(ctx context.Context, d *schema.Resour
 }
 
 func resourcePropertyIncludeActivationUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourcePropertyIncludeActivationUpdate")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	client := inst.Client(meta)
+	client := Client(meta)
 	logger.Debug("Updating property include activation")
 
 	mutableAttrsHaveChanges := d.HasChanges("note", "notify_emails", "auto_acknowledge_rule_warnings", "compliance_record")
@@ -217,10 +218,10 @@ func resourcePropertyIncludeActivationUpdate(ctx context.Context, d *schema.Reso
 }
 
 func resourcePropertyIncludeActivationDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourcePropertyIncludeActivationDelete")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	client := inst.Client(meta)
+	client := Client(meta)
 	logger.Debug("Deactivating property include")
 
 	activationResourceData := propertyIncludeActivationData{}
@@ -258,7 +259,7 @@ func resourcePropertyIncludeActivationDelete(ctx context.Context, d *schema.Reso
 }
 
 func resourcePropertyIncludeActivationImport(_ context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourcePropertyIncludeActivationImport")
 	logger.Debug("Importing property include activation")
 
@@ -284,7 +285,7 @@ func resourcePropertyIncludeActivationImport(_ context.Context, d *schema.Resour
 }
 
 func resourcePropertyIncludeActivationUpsert(ctx context.Context, d *schema.ResourceData, client papi.PAPI) error {
-	logger := akamai.Log("resourcePropertyIncludeActivationUpsert")
+	logger := logger.Get("resourcePropertyIncludeActivationUpsert")
 
 	activationResourceData := propertyIncludeActivationData{}
 	if err := activationResourceData.populateFromResource(d); err != nil {
@@ -461,7 +462,7 @@ func isLatestActiveExpectedActivated(ctx context.Context, client papi.PAPI, acti
 }
 
 func createNewActivation(ctx context.Context, client papi.PAPI, activationResourceData propertyIncludeActivationData) error {
-	logger := akamai.Log("createNewActivation")
+	logger := logger.Get("createNewActivation")
 
 	logger.Debug("preparing activation request")
 	activateIncludeRequest := papi.ActivateIncludeRequest{
@@ -490,7 +491,7 @@ func createNewActivation(ctx context.Context, client papi.PAPI, activationResour
 }
 
 func createNewDeactivation(ctx context.Context, client papi.PAPI, activationResourceData propertyIncludeActivationData) error {
-	logger := akamai.Log("createNewDeactivation")
+	logger := logger.Get("createNewDeactivation")
 
 	deactivateIncludeRequest := papi.DeactivateIncludeRequest{
 		IncludeID:              activationResourceData.includeID,

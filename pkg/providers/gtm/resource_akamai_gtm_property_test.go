@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/gtm"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/gtm"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -304,6 +304,162 @@ func TestResGtmProperty(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 
+	t.Run("test_object_protocol different than HTTP, HTTPS or FTP", func(t *testing.T) {
+		client := &gtm.Mock{}
+
+		getCall := client.On("GetProperty",
+			mock.Anything,
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
+		).Return(nil, &gtm.Error{
+			StatusCode: http.StatusNotFound,
+		})
+
+		resp := gtm.PropertyResponse{}
+		resp.Resource = &prop
+		resp.Status = &pendingResponseStatus
+		client.On("CreateProperty",
+			mock.Anything,
+			mock.AnythingOfType("*gtm.Property"),
+			mock.AnythingOfType("string"),
+		).Return(&resp, nil).Run(func(args mock.Arguments) {
+			getCall.ReturnArguments = mock.Arguments{args.Get(1).(*gtm.Property), nil}
+		})
+
+		client.On("NewProperty",
+			mock.Anything,
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
+		).Return(&gtm.Property{
+			Name: "tfexample_prop_1",
+		})
+
+		client.On("GetDomainStatus",
+			mock.Anything,
+			mock.AnythingOfType("string"),
+		).Return(&completeResponseStatus, nil)
+
+		client.On("NewTrafficTarget",
+			mock.Anything,
+		).Return(&gtm.TrafficTarget{})
+
+		client.On("NewStaticRRSet",
+			mock.Anything,
+		).Return(&gtm.StaticRRSet{})
+
+		liveCall := client.On("NewLivenessTest",
+			mock.Anything,
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("int"),
+			mock.AnythingOfType("float32"),
+		)
+
+		liveCall.RunFn = func(args mock.Arguments) {
+			liveCall.ReturnArguments = mock.Arguments{
+				&gtm.LivenessTest{
+					Name:               args.String(1),
+					TestObjectProtocol: args.String(2),
+					TestInterval:       args.Int(3),
+					TestTimeout:        args.Get(4).(float32),
+				},
+			}
+		}
+
+		client.On("UpdateProperty",
+			mock.Anything,
+			mock.AnythingOfType("*gtm.Property"),
+			mock.AnythingOfType("string"),
+		).Return(&completeResponseStatus, nil).Run(func(args mock.Arguments) {
+			getCall.ReturnArguments = mock.Arguments{args.Get(1).(*gtm.Property), nil}
+		})
+
+		client.On("DeleteProperty",
+			mock.Anything,
+			mock.AnythingOfType("*gtm.Property"),
+			mock.AnythingOfType("string"),
+		).Return(&completeResponseStatus, nil)
+
+		dataSourceName := "akamai_gtm_property.tfexample_prop_1"
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProviderFactories: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString("testdata/TestResGtmProperty/test_object/test_object_not_required.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr(dataSourceName, "name", "tfexample_prop_1"),
+							resource.TestCheckResourceAttr(dataSourceName, "type", "weighted-round-robin"),
+						),
+					},
+					{
+						Config: loadFixtureString("testdata/TestResGtmProperty/update_basic.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr(dataSourceName, "name", "tfexample_prop_1"),
+							resource.TestCheckResourceAttr(dataSourceName, "type", "weighted-round-robin"),
+						),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
+	t.Run("create property with test_object_protocol set to 'FTP' - test_object required error", func(t *testing.T) {
+		client := &gtm.Mock{}
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProviderFactories: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config:      loadFixtureString("testdata/TestResGtmProperty/test_object/test_object_protocol_ftp.tf"),
+						ExpectError: regexp.MustCompile(`Error: attribute 'test_object' is required when 'test_object_protocol' is set to 'HTTP', 'HTTPS' or 'FTP'`),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
+	t.Run("create property with test_object_protocol set to 'HTTP' - test_object required error", func(t *testing.T) {
+		client := &gtm.Mock{}
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProviderFactories: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config:      loadFixtureString("testdata/TestResGtmProperty/test_object/test_object_protocol_http.tf"),
+						ExpectError: regexp.MustCompile(`Error: attribute 'test_object' is required when 'test_object_protocol' is set to 'HTTP', 'HTTPS' or 'FTP'`),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
+	t.Run("create property with test_object_protocol set to 'HTTPS' - test_object required error", func(t *testing.T) {
+		client := &gtm.Mock{}
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProviderFactories: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config:      loadFixtureString("testdata/TestResGtmProperty/test_object/test_object_protocol_https.tf"),
+						ExpectError: regexp.MustCompile(`Error: attribute 'test_object' is required when 'test_object_protocol' is set to 'HTTP', 'HTTPS' or 'FTP'`),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
 }
 
 func TestResourceGTMTrafficTargetOrder(t *testing.T) {

@@ -1,0 +1,25 @@
+{
+    "block": "blockSpecificIPGeo",
+    "geoControls": {
+        "blockedIPNetworkLists": {
+            "networkList": [
+                "40731_BMROLLOUTGEO","44831_ECSCGEOBLACKLIST"
+            ]
+        }
+    },
+    "ipControls": {
+        "blockedIPNetworkLists": {
+            "networkList": [
+                "49181_ADTIPBLACKLIST","49185_ADTWAFBYPASSLIST"
+            ]
+        },
+        "allowedIPNetworkLists": {
+            "networkList": [
+                "68762_ADYEN", "69601_ADYENPRODWHITELIST"
+            ]
+        }
+    },
+    "ukraineGeoControl": {
+        "action": "alert"
+    }
+}

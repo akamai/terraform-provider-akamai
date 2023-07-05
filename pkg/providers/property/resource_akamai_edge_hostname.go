@@ -7,14 +7,16 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/hapi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
+
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/logger"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/hapi"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/tools"
 )
 
 func resourceSecureEdgeHostName() *schema.Resource {
@@ -31,47 +33,21 @@ func resourceSecureEdgeHostName() *schema.Resource {
 }
 
 var akamaiSecureEdgeHostNameSchema = map[string]*schema.Schema{
-	"product": {
-		Type:          schema.TypeString,
-		Optional:      true,
-		Computed:      true,
-		Deprecated:    akamai.NoticeDeprecatedUseAlias("product"),
-		ConflictsWith: []string{"product_id"},
-		StateFunc:     addPrefixToState("prd_"),
-	},
 	"product_id": {
 		Type:      schema.TypeString,
 		Optional:  true,
 		Computed:  true,
 		StateFunc: addPrefixToState("prd_"),
 	},
-	"contract": {
-		Type:       schema.TypeString,
-		Optional:   true,
-		Computed:   true,
-		Deprecated: akamai.NoticeDeprecatedUseAlias("contract"),
-		StateFunc:  addPrefixToState("ctr_"),
-	},
 	"contract_id": {
-		Type:         schema.TypeString,
-		Optional:     true,
-		Computed:     true,
-		ExactlyOneOf: []string{"contract_id", "contract"},
-		StateFunc:    addPrefixToState("ctr_"),
-	},
-	"group": {
-		Type:       schema.TypeString,
-		Optional:   true,
-		Computed:   true,
-		Deprecated: akamai.NoticeDeprecatedUseAlias("group"),
-		StateFunc:  addPrefixToState("grp_"),
+		Type:      schema.TypeString,
+		Required:  true,
+		StateFunc: addPrefixToState("ctr_"),
 	},
 	"group_id": {
-		Type:         schema.TypeString,
-		Optional:     true,
-		Computed:     true,
-		ExactlyOneOf: []string{"group_id", "group"},
-		StateFunc:    addPrefixToState("grp_"),
+		Type:      schema.TypeString,
+		Required:  true,
+		StateFunc: addPrefixToState("grp_"),
 	},
 	"edge_hostname": {
 		Type:             schema.TypeString,
@@ -106,57 +82,39 @@ var akamaiSecureEdgeHostNameSchema = map[string]*schema.Schema{
 }
 
 func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourceSecureEdgeHostNameCreate")
 
-	client := inst.Client(meta)
+	client := Client(meta)
 
-	// Schema guarantees group_id/group are strings and one or the other is set
-	var groupID string
-	if got, ok := d.GetOk("group_id"); ok {
-		groupID = got.(string)
-	} else {
-		groupID = d.Get("group").(string)
+	groupID, err := tf.GetStringValue("group_id", d)
+	if err != nil {
+		return diag.FromErr(err)
 	}
 	groupID = tools.AddPrefix(groupID, "grp_")
-	// set group/groupID into ResourceData
 	if err := d.Set("group_id", groupID); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 	}
-	if err := d.Set("group", groupID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
-	}
 
-	// Schema guarantees contract_id/contract are strings and one or the other is set
-	var contractID string
-	if got, ok := d.GetOk("contract_id"); ok {
-		contractID = got.(string)
-	} else {
-		contractID = d.Get("contract").(string)
+	contractID, err := tf.GetStringValue("contract_id", d)
+	if err != nil {
+		return diag.FromErr(err)
 	}
 	contractID = tools.AddPrefix(contractID, "ctr_")
-	// set contract/contract_id into ResourceData
 	if err := d.Set("contract_id", contractID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
-	}
-	if err := d.Set("contract", contractID); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 	}
 
 	logger.Debugf("Edgehostnames GROUP = %v", groupID)
 	logger.Debugf("Edgehostnames CONTRACT = %v", contractID)
 
-	// Schema no longer guarantees that product_id/product are set, one of them is required only for creation
-	productID, err := tf.ResolveKeyStringState(d, "product_id", "product")
+	// Schema no longer guarantees that product_id is set, this field is required only for creation
+	productID, err := tf.GetStringValue("product_id", d)
 	if err != nil {
-		return diag.Errorf("one of `%s` must be specified for creation", strings.Join([]string{"product_id", "product"}, ", "))
+		return diag.Errorf("`product_id` must be specified for creation")
 	}
 	productID = tools.AddPrefix(productID, "prd_")
-	// set product/product_id into ResourceData
 	if err := d.Set("product_id", productID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
-	}
-	if err := d.Set("product", productID); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 	}
 
@@ -231,40 +189,27 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 }
 
 func resourceSecureEdgeHostNameRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourceSecureEdgeHostNameRead")
 
-	client := inst.Client(meta)
+	client := Client(meta)
 
-	// Schema guarantees group_id/group are strings and one or the other is set
-	var groupID string
-	if got, ok := d.GetOk("group_id"); ok {
-		groupID = got.(string)
-	} else {
-		groupID = d.Get("group").(string)
+	groupID, err := tf.GetStringValue("group_id", d)
+	if err != nil {
+		return diag.FromErr(err)
 	}
 	groupID = tools.AddPrefix(groupID, "grp_")
-	// set group/groupID into ResourceData
 	if err := d.Set("group_id", groupID); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 	}
-	if err := d.Set("group", groupID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
-	}
 
-	// Schema guarantees contract_id/contract are strings and one or the other is set
-	var contractID string
-	if got, ok := d.GetOk("contract_id"); ok {
-		contractID = got.(string)
-	} else {
-		contractID = d.Get("contract").(string)
+	contractID, err := tf.GetStringValue("contract_id", d)
+	if err != nil {
+		return diag.FromErr(err)
 	}
 	contractID = tools.AddPrefix(contractID, "ctr_")
 	// set contract/contract_id into ResourceData
 	if err := d.Set("contract_id", contractID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
-	}
-	if err := d.Set("contract", contractID); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 	}
 
@@ -272,15 +217,9 @@ func resourceSecureEdgeHostNameRead(ctx context.Context, d *schema.ResourceData,
 	var productID string
 	if got, ok := d.GetOk("product_id"); ok {
 		productID = got.(string)
-	} else {
-		productID = d.Get("product").(string)
 	}
 	productID = tools.AddPrefix(productID, "prd_")
-	// set product/product_id into ResourceData
 	if err := d.Set("product_id", productID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
-	}
-	if err := d.Set("product", productID); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 	}
 
@@ -322,7 +261,7 @@ func resourceSecureEdgeHostNameRead(ctx context.Context, d *schema.ResourceData,
 }
 
 func resourceSecureEdgeHostNameUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourceSecureEdgeHostNameUpdate")
 
 	if d.HasChange("ip_behavior") {
@@ -353,7 +292,7 @@ func resourceSecureEdgeHostNameUpdate(ctx context.Context, d *schema.ResourceDat
 			ipBehavior = "IPV6_IPV4_DUALSTACK"
 		}
 
-		if _, err = inst.HapiClient(meta).UpdateEdgeHostname(ctx, hapi.UpdateEdgeHostnameRequest{
+		if _, err = HapiClient(meta).UpdateEdgeHostname(ctx, hapi.UpdateEdgeHostnameRequest{
 			DNSZone:           dnsZone,
 			RecordName:        strings.ReplaceAll(edgeHostname, "."+dnsZone, ""),
 			Comments:          fmt.Sprintf("change /ipVersionBehavior to %s", ipBehavior),
@@ -381,7 +320,7 @@ Failed to restore previous local schema values. The schema will remain in tainte
 }
 
 func resourceSecureEdgeHostNameDelete(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourceSecureEdgeHostNameDelete")
 	logger.Debug("DELETING")
 	logger.Info("PAPI does not support edge hostname deletion - resource will only be removed from state")
@@ -391,8 +330,8 @@ func resourceSecureEdgeHostNameDelete(_ context.Context, d *schema.ResourceData,
 }
 
 func resourceSecureEdgeHostNameImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
-	meta := akamai.Meta(m)
-	client := inst.Client(meta)
+	meta := meta.Must(m)
+	client := Client(meta)
 
 	parts := strings.Split(d.Id(), ",")
 	if len(parts) < 3 {
@@ -412,13 +351,7 @@ func resourceSecureEdgeHostNameImport(ctx context.Context, d *schema.ResourceDat
 		return nil, err
 	}
 
-	if err := d.Set("contract", edgehostnameDetails.ContractID); err != nil {
-		return nil, fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
-	}
 	if err := d.Set("contract_id", edgehostnameDetails.ContractID); err != nil {
-		return nil, fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
-	}
-	if err := d.Set("group", edgehostnameDetails.GroupID); err != nil {
 		return nil, fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("group_id", edgehostnameDetails.GroupID); err != nil {
@@ -458,7 +391,7 @@ func diffSuppressEdgeHostname(_, oldVal, newVal string, _ *schema.ResourceData) 
 }
 
 func suppressEdgeHostnameUseCases(_, oldVal, newVal string, _ *schema.ResourceData) bool {
-	logger := akamai.Log("PAPI", "suppressEdgeHostnameUseCases")
+	logger := logger.Get("PAPI", "suppressEdgeHostnameUseCases")
 	if oldVal == newVal {
 		return true
 	}

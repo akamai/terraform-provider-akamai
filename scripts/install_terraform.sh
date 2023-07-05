@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-VERSION="1.0.11"
+VERSION="1.4.6"
 
 [[ -n $(which terraform) ]] && echo "Terraform already installed" && exit 0
 

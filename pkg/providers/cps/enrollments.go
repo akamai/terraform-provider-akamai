@@ -9,12 +9,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/cps"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
-	cpstools "github.com/akamai/terraform-provider-akamai/v4/pkg/providers/cps/tools"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cps"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
+	cpstools "github.com/akamai/terraform-provider-akamai/v5/pkg/providers/cps/tools"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 	"github.com/apex/log"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -350,7 +350,7 @@ func newChallenge(c *cps.Challenge, dv *cps.DV) challenge {
 }
 
 func enrollmentDelete(ctx context.Context, d *schema.ResourceData, m interface{}, functionName string) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("CPS", functionName)
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
@@ -383,7 +383,7 @@ func readAttrs(enrollment *cps.Enrollment, d *schema.ResourceData) (map[string]i
 		return nil, err
 	}
 	for _, san := range enrollment.CSR.SANS {
-		if enrollment.ValidationType == "dv" && (sansFromSchema.Len() == 0 || !sansFromSchema.Contains(enrollment.CSR.CN)) && san == enrollment.CSR.CN {
+		if (sansFromSchema.Len() == 0 || !sansFromSchema.Contains(enrollment.CSR.CN)) && san == enrollment.CSR.CN {
 			continue
 		}
 		sans = append(sans, san)

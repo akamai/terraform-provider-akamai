@@ -8,9 +8,9 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/botman"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/botman"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -49,7 +49,7 @@ func resourceBotCategoryException() *schema.Resource {
 }
 
 func resourceBotCategoryExceptionCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("botman", "resourceBotCategoryExceptionCreate")
 	logger.Debugf("in resourceBotCategoryExceptionCreate")
@@ -93,7 +93,7 @@ func resourceBotCategoryExceptionCreate(ctx context.Context, d *schema.ResourceD
 }
 
 func resourceBotCategoryExceptionRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("botman", "resourceBotCategoryExceptionRead")
 	logger.Debugf("in resourceBotCategoryExceptionRead")
@@ -145,7 +145,7 @@ func resourceBotCategoryExceptionRead(ctx context.Context, d *schema.ResourceDat
 }
 
 func resourceBotCategoryExceptionUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("botman", "resourceBotCategoryExceptionUpdate")
 	logger.Debugf("in resourceBotCategoryExceptionUpdate")
@@ -189,7 +189,7 @@ func resourceBotCategoryExceptionUpdate(ctx context.Context, d *schema.ResourceD
 }
 
 func resourceBotCategoryExceptionDelete(_ context.Context, _ *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("botman", "resourceBotCategoryExceptionDelete")
 	logger.Debugf("in resourceBotCategoryExceptionDelete")
 	logger.Info("Botman API does not support bot category exception deletion - resource will only be removed from state")

@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/botman"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/botman"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -47,7 +47,7 @@ func resourceCustomClient() *schema.Resource {
 }
 
 func resourceCustomClientCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("botman", "resourceCustomClientCreateAction")
 	logger.Debugf("in resourceCustomClientCreateAction")
@@ -85,7 +85,7 @@ func resourceCustomClientCreate(ctx context.Context, d *schema.ResourceData, m i
 }
 
 func resourceCustomClientRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("botman", "resourceCustomClientReadAction")
 	logger.Debugf("in resourceCustomClientReadAction")
@@ -139,7 +139,7 @@ func resourceCustomClientRead(ctx context.Context, d *schema.ResourceData, m int
 }
 
 func resourceCustomClientUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("botman", "resourceCustomClientUpdateAction")
 	logger.Debugf("in resourceCustomClientUpdateAction")
@@ -183,7 +183,7 @@ func resourceCustomClientUpdate(ctx context.Context, d *schema.ResourceData, m i
 }
 
 func resourceCustomClientDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("botman", "resourceCustomClientDeleteAction")
 	logger.Debugf("in resourceCustomClientDeleteAction")

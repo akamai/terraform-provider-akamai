@@ -8,11 +8,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/cps"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
-	toolsCPS "github.com/akamai/terraform-provider-akamai/v4/pkg/providers/cps/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cps"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
+	toolsCPS "github.com/akamai/terraform-provider-akamai/v5/pkg/providers/cps/tools"
 	"github.com/apex/log"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -107,7 +107,7 @@ type attributes struct {
 }
 
 func resourceCPSUploadCertificateCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("CPS", "resourceCPSUploadCertificateCreate")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
 	client := inst.Client(meta)
@@ -117,7 +117,7 @@ func resourceCPSUploadCertificateCreate(ctx context.Context, d *schema.ResourceD
 }
 
 func resourceCPSUploadCertificateRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("CPS", "resourceCPSUploadCertificateRead")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
 	client := inst.Client(meta)
@@ -182,7 +182,7 @@ func resourceCPSUploadCertificateRead(ctx context.Context, d *schema.ResourceDat
 }
 
 func resourceCPSUploadCertificateUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("CPS", "resourceCPSUploadCertificateUpdate")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
 	client := inst.Client(meta)
@@ -268,7 +268,7 @@ func resourceCPSUploadCertificateUpdate(ctx context.Context, d *schema.ResourceD
 }
 
 func resourceCPSUploadCertificateDelete(_ context.Context, _ *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("CPS", "resourceCPSUploadCertificateDelete")
 	logger.Debug("Deleting CPS upload certificate configuration")
 	logger.Info("CPS upload certificate deletion - resource will only be removed from local state")
@@ -336,8 +336,8 @@ func upsertUploadCertificate(ctx context.Context, d *schema.ResourceData, m inte
 }
 
 // checkUnacknowledgedWarnings checks if there are unacknowledged warnings for a certificate
-func checkUnacknowledgedWarnings(ctx context.Context, diff *schema.ResourceDiff, i interface{}) error {
-	meta := akamai.Meta(i)
+func checkUnacknowledgedWarnings(ctx context.Context, diff *schema.ResourceDiff, m interface{}) error {
+	meta := meta.Must(m)
 	logger := meta.Log("CPS", "checkUnacknowledgedWarnings")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
 	client := inst.Client(meta)
@@ -649,7 +649,7 @@ func getCPSUploadCertificateAttrs(d *schema.ResourceData) (*attributes, error) {
 }
 
 func resourceCPSUploadCertificateImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("CPS", "resourceCPSUploadCertificateImport")
 	ctx = session.ContextWithOptions(
 		ctx,

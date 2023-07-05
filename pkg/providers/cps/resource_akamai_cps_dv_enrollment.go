@@ -8,11 +8,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/cps"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
-	cpstools "github.com/akamai/terraform-provider-akamai/v4/pkg/providers/cps/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cps"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/tools"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
+	cpstools "github.com/akamai/terraform-provider-akamai/v5/pkg/providers/cps/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -90,12 +91,6 @@ func resourceCPSDVEnrollment() *schema.Resource {
 				MaxItems:    1,
 				Elem:        csr,
 				Description: "Certificate signing request generated during enrollment creation",
-			},
-			"enable_multi_stacked_certificates": {
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Deprecated:  "Deprecated, don't use; always false",
-				Description: "Enable Dual-Stacked certificate deployment for enrollment",
 			},
 			"network_configuration": {
 				Type:        schema.TypeSet,
@@ -204,10 +199,12 @@ func resourceCPSDVEnrollment() *schema.Resource {
 				if !diff.HasChange("sans") {
 					return nil
 				}
-				domainsToValidate := []interface{}{map[string]interface{}{"domain": diff.Get("common_name").(string)}}
+				domainsToValidate := []interface{}{map[string]interface{}{
+					"domain": strings.ToLower(diff.Get("common_name").(string)),
+				}}
 				if sans, ok := diff.Get("sans").(*schema.Set); ok {
 					for _, san := range sans.List() {
-						domain := map[string]interface{}{"domain": san.(string)}
+						domain := map[string]interface{}{"domain": strings.ToLower(san.(string))}
 						domainsToValidate = append(domainsToValidate, domain)
 					}
 				}
@@ -223,7 +220,7 @@ func resourceCPSDVEnrollment() *schema.Resource {
 }
 
 func resourceCPSDVEnrollmentCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("CPS", "resourceCPSDVEnrollmentCreate")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
@@ -307,6 +304,11 @@ func resourceCPSDVEnrollmentCreate(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 
+	// save ClientMutualAuthentication and unset it in enrollment request struct
+	// create request must not have it set; in case its not nil, we will run update later to add it
+	clientMutualAuthentication := enrollment.NetworkConfiguration.ClientMutualAuthentication
+	enrollment.NetworkConfiguration.ClientMutualAuthentication = nil
+
 	req := cps.CreateEnrollmentRequest{
 		Enrollment:       enrollment,
 		ContractID:       strings.TrimPrefix(contractID, "ctr_"),
@@ -322,17 +324,29 @@ func resourceCPSDVEnrollmentCreate(ctx context.Context, d *schema.ResourceData, 
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	if err = waitForVerification(ctx, logger, client, res.ID, acknowledgeWarnings, nil); err != nil {
-		return diag.FromErr(err)
+
+	// when clientMutualAuthentication was provided, insert it back to enrollment and send the update request
+	if clientMutualAuthentication != nil {
+		logger.Debug("Updating ClientMutualAuthentication configuration")
+		enrollment.NetworkConfiguration.ClientMutualAuthentication = clientMutualAuthentication
+		req := cps.UpdateEnrollmentRequest{
+			EnrollmentID:              res.ID,
+			Enrollment:                enrollment,
+			AllowCancelPendingChanges: tools.BoolPtr(true),
+		}
+		_, err := client.UpdateEnrollment(ctx, req)
+		if err != nil {
+			return diag.FromErr(err)
+		}
 	}
-	if err != nil {
+	if err = waitForVerification(ctx, logger, client, res.ID, acknowledgeWarnings, nil); err != nil {
 		return diag.FromErr(err)
 	}
 	return resourceCPSDVEnrollmentRead(ctx, d, m)
 }
 
 func resourceCPSDVEnrollmentRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("CPS", "resourceCPSDVEnrollmentRead")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
@@ -437,7 +451,7 @@ func resourceCPSDVEnrollmentRead(ctx context.Context, d *schema.ResourceData, m 
 }
 
 func resourceCPSDVEnrollmentUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("CPS", "resourceCPSDVEnrollmentUpdate")
 	ctx = session.ContextWithOptions(
 		ctx,
@@ -559,7 +573,7 @@ func resourceCPSDVEnrollmentDelete(ctx context.Context, d *schema.ResourceData, 
 }
 
 func resourceCPSDVEnrollmentImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("CPS", "resourceCPSDVEnrollmentImport")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(

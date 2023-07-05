@@ -12,10 +12,10 @@ import (
 
 	"github.com/apex/log"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/cloudlets"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cloudlets"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -94,7 +94,7 @@ var (
 )
 
 func resourcePolicyActivationDelete(ctx context.Context, rd *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Cloudlets", "resourcePolicyActivationDelete")
 	logger.Debug("Deleting cloudlets policy activation")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
@@ -157,7 +157,7 @@ func resourcePolicyActivationDelete(ctx context.Context, rd *schema.ResourceData
 }
 
 func resourcePolicyActivationUpdate(ctx context.Context, rd *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Cloudlets", "resourcePolicyActivationUpdate")
 
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
@@ -269,7 +269,7 @@ func resourcePolicyActivationUpdate(ctx context.Context, rd *schema.ResourceData
 }
 
 func resourcePolicyActivationCreate(ctx context.Context, rd *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Cloudlets", "resourcePolicyActivationCreate")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
 	client := inst.Client(meta)
@@ -380,7 +380,7 @@ func resourcePolicyActivationCreate(ctx context.Context, rd *schema.ResourceData
 }
 
 func resourcePolicyActivationRead(ctx context.Context, rd *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Cloudlets", "resourcePolicyActivationRead")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
 	client := inst.Client(meta)

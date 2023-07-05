@@ -1,14 +1,15 @@
 package property
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"regexp"
 	"strings"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/assert"
@@ -137,12 +138,6 @@ func TestResProperty(t *testing.T) {
 		}
 	}
 
-	getEdgeHostnames := func(contractID, groupID string, edgehostnames papi.EdgeHostnameItems) BehaviorFunc {
-		return func(state *TestState) {
-			ExpectGetEdgeHostnames(state.Client, contractID, groupID, edgehostnames).Once()
-		}
-	}
-
 	getPropertyVersions := func(propertyID, propertyName, contractID, groupID string, items ...papi.PropertyVersionItems) BehaviorFunc {
 		return func(state *TestState) {
 			versionItems := &state.VersionItems
@@ -248,10 +243,7 @@ func TestResProperty(t *testing.T) {
 			resource.TestCheckResourceAttr("akamai_property.test", "production_version", productionVersion),
 			resource.TestCheckResourceAttr("akamai_property.test", "name", "test_property"),
 			resource.TestCheckResourceAttr("akamai_property.test", "contract_id", "ctr_0"),
-			resource.TestCheckResourceAttr("akamai_property.test", "contract", "ctr_0"),
 			resource.TestCheckResourceAttr("akamai_property.test", "group_id", "grp_0"),
-			resource.TestCheckResourceAttr("akamai_property.test", "group", "grp_0"),
-			resource.TestCheckResourceAttr("akamai_property.test", "product", "prd_0"),
 			resource.TestCheckResourceAttr("akamai_property.test", "product_id", "prd_0"),
 			resource.TestCheckResourceAttr("akamai_property.test", "rule_warnings.#", "0"),
 			resource.TestCheckResourceAttr("akamai_property.test", "rules", rules),
@@ -278,7 +270,6 @@ func TestResProperty(t *testing.T) {
 			advanceVersion("prp_0", 1, 2),
 			getPropertyVersionResources("prp_0", "grp_0", "ctr_0", 2, papi.VersionStatusDeactivated, papi.VersionStatusInactive),
 			setHostnames("prp_0", 2, "to2.test.domain"),
-			getEdgeHostnames("ctr_0", "grp_0", papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{{DomainPrefix: "from.test.domain"}}}),
 		),
 		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
 			return []resource.TestStep{
@@ -320,7 +311,6 @@ func TestResProperty(t *testing.T) {
 			advanceVersion("prp_0", 1, 2),
 			getPropertyVersionResources("prp_0", "grp_0", "ctr_0", 2, papi.VersionStatusInactive, papi.VersionStatusDeactivated),
 			setHostnames("prp_0", 2, "to2.test.domain"),
-			getEdgeHostnames("ctr_0", "grp_0", papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{{DomainPrefix: "from.test.domain"}}}),
 		),
 		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
 			return []resource.TestStep{
@@ -362,7 +352,6 @@ func TestResProperty(t *testing.T) {
 			advanceVersion("prp_0", 1, 2),
 			getPropertyVersionResources("prp_0", "grp_0", "ctr_0", 2, papi.VersionStatusInactive, papi.VersionStatusActive),
 			setHostnames("prp_0", 2, "to2.test.domain"),
-			getEdgeHostnames("ctr_0", "grp_0", papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{{DomainPrefix: "from.test.domain"}}}),
 		),
 		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
 			return []resource.TestStep{
@@ -404,7 +393,6 @@ func TestResProperty(t *testing.T) {
 			advanceVersion("prp_0", 1, 2),
 			getPropertyVersionResources("prp_0", "grp_0", "ctr_0", 2, papi.VersionStatusInactive, papi.VersionStatusActive),
 			setHostnames("prp_0", 2, "to2.test.domain"),
-			getEdgeHostnames("ctr_0", "grp_0", papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{{DomainPrefix: "from.test.domain"}}}),
 		),
 		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
 			return []resource.TestStep{
@@ -444,7 +432,6 @@ func TestResProperty(t *testing.T) {
 			getPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive),
 			setHostnames("prp_0", 1, "to.test.domain"),
 			setHostnames("prp_0", 1, "to2.test.domain"),
-			getEdgeHostnames("ctr_0", "grp_0", papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{{DomainPrefix: "from.test.domain"}}}),
 		),
 		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
 			return []resource.TestStep{
@@ -476,7 +463,6 @@ func TestResProperty(t *testing.T) {
 			getPropertyVersionResources("prp_0", "grp_0", "ctr_0", 2, papi.VersionStatusInactive, papi.VersionStatusInactive),
 			GetVersionResources("prp_0", "ctr_0", "grp_0", 2),
 			setHostnames("prp_0", 2, "to.test.domain"),
-			getEdgeHostnames("ctr_0", "grp_0", papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{{DomainPrefix: "from.test.domain"}}}),
 		),
 		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
 			return []resource.TestStep{
@@ -644,48 +630,12 @@ func TestResProperty(t *testing.T) {
 
 		return func(t *testing.T) {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{{
 					Config:      loadFixtureString("testdata/TestResProperty/ConfigError/%s.tf", fixtureName),
 					ExpectError: regexp.MustCompile(rx),
 				}},
 			})
-		}
-	}
-
-	// Test Deprecated Schema Option
-
-	// Run a test case to verify schema attribute deprecation
-	assertDeprecated := func(t *testing.T, attribute string) func(t *testing.T) {
-		return func(t *testing.T) {
-			if resourceProperty().Schema[attribute].Deprecated == "" {
-				t.Fatalf(`%q attribute is not marked deprecated`, attribute)
-			}
-		}
-	}
-
-	// Test Forbidden Schema Option
-
-	// Run a test case to confirm that the user is prompted to read the upgrade guide
-	assertForbiddenAttr := func(t *testing.T, fixtureName string) func(t *testing.T) {
-
-		fixtureName = strings.ReplaceAll(fixtureName, " ", "_")
-
-		return func(t *testing.T) {
-			client := &papi.Mock{}
-			client.Test(T{t})
-
-			useClient(client, nil, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProviderFactories: testAccProviders,
-					Steps: []resource.TestStep{{
-						Config:      loadFixtureString("testdata/TestResProperty/ForbiddenAttr/%s.tf", fixtureName),
-						ExpectError: regexp.MustCompile("See the Akamai Terraform Upgrade Guide"),
-					}},
-				})
-			})
-
-			client.AssertExpectations(t)
 		}
 	}
 
@@ -704,9 +654,9 @@ func TestResProperty(t *testing.T) {
 
 			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProviderFactories: testAccProviders,
-					IsUnitTest:        true,
-					Steps:             tc.Steps(State, fixturePrefix),
+					ProtoV5ProviderFactories: testAccProviders,
+					IsUnitTest:               true,
+					Steps:                    tc.Steps(State, fixturePrefix),
 				})
 			})
 
@@ -789,8 +739,8 @@ func TestResProperty(t *testing.T) {
 			tc.ClientSetup(State)
 			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProviderFactories: testAccProviders,
-					Steps:             tc.Steps(State, ""),
+					ProtoV5ProviderFactories: testAccProviders,
+					Steps:                    tc.Steps(State, ""),
 				})
 			})
 
@@ -807,34 +757,12 @@ func TestResProperty(t *testing.T) {
 		// Test Schema Configuration
 
 		t.Run("Schema Configuration Error: name not given", assertConfigError(t, "name not given", `"name" is required`))
-		t.Run("Schema Configuration Error: neither contract nor contract_id given", assertConfigError(t, "neither contract nor contract_id given", `one of .contract,contract_id. must be specified`))
-		t.Run("Schema Configuration Error: both contract and contract_id given", assertConfigError(t, "both contract and contract_id given", `only one of .contract,contract_id. can be specified`))
-		t.Run("Schema Configuration Error: neither group nor group_id given", assertConfigError(t, "neither group nor group_id given", `one of .group,group_id. must be specified`))
-		t.Run("Schema Configuration Error: both group and group_id given", assertConfigError(t, "both group and group_id given", `only one of .group,group_id. can be specified`))
-		t.Run("Schema Configuration Error: neither product nor product_id given", assertConfigError(t, "neither product nor product_id given", `one of .product,product_id. must be specified`))
-		t.Run("Schema Configuration Error: both product and product_id given", assertConfigError(t, "both product and product_id given", `only one of .product,product_id. can be specified`))
+		t.Run("Schema Configuration Error: contract_id not given", assertConfigError(t, "contract_id not given", `Missing required argument`))
+		t.Run("Schema Configuration Error: group_id not given", assertConfigError(t, "group_id not given", `Missing required argument`))
+		t.Run("Schema Configuration Error: product_id not given", assertConfigError(t, "product_id not given", `Missing required argument`))
 		t.Run("Schema Configuration Error: invalid json rules", assertConfigError(t, "invalid json rules", `rules are not valid JSON`))
 		t.Run("Schema Configuration Error: invalid name given", assertConfigError(t, "invalid name given", `a name must only contain letters, numbers, and these characters: . _ -`))
 		t.Run("Schema Configuration Error: name given too long", assertConfigError(t, "name given too long", `a name must be shorter than 86 characters`))
-
-		// Test Deprecated Schema Option
-
-		t.Run("Schema deprecation: contract", assertDeprecated(t, "contract"))
-		t.Run("Schema deprecation: group", assertDeprecated(t, "group"))
-		t.Run("Schema deprecation: product", assertDeprecated(t, "product"))
-		t.Run("Schema deprecation: cp_code", assertDeprecated(t, "cp_code"))
-		t.Run("Schema deprecation: contact", assertDeprecated(t, "contact"))
-		t.Run("Schema deprecation: origin", assertDeprecated(t, "origin"))
-		t.Run("Schema deprecation: is_secure", assertDeprecated(t, "is_secure"))
-		t.Run("Schema deprecation: variables", assertDeprecated(t, "variables"))
-
-		// Test Forbidden Schema Option
-
-		t.Run("Schema forbidden attribute: cp_code", assertForbiddenAttr(t, "cp_code"))
-		t.Run("Schema forbidden attribute: contact", assertForbiddenAttr(t, "contact"))
-		t.Run("Schema forbidden attribute: origin", assertForbiddenAttr(t, "origin"))
-		t.Run("Schema forbidden attribute: is_secure", assertForbiddenAttr(t, "is_secure"))
-		t.Run("Schema forbidden attribute: variables", assertForbiddenAttr(t, "variables"))
 
 		// Test Lifecycle
 
@@ -846,24 +774,13 @@ func TestResProperty(t *testing.T) {
 		t.Run("Lifecycle: latest version is not active (contract_id without prefix)", assertLifecycle(t, t.Name(), "contract_id without prefix", latestVersionNotActive))
 		t.Run("Lifecycle: latest version active in staging (contract_id without prefix)", assertLifecycle(t, t.Name(), "contract_id without prefix", latestVersionActiveInStaging))
 		t.Run("Lifecycle: latest version active in production (contract_id without prefix)", assertLifecycle(t, t.Name(), "contract_id without prefix", latestVersionActiveInProd))
-		t.Run("Lifecycle: latest version is not active (contract without prefix)", assertLifecycle(t, t.Name(), "contract without prefix", latestVersionNotActive))
-		t.Run("Lifecycle: latest version is active in staging (contract without prefix)", assertLifecycle(t, t.Name(), "contract without prefix", latestVersionActiveInStaging))
-		t.Run("Lifecycle: latest version is active in production (contract without prefix)", assertLifecycle(t, t.Name(), "contract without prefix", latestVersionActiveInProd))
 		t.Run("Lifecycle: latest version is not active (group_id without prefix)", assertLifecycle(t, t.Name(), "group_id without prefix", latestVersionNotActive))
 		t.Run("Lifecycle: latest version is active in staging (group_id without prefix)", assertLifecycle(t, t.Name(), "group_id without prefix", latestVersionActiveInStaging))
 		t.Run("Lifecycle: latest version is active in production (group_id without prefix)", assertLifecycle(t, t.Name(), "group_id without prefix", latestVersionActiveInProd))
-		t.Run("Lifecycle: latest version is not active (group without prefix)", assertLifecycle(t, t.Name(), "group without prefix", latestVersionNotActive))
-		t.Run("Lifecycle: latest version is active in staging (group without prefix)", assertLifecycle(t, t.Name(), "group without prefix", latestVersionActiveInStaging))
-		t.Run("Lifecycle: latest version is active in production (group without prefix)", assertLifecycle(t, t.Name(), "group without prefix", latestVersionActiveInProd))
 		t.Run("Lifecycle: latest version is not active (product_id without prefix)", assertLifecycle(t, t.Name(), "product_id without prefix", latestVersionNotActive))
 		t.Run("Lifecycle: latest version is active in staging (product_id without prefix)", assertLifecycle(t, t.Name(), "product_id without prefix", latestVersionActiveInStaging))
 		t.Run("Lifecycle: latest version is active in production (product_id without prefix)", assertLifecycle(t, t.Name(), "product_id without prefix", latestVersionActiveInProd))
-		t.Run("Lifecycle: latest version is not active (product without prefix)", assertLifecycle(t, t.Name(), "product without prefix", latestVersionNotActive))
-		t.Run("Lifecycle: latest version is active in staging (product without prefix)", assertLifecycle(t, t.Name(), "product without prefix", latestVersionActiveInStaging))
-		t.Run("Lifecycle: latest version is active in production (product without prefix)", assertLifecycle(t, t.Name(), "product without prefix", latestVersionActiveInProd))
 		t.Run("Lifecycle: no diff", assertLifecycle(t, t.Name(), "no diff", noDiff))
-		t.Run("Lifecycle: no diff (product to product_id)", assertLifecycle(t, t.Name(), "product to product_id", noDiff))
-		t.Run("Lifecycle: no diff (product_id to product)", assertLifecycle(t, t.Name(), "product_id to product", noDiff))
 		t.Run("Lifecycle: rules custom diff", assertLifecycle(t, t.Name(), "rules custom diff", rulesCustomDiff))
 		t.Run("Lifecycle: no diff for hostnames (hostnames)", assertLifecycle(t, t.Name(), "hostnames", noDiffForHostnames))
 		t.Run("Lifecycle: new version changed on server", assertLifecycle(t, t.Name(), "new version changed on server", changesMadeOutsideOfTerraform))
@@ -926,7 +843,7 @@ func TestResProperty(t *testing.T) {
 
 			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProviderFactories: testAccProviders,
+					ProtoV5ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
 							Config: loadFixtureString("testdata/%s-step0.tf", t.Name()),
@@ -975,7 +892,7 @@ func TestResProperty(t *testing.T) {
 
 			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProviderFactories: testAccProviders,
+					ProtoV5ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
 							Config: loadFixtureString("testdata/%s/step0.tf", t.Name()),
@@ -1026,7 +943,7 @@ func TestResProperty(t *testing.T) {
 			ExpectRemoveProperty(client, "prp_1", "", "")
 			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProviderFactories: testAccProviders,
+					ProtoV5ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
 							Config: loadFixtureString("testdata/TestResProperty/property_update_with_validation_error_for_rules.tf"),
@@ -1107,7 +1024,7 @@ func TestResProperty(t *testing.T) {
 
 			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProviderFactories: testAccProviders,
+					ProtoV5ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
 							Config: loadFixtureString("testdata/TestResProperty/CreationUpdateNoHostnames/creation/property_create.tf"),
@@ -1163,7 +1080,7 @@ func TestResProperty(t *testing.T) {
 
 			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProviderFactories: testAccProviders,
+					ProtoV5ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
 							Config:      loadFixtureString("testdata/TestResProperty/CreationUpdateNoHostnames/creation/property_create.tf"),
@@ -1211,7 +1128,7 @@ func TestResProperty(t *testing.T) {
 
 			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProviderFactories: testAccProviders,
+					ProtoV5ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
 							Config:      loadFixtureString("testdata/TestResProperty/CreationUpdateNoHostnames/creation/property_create.tf"),
@@ -1254,7 +1171,7 @@ func TestResProperty(t *testing.T) {
 
 			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProviderFactories: testAccProviders,
+					ProtoV5ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{{
 						Config:      loadFixtureString("testdata/TestResProperty/Creation/property.tf"),
 						ExpectError: regexp.MustCompile("group not found: grp_0"),
@@ -1281,7 +1198,7 @@ func TestResProperty(t *testing.T) {
 			client.On("CreateProperty", AnyCTX, req).Return(nil, fmt.Errorf("given property name is not unique"))
 			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProviderFactories: testAccProviders,
+					ProtoV5ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
 							Config:      loadFixtureString("testdata/%s.tf", t.Name()),
@@ -1374,13 +1291,14 @@ func TestResProperty(t *testing.T) {
 							Status:          papi.ActivationStatusActive,
 							ActivationType:  papi.ActivationTypeActivate,
 							SubmitDate:      "2020-10-28T15:04:05Z",
+							NotifyEmails:    []string{"dummy-user@akamai.com"},
 						},
 					},
 				},
 			}, nil).Once()
 		}
 
-		t.Run("error update property version with incorrect edgehostname and update in rule tree", func(t *testing.T) {
+		t.Run("400 from UpdatePropertyVersionHostnames - incorrect/invalid edge hostname", func(t *testing.T) {
 			client := &papi.Mock{}
 			client.Test(T{t})
 			ruleFormat := ""
@@ -1444,7 +1362,7 @@ func TestResProperty(t *testing.T) {
 			expectGetRuleTree(client, "prp_0", 1, ruleTreeRes, nil).Once()
 			expectGetActivations(client, "prp_0", papi.GetActivationsResponse{}, nil).Once()
 			client.On("CreateActivation", mock.Anything, mock.Anything).Return(&papi.CreateActivationResponse{ActivationID: "act_123"}, nil).Once()
-			expectGetActivation(client, "prp_0", "act_123", 1, papi.ActivationNetworkStaging, papi.ActivationStatusActive, papi.ActivationTypeActivate, nil).Once()
+			expectGetActivation(client, "prp_0", "act_123", 1, papi.ActivationNetworkStaging, papi.ActivationStatusActive, papi.ActivationTypeActivate, "", []string{"dummy-user@akamai.com"}, nil).Once()
 
 			// read property
 			propertyReadCtx(client, papi.VersionStatusActive, papi.VersionStatusActive)
@@ -1461,8 +1379,30 @@ func TestResProperty(t *testing.T) {
 			// second step
 			// property update returns an error on the invalid edgehostname
 			ExpectGetPropertyVersion(client, "prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusActive, papi.VersionStatusActive).Once()
-			ExpectGetEdgeHostnames(client, "ctr_0", "grp_0", papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
-				{DomainPrefix: "dxe-2406-issue-example-second.com"}, {DomainPrefix: "dxe-2406-issue.com"}}}).Once()
+			ExpectCreatePropertyVersion(client, "prp_0", "grp_0", "ctr_0", 1, 2)
+
+			ExpectUpdatePropertyVersionHostnames(
+				client, "prp_0", "grp_0", "ctr_0", 2,
+				[]papi.Hostname{
+					{
+						CnameType:            "EDGE_HOSTNAME",
+						CnameFrom:            "dxe-2406-issue-example-second.com",
+						CnameTo:              "dxe-2406-issue-example-second.com.example.net",
+						CertProvisioningType: "CPS_MANAGED",
+					},
+					{
+						CnameType:            "EDGE_HOSTNAME",
+						CnameFrom:            "dxe-2406-issue.com",
+						CnameTo:              "dxe-2406-issue.com.example.net",
+						CertProvisioningType: "CPS_MANAGED",
+					},
+					{
+						CnameType:            "EDGE_HOSTNAME",
+						CnameFrom:            "does-not-exist.com",
+						CnameTo:              "does-not-exist.com.example.net",
+						CertProvisioningType: "CPS_MANAGED",
+					}}, fmt.Errorf("%w: request failed: %s", papi.ErrUpdatePropertyVersionHostnames, errors.New("{\n    \"type\": \"https://problems.luna.akamaiapis.net/papi/v0/property-version-hostname/bad-cnameto\",\n    \"title\": \"Bad `cnameTo`\",\n    \"detail\": \"The System could not find cnameTo value `does-not-exist.com.example.net`.\",\n    \"instance\": \"host/papi/v1/properties/prp_0/versions/2/hostnames?contractId=ctr_0&groupId=grp_0&includeCertStatus=false&validateHostnames=false#efba6490291100b1\",\n    \"status\": 400\n}")),
+			).Once()
 
 			// terraform clean up - terraform test framework attempts to run destroy plan, if an error is returned on second step
 			// activation and property deletion
@@ -1470,14 +1410,14 @@ func TestResProperty(t *testing.T) {
 			client.On("CreateActivation", mock.Anything, mock.Anything).Return(&papi.CreateActivationResponse{
 				ActivationID: "act_123",
 			}, nil).Once()
-			expectGetActivation(client, "prp_0", "act_123", 1, papi.ActivationNetworkStaging, papi.ActivationStatusActive, papi.ActivationTypeDeactivate, nil).Once()
+			expectGetActivation(client, "prp_0", "act_123", 1, papi.ActivationNetworkStaging, papi.ActivationStatusActive, papi.ActivationTypeDeactivate, "", []string{"dummy-user@akamai.com"}, nil).Once()
 			client.On("RemoveProperty", mock.Anything, mock.Anything).Return(&papi.RemovePropertyResponse{
 				Message: "removed",
 			}, nil).Once()
 
 			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProviderFactories: testAccProviders,
+					ProtoV5ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
 							Config: loadFixtureString("testdata/TestResProperty/CreationUpdateIncorrectEdgeHostname/create/property.tf"),
@@ -1492,7 +1432,7 @@ func TestResProperty(t *testing.T) {
 								resource.TestCheckResourceAttr("akamai_property.akaproperty", "id", "prp_0"),
 								resource.TestCheckResourceAttr("akamai_property.akaproperty", "hostnames.#", "3"),
 							),
-							ExpectError: regexp.MustCompile("hostnames with 'cname_from' containing \\[does-not-exist.com] do not exist under this account, you need to remove or replace invalid hostnames entries in your configuration to proceed with property version update"),
+							ExpectError: regexp.MustCompile("Error: updating hostnames: request failed:"),
 						},
 					},
 				})
@@ -1500,7 +1440,6 @@ func TestResProperty(t *testing.T) {
 
 			client.AssertExpectations(t)
 		})
-
 	})
 }
 

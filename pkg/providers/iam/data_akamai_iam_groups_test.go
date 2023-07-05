@@ -10,14 +10,14 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/iam"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/test"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/iam"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/test"
 )
 
 func TestDataGroups(t *testing.T) {
 
 	t.Run("groups can nest 50 levels deep", func(t *testing.T) {
-		assert.Equal(t, 50, groupsNestingDepth(inst.DataSourcesMap["akamai_iam_groups"]), "incorrect nesting depth")
+		assert.Equal(t, 50, groupsNestingDepth(dataSourceIAMGroups()), "incorrect nesting depth")
 	})
 
 	t.Run("happy path", func(t *testing.T) {

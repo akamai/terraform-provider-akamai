@@ -10,10 +10,11 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/imaging"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/imaging"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/logger"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -76,7 +77,7 @@ func resourceImagingPolicyVideo() *schema.Resource {
 }
 
 func resourcePolicyVideoCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Imaging", "resourcePolicyVideoCreate")
 	ctx = session.ContextWithOptions(
 		ctx,
@@ -148,7 +149,7 @@ func upsertPolicyVideo(ctx context.Context, d *schema.ResourceData, m interface{
 }
 
 func resourcePolicyVideoRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Imaging", "resourcePolicyVideoRead")
 	ctx = session.ContextWithOptions(
 		ctx,
@@ -240,7 +241,7 @@ func getPolicyVideoJSON(policy *imaging.PolicyInputVideo) (string, error) {
 }
 
 func resourcePolicyVideoUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Imaging", "resourcePolicyVideoUpdate")
 	ctx = session.ContextWithOptions(
 		ctx,
@@ -253,7 +254,7 @@ func resourcePolicyVideoUpdate(ctx context.Context, d *schema.ResourceData, m in
 }
 
 func resourcePolicyVideoDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Imaging", "resourcePolicyVideoDelete")
 	ctx = session.ContextWithOptions(
 		ctx,
@@ -315,7 +316,7 @@ func resourcePolicyVideoDelete(ctx context.Context, d *schema.ResourceData, m in
 }
 
 func resourcePolicyVideoImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Imaging", "resourcePolicyVideoImport")
 	ctx = session.ContextWithOptions(
 		ctx,
@@ -380,7 +381,7 @@ func diffSuppressPolicyVideo(_, old, new string, _ *schema.ResourceData) bool {
 }
 
 func equalPolicyVideo(old, new string) bool {
-	logger := akamai.Log("Imaging", "equalPolicyVideo")
+	logger := logger.Get("Imaging", "equalPolicyVideo")
 	if old == new {
 		return true
 	}

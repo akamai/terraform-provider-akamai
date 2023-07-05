@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
@@ -54,7 +54,7 @@ func TestDataSourcePAPIPropertyActivation(t *testing.T) {
 		},
 		"check schema property activation - OK": {
 			init: func(m *papi.Mock) {
-				expectGetActivations(m, "prp_test", activationsResponseActivated, nil).Times(5)
+				expectGetActivations(m, "prp_test", generateActivationResponseMock("atv_activation1", "", 1, papi.ActivationTypeActivate, "2020-10-28T14:04:05Z"), nil).Times(5)
 			},
 			steps: []resource.TestStep{
 				{
@@ -111,9 +111,9 @@ func TestDataSourcePAPIPropertyActivation(t *testing.T) {
 			}
 			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProviderFactories: testAccProviders,
-					IsUnitTest:        true,
-					Steps:             test.steps,
+					ProtoV5ProviderFactories: testAccProviders,
+					IsUnitTest:               true,
+					Steps:                    test.steps,
 				})
 			})
 			client.AssertExpectations(t)

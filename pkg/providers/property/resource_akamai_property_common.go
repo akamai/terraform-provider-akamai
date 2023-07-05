@@ -7,14 +7,14 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 )
 
-func getGroup(ctx context.Context, meta akamai.OperationMeta, groupID string) (*papi.Group, error) {
+func getGroup(ctx context.Context, meta meta.Meta, groupID string) (*papi.Group, error) {
 	logger := meta.Log("PAPI", "getGroup")
-	client := inst.Client(meta)
+	client := Client(meta)
 	logger.Debugf("Fetching groups")
 	res, err := client.GetGroups(ctx)
 	if err != nil {
@@ -38,9 +38,9 @@ func getGroup(ctx context.Context, meta akamai.OperationMeta, groupID string) (*
 	return group, nil
 }
 
-func getContract(ctx context.Context, meta akamai.OperationMeta, contractID string) (*papi.Contract, error) {
+func getContract(ctx context.Context, meta meta.Meta, contractID string) (*papi.Contract, error) {
 	logger := meta.Log("PAPI", "getContract")
-	client := inst.Client(meta)
+	client := Client(meta)
 	logger.Debugf("Fetching contract")
 	res, err := client.GetContracts(ctx)
 	if err != nil {
@@ -63,9 +63,9 @@ func getContract(ctx context.Context, meta akamai.OperationMeta, contractID stri
 	return contract, nil
 }
 
-func getProduct(ctx context.Context, meta akamai.OperationMeta, productID, contractID string) (*papi.ProductItem, error) {
+func getProduct(ctx context.Context, meta meta.Meta, productID, contractID string) (*papi.ProductItem, error) {
 	logger := meta.Log("PAPI", "getProduct")
-	client := inst.Client(meta)
+	client := Client(meta)
 	if contractID == "" {
 		return nil, ErrNoContractProvided
 	}
@@ -106,8 +106,8 @@ func convertString(v string) interface{} {
 	return v
 }
 
-func findProperty(ctx context.Context, name string, meta akamai.OperationMeta) (*papi.Property, error) {
-	client := inst.Client(meta)
+func findProperty(ctx context.Context, name string, meta meta.Meta) (*papi.Property, error) {
+	client := Client(meta)
 	results, err := client.SearchProperties(ctx, papi.SearchRequest{Key: papi.SearchKeyPropertyName, Value: name})
 	if err != nil {
 		return nil, err

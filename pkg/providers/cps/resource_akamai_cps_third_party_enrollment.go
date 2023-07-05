@@ -7,11 +7,12 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/cps"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
-	cpstools "github.com/akamai/terraform-provider-akamai/v4/pkg/providers/cps/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cps"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
+	cpstools "github.com/akamai/terraform-provider-akamai/v5/pkg/providers/cps/tools"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -169,7 +170,7 @@ func supressSignatureAlgorithm(_ string, oldValue, newValue string, d *schema.Re
 }
 
 func resourceCPSThirdPartyEnrollmentCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("CPS", "resourceCPSThirdPartyEnrollmentCreate")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
@@ -193,6 +194,11 @@ func resourceCPSThirdPartyEnrollmentCreate(ctx context.Context, d *schema.Resour
 		return diag.FromErr(err)
 	}
 
+	// save ClientMutualAuthentication and unset it in enrollment request struct
+	// create request must not have it set; in case its not nil, we will run update later to add it
+	clientMutualAuthentication := enrollment.NetworkConfiguration.ClientMutualAuthentication
+	enrollment.NetworkConfiguration.ClientMutualAuthentication = nil
+
 	req := cps.CreateEnrollmentRequest{
 		Enrollment:       *enrollment,
 		ContractID:       strings.TrimPrefix(contractID, "ctr_"),
@@ -203,6 +209,21 @@ func resourceCPSThirdPartyEnrollmentCreate(ctx context.Context, d *schema.Resour
 		return diag.FromErr(err)
 	}
 	d.SetId(strconv.Itoa(res.ID))
+
+	// when clientMutualAuthentication was provided, insert it back to enrollment and send the update request
+	if clientMutualAuthentication != nil {
+		logger.Debug("Updating ClientMutualAuthentication configuration")
+		enrollment.NetworkConfiguration.ClientMutualAuthentication = clientMutualAuthentication
+		req := cps.UpdateEnrollmentRequest{
+			EnrollmentID:              res.ID,
+			Enrollment:                *enrollment,
+			AllowCancelPendingChanges: tools.BoolPtr(true),
+		}
+		_, err := client.UpdateEnrollment(ctx, req)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	}
 
 	acknowledgeWarnings, err := tf.GetBoolValue("acknowledge_pre_verification_warnings", d)
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
@@ -221,7 +242,7 @@ func resourceCPSThirdPartyEnrollmentCreate(ctx context.Context, d *schema.Resour
 }
 
 func resourceCPSThirdPartyEnrollmentRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("CPS", "resourceCPSThirdPartyEnrollmentRead")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
@@ -260,7 +281,7 @@ func resourceCPSThirdPartyEnrollmentRead(ctx context.Context, d *schema.Resource
 }
 
 func resourceCPSThirdPartyEnrollmentUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("CPS", "resourceCPSThirdPartyEnrollmentUpdate")
 	ctx = session.ContextWithOptions(
 		ctx,
@@ -399,7 +420,7 @@ func resourceCPSThirdPartyEnrollmentDelete(ctx context.Context, d *schema.Resour
 }
 
 func resourceCPSThirdPartyEnrollmentImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("CPS", "resourceCPSThirdPartyEnrollmentImport")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(

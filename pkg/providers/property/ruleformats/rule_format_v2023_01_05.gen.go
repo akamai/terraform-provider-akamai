@@ -1533,7 +1533,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"breadcrumbs": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Provides per-HTTP transaction visibility into a request for content, regardless of how deep the request goes into the Akamai platform. The `X-Breadcrumbs` response header includes various data, such as network health and the location in the Akamai network used to serve content, which simplifies log review for troubleshooting. This behavior can be used in includes.",
+			Description: "Provides per-HTTP transaction visibility into a request for content, regardless of how deep the request goes into the Akamai platform. The `Akamai-Request-BC` response header includes various data, such as network health and the location in the Akamai network used to serve content, which simplifies log review for troubleshooting. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -3337,7 +3337,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 					"stream_type": {
 						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"BEACON", "LOG", "BEACON_AND_LOG"}, false)),
 						Optional:         true,
-						Description:      "Specify the DataStream type. `LOG` is the only value currently available, corresponding to DataStream 2.",
+						Description:      "Specify the DataStream type.",
 						Type:             schema.TypeString,
 					},
 					"beacon_stream_title": {
@@ -5508,7 +5508,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"fast_invalidate": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Applies Akamai's `Fast Purge` feature to selected edge content, invalidating it within approximately five seconds.  This behavior sends an `If-Modified-Since` request to the origin for subsequent requests, replacing it with origin content if its timestamp is more recent. Otherwise if the origin lacks a `Last-Modified` header, it sends a simple GET request. Note that this behavior does not simply delete content if more recent origin content is unavailable.  See the `Fast Purge API` for an independent way to invalidate selected sets of content, and for more information on the feature. This behavior can be used in includes.",
+			Description: "This behavior is deprecated, but you should not disable or remove it if present. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -5726,7 +5726,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"front_end_optimization": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "This behavior enables `Front End Optimization`, a suite of performance enhancements that accelerate page rendering and reduce download times, for example by `minifying` JavaScript and CSS. This behavior cannot be used in includes.",
+			Description: "This behavior is deprecated, but you should not disable or remove it if present. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -6993,7 +6993,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"input_validation": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "The Input Validation Cloudlet detects anomalous edge requests and helps mitigate repeated invalid requests.  You can configure it using either the Cloudlets Policy Manager application, available within `Control Center` under `Your services` > `Edge logic Cloudlets`, or the `Cloudlets API`. This behavior cannot be used in includes.",
+			Description: "This behavior is deprecated, but you should not disable or remove it if present. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -7792,7 +7792,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"media_client": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Enables client-side reporting through analytics beacon requests. This behavior cannot be used in includes.",
+			Description: "This behavior is deprecated, but you should not disable or remove it if present. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -8210,7 +8210,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"mobile_sdk_performance": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "The Mobile Application Performance software development kit allows you to optimize native iOS and Android apps, effectively extending Akamai's intelligent edge platform's advantages to mobile devices operation in poor network conditions. This behavior enables the SDK's features for this set of requests. This behavior can be used in includes.",
+			Description: "This behavior is deprecated, but you should not disable or remove it if present. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -10553,7 +10553,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"resource_optimizer": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Use this along with `adaptiveAcceleration` to compress and cache resources such as JavaScript, CSS, and font files. This behavior can be used in includes.",
+			Description: "This behavior is deprecated, but you should not disable or remove it if present. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -11862,7 +11862,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"shutr": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "The SHUTR protocol extends HTTP to reduce the amount of header data necessary for web transactions with mobile devices. This behavior can be used in includes.",
+			Description: "This behavior is deprecated, but you should not disable or remove it if present. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -11987,7 +11987,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"standard_tls_migration": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Migrates traffic to Standard TLS. Apply this behavior within the default rule or any `hostname` match.  In some cases you may need to apply this along with the `standardTLSMigrationOverride` behavior. This behavior cannot be used in includes.",
+			Description: "This behavior is deprecated, but you should not disable or remove it if present. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -12074,7 +12074,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"standard_tls_migration_override": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "When applying `standardTLSMigration`, add this behavior if your new certificate is SNI-only, if your property includes any `advanced features`, any Edge IP Binding enabled hosts, or if any foreground downloads are configured. This behavior is for internal usage only. This behavior cannot be used in includes.",
+			Description: "This behavior is deprecated, but you should not disable or remove it if present. This behavior is for internal usage only. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -12353,7 +12353,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"tcp_optimization": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Enables a suite of optimizations targeting buffers, time-outs, and packet loss that improve transmission performance. This behavior is deprecated, but you should not disable or remove it if present. This behavior can be used in includes.",
+			Description: "This behavior is deprecated, but you should not disable or remove it if present. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{

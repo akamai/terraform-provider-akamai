@@ -16,11 +16,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/papi"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 )
 
 func resourceProperty() *schema.Resource {
@@ -96,53 +96,23 @@ func resourceProperty() *schema.Resource {
 				ValidateDiagFunc: validatePropertyName,
 				Description:      "Name to give to the Property (must be unique)",
 			},
-
 			"group_id": {
-				Type:         schema.TypeString,
-				Optional:     true,
-				Computed:     true,
-				ExactlyOneOf: []string{"group_id", "group"},
-				StateFunc:    addPrefixToState("grp_"),
-				Description:  "Group ID to be assigned to the Property",
+				Type:        schema.TypeString,
+				Required:    true,
+				StateFunc:   addPrefixToState("grp_"),
+				Description: "Group ID to be assigned to the Property",
 			},
-			"group": {
-				Type:       schema.TypeString,
-				Optional:   true,
-				Computed:   true,
-				Deprecated: akamai.NoticeDeprecatedUseAlias("group"),
-				StateFunc:  addPrefixToState("grp_"),
-			},
-
 			"contract_id": {
-				Type:         schema.TypeString,
-				Optional:     true,
-				Computed:     true,
-				ExactlyOneOf: []string{"contract_id", "contract"},
-				StateFunc:    addPrefixToState("ctr_"),
-				Description:  "Contract ID to be assigned to the Property",
+				Type:        schema.TypeString,
+				Required:    true,
+				StateFunc:   addPrefixToState("ctr_"),
+				Description: "Contract ID to be assigned to the Property",
 			},
-			"contract": {
-				Type:       schema.TypeString,
-				Optional:   true,
-				Computed:   true,
-				Deprecated: akamai.NoticeDeprecatedUseAlias("contract"),
-				StateFunc:  addPrefixToState("ctr_"),
-			},
-
 			"product_id": {
 				Type:        schema.TypeString,
-				Optional:    true,
-				Computed:    true,
+				Required:    true,
 				Description: "Product ID to be assigned to the Property",
 				StateFunc:   addPrefixToState("prd_"),
-			},
-			"product": {
-				Type:         schema.TypeString,
-				Optional:     true,
-				Computed:     true,
-				ExactlyOneOf: []string{"product_id"},
-				Deprecated:   akamai.NoticeDeprecatedUseAlias("product"),
-				StateFunc:    addPrefixToState("prd_"),
 			},
 
 			// Optional
@@ -249,51 +219,6 @@ func resourceProperty() *schema.Resource {
 				Computed: true,
 				Elem:     papiError(),
 			},
-			"rule_warnings": {
-				Type:       schema.TypeList,
-				Optional:   true,
-				Computed:   true,
-				Elem:       papiError(),
-				Deprecated: "Rule warnings will not be set in state anymore",
-			},
-
-			// Hard-deprecated attributes: These are effectively removed, but we wanted to refer users to the upgrade guide
-			"cp_code": {
-				Type:       schema.TypeString,
-				Optional:   true,
-				Deprecated: akamai.NoticeDeprecatedUseAlias("cp_code"),
-			},
-			"contact": {
-				Type:       schema.TypeSet,
-				Optional:   true,
-				Elem:       &schema.Schema{Type: schema.TypeString},
-				Deprecated: akamai.NoticeDeprecatedUseAlias("contact"),
-			},
-			"origin": {
-				Type:     schema.TypeSet,
-				Optional: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"hostname":              {Type: schema.TypeString, Optional: true},
-						"port":                  {Type: schema.TypeInt, Optional: true},
-						"forward_hostname":      {Type: schema.TypeString, Optional: true},
-						"cache_key_hostname":    {Type: schema.TypeString, Optional: true},
-						"compress":              {Type: schema.TypeBool, Optional: true},
-						"enable_true_client_ip": {Type: schema.TypeBool, Optional: true},
-					},
-				},
-				Deprecated: akamai.NoticeDeprecatedUseAlias("origin"),
-			},
-			"is_secure": {
-				Type:       schema.TypeBool,
-				Optional:   true,
-				Deprecated: akamai.NoticeDeprecatedUseAlias("is_secure"),
-			},
-			"variables": {
-				Type:       schema.TypeString,
-				Optional:   true,
-				Deprecated: akamai.NoticeDeprecatedUseAlias("variables"),
-			},
 		},
 	}
 }
@@ -390,7 +315,7 @@ func compareFields(old, new *papi.RulesUpdate) (string, error) {
 }
 
 func hostNamesCustomDiff(_ context.Context, d *schema.ResourceDiff, m interface{}) error {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "hostNamesCustomDiff")
 
 	o, n := d.GetChange("hostnames")
@@ -442,36 +367,29 @@ func setPropertyVersionsComputedOnRulesChange(_ context.Context, rd *schema.Reso
 }
 
 func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourcePropertyCreate")
-	client := inst.Client(meta)
+	client := Client(meta)
 	ctx = log.NewContext(ctx, logger)
-
-	// Block creation if user has set any hard-deprecated attributes
-	for _, attr := range resPropForbiddenAttrs() {
-		if _, ok := d.GetOk(attr); ok {
-			return diag.Errorf("unsupported attribute: %q See the Akamai Terraform Upgrade Guide", attr)
-		}
-	}
 
 	// Schema guarantees these types
 	propertyName := d.Get("name").(string)
 
-	groupID, err := tf.ResolveKeyStringState(d, "group_id", "group")
+	groupID, err := tf.GetStringValue("group_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	groupID = tools.AddPrefix(groupID, "grp_")
 
-	contractID := d.Get("contract_id").(string)
-	if contractID == "" {
-		contractID = d.Get("contract").(string)
+	contractID, err := tf.GetStringValue("contract_id", d)
+	if err != nil {
+		return diag.FromErr(err)
 	}
 	contractID = tools.AddPrefix(contractID, "ctr_")
 
-	productID := d.Get("product_id").(string)
-	if productID == "" {
-		productID = d.Get("product").(string)
+	productID, err := tf.GetStringValue("product_id", d)
+	if err != nil {
+		return diag.FromErr(err)
 	}
 	productID = tools.AddPrefix(productID, "prd_")
 
@@ -512,7 +430,6 @@ func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m inter
 		"group_id":    groupID,
 		"contract_id": contractID,
 		"product_id":  productID,
-		"product":     productID,
 	}
 	if err := rdSetAttrs(ctx, d, attrs); err != nil {
 		return diag.FromErr(err)
@@ -564,9 +481,9 @@ func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m inter
 }
 
 func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	ctx = log.NewContext(ctx, akamai.Meta(m).Log("PAPI", "resourcePropertyRead"))
+	ctx = log.NewContext(ctx, meta.Must(m).Log("PAPI", "resourcePropertyRead"))
 	logger := log.FromContext(ctx)
-	client := inst.Client(akamai.Meta(m))
+	client := Client(meta.Must(m))
 
 	// Schema guarantees group_id, and contract_id are strings
 	propertyID := d.Id()
@@ -643,9 +560,7 @@ func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interfa
 	attrs := map[string]interface{}{
 		"name":               property.PropertyName,
 		"group_id":           property.GroupID,
-		"group":              property.GroupID,
 		"contract_id":        property.ContractID,
-		"contract":           property.ContractID,
 		"latest_version":     property.LatestVersion,
 		"staging_version":    stagingVersion,
 		"production_version": productionVersion,
@@ -657,7 +572,6 @@ func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interfa
 	}
 	if property.ProductID != "" {
 		attrs["product_id"] = property.ProductID
-		attrs["product"] = property.ProductID
 	}
 	if err := rdSetAttrs(ctx, d, attrs); err != nil {
 		return diag.FromErr(err)
@@ -667,27 +581,16 @@ func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interfa
 }
 
 func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	ctx = log.NewContext(ctx, akamai.Meta(m).Log("PAPI", "resourcePropertyUpdate"))
+	ctx = log.NewContext(ctx, meta.Must(m).Log("PAPI", "resourcePropertyUpdate"))
 	logger := log.FromContext(ctx)
-	client := inst.Client(akamai.Meta(m))
-
-	// Block changes to hard-deprecated attributes
-	for _, attr := range resPropForbiddenAttrs() {
-		if _, ok := d.GetOk(attr); ok && d.HasChange(attr) {
-			d.Partial(true)
-			return diag.Errorf("unsupported attribute: %q See the Akamai Terraform Upgrade Guide", attr)
-		}
-	}
+	client := Client(meta.Must(m))
 
 	diags := diag.Diagnostics{}
 
 	immutable := []string{
 		"group_id",
-		"group",
 		"contract_id",
-		"contract",
 		"product_id",
-		"product",
 	}
 	for _, attr := range immutable {
 		if d.HasChange(attr) {
@@ -748,11 +651,6 @@ func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 		return diag.FromErr(err)
 	}
 
-	hostnames, err := validateHostnames(ctx, d, client, contractID, groupID)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
 	// if read_version is not the latest version or not editable then create a new version from it before proceeding
 	if (propertyVersion != property.LatestVersion) || (resp.Version.ProductionStatus != papi.VersionStatusInactive || resp.Version.StagingStatus != papi.VersionStatusInactive) {
 		// The latest version has been activated on either production or staging, so we need to create a new version to apply changes on
@@ -769,7 +667,9 @@ func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 
 	// hostnames
 	if d.HasChange("hostnames") {
+		hostnamesVal, err := tf.GetSetValue("hostnames", d)
 		if err == nil {
+			hostnames := mapToHostnames(hostnamesVal.List())
 			if len(hostnames) > 0 {
 				if err := updatePropertyHostnames(ctx, client, property, hostnames); err != nil {
 					d.Partial(true)
@@ -794,8 +694,8 @@ func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 }
 
 func resourcePropertyDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	ctx = log.NewContext(ctx, akamai.Meta(m).Log("PAPI", "resourcePropertyDelete"))
-	client := inst.Client(akamai.Meta(m))
+	ctx = log.NewContext(ctx, meta.Must(m).Log("PAPI", "resourcePropertyDelete"))
+	client := Client(meta.Must(m))
 
 	propertyID := d.Id()
 	contractID := tools.AddPrefix(d.Get("contract_id").(string), "ctr_")
@@ -809,7 +709,7 @@ func resourcePropertyDelete(ctx context.Context, d *schema.ResourceData, m inter
 }
 
 func resourcePropertyImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
-	ctx = log.NewContext(ctx, akamai.Meta(m).Log("PAPI", "resourcePropertyImport"))
+	ctx = log.NewContext(ctx, meta.Must(m).Log("PAPI", "resourcePropertyImport"))
 
 	// User-supplied import ID is a comma-separated list of propertyID[,groupID[,contractID]]
 	// contractID and groupID are optional as long as the propertyID is sufficient to fetch the property
@@ -849,7 +749,7 @@ func resourcePropertyImport(ctx context.Context, d *schema.ResourceData, m inter
 					return nil, ErrPropertyVersionNotFound
 				}
 				// if we ran validation and we actually have a network name, we still need to fetch the desired version number
-				_, attrs["read_version"], err = fetchProperty(ctx, inst.Client(akamai.Meta(m)), propertyID, groupID, contractID, version)
+				_, attrs["read_version"], err = fetchProperty(ctx, Client(meta.Must(m)), propertyID, groupID, contractID, version)
 				if err != nil {
 					return nil, err
 				}
@@ -870,9 +770,9 @@ func resourcePropertyImport(ctx context.Context, d *schema.ResourceData, m inter
 	var property *papi.Property
 	var v int
 	if !isDefaultVersion(version) {
-		property, v, err = fetchProperty(ctx, inst.Client(akamai.Meta(m)), propertyID, groupID, contractID, version)
+		property, v, err = fetchProperty(ctx, Client(meta.Must(m)), propertyID, groupID, contractID, version)
 	} else {
-		property, err = fetchLatestProperty(ctx, inst.Client(akamai.Meta(m)), propertyID, groupID, contractID)
+		property, err = fetchLatestProperty(ctx, Client(meta.Must(m)), propertyID, groupID, contractID)
 	}
 	if err != nil {
 		return nil, err
@@ -907,16 +807,6 @@ func parseVersionNumber(version string) (int, error) {
 	}
 	versionNumber, err := strconv.Atoi(matches[1])
 	return versionNumber, err
-}
-
-func resPropForbiddenAttrs() []string {
-	return []string{
-		"cp_code",
-		"contact",
-		"origin",
-		"is_secure",
-		"variables",
-	}
 }
 
 func createProperty(ctx context.Context, client papi.PAPI, propertyName, groupID, contractID, productID, ruleFormat string) (propertyID string, err error) {
@@ -1327,51 +1217,6 @@ func rdSetAttrs(ctx context.Context, d *schema.ResourceData, AttributeValues map
 	}
 
 	return nil
-}
-
-func contains(edgeHostnames *papi.GetEdgeHostnamesResponse, hostname papi.Hostname) bool {
-	for _, v := range edgeHostnames.EdgeHostnames.Items {
-		if hostname.CnameFrom == v.DomainPrefix {
-			return true
-		}
-	}
-	return false
-}
-
-func checkHostnames(hostnames []papi.Hostname, edgeHostnames *papi.GetEdgeHostnamesResponse) error {
-	invalidHostnames := make([]string, 0)
-	for _, v := range hostnames {
-		if !contains(edgeHostnames, v) {
-			invalidHostnames = append(invalidHostnames, v.CnameFrom)
-		}
-	}
-	if len(invalidHostnames) > 0 {
-		return fmt.Errorf("hostnames with 'cname_from' containing %s do not exist under this account, you need to remove or replace invalid hostnames entries in your configuration to proceed with property version update", invalidHostnames)
-	}
-	return nil
-}
-
-func validateHostnames(ctx context.Context, d *schema.ResourceData, client papi.PAPI, contractID, groupID string) ([]papi.Hostname, error) {
-	hostnames := make([]papi.Hostname, 0)
-	if d.HasChange("hostnames") {
-		hostnameVal, err := tf.GetSetValue("hostnames", d)
-		if err != nil {
-			return nil, err
-		}
-		edgeHostnames, err := client.GetEdgeHostnames(ctx, papi.GetEdgeHostnamesRequest{
-			ContractID: contractID,
-			GroupID:    groupID,
-		})
-		if err != nil {
-			return nil, err
-		}
-
-		hostnames = mapToHostnames(hostnameVal.List())
-		if err := checkHostnames(hostnames, edgeHostnames); err != nil {
-			return nil, err
-		}
-	}
-	return hostnames, nil
 }
 
 func needsUpdate(ctx context.Context, d *schema.ResourceData, formatNeedsUpdate, rulesNeedUpdate bool, rulesJSON []byte, ruleFormat string, client papi.PAPI, property papi.Property) error {

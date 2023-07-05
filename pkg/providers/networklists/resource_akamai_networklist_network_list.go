@@ -7,9 +7,9 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/networklists"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/networklists"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -99,7 +99,7 @@ func resourceNetworkList() *schema.Resource {
 }
 
 func resourceNetworkListCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("NETWORKLIST", "resourceNetworkListCreate")
 
@@ -212,7 +212,7 @@ func resourceNetworkListCreate(ctx context.Context, d *schema.ResourceData, m in
 }
 
 func resourceNetworkListUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("NETWORKLIST", "resourceNetworkListUpdate")
 
@@ -306,7 +306,7 @@ func resourceNetworkListUpdate(ctx context.Context, d *schema.ResourceData, m in
 }
 
 func resourceNetworkListDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("NETWORKLIST", "resourceNetworkListRemove")
 
@@ -323,7 +323,7 @@ func resourceNetworkListDelete(ctx context.Context, d *schema.ResourceData, m in
 }
 
 func resourceNetworkListRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("NETWORKLIST", "resourceNetworkListRead")
 
@@ -513,7 +513,7 @@ func RemoveIndex(hl []string, index int) []string {
 // value specified in the resources's ID, to ensure that the user has not inadvertently modified the configuration's
 // value; any such modifications indicate an incorrect understanding of the Update operation.
 func verifyContractGroupUnchanged(_ context.Context, d *schema.ResourceDiff, m interface{}) error {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("NETWORKLIST", "VerifyContractGroupUnchanged")
 
 	if d.HasChange("contract_id") {
@@ -542,7 +542,7 @@ func verifyContractGroupUnchanged(_ context.Context, d *schema.ResourceDiff, m i
 // markSyncPointComputedIfListModified sets 'sync_point' field as new computed
 // if a new version of network list is expected to be created.
 func markSyncPointComputedIfListModified(_ context.Context, d *schema.ResourceDiff, m interface{}) error {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("NETWORKLIST", "MarkSyncPointComputedIfListModified")
 	if d.HasChange("list") {
 		logger.Debug("setting sync_point as new computed")

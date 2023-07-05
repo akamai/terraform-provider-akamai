@@ -7,9 +7,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -47,25 +47,10 @@ func resourceActivations() *schema.Resource {
 				Default:     "STAGING",
 				Description: "Network on which to activate the configuration version (STAGING or PRODUCTION)",
 			},
-			"activate": {
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Default:     true,
-				Description: "Whether to activate or deactivate the specified security configuration and version",
-				Deprecated:  `The setting activate has been deprecated; "terraform apply" will always perform activation. (Use "terraform destroy" for deactivation.)`,
-			},
 			"note": {
-				Type:          schema.TypeString,
-				Optional:      true,
-				Description:   "Note describing the activation. Will use timestamp if omitted.",
-				ConflictsWith: []string{"notes"},
-			},
-			"notes": {
-				Type:          schema.TypeString,
-				Optional:      true,
-				Description:   "Note describing the activation",
-				Deprecated:    `The setting notes has been deprecated. Use "note" instead.`,
-				ConflictsWith: []string{"note"},
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Note describing the activation. Will use timestamp if omitted.",
 			},
 			"notification_emails": {
 				Type:        schema.TypeSet,
@@ -98,7 +83,7 @@ var (
 )
 
 func resourceActivationsCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceActivationsCreate")
 	logger.Debug("in resourceActivationsCreate")
@@ -119,12 +104,6 @@ func resourceActivationsCreate(ctx context.Context, d *schema.ResourceData, m in
 	note, err = tf.GetStringValue("note", d)
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
-	}
-	if note == "" {
-		note, err = tf.GetStringValue("notes", d)
-		if err != nil && !errors.Is(err, tf.ErrNotFound) {
-			return diag.FromErr(err)
-		}
 	}
 	if note == "" {
 		note, err = defaultActivationNote(false)
@@ -187,7 +166,7 @@ func resourceActivationsCreate(ctx context.Context, d *schema.ResourceData, m in
 }
 
 func resourceActivationsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceActivationsRead")
 	logger.Debug("in resourceActivationsRead")
@@ -215,7 +194,7 @@ func resourceActivationsRead(ctx context.Context, d *schema.ResourceData, m inte
 }
 
 func resourceActivationsUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceActivationsUpdate")
 	logger.Debug("in resourceActivationsUpdate")
@@ -236,12 +215,6 @@ func resourceActivationsUpdate(ctx context.Context, d *schema.ResourceData, m in
 	note, err = tf.GetStringValue("note", d)
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
-	}
-	if errors.Is(err, tf.ErrNotFound) {
-		note, err = tf.GetStringValue("notes", d)
-		if err != nil && !errors.Is(err, tf.ErrNotFound) {
-			return diag.FromErr(err)
-		}
 	}
 	if note == "" {
 		note, err = defaultActivationNote(false)
@@ -305,7 +278,7 @@ func resourceActivationsUpdate(ctx context.Context, d *schema.ResourceData, m in
 }
 
 func resourceActivationsDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceActivationsRemove")
 	logger.Debug("in resourceActivationsDelete")
@@ -331,12 +304,6 @@ func resourceActivationsDelete(ctx context.Context, d *schema.ResourceData, m in
 	note, err = tf.GetStringValue("note", d)
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
-	}
-	if note == "" {
-		note, err = tf.GetStringValue("notes", d)
-		if err != nil && !errors.Is(err, tf.ErrNotFound) {
-			return diag.FromErr(err)
-		}
 	}
 	if note == "" {
 		note, err = defaultActivationNote(true)
@@ -404,7 +371,7 @@ func resourceActivationsDelete(ctx context.Context, d *schema.ResourceData, m in
 }
 
 func resourceImporter(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceActivationsImport")
 	logger.Debug("in appsec_activation resource's resourceImporter")
@@ -438,9 +405,6 @@ func resourceImporter(ctx context.Context, d *schema.ResourceData, m interface{}
 	for _, activation := range response.ActivationHistory {
 		if activation.Version == version && activation.Network == network {
 			d.SetId(strconv.Itoa(activation.ActivationID))
-			if err = d.Set("activate", true); err != nil {
-				return nil, err
-			}
 			if err = d.Set("config_id", configID); err != nil {
 				return nil, err
 			}

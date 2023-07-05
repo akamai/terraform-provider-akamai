@@ -7,13 +7,15 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/gtm"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/gtm"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/logger"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"golang.org/x/exp/slices"
 )
 
 func resourceGTMv1Property() *schema.Resource {
@@ -22,6 +24,7 @@ func resourceGTMv1Property() *schema.Resource {
 		ReadContext:   resourceGTMv1PropertyRead,
 		UpdateContext: resourceGTMv1PropertyUpdate,
 		DeleteContext: resourceGTMv1PropertyDelete,
+		CustomizeDiff: validateTestObject,
 		Importer: &schema.ResourceImporter{
 			State: resourceGTMv1PropertyImport,
 		},
@@ -239,7 +242,7 @@ func resourceGTMv1Property() *schema.Resource {
 						},
 						"test_object": {
 							Type:     schema.TypeString,
-							Required: true,
+							Optional: true,
 						},
 						"request_string": {
 							Type:     schema.TypeString,
@@ -349,6 +352,46 @@ func parseResourceStringID(id string) (string, string, error) {
 
 }
 
+// validateTestObject checks if `test_object` is provided when `test_object_protocol` is set to `HTTP`, `HTTPS` or `FTP`
+func validateTestObject(_ context.Context, d *schema.ResourceDiff, m interface{}) error {
+	meta := meta.Must(m)
+	logger := meta.Log("Akamai GTM", "validateTestObject")
+	logger.Debug("Validating test_object")
+
+	livenessTestRaw, ok := d.GetOkExists("liveness_test")
+	if !ok {
+		return nil
+	}
+
+	livenessTest, ok := livenessTestRaw.([]interface{})
+	if !ok {
+		return fmt.Errorf("could not cast the value of type %T to []interface{}", livenessTest)
+	}
+
+	requiredWith := []string{"HTTP", "HTTPS", "FTP"}
+
+	for _, itemRaw := range livenessTest {
+		item, ok := itemRaw.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("could not cast the value of type %T to map[string]interface{}", item)
+		}
+		testObjectProtocol, ok := item["test_object_protocol"].(string)
+		if !ok {
+			return fmt.Errorf("could not cast the value of type %T to string", testObjectProtocol)
+		}
+		testObject, ok := item["test_object"].(string)
+		if !ok {
+			return fmt.Errorf("could not cast the value of type %T to string", testObject)
+		}
+
+		if slices.Contains(requiredWith, testObjectProtocol) && testObject == "" {
+			return fmt.Errorf("attribute 'test_object' is required when 'test_object_protocol' is set to 'HTTP', 'HTTPS' or 'FTP'")
+		}
+	}
+
+	return nil
+}
+
 // validateTTL is a SchemaValidateDiagFunc to validate dynamic_ttl and static_ttl.
 func validateTTL(v interface{}, path cty.Path) diag.Diagnostics {
 	schemaFieldName, err := tf.GetSchemaFieldNameFromPath(path)
@@ -376,7 +419,7 @@ func validateTTL(v interface{}, path cty.Path) diag.Diagnostics {
 
 // Create a new GTM Property
 func resourceGTMv1PropertyCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1PropertyCreate")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
@@ -457,7 +500,7 @@ func resourceGTMv1PropertyCreate(ctx context.Context, d *schema.ResourceData, m 
 // Only ever save data from the tf config in the tf state file, to help with
 // api issues. See func unmarshalResourceData for more info.
 func resourceGTMv1PropertyRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1PropertyRead")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
@@ -483,7 +526,7 @@ func resourceGTMv1PropertyRead(ctx context.Context, d *schema.ResourceData, m in
 
 // Update GTM Property
 func resourceGTMv1PropertyUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1PropertyUpdate")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
@@ -544,7 +587,7 @@ func resourceGTMv1PropertyUpdate(ctx context.Context, d *schema.ResourceData, m 
 
 // Import GTM Property.
 func resourceGTMv1PropertyImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1PropertyImport")
 	// create a context with logging for api calls
 	ctx := context.Background()
@@ -577,7 +620,7 @@ func resourceGTMv1PropertyImport(d *schema.ResourceData, m interface{}) ([]*sche
 
 // Delete GTM Property.
 func resourceGTMv1PropertyDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1PropertyDelete")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
@@ -635,7 +678,7 @@ func resourceGTMv1PropertyDelete(ctx context.Context, d *schema.ResourceData, m 
 // nolint:gocyclo
 // Populate existing property object from resource data
 func populatePropertyObject(ctx context.Context, d *schema.ResourceData, prop *gtm.Property, m interface{}) error {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "populatePropertyObject")
 
 	vstr, err := tf.GetStringValue("name", d)
@@ -841,7 +884,7 @@ func populatePropertyObject(ctx context.Context, d *schema.ResourceData, prop *g
 }
 
 // Create and populate a new property object from resource data
-func populateNewPropertyObject(ctx context.Context, meta akamai.OperationMeta, d *schema.ResourceData, m interface{}) (*gtm.Property, error) {
+func populateNewPropertyObject(ctx context.Context, meta meta.Meta, d *schema.ResourceData, m interface{}) (*gtm.Property, error) {
 
 	name, _ := tf.GetStringValue("name", d)
 	propObj := inst.Client(meta).NewProperty(ctx, name)
@@ -855,7 +898,7 @@ func populateNewPropertyObject(ctx context.Context, meta akamai.OperationMeta, d
 
 // Populate Terraform state from provided Property object
 func populateTerraformPropertyState(d *schema.ResourceData, prop *gtm.Property, m interface{}) {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "populateTerraformPropertyState")
 
 	for stateKey, stateValue := range map[string]interface{}{
@@ -908,7 +951,7 @@ func populateTerraformPropertyState(d *schema.ResourceData, prop *gtm.Property, 
 
 // create and populate GTM Property TrafficTargets object
 func populateTrafficTargetObject(ctx context.Context, d *schema.ResourceData, prop *gtm.Property, m interface{}) {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "populateTrafficTargetObject")
 
 	// pull apart List
@@ -939,7 +982,7 @@ func populateTrafficTargetObject(ctx context.Context, d *schema.ResourceData, pr
 
 // create and populate Terraform traffic_targets schema
 func populateTerraformTrafficTargetState(d *schema.ResourceData, prop *gtm.Property, m interface{}) {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "populateTerraformTrafficTargetState")
 
 	objectInventory := make(map[int]*gtm.TrafficTarget, len(prop.TrafficTargets))
@@ -983,7 +1026,7 @@ func populateTerraformTrafficTargetState(d *schema.ResourceData, prop *gtm.Prope
 }
 
 // Populate existing static_rr_sets object from resource data
-func populateStaticRRSetObject(ctx context.Context, meta akamai.OperationMeta, d *schema.ResourceData, prop *gtm.Property) {
+func populateStaticRRSetObject(ctx context.Context, meta meta.Meta, d *schema.ResourceData, prop *gtm.Property) {
 
 	// pull apart List
 	staticSetList, err := tf.GetInterfaceArrayValue("static_rr_set", d)
@@ -1009,7 +1052,7 @@ func populateStaticRRSetObject(ctx context.Context, meta akamai.OperationMeta, d
 
 // create and populate Terraform static_rr_sets schema
 func populateTerraformStaticRRSetState(d *schema.ResourceData, prop *gtm.Property, m interface{}) {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "populateTerraformStaticRRSetState")
 
 	objectInventory := make(map[string]*gtm.StaticRRSet, len(prop.StaticRRSets))
@@ -1050,7 +1093,7 @@ func populateTerraformStaticRRSetState(d *schema.ResourceData, prop *gtm.Propert
 }
 
 // Populate existing Liveness test  object from resource data
-func populateLivenessTestObject(ctx context.Context, meta akamai.OperationMeta, d *schema.ResourceData, prop *gtm.Property) {
+func populateLivenessTestObject(ctx context.Context, meta meta.Meta, d *schema.ResourceData, prop *gtm.Property) {
 
 	liveTestList, err := tf.GetInterfaceArrayValue("liveness_test", d)
 	if err == nil {
@@ -1100,7 +1143,7 @@ func populateLivenessTestObject(ctx context.Context, meta akamai.OperationMeta, 
 
 // create and populate Terraform liveness_test schema
 func populateTerraformLivenessTestState(d *schema.ResourceData, prop *gtm.Property, m interface{}) {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "populateTerraformLivenessTestState")
 
 	objectInventory := make(map[string]*gtm.LivenessTest, len(prop.LivenessTests))
@@ -1199,7 +1242,7 @@ func populateTerraformLivenessTestState(d *schema.ResourceData, prop *gtm.Proper
 }
 
 func convertStringToInterfaceList(stringList []string, m interface{}) []interface{} {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTMv1", "convertStringToInterfaceList")
 
 	logger.Debugf("String List: %v", stringList)
@@ -1214,7 +1257,7 @@ func convertStringToInterfaceList(stringList []string, m interface{}) []interfac
 
 // Util method to reconcile list configs. Type agnostic. Goal: maintain order of tf list config
 func reconcileTerraformLists(terraList []interface{}, newList []interface{}, m interface{}) []interface{} {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTMv1", "reconcileTerraformLists")
 
 	logger.Debugf("Existing Terra List: %v", terraList)
@@ -1242,7 +1285,7 @@ func reconcileTerraformLists(terraList []interface{}, newList []interface{}, m i
 }
 
 func trafficTargetDiffSuppress(_, _, _ string, d *schema.ResourceData) bool {
-	logger := akamai.Log("Akamai GTM", "trafficTargetDiffSuppress")
+	logger := logger.Get("Akamai GTM", "trafficTargetDiffSuppress")
 	oldTarget, newTarget := d.GetChange("traffic_target")
 
 	oldTrafficTarget, ok := oldTarget.([]interface{})
@@ -1290,7 +1333,7 @@ func trafficTargetDiffSuppress(_, _, _ string, d *schema.ResourceData) bool {
 
 // serversEqual checks whether provided sets of ip addresses contain the same entries
 func serversEqual(old, new interface{}) bool {
-	logger := akamai.Log("Akamai GTM", "serversEqual")
+	logger := logger.Get("Akamai GTM", "serversEqual")
 
 	oldServers, ok := old.(*schema.Set)
 	if !ok {

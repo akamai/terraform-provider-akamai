@@ -4,29 +4,27 @@ provider "akamai" {
 
 resource "akamai_datastream" "s" {
   active = false
-  config {
-    delimiter = "SPACE"
-    format    = "STRUCTURED"
+  delivery_configuration {
+    field_delimiter = "SPACE"
+    format          = "STRUCTURED"
     frequency {
-      time_in_sec = 30
+      interval_in_secs = 30
     }
   }
 
   contract_id = "test_contract"
-  dataset_fields_ids = [
+  dataset_fields = [
     1001
   ]
   group_id = 1337
-  property_ids = [
+  properties = [
     1,
   ]
-  stream_name   = "test_stream"
-  stream_type   = "RAW_LOGS"
-  template_name = "EDGE_LOGS"
+  stream_name = "test_stream"
 
   sumologic_connector {
     collector_code = "collector_code"
-    connector_name = "connector_name"
+    display_name   = "display_name"
     endpoint       = "endpoint"
 
   }

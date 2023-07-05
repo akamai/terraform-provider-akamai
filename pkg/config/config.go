@@ -2,94 +2,70 @@
 package config
 
 import (
-	"errors"
-	"os"
-	"strings"
-
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf/validators"
+	frameworkSchema "github.com/hashicorp/terraform-plugin-framework/provider/schema"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	pluginSchema "github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-// Options initializes and returns terraform.Resource with credentials for given section
-func Options(section string) *schema.Resource {
-	section = strings.ToUpper(section)
-
-	return &schema.Resource{
-		Schema: map[string]*schema.Schema{
+// PluginOptions returns edgegrid config schema for terraform-plugin-sdk
+func PluginOptions() *pluginSchema.Resource {
+	return &pluginSchema.Resource{
+		Schema: map[string]*pluginSchema.Schema{
 			"host": {
-				Type:     schema.TypeString,
-				Optional: true,
-				DefaultFunc: func() (interface{}, error) {
-					if v := os.Getenv("AKAMAI_" + section + "_HOST"); v != "" {
-						return v, nil
-					} else if v := os.Getenv("AKAMAI_HOST"); v != "" {
-						return v, nil
-					}
-					return nil, errors.New("host not set")
-				},
+				Type:     pluginSchema.TypeString,
+				Required: true,
 			},
 			"access_token": {
-				Type:     schema.TypeString,
-				Optional: true,
-				DefaultFunc: func() (interface{}, error) {
-					if v := os.Getenv("AKAMAI_" + section + "_ACCESS_TOKEN"); v != "" {
-						return v, nil
-					} else if v := os.Getenv("AKAMAI_ACCESS_TOKEN"); v != "" {
-						return v, nil
-					}
-
-					return nil, errors.New("access_token not set")
-				},
+				Type:     pluginSchema.TypeString,
+				Required: true,
 			},
 			"client_token": {
-				Type:     schema.TypeString,
-				Optional: true,
-				DefaultFunc: func() (interface{}, error) {
-					if v := os.Getenv("AKAMAI_" + section + "_CLIENT_TOKEN"); v != "" {
-						return v, nil
-					} else if v := os.Getenv("AKAMAI_CLIENT_TOKEN"); v != "" {
-						return v, nil
-					}
-
-					return nil, errors.New("client_token not set")
-				},
+				Type:     pluginSchema.TypeString,
+				Required: true,
 			},
 			"client_secret": {
-				Type:     schema.TypeString,
-				Optional: true,
-				DefaultFunc: func() (interface{}, error) {
-					if v := os.Getenv("AKAMAI_" + section + "_CLIENT_SECRET"); v != "" {
-						return v, nil
-					} else if v := os.Getenv("AKAMAI_CLIENT_SECRET"); v != "" {
-						return v, nil
-					}
-
-					return nil, errors.New("client_secret not set")
-				},
+				Type:     pluginSchema.TypeString,
+				Required: true,
 			},
 			"max_body": {
-				Type:     schema.TypeInt,
+				Type:     pluginSchema.TypeInt,
 				Optional: true,
-				DefaultFunc: func() (interface{}, error) {
-					if v := os.Getenv("AKAMAI_" + section + "_MAX_SIZE"); v != "" {
-						return v, nil
-					} else if v := os.Getenv("AKAMAI_MAX_SIZE"); v != "" {
-						return v, nil
-					}
-
-					return 131072, nil
-				},
 			},
 			"account_key": {
-				Type:     schema.TypeString,
+				Type:     pluginSchema.TypeString,
 				Optional: true,
-				DefaultFunc: func() (interface{}, error) {
-					if v := os.Getenv("AKAMAI_" + section + "_ACCOUNT_KEY"); v != "" {
-						return v, nil
-					} else if v := os.Getenv("AKAMAI_ACCOUNT_KEY"); v != "" {
-						return v, nil
-					}
+			},
+		},
+	}
+}
 
-					return "", nil
+// FrameworkOptions returns edgegrid config schema for terraform-plugin-framework
+func FrameworkOptions() frameworkSchema.SetNestedBlock {
+	return frameworkSchema.SetNestedBlock{
+		NestedObject: frameworkSchema.NestedBlockObject{
+			Attributes: map[string]frameworkSchema.Attribute{
+				"host": frameworkSchema.StringAttribute{
+					Required:   true,
+					Validators: []validator.String{validators.NotEmptyString()},
+				},
+				"access_token": frameworkSchema.StringAttribute{
+					Required:   true,
+					Validators: []validator.String{validators.NotEmptyString()},
+				},
+				"client_token": frameworkSchema.StringAttribute{
+					Required:   true,
+					Validators: []validator.String{validators.NotEmptyString()},
+				},
+				"client_secret": frameworkSchema.StringAttribute{
+					Required:   true,
+					Validators: []validator.String{validators.NotEmptyString()},
+				},
+				"max_body": frameworkSchema.Int64Attribute{
+					Optional: true,
+				},
+				"account_key": frameworkSchema.StringAttribute{
+					Optional: true,
 				},
 			},
 		},

@@ -7,8 +7,9 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/networklists"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/networklists"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -16,26 +17,20 @@ var testAccProviders map[string]func() (*schema.Provider, error)
 var testAccProvider *schema.Provider
 
 func TestMain(m *testing.M) {
-	testAccProvider = akamai.Provider(Subprovider())()
+	testAccProvider = akamai.NewPluginProvider(NewSubprovider())()
 	testAccProviders = map[string]func() (*schema.Provider, error){
 		"akamai": func() (*schema.Provider, error) {
 			return testAccProvider, nil
 		},
 	}
-	if err := akamai.TFTestSetup(); err != nil {
+	if err := testutils.TFTestSetup(); err != nil {
 		log.Fatal(err)
 	}
 	exitCode := m.Run()
-	if err := akamai.TFTestTeardown(); err != nil {
+	if err := testutils.TFTestTeardown(); err != nil {
 		log.Fatal(err)
 	}
 	os.Exit(exitCode)
-}
-
-func TestProvider(t *testing.T) {
-	if err := Provider().InternalValidate(); err != nil {
-		t.Fatalf("err: %s", err)
-	}
 }
 
 // Only allow one test at a time to patch the client via useClient()

@@ -18,5 +18,8 @@
                 "53712_TESTLIST123"
             ]
         }
+    },
+    "ukraineGeoControl": {
+        "action": "alert"
     }
 }

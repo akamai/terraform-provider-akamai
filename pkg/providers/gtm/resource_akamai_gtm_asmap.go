@@ -6,10 +6,11 @@ import (
 	"net/http"
 	"sort"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/gtm"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/gtm"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/logger"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -82,7 +83,7 @@ func resourceGTMv1ASmap() *schema.Resource {
 }
 
 // Util method to validate default datacenter and create if necessary
-func validateDefaultDC(ctx context.Context, meta akamai.OperationMeta, ddcField []interface{}, domain string) error {
+func validateDefaultDC(ctx context.Context, meta meta.Meta, ddcField []interface{}, domain string) error {
 
 	if len(ddcField) == 0 {
 		return fmt.Errorf("default Datacenter invalid")
@@ -124,7 +125,7 @@ func validateDefaultDC(ctx context.Context, meta akamai.OperationMeta, ddcField 
 
 // Create a new GTM ASmap
 func resourceGTMv1ASmapCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1ASmapCreate")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
@@ -210,7 +211,7 @@ func resourceGTMv1ASmapCreate(ctx context.Context, d *schema.ResourceData, m int
 
 // read asMap. updates state with entire API result configuration.
 func resourceGTMv1ASmapRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1ASmapRead")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
@@ -241,7 +242,7 @@ func resourceGTMv1ASmapRead(ctx context.Context, d *schema.ResourceData, m inter
 
 // Update GTM ASmap
 func resourceGTMv1ASmapUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1ASmapUpdate")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
@@ -314,7 +315,7 @@ func resourceGTMv1ASmapUpdate(ctx context.Context, d *schema.ResourceData, m int
 
 // Import GTM ASmap.
 func resourceGTMv1ASmapImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1ASmapImport")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
@@ -347,7 +348,7 @@ func resourceGTMv1ASmapImport(ctx context.Context, d *schema.ResourceData, m int
 
 // Delete GTM ASmap.
 func resourceGTMv1ASmapDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1ASmapDelete")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
@@ -418,7 +419,7 @@ func resourceGTMv1ASmapDelete(ctx context.Context, d *schema.ResourceData, m int
 }
 
 // Create and populate a new asMap object from asMap data
-func populateNewASmapObject(ctx context.Context, meta akamai.OperationMeta, d *schema.ResourceData, m interface{}) *gtm.AsMap {
+func populateNewASmapObject(ctx context.Context, meta meta.Meta, d *schema.ResourceData, m interface{}) *gtm.AsMap {
 
 	asMapName, _ := tf.GetStringValue("name", d)
 	asObj := inst.Client(meta).NewAsMap(ctx, asMapName)
@@ -444,7 +445,7 @@ func populateASmapObject(d *schema.ResourceData, as *gtm.AsMap, m interface{}) {
 
 // Populate Terraform state from provided ASmap object
 func populateTerraformASmapState(d *schema.ResourceData, as *gtm.AsMap, m interface{}) {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "populateTerraformASmapState")
 
 	// walk through all state elements
@@ -457,7 +458,7 @@ func populateTerraformASmapState(d *schema.ResourceData, as *gtm.AsMap, m interf
 
 // create and populate GTM ASmap Assignments object
 func populateAsAssignmentsObject(d *schema.ResourceData, as *gtm.AsMap, m interface{}) {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "populateAsAssignmentsObject")
 
 	// pull apart List
@@ -489,7 +490,7 @@ func populateAsAssignmentsObject(d *schema.ResourceData, as *gtm.AsMap, m interf
 
 // create and populate Terraform asMap assignments schema
 func populateTerraformAsAssignmentsState(d *schema.ResourceData, asm *gtm.AsMap, m interface{}) {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "populateTerraformAsAssignmentsState")
 
 	var asStateList []map[string]interface{}
@@ -509,7 +510,7 @@ func populateTerraformAsAssignmentsState(d *schema.ResourceData, asm *gtm.AsMap,
 
 // create and populate GTM ASmap DefaultDatacenter object
 func populateAsDefaultDCObject(d *schema.ResourceData, as *gtm.AsMap, m interface{}) {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTMv1", "resourceGTMv1ASmapDelete")
 
 	// pull apart List
@@ -535,7 +536,7 @@ func populateAsDefaultDCObject(d *schema.ResourceData, as *gtm.AsMap, m interfac
 
 // create and populate Terraform asMap default_datacenter schema
 func populateTerraformAsDefaultDCState(d *schema.ResourceData, as *gtm.AsMap, m interface{}) {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "populateTerraformAsDefaultDCState")
 
 	ddcListNew := make([]interface{}, 1)
@@ -551,7 +552,7 @@ func populateTerraformAsDefaultDCState(d *schema.ResourceData, as *gtm.AsMap, m 
 
 // assignmentDiffSuppress is a diff suppress function used in gtm_asmap, gtm_cidrmap and gtm_geomap resources
 func assignmentDiffSuppress(_, _, _ string, d *schema.ResourceData) bool {
-	logger := akamai.Log("Akamai GTM", "assignmentDiffSuppress")
+	logger := logger.Get("Akamai GTM", "assignmentDiffSuppress")
 	oldVal, newVal := d.GetChange("assignment")
 
 	oldList, ok := oldVal.([]interface{})
@@ -626,7 +627,7 @@ func assignmentDiffSuppress(_, _, _ string, d *schema.ResourceData) bool {
 
 // asNumbersEqual checks whether the as_numbers are equal
 func asNumbersEqual(old, new interface{}) bool {
-	logger := akamai.Log("Akamai GTM", "asNumbersEqual")
+	logger := logger.Get("Akamai GTM", "asNumbersEqual")
 
 	oldVal, ok := old.(*schema.Set)
 	if !ok {

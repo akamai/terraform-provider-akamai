@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/dns"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/dns"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -77,7 +77,6 @@ func TestResDnsZone(t *testing.T) {
 		}()
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				PreCheck:          func() { testAccPreCheck(t) },
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{

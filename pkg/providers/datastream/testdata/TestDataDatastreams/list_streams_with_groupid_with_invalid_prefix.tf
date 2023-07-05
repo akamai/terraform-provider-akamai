@@ -3,5 +3,5 @@ provider "akamai" {
 }
 
 data "akamai_datastreams" "test" {
-  group_id = "asdf_1234"
+  group_id = g1234
 }

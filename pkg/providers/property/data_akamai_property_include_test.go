@@ -5,8 +5,8 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 	"github.com/stretchr/testify/mock"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -39,6 +39,13 @@ func TestDataPropertyInclude(t *testing.T) {
 							},
 						},
 					},
+					Include: papi.Include{
+						IncludeName:       "inc_name",
+						IncludeType:       "MICROSERVICES",
+						LatestVersion:     4,
+						ProductionVersion: tools.IntPtr(3),
+						StagingVersion:    tools.IntPtr(2),
+					},
 				}, nil)
 			},
 			expectedAttributes: map[string]string{
@@ -69,6 +76,13 @@ func TestDataPropertyInclude(t *testing.T) {
 							},
 						},
 					},
+					Include: papi.Include{
+						IncludeName:       "inc_name",
+						IncludeType:       "MICROSERVICES",
+						LatestVersion:     4,
+						ProductionVersion: nil,
+						StagingVersion:    nil,
+					},
 				}, nil)
 			},
 			expectedAttributes: map[string]string{
@@ -92,21 +106,6 @@ func TestDataPropertyInclude(t *testing.T) {
 				}).Return(nil, fmt.Errorf("oops"))
 			},
 			expectError: regexp.MustCompile("oops"),
-		},
-		"empty include items list in response": {
-			givenTF: "valid.tf",
-			init: func(m *papi.Mock) {
-				m.On("GetInclude", mock.Anything, papi.GetIncludeRequest{
-					ContractID: "ctr_1",
-					GroupID:    "grp_1",
-					IncludeID:  "inc_1",
-				}).Return(&papi.GetIncludeResponse{
-					Includes: papi.IncludeItems{
-						Items: []papi.Include{},
-					},
-				}, nil)
-			},
-			expectError: regexp.MustCompile("Error: empty include response from api"),
 		},
 		"missing required argument contract_id": {
 			givenTF:     "missing_contract_id.tf",
@@ -136,8 +135,8 @@ func TestDataPropertyInclude(t *testing.T) {
 			}
 			useClient(client, nil, func() {
 				resource.Test(t, resource.TestCase{
-					IsUnitTest:        true,
-					ProviderFactories: testAccProviders,
+					IsUnitTest:               true,
+					ProtoV5ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{{
 						Config:      loadFixtureString(fmt.Sprintf("testdata/TestDataPropertyInclude/%s", test.givenTF)),
 						Check:       resource.ComposeAggregateTestCheckFunc(checkFuncs...),

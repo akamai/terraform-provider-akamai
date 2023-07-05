@@ -8,32 +8,43 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cloudlets"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/cloudlets"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/tools"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/logger"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-var cloudletIDs = map[string]int{
-	"ER":  0,
-	"VP":  1,
-	"FR":  3,
-	"IG":  4,
-	"AP":  5,
-	"AS":  6,
-	"CD":  7,
-	"IV":  8,
-	"ALB": 9,
-	"MMB": 10,
-	"MMA": 11,
-}
+var (
+	// DeletionPolicyPollInterval is the default poll interval for delete policy retries
+	DeletionPolicyPollInterval = time.Second * 10
+
+	// DeletionPolicyTimeout is the default timeout for the policy deletion
+	DeletionPolicyTimeout = time.Minute * 90
+
+	cloudletIDs = map[string]int{
+		"ER":  0,
+		"VP":  1,
+		"FR":  3,
+		"IG":  4,
+		"AP":  5,
+		"AS":  6,
+		"CD":  7,
+		"IV":  8,
+		"ALB": 9,
+		"MMB": 10,
+		"MMA": 11,
+	}
+)
 
 func resourceCloudletsPolicy() *schema.Resource {
 	return &schema.Resource{
@@ -127,7 +138,7 @@ func EnforceMatchRulesChange(_ context.Context, diff *schema.ResourceDiff, _ int
 }
 
 func resourcePolicyCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Cloudlets", "resourcePolicyCreate")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
@@ -210,7 +221,7 @@ func resourcePolicyCreate(ctx context.Context, d *schema.ResourceData, m interfa
 }
 
 func resourcePolicyRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Cloudlets", "resourcePolicyRead")
 	ctx = session.ContextWithOptions(
 		ctx,
@@ -260,7 +271,7 @@ func resourcePolicyRead(ctx context.Context, d *schema.ResourceData, m interface
 }
 
 func resourcePolicyUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Cloudlets", "resourcePolicyUpdate")
 	ctx = session.ContextWithOptions(
 		ctx,
@@ -373,7 +384,7 @@ func resourcePolicyUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 }
 
 func resourcePolicyDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Cloudlets", "resourcePolicyDelete")
 	ctx = session.ContextWithOptions(
 		ctx,
@@ -397,26 +408,34 @@ func resourcePolicyDelete(ctx context.Context, d *schema.ResourceData, m interfa
 			return diag.FromErr(err)
 		}
 	}
-	if err := client.RemovePolicy(ctx, cloudlets.RemovePolicyRequest{PolicyID: policyID}); err != nil {
-		statusErr := new(cloudlets.Error)
-		if errors.As(err, &statusErr) &&
-			strings.Contains(statusErr.Detail, "Unable to delete policy because an activation for this policy is still pending") {
-			return diag.Diagnostics{
-				diag.Diagnostic{
-					Severity: diag.Error,
-					Summary:  "Unable to remove policy",
-					Detail:   "Policy could not be removed because some activations are still pending. Please try again later.",
-				},
+
+	deletionTimeoutCtx, cancel := context.WithTimeout(ctx, DeletionPolicyTimeout)
+	defer cancel()
+
+	activationPending := true
+	for activationPending {
+		select {
+		case <-time.After(DeletionPolicyPollInterval):
+			if err = client.RemovePolicy(ctx, cloudlets.RemovePolicyRequest{PolicyID: policyID}); err != nil {
+				statusErr := new(cloudlets.Error)
+				// if error does not contain information about pending activations, return it as it is not expected
+				if errors.As(err, &statusErr) && !strings.Contains(statusErr.Detail, "Unable to delete policy because an activation for this policy is still pending") {
+					return diag.Errorf("remove policy error: %s", err)
+				}
+				continue
 			}
+			activationPending = false
+		case <-deletionTimeoutCtx.Done():
+			return diag.Errorf("retry timeout reached: %s", ctx.Err())
 		}
-		return diag.FromErr(err)
 	}
 	d.SetId("")
+
 	return nil
 }
 
 func resourcePolicyImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Cloudlets", "resourcePolicyImport")
 	logger.Debugf("Import Policy")
 
@@ -485,7 +504,7 @@ func diffSuppressMatchRules(_, old, new string, _ *schema.ResourceData) bool {
 }
 
 func diffMatchRules(old, new string) bool {
-	logger := akamai.Log("Cloudlets", "diffMatchRules")
+	logger := logger.Get("Cloudlets", "diffMatchRules")
 	if old == new {
 		return true
 	}

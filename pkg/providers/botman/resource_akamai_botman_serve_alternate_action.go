@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/botman"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/botman"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
@@ -49,7 +49,7 @@ func resourceServeAlternateAction() *schema.Resource {
 }
 
 func resourceServeAlternateActionCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("botman", "resourceServeAlternateActionCreateAction")
 	logger.Debugf("in resourceServeAlternateActionCreateAction")
@@ -87,7 +87,7 @@ func resourceServeAlternateActionCreate(ctx context.Context, d *schema.ResourceD
 }
 
 func resourceServeAlternateActionRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("botman", "resourceServeAlternateActionRead")
 	logger.Debugf("in resourceServeAlternateActionRead")
@@ -142,7 +142,7 @@ func resourceServeAlternateActionRead(ctx context.Context, d *schema.ResourceDat
 }
 
 func resourceServeAlternateActionUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("botman", "resourceServeAlternateActionUpdate")
 	logger.Debugf("in resourceServeAlternateActionUpdate")
@@ -186,7 +186,7 @@ func resourceServeAlternateActionUpdate(ctx context.Context, d *schema.ResourceD
 }
 
 func resourceServeAlternateActionDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("botman", "resourceServeAlternateActionDelete")
 	logger.Debugf("in resourceServeAlternateActionDelete")

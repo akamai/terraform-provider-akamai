@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/botman"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/botman"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -53,7 +53,7 @@ func resourceTransactionalEndpoint() *schema.Resource {
 }
 
 func resourceTransactionalEndpointCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("botman", "resourceTransactionalEndpointCreateAction")
 	logger.Debugf("in resourceTransactionalEndpointCreateAction")
@@ -106,7 +106,7 @@ func resourceTransactionalEndpointRead(ctx context.Context, d *schema.ResourceDa
 }
 
 func transactionalEndpointRead(ctx context.Context, d *schema.ResourceData, m interface{}, readFromCache bool) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("botman", "resourceTransactionalEndpointReadAction")
 	logger.Debugf("in resourceTransactionalEndpointReadAction")
@@ -181,7 +181,7 @@ func transactionalEndpointRead(ctx context.Context, d *schema.ResourceData, m in
 }
 
 func resourceTransactionalEndpointUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("botman", "resourceTransactionalEndpointUpdateAction")
 	logger.Debugf("in resourceTransactionalEndpointUpdateAction")
@@ -228,7 +228,7 @@ func resourceTransactionalEndpointUpdate(ctx context.Context, d *schema.Resource
 }
 
 func resourceTransactionalEndpointDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("botman", "resourceTransactionalEndpointDeleteAction")
 	logger.Debugf("in resourceTransactionalEndpointDeleteAction")

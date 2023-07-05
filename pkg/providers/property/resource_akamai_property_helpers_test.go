@@ -3,8 +3,8 @@ package property
 import (
 	"context"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/papi"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/tools"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -118,22 +118,6 @@ func ExpectUpdatePropertyVersionHostnames(client *papi.Mock, PropertyID, GroupID
 		PropertyID:      PropertyID,
 		PropertyVersion: PropertyVersion,
 		Hostnames:       papi.HostnameResponseItems{Items: Hostnames},
-	}
-
-	return call.Return(&res, nil)
-}
-
-func ExpectGetEdgeHostnames(client *papi.Mock, contractID, groupID string, edgehostnames papi.EdgeHostnameItems) *mock.Call {
-	req := papi.GetEdgeHostnamesRequest{
-		ContractID: contractID,
-		GroupID:    groupID,
-	}
-	call := client.On("GetEdgeHostnames", AnyCTX, req)
-
-	res := papi.GetEdgeHostnamesResponse{
-		ContractID:    contractID,
-		GroupID:       groupID,
-		EdgeHostnames: edgehostnames,
 	}
 
 	return call.Return(&res, nil)

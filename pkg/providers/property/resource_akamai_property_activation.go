@@ -9,11 +9,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/papi"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 	"github.com/apex/log"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -26,7 +26,10 @@ func resourcePropertyActivation() *schema.Resource {
 		ReadContext:   resourcePropertyActivationRead,
 		UpdateContext: resourcePropertyActivationUpdate,
 		DeleteContext: resourcePropertyActivationDelete,
-		Schema:        akamaiPropertyActivationSchema,
+		Importer: &schema.ResourceImporter{
+			StateContext: resourcePropertyActivationImport,
+		},
+		Schema: akamaiPropertyActivationSchema,
 		Timeouts: &schema.ResourceTimeout{
 			Default: &PropertyResourceTimeout,
 		},
@@ -47,19 +50,10 @@ var (
 )
 
 var akamaiPropertyActivationSchema = map[string]*schema.Schema{
-	"property": {
-		Type:       schema.TypeString,
-		Optional:   true,
-		Deprecated: akamai.NoticeDeprecatedUseAlias("property"),
-		Computed:   true,
-		StateFunc:  addPrefixToState("prp_"),
-	},
 	"property_id": {
-		Type:         schema.TypeString,
-		Optional:     true,
-		ExactlyOneOf: []string{"property_id", "property"},
-		Computed:     true,
-		StateFunc:    addPrefixToState("prp_"),
+		Type:      schema.TypeString,
+		Required:  true,
+		StateFunc: addPrefixToState("prp_"),
 	},
 	"activation_id": {
 		Type:     schema.TypeString,
@@ -80,18 +74,11 @@ var akamaiPropertyActivationSchema = map[string]*schema.Schema{
 		Computed: true,
 		Elem:     papiError(),
 	},
-	"rule_warnings": {
-		Type:       schema.TypeList,
-		Optional:   true,
-		Computed:   true,
-		Elem:       papiError(),
-		Deprecated: "Rule warnings will not be set in state anymore",
-	},
 	"auto_acknowledge_rule_warnings": {
 		Type:        schema.TypeBool,
 		Optional:    true,
-		Default:     true,
-		Description: "automatically acknowledge all rule warnings for activation to continue. default is true",
+		Default:     false,
+		Description: "Automatically acknowledge all rule warnings for activation to continue. Default is false",
 	},
 	"version": {
 		Type:             schema.TypeInt,
@@ -139,9 +126,9 @@ func papiError() *schema.Resource {
 }
 
 func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourcePropertyActivationCreate")
-	client := inst.Client(meta)
+	client := Client(meta)
 
 	logger.Debug("resourcePropertyActivationCreate call")
 
@@ -280,9 +267,9 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 }
 
 func resourcePropertyActivationDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourcePropertyActivationDelete")
-	client := inst.Client(meta)
+	client := Client(meta)
 
 	logger.Debug("resourcePropertyActivationDelete call")
 
@@ -428,9 +415,9 @@ func flattenErrorArray(errors []*papi.Error) string {
 }
 
 func resourcePropertyActivationRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourcePropertyActivationRead")
-	client := inst.Client(meta)
+	client := Client(meta)
 
 	logger.Debug("resourcePropertyActivationRead call")
 	// create a context with logging for api calls
@@ -479,6 +466,8 @@ func resourcePropertyActivationRead(ctx context.Context, d *schema.ResourceData,
 		"version":       activation.PropertyVersion,
 		"network":       network,
 		"activation_id": activation.ActivationID,
+		"note":          activation.Note,
+		"contact":       activation.NotifyEmails,
 	}
 	if err = tf.SetAttrs(d, attrs); err != nil {
 		return diag.FromErr(err)
@@ -535,9 +524,9 @@ func resolveVersion(ctx context.Context, d *schema.ResourceData, client papi.PAP
 }
 
 func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourcePropertyActivationUpdate")
-	client := inst.Client(meta)
+	client := Client(meta)
 
 	logger.Debug("resourcePropertyActivationUpdate call")
 	// create a context with logging for api calls
@@ -685,6 +674,29 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 	return nil
 }
 
+func resourcePropertyActivationImport(_ context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	meta := meta.Must(m)
+	logger := meta.Log("PAPI", "resourcePropertyActivationImport")
+
+	logger.Debug("Importing property activation")
+
+	parts := strings.Split(d.Id(), ":")
+	if len(parts) != 2 {
+		return nil, fmt.Errorf("invalid property activation identifier: %s", d.Id())
+	}
+
+	attrs := make(map[string]interface{}, 3)
+	attrs["property_id"] = parts[0]
+	attrs["network"] = parts[1]
+	attrs["auto_acknowledge_rule_warnings"] = false
+
+	if err := tf.SetAttrs(d, attrs); err != nil {
+		return nil, err
+	}
+
+	return []*schema.ResourceData{d}, nil
+}
+
 func addPropertyComplianceRecord(complianceRecord []interface{}, activatePAPIRequest papi.CreateActivationRequest) papi.CreateActivationRequest {
 	if len(complianceRecord) == 0 {
 		return activatePAPIRequest
@@ -788,10 +800,6 @@ func setErrorsAndWarnings(d *schema.ResourceData, errors, warnings string) error
 
 func resolvePropertyID(d *schema.ResourceData) (string, error) {
 	propertyID, err := tf.GetStringValue("property_id", d)
-	if errors.Is(err, tf.ErrNotFound) {
-		// use legacy property as fallback option
-		propertyID, err = tf.GetStringValue("property", d)
-	}
 	return tools.AddPrefix(propertyID, "prp_"), err
 }
 

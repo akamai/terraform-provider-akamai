@@ -11,11 +11,11 @@ import (
 
 	"github.com/apex/log"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/dns"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/dns"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
 
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -120,7 +120,7 @@ func resourceDNSv2Zone() *schema.Resource {
 
 func resourceDNSv2ZoneCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("AkamaiDNS", "resourceDNSZoneCreate")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
@@ -233,7 +233,7 @@ func resourceDNSv2ZoneCreate(ctx context.Context, d *schema.ResourceData, m inte
 func resourceDNSv2ZoneRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("AkamaiDNS", "resourceDNSZoneRead")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
@@ -322,7 +322,7 @@ func resourceDNSv2ZoneUpdate(ctx context.Context, d *schema.ResourceData, m inte
 	var diags diag.Diagnostics
 
 	hostname := d.Get("zone").(string)
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("AkamaiDNS", "resourceDNSZoneUpdate")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
@@ -397,7 +397,7 @@ func resourceDNSv2ZoneUpdate(ctx context.Context, d *schema.ResourceData, m inte
 // Import Zone. Id is the zone
 func resourceDNSv2ZoneImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	hostname := d.Id()
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("AkamaiDNS", "resourceDNSZoneImport")
 	// create a context with logging for api calls
 	ctx := context.TODO()
@@ -448,7 +448,7 @@ func resourceDNSv2ZoneDelete(_ context.Context, d *schema.ResourceData, m interf
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("AkamaiDNS", "resourceDNSZoneDelete")
 	logger.WithField("zone", hostname).Info("Zone Delete")
 	// Ignore for Unit test Lifecycle
@@ -644,7 +644,7 @@ func checkDNSv2Zone(d tf.ResourceDataFetcher) error {
 }
 
 // Util func to create SOA and NS records
-func checkZoneSOAandNSRecords(ctx context.Context, meta akamai.OperationMeta, zone *dns.ZoneResponse, logger log.Interface) error {
+func checkZoneSOAandNSRecords(ctx context.Context, meta meta.Meta, zone *dns.ZoneResponse, logger log.Interface) error {
 	logger.Debugf("Checking SOA and NS records exist for zone %s", zone.Zone)
 	var resp *dns.RecordSetResponse
 	var err error

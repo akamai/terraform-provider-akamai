@@ -8,9 +8,10 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/cache"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
+	akameta "github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -73,7 +74,7 @@ func resourceRule() *schema.Resource {
 }
 
 func resourceRuleCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := akameta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceRuleCreate")
 	logger.Debugf("in resourceRuleCreate")
@@ -132,13 +133,13 @@ func resourceRuleCreate(ctx context.Context, d *schema.ResourceData, m interface
 }
 
 func getWAFMode(ctx context.Context, m interface{}, configID int, version int, policyID string) (string, error) {
-	meta := akamai.Meta(m)
+	meta := akameta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "getWAFMode")
 
 	cacheKey := fmt.Sprintf("%s:%d:%d:%s", "getWAFMode", configID, version, policyID)
 	getWAFModeResponse := &appsec.GetWAFModeResponse{}
-	if err := meta.CacheGet(inst, cacheKey, getWAFModeResponse); err == nil {
+	if err := cache.Get(cache.BucketName(SubproviderName), cacheKey, getWAFModeResponse); err == nil {
 		logger.Debugf("returning wafMode %s for config/version/policy %d/%d/%s",
 			getWAFModeResponse.Mode, configID, version, policyID)
 		return getWAFModeResponse.Mode, nil
@@ -151,14 +152,14 @@ func getWAFMode(ctx context.Context, m interface{}, configID int, version int, p
 		getWAFModeMutex.Unlock()
 	}()
 
-	err := meta.CacheGet(inst, cacheKey, getWAFModeResponse)
+	err := cache.Get(cache.BucketName(SubproviderName), cacheKey, getWAFModeResponse)
 	if err == nil {
 		logger.Debugf("returning wafMode %s for config/version/policy %d/%d/%s",
 			getWAFModeResponse.Mode, configID, version, policyID)
 		return getWAFModeResponse.Mode, nil
 	}
 	// Any error response other than 'not found' or 'cache disabled' is a problem.
-	if !akamai.IsNotFoundError(err) && !errors.Is(err, akamai.ErrCacheDisabled) {
+	if !errors.Is(err, cache.ErrEntryNotFound) && !errors.Is(err, cache.ErrDisabled) {
 		logger.Errorf("error reading from cache: %s", err.Error())
 		return "", err
 	}
@@ -173,8 +174,8 @@ func getWAFMode(ctx context.Context, m interface{}, configID int, version int, p
 		logger.Errorf("calling 'GetWAFMode': %s", err.Error())
 		return "", err
 	}
-	if err := meta.CacheSet(inst, cacheKey, wafMode); err != nil {
-		if !errors.Is(err, akamai.ErrCacheDisabled) {
+	if err := cache.Set(cache.BucketName(SubproviderName), cacheKey, wafMode); err != nil {
+		if !errors.Is(err, cache.ErrDisabled) {
 			logger.Errorf("error caching WAFMode: %s", err.Error())
 		}
 	}
@@ -182,7 +183,7 @@ func getWAFMode(ctx context.Context, m interface{}, configID int, version int, p
 }
 
 func resourceRuleRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := akameta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceRuleRead")
 	logger.Debugf("in resourceRuleRead")
@@ -246,7 +247,7 @@ func resourceRuleRead(ctx context.Context, d *schema.ResourceData, m interface{}
 }
 
 func resourceRuleUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := akameta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceRuleUpdate")
 	logger.Debugf("in resourceRuleUpdate")
@@ -302,8 +303,7 @@ func resourceRuleUpdate(ctx context.Context, d *schema.ResourceData, m interface
 }
 
 func resourceRuleDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-
-	meta := akamai.Meta(m)
+	meta := akameta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceRuleDelete")
 	logger.Debugf("in resourceRuleDelete")

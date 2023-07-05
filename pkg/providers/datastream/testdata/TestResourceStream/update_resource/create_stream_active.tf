@@ -4,28 +4,26 @@ provider "akamai" {
 
 resource "akamai_datastream" "s" {
   active = true
-  config {
-    delimiter = "SPACE"
-    format    = "STRUCTURED"
+  delivery_configuration {
+    field_delimiter = "SPACE"
+    format          = "STRUCTURED"
     frequency {
-      time_in_sec = 30
+      interval_in_secs = 30
     }
     upload_file_prefix = "pre"
     upload_file_suffix = "suf"
   }
 
-  contract_id        = "test_contract"
-  dataset_fields_ids = [1001]
-  group_id           = 1337
-  property_ids       = [1]
-  stream_name        = "test_stream"
-  stream_type        = "RAW_LOGS"
-  template_name      = "EDGE_LOGS"
+  contract_id    = "test_contract"
+  dataset_fields = [1001]
+  group_id       = 1337
+  properties     = [1]
+  stream_name    = "test_stream"
 
   oracle_connector {
     access_key        = "access_key"
     bucket            = "bucket"
-    connector_name    = "connector_name"
+    display_name      = "display_name"
     namespace         = "namespace"
     path              = "path"
     region            = "region"

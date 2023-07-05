@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -162,8 +162,8 @@ func TestDataPropertyIncludeActivation(t *testing.T) {
 			test.init(t, client, test.attrs)
 			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProviderFactories: testAccProviders,
-					IsUnitTest:        true,
+					ProtoV5ProviderFactories: testAccProviders,
+					IsUnitTest:               true,
 					Steps: []resource.TestStep{{
 						Config:      loadFixtureString(test.configPath),
 						Check:       checkPropertyIncludeActivationAttrs(test.attrs),

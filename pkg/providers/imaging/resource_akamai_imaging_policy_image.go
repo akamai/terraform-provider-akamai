@@ -10,10 +10,11 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/imaging"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/imaging"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/logger"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -84,7 +85,7 @@ func resourceImagingPolicyImage() *schema.Resource {
 }
 
 func resourcePolicyImageCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Imaging", "resourcePolicyImageCreate")
 	ctx = session.ContextWithOptions(
 		ctx,
@@ -155,7 +156,7 @@ func upsertPolicyImage(ctx context.Context, d *schema.ResourceData, m interface{
 }
 
 func resourcePolicyImageRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Imaging", "resourcePolicyImageRead")
 	ctx = session.ContextWithOptions(
 		ctx,
@@ -247,7 +248,7 @@ func getPolicyImageJSON(policy *imaging.PolicyInputImage) (string, error) {
 }
 
 func resourcePolicyImageUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Imaging", "resourcePolicyImageUpdate")
 	ctx = session.ContextWithOptions(
 		ctx,
@@ -260,7 +261,7 @@ func resourcePolicyImageUpdate(ctx context.Context, d *schema.ResourceData, m in
 }
 
 func resourcePolicyImageDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Imaging", "resourcePolicyImageDelete")
 	ctx = session.ContextWithOptions(
 		ctx,
@@ -321,7 +322,7 @@ func resourcePolicyImageDelete(ctx context.Context, d *schema.ResourceData, m in
 }
 
 func resourcePolicyImageImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Imaging", "resourcePolicyImageImport")
 	ctx = session.ContextWithOptions(
 		ctx,
@@ -386,7 +387,7 @@ func diffSuppressPolicyImage(_, old, new string, _ *schema.ResourceData) bool {
 }
 
 func equalPolicyImage(old, new string) bool {
-	logger := akamai.Log("Imaging", "equalPolicyImage")
+	logger := logger.Get("Imaging", "equalPolicyImage")
 	if old == new {
 		return true
 	}

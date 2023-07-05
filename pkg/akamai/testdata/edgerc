@@ -1,3 +1,9 @@
+[default]
+client_secret = client_secret
+host = host.com
+access_token = access_token
+client_token = client_token
+
 [validate_edgerc]
 client_secret = client_secret
 host = host.com/

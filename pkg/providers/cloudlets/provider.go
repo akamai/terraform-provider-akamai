@@ -4,35 +4,34 @@ package cloudlets
 import (
 	"sync"
 
-	"github.com/apex/log"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/cloudlets"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cloudlets"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/subprovider"
 )
 
 type (
-	provider struct {
-		*schema.Provider
-
+	// Subprovider gathers cloudlets resources and data sources
+	Subprovider struct {
 		client cloudlets.Cloudlets
 	}
 
-	// Option is a cloudlets provider option
-	Option func(p *provider)
+	option func(p *Subprovider)
 )
 
 var (
 	once sync.Once
 
-	inst *provider
+	inst *Subprovider
 )
 
-// Subprovider returns a core sub provider
-func Subprovider(opts ...Option) akamai.Subprovider {
+var _ subprovider.Plugin = &Subprovider{}
+
+// NewSubprovider returns a core sub provider
+func NewSubprovider(opts ...option) *Subprovider {
 	once.Do(func() {
-		inst = &provider{Provider: Provider()}
+		inst = &Subprovider{}
 
 		for _, opt := range opts {
 			opt(inst)
@@ -42,70 +41,42 @@ func Subprovider(opts ...Option) akamai.Subprovider {
 	return inst
 }
 
-// Provider returns the Akamai terraform.Resource provider.
-func Provider() *schema.Provider {
-	provider := &schema.Provider{
-		Schema: map[string]*schema.Schema{},
-		DataSourcesMap: map[string]*schema.Resource{
-			"akamai_cloudlets_api_prioritization_match_rule":        dataSourceCloudletsAPIPrioritizationMatchRule(),
-			"akamai_cloudlets_application_load_balancer":            dataSourceCloudletsApplicationLoadBalancer(),
-			"akamai_cloudlets_application_load_balancer_match_rule": dataSourceCloudletsApplicationLoadBalancerMatchRule(),
-			"akamai_cloudlets_audience_segmentation_match_rule":     dataSourceCloudletsAudienceSegmentationMatchRule(),
-			"akamai_cloudlets_edge_redirector_match_rule":           dataSourceCloudletsEdgeRedirectorMatchRule(),
-			"akamai_cloudlets_forward_rewrite_match_rule":           dataSourceCloudletsForwardRewriteMatchRule(),
-			"akamai_cloudlets_phased_release_match_rule":            dataSourceCloudletsPhasedReleaseMatchRule(),
-			"akamai_cloudlets_request_control_match_rule":           dataSourceCloudletsRequestControlMatchRule(),
-			"akamai_cloudlets_visitor_prioritization_match_rule":    dataSourceCloudletsVisitorPrioritizationMatchRule(),
-			"akamai_cloudlets_policy":                               dataSourceCloudletsPolicy(),
-		},
-		ResourcesMap: map[string]*schema.Resource{
-			"akamai_cloudlets_application_load_balancer":            resourceCloudletsApplicationLoadBalancer(),
-			"akamai_cloudlets_application_load_balancer_activation": resourceCloudletsApplicationLoadBalancerActivation(),
-			"akamai_cloudlets_policy":                               resourceCloudletsPolicy(),
-			"akamai_cloudlets_policy_activation":                    resourceCloudletsPolicyActivation(),
-		},
-	}
-	return provider
-}
-
-// WithClient sets the client interface function, used for mocking and testing
-func WithClient(c cloudlets.Cloudlets) Option {
-	return func(p *provider) {
+func withClient(c cloudlets.Cloudlets) option {
+	return func(p *Subprovider) {
 		p.client = c
 	}
 }
 
 // Client returns the Cloudlets interface
-func (p *provider) Client(meta akamai.OperationMeta) cloudlets.Cloudlets {
+func (p *Subprovider) Client(meta meta.Meta) cloudlets.Cloudlets {
 	if p.client != nil {
 		return p.client
 	}
 	return cloudlets.Client(meta.Session())
 }
 
-func (p *provider) Name() string {
-	return "cloudlets"
+// Resources returns terraform resources for cloudlets
+func (p *Subprovider) Resources() map[string]*schema.Resource {
+	return map[string]*schema.Resource{
+		"akamai_cloudlets_application_load_balancer":            resourceCloudletsApplicationLoadBalancer(),
+		"akamai_cloudlets_application_load_balancer_activation": resourceCloudletsApplicationLoadBalancerActivation(),
+		"akamai_cloudlets_policy":                               resourceCloudletsPolicy(),
+		"akamai_cloudlets_policy_activation":                    resourceCloudletsPolicyActivation(),
+	}
 }
 
-// ProviderVersion update version string anytime provider adds new features
-const ProviderVersion string = "v0.0.1"
-
-func (p *provider) Version() string {
-	return ProviderVersion
-}
-
-func (p *provider) Schema() map[string]*schema.Schema {
-	return p.Provider.Schema
-}
-
-func (p *provider) Resources() map[string]*schema.Resource {
-	return p.Provider.ResourcesMap
-}
-
-func (p *provider) DataSources() map[string]*schema.Resource {
-	return p.Provider.DataSourcesMap
-}
-
-func (p *provider) Configure(_ log.Interface, _ *schema.ResourceData) diag.Diagnostics {
-	return nil
+// DataSources returns terraform data sources for cloudlets
+func (p *Subprovider) DataSources() map[string]*schema.Resource {
+	return map[string]*schema.Resource{
+		"akamai_cloudlets_api_prioritization_match_rule":        dataSourceCloudletsAPIPrioritizationMatchRule(),
+		"akamai_cloudlets_application_load_balancer":            dataSourceCloudletsApplicationLoadBalancer(),
+		"akamai_cloudlets_application_load_balancer_match_rule": dataSourceCloudletsApplicationLoadBalancerMatchRule(),
+		"akamai_cloudlets_audience_segmentation_match_rule":     dataSourceCloudletsAudienceSegmentationMatchRule(),
+		"akamai_cloudlets_edge_redirector_match_rule":           dataSourceCloudletsEdgeRedirectorMatchRule(),
+		"akamai_cloudlets_forward_rewrite_match_rule":           dataSourceCloudletsForwardRewriteMatchRule(),
+		"akamai_cloudlets_phased_release_match_rule":            dataSourceCloudletsPhasedReleaseMatchRule(),
+		"akamai_cloudlets_request_control_match_rule":           dataSourceCloudletsRequestControlMatchRule(),
+		"akamai_cloudlets_visitor_prioritization_match_rule":    dataSourceCloudletsVisitorPrioritizationMatchRule(),
+		"akamai_cloudlets_policy":                               dataSourceCloudletsPolicy(),
+	}
 }

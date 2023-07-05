@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/botman"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/botman"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
@@ -49,7 +49,7 @@ func resourceCustomDenyAction() *schema.Resource {
 }
 
 func resourceCustomDenyActionCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("botman", "resourceCustomDenyActionCreateAction")
 	logger.Debugf("in resourceCustomDenyActionCreateAction")
@@ -87,7 +87,7 @@ func resourceCustomDenyActionCreate(ctx context.Context, d *schema.ResourceData,
 }
 
 func resourceCustomDenyActionRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("botman", "resourceCustomDenyActionRead")
 	logger.Debugf("in resourceCustomDenyActionRead")
@@ -142,7 +142,7 @@ func resourceCustomDenyActionRead(ctx context.Context, d *schema.ResourceData, m
 }
 
 func resourceCustomDenyActionUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("botman", "resourceCustomDenyActionUpdate")
 	logger.Debugf("in resourceCustomDenyActionUpdate")
@@ -186,7 +186,7 @@ func resourceCustomDenyActionUpdate(ctx context.Context, d *schema.ResourceData,
 }
 
 func resourceCustomDenyActionDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("botman", "resourceCustomDenyActionDelete")
 	logger.Debugf("in resourceCustomDenyActionDelete")

@@ -7,9 +7,9 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/botman"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/botman"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -43,7 +43,7 @@ func resourceClientSideSecurity() *schema.Resource {
 }
 
 func resourceClientSideSecurityCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("botman", "resourceClientSideSecurityCreate")
 	logger.Debugf("in resourceClientSideSecurityCreate")
@@ -81,7 +81,7 @@ func resourceClientSideSecurityCreate(ctx context.Context, d *schema.ResourceDat
 }
 
 func resourceClientSideSecurityRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("botman", "resourceClientSideSecurityRead")
 	logger.Debugf("in resourceClientSideSecurityRead")
@@ -124,7 +124,7 @@ func resourceClientSideSecurityRead(ctx context.Context, d *schema.ResourceData,
 }
 
 func resourceClientSideSecurityUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("botman", "resourceClientSideSecurityUpdate")
 	logger.Debugf("in resourceClientSideSecurityUpdate")
@@ -160,7 +160,7 @@ func resourceClientSideSecurityUpdate(ctx context.Context, d *schema.ResourceDat
 }
 
 func resourceClientSideSecurityDelete(_ context.Context, _ *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("botman", "resourceClientSideSecurityDelete")
 	logger.Debugf("in resourceClientSideSecurityDelete")
 	logger.Info("Botman API does not support client side security settings deletion - resource will only be removed from state")

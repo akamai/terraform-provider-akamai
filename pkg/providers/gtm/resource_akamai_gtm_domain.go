@@ -10,10 +10,10 @@ import (
 
 	"github.com/hashicorp/go-cty/cty"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/gtm"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/gtm"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -208,7 +208,7 @@ func GetQueryArgs(d *schema.ResourceData) (map[string]string, error) {
 
 // Create a new GTM Domain
 func resourceGTMv1DomainCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1DomainCreate")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
@@ -310,7 +310,7 @@ func resourceGTMv1DomainCreate(ctx context.Context, d *schema.ResourceData, m in
 // Only ever save data from the tf config in the tf state file, to help with
 // api issues. See func unmarshalResourceData for more info.
 func resourceGTMv1DomainRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1DomainRead")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
@@ -337,7 +337,7 @@ func resourceGTMv1DomainRead(ctx context.Context, d *schema.ResourceData, m inte
 
 // Update GTM Domain
 func resourceGTMv1DomainUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1DomainUpdate")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
@@ -421,7 +421,7 @@ func resourceGTMv1DomainUpdate(ctx context.Context, d *schema.ResourceData, m in
 
 // Delete GTM Domain. Admin privileges required in current API version.
 func resourceGTMv1DomainDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1DomainDelete")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
@@ -510,7 +510,7 @@ func resourceGTMv1DomainDelete(ctx context.Context, d *schema.ResourceData, m in
 }
 
 func resourceGTMv1DomainImport(_ context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1DomainImport")
 
 	logger.Debugf("Importing GTM Domain: %s", d.Id())
@@ -526,13 +526,13 @@ func resourceGTMv1DomainImport(_ context.Context, d *schema.ResourceData, m inte
 func validateDomainType(v interface{}, _ cty.Path) diag.Diagnostics {
 	value := strings.ToUpper(v.(string))
 	if value != "BASIC" && value != "FULL" && value != "WEIGHTED" && value != "STATIC" && value != "FAILOVER-ONLY" {
-		return diag.Errorf(("type must be basic, full, weighted, static, or failover-only"))
+		return diag.Errorf("type must be basic, full, weighted, static, or failover-only")
 	}
 	return nil
 }
 
 // Create and populate a new domain object from resource data
-func populateNewDomainObject(ctx context.Context, meta akamai.OperationMeta, d *schema.ResourceData, m interface{}) (*gtm.Domain, error) {
+func populateNewDomainObject(ctx context.Context, meta meta.Meta, d *schema.ResourceData, m interface{}) (*gtm.Domain, error) {
 
 	name, _ := tf.GetStringValue("name", d)
 	domObj := inst.Client(meta).NewDomain(ctx, name, d.Get("type").(string))
@@ -545,7 +545,7 @@ func populateNewDomainObject(ctx context.Context, meta akamai.OperationMeta, d *
 // nolint:gocyclo
 // Populate existing domain object from resource data
 func populateDomainObject(d *schema.ResourceData, dom *gtm.Domain, m interface{}) error {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "populateDomainObject")
 
 	domainName, err := tf.GetStringValue("name", d)
@@ -721,7 +721,7 @@ func populateDomainObject(d *schema.ResourceData, dom *gtm.Domain, m interface{}
 
 // Populate Terraform state from provided Domain object
 func populateTerraformState(d *schema.ResourceData, dom *gtm.Domain, m interface{}) {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "populateTerraformState")
 
 	for stateKey, stateValue := range map[string]interface{}{
@@ -766,7 +766,7 @@ func populateTerraformState(d *schema.ResourceData, dom *gtm.Domain, m interface
 
 // Util function to wait for change deployment. return true if complete. false if not - error or nil (timeout)
 func waitForCompletion(ctx context.Context, domain string, m interface{}) (bool, error) {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTMv1", "waitForCompletion")
 
 	var defaultInterval = 5 * time.Second

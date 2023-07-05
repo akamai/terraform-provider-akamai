@@ -14,11 +14,11 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/edgeworkers"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/edgeworkers"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -93,7 +93,7 @@ func resourceEdgeWorker() *schema.Resource {
 }
 
 func resourceEdgeWorkerCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("EdgeWorkers", "resourceEdgeWorkerCreate")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
@@ -167,7 +167,7 @@ func resourceEdgeWorkerCreate(ctx context.Context, d *schema.ResourceData, m int
 }
 
 func resourceEdgeWorkerRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("EdgeWorkers", "resourceEdgeWorkerRead")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
@@ -226,7 +226,7 @@ func resourceEdgeWorkerRead(ctx context.Context, d *schema.ResourceData, m inter
 }
 
 func resourceEdgeWorkerUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("EdgeWorkers", "resourceEdgeWorkerUpdate")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
@@ -314,7 +314,7 @@ func resourceEdgeWorkerUpdate(ctx context.Context, d *schema.ResourceData, m int
 }
 
 func resourceEdgeWorkerDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("EdgeWorkers", "resourceEdgeWorkerDelete")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
@@ -460,7 +460,7 @@ func convertWarningsToListOfStrings(res *edgeworkers.ValidateBundleResponse) ([]
 }
 
 func resourceEdgeWorkerImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("EdgeWorkers", "resourceEdgeWorkerImport")
 
 	logger.Debug("Importing EdgeWorker version")
@@ -509,7 +509,7 @@ func resourceEdgeWorkerImport(ctx context.Context, d *schema.ResourceData, m int
 }
 
 func bundleHashCustomDiff(_ context.Context, diff *schema.ResourceDiff, m interface{}) error {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("EdgeWorkers", "bundleHashCustomDiff")
 
 	allSetComputed := func(fields ...string) error {

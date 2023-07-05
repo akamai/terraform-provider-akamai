@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/botman"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/botman"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -47,7 +47,7 @@ func resourceCustomDefinedBot() *schema.Resource {
 }
 
 func resourceCustomDefinedBotCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("botman", "resourceCustomDefinedBotCreate")
 	logger.Debugf("in resourceCustomDefinedBotCreate")
@@ -85,7 +85,7 @@ func resourceCustomDefinedBotCreate(ctx context.Context, d *schema.ResourceData,
 }
 
 func resourceCustomDefinedBotRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("botman", "resourceCustomDefinedBotRead")
 	logger.Debugf("in resourceCustomDefinedBotRead")
@@ -139,7 +139,7 @@ func resourceCustomDefinedBotRead(ctx context.Context, d *schema.ResourceData, m
 }
 
 func resourceCustomDefinedBotUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("botman", "resourceCustomDefinedBotUpdate")
 	logger.Debugf("in resourceCustomDefinedBotUpdate")
@@ -183,7 +183,7 @@ func resourceCustomDefinedBotUpdate(ctx context.Context, d *schema.ResourceData,
 }
 
 func resourceCustomDefinedBotDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("botman", "resourceCustomDefinedBotDelete")
 	logger.Debugf("in resourceCustomDefinedBotDelete")

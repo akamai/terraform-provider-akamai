@@ -6,10 +6,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/iam"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/iam"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -48,7 +48,7 @@ func resourceIAMBlockedUserProperties() *schema.Resource {
 }
 
 func resourceIAMBlockedUserPropertiesCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("IAM", "resourceIAMBlockedUserPropertiesCreate")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
 	client := inst.Client(meta)
@@ -101,7 +101,7 @@ func resourceIAMBlockedUserPropertiesCreate(ctx context.Context, d *schema.Resou
 }
 
 func resourceIAMBlockedUserPropertiesRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("IAM", "resourceIAMBlockedUserPropertiesRead")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
 	client := inst.Client(meta)
@@ -144,7 +144,7 @@ func resourceIAMBlockedUserPropertiesRead(ctx context.Context, d *schema.Resourc
 }
 
 func resourceIAMBlockedUserPropertiesUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("IAM", "resourceIAMBlockedUserPropertiesUpdate")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
 	client := inst.Client(meta)
@@ -180,7 +180,7 @@ func resourceIAMBlockedUserPropertiesUpdate(ctx context.Context, d *schema.Resou
 }
 
 func resourceIAMBlockedUserPropertiesDelete(_ context.Context, _ *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("IAM", "resourceIAMBlockedUserPropertiesDelete")
 
 	logger.Debug("Deleting blocked user properties")
@@ -194,7 +194,7 @@ func resourceIAMBlockedUserPropertiesDelete(_ context.Context, _ *schema.Resourc
 }
 
 func resourceIAMBlockedUserPropertiesImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("IAM", "resourceIAMBlockedUserPropertiesImport")
 	logger.Debug("Importing blocked user properties")
 

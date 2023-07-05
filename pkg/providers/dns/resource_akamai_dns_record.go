@@ -15,12 +15,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/dns"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/session"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/dns"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/logger"
 
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/tools"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 	"github.com/apex/log"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -96,8 +97,9 @@ func getResourceDNSRecordSchema() map[string]*schema.Schema {
 			Required: true,
 		},
 		"active": {
-			Type:     schema.TypeBool,
-			Optional: true,
+			Type:       schema.TypeBool,
+			Optional:   true,
+			Deprecated: "Field 'active' has been deprecated. Setting it has no effect",
 		},
 		"target": {
 			Type:             schema.TypeList,
@@ -385,7 +387,7 @@ func dnsRecordFieldTrimQuoteSuppress(_, old, new string, _ *schema.ResourceData)
 
 // Suppress check for type_value. Mnemonic config comes back as numeric
 func dnsRecordTypeValueSuppress(_, _, _ string, d *schema.ResourceData) bool {
-	logger := akamai.Log("[Akamai DNS]", "dnsRecordTypeValueSuppress")
+	logger := logger.Get("[Akamai DNS]", "dnsRecordTypeValueSuppress")
 	oldv, newv := d.GetChange("type_value")
 	oldVal, ok := oldv.(int)
 	if !ok {
@@ -420,7 +422,7 @@ func dnsRecordTypeValueSuppress(_, _, _ string, d *schema.ResourceData) bool {
 
 // DiffSuppresFunc to handle quoted TXT Rdata strings possibly containing escaped quotes
 func dnsRecordTargetSuppress(key, oldTarget, newTarget string, d *schema.ResourceData) bool {
-	logger := akamai.Log("[Akamai DNS]", "dnsRecordTargetSuppress")
+	logger := logger.Get("[Akamai DNS]", "dnsRecordTargetSuppress")
 
 	//new value (and length) for target is not known during plan
 	if strings.HasSuffix(key, ".#") && newTarget == "" {
@@ -593,7 +595,7 @@ func getRecordLock(recordType string) *sync.Mutex {
 	return recordCreateLock[recordType]
 }
 
-func bumpSoaSerial(ctx context.Context, d *schema.ResourceData, meta akamai.OperationMeta, zone, host string, logger log.Interface) (*dns.RecordBody, error) {
+func bumpSoaSerial(ctx context.Context, d *schema.ResourceData, meta meta.Meta, zone, host string, logger log.Interface) (*dns.RecordBody, error) {
 	// Get SOA Record
 	recordset, err := inst.Client(meta).GetRecord(ctx, zone, host, "SOA")
 	if err != nil {
@@ -616,7 +618,7 @@ func bumpSoaSerial(ctx context.Context, d *schema.ResourceData, meta akamai.Oper
 }
 
 // Record op function
-func execFunc(ctx context.Context, meta akamai.OperationMeta, fn string, rec *dns.RecordBody, zone string, rlock bool) error {
+func execFunc(ctx context.Context, meta meta.Meta, fn string, rec *dns.RecordBody, zone string, rlock bool) error {
 
 	var e error
 	switch fn {
@@ -636,7 +638,7 @@ func execFunc(ctx context.Context, meta akamai.OperationMeta, fn string, rec *dn
 	return e
 }
 
-func executeRecordFunction(ctx context.Context, meta akamai.OperationMeta, name string, d *schema.ResourceData, fn string, rec *dns.RecordBody, zone, host, recordType string, logger log.Interface, rlock bool) error {
+func executeRecordFunction(ctx context.Context, meta meta.Meta, name string, d *schema.ResourceData, fn string, rec *dns.RecordBody, zone, host, recordType string, logger log.Interface, rlock bool) error {
 
 	logger.Debugf("executeRecordFunction - zone: %s, host: %s, recordtype: %s", zone, host, recordType)
 	// DNS API can have Concurrency issues
@@ -686,7 +688,7 @@ func resourceDNSRecordCreate(ctx context.Context, d *schema.ResourceData, m inte
 	// this prevents lost data if you are using a counter/dynamic variables
 	// in your config.tf which might overwrite each other
 
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("AkamaiDNS", "resourceDNSRecordCreate")
 	logger.Info("Record Create.")
 	// create a context with logging for api calls
@@ -840,7 +842,7 @@ func resourceDNSRecordUpdate(ctx context.Context, d *schema.ResourceData, m inte
 	// this prevents lost data if you are using a counter/dynamic variables
 	// in your config.tf which might overwrite each other
 
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("AkamaiDNS", "resourceDNSRecordUpdate")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
@@ -994,7 +996,7 @@ func resourceDNSRecordUpdate(ctx context.Context, d *schema.ResourceData, m inte
 
 //nolint:gocyclo
 func resourceDNSRecordRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("AkamaiDNS", "resourceDNSRecordRead")
 	logger.Info("Record Read")
 	// create a context with logging for api calls
@@ -1229,7 +1231,7 @@ func validateSOARecord(d *schema.ResourceData, logger log.Interface) bool {
 }
 
 func resourceDNSRecordImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("AkamaiDNS", "resourceDNSRecordImport")
 	// create a context with logging for api calls
 
@@ -1314,7 +1316,7 @@ func resourceDNSRecordImport(d *schema.ResourceData, m interface{}) ([]*schema.R
 }
 
 func resourceDNSRecordDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("AkamaiDNS", "resourceDNSRecordUpdate")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
@@ -1410,7 +1412,7 @@ func padCoordinates(str string, logger log.Interface) string {
 	return fmt.Sprintf("%s %s %s %s %s %s %s %s %sm %sm %sm %sm", latD, latM, latS, latDir, longD, longM, longS, longDir, padvalue(altitude, logger), padvalue(size, logger), padvalue(horizPrecision, logger), padvalue(vertPrecision, logger))
 }
 
-func bindRecord(ctx context.Context, meta akamai.OperationMeta, d *schema.ResourceData, logger log.Interface) (dns.RecordBody, error) {
+func bindRecord(ctx context.Context, meta meta.Meta, d *schema.ResourceData, logger log.Interface) (dns.RecordBody, error) {
 
 	var host, recordType string
 	var err error
@@ -1445,7 +1447,7 @@ func bindRecord(ctx context.Context, meta akamai.OperationMeta, d *schema.Resour
 }
 
 //nolint:gocyclo
-func newRecordCreate(ctx context.Context, meta akamai.OperationMeta, d *schema.ResourceData, recordType string, target []interface{}, host string, ttl int, logger log.Interface) (dns.RecordBody, error) {
+func newRecordCreate(ctx context.Context, meta meta.Meta, d *schema.ResourceData, recordType string, target []interface{}, host string, ttl int, logger log.Interface) (dns.RecordBody, error) {
 	var recordCreate dns.RecordBody
 	switch recordType {
 	case RRTypeAfsdb:

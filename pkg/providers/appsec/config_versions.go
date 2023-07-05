@@ -6,8 +6,9 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/cache"
+	akameta "github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
 )
 
 // Utility functions for determining current and latest versions of a security
@@ -36,14 +37,14 @@ var (
 // and the API client obtained from m. Log messages are written to m's logger. A
 // mutex prevents calls made by multiple resources from creating unnecessary clones.
 func getModifiableConfigVersion(ctx context.Context, configID int, resource string, m interface{}) (int, error) {
-	meta := akamai.Meta(m)
+	meta := akameta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "getModifiableConfigVersion")
 
 	// If the version info is in the cache, return it immediately.
 	cacheKey := fmt.Sprintf("%s:%d", "getModifiableConfigVersion", configID)
 	configuration := &appsec.GetConfigurationResponse{}
-	if err := meta.CacheGet(inst, cacheKey, configuration); err == nil {
+	if err := cache.Get(cache.BucketName(SubproviderName), cacheKey, configuration); err == nil {
 		logger.Debugf("Resource %s returning modifiable version %d from cache", resource, configuration.LatestVersion)
 		return configuration.LatestVersion, nil
 	}
@@ -56,13 +57,13 @@ func getModifiableConfigVersion(ctx context.Context, configID int, resource stri
 	}()
 
 	// If the version info is in the cache, return it immediately.
-	err := meta.CacheGet(inst, cacheKey, configuration)
+	err := cache.Get(cache.BucketName(SubproviderName), cacheKey, configuration)
 	if err == nil {
 		logger.Debugf("Resource %s returning modifiable version %d from cache", resource, configuration.LatestVersion)
 		return configuration.LatestVersion, nil
 	}
 	// Any error response other than 'not found' or 'cache disabled' is a problem.
-	if !akamai.IsNotFoundError(err) && !errors.Is(err, akamai.ErrCacheDisabled) {
+	if !errors.Is(err, cache.ErrEntryNotFound) && !errors.Is(err, cache.ErrDisabled) {
 		logger.Errorf("error reading from cache: %s", err.Error())
 		return 0, err
 	}
@@ -80,8 +81,8 @@ func getModifiableConfigVersion(ctx context.Context, configID int, resource stri
 	stagingVersion := configuration.StagingVersion
 	productionVersion := configuration.ProductionVersion
 	if latestVersion != stagingVersion && latestVersion != productionVersion {
-		if err := meta.CacheSet(inst, cacheKey, configuration); err != nil {
-			if !errors.Is(err, akamai.ErrCacheDisabled) {
+		if err := cache.Set(cache.BucketName(SubproviderName), cacheKey, configuration); err != nil {
+			if !errors.Is(err, cache.ErrDisabled) {
 				logger.Errorf("unable to set latestVersion %d into cache")
 			}
 		}
@@ -102,7 +103,7 @@ func getModifiableConfigVersion(ctx context.Context, configID int, resource stri
 	}
 
 	configuration.LatestVersion = ccr.Version
-	if err := meta.CacheSet(inst, cacheKey, configuration); err != nil && !errors.Is(err, akamai.ErrCacheDisabled) {
+	if err := cache.Set(cache.BucketName(SubproviderName), cacheKey, configuration); err != nil && !errors.Is(err, cache.ErrDisabled) {
 		logger.Errorf("unable to set latestVersion %d into cache: %s", err.Error())
 	}
 
@@ -114,14 +115,14 @@ func getModifiableConfigVersion(ctx context.Context, configID int, resource stri
 // configuration. API calls are made using the supplied context and the API client
 // obtained from m. Log messages are written to m's logger.
 func getLatestConfigVersion(ctx context.Context, configID int, m interface{}) (int, error) {
-	meta := akamai.Meta(m)
+	meta := akameta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "getLatestConfigVersion")
 
 	// Return the cached value if we have one
 	cacheKey := fmt.Sprintf("%s:%d", "getLatestConfigVersion", configID)
 	configuration := &appsec.GetConfigurationResponse{}
-	if err := meta.CacheGet(inst, cacheKey, configuration); err == nil {
+	if err := cache.Get(cache.BucketName(SubproviderName), cacheKey, configuration); err == nil {
 		logger.Debugf("Found config %d, returning %d as its latest version", configuration.ID, configuration.LatestVersion)
 		return configuration.LatestVersion, nil
 	}
@@ -133,13 +134,13 @@ func getLatestConfigVersion(ctx context.Context, configID int, m interface{}) (i
 		latestVersionMutex.Unlock()
 	}()
 
-	err := meta.CacheGet(inst, cacheKey, configuration)
+	err := cache.Get(cache.BucketName(SubproviderName), cacheKey, configuration)
 	if err == nil {
 		logger.Debugf("Found config %d, returning %d as its latest version", configuration.ID, configuration.LatestVersion)
 		return configuration.LatestVersion, nil
 	}
 	// Any error response other than 'not found' or 'cache disabled' is a problem.
-	if !akamai.IsNotFoundError(err) && !errors.Is(err, akamai.ErrCacheDisabled) {
+	if !errors.Is(err, cache.ErrEntryNotFound) && !errors.Is(err, cache.ErrDisabled) {
 		logger.Errorf("error reading from cache: %s", err.Error())
 		return 0, err
 	}
@@ -149,7 +150,7 @@ func getLatestConfigVersion(ctx context.Context, configID int, m interface{}) (i
 		logger.Errorf("error calling GetConfiguration: %s", err.Error())
 		return 0, err
 	}
-	if err := meta.CacheSet(inst, cacheKey, configuration); err != nil && !errors.Is(err, akamai.ErrCacheDisabled) {
+	if err := cache.Set(cache.BucketName(SubproviderName), cacheKey, configuration); err != nil && !errors.Is(err, cache.ErrDisabled) {
 		logger.Errorf("error caching latestVersion into cache: %s", err.Error())
 	}
 
@@ -161,7 +162,7 @@ func getLatestConfigVersion(ctx context.Context, configID int, m interface{}) (i
 // active in staging and production respectively. API calls are made using the supplied
 // context and the API client obtained from m. Log messages are written to m's logger.
 func getActiveConfigVersions(ctx context.Context, configID int, m interface{}) (int, int, error) {
-	meta := akamai.Meta(m)
+	meta := akameta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "getActiveConfigVersions")
 

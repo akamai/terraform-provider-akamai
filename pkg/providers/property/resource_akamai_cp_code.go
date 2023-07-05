@@ -11,10 +11,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 )
 
 // PAPI CP Code
@@ -36,47 +36,21 @@ func resourceCPCode() *schema.Resource {
 				Required:         true,
 				ValidateDiagFunc: tf.IsNotBlank,
 			},
-			"contract": {
-				Type:       schema.TypeString,
-				Optional:   true,
-				Computed:   true,
-				Deprecated: akamai.NoticeDeprecatedUseAlias("contract"),
-				StateFunc:  addPrefixToState("ctr_"),
-			},
 			"contract_id": {
-				Type:         schema.TypeString,
-				Optional:     true,
-				Computed:     true,
-				ExactlyOneOf: []string{"contract_id", "contract"},
-				StateFunc:    addPrefixToState("ctr_"),
-			},
-			"group": {
-				Type:       schema.TypeString,
-				Optional:   true,
-				Computed:   true,
-				Deprecated: akamai.NoticeDeprecatedUseAlias("group"),
-				StateFunc:  addPrefixToState("grp_"),
+				Type:      schema.TypeString,
+				Required:  true,
+				StateFunc: addPrefixToState("ctr_"),
 			},
 			"group_id": {
-				Type:         schema.TypeString,
-				Optional:     true,
-				Computed:     true,
-				ExactlyOneOf: []string{"group_id", "group"},
-				StateFunc:    addPrefixToState("grp_"),
-			},
-			"product": {
-				Type:       schema.TypeString,
-				Optional:   true,
-				Computed:   true,
-				Deprecated: akamai.NoticeDeprecatedUseAlias("product"),
-				StateFunc:  addPrefixToState("prd_"),
+				Type:      schema.TypeString,
+				Required:  true,
+				StateFunc: addPrefixToState("grp_"),
 			},
 			"product_id": {
-				Type:         schema.TypeString,
-				Optional:     true,
-				Computed:     true,
-				ExactlyOneOf: []string{"product"},
-				StateFunc:    addPrefixToState("prd_"),
+				Type:      schema.TypeString,
+				Optional:  true,
+				Computed:  true,
+				StateFunc: addPrefixToState("prd_"),
 			},
 		},
 		Timeouts: &schema.ResourceTimeout{
@@ -94,8 +68,8 @@ var (
 const cpCodePrefix = "cpc_"
 
 func resourceCPCodeCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
-	client := inst.Client(meta)
+	meta := meta.Must(m)
+	client := Client(meta)
 	logger := meta.Log("PAPI", "resourceCPCodeCreate")
 	logger.Debugf("Creating CP Code")
 
@@ -104,16 +78,24 @@ func resourceCPCodeCreate(ctx context.Context, d *schema.ResourceData, m interfa
 		name = got.(string)
 	}
 
-	// Schema guarantees product_id/product are strings and one or the other is set
-	var productID string
-	if got, ok := d.GetOk("product_id"); ok {
-		productID = got.(string)
-	} else {
-		productID = d.Get("product").(string)
+	// Schema no longer guarantees that product_id is set, this field is required only for creation
+	productID, err := tf.GetStringValue("product_id", d)
+	if err != nil {
+		return diag.Errorf("`product_id` must be specified for creation")
 	}
 	productID = tools.AddPrefix(productID, "prd_")
 
-	contractID, groupID := getContractIDAndGroupID(d)
+	contractID, err := tf.GetStringValue("contract_id", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	contractID = tools.AddPrefix(contractID, "ctr_")
+
+	groupID, err := tf.GetStringValue("group_id", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	groupID = tools.AddPrefix(groupID, "grp_")
 
 	var cpCodeID string
 	// Because CPCodes can't be deleted, we re-use an existing CPCode if it's there
@@ -136,24 +118,28 @@ func resourceCPCodeCreate(ctx context.Context, d *schema.ResourceData, m interfa
 }
 
 func resourceCPCodeRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourceCPCodeRead")
-	client := inst.Client(meta)
+	client := Client(meta)
 	logger.Debugf("Read CP Code")
 
-	contractID, groupID := getContractIDAndGroupID(d)
+	contractID, err := tf.GetStringValue("contract_id", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	contractID = tools.AddPrefix(contractID, "ctr_")
+
+	groupID, err := tf.GetStringValue("group_id", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	groupID = tools.AddPrefix(groupID, "grp_")
 
 	if err := d.Set("group_id", groupID); err != nil {
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
-	if err := d.Set("group", groupID); err != nil {
-		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
-	}
 
 	if err := d.Set("contract_id", contractID); err != nil {
-		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
-	}
-	if err := d.Set("contract", contractID); err != nil {
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	cpCodeResp, err := client.GetCPCode(ctx, papi.GetCPCodeRequest{
@@ -174,9 +160,6 @@ func resourceCPCodeRead(ctx context.Context, d *schema.ResourceData, m interface
 	if len(cpCode.ProductIDs) == 0 {
 		return diag.Errorf("Couldn't find product id on the CP Code")
 	}
-	if err := d.Set("product", cpCode.ProductIDs[0]); err != nil {
-		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
-	}
 	if err := d.Set("product_id", cpCode.ProductIDs[0]); err != nil {
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
@@ -186,9 +169,9 @@ func resourceCPCodeRead(ctx context.Context, d *schema.ResourceData, m interface
 }
 
 func resourceCPCodeUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourceCPCodeUpdate")
-	client := inst.Client(meta)
+	client := Client(meta)
 	logger.Debugf("Update CP Code")
 
 	if diags := checkImmutableChanged(d); diags != nil {
@@ -196,7 +179,16 @@ func resourceCPCodeUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 		return diags
 	}
 
-	contractID, groupID := getContractIDAndGroupID(d)
+	contractID, err := tf.GetStringValue("contract_id", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	contractID = tools.AddPrefix(contractID, "ctr_")
+	groupID, err := tf.GetStringValue("group_id", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	groupID = tools.AddPrefix(groupID, "grp_")
 
 	// trimCPCodeID is needed here for backwards compatibility
 	cpCodeID, err := strconv.Atoi(strings.TrimPrefix(d.Id(), cpCodePrefix))
@@ -238,9 +230,9 @@ func resourceCPCodeUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 }
 
 func resourceCPCodeImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourceCPCodeImport")
-	client := inst.Client(meta)
+	client := Client(meta)
 	logger.Debugf("Import CP Code")
 
 	parts := strings.Split(d.Id(), ",")
@@ -281,9 +273,6 @@ func resourceCPCodeImport(ctx context.Context, d *schema.ResourceData, m interfa
 	if err := d.Set("product_id", cpCode.ProductIDs[0]); err != nil {
 		return nil, fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 	}
-	if err := d.Set("product", cpCode.ProductIDs[0]); err != nil {
-		return nil, fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
-	}
 
 	d.SetId(strings.TrimPrefix(cpCode.ID, cpCodePrefix))
 	logger.Debugf("Import CP Code: %+v", cpCode)
@@ -309,11 +298,8 @@ func createCPCode(ctx context.Context, client papi.PAPI, name, productID, contra
 
 func checkImmutableChanged(d *schema.ResourceData) diag.Diagnostics {
 	immutables := []string{
-		"contract",
 		"contract_id",
-		"group",
 		"group_id",
-		"product",
 		"product_id",
 	}
 
@@ -324,26 +310,6 @@ func checkImmutableChanged(d *schema.ResourceData) diag.Diagnostics {
 		}
 	}
 	return diags
-}
-
-func getContractIDAndGroupID(d *schema.ResourceData) (contractID, groupID string) {
-	// Schema guarantees contract_id/contract are strings and one or the other is set
-	if got, ok := d.GetOk("contract_id"); ok {
-		contractID = got.(string)
-	} else {
-		contractID = d.Get("contract").(string)
-	}
-	contractID = tools.AddPrefix(contractID, "ctr_")
-
-	// Schema guarantees group_id/group are strings and one or the other is set
-	if got, ok := d.GetOk("group_id"); ok {
-		groupID = got.(string)
-	} else {
-		groupID = d.Get("group").(string)
-	}
-	groupID = tools.AddPrefix(groupID, "grp_")
-
-	return
 }
 
 func waitForCPCodeNameUpdate(ctx context.Context, client papi.PAPI, contractID, groupID, CPCodeID, updatedName string) error {

@@ -1,6 +1,7 @@
 package property
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -8,56 +9,71 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
-
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/hapi"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/hapi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 	"github.com/hashicorp/go-hclog"
+	"github.com/hashicorp/terraform-plugin-framework/provider"
+	"github.com/hashicorp/terraform-plugin-framework/providerserver"
+	"github.com/hashicorp/terraform-plugin-go/tfprotov5"
+	"github.com/hashicorp/terraform-plugin-mux/tf5muxserver"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-var testAccProviders map[string]func() (*schema.Provider, error)
+var testAccProviders map[string]func() (tfprotov5.ProviderServer, error)
 
-var testAccProvider *schema.Provider
+var testAccPluginProvider *schema.Provider
+var testAccFrameworkProvider provider.Provider
 
 func TestMain(m *testing.M) {
-	testAccProvider = akamai.Provider(Subprovider())()
-	testAccProviders = map[string]func() (*schema.Provider, error){
-		"akamai": func() (*schema.Provider, error) {
-			return testAccProvider, nil
+	testAccPluginProvider = akamai.NewPluginProvider(NewPluginSubprovider())()
+	testAccFrameworkProvider = akamai.NewFrameworkProvider(NewFrameworkSubprovider())()
+
+	testAccProviders = map[string]func() (tfprotov5.ProviderServer, error){
+		"akamai": func() (tfprotov5.ProviderServer, error) {
+			ctx := context.Background()
+			providers := []func() tfprotov5.ProviderServer{
+				testAccPluginProvider.GRPCProvider,
+				providerserver.NewProtocol5(
+					testAccFrameworkProvider,
+				),
+			}
+
+			muxServer, err := tf5muxserver.NewMuxServer(ctx, providers...)
+			if err != nil {
+				return nil, err
+			}
+
+			return muxServer.ProviderServer(), nil
 		},
 	}
-	if err := akamai.TFTestSetup(); err != nil {
+
+	if err := testutils.TFTestSetup(); err != nil {
 		log.Fatal(err)
 	}
 	exitCode := m.Run()
-	if err := akamai.TFTestTeardown(); err != nil {
+	if err := testutils.TFTestTeardown(); err != nil {
 		log.Fatal(err)
 	}
 	os.Exit(exitCode)
-}
-
-func TestProvider(t *testing.T) {
-	if err := Provider().InternalValidate(); err != nil {
-		t.Fatalf("err: %s", err)
-	}
 }
 
 // Only allow one test at a time to patch the client via useClient()
 var clientLock sync.Mutex
 
 // useClient swaps out the client on the global instance for the duration of the given func
-func useClient(client papi.PAPI, hapiClient hapi.HAPI, f func()) {
+func useClient(papiCli papi.PAPI, hapiCli hapi.HAPI, f func()) {
 	clientLock.Lock()
-	orig := inst.client
-	inst.client = client
+	orig := client
+	client = papiCli
 
-	origHapi := inst.hapiClient
-	inst.hapiClient = hapiClient
+	origHapi := hapiClient
+	hapiClient = hapiCli
 
 	defer func() {
-		inst.client = orig
-		inst.hapiClient = origHapi
+		client = orig
+		hapiClient = origHapi
 		clientLock.Unlock()
 	}()
 

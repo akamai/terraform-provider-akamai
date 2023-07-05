@@ -44,7 +44,6 @@ resource "akamai_cps_dv_enrollment" "dv" {
     preferred_trust_chain = "dst-root-ca-x3"
     state                 = "MA"
   }
-  enable_multi_stacked_certificates = false
   network_configuration {
     disallowed_tls_versions = [
       "TLSv1",

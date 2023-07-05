@@ -6,8 +6,8 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/cloudlets"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cloudlets"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/jinzhu/copier"
@@ -142,7 +142,7 @@ func TestResourcePolicy(t *testing.T) {
 			return &versionUpdate
 		}
 
-		expectRemovePolicy = func(_ *testing.T, client *cloudlets.Mock, policyID int64, numVersions int) {
+		expectRemovePolicy = func(_ *testing.T, client *cloudlets.Mock, policyID int64, numVersions, numDeleteRetries int) {
 			var versionList []cloudlets.PolicyVersion
 			for i := 1; i <= numVersions; i++ {
 				versionList = append(versionList, cloudlets.PolicyVersion{PolicyID: policyID, Version: int64(i)})
@@ -158,8 +158,14 @@ func TestResourcePolicy(t *testing.T) {
 					Version:  ver.Version,
 				}).Return(nil).Once()
 			}
+
+			pendingError := &cloudlets.Error{Detail: "Unable to delete policy because an activation for this policy is still pending"}
+			if numDeleteRetries != 0 {
+				client.On("RemovePolicy", mock.Anything, cloudlets.RemovePolicyRequest{PolicyID: policyID}).Return(pendingError).Times(numDeleteRetries)
+			}
 			client.On("RemovePolicy", mock.Anything, cloudlets.RemovePolicyRequest{PolicyID: policyID}).Return(nil).Once()
 		}
+
 		expectImportPolicy = func(_ *testing.T, client *cloudlets.Mock, policyID int64, policyName string, numVersions int) {
 			var versionList []cloudlets.PolicyVersion
 			for i := 1; i <= numVersions; i++ {
@@ -232,7 +238,7 @@ func TestResourcePolicy(t *testing.T) {
 		policy = expectUpdatePolicy(t, client, policy, "test_policy_updated")
 		version = expectCreatePolicyVersion(t, client, policy.PolicyID, version, matchRules[:1])
 		expectReadPolicy(t, client, policy, version, 2)
-		expectRemovePolicy(t, client, policy.PolicyID, 2)
+		expectRemovePolicy(t, client, policy.PolicyID, 2, 0)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -252,6 +258,59 @@ func TestResourcePolicy(t *testing.T) {
 							name:           "test_policy_updated",
 							version:        "2",
 							matchRulesPath: fmt.Sprintf("%s/match_rules/match_rules_update.json", testDir),
+						}),
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
+
+	t.Run("policy lifecycle and delete retries", func(t *testing.T) {
+		testDir := "testdata/TestResPolicy/lifecycle"
+
+		client := new(cloudlets.Mock)
+		matchRules := cloudlets.MatchRules{
+			&cloudlets.MatchRuleER{
+				Name:                     "r1",
+				Type:                     "erMatchRule",
+				UseRelativeURL:           "copy_scheme_hostname",
+				StatusCode:               301,
+				RedirectURL:              "/ddd",
+				MatchURL:                 "abc.com",
+				UseIncomingSchemeAndHost: true,
+			},
+			&cloudlets.MatchRuleER{
+				Name: "r3",
+				Type: "erMatchRule",
+				Matches: []cloudlets.MatchCriteriaER{
+					{
+						MatchType:     "hostname",
+						MatchValue:    "3333.dom",
+						MatchOperator: "equals",
+						CaseSensitive: true,
+					},
+				},
+				UseRelativeURL:           "copy_scheme_hostname",
+				StatusCode:               307,
+				RedirectURL:              "/abc/sss",
+				UseIncomingSchemeAndHost: true,
+			},
+		}
+		policy, version := expectCreatePolicy(t, client, 2, "test_policy", matchRules)
+		expectReadPolicy(t, client, policy, version, 2)
+		expectRemovePolicy(t, client, policy.PolicyID, 1, 1)
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProviderFactories: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString(fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Check: checkPolicyAttributes(policyAttributes{
+							name:           "test_policy",
+							version:        "1",
+							matchRulesPath: fmt.Sprintf("%s/match_rules/match_rules_create.json", testDir),
 						}),
 					},
 				},
@@ -296,7 +355,7 @@ func TestResourcePolicy(t *testing.T) {
 		policy = expectUpdatePolicy(t, client, policy, "test_policy_updated")
 		version = expectUpdatePolicyVersion(t, client, policy.PolicyID, version, matchRules[:1])
 		expectReadPolicy(t, client, policy, version, 2)
-		expectRemovePolicy(t, client, policy.PolicyID, 1)
+		expectRemovePolicy(t, client, policy.PolicyID, 1, 0)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -359,7 +418,7 @@ func TestResourcePolicy(t *testing.T) {
 		expectReadPolicy(t, client, policy, version, 3)
 		policy = expectUpdatePolicy(t, client, policy, "test_policy_updated")
 		expectReadPolicy(t, client, policy, version, 2)
-		expectRemovePolicy(t, client, policy.PolicyID, 1)
+		expectRemovePolicy(t, client, policy.PolicyID, 1, 0)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -422,7 +481,7 @@ func TestResourcePolicy(t *testing.T) {
 		expectReadPolicy(t, client, policy, version, 3)
 		version = expectUpdatePolicyVersion(t, client, policy.PolicyID, version, matchRules[:1])
 		expectReadPolicy(t, client, policy, version, 2)
-		expectRemovePolicy(t, client, policy.PolicyID, 1)
+		expectRemovePolicy(t, client, policy.PolicyID, 1, 0)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -485,7 +544,7 @@ func TestResourcePolicy(t *testing.T) {
 		expectReadPolicy(t, client, policy, version, 3)
 		version = expectUpdatePolicyVersion(t, client, policy.PolicyID, version, matchRules[:1])
 		expectReadPolicy(t, client, policy, version, 4)
-		expectRemovePolicy(t, client, policy.PolicyID, 1)
+		expectRemovePolicy(t, client, policy.PolicyID, 1, 0)
 
 		warningsJSON, err := warningsToJSON(version.Warnings)
 		require.NoError(t, err)
@@ -552,7 +611,7 @@ func TestResourcePolicy(t *testing.T) {
 		expectReadPolicy(t, client, policy, version, 3)
 		version = expectUpdatePolicyVersion(t, client, policy.PolicyID, version, cloudlets.MatchRules{})
 		expectReadPolicy(t, client, policy, version, 2)
-		expectRemovePolicy(t, client, policy.PolicyID, 1)
+		expectRemovePolicy(t, client, policy.PolicyID, 1, 0)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -586,7 +645,7 @@ func TestResourcePolicy(t *testing.T) {
 		client := new(cloudlets.Mock)
 		policy, version := expectCreatePolicy(t, client, 2, "test_policy", nil)
 		expectReadPolicy(t, client, policy, version, 2)
-		expectRemovePolicy(t, client, 2, 1)
+		expectRemovePolicy(t, client, 2, 1, 0)
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				ProviderFactories: testAccProviders,
@@ -681,7 +740,7 @@ func TestResourcePolicy(t *testing.T) {
 				PolicyID: 2,
 				Version:  1,
 			}).Return(nil, fmt.Errorf("UpdatePolicyVersionError"))
-			expectRemovePolicy(t, client, 2, 0)
+			expectRemovePolicy(t, client, 2, 0, 0)
 		}
 
 		testCases := []struct {
@@ -731,7 +790,7 @@ func TestResourcePolicy(t *testing.T) {
 		client := new(cloudlets.Mock)
 		policy, _ := expectCreatePolicy(t, client, 2, "test_policy", nil)
 		client.On("GetPolicy", mock.Anything, cloudlets.GetPolicyRequest{PolicyID: policy.PolicyID}).Return(nil, fmt.Errorf("oops"))
-		expectRemovePolicy(t, client, 2, 1)
+		expectRemovePolicy(t, client, 2, 1, 0)
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				ProviderFactories: testAccProviders,
@@ -756,7 +815,7 @@ func TestResourcePolicy(t *testing.T) {
 			PolicyID: policy.PolicyID,
 			Version:  version.Version,
 		}).Return(nil, fmt.Errorf("oops"))
-		expectRemovePolicy(t, client, 2, 1)
+		expectRemovePolicy(t, client, 2, 1, 0)
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				ProviderFactories: testAccProviders,
@@ -811,7 +870,7 @@ func TestResourcePolicy(t *testing.T) {
 			},
 			PolicyID: policy.PolicyID,
 		}).Return(nil, fmt.Errorf("oops")).Once()
-		expectRemovePolicy(t, client, policy.PolicyID, 1)
+		expectRemovePolicy(t, client, policy.PolicyID, 1, 0)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -878,7 +937,7 @@ func TestResourcePolicy(t *testing.T) {
 				PolicyID: policy.PolicyID,
 				Version:  version.Version,
 			}).Return(nil, fmt.Errorf("UpdatePolicyVersionError")).Once()
-			expectRemovePolicy(t, client, policy.PolicyID, 1)
+			expectRemovePolicy(t, client, policy.PolicyID, 1, 0)
 			return
 		}
 
@@ -975,7 +1034,7 @@ func TestResourcePolicy(t *testing.T) {
 		policy, version := expectCreatePolicy(t, client, 2, "test_policy", matchRules)
 		expectReadPolicy(t, client, policy, version, 3)
 		expectImportPolicy(t, client, 2, "test_policy", 1)
-		expectRemovePolicy(t, client, 2, 1)
+		expectRemovePolicy(t, client, 2, 1, 0)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -1005,7 +1064,7 @@ func TestResourcePolicy(t *testing.T) {
 		expectReadPolicy(t, client, policy, version, 2)
 		client.On("ListPolicies", mock.Anything, cloudlets.ListPoliciesRequest{PageSize: tools.IntPtr(1000), Offset: 0}).
 			Return([]cloudlets.Policy{}, nil).Once()
-		expectRemovePolicy(t, client, 2, 1)
+		expectRemovePolicy(t, client, 2, 1, 0)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -1033,7 +1092,7 @@ func TestResourcePolicy(t *testing.T) {
 		policy, version := expectCreatePolicy(t, client, 2, "test_policy", nil)
 		expectReadPolicy(t, client, policy, version, 2)
 		expectImportPolicy(t, client, 2, "test_policy", 0)
-		expectRemovePolicy(t, client, 2, 1)
+		expectRemovePolicy(t, client, 2, 1, 0)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -1060,7 +1119,7 @@ func TestResourcePolicy(t *testing.T) {
 
 		policy, version := expectCreatePolicy(t, client, 2, "test_policy", nil)
 		expectReadPolicy(t, client, policy, version, 2)
-		expectRemovePolicy(t, client, 2, 1)
+		expectRemovePolicy(t, client, 2, 1, 0)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{

@@ -8,9 +8,9 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/botman"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/botman"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -54,7 +54,7 @@ func resourceBotDetectionAction() *schema.Resource {
 }
 
 func resourceBotDetectionActionCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("botman", "resourceBotDetectionActionCreate")
 	logger.Debugf("in resourceBotDetectionActionCreate")
@@ -107,7 +107,7 @@ func resourceBotDetectionActionRead(ctx context.Context, d *schema.ResourceData,
 	return botDetectionActionRead(ctx, d, m, true)
 }
 func botDetectionActionRead(ctx context.Context, d *schema.ResourceData, m interface{}, readFromCache bool) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("botman", "resourceBotDetectionActionRead")
 	logger.Debugf("in resourceBotDetectionActionRead")
@@ -172,7 +172,7 @@ func botDetectionActionRead(ctx context.Context, d *schema.ResourceData, m inter
 }
 
 func resourceBotDetectionActionUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("botman", "resourceBotDetectionActionUpdate")
 	logger.Debugf("in resourceBotDetectionActionUpdate")
@@ -219,7 +219,7 @@ func resourceBotDetectionActionUpdate(ctx context.Context, d *schema.ResourceDat
 }
 
 func resourceBotDetectionActionDelete(_ context.Context, _ *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	logger := meta.Log("botman", "resourceBotDetectionActionDelete")
 	logger.Debugf("in resourceBotDetectionActionDelete")
 	logger.Info("Botman API does not support bot detection category action deletion - resource will only be removed from state")
