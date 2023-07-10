@@ -14,26 +14,19 @@ import (
 )
 
 type contextConfig struct {
-	edgercPath    string
-	edgercSection string
-	edgercConfig  *edgegrid.Config
-	userAgent     string
-	ctx           context.Context
-	requestLimit  int
-	enableCache   bool
+	edgegridConfig *edgegrid.Config
+	userAgent      string
+	ctx            context.Context
+	requestLimit   int
+	enableCache    bool
 }
 
 func configureContext(cfg contextConfig) (*meta.OperationMeta, error) {
 	operationID := uuid.NewString()
 	log := logger.FromContext(cfg.ctx, "OperationID", operationID)
 
-	edgerc, err := newEdgegridConfig(cfg.edgercPath, cfg.edgercSection, cfg.edgercConfig)
-	if err != nil {
-		return nil, err
-	}
-
 	sess, err := session.New(
-		session.WithSigner(edgerc),
+		session.WithSigner(cfg.edgegridConfig),
 		session.WithUserAgent(cfg.userAgent),
 		session.WithLog(log),
 		session.WithHTTPTracing(cast.ToBool(os.Getenv("AKAMAI_HTTP_TRACE_ENABLED"))),

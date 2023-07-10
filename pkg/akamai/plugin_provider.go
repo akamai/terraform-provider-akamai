@@ -11,7 +11,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/cache"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/collections"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
@@ -96,25 +95,30 @@ func configureProviderContext(p *schema.Provider) schema.ConfigureContextFunc {
 			return nil, diag.FromErr(err)
 		}
 
-		envs, err := tf.GetSetValue("config", d)
+		configSet, err := tf.GetSetValue("config", d)
 		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return nil, diag.FromErr(err)
 		}
 
-		var edgercConfig *edgegrid.Config
-		if err == nil && len(envs.List()) > 0 {
-			envsMap, ok := envs.List()[0].(map[string]any)
+		var edgegridConfigBearer configBearer
+		if configSet.Len() > 0 {
+			configMap, ok := configSet.List()[0].(map[string]any)
 			if !ok {
 				return nil, diag.FromErr(fmt.Errorf("%w: %s, %q", tf.ErrInvalidType, "config", "map[string]any"))
 			}
-			edgercConfig = &edgegrid.Config{
-				Host:         envsMap["host"].(string),
-				ClientToken:  envsMap["client_token"].(string),
-				ClientSecret: envsMap["client_secret"].(string),
-				AccessToken:  envsMap["access_token"].(string),
-				AccountKey:   envsMap["account_key"].(string),
-				MaxBody:      envsMap["max_body"].(int),
+			edgegridConfigBearer = configBearer{
+				accessToken:  configMap["access_token"].(string),
+				accountKey:   configMap["account_key"].(string),
+				clientSecret: configMap["client_secret"].(string),
+				clientToken:  configMap["client_token"].(string),
+				host:         configMap["host"].(string),
+				maxBody:      configMap["max_body"].(int),
 			}
+		}
+
+		edgegridConfig, err := newEdgegridConfig(edgercPath, edgercSection, edgegridConfigBearer)
+		if err != nil {
+			return nil, diag.FromErr(err)
 		}
 
 		requestLimit, err := tf.GetIntValue("request_limit", d)
@@ -131,13 +135,11 @@ func configureProviderContext(p *schema.Provider) schema.ConfigureContextFunc {
 		}
 
 		meta, err := configureContext(contextConfig{
-			edgercPath:    edgercPath,
-			edgercSection: edgercSection,
-			edgercConfig:  edgercConfig,
-			userAgent:     userAgent(p.TerraformVersion),
-			ctx:           ctx,
-			requestLimit:  requestLimit,
-			enableCache:   cacheEnabled,
+			edgegridConfig: edgegridConfig,
+			userAgent:      userAgent(p.TerraformVersion),
+			ctx:            ctx,
+			requestLimit:   requestLimit,
+			enableCache:    cacheEnabled,
 		})
 		if err != nil {
 			return nil, diag.FromErr(err)
