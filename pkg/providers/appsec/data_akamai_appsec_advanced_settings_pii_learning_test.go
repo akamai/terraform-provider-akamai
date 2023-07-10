@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -26,7 +27,7 @@ func TestAkamaiAdvancedSettingsPIILearning_data_basic(t *testing.T) {
 		client := &appsec.Mock{}
 
 		config := appsec.GetConfigurationResponse{}
-		err := json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 		require.NoError(t, err)
 
 		client.On("GetConfiguration",
@@ -35,7 +36,7 @@ func TestAkamaiAdvancedSettingsPIILearning_data_basic(t *testing.T) {
 		).Return(&config, nil)
 
 		getPIILearningResponse := appsec.AdvancedSettingsPIILearningResponse{}
-		piiLearningBytes := loadFixtureBytes("testdata/TestDSAdvancedSettingsPIILearning/PIILearning.json")
+		piiLearningBytes := testutils.LoadFixtureBytes(t, "testdata/TestDSAdvancedSettingsPIILearning/PIILearning.json")
 		var piiLearningJSON bytes.Buffer
 		err = json.Compact(&piiLearningJSON, []byte(piiLearningBytes))
 		require.NoError(t, err)
@@ -58,7 +59,7 @@ func TestAkamaiAdvancedSettingsPIILearning_data_basic(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestDSAdvancedSettingsPIILearning/match_by_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestDSAdvancedSettingsPIILearning/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("data.akamai_appsec_advanced_settings_pii_learning.test", "id", "43253"),
 							resource.TestCheckResourceAttr("data.akamai_appsec_advanced_settings_pii_learning.test", "json", piiLearningJSON.String()),
@@ -79,7 +80,7 @@ func TestAkamaiAdvancedSettingsPIILearning_data_missing_parameter(t *testing.T) 
 		client := &appsec.Mock{}
 
 		config := appsec.GetConfigurationResponse{}
-		err := json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 		require.NoError(t, err)
 
 		client.On("GetConfiguration",
@@ -88,7 +89,7 @@ func TestAkamaiAdvancedSettingsPIILearning_data_missing_parameter(t *testing.T) 
 		).Return(&config, nil)
 
 		getPIILearningResponse := appsec.AdvancedSettingsPIILearningResponse{}
-		piiLearningBytes := loadFixtureBytes("testdata/TestDSAdvancedSettingsPIILearning/PIILearning.json")
+		piiLearningBytes := testutils.LoadFixtureBytes(t, "testdata/TestDSAdvancedSettingsPIILearning/PIILearning.json")
 		var piiLearningJSON bytes.Buffer
 		err = json.Compact(&piiLearningJSON, []byte(piiLearningBytes))
 		require.NoError(t, err)
@@ -111,7 +112,7 @@ func TestAkamaiAdvancedSettingsPIILearning_data_missing_parameter(t *testing.T) 
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestDSAdvancedSettingsPIILearning/match_by_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestDSAdvancedSettingsPIILearning/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("data.akamai_appsec_advanced_settings_pii_learning.test", "id", "43253"),
 						),

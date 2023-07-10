@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/networklists"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -15,11 +16,11 @@ func TestAccAkamaiNetworkListDescription_res_basic(t *testing.T) {
 		client := &networklists.Mock{}
 
 		cu := networklists.UpdateNetworkListDescriptionResponse{}
-		err := json.Unmarshal(loadFixtureBytes("testdata/TestResNetworkListDescription/NetworkListDescription.json"), &cu)
+		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResNetworkListDescription/NetworkListDescription.json"), &cu)
 		require.NoError(t, err)
 
 		cr := networklists.GetNetworkListDescriptionResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResNetworkListDescription/NetworkListDescription.json"), &cr)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResNetworkListDescription/NetworkListDescription.json"), &cr)
 		require.NoError(t, err)
 
 		client.On("GetNetworkListDescription",
@@ -38,7 +39,7 @@ func TestAccAkamaiNetworkListDescription_res_basic(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResNetworkListDescription/match_by_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResNetworkListDescription/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_networklist_description.test", "id", "2275_VOYAGERCALLCENTERWHITELI"),
 						),

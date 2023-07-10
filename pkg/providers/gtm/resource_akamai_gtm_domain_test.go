@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/gtm"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -62,7 +63,7 @@ func TestResGtmDomain(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResGtmDomain/create_basic.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmDomain/create_basic.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr(resourceName, "name", gtmTestDomain),
 							resource.TestCheckResourceAttr(resourceName, "type", "weighted"),
@@ -70,7 +71,7 @@ func TestResGtmDomain(t *testing.T) {
 						),
 					},
 					{
-						Config: loadFixtureString("testdata/TestResGtmDomain/update_basic.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmDomain/update_basic.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr(resourceName, "name", gtmTestDomain),
 							resource.TestCheckResourceAttr(resourceName, "type", "weighted"),
@@ -126,7 +127,7 @@ func TestResGtmDomain(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResGtmDomain/create_basic.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmDomain/create_basic.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr(resourceName, "name", gtmTestDomain),
 							resource.TestCheckResourceAttr(resourceName, "type", "weighted"),
@@ -134,7 +135,7 @@ func TestResGtmDomain(t *testing.T) {
 						),
 					},
 					{
-						Config:      loadFixtureString("testdata/TestResGtmDomain/update_domain_name.tf"),
+						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmDomain/update_domain_name.tf"),
 						ExpectError: regexp.MustCompile("Error: once the domain is created, updating its name is not allowed"),
 					},
 				},
@@ -166,7 +167,7 @@ func TestResGtmDomain(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config:      loadFixtureString("testdata/TestResGtmDomain/create_basic.tf"),
+						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmDomain/create_basic.tf"),
 						ExpectError: regexp.MustCompile("Domain Create failed"),
 					},
 				},
@@ -199,7 +200,7 @@ func TestResGtmDomain(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config:      loadFixtureString("testdata/TestResGtmDomain/create_basic.tf"),
+						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmDomain/create_basic.tf"),
 						ExpectError: regexp.MustCompile("Request could not be completed. Invalid credentials."),
 					},
 				},
@@ -251,7 +252,7 @@ func TestResGtmDomain(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResGtmDomain/create_basic.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmDomain/create_basic.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr(resourceName, "name", gtmTestDomain),
 							resource.TestCheckResourceAttr(resourceName, "type", "weighted"),
@@ -259,7 +260,7 @@ func TestResGtmDomain(t *testing.T) {
 						),
 					},
 					{
-						Config:                  loadFixtureString("testdata/TestResGtmDomain/create_basic.tf"),
+						Config:                  testutils.LoadFixtureString(t, "testdata/TestResGtmDomain/create_basic.tf"),
 						ImportState:             true,
 						ImportStateId:           gtmTestDomain,
 						ResourceName:            resourceName,
@@ -306,10 +307,10 @@ func TestGTMDomainOrder(t *testing.T) {
 					IsUnitTest:        true,
 					Steps: []resource.TestStep{
 						{
-							Config: loadFixtureString(test.pathForCreate),
+							Config: testutils.LoadFixtureString(t, test.pathForCreate),
 						},
 						{
-							Config:             loadFixtureString(test.pathForUpdate),
+							Config:             testutils.LoadFixtureString(t, test.pathForUpdate),
 							PlanOnly:           test.planOnly,
 							ExpectNonEmptyPlan: test.nonEmptyPlan,
 						},

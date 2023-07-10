@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cps"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -98,7 +99,7 @@ func TestDVValidation(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResDVValidation/create_validation.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResDVValidation/create_validation.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_cps_dv_validation.dv_validation", "id", "1"),
 							resource.TestCheckResourceAttr("akamai_cps_dv_validation.dv_validation", "status", "coodinate-domain-validation"),
@@ -106,7 +107,7 @@ func TestDVValidation(t *testing.T) {
 						),
 					},
 					{
-						Config: loadFixtureString("testdata/TestResDVValidation/update_validation.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResDVValidation/update_validation.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_cps_dv_validation.dv_validation", "id", "1"),
 							resource.TestCheckResourceAttr("akamai_cps_dv_validation.dv_validation", "status", "coodinate-domain-validation"),
@@ -166,7 +167,7 @@ func TestDVValidation(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResDVValidation/create_validation.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResDVValidation/create_validation.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_cps_dv_validation.dv_validation", "id", "1"),
 							resource.TestCheckResourceAttr("akamai_cps_dv_validation.dv_validation", "status", "coodinate-domain-validation"),
@@ -207,7 +208,7 @@ func TestDVValidation(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config:      loadFixtureString("testdata/TestResDVValidation/create_validation.tf"),
+						Config:      testutils.LoadFixtureString(t, "testdata/TestResDVValidation/create_validation.tf"),
 						ExpectError: regexp.MustCompile("retry timeout reached - error sending acknowledgement request: oops"),
 					},
 				},

@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/gtm"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -75,13 +76,13 @@ func TestResGtmGeomap(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResGtmGeomap/create_basic.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmGeomap/create_basic.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr(dataSourceName, "name", "tfexample_geomap_1"),
 						),
 					},
 					{
-						Config: loadFixtureString("testdata/TestResGtmGeomap/update_basic.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmGeomap/update_basic.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr(dataSourceName, "name", "tfexample_geomap_1"),
 						),
@@ -120,7 +121,7 @@ func TestResGtmGeomap(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config:      loadFixtureString("testdata/TestResGtmGeomap/create_basic.tf"),
+						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmGeomap/create_basic.tf"),
 						ExpectError: regexp.MustCompile("geoMap Create failed"),
 					},
 				},
@@ -158,7 +159,7 @@ func TestResGtmGeomap(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config:      loadFixtureString("testdata/TestResGtmGeomap/create_basic.tf"),
+						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmGeomap/create_basic.tf"),
 						ExpectError: regexp.MustCompile("Request could not be completed. Invalid credentials."),
 					},
 				},
@@ -243,10 +244,10 @@ func TestGTMGeoMapOrder(t *testing.T) {
 					IsUnitTest:        true,
 					Steps: []resource.TestStep{
 						{
-							Config: loadFixtureString(test.pathForCreate),
+							Config: testutils.LoadFixtureString(t, test.pathForCreate),
 						},
 						{
-							Config:             loadFixtureString(test.pathForUpdate),
+							Config:             testutils.LoadFixtureString(t, test.pathForUpdate),
 							PlanOnly:           test.planOnly,
 							ExpectNonEmptyPlan: test.nonEmptyPlan,
 						},

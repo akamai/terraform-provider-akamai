@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -17,23 +18,23 @@ func TestAkamaiConfiguration_res_basic(t *testing.T) {
 		client := &appsec.Mock{}
 
 		createConfigResponse := appsec.CreateConfigurationResponse{}
-		err := json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/ConfigurationCreate.json"), &createConfigResponse)
+		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/ConfigurationCreate.json"), &createConfigResponse)
 		require.NoError(t, err)
 
 		readConfigResponse := appsec.GetConfigurationResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/Configuration.json"), &readConfigResponse)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/Configuration.json"), &readConfigResponse)
 		require.NoError(t, err)
 
 		deleteConfigResponse := appsec.RemoveConfigurationResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/Configuration.json"), &deleteConfigResponse)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/Configuration.json"), &deleteConfigResponse)
 		require.NoError(t, err)
 
 		getConfigurationVersionsResponse := appsec.GetConfigurationVersionsResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/ConfigurationVersions.json"), &getConfigurationVersionsResponse)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/ConfigurationVersions.json"), &getConfigurationVersionsResponse)
 		require.NoError(t, err)
 
 		getSelectedHostnamesResponse := appsec.GetSelectedHostnamesResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResSelectedHostname/SelectedHostname.json"), &getSelectedHostnamesResponse)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResSelectedHostname/SelectedHostname.json"), &getSelectedHostnamesResponse)
 		require.NoError(t, err)
 
 		client.On("GetSelectedHostnames",
@@ -67,7 +68,7 @@ func TestAkamaiConfiguration_res_basic(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResConfiguration/match_by_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResConfiguration/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_configuration.test", "id", "43253"),
 						),
@@ -85,23 +86,23 @@ func TestAkamaiConfiguration_res_error_updating_configuration(t *testing.T) {
 		client := &appsec.Mock{}
 
 		createConfigResponse := appsec.CreateConfigurationResponse{}
-		err := json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/ConfigurationCreate.json"), &createConfigResponse)
+		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/ConfigurationCreate.json"), &createConfigResponse)
 		require.NoError(t, err)
 
 		readConfigResponse := appsec.GetConfigurationResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/Configuration.json"), &readConfigResponse)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/Configuration.json"), &readConfigResponse)
 		require.NoError(t, err)
 
 		deleteConfigResponse := appsec.RemoveConfigurationResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/Configuration.json"), &deleteConfigResponse)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/Configuration.json"), &deleteConfigResponse)
 		require.NoError(t, err)
 
 		getConfigurationVersionsResponse := appsec.GetConfigurationVersionsResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/ConfigurationVersions.json"), &getConfigurationVersionsResponse)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/ConfigurationVersions.json"), &getConfigurationVersionsResponse)
 		require.NoError(t, err)
 
 		hns := appsec.GetSelectedHostnamesResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResSelectedHostname/SelectedHostname.json"), &hns)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResSelectedHostname/SelectedHostname.json"), &hns)
 		require.NoError(t, err)
 
 		client.On("GetSelectedHostnames",
@@ -140,13 +141,13 @@ func TestAkamaiConfiguration_res_error_updating_configuration(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResConfiguration/match_by_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResConfiguration/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_configuration.test", "id", "43253"),
 						),
 					},
 					{
-						Config: loadFixtureString("testdata/TestResConfiguration/modify_contract.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResConfiguration/modify_contract.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_configuration.test", "id", "43253"),
 						),

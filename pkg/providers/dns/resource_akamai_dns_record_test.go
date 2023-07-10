@@ -7,6 +7,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/dns"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/stretchr/testify/assert"
@@ -88,13 +89,13 @@ func TestResDnsRecord(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResDnsRecord/create_basic.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResDnsRecord/create_basic.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr(dataSourceName, "recordtype", "A"),
 						),
 					},
 					{
-						Config: loadFixtureString("testdata/TestResDnsRecord/update_basic.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResDnsRecord/update_basic.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr(dataSourceName, "recordtype", "A"),
 						),
@@ -200,7 +201,7 @@ func TestResDnsRecord(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResDnsRecord/create_basic_txt.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResDnsRecord/create_basic_txt.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr(dataSourceName, "recordtype", "TXT"),
 							resource.TestCheckResourceAttr(dataSourceName, "target.#", "1"),

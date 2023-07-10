@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cloudlets"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -186,7 +187,7 @@ func TestResourcePolicy(t *testing.T) {
 		checkPolicyAttributes = func(attrs policyAttributes) resource.TestCheckFunc {
 			var matchRulesPath string
 			if attrs.matchRulesPath != "" {
-				matchRulesPath = loadFixtureString(attrs.matchRulesPath)
+				matchRulesPath = testutils.LoadFixtureString(t, attrs.matchRulesPath)
 			}
 			return resource.ComposeAggregateTestCheckFunc(
 				resource.TestCheckResourceAttr("akamai_cloudlets_policy.policy", "id", "2"),
@@ -245,7 +246,7 @@ func TestResourcePolicy(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString(fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
 						Check: checkPolicyAttributes(policyAttributes{
 							name:           "test_policy",
 							version:        "1",
@@ -253,7 +254,7 @@ func TestResourcePolicy(t *testing.T) {
 						}),
 					},
 					{
-						Config: loadFixtureString(fmt.Sprintf("%s/policy_update.tf", testDir)),
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_update.tf", testDir)),
 						Check: checkPolicyAttributes(policyAttributes{
 							name:           "test_policy_updated",
 							version:        "2",
@@ -306,7 +307,7 @@ func TestResourcePolicy(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString(fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
 						Check: checkPolicyAttributes(policyAttributes{
 							name:           "test_policy",
 							version:        "1",
@@ -362,7 +363,7 @@ func TestResourcePolicy(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString(fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
 						Check: checkPolicyAttributes(policyAttributes{
 							name:           "test_policy",
 							version:        "1",
@@ -370,7 +371,7 @@ func TestResourcePolicy(t *testing.T) {
 						}),
 					},
 					{
-						Config: loadFixtureString(fmt.Sprintf("%s/policy_update.tf", testDir)),
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_update.tf", testDir)),
 						Check: checkPolicyAttributes(policyAttributes{
 							name:           "test_policy_updated",
 							version:        "1",
@@ -425,7 +426,7 @@ func TestResourcePolicy(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString(fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
 						Check: checkPolicyAttributes(policyAttributes{
 							name:           "test_policy",
 							version:        "1",
@@ -433,7 +434,7 @@ func TestResourcePolicy(t *testing.T) {
 						}),
 					},
 					{
-						Config: loadFixtureString(fmt.Sprintf("%s/policy_update.tf", testDir)),
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_update.tf", testDir)),
 						Check: checkPolicyAttributes(policyAttributes{
 							name:           "test_policy_updated",
 							version:        "1",
@@ -488,7 +489,7 @@ func TestResourcePolicy(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString(fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
 						Check: checkPolicyAttributes(policyAttributes{
 							name:           "test_policy",
 							version:        "1",
@@ -496,7 +497,7 @@ func TestResourcePolicy(t *testing.T) {
 						}),
 					},
 					{
-						Config: loadFixtureString(fmt.Sprintf("%s/policy_update.tf", testDir)),
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_update.tf", testDir)),
 						Check: checkPolicyAttributes(policyAttributes{
 							name:           "test_policy",
 							version:        "1",
@@ -559,15 +560,15 @@ func TestResourcePolicy(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString(fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
 						Check:  checkWarnings,
 					},
 					{
-						Config: loadFixtureString(fmt.Sprintf("%s/policy_update.tf", testDir)),
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_update.tf", testDir)),
 						Check:  checkWarnings,
 					},
 					{
-						Config: loadFixtureString(fmt.Sprintf("%s/policy_update.tf", testDir)),
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_update.tf", testDir)),
 						Check:  checkWarnings,
 					},
 				},
@@ -618,7 +619,7 @@ func TestResourcePolicy(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString(fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
 						Check: checkPolicyAttributes(policyAttributes{
 							name:           "test_policy",
 							version:        "1",
@@ -626,7 +627,7 @@ func TestResourcePolicy(t *testing.T) {
 						}),
 					},
 					{
-						Config: loadFixtureString(fmt.Sprintf("%s/policy_update.tf", testDir)),
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_update.tf", testDir)),
 						Check: checkPolicyAttributes(policyAttributes{
 							name:           "test_policy",
 							version:        "1",
@@ -651,7 +652,7 @@ func TestResourcePolicy(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString(fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
 						Check: checkPolicyAttributes(policyAttributes{
 							name:           "test_policy",
 							version:        "1",
@@ -679,7 +680,7 @@ func TestResourcePolicy(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config:      loadFixtureString(fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
 						ExpectError: regexp.MustCompile("oops"),
 					},
 				},
@@ -774,7 +775,7 @@ func TestResourcePolicy(t *testing.T) {
 					ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
-							Config:      loadFixtureString(fmt.Sprintf("%s/policy_create.tf", testDir)),
+							Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
 							ExpectError: testCases[i].ExpectedError,
 						},
 					},
@@ -796,7 +797,7 @@ func TestResourcePolicy(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config:      loadFixtureString(fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
 						ExpectError: regexp.MustCompile("oops"),
 					},
 				},
@@ -821,7 +822,7 @@ func TestResourcePolicy(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config:      loadFixtureString(fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
 						ExpectError: regexp.MustCompile("oops"),
 					},
 				},
@@ -877,10 +878,10 @@ func TestResourcePolicy(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString(fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
 					},
 					{
-						Config:      loadFixtureString(fmt.Sprintf("%s/policy_update.tf", testDir)),
+						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_update.tf", testDir)),
 						ExpectError: regexp.MustCompile("oops"),
 					},
 				},
@@ -968,10 +969,10 @@ func TestResourcePolicy(t *testing.T) {
 					ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
-							Config: loadFixtureString(fmt.Sprintf("%s/policy_create.tf", testDir)),
+							Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
 						},
 						{
-							Config:      loadFixtureString(fmt.Sprintf("%s/policy_update.tf", testDir)),
+							Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_update.tf", testDir)),
 							ExpectError: testCases[i].ExpectedError,
 						},
 					},
@@ -990,7 +991,7 @@ func TestResourcePolicy(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config:      loadFixtureString(fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
 						ExpectError: regexp.MustCompile("invalid group_id provided"),
 					},
 				},
@@ -1041,7 +1042,7 @@ func TestResourcePolicy(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString(fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
 					},
 					{
 						ImportState:             true,
@@ -1071,7 +1072,7 @@ func TestResourcePolicy(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString(fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
 					},
 					{
 						ImportState:   true,
@@ -1099,7 +1100,7 @@ func TestResourcePolicy(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString(fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
 					},
 					{
 						ImportState:   true,
@@ -1126,7 +1127,7 @@ func TestResourcePolicy(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString(fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
 					},
 					{
 						ImportState: true,
@@ -1178,8 +1179,8 @@ func TestDiffSuppressMatchRules(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			oldJSON := loadFixtureString(fmt.Sprintf("%s/%s", basePath, test.oldPath))
-			newJSON := loadFixtureString(fmt.Sprintf("%s/%s", basePath, test.newPath))
+			oldJSON := testutils.LoadFixtureString(t, fmt.Sprintf("%s/%s", basePath, test.oldPath))
+			newJSON := testutils.LoadFixtureString(t, fmt.Sprintf("%s/%s", basePath, test.newPath))
 			res := diffSuppressMatchRules("", oldJSON, newJSON, nil)
 			assert.Equal(t, test.expected, res)
 		})

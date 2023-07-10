@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/gtm"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -78,13 +79,13 @@ func TestResGtmAsmap(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResGtmAsmap/create_basic.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmAsmap/create_basic.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr(dataSourceName, "name", "tfexample_as_1"),
 						),
 					},
 					{
-						Config: loadFixtureString("testdata/TestResGtmAsmap/update_basic.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmAsmap/update_basic.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr(dataSourceName, "name", "tfexample_as_1"),
 						),
@@ -123,7 +124,7 @@ func TestResGtmAsmap(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config:      loadFixtureString("testdata/TestResGtmAsmap/create_basic.tf"),
+						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmAsmap/create_basic.tf"),
 						ExpectError: regexp.MustCompile("asMap Create failed"),
 					},
 				},
@@ -161,7 +162,7 @@ func TestResGtmAsmap(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config:      loadFixtureString("testdata/TestResGtmAsmap/create_basic.tf"),
+						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmAsmap/create_basic.tf"),
 						ExpectError: regexp.MustCompile("Request could not be completed. Invalid credentials."),
 					},
 				},
@@ -222,13 +223,13 @@ func TestResGtmAsmap(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResGtmAsmap/import_basic.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmAsmap/import_basic.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr(dataSourceName, "name", "tfexample_as_1"),
 						),
 					},
 					{
-						Config:            loadFixtureString("testdata/TestResGtmAsmap/create_basic.tf"),
+						Config:            testutils.LoadFixtureString(t, "testdata/TestResGtmAsmap/create_basic.tf"),
 						ImportState:       true,
 						ImportStateVerify: true,
 						ImportStateId:     fmt.Sprintf("%s:%s", gtmTestDomain, "tfexample_as_1"),
@@ -323,10 +324,10 @@ func TestGTMAsMapOrder(t *testing.T) {
 					IsUnitTest:        true,
 					Steps: []resource.TestStep{
 						{
-							Config: loadFixtureString(test.pathForCreate),
+							Config: testutils.LoadFixtureString(t, test.pathForCreate),
 						},
 						{
-							Config:             loadFixtureString(test.pathForUpdate),
+							Config:             testutils.LoadFixtureString(t, test.pathForUpdate),
 							PlanOnly:           test.planOnly,
 							ExpectNonEmptyPlan: test.nonEmptyPlan,
 						},

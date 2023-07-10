@@ -2,11 +2,12 @@
 package providers
 
 import (
-	// This is where providers are import so they can register themselves
+	// This is where providers are imported, so they can register themselves
 	_ "github.com/akamai/terraform-provider-akamai/v5/pkg/providers/appsec"
 	_ "github.com/akamai/terraform-provider-akamai/v5/pkg/providers/botman"
 	_ "github.com/akamai/terraform-provider-akamai/v5/pkg/providers/clientlists"
 	_ "github.com/akamai/terraform-provider-akamai/v5/pkg/providers/cloudlets"
+	_ "github.com/akamai/terraform-provider-akamai/v5/pkg/providers/cloudwrapper"
 	_ "github.com/akamai/terraform-provider-akamai/v5/pkg/providers/cps"
 	_ "github.com/akamai/terraform-provider-akamai/v5/pkg/providers/datastream"
 	_ "github.com/akamai/terraform-provider-akamai/v5/pkg/providers/dns"

@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/datastream"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 	"github.com/stretchr/testify/mock"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -79,7 +80,7 @@ func TestDataAkamaiDatastreamActivationHistoryRead(t *testing.T) {
 					ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
-							Config: loadFixtureString(test.configPath),
+							Config: testutils.LoadFixtureString(t, test.configPath),
 							Check: resource.ComposeAggregateTestCheckFunc(
 								test.checkFuncs...,
 							),

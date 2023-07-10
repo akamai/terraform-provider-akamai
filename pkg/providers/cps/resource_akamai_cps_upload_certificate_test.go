@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cps"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -75,12 +76,12 @@ func TestResourceCPSUploadCertificate(t *testing.T) {
 					IsUnitTest:        true,
 					Steps: []resource.TestStep{
 						{
-							Config:      loadFixtureString(test.configPathForCreate),
+							Config:      testutils.LoadFixtureString(t, test.configPathForCreate),
 							Check:       test.checkFuncForCreate,
 							ExpectError: test.error,
 						},
 						{
-							Config:      loadFixtureString(test.configPathForUpdate),
+							Config:      testutils.LoadFixtureString(t, test.configPathForUpdate),
 							Check:       test.checkFuncForUpdate,
 							ExpectError: test.error,
 						},
@@ -176,7 +177,7 @@ func TestResourceCPSUploadCertificateWithThirdPartyEnrollmentDependency(t *testi
 					IsUnitTest:        true,
 					Steps: []resource.TestStep{
 						{
-							Config:      loadFixtureString(test.configPath),
+							Config:      testutils.LoadFixtureString(t, test.configPath),
 							ExpectError: test.error,
 							Check:       test.checkFunc,
 						},
@@ -283,17 +284,17 @@ func TestResourceCPSUploadCertificateLifecycle(t *testing.T) {
 					IsUnitTest:        true,
 					Steps: []resource.TestStep{
 						{
-							Config:      loadFixtureString(test.configPathForCreate),
+							Config:      testutils.LoadFixtureString(t, test.configPathForCreate),
 							Check:       test.checkFuncForCreate,
 							ExpectError: test.errorForCreate,
 						},
 						{
-							Config:      loadFixtureString(test.configPathForUpdate),
+							Config:      testutils.LoadFixtureString(t, test.configPathForUpdate),
 							Check:       test.checkFuncForUpdate,
 							ExpectError: test.errorForUpdate,
 						},
 						{
-							Config:      loadFixtureString(test.configPathForSecondUpdate),
+							Config:      testutils.LoadFixtureString(t, test.configPathForSecondUpdate),
 							Check:       test.checkFuncForUpdate,
 							ExpectError: test.errorForSecondUpdate,
 						},
@@ -663,7 +664,7 @@ func TestCreateCPSUploadCertificate(t *testing.T) {
 					IsUnitTest:        true,
 					Steps: []resource.TestStep{
 						{
-							Config:      loadFixtureString(test.configPath),
+							Config:      testutils.LoadFixtureString(t, test.configPath),
 							Check:       test.checkFunc,
 							ExpectError: test.error,
 						},
@@ -778,7 +779,7 @@ func TestReadCPSUploadCertificate(t *testing.T) {
 					IsUnitTest:        true,
 					Steps: []resource.TestStep{
 						{
-							Config:      loadFixtureString(test.configPath),
+							Config:      testutils.LoadFixtureString(t, test.configPath),
 							Check:       test.checkFunc,
 							ExpectError: test.error,
 						},
@@ -1091,12 +1092,12 @@ func TestUpdateCPSUploadCertificate(t *testing.T) {
 					IsUnitTest:        true,
 					Steps: []resource.TestStep{
 						{
-							Config:      loadFixtureString(test.configPathForCreate),
+							Config:      testutils.LoadFixtureString(t, test.configPathForCreate),
 							Check:       test.checkFuncForCreate,
 							ExpectError: test.errorForCreate,
 						},
 						{
-							Config:      loadFixtureString(test.configPathForUpdate),
+							Config:      testutils.LoadFixtureString(t, test.configPathForUpdate),
 							Check:       test.checkFuncForUpdate,
 							ExpectError: test.errorForUpdate,
 						},
@@ -1169,7 +1170,7 @@ func TestResourceUploadCertificateImport(t *testing.T) {
 					ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
-							Config:           loadFixtureString("testdata/TestResCPSUploadCertificate/import/import_upload.tf"),
+							Config:           testutils.LoadFixtureString(t, "testdata/TestResCPSUploadCertificate/import/import_upload.tf"),
 							ImportState:      true,
 							ImportStateId:    fmt.Sprintf("%d", id),
 							ResourceName:     "akamai_cps_upload_certificate.import",

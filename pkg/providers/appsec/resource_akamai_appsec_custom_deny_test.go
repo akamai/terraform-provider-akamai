@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -15,7 +16,7 @@ func TestAkamaiCustomDeny_res_basic(t *testing.T) {
 		client := &appsec.Mock{}
 
 		configResponse := appsec.GetConfigurationResponse{}
-		err := json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &configResponse)
+		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/LatestConfiguration.json"), &configResponse)
 		require.NoError(t, err)
 		client.On("GetConfiguration",
 			mock.Anything,
@@ -23,25 +24,25 @@ func TestAkamaiCustomDeny_res_basic(t *testing.T) {
 		).Return(&configResponse, nil)
 
 		createResponse := appsec.CreateCustomDenyResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResCustomDeny/CustomDenyCreateResponse.json"), &createResponse)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResCustomDeny/CustomDenyCreateResponse.json"), &createResponse)
 		require.NoError(t, err)
-		createRequestJSON := loadFixtureBytes("testdata/TestResCustomDeny/CustomDenyWithPreventBrowserCacheTrue.json")
+		createRequestJSON := testutils.LoadFixtureBytes(t, "testdata/TestResCustomDeny/CustomDenyWithPreventBrowserCacheTrue.json")
 		client.On("CreateCustomDeny",
 			mock.Anything,
 			appsec.CreateCustomDenyRequest{ConfigID: 43253, Version: 7, JsonPayloadRaw: createRequestJSON},
 		).Return(&createResponse, nil)
 
 		getResponse := appsec.GetCustomDenyResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResCustomDeny/CustomDenyGetResponse.json"), &getResponse)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResCustomDeny/CustomDenyGetResponse.json"), &getResponse)
 		require.NoError(t, err)
 		client.On("GetCustomDeny",
 			mock.Anything,
 			appsec.GetCustomDenyRequest{ConfigID: 43253, Version: 7, ID: "deny_custom_622918"},
 		).Return(&getResponse, nil).Times(3)
 
-		updateRequestJSON := loadFixtureBytes("testdata/TestResCustomDeny/CustomDenyWithPreventBrowserCacheFalse.json")
+		updateRequestJSON := testutils.LoadFixtureBytes(t, "testdata/TestResCustomDeny/CustomDenyWithPreventBrowserCacheFalse.json")
 		updateResponse := appsec.UpdateCustomDenyResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResCustomDeny/CustomDenyUpdateResponse.json"), &updateResponse)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResCustomDeny/CustomDenyUpdateResponse.json"), &updateResponse)
 		require.NoError(t, err)
 		client.On("UpdateCustomDeny",
 			mock.Anything,
@@ -49,7 +50,7 @@ func TestAkamaiCustomDeny_res_basic(t *testing.T) {
 		).Return(&updateResponse, nil)
 
 		getResponseAfterUpdate := appsec.GetCustomDenyResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResCustomDeny/CustomDenyGetResponseAfterUpdate.json"), &getResponseAfterUpdate)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResCustomDeny/CustomDenyGetResponseAfterUpdate.json"), &getResponseAfterUpdate)
 		require.NoError(t, err)
 		client.On("GetCustomDeny",
 			mock.Anything,
@@ -57,7 +58,7 @@ func TestAkamaiCustomDeny_res_basic(t *testing.T) {
 		).Return(&getResponseAfterUpdate, nil).Twice()
 
 		removeResponse := appsec.RemoveCustomDenyResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResCustomDeny/CustomDeny.json"), &removeResponse)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResCustomDeny/CustomDeny.json"), &removeResponse)
 		require.NoError(t, err)
 		client.On("RemoveCustomDeny",
 			mock.Anything,
@@ -70,13 +71,13 @@ func TestAkamaiCustomDeny_res_basic(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResCustomDeny/match_by_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResCustomDeny/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_custom_deny.test", "id", "43253:deny_custom_622918"),
 						),
 					},
 					{
-						Config: loadFixtureString("testdata/TestResCustomDeny/update_by_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResCustomDeny/update_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_custom_deny.test", "id", "43253:deny_custom_622918"),
 						),

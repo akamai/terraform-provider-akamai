@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/datastream"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
@@ -71,7 +72,7 @@ func TestDataDatastreams(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("testdata/TestDataDatastreams/list_streams_without_groupid.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestDataDatastreams/list_streams_without_groupid.tf"),
 					Check:  streamsChecks(streamList),
 				},
 			},
@@ -84,7 +85,7 @@ func TestDataDatastreams(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("testdata/TestDataDatastreams/list_streams_with_groupid.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestDataDatastreams/list_streams_with_groupid.tf"),
 					Check:  streamsChecks(streamListForSpecificGroup),
 				},
 			},
@@ -97,7 +98,7 @@ func TestDataDatastreams(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("testdata/TestDataDatastreams/list_streams_with_groupid_with_prefix.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestDataDatastreams/list_streams_with_groupid_with_prefix.tf"),
 					Check:  streamsChecks(streamListForSpecificGroup),
 				},
 			},
@@ -106,7 +107,7 @@ func TestDataDatastreams(t *testing.T) {
 			init: func(t *testing.T, m *datastream.Mock) {},
 			steps: []resource.TestStep{
 				{
-					Config:      loadFixtureString("testdata/TestDataDatastreams/list_streams_with_groupid_with_invalid_prefix.tf"),
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDataDatastreams/list_streams_with_groupid_with_invalid_prefix.tf"),
 					ExpectError: regexp.MustCompile("Invalid reference"),
 				},
 			},
@@ -118,7 +119,7 @@ func TestDataDatastreams(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("testdata/TestDataDatastreams/list_streams_without_groupid.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestDataDatastreams/list_streams_without_groupid.tf"),
 					Check:  streamsChecks([]datastream.StreamDetails{}),
 				},
 			},
@@ -130,7 +131,7 @@ func TestDataDatastreams(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config:      loadFixtureString("testdata/TestDataDatastreams/list_streams_without_groupid.tf"),
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDataDatastreams/list_streams_without_groupid.tf"),
 					ExpectError: regexp.MustCompile("failed to get stream list"),
 				},
 			},

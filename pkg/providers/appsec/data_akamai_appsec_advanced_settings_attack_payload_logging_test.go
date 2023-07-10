@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -15,7 +16,7 @@ func TestAkamaiAdvancedSettingsAttackPayloadLoggingDataBasic(t *testing.T) {
 		client := &appsec.Mock{}
 
 		config := appsec.GetConfigurationResponse{}
-		err := json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 		require.NoError(t, err)
 
 		client.On("GetConfiguration",
@@ -24,7 +25,7 @@ func TestAkamaiAdvancedSettingsAttackPayloadLoggingDataBasic(t *testing.T) {
 		).Return(&config, nil)
 
 		getLoggingResponse := appsec.GetAdvancedSettingsAttackPayloadLoggingResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestDSAdvancedSettingsAttackPayloadLogging/AdvancedSettingsAttackPayloadLogging.json"), &getLoggingResponse)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestDSAdvancedSettingsAttackPayloadLogging/AdvancedSettingsAttackPayloadLogging.json"), &getLoggingResponse)
 		require.NoError(t, err)
 
 		client.On("GetAdvancedSettingsAttackPayloadLogging",
@@ -38,7 +39,7 @@ func TestAkamaiAdvancedSettingsAttackPayloadLoggingDataBasic(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestDSAdvancedSettingsAttackPayloadLogging/match_by_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestDSAdvancedSettingsAttackPayloadLogging/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("data.akamai_appsec_advanced_settings_attack_payload_logging.test", "id", "43253:"),
 						),
@@ -57,7 +58,7 @@ func TestAkamaiAdvancedSettingsAttackPayloadLoggingDataBasicPolicyId(t *testing.
 		client := &appsec.Mock{}
 
 		config := appsec.GetConfigurationResponse{}
-		err := json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 		require.NoError(t, err)
 
 		client.On("GetConfiguration",
@@ -66,7 +67,7 @@ func TestAkamaiAdvancedSettingsAttackPayloadLoggingDataBasicPolicyId(t *testing.
 		).Return(&config, nil)
 
 		getLoggingResponse := appsec.GetAdvancedSettingsAttackPayloadLoggingResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestDSAdvancedSettingsAttackPayloadLogging/AdvancedSettingsAttackPayloadLogging.json"), &getLoggingResponse)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestDSAdvancedSettingsAttackPayloadLogging/AdvancedSettingsAttackPayloadLogging.json"), &getLoggingResponse)
 		require.NoError(t, err)
 
 		client.On("GetAdvancedSettingsAttackPayloadLogging",
@@ -80,7 +81,7 @@ func TestAkamaiAdvancedSettingsAttackPayloadLoggingDataBasicPolicyId(t *testing.
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestDSAdvancedSettingsAttackPayloadLogging/match_by_policy_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestDSAdvancedSettingsAttackPayloadLogging/match_by_policy_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("data.akamai_appsec_advanced_settings_attack_payload_logging.policy", "id", "43253:test_policy"),
 						),

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/gtm"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -32,7 +33,7 @@ func TestAccDataSourceGTMDefaultDatacenter_basic(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestDataDefaultDatacenter/basic.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestDataDefaultDatacenter/basic.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttrSet(dataSourceName, "id"),
 						),

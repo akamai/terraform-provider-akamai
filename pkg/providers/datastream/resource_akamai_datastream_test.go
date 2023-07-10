@@ -12,6 +12,7 @@ import (
 	"github.com/tj/assert"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/datastream"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -371,7 +372,7 @@ func TestResourceStream(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResourceStream/lifecycle/create_stream.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResourceStream/lifecycle/create_stream.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_datastream.s", "id", strconv.FormatInt(streamID, 10)),
 							resource.TestCheckResourceAttr("akamai_datastream.s", "active", "true"),
@@ -405,7 +406,7 @@ func TestResourceStream(t *testing.T) {
 						),
 					},
 					{
-						Config: loadFixtureString("testdata/TestResourceStream/lifecycle/update_stream.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResourceStream/lifecycle/update_stream.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_datastream.s", "id", strconv.FormatInt(streamID, 10)),
 							resource.TestCheckResourceAttr("akamai_datastream.s", "active", "true"),
@@ -707,14 +708,14 @@ func TestResourceUpdate(t *testing.T) {
 					ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
-							Config: loadFixtureString(fmt.Sprintf("testdata/TestResourceStream/update_resource/create_stream_%s.tf", createStreamFilenameSuffix)),
+							Config: testutils.LoadFixtureString(t, fmt.Sprintf("testdata/TestResourceStream/update_resource/create_stream_%s.tf", createStreamFilenameSuffix)),
 							Check: resource.ComposeTestCheckFunc(
 								commonChecks,
 								resource.TestCheckResourceAttr("akamai_datastream.s", "active", strconv.FormatBool(test.CreateStreamActive)),
 							),
 						},
 						{
-							Config: loadFixtureString(fmt.Sprintf("testdata/TestResourceStream/update_resource/update_stream_%s.tf", updateStreamFilenameSuffix)),
+							Config: testutils.LoadFixtureString(t, fmt.Sprintf("testdata/TestResourceStream/update_resource/update_stream_%s.tf", updateStreamFilenameSuffix)),
 							Check: resource.ComposeTestCheckFunc(
 								commonChecks,
 								resource.TestCheckResourceAttr("akamai_datastream.s", "active", strconv.FormatBool(test.UpdateStreamActive)),
@@ -784,7 +785,7 @@ func TestResourceStreamErrors(t *testing.T) {
 					ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
-							Config:      loadFixtureString(test.tfFile),
+							Config:      testutils.LoadFixtureString(t, test.tfFile),
 							ExpectError: test.withError,
 						},
 					},
@@ -844,7 +845,7 @@ func TestResourceStreamCustomDiff(t *testing.T) {
 					ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
-							Config:             loadFixtureString(test.tfFile),
+							Config:             testutils.LoadFixtureString(t, test.tfFile),
 							ExpectError:        test.withError,
 							PlanOnly:           true,
 							ExpectNonEmptyPlan: true,
@@ -1002,7 +1003,7 @@ func TestEmailIDs(t *testing.T) {
 					ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
-							Config: loadFixtureString(fmt.Sprintf("testdata/TestResourceStream/email_ids/%s", test.Filename)),
+							Config: testutils.LoadFixtureString(t, fmt.Sprintf("testdata/TestResourceStream/email_ids/%s", test.Filename)),
 							Check:  resource.ComposeTestCheckFunc(test.TestChecks...),
 						},
 					},
@@ -1201,7 +1202,7 @@ func TestDatasetIDsDiff(t *testing.T) {
 					ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
-							Config:             loadFixtureString(test.preConfig),
+							Config:             testutils.LoadFixtureString(t, test.preConfig),
 							ExpectNonEmptyPlan: test.expectNonEmptyPlan,
 							Check: resource.ComposeTestCheckFunc(
 								resource.TestCheckResourceAttr("akamai_datastream.splunk_stream", "dataset_fields.#", "2"),
@@ -1505,7 +1506,7 @@ func TestCustomHeaders(t *testing.T) {
 					ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
-							Config: loadFixtureString(fmt.Sprintf("testdata/TestResourceStream/custom_headers/%s", test.Filename)),
+							Config: testutils.LoadFixtureString(t, fmt.Sprintf("testdata/TestResourceStream/custom_headers/%s", test.Filename)),
 							Check:  resource.ComposeTestCheckFunc(test.TestChecks...),
 						},
 					},
@@ -1734,7 +1735,7 @@ func TestMTLS(t *testing.T) {
 					ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
-							Config: loadFixtureString(fmt.Sprintf("testdata/TestResourceStream/mtls/%s", test.Filename)),
+							Config: testutils.LoadFixtureString(t, fmt.Sprintf("testdata/TestResourceStream/mtls/%s", test.Filename)),
 							Check:  resource.ComposeTestCheckFunc(test.TestChecks...),
 						},
 					},
@@ -1855,7 +1856,7 @@ func TestUrlSuppressor(t *testing.T) {
 			},
 			Steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("testdata/TestResourceStream/urlSuppressor/idempotency/create_stream.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestResourceStream/urlSuppressor/idempotency/create_stream.tf"),
 					Check: resource.ComposeTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_datastream.s", "sumologic_connector.0.collector_code", "collector_code"),
 						resource.TestCheckResourceAttr("akamai_datastream.s", "sumologic_connector.0.display_name", "display_name"),
@@ -1863,7 +1864,7 @@ func TestUrlSuppressor(t *testing.T) {
 					),
 				},
 				{
-					Config:   loadFixtureString("testdata/TestResourceStream/urlSuppressor/idempotency/create_stream.tf"),
+					Config:   testutils.LoadFixtureString(t, "testdata/TestResourceStream/urlSuppressor/idempotency/create_stream.tf"),
 					PlanOnly: true,
 				},
 			},
@@ -1902,7 +1903,7 @@ func TestUrlSuppressor(t *testing.T) {
 			},
 			Steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("testdata/TestResourceStream/urlSuppressor/update_endpoint_field/create_stream.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestResourceStream/urlSuppressor/update_endpoint_field/create_stream.tf"),
 					Check: resource.ComposeTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_datastream.s", "sumologic_connector.0.collector_code", "collector_code"),
 						resource.TestCheckResourceAttr("akamai_datastream.s", "sumologic_connector.0.display_name", "display_name"),
@@ -1910,7 +1911,7 @@ func TestUrlSuppressor(t *testing.T) {
 					),
 				},
 				{
-					Config: loadFixtureString("testdata/TestResourceStream/urlSuppressor/update_endpoint_field/update_stream.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestResourceStream/urlSuppressor/update_endpoint_field/update_stream.tf"),
 					Check: resource.ComposeTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_datastream.s", "sumologic_connector.0.collector_code", "collector_code"),
 						resource.TestCheckResourceAttr("akamai_datastream.s", "sumologic_connector.0.display_name", "display_name"),
@@ -1957,7 +1958,7 @@ func TestUrlSuppressor(t *testing.T) {
 			},
 			Steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("testdata/TestResourceStream/urlSuppressor/adding_fields/create_stream.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestResourceStream/urlSuppressor/adding_fields/create_stream.tf"),
 					Check: resource.ComposeTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_datastream.s", "sumologic_connector.0.collector_code", "collector_code"),
 						resource.TestCheckResourceAttr("akamai_datastream.s", "sumologic_connector.0.display_name", "display_name"),
@@ -1965,7 +1966,7 @@ func TestUrlSuppressor(t *testing.T) {
 					),
 				},
 				{
-					Config: loadFixtureString("testdata/TestResourceStream/urlSuppressor/adding_fields/update_stream.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestResourceStream/urlSuppressor/adding_fields/update_stream.tf"),
 					Check: resource.ComposeTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_datastream.s", "sumologic_connector.0.collector_code", "collector_code"),
 						resource.TestCheckResourceAttr("akamai_datastream.s", "sumologic_connector.0.display_name", "display_name"),
@@ -1975,7 +1976,7 @@ func TestUrlSuppressor(t *testing.T) {
 					),
 				},
 				{
-					Config:   loadFixtureString("testdata/TestResourceStream/urlSuppressor/adding_fields/update_stream.tf"),
+					Config:   testutils.LoadFixtureString(t, "testdata/TestResourceStream/urlSuppressor/adding_fields/update_stream.tf"),
 					PlanOnly: true,
 				},
 			},
@@ -2012,7 +2013,7 @@ func TestUrlSuppressor(t *testing.T) {
 			},
 			Steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("testdata/TestResourceStream/urlSuppressor/change_connector/create_stream.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestResourceStream/urlSuppressor/change_connector/create_stream.tf"),
 					Check: resource.ComposeTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_datastream.s", "sumologic_connector.0.collector_code", "collector_code"),
 						resource.TestCheckResourceAttr("akamai_datastream.s", "sumologic_connector.0.display_name", "display_name"),
@@ -2020,7 +2021,7 @@ func TestUrlSuppressor(t *testing.T) {
 					),
 				},
 				{
-					Config: loadFixtureString("testdata/TestResourceStream/urlSuppressor/change_connector/update_stream.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestResourceStream/urlSuppressor/change_connector/update_stream.tf"),
 					Check: resource.ComposeTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_datastream.s", "datadog_connector.0.display_name", "display_name"),
 						resource.TestCheckResourceAttr("akamai_datastream.s", "datadog_connector.0.auth_token", "auth_token"),
@@ -2028,7 +2029,7 @@ func TestUrlSuppressor(t *testing.T) {
 					),
 				},
 				{
-					Config:   loadFixtureString("testdata/TestResourceStream/urlSuppressor/change_connector/update_stream.tf"),
+					Config:   testutils.LoadFixtureString(t, "testdata/TestResourceStream/urlSuppressor/change_connector/update_stream.tf"),
 					PlanOnly: true,
 				},
 			},
@@ -2207,7 +2208,7 @@ func TestConnectors(t *testing.T) {
 					ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
-							Config: loadFixtureString(fmt.Sprintf("testdata/TestResourceStream/connectors/%s", test.Filename)),
+							Config: testutils.LoadFixtureString(t, fmt.Sprintf("testdata/TestResourceStream/connectors/%s", test.Filename)),
 							Check:  resource.ComposeTestCheckFunc(test.TestChecks...),
 						},
 					},

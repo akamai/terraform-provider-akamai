@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/dns"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -80,13 +81,13 @@ func TestResDnsZone(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResDnsZone/create_primary.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResDnsZone/create_primary.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr(dataSourceName, "zone", "primaryexampleterraform.io"),
 						),
 					},
 					{
-						Config: loadFixtureString("testdata/TestResDnsZone/update_primary.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResDnsZone/update_primary.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr(dataSourceName, "zone", "primaryexampleterraform.io"),
 						),

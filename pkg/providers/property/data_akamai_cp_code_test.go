@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 )
 
 func TestDSCPCode(t *testing.T) {
@@ -29,7 +30,7 @@ func TestDSCPCode(t *testing.T) {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{{
-					Config: loadFixtureString("testdata/TestDSCPCode/match_by_name.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestDSCPCode/match_by_name.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "id", "234"),
 						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "name", "test cpcode"),
@@ -61,7 +62,7 @@ func TestDSCPCode(t *testing.T) {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{{
-					Config: loadFixtureString("testdata/TestDSCPCode/match_by_name_output_products.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestDSCPCode/match_by_name_output_products.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "id", "234"),
 						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "name", "test cpcode"),
@@ -95,7 +96,7 @@ func TestDSCPCode(t *testing.T) {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{{
-					Config: loadFixtureString("testdata/TestDSCPCode/match_by_full_id.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestDSCPCode/match_by_full_id.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "id", "234"),
 						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "name", "cpc_234"),
@@ -127,7 +128,7 @@ func TestDSCPCode(t *testing.T) {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{{
-					Config: loadFixtureString("testdata/TestDSCPCode/match_by_unprefixed_id.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestDSCPCode/match_by_unprefixed_id.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "id", "234"),
 					),
@@ -156,7 +157,7 @@ func TestDSCPCode(t *testing.T) {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{{
-					Config:      loadFixtureString("testdata/TestDSCPCode/match_by_unprefixed_id.tf"),
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDSCPCode/match_by_unprefixed_id.tf"),
 					ExpectError: regexp.MustCompile(`cp code not found`),
 				}},
 			})
@@ -181,7 +182,7 @@ func TestDSCPCode(t *testing.T) {
 				ProtoV5ProviderFactories: testAccProviders,
 				IsUnitTest:               true,
 				Steps: []resource.TestStep{{
-					Config: loadFixtureString("testdata/TestDSGroupNotFound/cp_code.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestDSGroupNotFound/cp_code.tf"),
 				}},
 			})
 		})

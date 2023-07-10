@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
@@ -44,11 +45,11 @@ func TestDataCloudletsAPIPrioritizationMatchRule(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString(test.configPath),
+						Config: testutils.LoadFixtureString(t, test.configPath),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr(
 								"data.akamai_cloudlets_api_prioritization_match_rule.test", "json",
-								loadFixtureString(test.expectedJSONPath)),
+								testutils.LoadFixtureString(t, test.expectedJSONPath)),
 							resource.TestCheckResourceAttr(
 								"data.akamai_cloudlets_api_prioritization_match_rule.test", "match_rules.0.type", "apMatchRule"),
 							resource.TestCheckResourceAttr(
@@ -109,7 +110,7 @@ func TestIncorrectDataCloudletsAPIPrioritizationMatchRule(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString(test.configPath),
+						Config: testutils.LoadFixtureString(t, test.configPath),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr(
 								"data.akamai_cloudlets_api_prioritization_match_rule.test", "match_rules.0.type", "apMatchRule"),

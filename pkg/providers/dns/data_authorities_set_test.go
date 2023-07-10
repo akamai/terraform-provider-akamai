@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/dns"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -30,7 +31,7 @@ func TestDataSourceAuthoritiesSet_basic(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestDataSetAuthorities/basic.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestDataSetAuthorities/basic.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							// check the values set in dataSourceAuthoritiesSetRead
 							// authorities is an array that becomes authorities.0 and authorities.1 in tf state
@@ -55,7 +56,7 @@ func TestDataSourceAuthoritiesSet_basic(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config:      loadFixtureString("testdata/TestDataSetAuthorities/missing_contract.tf"),
+						Config:      testutils.LoadFixtureString(t, "testdata/TestDataSetAuthorities/missing_contract.tf"),
 						ExpectError: regexp.MustCompile(`Missing required argument`),
 					},
 				},
@@ -78,7 +79,7 @@ func TestDataSourceAuthoritiesSet_basic(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config:      loadFixtureString("testdata/TestDataSetAuthorities/basic.tf"),
+						Config:      testutils.LoadFixtureString(t, "testdata/TestDataSetAuthorities/basic.tf"),
 						ExpectError: regexp.MustCompile(`invalid contract`),
 					},
 				},

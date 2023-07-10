@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -15,19 +16,19 @@ func TestAkamaiEvalRule_res_basic(t *testing.T) {
 		client := &appsec.Mock{}
 
 		updateEvalRuleResponse := appsec.UpdateEvalRuleResponse{}
-		err := json.Unmarshal(loadFixtureBytes("testdata/TestResEvalRule/EvalRuleUpdated.json"), &updateEvalRuleResponse)
+		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResEvalRule/EvalRuleUpdated.json"), &updateEvalRuleResponse)
 		require.NoError(t, err)
 
 		getEvalRuleResponse := appsec.GetEvalRuleResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResEvalRule/EvalRule.json"), &getEvalRuleResponse)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResEvalRule/EvalRule.json"), &getEvalRuleResponse)
 		require.NoError(t, err)
 
 		removeEvalRuleActionResponse := appsec.UpdateEvalRuleResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResEvalRule/EvalRule.json"), &removeEvalRuleActionResponse)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResEvalRule/EvalRule.json"), &removeEvalRuleActionResponse)
 		require.NoError(t, err)
 
 		config := appsec.GetConfigurationResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 		require.NoError(t, err)
 
 		client.On("GetConfiguration",
@@ -40,7 +41,7 @@ func TestAkamaiEvalRule_res_basic(t *testing.T) {
 			appsec.GetEvalRuleRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", RuleID: 12345},
 		).Return(&getEvalRuleResponse, nil)
 
-		conditionExceptionJSON := loadFixtureBytes("testdata/TestResEvalRule/ConditionException.json")
+		conditionExceptionJSON := testutils.LoadFixtureBytes(t, "testdata/TestResEvalRule/ConditionException.json")
 		client.On("UpdateEvalRule", mock.Anything,
 			appsec.UpdateEvalRuleRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", Action: "alert", RuleID: 12345, JsonPayloadRaw: conditionExceptionJSON},
 		).Return(&updateEvalRuleResponse, nil)
@@ -56,7 +57,7 @@ func TestAkamaiEvalRule_res_basic(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResEvalRule/match_by_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResEvalRule/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_eval_rule.test", "id", "43253:AAAA_81230:12345"),
 						),

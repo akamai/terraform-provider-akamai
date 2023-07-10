@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -15,7 +16,7 @@ func TestAkamaiCustomRules_data_basic(t *testing.T) {
 		client := &appsec.Mock{}
 
 		getCustomRulesResponse := appsec.GetCustomRulesResponse{}
-		err := json.Unmarshal(loadFixtureBytes("testdata/TestDSCustomRules/CustomRules.json"), &getCustomRulesResponse)
+		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestDSCustomRules/CustomRules.json"), &getCustomRulesResponse)
 		require.NoError(t, err)
 
 		client.On("GetCustomRules",
@@ -29,7 +30,7 @@ func TestAkamaiCustomRules_data_basic(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestDSCustomRules/match_by_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestDSCustomRules/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("data.akamai_appsec_custom_rules.test", "id", "43253"),
 						),

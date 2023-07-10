@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -15,27 +16,27 @@ func TestAkamaiRatePolicyAction_res_basic(t *testing.T) {
 		client := &appsec.Mock{}
 
 		config := appsec.GetConfigurationResponse{}
-		err := json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 		require.NoError(t, err)
 
 		actionAfterCreate := appsec.UpdateRatePolicyActionResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResRatePolicyAction/ActionAfterCreate.json"), &actionAfterCreate)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResRatePolicyAction/ActionAfterCreate.json"), &actionAfterCreate)
 		require.NoError(t, err)
 
 		allActionsAfterCreate := appsec.GetRatePolicyActionsResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResRatePolicyAction/AllActionsAfterCreate.json"), &allActionsAfterCreate)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResRatePolicyAction/AllActionsAfterCreate.json"), &allActionsAfterCreate)
 		require.NoError(t, err)
 
 		actionAfterUpdate := appsec.UpdateRatePolicyActionResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResRatePolicyAction/ActionAfterUpdate.json"), &actionAfterUpdate)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResRatePolicyAction/ActionAfterUpdate.json"), &actionAfterUpdate)
 		require.NoError(t, err)
 
 		allActionsAfterUpdate := appsec.GetRatePolicyActionsResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResRatePolicyAction/AllActionsAfterUpdate.json"), &allActionsAfterUpdate)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResRatePolicyAction/AllActionsAfterUpdate.json"), &allActionsAfterUpdate)
 		require.NoError(t, err)
 
 		actionAfterDelete := appsec.UpdateRatePolicyActionResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResRatePolicyAction/ActionAfterDelete.json"), &actionAfterDelete)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResRatePolicyAction/ActionAfterDelete.json"), &actionAfterDelete)
 		require.NoError(t, err)
 
 		client.On("GetConfiguration",
@@ -97,7 +98,7 @@ func TestAkamaiRatePolicyAction_res_basic(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResRatePolicyAction/create.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResRatePolicyAction/create.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_rate_policy_action.test", "id", "43253:AAAA_81230:135355"),
 							resource.TestCheckResourceAttr("akamai_appsec_rate_policy_action.test", "ipv4_action", "none"),
@@ -105,7 +106,7 @@ func TestAkamaiRatePolicyAction_res_basic(t *testing.T) {
 						),
 					},
 					{
-						Config: loadFixtureString("testdata/TestResRatePolicyAction/update.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResRatePolicyAction/update.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_rate_policy_action.test", "id", "43253:AAAA_81230:135355"),
 							resource.TestCheckResourceAttr("akamai_appsec_rate_policy_action.test", "ipv4_action", "alert"),

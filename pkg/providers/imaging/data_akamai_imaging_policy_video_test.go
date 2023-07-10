@@ -3,6 +3,7 @@ package imaging
 import (
 	"testing"
 
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
@@ -27,11 +28,11 @@ func TestDataPolicyVideo(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString(test.configPath),
+						Config: testutils.LoadFixtureString(t, test.configPath),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr(
 								"data.akamai_imaging_policy_video.policy", "json",
-								loadFixtureString(test.expectedJSONPath)),
+								testutils.LoadFixtureString(t, test.expectedJSONPath)),
 						),
 					},
 				},

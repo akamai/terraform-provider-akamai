@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -17,7 +18,7 @@ func TestAkamaiThreatIntel_data_basic(t *testing.T) {
 		client := &appsec.Mock{}
 
 		config := appsec.GetConfigurationResponse{}
-		err := json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 		require.NoError(t, err)
 
 		client.On("GetConfiguration",
@@ -26,7 +27,7 @@ func TestAkamaiThreatIntel_data_basic(t *testing.T) {
 		).Return(&config, nil)
 
 		getThreatIntelResponse := appsec.GetThreatIntelResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestDSThreatIntel/ThreatIntel.json"), &getThreatIntelResponse)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestDSThreatIntel/ThreatIntel.json"), &getThreatIntelResponse)
 		require.NoError(t, err)
 
 		client.On("GetThreatIntel",
@@ -40,7 +41,7 @@ func TestAkamaiThreatIntel_data_basic(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestDSThreatIntel/match_by_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestDSThreatIntel/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("data.akamai_appsec_threat_intel.test", "id", "43253"),
 						),
@@ -59,7 +60,7 @@ func TestAkamaiThreatIntel_data_error_retrieving_threat_intel(t *testing.T) {
 		client := &appsec.Mock{}
 
 		config := appsec.GetConfigurationResponse{}
-		err := json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 		require.NoError(t, err)
 
 		client.On("GetConfiguration",
@@ -68,7 +69,7 @@ func TestAkamaiThreatIntel_data_error_retrieving_threat_intel(t *testing.T) {
 		).Return(&config, nil)
 
 		threatIntelResponse := appsec.GetThreatIntelResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestDSThreatIntel/ThreatIntel.json"), &threatIntelResponse)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestDSThreatIntel/ThreatIntel.json"), &threatIntelResponse)
 		require.NoError(t, err)
 
 		client.On("GetThreatIntel",
@@ -82,7 +83,7 @@ func TestAkamaiThreatIntel_data_error_retrieving_threat_intel(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestDSThreatIntel/match_by_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestDSThreatIntel/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("data.akamai_appsec_threat_intel.test", "id", "43253"),
 						),

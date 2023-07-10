@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -15,7 +16,7 @@ func TestAkamaiCustomRuleAction_res_basic(t *testing.T) {
 		client := &appsec.Mock{}
 
 		getConfigResponse := appsec.GetConfigurationResponse{}
-		err := json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &getConfigResponse)
+		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/LatestConfiguration.json"), &getConfigResponse)
 		require.NoError(t, err)
 		client.On("GetConfiguration",
 			mock.Anything,
@@ -23,7 +24,7 @@ func TestAkamaiCustomRuleAction_res_basic(t *testing.T) {
 		).Return(&getConfigResponse, nil)
 
 		updateResponse := appsec.UpdateCustomRuleActionResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResCustomRuleAction/CustomRuleActionUpdated.json"), &updateResponse)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResCustomRuleAction/CustomRuleActionUpdated.json"), &updateResponse)
 		require.NoError(t, err)
 		client.On("UpdateCustomRuleAction",
 			mock.Anything,
@@ -31,7 +32,7 @@ func TestAkamaiCustomRuleAction_res_basic(t *testing.T) {
 		).Return(&updateResponse, nil)
 
 		getResponse := appsec.GetCustomRuleActionResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResCustomRuleAction/CustomRuleAction.json"), &getResponse)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResCustomRuleAction/CustomRuleAction.json"), &getResponse)
 		require.NoError(t, err)
 		client.On("GetCustomRuleAction",
 			mock.Anything,
@@ -44,7 +45,7 @@ func TestAkamaiCustomRuleAction_res_basic(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResCustomRuleAction/match_by_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResCustomRuleAction/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_custom_rule_action.test", "id", "43253:AAAA_81230:60036362"),
 						),

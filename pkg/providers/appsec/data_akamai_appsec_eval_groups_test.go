@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -17,7 +18,7 @@ func TestAkamaiEvalGroups_data_basic(t *testing.T) {
 		client := &appsec.Mock{}
 
 		configs := appsec.GetConfigurationResponse{}
-		err := json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &configs)
+		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/LatestConfiguration.json"), &configs)
 		require.NoError(t, err)
 
 		client.On("GetEvalGroups",
@@ -36,7 +37,7 @@ func TestAkamaiEvalGroups_data_basic(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestDSEvalGroups/match_by_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestDSEvalGroups/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("data.akamai_appsec_eval_groups.test", "id", "43253"),
 						),
@@ -55,7 +56,7 @@ func TestAkamaiEvalGroups_data_error_retrieving_eval_groups(t *testing.T) {
 		client := &appsec.Mock{}
 
 		configs := appsec.GetConfigurationResponse{}
-		err := json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &configs)
+		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/LatestConfiguration.json"), &configs)
 		require.NoError(t, err)
 
 		client.On("GetEvalGroups",
@@ -74,7 +75,7 @@ func TestAkamaiEvalGroups_data_error_retrieving_eval_groups(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestDSEvalGroups/match_by_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestDSEvalGroups/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("data.akamai_appsec_eval_groups.test", "id", "43253"),
 						),

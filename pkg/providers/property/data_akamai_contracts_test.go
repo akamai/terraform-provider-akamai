@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 	"github.com/stretchr/testify/mock"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -31,7 +32,7 @@ func TestDataContracts(t *testing.T) {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{{
-					Config: loadFixtureString("testdata/TestDataContracts/contracts.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestDataContracts/contracts.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("data.akamai_contracts.akacontracts", "id", "act_test"),
 						resource.TestCheckOutput("aka_contract_id1", "ctr_test1"),

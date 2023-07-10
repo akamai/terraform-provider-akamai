@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/iam"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -36,7 +37,7 @@ func TestResourceGroup(t *testing.T) {
 		"creation error": {
 			steps: []resource.TestStep{
 				{
-					Config:      loadFixtureString("./testdata/TestResGroup/basic/basic.tf"),
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestResGroup/basic/basic.tf"),
 					ExpectError: regexp.MustCompile("group creation error"),
 				},
 			},
@@ -47,7 +48,7 @@ func TestResourceGroup(t *testing.T) {
 		"group read error": {
 			steps: []resource.TestStep{
 				{
-					Config:      loadFixtureString("./testdata/TestResGroup/basic/basic.tf"),
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestResGroup/basic/basic.tf"),
 					ExpectError: regexp.MustCompile("group read error"),
 				},
 			},
@@ -64,7 +65,7 @@ func TestResourceGroup(t *testing.T) {
 		"basic": {
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("./testdata/TestResGroup/basic/basic.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResGroup/basic/basic.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_iam_group.test", "parent_group_id", strconv.FormatInt(groupCreate.ParentGroupID, 10)),
 						resource.TestCheckResourceAttr("akamai_iam_group.test", "id", strconv.FormatInt(groupCreate.GroupID, 10)),
@@ -92,7 +93,7 @@ func TestResourceGroup(t *testing.T) {
 		"update": {
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("./testdata/TestResGroup/basic/basic.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResGroup/basic/basic.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_iam_group.test", "parent_group_id", strconv.FormatInt(groupCreate.ParentGroupID, 10)),
 						resource.TestCheckResourceAttr("akamai_iam_group.test", "id", strconv.FormatInt(groupCreate.GroupID, 10)),
@@ -104,7 +105,7 @@ func TestResourceGroup(t *testing.T) {
 					),
 				},
 				{
-					Config: loadFixtureString("./testdata/TestResGroup/update/update.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResGroup/update/update.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_iam_group.test", "parent_group_id", strconv.FormatInt(groupUpdate.ParentGroupID, 10)),
 						resource.TestCheckResourceAttr("akamai_iam_group.test", "id", strconv.FormatInt(groupUpdate.GroupID, 10)),

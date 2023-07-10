@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -15,15 +16,15 @@ func TestAkamaiVersionNotes_res_basic(t *testing.T) {
 		client := &appsec.Mock{}
 
 		updateVersionNotesResponse := appsec.UpdateVersionNotesResponse{}
-		err := json.Unmarshal(loadFixtureBytes("testdata/TestResVersionNotes/VersionNotes.json"), &updateVersionNotesResponse)
+		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResVersionNotes/VersionNotes.json"), &updateVersionNotesResponse)
 		require.NoError(t, err)
 
 		getVersionNotesResponse := appsec.GetVersionNotesResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResVersionNotes/VersionNotes.json"), &getVersionNotesResponse)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResVersionNotes/VersionNotes.json"), &getVersionNotesResponse)
 		require.NoError(t, err)
 
 		config := appsec.GetConfigurationResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 		require.NoError(t, err)
 
 		client.On("GetConfiguration",
@@ -47,7 +48,7 @@ func TestAkamaiVersionNotes_res_basic(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResVersionNotes/match_by_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResVersionNotes/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_version_notes.test", "id", "43253"),
 						),

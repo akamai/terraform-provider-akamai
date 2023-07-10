@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -16,19 +17,19 @@ func TestAkamaiEvalGroup_res_basic(t *testing.T) {
 	t.Run("match by AttackGroup ID", func(t *testing.T) {
 		client := &appsec.Mock{}
 
-		conditionExceptionJSON := loadFixtureString("testdata/TestResEvalGroup/ConditionException.json")
+		conditionExceptionJSON := testutils.LoadFixtureString(t, "testdata/TestResEvalGroup/ConditionException.json")
 		conditionExceptionRawMessage := json.RawMessage(conditionExceptionJSON)
 
 		updateResponse := appsec.UpdateAttackGroupResponse{}
-		err := json.Unmarshal(loadFixtureBytes("testdata/TestResEvalGroup/AttackGroup.json"), &updateResponse)
+		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResEvalGroup/AttackGroup.json"), &updateResponse)
 		require.NoError(t, err)
 
 		getResponse := appsec.GetAttackGroupResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResEvalGroup/AttackGroup.json"), &getResponse)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResEvalGroup/AttackGroup.json"), &getResponse)
 		require.NoError(t, err)
 
 		config := appsec.GetConfigurationResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 		require.NoError(t, err)
 
 		client.On("GetConfiguration",
@@ -57,7 +58,7 @@ func TestAkamaiEvalGroup_res_basic(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResEvalGroup/match_by_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResEvalGroup/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_eval_group.test", "id", "43253:AAAA_81230:SQL"),
 						),
@@ -75,19 +76,19 @@ func TestAkamaiEvalGroup_res_error_updating_eval_group(t *testing.T) {
 	t.Run("match by AttackGroup ID", func(t *testing.T) {
 		client := &appsec.Mock{}
 
-		conditionExceptionJSON := loadFixtureString("testdata/TestResEvalGroup/ConditionException.json")
+		conditionExceptionJSON := testutils.LoadFixtureString(t, "testdata/TestResEvalGroup/ConditionException.json")
 		conditionExceptionRawMessage := json.RawMessage(conditionExceptionJSON)
 
 		updateResponse := appsec.UpdateAttackGroupResponse{}
-		err := json.Unmarshal(loadFixtureBytes("testdata/TestResEvalGroup/AttackGroup.json"), &updateResponse)
+		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResEvalGroup/AttackGroup.json"), &updateResponse)
 		require.NoError(t, err)
 
 		getResponse := appsec.GetAttackGroupResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResEvalGroup/AttackGroup.json"), &getResponse)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResEvalGroup/AttackGroup.json"), &getResponse)
 		require.NoError(t, err)
 
 		config := appsec.GetConfigurationResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 		require.NoError(t, err)
 
 		client.On("GetConfiguration",
@@ -106,7 +107,7 @@ func TestAkamaiEvalGroup_res_error_updating_eval_group(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResEvalGroup/match_by_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResEvalGroup/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_eval_group.test", "id", "43253:AAAA_81230:SQL"),
 						),

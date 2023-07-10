@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -15,11 +16,11 @@ func TestAkamaiIPGeo_data_basic(t *testing.T) {
 		client := &appsec.Mock{}
 
 		getIPGeoResponse := appsec.GetIPGeoResponse{}
-		err := json.Unmarshal(loadFixtureBytes("testdata/TestDSIPGeo/IPGeo.json"), &getIPGeoResponse)
+		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestDSIPGeo/IPGeo.json"), &getIPGeoResponse)
 		require.NoError(t, err)
 
 		config := appsec.GetConfigurationResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 		require.NoError(t, err)
 
 		client.On("GetConfiguration",
@@ -38,7 +39,7 @@ func TestAkamaiIPGeo_data_basic(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestDSIPGeo/match_by_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestDSIPGeo/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("data.akamai_appsec_ip_geo.test", "id", "43253"),
 						),

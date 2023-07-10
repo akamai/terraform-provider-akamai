@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -15,7 +16,7 @@ func TestAkamaiSlowPostProtectionSetting_res_basic(t *testing.T) {
 		client := &appsec.Mock{}
 
 		getConfigurationResponse := appsec.GetConfigurationResponse{}
-		err := json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &getConfigurationResponse)
+		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/LatestConfiguration.json"), &getConfigurationResponse)
 		require.NoError(t, err)
 		client.On("GetConfiguration",
 			mock.Anything,
@@ -23,7 +24,7 @@ func TestAkamaiSlowPostProtectionSetting_res_basic(t *testing.T) {
 		).Return(&getConfigurationResponse, nil)
 
 		updateSlowPostProtectionSettingResponse := appsec.UpdateSlowPostProtectionSettingResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResSlowPostProtectionSetting/SlowPostProtectionSetting.json"), &updateSlowPostProtectionSettingResponse)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResSlowPostProtectionSetting/SlowPostProtectionSetting.json"), &updateSlowPostProtectionSettingResponse)
 		require.NoError(t, err)
 		client.On("UpdateSlowPostProtectionSetting",
 			mock.Anything,
@@ -36,7 +37,7 @@ func TestAkamaiSlowPostProtectionSetting_res_basic(t *testing.T) {
 		).Return(&updateSlowPostProtectionSettingResponse, nil)
 
 		getSlowPostProtectionSettingsResponse := appsec.GetSlowPostProtectionSettingsResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResSlowPostProtectionSetting/SlowPostProtectionSetting.json"), &getSlowPostProtectionSettingsResponse)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResSlowPostProtectionSetting/SlowPostProtectionSetting.json"), &getSlowPostProtectionSettingsResponse)
 		require.NoError(t, err)
 		client.On("GetSlowPostProtectionSettings",
 			mock.Anything,
@@ -44,7 +45,7 @@ func TestAkamaiSlowPostProtectionSetting_res_basic(t *testing.T) {
 		).Return(&getSlowPostProtectionSettingsResponse, nil).Twice()
 
 		updateSlowPostProtectionResponse := appsec.UpdateSlowPostProtectionResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResSlowPostProtectionSetting/SlowPostProtection.json"), &updateSlowPostProtectionResponse)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResSlowPostProtectionSetting/SlowPostProtection.json"), &updateSlowPostProtectionResponse)
 		require.NoError(t, err)
 		client.On("UpdateSlowPostProtection",
 			mock.Anything,
@@ -57,7 +58,7 @@ func TestAkamaiSlowPostProtectionSetting_res_basic(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResSlowPostProtectionSetting/match_by_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResSlowPostProtectionSetting/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_slow_post.test", "id", "43253:AAAA_81230"),
 						),

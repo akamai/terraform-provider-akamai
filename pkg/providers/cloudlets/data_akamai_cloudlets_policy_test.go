@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cloudlets"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 )
 
 func TestDataCloudletsPolicy(t *testing.T) {
@@ -76,7 +77,7 @@ func TestDataCloudletsPolicy(t *testing.T) {
 				resource.TestCheckResourceAttr("data.akamai_cloudlets_policy.test", "api_version", "2.0"),
 				resource.TestCheckResourceAttr("data.akamai_cloudlets_policy.test", "revision_id", "4824132"),
 				resource.TestCheckResourceAttr("data.akamai_cloudlets_policy.test", "rules_locked", "false"),
-				resource.TestCheckResourceAttr("data.akamai_cloudlets_policy.test", "match_rules", loadFixtureString("testdata/TestDataCloudletsPolicy/rules/match_rules_out.json")),
+				resource.TestCheckResourceAttr("data.akamai_cloudlets_policy.test", "match_rules", testutils.LoadFixtureString(t, "testdata/TestDataCloudletsPolicy/rules/match_rules_out.json")),
 				resource.TestCheckResourceAttr("data.akamai_cloudlets_policy.test", "match_rule_format", "1.0"),
 				resource.TestCheckResourceAttr("data.akamai_cloudlets_policy.test", "warnings", "null"),
 			},
@@ -250,7 +251,7 @@ func TestDataCloudletsPolicy(t *testing.T) {
 					ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
-							Config: loadFixtureString(test.configPath),
+							Config: testutils.LoadFixtureString(t, test.configPath),
 							Check: resource.ComposeAggregateTestCheckFunc(
 								test.checkFuncs...,
 							),

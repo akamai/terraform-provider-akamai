@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cps"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -335,7 +336,7 @@ func TestDataEnrollment(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("testdata/TestDataEnrollment/enrollment_without_challenges.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestDataEnrollment/enrollment_without_challenges.tf"),
 					Check:  checkAttributesForEnrollment(enrollmentDV1, enrollment1ID, mockEmptyChanges(), mockEmptyDVArray()),
 				},
 			},
@@ -363,7 +364,7 @@ func TestDataEnrollment(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("testdata/TestDataEnrollment/enrollment_with_challenges.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestDataEnrollment/enrollment_with_challenges.tf"),
 					Check:  checkAttributesForEnrollment(enrollmentDV2, enrollment2ID, mockLetsEncryptChallenges(), mockDVArray()),
 				},
 			},
@@ -378,7 +379,7 @@ func TestDataEnrollment(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config:      loadFixtureString("testdata/TestDataEnrollment/enrollment_without_challenges.tf"),
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDataEnrollment/enrollment_without_challenges.tf"),
 					ExpectError: regexp.MustCompile("could not get an enrollment"),
 				},
 			},
@@ -398,7 +399,7 @@ func TestDataEnrollment(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config:      loadFixtureString("testdata/TestDataEnrollment/enrollment_with_challenges.tf"),
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDataEnrollment/enrollment_with_challenges.tf"),
 					ExpectError: regexp.MustCompile("could not get a change status"),
 				},
 			},
@@ -425,7 +426,7 @@ func TestDataEnrollment(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config:      loadFixtureString("testdata/TestDataEnrollment/enrollment_with_challenges.tf"),
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDataEnrollment/enrollment_with_challenges.tf"),
 					ExpectError: regexp.MustCompile("could not get LetsEncrypt challenges"),
 				},
 			},
@@ -448,7 +449,7 @@ func TestDataEnrollment(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("testdata/TestDataEnrollment/enrollment_with_third_party_challenges.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestDataEnrollment/enrollment_with_third_party_challenges.tf"),
 					Check:  checkAttributesForEnrollment(enrollmentThirdParty, enrollment3ID, mockThirdPartyCSRChallenges(), mockThirdPartyCSRDVArray()),
 				},
 			},
@@ -471,7 +472,7 @@ func TestDataEnrollment(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("testdata/TestDataEnrollment/enrollment_with_ev_challenges.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestDataEnrollment/enrollment_with_ev_challenges.tf"),
 					Check:  checkAttributesForEnrollment(enrollmentEV, enrollment4ID, mockEVChallenges(), mockEVDVArray()),
 				},
 			},

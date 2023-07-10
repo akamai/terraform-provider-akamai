@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -15,19 +16,19 @@ func TestAkamaiSelectedHostname_res_basic(t *testing.T) {
 		client := &appsec.Mock{}
 
 		updateSelectedHostnamesResponse := appsec.UpdateSelectedHostnamesResponse{}
-		err := json.Unmarshal(loadFixtureBytes("testdata/TestResSelectedHostname/SelectedHostname.json"), &updateSelectedHostnamesResponse)
+		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResSelectedHostname/SelectedHostname.json"), &updateSelectedHostnamesResponse)
 		require.NoError(t, err)
 
 		getSelectedHostnamesResponse := appsec.GetSelectedHostnamesResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResSelectedHostname/SelectedHostname.json"), &getSelectedHostnamesResponse)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResSelectedHostname/SelectedHostname.json"), &getSelectedHostnamesResponse)
 		require.NoError(t, err)
 
 		getSelectedHostnamesResponseAfterUpdate := appsec.GetSelectedHostnamesResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResSelectedHostname/SelectedHostname.json"), &getSelectedHostnamesResponseAfterUpdate)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResSelectedHostname/SelectedHostname.json"), &getSelectedHostnamesResponseAfterUpdate)
 		require.NoError(t, err)
 
 		config := appsec.GetConfigurationResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 		require.NoError(t, err)
 
 		client.On("GetConfiguration",
@@ -59,7 +60,7 @@ func TestAkamaiSelectedHostname_res_basic(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResSelectedHostname/match_by_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResSelectedHostname/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_selected_hostnames.test", "id", "43253"),
 						),

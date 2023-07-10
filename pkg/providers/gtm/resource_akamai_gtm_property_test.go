@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/gtm"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -161,14 +162,14 @@ func TestResGtmProperty(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResGtmProperty/create_basic.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/create_basic.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr(dataSourceName, "name", "tfexample_prop_1"),
 							resource.TestCheckResourceAttr(dataSourceName, "type", "weighted-round-robin"),
 						),
 					},
 					{
-						Config: loadFixtureString("testdata/TestResGtmProperty/update_basic.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/update_basic.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr(dataSourceName, "name", "tfexample_prop_1"),
 							resource.TestCheckResourceAttr(dataSourceName, "type", "weighted-round-robin"),
@@ -232,7 +233,7 @@ func TestResGtmProperty(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config:      loadFixtureString("testdata/TestResGtmProperty/create_basic.tf"),
+						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/create_basic.tf"),
 						ExpectError: regexp.MustCompile("property Create failed"),
 					},
 				},
@@ -294,7 +295,7 @@ func TestResGtmProperty(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config:      loadFixtureString("testdata/TestResGtmProperty/create_basic.tf"),
+						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/create_basic.tf"),
 						ExpectError: regexp.MustCompile("Request could not be completed. Invalid credentials."),
 					},
 				},
@@ -387,14 +388,14 @@ func TestResGtmProperty(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResGtmProperty/test_object/test_object_not_required.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/test_object/test_object_not_required.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr(dataSourceName, "name", "tfexample_prop_1"),
 							resource.TestCheckResourceAttr(dataSourceName, "type", "weighted-round-robin"),
 						),
 					},
 					{
-						Config: loadFixtureString("testdata/TestResGtmProperty/update_basic.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/update_basic.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr(dataSourceName, "name", "tfexample_prop_1"),
 							resource.TestCheckResourceAttr(dataSourceName, "type", "weighted-round-robin"),
@@ -415,7 +416,7 @@ func TestResGtmProperty(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config:      loadFixtureString("testdata/TestResGtmProperty/test_object/test_object_protocol_ftp.tf"),
+						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/test_object/test_object_protocol_ftp.tf"),
 						ExpectError: regexp.MustCompile(`Error: attribute 'test_object' is required when 'test_object_protocol' is set to 'HTTP', 'HTTPS' or 'FTP'`),
 					},
 				},
@@ -433,7 +434,7 @@ func TestResGtmProperty(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config:      loadFixtureString("testdata/TestResGtmProperty/test_object/test_object_protocol_http.tf"),
+						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/test_object/test_object_protocol_http.tf"),
 						ExpectError: regexp.MustCompile(`Error: attribute 'test_object' is required when 'test_object_protocol' is set to 'HTTP', 'HTTPS' or 'FTP'`),
 					},
 				},
@@ -451,7 +452,7 @@ func TestResGtmProperty(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config:      loadFixtureString("testdata/TestResGtmProperty/test_object/test_object_protocol_https.tf"),
+						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/test_object/test_object_protocol_https.tf"),
 						ExpectError: regexp.MustCompile(`Error: attribute 'test_object' is required when 'test_object_protocol' is set to 'HTTP', 'HTTPS' or 'FTP'`),
 					},
 				},
@@ -565,10 +566,10 @@ func TestResourceGTMTrafficTargetOrder(t *testing.T) {
 					IsUnitTest:        true,
 					Steps: []resource.TestStep{
 						{
-							Config: loadFixtureString(test.pathForCreate),
+							Config: testutils.LoadFixtureString(t, test.pathForCreate),
 						},
 						{
-							Config:             loadFixtureString(test.pathForUpdate),
+							Config:             testutils.LoadFixtureString(t, test.pathForUpdate),
 							PlanOnly:           test.planOnly,
 							ExpectNonEmptyPlan: test.nonEmptyPlan,
 						},

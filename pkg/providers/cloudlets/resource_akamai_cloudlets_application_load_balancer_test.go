@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cloudlets"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -213,7 +214,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString(fmt.Sprintf("%s/alb_create.tf", testDir)),
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_create.tf", testDir)),
 						Check: checkAttributes(loadBalancerAttributes{
 							originID:      "test_origin",
 							version:       "1",
@@ -222,7 +223,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 						}),
 					},
 					{
-						Config: loadFixtureString(fmt.Sprintf("%s/alb_update.tf", testDir)),
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_update.tf", testDir)),
 						Check: checkAttributes(loadBalancerAttributes{
 							originID:      "test_origin",
 							version:       "2",
@@ -253,7 +254,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString(fmt.Sprintf("%s/alb_create.tf", testDir)),
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_create.tf", testDir)),
 						Check: checkAttributes(loadBalancerAttributes{
 							originID:      "test_origin",
 							version:       "1",
@@ -262,7 +263,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 						}),
 					},
 					{
-						Config: loadFixtureString(fmt.Sprintf("%s/alb_update.tf", testDir)),
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_update.tf", testDir)),
 						Check: checkAttributes(loadBalancerAttributes{
 							originID:      "test_origin",
 							version:       "1",
@@ -293,7 +294,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString(fmt.Sprintf("%s/alb_create.tf", testDir)),
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_create.tf", testDir)),
 						Check: checkAttributes(loadBalancerAttributes{
 							originID:      "test_origin",
 							version:       "1",
@@ -302,7 +303,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 						}),
 					},
 					{
-						Config: loadFixtureString(fmt.Sprintf("%s/alb_update.tf", testDir)),
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_update.tf", testDir)),
 						Check: checkAttributes(loadBalancerAttributes{
 							originID:      "test_origin",
 							version:       "1",
@@ -333,7 +334,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString(fmt.Sprintf("%s/alb_create.tf", testDir)),
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_create.tf", testDir)),
 						Check: checkAttributes(loadBalancerAttributes{
 							originID:      "test_origin",
 							version:       "1",
@@ -342,7 +343,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 						}),
 					},
 					{
-						Config: loadFixtureString(fmt.Sprintf("%s/alb_update.tf", testDir)),
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_update.tf", testDir)),
 						Check: checkAttributes(loadBalancerAttributes{
 							originID:      "test_origin",
 							version:       "1",
@@ -380,7 +381,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString(fmt.Sprintf("%s/alb_create.tf", testDir)),
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_create.tf", testDir)),
 						Check: checkAttributes(loadBalancerAttributes{
 							originID:      "test_origin",
 							version:       "1",
@@ -389,7 +390,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 						}),
 					},
 					{
-						Config: loadFixtureString(fmt.Sprintf("%s/alb_update.tf", testDir)),
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_update.tf", testDir)),
 						Check: checkAttributes(loadBalancerAttributes{
 							originID:      "test_origin",
 							version:       "1",
@@ -425,7 +426,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config:      loadFixtureString(fmt.Sprintf("%s/alb_create.tf", testDir)),
+						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_create.tf", testDir)),
 						ExpectError: regexp.MustCompile("creating origin"),
 					},
 				},
@@ -491,7 +492,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config:      loadFixtureString(fmt.Sprintf("%s/alb_create.tf", testDir)),
+						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_create.tf", testDir)),
 						ExpectError: regexp.MustCompile("creating version"),
 					},
 				},
@@ -517,7 +518,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString(fmt.Sprintf("%s/alb_create.tf", testDir)),
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_create.tf", testDir)),
 						Check: checkAttributes(loadBalancerAttributes{
 							originID:      "test_origin",
 							version:       "1",
@@ -526,7 +527,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 						}),
 					},
 					{
-						Config: loadFixtureString(fmt.Sprintf("%s/alb_update.tf", testDir)),
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_update.tf", testDir)),
 						Check: checkAttributes(loadBalancerAttributes{
 							originID:      "test_origin",
 							version:       "2",
@@ -557,7 +558,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config:      loadFixtureString(fmt.Sprintf("%s/alb_create.tf", testDir)),
+						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_create.tf", testDir)),
 						ExpectError: regexp.MustCompile("fetching version"),
 					},
 				},
@@ -581,7 +582,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString(fmt.Sprintf("%s/alb_create.tf", testDir)),
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_create.tf", testDir)),
 					},
 					{
 						ImportState:       true,
@@ -610,7 +611,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString(fmt.Sprintf("%s/alb_create.tf", testDir)),
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_create.tf", testDir)),
 					},
 					{
 						ImportState:   true,
@@ -637,7 +638,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString(fmt.Sprintf("%s/alb_create.tf", testDir)),
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_create.tf", testDir)),
 					},
 					{
 						ImportState: true,
@@ -668,7 +669,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString(fmt.Sprintf("%s/alb_create.tf", testDir)),
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_create.tf", testDir)),
 					},
 					{
 						ImportState:   true,
@@ -702,7 +703,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString(fmt.Sprintf("%s/alb_create.tf", testDir)),
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_create.tf", testDir)),
 						ExpectError: regexp.MustCompile("'liveness_hosts' field should be omitted for GTM hostname: \"test-hostname\". " +
 							"Liveness tests for this host can be configured in DNS traffic management"),
 					},
@@ -736,10 +737,10 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString(fmt.Sprintf("%s/alb_create.tf", testDir)),
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_create.tf", testDir)),
 					},
 					{
-						Config: loadFixtureString(fmt.Sprintf("%s/alb_update.tf", testDir)),
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_update.tf", testDir)),
 						ExpectError: regexp.MustCompile("'liveness_hosts' field should be omitted for GTM hostname: \"test-hostname\". " +
 							"Liveness tests for this host can be configured in DNS traffic management"),
 					},
@@ -758,7 +759,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config:      loadFixtureString(fmt.Sprintf("%s/alb_create.tf", testDir)),
+						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_create.tf", testDir)),
 						ExpectError: regexp.MustCompile("the total data center percentage must be 100%: total=10.012%"),
 					},
 				},

@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 )
 
 func TestDataSourceMultipleGroups_basic(t *testing.T) {
@@ -72,7 +73,7 @@ func TestGroup_ContractNotFoundInState(t *testing.T) {
 				ProtoV5ProviderFactories: testAccProviders,
 				IsUnitTest:               true,
 				Steps: []resource.TestStep{{
-					Config: loadFixtureString("testdata/TestDSContractRequired/groups.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestDSContractRequired/groups.tf"),
 				}},
 			})
 		})

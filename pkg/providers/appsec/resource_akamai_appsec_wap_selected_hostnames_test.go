@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -17,15 +18,15 @@ func TestAkamaiWAPSelectedHostnames_res_basic(t *testing.T) {
 		client := &appsec.Mock{}
 
 		updateWAPSelectedHostnamesResponse := appsec.UpdateWAPSelectedHostnamesResponse{}
-		err := json.Unmarshal(loadFixtureBytes("testdata/TestResWAPSelectedHostnames/WAPSelectedHostnames.json"), &updateWAPSelectedHostnamesResponse)
+		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResWAPSelectedHostnames/WAPSelectedHostnames.json"), &updateWAPSelectedHostnamesResponse)
 		require.NoError(t, err)
 
 		getWAPSelectedHostnamesResponse := appsec.GetWAPSelectedHostnamesResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResWAPSelectedHostnames/WAPSelectedHostnames.json"), &getWAPSelectedHostnamesResponse)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResWAPSelectedHostnames/WAPSelectedHostnames.json"), &getWAPSelectedHostnamesResponse)
 		require.NoError(t, err)
 
 		config := appsec.GetConfigurationResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 		require.NoError(t, err)
 
 		client.On("GetConfiguration",
@@ -56,7 +57,7 @@ func TestAkamaiWAPSelectedHostnames_res_basic(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResWAPSelectedHostnames/match_by_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResWAPSelectedHostnames/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_wap_selected_hostnames.test", "id", "43253:AAAA_81230"),
 						),
@@ -75,15 +76,15 @@ func TestAkamaiWAPSelectedHostnames_res_error_retrieving_hostnames(t *testing.T)
 		client := &appsec.Mock{}
 
 		updateWAPSelectedHostnamesResponse := appsec.UpdateWAPSelectedHostnamesResponse{}
-		err := json.Unmarshal(loadFixtureBytes("testdata/TestResWAPSelectedHostnames/WAPSelectedHostnames.json"), &updateWAPSelectedHostnamesResponse)
+		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResWAPSelectedHostnames/WAPSelectedHostnames.json"), &updateWAPSelectedHostnamesResponse)
 		require.NoError(t, err)
 
 		getWAPSelectedHostnamesResponse := appsec.GetWAPSelectedHostnamesResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResWAPSelectedHostnames/WAPSelectedHostnames.json"), &getWAPSelectedHostnamesResponse)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResWAPSelectedHostnames/WAPSelectedHostnames.json"), &getWAPSelectedHostnamesResponse)
 		require.NoError(t, err)
 
 		config := appsec.GetConfigurationResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 		require.NoError(t, err)
 
 		client.On("GetConfiguration",
@@ -114,7 +115,7 @@ func TestAkamaiWAPSelectedHostnames_res_error_retrieving_hostnames(t *testing.T)
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResWAPSelectedHostnames/match_by_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResWAPSelectedHostnames/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_wap_selected_hostnames.test", "id", "43253:AAAA_81230"),
 						),

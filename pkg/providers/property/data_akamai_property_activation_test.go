@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
@@ -36,7 +37,7 @@ func TestDataSourcePAPIPropertyActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("./testdata/TestDSPropertyActivation/ok/datasource_property_activation.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestDSPropertyActivation/ok/datasource_property_activation.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("data.akamai_property_activation.test", "id", "prp_test:STAGING"),
 						resource.TestCheckResourceAttr("data.akamai_property_activation.test", "property_id", "prp_test"),
@@ -58,7 +59,7 @@ func TestDataSourcePAPIPropertyActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("./testdata/TestDSPropertyActivation/ok/datasource_property_activation.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestDSPropertyActivation/ok/datasource_property_activation.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("data.akamai_property_activation.test", "id", "prp_test:STAGING"),
 						resource.TestCheckResourceAttr("data.akamai_property_activation.test", "property_id", "prp_test"),
@@ -77,7 +78,7 @@ func TestDataSourcePAPIPropertyActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config:      loadFixtureString("./testdata/TestDSPropertyActivation/ok/datasource_property_activation.tf"),
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestDSPropertyActivation/ok/datasource_property_activation.tf"),
 					ExpectError: regexp.MustCompile("failed to create request"),
 				},
 			},
@@ -85,7 +86,7 @@ func TestDataSourcePAPIPropertyActivation(t *testing.T) {
 		"check schema property activation - no property id": {
 			steps: []resource.TestStep{
 				{
-					Config:      loadFixtureString("./testdata/TestDSPropertyActivation/no_propertyId/datasource_property_activation.tf"),
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestDSPropertyActivation/no_propertyId/datasource_property_activation.tf"),
 					ExpectError: regexp.MustCompile("Error: Missing required argument"),
 				},
 			},
@@ -96,7 +97,7 @@ func TestDataSourcePAPIPropertyActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config:      loadFixtureString("./testdata/TestDSPropertyActivation/ok/datasource_property_activation_prod.tf"),
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestDSPropertyActivation/ok/datasource_property_activation_prod.tf"),
 					ExpectError: regexp.MustCompile("there is no active version on PRODUCTION network"),
 				},
 			},

@@ -3,6 +3,7 @@ package cps
 import (
 	"testing"
 
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
@@ -13,7 +14,7 @@ func TestDataWarnings(t *testing.T) {
 			IsUnitTest:        true,
 			Steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("testdata/TestDataWarnings/warnings.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestDataWarnings/warnings.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("data.akamai_cps_warnings.test", "warnings.%", "112"),
 						resource.TestCheckResourceAttr("data.akamai_cps_warnings.test", "warnings.CERTIFICATE_NULL_OR_EMPTY", "Null or empty [<certificateDescription>] Certificate."),

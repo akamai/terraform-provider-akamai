@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -15,15 +16,15 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 		client := &appsec.Mock{}
 
 		removeActivationsResponse := appsec.RemoveActivationsResponse{}
-		err := json.Unmarshal(loadFixtureBytes("testdata/TestResActivations/ActivationsDelete.json"), &removeActivationsResponse)
+		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResActivations/ActivationsDelete.json"), &removeActivationsResponse)
 		require.NoError(t, err)
 
 		getActivationsResponse := appsec.GetActivationsResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResActivations/Activations.json"), &getActivationsResponse)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResActivations/Activations.json"), &getActivationsResponse)
 		require.NoError(t, err)
 
 		createActivationsResponse := appsec.CreateActivationsResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResActivations/Activations.json"), &createActivationsResponse)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResActivations/Activations.json"), &createActivationsResponse)
 		require.NoError(t, err)
 
 		client.On("GetActivations",
@@ -64,7 +65,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResActivations/match_by_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResActivations/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "id", "547694"),
 						),

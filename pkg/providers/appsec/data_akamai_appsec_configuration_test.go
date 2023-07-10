@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -17,7 +18,7 @@ func TestAkamaiConfiguration_data_basic(t *testing.T) {
 		client := &appsec.Mock{}
 
 		getConfigurationsResponse := appsec.GetConfigurationsResponse{}
-		err := json.Unmarshal(loadFixtureBytes("testdata/TestDSConfiguration/Configuration.json"), &getConfigurationsResponse)
+		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestDSConfiguration/Configuration.json"), &getConfigurationsResponse)
 		require.NoError(t, err)
 
 		client.On("GetConfigurations",
@@ -31,7 +32,7 @@ func TestAkamaiConfiguration_data_basic(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestDSConfiguration/match_by_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestDSConfiguration/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("data.akamai_appsec_configuration.test", "id", "43253"),
 						),
@@ -50,7 +51,7 @@ func TestAkamaiConfiguration_data_nonexistentConfig(t *testing.T) {
 		client := &appsec.Mock{}
 
 		getConfigurationsResponse := appsec.GetConfigurationsResponse{}
-		err := json.Unmarshal(loadFixtureBytes("testdata/TestDSConfiguration/Configuration.json"), &getConfigurationsResponse)
+		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestDSConfiguration/Configuration.json"), &getConfigurationsResponse)
 		require.NoError(t, err)
 
 		client.On("GetConfigurations",
@@ -63,7 +64,7 @@ func TestAkamaiConfiguration_data_nonexistentConfig(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestDSConfiguration/nonexistent_config.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestDSConfiguration/nonexistent_config.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("data.akamai_appsec_configuration.test", "id", "43253"),
 						),

@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 )
 
 func Test_readPropertyRuleFormats(t *testing.T) {
@@ -24,7 +25,7 @@ func Test_readPropertyRuleFormats(t *testing.T) {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{{
-					Config: loadFixtureString("testdata/TestDSPropertyRuleFormats/rule_formats.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestDSPropertyRuleFormats/rule_formats.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("data.akamai_property_rule_formats.akarulesformats", "id", "rule_format"),
 						resource.TestCheckResourceAttr("data.akamai_property_rule_formats.akarulesformats", "rule_format.0", "latest"),

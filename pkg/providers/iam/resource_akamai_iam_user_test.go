@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 	"github.com/stretchr/testify/assert"
 
@@ -279,7 +280,7 @@ func TestResourceUser(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("./testdata/TestResourceUserLifecycle/create_basic.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic.tf"),
 					Check:  checkUserAttributes(userCreate),
 				},
 			},
@@ -295,7 +296,7 @@ func TestResourceUser(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("./testdata/TestResourceUserLifecycle/create_basic_lock.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic_lock.tf"),
 					Check:  checkUserAttributes(userCreateLocked),
 				},
 			},
@@ -307,7 +308,7 @@ func TestResourceUser(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config:      loadFixtureString("./testdata/TestResourceUserLifecycle/create_basic.tf"),
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic.tf"),
 					ExpectError: regexp.MustCompile("failed to create user: error create"),
 				},
 			},
@@ -326,11 +327,11 @@ func TestResourceUser(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("./testdata/TestResourceUserLifecycle/create_basic.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic.tf"),
 					Check:  checkUserAttributes(userCreate),
 				},
 				{
-					Config: loadFixtureString("./testdata/TestResourceUserLifecycle/create_basic.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic.tf"),
 					Check:  checkUserAttributes(userCreate),
 				},
 			},
@@ -352,11 +353,11 @@ func TestResourceUser(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("./testdata/TestResourceUserLifecycle/create_basic.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic.tf"),
 					Check:  checkUserAttributes(userCreate),
 				},
 				{
-					Config: loadFixtureString("./testdata/TestResourceUserLifecycle/update_user_info.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/update_user_info.tf"),
 					Check:  checkUserAttributes(userUpdateInfo),
 				},
 			},
@@ -382,15 +383,15 @@ func TestResourceUser(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("./testdata/TestResourceUserLifecycle/create_basic.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic.tf"),
 					Check:  checkUserAttributes(userCreate),
 				},
 				{
-					Config: loadFixtureString("./testdata/TestResourceUserLifecycle/create_basic_lock.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic_lock.tf"),
 					Check:  checkUserAttributes(userCreateLocked),
 				},
 				{
-					Config: loadFixtureString("./testdata/TestResourceUserLifecycle/create_basic.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic.tf"),
 					Check:  checkUserAttributes(userCreate),
 				},
 			},
@@ -411,11 +412,11 @@ func TestResourceUser(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("./testdata/TestResourceUserLifecycle/create_basic.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic.tf"),
 					Check:  checkUserAttributes(userCreate),
 				},
 				{
-					Config:      loadFixtureString("./testdata/TestResourceUserLifecycle/update_user_info.tf"),
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/update_user_info.tf"),
 					ExpectError: regexp.MustCompile("failed to update user: error updating"),
 				},
 			},
@@ -437,11 +438,11 @@ func TestResourceUser(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("./testdata/TestResourceUserLifecycle/create_basic.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic.tf"),
 					Check:  checkUserAttributes(userCreate),
 				},
 				{
-					Config: loadFixtureString("./testdata/TestResourceUserLifecycle/update_auth_grants.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/update_auth_grants.tf"),
 					Check:  checkUserAttributes(userUpdateGrants),
 				},
 			},
@@ -460,11 +461,11 @@ func TestResourceUser(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("./testdata/TestResourceUserLifecycle/create_basic_grants.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic_grants.tf"),
 					Check:  checkUserAttributes(userSubgroupCreate),
 				},
 				{
-					Config: loadFixtureString("./testdata/TestResourceUserLifecycle/create_basic_grants_swap.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic_grants_swap.tf"),
 					Check:  checkUserAttributes(userSubgroupCreate),
 				},
 			},
@@ -485,11 +486,11 @@ func TestResourceUser(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("./testdata/TestResourceUserLifecycle/create_auth_grants.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_auth_grants.tf"),
 					Check:  checkUserAttributes(userCreateWithIgnoredFieldsResponse),
 				},
 				{
-					Config: loadFixtureString("./testdata/TestResourceUserLifecycle/create_auth_grants.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_auth_grants.tf"),
 					Check:  checkUserAttributes(userCreateWithIgnoredFieldsResponse),
 				},
 			},
@@ -510,11 +511,11 @@ func TestResourceUser(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("./testdata/TestResourceUserLifecycle/create_basic.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic.tf"),
 					Check:  checkUserAttributes(userCreate),
 				},
 				{
-					Config:      loadFixtureString("./testdata/TestResourceUserLifecycle/update_auth_grants.tf"),
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/update_auth_grants.tf"),
 					ExpectError: regexp.MustCompile("failed to update user AuthGrants: error update user auth grants"),
 				},
 			},
@@ -533,7 +534,7 @@ func TestResourceUser(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("./testdata/TestResourceUserLifecycle/create_basic.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic.tf"),
 					Check:  checkUserAttributes(userCreate),
 				},
 				{
@@ -549,7 +550,7 @@ func TestResourceUser(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config:             loadFixtureString("./testdata/TestResourceUserLifecycle/auth_grants_interpolated.tf"),
+					Config:             testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/auth_grants_interpolated.tf"),
 					PlanOnly:           true,
 					ExpectNonEmptyPlan: true,
 				},
@@ -569,11 +570,11 @@ func TestResourceUser(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("./testdata/TestResourceUserLifecycle/create_basic.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic.tf"),
 					Check:  checkUserAttributes(userCreate),
 				},
 				{
-					Config:      loadFixtureString("./testdata/TestResourceUserLifecycle/update_email.tf"),
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/update_email.tf"),
 					ExpectError: regexp.MustCompile("cannot change email address"),
 				},
 			},
@@ -582,7 +583,7 @@ func TestResourceUser(t *testing.T) {
 			init: func(m *iam.Mock) {},
 			steps: []resource.TestStep{
 				{
-					Config:      loadFixtureString("./testdata/TestResourceUserLifecycle/invalid_auth_grants.tf"),
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/invalid_auth_grants.tf"),
 					ExpectError: regexp.MustCompile("auth_grants_json is not valid"),
 				},
 			},

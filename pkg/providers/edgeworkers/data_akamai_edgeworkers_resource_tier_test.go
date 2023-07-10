@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/edgeworkers"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -34,7 +35,7 @@ func TestDataEdgeworkersResourceTier(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("./testdata/TestDataEdgeWorkersResourceTier/basic.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestDataEdgeWorkersResourceTier/basic.tf"),
 					Check:  resource.TestCheckResourceAttr("data.akamai_edgeworkers_resource_tier.test", "resource_tier_id", "100"),
 				},
 			},
@@ -58,7 +59,7 @@ func TestDataEdgeworkersResourceTier(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("./testdata/TestDataEdgeWorkersResourceTier/ctr_prefix.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestDataEdgeWorkersResourceTier/ctr_prefix.tf"),
 					Check: resource.ComposeTestCheckFunc(
 						resource.TestCheckResourceAttr("data.akamai_edgeworkers_resource_tier.test", "resource_tier_id", "100"),
 						resource.TestCheckResourceAttr("data.akamai_edgeworkers_resource_tier.test", "contract_id", "ctr_1-599K"),
@@ -85,14 +86,14 @@ func TestDataEdgeworkersResourceTier(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("./testdata/TestDataEdgeWorkersResourceTier/basic.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestDataEdgeWorkersResourceTier/basic.tf"),
 					Check: resource.ComposeTestCheckFunc(
 						resource.TestCheckResourceAttr("data.akamai_edgeworkers_resource_tier.test", "resource_tier_id", "100"),
 						resource.TestCheckResourceAttr("data.akamai_edgeworkers_resource_tier.test", "contract_id", "1-599K"),
 					),
 				},
 				{
-					Config: loadFixtureString("./testdata/TestDataEdgeWorkersResourceTier/ctr_prefix.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestDataEdgeWorkersResourceTier/ctr_prefix.tf"),
 					Check: resource.ComposeTestCheckFunc(
 						resource.TestCheckResourceAttr("data.akamai_edgeworkers_resource_tier.test", "resource_tier_id", "100"),
 						resource.TestCheckResourceAttr("data.akamai_edgeworkers_resource_tier.test", "contract_id", "ctr_1-599K"),
@@ -108,7 +109,7 @@ func TestDataEdgeworkersResourceTier(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config:      loadFixtureString("./testdata/TestDataEdgeWorkersResourceTier/basic.tf"),
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestDataEdgeWorkersResourceTier/basic.tf"),
 					ExpectError: regexp.MustCompile("oops"),
 				},
 			},
@@ -132,7 +133,7 @@ func TestDataEdgeworkersResourceTier(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config:      loadFixtureString("./testdata/TestDataEdgeWorkersResourceTier/incorrect_resource_tier_name.tf"),
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestDataEdgeWorkersResourceTier/incorrect_resource_tier_name.tf"),
 					ExpectError: regexp.MustCompile("Resource tier with name: 'Incorrect' was not found"),
 				},
 			},
@@ -141,7 +142,7 @@ func TestDataEdgeworkersResourceTier(t *testing.T) {
 			init: func(m *edgeworkers.Mock) {},
 			steps: []resource.TestStep{
 				{
-					Config:      loadFixtureString("./testdata/TestDataEdgeWorkersResourceTier/missing_contract_id.tf"),
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestDataEdgeWorkersResourceTier/missing_contract_id.tf"),
 					ExpectError: regexp.MustCompile(`The argument "contract_id" is required, but no definition was found`),
 				},
 			},
@@ -150,7 +151,7 @@ func TestDataEdgeworkersResourceTier(t *testing.T) {
 			init: func(m *edgeworkers.Mock) {},
 			steps: []resource.TestStep{
 				{
-					Config:      loadFixtureString("./testdata/TestDataEdgeWorkersResourceTier/missing_resource_tier_name.tf"),
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestDataEdgeWorkersResourceTier/missing_resource_tier_name.tf"),
 					ExpectError: regexp.MustCompile(`The argument "resource_tier_name" is required, but no definition was found`),
 				},
 			},
