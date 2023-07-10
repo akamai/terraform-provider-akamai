@@ -62,29 +62,40 @@ func TestDataPropertyRulesBuilder(t *testing.T) {
 							"v2023-05-30"),
 						testCheckResourceAttrJSON("data.akamai_property_rules_builder.default",
 							"json",
-							loadFixtureString("testdata/TestDSPropertyRulesBuilder/default.json")),
+							loadFixtureString("testdata/TestDSPropertyRulesBuilder/default_v2023_05_30.json")),
 
 						resource.TestCheckResourceAttr("data.akamai_property_rules_builder.content_compression",
 							"rule_format",
 							"v2023-05-30"),
 						testCheckResourceAttrJSON("data.akamai_property_rules_builder.content_compression",
 							"json",
-							loadFixtureString("testdata/TestDSPropertyRulesBuilder/content_compression.json")),
+							loadFixtureString("testdata/TestDSPropertyRulesBuilder/content_compression_v2023_05_30.json")),
 
 						resource.TestCheckResourceAttr("data.akamai_property_rules_builder.static_content",
 							"rule_format",
 							"v2023-05-30"),
 						testCheckResourceAttrJSON("data.akamai_property_rules_builder.static_content",
 							"json",
-							loadFixtureString("testdata/TestDSPropertyRulesBuilder/static_content.json")),
+							loadFixtureString("testdata/TestDSPropertyRulesBuilder/static_content_v2023_05_30.json")),
 
 						resource.TestCheckResourceAttr("data.akamai_property_rules_builder.dynamic_content",
 							"rule_format",
 							"v2023-05-30"),
 						testCheckResourceAttrJSON("data.akamai_property_rules_builder.dynamic_content",
 							"json",
-							loadFixtureString("testdata/TestDSPropertyRulesBuilder/dynamic_content.json")),
+							loadFixtureString("testdata/TestDSPropertyRulesBuilder/dynamic_content_v2023_05_30.json")),
 					),
+				}},
+			})
+		})
+	})
+	t.Run("invalid rule with 3 children with different versions", func(t *testing.T) {
+		useClient(nil, nil, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV5ProviderFactories: testAccProviders,
+				Steps: []resource.TestStep{{
+					Config:      loadFixtureString("testdata/TestDSPropertyRulesBuilder/rules_mixed_versions.tf"),
+					ExpectError: regexp.MustCompile(`child rule is using different rule format \(rules_v2023_05_30\) than expected \(rules_v2023_01_05\)`),
 				}},
 			})
 		})

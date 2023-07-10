@@ -21,6 +21,12 @@ type RulesBuilder struct {
 	shouldFlatten func(string) bool
 }
 
+// RulesUpdate is a helper structure for easier injecting rule format AND preserving the order of fields
+type RulesUpdate struct {
+	RuleFormat string `json:"_ruleFormat_"`
+	papi.RulesUpdate
+}
+
 const defaultRule = "default"
 
 // NewBuilder returns a new RulesBuilder that uses the provided schema.ResourceData to construct papi.Rules.
@@ -312,10 +318,13 @@ func (r RulesBuilder) ruleChildren() ([]papi.Rules, error) {
 
 	children := make([]papi.Rules, 0, len(childrenList))
 	for _, childJSON := range childrenList {
-		var child papi.RulesUpdate
-		err := json.Unmarshal([]byte(childJSON), &child)
+		var child RulesUpdate
+		err = json.Unmarshal([]byte(childJSON), &child)
 		if err != nil {
 			return nil, err
+		}
+		if child.RuleFormat != "" && child.RuleFormat != r.schemaReader.ruleFormatKey {
+			return nil, fmt.Errorf("child rule is using different rule format (%s) than expected (%s)", child.RuleFormat, r.schemaReader.ruleFormatKey)
 		}
 		children = append(children, child.Rules)
 	}

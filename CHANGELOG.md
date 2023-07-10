@@ -3,9 +3,17 @@
 ## X.X.X (XXX XX, 2023)
 
 #### BUG FIXES:
+
 * PAPI
   * Dropped too strict early snippet validation ([#436](https://github.com/akamai/terraform-provider-akamai/issues/436))
   * Fixed issue that `akamai_property` or `akamai_property_include` would sometimes show strange `null -> null` diff in `rules` (or dropping `null` in newer Terraform versions) even if no update actually is needed. If there is anything else changing in the rule tree, the `null -> null` will be also visible in the diff. That may be fixed in later time.
+
+#### FEATURES/ENHANCEMENTS:
+
+* PAPI
+  * Added verification to ensure that `akamai_property_rules_builder` data source
+    has consistent frozen rule format between parent and it's child.
+    Additionally `akamai_property_rules_builder.json` is returning artificial field `_ruleFormat_`.
 
 ## 5.0.1 (Jul 12, 2023)
 
