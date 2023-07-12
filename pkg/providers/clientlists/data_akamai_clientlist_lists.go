@@ -3,18 +3,33 @@ package clientlists
 import (
 	"context"
 	"encoding/json"
+	"errors"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/clientlists"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/common/tf"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/clientlists"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 func dataSourceClientLists() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataSourceClientListRead,
 		Schema: map[string]*schema.Schema{
+			"name": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+			"type": {
+				Type:     schema.TypeSet,
+				Optional: true,
+				Elem: &schema.Schema{
+					Type:             schema.TypeString,
+					ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice(getValidListTypes(), false)),
+				},
+			},
 			"list_ids": {
 				Type:        schema.TypeList,
 				Elem:        &schema.Schema{Type: schema.TypeString},
@@ -131,18 +146,32 @@ func dataSourceClientLists() *schema.Resource {
 }
 
 func dataSourceClientListRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := akamai.Meta(m)
+	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("CLIENTLIST", "dataSourceClientListRead")
 
-	lists, err := client.GetClientLists(ctx, clientlists.GetClientListsRequest{})
-	if err != nil {
-		logger.Errorf("calling 'GetClientLists': %s", err.Error())
+	name, err := tf.GetStringValue("name", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 
-	if len(lists.Content) > 0 {
-		d.SetId(lists.Content[0].ListID)
+	listTypesSet, err := tf.GetSetValue("type", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	listTypesList := tf.SetToStringSlice(listTypesSet)
+	listTypes := make([]clientlists.ClientListType, 0, listTypesSet.Len())
+	for _, v := range listTypesList {
+		listTypes = append(listTypes, clientlists.ClientListType(v))
+	}
+
+	lists, err := client.GetClientLists(ctx, clientlists.GetClientListsRequest{
+		Name: name,
+		Type: listTypes,
+	})
+	if err != nil {
+		logger.Errorf("calling 'GetClientLists': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	mappedLists := mapClientListsToSchema(lists)
@@ -178,6 +207,8 @@ func dataSourceClientListRead(ctx context.Context, d *schema.ResourceData, m int
 		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
 
+	d.SetId(tools.GetSHAString(string(jsonBody)))
+
 	return nil
 }
 
@@ -211,4 +242,14 @@ func mapClientListsToSchema(lists *clientlists.GetClientListsResponse) []interfa
 	}
 
 	return make([]interface{}, 0)
+}
+
+func getValidListTypes() []string {
+	return []string{
+		string(clientlists.IP),
+		string(clientlists.GEO),
+		string(clientlists.ASN),
+		string(clientlists.TLSFingerprint),
+		string(clientlists.FileHash),
+	}
 }

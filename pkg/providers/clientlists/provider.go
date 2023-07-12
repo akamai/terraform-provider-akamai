@@ -4,34 +4,31 @@ package clientlists
 import (
 	"sync"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v6/pkg/clientlists"
-	"github.com/akamai/terraform-provider-akamai/v4/pkg/akamai"
-	"github.com/apex/log"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/clientlists"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 type (
-	provider struct {
-		*schema.Provider
-
+	// Subprovider gathers clientlists resources and data sources
+	Subprovider struct {
 		client clientlists.ClientLists
 	}
 	// Option is a clientlists provider option
-	Option func(p *provider)
+	Option func(p *Subprovider)
 )
 
 var (
 	once sync.Once
 
-	inst *provider
+	inst *Subprovider
 )
 
-// Subprovider returns a core sub provider
-func Subprovider(opts ...Option) akamai.Subprovider {
+// NewSubprovider returns a core sub provider
+func NewSubprovider(opts ...Option) *Subprovider {
 	once.Do(func() {
-		inst = &provider{Provider: Provider()}
+		inst = &Subprovider{}
 
 		for _, opt := range opts {
 			opt(inst)
@@ -41,57 +38,29 @@ func Subprovider(opts ...Option) akamai.Subprovider {
 	return inst
 }
 
-// Provider returns the Akamai terraform.Resource provider.
-func Provider() *schema.Provider {
-	provider := &schema.Provider{
-		Schema: map[string]*schema.Schema{},
-		DataSourcesMap: map[string]*schema.Resource{
-			"akamai_clientlist_lists": dataSourceClientLists(),
-		},
-		ResourcesMap: map[string]*schema.Resource{},
-	}
-	return provider
-}
-
 // WithClient sets the client interface function, used for mocking and testing
 func WithClient(c clientlists.ClientLists) Option {
-	return func(p *provider) {
+	return func(p *Subprovider) {
 		p.client = c
 	}
 }
 
 // Client returns the CLIENTLISTS interface
-func (p *provider) Client(meta akamai.OperationMeta) clientlists.ClientLists {
+func (p *Subprovider) Client(meta meta.Meta) clientlists.ClientLists {
 	if p.client != nil {
 		return p.client
 	}
 	return clientlists.Client(meta.Session())
 }
 
-// Name return provider name
-func (p *provider) Name() string {
-	return "clientlists"
+// Resources returns terraform resources for clientlists
+func (p *Subprovider) Resources() map[string]*schema.Resource {
+	return map[string]*schema.Resource{}
 }
 
-// Version returns sub-provider version
-func (p *provider) Version() string {
-	return "v1.0.0"
-}
-
-func (p *provider) Schema() map[string]*schema.Schema {
-	return p.Provider.Schema
-}
-
-func (p *provider) Resources() map[string]*schema.Resource {
-	return p.Provider.ResourcesMap
-}
-
-func (p *provider) DataSources() map[string]*schema.Resource {
-	return p.Provider.DataSourcesMap
-}
-
-func (p *provider) Configure(log log.Interface, _ *schema.ResourceData) diag.Diagnostics {
-	log.Debug("START Configure")
-
-	return nil
+// DataSources returns terraform data sources for clientlists
+func (p *Subprovider) DataSources() map[string]*schema.Resource {
+	return map[string]*schema.Resource{
+		"akamai_clientlist_lists": dataSourceClientLists(),
+	}
 }

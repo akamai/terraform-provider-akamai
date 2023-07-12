@@ -67,9 +67,9 @@
   * Changed the following data sources in DataStream 2 V2 API:
     * `akamai_datastream_activation_history` - changed schema and corresponding implementations.
     * `akamai_datastream_dataset_fields` - changed parameter, schema and corresponding implementations.
-    * `akamai_datastreams` - changed parameter, schema and corresponding implementations. 
+    * `akamai_datastreams` - changed parameter, schema and corresponding implementations.
   * Changed the following resources in DataStream 2 V2 API:
-    * `akamai_datastreams` - changed in schema payload, response attributes and corresponding implementations. 
+    * `akamai_datastreams` - changed in schema payload, response attributes and corresponding implementations.
   * Updated attribute names in `datastream.connectors`.
   * Updated methods in `datastream.stream` for the above changes.
 
@@ -87,7 +87,7 @@
 
 * CPS
   * `enable_multi_stacked_certificates` field in `akamai_cps_dv_enrollment` resource
-  
+
 * DNS
   * `dns_section` and `dns` fields in provider schema
 
@@ -133,6 +133,7 @@
 * [IMPORTANT] Added Client Lists API Support
   *  Added data source:
      *  `akamai_clientlist_lists` get list of Client Lists
+        *  Support filter by `name` and/or `types`
 
 #### DEPRECATIONS
 

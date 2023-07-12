@@ -3,4 +3,3 @@ provider "akamai" {
 }
 
 data "akamai_clientlist_lists" "lists" {}
-
