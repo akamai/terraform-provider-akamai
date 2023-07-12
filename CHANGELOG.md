@@ -11,6 +11,10 @@
 
 #### FEATURES/ENHANCEMENTS:
 
+* Appsec
+  * Added resource:
+    * `akamai_appsec_security_policy_default_protections`
+
 * BOTMAN
   * Added resource:
     * `akamai_botman_challenge_injection_rules` - read and update
@@ -24,6 +28,15 @@
   * Suppressed trigger of new activation for `note` field change in `akamai_property_activation` and `akamai_property_include_activation` resources.
 
 #### DEPRECATIONS
+
+* Appsec
+  * deprecated following resources; use `akamai_appsec_security_policy_default_protections` resource instead:
+    * `akamai_appsec_api_constraint_protection`
+    * `akamai_appsec_ip_geo_protection`
+    * `akamai_appsec_malware_protection`
+    * `akamai_appsec_rate_protection`
+    * `akamai_appsec_reputation_protection`
+    * `akamai_appsec_slowpost_protection`
 
 * BOTMAN
   * deprecated `akamai_botman_challenge_interception_rules` data source and resource; use `akamai_botman_challenge_injection_rules` instead.
