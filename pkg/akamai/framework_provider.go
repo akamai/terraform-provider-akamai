@@ -5,7 +5,6 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/config"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/subprovider"
 	"github.com/akamai/terraform-provider-akamai/v5/version"
@@ -33,8 +32,8 @@ type ProviderModel struct {
 	RequestLimit  types.Int64  `tfsdk:"request_limit"`
 }
 
-// EdgegridConfigModel represents the model of edgegrid configuration block
-type EdgegridConfigModel struct {
+// ConfigModel represents the model of edgegrid configuration block
+type ConfigModel struct {
 	Host         types.String `tfsdk:"host"`
 	AccessToken  types.String `tfsdk:"access_token"`
 	ClientToken  types.String `tfsdk:"client_token"`
@@ -117,32 +116,37 @@ func (p *Provider) Configure(ctx context.Context, req provider.ConfigureRequest,
 		}
 	}
 
-	var edgercConfigModels []EdgegridConfigModel
-	resp.Diagnostics.Append(data.EdgercConfig.ElementsAs(ctx, &edgercConfigModels, false)...)
-	if resp.Diagnostics.HasError() {
+	var edgegridConfigBearer configBearer
+	if !data.EdgercConfig.IsNull() {
+		var configModels []ConfigModel
+		resp.Diagnostics.Append(data.EdgercConfig.ElementsAs(ctx, &configModels, false)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		configModel := configModels[0]
+		edgegridConfigBearer = configBearer{
+			accessToken:  configModel.AccessToken.ValueString(),
+			accountKey:   configModel.AccountKey.ValueString(),
+			clientSecret: configModel.ClientSecret.ValueString(),
+			clientToken:  configModel.ClientToken.ValueString(),
+			host:         configModel.Host.ValueString(),
+			maxBody:      int(configModel.MaxBody.ValueInt64()),
+		}
+
+	}
+
+	edgegridConfig, err := newEdgegridConfig(data.EdgercPath.ValueString(), data.EdgercSection.ValueString(), edgegridConfigBearer)
+	if err != nil {
+		resp.Diagnostics.Append(diag.NewErrorDiagnostic("configuring context failed", err.Error()))
 		return
 	}
 
-	var edgercConfig *edgegrid.Config
-	if len(edgercConfigModels) > 0 {
-		edgercConfig = &edgegrid.Config{
-			Host:         edgercConfigModels[0].Host.ValueString(),
-			ClientToken:  edgercConfigModels[0].ClientToken.ValueString(),
-			ClientSecret: edgercConfigModels[0].ClientSecret.ValueString(),
-			AccessToken:  edgercConfigModels[0].AccessToken.ValueString(),
-			AccountKey:   edgercConfigModels[0].AccountKey.ValueString(),
-			MaxBody:      int(edgercConfigModels[0].MaxBody.ValueInt64()),
-		}
-	}
-
 	meta, err := configureContext(contextConfig{
-		edgercPath:    data.EdgercPath.ValueString(),
-		edgercSection: data.EdgercSection.ValueString(),
-		edgercConfig:  edgercConfig,
-		userAgent:     userAgent(req.TerraformVersion),
-		ctx:           ctx,
-		requestLimit:  int(data.RequestLimit.ValueInt64()),
-		enableCache:   data.CacheEnabled.ValueBool(),
+		edgegridConfig: edgegridConfig,
+		userAgent:      userAgent(req.TerraformVersion),
+		ctx:            ctx,
+		requestLimit:   int(data.RequestLimit.ValueInt64()),
+		enableCache:    data.CacheEnabled.ValueBool(),
 	})
 	if err != nil {
 		resp.Diagnostics.Append(diag.NewErrorDiagnostic("configuring context failed", err.Error()))

@@ -21,7 +21,7 @@ Your Akamai Terraform configuration starts with listing us as a required provide
      required_providers {
        akamai = {
          source = "akamai/akamai"
-         version = "5.0.0"
+         version = "5.0.1"
        }
      }
    }

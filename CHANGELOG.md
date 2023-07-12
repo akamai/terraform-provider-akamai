@@ -1,5 +1,12 @@
 # RELEASE NOTES
 
+## 5.0.1 (Jul 12, 2023)
+
+#### BUG FIXES:
+
+* Reinstated support for configuring provider with environmental variables ([#407](https://github.com/akamai/terraform-provider-akamai/issues/407), [#444](https://github.com/akamai/terraform-provider-akamai/issues/444))
+* Fixed `signature does not match` error when using `config` block for authentication ([#444](https://github.com/akamai/terraform-provider-akamai/issues/444), [#446](https://github.com/akamai/terraform-provider-akamai/issues/446))
+
 ## 5.0.0 (Jul 5, 2023)
 
 #### BREAKING CHANGES:

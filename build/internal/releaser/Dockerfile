@@ -22,6 +22,6 @@ RUN apt update && apt install -y curl git gcc ca-certificates openssh-client gnu
     && update-ca-certificates \
     && curl -o go1.18.linux-amd64.tar.gz https://dl.google.com/go/go1.18.linux-amd64.tar.gz \
     && rm -rf /usr/local/go && tar -C /usr/local -xzf go1.18.linux-amd64.tar.gz \
-    && go install github.com/goreleaser/goreleaser@latest \
+    && go install github.com/goreleaser/goreleaser@v1.18.2 \
     && mkdir -p /root/.terraform.d/plugins/registry.terraform.io/akamai/akamai/10.0.0/linux_amd64 /root/.ssh
 
