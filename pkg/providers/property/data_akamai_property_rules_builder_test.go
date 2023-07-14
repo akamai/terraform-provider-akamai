@@ -133,6 +133,31 @@ func TestDataPropertyRulesBuilder(t *testing.T) {
 			})
 		})
 	})
+	t.Run("valid rule with one child and some values are variables", func(t *testing.T) {
+		useClient(nil, nil, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV5ProviderFactories: testAccProviders,
+				Steps: []resource.TestStep{{
+					Config: loadFixtureString("testdata/TestDSPropertyRulesBuilder/rules_variables.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("data.akamai_property_rules_builder.default",
+							"rule_format",
+							"v2023-01-05"),
+						testCheckResourceAttrJSON("data.akamai_property_rules_builder.default",
+							"json",
+							loadFixtureString("testdata/TestDSPropertyRulesBuilder/default_variables.json")),
+
+						resource.TestCheckResourceAttr("data.akamai_property_rules_builder.content_compression",
+							"rule_format",
+							"v2023-01-05"),
+						testCheckResourceAttrJSON("data.akamai_property_rules_builder.content_compression",
+							"json",
+							loadFixtureString("testdata/TestDSPropertyRulesBuilder/content_compression_variables.json")),
+					),
+				}},
+			})
+		})
+	})
 }
 
 func testCheckResourceAttrJSON(name, key, value string) func(s *terraform.State) error {

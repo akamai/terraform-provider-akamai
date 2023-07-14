@@ -58,7 +58,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"response_codes": {
-						ValidateDiagFunc: validateRegex("^(([0-9]{3})(,?))+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^(([0-9]{3})(,?))+$"),
 						Optional:         true,
 						Description:      "Specifies the codes in the partner's response that trigger the fallback action,  either `408`, `500`, `502`, `504`, `SAME_AS_RECEIEVED`, or `SPECIFY_YOUR_OWN` for a custom code.",
 						Type:             schema.TypeString,
@@ -76,7 +76,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:             schema.TypeString,
 					},
 					"specify_your_own_response_code_based": {
-						ValidateDiagFunc: validateRegex("^\\d{3}$"),
+						ValidateDiagFunc: validateRegexOrVariable("^\\d{3}$"),
 						Optional:         true,
 						Description:      "Defines a custom error response.",
 						Type:             schema.TypeString,
@@ -561,7 +561,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"purge_origin_query_parameter": {
-						ValidateDiagFunc: validateRegex("^[^:/?#\\[\\]@&]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[^:/?#\\[\\]@&]+$"),
 						Optional:         true,
 						Description:      "When purging content from a Cloudlets Origin, this specifies a query parameter name whose value is the specific named origin to purge.  Note that this only applies to content purge requests, for example when using the `Content Control Utility API`.",
 						Type:             schema.TypeString,
@@ -917,7 +917,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeInt,
 					},
 					"label": {
-						ValidateDiagFunc: validateRegex("^[a-zA-Z0-9_\\-*\\.]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[a-zA-Z0-9_\\-*\\.]+$"),
 						Optional:         true,
 						Description:      "A label to distinguish this API Prioritization policy from any others in the same property.",
 						Type:             schema.TypeString,
@@ -996,7 +996,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"throttled_status_code": {
-						ValidateDiagFunc: validateRegex("^\\d{3}$"),
+						ValidateDiagFunc: validateRegexOrVariable("^\\d{3}$"),
 						Optional:         true,
 						Description:      "Specifies the HTTP response code for requests that receive the alternate response.",
 						Type:             schema.TypeInt,
@@ -1027,7 +1027,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						},
 					},
 					"net_storage_path": {
-						ValidateDiagFunc: validateRegex("^[^#\\[\\]@]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[^#\\[\\]@]+$"),
 						Optional:         true,
 						Description:      "Specify the full NetStorage path for the alternate response, including trailing file name.",
 						Type:             schema.TypeString,
@@ -1090,7 +1090,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						},
 					},
 					"label": {
-						ValidateDiagFunc: validateRegex("^[a-zA-Z0-9_\\-*\\.]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[a-zA-Z0-9_\\-*\\.]+$"),
 						Optional:         true,
 						Description:      "A label to distinguish this Application Load Balancer policy from any others within the same property.",
 						Type:             schema.TypeString,
@@ -1107,13 +1107,13 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:             schema.TypeString,
 					},
 					"stickiness_expiration_date": {
-						ValidateDiagFunc: validateRegex("^[0-9]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[0-9]+$"),
 						Optional:         true,
 						Description:      "Specifies when the cookie expires.",
 						Type:             schema.TypeString,
 					},
 					"stickiness_duration": {
-						ValidateDiagFunc: validateRegex("^[0-9]+[DdHhMmSs]$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[0-9]+[DdHhMmSs]$"),
 						Optional:         true,
 						Description:      "Sets how long it is before the cookie expires.",
 						Type:             schema.TypeString,
@@ -1124,7 +1124,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"origin_cookie_name": {
-						ValidateDiagFunc: validateRegex("^[a-zA-Z0-9_\\-*\\.]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[a-zA-Z0-9_\\-*\\.]+$"),
 						Optional:         true,
 						Description:      "Specifies the name for your session cookie.",
 						Type:             schema.TypeString,
@@ -1135,7 +1135,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"stickiness_cookie_domain": {
-						ValidateDiagFunc: validateRegex("^([a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})(\\.[a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^([a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})(\\.[a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})+$"),
 						Optional:         true,
 						Description:      "Specifies the domain to track the stickiness cookie.",
 						Type:             schema.TypeString,
@@ -1146,7 +1146,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"stickiness_cookie_salt": {
-						ValidateDiagFunc: validateRegex("^[a-zA-Z0-9_\\-*\\.]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[a-zA-Z0-9_\\-*\\.]+$"),
 						Optional:         true,
 						Description:      "Specifies the stickiness cookie's salt value. Use this option to share the cookie across many properties.",
 						Type:             schema.TypeString,
@@ -1187,13 +1187,13 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						},
 					},
 					"all_down_net_storage_file": {
-						ValidateDiagFunc: validateRegex("^[^#\\[\\]@]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[^#\\[\\]@]+$"),
 						Optional:         true,
 						Description:      "Specifies the fallback maintenance page's filename, expressed as a full path from the root of the NetStorage server.",
 						Type:             schema.TypeString,
 					},
 					"all_down_status_code": {
-						ValidateDiagFunc: validateRegex("^\\d{3}$"),
+						ValidateDiagFunc: validateRegexOrVariable("^\\d{3}$"),
 						Optional:         true,
 						Description:      "Specifies the HTTP response code when all load-balancing origins are unavailable.",
 						Type:             schema.TypeString,
@@ -1224,7 +1224,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Elem: &schema.Resource{
 							Schema: map[string]*schema.Schema{
 								"from_origin_id": {
-									ValidateDiagFunc: validateRegex("^[a-zA-Z0-9_\\-\\.]+$"),
+									ValidateDiagFunc: validateRegexOrVariable("^[a-zA-Z0-9_\\-\\.]+$"),
 									Optional:         true,
 									Description:      "Specifies the origin whose failure triggers the mapping rule.",
 									Type:             schema.TypeString,
@@ -1317,7 +1317,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeInt,
 					},
 					"label": {
-						ValidateDiagFunc: validateRegex("^[a-zA-Z0-9_\\-*\\.]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[a-zA-Z0-9_\\-*\\.]+$"),
 						Optional:         true,
 						Description:      "Specifies a suffix to append to the cookie name. This helps distinguish this audience segmentation policy from any others within the same property.",
 						Type:             schema.TypeString,
@@ -1334,19 +1334,19 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:             schema.TypeString,
 					},
 					"segment_tracking_query_param": {
-						ValidateDiagFunc: validateRegex("^[a-zA-Z0-9_\\-*\\.]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[a-zA-Z0-9_\\-*\\.]+$"),
 						Optional:         true,
 						Description:      "This query parameter specifies the name of the segmentation rule.",
 						Type:             schema.TypeString,
 					},
 					"segment_tracking_cookie_name": {
-						ValidateDiagFunc: validateRegex("^[a-zA-Z0-9_\\-*\\.]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[a-zA-Z0-9_\\-*\\.]+$"),
 						Optional:         true,
 						Description:      "This cookie name specifies the name of the segmentation rule.",
 						Type:             schema.TypeString,
 					},
 					"segment_tracking_custom_header": {
-						ValidateDiagFunc: validateRegex("^[a-zA-Z0-9_\\-*\\.]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[a-zA-Z0-9_\\-*\\.]+$"),
 						Optional:         true,
 						Description:      "This custom HTTP header specifies the name of the segmentation rule.",
 						Type:             schema.TypeString,
@@ -1363,7 +1363,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:             schema.TypeString,
 					},
 					"population_duration": {
-						ValidateDiagFunc: validateRegex("^[0-9]+[DdHhMmSs]$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[0-9]+[DdHhMmSs]$"),
 						Optional:         true,
 						Description:      "Specifies the lifetime of the segmentation cookie.",
 						Type:             schema.TypeString,
@@ -1379,7 +1379,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"population_cookie_domain": {
-						ValidateDiagFunc: validateRegex("^([a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})(\\.[a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^([a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})(\\.[a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})+$"),
 						Optional:         true,
 						Description:      "Specifies the domain to track the population cookie.",
 						Type:             schema.TypeString,
@@ -1390,7 +1390,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"population_cookie_salt": {
-						ValidateDiagFunc: validateRegex("^[a-zA-Z0-9_\\-*\\.]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[a-zA-Z0-9_\\-*\\.]+$"),
 						Optional:         true,
 						Description:      "Specifies the cookie's salt value. Use this option to share the cookie across many properties.",
 						Type:             schema.TypeString,
@@ -1458,7 +1458,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeString,
 					},
 					"value": {
-						ValidateDiagFunc: validateRegex("^/([^:#\\[\\]@/?]+/)*$"),
+						ValidateDiagFunc: validateRegexOrVariable("^/([^:#\\[\\]@/?]+/)*$"),
 						Optional:         true,
 						Description:      "Specifies the base path of content on your origin server. The value needs to begin and end with a slash (`/`) character, for example `/parent/child/`.",
 						Type:             schema.TypeString,
@@ -1495,7 +1495,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"cpcodes": {
-						ValidateDiagFunc: validateRegex("^[0-9 ]*$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[0-9 ]*$"),
 						Optional:         true,
 						Description:      "The space-separated list of CP codes that trigger the beacons. You need to specify the same set of CP codes within BOSS.",
 						Type:             schema.TypeString,
@@ -1534,7 +1534,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 					},
 					"conditional_error_pattern": {
 						Optional:    true,
-						Description: "A space-separated set of error patterns that trigger beacons to conditional feeds. Each pattern can include wildcards, such as `*CONNECT* *DENIED*`.",
+						Description: "A space-separated set of error patterns that trigger beacons to conditional feeds. Each pattern can include wildcards, where `?` matches a single character and `*` matches zero or more characters. For example, `*CONNECT* *DENIED*` matches two different words as substrings.",
 						Type:        schema.TypeString,
 					},
 				},
@@ -1646,7 +1646,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 		"cache_error": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Caches the origin's error responses to decrease server load. Applies for 10 seconds by default to the following HTTP codes: `204`, `305`, `400`, `404`, `405`, `501`, `502`, `503`, `504`, and `505`. This behavior can be used in includes.",
+			Description: "Caches the origin's error responses to decrease server load. Applies for 10 seconds by default to the following HTTP codes: `204`, `305`, `404`, `405`, `501`, `502`, `503`, `504`, and `505`. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -1672,14 +1672,14 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"ttl": {
-						ValidateDiagFunc: validateRegex("^[0-9]+[DdHhMmSs]$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[0-9]+[DdHhMmSs]$"),
 						Optional:         true,
 						Description:      "Overrides the default caching duration of `10s`. Note that if set to `0`, it is equivalent to `no-cache`, which forces revalidation and may cause a traffic spike. This can be counterproductive when, for example, the origin is producing an error code of `500`.",
 						Type:             schema.TypeString,
 					},
 					"preserve_stale": {
 						Optional:    true,
-						Description: "When enabled, the edge server preserves stale cached objects when the origin returns `400`, `500`, `502`, `503`, and `504` error codes. This avoids re-fetching and re-caching content after transient errors.",
+						Description: "When enabled, the edge server preserves stale cached objects when the origin returns `500`, `502`, `503`, and `504` error codes. This avoids re-fetching and re-caching content after transient errors.",
 						Type:        schema.TypeBool,
 					},
 				},
@@ -1840,7 +1840,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeString,
 					},
 					"purge_key": {
-						ValidateDiagFunc: validateRegex("^[\\w-]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[\\w-]+$"),
 						Optional:         true,
 						Description:      "Specifies the new cache key path as an alphanumeric value.",
 						Type:             schema.TypeString,
@@ -1940,7 +1940,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeString,
 					},
 					"tag": {
-						ValidateDiagFunc: validateRegex("^[a-zA-Z0-9\\&\\'\\^\\-\\$\\!\\`\\#\\%\\.\\+\\~\\_\\|\\/]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[a-zA-Z0-9\\&\\'\\^\\-\\$\\!\\`\\#\\%\\.\\+\\~\\_\\|\\/]+$"),
 						Optional:         true,
 						Description:      "Specifies the cache tag you want to add to your cached content. A cache tag is only added when the object is first added to cache. A single cache tag can't exceed 128 characters and can only include alphanumeric characters, plus this class of characters: ```[!#$%'+./^_`|~-]```",
 						Type:             schema.TypeString,
@@ -2015,13 +2015,13 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"ttl": {
-						ValidateDiagFunc: validateRegex("^[0-9]+[DdHhMmSs]$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[0-9]+[DdHhMmSs]$"),
 						Optional:         true,
 						Description:      "The maximum time content may remain cached. Setting the value to `0` is the same as setting a `no-cache` header, which forces content to revalidate.",
 						Type:             schema.TypeString,
 					},
 					"default_ttl": {
-						ValidateDiagFunc: validateRegex("^[0-9]+[DdHhMmSs]$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[0-9]+[DdHhMmSs]$"),
 						Optional:         true,
 						Description:      "Set the `MAX_AGE` header for the cached content.",
 						Type:             schema.TypeString,
@@ -2302,7 +2302,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeString,
 					},
 					"custom_failover_map": {
-						ValidateDiagFunc: validateRegex("^[a-zA-Z][a-zA-Z0-9-]*$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[a-zA-Z][a-zA-Z0-9-]*$"),
 						Optional:         true,
 						Description:      "Specifies the custom failover map to handle Cloud Wrapper failures. Contact your account representative for more information.",
 						Type:             schema.TypeString,
@@ -2365,7 +2365,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeString,
 					},
 					"origin_id": {
-						ValidateDiagFunc: validateRegex("^[a-zA-Z0-9_\\-\\.]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[a-zA-Z0-9_\\-\\.]+$"),
 						Optional:         true,
 						Description:      "",
 						Type:             schema.TypeString,
@@ -3224,7 +3224,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						},
 					},
 					"preflight_max_age": {
-						ValidateDiagFunc: validateRegex("^[0-9]+[DdHhMmSs]$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[0-9]+[DdHhMmSs]$"),
 						Optional:         true,
 						Description:      "Defines the number of seconds that the browser should cache the response to a preflight request.",
 						Type:             schema.TypeString,
@@ -3392,7 +3392,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"datastream_ids": {
-						ValidateDiagFunc: validateRegex("^[0-9]+(-[0-9]+)*$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[0-9]+(-[0-9]+)*$"),
 						Optional:         true,
 						Description:      "A set of dash-separated DataStream ID values to limit the scope of reported data. By default, all active streams report. Use the DataStream application to gather stream ID values that apply to this property configuration. Specifying IDs for any streams that don't apply to this property has no effect, and results in no data reported.",
 						Type:             schema.TypeString,
@@ -3542,7 +3542,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeString,
 					},
 					"regex_pattern": {
-						ValidateDiagFunc: validateRegex("^[^\\(\\)]*\\([^\\(\\)]+\\)[^\\(\\)]*$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[^\\(\\)]*\\([^\\(\\)]+\\)[^\\(\\)]*$"),
 						Optional:         true,
 						Description:      "Specifies a Perl-compatible regular expression with a single grouping to capture the text.  For example, a value of `^.(.{0,10})` omits the first character, but then captures up to 10 characters after that. If the regular expression does not capture a substring, authentication may fail.",
 						Type:             schema.TypeString,
@@ -3574,13 +3574,13 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeString,
 					},
 					"substring_start": {
-						ValidateDiagFunc: validateRegex("^[0-9]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[0-9]+$"),
 						Optional:         true,
 						Description:      "The zero-based index offset of the first character to extract. If the index is out of bound from the string's length, authentication may fail.",
 						Type:             schema.TypeString,
 					},
 					"substring_end": {
-						ValidateDiagFunc: validateRegex("^[0-9]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[0-9]+$"),
 						Optional:         true,
 						Description:      "The zero-based index offset of the last character to extract, where `-1` selects the remainder of the string. If the index is out of bound from the string's length, authentication may fail.",
 						Type:             schema.TypeString,
@@ -3694,7 +3694,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"hostname": {
-						ValidateDiagFunc: validateRegex("^(([a-zA-Z0-9]([a-zA-Z0-9_\\-]*[a-zA-Z0-9])?)\\.)+([a-zA-Z]+|xn--[a-zA-Z0-9]+)$"),
+						ValidateDiagFunc: validateRegexOrVariable("^(([a-zA-Z0-9]([a-zA-Z0-9_\\-]*[a-zA-Z0-9])?)\\.)+([a-zA-Z]+|xn--[a-zA-Z0-9]+)$"),
 						Optional:         true,
 						Description:      "Specifies the JWT server's hostname.",
 						Type:             schema.TypeString,
@@ -3818,7 +3818,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeString,
 					},
 					"reason": {
-						ValidateDiagFunc: validateRegex("^[\\w-]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[\\w-]+$"),
 						Optional:         true,
 						Description:      "Text message that keys why access is denied. Any subsequent `denyAccess` behaviors within the rule tree may refer to the same `reason` key to override the current behavior.",
 						Type:             schema.TypeString,
@@ -3959,7 +3959,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"timeout": {
-						ValidateDiagFunc: validateRegex("^[0-9]+[DdHhMmSs]$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[0-9]+[DdHhMmSs]$"),
 						Optional:         true,
 						Description:      "Set the maximum allowed time an expired DNS record may be active.",
 						Type:             schema.TypeString,
@@ -3996,13 +3996,13 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"delay": {
-						ValidateDiagFunc: validateRegex("^[0-9]+[DdHhMmSs]$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[0-9]+[DdHhMmSs]$"),
 						Optional:         true,
 						Description:      "Specifies the amount of time following a DNS record's expiration to asynchronously prefresh it.",
 						Type:             schema.TypeString,
 					},
 					"timeout": {
-						ValidateDiagFunc: validateRegex("^[0-9]+[DdHhMmSs]$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[0-9]+[DdHhMmSs]$"),
 						Optional:         true,
 						Description:      "Specifies the amount of time to prefresh a DNS entry if there have been no requests to the domain name.",
 						Type:             schema.TypeString,
@@ -4139,7 +4139,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:             schema.TypeString,
 					},
 					"ttl": {
-						ValidateDiagFunc: validateRegex("^[0-9]+[DdHhMmSs]$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[0-9]+[DdHhMmSs]$"),
 						Optional:         true,
 						Description:      "Sets the duration of the cache. Setting the value to `0` equates to a `no-cache` header that forces revalidation.",
 						Type:             schema.TypeString,
@@ -4342,7 +4342,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeString,
 					},
 					"regex_pattern": {
-						ValidateDiagFunc: validateRegex("^[^\\(\\)]*\\([^\\(\\)]+\\)[^\\(\\)]*$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[^\\(\\)]*\\([^\\(\\)]+\\)[^\\(\\)]*$"),
 						Optional:         true,
 						Description:      "Specifies the regular expression that matches the database name in the URL.",
 						Type:             schema.TypeString,
@@ -4395,7 +4395,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeString,
 					},
 					"regex_pattern": {
-						ValidateDiagFunc: validateRegex("^[^\\(\\)]*\\([^\\(\\)]+\\)[^\\(\\)]*$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[^\\(\\)]*\\([^\\(\\)]+\\)[^\\(\\)]*$"),
 						Optional:         true,
 						Description:      "Specifies the regular expression that matches the data set name in the URL.",
 						Type:             schema.TypeString,
@@ -4427,7 +4427,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeString,
 					},
 					"regex": {
-						ValidateDiagFunc: validateRegex("^[^\\(\\)]*\\([^\\(\\)]+\\)[^\\(\\)]*$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[^\\(\\)]*\\([^\\(\\)]+\\)[^\\(\\)]*$"),
 						Optional:         true,
 						Description:      "Enables sending a compressed archive file with objects to the default path of the target data set: `<hostname>/bulk/<database_name>/<dataset_name>`.",
 						Type:             schema.TypeString,
@@ -4478,13 +4478,13 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						},
 					},
 					"destination_hostname": {
-						ValidateDiagFunc: validateRegex("^([a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})(\\.[a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^([a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})(\\.[a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})+$"),
 						Optional:         true,
 						Description:      "Specifies the target hostname accepting push API requests.",
 						Type:             schema.TypeString,
 					},
 					"destination_path": {
-						ValidateDiagFunc: validateRegex("^[^#\\[\\]@]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[^#\\[\\]@]+$"),
 						Optional:         true,
 						Description:      "Specifies the push API's endpoint.",
 						Type:             schema.TypeString,
@@ -4495,19 +4495,19 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"aggregate_time": {
-						ValidateDiagFunc: validateRegex("^[0-9]+[DdHhMmSs]$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[0-9]+[DdHhMmSs]$"),
 						Optional:         true,
 						Description:      "Specifies how often logs are generated.",
 						Type:             schema.TypeString,
 					},
 					"aggregate_lines": {
-						ValidateDiagFunc: validateRegex("^[1-9]\\d*$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[1-9]\\d*$"),
 						Optional:         true,
 						Description:      "Specifies the maximum number of lines to include in each log.",
 						Type:             schema.TypeString,
 					},
 					"aggregate_size": {
-						ValidateDiagFunc: validateRegex("^\\d+[K,M,G,T]B$"),
+						ValidateDiagFunc: validateRegexOrVariable("^\\d+[K,M,G,T]B$"),
 						Optional:         true,
 						Description:      "Specifies the log's maximum size.",
 						Type:             schema.TypeString,
@@ -4585,13 +4585,13 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeString,
 					},
 					"hostname": {
-						ValidateDiagFunc: validateAny(validateRegex("^([a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})(\\.[a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})+$"), validateRegex("^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$")),
+						ValidateDiagFunc: validateAny(validateRegexOrVariable("^([a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})(\\.[a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})+$"), validateRegexOrVariable("^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$")),
 						Optional:         true,
 						Description:      "Specifies the data center's hostname.",
 						Type:             schema.TypeString,
 					},
 					"cookie_name": {
-						ValidateDiagFunc: validateRegex("^[^\\s;]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[^\\s;]+$"),
 						Optional:         true,
 						Description:      "If using session persistence, this specifies the value of the cookie named in the corresponding `edgeLoadBalancingOrigin` behavior's `cookie_name` option.",
 						Type:             schema.TypeString,
@@ -4607,7 +4607,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"ip": {
-						ValidateDiagFunc: validateRegex("^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$"),
+						ValidateDiagFunc: validateRegexOrVariable("^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$"),
 						Optional:         true,
 						Description:      "Specifies this data center's IP address.",
 						Type:             schema.TypeString,
@@ -4619,7 +4619,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Elem: &schema.Resource{
 							Schema: map[string]*schema.Schema{
 								"failover_hostname": {
-									ValidateDiagFunc: validateRegex("^([a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})(\\.[a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})+$"),
+									ValidateDiagFunc: validateRegexOrVariable("^([a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})(\\.[a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})+$"),
 									Optional:         true,
 									Description:      "The hostname of the data center to fail over to.",
 									Type:             schema.TypeString,
@@ -4635,7 +4635,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 									Type:        schema.TypeBool,
 								},
 								"context_root": {
-									ValidateDiagFunc: validateRegex("^[^#\\[\\]@]+$"),
+									ValidateDiagFunc: validateRegexOrVariable("^[^#\\[\\]@]+$"),
 									Optional:         true,
 									Description:      "Specifies the path to use in the forwarding request, typically the root (`/`) when failing over to a different data center, or a full path such as `/static/error.html` when failing over to an error page.",
 									Type:             schema.TypeString,
@@ -4685,7 +4685,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeString,
 					},
 					"hostname": {
-						ValidateDiagFunc: validateRegex("^([a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})(\\.[a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^([a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})(\\.[a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})+$"),
 						Optional:         true,
 						Description:      "Specifies the hostname associated with the ELB rule.",
 						Type:             schema.TypeString,
@@ -4701,7 +4701,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"cookie_name": {
-						ValidateDiagFunc: validateRegex("^[a-zA-Z0-9_\\-*\\.]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[a-zA-Z0-9_\\-*\\.]+$"),
 						Optional:         true,
 						Description:      "This specifies the name of the cookie that marks users' persistent sessions. The accompanying `edgeLoadBalancingDataCenter` behavior's `description` option specifies the cookie's value.",
 						Type:             schema.TypeString,
@@ -4738,19 +4738,19 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"cookie_name": {
-						ValidateDiagFunc: validateRegex("^[a-zA-Z0-9_\\-*\\.]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[a-zA-Z0-9_\\-*\\.]+$"),
 						Optional:         true,
 						Description:      "Specifies the name of the cookie to use for authorization.",
 						Type:             schema.TypeString,
 					},
 					"value": {
-						ValidateDiagFunc: validateRegex("^[^\\s;]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[^\\s;]+$"),
 						Optional:         true,
 						Description:      "Specifies the value of the authorization cookie.",
 						Type:             schema.TypeString,
 					},
 					"domain": {
-						ValidateDiagFunc: validateRegex("^([a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})(\\.[a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^([a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})(\\.[a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})+$"),
 						Optional:         true,
 						Description:      "Specify the cookie's domain, which needs to match the top-level domain of the `Host` header the origin server receives.",
 						Type:             schema.TypeString,
@@ -5037,7 +5037,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:             schema.TypeString,
 					},
 					"best_practice_redirecturl": {
-						ValidateDiagFunc: validateRegex("(http|https)://(\\w+:{0,1}\\w*@)?(\\S+)(:[0-9]+)?(/|/([\\w#!:.?+=&%@!\\-/]))?"),
+						ValidateDiagFunc: validateRegexOrVariable("(http|https)://(\\w+:{0,1}\\w*@)?(\\S+)(:[0-9]+)?(/|/([\\w#!:.?+=&%@!\\-/]))?"),
 						Optional:         true,
 						Description:      "This specifies the URL to which to redirect requests.",
 						Type:             schema.TypeString,
@@ -5059,7 +5059,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:             schema.TypeString,
 					},
 					"detect_anonymous_vpn_redirecturl": {
-						ValidateDiagFunc: validateRegex("(http|https)://(\\w+:{0,1}\\w*@)?(\\S+)(:[0-9]+)?(/|/([\\w#!:.?+=&%@!\\-/]))?"),
+						ValidateDiagFunc: validateRegexOrVariable("(http|https)://(\\w+:{0,1}\\w*@)?(\\S+)(:[0-9]+)?(/|/([\\w#!:.?+=&%@!\\-/]))?"),
 						Optional:         true,
 						Description:      "This specifies the URL to which to redirect anonymous VPN requests.",
 						Type:             schema.TypeString,
@@ -5081,7 +5081,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:             schema.TypeString,
 					},
 					"detect_public_proxy_redirecturl": {
-						ValidateDiagFunc: validateRegex("(http|https)://(\\w+:{0,1}\\w*@)?(\\S+)(:[0-9]+)?(/|/([\\w#!:.?+=&%@!\\-/]))?"),
+						ValidateDiagFunc: validateRegexOrVariable("(http|https)://(\\w+:{0,1}\\w*@)?(\\S+)(:[0-9]+)?(/|/([\\w#!:.?+=&%@!\\-/]))?"),
 						Optional:         true,
 						Description:      "This specifies the URL to which to redirect public proxy requests.",
 						Type:             schema.TypeString,
@@ -5103,7 +5103,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:             schema.TypeString,
 					},
 					"detect_tor_exit_node_redirecturl": {
-						ValidateDiagFunc: validateRegex("(http|https)://(\\w+:{0,1}\\w*@)?(\\S+)(:[0-9]+)?(/|/([\\w#!:.?+=&%@!\\-/]))?"),
+						ValidateDiagFunc: validateRegexOrVariable("(http|https)://(\\w+:{0,1}\\w*@)?(\\S+)(:[0-9]+)?(/|/([\\w#!:.?+=&%@!\\-/]))?"),
 						Optional:         true,
 						Description:      "This specifies the URL to which to redirect requests from Tor exit nodes.",
 						Type:             schema.TypeString,
@@ -5125,7 +5125,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:             schema.TypeString,
 					},
 					"detect_smart_dns_proxy_redirecturl": {
-						ValidateDiagFunc: validateRegex("(http|https)://(\\w+:{0,1}\\w*@)?(\\S+)(:[0-9]+)?(/|/([\\w#!:.?+=&%@!\\-/]))?"),
+						ValidateDiagFunc: validateRegexOrVariable("(http|https)://(\\w+:{0,1}\\w*@)?(\\S+)(:[0-9]+)?(/|/([\\w#!:.?+=&%@!\\-/]))?"),
 						Optional:         true,
 						Description:      "This specifies the URL to which to redirect DNS proxy requests.",
 						Type:             schema.TypeString,
@@ -5147,7 +5147,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:             schema.TypeString,
 					},
 					"detect_hosting_provider_redirecturl": {
-						ValidateDiagFunc: validateRegex("(http|https)://(\\w+:{0,1}\\w*@)?(\\S+)(:[0-9]+)?(/|/([\\w#!:.?+=&%@!\\-/]))?"),
+						ValidateDiagFunc: validateRegexOrVariable("(http|https)://(\\w+:{0,1}\\w*@)?(\\S+)(:[0-9]+)?(/|/([\\w#!:.?+=&%@!\\-/]))?"),
 						Optional:         true,
 						Description:      "This specifies the absolute URL to which to redirect requests from hosting providers.",
 						Type:             schema.TypeString,
@@ -5169,7 +5169,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:             schema.TypeString,
 					},
 					"detect_vpn_data_center_redirecturl": {
-						ValidateDiagFunc: validateRegex("(http|https)://(\\w+:{0,1}\\w*@)?(\\S+)(:[0-9]+)?(/|/([\\w#!:.?+=&%@!\\-/]))?"),
+						ValidateDiagFunc: validateRegexOrVariable("(http|https)://(\\w+:{0,1}\\w*@)?(\\S+)(:[0-9]+)?(/|/([\\w#!:.?+=&%@!\\-/]))?"),
 						Optional:         true,
 						Description:      "This specifies the URL to which to redirect requests from VPN data centers.",
 						Type:             schema.TypeString,
@@ -5191,7 +5191,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:             schema.TypeString,
 					},
 					"detect_residential_proxy_redirecturl": {
-						ValidateDiagFunc: validateRegex("(http|https)://(\\w+:{0,1}\\w*@)?(\\S+)(:[0-9]+)?(/|/([\\w#!:.?+=&%@!\\-/]))?"),
+						ValidateDiagFunc: validateRegexOrVariable("(http|https)://(\\w+:{0,1}\\w*@)?(\\S+)(:[0-9]+)?(/|/([\\w#!:.?+=&%@!\\-/]))?"),
 						Optional:         true,
 						Description:      "This specifies the URL to which to redirect requests.",
 						Type:             schema.TypeString,
@@ -5276,37 +5276,37 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"saas_cname_level": {
-						ValidateDiagFunc: validateRegex("^[0-9]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[0-9]+$"),
 						Optional:         true,
 						Description:      "Specifies the number of elements in the CNAME chain backwards from the edge hostname that determines the hostname for the SaaS dynamic failaction.",
 						Type:             schema.TypeInt,
 					},
 					"saas_cookie": {
-						ValidateDiagFunc: validateRegex("^[a-zA-Z0-9_\\-*\\.]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[a-zA-Z0-9_\\-*\\.]+$"),
 						Optional:         true,
 						Description:      "Specifies the name of the cookie that identifies this SaaS dynamic failaction.",
 						Type:             schema.TypeString,
 					},
 					"saas_query_string": {
-						ValidateDiagFunc: validateRegex("^[^:/?#\\[\\]@&]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[^:/?#\\[\\]@&]+$"),
 						Optional:         true,
 						Description:      "Specifies the name of the query parameter that identifies this SaaS dynamic failaction.",
 						Type:             schema.TypeString,
 					},
 					"saas_regex": {
-						ValidateDiagFunc: validateRegex("^([a-zA-Z0-9\\:\\[\\]\\{\\}\\(\\)\\.\\?_\\-\\*\\+\\^\\$\\\\\\/\\|&=!]{1,250})$"),
+						ValidateDiagFunc: validateRegexOrVariable("^([a-zA-Z0-9\\:\\[\\]\\{\\}\\(\\)\\.\\?_\\-\\*\\+\\^\\$\\\\\\/\\|&=!]{1,250})$"),
 						Optional:         true,
 						Description:      "Specifies the substitution pattern (a Perl-compatible regular expression) that defines the SaaS dynamic failaction.",
 						Type:             schema.TypeString,
 					},
 					"saas_replace": {
-						ValidateDiagFunc: validateRegex("^(([a-zA-Z0-9]|\\$[1-9])(([a-zA-Z0-9\\._\\-]|\\$[1-9]){0,250}([a-zA-Z0-9]|\\$[1-9]))?){1,10}$"),
+						ValidateDiagFunc: validateRegexOrVariable("^(([a-zA-Z0-9]|\\$[1-9])(([a-zA-Z0-9\\._\\-]|\\$[1-9]){0,250}([a-zA-Z0-9]|\\$[1-9]))?){1,10}$"),
 						Optional:         true,
 						Description:      "Specifies the replacement pattern that defines the SaaS dynamic failaction.",
 						Type:             schema.TypeString,
 					},
 					"saas_suffix": {
-						ValidateDiagFunc: validateRegex("^([a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})\\.(com|net|org|info|biz|us|co\\.uk|ac\\.uk|org\\.uk|me\\.uk|ca|eu|com\\.au|co|co\\.za|ru|es|me|tv|pro|in|ie|de|it|nl|fr|co\\.il|ch|se|co\\.nz|pl|jp|name|mobi|cc|ws|be|com\\.mx|at|nu|asia|co\\.nz|net\\.nz|org\\.nz|com\\.au|net\\.au|org\\.au|tools)$"),
+						ValidateDiagFunc: validateRegexOrVariable("^([a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})\\.(com|net|org|info|biz|us|co\\.uk|ac\\.uk|org\\.uk|me\\.uk|ca|eu|com\\.au|co|co\\.za|ru|es|me|tv|pro|in|ie|de|it|nl|fr|co\\.il|ch|se|co\\.nz|pl|jp|name|mobi|cc|ws|be|com\\.mx|at|nu|asia|co\\.nz|net\\.nz|org\\.nz|com\\.au|net\\.au|org\\.au|tools)$"),
 						Optional:         true,
 						Description:      "Specifies the static portion of the SaaS dynamic failaction.",
 						Type:             schema.TypeString,
@@ -5323,7 +5323,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"dynamic_path": {
-						ValidateDiagFunc: validateRegex("^[^#\\[\\]@]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[^#\\[\\]@]+$"),
 						Optional:         true,
 						Description:      "Specifies the new path.",
 						Type:             schema.TypeString,
@@ -5335,7 +5335,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:             schema.TypeString,
 					},
 					"redirect_hostname": {
-						ValidateDiagFunc: validateRegex("^([a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})(\\.[a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^([a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})(\\.[a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})+$"),
 						Optional:         true,
 						Description:      "When the `actionType` is `REDIRECT` and the `redirectHostnameType` is `ALTERNATE`, this specifies the hostname for the redirect.",
 						Type:             schema.TypeString,
@@ -5346,7 +5346,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"redirect_path": {
-						ValidateDiagFunc: validateRegex("^[^#\\[\\]@]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[^#\\[\\]@]+$"),
 						Optional:         true,
 						Description:      "Specifies a new path.",
 						Type:             schema.TypeString,
@@ -5358,7 +5358,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:             schema.TypeInt,
 					},
 					"content_hostname": {
-						ValidateDiagFunc: validateRegex("^([a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})(\\.[a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^([a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})(\\.[a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})+$"),
 						Optional:         true,
 						Description:      "Specifies the static hostname for the alternate redirect.",
 						Type:             schema.TypeString,
@@ -5369,7 +5369,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"content_path": {
-						ValidateDiagFunc: validateRegex("^[^#\\[\\]@]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[^#\\[\\]@]+$"),
 						Optional:         true,
 						Description:      "Specifies a custom redirect path.",
 						Type:             schema.TypeString,
@@ -5400,13 +5400,13 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						},
 					},
 					"net_storage_path": {
-						ValidateDiagFunc: validateRegex("^[^#\\[\\]@]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[^#\\[\\]@]+$"),
 						Optional:         true,
 						Description:      "When the `actionType` is `RECREATED_NS`, specifies the path for the `NetStorage` request.",
 						Type:             schema.TypeString,
 					},
 					"cex_hostname": {
-						ValidateDiagFunc: validateRegex("^([a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})(\\.[a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^([a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})(\\.[a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})+$"),
 						Optional:         true,
 						Description:      "Specifies a hostname.",
 						Type:             schema.TypeString,
@@ -5417,7 +5417,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"cex_path": {
-						ValidateDiagFunc: validateRegex("^[^#\\[\\]@]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[^#\\[\\]@]+$"),
 						Optional:         true,
 						Description:      "Specifies a custom path.",
 						Type:             schema.TypeString,
@@ -5632,7 +5632,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						},
 					},
 					"media_math_prefix": {
-						ValidateDiagFunc: validateRegex("^[^#\\[\\]@]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[^#\\[\\]@]+$"),
 						Optional:         true,
 						Description:      "Specify the URL path prefix that distinguishes Cloud Marketing requests from your other web traffic. Include the leading slash character, but no trailing slash.  For example, if the path prefix is `/mmath`, and the request is for `www.example.com/dir`, the new URL is `www.example.com/mmath/dir`.",
 						Type:             schema.TypeString,
@@ -5695,7 +5695,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						},
 					},
 					"media_math_prefix": {
-						ValidateDiagFunc: validateRegex("^[^#\\[\\]@]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[^#\\[\\]@]+$"),
 						Optional:         true,
 						Description:      "Specify the URL path prefix that distinguishes Cloud Marketing requests from your other web traffic. Include the leading slash character, but no trailing slash.  For example, if the path prefix is `/mmath`, and the request is for `www.example.com/dir`, the new URL is `www.example.com/mmath/dir`.",
 						Type:             schema.TypeString,
@@ -5793,13 +5793,13 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"data_header": {
-						ValidateDiagFunc: validateRegex("^[^()<>@,;:\\\"/\\[\\]?{}\\s]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[^()<>@,;:\\\"/\\[\\]?{}\\s]+$"),
 						Optional:         true,
 						Description:      "Specifies the name of the header that contains the request data that needs to be encrypted.",
 						Type:             schema.TypeString,
 					},
 					"signed_header": {
-						ValidateDiagFunc: validateRegex("^[^()<>@,;:\\\"/\\[\\]?{}\\s]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[^()<>@,;:\\\"/\\[\\]?{}\\s]+$"),
 						Optional:         true,
 						Description:      "Specifies the name of the header containing encrypted request data.",
 						Type:             schema.TypeString,
@@ -5824,13 +5824,13 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						},
 					},
 					"secret_key": {
-						ValidateDiagFunc: validateRegex("^[0-9a-zA-Z]{24}$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[0-9a-zA-Z]{24}$"),
 						Optional:         true,
 						Description:      "Specifies the shared secret key.",
 						Type:             schema.TypeString,
 					},
 					"nonce": {
-						ValidateDiagFunc: validateRegex("^[0-9a-zA-Z]{1,8}$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[0-9a-zA-Z]{1,8}$"),
 						Optional:         true,
 						Description:      "Specifies the cryptographic `nonce` string.",
 						Type:             schema.TypeString,
@@ -5868,7 +5868,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:             schema.TypeString,
 					},
 					"header_name": {
-						ValidateDiagFunc: validateRegex("^[^()<>@,;:\\\"/\\[\\]?{}\\s]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[^()<>@,;:\\\"/\\[\\]?{}\\s]+$"),
 						Optional:         true,
 						Description:      "With `outputOption` set to specify any set of headers, this specifies the name of the header to report the GRN value.",
 						Type:             schema.TypeString,
@@ -6035,7 +6035,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeInt,
 					},
 					"retry_interval": {
-						ValidateDiagFunc: validateRegex("^[0-9]+[DdHhMmSs]$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[0-9]+[DdHhMmSs]$"),
 						Optional:         true,
 						Description:      "Specifies the amount of time the edge server will wait before trying to reconnect to an IP address it has already identified as faulty.",
 						Type:             schema.TypeString,
@@ -6313,7 +6313,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeString,
 					},
 					"width": {
-						ValidateDiagFunc: validateRegex("^[0-9]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[0-9]+$"),
 						Optional:         true,
 						Description:      "Sets the image's desired pixel width directly. If the Image Manager policy doesn't define that width, it serves the next largest width.",
 						Type:             schema.TypeFloat,
@@ -6324,7 +6324,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeString,
 					},
 					"policy": {
-						ValidateDiagFunc: validateRegex("^[a-zA-Z0-9_-]{1,32}$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[a-zA-Z0-9_-]{1,32}$"),
 						Optional:         true,
 						Description:      "This selects the desired Image and Video Manager policy name directly. If there is no policy by that name, Image and Video Manager serves the image unmodified.",
 						Type:             schema.TypeString,
@@ -6525,13 +6525,13 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						},
 					},
 					"image_set": {
-						ValidateDiagFunc: validateRegex("^[a-zA-Z0-9_-]+([^-].|[^v])$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[a-zA-Z0-9_-]+([^-].|[^v])$"),
 						Optional:         true,
 						Description:      "",
 						Type:             schema.TypeString,
 					},
 					"video_set": {
-						ValidateDiagFunc: validateRegex("^[a-zA-Z0-9_-]+-v$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[a-zA-Z0-9_-]+-v$"),
 						Optional:         true,
 						Description:      "",
 						Type:             schema.TypeString,
@@ -6730,7 +6730,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"policy_set": {
-						ValidateDiagFunc: validateRegex("^[a-zA-Z0-9_-]+([^-].|[^v])$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[a-zA-Z0-9_-]+([^-].|[^v])$"),
 						Optional:         true,
 						Description:      "Identifies the existing policy set configured with `Image and Video Manager API`.",
 						Type:             schema.TypeString,
@@ -6741,7 +6741,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"policy_token": {
-						ValidateDiagFunc: validateRegex("^[a-zA-Z0-9_-]{1,64}$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[a-zA-Z0-9_-]{1,64}$"),
 						Optional:         true,
 						Description:      "Assign a prefix label to help match the policy token to this set of images, limited to 32 alphanumeric or underscore characters. If you don't specify a label, `default` becomes the prefix.",
 						Type:             schema.TypeString,
@@ -6945,7 +6945,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"policy_set": {
-						ValidateDiagFunc: validateRegex("^[a-zA-Z0-9_-]+-v$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[a-zA-Z0-9_-]+-v$"),
 						Optional:         true,
 						Description:      "Identifies the existing policy set configured with `Image and Video Manager API`.",
 						Type:             schema.TypeString,
@@ -6956,7 +6956,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"policy_token": {
-						ValidateDiagFunc: validateRegex("^[a-zA-Z0-9_-]{1,64}$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[a-zA-Z0-9_-]{1,64}$"),
 						Optional:         true,
 						Description:      "Specifies a custom policy defined in the Image and Video Manager Policy Manager or the `Image and Video Manager API`. The policy name can include up to 64 alphanumeric, dash, or underscore characters.",
 						Type:             schema.TypeString,
@@ -7123,13 +7123,13 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:             schema.TypeString,
 					},
 					"minimum_size": {
-						ValidateDiagFunc: validateRegex("^\\d+[K,M,G,T]B$"),
+						ValidateDiagFunc: validateRegexOrVariable("^\\d+[K,M,G,T]B$"),
 						Optional:         true,
 						Description:      "Optimization only applies to files larger than this, expressed as a number suffixed with a unit string such as `MB` or `GB`.",
 						Type:             schema.TypeString,
 					},
 					"maximum_size": {
-						ValidateDiagFunc: validateRegex("^\\d+[K,M,G,T]B$"),
+						ValidateDiagFunc: validateRegexOrVariable("^\\d+[K,M,G,T]B$"),
 						Optional:         true,
 						Description:      "Optimization does not apply to files larger than this, expressed as a number suffixed with a unit string such as `MB` or `GB`. The size of a file can't be greater than 323 GB. If you need to optimize a larger file, contact Akamai Professional Services for help. This option is for internal usage only.",
 						Type:             schema.TypeString,
@@ -7171,7 +7171,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"object_size": {
-						ValidateDiagFunc: validateRegex("^\\d+[K,M,G,T]B$"),
+						ValidateDiagFunc: validateRegexOrVariable("^\\d+[K,M,G,T]B$"),
 						Optional:         true,
 						Description:      "Specifies the size of the file at which point to apply partial object (POC) caching. Append a numeric value with a `MB` or `GB` suffix.",
 						Type:             schema.TypeString,
@@ -7296,7 +7296,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 					},
 					"custom_log_field": {
 						Optional:    true,
-						Description: "Specifies an additional data field to append to each log line, maximum 40 bytes, typically based on a dynamically generated built-in system variable. For example, `round-trip: {{builtin.AK_CLIENT_TURNAROUND_TIME}}ms` logs the total time to complete the response. See `Support for variables` for more information. Since this option can specify both a request and response, it overrides any `customLogField` settings in the `report` behavior.",
+						Description: "Specifies an additional data field to append to each log line, maximum 1000 bytes, typically based on a dynamically generated built-in system variable. For example, `round-trip: {{builtin.AK_CLIENT_TURNAROUND_TIME}}ms` logs the total time to complete the response. See `Support for variables` for more information. Since this option can specify both a request and response, it overrides any `customLogField` settings in the `report` behavior.",
 						Type:        schema.TypeString,
 					},
 				},
@@ -7347,13 +7347,13 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeString,
 					},
 					"api_key": {
-						ValidateDiagFunc: validateRegex("^$|^[a-zA-Z2-9]{5}-[a-zA-Z2-9]{5}-[a-zA-Z2-9]{5}-[a-zA-Z2-9]{5}-[a-zA-Z2-9]{5}$"),
+						ValidateDiagFunc: validateRegexOrVariable("^$|^[a-zA-Z2-9]{5}-[a-zA-Z2-9]{5}-[a-zA-Z2-9]{5}-[a-zA-Z2-9]{5}-[a-zA-Z2-9]{5}$"),
 						Optional:         true,
 						Description:      "This generated value uniquely identifies sections of your website for you to analyze independently. To access this value, see `Enable mPulse in Property Manager`.",
 						Type:             schema.TypeString,
 					},
 					"buffer_size": {
-						ValidateDiagFunc: validateRegex("^(1[5-9][0-9]|1[0-9]{3}|[2-9][0-9]{2,3})$"),
+						ValidateDiagFunc: validateRegexOrVariable("^(1[5-9][0-9]|1[0-9]{3}|[2-9][0-9]{2,3})$"),
 						Optional:         true,
 						Description:      "Allows you to override the browser's default (150) maximum number of reported performance timeline entries.",
 						Type:             schema.TypeString,
@@ -7411,13 +7411,13 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:             schema.TypeString,
 					},
 					"hls_preferred_bitrate": {
-						ValidateDiagFunc: validateRegex("^\\d+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^\\d+$"),
 						Optional:         true,
 						Description:      "Sets the preferred bit rate in Kbps. This causes the media playlist specified in the `#EXT-X-STREAM-INF` tag that most closely matches the value to list first. All other playlists maintain their current position in the manifest.",
 						Type:             schema.TypeString,
 					},
 					"hls_filter_in_bitrates": {
-						ValidateDiagFunc: validateRegex("^\\d+(,\\d+)*$"),
+						ValidateDiagFunc: validateRegexOrVariable("^\\d+(,\\d+)*$"),
 						Optional:         true,
 						Description:      "Specifies a comma-delimited set of preferred bit rates, such as `100,200,400`. Playlists specified in the `#EXT-X-STREAM-INF` tag with bit rates outside of any of those values by up to 100 Kbps are excluded from the manifest.",
 						Type:             schema.TypeString,
@@ -7433,13 +7433,13 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"hls_query_param_secret_key": {
-						ValidateDiagFunc: validateRegex("^(0x)?[0-9a-fA-F]{32}$"),
+						ValidateDiagFunc: validateRegexOrVariable("^(0x)?[0-9a-fA-F]{32}$"),
 						Optional:         true,
 						Description:      "Specifies a primary key as a token to accompany the request.",
 						Type:             schema.TypeString,
 					},
 					"hls_query_param_transition_key": {
-						ValidateDiagFunc: validateRegex("^(0x)?[0-9a-fA-F]{32}$"),
+						ValidateDiagFunc: validateRegexOrVariable("^(0x)?[0-9a-fA-F]{32}$"),
 						Optional:         true,
 						Description:      "Specifies a transition key as a token to accompany the request.",
 						Type:             schema.TypeString,
@@ -7487,7 +7487,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:             schema.TypeString,
 					},
 					"username": {
-						ValidateDiagFunc: validateRegex("^[0-9A-Za-z!@.,;:'\"?-]{1,50}$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[0-9A-Za-z!@.,;:'\"?-]{1,50}$"),
 						Optional:         true,
 						Description:      "The user name for your Adobe Primetime account.",
 						Type:             schema.TypeString,
@@ -7726,13 +7726,13 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:             schema.TypeString,
 					},
 					"origin_unresponsive_backup_host": {
-						ValidateDiagFunc: validateRegex("^([a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})(\\.[a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^([a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})(\\.[a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})+$"),
 						Optional:         true,
 						Description:      "This specifies the origin hostname.",
 						Type:             schema.TypeString,
 					},
 					"origin_unresponsive_alternate_host": {
-						ValidateDiagFunc: validateRegex("^([a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})(\\.[a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^([a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})(\\.[a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})+$"),
 						Optional:         true,
 						Description:      "This specifies the redirect's destination hostname.",
 						Type:             schema.TypeString,
@@ -7743,7 +7743,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"origin_unresponsive_modified_path": {
-						ValidateDiagFunc: validateRegex("^[^#\\[\\]@]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[^#\\[\\]@]+$"),
 						Optional:         true,
 						Description:      "This specifies the path to form the new URL.",
 						Type:             schema.TypeString,
@@ -7818,13 +7818,13 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:             schema.TypeString,
 					},
 					"origin_unavailable_backup_host": {
-						ValidateDiagFunc: validateRegex("^([a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})(\\.[a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^([a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})(\\.[a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})+$"),
 						Optional:         true,
 						Description:      "This specifies the origin hostname.",
 						Type:             schema.TypeString,
 					},
 					"origin_unavailable_alternate_host": {
-						ValidateDiagFunc: validateRegex("^([a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})(\\.[a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^([a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})(\\.[a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})+$"),
 						Optional:         true,
 						Description:      "This specifies the redirect's destination hostname.",
 						Type:             schema.TypeString,
@@ -7835,7 +7835,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"origin_unavailable_modified_path": {
-						ValidateDiagFunc: validateRegex("^[^#\\[\\]@]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[^#\\[\\]@]+$"),
 						Optional:         true,
 						Description:      "This specifies the path to form the new URL.",
 						Type:             schema.TypeString,
@@ -7910,13 +7910,13 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:             schema.TypeString,
 					},
 					"object_unavailable_backup_host": {
-						ValidateDiagFunc: validateRegex("^([a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})(\\.[a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^([a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})(\\.[a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})+$"),
 						Optional:         true,
 						Description:      "This specifies the origin hostname.",
 						Type:             schema.TypeString,
 					},
 					"object_unavailable_alternate_host": {
-						ValidateDiagFunc: validateRegex("^([a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})(\\.[a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^([a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})(\\.[a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})+$"),
 						Optional:         true,
 						Description:      "This specifies the redirect's destination hostname.",
 						Type:             schema.TypeString,
@@ -7927,7 +7927,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"object_unavailable_modified_path": {
-						ValidateDiagFunc: validateRegex("^[^#\\[\\]@]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[^#\\[\\]@]+$"),
 						Optional:         true,
 						Description:      "This specifies the path to form the new URL.",
 						Type:             schema.TypeString,
@@ -8099,7 +8099,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:             schema.TypeString,
 					},
 					"custom_header_name": {
-						ValidateDiagFunc: validateRegex("^[^()<>@,;:\\\"/\\[\\]?{}\\s]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[^()<>@,;:\\\"/\\[\\]?{}\\s]+$"),
 						Optional:         true,
 						Description:      "Specifies a custom field name that applies when the relevant `standard` header name is set to `OTHER`.",
 						Type:             schema.TypeString,
@@ -8176,7 +8176,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:             schema.TypeString,
 					},
 					"custom_header_name": {
-						ValidateDiagFunc: validateRegex("^[^()<>@,;:\\\"/\\[\\]?{}\\s]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[^()<>@,;:\\\"/\\[\\]?{}\\s]+$"),
 						Optional:         true,
 						Description:      "Specifies a custom field name that applies when the relevant `standard` header name is set to `OTHER`.",
 						Type:             schema.TypeString,
@@ -8247,7 +8247,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:             schema.TypeString,
 					},
 					"custom_header_name": {
-						ValidateDiagFunc: validateRegex("^[^()<>@,;:\\\"/\\[\\]?{}\\s]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[^()<>@,;:\\\"/\\[\\]?{}\\s]+$"),
 						Optional:         true,
 						Description:      "Specifies a custom field name that applies when the relevant `standard` header name is set to `OTHER`.",
 						Type:             schema.TypeString,
@@ -8333,7 +8333,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:             schema.TypeString,
 					},
 					"custom_header_name": {
-						ValidateDiagFunc: validateRegex("^[^()<>@,;:\\\"/\\[\\]?{}\\s]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[^()<>@,;:\\\"/\\[\\]?{}\\s]+$"),
 						Optional:         true,
 						Description:      "Specifies a custom field name that applies when the relevant `standard` header name is set to `OTHER`.",
 						Type:             schema.TypeString,
@@ -8406,7 +8406,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:             schema.TypeString,
 					},
 					"rename_header_to": {
-						ValidateDiagFunc: validateRegex("^[^()<>@,;:\\\"\\[\\]?{}\\s]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[^()<>@,;:\\\"\\[\\]?{}\\s]+$"),
 						Optional:         true,
 						Description:      "Specifies a new name to replace the existing `Via` header.",
 						Type:             schema.TypeString,
@@ -8505,37 +8505,37 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"saas_cname_level": {
-						ValidateDiagFunc: validateRegex("^[0-9]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[0-9]+$"),
 						Optional:         true,
 						Description:      "Specifies the desired number of hostnames to use in the `CNAME chain`, starting backwards from the edge server.",
 						Type:             schema.TypeInt,
 					},
 					"saas_cookie": {
-						ValidateDiagFunc: validateRegex("^[a-zA-Z0-9_\\-*\\.]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[a-zA-Z0-9_\\-*\\.]+$"),
 						Optional:         true,
 						Description:      "Specifies the name of the cookie that identifies this SaaS dynamic origin.",
 						Type:             schema.TypeString,
 					},
 					"saas_query_string": {
-						ValidateDiagFunc: validateRegex("^[^:/?#\\[\\]@&]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[^:/?#\\[\\]@&]+$"),
 						Optional:         true,
 						Description:      "Specifies the name of the query parameter that identifies this SaaS dynamic origin.",
 						Type:             schema.TypeString,
 					},
 					"saas_regex": {
-						ValidateDiagFunc: validateRegex("^([a-zA-Z0-9\\:\\[\\]\\{\\}\\(\\)\\.\\?_\\-\\*\\+\\^\\$\\\\\\/\\|&=!]{1,250})$"),
+						ValidateDiagFunc: validateRegexOrVariable("^([a-zA-Z0-9\\:\\[\\]\\{\\}\\(\\)\\.\\?_\\-\\*\\+\\^\\$\\\\\\/\\|&=!]{1,250})$"),
 						Optional:         true,
 						Description:      "Specifies the Perl-compatible regular expression match that identifies this SaaS dynamic origin.",
 						Type:             schema.TypeString,
 					},
 					"saas_replace": {
-						ValidateDiagFunc: validateRegex("^(([a-zA-Z0-9]|\\$[1-9])(([a-zA-Z0-9\\._\\-]|\\$[1-9]){0,250}([a-zA-Z0-9]|\\$[1-9]))?){1,10}$"),
+						ValidateDiagFunc: validateRegexOrVariable("^(([a-zA-Z0-9]|\\$[1-9])(([a-zA-Z0-9\\._\\-]|\\$[1-9]){0,250}([a-zA-Z0-9]|\\$[1-9]))?){1,10}$"),
 						Optional:         true,
 						Description:      "Specifies replacement text for what `saasRegex` matches.",
 						Type:             schema.TypeString,
 					},
 					"saas_suffix": {
-						ValidateDiagFunc: validateRegex("^([a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})\\.(com|net|org|info|biz|us|co\\.uk|ac\\.uk|org\\.uk|me\\.uk|ca|eu|com\\.au|co|co\\.za|ru|es|me|tv|pro|in|ie|de|it|nl|fr|co\\.il|ch|se|co\\.nz|pl|jp|name|mobi|cc|ws|be|com\\.mx|at|nu|asia|co\\.nz|net\\.nz|org\\.nz|com\\.au|net\\.au|org\\.au|tools)$"),
+						ValidateDiagFunc: validateRegexOrVariable("^([a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})\\.(com|net|org|info|biz|us|co\\.uk|ac\\.uk|org\\.uk|me\\.uk|ca|eu|com\\.au|co|co\\.za|ru|es|me|tv|pro|in|ie|de|it|nl|fr|co\\.il|ch|se|co\\.nz|pl|jp|name|mobi|cc|ws|be|com\\.mx|at|nu|asia|co\\.nz|net\\.nz|org\\.nz|com\\.au|net\\.au|org\\.au|tools)$"),
 						Optional:         true,
 						Description:      "Specifies the static part of the SaaS dynamic origin.",
 						Type:             schema.TypeString,
@@ -8579,7 +8579,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"true_client_ip_header": {
-						ValidateDiagFunc: validateRegex("^[^()<>@,;:\\\"/\\[\\]?{}\\s]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[^()<>@,;:\\\"/\\[\\]?{}\\s]+$"),
 						Optional:         true,
 						Description:      "This specifies the name of the field that identifies the end client's IP address, for example `True-Client-IP`.",
 						Type:             schema.TypeString,
@@ -8634,13 +8634,13 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Elem: &schema.Resource{
 							Schema: map[string]*schema.Schema{
 								"pem_encoded_cert": {
-									ValidateDiagFunc: validateRegex("^-----BEGIN CERTIFICATE-----(.|\\s)*-----END CERTIFICATE-----\\s*$"),
+									ValidateDiagFunc: validateRegexOrVariable("^-----BEGIN CERTIFICATE-----(.|\\s)*-----END CERTIFICATE-----\\s*$"),
 									Optional:         true,
 									Description:      "",
 									Type:             schema.TypeString,
 								},
 								"sha1_fingerprint": {
-									ValidateDiagFunc: validateRegex("^[a-f0-9]{40}$"),
+									ValidateDiagFunc: validateRegexOrVariable("^[a-f0-9]{40}$"),
 									Optional:         true,
 									Description:      "",
 									Type:             schema.TypeString,
@@ -8655,13 +8655,13 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Elem: &schema.Resource{
 							Schema: map[string]*schema.Schema{
 								"pem_encoded_cert": {
-									ValidateDiagFunc: validateRegex("^-----BEGIN CERTIFICATE-----(.|\\s)*-----END CERTIFICATE-----\\s*$"),
+									ValidateDiagFunc: validateRegexOrVariable("^-----BEGIN CERTIFICATE-----(.|\\s)*-----END CERTIFICATE-----\\s*$"),
 									Optional:         true,
 									Description:      "",
 									Type:             schema.TypeString,
 								},
 								"sha1_fingerprint": {
-									ValidateDiagFunc: validateRegex("^[a-f0-9]{40}$"),
+									ValidateDiagFunc: validateRegexOrVariable("^[a-f0-9]{40}$"),
 									Optional:         true,
 									Description:      "",
 									Type:             schema.TypeString,
@@ -8741,25 +8741,25 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						},
 					},
 					"secret_key": {
-						ValidateDiagFunc: validateRegex("^[0-9a-zA-Z]{24}$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[0-9a-zA-Z]{24}$"),
 						Optional:         true,
 						Description:      "Specifies the shared secret key.",
 						Type:             schema.TypeString,
 					},
 					"nonce": {
-						ValidateDiagFunc: validateRegex("^[0-9a-zA-Z]{1,8}$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[0-9a-zA-Z]{1,8}$"),
 						Optional:         true,
 						Description:      "Specifies the nonce.",
 						Type:             schema.TypeString,
 					},
 					"mslkey": {
-						ValidateDiagFunc: validateRegex("^[0-9a-zA-Z]{10,}$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[0-9a-zA-Z]{10,}$"),
 						Optional:         true,
 						Description:      "Specifies the access key provided by the hosting service.",
 						Type:             schema.TypeString,
 					},
 					"mslname": {
-						ValidateDiagFunc: validateRegex("^[0-9a-zA-Z]{1,8}$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[0-9a-zA-Z]{1,8}$"),
 						Optional:         true,
 						Description:      "Specifies the origin name provided by the hosting service.",
 						Type:             schema.TypeString,
@@ -8775,13 +8775,13 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeString,
 					},
 					"gcs_hmac_key_access_id": {
-						ValidateDiagFunc: validateRegex("^[a-zA-Z0-9]{1,128}$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[a-zA-Z0-9]{1,128}$"),
 						Optional:         true,
 						Description:      "Specifies the active access ID linked to your Google account.",
 						Type:             schema.TypeString,
 					},
 					"gcs_hmac_key_secret": {
-						ValidateDiagFunc: validateRegex("^[a-zA-Z0-9+/=_-]{1,40}$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[a-zA-Z0-9+/=_-]{1,40}$"),
 						Optional:         true,
 						Description:      "Specifies the secret linked to the access ID that you want to use to sign requests to Google Cloud Storage.",
 						Type:             schema.TypeString,
@@ -8792,25 +8792,25 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeString,
 					},
 					"aws_access_key_id": {
-						ValidateDiagFunc: validateRegex("^[a-zA-Z0-9]{1,128}$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[a-zA-Z0-9]{1,128}$"),
 						Optional:         true,
 						Description:      "Specifies active access key ID linked to your AWS account.",
 						Type:             schema.TypeString,
 					},
 					"aws_secret_access_key": {
-						ValidateDiagFunc: validateRegex("^[a-zA-Z0-9+/=_-]{1,1024}$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[a-zA-Z0-9+/=_-]{1,1024}$"),
 						Optional:         true,
 						Description:      "Specifies the secret linked to the access key identifier that you want to use to sign requests to AWS.",
 						Type:             schema.TypeString,
 					},
 					"aws_region": {
-						ValidateDiagFunc: validateRegex("^[a-zA-Z0-9-]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[a-zA-Z0-9-]+$"),
 						Optional:         true,
 						Description:      "This specifies the AWS region code of the location where your bucket resides.",
 						Type:             schema.TypeString,
 					},
 					"aws_host": {
-						ValidateDiagFunc: validateRegex("^(([a-zA-Z0-9]([a-zA-Z0-9_\\-]*[a-zA-Z0-9])?)\\.)+([a-zA-Z]+|xn--[a-zA-Z0-9]+)$"),
+						ValidateDiagFunc: validateRegexOrVariable("^(([a-zA-Z0-9]([a-zA-Z0-9_\\-]*[a-zA-Z0-9])?)\\.)+([a-zA-Z]+|xn--[a-zA-Z0-9]+)$"),
 						Optional:         true,
 						Description:      "This specifies the AWS hostname, without `http://` or `https://` prefixes. If you leave this option empty, it inherits the hostname from the `origin` behavior.",
 						Type:             schema.TypeString,
@@ -8831,19 +8831,19 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"role_arn": {
-						ValidateDiagFunc: validateRegex("^[a-zA-Z0-9][a-zA-Z0-9_\\+=,.@\\-:/]{0,2047}$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[a-zA-Z0-9][a-zA-Z0-9_\\+=,.@\\-:/]{0,2047}$"),
 						Optional:         true,
 						Description:      "The Amazon Resource Name (ARN) of the `AWS IAM role` you want to use. This role needs to be configured with the proper permissions for your target resources. The `AWS IAM policy` needs to contain the trust relationships defining other users that can assume this role.",
 						Type:             schema.TypeString,
 					},
 					"aws_ar_region": {
-						ValidateDiagFunc: validateRegex("^[a-zA-Z0-9][a-zA-Z0-9\\-]{0,63}$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[a-zA-Z0-9][a-zA-Z0-9\\-]{0,63}$"),
 						Optional:         true,
 						Description:      "Specifies the AWS region code that represents the location of your AWS bucket.",
 						Type:             schema.TypeString,
 					},
 					"end_point_service": {
-						ValidateDiagFunc: validateRegex("^[a-zA-Z0-9][a-zA-Z0-9\\-]{0,63}$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[a-zA-Z0-9][a-zA-Z0-9\\-]{0,63}$"),
 						Optional:         true,
 						Description:      "Specifies the code of your AWS service. It precedes `.amazonaws.com` or the region code in your AWS hostname.",
 						Type:             schema.TypeString,
@@ -9192,7 +9192,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"timeout": {
-						ValidateDiagFunc: validateRegex("^[0-9]+[DdHhMmSs]$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[0-9]+[DdHhMmSs]$"),
 						Optional:         true,
 						Description:      "Specifies the timeout period after which edge server closes the persistent connection with the client, 500 seconds by default.",
 						Type:             schema.TypeString,
@@ -9229,7 +9229,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"timeout": {
-						ValidateDiagFunc: validateRegex("^[0-9]+[DdHhMmSs]$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[0-9]+[DdHhMmSs]$"),
 						Optional:         true,
 						Description:      "Specifies the timeout period after which edge server closes a persistent connection.",
 						Type:             schema.TypeString,
@@ -9327,7 +9327,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeInt,
 					},
 					"label": {
-						ValidateDiagFunc: validateRegex("^[a-zA-Z0-9_\\-*\\.]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[a-zA-Z0-9_\\-*\\.]+$"),
 						Optional:         true,
 						Description:      "A label to distinguish this Phased Release policy from any others within the same property.",
 						Type:             schema.TypeString,
@@ -9344,13 +9344,13 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:             schema.TypeString,
 					},
 					"population_expiration_date": {
-						ValidateDiagFunc: validateRegex("^[0-9]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[0-9]+$"),
 						Optional:         true,
 						Description:      "Specifies the date and time when membership expires, and the browser no longer sends the cookie. Subsequent requests re-evaluate based on current membership settings.",
 						Type:             schema.TypeString,
 					},
 					"population_duration": {
-						ValidateDiagFunc: validateRegex("^[0-9]+[DdHhMmSs]$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[0-9]+[DdHhMmSs]$"),
 						Optional:         true,
 						Description:      "Sets the lifetime of the cookie from the initial request. Subsequent requests re-evaluate based on current membership settings.",
 						Type:             schema.TypeString,
@@ -9778,7 +9778,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"maximum_size": {
-						ValidateDiagFunc: validateRegex("^\\d+[K,M,G,T]B$"),
+						ValidateDiagFunc: validateRegexOrVariable("^\\d+[K,M,G,T]B$"),
 						Optional:         true,
 						Description:      "Sets the maximum size of the MP4 file to optimize, expressed as a number suffixed with a unit string such as `MB` or `GB`.",
 						Type:             schema.TypeString,
@@ -9841,7 +9841,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeString,
 					},
 					"value": {
-						ValidateDiagFunc: validateRegex("^[0-9]+[DdHhMmSs]$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[0-9]+[DdHhMmSs]$"),
 						Optional:         true,
 						Description:      "Specifies the read timeout necessary before failing with a `504` error. This value should never be zero.",
 						Type:             schema.TypeString,
@@ -9893,7 +9893,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 		"real_user_monitoring": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Real User Monitoring (RUM) injects JavaScript into HTML pages served to end-user clients that monitors page-load performance and reports on various data, such as browser type and geographic location. The `report` behavior allows you to configure logs. This behavior cannot be used in includes.",
+			Description: "This behavior is deprecated, but you should not disable or remove it if present. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -9973,7 +9973,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeString,
 					},
 					"destination_hostname_other": {
-						ValidateDiagFunc: validateRegex("^([a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})(\\.[a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^([a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})(\\.[a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})+$"),
 						Optional:         true,
 						Description:      "Specifies the full hostname with which to replace the current hostname.",
 						Type:             schema.TypeString,
@@ -9985,7 +9985,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:             schema.TypeString,
 					},
 					"destination_path_prefix": {
-						ValidateDiagFunc: validateRegex("^[^#\\[\\]@]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[^#\\[\\]@]+$"),
 						Optional:         true,
 						Description:      "When `destinationPath` is set to `PREFIX_REQUEST`, this prepends the current path. For example, a value of `/prefix/path` changes `/example/index.html` to `/prefix/path/example/index.html`.",
 						Type:             schema.TypeString,
@@ -9997,13 +9997,13 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:             schema.TypeString,
 					},
 					"destination_path_suffix": {
-						ValidateDiagFunc: validateRegex("^[a-zA-Z0-9\\[\\]/?#!=&_\\-\\.]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[a-zA-Z0-9\\[\\]/?#!=&_\\-\\.]+$"),
 						Optional:         true,
 						Description:      "When `destinationPath` is set to `PREFIX_REQUEST` and `destinationPathSuffixStatus` is set to `SUFFIX`, this specifies the suffix to append to the path.",
 						Type:             schema.TypeString,
 					},
 					"destination_path_other": {
-						ValidateDiagFunc: validateRegex("^/"),
+						ValidateDiagFunc: validateRegexOrVariable("^/"),
 						Optional:         true,
 						Description:      "When `destinationPath` is set to `PREFIX_REQUEST`, this replaces the current path.",
 						Type:             schema.TypeString,
@@ -10242,7 +10242,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 					},
 					"custom_log_field": {
 						Optional:    true,
-						Description: "Specifies an additional data field to append to each log line, maximum 40 bytes, typically based on a dynamically generated built-in system variable. For example, `round-trip: {{builtin.AK_CLIENT_TURNAROUND_TIME}}ms` logs the total time to complete the response. See `Support for variables` for more information. If you enable the `logCustom` behavior, it overrides the `customLogField` option.",
+						Description: "Specifies an additional data field to append to each log line, maximum 1000 bytes, typically based on a dynamically generated built-in system variable. For example, `round-trip: {{builtin.AK_CLIENT_TURNAROUND_TIME}}ms` logs the total time to complete the response. See `Support for variables` for more information. If you enable the `logCustom` behavior, it overrides the `customLogField` option.",
 						Type:        schema.TypeString,
 					},
 					"log_edge_ip": {
@@ -10353,13 +10353,13 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						},
 					},
 					"branded403_file": {
-						ValidateDiagFunc: validateRegex("^[^#\\[\\]@]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[^#\\[\\]@]+$"),
 						Optional:         true,
 						Description:      "Specifies the full path of the branded 403 page, including the filename, but excluding the NetStorage CP code path component.",
 						Type:             schema.TypeString,
 					},
 					"branded403_url": {
-						ValidateDiagFunc: validateRegex("^[^\\s]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[^\\s]+$"),
 						Optional:         true,
 						Description:      "Specifies the redirect URL for the branded deny action.",
 						Type:             schema.TypeString,
@@ -10533,7 +10533,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeString,
 					},
 					"cookie_name": {
-						ValidateDiagFunc: validateRegex("^[a-zA-Z0-9_\\-*\\.]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[a-zA-Z0-9_\\-*\\.]+$"),
 						Optional:         true,
 						Description:      "Specifies the name of the cookie, which serves as a key to determine if the cookie is set.",
 						Type:             schema.TypeString,
@@ -10550,7 +10550,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:             schema.TypeString,
 					},
 					"value": {
-						ValidateDiagFunc: validateRegex("^[^\\s;]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[^\\s;]+$"),
 						Optional:         true,
 						Description:      "If the cookie `type` is `FIXED`, this specifies the cookie value.",
 						Type:             schema.TypeString,
@@ -10572,13 +10572,13 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"domain": {
-						ValidateDiagFunc: validateRegex("^([a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})(\\.[a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^([a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})(\\.[a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})+$"),
 						Optional:         true,
 						Description:      "If the `defaultDomain` is disabled, this sets the domain for which the cookie is valid. For example, `example.com` makes the cookie valid for that hostname and all subdomains.",
 						Type:             schema.TypeString,
 					},
 					"path": {
-						ValidateDiagFunc: validateRegex("^[^#\\[\\]@]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[^#\\[\\]@]+$"),
 						Optional:         true,
 						Description:      "If the `defaultPath` is disabled, sets the path component for which the cookie is valid.",
 						Type:             schema.TypeString,
@@ -10590,13 +10590,13 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:             schema.TypeString,
 					},
 					"expiration_date": {
-						ValidateDiagFunc: validateRegex("^[0-9]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[0-9]+$"),
 						Optional:         true,
 						Description:      "If `expires` is set to `FIXED_DATE`, this sets when the cookie expires as a UTC date and time.",
 						Type:             schema.TypeString,
 					},
 					"duration": {
-						ValidateDiagFunc: validateRegex("^[0-9]+[DdHhMmSs]$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[0-9]+[DdHhMmSs]$"),
 						Optional:         true,
 						Description:      "If `expires` is set to `DURATION`, this sets the cookie's lifetime.",
 						Type:             schema.TypeString,
@@ -10675,7 +10675,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeString,
 					},
 					"response_header_name": {
-						ValidateDiagFunc: validateRegex("^[^()<>@,;:\\\"/\\[\\]?{}\\s]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[^()<>@,;:\\\"/\\[\\]?{}\\s]+$"),
 						Optional:         true,
 						Description:      "Specifies the name of the HTTP header in which to report the cache status value.",
 						Type:             schema.TypeString,
@@ -10713,7 +10713,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:             schema.TypeString,
 					},
 					"match": {
-						ValidateDiagFunc: validateRegex("^/([^:#\\[\\]@/?]+/)*$"),
+						ValidateDiagFunc: validateRegexOrVariable("^/([^:#\\[\\]@/?]+/)*$"),
 						Optional:         true,
 						Description:      "When `behavior` is `REMOVE` or `REPLACE`, specifies the part of the incoming path you'd like to remove or modify.",
 						Type:             schema.TypeString,
@@ -10729,19 +10729,19 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeString,
 					},
 					"target_path": {
-						ValidateDiagFunc: validateRegex("^/([^:#\\[\\]@/?]+/)*$"),
+						ValidateDiagFunc: validateRegexOrVariable("^/([^:#\\[\\]@/?]+/)*$"),
 						Optional:         true,
 						Description:      "When `behavior` is set to `REPLACE`, this path replaces whatever the `match` field matches in the incoming request's path.",
 						Type:             schema.TypeString,
 					},
 					"target_path_prepend": {
-						ValidateDiagFunc: validateRegex("^/([^:#\\[\\]@/?]+/)*$"),
+						ValidateDiagFunc: validateRegexOrVariable("^/([^:#\\[\\]@/?]+/)*$"),
 						Optional:         true,
 						Description:      "When `behavior` is set to `PREPEND`, specifies a path to prepend to the incoming request's URL.",
 						Type:             schema.TypeString,
 					},
 					"target_url": {
-						ValidateDiagFunc: validateRegex("(/\\S*)?$"),
+						ValidateDiagFunc: validateRegexOrVariable("(/\\S*)?$"),
 						Optional:         true,
 						Description:      "When `behavior` is set to `REWRITE`, specifies the full path to request from the origin.",
 						Type:             schema.TypeString,
@@ -10762,7 +10762,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 		"rum_custom": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "With `realUserMonitoring` enabled, this configures the sample of data to include in your RUM report. This behavior is for internal usage only. This behavior cannot be used in includes.",
+			Description: "This behavior is deprecated, but you should not disable or remove it if present. This behavior is for internal usage only. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -10789,7 +10789,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:             schema.TypeInt,
 					},
 					"rum_group_name": {
-						ValidateDiagFunc: validateRegex("^[0-9a-zA-Z]*$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[0-9a-zA-Z]*$"),
 						Optional:         true,
 						Description:      "A deprecated option to specify an alternate name under which to batch this set of web traffic in your report. Do not use it.",
 						Type:             schema.TypeString,
@@ -10837,31 +10837,31 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"customer_cname_level": {
-						ValidateDiagFunc: validateRegex("^[0-9]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[0-9]+$"),
 						Optional:         true,
 						Description:      "Specifies the number of CNAMEs to use in the chain.",
 						Type:             schema.TypeInt,
 					},
 					"customer_cookie": {
-						ValidateDiagFunc: validateRegex("^[a-zA-Z0-9_\\-*\\.]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[a-zA-Z0-9_\\-*\\.]+$"),
 						Optional:         true,
 						Description:      "This specifies the name of the cookie that identifies the customer.",
 						Type:             schema.TypeString,
 					},
 					"customer_query_string": {
-						ValidateDiagFunc: validateRegex("^[^:/?#\\[\\]@&]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[^:/?#\\[\\]@&]+$"),
 						Optional:         true,
 						Description:      "This names the query parameter that identifies the customer.",
 						Type:             schema.TypeString,
 					},
 					"customer_regex": {
-						ValidateDiagFunc: validateRegex("^([a-zA-Z0-9\\:\\[\\]\\{\\}\\(\\)\\.\\?_\\-\\*\\+\\^\\$\\\\\\/\\|&=!]{1,250})$"),
+						ValidateDiagFunc: validateRegexOrVariable("^([a-zA-Z0-9\\:\\[\\]\\{\\}\\(\\)\\.\\?_\\-\\*\\+\\^\\$\\\\\\/\\|&=!]{1,250})$"),
 						Optional:         true,
 						Description:      "Specifies a Perl-compatible regular expression with which to substitute the request's customer ID.",
 						Type:             schema.TypeString,
 					},
 					"customer_replace": {
-						ValidateDiagFunc: validateRegex("^(([a-zA-Z0-9_\\-]|\\$[1-9]){1,250})$"),
+						ValidateDiagFunc: validateRegexOrVariable("^(([a-zA-Z0-9_\\-]|\\$[1-9]){1,250})$"),
 						Optional:         true,
 						Description:      "Specifies a string to replace the request's customer ID matched by `customerRegex`.",
 						Type:             schema.TypeString,
@@ -10883,31 +10883,31 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"application_cname_level": {
-						ValidateDiagFunc: validateRegex("^[0-9]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[0-9]+$"),
 						Optional:         true,
 						Description:      "Specifies the number of CNAMEs to use in the chain.",
 						Type:             schema.TypeInt,
 					},
 					"application_cookie": {
-						ValidateDiagFunc: validateRegex("^[a-zA-Z0-9_\\-*\\.]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[a-zA-Z0-9_\\-*\\.]+$"),
 						Optional:         true,
 						Description:      "This specifies the name of the cookie that identifies the application.",
 						Type:             schema.TypeString,
 					},
 					"application_query_string": {
-						ValidateDiagFunc: validateRegex("^[^:/?#\\[\\]@&]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[^:/?#\\[\\]@&]+$"),
 						Optional:         true,
 						Description:      "This names the query parameter that identifies the application.",
 						Type:             schema.TypeString,
 					},
 					"application_regex": {
-						ValidateDiagFunc: validateRegex("^([a-zA-Z0-9\\:\\[\\]\\{\\}\\(\\)\\.\\?_\\-\\*\\+\\^\\$\\\\\\/\\|&=!]{1,250})$"),
+						ValidateDiagFunc: validateRegexOrVariable("^([a-zA-Z0-9\\:\\[\\]\\{\\}\\(\\)\\.\\?_\\-\\*\\+\\^\\$\\\\\\/\\|&=!]{1,250})$"),
 						Optional:         true,
 						Description:      "Specifies a Perl-compatible regular expression with which to substitute the request's application ID.",
 						Type:             schema.TypeString,
 					},
 					"application_replace": {
-						ValidateDiagFunc: validateRegex("^(([a-zA-Z0-9_\\-]|\\$[1-9]){1,250})$"),
+						ValidateDiagFunc: validateRegexOrVariable("^(([a-zA-Z0-9_\\-]|\\$[1-9]){1,250})$"),
 						Optional:         true,
 						Description:      "Specifies a string to replace the request's application ID matched by `applicationRegex`.",
 						Type:             schema.TypeString,
@@ -10929,31 +10929,31 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"users_cname_level": {
-						ValidateDiagFunc: validateRegex("^[0-9]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[0-9]+$"),
 						Optional:         true,
 						Description:      "Specifies the number of CNAMEs to use in the chain.",
 						Type:             schema.TypeInt,
 					},
 					"users_cookie": {
-						ValidateDiagFunc: validateRegex("^[a-zA-Z0-9_\\-*\\.]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[a-zA-Z0-9_\\-*\\.]+$"),
 						Optional:         true,
 						Description:      "This specifies the name of the cookie that identifies the user.",
 						Type:             schema.TypeString,
 					},
 					"users_query_string": {
-						ValidateDiagFunc: validateRegex("^[^:/?#\\[\\]@&]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[^:/?#\\[\\]@&]+$"),
 						Optional:         true,
 						Description:      "This names the query parameter that identifies the user.",
 						Type:             schema.TypeString,
 					},
 					"users_regex": {
-						ValidateDiagFunc: validateRegex("^([a-zA-Z0-9\\:\\[\\]\\{\\}\\(\\)\\.\\?_\\-\\*\\+\\^\\$\\\\\\/\\|&=!]{1,250})$"),
+						ValidateDiagFunc: validateRegexOrVariable("^([a-zA-Z0-9\\:\\[\\]\\{\\}\\(\\)\\.\\?_\\-\\*\\+\\^\\$\\\\\\/\\|&=!]{1,250})$"),
 						Optional:         true,
 						Description:      "Specifies a Perl-compatible regular expression with which to substitute the request's user ID.",
 						Type:             schema.TypeString,
 					},
 					"users_replace": {
-						ValidateDiagFunc: validateRegex("^(([a-zA-Z0-9_\\-]|\\$[1-9]){1,250})$"),
+						ValidateDiagFunc: validateRegexOrVariable("^(([a-zA-Z0-9_\\-]|\\$[1-9]){1,250})$"),
 						Optional:         true,
 						Description:      "Specifies a string to replace the request's user ID matched by `usersRegex`.",
 						Type:             schema.TypeString,
@@ -10990,7 +10990,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"connector_id": {
-						ValidateDiagFunc: validateRegex("^[a-zA-Z0-9_\\.]+\\-[a-zA-Z0-9_\\.]+\\-[a-zA-Z0-9\\-_\\.]+$|^door2.dw.com$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[a-zA-Z0-9_\\.]+\\-[a-zA-Z0-9_\\.]+\\-[a-zA-Z0-9\\-_\\.]+$|^door2.dw.com$"),
 						Optional:         true,
 						Description:      "An ID value that helps distinguish different types of traffic sent from Akamai to the Salesforce Commerce Cloud. Form the value as `instance-realm-customer`, where `instance` is either `production` or `development`, `realm` is your Salesforce Commerce Cloud service `$REALM` value, and `customer` is the name for your organization in Salesforce Commerce Cloud.  You can use alphanumeric characters, underscores, or dot characters within dash-delimited segment values.",
 						Type:             schema.TypeString,
@@ -11153,7 +11153,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"repeat_interval": {
-						ValidateDiagFunc: validateRegex("^[0-9]+[DdHhMmSs]$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[0-9]+[DdHhMmSs]$"),
 						Optional:         true,
 						Description:      "Specifies how often to invalidate content from the `start` time, expressed in seconds. For example, an expiration set to midnight and an interval of `86400` seconds invalidates content once a day.  Repeating intervals of less than 5 minutes are not allowed for `NetStorage` origins.",
 						Type:             schema.TypeString,
@@ -11243,7 +11243,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"key": {
-						ValidateDiagFunc: validateRegex("^(0x)?[0-9a-fA-F]{32}$"),
+						ValidateDiagFunc: validateRegexOrVariable("^(0x)?[0-9a-fA-F]{32}$"),
 						Optional:         true,
 						Description:      "Specifies the encryption key to use as a shared secret to validate tokens.",
 						Type:             schema.TypeString,
@@ -11254,7 +11254,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"transition_key": {
-						ValidateDiagFunc: validateRegex("^(0x)?[0-9a-fA-F]{32}$"),
+						ValidateDiagFunc: validateRegexOrVariable("^(0x)?[0-9a-fA-F]{32}$"),
 						Optional:         true,
 						Description:      "An alternate encryption key to match along with the `key` field, allowing you to rotate keys with no down time.",
 						Type:             schema.TypeString,
@@ -11310,7 +11310,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 					},
 					"hls_master_manifest_files": {
 						Optional:    true,
-						Description: "Specifies the set of filenames that form HLS master manifest URLs. You can use `*` wildcard characters, but make sure to specify master manifest filenames uniquely, to distinguish them from variant manifest files.",
+						Description: "Specifies the set of filenames that form HLS master manifest URLs. You can use `*` wildcard character that matches zero or more characters. Make sure to specify master manifest filenames uniquely, to distinguish them from variant manifest files.",
 						Type:        schema.TypeList,
 						Elem: &schema.Schema{
 							Type: schema.TypeString,
@@ -11395,13 +11395,13 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:             schema.TypeString,
 					},
 					"start_time": {
-						ValidateDiagFunc: validateRegex("^[0-9]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[0-9]+$"),
 						Optional:         true,
 						Description:      "This specifies when the live media event begins.",
 						Type:             schema.TypeString,
 					},
 					"end_time": {
-						ValidateDiagFunc: validateRegex("^[0-9]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[0-9]+$"),
 						Optional:         true,
 						Description:      "This specifies when the live media event ends.",
 						Type:             schema.TypeString,
@@ -11413,7 +11413,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:             schema.TypeString,
 					},
 					"dvr_window": {
-						ValidateDiagFunc: validateRegex("^[0-9]+[DdHhMmSs]$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[0-9]+[DdHhMmSs]$"),
 						Optional:         true,
 						Description:      "Set the duration for your media, or `0m` if a DVR is not required.",
 						Type:             schema.TypeString,
@@ -11579,13 +11579,13 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:             schema.TypeString,
 					},
 					"encryption_key": {
-						ValidateDiagFunc: validateRegex("^(0x)?[0-9a-fA-F]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^(0x)?[0-9a-fA-F]+$"),
 						Optional:         true,
 						Description:      "Specifies the encryption hex key. For `ALG_3DES` it needs to be 48 characters long, 32 characters for `ALG_AES128`, and 64 characters for `ALG_AES256`.",
 						Type:             schema.TypeString,
 					},
 					"initialization_vector": {
-						ValidateDiagFunc: validateRegex("^(0x)?[0-9a-fA-F]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^(0x)?[0-9a-fA-F]+$"),
 						Optional:         true,
 						Description:      "Specifies a one-time number as an initialization vector.  It needs to be 15 characters long for `ALG_3DES`, and 32 characters for both `ALG_AES128` and `ALG_AES256`.",
 						Type:             schema.TypeString,
@@ -11744,7 +11744,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:             schema.TypeString,
 					},
 					"timeout": {
-						ValidateDiagFunc: validateRegex("^[0-9]+[DdHhMmSs]$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[0-9]+[DdHhMmSs]$"),
 						Optional:         true,
 						Description:      "When the `errorType` is `ERR_CONNECT_TIMEOUT`, `ERR_DNS_TIMEOUT`, `ERR_SUREROUTE_DNS_FAIL`, or `ERR_READ_TIMEOUT`, generates an error after the specified amount of time from the initial request.",
 						Type:             schema.TypeString,
@@ -11853,25 +11853,25 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"migration_start_time": {
-						ValidateDiagFunc: validateRegex("^[0-9]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[0-9]+$"),
 						Optional:         true,
 						Description:      "Specifies when to start migrating the cache.",
 						Type:             schema.TypeString,
 					},
 					"migration_duration": {
-						ValidateDiagFunc: validateRegex("^[1-9]$|^[1-2]\\d$|^30$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[1-9]$|^[1-2]\\d$|^30$"),
 						Optional:         true,
 						Description:      "Specifies the number of days to migrate the cache.",
 						Type:             schema.TypeInt,
 					},
 					"cache_sharing_start_time": {
-						ValidateDiagFunc: validateRegex("^[0-9]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[0-9]+$"),
 						Optional:         true,
 						Description:      "Specifies when to start cache sharing.",
 						Type:             schema.TypeString,
 					},
 					"cache_sharing_duration": {
-						ValidateDiagFunc: validateRegex("^[1-9]$|^[1-2]\\d$|^30$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[1-9]$|^[1-2]\\d$|^30$"),
 						Optional:         true,
 						Description:      "Specifies the number cache sharing days.",
 						Type:             schema.TypeInt,
@@ -12123,7 +12123,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeString,
 					},
 					"test_object_url": {
-						ValidateDiagFunc: validateRegex("^[^#\\[\\]@]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[^#\\[\\]@]+$"),
 						Optional:         true,
 						Description:      "Specifies the path and filename for your origin's test object to use in races to test routes.",
 						Type:             schema.TypeString,
@@ -12145,7 +12145,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeString,
 					},
 					"race_stat_ttl": {
-						ValidateDiagFunc: validateRegex("^[0-9]+[DdHhMmSs]$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[0-9]+[DdHhMmSs]$"),
 						Optional:         true,
 						Description:      "Specifies the time-to-live to preserve SureRoute race results, typically `30m`. If traffic exceeds a certain threshold after TTL expires, the overflow is routed directly to the origin, not necessarily optimally. If traffic remains under the threshold, the route is determined by the winner of the most recent race.",
 						Type:             schema.TypeString,
@@ -12166,7 +12166,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"custom_stat_key": {
-						ValidateDiagFunc: validateRegex("^([a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})(\\.[a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^([a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})(\\.[a-zA-Z0-9][a-zA-Z0-9\\-]{0,62})+$"),
 						Optional:         true,
 						Description:      "This specifies a hostname under which to cache race results. This may be useful when a property corresponds to many origin hostnames. By default, SureRoute would launch races for each origin, but consolidating under a single hostname runs only one race.",
 						Type:             schema.TypeString,
@@ -12370,7 +12370,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"custom_map_name": {
-						ValidateDiagFunc: validateRegex("^(([a-zA-Z]|[a-zA-Z][a-zA-Z0-9\\-]*[a-zA-Z0-9])\\.)+(akamai|akamaiedge)\\.net$"),
+						ValidateDiagFunc: validateRegexOrVariable("^(([a-zA-Z]|[a-zA-Z][a-zA-Z0-9\\-]*[a-zA-Z0-9])\\.)+(akamai|akamaiedge)\\.net$"),
 						Optional:         true,
 						Description:      "Specifies the custom map name.",
 						Type:             schema.TypeString,
@@ -12412,13 +12412,13 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeString,
 					},
 					"migration_start_date": {
-						ValidateDiagFunc: validateRegex("^[0-9]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[0-9]+$"),
 						Optional:         true,
 						Description:      "Specifies when to start migrating the map.",
 						Type:             schema.TypeString,
 					},
 					"migration_end_date": {
-						ValidateDiagFunc: validateRegex("^[0-9]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[0-9]+$"),
 						Optional:         true,
 						Description:      "Specifies when the map migration should end.",
 						Type:             schema.TypeString,
@@ -12450,7 +12450,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeString,
 					},
 					"value": {
-						ValidateDiagFunc: validateRegex("^[0-9]+[DdHhMmSs]$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[0-9]+[DdHhMmSs]$"),
 						Optional:         true,
 						Description:      "Specifies the timeout, for example `10s`.",
 						Type:             schema.TypeString,
@@ -12664,7 +12664,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"client_id": {
-						ValidateDiagFunc: validateRegex("^[a-zA-Z0-9_-]{1,20}$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[a-zA-Z0-9_-]{1,20}$"),
 						Optional:         true,
 						Description:      "This specifies the claim name.",
 						Type:             schema.TypeString,
@@ -12675,7 +12675,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"authorizations": {
-						ValidateDiagFunc: validateRegex("^[a-zA-Z0-9_-]{1,20}$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[a-zA-Z0-9_-]{1,20}$"),
 						Optional:         true,
 						Description:      "This specifies the authorization group name.",
 						Type:             schema.TypeString,
@@ -12686,7 +12686,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"user_name": {
-						ValidateDiagFunc: validateRegex("^[a-zA-Z0-9_-]{1,20}$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[a-zA-Z0-9_-]{1,20}$"),
 						Optional:         true,
 						Description:      "This specifies the user name.",
 						Type:             schema.TypeString,
@@ -12760,13 +12760,13 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"key": {
-						ValidateDiagFunc: validateRegex("^(0x)?[0-9a-fA-F]{64}$"),
+						ValidateDiagFunc: validateRegexOrVariable("^(0x)?[0-9a-fA-F]{64}$"),
 						Optional:         true,
 						Description:      "The shared secret used to validate tokens, which needs to match the key used in the token generation code.",
 						Type:             schema.TypeString,
 					},
 					"transition_key": {
-						ValidateDiagFunc: validateRegex("^(0x)?[0-9a-fA-F]{64}$"),
+						ValidateDiagFunc: validateRegexOrVariable("^(0x)?[0-9a-fA-F]{64}$"),
 						Optional:         true,
 						Description:      "Specifies a transition key as a hex value.",
 						Type:             schema.TypeString,
@@ -12820,7 +12820,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:             schema.TypeString,
 					},
 					"custom_cookie_domain": {
-						ValidateDiagFunc: validateRegex("^(\\.)?(([a-zA-Z]|[a-zA-Z][a-zA-Z0-9\\-]*[a-zA-Z0-9])\\.)+([A-Za-z]|[A-Za-z][A-Za-z0-9\\-]*[A-Za-z0-9])$"),
+						ValidateDiagFunc: validateRegexOrVariable("^(\\.)?(([a-zA-Z]|[a-zA-Z][a-zA-Z0-9\\-]*[a-zA-Z0-9])\\.)+([A-Za-z]|[A-Za-z][A-Za-z0-9\\-]*[A-Za-z0-9])$"),
 						Optional:         true,
 						Description:      "This specifies a domain for all session cookies. In case you configure many property hostnames, this may be their common domain. Make sure the user agent accepts the custom domain for any request matching the `virtualWaitingRoom` behavior. Don't use top level domains (TLDs).",
 						Type:             schema.TypeString,
@@ -12837,7 +12837,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 					},
 					"waiting_room_assets_paths": {
 						Optional:    true,
-						Description: "This specifies the base paths to static resources such as JavaScript, CSS, or image files for the Waiting Room Main Page requests. The option supports the multiple-character <strong>`*`</strong> wildcard. Requests matching any of these paths aren't blocked, but marked as Waiting Room Assets and passed through to the origin. See the `virtualWaitingRoomRequest` match criteria to further customize these requests.",
+						Description: "This specifies the base paths to static resources such as JavaScript, CSS, or image files for the Waiting Room Main Page requests. The option supports the `*` wildcard that matches zero or more characters. Requests matching any of these paths aren't blocked, but marked as Waiting Room Assets and passed through to the origin. See the `virtualWaitingRoomRequest` match criteria to further customize these requests.",
 						Type:        schema.TypeList,
 						Elem: &schema.Schema{
 							Type: schema.TypeString,
@@ -12947,7 +12947,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"user_identification_key_cookie": {
-						ValidateDiagFunc: validateRegex("^[a-zA-Z0-9_\\-*\\.]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[a-zA-Z0-9_\\-*\\.]+$"),
 						Optional:         true,
 						Description:      "Specifies the name of the cookie whose value identifies users. To match a user, the value of the cookie needs to remain constant across all requests.",
 						Type:             schema.TypeString,
@@ -12994,7 +12994,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"allowed_user_cookie_label": {
-						ValidateDiagFunc: validateRegex("^[a-zA-Z0-9_\\-*\\.]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[a-zA-Z0-9_\\-*\\.]+$"),
 						Optional:         true,
 						Description:      "Specifies a label to distinguish this cookie for an allowed user from others. The value appends to the cookie's name, and helps you to maintain the same user assignment across behaviors within a property, and across properties.",
 						Type:             schema.TypeString,
@@ -13021,7 +13021,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"allowed_user_cookie_salt": {
-						ValidateDiagFunc: validateRegex("^[a-zA-Z0-9_\\-*\\.]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[a-zA-Z0-9_\\-*\\.]+$"),
 						Optional:         true,
 						Description:      "Specifies a fixed `salt` value, which is incorporated into the cookie's value to prevent users from manipulating it. You can use the same salt string across different behaviors or properties to apply a single cookie to all allowed users.",
 						Type:             schema.TypeString,
@@ -13033,7 +13033,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:             schema.TypeString,
 					},
 					"allowed_user_cookie_domain": {
-						ValidateDiagFunc: validateRegex("^(\\.)?(([a-zA-Z]|[a-zA-Z][a-zA-Z0-9\\-]*[a-zA-Z0-9])\\.)+([A-Za-z]|[A-Za-z][A-Za-z0-9\\-]*[A-Za-z0-9])$"),
+						ValidateDiagFunc: validateRegexOrVariable("^(\\.)?(([a-zA-Z]|[a-zA-Z][a-zA-Z0-9\\-]*[a-zA-Z0-9])\\.)+([A-Za-z]|[A-Za-z][A-Za-z0-9\\-]*[A-Za-z0-9])$"),
 						Optional:         true,
 						Description:      "Specifies a domain for an allowed user cookie.",
 						Type:             schema.TypeString,
@@ -13059,7 +13059,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"waiting_room_cookie_label": {
-						ValidateDiagFunc: validateRegex("^[a-zA-Z0-9_\\-*\\.]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[a-zA-Z0-9_\\-*\\.]+$"),
 						Optional:         true,
 						Description:      "Specifies a label to distinguish this waiting room cookie from others. The value appends to the cookie's name, and helps you to maintain the same waiting room assignment across behaviors within a property, and across properties.",
 						Type:             schema.TypeString,
@@ -13081,7 +13081,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"waiting_room_cookie_salt": {
-						ValidateDiagFunc: validateRegex("^[a-zA-Z0-9_\\-*\\.]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[a-zA-Z0-9_\\-*\\.]+$"),
 						Optional:         true,
 						Description:      "Specifies a fixed `salt` value, which is incorporated into the cookie's value to prevent users from manipulating it. You can use the same salt string across different behaviors or properties to apply a single cookie for the waiting room session.",
 						Type:             schema.TypeString,
@@ -13093,7 +13093,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:             schema.TypeString,
 					},
 					"waiting_room_cookie_domain": {
-						ValidateDiagFunc: validateRegex("^(\\.)?(([a-zA-Z]|[a-zA-Z][a-zA-Z0-9\\-]*[a-zA-Z0-9])\\.)+([A-Za-z]|[A-Za-z][A-Za-z0-9\\-]*[A-Za-z0-9])$"),
+						ValidateDiagFunc: validateRegexOrVariable("^(\\.)?(([a-zA-Z]|[a-zA-Z][a-zA-Z0-9\\-]*[a-zA-Z0-9])\\.)+([A-Za-z]|[A-Za-z][A-Za-z0-9\\-]*[A-Za-z0-9])$"),
 						Optional:         true,
 						Description:      "Specifies a domain for the waiting room cookie.",
 						Type:             schema.TypeString,
@@ -13109,7 +13109,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeString,
 					},
 					"waiting_room_status_code": {
-						ValidateDiagFunc: validateRegex("[2|4|5][0-9][0-9]"),
+						ValidateDiagFunc: validateRegexOrVariable("[2|4|5][0-9][0-9]"),
 						Optional:         true,
 						Description:      "Specifies the response code for requests sent to the waiting room.",
 						Type:             schema.TypeInt,
@@ -13208,7 +13208,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						},
 					},
 					"waiting_room_directory": {
-						ValidateDiagFunc: validateRegex("^[^#\\[\\]@]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[^#\\[\\]@]+$"),
 						Optional:         true,
 						Description:      "Specifies the NetStorage directory that contains the static waiting room page, with no trailing slash character.",
 						Type:             schema.TypeString,
@@ -13257,7 +13257,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:             schema.TypeString,
 					},
 					"custom_cookie_domain": {
-						ValidateDiagFunc: validateRegex("^(\\.)?(([a-zA-Z]|[a-zA-Z][a-zA-Z0-9\\-]*[a-zA-Z0-9])\\.)+([A-Za-z]|[A-Za-z][A-Za-z0-9\\-]*[A-Za-z0-9])$"),
+						ValidateDiagFunc: validateRegexOrVariable("^(\\.)?(([a-zA-Z]|[a-zA-Z][a-zA-Z0-9\\-]*[a-zA-Z0-9])\\.)+([A-Za-z]|[A-Za-z][A-Za-z0-9\\-]*[A-Za-z0-9])$"),
 						Optional:         true,
 						Description:      "This specifies a domain for all session cookies. In case you configure many property hostnames, this may be their common domain. Make sure the user agent accepts the custom domain for any request matching the `visitorPrioritizationFifo` behavior. Don't use top level domains (TLDs).",
 						Type:             schema.TypeString,
@@ -13274,7 +13274,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 					},
 					"waiting_room_assets_paths": {
 						Optional:    true,
-						Description: "This specifies the base paths to static resources such as `JavaScript`, `CSS`, or image files for the `Waiting Room Main Page` requests. The option supports the multiple-character <strong>`*`</strong> wildcard. Requests matching any of these paths aren't blocked, but marked as `Waiting Room Assets` and passed through to the origin. See the `visitorPrioritizationRequest` match criteria to further customize these requests.",
+						Description: "This specifies the base paths to static resources such as `JavaScript`, `CSS`, or image files for the `Waiting Room Main Page` requests. The option supports the `*` wildcard wildcard that matches zero or more characters. Requests matching any of these paths aren't blocked, but marked as Waiting Room Assets and passed through to the origin. See the `visitorPrioritizationRequest` match criteria to further customize these requests.",
 						Type:        schema.TypeList,
 						Elem: &schema.Schema{
 							Type: schema.TypeString,
@@ -13745,7 +13745,7 @@ func getCriteriaSchemaV20230530() map[string]*schema.Schema {
 		"client_ip": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Matches the IP number of the requesting client. This criterion can be used in includes.",
+			Description: "Matches the IP number of the requesting client. To use this condition to match end-user IP addresses, apply it together with the `requestType` matching on the `CLIENT_REQ` value. This criterion can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -13848,7 +13848,7 @@ func getCriteriaSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeString,
 					},
 					"origin_id": {
-						ValidateDiagFunc: validateRegex("^[a-zA-Z0-9_\\-\\.]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[a-zA-Z0-9_\\-\\.]+$"),
 						Optional:         true,
 						Description:      "The Cloudlets Origins identifier, limited to alphanumeric and underscore characters.",
 						Type:             schema.TypeString,
@@ -13933,7 +13933,7 @@ func getCriteriaSchemaV20230530() map[string]*schema.Schema {
 					},
 					"match_wildcard": {
 						Optional:    true,
-						Description: "Allows `*` and `?` wildcard matches among the `values`, so that specifying `text/*` matches both `text/html` and `text/css`.",
+						Description: "Allows wildcards in the `value` field, where `?` matches a single character and `*` matches zero or more characters. Specifying `text/*` matches both `text/html` and `text/css`.",
 						Type:        schema.TypeBool,
 					},
 					"match_case_sensitive": {
@@ -14021,7 +14021,7 @@ func getCriteriaSchemaV20230530() map[string]*schema.Schema {
 					},
 					"match_wildcard": {
 						Optional:    true,
-						Description: "Allows `*` and `?` wildcard matches in the `stringValue` field.",
+						Description: "Allows wildcards in the `stringValue` field, where `?` matches a single character and `*` matches zero or more characters.",
 						Type:        schema.TypeBool,
 					},
 				},
@@ -14057,7 +14057,7 @@ func getCriteriaSchemaV20230530() map[string]*schema.Schema {
 						Type:             schema.TypeString,
 					},
 					"value": {
-						ValidateDiagFunc: validateRegex("^[a-zA-Z0-9_-]{1,255}$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[a-zA-Z0-9_-]{1,255}$"),
 						Optional:         true,
 						Description:      "",
 						Type:             schema.TypeString,
@@ -14159,13 +14159,13 @@ func getCriteriaSchemaV20230530() map[string]*schema.Schema {
 						Type:             schema.TypeString,
 					},
 					"value": {
-						ValidateDiagFunc: validateRegex("^[a-zA-Z0-9_-]{1,255}$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[a-zA-Z0-9_-]{1,255}$"),
 						Optional:         true,
 						Description:      "",
 						Type:             schema.TypeString,
 					},
 					"length": {
-						ValidateDiagFunc: validateRegex("^[1-9]\\d*$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[1-9]\\d*$"),
 						Optional:         true,
 						Description:      "",
 						Type:             schema.TypeString,
@@ -14281,7 +14281,7 @@ func getCriteriaSchemaV20230530() map[string]*schema.Schema {
 					},
 					"values": {
 						Optional:    true,
-						Description: "Matches the filename component of the request URL. Wildcards are allowed, where `?` matches a single character and `*` matches more than one. For example, specify `filename.*` to accept any extension.",
+						Description: "Matches the filename component of the request URL. Allows wildcards, where `?` matches a single character and `*` matches zero or more characters. For example, specify `filename.*` to accept any extension.",
 						Type:        schema.TypeList,
 						Elem: &schema.Schema{
 							Type: schema.TypeString,
@@ -14326,7 +14326,7 @@ func getCriteriaSchemaV20230530() map[string]*schema.Schema {
 					},
 					"values": {
 						Optional:    true,
-						Description: "A list of hostnames. Wildcards match, so `*.example.com` matches both `m.example.com` and `www.example.com`.",
+						Description: "A list of hostnames. Allows wildcards, where `?` matches a single character and `*` matches zero or more characters. Specifying `*.example.com` matches both `m.example.com` and `www.example.com`.",
 						Type:        schema.TypeList,
 						Elem: &schema.Schema{
 							Type: schema.TypeString,
@@ -14503,13 +14503,13 @@ func getCriteriaSchemaV20230530() map[string]*schema.Schema {
 						},
 					},
 					"lower_bound": {
-						ValidateDiagFunc: validateRegex("^\\d{3}$"),
+						ValidateDiagFunc: validateRegexOrVariable("^\\d{3}$"),
 						Optional:         true,
 						Description:      "Specifies the start of a range of responses. For example, `400` to match anything from `400` to `500`.",
 						Type:             schema.TypeInt,
 					},
 					"upper_bound": {
-						ValidateDiagFunc: validateRegex("^\\d{3}$"),
+						ValidateDiagFunc: validateRegexOrVariable("^\\d{3}$"),
 						Optional:         true,
 						Description:      "Specifies the end of a range of responses. For example, `500` to match anything from `400` to `500`.",
 						Type:             schema.TypeInt,
@@ -14541,7 +14541,7 @@ func getCriteriaSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeString,
 					},
 					"variable_name": {
-						ValidateDiagFunc: validateRegex("^[a-zA-Z_][a-zA-Z0-9_]{0,31}$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[a-zA-Z_][a-zA-Z0-9_]{0,31}$"),
 						Optional:         true,
 						Description:      "The name of the variable to match.",
 						Type:             schema.TypeString,
@@ -14566,20 +14566,20 @@ func getCriteriaSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeString,
 					},
 					"lower_bound": {
-						ValidateDiagFunc: validateRegex("^[1-9]\\d*$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[1-9]\\d*$"),
 						Optional:         true,
 						Description:      "Specifies the range's numeric minimum value.",
 						Type:             schema.TypeString,
 					},
 					"upper_bound": {
-						ValidateDiagFunc: validateRegex("^[1-9]\\d*$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[1-9]\\d*$"),
 						Optional:         true,
 						Description:      "Specifies the range's numeric maximum value.",
 						Type:             schema.TypeString,
 					},
 					"match_wildcard": {
 						Optional:    true,
-						Description: "When matching string expressions, enabling this matches wildcard metacharacters such as `*` and `?`.",
+						Description: "When matching string expressions, enabling this allows wildcards, where `?` matches a single character and `*` matches zero or more characters.",
 						Type:        schema.TypeBool,
 					},
 					"match_case_sensitive": {
@@ -14691,7 +14691,7 @@ func getCriteriaSchemaV20230530() map[string]*schema.Schema {
 					},
 					"values": {
 						Optional:    true,
-						Description: "Matches the URL path, excluding leading hostname and trailing query parameters. The path is relative to the server root, for example `/blog`. The `value` accepts `*` or `?` wildcard characters, for example `/blog/*/2014`.",
+						Description: "Matches the URL path, excluding leading hostname and trailing query parameters. The path is relative to the server root, for example `/blog`. This field allows wildcards, where `?` matches a single character and `*` matches zero or more characters. For example, `/blog/*/2014` matches paths with two fixed segments and other varying segments between them.",
 						Type:        schema.TypeList,
 						Elem: &schema.Schema{
 							Type: schema.TypeString,
@@ -14734,7 +14734,7 @@ func getCriteriaSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeString,
 					},
 					"parameter_name": {
-						ValidateDiagFunc: validateRegex("^[^:/?#\\[\\]@&]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[^:/?#\\[\\]@&]+$"),
 						Optional:         true,
 						Description:      "The name of the query field, for example, `q` in `?q=string`.",
 						Type:             schema.TypeString,
@@ -14754,20 +14754,20 @@ func getCriteriaSchemaV20230530() map[string]*schema.Schema {
 						},
 					},
 					"lower_bound": {
-						ValidateDiagFunc: validateRegex("^[0-9]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[0-9]+$"),
 						Optional:         true,
 						Description:      "Specifies the match's minimum value.",
 						Type:             schema.TypeInt,
 					},
 					"upper_bound": {
-						ValidateDiagFunc: validateRegex("^[0-9]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[0-9]+$"),
 						Optional:         true,
 						Description:      "When the `value` is numeric, this field specifies the match's maximum value.",
 						Type:             schema.TypeInt,
 					},
 					"match_wildcard_name": {
 						Optional:    true,
-						Description: "Allows `*` and `?` wildcard matches in the `parameterName` field.",
+						Description: "Allows wildcards in the `parameterName` field, where `?` matches a single character and `*` matches zero or more characters.",
 						Type:        schema.TypeBool,
 					},
 					"match_case_sensitive_name": {
@@ -14777,7 +14777,7 @@ func getCriteriaSchemaV20230530() map[string]*schema.Schema {
 					},
 					"match_wildcard_value": {
 						Optional:    true,
-						Description: "Allows `*` and `?` wildcard matches in the `value` field.",
+						Description: "Allows wildcards in the `value` field, where `?` matches a single character and `*` matches zero or more characters.",
 						Type:        schema.TypeBool,
 					},
 					"match_case_sensitive_value": {
@@ -14849,7 +14849,7 @@ func getCriteriaSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeString,
 					},
 					"config_name": {
-						ValidateDiagFunc: validateRegex("^[A-Z0-9-]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[A-Z0-9-]+$"),
 						Optional:         true,
 						Description:      "A unique identifier used for origin failure recovery configurations. This is the recovery method configuration name you apply when setting origin failure recovery methods and scenarios in `originFailureRecoveryMethod` and `originFailureRecoveryPolicy` behaviors. The value can contain alphanumeric characters and dashes.",
 						Type:             schema.TypeString,
@@ -14922,7 +14922,7 @@ func getCriteriaSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeString,
 					},
 					"cookie_name": {
-						ValidateDiagFunc: validateRegex("^[a-zA-Z0-9_\\-*\\.]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[a-zA-Z0-9_\\-*\\.]+$"),
 						Optional:         true,
 						Description:      "The name of the cookie, for example, `visitor` in `visitor:anon`.",
 						Type:             schema.TypeString,
@@ -14934,26 +14934,26 @@ func getCriteriaSchemaV20230530() map[string]*schema.Schema {
 						Type:             schema.TypeString,
 					},
 					"value": {
-						ValidateDiagFunc: validateRegex("^[^\\s;]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[^\\s;]+$"),
 						Optional:         true,
 						Description:      "The cookie's value, for example, `anon` in `visitor:anon`.",
 						Type:             schema.TypeString,
 					},
 					"lower_bound": {
-						ValidateDiagFunc: validateRegex("^[1-9]\\d*$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[1-9]\\d*$"),
 						Optional:         true,
 						Description:      "When the `value` is numeric, this field specifies the match's minimum value.",
 						Type:             schema.TypeInt,
 					},
 					"upper_bound": {
-						ValidateDiagFunc: validateRegex("^[1-9]\\d*$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[1-9]\\d*$"),
 						Optional:         true,
 						Description:      "When the `value` is numeric, this field specifies the match's maximum value.",
 						Type:             schema.TypeInt,
 					},
 					"match_wildcard_name": {
 						Optional:    true,
-						Description: "Allows `*` and `?` wildcard matches in the `cookieName` field.",
+						Description: "Allows wildcards in the `cookieName` field, where `?` matches a single character and `*` matches zero or more characters.",
 						Type:        schema.TypeBool,
 					},
 					"match_case_sensitive_name": {
@@ -14963,7 +14963,7 @@ func getCriteriaSchemaV20230530() map[string]*schema.Schema {
 					},
 					"match_wildcard_value": {
 						Optional:    true,
-						Description: "Allows `*` and `?` wildcard matches in the `value` field.",
+						Description: "Allows wildcards in the `value` field, where `?` matches a single character and `*` matches zero or more characters.",
 						Type:        schema.TypeBool,
 					},
 					"match_case_sensitive_value": {
@@ -14998,7 +14998,7 @@ func getCriteriaSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeString,
 					},
 					"header_name": {
-						ValidateDiagFunc: validateRegex("^[^()<>@,;:\\\"/\\[\\]?{}\\s]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[^()<>@,;:\\\"/\\[\\]?{}\\s]+$"),
 						Optional:         true,
 						Description:      "The name of the request header, for example `Accept-Language`.",
 						Type:             schema.TypeString,
@@ -15019,12 +15019,12 @@ func getCriteriaSchemaV20230530() map[string]*schema.Schema {
 					},
 					"match_wildcard_name": {
 						Optional:    true,
-						Description: "Allows `*` and `?` wildcard matches in the `headerName` field.",
+						Description: "Allows wildcards in the `headerName` field, where `?` matches a single character and `*` matches zero or more characters.",
 						Type:        schema.TypeBool,
 					},
 					"match_wildcard_value": {
 						Optional:    true,
-						Description: "Allows `*` and `?` wildcard matches in the `value` field.",
+						Description: "Allows wildcards in the `value` field, where `?` matches a single character and `*` matches zero or more characters.",
 						Type:        schema.TypeBool,
 					},
 					"match_case_sensitive_value": {
@@ -15108,7 +15108,7 @@ func getCriteriaSchemaV20230530() map[string]*schema.Schema {
 		"request_type": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Matches the basic type of request.  To use this match, you need to be thoroughly familiar with how Akamai edge servers process requests.  Contact your Akamai Technical representative if you need help, and test thoroughly on staging before activating on production. This criterion can be used in includes.",
+			Description: "Matches the basic type of request. To use this match, you need to be thoroughly familiar with how Akamai edge servers process requests. Contact your Akamai Technical representative if you need help, and test thoroughly on staging before activating on production. This criterion can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -15167,7 +15167,7 @@ func getCriteriaSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeString,
 					},
 					"header_name": {
-						ValidateDiagFunc: validateRegex("^[^()<>@,;:\\\"/\\[\\]?{}\\s]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[^()<>@,;:\\\"/\\[\\]?{}\\s]+$"),
 						Optional:         true,
 						Description:      "The name of the response header, for example `Content-Type`.",
 						Type:             schema.TypeString,
@@ -15187,25 +15187,25 @@ func getCriteriaSchemaV20230530() map[string]*schema.Schema {
 						},
 					},
 					"lower_bound": {
-						ValidateDiagFunc: validateRegex("^[0-9]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[0-9]+$"),
 						Optional:         true,
 						Description:      "When the `value` is numeric, this field specifies the match's minimum value.",
 						Type:             schema.TypeInt,
 					},
 					"upper_bound": {
-						ValidateDiagFunc: validateRegex("^[0-9]+$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[0-9]+$"),
 						Optional:         true,
 						Description:      "When the `value` is numeric, this field specifies the match's maximum value.",
 						Type:             schema.TypeInt,
 					},
 					"match_wildcard_name": {
 						Optional:    true,
-						Description: "Allows `*` and `?` wildcard matches in the `headerName` field.",
+						Description: "Allows wildcards in the `headerName` field, where `?` matches a single character and `*` matches zero or more characters.",
 						Type:        schema.TypeBool,
 					},
 					"match_wildcard_value": {
 						Optional:    true,
-						Description: "Allows `*` and `?` wildcard matches in the `value` field.",
+						Description: "Allows wildcards in the `value` field, where `?` matches a single character and `*` matches zero or more characters.",
 						Type:        schema.TypeBool,
 					},
 					"match_case_sensitive_value": {
@@ -15308,19 +15308,19 @@ func getCriteriaSchemaV20230530() map[string]*schema.Schema {
 						Type:             schema.TypeString,
 					},
 					"repeat_interval": {
-						ValidateDiagFunc: validateRegex("^[0-9]+[DdHhMmSs]$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[0-9]+[DdHhMmSs]$"),
 						Optional:         true,
 						Description:      "Sets the time between each repeating time period's starting points.",
 						Type:             schema.TypeString,
 					},
 					"repeat_duration": {
-						ValidateDiagFunc: validateRegex("^[0-9]+[DdHhMmSs]$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[0-9]+[DdHhMmSs]$"),
 						Optional:         true,
 						Description:      "Sets the duration of each repeating time period.",
 						Type:             schema.TypeString,
 					},
 					"lasting_duration": {
-						ValidateDiagFunc: validateRegex("^[0-9]+[DdHhMmSs]$"),
+						ValidateDiagFunc: validateRegexOrVariable("^[0-9]+[DdHhMmSs]$"),
 						Optional:         true,
 						Description:      "Specifies the end of a time period as a duration relative to the `lastingDate`.",
 						Type:             schema.TypeString,
@@ -15432,7 +15432,7 @@ func getCriteriaSchemaV20230530() map[string]*schema.Schema {
 					},
 					"match_wildcard": {
 						Optional:    true,
-						Description: "Allows `*` and `?` wildcard matches in the `value` field. For example, `*Android*`, `*iPhone5*`, `*Firefox*`, or `*Chrome*`.",
+						Description: "Allows wildcards in the `value` field, where `?` matches a single character and `*` matches zero or more characters. For example, `*Android*`, `*iPhone5*`, `*Firefox*`, or `*Chrome*` allow substring matches.",
 						Type:        schema.TypeBool,
 					},
 					"match_case_sensitive": {

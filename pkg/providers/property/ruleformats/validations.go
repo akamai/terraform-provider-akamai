@@ -32,6 +32,10 @@ func validateRegex(pattern string) schema.SchemaValidateDiagFunc {
 	}
 }
 
+func validateRegexOrVariable(pattern string) schema.SchemaValidateDiagFunc {
+	return validateRegex(fmt.Sprintf("%s|{{.+}}", pattern))
+}
+
 func validateAny(funcs ...schema.SchemaValidateDiagFunc) schema.SchemaValidateDiagFunc {
 	return func(i interface{}, p cty.Path) diag.Diagnostics {
 		diags := diag.Diagnostics{}
