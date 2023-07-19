@@ -215,8 +215,7 @@ func resourcePropertyIncludeRead(ctx context.Context, rd *schema.ResourceData, m
 	}
 
 	rules := papi.RulesUpdate{
-		Comments: getIncludeRuleTreeResp.Comments,
-		Rules:    getIncludeRuleTreeResp.Rules,
+		Rules: getIncludeRuleTreeResp.Rules,
 	}
 	rulesJSON, err := json.MarshalIndent(rules, "", "  ")
 	if err != nil {
