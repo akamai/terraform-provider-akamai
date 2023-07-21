@@ -54,6 +54,7 @@ func newTestSubprovider(opts ...testSubproviderOption) *TestSubprovider {
 // Resources returns terraform resources for cloudwrapper
 func (ts *TestSubprovider) Resources() []func() resource.Resource {
 	for i, fn := range ts.resources {
+		fn := fn
 		// decorate
 		ts.resources[i] = func() resource.Resource {
 			res := fn()
@@ -69,6 +70,7 @@ func (ts *TestSubprovider) Resources() []func() resource.Resource {
 // DataSources returns terraform data sources for cloudwrapper
 func (ts *TestSubprovider) DataSources() []func() datasource.DataSource {
 	for i, fn := range ts.datasources {
+		fn := fn
 		// decorate
 		ts.datasources[i] = func() datasource.DataSource {
 			ds := fn()

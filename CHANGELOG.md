@@ -1,11 +1,12 @@
 # RELEASE NOTES
 
-## 5.x.0 (Aug xx, 2023)
+## Y.Y.Y (YYY YY, 2023) - CW
 
-#### BREAKING CHANGES:
-
-* PAPI
-  * `logStreamName` field from `datastream` behavior has changed from string to array of strings for rule format `v2023-05-30`
+* CloudWrapper
+  * Added resource:
+  * Added data sources:
+    * `akamai_cloudwrapper_location` - reads location for with given location name and traffic type
+    * `akamai_cloudwrapper_properties` - reads properties associated with contract IDs with Cloud Wrapper entitlement
 
 ## 5.1.0 (Aug 01, 2023)
 

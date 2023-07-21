@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestDataPropertyInclude(t *testing.T) {
+func TestDataProperty(t *testing.T) {
 	tests := map[string]struct {
 		configPath string
 		init       func(*testing.T, *cloudwrapper.Mock, testDataForCWProperties)
