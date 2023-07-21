@@ -52,6 +52,13 @@
 * BOTMAN
   * deprecated `akamai_botman_challenge_interception_rules` data source and resource; use `akamai_botman_challenge_injection_rules` instead.
 
+* [IMPORTANT] CLIENTLISTS - Added Client Lists API Support
+  *  Added data source:
+     *  `akamai_clientlist_lists` get list of Client Lists
+        *  Support filter by `name` and/or `types`
+  * Added resource:
+    * `akamai_clientlist_list` to create, update or delete Client Lists
+
 ## 5.0.1 (Jul 12, 2023)
 
 #### BUG FIXES:
@@ -128,12 +135,6 @@
 * Appsec
   * Updated Geo control to include Action for Ukraine.
   * Added `akamai_appsec_advanced_settings_pii_learning` data source and resource for managing the PII learning advanced setting.
-
-* CLIENTLISTS
-* [IMPORTANT] Added Client Lists API Support
-  *  Added data source:
-     *  `akamai_clientlist_lists` get list of Client Lists
-        *  Support filter by `name` and/or `types`
 
 #### DEPRECATIONS
 
