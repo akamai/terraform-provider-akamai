@@ -30,6 +30,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 		stagingStatus     papi.VersionStatus
 		productionStatus  papi.VersionStatus
 		includeType       papi.IncludeType
+		rules             papi.RulesUpdate
 	}
 
 	workdir := "./testdata/TestResPropertyInclude"
@@ -74,19 +75,79 @@ func TestResourcePropertyInclude(t *testing.T) {
 		return resp
 	}
 
+	simpleRules := papi.RulesUpdate{
+		Rules: papi.Rules{
+			Behaviors: []papi.RuleBehavior{
+				{Name: "caching", Options: papi.RuleOptionsMap{
+					"behavior":       "MAX_AGE",
+					"mustRevalidate": false, "ttl": "13d"}},
+				{Name: "cpCode", Options: papi.RuleOptionsMap{
+					"value": map[string]interface{}{
+						"id": 1.013931e+06}}},
+				{Name: "origin", Options: papi.RuleOptionsMap{
+					"cacheKeyHostname":   "ORIGIN_HOSTNAME",
+					"compress":           true,
+					"enableTrueClientIp": false,
+					"forwardHostHeader":  "REQUEST_HOST_HEADER",
+					"hostname":           "terraform.prov.test.net",
+					"httpPort":           float64(80),
+					"httpsPort":          float64(443),
+					"originCertificate":  "",
+					"originSni":          true,
+					"originType":         "CUSTOMER",
+					"ports":              "",
+					"verificationMode":   "PLATFORM_SETTINGS"}},
+			},
+			Name: "default",
+			Children: []papi.Rules{
+				{
+					Behaviors: []papi.RuleBehavior{
+						{Name: "caching", Options: papi.RuleOptionsMap{
+							"behavior":       "MAX_AGE",
+							"mustRevalidate": false, "ttl": "13d"}},
+						{Name: "cpCode", Options: papi.RuleOptionsMap{
+							"value": map[string]interface{}{
+								"id": 1.013931e+06}}},
+						{Name: "origin", Options: papi.RuleOptionsMap{
+							"cacheKeyHostname":   "ORIGIN_HOSTNAME",
+							"compress":           true,
+							"enableTrueClientIp": false,
+							"forwardHostHeader":  "REQUEST_HOST_HEADER",
+							"hostname":           "terraform.prov.test.net",
+							"httpPort":           float64(80),
+							"httpsPort":          float64(443),
+							"originCertificate":  "",
+							"originSni":          true,
+							"originType":         "CUSTOMER",
+							"ports":              "",
+							"verificationMode":   "PLATFORM_SETTINGS"}},
+					},
+				},
+			},
+		},
+	}
+
+	nullRules := papi.RulesUpdate{
+		Rules: papi.Rules{
+			Behaviors: []papi.RuleBehavior{
+				{Name: "cpCode", Options: papi.RuleOptionsMap{
+					"value": map[string]interface{}{
+						"id":          1.047836e+06,
+						"description": "CliTerraformCPCode",
+						"name":        "DevExpCliTerraformPapiTest",
+						"products":    []interface{}{"Web_App_Accel"},
+					}}}},
+			Name: "default",
+		},
+	}
+
 	newUpdateIncludeRuleTreeReq := func(testData *testData) papi.UpdateIncludeRuleTreeRequest {
-		unifiedRules := loadFixtureString(path.Join(workdir, "property-snippets", testData.rulesPath))
-
-		var rules papi.RulesUpdate
-		err := json.Unmarshal([]byte(unifiedRules), &rules)
-		assert.NoError(t, err)
-
 		return papi.UpdateIncludeRuleTreeRequest{
 			ContractID:     testData.contractID,
 			GroupID:        testData.groupID,
 			IncludeID:      testData.includeID,
 			IncludeVersion: testData.latestVersion,
-			Rules:          rules,
+			Rules:          testData.rules,
 		}
 	}
 
@@ -261,6 +322,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 				contractID:  "ctr_123",
 				includeName: "test include",
 				includeType: papi.IncludeTypeMicroServices,
+				rules:       simpleRules,
 			},
 			init: func(m *papi.Mock, testData *testData) {
 				expectCreate(m, testData).Once()
@@ -297,6 +359,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 				contractID:  "ctr_123",
 				includeName: "test include",
 				includeType: papi.IncludeTypeMicroServices,
+				rules:       simpleRules,
 			},
 			init: func(m *papi.Mock, testData *testData) {
 				expectCreate(m, testData).Once()
@@ -333,6 +396,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 				contractID:  "ctr_123",
 				includeName: "test include",
 				includeType: papi.IncludeTypeMicroServices,
+				rules:       simpleRules,
 			},
 			init: func(m *papi.Mock, testData *testData) {
 				expectCreate(m, testData).Once()
@@ -370,6 +434,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 				contractID:  "ctr_123",
 				includeName: "test include",
 				includeType: papi.IncludeTypeMicroServices,
+				rules:       simpleRules,
 			},
 			init: func(m *papi.Mock, testData *testData) {
 				expectCreate(m, testData).Once()
@@ -407,6 +472,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 				contractID:  "ctr_123",
 				includeName: "test include",
 				includeType: papi.IncludeTypeMicroServices,
+				rules:       simpleRules,
 			},
 			init: func(m *papi.Mock, testData *testData) {
 				// first step when server returns validation warnings
@@ -466,6 +532,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 				contractID:  "ctr_123",
 				includeName: "test include",
 				includeType: papi.IncludeTypeMicroServices,
+				rules:       simpleRules,
 			},
 			init: func(m *papi.Mock, testData *testData) {
 				// first step when server returns validation errors
@@ -526,6 +593,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 				includeType:      papi.IncludeTypeMicroServices,
 				stagingStatus:    papi.VersionStatusInactive,
 				productionStatus: papi.VersionStatusInactive,
+				rules:            simpleRules,
 			},
 			init: func(m *papi.Mock, testData *testData) {
 				expectCreate(m, testData).Once()
@@ -587,6 +655,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 				includeType:      papi.IncludeTypeMicroServices,
 				stagingStatus:    papi.VersionStatusInactive,
 				productionStatus: papi.VersionStatusInactive,
+				rules:            simpleRules,
 			},
 			init: func(m *papi.Mock, testData *testData) {
 				expectCreate(m, testData).Once()
@@ -653,6 +722,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 				includeType:      papi.IncludeTypeMicroServices,
 				stagingStatus:    papi.VersionStatusInactive,
 				productionStatus: papi.VersionStatusInactive,
+				rules:            simpleRules,
 			},
 			init: func(m *papi.Mock, testData *testData) {
 				// Resource create & post-create plan calls
@@ -719,6 +789,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 				contractID:  "ctr_123",
 				includeName: "test include",
 				includeType: papi.IncludeTypeMicroServices,
+				rules:       nullRules,
 			},
 			init: func(m *papi.Mock, testData *testData) {
 				expectCreate(m, testData).Once()
@@ -745,6 +816,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 				contractID:  "ctr_123",
 				includeName: "test include",
 				includeType: papi.IncludeTypeMicroServices,
+				rules:       simpleRules,
 			},
 			init: func(m *papi.Mock, testData *testData) {
 				expectCreate(m, testData).Once()
@@ -774,6 +846,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 				contractID:  "ctr_123",
 				includeName: "test include",
 				includeType: papi.IncludeTypeMicroServices,
+				rules:       simpleRules,
 			},
 			init: func(m *papi.Mock, testData *testData) {
 				expectCreate(m, testData).Once()
