@@ -622,6 +622,130 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 		})
 		client.AssertExpectations(t)
 	})
+
+	t.Run("note filed change suppressed", func(t *testing.T) {
+		client := new(papi.Mock)
+		state := State{}
+
+		// 1. first step
+
+		// create
+		actReq := activateIncludeReq("STAGING", false)
+		state = expectCreate(client, state, actReq)
+
+		// read
+		expectRead(client, state, papi.ActivationNetworkStaging)
+
+		// read
+		expectRead(client, state, papi.ActivationNetworkStaging)
+
+		// 2. second step - update only note field - change suppressed
+		// delete
+		deactReq := deactivateIncludeReq("STAGING", false)
+		_ = expectDelete(client, state, deactReq)
+
+		useClient(client, nil, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV5ProviderFactories: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString(fmt.Sprintf("%s/property_include_activation.tf", testDir)),
+						Check: checkAttributes(attrs{
+							includeID:    includeID,
+							contractID:   contractID,
+							groupID:      groupID,
+							version:      version,
+							network:      "STAGING",
+							note:         note,
+							notifyEmails: []string{email},
+						}),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
+	t.Run("note and version filed change not suppressed", func(t *testing.T) {
+		client := new(papi.Mock)
+		state := State{}
+
+		// 1. first step
+
+		// create
+		actReq := activateIncludeReq("STAGING", false)
+		state = expectCreate(client, state, actReq)
+
+		// read
+		expectRead(client, state, papi.ActivationNetworkStaging)
+
+		// read
+		expectRead(client, state, papi.ActivationNetworkStaging)
+
+		expectRead(client, state, papi.ActivationNetworkStaging)
+
+		// 2. second step - update note and version with creation of new activation - note change not suppressed
+		// create
+		req := papi.ActivateIncludeRequest{
+			IncludeID:    includeID,
+			Version:      4,
+			Network:      "STAGING",
+			Note:         "not suppressed note field change",
+			NotifyEmails: []string{email},
+		}
+		state = expectCreate(client, state, req)
+
+		// read
+		expectRead(client, state, papi.ActivationNetworkStaging)
+
+		// read
+		expectRead(client, state, papi.ActivationNetworkStaging)
+
+		// delete
+		deactReq := papi.DeactivateIncludeRequest{
+			IncludeID:    includeID,
+			Version:      4,
+			Network:      "STAGING",
+			Note:         "not suppressed note field change",
+			NotifyEmails: []string{email},
+		}
+		_ = expectDelete(client, state, deactReq)
+
+		useClient(client, nil, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV5ProviderFactories: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString(fmt.Sprintf("%s/property_include_activation.tf", testDir)),
+						Check: checkAttributes(attrs{
+							includeID:    includeID,
+							contractID:   contractID,
+							groupID:      groupID,
+							version:      version,
+							network:      "STAGING",
+							note:         note,
+							notifyEmails: []string{email},
+						}),
+					},
+					{
+						Config: loadFixtureString(fmt.Sprintf("%s/property_include_update_note_not_suppressed.tf", testDir)),
+						Check: checkAttributes(attrs{
+							includeID:    includeID,
+							contractID:   contractID,
+							groupID:      groupID,
+							version:      4,
+							network:      "STAGING",
+							note:         "not suppressed note field change",
+							notifyEmails: []string{email},
+						}),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
 }
 
 func TestReadTimeoutFromEnvOrDefault(t *testing.T) {

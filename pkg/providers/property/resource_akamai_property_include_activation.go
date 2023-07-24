@@ -77,10 +77,11 @@ func resourcePropertyIncludeActivation() *schema.Resource {
 				Description: "The list of email addresses to notify about an activation status",
 			},
 			"note": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "The note to assign to a log message of the activation request",
-				Default:     "",
+				Type:             schema.TypeString,
+				Optional:         true,
+				Description:      "The note to assign to a log message of the activation request",
+				Default:          "",
+				DiffSuppressFunc: suppressNoteFieldForIncludeActivation,
 			},
 			"auto_acknowledge_rule_warnings": {
 				Type:        schema.TypeBool,
@@ -204,9 +205,9 @@ func resourcePropertyIncludeActivationUpdate(ctx context.Context, d *schema.Reso
 	client := Client(meta)
 	logger.Debug("Updating property include activation")
 
-	mutableAttrsHaveChanges := d.HasChanges("note", "notify_emails", "auto_acknowledge_rule_warnings", "compliance_record")
+	mutableAttrsHaveChanges := d.HasChanges("notify_emails", "auto_acknowledge_rule_warnings", "compliance_record")
 	if mutableAttrsHaveChanges && !d.HasChanges("version") {
-		return diag.FromErr(fmt.Errorf("attributes such as 'note', 'notify_emails', 'auto_acknowledge_rule_warnings', " +
+		return diag.FromErr(fmt.Errorf("attributes such as 'notify_emails', 'auto_acknowledge_rule_warnings', " +
 			"'compliance_record' cannot be updated after resource creation without 'version' attribute modification"))
 	}
 
@@ -694,4 +695,11 @@ func addComplianceRecord(complianceRecord []interface{}, activateIncludeRequest 
 	}
 
 	return activateIncludeRequest
+}
+
+func suppressNoteFieldForIncludeActivation(_, oldValue, newValue string, d *schema.ResourceData) bool {
+	if oldValue != newValue && d.HasChanges("version", "network") {
+		return false
+	}
+	return true
 }

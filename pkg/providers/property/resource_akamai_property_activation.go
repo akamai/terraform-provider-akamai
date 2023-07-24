@@ -100,9 +100,10 @@ var akamaiPropertyActivationSchema = map[string]*schema.Schema{
 		Computed: true,
 	},
 	"note": {
-		Type:        schema.TypeString,
-		Optional:    true,
-		Description: "assigns a log message to the activation request",
+		Type:             schema.TypeString,
+		Optional:         true,
+		Description:      "assigns a log message to the activation request",
+		DiffSuppressFunc: suppressNoteFieldForPropertyActivation,
 	},
 	"compliance_record": {
 		Type:        schema.TypeList,
@@ -644,14 +645,13 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 			return diag.FromErr(err)
 		}
 	} else {
-		for _, changedAttr := range []string{"note", "compliance_record"} {
-			if d.HasChange(changedAttr) {
-				oldValue, _ := d.GetChange(changedAttr)
-				if err = d.Set(changedAttr, oldValue); err != nil {
-					return diag.FromErr(err)
-				}
-				return diag.Errorf("cannot update activation attribute %s after creation", changedAttr)
+		changedAttr := "compliance_record"
+		if d.HasChange(changedAttr) {
+			oldValue, _ := d.GetChange(changedAttr)
+			if err = d.Set(changedAttr, oldValue); err != nil {
+				return diag.FromErr(err)
 			}
+			return diag.Errorf("cannot update activation attribute %s after creation", changedAttr)
 		}
 	}
 
@@ -911,4 +911,11 @@ func pollActivation(ctx context.Context, client papi.PAPI, activation *papi.Acti
 		}
 	}
 	return activation, nil
+}
+
+func suppressNoteFieldForPropertyActivation(_, oldValue, newValue string, d *schema.ResourceData) bool {
+	if oldValue != newValue && d.HasChanges("property_id", "version", "network") {
+		return false
+	}
+	return true
 }
