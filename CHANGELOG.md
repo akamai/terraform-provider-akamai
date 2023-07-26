@@ -1,6 +1,6 @@
 # RELEASE NOTES
 
-## X.X.X (XXX XX, 2023)
+## 5.1.0 (Aug 01, 2023)
 
 #### BUG FIXES:
 
