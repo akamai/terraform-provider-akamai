@@ -77,12 +77,18 @@ func (r *ConfigurationResource) Schema(ctx context.Context, _ resource.SchemaReq
 					modifiers.StringUseStateIf(modifiers.EqualUpToPrefixFunc("ctr_")),
 					stringplanmodifier.RequiresReplace(),
 				},
+				Validators: []validator.String{
+					stringvalidator.LengthAtLeast(1),
+				},
 			},
 			"config_name": schema.StringAttribute{
 				Required:    true,
 				Description: "Name of the configuration",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
+				},
+				Validators: []validator.String{
+					stringvalidator.LengthAtLeast(1),
 				},
 			},
 			"property_ids": schema.SetAttribute{
@@ -408,7 +414,7 @@ func (r *ConfigurationResource) isPendingDelete(ctx context.Context, id int64) (
 		return false, diags
 	}
 
-	if resp.Status == "DELETE_IN_PROGRESS" {
+	if resp.Status == cloudwrapper.StatusDeleteInProgress {
 		return true, diags
 	}
 
