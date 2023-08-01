@@ -30,6 +30,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 		stagingStatus     papi.VersionStatus
 		productionStatus  papi.VersionStatus
 		includeType       papi.IncludeType
+		rules             papi.RulesUpdate
 	}
 
 	workdir := "./testdata/TestResPropertyInclude"
@@ -74,19 +75,84 @@ func TestResourcePropertyInclude(t *testing.T) {
 		return resp
 	}
 
+	simpleRules := papi.RulesUpdate{
+		Rules: papi.Rules{
+			Behaviors: []papi.RuleBehavior{
+				{Name: "caching", Options: papi.RuleOptionsMap{
+					"behavior":       "MAX_AGE",
+					"mustRevalidate": false, "ttl": "13d"}},
+				{Name: "cpCode", Options: papi.RuleOptionsMap{
+					"value": map[string]interface{}{
+						"id": 1.013931e+06}}},
+				{Name: "origin", Options: papi.RuleOptionsMap{
+					"cacheKeyHostname":   "ORIGIN_HOSTNAME",
+					"compress":           true,
+					"enableTrueClientIp": false,
+					"forwardHostHeader":  "REQUEST_HOST_HEADER",
+					"hostname":           "terraform.prov.test.net",
+					"httpPort":           float64(80),
+					"httpsPort":          float64(443),
+					"originCertificate":  "",
+					"originSni":          true,
+					"originType":         "CUSTOMER",
+					"ports":              "",
+					"verificationMode":   "PLATFORM_SETTINGS"}},
+			},
+			Name: "default",
+			Children: []papi.Rules{
+				{
+					Behaviors: []papi.RuleBehavior{
+						{Name: "caching", Options: papi.RuleOptionsMap{
+							"behavior":       "MAX_AGE",
+							"mustRevalidate": false, "ttl": "13d"}},
+						{Name: "cpCode", Options: papi.RuleOptionsMap{
+							"value": map[string]interface{}{
+								"id": 1.013931e+06}}},
+						{Name: "origin", Options: papi.RuleOptionsMap{
+							"cacheKeyHostname":   "ORIGIN_HOSTNAME",
+							"compress":           true,
+							"enableTrueClientIp": false,
+							"forwardHostHeader":  "REQUEST_HOST_HEADER",
+							"hostname":           "terraform.prov.test.net",
+							"httpPort":           float64(80),
+							"httpsPort":          float64(443),
+							"originCertificate":  "",
+							"originSni":          true,
+							"originType":         "CUSTOMER",
+							"ports":              "",
+							"verificationMode":   "PLATFORM_SETTINGS"}},
+					},
+				},
+			},
+		},
+	}
+
+	simpleRulesWithComment := papi.RulesUpdate{
+		Rules:    simpleRules.Rules,
+		Comments: "test comment",
+	}
+
+	nullRules := papi.RulesUpdate{
+		Rules: papi.Rules{
+			Behaviors: []papi.RuleBehavior{
+				{Name: "cpCode", Options: papi.RuleOptionsMap{
+					"value": map[string]interface{}{
+						"id":          1.047836e+06,
+						"description": "CliTerraformCPCode",
+						"name":        "DevExpCliTerraformPapiTest",
+						"products":    []interface{}{"Web_App_Accel"},
+					}}}},
+			Name: "default",
+		},
+	}
+
 	newUpdateIncludeRuleTreeReq := func(testData *testData) papi.UpdateIncludeRuleTreeRequest {
-		unifiedRules := loadFixtureString(path.Join(workdir, "property-snippets", testData.rulesPath))
-
-		var rules papi.RulesUpdate
-		err := json.Unmarshal([]byte(unifiedRules), &rules)
-		assert.NoError(t, err)
-
 		return papi.UpdateIncludeRuleTreeRequest{
 			ContractID:     testData.contractID,
 			GroupID:        testData.groupID,
 			IncludeID:      testData.includeID,
 			IncludeVersion: testData.latestVersion,
-			Rules:          rules,
+			Rules:          testData.rules,
 		}
 	}
 
@@ -261,6 +327,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 				contractID:  "ctr_123",
 				includeName: "test include",
 				includeType: papi.IncludeTypeMicroServices,
+				rules:       simpleRules,
 			},
 			init: func(m *papi.Mock, testData *testData) {
 				expectCreate(m, testData).Once()
@@ -287,6 +354,43 @@ func TestResourcePropertyInclude(t *testing.T) {
 				},
 			},
 		},
+		"create include - with rules with comment": {
+			testData: testData{
+				groupID:     "grp_123",
+				rulesPath:   "simple_rules_with_comment.json",
+				productID:   "prd_test",
+				includeID:   includeID,
+				ruleFormat:  "v2022-06-28",
+				contractID:  "ctr_123",
+				includeName: "test include",
+				includeType: papi.IncludeTypeMicroServices,
+				rules:       simpleRulesWithComment,
+			},
+			init: func(m *papi.Mock, testData *testData) {
+				expectCreate(m, testData).Once()
+				expectRead(m, testData).Times(2)
+				expectDelete(m, testData).Once()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: loadFixtureString("%s/property_include_with_comment.tf", workdir),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_property_include.test", "group_id", "grp_123"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "contract_id", "ctr_123"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "product_id", "prd_test"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "name", "test include"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_format", "v2022-06-28"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "type", "MICROSERVICES"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "latest_version", "1"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "staging_version", ""),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "production_version", ""),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "rules", loadFixtureString("%s/expected/simple_rules_with_comment.json", workdir)),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_errors", ""),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_warnings", ""),
+					),
+				},
+			},
+		},
 		"create include - rules with validation errors": {
 			testData: testData{
 				groupID:     "grp_123",
@@ -297,6 +401,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 				contractID:  "ctr_123",
 				includeName: "test include",
 				includeType: papi.IncludeTypeMicroServices,
+				rules:       simpleRules,
 			},
 			init: func(m *papi.Mock, testData *testData) {
 				expectCreate(m, testData).Once()
@@ -333,6 +438,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 				contractID:  "ctr_123",
 				includeName: "test include",
 				includeType: papi.IncludeTypeMicroServices,
+				rules:       simpleRules,
 			},
 			init: func(m *papi.Mock, testData *testData) {
 				expectCreate(m, testData).Once()
@@ -370,6 +476,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 				contractID:  "ctr_123",
 				includeName: "test include",
 				includeType: papi.IncludeTypeMicroServices,
+				rules:       simpleRules,
 			},
 			init: func(m *papi.Mock, testData *testData) {
 				expectCreate(m, testData).Once()
@@ -407,6 +514,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 				contractID:  "ctr_123",
 				includeName: "test include",
 				includeType: papi.IncludeTypeMicroServices,
+				rules:       simpleRules,
 			},
 			init: func(m *papi.Mock, testData *testData) {
 				// first step when server returns validation warnings
@@ -466,6 +574,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 				contractID:  "ctr_123",
 				includeName: "test include",
 				includeType: papi.IncludeTypeMicroServices,
+				rules:       simpleRules,
 			},
 			init: func(m *papi.Mock, testData *testData) {
 				// first step when server returns validation errors
@@ -526,6 +635,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 				includeType:      papi.IncludeTypeMicroServices,
 				stagingStatus:    papi.VersionStatusInactive,
 				productionStatus: papi.VersionStatusInactive,
+				rules:            simpleRules,
 			},
 			init: func(m *papi.Mock, testData *testData) {
 				expectCreate(m, testData).Once()
@@ -587,6 +697,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 				includeType:      papi.IncludeTypeMicroServices,
 				stagingStatus:    papi.VersionStatusInactive,
 				productionStatus: papi.VersionStatusInactive,
+				rules:            simpleRules,
 			},
 			init: func(m *papi.Mock, testData *testData) {
 				expectCreate(m, testData).Once()
@@ -653,6 +764,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 				includeType:      papi.IncludeTypeMicroServices,
 				stagingStatus:    papi.VersionStatusInactive,
 				productionStatus: papi.VersionStatusInactive,
+				rules:            simpleRules,
 			},
 			init: func(m *papi.Mock, testData *testData) {
 				// Resource create & post-create plan calls
@@ -709,6 +821,33 @@ func TestResourcePropertyInclude(t *testing.T) {
 				},
 			},
 		},
+		"lifecycle with null in returned cpcode - expect no diff on refresh": {
+			testData: testData{
+				groupID:     "grp_123",
+				rulesPath:   "null_rules.json",
+				productID:   "prd_test",
+				includeID:   includeID,
+				ruleFormat:  "v2023-01-05",
+				contractID:  "ctr_123",
+				includeName: "test include",
+				includeType: papi.IncludeTypeMicroServices,
+				rules:       nullRules,
+			},
+			init: func(m *papi.Mock, testData *testData) {
+				expectCreate(m, testData).Once()
+				expectRead(m, testData).Times(2)
+				expectDelete(m, testData).Once()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: loadFixtureString("%s/property_include_null_cpcode.tf", workdir),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_property_include.test", "name", "test include"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "rules", loadFixtureString("%s/expected/rules_cpcode_null.json", workdir)),
+					),
+				},
+			},
+		},
 		"import include": {
 			testData: testData{
 				groupID:     "grp_123",
@@ -719,6 +858,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 				contractID:  "ctr_123",
 				includeName: "test include",
 				includeType: papi.IncludeTypeMicroServices,
+				rules:       simpleRules,
 			},
 			init: func(m *papi.Mock, testData *testData) {
 				expectCreate(m, testData).Once()
@@ -748,6 +888,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 				contractID:  "ctr_123",
 				includeName: "test include",
 				includeType: papi.IncludeTypeMicroServices,
+				rules:       simpleRules,
 			},
 			init: func(m *papi.Mock, testData *testData) {
 				expectCreate(m, testData).Once()

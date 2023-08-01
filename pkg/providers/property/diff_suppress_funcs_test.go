@@ -607,3 +607,37 @@ func TestRulesEqual(t *testing.T) {
 		})
 	}
 }
+
+func TestRemoveNil(t *testing.T) {
+	input := map[string]any{
+		"a": "aval",
+		"b": nil,
+		"c": map[string]any{
+			"c1": "c1val",
+			"c2": nil,
+			"c3": map[string]any{
+				"c31": "c31val",
+				"c32": nil,
+				"c33": map[string]any{
+					"c331": "c331val",
+					"c332": nil,
+				},
+			},
+		},
+	}
+
+	removeNils(input)
+	assert.Equal(t, map[string]any{
+		"a": "aval",
+		"c": map[string]any{
+			"c1": "c1val",
+			"c3": map[string]any{
+				"c31": "c31val",
+				"c33": map[string]any{
+					"c331": "c331val",
+				},
+			},
+		},
+	}, input)
+
+}

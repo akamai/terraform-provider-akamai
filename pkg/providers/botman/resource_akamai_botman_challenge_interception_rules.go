@@ -5,14 +5,13 @@ import (
 	"encoding/json"
 	"strconv"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/botman"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 func resourceChallengeInterceptionRules() *schema.Resource {
@@ -163,7 +162,7 @@ func resourceChallengeInterceptionRulesDelete(_ context.Context, _ *schema.Resou
 	meta := meta.Must(m)
 	logger := meta.Log("botman", "resourceChallengeInterceptionRulesDelete")
 	logger.Debugf("in resourceChallengeInterceptionRulesDelete")
-	logger.Info("Botman API does not support client side security settings deletion - resource will only be removed from state")
+	logger.Info("Botman API does not support challenge interception rules deletion - resource will only be removed from state")
 
 	return nil
 }

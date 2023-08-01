@@ -53,43 +53,64 @@ func ruleTreesEqual(old, new *papi.RulesUpdate) bool {
 
 // rulesEqual handles comparison between two papi.Rules objects ignoring the order in
 // collection of variables.
-func rulesEqual(old, new *papi.Rules) bool {
-	if len(old.Behaviors) != len(new.Behaviors) ||
-		len(old.Criteria) != len(new.Criteria) ||
-		len(old.Variables) != len(new.Variables) ||
-		len(old.Children) != len(new.Children) {
+func rulesEqual(oldRules, newRules *papi.Rules) bool {
+	if len(oldRules.Behaviors) != len(newRules.Behaviors) ||
+		len(oldRules.Criteria) != len(newRules.Criteria) ||
+		len(oldRules.Variables) != len(newRules.Variables) ||
+		len(oldRules.Children) != len(newRules.Children) {
 		return false
 	}
 
-	if len(old.Children) > 0 {
-		for i := range old.Children {
-			if !rulesEqual(&old.Children[i], &new.Children[i]) {
+	if len(oldRules.Children) > 0 {
+		for i := range oldRules.Children {
+			if !rulesEqual(&oldRules.Children[i], &newRules.Children[i]) {
 				return false
 			}
 		}
 	} else {
-		old.Children = nil
-		new.Children = nil
+		oldRules.Children = nil
+		newRules.Children = nil
 	}
 
-	if len(old.Behaviors) == 0 {
-		old.Behaviors = nil
+	if len(oldRules.Behaviors) == 0 {
+		oldRules.Behaviors = nil
 	}
-	if len(new.Behaviors) == 0 {
-		new.Behaviors = nil
-	}
-
-	if len(old.Criteria) == 0 {
-		old.Criteria = nil
-	}
-	if len(new.Criteria) == 0 {
-		new.Criteria = nil
+	if len(newRules.Behaviors) == 0 {
+		newRules.Behaviors = nil
 	}
 
-	old.Variables = orderVariables(old.Variables)
-	new.Variables = orderVariables(new.Variables)
+	if len(oldRules.Criteria) == 0 {
+		oldRules.Criteria = nil
+	}
+	if len(newRules.Criteria) == 0 {
+		newRules.Criteria = nil
+	}
 
-	return reflect.DeepEqual(old, new)
+	oldRules.Variables = orderVariables(oldRules.Variables)
+	newRules.Variables = orderVariables(newRules.Variables)
+
+	removeNilOptions(oldRules)
+	removeNilOptions(newRules)
+
+	return reflect.DeepEqual(oldRules, newRules)
+}
+
+// PAPI sometimes adds fields (with value null) that are not present in configuration (e.g. exported in cli-terraform)
+// these fields has to be diff suppressed and treated as no diff in customizeDiff to not provide diff after plan with no actual changes
+func removeNilOptions(rules *papi.Rules) {
+	for _, b := range rules.Behaviors {
+		removeNils(b.Options)
+	}
+}
+
+func removeNils(parent map[string]any) {
+	for k, v := range parent {
+		if v == nil {
+			delete(parent, k)
+		} else if vv, ok := v.(map[string]any); ok {
+			removeNils(vv)
+		}
+	}
 }
 
 func orderVariables(variables []papi.RuleVariable) []papi.RuleVariable {

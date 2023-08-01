@@ -174,7 +174,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 				Steps: []resource.TestStep{
 					{
 						Config:      loadFixtureString("testdata/TestDSRulesTemplate/template_var_not_found.tf"),
-						ExpectError: regexp.MustCompile(`error replacing variable at ".+": could not find variable ".+"`),
+						ExpectError: regexp.MustCompile(`executing "snippets/sub/another-template.json" at <.options>: map has no entry for key "options"`),
 					},
 				},
 			})
@@ -733,4 +733,24 @@ func TestVariablesAndIncludesNestingCyclicDependency(t *testing.T) {
 			})
 		})
 	}
+}
+
+func TestMultipleTemplates(t *testing.T) {
+	t.Run("Multiple templates in one directory", func(t *testing.T) {
+		client := papi.Mock{}
+		useClient(&client, nil, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV5ProviderFactories: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString("testdata/TestDSRulesTemplate/template_multiple_templates.tf"),
+						Check: resource.ComposeAggregateTestCheckFunc(
+							resource.TestCheckResourceAttr("data.akamai_property_rules_template.rules1", "json", loadFixtureString("testdata/TestDSRulesTemplate/output/template_multiple_templates_snippet1.json")),
+							resource.TestCheckResourceAttr("data.akamai_property_rules_template.rules2", "json", loadFixtureString("testdata/TestDSRulesTemplate/output/template_multiple_templates_snippet2.json")),
+						),
+					},
+				},
+			})
+		})
+	})
 }

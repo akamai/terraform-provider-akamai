@@ -88,7 +88,6 @@ func resourceProperty() *schema.Resource {
 		}},
 		SchemaVersion: 1,
 		Schema: map[string]*schema.Schema{
-			// Required
 			"name": {
 				Type:             schema.TypeString,
 				Required:         true,
@@ -114,8 +113,6 @@ func resourceProperty() *schema.Resource {
 				Description: "Product ID to be assigned to the Property",
 				StateFunc:   addPrefixToState("prd_"),
 			},
-
-			// Optional
 			"rule_format": {
 				Type:             schema.TypeString,
 				Optional:         true,
@@ -130,13 +127,7 @@ func resourceProperty() *schema.Resource {
 				Description:      "Property Rules as JSON",
 				ValidateDiagFunc: validateRules,
 				DiffSuppressFunc: diffSuppressRules,
-				StateFunc: func(v interface{}) string {
-					var js string
-					if json.Unmarshal([]byte(v.(string)), &js) == nil {
-						return compactJSON([]byte(v.(string)))
-					}
-					return v.(string)
-				},
+				StateFunc:        rulesStateFunc,
 			},
 			"hostnames": {
 				Type:     schema.TypeSet,
@@ -192,8 +183,6 @@ func resourceProperty() *schema.Resource {
 					},
 				},
 			},
-
-			// Computed
 			"latest_version": {
 				Type:        schema.TypeInt,
 				Computed:    true,
@@ -221,6 +210,14 @@ func resourceProperty() *schema.Resource {
 			},
 		},
 	}
+}
+
+var rulesStateFunc = func(v interface{}) string {
+	var js string
+	if json.Unmarshal([]byte(v.(string)), &js) == nil {
+		return compactJSON([]byte(v.(string)))
+	}
+	return v.(string)
 }
 
 // isValidPropertyName is a function that validates if given string contains only letters, numbers, and these characters: . _ -
@@ -276,12 +273,15 @@ func rulesCustomDiff(_ context.Context, diff *schema.ResourceDiff, _ interface{}
 		return fmt.Errorf("cannot parse rules JSON from config: %s", err)
 	}
 
-	rules, err := compareFields(&oldRulesUpdate, &newRulesUpdate)
+	normalizeFields(&oldRulesUpdate, &newRulesUpdate)
+	rules, err := json.Marshal(newRulesUpdate)
 	if err != nil {
 		return fmt.Errorf("cannot encode rules JSON %s", err)
 	}
-
-	if err = diff.SetNew("rules", rules); err != nil {
+	if ruleTreesEqual(&oldRulesUpdate, &newRulesUpdate) {
+		return nil
+	}
+	if err = diff.SetNew("rules", string(rules)); err != nil {
 		return fmt.Errorf("cannot set a new diff value for 'rules' %s", err)
 	}
 	return nil
@@ -296,6 +296,7 @@ func unifyRulesDiff(newValue string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("cannot parse rules JSON from config: %s", err)
 	}
+	removeNilOptions(&newRulesUpdate.Rules)
 	rulesBytes, err := json.Marshal(newRulesUpdate)
 	if err != nil {
 		return "", err
@@ -303,15 +304,13 @@ func unifyRulesDiff(newValue string) (string, error) {
 	return string(rulesBytes), nil
 }
 
-func compareFields(old, new *papi.RulesUpdate) (string, error) {
-	if old.Rules.Children == nil && len(new.Rules.Children) == 0 {
-		new.Rules.Children = old.Rules.Children
+func normalizeFields(oldRules, newRules *papi.RulesUpdate) {
+	if oldRules.Rules.Children == nil && len(newRules.Rules.Children) == 0 {
+		newRules.Rules.Children = oldRules.Rules.Children
 	}
-	if old.Rules.Criteria == nil && len(new.Rules.Criteria) == 0 {
-		new.Rules.Criteria = old.Rules.Criteria
+	if oldRules.Rules.Criteria == nil && len(newRules.Rules.Criteria) == 0 {
+		newRules.Rules.Criteria = oldRules.Rules.Criteria
 	}
-	rules, err := json.Marshal(new)
-	return string(rules), err
 }
 
 func hostNamesCustomDiff(_ context.Context, d *schema.ResourceDiff, m interface{}) error {

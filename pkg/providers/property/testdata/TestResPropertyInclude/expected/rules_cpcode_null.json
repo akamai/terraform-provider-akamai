@@ -1,0 +1,22 @@
+{
+  "rules": {
+    "behaviors": [
+      {
+        "name": "cpCode",
+        "options": {
+          "value": {
+            "cpCodeLimits": null,
+            "description": "CliTerraformCPCode",
+            "id": 1047836,
+            "name": "DevExpCliTerraformPapiTest",
+            "products": [
+              "Web_App_Accel"
+            ]
+          }
+        }
+      }
+    ],
+    "name": "default",
+    "options": {}
+  }
+}

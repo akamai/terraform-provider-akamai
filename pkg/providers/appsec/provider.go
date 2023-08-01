@@ -97,6 +97,7 @@ func (p *Subprovider) Resources() map[string]*schema.Resource {
 		"akamai_appsec_rule":                                     resourceRule(),
 		"akamai_appsec_rule_upgrade":                             resourceRuleUpgrade(),
 		"akamai_appsec_security_policy":                          resourceSecurityPolicy(),
+		"akamai_appsec_security_policy_default_protections":      resourceSecurityPolicyDefaultProtections(),
 		"akamai_appsec_security_policy_rename":                   resourceSecurityPolicyRename(),
 		"akamai_appsec_selected_hostnames":                       resourceSelectedHostname(),
 		"akamai_appsec_siem_settings":                            resourceSiemSettings(),

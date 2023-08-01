@@ -161,6 +161,13 @@ func TestResProperty(t *testing.T) {
 		}
 	}
 
+	GetVersionResourcesDrift := func(propertyID, contractID, groupID string, version int, rules papi.RulesUpdate) BehaviorFunc {
+		return func(state *TestState) {
+			ExpectGetPropertyVersionHostnames(state.Client, propertyID, groupID, contractID, version, &state.Hostnames)
+			ExpectGetRuleTree(state.Client, propertyID, groupID, contractID, version, &rules, &state.RuleFormat)
+		}
+	}
+
 	DeleteProperty := func(propertyID string) BehaviorFunc {
 		return func(state *TestState) {
 			ExpectRemoveProperty(state.Client, propertyID, "ctr_0", "grp_0").Once().Run(func(mock.Arguments) {
@@ -203,6 +210,14 @@ func TestResProperty(t *testing.T) {
 		return func(state *TestState) {
 			createProperty(propertyName, propertyID, rules)(state)
 			GetVersionResources(propertyID, "ctr_0", "grp_0", 1)(state)
+			DeleteProperty(propertyID)(state)
+		}
+	}
+
+	propertyLifecycleWithDrift := func(propertyName, propertyID, groupID string, rulesToSend, rulesToReceive papi.RulesUpdate) BehaviorFunc {
+		return func(state *TestState) {
+			createProperty(propertyName, propertyID, rulesToSend)(state)
+			GetVersionResourcesDrift(propertyID, "ctr_0", "grp_0", 1, rulesToReceive)(state)
 			DeleteProperty(propertyID)(state)
 		}
 	}
@@ -517,6 +532,70 @@ func TestResProperty(t *testing.T) {
 		},
 	}
 
+	diffCPCode := LifecycleTestCase{
+		Name: "Diff cpCode.cpCodeLimits",
+		ClientSetup: composeBehaviors(
+			propertyLifecycleWithDrift("test_property", "prp_0", "grp_0",
+				papi.RulesUpdate{
+					Rules: papi.Rules{Behaviors: []papi.RuleBehavior{
+						{
+							Name: "cpCode",
+							Options: papi.RuleOptionsMap{
+								"value": map[string]interface{}{
+									"description": "CliTerraformCPCode",
+									"id":          1.050269e+06,
+									"name":        "DevExpCliTerraformPapiAsSchemaTest",
+									"products":    []interface{}{"Web_App_Accel"},
+								},
+							},
+						},
+					},
+						Name: "default"}},
+				papi.RulesUpdate{
+					Rules: papi.Rules{Behaviors: []papi.RuleBehavior{
+						{
+							Name: "cpCode",
+							Options: papi.RuleOptionsMap{
+								"value": map[string]interface{}{
+									"cpCodeLimits": nil,
+									"description":  "CliTerraformCPCode",
+									"id":           1.050269e+06,
+									"name":         "DevExpCliTerraformPapiAsSchemaTest",
+									"products":     []interface{}{"Web_App_Accel"},
+								},
+							},
+						},
+					},
+						Name: "default"}},
+			),
+			setHostnames("prp_0", 1, "to.test.domain"),
+			updateRuleTree("prp_0", "ctr_0", "grp_0", 1,
+				&papi.RulesUpdate{Rules: papi.Rules{Behaviors: []papi.RuleBehavior{
+					{Name: "cpCode",
+						Options: papi.RuleOptionsMap{
+							"value": map[string]interface{}{
+								"description": "CliTerraformCPCode",
+								"id":          1.050269e+06,
+								"name":        "DevExpCliTerraformPapiAsSchemaTest",
+								"products":    []interface{}{"Web_App_Accel"},
+							},
+						},
+					},
+				},
+					Name: "default"}}),
+			getPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive),
+		),
+		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
+			return []resource.TestStep{
+				{
+					Config: loadFixtureString("%s/step0.tf", FixturePath),
+					Check: checkAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
+						`{"rules":{"behaviors":[{"name":"cpCode","options":{"value":{"cpCodeLimits":null,"description":"CliTerraformCPCode","id":1050269,"name":"DevExpCliTerraformPapiAsSchemaTest","products":["Web_App_Accel"]}}}],"name":"default","options":{}}}`),
+				},
+			}
+		},
+	}
+
 	/*
 		rulesCustomDiff tests rulesCustomDiff function which is in resource_akamai_property.go file.
 		There is an additional field "options":{} in expected attributes, because with UpdateRuleTree(ctx, req) function
@@ -781,6 +860,7 @@ func TestResProperty(t *testing.T) {
 		t.Run("Lifecycle: latest version is active in staging (product_id without prefix)", assertLifecycle(t, t.Name(), "product_id without prefix", latestVersionActiveInStaging))
 		t.Run("Lifecycle: latest version is active in production (product_id without prefix)", assertLifecycle(t, t.Name(), "product_id without prefix", latestVersionActiveInProd))
 		t.Run("Lifecycle: no diff", assertLifecycle(t, t.Name(), "no diff", noDiff))
+		t.Run("Lifecycle: diff cpCode", assertLifecycle(t, t.Name(), "rules diff cpcode", diffCPCode))
 		t.Run("Lifecycle: rules custom diff", assertLifecycle(t, t.Name(), "rules custom diff", rulesCustomDiff))
 		t.Run("Lifecycle: no diff for hostnames (hostnames)", assertLifecycle(t, t.Name(), "hostnames", noDiffForHostnames))
 		t.Run("Lifecycle: new version changed on server", assertLifecycle(t, t.Name(), "new version changed on server", changesMadeOutsideOfTerraform))

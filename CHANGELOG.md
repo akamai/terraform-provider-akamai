@@ -1,5 +1,46 @@
 # RELEASE NOTES
 
+## 5.1.0 (Aug 01, 2023)
+
+#### BUG FIXES:
+
+* PAPI
+  * Dropped too strict early snippet validation ([#436](https://github.com/akamai/terraform-provider-akamai/issues/436))
+  * Fixed issue that `akamai_property` or `akamai_property_include` would sometimes show strange `null -> null` diff in `rules` (or dropping `null` in newer Terraform versions) even if no update actually is needed. If there is anything else changing in the rule tree, the `null -> null` will be also visible in the diff. That may be fixed in later time.
+  * Fixed issue that `akamai_property_rules_builder` data source did not support PM variables for fields with validation based on regular expressions
+
+#### FEATURES/ENHANCEMENTS:
+
+* Appsec
+  * Added resource:
+    * `akamai_appsec_security_policy_default_protections`
+
+* BOTMAN
+  * Added resource:
+    * `akamai_botman_challenge_injection_rules` - read and update
+  * Added data sources:
+    * `akamai_botman_challenge_injection_rules` - read
+
+* PAPI
+  * Added verification to ensure that `akamai_property_rules_builder` data source
+    has consistent frozen rule format between parent and it's child.
+    Additionally `akamai_property_rules_builder.json` is returning artificial field `_ruleFormat_`.
+  * Suppressed trigger of new activation for `note` field change in `akamai_property_activation` and `akamai_property_include_activation` resources.
+
+#### DEPRECATIONS
+
+* Appsec
+  * deprecated following resources; use `akamai_appsec_security_policy_default_protections` resource instead:
+    * `akamai_appsec_api_constraint_protection`
+    * `akamai_appsec_ip_geo_protection`
+    * `akamai_appsec_malware_protection`
+    * `akamai_appsec_rate_protection`
+    * `akamai_appsec_reputation_protection`
+    * `akamai_appsec_slowpost_protection`
+
+* BOTMAN
+  * deprecated `akamai_botman_challenge_interception_rules` data source and resource; use `akamai_botman_challenge_injection_rules` instead.
+
 ## 5.0.1 (Jul 12, 2023)
 
 #### BUG FIXES:

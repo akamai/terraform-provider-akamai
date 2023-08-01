@@ -16,6 +16,7 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/logger"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
@@ -29,7 +30,10 @@ func resourcePropertyInclude() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			StateContext: resourcePropertyIncludeImport,
 		},
-		CustomizeDiff: setIncludeVersionsComputedOnRulesChange,
+		CustomizeDiff: customdiff.All(
+			rulesCustomDiff,
+			setIncludeVersionsComputedOnRulesChange,
+		),
 		Schema: map[string]*schema.Schema{
 			"contract_id": {
 				Type:        schema.TypeString,
@@ -78,6 +82,7 @@ func resourcePropertyInclude() *schema.Resource {
 				Description:      "Property Rules as JSON",
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsJSON),
 				DiffSuppressFunc: tf.ComposeDiffSuppress(suppressDefaultRules, diffSuppressRules),
+				StateFunc:        rulesStateFunc,
 			},
 			"rule_errors": {
 				Type:        schema.TypeString,
