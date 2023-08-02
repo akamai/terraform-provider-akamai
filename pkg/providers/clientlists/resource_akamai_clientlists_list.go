@@ -12,6 +12,7 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
@@ -22,6 +23,9 @@ func resourceClientList() *schema.Resource {
 		CreateContext: resourceClientListCreate,
 		UpdateContext: resourceClientListUpdate,
 		DeleteContext: resourceClientListDelete,
+		CustomizeDiff: customdiff.All(
+			markVersionComputedIfListModified,
+		),
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:        schema.TypeString,
@@ -443,4 +447,72 @@ func validateItemsUniqueness(d *schema.ResourceData) error {
 	}
 
 	return nil
+}
+
+// markVersionComputedIfListModified sets 'version' field as new computed
+// if a new version of client list is expected to be created.
+func markVersionComputedIfListModified(_ context.Context, d *schema.ResourceDiff, m interface{}) error {
+	meta := meta.Must(m)
+	logger := meta.Log("CLIENTLIST", "markVersionComputedIfListModified")
+
+	itemsHasChange := d.HasChange("items")
+	oldItems, newItems := d.GetChange("items")
+
+	isVersionUpdateRequired, err := isVersionUpdateRequired(oldItems, newItems)
+	if err != nil {
+		return err
+	}
+
+	if itemsHasChange && isVersionUpdateRequired {
+		logger.Debug("setting version as new computed")
+		if err := d.SetNewComputed("version"); err != nil {
+			return fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
+		}
+	}
+
+	return nil
+}
+
+// isVersionUpdateRequired determines if list version update is required based on items changes
+func isVersionUpdateRequired(oldValue, newValue interface{}) (bool, error) {
+	if oldValue == nil || newValue == nil {
+		return oldValue != newValue, nil
+	}
+
+	o, ok := oldValue.(*schema.Set)
+	if !ok {
+		return false, fmt.Errorf("'items' old value is not of type schema.Set")
+	}
+	n, ok := newValue.(*schema.Set)
+	if !ok {
+		return false, fmt.Errorf("'items' new value is not of type schema.Set")
+	}
+
+	if o.Len() != n.Len() {
+		return true, nil
+	}
+
+	oldMap := mapExpirationDateToValue(o)
+	newMap := mapExpirationDateToValue(n)
+
+	for newValue, newExpDate := range newMap {
+		// if value does not exist or expiration dates are different,
+		// then version update is required
+		if oldExpDate, ok := oldMap[newValue]; !ok || oldExpDate != newExpDate {
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
+func mapExpirationDateToValue(items *schema.Set) map[string]string {
+	res := make(map[string]string)
+
+	for _, v := range items.List() {
+		item := v.(map[string]interface{})
+		res[item["value"].(string)] = item["expiration_date"].(string)
+	}
+
+	return res
 }

@@ -32,6 +32,14 @@
   * Added data sources:
     * `akamai_botman_challenge_injection_rules` - read
 
+* [IMPORTANT] CLIENTLISTS - Added Client Lists API Support
+  *  Added data source:
+     *  `akamai_clientlist_lists` get list of Client Lists
+        *  Support filter by `name` and/or `types`
+  * Added resource:
+    * `akamai_clientlist_list` to create, update or delete Client Lists
+    * `akamai_clientlist_activation` to activate a client list
+
 * PAPI
   * Added verification to ensure that `akamai_property_rules_builder` data source
     has consistent frozen rule format between parent and it's child.
@@ -51,13 +59,6 @@
 
 * BOTMAN
   * deprecated `akamai_botman_challenge_interception_rules` data source and resource; use `akamai_botman_challenge_injection_rules` instead.
-
-* [IMPORTANT] CLIENTLISTS - Added Client Lists API Support
-  *  Added data source:
-     *  `akamai_clientlist_lists` get list of Client Lists
-        *  Support filter by `name` and/or `types`
-  * Added resource:
-    * `akamai_clientlist_list` to create, update or delete Client Lists
 
 ## 5.0.1 (Jul 12, 2023)
 

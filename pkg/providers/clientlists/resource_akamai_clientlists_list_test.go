@@ -651,6 +651,127 @@ func TestResourceClientList(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 
+	t.Run("Update items set new computed version", func(t *testing.T) {
+		client := new(clientlists.Mock)
+		items := append([]clientlists.ListItemPayload{},
+			clientlists.ListItemPayload{
+				Value:       "1",
+				Description: "Item 1 Desc",
+				Tags:        []string{"item1Tag2", "item1Tag1"},
+			})
+		updatedItems := []clientlists.ListItemPayload{}
+
+		clientList := expectCreateList(t, client, clientlists.CreateClientListRequest{
+			Name:       "List Name",
+			Notes:      "List Notes",
+			Tags:       []string{"a", "b"},
+			Type:       clientlists.ASN,
+			ContractID: "12_ABC",
+			GroupID:    12,
+			Items:      items,
+		})
+		expectReadList(t, client, clientList.ListContent, mapItemsPayloadToContent(items), 4)
+		expectUpdateListItems(t, client, clientlists.UpdateClientListItemsRequest{
+			ListID: clientList.ListID,
+			UpdateClientListItems: clientlists.UpdateClientListItems{
+				Append: []clientlists.ListItemPayload{},
+				Update: []clientlists.ListItemPayload{},
+				Delete: []clientlists.ListItemPayload{{Value: "1"}},
+			},
+		})
+		// Update version
+		updatedClientList := clientList.ListContent
+		updatedClientList.Version = 2
+
+		expectReadList(t, client, updatedClientList, mapItemsPayloadToContent(updatedItems), 2)
+		expectDeleteList(t, client, clientList.ListContent)
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProviderFactories: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString(fmt.Sprintf("%s/list_and_items_create_one_item.tf", testDir)),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckOutput("version", "1"),
+						),
+					},
+					{
+						Config: loadFixtureString(fmt.Sprintf("%s/list_items_update_compute_version.tf", testDir)),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckOutput("version", "2"),
+						),
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
+
+	t.Run("Update items NOT set new computed version", func(t *testing.T) {
+		client := new(clientlists.Mock)
+		items := append([]clientlists.ListItemPayload{},
+			clientlists.ListItemPayload{
+				Value:       "1",
+				Description: "Item 1 Desc",
+				Tags:        []string{"item1Tag2", "item1Tag1"},
+			})
+		updatedItems := append([]clientlists.ListItemPayload{},
+			clientlists.ListItemPayload{
+				Value: "1",
+			})
+
+		clientList := expectCreateList(t, client, clientlists.CreateClientListRequest{
+			Name:       "List Name",
+			Notes:      "List Notes",
+			Tags:       []string{"a", "b"},
+			Type:       clientlists.ASN,
+			ContractID: "12_ABC",
+			GroupID:    12,
+			Items:      items,
+		})
+		expectReadList(t, client, clientList.ListContent, mapItemsPayloadToContent(items), 4)
+		expectUpdateListItems(t, client, clientlists.UpdateClientListItemsRequest{
+			ListID: clientList.ListID,
+			UpdateClientListItems: clientlists.UpdateClientListItems{
+				Append: []clientlists.ListItemPayload{},
+				Update: []clientlists.ListItemPayload{
+					{
+						Value: "1",
+						Tags:  []string{},
+					},
+				},
+				Delete: []clientlists.ListItemPayload{},
+			},
+		})
+		// Fake version update
+		updatedClientList := clientList.ListContent
+		updatedClientList.Version = 2
+		expectReadList(t, client, updatedClientList, mapItemsPayloadToContent(updatedItems), 2)
+		expectDeleteList(t, client, clientList.ListContent)
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProviderFactories: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString(fmt.Sprintf("%s/list_and_items_create_one_item.tf", testDir)),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckOutput("version", "1"),
+						),
+					},
+					{
+						Config: loadFixtureString(fmt.Sprintf("%s/list_items_update_not_compute_version.tf", testDir)),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckOutput("version", "1"),
+						),
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
+
 	t.Run("Create list with duplicate items fails", func(t *testing.T) {
 		client := new(clientlists.Mock)
 

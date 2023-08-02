@@ -56,7 +56,8 @@ func (p *Subprovider) Client(meta meta.Meta) clientlists.ClientLists {
 // Resources returns terraform resources for clientlists
 func (p *Subprovider) Resources() map[string]*schema.Resource {
 	return map[string]*schema.Resource{
-		"akamai_clientlist_list": resourceClientList(),
+		"akamai_clientlist_activation": resourceClientListActivation(),
+		"akamai_clientlist_list":       resourceClientList(),
 	}
 }
 

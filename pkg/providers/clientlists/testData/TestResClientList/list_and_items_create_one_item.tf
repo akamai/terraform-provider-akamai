@@ -11,15 +11,6 @@ resource "akamai_clientlist_list" "test_list" {
     description = "Item 1 Desc"
     tags        = ["item1Tag1", "item1Tag2"]
   }
-  items {
-    value           = "123"
-    expiration_date = "2026-12-26T01:00:00+00:00"
-  }
-  items {
-    value       = "12"
-    description = "Item 12 Desc"
-    tags        = ["item12Tag1", "item12Tag2"]
-  }
 }
 
 output "version" {
