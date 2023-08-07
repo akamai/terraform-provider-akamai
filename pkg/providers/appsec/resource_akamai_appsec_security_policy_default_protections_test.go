@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -17,27 +18,27 @@ func TestAkamaiSecurityPolicyDefaultProtections_res_basic(t *testing.T) {
 		client := &appsec.Mock{}
 
 		getSecurityPolicyResponse := appsec.GetSecurityPolicyResponse{}
-		err := json.Unmarshal(loadFixtureBytes("testdata/TestResSecurityPolicyDefaultProtections/SecurityPolicy.json"), &getSecurityPolicyResponse)
+		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResSecurityPolicyDefaultProtections/SecurityPolicy.json"), &getSecurityPolicyResponse)
 		require.NoError(t, err)
 
 		getSecurityPolicyAfterUpdateResponse := appsec.GetSecurityPolicyResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResSecurityPolicyDefaultProtections/SecurityPolicyDefaultProtectionsUpdated.json"), &getSecurityPolicyAfterUpdateResponse)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResSecurityPolicyDefaultProtections/SecurityPolicyDefaultProtectionsUpdated.json"), &getSecurityPolicyAfterUpdateResponse)
 		require.NoError(t, err)
 
 		createSecurityPolicyResponse := appsec.CreateSecurityPolicyResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResSecurityPolicyDefaultProtections/SecurityPolicyDefaultProtectionsCreate.json"), &createSecurityPolicyResponse)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResSecurityPolicyDefaultProtections/SecurityPolicyDefaultProtectionsCreate.json"), &createSecurityPolicyResponse)
 		require.NoError(t, err)
 
 		updateSecurityPolicyResponse := appsec.UpdateSecurityPolicyResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResSecurityPolicyDefaultProtections/SecurityPolicyDefaultProtectionsUpdated.json"), &updateSecurityPolicyResponse)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResSecurityPolicyDefaultProtections/SecurityPolicyDefaultProtectionsUpdated.json"), &updateSecurityPolicyResponse)
 		require.NoError(t, err)
 
 		removeSecurityPolicyResponse := appsec.RemoveSecurityPolicyResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResSecurityPolicyDefaultProtections/SecurityPolicy.json"), &removeSecurityPolicyResponse)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResSecurityPolicyDefaultProtections/SecurityPolicy.json"), &removeSecurityPolicyResponse)
 		require.NoError(t, err)
 
 		config := appsec.GetConfigurationResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 		require.NoError(t, err)
 
 		client.On("GetConfiguration",
@@ -76,13 +77,13 @@ func TestAkamaiSecurityPolicyDefaultProtections_res_basic(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResSecurityPolicyDefaultProtections/match_by_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResSecurityPolicyDefaultProtections/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_security_policy_default_protections.test", "id", "43253:PLEB_114049"),
 						),
 					},
 					{
-						Config: loadFixtureString("testdata/TestResSecurityPolicyDefaultProtections/update_by_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResSecurityPolicyDefaultProtections/update_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_security_policy_default_protections.test", "security_policy_name", "PLEB Cloned Test for Launchpad 15 New"),
 						),
@@ -101,7 +102,7 @@ func TestAkamaiSecurityPolicyDefaultProtections_res_failure_creating_policy(t *t
 		client := &appsec.Mock{}
 
 		config := appsec.GetConfigurationResponse{}
-		err := json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 		require.NoError(t, err)
 
 		client.On("GetConfiguration",
@@ -120,7 +121,7 @@ func TestAkamaiSecurityPolicyDefaultProtections_res_failure_creating_policy(t *t
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResSecurityPolicyDefaultProtections/match_by_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResSecurityPolicyDefaultProtections/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_security_policy_default_protections.test", "id", "43253:PLEB_114049"),
 						),

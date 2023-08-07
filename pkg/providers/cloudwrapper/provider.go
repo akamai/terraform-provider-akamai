@@ -32,6 +32,7 @@ func (p *Subprovider) Resources() []func() resource.Resource {
 func (p *Subprovider) DataSources() []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		NewLocationDataSource,
+		NewLocationsDataSource,
 		NewPropertiesDataSource,
 	}
 }

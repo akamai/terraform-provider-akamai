@@ -11,8 +11,8 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestDataLocation(t *testing.T) {
-	expectListLocations := func(client *cloudwrapper.Mock, data testDataForCWLocation, timesToRun int) {
+func TestDataLocations(t *testing.T) {
+	expectListLocations := func(client *cloudwrapper.Mock, data testDataForCWLocations, timesToRun int) {
 		listLocationsRes := cloudwrapper.ListLocationResponse{
 			Locations: data.locations,
 		}
@@ -23,7 +23,7 @@ func TestDataLocation(t *testing.T) {
 		client.On("ListLocations", mock.Anything).Return(nil, fmt.Errorf("list locations failed")).Times(timesToRun)
 	}
 
-	location := testDataForCWLocation{
+	location := testDataForCWLocations{
 		locations: []cloudwrapper.Location{
 			{
 				LocationID:   1,
@@ -63,32 +63,20 @@ func TestDataLocation(t *testing.T) {
 	}
 	tests := map[string]struct {
 		configPath string
-		init       func(*testing.T, *cloudwrapper.Mock, testDataForCWLocation)
-		mockData   testDataForCWLocation
+		init       func(*testing.T, *cloudwrapper.Mock, testDataForCWLocations)
+		mockData   testDataForCWLocations
 		error      *regexp.Regexp
 	}{
 		"happy path": {
-			configPath: "testdata/TestDataLocation/location.tf",
-			init: func(t *testing.T, m *cloudwrapper.Mock, testData testDataForCWLocation) {
+			configPath: "testdata/TestDataLocations/location.tf",
+			init: func(t *testing.T, m *cloudwrapper.Mock, testData testDataForCWLocations) {
 				expectListLocations(m, testData, 5)
 			},
 			mockData: location,
 		},
-		"no location": {
-			configPath: "testdata/TestDataLocation/no_location.tf",
-			init: func(t *testing.T, m *cloudwrapper.Mock, testData testDataForCWLocation) {
-				expectListLocations(m, testData, 1)
-			},
-			mockData: location,
-			error:    regexp.MustCompile("no location with given location name and traffic type"),
-		},
-		"invalid type": {
-			configPath: "testdata/TestDataLocation/invalid_type.tf",
-			error:      regexp.MustCompile(`Attribute traffic_type value must be one of: \["\\"LIVE\\"" "\\"LIVE_VOD\\""\s+"\\"WEB_STANDARD_TLS\\"" "\\"WEB_ENHANCED_TLS\\""], got: "TEST"`),
-		},
 		"error listing locations": {
-			configPath: "testdata/TestDataLocation/location.tf",
-			init: func(t *testing.T, m *cloudwrapper.Mock, testData testDataForCWLocation) {
+			configPath: "testdata/TestDataLocations/location.tf",
+			init: func(t *testing.T, m *cloudwrapper.Mock, testData testDataForCWLocations) {
 				expectListLocationsWithError(m, 1)
 			},
 			error: regexp.MustCompile("list locations failed"),
@@ -107,7 +95,7 @@ func TestDataLocation(t *testing.T) {
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, test.configPath),
-						Check:       checkCloudWrapperLocationAttrs(),
+						Check:       checkCloudWrapperLocationsAttrs(),
 						ExpectError: test.error,
 					},
 				},
@@ -118,16 +106,19 @@ func TestDataLocation(t *testing.T) {
 	}
 }
 
-type testDataForCWLocation struct {
+type testDataForCWLocations struct {
 	locations []cloudwrapper.Location
 }
 
-func checkCloudWrapperLocationAttrs() resource.TestCheckFunc {
+func checkCloudWrapperLocationsAttrs() resource.TestCheckFunc {
 	var checkFuncs []resource.TestCheckFunc
 
-	checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("data.akamai_cloudwrapper_location.test", "traffic_type_id", "3"))
-	checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("data.akamai_cloudwrapper_location.test", "location_id", "cw-s-usw"))
-	checkFuncs = append(checkFuncs, resource.TestCheckResourceAttrSet("data.akamai_cloudwrapper_location.test", "id"))
+	checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("data.akamai_cloudwrapper_locations.test", "locations.#", "2"))
+	checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("data.akamai_cloudwrapper_locations.test", "locations.1.location_id", "2"))
+	checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("data.akamai_cloudwrapper_locations.test", "locations.1.traffic_types.#", "2"))
+	checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("data.akamai_cloudwrapper_locations.test", "locations.1.traffic_types.0.traffic_type_id", "3"))
+	checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("data.akamai_cloudwrapper_locations.test", "locations.1.traffic_types.0.location_id", "cw-s-usw"))
+	checkFuncs = append(checkFuncs, resource.TestCheckResourceAttrSet("data.akamai_cloudwrapper_locations.test", "id"))
 
 	return resource.ComposeAggregateTestCheckFunc(checkFuncs...)
 }
