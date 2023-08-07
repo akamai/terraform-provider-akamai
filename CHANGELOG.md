@@ -24,6 +24,12 @@
     * `akamai_clientlist_list` to create, update or delete Client Lists
     * `akamai_clientlist_activation` to activate a client list
 
+* BOTMAN
+  * Added resource:
+    * `akamai_botman_custom_client_sequence` - read, create and update custom client sequence
+  * Added data source:
+    * `akamai_botman_custom_client_sequence` - read custom client sequence
+
 #### BREAKING CHANGES:
 
 * PAPI
