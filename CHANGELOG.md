@@ -6,6 +6,7 @@
   * Added resource:
     * `akamai_cloudwrapper_configuration` - create, read and update cloud wrapper configuration
   * Added data sources:
+    * `akamai_cloudwrapper_configuration` - reads configuration associated with config ID
     * `akamai_cloudwrapper_location` - reads location for with given location name and traffic type
     * `akamai_cloudwrapper_locations` - reads all locations
     * `akamai_cloudwrapper_properties` - reads properties associated with contract IDs with Cloud Wrapper entitlement

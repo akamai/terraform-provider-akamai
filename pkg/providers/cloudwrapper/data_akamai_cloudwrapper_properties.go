@@ -145,7 +145,7 @@ func (d *propertiesDataSource) Read(ctx context.Context, req datasource.ReadRequ
 		ContractIDs: contracts,
 	})
 	if err != nil {
-		resp.Diagnostics.AddError(fmt.Sprintf("reading %s", ErrCloudWrapperProperties), err.Error())
+		resp.Diagnostics.AddError("Reading CloudWrapper Properties", err.Error())
 		return
 	}
 
