@@ -49,11 +49,6 @@ type (
 		MapName       types.String  `tfsdk:"map_name"`
 	}
 
-	capacityModel struct {
-		Unit  types.String `tfsdk:"unit"`
-		Value types.Int64  `tfsdk:"value"`
-	}
-
 	boccModel struct {
 		ConditionalSamplingFrequency types.String `tfsdk:"conditional_sampling_frequency"`
 		Enabled                      types.Bool   `tfsdk:"enabled"`
