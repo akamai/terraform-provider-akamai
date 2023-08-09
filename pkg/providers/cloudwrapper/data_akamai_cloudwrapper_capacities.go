@@ -84,8 +84,7 @@ func NewCapacitiesDataSource() datasource.DataSource {
 	return &capacitiesDataSource{}
 }
 
-// SetClient assigns given client to capacities data source
-func (d *capacitiesDataSource) SetClient(client cloudwrapper.CloudWrapper) {
+func (d *capacitiesDataSource) setClient(client cloudwrapper.CloudWrapper) {
 	d.client = client
 }
 

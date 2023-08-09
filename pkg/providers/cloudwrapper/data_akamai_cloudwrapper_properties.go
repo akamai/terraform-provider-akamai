@@ -44,8 +44,7 @@ func NewPropertiesDataSource() datasource.DataSource {
 	return &propertiesDataSource{}
 }
 
-// SetClient assigns given client to properties data source
-func (d *propertiesDataSource) SetClient(client cloudwrapper.CloudWrapper) {
+func (d *propertiesDataSource) setClient(client cloudwrapper.CloudWrapper) {
 	d.client = client
 }
 

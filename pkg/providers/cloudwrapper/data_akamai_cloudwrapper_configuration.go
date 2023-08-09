@@ -98,8 +98,7 @@ func NewConfigurationDataSource() datasource.DataSource {
 	return &configurationDataSource{}
 }
 
-// SetClient assigns given client to configuration data source
-func (d *configurationDataSource) SetClient(client cloudwrapper.CloudWrapper) {
+func (d *configurationDataSource) setClient(client cloudwrapper.CloudWrapper) {
 	d.client = client
 }
 

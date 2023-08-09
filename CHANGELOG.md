@@ -4,6 +4,7 @@
 
 * CloudWrapper
   * Added resource:
+    * `akamai_cloudwrapper_activation` - activate cloud wrapper configuration, import cloud wrapper configuration activation
     * `akamai_cloudwrapper_configuration` - create, read and update cloud wrapper configuration
   * Added data sources:
     * `akamai_cloudwrapper_capacities` - reads capacities available for the provided contract IDs

@@ -26,11 +26,11 @@ type (
 	}
 
 	clientSetter interface {
-		SetClient(cloudwrapper.CloudWrapper)
+		setClient(cloudwrapper.CloudWrapper)
 	}
 
 	pollIntervalSetter interface {
-		SetPollInterval(time.Duration)
+		setPollInterval(time.Duration)
 	}
 
 	testSubproviderOption func(*TestSubprovider)
@@ -40,6 +40,12 @@ func withMockClient(mock cloudwrapper.CloudWrapper) testSubproviderOption {
 	return func(ts *TestSubprovider) {
 		ts.client = mock
 		ts.interval = time.Microsecond
+	}
+}
+
+func withInterval(interval time.Duration) testSubproviderOption {
+	return func(ts *TestSubprovider) {
+		ts.interval = interval
 	}
 }
 
@@ -66,10 +72,10 @@ func (ts *TestSubprovider) Resources() []func() resource.Resource {
 		ts.resources[i] = func() resource.Resource {
 			res := fn()
 			if v, ok := res.(clientSetter); ok {
-				v.SetClient(ts.client)
+				v.setClient(ts.client)
 			}
 			if v, ok := res.(pollIntervalSetter); ok {
-				v.SetPollInterval(ts.interval)
+				v.setPollInterval(ts.interval)
 			}
 			return res
 		}
@@ -85,7 +91,7 @@ func (ts *TestSubprovider) DataSources() []func() datasource.DataSource {
 		ts.datasources[i] = func() datasource.DataSource {
 			ds := fn()
 			if v, ok := ds.(clientSetter); ok {
-				v.SetClient(ts.client)
+				v.setClient(ts.client)
 			}
 			return ds
 		}

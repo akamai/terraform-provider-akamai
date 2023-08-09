@@ -46,8 +46,7 @@ func NewLocationsDataSource() datasource.DataSource {
 	return &locationsDataSource{}
 }
 
-// SetClient assigns given client to location data source
-func (d *locationsDataSource) SetClient(client cloudwrapper.CloudWrapper) {
+func (d *locationsDataSource) setClient(client cloudwrapper.CloudWrapper) {
 	d.client = client
 }
 

@@ -43,13 +43,11 @@ type ConfigurationResource struct {
 	pollInterval  time.Duration
 }
 
-// SetClient is used for mocking purposes
-func (r *ConfigurationResource) SetClient(client cloudwrapper.CloudWrapper) {
+func (r *ConfigurationResource) setClient(client cloudwrapper.CloudWrapper) {
 	r.client = client
 }
 
-// SetPollInterval is used for mocking purposes
-func (r *ConfigurationResource) SetPollInterval(duration time.Duration) {
+func (r *ConfigurationResource) setPollInterval(duration time.Duration) {
 	r.pollInterval = duration
 }
 
@@ -188,7 +186,8 @@ func (r *ConfigurationResource) Schema(ctx context.Context, _ resource.SchemaReq
 				},
 			},
 			"timeouts": timeouts.Block(ctx, timeouts.Opts{
-				Delete: true,
+				Delete:            true,
+				CreateDescription: "Optional configurable resource delete timeout. By default it's 2h with 30s pooling interval",
 			}),
 		},
 	}
@@ -239,6 +238,18 @@ func (*ConfigurationResource) ModifyPlan(ctx context.Context, req resource.Modif
 
 	plan.Revision = types.StringValue(plan.revision(ctx))
 	resp.Diagnostics.Append(resp.Plan.Set(ctx, plan)...)
+
+	var state *ConfigurationResourceModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+	if onlyTimeoutChanged(state, plan) {
+		resp.Diagnostics.Append(onlyTimeoutChangeWarn)
+	}
+}
+
+func onlyTimeoutChanged(state, plan *ConfigurationResourceModel) bool {
+	return state != nil && plan != nil &&
+		state.Revision == plan.Revision &&
+		!state.Timeouts.Equal(plan.Timeouts)
 }
 
 // Create implements resource.Resource.
@@ -337,6 +348,18 @@ func (r *ConfigurationResource) Update(ctx context.Context, req resource.UpdateR
 		return
 	}
 
+	var oldState *ConfigurationResourceModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &oldState)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if onlyTimeoutChanged(oldState, data) {
+		oldState.Timeouts = data.Timeouts
+		resp.Diagnostics.Append(resp.State.Set(ctx, &oldState)...)
+		return
+	}
+
 	resp.Diagnostics.Append(r.update(ctx, data)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -414,11 +437,7 @@ func (r *ConfigurationResource) isPendingDelete(ctx context.Context, id int64) (
 		return false, diags
 	}
 
-	if resp.Status == cloudwrapper.StatusDeleteInProgress {
-		return true, diags
-	}
-
-	return false, diags
+	return resp.Status == cloudwrapper.StatusDeleteInProgress, diags
 }
 
 func (r *ConfigurationResource) waitForDelete(ctx context.Context, id int64) diag.Diagnostics {
@@ -468,18 +487,10 @@ func (r *ConfigurationResource) ImportState(ctx context.Context, req resource.Im
 		return
 	}
 
-	timeoutsObject, diags := types.ObjectValue(map[string]attr.Type{
-		"delete": types.StringType,
-	}, map[string]attr.Value{
-		"delete": types.StringValue("2h"),
-	})
-	if diags.HasError() {
-		resp.Diagnostics.Append(diags...)
-		return
-	}
-
 	data.Timeouts = timeouts.Value{
-		Object: timeoutsObject,
+		Object: types.ObjectNull(map[string]attr.Type{
+			"delete": types.StringType,
+		}),
 	}
 
 	resp.Diagnostics.Append(data.populateFrom(ctx, result)...)
