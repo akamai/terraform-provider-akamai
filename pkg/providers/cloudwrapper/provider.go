@@ -34,6 +34,7 @@ func (p *Subprovider) DataSources() []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		NewCapacitiesDataSource,
 		NewConfigurationDataSource,
+		NewConfigurationsDataSource,
 		NewLocationDataSource,
 		NewLocationsDataSource,
 		NewPropertiesDataSource,

@@ -17,6 +17,158 @@ import (
 var (
 	_ datasource.DataSource              = &configurationDataSource{}
 	_ datasource.DataSourceWithConfigure = &configurationDataSource{}
+
+	configBlock = map[string]schema.Block{
+		"multi_cdn_settings": schema.SingleNestedBlock{
+			Description: "Specify details about the Multi CDN settings.",
+			Attributes: map[string]schema.Attribute{
+				"enable_soft_alerts": schema.BoolAttribute{
+					Computed:    true,
+					Description: "Option to opt out of alerts based on soft limits of bandwidth usage.",
+				},
+			},
+			Blocks: map[string]schema.Block{
+				"bocc": schema.SingleNestedBlock{
+					Description: "Specify diagnostic data beacons details.",
+					Attributes: map[string]schema.Attribute{
+						"conditional_sampling_frequency": schema.StringAttribute{
+							Computed:    true,
+							Description: "The sampling frequency of requests and forwards for EDGE, MIDGRESS, and ORIGIN beacons.",
+						},
+						"enabled": schema.BoolAttribute{
+							Computed:    true,
+							Description: "Enable diagnostic data beacons for consumption by the Broadcast Operations Control Center.",
+						},
+						"forward_type": schema.StringAttribute{
+							Computed:    true,
+							Description: "Select whether to beacon diagnostics data for internal ORIGIN_ONLY, MIDGRESS_ONLY, or both ORIGIN_AND_MIDGRESS forwards.",
+						},
+						"request_type": schema.StringAttribute{
+							Computed:    true,
+							Description: "Select whether to beacon diagnostics data for EDGE_ONLY or EDGE_AND_MIDGRESS requests.",
+						},
+						"sampling_frequency": schema.StringAttribute{
+							Computed:    true,
+							Description: "The sampling frequency of requests and forwards for EDGE, MIDGRESS, and ORIGIN beacons.",
+						},
+					},
+				},
+				"cdns": schema.SetNestedBlock{
+					Description: "List of CDN added for the configuration.",
+					NestedObject: schema.NestedBlockObject{
+						Attributes: map[string]schema.Attribute{
+							"cdn_code": schema.StringAttribute{
+								Computed:    true,
+								Description: "Unique identifier for the CDN.",
+							},
+							"enabled": schema.BoolAttribute{
+								Computed:    true,
+								Description: "Enable CDN.",
+							},
+							"https_only": schema.BoolAttribute{
+								Computed:    true,
+								Description: "Specify whether CDN communication is HTTPS only.",
+							},
+							"ip_acl_cidrs": schema.SetAttribute{
+								ElementType: types.StringType,
+								Computed:    true,
+								Description: "Configure an access control list using IP addresses in CIDR notation.",
+							},
+						},
+						Blocks: map[string]schema.Block{
+							"cdn_auth_keys": schema.SetNestedBlock{
+								NestedObject: schema.NestedBlockObject{
+									Attributes: map[string]schema.Attribute{
+										"auth_key_name": schema.StringAttribute{
+											Computed:    true,
+											Description: "The name of the auth key.",
+										},
+										"expiry_date": schema.StringAttribute{
+											Computed:    true,
+											Description: "The expirty date of an auth key.",
+										},
+										"header_name": schema.StringAttribute{
+											Computed:    true,
+											Description: "The header name of an auth key.",
+										},
+										"secret": schema.StringAttribute{
+											Computed:    true,
+											Description: "The secret of an auth key.",
+										},
+									},
+								},
+								Description: "List of auth keys configured for the CDN.",
+							},
+						},
+					},
+				},
+				"data_streams": schema.SingleNestedBlock{
+					Description: "Specifies data streams details.",
+					Attributes: map[string]schema.Attribute{
+						"data_stream_ids": schema.SetAttribute{
+							ElementType: types.Int64Type,
+							Computed:    true,
+							Description: "Unique identifiers of the Data Streams.",
+						},
+						"enabled": schema.BoolAttribute{
+							Computed:    true,
+							Description: "Enables DataStream reporting.",
+						},
+						"sampling_rate": schema.Int64Attribute{
+							Computed:    true,
+							Description: "Specifies the percentage of log data you want to collect for this configuration.",
+						},
+					},
+				},
+				"origins": schema.SetNestedBlock{
+					Description: "List of origins corresponding to the properties selected in the configuration.",
+					NestedObject: schema.NestedBlockObject{
+						Attributes: map[string]schema.Attribute{
+							"hostname": schema.StringAttribute{
+								Computed:    true,
+								Description: "Origins hostname corresponding to the Akamai Delivery Property.",
+							},
+							"origin_id": schema.StringAttribute{
+								Computed:    true,
+								Description: "Origin identifier and will be used to generated Multi CDN host names.",
+							},
+							"property_id": schema.Int64Attribute{
+								Computed:    true,
+								Description: "Property ID of the property that origin belongs to.",
+							},
+						},
+					},
+				},
+			},
+		},
+		"locations": schema.SetNestedBlock{
+			Description: "List of all unused properties.",
+			NestedObject: schema.NestedBlockObject{
+				Attributes: map[string]schema.Attribute{
+					"comments": schema.StringAttribute{
+						Computed:    true,
+						Description: "Additional comments provided by user.",
+					},
+					"traffic_type_id": schema.Int64Attribute{
+						Computed:    true,
+						Description: "Unique identifier for the location and traffic type combination.",
+					},
+					"map_name": schema.StringAttribute{
+						Computed:    true,
+						Description: "The name of the map.",
+					},
+					"capacity": schema.ObjectAttribute{
+						AttributeTypes: map[string]attr.Type{
+							"unit":  types.StringType,
+							"value": types.Int64Type,
+						},
+						Computed:    true,
+						Description: "The capacity assigned to this configuration's location.",
+					},
+				},
+			},
+		},
+	}
 )
 
 type (
@@ -188,157 +340,7 @@ func (d *configurationDataSource) Schema(_ context.Context, _ datasource.SchemaR
 				Description: "Current state of the provisioning of the configuration, either SAVED, IN_PROGRESS, ACTIVE, DELETE_IN_PROGRESS, or FAILED.",
 			},
 		},
-		Blocks: map[string]schema.Block{
-			"multi_cdn_settings": schema.SingleNestedBlock{
-				Description: "Specify details about the Multi CDN settings.",
-				Attributes: map[string]schema.Attribute{
-					"enable_soft_alerts": schema.BoolAttribute{
-						Computed:    true,
-						Description: "Option to opt out of alerts based on soft limits of bandwidth usage.",
-					},
-				},
-				Blocks: map[string]schema.Block{
-					"bocc": schema.SingleNestedBlock{
-						Description: "Specify diagnostic data beacons details.",
-						Attributes: map[string]schema.Attribute{
-							"conditional_sampling_frequency": schema.StringAttribute{
-								Computed:    true,
-								Description: "The sampling frequency of requests and forwards for EDGE, MIDGRESS, and ORIGIN beacons.",
-							},
-							"enabled": schema.BoolAttribute{
-								Computed:    true,
-								Description: "Enable diagnostic data beacons for consumption by the Broadcast Operations Control Center.",
-							},
-							"forward_type": schema.StringAttribute{
-								Computed:    true,
-								Description: "Select whether to beacon diagnostics data for internal ORIGIN_ONLY, MIDGRESS_ONLY, or both ORIGIN_AND_MIDGRESS forwards.",
-							},
-							"request_type": schema.StringAttribute{
-								Computed:    true,
-								Description: "Select whether to beacon diagnostics data for EDGE_ONLY or EDGE_AND_MIDGRESS requests.",
-							},
-							"sampling_frequency": schema.StringAttribute{
-								Computed:    true,
-								Description: "The sampling frequency of requests and forwards for EDGE, MIDGRESS, and ORIGIN beacons.",
-							},
-						},
-					},
-					"cdns": schema.SetNestedBlock{
-						Description: "List of CDN added for the configuration.",
-						NestedObject: schema.NestedBlockObject{
-							Attributes: map[string]schema.Attribute{
-								"cdn_code": schema.StringAttribute{
-									Computed:    true,
-									Description: "Unique identifier for the CDN.",
-								},
-								"enabled": schema.BoolAttribute{
-									Computed:    true,
-									Description: "Enable CDN.",
-								},
-								"https_only": schema.BoolAttribute{
-									Computed:    true,
-									Description: "Specify whether CDN communication is HTTPS only.",
-								},
-								"ip_acl_cidrs": schema.SetAttribute{
-									ElementType: types.StringType,
-									Computed:    true,
-									Description: "Configure an access control list using IP addresses in CIDR notation.",
-								},
-							},
-							Blocks: map[string]schema.Block{
-								"cdn_auth_keys": schema.SetNestedBlock{
-									NestedObject: schema.NestedBlockObject{
-										Attributes: map[string]schema.Attribute{
-											"auth_key_name": schema.StringAttribute{
-												Computed:    true,
-												Description: "The name of the auth key.",
-											},
-											"expiry_date": schema.StringAttribute{
-												Computed:    true,
-												Description: "The expirty date of an auth key.",
-											},
-											"header_name": schema.StringAttribute{
-												Computed:    true,
-												Description: "The header name of an auth key.",
-											},
-											"secret": schema.StringAttribute{
-												Computed:    true,
-												Description: "The secret of an auth key.",
-											},
-										},
-									},
-									Description: "List of auth keys configured for the CDN.",
-								},
-							},
-						},
-					},
-					"data_streams": schema.SingleNestedBlock{
-						Description: "Specifies data streams details.",
-						Attributes: map[string]schema.Attribute{
-							"data_stream_ids": schema.SetAttribute{
-								ElementType: types.Int64Type,
-								Computed:    true,
-								Description: "Unique identifiers of the Data Streams.",
-							},
-							"enabled": schema.BoolAttribute{
-								Computed:    true,
-								Description: "Enables DataStream reporting.",
-							},
-							"sampling_rate": schema.Int64Attribute{
-								Computed:    true,
-								Description: "Specifies the percentage of log data you want to collect for this configuration.",
-							},
-						},
-					},
-					"origins": schema.SetNestedBlock{
-						Description: "List of origins corresponding to the properties selected in the configuration.",
-						NestedObject: schema.NestedBlockObject{
-							Attributes: map[string]schema.Attribute{
-								"hostname": schema.StringAttribute{
-									Computed:    true,
-									Description: "Origins hostname corresponding to the Akamai Delivery Property.",
-								},
-								"origin_id": schema.StringAttribute{
-									Computed:    true,
-									Description: "Origin identifier and will be used to generated Multi CDN host names.",
-								},
-								"property_id": schema.Int64Attribute{
-									Computed:    true,
-									Description: "Property ID of the property that origin belongs to.",
-								},
-							},
-						},
-					},
-				},
-			},
-			"locations": schema.SetNestedBlock{
-				Description: "List of all unused properties.",
-				NestedObject: schema.NestedBlockObject{
-					Attributes: map[string]schema.Attribute{
-						"comments": schema.StringAttribute{
-							Computed:    true,
-							Description: "Additional comments provided by user.",
-						},
-						"traffic_type_id": schema.Int64Attribute{
-							Computed:    true,
-							Description: "Unique identifier for the location and traffic type combination.",
-						},
-						"map_name": schema.StringAttribute{
-							Computed:    true,
-							Description: "The name of the map.",
-						},
-						"capacity": schema.ObjectAttribute{
-							AttributeTypes: map[string]attr.Type{
-								"unit":  types.StringType,
-								"value": types.Int64Type,
-							},
-							Computed:    true,
-							Description: "The capacity assigned to this configuration's location.",
-						},
-					},
-				},
-			},
-		},
+		Blocks: configBlock,
 	}
 }
 
