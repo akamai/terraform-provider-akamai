@@ -3410,7 +3410,10 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 					"log_stream_name": {
 						Optional:    true,
 						Description: "Specifies the unique IDs of streams configured for the property. For properties created with the previous version of the rule format, this option contains a string instead of an array of strings. You can use the `List streams` operation to get stream IDs.",
-						Type:        schema.TypeString,
+						Type:        schema.TypeList,
+						Elem: &schema.Schema{
+							Type: schema.TypeString,
+						},
 					},
 					"sampling_percentage": {
 						Optional:    true,
@@ -11455,7 +11458,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 		"set_variable": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Modify a variable to insert into subsequent fields within the rule tree.  Use this behavior to specify the predeclared `variableName` and determine from where to derive its new value. Based on this `valueSource`, you can either generate the value, extract it from some part of the incoming request, assign it from another variable (including a set of built-in system variables), or directly specify its text.  Optionally choose a `transform` function to modify the value once. See `Support for variables` for more information. This behavior cannot be used in includes.",
+			Description: "Modify a variable to insert into subsequent fields within the rule tree.  Use this behavior to specify the predeclared `variableName` and determine from where to derive its new value. Based on this `valueSource`, you can either generate the value, extract it from some part of the incoming request, assign it from another variable (including a set of built-in system variables), or directly specify its text.  Optionally choose a `transform` function to modify the value once. See `Support for variables` for more information. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
