@@ -103,6 +103,9 @@ func (r *ConfigurationResource) Schema(ctx context.Context, _ resource.SchemaReq
 				Validators: []validator.String{
 					stringvalidator.LengthAtLeast(1),
 				},
+				PlanModifiers: []planmodifier.String{
+					modifiers.PreventStringUpdate(),
+				},
 			},
 			"retain_idle_objects": schema.BoolAttribute{
 				Optional:    true,
@@ -241,6 +244,7 @@ func (*ConfigurationResource) ModifyPlan(ctx context.Context, req resource.Modif
 
 	var state *ConfigurationResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+
 	if onlyTimeoutChanged(state, plan) {
 		resp.Diagnostics.Append(onlyTimeoutChangeWarn)
 	}
