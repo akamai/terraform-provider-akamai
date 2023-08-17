@@ -10,7 +10,7 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 	"github.com/stretchr/testify/mock"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
 func TestDataPropertyInclude(t *testing.T) {

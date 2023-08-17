@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
 func TestDataPolicyVideo(t *testing.T) {
