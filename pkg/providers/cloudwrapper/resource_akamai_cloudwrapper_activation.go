@@ -94,19 +94,19 @@ func (a *activationResource) Schema(ctx context.Context, _ resource.SchemaReques
 				Required:    true,
 				Description: "Unique hash value of the configuration.",
 			},
-			"id": schema.Int64Attribute{
+			"id": schema.StringAttribute{
 				Computed:           true,
-				Description:        "Configuration activation resource unique identifier.",
-				DeprecationMessage: "Activation ID is deprecated. Please rely on 'config_id'",
+				Description:        "ID of the resource.",
+				DeprecationMessage: "Required by the terraform plugin testing framework, always set to `akamai_cloudwrapper_activation`.",
 			},
 		},
 		Blocks: map[string]schema.Block{
 			"timeouts": timeouts.Block(ctx,
 				timeouts.Opts{
 					Create:            true,
-					CreateDescription: "Optional configurable activation timeout to be used on resource create. By default it's 4h with 1s pooling interval",
+					CreateDescription: "Optional configurable activation timeout to be used on resource create. By default it's 4h with 1s pooling interval.",
 					Update:            true,
-					UpdateDescription: "Optional configurable activation timeout to be used on resource update. By default it's 4h with 1s pooling interval",
+					UpdateDescription: "Optional configurable activation timeout to be used on resource update. By default it's 4h with 1s pooling interval.",
 				},
 			),
 		},
@@ -143,7 +143,7 @@ func (a *activationResource) configureResource(req resource.ConfigureRequest, re
 }
 
 type activationResourceModel struct {
-	ID       types.Int64    `tfsdk:"id"`
+	ID       types.String   `tfsdk:"id"`
 	ConfigID types.Int64    `tfsdk:"config_id"`
 	Revision types.String   `tfsdk:"revision"`
 	Timeouts timeouts.Value `tfsdk:"timeouts"`
@@ -173,6 +173,7 @@ func (a *activationResource) Create(ctx context.Context, req resource.CreateRequ
 	}
 
 	newState.Timeouts = data.Timeouts
+	newState.ID = types.StringValue("akamai_cloudwrapper_activation")
 	resp.Diagnostics.Append(resp.State.Set(ctx, newState)...)
 }
 
@@ -205,11 +206,9 @@ func (a *activationResource) readStateFromAPI(ctx context.Context, model activat
 		return nil, err
 	}
 	if configuration.Status == cloudwrapper.StatusActive {
-		model.ID = types.Int64Value(configuration.ConfigID)
 		model.ConfigID = types.Int64Value(configuration.ConfigID)
 		model.Revision = types.StringValue(calculateRevision(configuration))
 	} else {
-		model.ID = types.Int64Null()
 		model.ConfigID = types.Int64Null()
 		model.Revision = types.StringNull()
 	}
@@ -253,13 +252,13 @@ func (a *activationResource) Read(ctx context.Context, req resource.ReadRequest,
 		return
 	}
 
-	newState, err := a.readStateFromAPI(ctx, data, data.ID.ValueInt64())
+	newState, err := a.readStateFromAPI(ctx, data, data.ConfigID.ValueInt64())
 	if err != nil {
 		resp.Diagnostics.AddError(readError, err.Error())
 		return
 	}
 
-	if newState.ID.IsNull() {
+	if newState.ConfigID.IsNull() {
 		resp.State.RemoveResource(ctx)
 	} else {
 		resp.Diagnostics.Append(resp.State.Set(ctx, newState)...)
@@ -335,11 +334,12 @@ func (a *activationResource) ImportState(ctx context.Context, req resource.Impor
 		return
 	}
 
-	if newState.ID.IsNull() {
+	if newState.ConfigID.IsNull() {
 		resp.Diagnostics.AddError("Import Failed", "configuration must be active prior to import; activate configuration instead")
 		return
 	}
 
+	newState.ID = types.StringValue("akamai_cloudwrapper_activation")
 	resp.Diagnostics.Append(resp.State.Set(ctx, newState)...)
 }
 

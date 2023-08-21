@@ -12,6 +12,7 @@ import (
 )
 
 func TestActivation(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		init  func() *cloudwrapper.Mock
 		steps []resource.TestStep
@@ -36,7 +37,7 @@ func TestActivation(t *testing.T) {
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResActivation/create.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudwrapper_activation.act", "id", "123"),
+						resource.TestCheckResourceAttr("akamai_cloudwrapper_activation.act", "id", "akamai_cloudwrapper_activation"),
 						resource.TestCheckResourceAttr("akamai_cloudwrapper_activation.act", "config_id", "123"),
 						resource.TestCheckResourceAttr("akamai_cloudwrapper_activation.act", "revision", "5fe7963eb7270e69c5e8"),
 					),
@@ -44,7 +45,7 @@ func TestActivation(t *testing.T) {
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResActivation/update.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudwrapper_activation.act", "id", "123"),
+						resource.TestCheckResourceAttr("akamai_cloudwrapper_activation.act", "id", "akamai_cloudwrapper_activation"),
 						resource.TestCheckResourceAttr("akamai_cloudwrapper_activation.act", "config_id", "123"),
 						resource.TestCheckResourceAttr("akamai_cloudwrapper_activation.act", "revision", "8b92934d68d69621153c"),
 					),
@@ -63,7 +64,7 @@ func TestActivation(t *testing.T) {
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResActivation/create.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudwrapper_activation.act", "id", "123"),
+						resource.TestCheckResourceAttr("akamai_cloudwrapper_activation.act", "id", "akamai_cloudwrapper_activation"),
 						resource.TestCheckResourceAttr("akamai_cloudwrapper_activation.act", "config_id", "123"),
 						resource.TestCheckResourceAttr("akamai_cloudwrapper_activation.act", "revision", "5fe7963eb7270e69c5e8"),
 					),
@@ -73,7 +74,7 @@ func TestActivation(t *testing.T) {
 					ImportStateId: "123",
 					ResourceName:  "akamai_cloudwrapper_activation.act",
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudwrapper_activation.act", "id", "123"),
+						resource.TestCheckResourceAttr("akamai_cloudwrapper_activation.act", "id", "akamai_cloudwrapper_activation"),
 						resource.TestCheckResourceAttr("akamai_cloudwrapper_activation.act", "config_id", "123"),
 						resource.TestCheckResourceAttr("akamai_cloudwrapper_activation.act", "revision", "5fe7963eb7270e69c5e8"),
 					),
@@ -93,7 +94,7 @@ func TestActivation(t *testing.T) {
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResActivation/create.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudwrapper_activation.act", "id", "123"),
+						resource.TestCheckResourceAttr("akamai_cloudwrapper_activation.act", "id", "akamai_cloudwrapper_activation"),
 						resource.TestCheckResourceAttr("akamai_cloudwrapper_activation.act", "config_id", "123"),
 						resource.TestCheckResourceAttr("akamai_cloudwrapper_activation.act", "revision", "5fe7963eb7270e69c5e8"),
 					),
@@ -120,7 +121,7 @@ func TestActivation(t *testing.T) {
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResActivation/create.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudwrapper_activation.act", "id", "123"),
+						resource.TestCheckResourceAttr("akamai_cloudwrapper_activation.act", "id", "akamai_cloudwrapper_activation"),
 						resource.TestCheckResourceAttr("akamai_cloudwrapper_activation.act", "config_id", "123"),
 						resource.TestCheckResourceAttr("akamai_cloudwrapper_activation.act", "revision", "5fe7963eb7270e69c5e8"),
 					),
@@ -128,7 +129,7 @@ func TestActivation(t *testing.T) {
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResActivation/update_forcenew.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudwrapper_activation.act", "id", "321"),
+						resource.TestCheckResourceAttr("akamai_cloudwrapper_activation.act", "id", "akamai_cloudwrapper_activation"),
 						resource.TestCheckResourceAttr("akamai_cloudwrapper_activation.act", "config_id", "321"),
 						resource.TestCheckResourceAttr("akamai_cloudwrapper_activation.act", "revision", "5fe7963eb7270e69c5e8"),
 					),
@@ -178,7 +179,7 @@ func TestActivation(t *testing.T) {
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResActivation/create_timeout.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudwrapper_activation.act", "id", "123"),
+						resource.TestCheckResourceAttr("akamai_cloudwrapper_activation.act", "id", "akamai_cloudwrapper_activation"),
 						resource.TestCheckResourceAttr("akamai_cloudwrapper_activation.act", "config_id", "123"),
 						resource.TestCheckResourceAttr("akamai_cloudwrapper_activation.act", "revision", "5fe7963eb7270e69c5e8"),
 					),
@@ -192,7 +193,9 @@ func TestActivation(t *testing.T) {
 	}
 
 	for name, test := range tests {
+		name, test := name, test
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			client := test.init()
 			resource.Test(t, resource.TestCase{
 				IsUnitTest:               true,

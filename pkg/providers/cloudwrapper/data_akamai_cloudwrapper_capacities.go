@@ -129,7 +129,7 @@ func (d *capacitiesDataSource) Schema(_ context.Context, _ datasource.SchemaRequ
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:           true,
-				DeprecationMessage: "It will be removed after migration to the new testing framework",
+				DeprecationMessage: "Required by the terraform plugin testing framework, always set to `akamai_cloudwrapper_capacities`.",
 				Description:        "ID of the data source.",
 			},
 			"contract_ids": schema.ListAttribute{

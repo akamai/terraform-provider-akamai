@@ -81,7 +81,7 @@ func (r *ConfigurationResource) Schema(ctx context.Context, _ resource.SchemaReq
 			},
 			"config_name": schema.StringAttribute{
 				Required:    true,
-				Description: "Name of the configuration",
+				Description: "Name of the configuration.",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
@@ -171,7 +171,7 @@ func (r *ConfigurationResource) Schema(ctx context.Context, _ resource.SchemaReq
 							Attributes: map[string]schema.Attribute{
 								"value": schema.Int64Attribute{
 									Required:    true,
-									Description: "value of capacity",
+									Description: "Value of capacity.",
 								},
 								"unit": schema.StringAttribute{
 									Required:    true,
@@ -190,7 +190,7 @@ func (r *ConfigurationResource) Schema(ctx context.Context, _ resource.SchemaReq
 			},
 			"timeouts": timeouts.Block(ctx, timeouts.Opts{
 				Delete:            true,
-				CreateDescription: "Optional configurable resource delete timeout. By default it's 2h with 30s pooling interval",
+				CreateDescription: "Optional configurable resource delete timeout. By default it's 2h with 30s pooling interval.",
 			}),
 		},
 	}

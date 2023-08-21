@@ -6,7 +6,6 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cloudwrapper"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
-	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -80,8 +79,9 @@ func (d *propertiesDataSource) Schema(_ context.Context, _ datasource.SchemaRequ
 		Description: "CloudWrapper properties",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
-				Computed:    true,
-				Description: "ID of the data source.",
+				Computed:           true,
+				DeprecationMessage: "Required by the terraform plugin testing framework, always set to `akamai_cloudwrapper_properties`",
+				Description:        "ID of the data source.",
 			},
 			"contract_ids": schema.ListAttribute{
 				ElementType: types.StringType,
@@ -158,7 +158,7 @@ func (d *propertiesDataSource) Read(ctx context.Context, req datasource.ReadRequ
 		})
 	}
 
-	data.ID = types.StringValue(uuid.NewString())
+	data.ID = types.StringValue("akamai_cloudwrapper_properties")
 
 	if resp.Diagnostics.Append(resp.State.Set(ctx, &data)...); resp.Diagnostics.HasError() {
 		return

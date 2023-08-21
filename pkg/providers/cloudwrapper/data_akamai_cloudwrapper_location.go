@@ -74,8 +74,9 @@ func (d *locationDataSource) Schema(_ context.Context, _ datasource.SchemaReques
 		Description: "CloudWrapper location",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
-				Computed:    true,
-				Description: "ID of the data source.",
+				Computed:           true,
+				DeprecationMessage: "Required by the terraform plugin testing framework, always set to `akamai_cloudwrapper_location`",
+				Description:        "ID of the data source.",
 			},
 			"location_name": schema.StringAttribute{
 				Required:    true,
@@ -120,7 +121,7 @@ func (d *locationDataSource) Read(ctx context.Context, req datasource.ReadReques
 			if trafficType, ok := getMatchingTrafficType(loc.TrafficTypes, data.TrafficType.ValueString()); ok {
 				data.LocationID = types.StringValue(trafficType.MapName)
 				data.TrafficTypeID = types.Int64Value(int64(trafficType.TrafficTypeID))
-				data.ID = types.StringValue(fmt.Sprintf("%s:%s", data.LocationName, data.TrafficType))
+				data.ID = types.StringValue("akamai_cloudwrapper_location")
 				resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 				return
 			}
