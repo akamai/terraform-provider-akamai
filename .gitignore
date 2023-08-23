@@ -1,9 +1,11 @@
 # testing and custom build code
 .terraform/
+.build/
 terraform-provider-akamai
 terraform.tfstate
 terraform.tfstate.backup
 *.log
+tools/bin/
 
 # local files
 .DS_Store
