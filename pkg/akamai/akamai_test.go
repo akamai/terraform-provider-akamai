@@ -2,13 +2,29 @@ package akamai_test
 
 import (
 	"context"
+	"os"
+	"testing"
 
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/subprovider"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
+
+func TestMain(m *testing.M) {
+	const testDefaultEdgercPath = "./testdata/edgerc"
+
+	oldConfigFilePath := akamai.DefaultConfigFilePath
+	akamai.DefaultConfigFilePath = testDefaultEdgercPath
+
+	exitCode := m.Run()
+
+	akamai.DefaultConfigFilePath = oldConfigFilePath
+
+	os.Exit(exitCode)
+}
 
 // dummy subprovider has only one datasource: "akamai_dummy"
 // that itself does nothing and is used only for test purposes

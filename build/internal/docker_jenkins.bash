@@ -37,8 +37,6 @@ PROVIDER_BRANCH_HASH="$(git rev-parse --short HEAD)"
 echo "Making build on branch $PROVIDER_BRANCH_NAME at hash $PROVIDER_BRANCH_HASH with tag $eTAG"
 
 mkdir -p $COVERAGE_DIR
-cp "$HOME"/.edgerc "$WORKDIR"/.edgerc
-sed -i -e "1s/^.*$/[default]/" "$WORKDIR"/.edgerc
 
 docker rm -f akatf-container 2> /dev/null || true
 

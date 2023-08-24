@@ -87,7 +87,3 @@ init: tools tools.terraform
 .PHONY: tools.terraform
 tools.terraform:
 	@sh -c "'$(CURDIR)/scripts/install_terraform.sh'"
-
-.PHONY: dummy-edgerc
-dummy-edgerc:
-	@sh -c "'$(CURDIR)/scripts/dummyedgerc.sh'"

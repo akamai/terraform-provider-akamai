@@ -1,3 +1,7 @@
+provider "akamai" {
+  edgerc = "../../test/edgerc"
+}
+
 resource "akamai_iam_role" "role" {
   name          = "role name"
   description   = "role description"

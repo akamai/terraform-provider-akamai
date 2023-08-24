@@ -69,23 +69,21 @@ func TestFramework_ConfigureCache_EnabledInContext(t *testing.T) {
 
 func TestFramework_ConfigureEdgercInContext(t *testing.T) {
 	tests := map[string]struct {
-		key           string
-		value         string
+		edgerc        string
+		configSection string
 		expectedError *regexp.Regexp
 	}{
-		"file with EdgeGrid configuration does not exist": {
-			key:           "edgerc",
-			value:         "not_existing_file_path",
+		"edgerc file does not exist": {
+			edgerc:        "not_existing_file_path",
 			expectedError: regexp.MustCompile("error reading Akamai EdgeGrid configuration: loading config file: open not_existing_file_path: no such file or directory"),
 		},
 		"config section does not exist": {
-			key:           "config_section",
-			value:         "not_existing_config_section",
+			configSection: "not_existing_config_section",
 			expectedError: regexp.MustCompile("error reading Akamai EdgeGrid configuration: provided config section does not exist: section \"not_existing_config_section\" does not exist"),
 		},
-		"with empty edgerc path, default path is used": {
-			key:           "edgerc",
-			value:         "",
+		"uses defaults with empty edgerc and config_section": {
+			edgerc:        "",
+			configSection: "",
 			expectedError: nil,
 		},
 	}
@@ -100,10 +98,11 @@ func TestFramework_ConfigureEdgercInContext(t *testing.T) {
 						ExpectError: testcase.expectedError,
 						Config: fmt.Sprintf(`
 							provider "akamai" {
-								%v = "%v"
+								edgerc         = "%v"
+								config_section = "%v"
 							}
 							data "akamai_dummy" "test" {}
-						`, testcase.key, testcase.value),
+						`, testcase.edgerc, testcase.configSection),
 					},
 				},
 			})
@@ -112,7 +111,6 @@ func TestFramework_ConfigureEdgercInContext(t *testing.T) {
 }
 
 func TestFramework_EdgercValidate(t *testing.T) {
-
 	tests := map[string]struct {
 		expectedError *regexp.Regexp
 		configSection string

@@ -18,8 +18,6 @@ jobs:
             go-version-file: 'go.mod'
         - name: Install terraform
           run: make tools.terraform
-        - name: Prepare dummy edgerc
-          run: make dummy-edgerc
         - name: Run linter
           run: make lint
         - name: Create build

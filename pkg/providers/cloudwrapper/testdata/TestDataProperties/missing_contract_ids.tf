@@ -1,2 +1,5 @@
-data "akamai_cloudwrapper_properties" "test" {
+provider "akamai" {
+  edgerc = "../../test/edgerc"
 }
+
+data "akamai_cloudwrapper_properties" "test" {}
