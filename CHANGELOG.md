@@ -26,7 +26,7 @@
 
 * BOTMAN
   * Added resource:
-    * `akamai_botman_custom_client_sequence` - read, create and update custom client sequence
+    * `akamai_botman_custom_client_sequence` - read and update custom client sequence
   * Added data source:
     * `akamai_botman_custom_client_sequence` - read custom client sequence
 
