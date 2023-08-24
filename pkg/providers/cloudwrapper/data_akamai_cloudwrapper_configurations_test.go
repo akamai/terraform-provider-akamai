@@ -13,6 +13,7 @@ import (
 )
 
 func TestDataConfigurations(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		configPath string
 		init       func(*testing.T, *cloudwrapper.Mock, []testDataForCWConfiguration)
@@ -61,6 +62,7 @@ func TestDataConfigurations(t *testing.T) {
 		},
 	}
 	for name, test := range tests {
+		name, test := name, test
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 

@@ -1,6 +1,8 @@
 # RELEASE NOTES
 
-## Y.Y.Y (YYY YY, 2023) - CW
+## 5.2.0 (Aug 29, 2023)
+
+#### FEATURES/ENHANCEMENTS:
 
 * CloudWrapper
   * Added resource:
@@ -13,6 +15,19 @@
     * `akamai_cloudwrapper_location` - reads location for with given location name and traffic type
     * `akamai_cloudwrapper_locations` - reads all locations
     * `akamai_cloudwrapper_properties` - reads properties associated with contract IDs with Cloud Wrapper entitlement
+
+* CLIENTLISTS - Added Client Lists API Support
+  * Added data source:
+  * `akamai_clientlist_lists` get list of Client Lists
+    *  Support filter by `name` and/or `types`
+  * Added resources:
+    * `akamai_clientlist_list` to create, update or delete Client Lists
+    * `akamai_clientlist_activation` to activate a client list
+
+#### BREAKING CHANGES:
+
+* PAPI
+  * `logStreamName` field from `datastream` behavior has changed from string to array of strings for rule format `v2023-05-30`
 
 ## 5.1.0 (Aug 01, 2023)
 
@@ -38,14 +53,6 @@
     * `akamai_botman_challenge_injection_rules` - read and update
   * Added data sources:
     * `akamai_botman_challenge_injection_rules` - read
-
-* [IMPORTANT] CLIENTLISTS - Added Client Lists API Support
-  *  Added data source:
-     *  `akamai_clientlist_lists` get list of Client Lists
-        *  Support filter by `name` and/or `types`
-  * Added resource:
-    * `akamai_clientlist_list` to create, update or delete Client Lists
-    * `akamai_clientlist_activation` to activate a client list
 
 * PAPI
   * Added verification to ensure that `akamai_property_rules_builder` data source

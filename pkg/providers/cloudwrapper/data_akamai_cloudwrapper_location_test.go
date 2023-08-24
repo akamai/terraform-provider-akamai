@@ -84,7 +84,7 @@ func TestDataLocation(t *testing.T) {
 		},
 		"invalid type": {
 			configPath: "testdata/TestDataLocation/invalid_type.tf",
-			error:      regexp.MustCompile(`Attribute traffic_type value must be one of: \["\\"LIVE\\"" "\\"LIVE_VOD\\""\s+"\\"WEB_STANDARD_TLS\\"" "\\"WEB_ENHANCED_TLS\\""], got: "TEST"`),
+			error:      regexp.MustCompile(`Attribute traffic_type value must be one of: \["LIVE" "LIVE_VOD"\n"WEB_STANDARD_TLS" "WEB_ENHANCED_TLS"], got: "TEST"`),
 		},
 		"error listing locations": {
 			configPath: "testdata/TestDataLocation/location.tf",
