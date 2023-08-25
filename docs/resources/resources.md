@@ -8,15 +8,15 @@ We’ve moved our documentation to the Akamai TechDocs site. Use the table to fi
 
 | Subprovider                                                                                     | Description                                                                                          |
 |-------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------|
-| [Application Security](https://techdocs.akamai.com/terraform/v5.1/docs/appsec-resources)        | Manage security configurations, security policies, match targets, rate policies, and firewall rules. |
-| [Bot Manager](https://techdocs.akamai.com/terraform/v5.1/docs/botman-resources)                 | Identify, track, and respond to bot activity on your domain or in your app.                          |
-| [Certificates](https://techdocs.akamai.com/terraform/v5.1/docs/cps-resources)                   | Full life cycle management of SSL certificates for your ​Akamai​ CDN applications.                   |
-| [Cloudlets](https://techdocs.akamai.com/terraform/v5.1/docs/cl-resources)                       | Solve specific business challenges using value-added apps that complement ​Akamai​'s core solutions. |
-| [DataStream](https://techdocs.akamai.com/terraform/v5.1/docs/ds-resources)                      | Monitor activity on the ​Akamai​ platform and send live log data to a destination of your choice.    |
-| [Edge DNS](https://techdocs.akamai.com/terraform/v5.1/docs/edns-resources)                      | Replace or augment your DNS infrastructure with a cloud-based authoritative DNS solution.            |
-| [EdgeWorkers](https://techdocs.akamai.com/terraform/v5.1/docs/ew-resources)                     | Execute JavaScript functions at the edge to optimize site performance and customize web experiences. |
-| [Global Traffic Management](https://techdocs.akamai.com/terraform/v5.1/docs/gtm-resources)      | Use load balancing to manage website and mobile performance demands.                                 |
-| [Identity and Access Management](https://techdocs.akamai.com/terraform/v5.1/docs/iam-resources) | Create users and groups, and define policies that manage access to your Akamai applications.         |
-| [Image and Video Manager](https://techdocs.akamai.com/terraform/v5.1/docs/ivm-resources)        | Automate image and video delivery optimizations for your website visitors.                           |
-| [Network Lists](https://techdocs.akamai.com/terraform/v5.1/docs/nl-resources)                   | Automate the creation, deployment, and management of lists used in ​Akamai​ security products.       |
-| [Property](https://techdocs.akamai.com/terraform/v5.1/docs/pm-resources)                        | Define rules and behaviors that govern your website delivery based on match criteria.                |
+| [Application Security](https://techdocs.akamai.com/terraform/v5.2/docs/appsec-resources)        | Manage security configurations, security policies, match targets, rate policies, and firewall rules. |
+| [Bot Manager](https://techdocs.akamai.com/terraform/v5.2/docs/botman-resources)                 | Identify, track, and respond to bot activity on your domain or in your app.                          |
+| [Certificates](https://techdocs.akamai.com/terraform/v5.2/docs/cps-resources)                   | Full life cycle management of SSL certificates for your ​Akamai​ CDN applications.                   |
+| [Cloudlets](https://techdocs.akamai.com/terraform/v5.2/docs/cl-resources)                       | Solve specific business challenges using value-added apps that complement ​Akamai​'s core solutions. |
+| [DataStream](https://techdocs.akamai.com/terraform/v5.2/docs/ds-resources)                      | Monitor activity on the ​Akamai​ platform and send live log data to a destination of your choice.    |
+| [Edge DNS](https://techdocs.akamai.com/terraform/v5.2/docs/edns-resources)                      | Replace or augment your DNS infrastructure with a cloud-based authoritative DNS solution.            |
+| [EdgeWorkers](https://techdocs.akamai.com/terraform/v5.2/docs/ew-resources)                     | Execute JavaScript functions at the edge to optimize site performance and customize web experiences. |
+| [Global Traffic Management](https://techdocs.akamai.com/terraform/v5.2/docs/gtm-resources)      | Use load balancing to manage website and mobile performance demands.                                 |
+| [Identity and Access Management](https://techdocs.akamai.com/terraform/v5.2/docs/iam-resources) | Create users and groups, and define policies that manage access to your Akamai applications.         |
+| [Image and Video Manager](https://techdocs.akamai.com/terraform/v5.2/docs/ivm-resources)        | Automate image and video delivery optimizations for your website visitors.                           |
+| [Network Lists](https://techdocs.akamai.com/terraform/v5.2/docs/nl-resources)                   | Automate the creation, deployment, and management of lists used in ​Akamai​ security products.       |
+| [Property](https://techdocs.akamai.com/terraform/v5.2/docs/pm-resources)                        | Define rules and behaviors that govern your website delivery based on match criteria.                |

@@ -4,33 +4,31 @@
 
 #### FEATURES/ENHANCEMENTS:
 
-* CloudWrapper
-  * Added resource:
+* [IMPORTANT] Cloud Wrapper
+  * Added resources:
     * `akamai_cloudwrapper_activation` - activate cloud wrapper configuration, import cloud wrapper configuration activation
     * `akamai_cloudwrapper_configuration` - create, read and update cloud wrapper configuration
   * Added data sources:
     * `akamai_cloudwrapper_capacities` - reads capacities available for the provided contract IDs
     * `akamai_cloudwrapper_configuration` - reads configuration associated with config ID
     * `akamai_cloudwrapper_configurations` - reads all the configurations
-    * `akamai_cloudwrapper_location` - reads location for with given location name and traffic type
+    * `akamai_cloudwrapper_location` - reads location for given location name and traffic type
     * `akamai_cloudwrapper_locations` - reads all locations
     * `akamai_cloudwrapper_properties` - reads properties associated with contract IDs with Cloud Wrapper entitlement
 
-* CLIENTLISTS - Added Client Lists API Support
-  * Added data source:
-  * `akamai_clientlist_lists` get list of Client Lists
-    *  Support filter by `name` and/or `types`
+* [IMPORTANT] Client Lists
   * Added resources:
-    * `akamai_clientlist_list` to create, update or delete Client Lists
-    * `akamai_clientlist_activation` to activate a client list
+    * `akamai_clientlist_list` - create, update and delete Client Lists
+    * `akamai_clientlist_activation` - activate a client list
+  * Added data source:
+    * `akamai_clientlist_lists` - reads Client Lists
+      *  Support filter by `name` and/or `types`
 
 * BOTMAN
   * Added resource:
     * `akamai_botman_custom_client_sequence` - read and update custom client sequence
   * Added data source:
-    * `akamai_botman_custom_client_sequence` - read custom client sequence
-
-#### BREAKING CHANGES:
+    * `akamai_botman_custom_client_sequence` - reads custom client sequence
 
 * PAPI
   * `logStreamName` field from `datastream` behavior has changed from string to array of strings for rule format `v2023-05-30`
