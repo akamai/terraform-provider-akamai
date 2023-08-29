@@ -5,7 +5,8 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/appsec"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
@@ -15,7 +16,7 @@ func TestAkamaiSiemDefinitions_data_basic(t *testing.T) {
 		client := &appsec.Mock{}
 
 		getSiemDefinitionsResponse := appsec.GetSiemDefinitionsResponse{}
-		err := json.Unmarshal(loadFixtureBytes("testdata/TestDSSiemDefinitions/SiemDefinitions.json"), &getSiemDefinitionsResponse)
+		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestDSSiemDefinitions/SiemDefinitions.json"), &getSiemDefinitionsResponse)
 		require.NoError(t, err)
 
 		client.On("GetSiemDefinitions",
@@ -29,7 +30,7 @@ func TestAkamaiSiemDefinitions_data_basic(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestDSSiemDefinitions/match_by_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestDSSiemDefinitions/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("data.akamai_appsec_siem_definitions.test", "id", "1"),
 						),

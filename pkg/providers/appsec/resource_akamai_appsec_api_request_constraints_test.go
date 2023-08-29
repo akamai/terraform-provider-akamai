@@ -5,7 +5,8 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/appsec"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
@@ -15,19 +16,19 @@ func TestAkamaiApiRequestConstraints_res_basic(t *testing.T) {
 		client := &appsec.Mock{}
 
 		updateResponse := appsec.UpdateApiRequestConstraintsResponse{}
-		err := json.Unmarshal(loadFixtureBytes("testdata/TestResApiRequestConstraints/ApiRequestConstraints.json"), &updateResponse)
+		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResApiRequestConstraints/ApiRequestConstraints.json"), &updateResponse)
 		require.NoError(t, err)
 
 		getResponse := appsec.GetApiRequestConstraintsResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResApiRequestConstraints/ApiRequestConstraints.json"), &getResponse)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResApiRequestConstraints/ApiRequestConstraints.json"), &getResponse)
 		require.NoError(t, err)
 
 		deleteResponse := appsec.RemoveApiRequestConstraintsResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResApiRequestConstraints/ApiRequestConstraints.json"), &deleteResponse)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResApiRequestConstraints/ApiRequestConstraints.json"), &deleteResponse)
 		require.NoError(t, err)
 
 		config := appsec.GetConfigurationResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 		require.NoError(t, err)
 
 		client.On("GetConfiguration",
@@ -56,7 +57,7 @@ func TestAkamaiApiRequestConstraints_res_basic(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResApiRequestConstraints/match_by_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResApiRequestConstraints/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_api_request_constraints.test", "id", "43253:AAAA_81230:1"),
 						),

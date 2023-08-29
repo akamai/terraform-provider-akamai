@@ -5,7 +5,8 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/appsec"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
@@ -15,11 +16,11 @@ func TestAkamaiConfigurationRename_res_basic(t *testing.T) {
 		client := &appsec.Mock{}
 
 		updateConfigurationResponse := appsec.UpdateConfigurationResponse{}
-		err := json.Unmarshal(loadFixtureBytes("testdata/TestResConfigurationRename/ConfigurationUpdate.json"), &updateConfigurationResponse)
+		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfigurationRename/ConfigurationUpdate.json"), &updateConfigurationResponse)
 		require.NoError(t, err)
 
 		getConfigurationResponse := appsec.GetConfigurationResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResConfigurationRename/Configuration.json"), &getConfigurationResponse)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfigurationRename/Configuration.json"), &getConfigurationResponse)
 		require.NoError(t, err)
 
 		client.On("GetConfiguration",
@@ -38,13 +39,13 @@ func TestAkamaiConfigurationRename_res_basic(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResConfigurationRename/match_by_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResConfigurationRename/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_configuration_rename.test", "id", "432531"),
 						),
 					},
 					{
-						Config: loadFixtureString("testdata/TestResConfigurationRename/update_by_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResConfigurationRename/update_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_configuration_rename.test", "id", "432531"),
 						),

@@ -5,7 +5,8 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/appsec"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
@@ -15,11 +16,11 @@ func TestAkamaiAttackGroups_data_basic(t *testing.T) {
 		client := &appsec.Mock{}
 
 		getAttackGroupsResponse := appsec.GetAttackGroupsResponse{}
-		err := json.Unmarshal(loadFixtureBytes("testdata/TestDSAttackGroups/AttackGroups.json"), &getAttackGroupsResponse)
+		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestDSAttackGroups/AttackGroups.json"), &getAttackGroupsResponse)
 		require.NoError(t, err)
 
 		configs := appsec.GetConfigurationResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &configs)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/LatestConfiguration.json"), &configs)
 		require.NoError(t, err)
 
 		client.On("GetAttackGroups",
@@ -38,7 +39,7 @@ func TestAkamaiAttackGroups_data_basic(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestDSAttackGroups/match_by_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestDSAttackGroups/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("data.akamai_appsec_attack_groups.test", "id", "43253"),
 						),

@@ -6,7 +6,8 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/gtm"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -70,13 +71,13 @@ func TestResGtmCidrmap(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResGtmCidrmap/create_basic.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmCidrmap/create_basic.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr(dataSourceName, "name", "tfexample_cidrmap_1"),
 						),
 					},
 					{
-						Config: loadFixtureString("testdata/TestResGtmCidrmap/update_basic.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmCidrmap/update_basic.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr(dataSourceName, "name", "tfexample_cidrmap_1"),
 						),
@@ -115,7 +116,7 @@ func TestResGtmCidrmap(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config:      loadFixtureString("testdata/TestResGtmCidrmap/create_basic.tf"),
+						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmCidrmap/create_basic.tf"),
 						ExpectError: regexp.MustCompile("cidrMap Create failed"),
 					},
 				},
@@ -153,7 +154,7 @@ func TestResGtmCidrmap(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config:      loadFixtureString("testdata/TestResGtmCidrmap/create_basic.tf"),
+						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmCidrmap/create_basic.tf"),
 						ExpectError: regexp.MustCompile("Request could not be completed. Invalid credentials."),
 					},
 				},
@@ -245,10 +246,10 @@ func TestGTMCidrMapOrder(t *testing.T) {
 					IsUnitTest:        true,
 					Steps: []resource.TestStep{
 						{
-							Config: loadFixtureString(test.pathForCreate),
+							Config: testutils.LoadFixtureString(t, test.pathForCreate),
 						},
 						{
-							Config:             loadFixtureString(test.pathForUpdate),
+							Config:             testutils.LoadFixtureString(t, test.pathForUpdate),
 							PlanOnly:           test.planOnly,
 							ExpectNonEmptyPlan: test.nonEmptyPlan,
 						},

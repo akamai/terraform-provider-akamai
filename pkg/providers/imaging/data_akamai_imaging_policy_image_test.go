@@ -3,7 +3,8 @@ package imaging
 import (
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
 func TestDataPolicyImage(t *testing.T) {
@@ -39,11 +40,11 @@ func TestDataPolicyImage(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString(test.configPath),
+						Config: testutils.LoadFixtureString(t, test.configPath),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr(
 								"data.akamai_imaging_policy_image.policy", "json",
-								loadFixtureString(test.expectedJSONPath)),
+								testutils.LoadFixtureString(t, test.expectedJSONPath)),
 						),
 					},
 				},

@@ -5,7 +5,8 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/appsec"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
@@ -15,7 +16,7 @@ func TestAkamaiApiRequestConstraints_data_basic(t *testing.T) {
 		client := &appsec.Mock{}
 
 		config := appsec.GetConfigurationResponse{}
-		err := json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 		require.NoError(t, err)
 
 		client.On("GetConfiguration",
@@ -24,7 +25,7 @@ func TestAkamaiApiRequestConstraints_data_basic(t *testing.T) {
 		).Return(&config, nil)
 
 		getAPIRequestConstraintsResponse := appsec.GetApiRequestConstraintsResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestDSApiRequestConstraints/ApiRequestConstraints.json"), &getAPIRequestConstraintsResponse)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestDSApiRequestConstraints/ApiRequestConstraints.json"), &getAPIRequestConstraintsResponse)
 		require.NoError(t, err)
 
 		client.On("GetApiRequestConstraints",
@@ -38,7 +39,7 @@ func TestAkamaiApiRequestConstraints_data_basic(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestDSApiRequestConstraints/match_by_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestDSApiRequestConstraints/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("data.akamai_appsec_api_request_constraints.test", "id", "43253"),
 						),

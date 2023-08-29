@@ -5,7 +5,8 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/appsec"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
@@ -15,19 +16,19 @@ func TestAkamaiReputationAnalysis_res_basic(t *testing.T) {
 		client := &appsec.Mock{}
 
 		updateReputationAnalysisResponse := appsec.UpdateReputationAnalysisResponse{}
-		err := json.Unmarshal(loadFixtureBytes("testdata/TestResReputationAnalysis/ReputationAnalysisUpdated.json"), &updateReputationAnalysisResponse)
+		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResReputationAnalysis/ReputationAnalysisUpdated.json"), &updateReputationAnalysisResponse)
 		require.NoError(t, err)
 
 		getReputationAnalysisResponse := appsec.GetReputationAnalysisResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResReputationAnalysis/ReputationAnalysis.json"), &getReputationAnalysisResponse)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResReputationAnalysis/ReputationAnalysis.json"), &getReputationAnalysisResponse)
 		require.NoError(t, err)
 
 		removeReputationAnalysisResponse := appsec.RemoveReputationAnalysisResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResReputationAnalysis/ReputationAnalysisDelete.json"), &removeReputationAnalysisResponse)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResReputationAnalysis/ReputationAnalysisDelete.json"), &removeReputationAnalysisResponse)
 		require.NoError(t, err)
 
 		config := appsec.GetConfigurationResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 		require.NoError(t, err)
 
 		client.On("GetConfiguration",
@@ -56,13 +57,13 @@ func TestAkamaiReputationAnalysis_res_basic(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResReputationAnalysis/match_by_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResReputationAnalysis/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_reputation_profile_analysis.test", "id", "43253:AAAA_81230"),
 						),
 					},
 					{
-						Config: loadFixtureString("testdata/TestResReputationAnalysis/update_by_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResReputationAnalysis/update_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_reputation_profile_analysis.test", "id", "43253:AAAA_81230"),
 						),

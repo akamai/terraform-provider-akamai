@@ -9,7 +9,8 @@ import (
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -296,7 +297,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString(fmt.Sprintf("%s/property_include_activation.tf", testDir)),
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/property_include_activation.tf", testDir)),
 						Check: checkAttributes(attrs{
 							includeID:    includeID,
 							contractID:   contractID,
@@ -357,7 +358,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString(fmt.Sprintf("%s/property_include_activation.tf", testDir)),
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/property_include_activation.tf", testDir)),
 						Check: checkAttributes(attrs{
 							includeID:    includeID,
 							contractID:   contractID,
@@ -369,7 +370,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 						}),
 					},
 					{
-						Config: loadFixtureString(fmt.Sprintf("%s/property_include_activation_update.tf", testDir)),
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/property_include_activation_update.tf", testDir)),
 						Check: checkAttributes(attrs{
 							includeID:                   includeID,
 							contractID:                  contractID,
@@ -415,7 +416,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString(fmt.Sprintf("%s/property_include_activation.tf", testDir)),
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/property_include_activation.tf", testDir)),
 						Check: checkAttributes(attrs{
 							includeID:    includeID,
 							contractID:   contractID,
@@ -463,7 +464,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString(fmt.Sprintf("%s/property_include_activation.tf", testDir)),
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/property_include_activation.tf", testDir)),
 						Check: checkAttributes(attrs{
 							includeID:    includeID,
 							contractID:   contractID,
@@ -513,7 +514,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config:      loadFixtureString(fmt.Sprintf("%s/no_compliance_record_on_production.tf", testDir)),
+						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/no_compliance_record_on_production.tf", testDir)),
 						ExpectError: regexp.MustCompile(`Error: for 'PRODUCTION' network, 'compliance_record' must be specified`),
 					},
 				},
@@ -553,7 +554,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString(fmt.Sprintf("%s/property_include_activation.tf", testDir)),
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/property_include_activation.tf", testDir)),
 						Check: checkAttributes(attrs{
 							includeID:    includeID,
 							contractID:   contractID,
@@ -566,7 +567,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 						ExpectError: regexp.MustCompile("oops"),
 					},
 					{
-						Config: loadFixtureString(fmt.Sprintf("%s/property_include_activation.tf", testDir)),
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/property_include_activation.tf", testDir)),
 						Check: checkAttributes(attrs{
 							includeID:    includeID,
 							contractID:   contractID,
@@ -609,7 +610,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString(fmt.Sprintf("%s/property_include_activation.tf", testDir)),
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/property_include_activation.tf", testDir)),
 					},
 					{
 						ImportState:       true,
@@ -649,7 +650,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString(fmt.Sprintf("%s/property_include_activation.tf", testDir)),
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/property_include_activation.tf", testDir)),
 						Check: checkAttributes(attrs{
 							includeID:    includeID,
 							contractID:   contractID,
@@ -717,7 +718,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString(fmt.Sprintf("%s/property_include_activation.tf", testDir)),
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/property_include_activation.tf", testDir)),
 						Check: checkAttributes(attrs{
 							includeID:    includeID,
 							contractID:   contractID,
@@ -729,7 +730,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 						}),
 					},
 					{
-						Config: loadFixtureString(fmt.Sprintf("%s/property_include_update_note_not_suppressed.tf", testDir)),
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/property_include_update_note_not_suppressed.tf", testDir)),
 						Check: checkAttributes(attrs{
 							includeID:    includeID,
 							contractID:   contractID,

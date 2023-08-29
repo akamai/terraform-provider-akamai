@@ -7,7 +7,8 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/dns"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -33,7 +34,7 @@ func TestDataSourceDNSRecordSet_basic(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestDataDnsRecordSet/basic.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestDataDnsRecordSet/basic.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							// check the values set in dataSourceDNSRecordSetRead
 							// rdata is an array that becomes rdata.0 and rdata.1 in tf state
@@ -65,7 +66,7 @@ func TestDataSourceDNSRecordSet_basic(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config:      loadFixtureString("testdata/TestDataDnsRecordSet/basic.tf"),
+						Config:      testutils.LoadFixtureString(t, "testdata/TestDataDnsRecordSet/basic.tf"),
 						ExpectError: regexp.MustCompile(`invalid zone`),
 					},
 				},

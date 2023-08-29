@@ -5,7 +5,8 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/appsec"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
@@ -14,7 +15,7 @@ func TestAkamaiIPGeo_res_block(t *testing.T) {
 	var (
 		configVersion = func(t *testing.T, configId int, client *appsec.Mock) appsec.GetConfigurationResponse {
 			configResponse := appsec.GetConfigurationResponse{}
-			err := json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &configResponse)
+			err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/LatestConfiguration.json"), &configResponse)
 			require.NoError(t, err)
 
 			client.On("GetConfiguration",
@@ -27,7 +28,7 @@ func TestAkamaiIPGeo_res_block(t *testing.T) {
 
 		getIPGeoResponse = func(t *testing.T, configId int, version int, policyId string, path string, client *appsec.Mock) appsec.GetIPGeoResponse {
 			getIPGeoResponse := appsec.GetIPGeoResponse{}
-			err := json.Unmarshal(loadFixtureBytes(path), &getIPGeoResponse)
+			err := json.Unmarshal(testutils.LoadFixtureBytes(t, path), &getIPGeoResponse)
 			require.NoError(t, err)
 
 			client.On("GetIPGeo",
@@ -40,7 +41,7 @@ func TestAkamaiIPGeo_res_block(t *testing.T) {
 
 		updateIPGeoResponse = func(t *testing.T, configId int, version int, policyId string, path string, request appsec.UpdateIPGeoRequest, client *appsec.Mock) appsec.UpdateIPGeoResponse {
 			updateIPGeoResponse := appsec.UpdateIPGeoResponse{}
-			err := json.Unmarshal(loadFixtureBytes(path), &updateIPGeoResponse)
+			err := json.Unmarshal(testutils.LoadFixtureBytes(t, path), &updateIPGeoResponse)
 			require.NoError(t, err)
 
 			client.On("UpdateIPGeo",
@@ -52,7 +53,7 @@ func TestAkamaiIPGeo_res_block(t *testing.T) {
 
 		updateIPGeoProtectionResponseAllProtectionsFalse = func(t *testing.T, configId int, version int, policyId string, path string, client *appsec.Mock) appsec.UpdateIPGeoProtectionResponse {
 			updateIPGeoProtectionResponseAllProtectionsFalse := appsec.UpdateIPGeoProtectionResponse{}
-			err := json.Unmarshal(loadFixtureBytes(path), &updateIPGeoProtectionResponseAllProtectionsFalse)
+			err := json.Unmarshal(testutils.LoadFixtureBytes(t, path), &updateIPGeoProtectionResponseAllProtectionsFalse)
 			require.NoError(t, err)
 
 			client.On("UpdateIPGeoProtection",
@@ -104,7 +105,7 @@ func TestAkamaiIPGeo_res_block(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResIPGeo/match_by_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResIPGeo/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_ip_geo.test", "id", "43253:AAAA_81230"),
 						),
@@ -160,7 +161,7 @@ func TestAkamaiIPGeo_res_block(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResIPGeo/ukraine_match_by_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResIPGeo/ukraine_match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_ip_geo.test1", "id", "43253:AAAA_81230"),
 						),
@@ -201,7 +202,7 @@ func TestAkamaiIPGeo_res_block(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResIPGeo/allow.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResIPGeo/allow.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_ip_geo.test", "id", "43253:AAAA_81230"),
 						),
@@ -234,7 +235,7 @@ func TestAkamaiIPGeo_res_block(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResIPGeo/block_with_empty_lists.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResIPGeo/block_with_empty_lists.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_ip_geo.test", "id", "43253:AAAA_81230"),
 						),
@@ -268,7 +269,7 @@ func TestAkamaiIPGeo_res_block(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResIPGeo/allow_with_empty_lists.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResIPGeo/allow_with_empty_lists.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_ip_geo.test", "id", "43253:AAAA_81230"),
 						),

@@ -8,8 +8,9 @@ import (
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/edgeworkers"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -160,7 +161,7 @@ func TestCreateEdgeKVGroupItems(t *testing.T) {
 					ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
-							Config:      loadFixtureString(test.configPath),
+							Config:      testutils.LoadFixtureString(t, test.configPath),
 							Check:       checkEdgeKVGroupItemsAttrs(test.attrs),
 							ExpectError: test.withError,
 						},
@@ -325,12 +326,12 @@ func TestReadEdgeKVGroupItems(t *testing.T) {
 					ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
-							Config:      loadFixtureString(test.configPathForCreate),
+							Config:      testutils.LoadFixtureString(t, test.configPathForCreate),
 							Check:       checkEdgeKVGroupItemsAttrs(test.attrsForCreate),
 							ExpectError: test.errorForCreate,
 						},
 						{
-							Config:      loadFixtureString(test.configPathForUpdate),
+							Config:      testutils.LoadFixtureString(t, test.configPathForUpdate),
 							Check:       checkEdgeKVGroupItemsAttrs(test.attrsForUpdate),
 							ExpectError: test.errorForUpdate,
 						},
@@ -814,12 +815,12 @@ func TestUpdateEdgeKVGroupItems(t *testing.T) {
 						{
 							PlanOnly:           test.planOnly,
 							ExpectNonEmptyPlan: test.expectNonEmptyPlan,
-							Config:             loadFixtureString(test.configPathForCreate),
+							Config:             testutils.LoadFixtureString(t, test.configPathForCreate),
 							Check:              checkEdgeKVGroupItemsAttrs(test.attrsForCreate),
 							ExpectError:        test.errorForCreate,
 						},
 						{
-							Config:      loadFixtureString(test.configPathForUpdate),
+							Config:      testutils.LoadFixtureString(t, test.configPathForUpdate),
 							Check:       checkEdgeKVGroupItemsAttrs(test.attrsForUpdate),
 							ExpectError: test.errorForUpdate,
 						},
@@ -886,7 +887,7 @@ func TestDeleteEdgeKVGroupItems(t *testing.T) {
 					ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
-							Config:      loadFixtureString(test.configPath),
+							Config:      testutils.LoadFixtureString(t, test.configPath),
 							Check:       checkEdgeKVGroupItemsAttrs(test.attrs),
 							ExpectError: test.error,
 						},
@@ -960,7 +961,7 @@ func TestImportEdgeKVGroupItems(t *testing.T) {
 
 					Steps: []resource.TestStep{
 						{
-							Config: loadFixtureString(test.configPath),
+							Config: testutils.LoadFixtureString(t, test.configPath),
 						},
 						{
 							ImportState:       true,

@@ -5,7 +5,8 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/appsec"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
@@ -14,7 +15,7 @@ func TestAkamaiAdvancedSettingsRequestBodyResConfig(t *testing.T) {
 	var (
 		configVersion = func(t *testing.T, configId int, client *appsec.Mock) appsec.GetConfigurationResponse {
 			configResponse := appsec.GetConfigurationResponse{}
-			err := json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &configResponse)
+			err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/LatestConfiguration.json"), &configResponse)
 			require.NoError(t, err)
 
 			client.On("GetConfiguration",
@@ -27,7 +28,7 @@ func TestAkamaiAdvancedSettingsRequestBodyResConfig(t *testing.T) {
 
 		requestBodyRead = func(t *testing.T, configId int, version int, policyId string, client *appsec.Mock, numberOfTimes int) {
 			requestBodyResponse := appsec.GetAdvancedSettingsRequestBodyResponse{}
-			err := json.Unmarshal(loadFixtureBytes("testdata/TestResAdvancedSettingsRequestBody/AdvancedSettingsRequestBody.json"), &requestBodyResponse)
+			err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResAdvancedSettingsRequestBody/AdvancedSettingsRequestBody.json"), &requestBodyResponse)
 			require.NoError(t, err)
 
 			client.On("GetAdvancedSettingsRequestBody",
@@ -39,7 +40,7 @@ func TestAkamaiAdvancedSettingsRequestBodyResConfig(t *testing.T) {
 
 		updateRequestBody = func(t *testing.T, updateRequestBody appsec.UpdateAdvancedSettingsRequestBodyRequest, client *appsec.Mock, numberOfTimes int) {
 			updateRequestBodyResponse := appsec.UpdateAdvancedSettingsRequestBodyResponse{}
-			err := json.Unmarshal(loadFixtureBytes("testdata/TestResAdvancedSettingsRequestBody/AdvancedSettingsRequestBody.json"), &updateRequestBodyResponse)
+			err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResAdvancedSettingsRequestBody/AdvancedSettingsRequestBody.json"), &updateRequestBodyResponse)
 			require.NoError(t, err)
 
 			client.On("UpdateAdvancedSettingsRequestBody",
@@ -50,7 +51,7 @@ func TestAkamaiAdvancedSettingsRequestBodyResConfig(t *testing.T) {
 
 		removeRequestBody = func(t *testing.T, updateRequestBody appsec.RemoveAdvancedSettingsRequestBodyRequest, client *appsec.Mock, numberOfTimes int) {
 			removeRequestBodyResponse := appsec.RemoveAdvancedSettingsRequestBodyResponse{}
-			err := json.Unmarshal(loadFixtureBytes("testdata/TestResAdvancedSettingsRequestBody/AdvancedSettingsRequestBody.json"), &removeRequestBodyResponse)
+			err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResAdvancedSettingsRequestBody/AdvancedSettingsRequestBody.json"), &removeRequestBodyResponse)
 			require.NoError(t, err)
 
 			client.On("RemoveAdvancedSettingsRequestBody",
@@ -78,7 +79,7 @@ func TestAkamaiAdvancedSettingsRequestBodyResConfig(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResAdvancedSettingsRequestBody/match_by_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResAdvancedSettingsRequestBody/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_advanced_settings_request_body.test", "id", "43253:"),
 						),
@@ -109,7 +110,7 @@ func TestAkamaiAdvancedSettingsRequestBodyResConfig(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResAdvancedSettingsRequestBody/match_by_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResAdvancedSettingsRequestBody/match_by_id.tf"),
 					},
 					{
 						ImportState:       true,
@@ -142,7 +143,7 @@ func TestAkamaiAdvancedSettingsRequestBodyResConfig(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResAdvancedSettingsRequestBody/update_by_policy_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResAdvancedSettingsRequestBody/update_by_policy_id.tf"),
 					},
 					{
 						ImportState:       true,
@@ -176,7 +177,7 @@ func TestAkamaiAdvancedSettingsRequestBodyResConfig(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResAdvancedSettingsRequestBody/update_by_policy_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResAdvancedSettingsRequestBody/update_by_policy_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_advanced_settings_request_body.policy", "id", "43253:test_policy"),
 						),

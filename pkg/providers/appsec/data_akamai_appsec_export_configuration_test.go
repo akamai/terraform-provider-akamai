@@ -5,7 +5,8 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/appsec"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
@@ -15,7 +16,7 @@ func TestAkamaiExportConfiguration_data_basic(t *testing.T) {
 		client := &appsec.Mock{}
 
 		getExportConfigurationResponse := appsec.GetExportConfigurationResponse{}
-		err := json.Unmarshal(loadFixtureBytes("testdata/TestDSExportConfiguration/ExportConfiguration.json"), &getExportConfigurationResponse)
+		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestDSExportConfiguration/ExportConfiguration.json"), &getExportConfigurationResponse)
 		require.NoError(t, err)
 
 		client.On("GetExportConfiguration",
@@ -31,7 +32,7 @@ func TestAkamaiExportConfiguration_data_basic(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestDSExportConfiguration/match_by_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestDSExportConfiguration/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("data.akamai_appsec_export_configuration.test", "id", "43253"),
 							resource.TestCheckResourceAttr("data.akamai_appsec_export_configuration.evalGroups", "output_text", expectedEvalGroups),

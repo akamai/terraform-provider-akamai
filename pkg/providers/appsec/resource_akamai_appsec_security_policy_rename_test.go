@@ -5,7 +5,8 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/appsec"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
@@ -15,15 +16,15 @@ func TestAkamaiSecurityPolicyRename_res_basic(t *testing.T) {
 		client := &appsec.Mock{}
 
 		updateSecurityPolicyResponse := appsec.UpdateSecurityPolicyResponse{}
-		err := json.Unmarshal(loadFixtureBytes("testdata/TestResSecurityPolicyRename/SecurityPolicyUpdate.json"), &updateSecurityPolicyResponse)
+		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResSecurityPolicyRename/SecurityPolicyUpdate.json"), &updateSecurityPolicyResponse)
 		require.NoError(t, err)
 
 		getSecurityPolicyResponse := appsec.GetSecurityPolicyResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResSecurityPolicyRename/SecurityPolicy.json"), &getSecurityPolicyResponse)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResSecurityPolicyRename/SecurityPolicy.json"), &getSecurityPolicyResponse)
 		require.NoError(t, err)
 
 		config := appsec.GetConfigurationResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 		require.NoError(t, err)
 
 		client.On("GetConfiguration",
@@ -47,13 +48,13 @@ func TestAkamaiSecurityPolicyRename_res_basic(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResSecurityPolicyRename/match_by_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResSecurityPolicyRename/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_security_policy_rename.test", "id", "43253:PLE_114049"),
 						),
 					},
 					{
-						Config: loadFixtureString("testdata/TestResSecurityPolicyRename/update_by_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResSecurityPolicyRename/update_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_security_policy_rename.test", "id", "43253:PLE_114049"),
 						),

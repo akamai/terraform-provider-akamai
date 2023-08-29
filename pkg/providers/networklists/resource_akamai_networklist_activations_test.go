@@ -5,7 +5,8 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/networklists"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
@@ -15,15 +16,15 @@ func TestAccAkamaiActivations_res_basic(t *testing.T) {
 		client := &networklists.Mock{}
 
 		cu := networklists.RemoveActivationsResponse{}
-		err := json.Unmarshal(loadFixtureBytes("testdata/TestResActivations/ActivationsDelete.json"), &cu)
+		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResActivations/ActivationsDelete.json"), &cu)
 		require.NoError(t, err)
 
 		ga := networklists.GetActivationsResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResActivations/Activations.json"), &ga)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResActivations/Activations.json"), &ga)
 		require.NoError(t, err)
 
 		cr := networklists.CreateActivationsResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResActivations/Activations.json"), &cr)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResActivations/Activations.json"), &cr)
 		require.NoError(t, err)
 
 		client.On("GetActivations",
@@ -47,7 +48,7 @@ func TestAccAkamaiActivations_res_basic(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResActivations/match_by_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResActivations/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_networklist_activations.test", "id", "547694"),
 							resource.TestCheckResourceAttr("akamai_networklist_activations.test", "name", "Network list test"),
@@ -57,7 +58,7 @@ func TestAccAkamaiActivations_res_basic(t *testing.T) {
 						),
 					},
 					{
-						Config: loadFixtureString("testdata/TestResActivations/update_by_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResActivations/update_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_networklist_activations.test", "id", "547694"),
 							resource.TestCheckResourceAttr("akamai_networklist_activations.test", "name", "Network list test"),

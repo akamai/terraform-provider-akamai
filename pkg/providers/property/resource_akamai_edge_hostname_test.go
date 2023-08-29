@@ -8,14 +8,15 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/hapi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 )
 
 func TestResourceEdgeHostname(t *testing.T) {
@@ -99,7 +100,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString(fmt.Sprintf("%s/%s", testDir, "new_edgesuite_net.tf")),
+					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/%s", testDir, "new_edgesuite_net.tf")),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "id", "eh_123"),
 						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "ip_behavior", "IPV6_COMPLIANCE"),
@@ -184,7 +185,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString(fmt.Sprintf("%s/%s", testDir, "new_edgekey_net.tf")),
+					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/%s", testDir, "new_edgekey_net.tf")),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "id", "eh_123"),
 						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "ip_behavior", "IPV6_PERFORMANCE"),
@@ -267,7 +268,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString(fmt.Sprintf("%s/%s", testDir, "new_akamaized_net.tf")),
+					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/%s", testDir, "new_akamaized_net.tf")),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "id", "eh_123"),
 						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "ip_behavior", "IPV6_COMPLIANCE"),
@@ -363,14 +364,14 @@ func TestResourceEdgeHostname(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString(fmt.Sprintf("%s/%s", testDir, "new.tf")),
+					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/%s", testDir, "new.tf")),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "id", "eh_123"),
 						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "ip_behavior", "IPV4"),
 						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "contract_id", "ctr_2"),
 						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "group_id", "grp_2"),
 						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "edge_hostname", "test.aka.edgesuite.net"),
-						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "use_cases", loadFixtureString(fmt.Sprintf("%s/use_cases/use_cases_new.json", testDir))),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "use_cases", testutils.LoadFixtureString(t, fmt.Sprintf("%s/use_cases/use_cases_new.json", testDir))),
 						resource.TestCheckOutput("edge_hostname", "test.aka.edgesuite.net"),
 					),
 				},
@@ -404,7 +405,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString(fmt.Sprintf("%s/%s", testDir, "new_akamaized_net.tf")),
+					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/%s", testDir, "new_akamaized_net.tf")),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "id", "eh_123"),
 						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "contract_id", "ctr_2"),
@@ -511,7 +512,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString(fmt.Sprintf("%s/%s", testDir, "new_akamaized_ipv4.tf")),
+					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/%s", testDir, "new_akamaized_ipv4.tf")),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "id", "eh_123"),
 						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "contract_id", "ctr_2"),
@@ -521,7 +522,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 					),
 				},
 				{
-					Config: loadFixtureString(fmt.Sprintf("%s/%s", testDir, "new_akamaized_update_ip_behavior.tf")),
+					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/%s", testDir, "new_akamaized_update_ip_behavior.tf")),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "id", "eh_123"),
 						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "contract_id", "ctr_2"),
@@ -602,7 +603,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString(fmt.Sprintf("%s/%s", testDir, "new_akamaized_ipv4.tf")),
+					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/%s", testDir, "new_akamaized_ipv4.tf")),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "id", "eh_123"),
 						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "contract_id", "ctr_2"),
@@ -612,7 +613,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 					),
 				},
 				{
-					Config:      loadFixtureString(fmt.Sprintf("%s/%s", testDir, "new_akamaized_error_update_ipv6_performance.tf")),
+					Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/%s", testDir, "new_akamaized_error_update_ipv6_performance.tf")),
 					ExpectError: regexp.MustCompile("invalid IP version behavior: valid values are IPV4 and IPV6_IPV4_DUALSTACK; IPV6 and other values aren't currently supported"),
 				},
 			},
@@ -673,7 +674,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString(fmt.Sprintf("%s/%s", testDir, "new_akamaized_ipv4.tf")),
+					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/%s", testDir, "new_akamaized_ipv4.tf")),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "id", "eh_123"),
 						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "contract_id", "ctr_2"),
@@ -683,7 +684,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 					),
 				},
 				{
-					Config:      loadFixtureString(fmt.Sprintf("%s/%s", testDir, "new_akamaized_update_ip_behavior_no_email.tf")),
+					Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/%s", testDir, "new_akamaized_update_ip_behavior_no_email.tf")),
 					ExpectError: regexp.MustCompile("\"status_update_email\" is a required parameter to update an edge hostname"),
 				},
 			},
@@ -744,7 +745,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString(fmt.Sprintf("%s/%s", testDir, "new_akamaized_ipv4.tf")),
+					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/%s", testDir, "new_akamaized_ipv4.tf")),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "id", "eh_123"),
 						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "contract_id", "ctr_2"),
@@ -754,7 +755,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 					),
 				},
 				{
-					Config:      loadFixtureString(fmt.Sprintf("%s/%s", testDir, "new_akamaized_update_ip_behavior_empty_email.tf")),
+					Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/%s", testDir, "new_akamaized_update_ip_behavior_empty_email.tf")),
 					ExpectError: regexp.MustCompile("\"status_update_email\" is a required parameter to update an edge hostname"),
 				},
 			},
@@ -768,7 +769,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config:      loadFixtureString(fmt.Sprintf("%s/%s", testDir, "new_akamaized_net.tf")),
+					Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/%s", testDir, "new_akamaized_net.tf")),
 					ExpectError: regexp.MustCompile("oops"),
 				},
 			},
@@ -782,7 +783,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config:      loadFixtureString(fmt.Sprintf("%s/%s", testDir, "missing_certificate.tf")),
+					Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/%s", testDir, "missing_certificate.tf")),
 					ExpectError: regexp.MustCompile("a certificate enrollment ID is required for Enhanced TLS edge hostnames with 'edgekey.net' suffix"),
 				},
 			},
@@ -826,7 +827,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config:      loadFixtureString(fmt.Sprintf("%s/%s", testDir, "new_akamaized_net.tf")),
+					Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/%s", testDir, "new_akamaized_net.tf")),
 					ExpectError: regexp.MustCompile("oops"),
 				},
 			},
@@ -872,7 +873,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config:      loadFixtureString(fmt.Sprintf("%s/%s", testDir, "new_akamaized_net.tf")),
+					Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/%s", testDir, "new_akamaized_net.tf")),
 					ExpectError: regexp.MustCompile("unable to find edge hostname"),
 				},
 			},
@@ -881,7 +882,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 			init: func(mp *papi.Mock, mh *hapi.Mock) {},
 			steps: []resource.TestStep{
 				{
-					Config:      loadFixtureString(fmt.Sprintf("%s/%s", testDir, "new_akamaized_net_without_product_id.tf")),
+					Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/%s", testDir, "new_akamaized_net_without_product_id.tf")),
 					ExpectError: regexp.MustCompile("`product_id` must be specified for creation"),
 				},
 			},
@@ -981,10 +982,10 @@ func TestResourceEdgeHostnames_WithImport(t *testing.T) {
 				Steps: []resource.TestStep{
 					{
 						// please note that import does not support product id, that why we only define it in config for creation
-						Config: loadFixtureString("testdata/TestResourceEdgeHostname/creation_before_import_edgehostname.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResourceEdgeHostname/creation_before_import_edgehostname.tf"),
 					},
 					{
-						Config:      loadFixtureString("testdata/TestResourceEdgeHostname/import_edgehostname.tf"),
+						Config:      testutils.LoadFixtureString(t, "testdata/TestResourceEdgeHostname/import_edgehostname.tf"),
 						ImportState: true,
 						ImportStateCheck: func(s []*terraform.InstanceState) error {
 							assert.Len(t, s, 1)
@@ -1206,8 +1207,8 @@ func TestSuppressEdgeHostnameUseCases(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			oldFixture := loadFixtureString(fmt.Sprintf("%s/%s", testDir, test.oldPath))
-			newFixture := loadFixtureString(fmt.Sprintf("%s/%s", testDir, test.newPath))
+			oldFixture := testutils.LoadFixtureString(t, fmt.Sprintf("%s/%s", testDir, test.oldPath))
+			newFixture := testutils.LoadFixtureString(t, fmt.Sprintf("%s/%s", testDir, test.newPath))
 
 			assert.Equal(t, test.expected, suppressEdgeHostnameUseCases("", oldFixture, newFixture, nil))
 		})
@@ -1237,7 +1238,7 @@ func TestConvertingUseCases2JSON(t *testing.T) {
 					UseCase: "Download_Mode",
 				},
 			},
-			expected: loadFixtureBytes(fmt.Sprintf("%s/%s", testDir, "use_cases1.json")),
+			expected: testutils.LoadFixtureBytes(t, fmt.Sprintf("%s/%s", testDir, "use_cases1.json")),
 		},
 	}
 

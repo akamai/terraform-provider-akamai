@@ -8,8 +8,9 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cps"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/tools"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/jinzhu/copier"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -278,7 +279,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResDVEnrollment/lifecycle/create_enrollment.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/lifecycle/create_enrollment.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "contract_id", "ctr_1"),
 							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "certificate_type", "san"),
@@ -290,7 +291,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 						),
 					},
 					{
-						Config: loadFixtureString("testdata/TestResDVEnrollment/lifecycle/update_enrollment.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/lifecycle/update_enrollment.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "contract_id", "ctr_1"),
 							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "certificate_type", "san"),
@@ -477,7 +478,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResDVEnrollment/empty_sans/create_enrollment.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/empty_sans/create_enrollment.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "contract_id", "ctr_1"),
 							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "certificate_type", "san"),
@@ -687,7 +688,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResDVEnrollment/client_mutual_auth/create_enrollment.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/client_mutual_auth/create_enrollment.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "contract_id", "ctr_1"),
 							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "network_configuration.0.client_mutual_authentication.0.set_id", "12345"),
@@ -878,7 +879,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResDVEnrollment/lifecycle_cn_in_sans/create_enrollment.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/lifecycle_cn_in_sans/create_enrollment.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "contract_id", "ctr_1"),
 							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "certificate_type", "san"),
@@ -890,7 +891,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 						),
 					},
 					{
-						Config: loadFixtureString("testdata/TestResDVEnrollment/lifecycle_cn_in_sans/create_enrollment.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/lifecycle_cn_in_sans/create_enrollment.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "contract_id", "ctr_1"),
 							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "certificate_type", "san"),
@@ -1036,7 +1037,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResDVEnrollment/lifecycle/create_enrollment.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/lifecycle/create_enrollment.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "contract_id", "ctr_1"),
 							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "certificate_type", "san"),
@@ -1249,7 +1250,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResDVEnrollment/no_acknowledge_warnings/create_enrollment.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/no_acknowledge_warnings/create_enrollment.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "contract_id", "ctr_1"),
 							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "certificate_type", "san"),
@@ -1258,7 +1259,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 						),
 					},
 					{
-						Config: loadFixtureString("testdata/TestResDVEnrollment/acknowledge_warnings/create_enrollment.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/acknowledge_warnings/create_enrollment.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "contract_id", "ctr_1"),
 							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "certificate_type", "san"),
@@ -1438,7 +1439,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResDVEnrollment/acknowledge_warnings/create_enrollment.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/acknowledge_warnings/create_enrollment.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "contract_id", "ctr_1"),
 							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "certificate_type", "san"),
@@ -1624,7 +1625,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResDVEnrollment/allow_duplicate_cn/create_enrollment.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/allow_duplicate_cn/create_enrollment.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "contract_id", "ctr_1"),
 							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "certificate_type", "san"),
@@ -1760,7 +1761,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config:      loadFixtureString("testdata/TestResDVEnrollment/no_acknowledge_warnings/create_enrollment.tf"),
+						Config:      testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/no_acknowledge_warnings/create_enrollment.tf"),
 						ExpectError: regexp.MustCompile(`enrollment pre-verification returned warnings and the enrollment cannot be validated. Please fix the issues or set acknowledge_pre_validation_warnings flag to true then run 'terraform apply' again: some warning`),
 					},
 				},
@@ -1843,7 +1844,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config:      loadFixtureString("testdata/TestResDVEnrollment/no_acknowledge_warnings/create_enrollment.tf"),
+						Config:      testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/no_acknowledge_warnings/create_enrollment.tf"),
 						ExpectError: regexp.MustCompile(`error creating enrollment`),
 					},
 				},
@@ -1996,7 +1997,7 @@ func TestResourceDVEnrollmentImport(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResDVEnrollment/import/import_enrollment.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/import/import_enrollment.tf"),
 						ImportStateCheck: func(s []*terraform.InstanceState) error {
 							assert.Len(t, s, 1)
 							rs := s[0]
@@ -2006,7 +2007,7 @@ func TestResourceDVEnrollmentImport(t *testing.T) {
 						},
 					},
 					{
-						Config:            loadFixtureString("testdata/TestResDVEnrollment/import/import_enrollment.tf"),
+						Config:            testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/import/import_enrollment.tf"),
 						ImportState:       true,
 						ImportStateId:     id,
 						ResourceName:      "akamai_cps_dv_enrollment.dv",
@@ -2033,7 +2034,7 @@ func TestResourceDVEnrollmentImport(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config:        loadFixtureString("testdata/TestResDVEnrollment/import/import_enrollment.tf"),
+						Config:        testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/import/import_enrollment.tf"),
 						ImportState:   true,
 						ImportStateId: id,
 						ResourceName:  "akamai_cps_dv_enrollment.dv",

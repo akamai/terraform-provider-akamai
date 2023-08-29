@@ -6,7 +6,8 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/iam"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -72,11 +73,11 @@ func TestResourceIAMBlockedUserProperties(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("./testdata/TestResourceIAMBlockedUserProperties/create.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceIAMBlockedUserProperties/create.tf"),
 					Check:  checkAttributes(propertiesCreate),
 				},
 				{
-					Config: loadFixtureString("./testdata/TestResourceIAMBlockedUserProperties/update.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceIAMBlockedUserProperties/update.tf"),
 					Check:  checkAttributes(propertiesUpdate),
 				},
 			},
@@ -102,11 +103,11 @@ func TestResourceIAMBlockedUserProperties(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("./testdata/TestResourceIAMBlockedUserProperties/create.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceIAMBlockedUserProperties/create.tf"),
 					Check:  checkAttributes(propertiesCreate),
 				},
 				{
-					Config: loadFixtureString("./testdata/TestResourceIAMBlockedUserProperties/update-group-id.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceIAMBlockedUserProperties/update-group-id.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_iam_blocked_user_properties.test", "id", "test_identity_id:23456"),
 						resource.TestCheckResourceAttr("akamai_iam_blocked_user_properties.test", "identity_id", identityID),
@@ -123,7 +124,7 @@ func TestResourceIAMBlockedUserProperties(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config:      loadFixtureString("./testdata/TestResourceIAMBlockedUserProperties/create.tf"),
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestResourceIAMBlockedUserProperties/create.tf"),
 					ExpectError: regexp.MustCompile("there are already blocked properties on server, please import resource first"),
 				},
 			},
@@ -132,7 +133,7 @@ func TestResourceIAMBlockedUserProperties(t *testing.T) {
 			init: func(m *iam.Mock) {},
 			steps: []resource.TestStep{
 				{
-					Config:      loadFixtureString("./testdata/TestResourceIAMBlockedUserProperties/create-empty-properties.tf"),
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestResourceIAMBlockedUserProperties/create-empty-properties.tf"),
 					ExpectError: regexp.MustCompile("Not enough list items"),
 				},
 			},
@@ -152,7 +153,7 @@ func TestResourceIAMBlockedUserProperties(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("./testdata/TestResourceIAMBlockedUserProperties/create.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceIAMBlockedUserProperties/create.tf"),
 					Check:  checkAttributes(propertiesCreate),
 				},
 				{

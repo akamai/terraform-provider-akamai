@@ -5,7 +5,8 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/appsec"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
@@ -15,7 +16,7 @@ func TestAkamaiBypassNetworkLists_res_basic(t *testing.T) {
 		client := &appsec.Mock{}
 
 		config := appsec.GetConfigurationResponse{}
-		err := json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 		require.NoError(t, err)
 
 		client.On("GetConfiguration",
@@ -24,15 +25,15 @@ func TestAkamaiBypassNetworkLists_res_basic(t *testing.T) {
 		).Return(&config, nil)
 
 		updateWAPBypassNetworkListsResponse := appsec.UpdateWAPBypassNetworkListsResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResBypassNetworkLists/BypassNetworkLists.json"), &updateWAPBypassNetworkListsResponse)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResBypassNetworkLists/BypassNetworkLists.json"), &updateWAPBypassNetworkListsResponse)
 		require.NoError(t, err)
 
 		getWAPBypassNetworkListsResponse := appsec.GetWAPBypassNetworkListsResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResBypassNetworkLists/BypassNetworkLists.json"), &getWAPBypassNetworkListsResponse)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResBypassNetworkLists/BypassNetworkLists.json"), &getWAPBypassNetworkListsResponse)
 		require.NoError(t, err)
 
 		removeWAPBypassNetworkListsResponse := appsec.RemoveWAPBypassNetworkListsResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResBypassNetworkLists/RemoveNetworkLists.json"), &removeWAPBypassNetworkListsResponse)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResBypassNetworkLists/RemoveNetworkLists.json"), &removeWAPBypassNetworkListsResponse)
 		require.NoError(t, err)
 
 		client.On("GetWAPBypassNetworkLists",
@@ -56,7 +57,7 @@ func TestAkamaiBypassNetworkLists_res_basic(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResBypassNetworkLists/match_by_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResBypassNetworkLists/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_bypass_network_lists.test", "id", "43253"),
 						),

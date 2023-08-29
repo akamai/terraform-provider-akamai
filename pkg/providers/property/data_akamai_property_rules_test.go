@@ -5,10 +5,11 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 )
 
 func TestDSPropertyRulesRead(t *testing.T) {
@@ -53,7 +54,7 @@ func TestDSPropertyRulesRead(t *testing.T) {
 				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestDSPropertyRules/ds_property_rules.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestDSPropertyRules/ds_property_rules.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("data.akamai_property_rules.rules", "id", "prp_2"),
 							resource.TestCheckResourceAttr("data.akamai_property_rules.rules", "property_id", "prp_2"),
@@ -129,7 +130,7 @@ func TestDSPropertyRulesRead(t *testing.T) {
 						ProtoV5ProviderFactories: testAccProviders,
 						Steps: []resource.TestStep{
 							{
-								Config: loadFixtureString(test.configFile),
+								Config: testutils.LoadFixtureString(t, test.configFile),
 								Check: resource.ComposeAggregateTestCheckFunc(
 									resource.TestCheckResourceAttr("data.akamai_property_rules.rules", "rule_format", test.expectedRuleFormat),
 								),
@@ -159,7 +160,7 @@ func TestDSPropertyRulesRead(t *testing.T) {
 				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config:      loadFixtureString("testdata/TestDSPropertyRules/with_versioned_rule_format.tf"),
+						Config:      testutils.LoadFixtureString(t, "testdata/TestDSPropertyRules/with_versioned_rule_format.tf"),
 						ExpectError: regexp.MustCompile("given 'rule_format' is not supported: \"v2015-08-17\""),
 					},
 				},
@@ -178,7 +179,7 @@ func TestDSPropertyRulesRead(t *testing.T) {
 				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config:      loadFixtureString("testdata/TestDSPropertyRules/with_versioned_rule_format.tf"),
+						Config:      testutils.LoadFixtureString(t, "testdata/TestDSPropertyRules/with_versioned_rule_format.tf"),
 						ExpectError: regexp.MustCompile("oops"),
 					},
 				},
@@ -193,7 +194,7 @@ func TestDSPropertyRulesRead(t *testing.T) {
 				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config:      loadFixtureString("testdata/TestDSPropertyRules/missing_group_id.tf"),
+						Config:      testutils.LoadFixtureString(t, "testdata/TestDSPropertyRules/missing_group_id.tf"),
 						ExpectError: regexp.MustCompile("\"contract_id\": all of `contract_id,group_id` must be specified"),
 					},
 				},
@@ -208,7 +209,7 @@ func TestDSPropertyRulesRead(t *testing.T) {
 				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config:      loadFixtureString("testdata/TestDSPropertyRules/missing_contract_id.tf"),
+						Config:      testutils.LoadFixtureString(t, "testdata/TestDSPropertyRules/missing_contract_id.tf"),
 						ExpectError: regexp.MustCompile("\"group_id\": all of `contract_id,group_id` must be specified"),
 					},
 				},
@@ -223,7 +224,7 @@ func TestDSPropertyRulesRead(t *testing.T) {
 				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config:      loadFixtureString("testdata/TestDSPropertyRules/empty_contract_id.tf"),
+						Config:      testutils.LoadFixtureString(t, "testdata/TestDSPropertyRules/empty_contract_id.tf"),
 						ExpectError: regexp.MustCompile(`provided value cannot be blank((.|\n)*)contract_id = ""`),
 					},
 				},
@@ -238,7 +239,7 @@ func TestDSPropertyRulesRead(t *testing.T) {
 				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config:      loadFixtureString("testdata/TestDSPropertyRules/empty_group_id.tf"),
+						Config:      testutils.LoadFixtureString(t, "testdata/TestDSPropertyRules/empty_group_id.tf"),
 						ExpectError: regexp.MustCompile(`provided value cannot be blank((.|\n)*)group_id += ""`),
 					},
 				},
@@ -261,7 +262,7 @@ func TestDSPropertyRulesRead(t *testing.T) {
 				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config:      loadFixtureString("testdata/TestDSPropertyRules/ds_property_rules.tf"),
+						Config:      testutils.LoadFixtureString(t, "testdata/TestDSPropertyRules/ds_property_rules.tf"),
 						ExpectError: regexp.MustCompile("fetching latest version"),
 					},
 				},
@@ -298,7 +299,7 @@ func TestDSPropertyRulesRead(t *testing.T) {
 				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config:      loadFixtureString("testdata/TestDSPropertyRules/ds_property_rules.tf"),
+						Config:      testutils.LoadFixtureString(t, "testdata/TestDSPropertyRules/ds_property_rules.tf"),
 						ExpectError: regexp.MustCompile("fetching rule tree"),
 					},
 				},
@@ -312,7 +313,7 @@ func TestDSPropertyRulesRead_Fail(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
 		ProtoV5ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{{
-			Config:      loadFixtureString("testdata/TestDSPropertyRules/always_fails.tf"),
+			Config:      testutils.LoadFixtureString(t, "testdata/TestDSPropertyRules/always_fails.tf"),
 			ExpectError: regexp.MustCompile(`Error: provided value cannot be blank`),
 		}},
 	})

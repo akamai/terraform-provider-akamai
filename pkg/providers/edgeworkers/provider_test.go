@@ -1,8 +1,6 @@
 package edgeworkers
 
 import (
-	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"sync"
@@ -50,18 +48,4 @@ func useClient(client edgeworkers.Edgeworkers, f func()) {
 	}()
 
 	f()
-}
-
-// loadFixtureBytes returns the entire contents of the given file as a byte slice
-func loadFixtureBytes(path string) []byte {
-	contents, err := ioutil.ReadFile(path)
-	if err != nil {
-		panic(err)
-	}
-	return contents
-}
-
-// loadFixtureString returns the entire contents of the given file as a string
-func loadFixtureString(format string, args ...interface{}) string {
-	return string(loadFixtureBytes(fmt.Sprintf(format, args...)))
 }

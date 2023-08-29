@@ -4,9 +4,10 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 )
 
 func Test_DSReadContract(t *testing.T) {
@@ -33,7 +34,7 @@ func Test_DSReadContract(t *testing.T) {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{{
-					Config:      loadFixtureString("testdata/TestDSContractRequired/ds_contract_with_group_name_and_group.tf"),
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDSContractRequired/ds_contract_with_group_name_and_group.tf"),
 					ExpectError: regexp.MustCompile("only one of `group_id,group_name` can be specified"),
 				}},
 			})
@@ -63,7 +64,7 @@ func Test_DSReadContract(t *testing.T) {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{{
-					Config: loadFixtureString("testdata/TestDSContractRequired/ds_contract_with_group_id.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestDSContractRequired/ds_contract_with_group_id.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("data.akamai_contract.akacontract", "id", "ctr_1234"),
 						resource.TestCheckResourceAttr("data.akamai_contract.akacontract", "group_id", "grp_12345"),
@@ -97,7 +98,7 @@ func Test_DSReadContract(t *testing.T) {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{{
-					Config: loadFixtureString("testdata/TestDSContractRequired/ds_contract_with_group_id_without_prefix.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestDSContractRequired/ds_contract_with_group_id_without_prefix.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("data.akamai_contract.akacontract", "id", "ctr_1234"),
 						resource.TestCheckResourceAttr("data.akamai_contract.akacontract", "group_id", "grp_12345"),
@@ -131,7 +132,7 @@ func Test_DSReadContract(t *testing.T) {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{{
-					Config: loadFixtureString("testdata/TestDSContractRequired/ds_contract_with_group_name.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestDSContractRequired/ds_contract_with_group_name.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("data.akamai_contract.akacontract", "id", "ctr_1234"),
 						resource.TestCheckResourceAttr("data.akamai_contract.akacontract", "group_id", "grp_12345"),

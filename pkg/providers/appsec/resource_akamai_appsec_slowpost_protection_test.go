@@ -5,7 +5,8 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/appsec"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
@@ -15,23 +16,23 @@ func TestAkamaiSlowPostProtection_res_basic(t *testing.T) {
 		client := &appsec.Mock{}
 
 		config := appsec.GetConfigurationResponse{}
-		err := json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 		require.NoError(t, err)
 
 		updateResponseAllProtectionsFalse := appsec.UpdateSlowPostProtectionResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResSlowPostProtection/PolicyProtections.json"), &updateResponseAllProtectionsFalse)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResSlowPostProtection/PolicyProtections.json"), &updateResponseAllProtectionsFalse)
 		require.NoError(t, err)
 
 		getResponseAllProtectionsFalse := appsec.GetSlowPostProtectionResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResSlowPostProtection/PolicyProtections.json"), &getResponseAllProtectionsFalse)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResSlowPostProtection/PolicyProtections.json"), &getResponseAllProtectionsFalse)
 		require.NoError(t, err)
 
 		updateResponseOneProtectionTrue := appsec.UpdateSlowPostProtectionResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResSlowPostProtection/UpdatedPolicyProtections.json"), &updateResponseOneProtectionTrue)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResSlowPostProtection/UpdatedPolicyProtections.json"), &updateResponseOneProtectionTrue)
 		require.NoError(t, err)
 
 		getResponseOneProtectionTrue := appsec.GetSlowPostProtectionResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResSlowPostProtection/UpdatedPolicyProtections.json"), &getResponseOneProtectionTrue)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResSlowPostProtection/UpdatedPolicyProtections.json"), &getResponseOneProtectionTrue)
 		require.NoError(t, err)
 
 		// Mock each call to the EdgeGrid library. With the exception of GetConfiguration, each call
@@ -71,7 +72,7 @@ func TestAkamaiSlowPostProtection_res_basic(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResSlowPostProtection/match_by_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResSlowPostProtection/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_slowpost_protection.test", "id", "43253:AAAA_81230"),
 							resource.TestCheckResourceAttr("akamai_appsec_slowpost_protection.test", "enabled", "false"),

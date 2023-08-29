@@ -5,7 +5,8 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/appsec"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
@@ -15,11 +16,11 @@ func TestAkamaiEvalRules_data_basic(t *testing.T) {
 		client := &appsec.Mock{}
 
 		getEvalRulesResponse := appsec.GetEvalRulesResponse{}
-		err := json.Unmarshal(loadFixtureBytes("testdata/TestDSEvalRules/EvalRules.json"), &getEvalRulesResponse)
+		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestDSEvalRules/EvalRules.json"), &getEvalRulesResponse)
 		require.NoError(t, err)
 
 		configs := appsec.GetConfigurationResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &configs)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/LatestConfiguration.json"), &configs)
 		require.NoError(t, err)
 
 		client.On("GetEvalRules",
@@ -38,7 +39,7 @@ func TestAkamaiEvalRules_data_basic(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestDSEvalRules/match_by_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestDSEvalRules/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("data.akamai_appsec_eval_rules.test", "id", "43253"),
 						),

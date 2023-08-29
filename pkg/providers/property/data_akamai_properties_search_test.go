@@ -4,10 +4,11 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 )
 
 func TestDSPropertiesSearch(t *testing.T) {
@@ -56,7 +57,7 @@ func TestDSPropertiesSearch(t *testing.T) {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{{
-					Config: loadFixtureString("testdata/TestDSPropertiesSearch/match_by_hostname.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestDSPropertiesSearch/match_by_hostname.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("data.akamai_properties_search.test", "id", "hostname:www.example.com"),
 						resource.TestCheckResourceAttr("data.akamai_properties_search.test", "properties.#", "2"),
@@ -97,7 +98,7 @@ func TestDSPropertiesSearch(t *testing.T) {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{{
-					Config:      loadFixtureString("testdata/TestDSPropertiesSearch/match_by_hostname.tf"),
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDSPropertiesSearch/match_by_hostname.tf"),
 					ExpectError: regexp.MustCompile("searching for properties"),
 				}},
 			})

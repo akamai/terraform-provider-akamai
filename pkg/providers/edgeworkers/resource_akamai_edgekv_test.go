@@ -9,8 +9,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 
 	"github.com/stretchr/testify/mock"
@@ -188,7 +189,7 @@ func TestResourceEdgeKV(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("./testdata/TestResourceEdgeWorkersEdgeKV/basic.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceEdgeWorkersEdgeKV/basic.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edgekv.test", "id", id),
 						resource.TestCheckResourceAttr("akamai_edgekv.test", "namespace_name", namespaceName),
@@ -212,7 +213,7 @@ func TestResourceEdgeKV(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("./testdata/TestResourceEdgeWorkersEdgeKV/basic_retention_0.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceEdgeWorkersEdgeKV/basic_retention_0.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edgekv.test", "id", id),
 						resource.TestCheckResourceAttr("akamai_edgekv.test", "namespace_name", namespaceName),
@@ -237,7 +238,7 @@ func TestResourceEdgeKV(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("./testdata/TestResourceEdgeWorkersEdgeKV/ekv_with_data.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceEdgeWorkersEdgeKV/ekv_with_data.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edgekv.test", "id", id),
 						resource.TestCheckResourceAttr("akamai_edgekv.test", "namespace_name", namespaceName),
@@ -261,7 +262,7 @@ func TestResourceEdgeKV(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config:      loadFixtureString("./testdata/TestResourceEdgeWorkersEdgeKV/ekv_with_data.tf"),
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestResourceEdgeWorkersEdgeKV/ekv_with_data.tf"),
 					ExpectError: regexp.MustCompile("The requested namespace does not exist"),
 				},
 			},
@@ -274,7 +275,7 @@ func TestResourceEdgeKV(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config:      loadFixtureString("./testdata/TestResourceEdgeWorkersEdgeKV/basic.tf"),
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestResourceEdgeWorkersEdgeKV/basic.tf"),
 					ExpectError: regexp.MustCompile(anError),
 				},
 			},
@@ -288,7 +289,7 @@ func TestResourceEdgeKV(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config:      loadFixtureString("./testdata/TestResourceEdgeWorkersEdgeKV/basic.tf"),
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestResourceEdgeWorkersEdgeKV/basic.tf"),
 					ExpectError: regexp.MustCompile("there was a timeout initializing"),
 				},
 			},
@@ -301,7 +302,7 @@ func TestResourceEdgeKV(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config:      loadFixtureString("./testdata/TestResourceEdgeWorkersEdgeKV/basic.tf"),
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestResourceEdgeWorkersEdgeKV/basic.tf"),
 					ExpectError: regexp.MustCompile(anError),
 				},
 			},
@@ -316,7 +317,7 @@ func TestResourceEdgeKV(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config:      loadFixtureString("./testdata/TestResourceEdgeWorkersEdgeKV/basic.tf"),
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestResourceEdgeWorkersEdgeKV/basic.tf"),
 					ExpectError: regexp.MustCompile(anError),
 				},
 			},
@@ -331,7 +332,7 @@ func TestResourceEdgeKV(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("./testdata/TestResourceEdgeWorkersEdgeKV/basic.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceEdgeWorkersEdgeKV/basic.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edgekv.test", "id", id),
 						resource.TestCheckResourceAttr("akamai_edgekv.test", "namespace_name", namespaceName),
@@ -341,7 +342,7 @@ func TestResourceEdgeKV(t *testing.T) {
 					),
 				},
 				{
-					Config: loadFixtureString("./testdata/TestResourceEdgeWorkersEdgeKV/basic.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceEdgeWorkersEdgeKV/basic.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edgekv.test", "id", id),
 						resource.TestCheckResourceAttr("akamai_edgekv.test", "namespace_name", namespaceName),
@@ -362,7 +363,7 @@ func TestResourceEdgeKV(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("./testdata/TestResourceEdgeWorkersEdgeKV/basic.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceEdgeWorkersEdgeKV/basic.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edgekv.test", "id", id),
 						resource.TestCheckResourceAttr("akamai_edgekv.test", "namespace_name", namespaceName),
@@ -372,7 +373,7 @@ func TestResourceEdgeKV(t *testing.T) {
 					),
 				},
 				{
-					Config: loadFixtureString("./testdata/TestResourceEdgeWorkersEdgeKV/update_diff_group_id.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceEdgeWorkersEdgeKV/update_diff_group_id.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edgekv.test", "id", id),
 						resource.TestCheckResourceAttr("akamai_edgekv.test", "namespace_name", namespaceName),
@@ -397,7 +398,7 @@ func TestResourceEdgeKV(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("./testdata/TestResourceEdgeWorkersEdgeKV/basic.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceEdgeWorkersEdgeKV/basic.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edgekv.test", "id", id),
 						resource.TestCheckResourceAttr("akamai_edgekv.test", "namespace_name", namespaceName),
@@ -407,7 +408,7 @@ func TestResourceEdgeKV(t *testing.T) {
 					),
 				},
 				{
-					Config: loadFixtureString("./testdata/TestResourceEdgeWorkersEdgeKV/update_retention.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceEdgeWorkersEdgeKV/update_retention.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edgekv.test", "id", id),
 						resource.TestCheckResourceAttr("akamai_edgekv.test", "namespace_name", namespaceName),
@@ -428,7 +429,7 @@ func TestResourceEdgeKV(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("./testdata/TestResourceEdgeWorkersEdgeKV/basic.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceEdgeWorkersEdgeKV/basic.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edgekv.test", "id", id),
 						resource.TestCheckResourceAttr("akamai_edgekv.test", "namespace_name", namespaceName),
@@ -438,7 +439,7 @@ func TestResourceEdgeKV(t *testing.T) {
 					),
 				},
 				{
-					Config:      loadFixtureString("./testdata/TestResourceEdgeWorkersEdgeKV/update_data.tf"),
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestResourceEdgeWorkersEdgeKV/update_data.tf"),
 					ExpectError: regexp.MustCompile("the field \"initial_data\" cannot be updated after resource creation"),
 				},
 			},
@@ -457,7 +458,7 @@ func TestResourceEdgeKV(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("./testdata/TestResourceEdgeWorkersEdgeKV/basic.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceEdgeWorkersEdgeKV/basic.tf"),
 				},
 				{
 					ImportState:       true,
@@ -479,7 +480,7 @@ func TestResourceEdgeKV(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("./testdata/TestResourceEdgeWorkersEdgeKV/basic.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceEdgeWorkersEdgeKV/basic.tf"),
 				},
 				{
 					ImportState:       true,

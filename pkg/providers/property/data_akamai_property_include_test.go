@@ -6,10 +6,11 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 	"github.com/stretchr/testify/mock"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
 func TestDataPropertyInclude(t *testing.T) {
@@ -138,7 +139,7 @@ func TestDataPropertyInclude(t *testing.T) {
 					IsUnitTest:               true,
 					ProtoV5ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{{
-						Config:      loadFixtureString(fmt.Sprintf("testdata/TestDataPropertyInclude/%s", test.givenTF)),
+						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("testdata/TestDataPropertyInclude/%s", test.givenTF)),
 						Check:       resource.ComposeAggregateTestCheckFunc(checkFuncs...),
 						ExpectError: test.expectError,
 					}},

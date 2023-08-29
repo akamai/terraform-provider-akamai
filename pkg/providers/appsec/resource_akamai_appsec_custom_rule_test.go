@@ -7,7 +7,8 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/appsec"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
@@ -17,27 +18,27 @@ func TestAkamaiCustomRule_res_basic(t *testing.T) {
 		client := &appsec.Mock{}
 
 		createCustomRuleResponse := appsec.CreateCustomRuleResponse{}
-		err := json.Unmarshal(loadFixtureBytes("testdata/TestResCustomRule/CustomRule.json"), &createCustomRuleResponse)
+		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResCustomRule/CustomRule.json"), &createCustomRuleResponse)
 		require.NoError(t, err)
 
 		getCustomRuleResponse := appsec.GetCustomRuleResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResCustomRule/CustomRule.json"), &getCustomRuleResponse)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResCustomRule/CustomRule.json"), &getCustomRuleResponse)
 		require.NoError(t, err)
 
 		updateCustomRuleResponse := appsec.UpdateCustomRuleResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResCustomRule/CustomRuleUpdated.json"), &updateCustomRuleResponse)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResCustomRule/CustomRuleUpdated.json"), &updateCustomRuleResponse)
 		require.NoError(t, err)
 
 		getCustomRuleAfterUpdate := appsec.GetCustomRuleResponse{} // custom rule after update
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResCustomRule/CustomRuleUpdated.json"), &getCustomRuleAfterUpdate)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResCustomRule/CustomRuleUpdated.json"), &getCustomRuleAfterUpdate)
 		require.NoError(t, err)
 
 		removeCustomRuleResponse := appsec.RemoveCustomRuleResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResCustomRule/CustomRulesDeleted.json"), &removeCustomRuleResponse)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResCustomRule/CustomRulesDeleted.json"), &removeCustomRuleResponse)
 		require.NoError(t, err)
 
 		getCustomRulesAfterDelete := appsec.GetCustomRulesResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResCustomRule/CustomRulesForDelete.json"), &getCustomRulesAfterDelete)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResCustomRule/CustomRulesForDelete.json"), &getCustomRulesAfterDelete)
 		require.NoError(t, err)
 
 		client.On("GetCustomRules",
@@ -57,13 +58,13 @@ func TestAkamaiCustomRule_res_basic(t *testing.T) {
 			appsec.GetCustomRuleRequest{ConfigID: 43253, ID: 661699},
 		).Return(&getCustomRuleAfterUpdate, nil)
 
-		updateCustomRuleJSON := loadFixtureBytes("testdata/TestResCustomRule/UpdateCustomRule.json")
+		updateCustomRuleJSON := testutils.LoadFixtureBytes(t, "testdata/TestResCustomRule/UpdateCustomRule.json")
 		client.On("UpdateCustomRule",
 			mock.Anything,
 			appsec.UpdateCustomRuleRequest{ConfigID: 43253, ID: 661699, Version: 0, JsonPayloadRaw: updateCustomRuleJSON},
 		).Return(&updateCustomRuleResponse, nil)
 
-		createCustomRuleJSON := loadFixtureBytes("testdata/TestResCustomRule/CreateCustomRule.json")
+		createCustomRuleJSON := testutils.LoadFixtureBytes(t, "testdata/TestResCustomRule/CreateCustomRule.json")
 		client.On("CreateCustomRule",
 			mock.Anything,
 			appsec.CreateCustomRuleRequest{ConfigID: 43253, Version: 0, JsonPayloadRaw: createCustomRuleJSON},
@@ -80,13 +81,13 @@ func TestAkamaiCustomRule_res_basic(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResCustomRule/match_by_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResCustomRule/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_custom_rule.test", "id", "43253:661699"),
 						),
 					},
 					{
-						Config: loadFixtureString("testdata/TestResCustomRule/update_by_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResCustomRule/update_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_custom_rule.test", "id", "43253:661699"),
 						),
@@ -105,27 +106,27 @@ func TestAkamaiCustomRule_res_error_removing_active_rule(t *testing.T) {
 		client := &appsec.Mock{}
 
 		updateCustomRuleResponse := appsec.UpdateCustomRuleResponse{}
-		err := json.Unmarshal(loadFixtureBytes("testdata/TestResCustomRule/CustomRuleUpdated.json"), &updateCustomRuleResponse)
+		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResCustomRule/CustomRuleUpdated.json"), &updateCustomRuleResponse)
 		require.NoError(t, err)
 
 		createCustomRuleResponse := appsec.CreateCustomRuleResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResCustomRule/CustomRule.json"), &createCustomRuleResponse)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResCustomRule/CustomRule.json"), &createCustomRuleResponse)
 		require.NoError(t, err)
 
 		getCustomRuleResponse := appsec.GetCustomRuleResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResCustomRule/CustomRule.json"), &getCustomRuleResponse)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResCustomRule/CustomRule.json"), &getCustomRuleResponse)
 		require.NoError(t, err)
 
 		getCustomRuleResponseAfterUpdate := appsec.GetCustomRuleResponse{} // custom rule after update
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResCustomRule/CustomRuleUpdated.json"), &getCustomRuleResponseAfterUpdate)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResCustomRule/CustomRuleUpdated.json"), &getCustomRuleResponseAfterUpdate)
 		require.NoError(t, err)
 
 		removeCustomRuleResponse := appsec.RemoveCustomRuleResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResCustomRule/CustomRulesDeleted.json"), &removeCustomRuleResponse)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResCustomRule/CustomRulesDeleted.json"), &removeCustomRuleResponse)
 		require.NoError(t, err)
 
 		getCustomRulesAfterDelete := appsec.GetCustomRulesResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResCustomRule/CustomRulesForDelete.json"), &getCustomRulesAfterDelete)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResCustomRule/CustomRulesForDelete.json"), &getCustomRulesAfterDelete)
 		require.NoError(t, err)
 
 		client.On("GetCustomRules",
@@ -145,13 +146,13 @@ func TestAkamaiCustomRule_res_error_removing_active_rule(t *testing.T) {
 			appsec.GetCustomRuleRequest{ConfigID: 43253, ID: 661699},
 		).Return(&getCustomRuleResponseAfterUpdate, nil)
 
-		updateCustomRuleJSON := loadFixtureBytes("testdata/TestResCustomRule/UpdateCustomRule.json")
+		updateCustomRuleJSON := testutils.LoadFixtureBytes(t, "testdata/TestResCustomRule/UpdateCustomRule.json")
 		client.On("UpdateCustomRule",
 			mock.Anything,
 			appsec.UpdateCustomRuleRequest{ConfigID: 43253, ID: 661699, Version: 0, JsonPayloadRaw: updateCustomRuleJSON},
 		).Return(nil, fmt.Errorf("RemoveCustomRule request failed"))
 
-		createCustomRuleJSON := loadFixtureBytes("testdata/TestResCustomRule/CreateCustomRule.json")
+		createCustomRuleJSON := testutils.LoadFixtureBytes(t, "testdata/TestResCustomRule/CreateCustomRule.json")
 		client.On("CreateCustomRule",
 			mock.Anything,
 			appsec.CreateCustomRuleRequest{ConfigID: 43253, Version: 0, JsonPayloadRaw: createCustomRuleJSON},
@@ -168,13 +169,13 @@ func TestAkamaiCustomRule_res_error_removing_active_rule(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResCustomRule/match_by_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResCustomRule/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_custom_rule.test", "id", "43253:661699"),
 						),
 					},
 					{
-						Config: loadFixtureString("testdata/TestResCustomRule/update_by_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResCustomRule/update_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_custom_rule.test", "id", "43253:661699"),
 						),

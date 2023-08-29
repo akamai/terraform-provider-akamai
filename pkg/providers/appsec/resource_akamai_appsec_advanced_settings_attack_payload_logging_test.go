@@ -5,7 +5,8 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/appsec"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
@@ -14,7 +15,7 @@ func TestAkamaiAdvancedSettingsAttackPayloadLoggingConfig(t *testing.T) {
 	var (
 		configVersion = func(t *testing.T, configId int, client *appsec.Mock) appsec.GetConfigurationResponse {
 			configResponse := appsec.GetConfigurationResponse{}
-			err := json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &configResponse)
+			err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/LatestConfiguration.json"), &configResponse)
 			require.NoError(t, err)
 
 			client.On("GetConfiguration",
@@ -27,7 +28,7 @@ func TestAkamaiAdvancedSettingsAttackPayloadLoggingConfig(t *testing.T) {
 
 		attackPayloadLoggingRead = func(t *testing.T, configId int, version int, policyId string, client *appsec.Mock, numberOfTimes int) {
 			attackPayloadLoggingResponse := appsec.GetAdvancedSettingsAttackPayloadLoggingResponse{}
-			err := json.Unmarshal(loadFixtureBytes("testdata/TestResAdvancedSettingsAttackPayloadLogging/AdvancedSettingsAttackPayloadLogging.json"), &attackPayloadLoggingResponse)
+			err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResAdvancedSettingsAttackPayloadLogging/AdvancedSettingsAttackPayloadLogging.json"), &attackPayloadLoggingResponse)
 			require.NoError(t, err)
 
 			client.On("GetAdvancedSettingsAttackPayloadLogging",
@@ -39,7 +40,7 @@ func TestAkamaiAdvancedSettingsAttackPayloadLoggingConfig(t *testing.T) {
 
 		updateAttackPayloadLogging = func(t *testing.T, updateAttackPayloadLogging appsec.UpdateAdvancedSettingsAttackPayloadLoggingRequest, client *appsec.Mock, numberOfTimes int) {
 			updateAttackPayloadLoggingResponse := appsec.UpdateAdvancedSettingsAttackPayloadLoggingResponse{}
-			err := json.Unmarshal(loadFixtureBytes("testdata/TestResAdvancedSettingsAttackPayloadLogging/UpdateAdvancedSettingsAttackPayloadLogging.json"), &updateAttackPayloadLoggingResponse)
+			err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResAdvancedSettingsAttackPayloadLogging/UpdateAdvancedSettingsAttackPayloadLogging.json"), &updateAttackPayloadLoggingResponse)
 			require.NoError(t, err)
 
 			client.On("UpdateAdvancedSettingsAttackPayloadLogging",
@@ -50,7 +51,7 @@ func TestAkamaiAdvancedSettingsAttackPayloadLoggingConfig(t *testing.T) {
 
 		removeAttackPayloadLogging = func(t *testing.T, removeAttackPayloadLogging appsec.RemoveAdvancedSettingsAttackPayloadLoggingRequest, client *appsec.Mock, numberOfTimes int) {
 			removeAttackPayloadLoggingResponse := appsec.RemoveAdvancedSettingsAttackPayloadLoggingResponse{}
-			err := json.Unmarshal(loadFixtureBytes("testdata/TestResAdvancedSettingsAttackPayloadLogging/UpdateAdvancedSettingsAttackPayloadLogging.json"), &removeAttackPayloadLoggingResponse)
+			err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResAdvancedSettingsAttackPayloadLogging/UpdateAdvancedSettingsAttackPayloadLogging.json"), &removeAttackPayloadLoggingResponse)
 			require.NoError(t, err)
 
 			client.On("RemoveAdvancedSettingsAttackPayloadLogging",
@@ -65,7 +66,7 @@ func TestAkamaiAdvancedSettingsAttackPayloadLoggingConfig(t *testing.T) {
 		configResponse := configVersion(t, 43253, client)
 
 		attackPayloadLoggingRead(t, 43253, 7, "", client, 2)
-		updateAdvancedSettingsAttackPayloadLoggingJSON := loadFixtureBytes("testdata/TestResAdvancedSettingsAttackPayloadLogging/UpdateAdvancedSettingsAttackPayloadLogging.json")
+		updateAdvancedSettingsAttackPayloadLoggingJSON := testutils.LoadFixtureBytes(t, "testdata/TestResAdvancedSettingsAttackPayloadLogging/UpdateAdvancedSettingsAttackPayloadLogging.json")
 		updateAttackPayloadLoggingRequest := appsec.UpdateAdvancedSettingsAttackPayloadLoggingRequest{ConfigID: configResponse.ID, Version: configResponse.LatestVersion, PolicyID: "", JSONPayloadRaw: updateAdvancedSettingsAttackPayloadLoggingJSON}
 
 		updateAttackPayloadLogging(t, updateAttackPayloadLoggingRequest, client, 1)
@@ -86,7 +87,7 @@ func TestAkamaiAdvancedSettingsAttackPayloadLoggingConfig(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResAdvancedSettingsAttackPayloadLogging/match_by_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResAdvancedSettingsAttackPayloadLogging/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_advanced_settings_attack_payload_logging.test", "id", "43253:"),
 						),
@@ -104,7 +105,7 @@ func TestAkamaiAdvancedSettingsAttackPayloadLoggingConfig(t *testing.T) {
 		configResponse := configVersion(t, 43253, client)
 
 		attackPayloadLoggingRead(t, configResponse.ID, configResponse.LatestVersion, "", client, 4)
-		updateAdvancedSettingsAttackPayloadLoggingJSON := loadFixtureBytes("testdata/TestResAdvancedSettingsAttackPayloadLogging/UpdateAdvancedSettingsAttackPayloadLogging.json")
+		updateAdvancedSettingsAttackPayloadLoggingJSON := testutils.LoadFixtureBytes(t, "testdata/TestResAdvancedSettingsAttackPayloadLogging/UpdateAdvancedSettingsAttackPayloadLogging.json")
 		updateAttackPayloadLoggingRequest := appsec.UpdateAdvancedSettingsAttackPayloadLoggingRequest{ConfigID: configResponse.ID, Version: configResponse.LatestVersion, PolicyID: "", JSONPayloadRaw: updateAdvancedSettingsAttackPayloadLoggingJSON}
 
 		updateAttackPayloadLogging(t, updateAttackPayloadLoggingRequest, client, 1)
@@ -125,7 +126,7 @@ func TestAkamaiAdvancedSettingsAttackPayloadLoggingConfig(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResAdvancedSettingsAttackPayloadLogging/match_by_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResAdvancedSettingsAttackPayloadLogging/match_by_id.tf"),
 					},
 					{
 						ImportState:       true,
@@ -144,7 +145,7 @@ func TestAkamaiAdvancedSettingsAttackPayloadLoggingConfig(t *testing.T) {
 		configResponse := configVersion(t, 43253, client)
 
 		attackPayloadLoggingRead(t, 43253, 7, "test_policy", client, 4)
-		updateAdvancedSettingsAttackPayloadLoggingJSON := loadFixtureBytes("testdata/TestResAdvancedSettingsAttackPayloadLogging/UpdateAdvancedSettingsAttackPayloadLogging.json")
+		updateAdvancedSettingsAttackPayloadLoggingJSON := testutils.LoadFixtureBytes(t, "testdata/TestResAdvancedSettingsAttackPayloadLogging/UpdateAdvancedSettingsAttackPayloadLogging.json")
 		updateAttackPayloadLoggingRequest := appsec.UpdateAdvancedSettingsAttackPayloadLoggingRequest{ConfigID: configResponse.ID, Version: configResponse.LatestVersion, PolicyID: "test_policy", JSONPayloadRaw: updateAdvancedSettingsAttackPayloadLoggingJSON}
 
 		updateAttackPayloadLogging(t, updateAttackPayloadLoggingRequest, client, 1)
@@ -165,7 +166,7 @@ func TestAkamaiAdvancedSettingsAttackPayloadLoggingConfig(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResAdvancedSettingsAttackPayloadLogging/update_by_policy_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResAdvancedSettingsAttackPayloadLogging/update_by_policy_id.tf"),
 					},
 					{
 						ImportState:       true,
@@ -184,7 +185,7 @@ func TestAkamaiAdvancedSettingsAttackPayloadLoggingConfig(t *testing.T) {
 		configResponse := configVersion(t, 43253, client)
 
 		attackPayloadLoggingRead(t, 43253, 7, "test_policy", client, 2)
-		updateAdvancedSettingsAttackPayloadLoggingJSON := loadFixtureBytes("testdata/TestResAdvancedSettingsAttackPayloadLogging/UpdateAdvancedSettingsAttackPayloadLogging.json")
+		updateAdvancedSettingsAttackPayloadLoggingJSON := testutils.LoadFixtureBytes(t, "testdata/TestResAdvancedSettingsAttackPayloadLogging/UpdateAdvancedSettingsAttackPayloadLogging.json")
 		updateAttackPayloadLoggingRequest := appsec.UpdateAdvancedSettingsAttackPayloadLoggingRequest{ConfigID: configResponse.ID, Version: configResponse.LatestVersion, PolicyID: "test_policy", JSONPayloadRaw: updateAdvancedSettingsAttackPayloadLoggingJSON}
 
 		updateAttackPayloadLogging(t, updateAttackPayloadLoggingRequest, client, 1)
@@ -206,7 +207,7 @@ func TestAkamaiAdvancedSettingsAttackPayloadLoggingConfig(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResAdvancedSettingsAttackPayloadLogging/update_by_policy_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResAdvancedSettingsAttackPayloadLogging/update_by_policy_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_advanced_settings_attack_payload_logging.policy", "id", "43253:test_policy"),
 						),

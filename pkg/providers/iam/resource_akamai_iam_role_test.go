@@ -7,7 +7,8 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/iam"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -137,7 +138,7 @@ func TestResourceIAMRole(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString(fmt.Sprintf("%s/role_create.tf", testDir)),
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/role_create.tf", testDir)),
 						Check: checkAttributes(roleAttributes{
 							name:         "role name",
 							description:  "role description",
@@ -166,7 +167,7 @@ func TestResourceIAMRole(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString(fmt.Sprintf("%s/role_create.tf", testDir)),
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/role_create.tf", testDir)),
 						Check: checkAttributes(roleAttributes{
 							name:         "role name",
 							description:  "role description",
@@ -174,7 +175,7 @@ func TestResourceIAMRole(t *testing.T) {
 						}),
 					},
 					{
-						Config: loadFixtureString(fmt.Sprintf("%s/role_update.tf", testDir)),
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/role_update.tf", testDir)),
 						Check: checkAttributes(roleAttributes{
 							name:         "role name update",
 							description:  "role description update",
@@ -200,7 +201,7 @@ func TestResourceIAMRole(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString(fmt.Sprintf("%s/role_create.tf", testDir)),
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/role_create.tf", testDir)),
 						Check: checkAttributes(roleAttributes{
 							name:         "role name",
 							description:  "role description",
@@ -208,7 +209,7 @@ func TestResourceIAMRole(t *testing.T) {
 						}),
 					},
 					{
-						Config: loadFixtureString(fmt.Sprintf("%s/role_with_reordered_granted_roles.tf", testDir)),
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/role_with_reordered_granted_roles.tf", testDir)),
 						Check: checkAttributes(roleAttributes{
 							name:         "role name",
 							description:  "role description",
@@ -237,7 +238,7 @@ func TestResourceIAMRole(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString(fmt.Sprintf("%s/role_create.tf", testDir)),
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/role_create.tf", testDir)),
 						Check: checkAttributes(roleAttributes{
 							name:         "role name",
 							description:  "role description",
@@ -245,7 +246,7 @@ func TestResourceIAMRole(t *testing.T) {
 						}),
 					},
 					{
-						Config:      loadFixtureString(fmt.Sprintf("%s/role_update.tf", testDir)),
+						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/role_update.tf", testDir)),
 						ExpectError: regexp.MustCompile(updateAPIError),
 					},
 				},
@@ -270,7 +271,7 @@ func TestResourceIAMRole(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString(fmt.Sprintf("%s/role_create.tf", testDir)),
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/role_create.tf", testDir)),
 						Check: checkAttributes(roleAttributes{
 							name:         "role name",
 							description:  "role description",
@@ -278,7 +279,7 @@ func TestResourceIAMRole(t *testing.T) {
 						}),
 					},
 					{
-						Config:      loadFixtureString(fmt.Sprintf("%s/role_update.tf", testDir)),
+						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/role_update.tf", testDir)),
 						ExpectError: regexp.MustCompile(readAPIError),
 					},
 				},
@@ -300,7 +301,7 @@ func TestResourceIAMRole(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString(fmt.Sprintf("%s/role_create.tf", testDir)),
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/role_create.tf", testDir)),
 					},
 					{
 						ImportState:       true,

@@ -10,7 +10,8 @@ import (
 	"github.com/tj/assert"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/imaging"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
 func TestResourceImagingPolicySet(t *testing.T) {
@@ -97,7 +98,7 @@ func TestResourceImagingPolicySet(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("%s/lifecycle/create.tf", testDir),
+					Config: testutils.LoadFixtureString(t, "%s/lifecycle/create.tf", testDir),
 					Check: resource.ComposeTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_imaging_policy_set.test_image_set", "id", "testID"),
 						resource.TestCheckResourceAttr("akamai_imaging_policy_set.test_image_set", "name", "test_policy_set"),
@@ -116,7 +117,7 @@ func TestResourceImagingPolicySet(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config:      loadFixtureString("%s/lifecycle/create.tf", testDir),
+					Config:      testutils.LoadFixtureString(t, "%s/lifecycle/create.tf", testDir),
 					ExpectError: regexp.MustCompile(anError.Error()),
 				},
 			},
@@ -142,7 +143,7 @@ func TestResourceImagingPolicySet(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config:      loadFixtureString("%s/lifecycle/create.tf", testDir),
+					Config:      testutils.LoadFixtureString(t, "%s/lifecycle/create.tf", testDir),
 					ExpectError: regexp.MustCompile(anError.Error()),
 				},
 			},
@@ -175,7 +176,7 @@ func TestResourceImagingPolicySet(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("%s/lifecycle/create.tf", testDir),
+					Config: testutils.LoadFixtureString(t, "%s/lifecycle/create.tf", testDir),
 					Check: resource.ComposeTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_imaging_policy_set.test_image_set", "id", "testID"),
 						resource.TestCheckResourceAttr("akamai_imaging_policy_set.test_image_set", "name", "test_policy_set"),
@@ -184,7 +185,7 @@ func TestResourceImagingPolicySet(t *testing.T) {
 					),
 				},
 				{
-					Config: loadFixtureString("%s/lifecycle/update_region_us.tf", testDir),
+					Config: testutils.LoadFixtureString(t, "%s/lifecycle/update_region_us.tf", testDir),
 					Check: resource.ComposeTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_imaging_policy_set.test_image_set", "id", "testID"),
 						resource.TestCheckResourceAttr("akamai_imaging_policy_set.test_image_set", "name", "test_policy_set"),
@@ -214,7 +215,7 @@ func TestResourceImagingPolicySet(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("%s/lifecycle/create.tf", testDir),
+					Config: testutils.LoadFixtureString(t, "%s/lifecycle/create.tf", testDir),
 				},
 				{
 					ImportState:       true,
@@ -244,7 +245,7 @@ func TestResourceImagingPolicySet(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("%s/lifecycle/create.tf", testDir),
+					Config: testutils.LoadFixtureString(t, "%s/lifecycle/create.tf", testDir),
 				},
 				{
 					ImportState:       true,

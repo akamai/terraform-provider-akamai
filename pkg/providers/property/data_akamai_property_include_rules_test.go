@@ -9,7 +9,8 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -29,17 +30,6 @@ type testDataPropertyIncludeRules struct {
 
 var (
 	workdir = "./testdata/TestDSPropertyIncludeRules"
-
-	propertyIncludeRules = testDataPropertyIncludeRules{
-		ContractID:  "ctr_1",
-		GroupID:     "grp_2",
-		IncludeID:   "12345",
-		Version:     1,
-		RuleFormat:  "v2022-06-28",
-		Name:        "TestIncludeName",
-		IncludeType: "MICROSERVICES",
-		Rules:       loadFixtureString("%s/property-snippets/rules_without_errors.json", workdir),
-	}
 
 	propertyIncludeRulesWithRuleErrors = func(propertyIncludeRules testDataPropertyIncludeRules, rulesErrors string) testDataPropertyIncludeRules {
 		propertyIncludeRules.RuleErrors = rulesErrors
@@ -72,7 +62,7 @@ var (
 		}
 
 		var ruleResp papi.GetIncludeRuleTreeResponse
-		err := json.Unmarshal(loadFixtureBytes(path.Join(workdir, "expected-response", rulesFileName)), &ruleResp)
+		err := json.Unmarshal(testutils.LoadFixtureBytes(t, path.Join(workdir, "expected-response", rulesFileName)), &ruleResp)
 		assert.NoError(t, err)
 
 		getIncludeRuleTreeResponse.Rules = ruleResp.Rules
@@ -111,29 +101,29 @@ func TestDataPropertyIncludeRules(t *testing.T) {
 			init: func(t *testing.T, m *papi.Mock, testData testDataPropertyIncludeRules) {
 				expectReadPropertyRulesInclude(t, m, testData, 5, true, false, "rules_with_errors.json")
 			},
-			mockData:   propertyIncludeRulesWithRuleErrors(propertyIncludeRules, loadFixtureString("%s/property-snippets/rule_errors.json", workdir)),
+			mockData:   propertyIncludeRulesWithRuleErrors(testDataIncludeRules(t), testutils.LoadFixtureString(t, "%s/property-snippets/rule_errors.json", workdir)),
 			configPath: "./testdata/TestDSPropertyIncludeRules/property_include_rules.tf",
 		},
 		"happy path include rules with rules warnings": {
 			init: func(t *testing.T, m *papi.Mock, testData testDataPropertyIncludeRules) {
 				expectReadPropertyRulesInclude(t, m, testData, 5, false, true, "rules_with_warnings.json")
 			},
-			mockData:   propertyIncludeRulesWithRuleWarnings(propertyIncludeRules, loadFixtureString("%s/property-snippets/rule_warnings.json", workdir)),
+			mockData:   propertyIncludeRulesWithRuleWarnings(testDataIncludeRules(t), testutils.LoadFixtureString(t, "%s/property-snippets/rule_warnings.json", workdir)),
 			configPath: "./testdata/TestDSPropertyIncludeRules/property_include_rules.tf",
 		},
 		"happy path include rules with rules warnings and errors": {
 			init: func(t *testing.T, m *papi.Mock, testData testDataPropertyIncludeRules) {
 				expectReadPropertyRulesInclude(t, m, testData, 5, true, true, "rules_with_errors_and_warnings.json")
 			},
-			mockData: propertyIncludeRulesWithRuleWarningsAndErrors(propertyIncludeRules, loadFixtureString("%s/property-snippets/rule_warnings.json", workdir),
-				loadFixtureString("%s/property-snippets/rule_errors.json", workdir)),
+			mockData: propertyIncludeRulesWithRuleWarningsAndErrors(testDataIncludeRules(t), testutils.LoadFixtureString(t, "%s/property-snippets/rule_warnings.json", workdir),
+				testutils.LoadFixtureString(t, "%s/property-snippets/rule_errors.json", workdir)),
 			configPath: "./testdata/TestDSPropertyIncludeRules/property_include_rules.tf",
 		},
 		"happy path include rules": {
 			init: func(t *testing.T, m *papi.Mock, testData testDataPropertyIncludeRules) {
 				expectReadPropertyRulesInclude(t, m, testData, 5, false, false, "rules_without_errors.json")
 			},
-			mockData:   propertyIncludeRules,
+			mockData:   testDataIncludeRules(t),
 			configPath: "./testdata/TestDSPropertyIncludeRules/property_include_rules.tf",
 		},
 		"groupID not provided": {
@@ -160,7 +150,7 @@ func TestDataPropertyIncludeRules(t *testing.T) {
 			init: func(t *testing.T, m *papi.Mock, testData testDataPropertyIncludeRules) {
 				expectGetIncludeRuleTreeError(t, m, testData)
 			},
-			mockData:   propertyIncludeRulesWithRuleErrors(propertyIncludeRules, loadFixtureString("%s/property-snippets/rule_errors.json", workdir)),
+			mockData:   propertyIncludeRulesWithRuleErrors(testDataIncludeRules(t), testutils.LoadFixtureString(t, "%s/property-snippets/rule_errors.json", workdir)),
 			configPath: "./testdata/TestDSPropertyIncludeRules/property_include_rules_api_error.tf",
 			error:      regexp.MustCompile("GetIncludeRuleTree response error"),
 		},
@@ -176,7 +166,7 @@ func TestDataPropertyIncludeRules(t *testing.T) {
 					IsUnitTest:               true,
 					Steps: []resource.TestStep{
 						{
-							Config:      loadFixtureString(test.configPath),
+							Config:      testutils.LoadFixtureString(t, test.configPath),
 							Check:       checkPropertyIncludeRulesAttrs(test.mockData, t),
 							ExpectError: test.error,
 						},
@@ -214,4 +204,18 @@ func checkPropertyIncludeRulesAttrs(data testDataPropertyIncludeRules, t *testin
 		}))
 	}
 	return resource.ComposeAggregateTestCheckFunc(testCheckFuncs...)
+}
+
+func testDataIncludeRules(t *testing.T) testDataPropertyIncludeRules {
+	t.Helper()
+	return testDataPropertyIncludeRules{
+		ContractID:  "ctr_1",
+		GroupID:     "grp_2",
+		IncludeID:   "12345",
+		Version:     1,
+		RuleFormat:  "v2022-06-28",
+		Name:        "TestIncludeName",
+		IncludeType: "MICROSERVICES",
+		Rules:       testutils.LoadFixtureString(t, "%s/property-snippets/rules_without_errors.json", workdir),
+	}
 }

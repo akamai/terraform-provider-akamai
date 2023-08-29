@@ -6,7 +6,8 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/gtm"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -88,14 +89,14 @@ func TestResGtmDatacenter(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResGtmDatacenter/create_basic.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmDatacenter/create_basic.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr(dataSourceName, "nickname", "tfexample_dc_1"),
 							resource.TestCheckResourceAttr(dataSourceName, "continent", "EU"),
 						),
 					},
 					{
-						Config: loadFixtureString("testdata/TestResGtmDatacenter/update_basic.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmDatacenter/update_basic.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr(dataSourceName, "nickname", "tfexample_dc_1"),
 							resource.TestCheckResourceAttr(dataSourceName, "continent", "NA"),
@@ -128,7 +129,7 @@ func TestResGtmDatacenter(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config:      loadFixtureString("testdata/TestResGtmDatacenter/create_basic.tf"),
+						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmDatacenter/create_basic.tf"),
 						ExpectError: regexp.MustCompile("Datacenter Create failed"),
 					},
 				},
@@ -159,7 +160,7 @@ func TestResGtmDatacenter(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config:      loadFixtureString("testdata/TestResGtmDatacenter/create_basic.tf"),
+						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmDatacenter/create_basic.tf"),
 						ExpectError: regexp.MustCompile("Request could not be completed. Invalid credentials."),
 					},
 				},

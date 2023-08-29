@@ -5,7 +5,8 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/appsec"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
@@ -15,7 +16,7 @@ func TestAkamaiContractsGroups_data_basic(t *testing.T) {
 		client := &appsec.Mock{}
 
 		getContractsGroupsResponse := appsec.GetContractsGroupsResponse{}
-		err := json.Unmarshal(loadFixtureBytes("testdata/TestDSContractsGroups/ContractsGroups.json"), &getContractsGroupsResponse)
+		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestDSContractsGroups/ContractsGroups.json"), &getContractsGroupsResponse)
 		require.NoError(t, err)
 
 		client.On("GetContractsGroups",
@@ -29,7 +30,7 @@ func TestAkamaiContractsGroups_data_basic(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestDSContractsGroups/match_by_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestDSContractsGroups/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("data.akamai_appsec_contracts_groups.test", "id", "C-1FRYVV3"),
 						),

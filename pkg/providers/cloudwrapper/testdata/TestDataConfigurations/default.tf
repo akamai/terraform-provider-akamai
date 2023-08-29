@@ -1,0 +1,1 @@
+data "akamai_cloudwrapper_configurations" "test" {}

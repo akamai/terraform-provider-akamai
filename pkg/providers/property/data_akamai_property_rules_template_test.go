@@ -7,8 +7,9 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/require"
 	"github.com/tj/assert"
 )
@@ -21,15 +22,15 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestDSRulesTemplate/template_vars_map.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_vars_map.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("data.akamai_property_rules_template.test", "json", loadFixtureString("testdata/TestDSRulesTemplate/rules/rules_out.json")),
+							resource.TestCheckResourceAttr("data.akamai_property_rules_template.test", "json", testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/rules/rules_out.json")),
 						),
 					},
 					{
-						Config: loadFixtureString("testdata/TestDSRulesTemplate/template_vars_map_with_data.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_vars_map_with_data.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("data.akamai_property_rules_template.test", "json", loadFixtureString("testdata/TestDSRulesTemplate/rules/rules_out.json")),
+							resource.TestCheckResourceAttr("data.akamai_property_rules_template.test", "json", testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/rules/rules_out.json")),
 						),
 					},
 				},
@@ -43,15 +44,15 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestDSRulesTemplate/template_vars_map_ns.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_vars_map_ns.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("data.akamai_property_rules_template.test", "json", loadFixtureString("testdata/TestDSRulesTemplate/rules/rules_out.json")),
+							resource.TestCheckResourceAttr("data.akamai_property_rules_template.test", "json", testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/rules/rules_out.json")),
 						),
 					},
 					{
-						Config: loadFixtureString("testdata/TestDSRulesTemplate/template_vars_map_with_data_ns.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_vars_map_with_data_ns.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("data.akamai_property_rules_template.test", "json", loadFixtureString("testdata/TestDSRulesTemplate/rules/rules_out.json")),
+							resource.TestCheckResourceAttr("data.akamai_property_rules_template.test", "json", testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/rules/rules_out.json")),
 						),
 					},
 				},
@@ -65,15 +66,15 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestDSRulesTemplate/template_null_values.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_null_values.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("data.akamai_property_rules_template.test", "json", loadFixtureString("testdata/TestDSRulesTemplate/rules/rules_defaults.json")),
+							resource.TestCheckResourceAttr("data.akamai_property_rules_template.test", "json", testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/rules/rules_defaults.json")),
 						),
 					},
 					{
-						Config: loadFixtureString("testdata/TestDSRulesTemplate/template_null_values_with_data.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_null_values_with_data.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("data.akamai_property_rules_template.test", "json", loadFixtureString("testdata/TestDSRulesTemplate/rules/rules_defaults.json")),
+							resource.TestCheckResourceAttr("data.akamai_property_rules_template.test", "json", testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/rules/rules_defaults.json")),
 						),
 					},
 				},
@@ -87,15 +88,15 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestDSRulesTemplate/template_vars_file.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_vars_file.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("data.akamai_property_rules_template.test", "json", loadFixtureString("testdata/TestDSRulesTemplate/rules/rules_out.json")),
+							resource.TestCheckResourceAttr("data.akamai_property_rules_template.test", "json", testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/rules/rules_out.json")),
 						),
 					},
 					{
-						Config: loadFixtureString("testdata/TestDSRulesTemplate/template_vars_file_with_data.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_vars_file_with_data.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("data.akamai_property_rules_template.test", "json", loadFixtureString("testdata/TestDSRulesTemplate/rules/rules_out.json")),
+							resource.TestCheckResourceAttr("data.akamai_property_rules_template.test", "json", testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/rules/rules_out.json")),
 						),
 					},
 				},
@@ -109,11 +110,11 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config:      loadFixtureString("testdata/TestDSRulesTemplate/template_file_data_conflict.tf"),
+						Config:      testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_file_data_conflict.tf"),
 						ExpectError: regexp.MustCompile(`"template_file": only one of .template,template_file. can be specified`),
 					},
 					{
-						Config:      loadFixtureString("testdata/TestDSRulesTemplate/template_file_data_missing.tf"),
+						Config:      testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_file_data_missing.tf"),
 						ExpectError: regexp.MustCompile(`"template_file": one of .template,template_file. must be specified`),
 					},
 				},
@@ -127,11 +128,11 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config:      loadFixtureString("testdata/TestDSRulesTemplate/template_missing_data.tf"),
+						Config:      testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_missing_data.tf"),
 						ExpectError: regexp.MustCompile(`The argument "template_data" is required, but no definition was found.`),
 					},
 					{
-						Config:      loadFixtureString("testdata/TestDSRulesTemplate/template_missing_dir.tf"),
+						Config:      testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_missing_dir.tf"),
 						ExpectError: regexp.MustCompile(`The argument "template_dir" is required, but no definition was found.`),
 					},
 				},
@@ -145,7 +146,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config:      loadFixtureString("testdata/TestDSRulesTemplate/template_vars_conflict.tf"),
+						Config:      testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_vars_conflict.tf"),
 						ExpectError: regexp.MustCompile(`"variables": conflicts with var_definition_file`),
 					},
 				},
@@ -159,7 +160,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config:      loadFixtureString("testdata/TestDSRulesTemplate/template_vars_invalid_type.tf"),
+						Config:      testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_vars_invalid_type.tf"),
 						ExpectError: regexp.MustCompile(`'type' has invalid value: should be 'bool', 'number', 'string' or 'jsonBlock'`),
 					},
 				},
@@ -173,7 +174,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config:      loadFixtureString("testdata/TestDSRulesTemplate/template_var_not_found.tf"),
+						Config:      testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_var_not_found.tf"),
 						ExpectError: regexp.MustCompile(`executing "snippets/sub/another-template.json" at <.options>: map has no entry for key "options"`),
 					},
 				},
@@ -187,7 +188,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config:      loadFixtureString("testdata/TestDSRulesTemplate/template_vars_invalid_value.tf"),
+						Config:      testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_vars_invalid_value.tf"),
 						ExpectError: regexp.MustCompile(`value could not be represented as number: strconv.ParseFloat: parsing "all": invalid syntax`),
 					},
 				},
@@ -201,7 +202,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config:      loadFixtureString("testdata/TestDSRulesTemplate/template_vars_file_not_found.tf"),
+						Config:      testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_vars_file_not_found.tf"),
 						ExpectError: regexp.MustCompile(`reading file: open invalid_path: no such file or directory`),
 					},
 				},
@@ -215,7 +216,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config:      loadFixtureString("testdata/TestDSRulesTemplate/template_invalid_json.tf"),
+						Config:      testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_invalid_json.tf"),
 						ExpectError: regexp.MustCompile(`snippets file should be with .json extension and valid json data. Invalid file: testdata/TestDSRulesTemplate/property-snippets/template_invalid_json.json`),
 					},
 				},
@@ -229,7 +230,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config:      loadFixtureString("testdata/TestDSRulesTemplate/template_file_not_found.tf"),
+						Config:      testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_file_not_found.tf"),
 						ExpectError: regexp.MustCompile(`Error: stat testdata/TestDSRulesTemplate/rules/property-snippets/non-existent.json: no such file or directory`),
 					},
 				},
@@ -244,7 +245,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config:      loadFixtureString("testdata/TestDSRulesTemplate/template_file_is_empty.tf"),
+						Config:      testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_file_is_empty.tf"),
 						ExpectError: regexp.MustCompile(`Error: snippets file should be with .json extension and valid json data. Invalid file: testdata/TestDSRulesTemplate/property-snippets/empty_json.json`),
 					},
 				},
@@ -259,7 +260,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config:      loadFixtureString("testdata/TestDSRulesTemplate/template_invalid_snippets_folder_json.tf"),
+						Config:      testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_invalid_snippets_folder_json.tf"),
 						ExpectError: regexp.MustCompile(`Error: snippets file should be with .json extension and valid json data. Invalid file: testdata/TestDSRulesTemplate/output/template_invalid_json.json`),
 					},
 				},
@@ -274,7 +275,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config:      loadFixtureString("testdata/TestDSRulesTemplate/template_invalid_snippets_only_one_folder_json.tf"),
+						Config:      testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_invalid_snippets_only_one_folder_json.tf"),
 						ExpectError: regexp.MustCompile(`Error: snippets file should be with .json extension and valid json data. Invalid file: property-snippet/template_invalid_json.json`),
 					},
 				},
@@ -501,21 +502,21 @@ func TestFlattenTemplate(t *testing.T) {
 		"valid list": {
 			givenList: []interface{}{
 				map[string]interface{}{
-					"template_data": loadFixtureString("testdata/TestDSRulesTemplate/rules/property-snippets/plain_json.json"),
+					"template_data": testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/rules/property-snippets/plain_json.json"),
 					"template_dir":  "testdata/TestDSRulesTemplate/rules/property-snippets/",
 				},
 			},
-			expectedData: loadFixtureString("testdata/TestDSRulesTemplate/rules/property-snippets/plain_json.json"),
+			expectedData: testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/rules/property-snippets/plain_json.json"),
 			expectedDir:  "testdata/TestDSRulesTemplate/rules/property-snippets",
 		},
 		"invalid list length": {
 			givenList: []interface{}{
 				map[string]interface{}{
-					"template_data": loadFixtureString("testdata/TestDSRulesTemplate/rules/property-snippets/plain_json.json"),
+					"template_data": testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/rules/property-snippets/plain_json.json"),
 					"template_dir":  "testdata/TestDSRulesTemplate/rules/property-snippets/",
 				},
 				map[string]interface{}{
-					"template_data": loadFixtureString("testdata/TestDSRulesTemplate/rules/property-snippets/template_in.json"),
+					"template_data": testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/rules/property-snippets/template_in.json"),
 					"template_dir":  "testdata/TestDSRulesTemplate/rules/property-snippets",
 				},
 			},
@@ -532,7 +533,7 @@ func TestFlattenTemplate(t *testing.T) {
 		"missing 'template_dir' in list": {
 			givenList: []interface{}{
 				map[string]interface{}{
-					"template_data": loadFixtureString("testdata/TestDSRulesTemplate/rules/property-snippets/template_in.json"),
+					"template_data": testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/rules/property-snippets/template_in.json"),
 				},
 			},
 			withError: tf.ErrNotFound,
@@ -549,7 +550,7 @@ func TestFlattenTemplate(t *testing.T) {
 		"invalid 'template_dir' in list": {
 			givenList: []interface{}{
 				map[string]interface{}{
-					"template_data": loadFixtureString("testdata/TestDSRulesTemplate/rules/property-snippets/template_in.json"),
+					"template_data": testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/rules/property-snippets/template_in.json"),
 					"template_dir":  true,
 				},
 			},
@@ -607,7 +608,7 @@ func TestConvertToTemplate(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
-			expected := loadFixtureString(fmt.Sprintf("%s/%s", templatesOut, test.expectedFile))
+			expected := testutils.LoadFixtureString(t, fmt.Sprintf("%s/%s", templatesOut, test.expectedFile))
 			assert.Equal(t, expected, res)
 		})
 	}
@@ -639,7 +640,7 @@ func TestStringToTemplate(t *testing.T) {
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			givenString := loadFixtureString(fmt.Sprintf("%s/%s", templates, test.givenFile))
+			givenString := testutils.LoadFixtureString(t, fmt.Sprintf("%s/%s", templates, test.givenFile))
 			res, err := stringToTemplate(givenString, test.varMaps, "main")
 			fmt.Println(res)
 			if test.withError != nil {
@@ -647,7 +648,7 @@ func TestStringToTemplate(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
-			expected := loadFixtureString(fmt.Sprintf("%s/%s", templatesOut, test.expectedFile))
+			expected := testutils.LoadFixtureString(t, fmt.Sprintf("%s/%s", templatesOut, test.expectedFile))
 			assert.Equal(t, expected, res)
 		})
 	}
@@ -691,9 +692,9 @@ func TestVariablesNesting(t *testing.T) {
 					ProtoV5ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
-							Config: loadFixtureString(test.configPath),
+							Config: testutils.LoadFixtureString(t, test.configPath),
 							Check: resource.ComposeAggregateTestCheckFunc(
-								resource.TestCheckResourceAttr("data.akamai_property_rules_template.test", "json", loadFixtureString(test.expectedPath)),
+								resource.TestCheckResourceAttr("data.akamai_property_rules_template.test", "json", testutils.LoadFixtureString(t, test.expectedPath)),
 							),
 						},
 					},
@@ -725,7 +726,7 @@ func TestVariablesAndIncludesNestingCyclicDependency(t *testing.T) {
 					ProtoV5ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
-							Config:      loadFixtureString(test.configPath),
+							Config:      testutils.LoadFixtureString(t, test.configPath),
 							ExpectError: regexp.MustCompile(test.withError),
 						},
 					},
@@ -743,10 +744,10 @@ func TestMultipleTemplates(t *testing.T) {
 				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestDSRulesTemplate/template_multiple_templates.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_multiple_templates.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("data.akamai_property_rules_template.rules1", "json", loadFixtureString("testdata/TestDSRulesTemplate/output/template_multiple_templates_snippet1.json")),
-							resource.TestCheckResourceAttr("data.akamai_property_rules_template.rules2", "json", loadFixtureString("testdata/TestDSRulesTemplate/output/template_multiple_templates_snippet2.json")),
+							resource.TestCheckResourceAttr("data.akamai_property_rules_template.rules1", "json", testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/output/template_multiple_templates_snippet1.json")),
+							resource.TestCheckResourceAttr("data.akamai_property_rules_template.rules2", "json", testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/output/template_multiple_templates_snippet2.json")),
 						),
 					},
 				},

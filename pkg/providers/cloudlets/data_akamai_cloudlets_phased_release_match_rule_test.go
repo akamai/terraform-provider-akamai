@@ -5,7 +5,8 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
 func TestDataCloudletsPhasedReleaseMatchRule(t *testing.T) {
@@ -43,11 +44,11 @@ func TestDataCloudletsPhasedReleaseMatchRule(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString(test.configPath),
+						Config: testutils.LoadFixtureString(t, test.configPath),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr(
 								"data.akamai_cloudlets_phased_release_match_rule.test", "json",
-								loadFixtureString(test.expectedJSONPath)),
+								testutils.LoadFixtureString(t, test.expectedJSONPath)),
 							resource.TestCheckResourceAttr(
 								"data.akamai_cloudlets_phased_release_match_rule.test", "match_rules.0.type", "cdMatchRule"),
 							resource.TestCheckResourceAttr(
@@ -100,7 +101,7 @@ func TestIncorrectDataPhasedReleaseDeploymentMatchRule(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString(test.configPath),
+						Config: testutils.LoadFixtureString(t, test.configPath),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr(
 								"data.akamai_cloudlets_phased_release_match_rule.test", "match_rules.0.type", "cdMatchRule"),

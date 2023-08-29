@@ -9,9 +9,10 @@ import (
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 
 	"github.com/stretchr/testify/mock"
 	"github.com/tj/assert"
@@ -156,7 +157,7 @@ func TestResCPCode(t *testing.T) {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{{
-					Config: loadFixtureString("testdata/TestResCPCode/create_new_cp_code.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCPCode/create_new_cp_code.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "0"),
 						resource.TestCheckResourceAttr("akamai_cp_code.test", "name", "test cpcode"),
@@ -191,7 +192,7 @@ func TestResCPCode(t *testing.T) {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{{
-					Config: loadFixtureString("testdata/TestResCPCode/use_existing_cp_code.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCPCode/use_existing_cp_code.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "0"),
 						resource.TestCheckResourceAttr("akamai_cp_code.test", "name", "test cpcode"),
@@ -227,7 +228,7 @@ func TestResCPCode(t *testing.T) {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{{
-					Config: loadFixtureString("testdata/TestResCPCode/use_existing_cp_code.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCPCode/use_existing_cp_code.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "1"),
 						resource.TestCheckResourceAttr("akamai_cp_code.test", "name", "test cpcode"),
@@ -263,7 +264,7 @@ func TestResCPCode(t *testing.T) {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{{
-					Config:      loadFixtureString("testdata/TestResCPCode/use_existing_cp_code.tf"),
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResCPCode/use_existing_cp_code.tf"),
 					ExpectError: regexp.MustCompile("Couldn't find product id on the CP Code"),
 				}},
 			})
@@ -295,14 +296,14 @@ func TestResCPCode(t *testing.T) {
 				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResCPCode/change_name_step0.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResCPCode/change_name_step0.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "0"),
 							resource.TestCheckResourceAttr("akamai_cp_code.test", "name", "test cpcode"),
 						),
 					},
 					{
-						Config: loadFixtureString("testdata/TestResCPCode/change_name_step1.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResCPCode/change_name_step1.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "0"),
 							resource.TestCheckResourceAttr("akamai_cp_code.test", "name", "renamed cpcode"),
@@ -325,7 +326,7 @@ func TestResCPCode(t *testing.T) {
 				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResCPCode/import_cp_code.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResCPCode/import_cp_code.tf"),
 					},
 					{
 						ImportState:   true,
@@ -358,7 +359,7 @@ func TestResCPCode(t *testing.T) {
 				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config:        loadFixtureString("testdata/TestResCPCode/import_cp_code.tf"),
+						Config:        testutils.LoadFixtureString(t, "testdata/TestResCPCode/import_cp_code.tf"),
 						ImportState:   true,
 						ImportStateId: id,
 						ResourceName:  "akamai_cp_code.test",
@@ -379,7 +380,7 @@ func TestResCPCode(t *testing.T) {
 				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config:        loadFixtureString("testdata/TestResCPCode/import_cp_code.tf"),
+						Config:        testutils.LoadFixtureString(t, "testdata/TestResCPCode/import_cp_code.tf"),
 						ImportState:   true,
 						ImportStateId: id,
 						ResourceName:  "akamai_cp_code.test",
@@ -410,7 +411,7 @@ func TestResCPCode(t *testing.T) {
 				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResCPCode/change_name_step0.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResCPCode/change_name_step0.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "0"),
 							resource.TestCheckResourceAttr("akamai_cp_code.test", "name", "test cpcode"),
@@ -420,7 +421,7 @@ func TestResCPCode(t *testing.T) {
 						),
 					},
 					{
-						Config:      loadFixtureString("testdata/TestResCPCode/change_immutable.tf"),
+						Config:      testutils.LoadFixtureString(t, "testdata/TestResCPCode/change_immutable.tf"),
 						ExpectError: regexp.MustCompile(`cp code attribute 'contract_id' cannot be changed after creation \(immutable\)`),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "0"),
@@ -431,7 +432,7 @@ func TestResCPCode(t *testing.T) {
 						),
 					},
 					{
-						Config:      loadFixtureString("testdata/TestResCPCode/change_immutable.tf"),
+						Config:      testutils.LoadFixtureString(t, "testdata/TestResCPCode/change_immutable.tf"),
 						ExpectError: regexp.MustCompile(`cp code attribute 'product_id' cannot be changed after creation \(immutable\)`),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "0"),
@@ -442,7 +443,7 @@ func TestResCPCode(t *testing.T) {
 						),
 					},
 					{
-						Config:      loadFixtureString("testdata/TestResCPCode/change_immutable.tf"),
+						Config:      testutils.LoadFixtureString(t, "testdata/TestResCPCode/change_immutable.tf"),
 						ExpectError: regexp.MustCompile(`cp code attribute 'group_id' cannot be changed after creation \(immutable\)`),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "0"),
@@ -478,14 +479,14 @@ func TestResCPCode(t *testing.T) {
 				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResCPCode/change_name_step0.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResCPCode/change_name_step0.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "0"),
 							resource.TestCheckResourceAttr("akamai_cp_code.test", "name", "test cpcode"),
 						),
 					},
 					{
-						Config:      loadFixtureString("testdata/TestResCPCode/change_name_step1.tf"),
+						Config:      testutils.LoadFixtureString(t, "testdata/TestResCPCode/change_name_step1.tf"),
 						ExpectError: regexp.MustCompile("oops"),
 					},
 				},
@@ -515,14 +516,14 @@ func TestResCPCode(t *testing.T) {
 				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResCPCode/change_name_step0.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResCPCode/change_name_step0.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "0"),
 							resource.TestCheckResourceAttr("akamai_cp_code.test", "name", "test cpcode"),
 						),
 					},
 					{
-						Config:      loadFixtureString("testdata/TestResCPCode/change_name_step1.tf"),
+						Config:      testutils.LoadFixtureString(t, "testdata/TestResCPCode/change_name_step1.tf"),
 						ExpectError: regexp.MustCompile("oops"),
 					},
 				},
@@ -565,14 +566,14 @@ func TestResCPCode(t *testing.T) {
 				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResCPCode/change_name_step0.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResCPCode/change_name_step0.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "0"),
 							resource.TestCheckResourceAttr("akamai_cp_code.test", "name", "test cpcode"),
 						),
 					},
 					{
-						Config:             loadFixtureString("testdata/TestResCPCode/change_name_step1.tf"),
+						Config:             testutils.LoadFixtureString(t, "testdata/TestResCPCode/change_name_step1.tf"),
 						ExpectNonEmptyPlan: true,
 					},
 				},
@@ -587,7 +588,7 @@ func TestResCPCode(t *testing.T) {
 			ProtoV5ProviderFactories: testAccProviders,
 			Steps: []resource.TestStep{
 				{
-					Config:      loadFixtureString("testdata/TestResCPCode/missing_product.tf"),
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResCPCode/missing_product.tf"),
 					ExpectError: expectedErr,
 				},
 			},

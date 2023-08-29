@@ -9,8 +9,9 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
 func TestDataProperty(t *testing.T) {
@@ -76,7 +77,7 @@ func TestDataProperty(t *testing.T) {
 			},
 			expectedAttributes: map[string]string{
 				"name":  "property_name",
-				"rules": compactJSON(loadFixtureBytes("testdata/TestDataProperty/no_version_rules.json")),
+				"rules": compactJSON(testutils.LoadFixtureBytes(t, "testdata/TestDataProperty/no_version_rules.json")),
 			},
 		},
 		"valid rules, with version provided": {
@@ -135,7 +136,7 @@ func TestDataProperty(t *testing.T) {
 			},
 			expectedAttributes: map[string]string{
 				"name":  "property_name",
-				"rules": compactJSON(loadFixtureBytes("testdata/TestDataProperty/with_version_rules.json")),
+				"rules": compactJSON(testutils.LoadFixtureBytes(t, "testdata/TestDataProperty/with_version_rules.json")),
 			},
 		},
 		"error searching for property": {
@@ -246,7 +247,7 @@ func TestDataProperty(t *testing.T) {
 					IsUnitTest:               true,
 					ProtoV5ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{{
-						Config:      loadFixtureString(fmt.Sprintf("testdata/TestDataProperty/%s", test.givenTF)),
+						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("testdata/TestDataProperty/%s", test.givenTF)),
 						Check:       resource.ComposeAggregateTestCheckFunc(checkFuncs...),
 						ExpectError: test.withError,
 					},

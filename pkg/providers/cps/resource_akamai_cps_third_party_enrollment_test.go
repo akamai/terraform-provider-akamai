@@ -7,9 +7,10 @@ import (
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cps"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/jinzhu/copier"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -139,13 +140,13 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResThirdPartyEnrollment/lifecycle/create_enrollment.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/lifecycle/create_enrollment.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_cps_third_party_enrollment.third_party", "contract_id", "ctr_1"),
 						),
 					},
 					{
-						Config: loadFixtureString("testdata/TestResThirdPartyEnrollment/lifecycle/update_enrollment.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/lifecycle/update_enrollment.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_cps_third_party_enrollment.third_party", "contract_id", "ctr_1"),
 						),
@@ -268,13 +269,13 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResThirdPartyEnrollment/lifecycle_no_sans/create_enrollment.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/lifecycle_no_sans/create_enrollment.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_cps_third_party_enrollment.third_party", "contract_id", "ctr_1"),
 						),
 					},
 					{
-						Config: loadFixtureString("testdata/TestResThirdPartyEnrollment/lifecycle_no_sans/update_enrollment.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/lifecycle_no_sans/update_enrollment.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_cps_third_party_enrollment.third_party", "contract_id", "ctr_1"),
 						),
@@ -362,7 +363,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResThirdPartyEnrollment/empty_sans/create_enrollment.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/empty_sans/create_enrollment.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_cps_third_party_enrollment.third_party", "contract_id", "ctr_1"),
 						),
@@ -476,7 +477,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResThirdPartyEnrollment/client_mutual_auth/create_enrollment.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/client_mutual_auth/create_enrollment.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_cps_third_party_enrollment.third_party", "contract_id", "ctr_1"),
 						),
@@ -566,13 +567,13 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResThirdPartyEnrollment/lifecycle_cn_in_sans/create_enrollment.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/lifecycle_cn_in_sans/create_enrollment.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_cps_third_party_enrollment.third_party", "contract_id", "ctr_1"),
 						),
 					},
 					{
-						Config: loadFixtureString("testdata/TestResThirdPartyEnrollment/lifecycle_cn_in_sans/create_enrollment.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/lifecycle_cn_in_sans/create_enrollment.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_cps_third_party_enrollment.third_party", "contract_id", "ctr_1"),
 						),
@@ -665,13 +666,13 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResThirdPartyEnrollment/lifecycle_no_cn_in_sans/create_enrollment.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/lifecycle_no_cn_in_sans/create_enrollment.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_cps_third_party_enrollment.third_party", "contract_id", "ctr_1"),
 						),
 					},
 					{
-						Config: loadFixtureString("testdata/TestResThirdPartyEnrollment/lifecycle_no_cn_in_sans/create_enrollment.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/lifecycle_no_cn_in_sans/create_enrollment.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_cps_third_party_enrollment.third_party", "contract_id", "ctr_1"),
 						),
@@ -731,7 +732,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResThirdPartyEnrollment/lifecycle/create_enrollment.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/lifecycle/create_enrollment.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_cps_third_party_enrollment.third_party", "contract_id", "ctr_1"),
 						),
@@ -822,13 +823,13 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResThirdPartyEnrollment/no_acknowledge_warnings/create_enrollment.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/no_acknowledge_warnings/create_enrollment.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_cps_third_party_enrollment.third_party", "contract_id", "ctr_1"),
 						),
 					},
 					{
-						Config: loadFixtureString("testdata/TestResThirdPartyEnrollment/acknowledge_warnings/create_enrollment.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/acknowledge_warnings/create_enrollment.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_cps_third_party_enrollment.third_party", "contract_id", "ctr_1"),
 						),
@@ -932,7 +933,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResThirdPartyEnrollment/acknowledge_warnings/create_enrollment.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/acknowledge_warnings/create_enrollment.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_cps_third_party_enrollment.third_party", "contract_id", "ctr_1"),
 						),
@@ -1019,7 +1020,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResThirdPartyEnrollment/allow_duplicate_cn/create_enrollment.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/allow_duplicate_cn/create_enrollment.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_cps_third_party_enrollment.third_party", "contract_id", "ctr_1"),
 							resource.TestCheckResourceAttr("akamai_cps_third_party_enrollment.third_party", "allow_duplicate_common_name", "true"),
@@ -1094,7 +1095,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config:      loadFixtureString("testdata/TestResThirdPartyEnrollment/no_acknowledge_warnings/create_enrollment.tf"),
+						Config:      testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/no_acknowledge_warnings/create_enrollment.tf"),
 						ExpectError: regexp.MustCompile(`enrollment pre-verification returned warnings and the enrollment cannot be validated. Please fix the issues or set acknowledge_pre_validation_warnings flag to true then run 'terraform apply' again: some warning`),
 					},
 				},
@@ -1134,7 +1135,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config:      loadFixtureString("testdata/TestResThirdPartyEnrollment/no_acknowledge_warnings/create_enrollment.tf"),
+						Config:      testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/no_acknowledge_warnings/create_enrollment.tf"),
 						ExpectError: regexp.MustCompile(`error creating enrollment`),
 					},
 				},
@@ -1236,7 +1237,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResThirdPartyEnrollment/auto_approve_warnings/create_enrollment.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/auto_approve_warnings/create_enrollment.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_cps_third_party_enrollment.third_party", "contract_id", "ctr_1"),
 						),
@@ -1310,7 +1311,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config:      loadFixtureString("testdata/TestResThirdPartyEnrollment/auto_approve_warnings/create_enrollment.tf"),
+						Config:      testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/auto_approve_warnings/create_enrollment.tf"),
 						ExpectError: regexp.MustCompile(`warnings cannot be approved: "FIXED_TRUST_CHAIN_PARSING_ERROR"`),
 					},
 				},
@@ -1388,7 +1389,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config:      loadFixtureString("testdata/TestResThirdPartyEnrollment/auto_approve_warnings/create_enrollment.tf"),
+						Config:      testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/auto_approve_warnings/create_enrollment.tf"),
 						ExpectError: regexp.MustCompile(`received warning\(s\) does not match any known warning: 'This is unknown warning.'`),
 					},
 				},
@@ -1471,7 +1472,7 @@ func TestResourceThirdPartyEnrollmentImport(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResThirdPartyEnrollment/import/import_enrollment.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/import/import_enrollment.tf"),
 						ImportStateCheck: func(s []*terraform.InstanceState) error {
 							assert.Len(t, s, 1)
 							rs := s[0]
@@ -1481,7 +1482,7 @@ func TestResourceThirdPartyEnrollmentImport(t *testing.T) {
 						},
 					},
 					{
-						Config:            loadFixtureString("testdata/TestResThirdPartyEnrollment/import/import_enrollment.tf"),
+						Config:            testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/import/import_enrollment.tf"),
 						ImportState:       true,
 						ImportStateId:     id,
 						ResourceName:      "akamai_cps_third_party_enrollment.third_party",
@@ -1508,7 +1509,7 @@ func TestResourceThirdPartyEnrollmentImport(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config:        loadFixtureString("testdata/TestResThirdPartyEnrollment/import/import_enrollment.tf"),
+						Config:        testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/import/import_enrollment.tf"),
 						ImportState:   true,
 						ImportStateId: id,
 						ResourceName:  "akamai_cps_third_party_enrollment.third_party",
@@ -1612,13 +1613,13 @@ func TestSuppressingSignatureAlgorithm(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResThirdPartyEnrollment/lifecycle/create_enrollment.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/lifecycle/create_enrollment.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_cps_third_party_enrollment.third_party", "contract_id", "ctr_1"),
 						),
 					},
 					{
-						Config: loadFixtureString("testdata/TestResThirdPartyEnrollment/lifecycle/update_enrollment.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/lifecycle/update_enrollment.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_cps_third_party_enrollment.third_party", "contract_id", "ctr_1"),
 						),

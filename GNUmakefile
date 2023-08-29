@@ -31,7 +31,7 @@ check: fmtcheck lint vet
 
 .PHONY: test
 test:
-	go test $(TEST) -v $(TESTARGS) -timeout 20m 2>&1 
+	go test $(TEST) -v $(TESTARGS) -timeout 30m 2>&1
 
 .PHONY: testacc
 testacc:

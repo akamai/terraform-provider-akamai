@@ -7,7 +7,8 @@ import (
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cloudlets"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -22,7 +23,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config:      loadFixtureString("./testdata/TestResCloudletsPolicyActivation/policy_activation_version1.tf"),
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestResCloudletsPolicyActivation/policy_activation_version1.tf"),
 					ExpectError: regexp.MustCompile(`policy activation: cannot find the given policy version \(1\): an error`),
 				},
 			},
@@ -35,7 +36,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("./testdata/TestResCloudletsPolicyActivation/policy_activation_version1.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResCloudletsPolicyActivation/policy_activation_version1.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckOutput("status", string(cloudlets.PolicyActivationStatusActive)),
 						resource.TestCheckResourceAttr("akamai_cloudlets_policy_activation.test", "version", "1"),
@@ -69,7 +70,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("./testdata/TestResCloudletsPolicyActivation/policy_activation_version1.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResCloudletsPolicyActivation/policy_activation_version1.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckOutput("status", string(cloudlets.PolicyActivationStatusActive)),
 						resource.TestCheckResourceAttr("akamai_cloudlets_policy_activation.test", "version", "1"),
@@ -104,7 +105,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("./testdata/TestResCloudletsPolicyActivation/policy_activation_version1.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResCloudletsPolicyActivation/policy_activation_version1.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckOutput("status", string(cloudlets.PolicyActivationStatusActive)),
 						resource.TestCheckResourceAttr("akamai_cloudlets_policy_activation.test", "version", "1"),
@@ -141,7 +142,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("./testdata/TestResCloudletsPolicyActivation/policy_activation_version1.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResCloudletsPolicyActivation/policy_activation_version1.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckOutput("status", string(cloudlets.PolicyActivationStatusActive)),
 						resource.TestCheckResourceAttr("akamai_cloudlets_policy_activation.test", "version", "1"),
@@ -178,7 +179,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config:      loadFixtureString("./testdata/TestResCloudletsPolicyActivation/policy_activation_version1.tf"),
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestResCloudletsPolicyActivation/policy_activation_version1.tf"),
 					ExpectError: regexp.MustCompile("policy activation create: policy activation: policyID 1234"),
 				},
 			},
@@ -200,7 +201,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config:      loadFixtureString("./testdata/TestResCloudletsPolicyActivation/policy_activation_version1.tf"),
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestResCloudletsPolicyActivation/policy_activation_version1.tf"),
 					ExpectError: regexp.MustCompile("policy activation create: policy activation: policyID 1234"),
 				},
 			},
@@ -229,7 +230,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("./testdata/TestResCloudletsPolicyActivation/policy_activation_version1.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResCloudletsPolicyActivation/policy_activation_version1.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckOutput("status", string(cloudlets.PolicyActivationStatusActive)),
 						resource.TestCheckResourceAttr("akamai_cloudlets_policy_activation.test", "version", "1"),
@@ -265,7 +266,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config:      loadFixtureString("./testdata/TestResCloudletsPolicyActivation/policy_activation_version1.tf"),
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestResCloudletsPolicyActivation/policy_activation_version1.tf"),
 					ExpectError: regexp.MustCompile(`policy activation read: cannot find any activation for the given policy \(1234\) and network \('staging'\)`),
 				},
 			},
@@ -278,7 +279,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("./testdata/TestResCloudletsPolicyActivation/policy_activation_version1_production.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResCloudletsPolicyActivation/policy_activation_version1_production.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckOutput("status", string(cloudlets.PolicyActivationStatusActive)),
 						resource.TestCheckResourceAttr("akamai_cloudlets_policy_activation.test", "version", "1"),
@@ -295,7 +296,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("./testdata/TestResCloudletsPolicyActivation/policy_activation_version1_prod.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResCloudletsPolicyActivation/policy_activation_version1_prod.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckOutput("status", string(cloudlets.PolicyActivationStatusActive)),
 						resource.TestCheckResourceAttr("akamai_cloudlets_policy_activation.test", "version", "1"),
@@ -315,7 +316,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config:      loadFixtureString("./testdata/TestResCloudletsPolicyActivation/policy_activation_version1.tf"),
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestResCloudletsPolicyActivation/policy_activation_version1.tf"),
 					ExpectError: regexp.MustCompile("policy activation create: an error"),
 				},
 			},
@@ -334,7 +335,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config:      loadFixtureString("./testdata/TestResCloudletsPolicyActivation/policy_activation_version1.tf"),
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestResCloudletsPolicyActivation/policy_activation_version1.tf"),
 					ExpectError: regexp.MustCompile("policy activation create: an error"),
 				},
 			},
@@ -358,7 +359,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("./testdata/TestResCloudletsPolicyActivation/policy_activation_version1.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResCloudletsPolicyActivation/policy_activation_version1.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckOutput("status", string(cloudlets.PolicyActivationStatusActive)),
 						resource.TestCheckResourceAttr("akamai_cloudlets_policy_activation.test", "version", "1"),
@@ -382,7 +383,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config:      loadFixtureString("./testdata/TestResCloudletsPolicyActivation/policy_activation_version1.tf"),
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestResCloudletsPolicyActivation/policy_activation_version1.tf"),
 					ExpectError: regexp.MustCompile("policy activation read: an error"),
 				},
 			},
@@ -409,7 +410,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("./testdata/TestResCloudletsPolicyActivation/policy_activation_version1.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResCloudletsPolicyActivation/policy_activation_version1.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckOutput("status", string(cloudlets.PolicyActivationStatusActive)),
 						resource.TestCheckResourceAttr("akamai_cloudlets_policy_activation.test", "version", "1"),
@@ -417,7 +418,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 					),
 				},
 				{
-					Config: loadFixtureString("./testdata/TestResCloudletsPolicyActivation/policy_activation_version1.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResCloudletsPolicyActivation/policy_activation_version1.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckOutput("status", string(cloudlets.PolicyActivationStatusActive)),
 						resource.TestCheckResourceAttr("akamai_cloudlets_policy_activation.test", "version", "1"),
@@ -436,7 +437,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config:      loadFixtureString("./testdata/TestResCloudletsPolicyActivation/policy_activation_version1.tf"),
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestResCloudletsPolicyActivation/policy_activation_version1.tf"),
 					ExpectError: regexp.MustCompile("policy activation create: activation failed"),
 				},
 			},
@@ -451,7 +452,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config:      loadFixtureString("./testdata/TestResCloudletsPolicyActivation/policy_activation_version1.tf"),
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestResCloudletsPolicyActivation/policy_activation_version1.tf"),
 					ExpectError: regexp.MustCompile("policy activation create: activation failed"),
 				},
 			},
@@ -471,7 +472,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("./testdata/TestResCloudletsPolicyActivation/policy_activation_version1.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResCloudletsPolicyActivation/policy_activation_version1.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckOutput("status", string(cloudlets.PolicyActivationStatusActive)),
 						resource.TestCheckResourceAttr("akamai_cloudlets_policy_activation.test", "version", "1"),
@@ -479,7 +480,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 					),
 				},
 				{
-					Config:      loadFixtureString("./testdata/TestResCloudletsPolicyActivation/policy_activation_update_version2.tf"),
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestResCloudletsPolicyActivation/policy_activation_update_version2.tf"),
 					ExpectError: regexp.MustCompile(`policy activation: cannot find the given policy version \(2\): an error`),
 				},
 			},
@@ -499,7 +500,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("./testdata/TestResCloudletsPolicyActivation/policy_activation_version1.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResCloudletsPolicyActivation/policy_activation_version1.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckOutput("status", string(cloudlets.PolicyActivationStatusActive)),
 						resource.TestCheckResourceAttr("akamai_cloudlets_policy_activation.test", "version", "1"),
@@ -507,7 +508,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 					),
 				},
 				{
-					Config: loadFixtureString("./testdata/TestResCloudletsPolicyActivation/policy_activation_version1.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResCloudletsPolicyActivation/policy_activation_version1.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckOutput("status", string(cloudlets.PolicyActivationStatusActive)),
 						resource.TestCheckResourceAttr("akamai_cloudlets_policy_activation.test", "version", "1"),
@@ -542,7 +543,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("./testdata/TestResCloudletsPolicyActivation/policy_activation_version1.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResCloudletsPolicyActivation/policy_activation_version1.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckOutput("status", string(cloudlets.PolicyActivationStatusActive)),
 						resource.TestCheckResourceAttr("akamai_cloudlets_policy_activation.test", "version", "1"),
@@ -550,7 +551,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 					),
 				},
 				{
-					Config: loadFixtureString("./testdata/TestResCloudletsPolicyActivation/policy_activation_update_version2.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResCloudletsPolicyActivation/policy_activation_update_version2.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckOutput("status", string(cloudlets.PolicyActivationStatusActive)),
 						resource.TestCheckResourceAttr("akamai_cloudlets_policy_activation.test", "version", "2"),
@@ -581,7 +582,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("./testdata/TestResCloudletsPolicyActivation/policy_activation_version1.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResCloudletsPolicyActivation/policy_activation_version1.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckOutput("status", string(cloudlets.PolicyActivationStatusActive)),
 						resource.TestCheckResourceAttr("akamai_cloudlets_policy_activation.test", "version", "1"),
@@ -589,7 +590,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 					),
 				},
 				{
-					Config: loadFixtureString("./testdata/TestResCloudletsPolicyActivation/policy_activation_version1_prod.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResCloudletsPolicyActivation/policy_activation_version1_prod.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckOutput("status", string(cloudlets.PolicyActivationStatusActive)),
 						resource.TestCheckResourceAttr("akamai_cloudlets_policy_activation.test", "version", "1"),
@@ -614,7 +615,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("./testdata/TestResCloudletsPolicyActivation/policy_activation_version1.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResCloudletsPolicyActivation/policy_activation_version1.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckOutput("status", string(cloudlets.PolicyActivationStatusActive)),
 						resource.TestCheckResourceAttr("akamai_cloudlets_policy_activation.test", "version", "1"),
@@ -622,7 +623,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 					),
 				},
 				{
-					Config:      loadFixtureString("./testdata/TestResCloudletsPolicyActivation/policy_activation_update_version2.tf"),
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestResCloudletsPolicyActivation/policy_activation_update_version2.tf"),
 					ExpectError: regexp.MustCompile("policy activation update: an error"),
 				},
 			},
@@ -645,7 +646,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("./testdata/TestResCloudletsPolicyActivation/policy_activation_version1.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResCloudletsPolicyActivation/policy_activation_version1.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckOutput("status", string(cloudlets.PolicyActivationStatusActive)),
 						resource.TestCheckResourceAttr("akamai_cloudlets_policy_activation.test", "version", "1"),
@@ -653,7 +654,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 					),
 				},
 				{
-					Config:      loadFixtureString("./testdata/TestResCloudletsPolicyActivation/policy_activation_update_version2.tf"),
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestResCloudletsPolicyActivation/policy_activation_update_version2.tf"),
 					ExpectError: regexp.MustCompile("policy activation update: an error"),
 				},
 			},
@@ -678,7 +679,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("./testdata/TestResCloudletsPolicyActivation/policy_activation_version1.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResCloudletsPolicyActivation/policy_activation_version1.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckOutput("status", string(cloudlets.PolicyActivationStatusActive)),
 						resource.TestCheckResourceAttr("akamai_cloudlets_policy_activation.test", "version", "1"),
@@ -686,7 +687,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 					),
 				},
 				{
-					Config:      loadFixtureString("./testdata/TestResCloudletsPolicyActivation/policy_activation_update_version2.tf"),
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestResCloudletsPolicyActivation/policy_activation_update_version2.tf"),
 					ExpectError: regexp.MustCompile("policy activation: cannot remove policy 1234 property 20 and network 'staging'. Please, try once again later.\nan error"),
 				},
 			},
@@ -709,7 +710,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("./testdata/TestResCloudletsPolicyActivation/policy_activation_version1.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResCloudletsPolicyActivation/policy_activation_version1.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckOutput("status", string(cloudlets.PolicyActivationStatusActive)),
 						resource.TestCheckResourceAttr("akamai_cloudlets_policy_activation.test", "version", "1"),
@@ -717,7 +718,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 					),
 				},
 				{
-					Config:      loadFixtureString("./testdata/TestResCloudletsPolicyActivation/policy_activation_update_version2.tf"),
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestResCloudletsPolicyActivation/policy_activation_update_version2.tf"),
 					ExpectError: regexp.MustCompile("policy activation: cannot find policy 1234 properties: an error"),
 				},
 			},
@@ -742,7 +743,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("./testdata/TestResCloudletsPolicyActivation/policy_activation_version1.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResCloudletsPolicyActivation/policy_activation_version1.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckOutput("status", string(cloudlets.PolicyActivationStatusActive)),
 						resource.TestCheckResourceAttr("akamai_cloudlets_policy_activation.test", "version", "1"),
@@ -750,7 +751,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 					),
 				},
 				{
-					Config:      loadFixtureString("./testdata/TestResCloudletsPolicyActivation/policy_activation_update_version2.tf"),
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestResCloudletsPolicyActivation/policy_activation_update_version2.tf"),
 					ExpectError: regexp.MustCompile("policy activation update: an error"),
 				},
 			},
@@ -779,7 +780,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("./testdata/TestResCloudletsPolicyActivation/policy_activation_version1.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResCloudletsPolicyActivation/policy_activation_version1.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckOutput("status", string(cloudlets.PolicyActivationStatusActive)),
 						resource.TestCheckResourceAttr("akamai_cloudlets_policy_activation.test", "version", "1"),
@@ -787,7 +788,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 					),
 				},
 				{
-					Config:      loadFixtureString("./testdata/TestResCloudletsPolicyActivation/policy_activation_update_version2.tf"),
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestResCloudletsPolicyActivation/policy_activation_update_version2.tf"),
 					ExpectError: regexp.MustCompile(`policy activation read: cannot find any activation for the given policy \(1234\) and network \('staging'\)`),
 				},
 			},

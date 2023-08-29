@@ -7,7 +7,8 @@ import (
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cloudlets"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -34,14 +35,14 @@ func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_version1.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_version1.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckOutput("status", string(cloudlets.LoadBalancerActivationStatusActive)),
 						resource.TestCheckResourceAttr("akamai_cloudlets_application_load_balancer_activation.test", "version", "1"),
 					),
 				},
 				{
-					Config: loadFixtureString("./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_version1.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_version1.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckOutput("status", string(cloudlets.LoadBalancerActivationStatusActive)),
 						resource.TestCheckResourceAttr("akamai_cloudlets_application_load_balancer_activation.test", "version", "1"),
@@ -66,14 +67,14 @@ func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_version1.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_version1.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckOutput("status", string(cloudlets.LoadBalancerActivationStatusActive)),
 						resource.TestCheckResourceAttr("akamai_cloudlets_application_load_balancer_activation.test", "version", "1"),
 					),
 				},
 				{
-					Config: loadFixtureString("./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_version1.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_version1.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckOutput("status", string(cloudlets.LoadBalancerActivationStatusActive)),
 						resource.TestCheckResourceAttr("akamai_cloudlets_application_load_balancer_activation.test", "version", "1"),
@@ -126,14 +127,14 @@ func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_version1.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_version1.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckOutput("status", string(cloudlets.LoadBalancerActivationStatusActive)),
 						resource.TestCheckResourceAttr("akamai_cloudlets_application_load_balancer_activation.test", "version", "1"),
 					),
 				},
 				{
-					Config: loadFixtureString("./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_version1.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_version1.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckOutput("status", string(cloudlets.LoadBalancerActivationStatusActive)),
 						resource.TestCheckResourceAttr("akamai_cloudlets_application_load_balancer_activation.test", "version", "1"),
@@ -149,7 +150,7 @@ func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config:      loadFixtureString("./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_version1.tf"),
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_version1.tf"),
 					ExpectError: regexp.MustCompile("application load balancer activation create: application load balancer activation failed. No changes were written to server:\nan error"),
 				},
 			},
@@ -164,7 +165,7 @@ func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config:      loadFixtureString("./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_version1.tf"),
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_version1.tf"),
 					ExpectError: regexp.MustCompile("application load balancer activation create: error while waiting until load balancer activation status == 'active':\nan error"),
 				},
 			},
@@ -179,7 +180,7 @@ func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_version1.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_version1.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckOutput("status", string(cloudlets.LoadBalancerActivationStatusActive)),
 						resource.TestCheckResourceAttr("akamai_cloudlets_application_load_balancer_activation.test", "version", "1"),
@@ -199,7 +200,7 @@ func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config:      loadFixtureString("./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_version1.tf"),
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_version1.tf"),
 					ExpectError: regexp.MustCompile("application load balancer activation read: an error"),
 				},
 			},
@@ -222,7 +223,7 @@ func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_version1.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_version1.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckOutput("status", string(cloudlets.LoadBalancerActivationStatusActive)),
 						resource.TestCheckResourceAttr("akamai_cloudlets_application_load_balancer_activation.test", "version", "1"),
@@ -230,7 +231,7 @@ func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 					),
 				},
 				{
-					Config: loadFixtureString("./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_version1.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_version1.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckOutput("status", string(cloudlets.LoadBalancerActivationStatusActive)),
 						resource.TestCheckResourceAttr("akamai_cloudlets_application_load_balancer_activation.test", "version", "1"),
@@ -260,7 +261,7 @@ func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_version1.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_version1.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckOutput("status", string(cloudlets.LoadBalancerActivationStatusActive)),
 						resource.TestCheckResourceAttr("akamai_cloudlets_application_load_balancer_activation.test", "version", "1"),
@@ -268,7 +269,7 @@ func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 					),
 				},
 				{
-					Config: loadFixtureString("./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_version1.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_version1.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckOutput("status", string(cloudlets.LoadBalancerActivationStatusActive)),
 						resource.TestCheckResourceAttr("akamai_cloudlets_application_load_balancer_activation.test", "version", "1"),
@@ -303,7 +304,7 @@ func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_version1.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_version1.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckOutput("status", string(cloudlets.LoadBalancerActivationStatusActive)),
 						resource.TestCheckResourceAttr("akamai_cloudlets_application_load_balancer_activation.test", "version", "1"),
@@ -311,7 +312,7 @@ func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 					),
 				},
 				{
-					Config: loadFixtureString("./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_update.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_update.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckOutput("status", string(cloudlets.LoadBalancerActivationStatusActive)),
 						resource.TestCheckResourceAttr("akamai_cloudlets_application_load_balancer_activation.test", "version", "2"),
@@ -347,7 +348,7 @@ func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_version1.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_version1.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckOutput("status", string(cloudlets.LoadBalancerActivationStatusActive)),
 						resource.TestCheckResourceAttr("akamai_cloudlets_application_load_balancer_activation.test", "id", "org_1:STAGING"),
@@ -356,7 +357,7 @@ func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 					),
 				},
 				{
-					Config: loadFixtureString("./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_update_prod.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_update_prod.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckOutput("status", string(cloudlets.LoadBalancerActivationStatusActive)),
 						resource.TestCheckResourceAttr("akamai_cloudlets_application_load_balancer_activation.test", "id", "org_1:PRODUCTION"),
@@ -389,7 +390,7 @@ func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_version1.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_version1.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckOutput("status", string(cloudlets.LoadBalancerActivationStatusActive)),
 						resource.TestCheckResourceAttr("akamai_cloudlets_application_load_balancer_activation.test", "version", "1"),
@@ -397,7 +398,7 @@ func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 					),
 				},
 				{
-					Config:      loadFixtureString("./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_update.tf"),
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_update.tf"),
 					ExpectError: regexp.MustCompile("application load balancer activation update: error while waiting until load balancer activation status == 'active':\nan error"),
 				},
 			},
@@ -423,7 +424,7 @@ func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_version1.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_version1.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckOutput("status", string(cloudlets.LoadBalancerActivationStatusActive)),
 						resource.TestCheckResourceAttr("akamai_cloudlets_application_load_balancer_activation.test", "version", "1"),
@@ -431,7 +432,7 @@ func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 					),
 				},
 				{
-					Config:      loadFixtureString("./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_update.tf"),
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_update.tf"),
 					ExpectError: regexp.MustCompile("application load balancer activation update: application load balancer activation failed. No changes were written to server:\nan error"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckOutput("status", string(cloudlets.LoadBalancerActivationStatusActive)),

@@ -8,7 +8,8 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
 func TestResourcePAPIPropertyActivation(t *testing.T) {
@@ -48,7 +49,7 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("./testdata/TestPropertyActivation/ok/resource_property_activation.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestPropertyActivation/ok/resource_property_activation.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_property_activation.test", "id", "prp_test:STAGING"),
 						resource.TestCheckResourceAttr("akamai_property_activation.test", "property_id", "prp_test"),
@@ -67,7 +68,7 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 					),
 				},
 				{
-					Config: loadFixtureString("./testdata/TestPropertyActivation/ok/resource_property_activation_update.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestPropertyActivation/ok/resource_property_activation_update.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_property_activation.test", "id", "prp_test:STAGING"),
 						resource.TestCheckResourceAttr("akamai_property_activation.test", "contact.#", "1"),
@@ -142,7 +143,7 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("./testdata/TestPropertyActivation/ok/resource_property_activation_with_compliance_record.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestPropertyActivation/ok/resource_property_activation_with_compliance_record.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_property_activation.test", "id", "prp_test:STAGING"),
 						resource.TestCheckResourceAttr("akamai_property_activation.test", "property_id", "prp_test"),
@@ -181,7 +182,7 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("./testdata/TestPropertyActivation/ok/resource_property_activation.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestPropertyActivation/ok/resource_property_activation.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_property_activation.test", "id", "prp_test:STAGING"),
 						resource.TestCheckResourceAttr("akamai_property_activation.test", "property_id", "prp_test"),
@@ -218,7 +219,7 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("testdata/TestPropertyActivation/ok/resource_property_activation_minimum_args.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestPropertyActivation/ok/resource_property_activation_minimum_args.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_property_activation.test", "id", "prp_test:STAGING"),
 						resource.TestCheckResourceAttr("akamai_property_activation.test", "property_id", "prp_test"),
@@ -264,11 +265,11 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("./testdata/TestPropertyActivation/deactivated_in_other_source/resource_property_activation.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestPropertyActivation/deactivated_in_other_source/resource_property_activation.tf"),
 					Check:  resource.TestCheckResourceAttr("akamai_property_activation.test", "version", "1"),
 				},
 				{
-					Config: loadFixtureString("./testdata/TestPropertyActivation/deactivated_in_other_source/resource_property_activation.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestPropertyActivation/deactivated_in_other_source/resource_property_activation.tf"),
 					Check:  resource.TestCheckResourceAttr("akamai_property_activation.test", "version", "1"),
 				},
 			},
@@ -276,7 +277,7 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 		"check schema property activation compliance record - error empty compliance_record block": {
 			steps: []resource.TestStep{
 				{
-					Config:      loadFixtureString("./testdata/TestPropertyActivation/cr_validation/resource_property_activation_with_empty_cr.tf"),
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestPropertyActivation/cr_validation/resource_property_activation_with_empty_cr.tf"),
 					ExpectError: regexp.MustCompile("one of\n`compliance_record.0.noncompliance_reason_emergency,compliance_record.0.noncompliance_reason_no_production_traffic,compliance_record.0.noncompliance_reason_none,compliance_record.0.noncompliance_reason_other`\nmust be specified"),
 				},
 			},
@@ -284,7 +285,7 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 		"check schema property activation compliance record - error more than one cr type": {
 			steps: []resource.TestStep{
 				{
-					Config:      loadFixtureString("./testdata/TestPropertyActivation/cr_validation/resource_property_activation_with_more_than_one_cr.tf"),
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestPropertyActivation/cr_validation/resource_property_activation_with_more_than_one_cr.tf"),
 					ExpectError: regexp.MustCompile("only one of\n`compliance_record.0.noncompliance_reason_emergency,compliance_record.0.noncompliance_reason_no_production_traffic,compliance_record.0.noncompliance_reason_none,compliance_record.0.noncompliance_reason_other`\ncan be specified"),
 				},
 			},
@@ -295,7 +296,7 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config:      loadFixtureString("./testdata/TestPropertyActivation/ok/resource_property_activation.tf"),
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestPropertyActivation/ok/resource_property_activation.tf"),
 					ExpectError: regexp.MustCompile("failed to create request"),
 				},
 			},
@@ -303,7 +304,7 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 		"check schema property activation - no property id nor property": {
 			steps: []resource.TestStep{
 				{
-					Config:      loadFixtureString("./testdata/TestPropertyActivation/no_propertyId/resource_property_activation.tf"),
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestPropertyActivation/no_propertyId/resource_property_activation.tf"),
 					ExpectError: regexp.MustCompile("Missing required argument"),
 				},
 			},
@@ -311,7 +312,7 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 		"check schema property activation - no contact": {
 			steps: []resource.TestStep{
 				{
-					Config:      loadFixtureString("./testdata/TestPropertyActivation/no_contact/resource_property_activation.tf"),
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestPropertyActivation/no_contact/resource_property_activation.tf"),
 					ExpectError: regexp.MustCompile("Missing required argument"),
 				},
 			},
@@ -322,7 +323,7 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config:      loadFixtureString("./testdata/TestPropertyActivation/ok/resource_property_activation.tf"),
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestPropertyActivation/ok/resource_property_activation.tf"),
 					ExpectError: regexp.MustCompile("activation cannot continue due to rule errors"),
 				},
 			},
@@ -353,7 +354,7 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("./testdata/TestPropertyActivation/ok/resource_property_activation.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestPropertyActivation/ok/resource_property_activation.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_property_activation.test", "id", "prp_test:STAGING"),
 						resource.TestCheckResourceAttr("akamai_property_activation.test", "property_id", "prp_test"),
@@ -369,7 +370,7 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 					),
 				},
 				{
-					Config: loadFixtureString("./testdata/TestPropertyActivation/ok/resource_property_activation.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestPropertyActivation/ok/resource_property_activation.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_property_activation.test", "id", "prp_test:STAGING"),
 						resource.TestCheckResourceAttr("akamai_property_activation.test", "property_id", "prp_test"),
@@ -418,7 +419,7 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("./testdata/TestPropertyActivation/diff_suppress/resource_property_activation.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestPropertyActivation/diff_suppress/resource_property_activation.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_property_activation.test", "id", "prp_test:STAGING"),
 						resource.TestCheckResourceAttr("akamai_property_activation.test", "property_id", "prp_test"),
@@ -437,7 +438,7 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 					),
 				},
 				{
-					Config: loadFixtureString("./testdata/TestPropertyActivation/diff_suppress/resource_property_activation_update.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestPropertyActivation/diff_suppress/resource_property_activation_update.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_property_activation.test", "id", "prp_test:STAGING"),
 						resource.TestCheckResourceAttr("akamai_property_activation.test", "contact.#", "2"),
@@ -490,11 +491,11 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("./testdata/TestPropertyActivation/500_on_activation/resource_property_activation.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestPropertyActivation/500_on_activation/resource_property_activation.tf"),
 					Check:  resource.TestCheckResourceAttr("akamai_property_activation.test", "version", "1"),
 				},
 				{
-					Config:      loadFixtureString("./testdata/TestPropertyActivation/500_on_activation/resource_property_activation_update.tf"),
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestPropertyActivation/500_on_activation/resource_property_activation_update.tf"),
 					Check:       resource.TestCheckResourceAttr("akamai_property_activation.test", "version", "1"),
 					ExpectError: regexp.MustCompile("some 500 error"),
 				},
@@ -520,7 +521,7 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: loadFixtureString("./testdata/TestPropertyActivation/import/resource_property_activation_creation_for_import.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestPropertyActivation/import/resource_property_activation_creation_for_import.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_property_activation.test", "id", "prp_test:STAGING"),
 						resource.TestCheckResourceAttr("akamai_property_activation.test", "property_id", "prp_test"),

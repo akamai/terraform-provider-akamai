@@ -7,7 +7,8 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/appsec"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
@@ -17,7 +18,7 @@ func TestAkamaiTuningRecommendationsDataBasic(t *testing.T) {
 		client := &appsec.Mock{}
 
 		config := appsec.GetConfigurationResponse{}
-		err := json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 		require.NoError(t, err)
 
 		client.On("GetConfiguration",
@@ -26,15 +27,15 @@ func TestAkamaiTuningRecommendationsDataBasic(t *testing.T) {
 		).Return(&config, nil)
 
 		getRecs := appsec.GetTuningRecommendationsResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestDSTuningRecommendations/Recommendations.json"), &getRecs)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestDSTuningRecommendations/Recommendations.json"), &getRecs)
 		require.NoError(t, err)
 
 		getGroupRecs := appsec.GetAttackGroupRecommendationsResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestDSTuningRecommendations/AttackGroupRecommendations.json"), &getGroupRecs)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestDSTuningRecommendations/AttackGroupRecommendations.json"), &getGroupRecs)
 		require.NoError(t, err)
 
 		getRuleRecs := appsec.GetRuleRecommendationsResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestDSTuningRecommendations/RuleRecommendations.json"), &getRuleRecs)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestDSTuningRecommendations/RuleRecommendations.json"), &getRuleRecs)
 		require.NoError(t, err)
 
 		client.On("GetTuningRecommendations",
@@ -58,7 +59,7 @@ func TestAkamaiTuningRecommendationsDataBasic(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestDSTuningRecommendations/match_by_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestDSTuningRecommendations/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("data.akamai_appsec_tuning_recommendations.recommendations", "id", "43253"),
 						),
@@ -77,7 +78,7 @@ func TestAkamaiTuningRecommenadationsDataErrorRetrievingTuningRecommenadations(t
 		client := &appsec.Mock{}
 
 		config := appsec.GetConfigurationResponse{}
-		err := json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 		require.NoError(t, err)
 
 		client.On("GetConfiguration",
@@ -86,15 +87,15 @@ func TestAkamaiTuningRecommenadationsDataErrorRetrievingTuningRecommenadations(t
 		).Return(&config, nil)
 
 		getRecs := appsec.GetTuningRecommendationsResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestDSTuningRecommendations/Recommendations.json"), &getRecs)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestDSTuningRecommendations/Recommendations.json"), &getRecs)
 		require.NoError(t, err)
 
 		getGroupRecs := appsec.GetAttackGroupRecommendationsResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestDSTuningRecommendations/AttackGroupRecommendations.json"), &getGroupRecs)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestDSTuningRecommendations/AttackGroupRecommendations.json"), &getGroupRecs)
 		require.NoError(t, err)
 
 		getRuleRecs := appsec.GetAttackGroupRecommendationsResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestDSTuningRecommendations/RuleRecommendations.json"), &getRuleRecs)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestDSTuningRecommendations/RuleRecommendations.json"), &getRuleRecs)
 		require.NoError(t, err)
 
 		client.On("GetTuningRecommendations",
@@ -118,7 +119,7 @@ func TestAkamaiTuningRecommenadationsDataErrorRetrievingTuningRecommenadations(t
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestDSTuningRecommendations/match_by_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestDSTuningRecommendations/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("data.akamai_appsec_tuning_recommendations.recommendations", "id", "43253"),
 						),

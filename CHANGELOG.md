@@ -1,13 +1,50 @@
 # RELEASE NOTES
 
+## 5.2.0 (Aug 29, 2023)
+
+#### FEATURES/ENHANCEMENTS:
+
+* [IMPORTANT] Cloud Wrapper
+  * Added resources:
+    * `akamai_cloudwrapper_activation` - activate cloud wrapper configuration, import cloud wrapper configuration activation
+    * `akamai_cloudwrapper_configuration` - create, read and update cloud wrapper configuration
+  * Added data sources:
+    * `akamai_cloudwrapper_capacities` - reads capacities available for the provided contract IDs
+    * `akamai_cloudwrapper_configuration` - reads configuration associated with config ID
+    * `akamai_cloudwrapper_configurations` - reads all the configurations
+    * `akamai_cloudwrapper_location` - reads location for given location name and traffic type
+    * `akamai_cloudwrapper_locations` - reads all locations
+    * `akamai_cloudwrapper_properties` - reads properties associated with contract IDs with Cloud Wrapper entitlement
+
+* [IMPORTANT] Client Lists
+  * Added resources:
+    * `akamai_clientlist_list` - create, update and delete Client Lists
+    * `akamai_clientlist_activation` - activate a client list
+  * Added data source:
+    * `akamai_clientlist_lists` - reads Client Lists
+      *  Support filter by `name` and/or `types`
+
+* BOTMAN
+  * Added resource:
+    * `akamai_botman_custom_client_sequence` - read and update custom client sequence
+  * Added data source:
+    * `akamai_botman_custom_client_sequence` - reads custom client sequence
+
+* PAPI
+  * `logStreamName` field from `datastream` behavior has changed from string to array of strings for rule format `v2023-05-30`
+
 ## 5.1.0 (Aug 01, 2023)
 
 #### BUG FIXES:
 
 * PAPI
   * Dropped too strict early snippet validation ([#436](https://github.com/akamai/terraform-provider-akamai/issues/436))
-  * Fixed issue that `akamai_property` or `akamai_property_include` would sometimes show strange `null -> null` diff in `rules` (or dropping `null` in newer Terraform versions) even if no update actually is needed. If there is anything else changing in the rule tree, the `null -> null` will be also visible in the diff. That may be fixed in later time.
-  * Fixed issue that `akamai_property_rules_builder` data source did not support PM variables for fields with validation based on regular expressions
+  * Fixed issue that `akamai_property` or `akamai_property_include` would sometimes show strange `null -> null` diff
+    in `rules` (or dropping `null` in newer Terraform versions) even if no update actually is needed. If there is
+    anything else changing in the rule tree, the `null -> null` will be also visible in the diff. That may be fixed in
+    later time.
+  * Fixed issue that `akamai_property_rules_builder` data source did not support PM variables for fields with validation
+    based on regular expressions
 
 #### FEATURES/ENHANCEMENTS:
 
@@ -56,9 +93,9 @@
   * Changed the following data sources in DataStream 2 V2 API:
     * `akamai_datastream_activation_history` - changed schema and corresponding implementations.
     * `akamai_datastream_dataset_fields` - changed parameter, schema and corresponding implementations.
-    * `akamai_datastreams` - changed parameter, schema and corresponding implementations. 
+    * `akamai_datastreams` - changed parameter, schema and corresponding implementations.
   * Changed the following resources in DataStream 2 V2 API:
-    * `akamai_datastreams` - changed in schema payload, response attributes and corresponding implementations. 
+    * `akamai_datastreams` - changed in schema payload, response attributes and corresponding implementations.
   * Updated attribute names in `datastream.connectors`.
   * Updated methods in `datastream.stream` for the above changes.
 
@@ -76,7 +113,7 @@
 
 * CPS
   * `enable_multi_stacked_certificates` field in `akamai_cps_dv_enrollment` resource
-  
+
 * DNS
   * `dns_section` and `dns` fields in provider schema
 
@@ -154,7 +191,7 @@
 * Appsec
   * Update malware policy `ContentTypes` to include `EncodedContentAttributes`.
   * Malware policy's `ContentTypes` is reported as part of an individual policy but is no longer included in the bulk report of all policies.
-  
+
 * PAPI
   * Remove `cpc_` prefix in `akamai_cp_code` resource and data source IDs
 
@@ -189,7 +226,7 @@
   * Fixed bug related to regex validation for handling property delay in `akamai_cloudlets_policy_activation`
   * Fixed sporadic issue with `akamai_cloudlets_policy_activation` due to network delay
 
-* PAPI 
+* PAPI
   * Fixed reading float values in `akamai_property_rules_builder`
   * Add validation for hostnames `cname_from` field in `akamai_property` resource
   * Assign only active property activation version in `akamai_property_activation` resource on read
@@ -302,7 +339,7 @@
 
 * GTM
   * Fixed diff in resources:
-    * `resource_akamai_gtm_asmap` for field `assignment.as_numbers` 
+    * `resource_akamai_gtm_asmap` for field `assignment.as_numbers`
     * `resource_akamai_gtm_cidrmap` for field `assignment.blocks`
     * `resource_akamai_gtm_geomap` for field `assignment.countries`
     * `resource_akamai_gtm_domain` for field `email_notification_list`
@@ -921,7 +958,7 @@
 #### BREAKING CHANGES:
 * PAPI - `resource_akamai_property:` Changed hostnames field to a block type syntax to support additional user inputs. Refer to [Property Resource](docs/resources/property.md) for new syntax.
 
-**Important Note**  
+**Important Note**
 Existing terraform users with hostnames defined in older syntax need to manually fix their hostnames configuration and existing state if needed. Additional info in [Property Resource](docs/resources/property.md)
 
 #### BUG FIXES:

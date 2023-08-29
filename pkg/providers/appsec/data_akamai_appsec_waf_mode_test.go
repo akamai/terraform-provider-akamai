@@ -5,7 +5,8 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/appsec"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
@@ -15,11 +16,11 @@ func TestAkamaiWAFMode_data_basic(t *testing.T) {
 		client := &appsec.Mock{}
 
 		getWAFModeResponse := appsec.GetWAFModeResponse{}
-		err := json.Unmarshal(loadFixtureBytes("testdata/TestDSWAFMode/WAFMode.json"), &getWAFModeResponse)
+		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestDSWAFMode/WAFMode.json"), &getWAFModeResponse)
 		require.NoError(t, err)
 
 		config := appsec.GetConfigurationResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 		require.NoError(t, err)
 
 		client.On("GetConfiguration",
@@ -38,7 +39,7 @@ func TestAkamaiWAFMode_data_basic(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestDSWAFMode/match_by_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestDSWAFMode/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("data.akamai_appsec_waf_mode.test", "id", "43253"),
 						),

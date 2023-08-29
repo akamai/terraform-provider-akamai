@@ -5,7 +5,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/botman"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/test"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
 

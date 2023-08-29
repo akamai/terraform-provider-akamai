@@ -9,9 +9,10 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -298,7 +299,7 @@ func TestResProperty(t *testing.T) {
 							}},
 						}
 					},
-					Config: loadFixtureString("%s/step0.tf", FixturePath),
+					Config: testutils.LoadFixtureString(t, "%s/step0.tf", FixturePath),
 					Check: checkAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
 						"{\"rules\":{\"name\":\"default\",\"options\":{}}}"),
 				},
@@ -307,7 +308,7 @@ func TestResProperty(t *testing.T) {
 						StagingVersion := 1
 						State.Property.StagingVersion = &StagingVersion
 					},
-					Config: loadFixtureString("%s/step1.tf", FixturePath),
+					Config: testutils.LoadFixtureString(t, "%s/step1.tf", FixturePath),
 					Check: checkAttrs("prp_0", "to2.test.domain", "2", "1", "0", "ehn_123",
 						"{\"rules\":{\"name\":\"default\",\"options\":{}}}"),
 				},
@@ -339,7 +340,7 @@ func TestResProperty(t *testing.T) {
 							}},
 						}
 					},
-					Config: loadFixtureString("%s/step0.tf", FixturePath),
+					Config: testutils.LoadFixtureString(t, "%s/step0.tf", FixturePath),
 					Check: checkAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
 						"{\"rules\":{\"name\":\"default\",\"options\":{}}}"),
 				},
@@ -348,7 +349,7 @@ func TestResProperty(t *testing.T) {
 						ProductionVersion := 1
 						State.Property.ProductionVersion = &ProductionVersion
 					},
-					Config: loadFixtureString("%s/step1.tf", FixturePath),
+					Config: testutils.LoadFixtureString(t, "%s/step1.tf", FixturePath),
 					Check: checkAttrs("prp_0", "to2.test.domain", "2", "0", "1", "ehn_123",
 						"{\"rules\":{\"name\":\"default\",\"options\":{}}}"),
 				},
@@ -380,7 +381,7 @@ func TestResProperty(t *testing.T) {
 							}},
 						}
 					},
-					Config: loadFixtureString("%s/step0.tf", FixturePath),
+					Config: testutils.LoadFixtureString(t, "%s/step0.tf", FixturePath),
 					Check: checkAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
 						"{\"rules\":{\"name\":\"default\",\"options\":{}}}"),
 				},
@@ -389,7 +390,7 @@ func TestResProperty(t *testing.T) {
 						StagingVersion := 1
 						State.Property.StagingVersion = &StagingVersion
 					},
-					Config: loadFixtureString("%s/step1.tf", FixturePath),
+					Config: testutils.LoadFixtureString(t, "%s/step1.tf", FixturePath),
 					Check: checkAttrs("prp_0", "to2.test.domain", "2", "1", "0", "ehn_123",
 						"{\"rules\":{\"name\":\"default\",\"options\":{}}}"),
 				},
@@ -421,7 +422,7 @@ func TestResProperty(t *testing.T) {
 							}},
 						}
 					},
-					Config: loadFixtureString("%s/step0.tf", FixturePath),
+					Config: testutils.LoadFixtureString(t, "%s/step0.tf", FixturePath),
 					Check: checkAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
 						"{\"rules\":{\"name\":\"default\",\"options\":{}}}"),
 				},
@@ -430,7 +431,7 @@ func TestResProperty(t *testing.T) {
 						ProductionVersion := 1
 						State.Property.ProductionVersion = &ProductionVersion
 					},
-					Config: loadFixtureString("%s/step1.tf", FixturePath),
+					Config: testutils.LoadFixtureString(t, "%s/step1.tf", FixturePath),
 					Check: checkAttrs("prp_0", "to2.test.domain", "2", "0", "1", "ehn_123",
 						"{\"rules\":{\"name\":\"default\",\"options\":{}}}"),
 				},
@@ -454,12 +455,12 @@ func TestResProperty(t *testing.T) {
 					PreConfig: func() {
 						State.VersionItems = papi.PropertyVersionItems{Items: []papi.PropertyVersionGetItem{{PropertyVersion: 1, ProductionStatus: papi.VersionStatusInactive}}}
 					},
-					Config: loadFixtureString("%s/step0.tf", FixturePath),
+					Config: testutils.LoadFixtureString(t, "%s/step0.tf", FixturePath),
 					Check: checkAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
 						"{\"rules\":{\"name\":\"default\",\"options\":{}}}"),
 				},
 				{
-					Config: loadFixtureString("%s/step1.tf", FixturePath),
+					Config: testutils.LoadFixtureString(t, "%s/step1.tf", FixturePath),
 					Check: checkAttrs("prp_0", "to2.test.domain", "1", "0", "0", "ehn_123",
 						"{\"rules\":{\"name\":\"default\",\"options\":{}}}"),
 				},
@@ -485,7 +486,7 @@ func TestResProperty(t *testing.T) {
 					PreConfig: func() {
 						State.VersionItems = papi.PropertyVersionItems{Items: []papi.PropertyVersionGetItem{{PropertyVersion: 1, ProductionStatus: papi.VersionStatusInactive}}}
 					},
-					Config: loadFixtureString("%s/step0.tf", FixturePath),
+					Config: testutils.LoadFixtureString(t, "%s/step0.tf", FixturePath),
 					Check: checkAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
 						"{\"rules\":{\"name\":\"default\",\"options\":{}}}"),
 				},
@@ -494,7 +495,7 @@ func TestResProperty(t *testing.T) {
 						State.Property.LatestVersion = 2
 						State.Hostnames[0].CnameTo = "changed.test.domain"
 					},
-					Config: loadFixtureString("%s/step0.tf", FixturePath),
+					Config: testutils.LoadFixtureString(t, "%s/step0.tf", FixturePath),
 					Check: checkAttrs("prp_0", "to.test.domain", "2", "0", "0", "ehn_123",
 						"{\"rules\":{\"name\":\"default\",\"options\":{}}}"),
 				},
@@ -519,12 +520,12 @@ func TestResProperty(t *testing.T) {
 					PreConfig: func() {
 						State.VersionItems = papi.PropertyVersionItems{Items: []papi.PropertyVersionGetItem{{PropertyVersion: 1, ProductionStatus: papi.VersionStatusInactive}}}
 					},
-					Config: loadFixtureString("%s/step0.tf", FixturePath),
+					Config: testutils.LoadFixtureString(t, "%s/step0.tf", FixturePath),
 					Check: checkAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
 						`{"rules":{"children":[{"name":"Default CORS Policy","options":{},"criteriaMustSatisfy":"all"}],"name":"","options":{}}}`),
 				},
 				{
-					Config: loadFixtureString("%s/step1.tf", FixturePath),
+					Config: testutils.LoadFixtureString(t, "%s/step1.tf", FixturePath),
 					Check: checkAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
 						`{"rules":{"children":[{"name":"Default CORS Policy","options":{},"criteriaMustSatisfy":"all"}],"name":"","options":{}}}`),
 				},
@@ -588,7 +589,7 @@ func TestResProperty(t *testing.T) {
 		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
 			return []resource.TestStep{
 				{
-					Config: loadFixtureString("%s/step0.tf", FixturePath),
+					Config: testutils.LoadFixtureString(t, "%s/step0.tf", FixturePath),
 					Check: checkAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
 						`{"rules":{"behaviors":[{"name":"cpCode","options":{"value":{"cpCodeLimits":null,"description":"CliTerraformCPCode","id":1050269,"name":"DevExpCliTerraformPapiAsSchemaTest","products":["Web_App_Accel"]}}}],"name":"default","options":{}}}`),
 				},
@@ -625,12 +626,12 @@ func TestResProperty(t *testing.T) {
 					PreConfig: func() {
 						State.VersionItems = papi.PropertyVersionItems{Items: []papi.PropertyVersionGetItem{{PropertyVersion: 1, ProductionStatus: papi.VersionStatusInactive}}}
 					},
-					Config: loadFixtureString("%s/step0.tf", FixturePath),
+					Config: testutils.LoadFixtureString(t, "%s/step0.tf", FixturePath),
 					Check: checkAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
 						`{"rules":{"behaviors":[{"name":"caching","options":{"behavior":"MAX_AGE","mustRevalidate":false,"ttl":"12d"}}],"name":"default","options":{}}}`),
 				},
 				{
-					Config: loadFixtureString("%s/step1.tf", FixturePath),
+					Config: testutils.LoadFixtureString(t, "%s/step1.tf", FixturePath),
 					Check: checkAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
 						`{"rules":{"behaviors":[{"name":"caching","options":{"behavior":"MAX_AGE","mustRevalidate":false,"ttl":"13d"}}],"name":"default","options":{}}}`),
 				},
@@ -654,12 +655,12 @@ func TestResProperty(t *testing.T) {
 					PreConfig: func() {
 						State.VersionItems = papi.PropertyVersionItems{Items: []papi.PropertyVersionGetItem{{PropertyVersion: 1, ProductionStatus: papi.VersionStatusInactive}}}
 					},
-					Config: loadFixtureString("%s/step0.tf", FixturePath),
+					Config: testutils.LoadFixtureString(t, "%s/step0.tf", FixturePath),
 					Check: checkAttrs("prp_0", "to1.test.domain", "1", "0", "0", "ehn_123",
 						`{"rules":{"children":[{"name":"Default CORS Policy","options":{},"criteriaMustSatisfy":"all"}],"name":"","options":{}}}`),
 				},
 				{
-					Config: loadFixtureString("%s/step1.tf", FixturePath),
+					Config: testutils.LoadFixtureString(t, "%s/step1.tf", FixturePath),
 					Check: checkAttrs("prp_0", "to1.test.domain", "1", "0", "0", "ehn_123",
 						`{"rules":{"children":[{"name":"Default CORS Policy","options":{},"criteriaMustSatisfy":"all"}],"name":"","options":{}}}`),
 				},
@@ -684,7 +685,7 @@ func TestResProperty(t *testing.T) {
 					PreConfig: func() {
 						State.VersionItems = papi.PropertyVersionItems{Items: []papi.PropertyVersionGetItem{{PropertyVersion: 1, ProductionStatus: papi.VersionStatusInactive}}}
 					},
-					Config: loadFixtureString("%s/step0.tf", FixturePath),
+					Config: testutils.LoadFixtureString(t, "%s/step0.tf", FixturePath),
 					Check: checkAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
 						"{\"rules\":{\"behaviors\":[{\"name\":\"origin\",\"options\":{\"cacheKeyHostname\":\"REQUEST_HOST_HEADER\",\"compress\":true,\"enableTrueClientIp\":true,\"forwardHostHeader\":\"REQUEST_HOST_HEADER\",\"hostname\":\"test.domain\",\"httpPort\":80,\"httpsPort\":443,\"originCertificate\":\"\",\"originSni\":true,\"originType\":\"CUSTOMER\",\"ports\":\"\",\"trueClientIpClientSetting\":false,\"trueClientIpHeader\":\"True-Client-IP\",\"verificationMode\":\"PLATFORM_SETTINGS\"}}],\"children\":[{\"behaviors\":[{\"name\":\"baseDirectory\",\"options\":{\"value\":\"/smth/\"}}],\"criteria\":[{\"name\":\"requestHeader\",\"options\":{\"headerName\":\"Accept-Encoding\",\"matchCaseSensitiveValue\":true,\"matchOperator\":\"IS_ONE_OF\",\"matchWildcardName\":false,\"matchWildcardValue\":false}}],\"name\":\"change fwd path\",\"options\":{},\"criteriaMustSatisfy\":\"all\"},{\"behaviors\":[{\"name\":\"caching\",\"options\":{\"behavior\":\"MAX_AGE\",\"mustRevalidate\":false,\"ttl\":\"1m\"}}],\"name\":\"caching\",\"options\":{},\"criteriaMustSatisfy\":\"any\"}],\"comments\":\"The behaviors in the Default Rule apply to all requests for the property hostname(s) unless another rule overrides the Default Rule settings.\",\"name\":\"default\",\"options\":{},\"variables\":[{\"description\":\"\",\"hidden\":true,\"name\":\"TEST_EMPTY_FIELDS\",\"sensitive\":false,\"value\":\"\"},{\"description\":null,\"hidden\":true,\"name\":\"TEST_NIL_FIELD\",\"sensitive\":false,\"value\":\"\"}]}}"),
 				},
@@ -692,7 +693,7 @@ func TestResProperty(t *testing.T) {
 					PreConfig: func() {
 						State.Property.LatestVersion = 1
 					},
-					Config: loadFixtureString("%s/step1.tf", FixturePath),
+					Config: testutils.LoadFixtureString(t, "%s/step1.tf", FixturePath),
 					Check: checkAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
 						"{\"rules\":{\"behaviors\":[{\"name\":\"origin\",\"options\":{\"cacheKeyHostname\":\"REQUEST_HOST_HEADER\",\"compress\":true,\"enableTrueClientIp\":true,\"forwardHostHeader\":\"REQUEST_HOST_HEADER\",\"hostname\":\"test.domain\",\"httpPort\":80,\"httpsPort\":443,\"originCertificate\":\"\",\"originSni\":true,\"originType\":\"CUSTOMER\",\"ports\":\"\",\"trueClientIpClientSetting\":false,\"trueClientIpHeader\":\"True-Client-IP\",\"verificationMode\":\"PLATFORM_SETTINGS\"}}],\"children\":[{\"behaviors\":[{\"name\":\"baseDirectory\",\"options\":{\"value\":\"/smth/\"}}],\"criteria\":[{\"name\":\"requestHeader\",\"options\":{\"headerName\":\"Accept-Encoding\",\"matchCaseSensitiveValue\":true,\"matchOperator\":\"IS_ONE_OF\",\"matchWildcardName\":false,\"matchWildcardValue\":false}}],\"name\":\"change fwd path\",\"options\":{},\"criteriaMustSatisfy\":\"all\"},{\"behaviors\":[{\"name\":\"caching\",\"options\":{\"behavior\":\"MAX_AGE\",\"mustRevalidate\":false,\"ttl\":\"1m\"}}],\"name\":\"caching\",\"options\":{},\"criteriaMustSatisfy\":\"any\"}],\"comments\":\"The behaviors in the Default Rule apply to all requests for the property hostname(s) unless another rule overrides the Default Rule settings.\",\"name\":\"default\",\"options\":{},\"variables\":[{\"description\":\"\",\"hidden\":true,\"name\":\"TEST_EMPTY_FIELDS\",\"sensitive\":false,\"value\":\"\"},{\"description\":\"\",\"hidden\":true,\"name\":\"TEST_NIL_FIELD\",\"sensitive\":false,\"value\":\"\"}]}}"),
 				},
@@ -711,7 +712,7 @@ func TestResProperty(t *testing.T) {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{{
-					Config:      loadFixtureString("testdata/TestResProperty/ConfigError/%s.tf", fixtureName),
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResProperty/ConfigError/%s.tf", fixtureName),
 					ExpectError: regexp.MustCompile(rx),
 				}},
 			})
@@ -782,7 +783,7 @@ func TestResProperty(t *testing.T) {
 				Steps: func(State *TestState, _ string) []resource.TestStep {
 					return []resource.TestStep{
 						{
-							Config: loadFixtureString(fixturePath),
+							Config: testutils.LoadFixtureString(t, fixturePath),
 							Check:  checkAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123", rules),
 						},
 						// this step is used to refresh state with updated staging/production statuses
@@ -799,7 +800,7 @@ func TestResProperty(t *testing.T) {
 								State.Property.StagingVersion = &stagingVersion
 
 							},
-							Config: loadFixtureString(fixturePath),
+							Config: testutils.LoadFixtureString(t, fixturePath),
 							Check:  checkAttrs("prp_0", "to.test.domain", "1", "1", "0", "ehn_123", rules),
 						},
 						{
@@ -807,7 +808,7 @@ func TestResProperty(t *testing.T) {
 							ImportStateVerify:       true,
 							ImportStateId:           importID,
 							ResourceName:            "akamai_property.test",
-							Config:                  loadFixtureString(fixturePath),
+							Config:                  testutils.LoadFixtureString(t, fixturePath),
 							ImportStateVerifyIgnore: []string{"product", "read_version"},
 							Check:                   checkAttrs("prp_0", "to.test.domain", "1", "1", "0", "ehn_123", rules),
 						},
@@ -926,12 +927,12 @@ func TestResProperty(t *testing.T) {
 					ProtoV5ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
-							Config: loadFixtureString("testdata/%s-step0.tf", t.Name()),
+							Config: testutils.LoadFixtureString(t, "testdata/%s-step0.tf", t.Name()),
 							Check: checkAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
 								"{\"rules\":{\"name\":\"default\",\"options\":{}}}"),
 						},
 						{
-							Config: loadFixtureString("testdata/%s-step1.tf", t.Name()),
+							Config: testutils.LoadFixtureString(t, "testdata/%s-step1.tf", t.Name()),
 							Check: resource.ComposeAggregateTestCheckFunc(
 								resource.TestCheckResourceAttr("akamai_property.test", "id", "prp_1"),
 								resource.TestCheckResourceAttr("akamai_property.test", "name", "renamed_property"),
@@ -975,12 +976,12 @@ func TestResProperty(t *testing.T) {
 					ProtoV5ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
-							Config: loadFixtureString("testdata/%s/step0.tf", t.Name()),
+							Config: testutils.LoadFixtureString(t, "testdata/%s/step0.tf", t.Name()),
 							Check: checkAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
 								"{\"rules\":{\"name\":\"default\",\"options\":{}}}"),
 						},
 						{
-							Config:      loadFixtureString("testdata/%s/step1.tf", t.Name()),
+							Config:      testutils.LoadFixtureString(t, "testdata/%s/step1.tf", t.Name()),
 							ExpectError: regexp.MustCompile(`cannot remove active property`),
 						},
 					},
@@ -1026,7 +1027,7 @@ func TestResProperty(t *testing.T) {
 					ProtoV5ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
-							Config: loadFixtureString("testdata/TestResProperty/property_update_with_validation_error_for_rules.tf"),
+							Config: testutils.LoadFixtureString(t, "testdata/TestResProperty/property_update_with_validation_error_for_rules.tf"),
 							Check: resource.ComposeAggregateTestCheckFunc(
 								resource.TestCheckNoResourceAttr("akamai_property.test", "rules")),
 							ExpectError: regexp.MustCompile(`validation.required_behavior`),
@@ -1107,11 +1108,11 @@ func TestResProperty(t *testing.T) {
 					ProtoV5ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
-							Config: loadFixtureString("testdata/TestResProperty/CreationUpdateNoHostnames/creation/property_create.tf"),
+							Config: testutils.LoadFixtureString(t, "testdata/TestResProperty/CreationUpdateNoHostnames/creation/property_create.tf"),
 							Check:  resource.TestCheckResourceAttr("akamai_property.test", "id", "prp_0"),
 						},
 						{
-							Config: loadFixtureString("testdata/TestResProperty/CreationUpdateNoHostnames/update/property_update.tf"),
+							Config: testutils.LoadFixtureString(t, "testdata/TestResProperty/CreationUpdateNoHostnames/update/property_update.tf"),
 							Check: resource.ComposeAggregateTestCheckFunc(
 								resource.TestCheckResourceAttr("akamai_property.test", "id", "prp_0"),
 								resource.TestCheckResourceAttr("akamai_property.test", "hostnames.#", "0"),
@@ -1163,7 +1164,7 @@ func TestResProperty(t *testing.T) {
 					ProtoV5ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
-							Config:      loadFixtureString("testdata/TestResProperty/CreationUpdateNoHostnames/creation/property_create.tf"),
+							Config:      testutils.LoadFixtureString(t, "testdata/TestResProperty/CreationUpdateNoHostnames/creation/property_create.tf"),
 							Check:       resource.TestCheckResourceAttr("akamai_property.test", "id", "prp_0"),
 							ExpectError: regexp.MustCompile("updating hostnames: not possible to use cert_provisioning_type = 'DEFAULT' as the limit for DEFAULT certificates has been reached"),
 						},
@@ -1211,7 +1212,7 @@ func TestResProperty(t *testing.T) {
 					ProtoV5ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
-							Config:      loadFixtureString("testdata/TestResProperty/CreationUpdateNoHostnames/creation/property_create.tf"),
+							Config:      testutils.LoadFixtureString(t, "testdata/TestResProperty/CreationUpdateNoHostnames/creation/property_create.tf"),
 							Check:       resource.TestCheckResourceAttr("akamai_property.test", "id", "prp_0"),
 							ExpectError: regexp.MustCompile("updating hostnames: not possible to use cert_provisioning_type = 'DEFAULT' as secure-by-default is not enabled in this account"),
 						},
@@ -1253,7 +1254,7 @@ func TestResProperty(t *testing.T) {
 				resource.UnitTest(t, resource.TestCase{
 					ProtoV5ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{{
-						Config:      loadFixtureString("testdata/TestResProperty/Creation/property.tf"),
+						Config:      testutils.LoadFixtureString(t, "testdata/TestResProperty/Creation/property.tf"),
 						ExpectError: regexp.MustCompile("group not found: grp_0"),
 					}},
 				})
@@ -1281,7 +1282,7 @@ func TestResProperty(t *testing.T) {
 					ProtoV5ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
-							Config:      loadFixtureString("testdata/%s.tf", t.Name()),
+							Config:      testutils.LoadFixtureString(t, "testdata/%s.tf", t.Name()),
 							Check:       resource.TestCheckNoResourceAttr("akamai_property.test", "id"),
 							ExpectError: regexp.MustCompile(`property name is not unique`),
 						},
@@ -1500,14 +1501,14 @@ func TestResProperty(t *testing.T) {
 					ProtoV5ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
-							Config: loadFixtureString("testdata/TestResProperty/CreationUpdateIncorrectEdgeHostname/create/property.tf"),
+							Config: testutils.LoadFixtureString(t, "testdata/TestResProperty/CreationUpdateIncorrectEdgeHostname/create/property.tf"),
 							Check: resource.ComposeAggregateTestCheckFunc(
 								resource.TestCheckResourceAttr("akamai_property.akaproperty", "id", "prp_0"),
 								resource.TestCheckResourceAttr("akamai_property.akaproperty", "hostnames.#", "2"),
 							),
 						},
 						{
-							Config: loadFixtureString("testdata/TestResProperty/CreationUpdateIncorrectEdgeHostname/update/property.tf"),
+							Config: testutils.LoadFixtureString(t, "testdata/TestResProperty/CreationUpdateIncorrectEdgeHostname/update/property.tf"),
 							Check: resource.ComposeAggregateTestCheckFunc(
 								resource.TestCheckResourceAttr("akamai_property.akaproperty", "id", "prp_0"),
 								resource.TestCheckResourceAttr("akamai_property.akaproperty", "hostnames.#", "3"),

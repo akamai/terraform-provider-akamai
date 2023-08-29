@@ -7,7 +7,8 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/edgeworkers"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -197,7 +198,7 @@ func TestDataEdgeWorkersActivation(t *testing.T) {
 					IsUnitTest:        true,
 					Steps: []resource.TestStep{
 						{
-							Config:      loadFixtureString(test.configPath),
+							Config:      testutils.LoadFixtureString(t, test.configPath),
 							Check:       checkAttrsForEdgeWorkerActivation(test.mockData),
 							ExpectError: test.error,
 						},

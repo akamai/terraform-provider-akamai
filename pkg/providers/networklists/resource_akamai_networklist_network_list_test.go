@@ -5,7 +5,8 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/networklists"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
@@ -15,27 +16,27 @@ func TestAccAkamaiNetworkList_res_basic(t *testing.T) {
 		client := &networklists.Mock{}
 
 		createResponse := networklists.CreateNetworkListResponse{}
-		err := json.Unmarshal(loadFixtureBytes("testdata/TestResNetworkList/NetworkList.json"), &createResponse)
+		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResNetworkList/NetworkList.json"), &createResponse)
 		require.NoError(t, err)
 
 		crl := networklists.GetNetworkListsResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResNetworkList/NetworkLists.json"), &crl)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResNetworkList/NetworkLists.json"), &crl)
 		require.NoError(t, err)
 
 		getResponse := networklists.GetNetworkListResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResNetworkList/NetworkList.json"), &getResponse)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResNetworkList/NetworkList.json"), &getResponse)
 		require.NoError(t, err)
 
 		updateResponse := networklists.UpdateNetworkListResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResNetworkList/NetworkListUpdated.json"), &updateResponse)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResNetworkList/NetworkListUpdated.json"), &updateResponse)
 		require.NoError(t, err)
 
 		getResponseAfterUpdate := networklists.GetNetworkListResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResNetworkList/NetworkListUpdated.json"), &getResponseAfterUpdate)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResNetworkList/NetworkListUpdated.json"), &getResponseAfterUpdate)
 		require.NoError(t, err)
 
 		cd := networklists.RemoveNetworkListResponse{}
-		err = json.Unmarshal(loadFixtureBytes("testdata/TestResNetworkList/empty.json"), &cd)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResNetworkList/empty.json"), &cd)
 		require.NoError(t, err)
 
 		client.On("CreateNetworkList",
@@ -74,13 +75,13 @@ func TestAccAkamaiNetworkList_res_basic(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config: loadFixtureString("testdata/TestResNetworkList/match_by_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResNetworkList/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_networklist_network_list.test", "name", "Voyager Call Center Whitelist"),
 						),
 					},
 					{
-						Config: loadFixtureString("testdata/TestResNetworkList/update_by_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResNetworkList/update_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_networklist_network_list.test", "name", "Voyager Call Center Whitelist"),
 						),
