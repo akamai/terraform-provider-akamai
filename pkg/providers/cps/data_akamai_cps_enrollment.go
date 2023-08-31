@@ -248,6 +248,11 @@ func dataSourceCPSEnrollment() *schema.Resource {
 				Computed:    true,
 				Description: "The registration authority or certificate authority (CA) used to obtain a certificate",
 			},
+			"pending_changes": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Whether some changes are pending",
+			},
 			"dns_challenges": {
 				Type:        schema.TypeSet,
 				Computed:    true,
@@ -323,6 +328,8 @@ func dataCPSEnrollmentRead(ctx context.Context, d *schema.ResourceData, m interf
 	}
 
 	attrs := createAttrs(enrollment, enrollmentID)
+
+	attrs["pending_changes"] = len(enrollment.PendingChanges) > 0
 
 	if err = tf.SetAttrs(d, attrs); err != nil {
 		return diag.FromErr(err)
