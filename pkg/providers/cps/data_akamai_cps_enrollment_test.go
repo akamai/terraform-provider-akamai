@@ -500,6 +500,7 @@ func checkAttributesForEnrollment(en *cps.Enrollment, enID int, changes *cps.Cha
 		checkCommonAttrs(en, enID),
 		checkSetTypeAttrs(en),
 		checkChallenges(changes, dvArray),
+		checkPendingChangesEnrollment(en),
 	)
 }
 
@@ -635,6 +636,14 @@ func checkChallenges(changes *cps.Change, dvArray *cps.DVArray) resource.TestChe
 		}
 	}
 	return resource.ComposeAggregateTestCheckFunc(checkFunctions...)
+}
+
+func checkPendingChangesEnrollment(en *cps.Enrollment) resource.TestCheckFunc {
+	if len(en.PendingChanges) > 0 {
+		return resource.TestCheckResourceAttr("data.akamai_cps_enrollment.test", "enrollment.pending_changes", "true")
+	}
+
+	return resource.TestCheckResourceAttr("data.akamai_cps_enrollment.test", "enrollment.pending_changes", "false")
 }
 
 func calculateNumberOfChanges(dvArray *cps.DVArray, changeType string) int {
