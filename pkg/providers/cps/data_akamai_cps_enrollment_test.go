@@ -640,10 +640,9 @@ func checkChallenges(changes *cps.Change, dvArray *cps.DVArray) resource.TestChe
 
 func checkPendingChangesEnrollment(en *cps.Enrollment) resource.TestCheckFunc {
 	if len(en.PendingChanges) > 0 {
-		return resource.TestCheckResourceAttr("data.akamai_cps_enrollment.test", "enrollment.pending_changes", "true")
+		return resource.TestCheckResourceAttr("data.akamai_cps_enrollment.test", "pending_changes", "true")
 	}
-
-	return resource.TestCheckResourceAttr("data.akamai_cps_enrollment.test", "enrollment.pending_changes", "false")
+	return resource.TestCheckResourceAttr("data.akamai_cps_enrollment.test", "pending_changes", "false")
 }
 
 func calculateNumberOfChanges(dvArray *cps.DVArray, changeType string) int {
