@@ -1,3 +1,7 @@
+provider "akamai" {
+  edgerc = "../../test/edgerc"
+}
+
 resource "akamai_cloudwrapper_configuration" "test" {
   config_name         = "newname"
   contract_id         = "ctr_123"

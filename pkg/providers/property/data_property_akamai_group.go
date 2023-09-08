@@ -6,14 +6,13 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/cache"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
 	akameta "github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"golang.org/x/exp/slices"
 )
 
 func dataSourcePropertyGroup() *schema.Resource {
@@ -68,14 +67,14 @@ func dataPropertyGroupRead(ctx context.Context, d *schema.ResourceData, m interf
 		return diag.Errorf("%v: %v: %v", ErrLookingUpGroupByName, groupName, err)
 	}
 
-	if err := d.Set("group_name", group.GroupName); err != nil {
+	if err = d.Set("group_name", group.GroupName); err != nil {
 		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
 
 	if len(group.ContractIDs) != 0 {
 		contractID = group.ContractIDs[0]
 	}
-	if err := d.Set("contract_id", contractID); err != nil {
+	if err = d.Set("contract_id", contractID); err != nil {
 		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
 
@@ -125,11 +124,22 @@ func findGroupByName(name, contract string, groups *papi.GetGroupsResponse, isDe
 	}
 
 	var foundGroups []*papi.Group
-	for _, group := range groups.Groups.Items {
+	for _, group = range groups.Groups.Items {
 		if group.GroupName == name {
 			foundGroups = append(foundGroups, group)
 		}
 	}
+
+	contractMap := make(map[string][]string)
+	for _, grp := range foundGroups {
+		if ctrs, ok := contractMap[grp.GroupName]; ok {
+			if slices.Equal(ctrs, grp.ContractIDs) {
+				return nil, fmt.Errorf("there is more than 1 group with the same name and contract combination. Based on provided data, it is impossible to determine which one should be returned")
+			}
+		}
+		contractMap[grp.GroupName] = grp.ContractIDs
+	}
+
 	// Make sure the group belongs to the specified contract
 	for _, foundGroup := range foundGroups {
 		for _, c := range foundGroup.ContractIDs {
@@ -138,24 +148,14 @@ func findGroupByName(name, contract string, groups *papi.GetGroupsResponse, isDe
 			}
 		}
 	}
+
 	return nil, fmt.Errorf("%v: %s", ErrGroupNotInContract, contract)
 }
 
 func getGroups(ctx context.Context, meta akameta.Meta) (*papi.GetGroupsResponse, error) {
-	groups := &papi.GetGroupsResponse{}
-	if err := cache.Get(cache.BucketName(SubproviderName), "groups", groups); err != nil {
-		if !errors.Is(err, cache.ErrEntryNotFound) && !errors.Is(err, cache.ErrDisabled) {
-			return nil, err
-		}
-		groups, err = Client(meta).GetGroups(ctx)
-		if err != nil {
-			return nil, err
-		}
-		if err := cache.Set(cache.BucketName(SubproviderName), "groups", groups); err != nil {
-			if !errors.Is(err, cache.ErrDisabled) {
-				return nil, err
-			}
-		}
+	groups, err := Client(meta).GetGroups(ctx)
+	if err != nil {
+		return nil, err
 	}
 
 	return groups, nil

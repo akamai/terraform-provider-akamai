@@ -12,7 +12,7 @@ RELOAD_DOCKER_IMAGE="${3:-false}"
 
 # Recalculate DOCKER_IMAGE_SIZE if any changes to dockerfile.
 TIMEOUT="40m"
-DOCKER_IMAGE_SIZE="651787326"
+DOCKER_IMAGE_SIZE="554443852"
 
 SSH_PRV_KEY="$(cat ~/.ssh/id_rsa)"
 SSH_PUB_KEY="$(cat ~/.ssh/id_rsa.pub)"
@@ -37,8 +37,6 @@ PROVIDER_BRANCH_HASH="$(git rev-parse --short HEAD)"
 echo "Making build on branch $PROVIDER_BRANCH_NAME at hash $PROVIDER_BRANCH_HASH with tag $eTAG"
 
 mkdir -p $COVERAGE_DIR
-cp "$HOME"/.edgerc "$WORKDIR"/.edgerc
-sed -i -e "1s/^.*$/[default]/" "$WORKDIR"/.edgerc
 
 docker rm -f akatf-container 2> /dev/null || true
 
@@ -70,6 +68,7 @@ docker run -d -it --name akatf-container --entrypoint "/usr/bin/tail" \
         -e SSH_KNOWN_HOSTS="${SSH_KNOWN_HOSTS}" \
         -e SSH_CONFIG="${SSH_CONFIG}" \
         -e TIMEOUT="$TIMEOUT" \
+        -e TERRAFORM_VERSION="$TERRAFORM_VERSION" \
         -v "$HOME"/.ssh/id_rsa=/root/id_rsa \
         -v "$HOME"/.ssh/id_rsa.pub=/root/id_rsa.pub \
         -v "$HOME"/.ssh/known_hosts=/root/known_hosts \
@@ -92,26 +91,22 @@ docker exec akatf-container sh -c 'git clone ssh://git@git.source.akamai.com:799
 echo "Checkout branches"
 docker exec akatf-container sh -c 'cd edgegrid; git checkout ${EDGEGRID_BRANCH_NAME};
                                    cd ../terraform-provider-akamai; git checkout ${PROVIDER_BRANCH_NAME};
-                                   go mod edit -replace github.com/akamai/AkamaiOPEN-edgegrid-golang/v7=../edgegrid;
-                                   go mod tidy -compat=1.18'
+                                   go mod edit -replace github.com/akamai/AkamaiOPEN-edgegrid-golang/v7=../edgegrid'
+
+echo "Installing terraform"
+docker exec akatf-container sh -c 'cd terraform-provider-akamai; make tools.terraform'
 
 echo "Running golangci-lint"
-docker exec akatf-container sh -c 'cd terraform-provider-akamai; golangci-lint run'
-
-echo "Running gofmt check"
-if ! docker exec akatf-container sh -c 'cd terraform-provider-akamai; test -z $(gofmt -l .)'; then
-  echo "gofmt check failed"
-  exit 1
-fi
+docker exec akatf-container sh -c 'cd terraform-provider-akamai; make lint'
 
 echo "Running terraform fmt"
-docker exec akatf-container sh -c 'cd terraform-provider-akamai; terraform fmt -recursive -check'
+docker exec akatf-container sh -c 'cd terraform-provider-akamai; make terraform-fmtcheck'
 
 echo "Running tflint on examples"
-docker exec akatf-container sh -c 'cd terraform-provider-akamai; find ./examples -type f -name "*.tf" | xargs -I % dirname % | sort -u | xargs -I @ sh -c "echo @ && tflint @"'
+docker exec akatf-container sh -c 'cd terraform-provider-akamai; make terraform-lint'
 
 echo "Running tests with xUnit output"
-docker exec akatf-container sh -c 'cd terraform-provider-akamai; go mod tidy -compat=1.18;
+docker exec akatf-container sh -c 'cd terraform-provider-akamai; go mod tidy;
                                    2>&1 go test -timeout $TIMEOUT -v -coverpkg=./... -coverprofile=../profile.out -covermode=$COVERMODE ./... | tee ../tests.output'
 docker exec akatf-container sh -c 'cat tests.output | go-junit-report' > test/tests.xml
 docker exec akatf-container sh -c 'cat tests.output' > test/tests.output
@@ -125,8 +120,6 @@ docker exec akatf-container sh -c 'cat index.html' > "$COVERAGE_HTML"
 docker exec akatf-container sh -c 'cat coverage.xml' > "$COVERAGE_XML"
 
 echo "Creating docker build"
-docker exec akatf-container sh -c 'cd terraform-provider-akamai; go install -tags all;
-                                   mkdir -p /root/.terraform.d/plugins/registry.terraform.io/akamai/akamai/${PROVIDER_VERSION}/linux_amd64;
-                                   cp /root/go/bin/terraform-provider-akamai /root/.terraform.d/plugins/registry.terraform.io/akamai/akamai/${PROVIDER_VERSION}/linux_amd64/terraform-provider-akamai_v${PROVIDER_VERSION}'
+docker exec akatf-container sh -c 'cd terraform-provider-akamai; make build'
 
 docker rm -f akatf-container 2> /dev/null || true

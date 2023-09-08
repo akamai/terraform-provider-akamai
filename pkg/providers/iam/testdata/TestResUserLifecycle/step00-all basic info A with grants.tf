@@ -1,3 +1,7 @@
+provider "akamai" {
+  edgerc = "../../test/edgerc"
+}
+
 resource "akamai_iam_user" "test" {
   first_name = "first name A"
   last_name  = "last name A"

@@ -1,3 +1,7 @@
+provider "akamai" {
+  edgerc = "../../test/edgerc"
+}
+
 resource "akamai_clientlist_list" "test_list" {
   name        = "List Name Updated"
   tags        = ["a", "c", "d"]

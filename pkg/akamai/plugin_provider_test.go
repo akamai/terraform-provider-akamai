@@ -43,10 +43,9 @@ func TestConfigureCache_EnabledInContext(t *testing.T) {
 	for name, test := range tests {
 		ctx := context.Background()
 		t.Run(name, func(t *testing.T) {
-
 			prov := akamai.NewPluginProvider()
 			_, diagnostics := prov().ConfigureContextFunc(ctx, test.resourceLocalData)
-			require.False(t, diagnostics.HasError())
+			require.False(t, diagnostics.HasError(), fmt.Sprintf("unexpected error in diagnostics: %v", diagnostics))
 
 			assert.Equal(t, test.expectedCacheEnabledState, cache.IsEnabled())
 		})
@@ -69,7 +68,7 @@ func TestConfigureEdgercInContext(t *testing.T) {
 			expectedDiagnostics: diag.Errorf("%s: %s: %s", akamai.ErrWrongEdgeGridConfiguration, edgegrid.ErrSectionDoesNotExist, "section \"not_existing_config_section\" does not exist"),
 			withError:           true,
 		},
-		"with empty edgerc path, default path is used": {
+		"uses defaults with empty edgerc and config_section": {
 			resourceLocalData:   getResourceLocalData(t, "edgerc", ""),
 			expectedDiagnostics: diag.Diagnostics(nil),
 			withError:           false,

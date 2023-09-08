@@ -156,6 +156,10 @@ func dataCloudWrapperCapacityConfig(contracts []string) string {
 	}
 
 	return fmt.Sprintf(`
+provider "akamai" {
+	edgerc = "../../test/edgerc"
+}
+
 data "akamai_cloudwrapper_capacities" "test" {
 	contract_ids = [%s]
 }`, contractIDs)

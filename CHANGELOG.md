@@ -1046,8 +1046,8 @@ These are the operations supported in the Network Lists API v2:
 These are the operations supported in the Identity Management: User Administration API v2:
 
 * Create a new user
-* Update a userâs profile
-* Update a userâs role assignments
+* Update a userÃ¢ÂÂs profile
+* Update a userÃ¢ÂÂs role assignments
 * Delete a user
 
 ## 1.1.1 (Jan 8, 2021)

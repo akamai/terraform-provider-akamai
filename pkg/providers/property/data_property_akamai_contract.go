@@ -4,13 +4,13 @@ import (
 	"context"
 	"errors"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
+	akameta "github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func dataSourcePropertyContract() *schema.Resource {
@@ -34,8 +34,7 @@ func dataSourcePropertyContract() *schema.Resource {
 }
 
 func dataPropertyContractRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := meta.Must(m)
-
+	meta := akameta.Must(m)
 	log := meta.Log("PAPI", "dataPropertyContractRead")
 
 	// create a context with logging for api calls
@@ -70,24 +69,34 @@ func dataPropertyContractRead(ctx context.Context, d *schema.ResourceData, m int
 		return diag.FromErr(err)
 	}
 
+	var foundGroups []*papi.Group
 	for _, g := range groups.Groups.Items {
-		if g.GroupID != group && g.GroupID != tools.AddPrefix(group, "grp_") && g.GroupName != group {
-			continue
+		if isGroupEqual(g, group) {
+			foundGroups = append(foundGroups, g)
 		}
-		if len(g.ContractIDs) == 0 {
-			return diag.Errorf("%v: %v", ErrLookingUpContract, group)
-		}
-
-		// set group_id/group_name/group in state.
-		if err := d.Set("group_id", tools.AddPrefix(g.GroupID, "grp_")); err != nil {
-			return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
-		}
-		if err := d.Set("group_name", g.GroupName); err != nil {
-			return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
-		}
-		d.SetId(g.ContractIDs[0])
-		return nil
 	}
 
-	return diag.Errorf("%v; groupID: %v", ErrNoContractsFound, group)
+	if len(foundGroups) > 1 {
+		return diag.Errorf("there is more than 1 group with the same name. Based on provided data, it is impossible to determine which one should be returned. Please use group_id attribute")
+	} else if len(foundGroups) == 0 {
+		return diag.Errorf("%v; groupID: %v", ErrNoContractsFound, group)
+	}
+	if len(foundGroups[0].ContractIDs) == 0 {
+		return diag.Errorf("%v: %v", ErrLookingUpContract, group)
+	}
+
+	if err = d.Set("group_id", tools.AddPrefix(foundGroups[0].GroupID, "grp_")); err != nil {
+		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
+	}
+	if err = d.Set("group_name", foundGroups[0].GroupName); err != nil {
+		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
+	}
+
+	d.SetId(foundGroups[0].ContractIDs[0])
+
+	return nil
+}
+
+func isGroupEqual(group *papi.Group, target string) bool {
+	return group.GroupID == target || group.GroupID == tools.AddPrefix(target, "grp_") || group.GroupName == target
 }

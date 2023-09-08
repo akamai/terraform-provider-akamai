@@ -1,3 +1,7 @@
+provider "akamai" {
+  edgerc = "../../test/edgerc"
+}
+
 resource "akamai_clientlist_activation" "activation_ASN_LIST_1" {
   version                 = 2
   network                 = "STAGING"
