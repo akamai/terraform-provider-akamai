@@ -67,6 +67,7 @@ func TestAccAkamaiNetworkList_data_by_uniqueID(t *testing.T) {
 							resource.TestCheckResourceAttr("data.akamai_networklist_network_lists.test", "id", "86093_AGEOLIST"),
 							resource.TestCheckResourceAttr("data.akamai_networklist_network_lists.test", "contract_id", "3-4168BG"),
 							resource.TestCheckResourceAttr("data.akamai_networklist_network_lists.test", "group_id", "17240"),
+							resource.TestCheckResourceAttr("data.akamai_networklist_network_lists.test", "sync_point", "1"),
 						),
 					},
 				},

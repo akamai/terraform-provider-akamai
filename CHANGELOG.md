@@ -24,6 +24,11 @@
 * GTM
   * Add better drift handling in akamai_gtm_property - when property is removed without terraform knowledge, resource doesn't just error on refresh but suggests recreation
 
+#### FEATURES/ENHANCEMENTS:
+
+* Appsec
+  * Added `sync_point` value in `akamai_networklist_network_lists` data source
+
 ## 5.2.0 (Aug 29, 2023)
 
 #### FEATURES/ENHANCEMENTS:
