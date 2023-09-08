@@ -1,5 +1,17 @@
 # RELEASE NOTES
 
+## 5.x.x (Sep xx, 2023)
+
+#### FEATURES/ENHANCEMENTS:
+
+* CPS
+  * Added `pending_changes` computed field to `akamai_cps_enrollment` data source ([#PR468](https://github.com/akamai/terraform-provider-akamai/pull/468))
+
+#### BUG FIXES:
+
+* PAPI
+  * Added errors to `data_property_akamai_contract` and `data_property_akamai_group` data sources, when fetching groups returns multiple inconclusive results
+
 ## 5.2.0 (Aug 29, 2023)
 
 #### FEATURES/ENHANCEMENTS:
