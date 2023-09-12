@@ -12,6 +12,9 @@
 * PAPI
   * Added errors to `data_property_akamai_contract` and `data_property_akamai_group` data sources, when fetching groups returns multiple inconclusive results
 
+* GTM
+  * Add better drift handling in akamai_gtm_property - when property is removed without terraform knowledge, resource doesn't just error on refresh but suggests recreation
+
 ## 5.2.0 (Aug 29, 2023)
 
 #### FEATURES/ENHANCEMENTS:

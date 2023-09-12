@@ -515,6 +515,10 @@ func resourceGTMv1PropertyRead(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(err)
 	}
 	prop, err := inst.Client(meta).GetProperty(ctx, property, domain)
+	if errors.Is(err, gtm.ErrNotFound) {
+		d.SetId("")
+		return nil
+	}
 	if err != nil {
 		logger.Errorf("Property Read failed: %s", err.Error())
 		return diag.Errorf("property Read failed: %s", err.Error())
