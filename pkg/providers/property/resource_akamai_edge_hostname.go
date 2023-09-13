@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/hapi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
@@ -255,6 +256,11 @@ func resourceSecureEdgeHostNameRead(ctx context.Context, d *schema.ResourceData,
 	if err := d.Set("edge_hostname", foundEdgeHostname.Domain); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 	}
+
+	if err := d.Set("ip_behavior", foundEdgeHostname.IPVersionBehavior); err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
+	}
+
 	d.SetId(foundEdgeHostname.ID)
 
 	return nil
@@ -292,7 +298,8 @@ func resourceSecureEdgeHostNameUpdate(ctx context.Context, d *schema.ResourceDat
 			ipBehavior = "IPV6_IPV4_DUALSTACK"
 		}
 
-		if _, err = HapiClient(meta).UpdateEdgeHostname(ctx, hapi.UpdateEdgeHostnameRequest{
+		hapiClient := HapiClient(meta)
+		resp, err := hapiClient.UpdateEdgeHostname(ctx, hapi.UpdateEdgeHostnameRequest{
 			DNSZone:           dnsZone,
 			RecordName:        strings.ReplaceAll(edgeHostname, "."+dnsZone, ""),
 			Comments:          fmt.Sprintf("change /ipVersionBehavior to %s", ipBehavior),
@@ -304,7 +311,8 @@ func resourceSecureEdgeHostNameUpdate(ctx context.Context, d *schema.ResourceDat
 					Value: ipBehavior,
 				},
 			},
-		}); err != nil {
+		})
+		if err != nil {
 			if err2 := tf.RestoreOldValues(d, []string{"ip_behavior"}); err2 != nil {
 				return diag.Errorf(`%s failed. No changes were written to server:
 %s
@@ -314,9 +322,36 @@ Failed to restore previous local schema values. The schema will remain in tainte
 			}
 			return diag.FromErr(err)
 		}
+
+		if err = waitForChange(ctx, hapiClient, resp.ChangeID); err != nil {
+			return diag.FromErr(err)
+		}
 	}
 
 	return resourceSecureEdgeHostNameRead(ctx, d, m)
+}
+
+func waitForChange(ctx context.Context, client hapi.HAPI, changeID int) error {
+	for {
+		change, err := client.GetChangeRequest(ctx, hapi.GetChangeRequest{
+			ChangeID: changeID,
+		})
+		if err != nil {
+			return err
+		}
+		if change.Status == "PENDING" {
+			select {
+			case <-time.After(time.Second * 10):
+			case <-ctx.Done():
+				return ctx.Err()
+			}
+			continue
+		}
+		if change.Status == "SUCCEEDED" {
+			return nil
+		}
+		return fmt.Errorf("unexpected change status: %s", change.Status)
+	}
 }
 
 func resourceSecureEdgeHostNameDelete(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {

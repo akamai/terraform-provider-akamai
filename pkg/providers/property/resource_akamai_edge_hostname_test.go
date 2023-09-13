@@ -122,18 +122,20 @@ func TestResourceEdgeHostname(t *testing.T) {
 					GroupID:    "grp_2",
 					EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
 						{
-							ID:           "eh_123",
-							Domain:       "test.edgesuite.net",
-							ProductID:    "prd_2",
-							DomainPrefix: "test2",
-							DomainSuffix: "edgesuite.net",
+							ID:                "eh_123",
+							Domain:            "test.edgesuite.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test2",
+							DomainSuffix:      "edgesuite.net",
+							IPVersionBehavior: "IPV6_PERFORMANCE",
 						},
 						{
-							ID:           "eh_2",
-							Domain:       "test.edgesuite.net",
-							ProductID:    "prd_2",
-							DomainPrefix: "test3",
-							DomainSuffix: "edgesuite.net",
+							ID:                "eh_2",
+							Domain:            "test.edgesuite.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test3",
+							DomainSuffix:      "edgesuite.net",
+							IPVersionBehavior: "IPV6_PERFORMANCE",
 						},
 					}},
 				}, nil).Once()
@@ -160,25 +162,28 @@ func TestResourceEdgeHostname(t *testing.T) {
 					GroupID:    "grp_2",
 					EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
 						{
-							ID:           "eh_123",
-							Domain:       "test.edgesuite.net",
-							ProductID:    "prd_2",
-							DomainPrefix: "test2",
-							DomainSuffix: "edgesuite.net",
+							ID:                "eh_123",
+							Domain:            "test.edgesuite.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test2",
+							DomainSuffix:      "edgesuite.net",
+							IPVersionBehavior: "IPV4",
 						},
 						{
-							ID:           "eh_2",
-							Domain:       "test3.edgesuite.net",
-							ProductID:    "prd_2",
-							DomainPrefix: "test3",
-							DomainSuffix: "edgesuite.net",
+							ID:                "eh_2",
+							Domain:            "test3.edgesuite.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test3",
+							DomainSuffix:      "edgesuite.net",
+							IPVersionBehavior: "IPV4",
 						},
 						{
-							ID:           "eh_123",
-							Domain:       "test.edgekey.net",
-							ProductID:    "prd_2",
-							DomainPrefix: "test",
-							DomainSuffix: "edgekey.net",
+							ID:                "eh_123",
+							Domain:            "test.edgekey.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test",
+							DomainSuffix:      "edgekey.net",
+							IPVersionBehavior: "IPV6_PERFORMANCE",
 						},
 					}},
 				}, nil)
@@ -207,18 +212,20 @@ func TestResourceEdgeHostname(t *testing.T) {
 					GroupID:    "grp_2",
 					EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
 						{
-							ID:           "eh_123",
-							Domain:       "test.akamaized.net",
-							ProductID:    "prd_2",
-							DomainPrefix: "test2",
-							DomainSuffix: "akamaized.net",
+							ID:                "eh_123",
+							Domain:            "test.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test2",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV4",
 						},
 						{
-							ID:           "eh_2",
-							Domain:       "test.akamaized.net",
-							ProductID:    "prd_2",
-							DomainPrefix: "test3",
-							DomainSuffix: "akamaized.net",
+							ID:                "eh_2",
+							Domain:            "test.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test3",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV4",
 						},
 					}},
 				}, nil).Once()
@@ -243,25 +250,28 @@ func TestResourceEdgeHostname(t *testing.T) {
 					GroupID:    "grp_2",
 					EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
 						{
-							ID:           "eh_123",
-							Domain:       "test.akamaized.net",
-							ProductID:    "prd_2",
-							DomainPrefix: "test2",
-							DomainSuffix: "akamaized.net",
+							ID:                "eh_123",
+							Domain:            "test.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test2",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV4",
 						},
 						{
-							ID:           "eh_2",
-							Domain:       "test.akamaized.net",
-							ProductID:    "prd_2",
-							DomainPrefix: "test3",
-							DomainSuffix: "akamaized.net",
+							ID:                "eh_2",
+							Domain:            "test.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test3",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV4",
 						},
 						{
-							ID:           "eh_123",
-							Domain:       "test.akamaized.net",
-							ProductID:    "prd_2",
-							DomainPrefix: "test",
-							DomainSuffix: "akamaized.net",
+							ID:                "eh_123",
+							Domain:            "test.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV6_COMPLIANCE",
 						},
 					}},
 				}, nil)
@@ -289,18 +299,20 @@ func TestResourceEdgeHostname(t *testing.T) {
 					GroupID:    "grp_2",
 					EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
 						{
-							ID:           "eh_123",
-							Domain:       "test.aka.edgesuite.net",
-							ProductID:    "prd_2",
-							DomainPrefix: "test2",
-							DomainSuffix: "aka.net.net",
+							ID:                "eh_123",
+							Domain:            "test.aka.edgesuite.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test2",
+							DomainSuffix:      "aka.net.net",
+							IPVersionBehavior: "IPV4",
 						},
 						{
-							ID:           "eh_2",
-							Domain:       "test.edgesuite.net",
-							ProductID:    "prd_2",
-							DomainPrefix: "test3",
-							DomainSuffix: "edgesuite.net",
+							ID:                "eh_2",
+							Domain:            "test.edgesuite.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test3",
+							DomainSuffix:      "edgesuite.net",
+							IPVersionBehavior: "IPV4",
 						},
 					}},
 				}, nil).Once()
@@ -332,25 +344,28 @@ func TestResourceEdgeHostname(t *testing.T) {
 					GroupID:    "grp_2",
 					EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
 						{
-							ID:           "eh_1",
-							Domain:       "test2.edgesuite.net",
-							ProductID:    "prd_2",
-							DomainPrefix: "test2",
-							DomainSuffix: "edgesuite.net",
+							ID:                "eh_1",
+							Domain:            "test2.edgesuite.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test2",
+							DomainSuffix:      "edgesuite.net",
+							IPVersionBehavior: "IPV4",
 						},
 						{
-							ID:           "eh_2",
-							Domain:       "test3.edgesuite.net",
-							ProductID:    "prd_2",
-							DomainPrefix: "test3",
-							DomainSuffix: "edgesuite.net",
+							ID:                "eh_2",
+							Domain:            "test3.edgesuite.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test3",
+							DomainSuffix:      "edgesuite.net",
+							IPVersionBehavior: "IPV4",
 						},
 						{
-							ID:           "eh_123",
-							Domain:       "test.aka.edgesuite.net",
-							ProductID:    "prd_2",
-							DomainPrefix: "test.aka",
-							DomainSuffix: "edgesuite.net",
+							ID:                "eh_123",
+							Domain:            "test.aka.edgesuite.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test.aka",
+							DomainSuffix:      "edgesuite.net",
+							IPVersionBehavior: "IPV4",
 							UseCases: []papi.UseCase{
 								{
 									UseCase: "Download_Mode",
@@ -387,18 +402,20 @@ func TestResourceEdgeHostname(t *testing.T) {
 					GroupID:    "grp_2",
 					EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
 						{
-							ID:           "eh_123",
-							Domain:       "test.akamaized.net",
-							ProductID:    "prd_2",
-							DomainPrefix: "test",
-							DomainSuffix: "akamaized.net",
+							ID:                "eh_123",
+							Domain:            "test.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV6_COMPLIANCE",
 						},
 						{
-							ID:           "eh_2",
-							Domain:       "test.akamaized.net",
-							ProductID:    "prd_2",
-							DomainPrefix: "test",
-							DomainSuffix: "akamaized.net",
+							ID:                "eh_2",
+							Domain:            "test.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV6_COMPLIANCE",
 						},
 					}},
 				}, nil).Times(3)
@@ -428,18 +445,20 @@ func TestResourceEdgeHostname(t *testing.T) {
 					GroupID:    "grp_2",
 					EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
 						{
-							ID:           "eh_123",
-							Domain:       "test.akamaized.net",
-							ProductID:    "prd_2",
-							DomainPrefix: "test",
-							DomainSuffix: "akamaized.net",
+							ID:                "eh_123",
+							Domain:            "test.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV4",
 						},
 						{
-							ID:           "eh_2",
-							Domain:       "test.akamaized.net",
-							ProductID:    "prd_2",
-							DomainPrefix: "test",
-							DomainSuffix: "akamaized.net",
+							ID:                "eh_2",
+							Domain:            "test.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV4",
 						},
 					}},
 				}, nil).Times(3)
@@ -453,18 +472,20 @@ func TestResourceEdgeHostname(t *testing.T) {
 					GroupID:    "grp_2",
 					EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
 						{
-							ID:           "eh_123",
-							Domain:       "test.akamaized.net",
-							ProductID:    "prd_2",
-							DomainPrefix: "test",
-							DomainSuffix: "akamaized.net",
+							ID:                "eh_123",
+							Domain:            "test.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV4",
 						},
 						{
-							ID:           "eh_2",
-							Domain:       "test.akamaized.net",
-							ProductID:    "prd_2",
-							DomainPrefix: "test",
-							DomainSuffix: "akamaized.net",
+							ID:                "eh_2",
+							Domain:            "test.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV4",
 						},
 					}},
 				}, nil).Once()
@@ -483,7 +504,13 @@ func TestResourceEdgeHostname(t *testing.T) {
 							Value: "IPV6_IPV4_DUALSTACK",
 						},
 					},
-				}).Return(&hapi.UpdateEdgeHostnameResponse{}, nil).Once()
+				}).Return(&hapi.UpdateEdgeHostnameResponse{
+					ChangeID: 123,
+				}, nil).Once()
+
+				mh.On("GetChangeRequest", mock.Anything, hapi.GetChangeRequest{ChangeID: 123}).Return(&hapi.ChangeRequest{
+					Status: "SUCCEEDED",
+				}, nil)
 
 				// read
 				mp.On("GetEdgeHostnames", mock.Anything, papi.GetEdgeHostnamesRequest{
@@ -494,18 +521,20 @@ func TestResourceEdgeHostname(t *testing.T) {
 					GroupID:    "grp_2",
 					EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
 						{
-							ID:           "eh_123",
-							Domain:       "test.akamaized.net",
-							ProductID:    "prd_2",
-							DomainPrefix: "test",
-							DomainSuffix: "akamaized.net",
+							ID:                "eh_123",
+							Domain:            "test.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV6_COMPLIANCE",
 						},
 						{
-							ID:           "eh_2",
-							Domain:       "test.akamaized.net",
-							ProductID:    "prd_2",
-							DomainPrefix: "test",
-							DomainSuffix: "akamaized.net",
+							ID:                "eh_2",
+							Domain:            "test.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV4",
 						},
 					}},
 				}, nil).Twice()
@@ -533,10 +562,11 @@ func TestResourceEdgeHostname(t *testing.T) {
 				},
 			},
 		},
-		"error - update ip_behavior to ipv6_performance": {
+		"edge hostname - ip_behavior drift": {
 			init: func(mp *papi.Mock, mh *hapi.Mock) {
-				// 1. call from create method and refresh 2. update ip_behvior to improper value
-				// 1st step - create
+				// 1st step
+				// 1. call from create method
+				// 2. and 3. call from read method
 				mp.On("GetEdgeHostnames", mock.Anything, papi.GetEdgeHostnamesRequest{
 					ContractID: "ctr_2",
 					GroupID:    "grp_2",
@@ -545,18 +575,20 @@ func TestResourceEdgeHostname(t *testing.T) {
 					GroupID:    "grp_2",
 					EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
 						{
-							ID:           "eh_123",
-							Domain:       "test.akamaized.net",
-							ProductID:    "prd_2",
-							DomainPrefix: "test",
-							DomainSuffix: "akamaized.net",
+							ID:                "eh_123",
+							Domain:            "test.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV4",
 						},
 						{
-							ID:           "eh_2",
-							Domain:       "test.akamaized.net",
-							ProductID:    "prd_2",
-							DomainPrefix: "test",
-							DomainSuffix: "akamaized.net",
+							ID:                "eh_2",
+							Domain:            "test.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV6_COMPLIANCE",
 						},
 					}},
 				}, nil).Times(3)
@@ -570,18 +602,152 @@ func TestResourceEdgeHostname(t *testing.T) {
 					GroupID:    "grp_2",
 					EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
 						{
-							ID:           "eh_123",
-							Domain:       "test.akamaized.net",
-							ProductID:    "prd_2",
-							DomainPrefix: "test",
-							DomainSuffix: "akamaized.net",
+							ID:                "eh_123",
+							Domain:            "test.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV6_COMPLIANCE", // drift happens here
 						},
 						{
-							ID:           "eh_2",
-							Domain:       "test.akamaized.net",
-							ProductID:    "prd_2",
-							DomainPrefix: "test",
-							DomainSuffix: "akamaized.net",
+							ID:                "eh_2",
+							Domain:            "test.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV6_COMPLIANCE",
+						},
+					}},
+				}, nil).Once()
+
+				// 2nd step
+				// update
+				mh.On("UpdateEdgeHostname", mock.Anything, hapi.UpdateEdgeHostnameRequest{
+					DNSZone:           "akamaized.net",
+					RecordName:        "test",
+					Comments:          "change /ipVersionBehavior to IPV4",
+					StatusUpdateEmail: []string{"hello@akamai.com"},
+					Body: []hapi.UpdateEdgeHostnameRequestBody{
+						{
+							Op:    "replace",
+							Path:  "/ipVersionBehavior",
+							Value: "IPV4",
+						},
+					},
+				}).Return(&hapi.UpdateEdgeHostnameResponse{
+					ChangeID: 123,
+				}, nil).Once()
+
+				mh.On("GetChangeRequest", mock.Anything, hapi.GetChangeRequest{ChangeID: 123}).Return(&hapi.ChangeRequest{
+					Status: "PENDING",
+				}, nil).Once()
+				mh.On("GetChangeRequest", mock.Anything, hapi.GetChangeRequest{ChangeID: 123}).Return(&hapi.ChangeRequest{
+					Status: "SUCCEEDED",
+				}, nil).Once()
+
+				// read
+				mp.On("GetEdgeHostnames", mock.Anything, papi.GetEdgeHostnamesRequest{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+				}).Return(&papi.GetEdgeHostnamesResponse{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+					EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
+						{
+							ID:                "eh_123",
+							Domain:            "test.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV4",
+						},
+						{
+							ID:                "eh_2",
+							Domain:            "test.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV6_COMPLIANCE",
+						},
+					}},
+				}, nil).Twice()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/%s", testDir, "new_akamaized_ipv4.tf")),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "id", "eh_123"),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "contract_id", "ctr_2"),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "group_id", "grp_2"),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "edge_hostname", "test.akamaized.net"),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "ip_behavior", "IPV4"),
+					),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/%s", testDir, "new_akamaized_ipv4_with_email.tf")),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "id", "eh_123"),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "contract_id", "ctr_2"),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "group_id", "grp_2"),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "edge_hostname", "test.akamaized.net"),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "ip_behavior", "IPV4"),
+					),
+				},
+			},
+		},
+		"error - update ip_behavior to ipv6_performance": {
+			init: func(mp *papi.Mock, mh *hapi.Mock) {
+				// 1. call from create method and refresh 2. update ip_behvior to improper value
+				// 1st step - create
+				mp.On("GetEdgeHostnames", mock.Anything, papi.GetEdgeHostnamesRequest{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+				}).Return(&papi.GetEdgeHostnamesResponse{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+					EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
+						{
+							ID:                "eh_123",
+							Domain:            "test.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV4",
+						},
+						{
+							ID:                "eh_2",
+							Domain:            "test.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV4",
+						},
+					}},
+				}, nil).Times(3)
+
+				// refresh
+				mp.On("GetEdgeHostnames", mock.Anything, papi.GetEdgeHostnamesRequest{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+				}).Return(&papi.GetEdgeHostnamesResponse{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+					EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
+						{
+							ID:                "eh_123",
+							Domain:            "test.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV4",
+						},
+						{
+							ID:                "eh_2",
+							Domain:            "test.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV4",
 						},
 					}},
 				}, nil).Once()
@@ -631,18 +797,20 @@ func TestResourceEdgeHostname(t *testing.T) {
 					GroupID:    "grp_2",
 					EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
 						{
-							ID:           "eh_123",
-							Domain:       "test.akamaized.net",
-							ProductID:    "prd_2",
-							DomainPrefix: "test",
-							DomainSuffix: "akamaized.net",
+							ID:                "eh_123",
+							Domain:            "test.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV4",
 						},
 						{
-							ID:           "eh_2",
-							Domain:       "test.akamaized.net",
-							ProductID:    "prd_2",
-							DomainPrefix: "test",
-							DomainSuffix: "akamaized.net",
+							ID:                "eh_2",
+							Domain:            "test.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV4",
 						},
 					}},
 				}, nil).Times(3)
@@ -656,18 +824,20 @@ func TestResourceEdgeHostname(t *testing.T) {
 					GroupID:    "grp_2",
 					EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
 						{
-							ID:           "eh_123",
-							Domain:       "test.akamaized.net",
-							ProductID:    "prd_2",
-							DomainPrefix: "test",
-							DomainSuffix: "akamaized.net",
+							ID:                "eh_123",
+							Domain:            "test.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV4",
 						},
 						{
-							ID:           "eh_2",
-							Domain:       "test.akamaized.net",
-							ProductID:    "prd_2",
-							DomainPrefix: "test",
-							DomainSuffix: "akamaized.net",
+							ID:                "eh_2",
+							Domain:            "test.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV4",
 						},
 					}},
 				}, nil).Once()
@@ -702,18 +872,20 @@ func TestResourceEdgeHostname(t *testing.T) {
 					GroupID:    "grp_2",
 					EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
 						{
-							ID:           "eh_123",
-							Domain:       "test.akamaized.net",
-							ProductID:    "prd_2",
-							DomainPrefix: "test",
-							DomainSuffix: "akamaized.net",
+							ID:                "eh_123",
+							Domain:            "test.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV4",
 						},
 						{
-							ID:           "eh_2",
-							Domain:       "test.akamaized.net",
-							ProductID:    "prd_2",
-							DomainPrefix: "test",
-							DomainSuffix: "akamaized.net",
+							ID:                "eh_2",
+							Domain:            "test.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV4",
 						},
 					}},
 				}, nil).Times(3)
@@ -727,18 +899,20 @@ func TestResourceEdgeHostname(t *testing.T) {
 					GroupID:    "grp_2",
 					EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
 						{
-							ID:           "eh_123",
-							Domain:       "test.akamaized.net",
-							ProductID:    "prd_2",
-							DomainPrefix: "test",
-							DomainSuffix: "akamaized.net",
+							ID:                "eh_123",
+							Domain:            "test.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV4",
 						},
 						{
-							ID:           "eh_2",
-							Domain:       "test.akamaized.net",
-							ProductID:    "prd_2",
-							DomainPrefix: "test",
-							DomainSuffix: "akamaized.net",
+							ID:                "eh_2",
+							Domain:            "test.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV4",
 						},
 					}},
 				}, nil).Once()
@@ -998,7 +1172,7 @@ func TestResourceEdgeHostnames_WithImport(t *testing.T) {
 						ImportStateId:           id,
 						ResourceName:            "akamai_edge_hostname.importedgehostname",
 						ImportStateVerify:       true,
-						ImportStateVerifyIgnore: []string{"ip_behavior", "product_id"},
+						ImportStateVerifyIgnore: []string{"product_id"},
 					},
 				},
 			})

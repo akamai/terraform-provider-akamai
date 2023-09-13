@@ -1,6 +1,6 @@
 # RELEASE NOTES
 
-## 5.x.x (Sep xx, 2023)
+## 5.3.x (Sep xx, 2023)
 
 #### FEATURES/ENHANCEMENTS:
 
@@ -11,6 +11,7 @@
 
 * PAPI
   * Added errors to `data_property_akamai_contract` and `data_property_akamai_group` data sources, when fetching groups returns multiple inconclusive results
+  * Fixed drift issue in `akamai_edge_hostname` resource [(#457)](https://github.com/akamai/terraform-provider-akamai/issues/457)
 
 * GTM
   * Add better drift handling in akamai_gtm_property - when property is removed without terraform knowledge, resource doesn't just error on refresh but suggests recreation
