@@ -297,9 +297,17 @@ func (r RulesBuilder) remapOptionValues(behaviorName string, options papi.RuleOp
 		} else {
 			newRom[optionName] = v
 		}
+		// for array with elements which potentially should be flattened
+		if items, ok := newRom[optionName].([]interface{}); ok {
+			for i, item := range items {
+				if opt, ok := item.(map[string]interface{}); ok {
+					newRom[optionName].([]interface{})[i] = r.remapOptionValues(optKey, opt)
+				}
+			}
+		}
 
-		if v, ok := newRom[optionName].(map[string]interface{}); ok {
-			newRom[optionName] = r.remapOptionValues(optKey, v)
+		if opt, ok := newRom[optionName].(map[string]interface{}); ok {
+			newRom[optionName] = r.remapOptionValues(optKey, opt)
 		}
 
 	}
