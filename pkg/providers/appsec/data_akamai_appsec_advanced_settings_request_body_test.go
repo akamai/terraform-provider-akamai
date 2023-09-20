@@ -35,8 +35,8 @@ func TestAkamaiAdvancedSettingsRequestBodyDataBasic(t *testing.T) {
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
-				IsUnitTest:        true,
-				ProviderFactories: testAccProviders,
+				IsUnitTest:               true,
+				ProtoV6ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestDSAdvancedSettingsRequestBody/match_by_id.tf"),
@@ -77,8 +77,8 @@ func TestAkamaiAdvancedSettingsRequestBodyDataBasicPolicyID(t *testing.T) {
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
-				IsUnitTest:        true,
-				ProviderFactories: testAccProviders,
+				IsUnitTest:               true,
+				ProtoV6ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestDSAdvancedSettingsRequestBody/match_by_policy_id.tf"),

@@ -297,7 +297,7 @@ func TestDataPropertyIncludes(t *testing.T) {
 			test.init(t, client, test.attrs)
 			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProtoV5ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testAccProviders,
 					IsUnitTest:               true,
 					Steps: []resource.TestStep{{
 						Config:      testutils.LoadFixtureString(t, test.configPath),

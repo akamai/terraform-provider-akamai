@@ -245,7 +245,7 @@ func TestResDnsZone(t *testing.T) {
 		}()
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestResDnsZone/create_primary.tf"),

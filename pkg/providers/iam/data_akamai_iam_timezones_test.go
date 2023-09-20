@@ -41,8 +41,8 @@ func TestDataTimezones(t *testing.T) {
 		useClient(client, func() {
 			resourceName := "data.akamai_iam_timezones.test"
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
-				IsUnitTest:        true,
+				ProtoV6ProviderFactories: testAccProviders,
+				IsUnitTest:               true,
 				Steps: []resource.TestStep{
 					{
 						Config: test.Fixture("testdata/%s/timezones.tf", workDir),
@@ -77,8 +77,8 @@ func TestDataTimezones(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
-				IsUnitTest:        true,
+				ProtoV6ProviderFactories: testAccProviders,
+				IsUnitTest:               true,
 				Steps: []resource.TestStep{
 					{
 						Config:      test.Fixture("testdata/%s/timezones.tf", workDir),

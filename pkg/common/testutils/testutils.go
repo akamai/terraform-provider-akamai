@@ -2,11 +2,17 @@
 package testutils
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"testing"
 
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/subprovider"
+	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
+	"github.com/hashicorp/terraform-plugin-mux/tf5to6server"
+	"github.com/hashicorp/terraform-plugin-mux/tf6muxserver"
 	"github.com/stretchr/testify/require"
 )
 
@@ -46,4 +52,34 @@ func LoadFixtureBytes(t *testing.T, path string) []byte {
 // LoadFixtureString returns the entire contents of the given file as a string
 func LoadFixtureString(t *testing.T, format string, args ...interface{}) string {
 	return string(LoadFixtureBytes(t, fmt.Sprintf(format, args...)))
+}
+
+// NewPluginProviderFactories provides protocol v6 plugin provider for test purposes
+func NewPluginProviderFactories(subprovider subprovider.Plugin) map[string]func() (tfprotov6.ProviderServer, error) {
+	testAccPluginProvider := akamai.NewPluginProvider(subprovider)()
+	testAccProviders := map[string]func() (tfprotov6.ProviderServer, error){
+		"akamai": func() (tfprotov6.ProviderServer, error) {
+			upgradedPluginProvider, err := tf5to6server.UpgradeServer(
+				context.Background(),
+				testAccPluginProvider.GRPCProvider,
+			)
+			if err != nil {
+				return nil, err
+			}
+
+			providers := []func() tfprotov6.ProviderServer{
+				func() tfprotov6.ProviderServer {
+					return upgradedPluginProvider
+				},
+			}
+
+			muxServer, err := tf6muxserver.NewMuxServer(context.Background(), providers...)
+			if err != nil {
+				return nil, err
+			}
+
+			return muxServer.ProviderServer(), nil
+		},
+	}
+	return testAccProviders
 }

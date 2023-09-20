@@ -31,7 +31,7 @@ func TestDataSourceMultipleGroups_basic(t *testing.T) {
 			}}}}, nil)
 		useClient(client, nil, func() {
 			resource.ParallelTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testAccProviders,
 				CheckDestroy:             testAccCheckAkamaiMultipleGroupsDestroy,
 				IsUnitTest:               true,
 				Steps: []resource.TestStep{
@@ -70,7 +70,7 @@ func TestGroup_ContractNotFoundInState(t *testing.T) {
 			}}}}, nil)
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testAccProviders,
 				IsUnitTest:               true,
 				Steps: []resource.TestStep{{
 					Config: testutils.LoadFixtureString(t, "testdata/TestDSContractRequired/groups.tf"),

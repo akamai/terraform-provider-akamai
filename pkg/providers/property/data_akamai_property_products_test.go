@@ -14,7 +14,7 @@ import (
 func TestVerifyProductsDataSourceSchema(t *testing.T) {
 	t.Run("akamai_property_products - test data source required contract", func(t *testing.T) {
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV5ProviderFactories: testAccProviders,
+			ProtoV6ProviderFactories: testAccProviders,
 			IsUnitTest:               true,
 			Steps: []resource.TestStep{{
 				Config:      testConfig(""),
@@ -38,7 +38,7 @@ func TestOutputProductsDataSource(t *testing.T) {
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testAccProviders,
 				IsUnitTest:               true,
 				Steps: []resource.TestStep{{
 					Config: testConfig("contract_id = \"ctr_test\""),

@@ -28,8 +28,8 @@ func TestAkamaiConfiguration_data_basic(t *testing.T) {
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
-				IsUnitTest:        true,
-				ProviderFactories: testAccProviders,
+				IsUnitTest:               true,
+				ProtoV6ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestDSConfiguration/match_by_id.tf"),
@@ -60,8 +60,8 @@ func TestAkamaiConfiguration_data_nonexistentConfig(t *testing.T) {
 		).Return(nil, fmt.Errorf("configuration 'Nonexistent' not found"))
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
-				IsUnitTest:        true,
-				ProviderFactories: testAccProviders,
+				IsUnitTest:               true,
+				ProtoV6ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestDSConfiguration/nonexistent_config.tf"),

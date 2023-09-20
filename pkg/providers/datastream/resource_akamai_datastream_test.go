@@ -8,13 +8,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
-	"github.com/tj/assert"
-
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/datastream"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+	"github.com/tj/assert"
 )
 
 const (
@@ -369,7 +368,7 @@ func TestResourceStream(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestResourceStream/lifecycle/create_stream.tf"),
@@ -705,7 +704,7 @@ func TestResourceUpdate(t *testing.T) {
 
 			useClient(m, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
 							Config: testutils.LoadFixtureString(t, fmt.Sprintf("testdata/TestResourceStream/update_resource/create_stream_%s.tf", createStreamFilenameSuffix)),
@@ -782,7 +781,7 @@ func TestResourceStreamErrors(t *testing.T) {
 
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
 							Config:      testutils.LoadFixtureString(t, test.tfFile),
@@ -842,7 +841,7 @@ func TestResourceStreamCustomDiff(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
 							Config:             testutils.LoadFixtureString(t, test.tfFile),
@@ -1000,7 +999,7 @@ func TestEmailIDs(t *testing.T) {
 
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
 							Config: testutils.LoadFixtureString(t, fmt.Sprintf("testdata/TestResourceStream/email_ids/%s", test.Filename)),
@@ -1199,7 +1198,7 @@ func TestDatasetIDsDiff(t *testing.T) {
 
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
 							Config:             testutils.LoadFixtureString(t, test.preConfig),
@@ -1503,7 +1502,7 @@ func TestCustomHeaders(t *testing.T) {
 
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
 							Config: testutils.LoadFixtureString(t, fmt.Sprintf("testdata/TestResourceStream/custom_headers/%s", test.Filename)),
@@ -1732,7 +1731,7 @@ func TestMTLS(t *testing.T) {
 
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
 							Config: testutils.LoadFixtureString(t, fmt.Sprintf("testdata/TestResourceStream/mtls/%s", test.Filename)),
@@ -2047,7 +2046,7 @@ func TestUrlSuppressor(t *testing.T) {
 
 			useClient(m, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testAccProviders,
 					Steps:             test.Steps,
 				})
 
@@ -2205,7 +2204,7 @@ func TestConnectors(t *testing.T) {
 
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
 							Config: testutils.LoadFixtureString(t, fmt.Sprintf("testdata/TestResourceStream/connectors/%s", test.Filename)),

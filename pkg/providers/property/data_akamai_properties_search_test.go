@@ -55,7 +55,7 @@ func TestDSPropertiesSearch(t *testing.T) {
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{{
 					Config: testutils.LoadFixtureString(t, "testdata/TestDSPropertiesSearch/match_by_hostname.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
@@ -96,7 +96,7 @@ func TestDSPropertiesSearch(t *testing.T) {
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestDSPropertiesSearch/match_by_hostname.tf"),
 					ExpectError: regexp.MustCompile("searching for properties"),

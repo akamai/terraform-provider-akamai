@@ -13,8 +13,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
-	"github.com/hashicorp/terraform-plugin-go/tfprotov5"
-	"github.com/hashicorp/terraform-plugin-mux/tf5muxserver"
+	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
+	"github.com/hashicorp/terraform-plugin-mux/tf6muxserver"
 )
 
 type (
@@ -110,19 +110,19 @@ func TestMain(m *testing.M) {
 	os.Exit(exitCode)
 }
 
-func newProviderFactory(opts ...testSubproviderOption) map[string]func() (tfprotov5.ProviderServer, error) {
+func newProviderFactory(opts ...testSubproviderOption) map[string]func() (tfprotov6.ProviderServer, error) {
 	testAccProvider := akamai.NewFrameworkProvider(newTestSubprovider(opts...))()
 
-	return map[string]func() (tfprotov5.ProviderServer, error){
-		"akamai": func() (tfprotov5.ProviderServer, error) {
+	return map[string]func() (tfprotov6.ProviderServer, error){
+		"akamai": func() (tfprotov6.ProviderServer, error) {
 			ctx := context.Background()
-			providers := []func() tfprotov5.ProviderServer{
-				providerserver.NewProtocol5(
+			providers := []func() tfprotov6.ProviderServer{
+				providerserver.NewProtocol6(
 					testAccProvider,
 				),
 			}
 
-			muxServer, err := tf5muxserver.NewMuxServer(ctx, providers...)
+			muxServer, err := tf6muxserver.NewMuxServer(ctx, providers...)
 			if err != nil {
 				return nil, err
 			}

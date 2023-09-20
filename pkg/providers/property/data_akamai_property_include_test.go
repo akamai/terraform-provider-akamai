@@ -137,7 +137,7 @@ func TestDataPropertyInclude(t *testing.T) {
 			useClient(client, nil, func() {
 				resource.Test(t, resource.TestCase{
 					IsUnitTest:               true,
-					ProtoV5ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{{
 						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("testdata/TestDataPropertyInclude/%s", test.givenTF)),
 						Check:       resource.ComposeAggregateTestCheckFunc(checkFuncs...),

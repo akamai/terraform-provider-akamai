@@ -7,14 +7,13 @@ import (
 	"log"
 
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/akamai"
-	// Load the providers
-	_ "github.com/akamai/terraform-provider-akamai/v5/pkg/providers"
+	_ "github.com/akamai/terraform-provider-akamai/v5/pkg/providers" // Load the providers
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/providers/registry"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
-	"github.com/hashicorp/terraform-plugin-go/tfprotov5"
-	"github.com/hashicorp/terraform-plugin-go/tfprotov5/tf5server"
-	"github.com/hashicorp/terraform-plugin-mux/tf5muxserver"
+	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
+	"github.com/hashicorp/terraform-plugin-go/tfprotov6/tf6server"
+	"github.com/hashicorp/terraform-plugin-mux/tf6muxserver"
 )
 
 func main() {
@@ -26,25 +25,30 @@ func main() {
 	// Anything lower and we risk losing those values to the ether
 	hclog.Default().SetLevel(hclog.Trace)
 
-	providers := []func() tfprotov5.ProviderServer{
-		akamai.NewPluginProvider(registry.PluginSubproviders()...)().GRPCProvider,
-		providerserver.NewProtocol5(
-			akamai.NewFrameworkProvider(registry.FrameworkSubproviders()...)(),
-		),
-	}
-
-	muxServer, err := tf5muxserver.NewMuxServer(context.Background(), providers...)
+	upgradedPluginProvider, err := akamai.NewProtoV6PluginProvider(registry.PluginSubproviders())
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	var serveOpts []tf5server.ServeOpt
-
-	if debugMode {
-		serveOpts = append(serveOpts, tf5server.WithManagedDebug())
+	providers := []func() tfprotov6.ProviderServer{
+		upgradedPluginProvider,
+		providerserver.NewProtocol6(
+			akamai.NewFrameworkProvider(registry.FrameworkSubproviders()...)(),
+		),
 	}
 
-	if err = tf5server.Serve(akamai.ProviderRegistryPath, muxServer.ProviderServer, serveOpts...); err != nil {
+	muxServer, err := tf6muxserver.NewMuxServer(context.Background(), providers...)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var serveOpts []tf6server.ServeOpt
+
+	if debugMode {
+		serveOpts = append(serveOpts, tf6server.WithManagedDebug())
+	}
+
+	if err = tf6server.Serve(akamai.ProviderRegistryPath, muxServer.ProviderServer, serveOpts...); err != nil {
 		log.Fatal(err)
 	}
 }

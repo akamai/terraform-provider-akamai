@@ -35,8 +35,8 @@ func TestEdgeKVGroupItems(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
-				IsUnitTest:        true,
+				ProtoV6ProviderFactories: testAccProviders,
+				IsUnitTest:               true,
 				Steps: []resource.TestStep{
 					{
 						Config: test.Fixture("testdata/TestDataEdgeKVGroupItems/basic.tf"),
@@ -59,8 +59,8 @@ func TestEdgeKVGroupItems(t *testing.T) {
 	t.Run("missed required `namespace_name` field", func(t *testing.T) {
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
-				IsUnitTest:        true,
+				ProtoV6ProviderFactories: testAccProviders,
+				IsUnitTest:               true,
 				Steps: []resource.TestStep{
 					{
 						Config:      test.Fixture("testdata/TestDataEdgeKVGroupItems/missed_namespace_name.tf"),
@@ -76,8 +76,8 @@ func TestEdgeKVGroupItems(t *testing.T) {
 	t.Run("missed required `network` field", func(t *testing.T) {
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
-				IsUnitTest:        true,
+				ProtoV6ProviderFactories: testAccProviders,
+				IsUnitTest:               true,
 				Steps: []resource.TestStep{
 					{
 						Config:      test.Fixture("testdata/TestDataEdgeKVGroupItems/missed_network.tf"),
@@ -93,8 +93,8 @@ func TestEdgeKVGroupItems(t *testing.T) {
 	t.Run("missed required `group_name` field", func(t *testing.T) {
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
-				IsUnitTest:        true,
+				ProtoV6ProviderFactories: testAccProviders,
+				IsUnitTest:               true,
 				Steps: []resource.TestStep{
 					{
 						Config:      test.Fixture("testdata/TestDataEdgeKVGroupItems/missed_group.tf"),
@@ -110,8 +110,8 @@ func TestEdgeKVGroupItems(t *testing.T) {
 	t.Run("incorrect `network` field", func(t *testing.T) {
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
-				IsUnitTest:        true,
+				ProtoV6ProviderFactories: testAccProviders,
+				IsUnitTest:               true,
 				Steps: []resource.TestStep{
 					{
 						Config:      test.Fixture("testdata/TestDataEdgeKVGroupItems/incorrect_network.tf"),

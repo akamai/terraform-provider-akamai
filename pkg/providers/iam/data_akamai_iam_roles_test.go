@@ -33,8 +33,8 @@ func TestDataRoles(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
-				IsUnitTest:        true,
+				ProtoV6ProviderFactories: testAccProviders,
+				IsUnitTest:               true,
 				Steps: []resource.TestStep{
 					{
 						Config: test.Fixture("testdata/%s.tf", t.Name()),
@@ -66,8 +66,8 @@ func TestDataRoles(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
-				IsUnitTest:        true,
+				ProtoV6ProviderFactories: testAccProviders,
+				IsUnitTest:               true,
 				Steps: []resource.TestStep{
 					{
 						Config:      test.Fixture("testdata/%s/step0.tf", t.Name()),

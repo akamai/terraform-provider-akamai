@@ -140,7 +140,7 @@ func TestDataSourcePAPIPropertyActivation(t *testing.T) {
 			}
 			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProtoV5ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testAccProviders,
 					IsUnitTest:               true,
 					Steps:                    test.steps,
 				})

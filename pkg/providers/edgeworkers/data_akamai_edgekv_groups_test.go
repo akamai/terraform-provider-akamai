@@ -21,8 +21,8 @@ func TestEdgeKVGroups(t *testing.T) {
 			Return([]string{"TestImportGroup", "TestGroup1", "TestGroup2", "TestGroup3", "TestGroup4"}, nil).Times(5)
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
-				IsUnitTest:        true,
+				ProtoV6ProviderFactories: testAccProviders,
+				IsUnitTest:               true,
 				Steps: []resource.TestStep{
 					{
 						Config: test.Fixture("testdata/TestDataEdgeKVNamespaceGroups/basic.tf"),
@@ -47,8 +47,8 @@ func TestEdgeKVGroups(t *testing.T) {
 	t.Run("missed required `namespace_name` field", func(t *testing.T) {
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
-				IsUnitTest:        true,
+				ProtoV6ProviderFactories: testAccProviders,
+				IsUnitTest:               true,
 				Steps: []resource.TestStep{
 					{
 						Config:      test.Fixture("testdata/TestDataEdgeKVNamespaceGroups/missed_namespace_name.tf"),
@@ -64,8 +64,8 @@ func TestEdgeKVGroups(t *testing.T) {
 	t.Run("missed required `network` field", func(t *testing.T) {
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
-				IsUnitTest:        true,
+				ProtoV6ProviderFactories: testAccProviders,
+				IsUnitTest:               true,
 				Steps: []resource.TestStep{
 					{
 						Config:      test.Fixture("testdata/TestDataEdgeKVNamespaceGroups/missed_network.tf"),
@@ -81,8 +81,8 @@ func TestEdgeKVGroups(t *testing.T) {
 	t.Run("incorrect `network` field", func(t *testing.T) {
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
-				IsUnitTest:        true,
+				ProtoV6ProviderFactories: testAccProviders,
+				IsUnitTest:               true,
 				Steps: []resource.TestStep{
 					{
 						Config:      test.Fixture("testdata/TestDataEdgeKVNamespaceGroups/incorrect_network.tf"),

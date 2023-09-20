@@ -15,6 +15,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
+	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
+	"github.com/hashicorp/terraform-plugin-mux/tf5to6server"
+	"github.com/hashicorp/terraform-plugin-mux/tf6muxserver"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov5"
 	"github.com/hashicorp/terraform-plugin-mux/tf5muxserver"
@@ -22,7 +25,7 @@ import (
 )
 
 var (
-	testAccProviders         map[string]func() (tfprotov5.ProviderServer, error)
+	testAccProviders         map[string]func() (tfprotov6.ProviderServer, error)
 	testAccPluginProvider    *schema.Provider
 	testAccFrameworkProvider provider.Provider
 )
@@ -31,17 +34,28 @@ func TestMain(m *testing.M) {
 	testAccPluginProvider = akamai.NewPluginProvider(NewPluginSubprovider())()
 	testAccFrameworkProvider = akamai.NewFrameworkProvider(NewFrameworkSubprovider())()
 
-	testAccProviders = map[string]func() (tfprotov5.ProviderServer, error){
-		"akamai": func() (tfprotov5.ProviderServer, error) {
+	testAccProviders = map[string]func() (tfprotov6.ProviderServer, error){
+		"akamai": func() (tfprotov6.ProviderServer, error) {
 			ctx := context.Background()
-			providers := []func() tfprotov5.ProviderServer{
+
+			upgradedSdkProvider, err := tf5to6server.UpgradeServer(
+				context.Background(),
 				testAccPluginProvider.GRPCProvider,
-				providerserver.NewProtocol5(
+			)
+			if err != nil {
+				return nil, err
+			}
+
+			providers := []func() tfprotov6.ProviderServer{
+				func() tfprotov6.ProviderServer {
+					return upgradedSdkProvider
+				},
+				providerserver.NewProtocol6(
 					testAccFrameworkProvider,
 				),
 			}
 
-			muxServer, err := tf5muxserver.NewMuxServer(ctx, providers...)
+			muxServer, err := tf6muxserver.NewMuxServer(ctx, providers...)
 			if err != nil {
 				return nil, err
 			}

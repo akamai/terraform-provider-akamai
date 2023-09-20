@@ -93,7 +93,7 @@ func TestDataSourceDatasetFieldsRead(t *testing.T) {
 			useClient(client, func() {
 				if test.withError == nil {
 					resource.UnitTest(t, resource.TestCase{
-						ProviderFactories: testAccProviders,
+						ProtoV6ProviderFactories: testAccProviders,
 						Steps: []resource.TestStep{
 							{
 								Config: testutils.LoadFixtureString(t, test.configPath),
@@ -105,7 +105,7 @@ func TestDataSourceDatasetFieldsRead(t *testing.T) {
 					})
 				} else {
 					resource.UnitTest(t, resource.TestCase{
-						ProviderFactories: testAccProviders,
+						ProtoV6ProviderFactories: testAccProviders,
 						Steps: []resource.TestStep{
 							{
 								Config:      testutils.LoadFixtureString(t, test.configPath),

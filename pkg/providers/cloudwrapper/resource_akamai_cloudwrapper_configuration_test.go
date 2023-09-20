@@ -48,7 +48,7 @@ func TestConfigurationResource(t *testing.T) {
 
 		resource.Test(t, resource.TestCase{
 			IsUnitTest:               true,
-			ProtoV5ProviderFactories: newProviderFactory(withMockClient(client)),
+			ProtoV6ProviderFactories: newProviderFactory(withMockClient(client)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResConfiguration/create.tf"),
@@ -106,7 +106,7 @@ func TestConfigurationResource(t *testing.T) {
 
 		resource.Test(t, resource.TestCase{
 			IsUnitTest:               true,
-			ProtoV5ProviderFactories: newProviderFactory(withMockClient(client)),
+			ProtoV6ProviderFactories: newProviderFactory(withMockClient(client)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResConfiguration/computed_email.tf"),
@@ -155,7 +155,7 @@ func TestConfigurationResource(t *testing.T) {
 
 		resource.Test(t, resource.TestCase{
 			IsUnitTest:               true,
-			ProtoV5ProviderFactories: newProviderFactory(withMockClient(client)),
+			ProtoV6ProviderFactories: newProviderFactory(withMockClient(client)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResConfiguration/computed_email.tf"),
@@ -233,7 +233,7 @@ func TestConfigurationResource(t *testing.T) {
 
 		resource.Test(t, resource.TestCase{
 			IsUnitTest:               true,
-			ProtoV5ProviderFactories: newProviderFactory(withMockClient(client)),
+			ProtoV6ProviderFactories: newProviderFactory(withMockClient(client)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResConfiguration/create.tf"),
@@ -318,7 +318,7 @@ func TestConfigurationResource(t *testing.T) {
 
 		resource.Test(t, resource.TestCase{
 			IsUnitTest:               true,
-			ProtoV5ProviderFactories: newProviderFactory(withMockClient(client)),
+			ProtoV6ProviderFactories: newProviderFactory(withMockClient(client)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResConfiguration/create.tf"),
@@ -405,7 +405,7 @@ func TestConfigurationResource(t *testing.T) {
 
 		resource.Test(t, resource.TestCase{
 			IsUnitTest:               true,
-			ProtoV5ProviderFactories: newProviderFactory(withMockClient(client)),
+			ProtoV6ProviderFactories: newProviderFactory(withMockClient(client)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResConfiguration/create.tf"),
@@ -466,7 +466,7 @@ func TestConfigurationResource(t *testing.T) {
 
 		resource.Test(t, resource.TestCase{
 			IsUnitTest:               true,
-			ProtoV5ProviderFactories: newProviderFactory(withMockClient(client)),
+			ProtoV6ProviderFactories: newProviderFactory(withMockClient(client)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResConfiguration/create.tf"),
@@ -573,7 +573,7 @@ func TestConfigurationResource(t *testing.T) {
 
 		resource.Test(t, resource.TestCase{
 			IsUnitTest:               true,
-			ProtoV5ProviderFactories: newProviderFactory(withMockClient(client)),
+			ProtoV6ProviderFactories: newProviderFactory(withMockClient(client)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResConfiguration/create.tf"),
@@ -601,6 +601,82 @@ func TestConfigurationResource(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_cloudwrapper_configuration.test", "contract_id", "ctr_123"),
 						resource.TestCheckNoResourceAttr("akamai_cloudwrapper_configuration.test", "capacity_alerts_threshold"),
 					),
+				},
+			},
+		})
+	})
+	t.Run("update comments - expect an error", func(t *testing.T) {
+		t.Parallel()
+		client := &cloudwrapper.Mock{}
+
+		configuration := cloudwrapper.CreateConfigurationRequest{
+			Body: cloudwrapper.CreateConfigurationBody{
+				Comments:   "test",
+				ContractID: "ctr_123",
+				Locations: []cloudwrapper.ConfigLocationReq{
+					{
+						Comments:      "test",
+						TrafficTypeID: 1,
+						Capacity: cloudwrapper.Capacity{
+							Value: 1,
+							Unit:  cloudwrapper.UnitGB,
+						},
+					},
+				},
+				NotificationEmails: []string{"test@akamai.com"},
+				ConfigName:         "testname",
+				PropertyIDs:        []string{"200200200"},
+				RetainIdleObjects:  false,
+			},
+		}
+
+		expecter := newExpecter(t, client)
+
+		expecter.ExpectCreate(configuration)
+
+		expecter.ExpectRefresh()
+
+		configUpdate := cloudwrapper.UpdateConfigurationRequest{
+			ConfigID: expecter.config.ConfigID,
+			Body: cloudwrapper.UpdateConfigurationBody{
+				Comments: "test-updated",
+				Locations: []cloudwrapper.ConfigLocationReq{
+					{
+						Comments:      "test",
+						TrafficTypeID: 1,
+						Capacity: cloudwrapper.Capacity{
+							Value: 1,
+							Unit:  cloudwrapper.UnitGB,
+						},
+					},
+				},
+				NotificationEmails: []string{"test@akamai.com"},
+				PropertyIDs:        []string{"200200200"},
+				RetainIdleObjects:  false,
+			},
+		}
+
+		expecter.ExpectRefresh()
+		expecter.ExpectUpdate(configUpdate)
+
+		expecter.ExpectRefresh()
+		expecter.ExpectDelete()
+
+		resource.Test(t, resource.TestCase{
+			IsUnitTest:               true,
+			ProtoV6ProviderFactories: newProviderFactory(withMockClient(client)),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResConfiguration/create.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_cloudwrapper_configuration.test", "id", "123"),
+						resource.TestCheckResourceAttr("akamai_cloudwrapper_configuration.test", "config_name", "testname"),
+						resource.TestCheckResourceAttr("akamai_cloudwrapper_configuration.test", "contract_id", "ctr_123"),
+					),
+				},
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResConfiguration/update_comments_error.tf"),
+					ExpectError: regexp.MustCompile("updating field `comments` is not possible"),
 				},
 			},
 		})
@@ -644,7 +720,7 @@ func TestConfigurationResource(t *testing.T) {
 
 		resource.Test(t, resource.TestCase{
 			IsUnitTest:               true,
-			ProtoV5ProviderFactories: newProviderFactory(withMockClient(client)),
+			ProtoV6ProviderFactories: newProviderFactory(withMockClient(client)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResConfiguration/create.tf"),
@@ -706,7 +782,7 @@ func TestConfigurationResource(t *testing.T) {
 
 		resource.Test(t, resource.TestCase{
 			IsUnitTest:               true,
-			ProtoV5ProviderFactories: newProviderFactory(withMockClient(client)),
+			ProtoV6ProviderFactories: newProviderFactory(withMockClient(client)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResConfiguration/create.tf"),
@@ -805,7 +881,7 @@ func TestConfigurationResource(t *testing.T) {
 
 		resource.Test(t, resource.TestCase{
 			IsUnitTest:               true,
-			ProtoV5ProviderFactories: newProviderFactory(withMockClient(client)),
+			ProtoV6ProviderFactories: newProviderFactory(withMockClient(client)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResConfiguration/property_ids_with_prefix.tf"),
@@ -883,7 +959,7 @@ func TestConfigurationResource(t *testing.T) {
 
 		resource.Test(t, resource.TestCase{
 			IsUnitTest:               true,
-			ProtoV5ProviderFactories: newProviderFactory(withMockClient(client)),
+			ProtoV6ProviderFactories: newProviderFactory(withMockClient(client)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResConfiguration/property_ids_with_prefix.tf"),
@@ -962,7 +1038,7 @@ func TestConfigurationResource(t *testing.T) {
 
 		resource.Test(t, resource.TestCase{
 			IsUnitTest:               true,
-			ProtoV5ProviderFactories: newProviderFactory(withMockClient(client)),
+			ProtoV6ProviderFactories: newProviderFactory(withMockClient(client)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResConfiguration/create.tf"),
@@ -1040,7 +1116,7 @@ func TestConfigurationResource(t *testing.T) {
 				t.Parallel()
 				resource.Test(t, resource.TestCase{
 					IsUnitTest:               true,
-					ProtoV5ProviderFactories: fact,
+					ProtoV6ProviderFactories: fact,
 					Steps: []resource.TestStep{
 						{
 							Config:      tc.config,

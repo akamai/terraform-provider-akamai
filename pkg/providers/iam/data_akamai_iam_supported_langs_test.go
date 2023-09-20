@@ -6,10 +6,9 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/iam"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/test"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
-
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/test"
 )
 
 func TestDataSupportedLangs(t *testing.T) {
@@ -20,8 +19,8 @@ func TestDataSupportedLangs(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
-				IsUnitTest:        true,
+				ProtoV6ProviderFactories: testAccProviders,
+				IsUnitTest:               true,
 				Steps: []resource.TestStep{
 					{
 						Config: test.Fixture("testdata/%s/step0.tf", t.Name()),
@@ -46,8 +45,8 @@ func TestDataSupportedLangs(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
-				IsUnitTest:        true,
+				ProtoV6ProviderFactories: testAccProviders,
+				IsUnitTest:               true,
 				Steps: []resource.TestStep{
 					{
 						Config:      test.Fixture("testdata/%s/step0.tf", t.Name()),

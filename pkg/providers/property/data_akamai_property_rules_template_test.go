@@ -19,7 +19,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 		client := papi.Mock{}
 		useClient(&client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_vars_map.tf"),
@@ -41,7 +41,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 		client := papi.Mock{}
 		useClient(&client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_vars_map_ns.tf"),
@@ -63,7 +63,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 		client := papi.Mock{}
 		useClient(&client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_null_values.tf"),
@@ -101,7 +101,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 		client := papi.Mock{}
 		useClient(&client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_vars_file.tf"),
@@ -123,7 +123,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 		client := papi.Mock{}
 		useClient(&client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_file_data_conflict.tf"),
@@ -141,7 +141,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 		client := papi.Mock{}
 		useClient(&client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_missing_data.tf"),
@@ -159,7 +159,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 		client := papi.Mock{}
 		useClient(&client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_vars_conflict.tf"),
@@ -173,7 +173,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 		client := papi.Mock{}
 		useClient(&client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_vars_invalid_type.tf"),
@@ -187,7 +187,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 		client := papi.Mock{}
 		useClient(&client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_var_not_found.tf"),
@@ -201,7 +201,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 		client := papi.Mock{}
 		useClient(&client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_vars_invalid_value.tf"),
@@ -215,7 +215,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 		client := papi.Mock{}
 		useClient(&client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_vars_file_not_found.tf"),
@@ -229,7 +229,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 		client := papi.Mock{}
 		useClient(&client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_invalid_json.tf"),
@@ -243,7 +243,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 		client := papi.Mock{}
 		useClient(&client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_file_not_found.tf"),
@@ -258,7 +258,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 		client := papi.Mock{}
 		useClient(&client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_file_is_empty.tf"),
@@ -674,7 +674,7 @@ func TestVariablesNesting(t *testing.T) {
 			client := papi.Mock{}
 			useClient(&client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProtoV5ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
 							Config: testutils.LoadFixtureString(t, test.configPath),
@@ -708,7 +708,7 @@ func TestVariablesAndIncludesNestingCyclicDependency(t *testing.T) {
 			client := papi.Mock{}
 			useClient(&client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProtoV5ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
 							Config:      testutils.LoadFixtureString(t, test.configPath),
@@ -726,7 +726,7 @@ func TestMultipleTemplates(t *testing.T) {
 		client := papi.Mock{}
 		useClient(&client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_multiple_templates.tf"),

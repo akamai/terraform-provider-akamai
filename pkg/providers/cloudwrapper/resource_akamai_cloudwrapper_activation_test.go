@@ -199,7 +199,7 @@ func TestActivation(t *testing.T) {
 			client := test.init()
 			resource.Test(t, resource.TestCase{
 				IsUnitTest:               true,
-				ProtoV5ProviderFactories: newProviderFactory(withMockClient(client), withInterval(time.Second)),
+				ProtoV6ProviderFactories: newProviderFactory(withMockClient(client), withInterval(time.Second)),
 				Steps:                    test.steps,
 			})
 			client.AssertExpectations(t)

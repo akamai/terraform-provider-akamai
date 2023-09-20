@@ -24,7 +24,7 @@ func TestDataProperties(t *testing.T) {
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{{
 					Config: testutils.LoadFixtureString(t, "testdata/TestDataProperties/properties.tf"),
 					Check:  buildAggregatedTest(properties, "grp_testctr_test", "grp_test", "ctr_test"),
@@ -47,7 +47,7 @@ func TestDataProperties(t *testing.T) {
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{{
 					Config: testutils.LoadFixtureString(t, "testdata/TestDataProperties/properties_no_group_prefix.tf"),
 					Check:  buildAggregatedTest(properties, "grp_testctr_test", "test", "ctr_test"),
@@ -70,7 +70,7 @@ func TestDataProperties(t *testing.T) {
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{{
 					Config: testutils.LoadFixtureString(t, "testdata/TestDataProperties/properties_no_contract_prefix.tf"),
 					Check:  buildAggregatedTest(properties, "grp_testctr_test", "grp_test", "test"),

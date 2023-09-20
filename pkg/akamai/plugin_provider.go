@@ -7,14 +7,15 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
-
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/cache"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/collections"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/subprovider"
+	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
+	"github.com/hashicorp/terraform-plugin-mux/tf5to6server"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
 )
 
 // NewPluginProvider returns the provider function to terraform
@@ -173,4 +174,15 @@ func configureProviderContext(p *schema.Provider) schema.ConfigureContextFunc {
 
 		return meta, nil
 	}
+}
+
+// NewProtoV6PluginProvider upgrades plugin provider from protocol version 5 to 6
+func NewProtoV6PluginProvider(subproviders []subprovider.Plugin) (func() tfprotov6.ProviderServer, error) {
+	pluginProvider, err := tf5to6server.UpgradeServer(
+		context.Background(),
+		NewPluginProvider(subproviders...)().GRPCProvider,
+	)
+	return func() tfprotov6.ProviderServer {
+		return pluginProvider
+	}, err
 }

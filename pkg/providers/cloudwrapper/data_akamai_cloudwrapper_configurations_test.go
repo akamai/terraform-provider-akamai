@@ -72,7 +72,7 @@ func TestDataConfigurations(t *testing.T) {
 			}
 
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: newProviderFactory(withMockClient(client)),
+				ProtoV6ProviderFactories: newProviderFactory(withMockClient(client)),
 				IsUnitTest:               true,
 				Steps: []resource.TestStep{
 					{

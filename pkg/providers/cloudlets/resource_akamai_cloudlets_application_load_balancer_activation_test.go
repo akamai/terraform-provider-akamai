@@ -474,7 +474,7 @@ func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 			test.init(client)
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProtoV5ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testAccProviders,
 					IsUnitTest:               true,
 					Steps:                    test.steps,
 				})

@@ -191,7 +191,7 @@ func TestCreateEdgeKVGroupItems(t *testing.T) {
 			test.init(client, test.attrs)
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
 							Config:      testutils.LoadFixtureString(t, test.configPath),
@@ -356,7 +356,7 @@ func TestReadEdgeKVGroupItems(t *testing.T) {
 			test.init(client, test.attrsForCreate, test.attrsForUpdate)
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
 							Config:      testutils.LoadFixtureString(t, test.configPathForCreate),
@@ -842,8 +842,8 @@ func TestUpdateEdgeKVGroupItems(t *testing.T) {
 			test.init(client, test.attrsForCreate, test.attrsForUpdate)
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProviderFactories: testAccProviders,
-					IsUnitTest:        true,
+					ProtoV6ProviderFactories: testAccProviders,
+					IsUnitTest:               true,
 					Steps: []resource.TestStep{
 						{
 							PlanOnly:           test.planOnly,
@@ -917,7 +917,7 @@ func TestDeleteEdgeKVGroupItems(t *testing.T) {
 			test.init(client, test.attrs)
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
 							Config:      testutils.LoadFixtureString(t, test.configPath),
@@ -989,8 +989,8 @@ func TestImportEdgeKVGroupItems(t *testing.T) {
 			test.init(client, test.attrs)
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProviderFactories: testAccProviders,
-					IsUnitTest:        true,
+					ProtoV6ProviderFactories: testAccProviders,
+					IsUnitTest:               true,
 
 					Steps: []resource.TestStep{
 						{

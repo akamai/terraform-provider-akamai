@@ -972,7 +972,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 
 			useClient(client, &hapi.Mock{}, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProtoV5ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testAccProviders,
 					IsUnitTest:               true,
 					Steps:                    testCase.steps,
 				})

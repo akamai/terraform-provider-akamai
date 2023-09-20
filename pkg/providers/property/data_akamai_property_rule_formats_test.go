@@ -23,7 +23,7 @@ func Test_readPropertyRuleFormats(t *testing.T) {
 		).Return(&papi.GetRuleFormatsResponse{RuleFormats: ruleFormats}, nil)
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{{
 					Config: testutils.LoadFixtureString(t, "testdata/TestDSPropertyRuleFormats/rule_formats.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(

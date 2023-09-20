@@ -35,8 +35,8 @@ func TestAkamaiMatchTargets_data_basic(t *testing.T) {
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
-				IsUnitTest:        false,
-				ProviderFactories: testAccProviders,
+				IsUnitTest:               false,
+				ProtoV6ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestDSMatchTargets/match_by_id.tf"),
