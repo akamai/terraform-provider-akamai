@@ -153,6 +153,17 @@ EOT
 
       }
     }
+    behavior {
+      cors_support {
+        allow_credentials = false
+        allow_headers     = "ANY"
+        allow_origins     = "ANY"
+        enabled           = true
+        expose_headers    = []
+        methods           = ["GET", "POST", ]
+        preflight_max_age = "600s"
+      }
+    }
     children = [
       data.akamai_property_rules_builder.content_compression.json,
       data.akamai_property_rules_builder.static_content.json,

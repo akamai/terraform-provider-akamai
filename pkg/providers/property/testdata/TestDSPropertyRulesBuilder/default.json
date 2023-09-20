@@ -32,6 +32,8 @@
         "options": {
           "cacheKeyHostname": "ORIGIN_HOSTNAME",
           "compress": true,
+          "customCertificateAuthorities": [],
+          "customCertificates": [],
           "enableTrueClientIp": true,
           "forwardHostHeader": "REQUEST_HOST_HEADER",
           "httpPort": 80,
@@ -145,6 +147,21 @@
           "enabled": true,
           "loaderVersion": "V12",
           "requirePci": false
+        }
+      },
+      {
+        "name": "corsSupport",
+        "options": {
+          "allowCredentials": false,
+          "allowHeaders": "ANY",
+          "allowOrigins": "ANY",
+          "enabled": true,
+          "exposeHeaders": [],
+          "methods": [
+            "GET",
+            "POST"
+          ],
+          "preflightMaxAge": "600s"
         }
       }
     ],

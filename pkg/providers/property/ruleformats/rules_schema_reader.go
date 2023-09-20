@@ -148,7 +148,7 @@ func (r *RulesSchemaReader) getCustomOverride(key string) (*papi.RuleCustomOverr
 		return nil, &TypeAssertionError{"[]any", typeof(rawVal), key}
 	}
 	if len(val) == 0 {
-		return nil, nil
+		return nil, &NotFoundError{key}
 	}
 	override, ok := val[0].(map[string]any)
 	if !ok {
@@ -197,6 +197,9 @@ func (r *RulesSchemaReader) getRuleItems(key string) ([]RuleItem, error) {
 		return nil, &TypeAssertionError{"[]any", typeof(rawVal), key}
 	}
 
+	if len(listVal) == 0 {
+		return nil, &NotFoundError{key}
+	}
 	listUnpacked := make([]RuleItem, 0, len(listVal))
 
 	for i, val := range listVal {

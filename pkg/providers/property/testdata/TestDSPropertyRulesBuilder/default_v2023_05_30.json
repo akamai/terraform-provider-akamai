@@ -32,6 +32,7 @@
         "options": {
           "cacheKeyHostname": "ORIGIN_HOSTNAME",
           "compress": true,
+          "customCertificateAuthorities": [],
           "customCertificates": [
             {
               "canBeCA": false,
