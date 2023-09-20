@@ -7,8 +7,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-// Plugin is the interface implemented by the sub-providers using terraform-plugin-sdk
-type Plugin interface {
+// SDK is the interface implemented by the sub-providers using terraform-plugin-sdk
+type SDK interface {
 	// Resources returns the resources for the sub-provider
 	Resources() map[string]*schema.Resource
 

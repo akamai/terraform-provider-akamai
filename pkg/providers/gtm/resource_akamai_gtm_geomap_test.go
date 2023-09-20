@@ -73,7 +73,7 @@ func TestResGtmGeomap(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewPluginProviderFactories(NewSubprovider()),
+				ProtoV6ProviderFactories: testutils.NewSDKProviderFactories(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmGeomap/create_basic.tf"),
@@ -118,7 +118,7 @@ func TestResGtmGeomap(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewPluginProviderFactories(NewSubprovider()),
+				ProtoV6ProviderFactories: testutils.NewSDKProviderFactories(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmGeomap/create_basic.tf"),
@@ -156,7 +156,7 @@ func TestResGtmGeomap(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewPluginProviderFactories(NewSubprovider()),
+				ProtoV6ProviderFactories: testutils.NewSDKProviderFactories(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmGeomap/create_basic.tf"),
@@ -240,7 +240,7 @@ func TestGTMGeoMapOrder(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			useClient(test.client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewPluginProviderFactories(NewSubprovider()),
+					ProtoV6ProviderFactories: testutils.NewSDKProviderFactories(NewSubprovider()),
 					IsUnitTest:               true,
 					Steps: []resource.TestStep{
 						{

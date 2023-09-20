@@ -25,7 +25,7 @@ var (
 	inst *Subprovider
 )
 
-var _ subprovider.Plugin = &Subprovider{}
+var _ subprovider.SDK = &Subprovider{}
 
 // NewSubprovider returns a core sub provider
 func NewSubprovider() *Subprovider {

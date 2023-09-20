@@ -18,10 +18,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestPluginProvider(t *testing.T) {
+func TestSDKProvider(t *testing.T) {
 	t.Parallel()
 
-	provider := akamai.NewPluginProvider(registry.PluginSubproviders()...)()
+	provider := akamai.NewSDKProvider(registry.SDKSubproviders()...)()
 	err := provider.InternalValidate()
 	assert.NoError(t, err)
 }
@@ -43,7 +43,7 @@ func TestConfigureCache_EnabledInContext(t *testing.T) {
 	for name, test := range tests {
 		ctx := context.Background()
 		t.Run(name, func(t *testing.T) {
-			prov := akamai.NewPluginProvider()
+			prov := akamai.NewSDKProvider()
 			_, diagnostics := prov().ConfigureContextFunc(ctx, test.resourceLocalData)
 			require.False(t, diagnostics.HasError(), fmt.Sprintf("unexpected error in diagnostics: %v", diagnostics))
 
@@ -78,7 +78,7 @@ func TestConfigureEdgercInContext(t *testing.T) {
 	for name, test := range tests {
 		ctx := context.Background()
 		t.Run(name, func(t *testing.T) {
-			prov := akamai.NewPluginProvider()
+			prov := akamai.NewSDKProvider()
 			meta, diagnostics := prov().ConfigureContextFunc(ctx, test.resourceLocalData)
 
 			if test.withError {
@@ -168,7 +168,7 @@ func TestEdgercValidate(t *testing.T) {
 			}
 			resourceData := schema.TestResourceDataRaw(t, resourceSchema, resourceDataMap)
 
-			prov := akamai.NewPluginProvider()
+			prov := akamai.NewSDKProvider()
 			configuredContext, diagnostics := prov().ConfigureContextFunc(ctx, resourceData)
 
 			assert.Nil(t, configuredContext)

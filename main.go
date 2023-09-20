@@ -25,13 +25,13 @@ func main() {
 	// Anything lower and we risk losing those values to the ether
 	hclog.Default().SetLevel(hclog.Trace)
 
-	upgradedPluginProvider, err := akamai.NewProtoV6PluginProvider(registry.PluginSubproviders())
+	sdkProviderV6, err := akamai.NewProtoV6SDKProvider(registry.SDKSubproviders())
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	providers := []func() tfprotov6.ProviderServer{
-		upgradedPluginProvider,
+		sdkProviderV6,
 		providerserver.NewProtocol6(
 			akamai.NewFrameworkProvider(registry.FrameworkSubproviders()...)(),
 		),

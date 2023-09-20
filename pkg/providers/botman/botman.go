@@ -6,5 +6,5 @@ import "github.com/akamai/terraform-provider-akamai/v5/pkg/providers/registry"
 const SubproviderName = "botman"
 
 func init() {
-	registry.RegisterPluginSubprovider(NewSubprovider())
+	registry.RegisterSDKSubprovider(NewSubprovider())
 }

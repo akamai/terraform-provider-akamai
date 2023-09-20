@@ -18,8 +18,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
 )
 
-// NewPluginProvider returns the provider function to terraform
-func NewPluginProvider(subprovs ...subprovider.Plugin) plugin.ProviderFunc {
+// NewSDKProvider returns the provider function to terraform
+func NewSDKProvider(subprovs ...subprovider.SDK) plugin.ProviderFunc {
 	prov := &schema.Provider{
 		Schema: map[string]*schema.Schema{
 			"edgerc": {
@@ -176,11 +176,11 @@ func configureProviderContext(p *schema.Provider) schema.ConfigureContextFunc {
 	}
 }
 
-// NewProtoV6PluginProvider upgrades plugin provider from protocol version 5 to 6
-func NewProtoV6PluginProvider(subproviders []subprovider.Plugin) (func() tfprotov6.ProviderServer, error) {
+// NewProtoV6SDKProvider upgrades SDK provider from protocol version 5 to 6
+func NewProtoV6SDKProvider(subproviders []subprovider.SDK) (func() tfprotov6.ProviderServer, error) {
 	pluginProvider, err := tf5to6server.UpgradeServer(
 		context.Background(),
-		NewPluginProvider(subproviders...)().GRPCProvider,
+		NewSDKProvider(subproviders...)().GRPCProvider,
 	)
 	return func() tfprotov6.ProviderServer {
 		return pluginProvider

@@ -29,7 +29,7 @@ var (
 	hapiClient hapi.HAPI
 )
 
-var _ subprovider.Plugin = &PluginSubprovider{}
+var _ subprovider.SDK = &PluginSubprovider{}
 var _ subprovider.Framework = &FrameworkSubprovider{}
 
 // NewPluginSubprovider returns a core SDKv2 based sub provider

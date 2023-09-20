@@ -10,25 +10,25 @@ import (
 var (
 	lock sync.Mutex
 
-	pluginSubproviders    []subprovider.Plugin
+	sdkSubproviders       []subprovider.SDK
 	frameworkSubproviders []subprovider.Framework
 )
 
-// RegisterPluginSubprovider registers a terraform-plugin-sdk sub-provider
-func RegisterPluginSubprovider(p subprovider.Plugin) {
+// RegisterSDKSubprovider registers a terraform-plugin-sdk sub-provider
+func RegisterSDKSubprovider(p subprovider.SDK) {
 	lock.Lock()
 	defer lock.Unlock()
 
-	pluginSubproviders = append(pluginSubproviders, p)
+	sdkSubproviders = append(sdkSubproviders, p)
 }
 
-// PluginSubproviders returns all of the registered terraform-plugin-sdk sub-providers
-func PluginSubproviders() []subprovider.Plugin {
+// SDKSubproviders returns all of the registered terraform-plugin-sdk sub-providers
+func SDKSubproviders() []subprovider.SDK {
 	lock.Lock()
 	defer lock.Unlock()
 
-	out := make([]subprovider.Plugin, len(pluginSubproviders))
-	copy(out, pluginSubproviders)
+	out := make([]subprovider.SDK, len(sdkSubproviders))
+	copy(out, sdkSubproviders)
 
 	return out
 }

@@ -19,12 +19,12 @@ var testAccProviders map[string]func() (tfprotov6.ProviderServer, error)
 
 func TestMain(m *testing.M) {
 	PolicyDepth = 4
-	testAccPluginProvider := akamai.NewPluginProvider(NewSubprovider())()
+	testAccSDKProvider := akamai.NewSDKProvider(NewSubprovider())()
 	testAccProviders = map[string]func() (tfprotov6.ProviderServer, error){
 		"akamai": func() (tfprotov6.ProviderServer, error) {
-			upgradedPluginProvider, err := tf5to6server.UpgradeServer(
+			sdkProviderV6, err := tf5to6server.UpgradeServer(
 				context.Background(),
-				testAccPluginProvider.GRPCProvider,
+				testAccSDKProvider.GRPCProvider,
 			)
 			if err != nil {
 				return nil, err
@@ -32,7 +32,7 @@ func TestMain(m *testing.M) {
 
 			providers := []func() tfprotov6.ProviderServer{
 				func() tfprotov6.ProviderServer {
-					return upgradedPluginProvider
+					return sdkProviderV6
 				},
 			}
 

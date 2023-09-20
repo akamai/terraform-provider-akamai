@@ -8,5 +8,5 @@ import (
 const SubproviderName = "appsec"
 
 func init() {
-	registry.RegisterPluginSubprovider(NewSubprovider())
+	registry.RegisterSDKSubprovider(NewSubprovider())
 }

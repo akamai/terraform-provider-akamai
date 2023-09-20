@@ -295,13 +295,13 @@ func newProtoV6ProviderFactory(subproviders ...subprovider.Framework) map[string
 		"akamai": func() (tfprotov6.ProviderServer, error) {
 			ctx := context.Background()
 
-			pluginProviderV6, err := akamai.NewProtoV6PluginProvider(registry.PluginSubproviders())
+			sdkProviderV6, err := akamai.NewProtoV6SDKProvider(registry.SDKSubproviders())
 			if err != nil {
 				return nil, err
 			}
 
 			providers := []func() tfprotov6.ProviderServer{
-				pluginProviderV6,
+				sdkProviderV6,
 				providerserver.NewProtocol6(
 					akamai.NewFrameworkProvider(subproviders...)(),
 				),

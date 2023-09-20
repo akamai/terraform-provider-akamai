@@ -54,14 +54,14 @@ func LoadFixtureString(t *testing.T, format string, args ...interface{}) string 
 	return string(LoadFixtureBytes(t, fmt.Sprintf(format, args...)))
 }
 
-// NewPluginProviderFactories provides protocol v6 plugin provider for test purposes
-func NewPluginProviderFactories(subprovider subprovider.Plugin) map[string]func() (tfprotov6.ProviderServer, error) {
-	testAccPluginProvider := akamai.NewPluginProvider(subprovider)()
+// NewSDKProviderFactories uses provided SDK subprovider to create provider factories for test purposes
+func NewSDKProviderFactories(subprovider subprovider.SDK) map[string]func() (tfprotov6.ProviderServer, error) {
+	testAccSDKProvider := akamai.NewSDKProvider(subprovider)()
 	testAccProviders := map[string]func() (tfprotov6.ProviderServer, error){
 		"akamai": func() (tfprotov6.ProviderServer, error) {
-			upgradedPluginProvider, err := tf5to6server.UpgradeServer(
+			sdkProviderV6, err := tf5to6server.UpgradeServer(
 				context.Background(),
-				testAccPluginProvider.GRPCProvider,
+				testAccSDKProvider.GRPCProvider,
 			)
 			if err != nil {
 				return nil, err
@@ -69,7 +69,7 @@ func NewPluginProviderFactories(subprovider subprovider.Plugin) map[string]func(
 
 			providers := []func() tfprotov6.ProviderServer{
 				func() tfprotov6.ProviderServer {
-					return upgradedPluginProvider
+					return sdkProviderV6
 				},
 			}
 

@@ -67,7 +67,7 @@ func TestDataGTMDatacenter(t *testing.T) {
 			test.init(t, client, test.mockData)
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewPluginProviderFactories(NewSubprovider()),
+					ProtoV6ProviderFactories: testutils.NewSDKProviderFactories(NewSubprovider()),
 					IsUnitTest:               true,
 					Steps: []resource.TestStep{
 						{
