@@ -22,7 +22,7 @@ func TestFrameworkProvider(t *testing.T) {
 	t.Parallel()
 	resp := provider.SchemaResponse{}
 
-	prov := akamai.NewFrameworkProvider(registry.FrameworkSubproviders()...)()
+	prov := akamai.NewFrameworkProvider(registry.Subproviders()...)()
 	prov.Schema(context.Background(), provider.SchemaRequest{}, &resp)
 
 	assert.False(t, resp.Diagnostics.HasError())
@@ -290,12 +290,12 @@ func TestFramework_EdgercFromConfig_missing_required_attributes(t *testing.T) {
 	})
 }
 
-func newProtoV6ProviderFactory(subproviders ...subprovider.Framework) map[string]func() (tfprotov6.ProviderServer, error) {
+func newProtoV6ProviderFactory(subproviders ...subprovider.Subprovider) map[string]func() (tfprotov6.ProviderServer, error) {
 	return map[string]func() (tfprotov6.ProviderServer, error){
 		"akamai": func() (tfprotov6.ProviderServer, error) {
 			ctx := context.Background()
 
-			sdkProviderV6, err := akamai.NewProtoV6SDKProvider(registry.SDKSubproviders())
+			sdkProviderV6, err := akamai.NewProtoV6SDKProvider(registry.Subproviders())
 			if err != nil {
 				return nil, err
 			}

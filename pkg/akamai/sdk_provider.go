@@ -19,7 +19,7 @@ import (
 )
 
 // NewSDKProvider returns the provider function to terraform
-func NewSDKProvider(subprovs ...subprovider.SDK) plugin.ProviderFunc {
+func NewSDKProvider(subprovs ...subprovider.Subprovider) plugin.ProviderFunc {
 	prov := &schema.Provider{
 		Schema: map[string]*schema.Schema{
 			"edgerc": {
@@ -80,11 +80,11 @@ func NewSDKProvider(subprovs ...subprovider.SDK) plugin.ProviderFunc {
 	}
 
 	for _, subprov := range subprovs {
-		if err := collections.AddMap(prov.ResourcesMap, subprov.Resources()); err != nil {
+		if err := collections.AddMap(prov.ResourcesMap, subprov.SDKResources()); err != nil {
 			panic(err)
 		}
 
-		if err := collections.AddMap(prov.DataSourcesMap, subprov.DataSources()); err != nil {
+		if err := collections.AddMap(prov.DataSourcesMap, subprov.SDKDataSources()); err != nil {
 			panic(err)
 		}
 	}
@@ -177,7 +177,7 @@ func configureProviderContext(p *schema.Provider) schema.ConfigureContextFunc {
 }
 
 // NewProtoV6SDKProvider upgrades SDK provider from protocol version 5 to 6
-func NewProtoV6SDKProvider(subproviders []subprovider.SDK) (func() tfprotov6.ProviderServer, error) {
+func NewProtoV6SDKProvider(subproviders []subprovider.Subprovider) (func() tfprotov6.ProviderServer, error) {
 	pluginProvider, err := tf5to6server.UpgradeServer(
 		context.Background(),
 		NewSDKProvider(subproviders...)().GRPCProvider,

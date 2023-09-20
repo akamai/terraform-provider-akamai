@@ -6,6 +6,5 @@ import "github.com/akamai/terraform-provider-akamai/v5/pkg/providers/registry"
 const SubproviderName = "property"
 
 func init() {
-	registry.RegisterSDKSubprovider(NewPluginSubprovider())
-	registry.RegisterFrameworkSubprovider(NewFrameworkSubprovider())
+	registry.RegisterSubprovider(NewSubprovider())
 }

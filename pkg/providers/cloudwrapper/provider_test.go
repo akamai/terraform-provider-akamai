@@ -15,6 +15,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-mux/tf6muxserver"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 type (
@@ -53,8 +54,8 @@ func newTestSubprovider(opts ...testSubproviderOption) *TestSubprovider {
 	s := NewSubprovider()
 
 	ts := &TestSubprovider{
-		resources:   s.Resources(),
-		datasources: s.DataSources(),
+		resources:   s.FrameworkResources(),
+		datasources: s.FrameworkDataSources(),
 	}
 
 	for _, opt := range opts {
@@ -64,8 +65,15 @@ func newTestSubprovider(opts ...testSubproviderOption) *TestSubprovider {
 	return ts
 }
 
-// Resources returns terraform resources for cloudwrapper
-func (ts *TestSubprovider) Resources() []func() resource.Resource {
+func (ts *TestSubprovider) SDKResources() map[string]*schema.Resource {
+	return nil
+}
+
+func (ts *TestSubprovider) SDKDataSources() map[string]*schema.Resource {
+	return nil
+}
+
+func (ts *TestSubprovider) FrameworkResources() []func() resource.Resource {
 	for i, fn := range ts.resources {
 		// decorate
 		fn := fn
@@ -83,8 +91,7 @@ func (ts *TestSubprovider) Resources() []func() resource.Resource {
 	return ts.resources
 }
 
-// DataSources returns terraform data sources for cloudwrapper
-func (ts *TestSubprovider) DataSources() []func() datasource.DataSource {
+func (ts *TestSubprovider) FrameworkDataSources() []func() datasource.DataSource {
 	for i, fn := range ts.datasources {
 		fn := fn
 		// decorate

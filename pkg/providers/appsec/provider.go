@@ -7,6 +7,8 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/subprovider"
+	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -25,9 +27,9 @@ var (
 	inst *Subprovider
 )
 
-var _ subprovider.SDK = &Subprovider{}
+var _ subprovider.Subprovider = &Subprovider{}
 
-// NewSubprovider returns a core sub provider
+// NewSubprovider returns a new appsec subprovider
 func NewSubprovider(opts ...option) *Subprovider {
 	once.Do(func() {
 		inst = &Subprovider{}
@@ -46,7 +48,7 @@ func withClient(c appsec.APPSEC) option {
 	}
 }
 
-// Client returns the PAPI interface
+// Client returns the APPSEC interface
 func (p *Subprovider) Client(meta meta.Meta) appsec.APPSEC {
 	if p.client != nil {
 		return p.client
@@ -54,8 +56,8 @@ func (p *Subprovider) Client(meta meta.Meta) appsec.APPSEC {
 	return appsec.Client(meta.Session())
 }
 
-// Resources returns terraform resources for appsec
-func (p *Subprovider) Resources() map[string]*schema.Resource {
+// SDKResources returns the appsec resources implemented using terraform-plugin-sdk
+func (p *Subprovider) SDKResources() map[string]*schema.Resource {
 	return map[string]*schema.Resource{
 		"akamai_appsec_activations":                              resourceActivations(),
 		"akamai_appsec_advanced_settings_attack_payload_logging": resourceAdvancedSettingsAttackPayloadLogging(),
@@ -111,8 +113,8 @@ func (p *Subprovider) Resources() map[string]*schema.Resource {
 	}
 }
 
-// DataSources returns terraform data sources for appsec
-func (p *Subprovider) DataSources() map[string]*schema.Resource {
+// SDKDataSources returns the appsec data sources implemented using terraform-plugin-sdk
+func (p *Subprovider) SDKDataSources() map[string]*schema.Resource {
 	return map[string]*schema.Resource{
 		"akamai_appsec_advanced_settings_attack_payload_logging": dataSourceAdvancedSettingsAttackPayloadLogging(),
 		"akamai_appsec_advanced_settings_evasive_path_match":     dataSourceAdvancedSettingsEvasivePathMatch(),
@@ -166,4 +168,14 @@ func (p *Subprovider) DataSources() map[string]*schema.Resource {
 		"akamai_appsec_waf_mode":                                 dataSourceWAFMode(),
 		"akamai_appsec_wap_selected_hostnames":                   dataSourceWAPSelectedHostnames(),
 	}
+}
+
+// FrameworkResources returns the appsec resources implemented using terraform-plugin-framework
+func (p *Subprovider) FrameworkResources() []func() resource.Resource {
+	return []func() resource.Resource{}
+}
+
+// FrameworkDataSources returns the appsec data sources implemented using terraform-plugin-framework
+func (p *Subprovider) FrameworkDataSources() []func() datasource.DataSource {
+	return []func() datasource.DataSource{}
 }

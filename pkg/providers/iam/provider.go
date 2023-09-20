@@ -7,6 +7,8 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/iam"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/subprovider"
+	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -25,9 +27,9 @@ var (
 	inst *Subprovider
 )
 
-var _ subprovider.SDK = &Subprovider{}
+var _ subprovider.Subprovider = &Subprovider{}
 
-// NewSubprovider returns a core sub provider
+// NewSubprovider returns a new IAM subprovider
 func NewSubprovider() *Subprovider {
 	once.Do(func() {
 		inst = &Subprovider{}
@@ -42,7 +44,7 @@ func withClient(c iam.IAM) option {
 	}
 }
 
-// Client returns the DNS interface
+// Client returns the IAM interface
 func (p *Subprovider) Client(meta meta.Meta) iam.IAM {
 	if p.client != nil {
 		return p.client
@@ -50,8 +52,8 @@ func (p *Subprovider) Client(meta meta.Meta) iam.IAM {
 	return iam.Client(meta.Session())
 }
 
-// Resources returns terraform resources for IAM
-func (p *Subprovider) Resources() map[string]*schema.Resource {
+// SDKResources returns the IAM resources implemented using terraform-plugin-sdk
+func (p *Subprovider) SDKResources() map[string]*schema.Resource {
 	return map[string]*schema.Resource{
 		"akamai_iam_blocked_user_properties": resourceIAMBlockedUserProperties(),
 		"akamai_iam_group":                   resourceIAMGroup(),
@@ -60,8 +62,8 @@ func (p *Subprovider) Resources() map[string]*schema.Resource {
 	}
 }
 
-// DataSources returns terraform data sources for IAM
-func (p *Subprovider) DataSources() map[string]*schema.Resource {
+// SDKDataSources returns the IAM data sources implemented using terraform-plugin-sdk
+func (p *Subprovider) SDKDataSources() map[string]*schema.Resource {
 	return map[string]*schema.Resource{
 		"akamai_iam_contact_types":    dataSourceIAMContactTypes(),
 		"akamai_iam_countries":        dataSourceIAMCountries(),
@@ -73,4 +75,14 @@ func (p *Subprovider) DataSources() map[string]*schema.Resource {
 		"akamai_iam_timeout_policies": dataSourceIAMTimeoutPolicies(),
 		"akamai_iam_timezones":        dataSourceIAMTimezones(),
 	}
+}
+
+// FrameworkResources returns the IAM resources implemented using terraform-plugin-framework
+func (p *Subprovider) FrameworkResources() []func() resource.Resource {
+	return []func() resource.Resource{}
+}
+
+// FrameworkDataSources returns the IAM data sources implemented using terraform-plugin-framework
+func (p *Subprovider) FrameworkDataSources() []func() datasource.DataSource {
+	return []func() datasource.DataSource{}
 }

@@ -10,44 +10,24 @@ import (
 var (
 	lock sync.Mutex
 
-	sdkSubproviders       []subprovider.SDK
-	frameworkSubproviders []subprovider.Framework
+	subproviders []subprovider.Subprovider
 )
 
-// RegisterSDKSubprovider registers a terraform-plugin-sdk sub-provider
-func RegisterSDKSubprovider(p subprovider.SDK) {
+// RegisterSubprovider registers a terraform-plugin-framework sub-provider
+func RegisterSubprovider(s subprovider.Subprovider) {
 	lock.Lock()
 	defer lock.Unlock()
 
-	sdkSubproviders = append(sdkSubproviders, p)
+	subproviders = append(subproviders, s)
 }
 
-// SDKSubproviders returns all of the registered terraform-plugin-sdk sub-providers
-func SDKSubproviders() []subprovider.SDK {
+// Subproviders returns all of the registered terraform-plugin-framework sub-providers
+func Subproviders() []subprovider.Subprovider {
 	lock.Lock()
 	defer lock.Unlock()
 
-	out := make([]subprovider.SDK, len(sdkSubproviders))
-	copy(out, sdkSubproviders)
-
-	return out
-}
-
-// RegisterFrameworkSubprovider registers a terraform-plugin-framework sub-provider
-func RegisterFrameworkSubprovider(p subprovider.Framework) {
-	lock.Lock()
-	defer lock.Unlock()
-
-	frameworkSubproviders = append(frameworkSubproviders, p)
-}
-
-// FrameworkSubproviders returns all of the registered terraform-plugin-framework sub-providers
-func FrameworkSubproviders() []subprovider.Framework {
-	lock.Lock()
-	defer lock.Unlock()
-
-	out := make([]subprovider.Framework, len(frameworkSubproviders))
-	copy(out, frameworkSubproviders)
+	out := make([]subprovider.Subprovider, len(subproviders))
+	copy(out, subproviders)
 
 	return out
 }

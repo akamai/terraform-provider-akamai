@@ -54,8 +54,8 @@ func LoadFixtureString(t *testing.T, format string, args ...interface{}) string 
 	return string(LoadFixtureBytes(t, fmt.Sprintf(format, args...)))
 }
 
-// NewSDKProviderFactories uses provided SDK subprovider to create provider factories for test purposes
-func NewSDKProviderFactories(subprovider subprovider.SDK) map[string]func() (tfprotov6.ProviderServer, error) {
+// NewSDKProviderFactories uses provided subprovider to create provider factories for test purposes
+func NewSDKProviderFactories(subprovider subprovider.Subprovider) map[string]func() (tfprotov6.ProviderServer, error) {
 	testAccSDKProvider := akamai.NewSDKProvider(subprovider)()
 	testAccProviders := map[string]func() (tfprotov6.ProviderServer, error){
 		"akamai": func() (tfprotov6.ProviderServer, error) {

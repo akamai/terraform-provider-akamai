@@ -21,7 +21,7 @@ var _ provider.Provider = &Provider{}
 
 // Provider is the implementation of akamai terraform provider which uses terraform-plugin-framework
 type Provider struct {
-	subproviders []subprovider.Framework
+	subproviders []subprovider.Subprovider
 }
 
 // ProviderModel represents the model of Provider configuration
@@ -44,7 +44,7 @@ type ConfigModel struct {
 }
 
 // NewFrameworkProvider returns a function returning Provider as provider.Provider
-func NewFrameworkProvider(subproviders ...subprovider.Framework) func() provider.Provider {
+func NewFrameworkProvider(subproviders ...subprovider.Subprovider) func() provider.Provider {
 	return func() provider.Provider {
 		return &Provider{
 			subproviders: subproviders,
@@ -190,7 +190,7 @@ func (p *Provider) Resources(_ context.Context) []func() resource.Resource {
 	resources := make([]func() resource.Resource, 0)
 
 	for _, subprovider := range p.subproviders {
-		resources = append(resources, subprovider.Resources()...)
+		resources = append(resources, subprovider.FrameworkResources()...)
 	}
 
 	return resources
@@ -201,7 +201,7 @@ func (p *Provider) DataSources(_ context.Context) []func() datasource.DataSource
 	dataSources := make([]func() datasource.DataSource, 0)
 
 	for _, subprovider := range p.subproviders {
-		dataSources = append(dataSources, subprovider.DataSources()...)
+		dataSources = append(dataSources, subprovider.FrameworkDataSources()...)
 	}
 
 	return dataSources

@@ -21,7 +21,7 @@ import (
 func TestSDKProvider(t *testing.T) {
 	t.Parallel()
 
-	provider := akamai.NewSDKProvider(registry.SDKSubproviders()...)()
+	provider := akamai.NewSDKProvider(registry.Subproviders()...)()
 	err := provider.InternalValidate()
 	assert.NoError(t, err)
 }
