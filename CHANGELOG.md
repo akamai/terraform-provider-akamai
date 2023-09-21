@@ -7,6 +7,9 @@
 * CPS
   * Added `pending_changes` computed field to `akamai_cps_enrollment` data source ([#PR468](https://github.com/akamai/terraform-provider-akamai/pull/468))
 
+* Cloud Wrapper
+  * Added support for `comments` argument modification in `akamai_cloudwrapper_configuration` resource
+
 #### BUG FIXES:
 
 * PAPI
