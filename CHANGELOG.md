@@ -12,6 +12,9 @@
 
 #### BUG FIXES:
 
+* Appsec
+  * Fixed `akamai_networklist_network_list` import resulting in null `contract_id` and `group_id`
+
 * PAPI
   * Added errors to `data_property_akamai_contract` and `data_property_akamai_group` data sources, when fetching groups returns multiple inconclusive results
   * Fixed drift issue in `akamai_edge_hostname` resource [(#457)](https://github.com/akamai/terraform-provider-akamai/issues/457)
