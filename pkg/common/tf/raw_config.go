@@ -112,5 +112,9 @@ func (rc RawConfig) transformSlice(val cty.Value) (any, bool) {
 			return nil, ok
 		}
 	}
+	if val.LengthInt() == 0 && val.Type().ListElementType().IsObjectType() {
+		return nil, true
+	}
+
 	return slc, true
 }
