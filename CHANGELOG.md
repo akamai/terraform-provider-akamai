@@ -1,8 +1,11 @@
 # RELEASE NOTES
 
-## 5.3.x (Sep xx, 2023)
+## 5.3.0 (Sep 26, 2023)
 
 #### FEATURES/ENHANCEMENTS:
+
+* Appsec
+  * Added `sync_point` value in `akamai_networklist_network_lists` data source
 
 * CPS
   * Added `pending_changes` computed field to `akamai_cps_enrollment` data source ([#PR468](https://github.com/akamai/terraform-provider-akamai/pull/468))
@@ -18,16 +21,11 @@
 * PAPI
   * Added errors to `data_property_akamai_contract` and `data_property_akamai_group` data sources, when fetching groups returns multiple inconclusive results
   * Fixed drift issue in `akamai_edge_hostname` resource [(#457)](https://github.com/akamai/terraform-provider-akamai/issues/457)
-  * Add missing fields to `akamai_property_builder` for `origin` and `siteShield` behaviors ([#465](https://github.com/akamai/terraform-provider-akamai/issues/465))
+  * Added missing fields to `akamai_property_builder` for `origin` and `siteShield` behaviors ([#465](https://github.com/akamai/terraform-provider-akamai/issues/465))
   * Improved `akamai_property_rules_builder` empty list transformation ([#438](https://github.com/akamai/terraform-provider-akamai/issues/438))
 
 * GTM
-  * Add better drift handling in akamai_gtm_property - when property is removed without terraform knowledge, resource doesn't just error on refresh but suggests recreation
-
-#### FEATURES/ENHANCEMENTS:
-
-* Appsec
-  * Added `sync_point` value in `akamai_networklist_network_lists` data source
+  * Added better drift handling in `akamai_gtm_property` - when property is removed without terraform knowledge, resource doesn't just error on refresh but suggests recreation
 
 ## 5.2.0 (Aug 29, 2023)
 
