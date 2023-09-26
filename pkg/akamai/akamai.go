@@ -17,5 +17,6 @@ const (
 )
 
 func userAgent(terraformVersion string) string {
-	return fmt.Sprintf("Terraform/%s (+https://www.terraform.io) %s/%s", terraformVersion, ProviderName, version.ProviderVersion)
+	return fmt.Sprintf("Terraform/%s (+https://www.terraform.io) %s/%s", terraformVersion,
+		ProviderName, version.ProviderVersion)
 }

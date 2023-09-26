@@ -10,7 +10,8 @@ import (
 // ErrWrongEdgeGridConfiguration is returned when the configuration could not be read
 var ErrWrongEdgeGridConfiguration = errors.New("error reading Akamai EdgeGrid configuration")
 
-var defaultConfigFile = edgegrid.DefaultConfigFile
+// DefaultConfigFilePath is the default path for edgerc config file
+var DefaultConfigFilePath = edgegrid.DefaultConfigFile
 
 type configBearer struct {
 	accessToken  string
@@ -84,7 +85,7 @@ func validateEdgerc(edgerc *edgegrid.Config) (*edgegrid.Config, error) {
 
 func edgercPathOrDefault(path string) string {
 	if path == "" {
-		return defaultConfigFile
+		return DefaultConfigFilePath
 	}
 	return path
 }

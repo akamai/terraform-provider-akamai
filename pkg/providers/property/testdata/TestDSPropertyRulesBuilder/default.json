@@ -146,6 +146,21 @@
           "loaderVersion": "V12",
           "requirePci": false
         }
+      },
+      {
+        "name": "corsSupport",
+        "options": {
+          "allowCredentials": false,
+          "allowHeaders": "ANY",
+          "allowOrigins": "ANY",
+          "enabled": true,
+          "exposeHeaders": [],
+          "methods": [
+            "GET",
+            "POST"
+          ],
+          "preflightMaxAge": "600s"
+        }
       }
     ],
     "children": [

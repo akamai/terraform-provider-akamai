@@ -27,11 +27,6 @@ func TestNewEdgegridConfig(t *testing.T) {
 		clientSecret: clientSecret,
 	}
 
-	defer func(oldDefault string) {
-		defaultConfigFile = oldDefault
-	}(defaultConfigFile)
-	defaultConfigFile = edgercPath
-
 	t.Run("env is prioritized over config", func(t *testing.T) {
 		t.Setenv("AKAMAI_HOST", envHost)
 		t.Setenv("AKAMAI_ACCESS_TOKEN", accessToken)
@@ -118,7 +113,7 @@ func TestEdgercPathOrDefault(t *testing.T) {
 	path := "testdata/edgerc"
 
 	assert.Equal(t, path, edgercPathOrDefault(path))
-	assert.Equal(t, defaultConfigFile, edgercPathOrDefault(""))
+	assert.Equal(t, DefaultConfigFilePath, edgercPathOrDefault(""))
 }
 
 func TestEdgercSectionOrDefault(t *testing.T) {

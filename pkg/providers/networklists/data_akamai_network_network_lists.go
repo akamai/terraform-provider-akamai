@@ -60,6 +60,11 @@ func dataSourceNetworkList() *schema.Resource {
 				Elem:     &schema.Schema{Type: schema.TypeString},
 				Computed: true,
 			},
+			"sync_point": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Sync Point identifies each version of the network list, which increments each time it's modified",
+			},
 		},
 	}
 }
@@ -99,6 +104,9 @@ func dataSourceNetworkListRead(ctx context.Context, d *schema.ResourceData, m in
 			return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 		}
 		if err := d.Set("contract_id", networkList.ContractID); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
+		}
+		if err := d.Set("sync_point", networkList.SyncPoint); err != nil {
 			return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 		}
 
@@ -148,6 +156,10 @@ func dataSourceNetworkListRead(ctx context.Context, d *schema.ResourceData, m in
 		}
 		if len(networkLists.NetworkLists) > 0 {
 			d.SetId(networkLists.NetworkLists[0].UniqueID)
+
+			if err := d.Set("sync_point", networkLists.NetworkLists[0].SyncPoint); err != nil {
+				return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
+			}
 		}
 		jsonBody, err := json.MarshalIndent(networkLists, "", "  ")
 		if err != nil {

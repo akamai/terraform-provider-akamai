@@ -53,6 +53,15 @@ data "akamai_property_rules_builder" "default" {
         true_client_ip_header         = "True-Client-IP"
         use_unique_cache_key          = false
         verification_mode             = "PLATFORM_SETTINGS"
+        custom_certificates {
+          can_be_ca   = false
+          can_be_leaf = true
+          issuer_rdns {
+            c  = "US"
+            cn = "DigiCert TLS RSA SHA256 2020 CA1"
+            o  = "DigiCert Inc"
+          }
+        }
       }
     }
     behavior {

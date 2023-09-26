@@ -16,19 +16,15 @@ jobs:
           uses: actions/setup-go@v3
           with:
             go-version-file: 'go.mod'
-        - name: Prepare env
-          run: make init
-        - name: Prepare terraform tools
+        - name: Install terraform
           run: make tools.terraform
-        - name: Prepare dummy edgerc
-          run: make dummy-edgerc
-        - name: Run checks
-          run: make check
+        - name: Run linter
+          run: make lint
         - name: Create build
           run: make build
         - name: Run tests
           run: make test
-        - name: Run terraform-fmt
-          run: make terraform-fmt
-        - name: Run terraform lint
+        - name: Run terraform fmt check
+          run: make terraform-fmtcheck
+        - name: Run tflint
           run: make terraform-lint

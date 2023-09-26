@@ -1,5 +1,32 @@
 # RELEASE NOTES
 
+## 5.3.0 (Sep 26, 2023)
+
+#### FEATURES/ENHANCEMENTS:
+
+* Appsec
+  * Added `sync_point` value in `akamai_networklist_network_lists` data source
+
+* CPS
+  * Added `pending_changes` computed field to `akamai_cps_enrollment` data source ([#PR468](https://github.com/akamai/terraform-provider-akamai/pull/468))
+
+* Cloud Wrapper
+  * Added support for `comments` argument modification in `akamai_cloudwrapper_configuration` resource
+
+#### BUG FIXES:
+
+* Appsec
+  * Fixed `akamai_networklist_network_list` import resulting in null `contract_id` and `group_id`
+
+* PAPI
+  * Added errors to `data_property_akamai_contract` and `data_property_akamai_group` data sources, when fetching groups returns multiple inconclusive results
+  * Fixed drift issue in `akamai_edge_hostname` resource [(#457)](https://github.com/akamai/terraform-provider-akamai/issues/457)
+  * Added missing fields to `akamai_property_builder` for `origin` and `siteShield` behaviors ([#465](https://github.com/akamai/terraform-provider-akamai/issues/465))
+  * Improved `akamai_property_rules_builder` empty list transformation ([#438](https://github.com/akamai/terraform-provider-akamai/issues/438))
+
+* GTM
+  * Added better drift handling in `akamai_gtm_property` - when property is removed without terraform knowledge, resource doesn't just error on refresh but suggests recreation
+
 ## 5.2.0 (Aug 29, 2023)
 
 #### FEATURES/ENHANCEMENTS:
@@ -1034,8 +1061,8 @@ These are the operations supported in the Network Lists API v2:
 These are the operations supported in the Identity Management: User Administration API v2:
 
 * Create a new user
-* Update a userâs profile
-* Update a userâs role assignments
+* Update a userÃ¢ÂÂs profile
+* Update a userÃ¢ÂÂs role assignments
 * Delete a user
 
 ## 1.1.1 (Jan 8, 2021)

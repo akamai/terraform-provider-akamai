@@ -4,142 +4,182 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
 func Test_DSReadContract(t *testing.T) {
-	t.Run("read contract with group name and group ID conflict", func(t *testing.T) {
-		client := &papi.Mock{}
-		client.On("GetGroups")
-		client.On("GetGroups", AnyCTX).Return(&papi.GetGroupsResponse{
-			AccountID: "act_1-1TJZFB", AccountName: "example.com",
-			Groups: papi.GroupItems{Items: []*papi.Group{
-				{
-					GroupID:       "grp_12345",
-					GroupName:     "Example.com-1-1TJZH5",
-					ParentGroupID: "grp_parent",
-					ContractIDs:   []string{"ctr_1234"},
+	tests := map[string]struct {
+		init       func(*testing.T, *papi.Mock, testDataForPAPIGroups)
+		mockData   testDataForPAPIGroups
+		configPath string
+		error      *regexp.Regexp
+	}{
+		"read contract with group name and group ID conflict": {
+			init:       func(t *testing.T, m *papi.Mock, testData testDataForPAPIGroups) {},
+			configPath: "testdata/TestDSContractRequired/ds_contract_with_group_name_and_group.tf",
+			error:      regexp.MustCompile("only one of `group_id,group_name` can be specified"),
+		},
+		"read contract with group id provided": {
+			init: func(t *testing.T, m *papi.Mock, testData testDataForPAPIGroups) {
+				expectGetGroups(m, testData, 5)
+			},
+			mockData: testDataForPAPIGroups{
+				accountID:   "",
+				accountName: "",
+				groups: papi.GroupItems{
+					Items: []*papi.Group{
+						{
+							GroupID:       "grp_12345",
+							GroupName:     "Example.com-1-1TJZH5",
+							ParentGroupID: "grp_parent",
+							ContractIDs:   []string{"ctr_1234"},
+						},
+						{
+							GroupID:       "grp_12346",
+							GroupName:     "default",
+							ParentGroupID: "grp_parent",
+							ContractIDs:   []string{"ctr_1234"},
+						},
+					},
 				},
-				{
-					GroupID:       "grp_12346",
-					GroupName:     "default",
-					ParentGroupID: "grp_parent",
-					ContractIDs:   []string{"ctr_1234"},
+			},
+			configPath: "testdata/TestDSContractRequired/ds_contract_with_group_id.tf",
+			error:      nil,
+		},
+		"read contract with group id without prefix": {
+			init: func(t *testing.T, m *papi.Mock, testData testDataForPAPIGroups) {
+				expectGetGroups(m, testData, 5)
+			},
+			mockData: testDataForPAPIGroups{
+				accountID:   "act_1-1TJZFB",
+				accountName: "example.com",
+				groups: papi.GroupItems{
+					Items: []*papi.Group{
+						{
+							GroupID:       "grp_12345",
+							GroupName:     "Example.com-1-1TJZH5",
+							ParentGroupID: "grp_parent",
+							ContractIDs:   []string{"ctr_1234"},
+						},
+						{
+							GroupID:       "grp_12346",
+							GroupName:     "default",
+							ParentGroupID: "grp_parent",
+							ContractIDs:   []string{"ctr_1234"},
+						},
+					},
 				},
-			}}}, nil)
-		useClient(client, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
-				Steps: []resource.TestStep{{
-					Config:      testutils.LoadFixtureString(t, "testdata/TestDSContractRequired/ds_contract_with_group_name_and_group.tf"),
-					ExpectError: regexp.MustCompile("only one of `group_id,group_name` can be specified"),
-				}},
-			})
-		})
-	})
+			},
+			configPath: "testdata/TestDSContractRequired/ds_contract_with_group_id_without_prefix.tf",
+			error:      nil,
+		},
+		"read contract with group name": {
+			init: func(t *testing.T, m *papi.Mock, testData testDataForPAPIGroups) {
+				expectGetGroups(m, testData, 5)
+			},
+			mockData: testDataForPAPIGroups{
+				accountID:   "act_1-1TJZFB",
+				accountName: "example.com",
+				groups: papi.GroupItems{
+					Items: []*papi.Group{
+						{
+							GroupID:       "grp_12345",
+							GroupName:     "Example.com-1-1TJZH5",
+							ParentGroupID: "grp_parent",
+							ContractIDs:   []string{"ctr_1234"},
+						},
+						{
+							GroupID:       "grp_12346",
+							GroupName:     "default",
+							ParentGroupID: "grp_parent",
+							ContractIDs:   []string{"ctr_1234"},
+						},
+					},
+				},
+			},
+			configPath: "testdata/TestDSContractRequired/ds_contract_with_group_name.tf",
+			error:      nil,
+		},
+		"multiple groups with the same name - expect an error": {
+			init: func(t *testing.T, m *papi.Mock, testData testDataForPAPIGroups) {
+				expectGetGroups(m, testData, 5)
+			},
+			mockData: testDataForPAPIGroups{
+				accountID:   "act_1-1TJZFB",
+				accountName: "example.com",
+				groups: papi.GroupItems{
+					Items: []*papi.Group{
+						{
+							GroupID:       "grp_12345",
+							GroupName:     "Example.com-1-1TJZH5",
+							ParentGroupID: "grp_parent",
+							ContractIDs:   []string{"ctr_1234"},
+						},
+						{
+							GroupID:       "grp_12346",
+							GroupName:     "Example.com-1-1TJZH5",
+							ParentGroupID: "grp_parent",
+							ContractIDs:   []string{"ctr_1234"},
+						},
+					},
+				},
+			},
+			configPath: "testdata/TestDSContractRequired/ds_contract_with_group_name.tf",
+			error:      regexp.MustCompile("there is more than 1 group with the same name. Based on provided data, it is impossible to determine which one should be returned. Please use group_id attribute"),
+		},
+		"multiple groups with the same name, distinguished by group_id": {
+			init: func(t *testing.T, m *papi.Mock, testData testDataForPAPIGroups) {
+				expectGetGroups(m, testData, 5)
+			},
+			mockData: testDataForPAPIGroups{
+				accountID:   "act_1-1TJZFB",
+				accountName: "example.com",
+				groups: papi.GroupItems{
+					Items: []*papi.Group{
+						{
+							GroupID:       "grp_12345",
+							GroupName:     "Example.com-1-1TJZH5",
+							ParentGroupID: "grp_parent",
+							ContractIDs:   []string{"ctr_1234"},
+						},
+						{
+							GroupID:       "grp_12346",
+							GroupName:     "Example.com-1-1TJZH5",
+							ParentGroupID: "grp_parent",
+							ContractIDs:   []string{"ctr_1234"},
+						},
+					},
+				},
+			},
+			configPath: "testdata/TestDSContractRequired/ds_contract_with_group_id.tf",
+			error:      nil,
+		},
+	}
 
-	t.Run("read contract with group id provided", func(t *testing.T) {
-		client := &papi.Mock{}
-		client.On("GetGroups")
-		client.On("GetGroups", AnyCTX).Return(&papi.GetGroupsResponse{
-			AccountID: "act_1-1TJZFB", AccountName: "example.com",
-			Groups: papi.GroupItems{Items: []*papi.Group{
-				{
-					GroupID:       "grp_12345",
-					GroupName:     "Example.com-1-1TJZH5",
-					ParentGroupID: "grp_parent",
-					ContractIDs:   []string{"ctr_1234"},
-				},
-				{
-					GroupID:       "grp_12346",
-					GroupName:     "default",
-					ParentGroupID: "grp_parent",
-					ContractIDs:   []string{"ctr_1234"},
-				},
-			}}}, nil)
-		useClient(client, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
-				Steps: []resource.TestStep{{
-					Config: testutils.LoadFixtureString(t, "testdata/TestDSContractRequired/ds_contract_with_group_id.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("data.akamai_contract.akacontract", "id", "ctr_1234"),
-						resource.TestCheckResourceAttr("data.akamai_contract.akacontract", "group_id", "grp_12345"),
-						resource.TestCheckResourceAttr("data.akamai_contract.akacontract", "group_name", "Example.com-1-1TJZH5"),
-					),
-				}},
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			client := &papi.Mock{}
+			test.init(t, client, test.mockData)
+			useClient(client, nil, func() {
+				resource.UnitTest(t, resource.TestCase{
+					ProtoV5ProviderFactories: testAccProviders,
+					IsUnitTest:               true,
+					Steps: []resource.TestStep{
+						{
+							Config: testutils.LoadFixtureString(t, test.configPath),
+							Check: resource.ComposeAggregateTestCheckFunc(
+								resource.TestCheckResourceAttr("data.akamai_contract.akacontract", "id", "ctr_1234"),
+								resource.TestCheckResourceAttr("data.akamai_contract.akacontract", "group_id", "grp_12345"),
+								resource.TestCheckResourceAttr("data.akamai_contract.akacontract", "group_name", "Example.com-1-1TJZH5"),
+							),
+							ExpectError: test.error,
+						},
+					},
+				})
 			})
+			client.AssertExpectations(t)
 		})
-	})
-
-	t.Run("read contract with group id without prefix", func(t *testing.T) {
-		client := &papi.Mock{}
-		client.On("GetGroups")
-		client.On("GetGroups", AnyCTX).Return(&papi.GetGroupsResponse{
-			AccountID: "act_1-1TJZFB", AccountName: "example.com",
-			Groups: papi.GroupItems{Items: []*papi.Group{
-				{
-					GroupID:       "grp_12345",
-					GroupName:     "Example.com-1-1TJZH5",
-					ParentGroupID: "grp_parent",
-					ContractIDs:   []string{"ctr_1234"},
-				},
-				{
-					GroupID:       "grp_12346",
-					GroupName:     "default",
-					ParentGroupID: "grp_parent",
-					ContractIDs:   []string{"ctr_1234"},
-				},
-			}}}, nil)
-		useClient(client, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
-				Steps: []resource.TestStep{{
-					Config: testutils.LoadFixtureString(t, "testdata/TestDSContractRequired/ds_contract_with_group_id_without_prefix.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("data.akamai_contract.akacontract", "id", "ctr_1234"),
-						resource.TestCheckResourceAttr("data.akamai_contract.akacontract", "group_id", "grp_12345"),
-						resource.TestCheckResourceAttr("data.akamai_contract.akacontract", "group_name", "Example.com-1-1TJZH5"),
-					),
-				}},
-			})
-		})
-	})
-
-	t.Run("read contract with group name", func(t *testing.T) {
-		client := &papi.Mock{}
-		client.On("GetGroups")
-		client.On("GetGroups", AnyCTX).Return(&papi.GetGroupsResponse{
-			AccountID: "act_1-1TJZFB", AccountName: "example.com",
-			Groups: papi.GroupItems{Items: []*papi.Group{
-				{
-					GroupID:       "grp_12345",
-					GroupName:     "Example.com-1-1TJZH5",
-					ParentGroupID: "grp_parent",
-					ContractIDs:   []string{"ctr_1234"},
-				},
-				{
-					GroupID:       "grp_12346",
-					GroupName:     "default",
-					ParentGroupID: "grp_parent",
-					ContractIDs:   []string{"ctr_1234"},
-				},
-			}}}, nil)
-		useClient(client, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
-				Steps: []resource.TestStep{{
-					Config: testutils.LoadFixtureString(t, "testdata/TestDSContractRequired/ds_contract_with_group_name.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("data.akamai_contract.akacontract", "id", "ctr_1234"),
-						resource.TestCheckResourceAttr("data.akamai_contract.akacontract", "group_id", "grp_12345"),
-						resource.TestCheckResourceAttr("data.akamai_contract.akacontract", "group_name", "Example.com-1-1TJZH5"),
-					),
-				}},
-			})
-		})
-	})
+	}
 }

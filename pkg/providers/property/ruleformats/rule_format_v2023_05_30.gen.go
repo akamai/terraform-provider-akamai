@@ -11,8 +11,8 @@ func init() {
 		behaviorsSchemas: getBehaviorsSchemaV20230530(),
 		criteriaSchemas:  getCriteriaSchemaV20230530(),
 		typeMappings:     map[string]interface{}{"adScalerCircuitBreaker.returnErrorResponseCodeBased.408": 408, "adScalerCircuitBreaker.returnErrorResponseCodeBased.500": 500, "adScalerCircuitBreaker.returnErrorResponseCodeBased.502": 502, "adScalerCircuitBreaker.returnErrorResponseCodeBased.504": 504},
-		nameMappings:     map[string]string{"allowFcmParentOverride": "allowFCMParentOverride", "allowHttpsCacheKeySharing": "allowHTTPSCacheKeySharing", "allowHttpsDowngrade": "allowHTTPSDowngrade", "allowHttpsUpgrade": "allowHTTPSUpgrade", "conditionalHttpStatus": "conditionalHTTPStatus", "contentCharacteristicsAmd": "contentCharacteristicsAMD", "contentCharacteristicsDd": "contentCharacteristicsDD", "dcpAuthHmacTransformation": "dcpAuthHMACTransformation", "detectSmartDnsProxy": "detectSmartDNSProxy", "detectSmartDnsProxyAction": "detectSmartDNSProxyAction", "detectSmartDnsProxyRedirecturl": "detectSmartDNSProxyRedirecturl", "enableCmcdSegmentPrefetch": "enableCMCDSegmentPrefetch", "enableEs256": "enableES256", "enableIpAvoidance": "enableIPAvoidance", "enableIpProtection": "enableIPProtection", "enableIpRedirectOnDeny": "enableIPRedirectOnDeny", "enableRs256": "enableRS256", "enableTokenInUri": "enableTokenInURI", "g2OToken": "g2oToken", "g2Oheader": "g2oheader", "i18NCharset": "i18nCharset", "i18NStatus": "i18nStatus", "isCertificateSniOnly": "isCertificateSNIOnly", "logEdgeIp": "logEdgeIP", "originSettings": "origin_settings", "overrideIpAddresses": "overrideIPAddresses", "segmentDurationDash": "segmentDurationDASH", "segmentDurationDashCustom": "segmentDurationDASHCustom", "segmentDurationHds": "segmentDurationHDS", "segmentDurationHdsCustom": "segmentDurationHDSCustom", "segmentDurationHls": "segmentDurationHLS", "segmentDurationHlsCustom": "segmentDurationHLSCustom", "segmentSizeDash": "segmentSizeDASH", "segmentSizeHds": "segmentSizeHDS", "segmentSizeHls": "segmentSizeHLS", "sf3COriginHost": "sf3cOriginHost", "sf3COriginHostHeader": "sf3cOriginHostHeader", "smartDnsProxy": "smartDNSProxy", "standardTlsMigration": "standardTLSMigration", "standardTlsMigrationOverride": "standardTLSMigrationOverride", "titleAicMobile": "title_aic_mobile", "titleAicNonmobile": "title_aic_nonmobile", "tokenAuthHlsTitle": "tokenAuthHLSTitle"},
-		shouldFlatten:    []string{"apiPrioritization.cloudletPolicy", "apiPrioritization.throttledCpCode", "apiPrioritization.throttledCpCode.cpCodeLimits", "apiPrioritization.netStorage", "applicationLoadBalancer.cloudletPolicy", "applicationLoadBalancer.allDownNetStorage", "audienceSegmentation.cloudletPolicy", "cpCode.value", "cpCode.value.cpCodeLimits", "edgeRedirector.cloudletPolicy", "failAction.netStorageHostname", "failAction.cpCode", "failAction.cpCode.cpCodeLimits", "firstPartyMarketing.cloudletPolicy", "firstPartyMarketingPlus.cloudletPolicy", "forwardRewrite.cloudletPolicy", "imageAndVideoManager.cpCodeOriginal", "imageAndVideoManager.cpCodeOriginal.cpCodeLimits", "imageAndVideoManager.cpCodeTransformed", "imageAndVideoManager.cpCodeTransformed.cpCodeLimits", "imageManager.cpCodeOriginal", "imageManager.cpCodeOriginal.cpCodeLimits", "imageManager.cpCodeTransformed", "imageManager.cpCodeTransformed.cpCodeLimits", "imageManagerVideo.cpCodeOriginal", "imageManagerVideo.cpCodeOriginal.cpCodeLimits", "imageManagerVideo.cpCodeTransformed", "imageManagerVideo.cpCodeTransformed.cpCodeLimits", "origin.netStorage", "phasedRelease.cloudletPolicy", "requestControl.cloudletPolicy", "requestControl.netStorage", "siteShield.ssmap", "visitorPrioritization.cloudletPolicy", "visitorPrioritization.waitingRoomCpCode", "visitorPrioritization.waitingRoomCpCode.cpCodeLimits", "visitorPrioritization.waitingRoomNetStorage", "webApplicationFirewall.firewallConfiguration", "matchCpCode.value", "matchCpCode.value.cpCodeLimits"},
+		nameMappings:     map[string]string{"allowFcmParentOverride": "allowFCMParentOverride", "allowHttpsCacheKeySharing": "allowHTTPSCacheKeySharing", "allowHttpsDowngrade": "allowHTTPSDowngrade", "allowHttpsUpgrade": "allowHTTPSUpgrade", "c": "C", "canBeCa": "canBeCA", "cn": "CN", "conditionalHttpStatus": "conditionalHTTPStatus", "contentCharacteristicsAmd": "contentCharacteristicsAMD", "contentCharacteristicsDd": "contentCharacteristicsDD", "dcpAuthHmacTransformation": "dcpAuthHMACTransformation", "detectSmartDnsProxy": "detectSmartDNSProxy", "detectSmartDnsProxyAction": "detectSmartDNSProxyAction", "detectSmartDnsProxyRedirecturl": "detectSmartDNSProxyRedirecturl", "enableCmcdSegmentPrefetch": "enableCMCDSegmentPrefetch", "enableEs256": "enableES256", "enableIpAvoidance": "enableIPAvoidance", "enableIpProtection": "enableIPProtection", "enableIpRedirectOnDeny": "enableIPRedirectOnDeny", "enableRs256": "enableRS256", "enableTokenInUri": "enableTokenInURI", "g2OToken": "g2oToken", "g2Oheader": "g2oheader", "i18NCharset": "i18nCharset", "i18NStatus": "i18nStatus", "isCertificateSniOnly": "isCertificateSNIOnly", "issuerRdns": "issuerRDNs", "logEdgeIp": "logEdgeIP", "o": "O", "originSettings": "origin_settings", "ou": "OU", "overrideIpAddresses": "overrideIPAddresses", "segmentDurationDash": "segmentDurationDASH", "segmentDurationDashCustom": "segmentDurationDASHCustom", "segmentDurationHds": "segmentDurationHDS", "segmentDurationHdsCustom": "segmentDurationHDSCustom", "segmentDurationHls": "segmentDurationHLS", "segmentDurationHlsCustom": "segmentDurationHLSCustom", "segmentSizeDash": "segmentSizeDASH", "segmentSizeHds": "segmentSizeHDS", "segmentSizeHls": "segmentSizeHLS", "sf3COriginHost": "sf3cOriginHost", "sf3COriginHostHeader": "sf3cOriginHostHeader", "smartDnsProxy": "smartDNSProxy", "standardTlsMigration": "standardTLSMigration", "standardTlsMigrationOverride": "standardTLSMigrationOverride", "subjectCn": "subjectCN", "subjectRdns": "subjectRDNs", "titleAicMobile": "title_aic_mobile", "titleAicNonmobile": "title_aic_nonmobile", "tokenAuthHlsTitle": "tokenAuthHLSTitle"},
+		shouldFlatten:    []string{"apiPrioritization.cloudletPolicy", "apiPrioritization.throttledCpCode", "apiPrioritization.throttledCpCode.cpCodeLimits", "apiPrioritization.netStorage", "applicationLoadBalancer.cloudletPolicy", "applicationLoadBalancer.allDownNetStorage", "audienceSegmentation.cloudletPolicy", "cpCode.value", "cpCode.value.cpCodeLimits", "edgeRedirector.cloudletPolicy", "failAction.netStorageHostname", "failAction.cpCode", "failAction.cpCode.cpCodeLimits", "firstPartyMarketing.cloudletPolicy", "firstPartyMarketingPlus.cloudletPolicy", "forwardRewrite.cloudletPolicy", "imageAndVideoManager.cpCodeOriginal", "imageAndVideoManager.cpCodeOriginal.cpCodeLimits", "imageAndVideoManager.cpCodeTransformed", "imageAndVideoManager.cpCodeTransformed.cpCodeLimits", "imageManager.cpCodeOriginal", "imageManager.cpCodeOriginal.cpCodeLimits", "imageManager.cpCodeTransformed", "imageManager.cpCodeTransformed.cpCodeLimits", "imageManagerVideo.cpCodeOriginal", "imageManagerVideo.cpCodeOriginal.cpCodeLimits", "imageManagerVideo.cpCodeTransformed", "imageManagerVideo.cpCodeTransformed.cpCodeLimits", "origin.netStorage", "origin.customCertificateAuthorities.subjectRDNs", "origin.customCertificateAuthorities.issuerRDNs", "origin.customCertificates.subjectRDNs", "origin.customCertificates.issuerRDNs", "phasedRelease.cloudletPolicy", "requestControl.cloudletPolicy", "requestControl.netStorage", "siteShield.ssmap", "visitorPrioritization.cloudletPolicy", "visitorPrioritization.waitingRoomCpCode", "visitorPrioritization.waitingRoomCpCode.cpCodeLimits", "visitorPrioritization.waitingRoomNetStorage", "webApplicationFirewall.firewallConfiguration", "matchCpCode.value", "matchCpCode.value.cpCodeLimits"},
 	})
 }
 
@@ -7094,7 +7094,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 		"large_file_optimization": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "The `Large File Optimization` feature improves performance and reliability when delivering large files. You need this behavior for objects larger than 1.8GB, and it's recommended for anything over 100MB. You should apply it only to the specific content to be optimized, such as a download directory's `.gz` files, and enable the `useVersioning` option while enforcing your own filename versioning policy.  Note that it is best to use `NetStorage` for objects larger than 1.8GB. This behavior can be used in includes.",
+			Description: "The `Large File Optimization` (LFO) feature improves performance and reliability when delivering large files. You need this behavior for objects larger than 1.8GB, and you should apply it to anything over 100MB. You should apply it only to the specific content to be optimized, such as a download directory's `.gz` files, and enable the `useVersioning` option while enforcing your own filename versioning policy. Make sure you meet all the `requirements and best practices` for the LFO delivery. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -8636,17 +8636,145 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeList,
 						Elem: &schema.Resource{
 							Schema: map[string]*schema.Schema{
-								"pem_encoded_cert": {
-									ValidateDiagFunc: validateRegexOrVariable("^-----BEGIN CERTIFICATE-----(.|\\s)*-----END CERTIFICATE-----\\s*$"),
-									Optional:         true,
-									Description:      "",
-									Type:             schema.TypeString,
+								"subject_cn": {
+									Optional:    true,
+									Description: "",
+									Type:        schema.TypeString,
+								},
+								"subject_alternative_names": {
+									Optional:    true,
+									Description: "",
+									Type:        schema.TypeList,
+									Elem: &schema.Schema{
+										Type: schema.TypeString,
+									},
+								},
+								"subject_rdns": {
+									Optional:    true,
+									Description: "",
+									Type:        schema.TypeList,
+									MaxItems:    1,
+									Elem: &schema.Resource{
+										Schema: map[string]*schema.Schema{
+											"c": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"ou": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"o": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"cn": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+										},
+									},
+								},
+								"issuer_rdns": {
+									Optional:    true,
+									Description: "",
+									Type:        schema.TypeList,
+									MaxItems:    1,
+									Elem: &schema.Resource{
+										Schema: map[string]*schema.Schema{
+											"c": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"ou": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"o": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"cn": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+										},
+									},
+								},
+								"not_before": {
+									Optional:    true,
+									Description: "",
+									Type:        schema.TypeInt,
+								},
+								"not_after": {
+									Optional:    true,
+									Description: "",
+									Type:        schema.TypeInt,
+								},
+								"sig_alg_name": {
+									Optional:    true,
+									Description: "",
+									Type:        schema.TypeString,
+								},
+								"public_key": {
+									Optional:    true,
+									Description: "",
+									Type:        schema.TypeString,
+								},
+								"public_key_algorithm": {
+									Optional:    true,
+									Description: "",
+									Type:        schema.TypeString,
+								},
+								"public_key_format": {
+									Optional:    true,
+									Description: "",
+									Type:        schema.TypeString,
+								},
+								"serial_number": {
+									Optional:    true,
+									Description: "",
+									Type:        schema.TypeString,
+								},
+								"version": {
+									Optional:    true,
+									Description: "",
+									Type:        schema.TypeInt,
 								},
 								"sha1_fingerprint": {
 									ValidateDiagFunc: validateRegexOrVariable("^[a-f0-9]{40}$"),
 									Optional:         true,
 									Description:      "",
 									Type:             schema.TypeString,
+								},
+								"pem_encoded_cert": {
+									ValidateDiagFunc: validateRegexOrVariable("^-----BEGIN CERTIFICATE-----(.|\\s)*-----END CERTIFICATE-----\\s*$"),
+									Optional:         true,
+									Description:      "",
+									Type:             schema.TypeString,
+								},
+								"can_be_leaf": {
+									Optional:    true,
+									Description: "",
+									Type:        schema.TypeBool,
+								},
+								"can_be_ca": {
+									Optional:    true,
+									Description: "",
+									Type:        schema.TypeBool,
+								},
+								"self_signed": {
+									Optional:    true,
+									Description: "",
+									Type:        schema.TypeBool,
 								},
 							},
 						},
@@ -8657,17 +8785,145 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeList,
 						Elem: &schema.Resource{
 							Schema: map[string]*schema.Schema{
-								"pem_encoded_cert": {
-									ValidateDiagFunc: validateRegexOrVariable("^-----BEGIN CERTIFICATE-----(.|\\s)*-----END CERTIFICATE-----\\s*$"),
-									Optional:         true,
-									Description:      "",
-									Type:             schema.TypeString,
+								"subject_cn": {
+									Optional:    true,
+									Description: "",
+									Type:        schema.TypeString,
+								},
+								"subject_alternative_names": {
+									Optional:    true,
+									Description: "",
+									Type:        schema.TypeList,
+									Elem: &schema.Schema{
+										Type: schema.TypeString,
+									},
+								},
+								"subject_rdns": {
+									Optional:    true,
+									Description: "",
+									Type:        schema.TypeList,
+									MaxItems:    1,
+									Elem: &schema.Resource{
+										Schema: map[string]*schema.Schema{
+											"c": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"ou": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"o": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"cn": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+										},
+									},
+								},
+								"issuer_rdns": {
+									Optional:    true,
+									Description: "",
+									Type:        schema.TypeList,
+									MaxItems:    1,
+									Elem: &schema.Resource{
+										Schema: map[string]*schema.Schema{
+											"c": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"ou": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"o": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"cn": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+										},
+									},
+								},
+								"not_before": {
+									Optional:    true,
+									Description: "",
+									Type:        schema.TypeInt,
+								},
+								"not_after": {
+									Optional:    true,
+									Description: "",
+									Type:        schema.TypeInt,
+								},
+								"sig_alg_name": {
+									Optional:    true,
+									Description: "",
+									Type:        schema.TypeString,
+								},
+								"public_key": {
+									Optional:    true,
+									Description: "",
+									Type:        schema.TypeString,
+								},
+								"public_key_algorithm": {
+									Optional:    true,
+									Description: "",
+									Type:        schema.TypeString,
+								},
+								"public_key_format": {
+									Optional:    true,
+									Description: "",
+									Type:        schema.TypeString,
+								},
+								"serial_number": {
+									Optional:    true,
+									Description: "",
+									Type:        schema.TypeString,
+								},
+								"version": {
+									Optional:    true,
+									Description: "",
+									Type:        schema.TypeInt,
 								},
 								"sha1_fingerprint": {
 									ValidateDiagFunc: validateRegexOrVariable("^[a-f0-9]{40}$"),
 									Optional:         true,
 									Description:      "",
 									Type:             schema.TypeString,
+								},
+								"pem_encoded_cert": {
+									ValidateDiagFunc: validateRegexOrVariable("^-----BEGIN CERTIFICATE-----(.|\\s)*-----END CERTIFICATE-----\\s*$"),
+									Optional:         true,
+									Description:      "",
+									Type:             schema.TypeString,
+								},
+								"can_be_leaf": {
+									Optional:    true,
+									Description: "",
+									Type:        schema.TypeBool,
+								},
+								"can_be_ca": {
+									Optional:    true,
+									Description: "",
+									Type:        schema.TypeBool,
+								},
+								"self_signed": {
+									Optional:    true,
+									Description: "",
+									Type:        schema.TypeBool,
 								},
 							},
 						},
@@ -11799,6 +12055,22 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 									Optional:    true,
 									Description: "",
 									Type:        schema.TypeString,
+								},
+								"china_cdn_map": {
+									Optional:    true,
+									Description: "",
+									Type:        schema.TypeString,
+								},
+								"has_mixed_hosts": {
+									Optional:    true,
+									Description: "",
+									Type:        schema.TypeBool,
+								},
+								"src": {
+									ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"FALLBACK", "PROTECTED_HOST_MATCH", "ORIGIN_MATCH", "PREVIOUS_MAP", "PROPERTY_MATCH"}, false)),
+									Optional:         true,
+									Description:      "",
+									Type:             schema.TypeString,
 								},
 							},
 						},

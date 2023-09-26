@@ -85,14 +85,16 @@ func resourceNetworkList() *schema.Resource {
 				Description: "sync point",
 			},
 			"contract_id": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "contract ID",
+				Type:             schema.TypeString,
+				Optional:         true,
+				DiffSuppressFunc: suppressDiffContractID,
+				Description:      "contract ID",
 			},
 			"group_id": {
-				Type:        schema.TypeInt,
-				Optional:    true,
-				Description: "group ID",
+				Type:             schema.TypeInt,
+				Optional:         true,
+				DiffSuppressFunc: suppressDiffGroupID,
+				Description:      "group ID",
 			},
 		},
 	}
@@ -376,6 +378,14 @@ func resourceNetworkListRead(ctx context.Context, d *schema.ResourceData, m inte
 		}
 	}
 
+	if err := d.Set("contract_id", networklist.ContractID); err != nil {
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
+	}
+
+	if err := d.Set("group_id", networklist.GroupID); err != nil {
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
+	}
+
 	if err := d.Set("description", networklist.Description); err != nil {
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
@@ -520,7 +530,7 @@ func verifyContractGroupUnchanged(_ context.Context, d *schema.ResourceDiff, m i
 		oldContract, newContract := d.GetChange("contract_id")
 		oldvalue := oldContract.(string)
 		newvalue := newContract.(string)
-		if len(oldvalue) > 0 {
+		if len(oldvalue) > 0 && len(newvalue) > 0 {
 			logger.Errorf("%s value %s specified in configuration differs from resource ID's value %s", "contract_id", newvalue, oldvalue)
 			return fmt.Errorf("%s value %s specified in configuration differs from resource ID's value %s", "contract_id", newvalue, oldvalue)
 		}
@@ -530,7 +540,7 @@ func verifyContractGroupUnchanged(_ context.Context, d *schema.ResourceDiff, m i
 		oldGroup, newGroup := d.GetChange("group_id")
 		oldvalue := oldGroup.(int)
 		newvalue := newGroup.(int)
-		if oldvalue > 0 {
+		if oldvalue > 0 && newvalue > 0 {
 			logger.Errorf("%s value %d specified in configuration differs from resource ID's value %d", "group_id", newvalue, oldvalue)
 			return fmt.Errorf("%s value %d specified in configuration differs from resource ID's value %d", "group_id", newvalue, oldvalue)
 		}
@@ -549,6 +559,44 @@ func markSyncPointComputedIfListModified(_ context.Context, d *schema.ResourceDi
 		return d.SetNewComputed("sync_point")
 	}
 	return nil
+}
+
+// suppress the diff if contract id if state file has some value
+// and if nothing is passed in terraform config
+func suppressDiffContractID(_, _, _ string, d *schema.ResourceData) bool {
+	key := "contract_id"
+
+	oldValue, newValue := d.GetChange(key)
+	oldContractID := oldValue.(string)
+	newContractID := newValue.(string)
+	if len(oldContractID) > 0 && len(newContractID) == 0 {
+		return false
+	}
+
+	if len(oldContractID) == 0 && len(newContractID) > 0 {
+		return false
+	}
+
+	return true
+}
+
+// suppress the diff if contract id if state file has some value
+// and if nothing is passed in terraform config
+func suppressDiffGroupID(_, _, _ string, d *schema.ResourceData) bool {
+	key := "group_id"
+
+	oldValue, newValue := d.GetChange(key)
+	oldGroupID := oldValue.(int)
+	newGroupID := newValue.(int)
+	if oldGroupID > 0 && newGroupID == 0 {
+		return false
+	}
+
+	if oldGroupID == 0 && newGroupID > 0 {
+		return false
+	}
+
+	return true
 }
 
 // Append Replace Remove mode flags

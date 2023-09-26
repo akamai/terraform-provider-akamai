@@ -103,17 +103,18 @@ func (rc RawConfig) transformMap(val cty.Value) (any, bool) {
 }
 
 func (rc RawConfig) transformSlice(val cty.Value) (any, bool) {
-	vals := val.AsValueSlice()
-	if vals == nil {
-		return nil, true
-	}
-	slc := make([]any, 0)
-	for _, v := range vals {
+	slc := make([]any, 0, val.LengthInt())
+	for it := val.ElementIterator(); it.Next(); {
+		_, v := it.Element()
 		if v, ok := rc.transform(v); ok {
 			slc = append(slc, v)
 		} else {
 			return nil, ok
 		}
 	}
+	if val.LengthInt() == 0 && val.Type().ListElementType().IsObjectType() {
+		return nil, true
+	}
+
 	return slc, true
 }

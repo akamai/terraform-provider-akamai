@@ -103,9 +103,6 @@ func (r *ConfigurationResource) Schema(ctx context.Context, _ resource.SchemaReq
 				Validators: []validator.String{
 					stringvalidator.LengthAtLeast(1),
 				},
-				PlanModifiers: []planmodifier.String{
-					modifiers.PreventStringUpdate(),
-				},
 			},
 			"retain_idle_objects": schema.BoolAttribute{
 				Optional:    true,
