@@ -140,7 +140,7 @@ func TestAccAkamaiNetworkListConfigChanged(t *testing.T) {
 	client.On("GetNetworkList",
 		mock.Anything,
 		networklists.GetNetworkListRequest{UniqueID: "2275_VOYAGERCALLCENTERWHITELI"},
-	).Return(&getResponse, nil).Times(2)
+	).Return(&getResponse, nil).Times(4)
 
 	client.On("RemoveNetworkList",
 		mock.Anything,
@@ -153,6 +153,12 @@ func TestAccAkamaiNetworkListConfigChanged(t *testing.T) {
 				IsUnitTest:        true,
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResNetworkList/match_by_id.tf"),
+						Check: resource.ComposeAggregateTestCheckFunc(
+							resource.TestCheckResourceAttr("akamai_networklist_network_list.test", "name", "Voyager Call Center Whitelist"),
+						),
+					},
 					{
 						Config:      testutils.LoadFixtureString(t, "testdata/TestResNetworkList/changed_contract_id.tf"),
 						ExpectError: regexp.MustCompile("contract_id value C-1FRYVV5 specified in configuration differs from resource ID's value C-1FRYVV3"),

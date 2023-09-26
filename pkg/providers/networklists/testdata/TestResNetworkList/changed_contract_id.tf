@@ -9,5 +9,6 @@ resource "akamai_networklist_network_list" "test" {
   list        = ["10.1.8.23", "10.3.5.67"]
   mode        = "REPLACE"
   contract_id = "C-1FRYVV5"
+  group_id    = 64867
 }
 

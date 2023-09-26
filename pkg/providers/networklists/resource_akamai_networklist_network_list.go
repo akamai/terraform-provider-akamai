@@ -572,6 +572,11 @@ func suppressDiffContractID(_, _, _ string, d *schema.ResourceData) bool {
 	if len(oldContractID) > 0 && len(newContractID) == 0 {
 		return false
 	}
+
+	if len(oldContractID) == 0 && len(newContractID) > 0 {
+		return false
+	}
+
 	return true
 }
 
@@ -586,6 +591,11 @@ func suppressDiffGroupID(_, _, _ string, d *schema.ResourceData) bool {
 	if oldGroupID > 0 && newGroupID == 0 {
 		return false
 	}
+
+	if oldGroupID == 0 && newGroupID > 0 {
+		return false
+	}
+
 	return true
 }
 
