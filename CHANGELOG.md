@@ -1,5 +1,12 @@
 # RELEASE NOTES
 
+## 5.4.x (Oct xx, 2023)
+
+#### BUG FIXES:
+
+* PAPI
+  * Made `status_update_email` attribute optional in `akamai_edge_hostname` resource
+
 ## 5.3.0 (Sep 26, 2023)
 
 #### FEATURES/ENHANCEMENTS:
