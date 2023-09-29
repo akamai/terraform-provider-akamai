@@ -164,6 +164,8 @@ func TestResCPCode(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_cp_code.test", "group_id", "grp_1"),
 						resource.TestCheckResourceAttr("akamai_cp_code.test", "contract_id", "ctr_1"),
 						resource.TestCheckResourceAttr("akamai_cp_code.test", "product_id", "prd_1"),
+						resource.TestCheckResourceAttr("akamai_cp_code.test", "timeouts.#", "1"),
+						resource.TestCheckResourceAttr("akamai_cp_code.test", "timeouts.0.update", "1h"),
 					),
 				}},
 			})
@@ -199,6 +201,7 @@ func TestResCPCode(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_cp_code.test", "group_id", "grp_test"),
 						resource.TestCheckResourceAttr("akamai_cp_code.test", "contract_id", "ctr_test"),
 						resource.TestCheckResourceAttr("akamai_cp_code.test", "product_id", "prd_test"),
+						resource.TestCheckResourceAttr("akamai_cp_code.test", "timeouts.#", "0"),
 					),
 				}},
 			})

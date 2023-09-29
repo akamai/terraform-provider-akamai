@@ -10,6 +10,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/edgeworkers"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/timeouts"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -25,6 +26,9 @@ func resourceEdgeKVGroupItems() *schema.Resource {
 		DeleteContext: resourceEdgeKVGroupItemsDelete,
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
+		},
+		Timeouts: &schema.ResourceTimeout{
+			Default: &timeouts.SDKDefaultTimeout,
 		},
 		Schema: map[string]*schema.Schema{
 			"namespace_name": {
@@ -55,6 +59,21 @@ func resourceEdgeKVGroupItems() *schema.Resource {
 				ValidateDiagFunc: tf.ValidateMapMinimalLength(1),
 				Description:      "A map of items within the specified group. Each item consists of an item key and a value.",
 				Elem:             &schema.Schema{Type: schema.TypeString},
+			},
+			"timeouts": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				MaxItems:    1,
+				Description: "Enables to set timeout for processing",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"default": {
+							Type:             schema.TypeString,
+							Optional:         true,
+							ValidateDiagFunc: timeouts.ValidateDurationFormat,
+						},
+					},
+				},
 			},
 		},
 	}
@@ -153,6 +172,11 @@ func resourceEdgeKVGroupItemsUpdate(ctx context.Context, rd *schema.ResourceData
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
 	client := inst.Client(meta)
 	logger.Debug("Updating EdgeKV group items")
+
+	if !rd.HasChangeExcept("timeouts") {
+		logger.Debug("Only timeouts were updated, skipping")
+		return nil
+	}
 
 	if !rd.HasChanges("items") {
 		return resourceEdgeKVGroupItemsRead(ctx, rd, m)
@@ -297,15 +321,11 @@ func resourceEdgeKVGroupItemsDelete(ctx context.Context, rd *schema.ResourceData
 var (
 	// pollForConsistentEdgeKVDatabaseInterval defines retry interval for listing items or getting and item
 	pollForConsistentEdgeKVDatabaseInterval = 5 * time.Second
-	// consistentEdgeKVDatabaseDeadline defines maximum timeout to wait for the database to be consistent
-	consistentEdgeKVDatabaseDeadline = 10 * time.Minute
 )
 
 // waitForEdgeKVGroupCreation waits for the group to be created in the remote state
 func waitForEdgeKVGroupCreation(ctx context.Context, client edgeworkers.Edgeworkers, groupName string, attrs *edgeKVGroupItemsAttrs) error {
 	var groupExists bool
-	statusDeadlineCtx, cancel := context.WithTimeout(ctx, consistentEdgeKVDatabaseDeadline)
-	defer cancel()
 
 	for !groupExists {
 		select {
@@ -321,7 +341,7 @@ func waitForEdgeKVGroupCreation(ctx context.Context, client edgeworkers.Edgework
 			if tools.ContainsString(groups, groupName) {
 				groupExists = true
 			}
-		case <-statusDeadlineCtx.Done():
+		case <-ctx.Done():
 			return fmt.Errorf("retry timeout reached for list groups")
 		}
 	}
@@ -332,8 +352,6 @@ func waitForEdgeKVGroupCreation(ctx context.Context, client edgeworkers.Edgework
 // waitForEdgeKVGroupDeletion waits for the group to be deleted from the remote state
 func waitForEdgeKVGroupDeletion(ctx context.Context, client edgeworkers.Edgeworkers, groupName string, attrs *edgeKVGroupItemsAttrs) error {
 	groupExists := true
-	statusDeadlineCtx, cancel := context.WithTimeout(ctx, consistentEdgeKVDatabaseDeadline)
-	defer cancel()
 
 	for groupExists {
 		select {
@@ -349,7 +367,7 @@ func waitForEdgeKVGroupDeletion(ctx context.Context, client edgeworkers.Edgework
 			if !tools.ContainsString(groups, groupName) {
 				groupExists = false
 			}
-		case <-statusDeadlineCtx.Done():
+		case <-ctx.Done():
 			return fmt.Errorf("retry timeout reached for list groups")
 		}
 	}
@@ -360,9 +378,6 @@ func waitForEdgeKVGroupDeletion(ctx context.Context, client edgeworkers.Edgework
 // waitForConsistentEdgeKVDatabase waits until all items specified in the config are propagated in the remote state, as well as all
 // the deleted items from the config are removed from the remote state.
 func waitForConsistentEdgeKVDatabase(ctx context.Context, client edgeworkers.Edgeworkers, deletedItems []string, attrs *edgeKVGroupItemsAttrs) error {
-	statusDeadlineCtx, cancel := context.WithTimeout(ctx, consistentEdgeKVDatabaseDeadline)
-	defer cancel()
-
 	for itemKey, itemRaw := range attrs.items {
 		itemVal, ok := itemRaw.(string)
 		if !ok {
@@ -386,7 +401,7 @@ func waitForConsistentEdgeKVDatabase(ctx context.Context, client edgeworkers.Edg
 				} else if err == nil && string(*stateVal) == itemVal {
 					isPresent = true
 				}
-			case <-statusDeadlineCtx.Done():
+			case <-ctx.Done():
 				return fmt.Errorf("retry timeout reached for get an item")
 			}
 		}
@@ -410,7 +425,7 @@ func waitForConsistentEdgeKVDatabase(ctx context.Context, client edgeworkers.Edg
 				} else if err != nil && errors.Is(err, edgeworkers.ErrNotFound) {
 					isDeleted = true
 				}
-			case <-statusDeadlineCtx.Done():
+			case <-ctx.Done():
 				return fmt.Errorf("retry timeout reached for get an item")
 			}
 		}

@@ -12,10 +12,10 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/timeouts"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 	"github.com/apex/log"
-	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/spf13/cast"
@@ -38,7 +38,7 @@ func resourcePropertyActivation() *schema.Resource {
 		StateUpgraders: []schema.StateUpgrader{{
 			Version: 0,
 			Type:    resourcePropertyActivationV0().CoreConfigSchema().ImpliedType(),
-			Upgrade: migrateTimeoutsToCustom(),
+			Upgrade: timeouts.MigrateToExplicit(),
 		}},
 	}
 }
@@ -129,23 +129,11 @@ var akamaiPropertyActivationSchema = map[string]*schema.Schema{
 				"default": {
 					Type:             schema.TypeString,
 					Optional:         true,
-					ValidateDiagFunc: validateDurationFormat,
+					ValidateDiagFunc: timeouts.ValidateDurationFormat,
 				},
 			},
 		},
 	},
-}
-
-func validateDurationFormat(i interface{}, _ cty.Path) diag.Diagnostics {
-	duration, ok := i.(string)
-	if !ok {
-		return diag.Errorf("incorrect format: expected duration")
-	}
-	_, err := time.ParseDuration(duration)
-	if err != nil {
-		return diag.FromErr(fmt.Errorf("provided incorrect duration: %w", err))
-	}
-	return nil
 }
 
 func papiError() *schema.Resource {

@@ -14,6 +14,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
 
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/timeouts"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/logger"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
@@ -106,9 +107,27 @@ func resourceCloudletsPolicy() *schema.Resource {
 				Computed:    true,
 				Description: "A JSON encoded list of warnings",
 			},
+			"timeouts": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				MaxItems:    1,
+				Description: "Enables to set timeout for processing",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"default": {
+							Type:             schema.TypeString,
+							Optional:         true,
+							ValidateDiagFunc: timeouts.ValidateDurationFormat,
+						},
+					},
+				},
+			},
 		},
 		Importer: &schema.ResourceImporter{
 			StateContext: resourcePolicyImport,
+		},
+		Timeouts: &schema.ResourceTimeout{
+			Default: &DeletionPolicyTimeout,
 		},
 	}
 }
@@ -279,6 +298,12 @@ func resourcePolicyUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 	)
 	client := inst.Client(meta)
 	logger.Debug("Updating policy")
+
+	if !d.HasChangeExcept("timeouts") {
+		logger.Debug("Only timeouts were updated, skipping")
+		return nil
+	}
+
 	policyID, err := strconv.ParseInt(d.Id(), 10, 0)
 	if err != nil {
 		return diag.FromErr(err)
@@ -409,9 +434,6 @@ func resourcePolicyDelete(ctx context.Context, d *schema.ResourceData, m interfa
 		}
 	}
 
-	deletionTimeoutCtx, cancel := context.WithTimeout(ctx, DeletionPolicyTimeout)
-	defer cancel()
-
 	activationPending := true
 	for activationPending {
 		select {
@@ -425,7 +447,7 @@ func resourcePolicyDelete(ctx context.Context, d *schema.ResourceData, m interfa
 				continue
 			}
 			activationPending = false
-		case <-deletionTimeoutCtx.Done():
+		case <-ctx.Done():
 			return diag.Errorf("retry timeout reached: %s", ctx.Err())
 		}
 	}

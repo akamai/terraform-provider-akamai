@@ -50,6 +50,43 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "timeouts.#", "0"),
+					),
+				},
+			},
+		},
+		"create and read activation - with timeout": {
+			init: func(m *edgeworkers.Mock) {
+				net := edgeworkers.ActivationNetworkStaging
+				version := "test"
+				activationID := 1
+
+				// version verification
+				expectListEdgeWorkerVersions(m, edgeworkerID, []edgeworkers.EdgeWorkerVersion{
+					*createStubEdgeworkerVersion(edgeworkerID, version),
+				}, nil).Once()
+
+				// create
+				expectFullActivation(m, edgeworkerID, activationID, net, version)
+
+				// read
+				expectFullRead(m, edgeworkerID, version, []edgeworkers.Activation{
+					*createStubActivation(edgeworkerID, activationID, net, version, activationStatusComplete, ""),
+				}, []edgeworkers.Deactivation{}, 2)
+
+				// test cleanup - destroy
+				expectFullDeactivation(m, edgeworkerID, 1, net, version)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworkers_activation_version_test_with_timeout.tf", workdir)),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "timeouts.#", "1"),
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "timeouts.0.default", "2h"),
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "timeouts.0.delete", "3h"),
 					),
 				},
 			},

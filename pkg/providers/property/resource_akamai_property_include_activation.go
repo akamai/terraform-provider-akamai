@@ -14,6 +14,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/timeouts"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/logger"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
@@ -111,7 +112,7 @@ func resourcePropertyIncludeActivation() *schema.Resource {
 						"default": {
 							Type:             schema.TypeString,
 							Optional:         true,
-							ValidateDiagFunc: validateDurationFormat,
+							ValidateDiagFunc: timeouts.ValidateDurationFormat,
 						},
 					},
 				},
@@ -124,7 +125,7 @@ func resourcePropertyIncludeActivation() *schema.Resource {
 		StateUpgraders: []schema.StateUpgrader{{
 			Version: 0,
 			Type:    resourcePropertyIncludeActivationV0().CoreConfigSchema().ImpliedType(),
-			Upgrade: migrateTimeoutsToCustom(),
+			Upgrade: timeouts.MigrateToExplicit(),
 		}},
 	}
 }

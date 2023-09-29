@@ -11,6 +11,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cps"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/timeouts"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
 	toolsCPS "github.com/akamai/terraform-provider-akamai/v5/pkg/providers/cps/tools"
 	"github.com/apex/log"
@@ -29,6 +30,9 @@ func resourceCPSUploadCertificate() *schema.Resource {
 			StateContext: resourceCPSUploadCertificateImport,
 		},
 		CustomizeDiff: checkUnacknowledgedWarnings,
+		Timeouts: &schema.ResourceTimeout{
+			Default: &defaultTimeout,
+		},
 		Schema: map[string]*schema.Schema{
 			"enrollment_id": {
 				Type:        schema.TypeInt,
@@ -91,6 +95,21 @@ func resourceCPSUploadCertificate() *schema.Resource {
 				Computed:    true,
 				Description: "Used to distinguish whether there are unacknowledged warnings for a certificate",
 			},
+			"timeouts": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				MaxItems:    1,
+				Description: "Enables to set timeout for processing",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"default": {
+							Type:             schema.TypeString,
+							Optional:         true,
+							ValidateDiagFunc: timeouts.ValidateDurationFormat,
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -105,6 +124,14 @@ type attributes struct {
 	ackChangeManagement bool
 	waitForDeployment   bool
 }
+
+var (
+	defaultTimeout = time.Hour * 2
+
+	trimWhitespaces = func(k, oldValue, newValue string, d *schema.ResourceData) bool {
+		return strings.TrimSpace(oldValue) == strings.TrimSpace(newValue)
+	}
+)
 
 func resourceCPSUploadCertificateCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
@@ -381,14 +408,6 @@ func checkUnacknowledgedWarnings(ctx context.Context, diff *schema.ResourceDiff,
 	return nil
 }
 
-var (
-	statusChangeDeadline = time.Minute * 30
-
-	trimWhitespaces = func(k, oldValue, newValue string, d *schema.ResourceData) bool {
-		return strings.TrimSpace(oldValue) == strings.TrimSpace(newValue)
-	}
-)
-
 // checkForTrustChainWithoutCert validates if user provided trustChain without certificate and fails processing if so
 func checkForTrustChainWithoutCert(attrs *attributes) error {
 	if attrs.certificateRSA == "" && attrs.trustChainRSA != "" {
@@ -408,8 +427,6 @@ func waitForChangeStatus(ctx context.Context, client cps.CPS, enrollmentID, chan
 		return fmt.Errorf("could not get change status: %s", err)
 	}
 
-	statusDeadlineCtx, cancel := context.WithTimeout(ctx, statusChangeDeadline)
-	defer cancel()
 	for change.StatusInfo.Status != status {
 		select {
 		case <-time.After(PollForChangeStatusInterval):
@@ -420,7 +437,7 @@ func waitForChangeStatus(ctx context.Context, client cps.CPS, enrollmentID, chan
 			if change.StatusInfo.Status == status {
 				continue
 			}
-		case <-statusDeadlineCtx.Done():
+		case <-ctx.Done():
 			return fmt.Errorf("retry timeout reached: incorrect status of a change: %s, %s", change.StatusInfo.Status, ctx.Err())
 		}
 	}
@@ -435,8 +452,6 @@ func waitUntilStatusPasses(ctx context.Context, client cps.CPS, enrollmentID, ch
 		return "", fmt.Errorf("could not get change status: %s", err)
 	}
 
-	statusDeadlineCtx, cancel := context.WithTimeout(ctx, statusChangeDeadline)
-	defer cancel()
 	for change.StatusInfo.Status == status {
 		select {
 		case <-time.After(PollForChangeStatusInterval):
@@ -444,7 +459,7 @@ func waitUntilStatusPasses(ctx context.Context, client cps.CPS, enrollmentID, ch
 			if err != nil {
 				return "", fmt.Errorf("could not get change status: %s", err)
 			}
-		case <-statusDeadlineCtx.Done():
+		case <-ctx.Done():
 			return "", fmt.Errorf("retry timeout reached: incorrect status of a change: %s, %s", change.StatusInfo.Status, ctx.Err())
 		}
 	}

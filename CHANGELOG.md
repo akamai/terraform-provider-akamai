@@ -6,12 +6,33 @@
 
 * Cloudlets
   * Added `matches_alway` field to `akamai_cloudlets_edge_redirector_match_rule` data source
+  * Added configurable timeout for following resources as `timeouts.default` field
+    * `akamai_cloudlets_application_load_balancer_activation`
+    * `akamai_cloudlets_policy_activation`
+    * `akamai_cloudlets_policy`
+
+* CPS
+  * Added configurable timeout for following resources as `timeouts.default` field ([I#440](https://github.com/akamai/terraform-provider-akamai/issues/440))
+    * `akamai_cps_dv_enrollment`
+    * `akamai_cps_dv_validation`
+    * `akamai_cps_third_party_enrollment`
+    * `akamai_cps_upload_certificate`
+
+* Edgeworkers
+  * Added configurable timeout for following resources as `timeouts.default` field
+    * `akamai_edgekv_group_items`
+    * `akamai_edgeworker`
+  * Added configurable timeout for `akamai_edgeworkers_activation` resource as `timeouts.default` and `timeouts.delete` fields
 
 * IAM
   * Phone number is no longer required for IAM user in `akamai_iam_user` resource.
 
 * PAPI
-  * Added configurable timeout for `akamai_property_activation` and `akamai_property_include_activation` as `timeouts.default` field
+  * Added configurable timeout for following resources as `timeouts.default` field ([I#440](https://github.com/akamai/terraform-provider-akamai/issues/440))
+    * `akamai_property_activation`
+    * `akamai_property_include_activation`
+    * `akamai_edge_hostname`
+  * Added configurable timeout for `akamai_cp_code` resource as `timeouts.update` field
   * Changed `version` field in `akamai_property_activation` data source to optional. Now when `version` is not provided, datasource automatically finds the active one for given network.
 
 #### BUG FIXES:

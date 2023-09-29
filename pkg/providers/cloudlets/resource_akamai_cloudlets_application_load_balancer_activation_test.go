@@ -188,6 +188,26 @@ func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 				},
 			},
 		},
+		"create and read activation, version == 1, active -> read with defined timeout": {
+			init: func(m *cloudlets.Mock) {
+				// create, alb active so no need to activate
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
+				// read
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_timeouts.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckOutput("status", string(cloudlets.LoadBalancerActivationStatusActive)),
+						resource.TestCheckResourceAttr("akamai_cloudlets_application_load_balancer_activation.test", "version", "1"),
+						resource.TestCheckResourceAttr("akamai_cloudlets_application_load_balancer_activation.test", "timeouts.#", "1"),
+						resource.TestCheckResourceAttr("akamai_cloudlets_application_load_balancer_activation.test", "timeouts.0.default", "2h"),
+					),
+				},
+			},
+		},
 		"create and read activation, version == 1, inactive -> activate -> read -> error": {
 			init: func(m *cloudlets.Mock) {
 				// create

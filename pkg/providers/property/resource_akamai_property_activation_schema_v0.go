@@ -1,8 +1,6 @@
 package property
 
 import (
-	"context"
-
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -70,19 +68,5 @@ func resourcePropertyActivationV0() *schema.Resource {
 		Timeouts: &schema.ResourceTimeout{
 			Default: &PropertyResourceTimeout,
 		},
-	}
-}
-
-// by default timeout is saved in a state as object as block; to have
-func migrateTimeoutsToCustom() func(ctx context.Context, rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
-	return func(ctx context.Context, rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
-		timeouts, ok := rawState["timeouts"]
-		if !ok || timeouts == nil {
-			return rawState, nil
-		}
-
-		rawState["timeouts"] = []interface{}{timeouts}
-
-		return rawState, nil
 	}
 }

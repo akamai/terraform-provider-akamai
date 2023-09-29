@@ -11,6 +11,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cloudlets"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/timeouts"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
 	"github.com/apex/log"
 	"github.com/hashicorp/go-cty/cty"
@@ -28,6 +29,12 @@ func resourceCloudletsApplicationLoadBalancerActivation() *schema.Resource {
 		Timeouts: &schema.ResourceTimeout{
 			Default: &ApplicationLoadBalancerActivationResourceTimeout,
 		},
+		SchemaVersion: 1,
+		StateUpgraders: []schema.StateUpgrader{{
+			Version: 0,
+			Type:    resourceCloudletsApplicationLoadBalancerActivationV0().CoreConfigSchema().ImpliedType(),
+			Upgrade: timeouts.MigrateToExplicit(),
+		}},
 	}
 }
 
@@ -56,6 +63,21 @@ func resourceCloudletsApplicationLoadBalancerActivationSchema() map[string]*sche
 			Computed:    true,
 			Description: "Activation status for this application load balancer",
 		},
+		"timeouts": {
+			Type:        schema.TypeList,
+			Optional:    true,
+			MaxItems:    1,
+			Description: "Enables to set timeout for processing",
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"default": {
+						Type:             schema.TypeString,
+						Optional:         true,
+						ValidateDiagFunc: timeouts.ValidateDurationFormat,
+					},
+				},
+			},
+		},
 	}
 }
 
@@ -83,6 +105,11 @@ func resourceApplicationLoadBalancerActivationDelete(_ context.Context, rd *sche
 func resourceApplicationLoadBalancerActivationUpdate(ctx context.Context, rd *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("Cloudlets", "resourceApplicationLoadBalancerActivationUpdate")
+
+	if !rd.HasChangeExcept("timeouts") {
+		logger.Debug("Only timeouts were updated, skipping")
+		return nil
+	}
 
 	if !rd.HasChanges("version", "network") {
 		logger.Debugf("nothing has changed, nothing to update")

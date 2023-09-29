@@ -288,6 +288,8 @@ func TestResourceDVEnrollment(t *testing.T) {
 							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "dns_challenges.#", "2"),
 							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "http_challenges.#", "2"),
 							resource.TestCheckOutput("domains_to_validate", "_acme-challenge.san.test.akamai.com,_acme-challenge.test.akamai.com"),
+							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "timeouts.#", "1"),
+							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "timeouts.0.default", "2h"),
 						),
 					},
 					{
@@ -299,6 +301,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "registration_authority", "lets-encrypt"),
 							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "dns_challenges.#", "3"),
 							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "http_challenges.#", "3"),
+							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "timeouts.#", "0"),
 							resource.TestCheckOutput("domains_to_validate", "_acme-challenge.san.test.akamai.com,_acme-challenge.san2.test.akamai.com,_acme-challenge.test.akamai.com"),
 						),
 					},

@@ -56,6 +56,39 @@ func TestCreateEdgeKVGroupItems(t *testing.T) {
 				mockListGroupsWithinNamespace(m, attrs, []string{}, 1)
 			},
 		},
+		"create edgeKV items with timeouts": {
+			configPath: "testdata/TestResourceEdgeKVGroupItems/create/with_timeout.tf",
+			attrs: edgeKVConfigurationForTests{
+				namespaceID: "test_namespace",
+				network:     "staging",
+				groupID:     "1234",
+				items: map[string]string{
+					"key1": "value1",
+					"key2": "value2",
+				},
+				timeouts: "2h",
+			},
+			init: func(m *edgeworkers.Mock, attrs edgeKVConfigurationForTests) {
+				// create
+				mockUpsertItem(m, attrs, "key1", "value1", 1)
+				mockUpsertItem(m, attrs, "key2", "value2", 1)
+				// waitForEdgeKVGroupCreation
+				mockListGroupsWithinNamespace(m, attrs, []string{"1234"}, 1)
+				// waitForConsistentEdgeKVDatabase
+				mockGetItem(m, attrs, "key1", "value1", 1)
+				mockGetItem(m, attrs, "key2", "value2", 1)
+				// read
+				mockListItems(m, attrs, edgeworkers.ListItemsResponse{"key1", "key2"}, 2)
+				mockGetItem(m, attrs, "key1", "value1", 2)
+				mockGetItem(m, attrs, "key2", "value2", 2)
+				// delete
+				mockListItems(m, attrs, edgeworkers.ListItemsResponse{"key1", "key2"}, 1)
+				mockDeleteItem(m, attrs, "key1", "message1", 1)
+				mockDeleteItem(m, attrs, "key2", "message2", 1)
+				// waitForEdgeKVGroupDeletion
+				mockListGroupsWithinNamespace(m, attrs, []string{}, 1)
+			},
+		},
 		"create edgeKV items, group not yet created": {
 			configPath: "testdata/TestResourceEdgeKVGroupItems/create/basic_2_items.tf",
 			attrs: edgeKVConfigurationForTests{
@@ -984,6 +1017,7 @@ type edgeKVConfigurationForTests struct {
 	network     edgeworkers.ItemNetwork
 	groupID     string
 	items       map[string]string
+	timeouts    string
 }
 
 var (
@@ -1075,6 +1109,12 @@ func checkEdgeKVGroupItemsAttrs(data edgeKVConfigurationForTests) resource.TestC
 		checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("akamai_edgekv_group_items.test", fmt.Sprintf("items.%s", key), val))
 	}
 	checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("akamai_edgekv_group_items.test", "id", fmt.Sprintf("%s:%s:%s", data.namespaceID, data.network, data.groupID)))
+	if data.timeouts != "" {
+		checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("akamai_edgekv_group_items.test", "timeouts.#", "1"))
+		checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("akamai_edgekv_group_items.test", "timeouts.0.default", data.timeouts))
+	} else {
+		checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("akamai_edgekv_group_items.test", "timeouts.#", "0"))
+	}
 
 	return resource.ComposeAggregateTestCheckFunc(checkFuncs...)
 }

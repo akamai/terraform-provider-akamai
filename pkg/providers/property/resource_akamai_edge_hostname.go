@@ -12,6 +12,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
 
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/timeouts"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/logger"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
@@ -30,6 +31,9 @@ func resourceSecureEdgeHostName() *schema.Resource {
 			StateContext: resourceSecureEdgeHostNameImport,
 		},
 		Schema: akamaiSecureEdgeHostNameSchema,
+		Timeouts: &schema.ResourceTimeout{
+			Default: &timeouts.SDKDefaultTimeout,
+		},
 	}
 }
 
@@ -79,6 +83,21 @@ var akamaiSecureEdgeHostNameSchema = map[string]*schema.Schema{
 		ForceNew:         true,
 		DiffSuppressFunc: suppressEdgeHostnameUseCases,
 		Description:      "A JSON encoded list of use cases",
+	},
+	"timeouts": {
+		Type:        schema.TypeList,
+		Optional:    true,
+		MaxItems:    1,
+		Description: "Enables to set timeout for processing",
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"default": {
+					Type:             schema.TypeString,
+					Optional:         true,
+					ValidateDiagFunc: timeouts.ValidateDurationFormat,
+				},
+			},
+		},
 	},
 }
 
@@ -269,6 +288,11 @@ func resourceSecureEdgeHostNameRead(ctx context.Context, d *schema.ResourceData,
 func resourceSecureEdgeHostNameUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourceSecureEdgeHostNameUpdate")
+
+	if !d.HasChangeExcept("timeouts") {
+		logger.Debug("Only timeouts were updated, skipping")
+		return nil
+	}
 
 	if d.HasChange("ip_behavior") {
 		edgeHostname, err := tf.GetStringValue("edge_hostname", d)

@@ -104,9 +104,9 @@ func (a *activationResource) Schema(ctx context.Context, _ resource.SchemaReques
 			"timeouts": timeouts.Block(ctx,
 				timeouts.Opts{
 					Create:            true,
-					CreateDescription: "Optional configurable activation timeout to be used on resource create. By default it's 4h with 1s pooling interval.",
+					CreateDescription: "Optional configurable activation timeout to be used on resource create. By default it's 4h with 1m pooling interval.",
 					Update:            true,
-					UpdateDescription: "Optional configurable activation timeout to be used on resource update. By default it's 4h with 1s pooling interval.",
+					UpdateDescription: "Optional configurable activation timeout to be used on resource update. By default it's 4h with 1m pooling interval.",
 				},
 			),
 		},

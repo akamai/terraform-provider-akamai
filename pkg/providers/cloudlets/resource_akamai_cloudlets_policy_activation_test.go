@@ -41,6 +41,8 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 						resource.TestCheckOutput("status", string(cloudlets.PolicyActivationStatusActive)),
 						resource.TestCheckResourceAttr("akamai_cloudlets_policy_activation.test", "version", "1"),
 						resource.TestCheckResourceAttr("akamai_cloudlets_policy_activation.test", "network", "staging"),
+						resource.TestCheckResourceAttr("akamai_cloudlets_policy_activation.test", "timeouts.#", "1"),
+						resource.TestCheckResourceAttr("akamai_cloudlets_policy_activation.test", "timeouts.0.default", "2h"),
 					),
 				},
 			},
@@ -300,6 +302,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckOutput("status", string(cloudlets.PolicyActivationStatusActive)),
 						resource.TestCheckResourceAttr("akamai_cloudlets_policy_activation.test", "version", "1"),
+						resource.TestCheckResourceAttr("akamai_cloudlets_policy_activation.test", "timeouts.#", "0"),
 					),
 				},
 			},
