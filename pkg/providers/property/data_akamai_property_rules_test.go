@@ -5,11 +5,10 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
-
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestDSPropertyRulesRead(t *testing.T) {
@@ -51,7 +50,7 @@ func TestDSPropertyRulesRead(t *testing.T) {
 		mockImpl(client)
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestDSPropertyRules/ds_property_rules.tf"),
@@ -127,7 +126,7 @@ func TestDSPropertyRulesRead(t *testing.T) {
 
 				useClient(client, nil, func() {
 					resource.UnitTest(t, resource.TestCase{
-						ProtoV6ProviderFactories: testAccProviders,
+						ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 						Steps: []resource.TestStep{
 							{
 								Config: testutils.LoadFixtureString(t, test.configFile),
@@ -157,7 +156,7 @@ func TestDSPropertyRulesRead(t *testing.T) {
 		mockImpl(client)
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, "testdata/TestDSPropertyRules/with_versioned_rule_format.tf"),
@@ -176,7 +175,7 @@ func TestDSPropertyRulesRead(t *testing.T) {
 		mockImpl(client)
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, "testdata/TestDSPropertyRules/with_versioned_rule_format.tf"),
@@ -191,7 +190,7 @@ func TestDSPropertyRulesRead(t *testing.T) {
 		client := &papi.Mock{}
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, "testdata/TestDSPropertyRules/missing_group_id.tf"),
@@ -206,7 +205,7 @@ func TestDSPropertyRulesRead(t *testing.T) {
 		client := &papi.Mock{}
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, "testdata/TestDSPropertyRules/missing_contract_id.tf"),
@@ -221,7 +220,7 @@ func TestDSPropertyRulesRead(t *testing.T) {
 		client := &papi.Mock{}
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, "testdata/TestDSPropertyRules/empty_contract_id.tf"),
@@ -236,7 +235,7 @@ func TestDSPropertyRulesRead(t *testing.T) {
 		client := &papi.Mock{}
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, "testdata/TestDSPropertyRules/empty_group_id.tf"),
@@ -259,7 +258,7 @@ func TestDSPropertyRulesRead(t *testing.T) {
 		mockImpl(client)
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, "testdata/TestDSPropertyRules/ds_property_rules.tf"),
@@ -296,7 +295,7 @@ func TestDSPropertyRulesRead(t *testing.T) {
 		mockImpl(client)
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, "testdata/TestDSPropertyRules/ds_property_rules.tf"),
@@ -311,7 +310,7 @@ func TestDSPropertyRulesRead(t *testing.T) {
 
 func TestDSPropertyRulesRead_Fail(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: testAccProviders,
+		ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 		Steps: []resource.TestStep{{
 			Config:      testutils.LoadFixtureString(t, "testdata/TestDSPropertyRules/always_fails.tf"),
 			ExpectError: regexp.MustCompile(`Error: provided value cannot be blank`),

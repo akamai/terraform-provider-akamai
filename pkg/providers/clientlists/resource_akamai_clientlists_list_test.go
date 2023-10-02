@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/clientlists"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -180,7 +181,7 @@ func TestResourceClientList(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString(fmt.Sprintf("%s/list_create.tf", testDir)),
@@ -228,7 +229,7 @@ func TestResourceClientList(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString(fmt.Sprintf("%s/list_create.tf", testDir)),
@@ -280,7 +281,7 @@ func TestResourceClientList(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString(fmt.Sprintf("%s/list_create_empty_tags.tf", testDir)),
@@ -340,7 +341,7 @@ func TestResourceClientList(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString(fmt.Sprintf("%s/list_create.tf", testDir)),
@@ -399,7 +400,7 @@ func TestResourceClientList(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString(fmt.Sprintf("%s/list_and_items_create.tf", testDir)),
@@ -504,7 +505,7 @@ func TestResourceClientList(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString(fmt.Sprintf("%s/list_and_items_create.tf", testDir)),
@@ -616,7 +617,7 @@ func TestResourceClientList(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString(fmt.Sprintf("%s/list_and_items_create.tf", testDir)),
@@ -691,7 +692,7 @@ func TestResourceClientList(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString(fmt.Sprintf("%s/list_and_items_create_one_item.tf", testDir)),
@@ -755,7 +756,7 @@ func TestResourceClientList(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: loadFixtureString(fmt.Sprintf("%s/list_and_items_create_one_item.tf", testDir)),
@@ -780,7 +781,7 @@ func TestResourceClientList(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config:      loadFixtureString(fmt.Sprintf("%s/list_and_duplicate_items_create.tf", testDir)),

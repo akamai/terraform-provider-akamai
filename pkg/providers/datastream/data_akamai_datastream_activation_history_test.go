@@ -76,7 +76,7 @@ func TestDataAkamaiDatastreamActivationHistoryRead(t *testing.T) {
 					client.On("GetActivationHistory", mock.Anything, mock.Anything).Return(test.getActivationHistoryReturn, nil)
 				}
 				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{
 						{
 							Config: testutils.LoadFixtureString(t, test.configPath),

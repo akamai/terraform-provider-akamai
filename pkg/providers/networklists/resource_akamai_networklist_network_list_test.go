@@ -74,7 +74,7 @@ func TestAccAkamaiNetworkList_res_basic(t *testing.T) {
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
 				IsUnitTest:               true,
-				ProtoV6ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestResNetworkList/match_by_id.tf"),
@@ -150,8 +150,8 @@ func TestAccAkamaiNetworkListConfigChanged(t *testing.T) {
 	t.Run("changed contractID and groupID", func(t *testing.T) {
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
-				IsUnitTest:        true,
-				ProviderFactories: testAccProviders,
+				IsUnitTest:               true,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestResNetworkList/match_by_id.tf"),

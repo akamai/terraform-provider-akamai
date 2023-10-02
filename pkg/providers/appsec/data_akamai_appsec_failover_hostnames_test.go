@@ -27,7 +27,7 @@ func TestAkamaiFailoverHostnames_data_basic(t *testing.T) {
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
 				IsUnitTest:               true,
-				ProtoV6ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestDSFailoverHostnames/match_by_id.tf"),

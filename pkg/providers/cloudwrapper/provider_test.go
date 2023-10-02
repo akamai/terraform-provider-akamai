@@ -2,8 +2,6 @@ package cloudwrapper
 
 import (
 	"context"
-	"log"
-	"os"
 	"testing"
 	"time"
 
@@ -107,14 +105,7 @@ func (ts *TestSubprovider) FrameworkDataSources() []func() datasource.DataSource
 }
 
 func TestMain(m *testing.M) {
-	if err := testutils.TFTestSetup(); err != nil {
-		log.Fatal(err)
-	}
-	exitCode := m.Run()
-	if err := testutils.TFTestTeardown(); err != nil {
-		log.Fatal(err)
-	}
-	os.Exit(exitCode)
+	testutils.TestRunner(m)
 }
 
 func newProviderFactory(opts ...testSubproviderOption) map[string]func() (tfprotov6.ProviderServer, error) {

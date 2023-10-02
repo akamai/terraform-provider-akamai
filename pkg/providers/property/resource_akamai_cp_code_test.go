@@ -10,10 +10,8 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
-
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
-
 	"github.com/stretchr/testify/mock"
 	"github.com/tj/assert"
 )
@@ -155,7 +153,7 @@ func TestResCPCode(t *testing.T) {
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResCPCode/create_new_cp_code.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
@@ -192,7 +190,7 @@ func TestResCPCode(t *testing.T) {
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResCPCode/use_existing_cp_code.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
@@ -229,7 +227,7 @@ func TestResCPCode(t *testing.T) {
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResCPCode/use_existing_cp_code.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
@@ -265,7 +263,7 @@ func TestResCPCode(t *testing.T) {
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResCPCode/use_existing_cp_code.tf"),
 					ExpectError: regexp.MustCompile("Couldn't find product id on the CP Code"),
@@ -296,7 +294,7 @@ func TestResCPCode(t *testing.T) {
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestResCPCode/change_name_step0.tf"),
@@ -326,7 +324,7 @@ func TestResCPCode(t *testing.T) {
 		expectGetCPCode(client, "ctr_1", "grp_2", 0, &CPCodes, nil).Times(4)
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestResCPCode/import_cp_code.tf"),
@@ -359,7 +357,7 @@ func TestResCPCode(t *testing.T) {
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config:        testutils.LoadFixtureString(t, "testdata/TestResCPCode/import_cp_code.tf"),
@@ -380,7 +378,7 @@ func TestResCPCode(t *testing.T) {
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config:        testutils.LoadFixtureString(t, "testdata/TestResCPCode/import_cp_code.tf"),
@@ -411,7 +409,7 @@ func TestResCPCode(t *testing.T) {
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestResCPCode/change_name_step0.tf"),
@@ -479,7 +477,7 @@ func TestResCPCode(t *testing.T) {
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestResCPCode/change_name_step0.tf"),
@@ -516,7 +514,7 @@ func TestResCPCode(t *testing.T) {
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestResCPCode/change_name_step0.tf"),
@@ -566,7 +564,7 @@ func TestResCPCode(t *testing.T) {
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestResCPCode/change_name_step0.tf"),
@@ -588,7 +586,7 @@ func TestResCPCode(t *testing.T) {
 		expectedErr := regexp.MustCompile("`product_id` must be specified for creation")
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testAccProviders,
+			ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 			Steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResCPCode/missing_product.tf"),

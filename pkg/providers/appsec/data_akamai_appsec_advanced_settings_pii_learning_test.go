@@ -56,7 +56,7 @@ func TestAkamaiAdvancedSettingsPIILearning_data_basic(t *testing.T) {
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
 				IsUnitTest:               true,
-				ProtoV6ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestDSAdvancedSettingsPIILearning/match_by_id.tf"),
@@ -109,7 +109,7 @@ func TestAkamaiAdvancedSettingsPIILearning_data_missing_parameter(t *testing.T) 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
 				IsUnitTest:               true,
-				ProtoV6ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestDSAdvancedSettingsPIILearning/match_by_id.tf"),

@@ -8,12 +8,9 @@ import (
 
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/cache"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/providers/registry"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/subprovider"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
-	"github.com/hashicorp/terraform-plugin-framework/providerserver"
-	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
-	"github.com/hashicorp/terraform-plugin-mux/tf6muxserver"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/assert"
 )
@@ -49,7 +46,7 @@ func TestFramework_ConfigureCache_EnabledInContext(t *testing.T) {
 
 			resource.Test(t, resource.TestCase{
 				IsUnitTest:               true,
-				ProtoV6ProviderFactories: newProtoV6ProviderFactory(dummy{}),
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(dummy{}),
 				Steps: []resource.TestStep{
 					{
 						Config: fmt.Sprintf(`
@@ -92,7 +89,7 @@ func TestFramework_ConfigureEdgercInContext(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			resource.Test(t, resource.TestCase{
 				IsUnitTest:               true,
-				ProtoV6ProviderFactories: newProtoV6ProviderFactory(dummy{}),
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(dummy{}),
 				Steps: []resource.TestStep{
 					{
 						ExpectError: testcase.expectedError,
@@ -141,7 +138,7 @@ func TestFramework_EdgercValidate(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			resource.Test(t, resource.TestCase{
 				IsUnitTest:               true,
-				ProtoV6ProviderFactories: newProtoV6ProviderFactory(dummy{}),
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(dummy{}),
 				Steps: []resource.TestStep{
 					{
 						ExpectError: testcase.expectedError,
@@ -211,7 +208,7 @@ func TestFramework_EdgercFromConfig(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			resource.Test(t, resource.TestCase{
 				IsUnitTest:               true,
-				ProtoV6ProviderFactories: newProtoV6ProviderFactory(dummy{}),
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(dummy{}),
 				Steps: []resource.TestStep{
 					{
 						ExpectError: testcase.expectedError,
@@ -236,7 +233,7 @@ func TestFramework_EdgercFromConfig(t *testing.T) {
 func TestFramework_EdgercFromConfig_missing_required_attributes(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		IsUnitTest:               true,
-		ProtoV6ProviderFactories: newProtoV6ProviderFactory(dummy{}),
+		ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(dummy{}),
 		Steps: []resource.TestStep{
 			{
 				ExpectError: regexp.MustCompile("The argument \"host\" is required, but no definition was found"),
@@ -288,31 +285,4 @@ func TestFramework_EdgercFromConfig_missing_required_attributes(t *testing.T) {
 			},
 		},
 	})
-}
-
-func newProtoV6ProviderFactory(subproviders ...subprovider.Subprovider) map[string]func() (tfprotov6.ProviderServer, error) {
-	return map[string]func() (tfprotov6.ProviderServer, error){
-		"akamai": func() (tfprotov6.ProviderServer, error) {
-			ctx := context.Background()
-
-			sdkProviderV6, err := akamai.NewProtoV6SDKProvider(registry.Subproviders())
-			if err != nil {
-				return nil, err
-			}
-
-			providers := []func() tfprotov6.ProviderServer{
-				sdkProviderV6,
-				providerserver.NewProtocol6(
-					akamai.NewFrameworkProvider(subproviders...)(),
-				),
-			}
-
-			muxServer, err := tf6muxserver.NewMuxServer(ctx, providers...)
-			if err != nil {
-				return nil, err
-			}
-
-			return muxServer.ProviderServer(), nil
-		},
-	}
 }

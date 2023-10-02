@@ -72,7 +72,7 @@ func TestResourceCPSUploadCertificate(t *testing.T) {
 			test.init(t, client, test.enrollment, test.enrollmentID, test.changeID)
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					IsUnitTest:               true,
 					Steps: []resource.TestStep{
 						{
@@ -173,7 +173,7 @@ func TestResourceCPSUploadCertificateWithThirdPartyEnrollmentDependency(t *testi
 			test.init(t, client, &test.enrollment, test.enrollmentID, test.changeID)
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					IsUnitTest:               true,
 					Steps: []resource.TestStep{
 						{
@@ -280,7 +280,7 @@ func TestResourceCPSUploadCertificateLifecycle(t *testing.T) {
 			test.init(t, client, test.enrollment, test.enrollmentUpdated, test.enrollmentID, test.changeID, test.changeIDUpdated)
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					IsUnitTest:               true,
 					Steps: []resource.TestStep{
 						{
@@ -673,7 +673,7 @@ func TestCreateCPSUploadCertificate(t *testing.T) {
 			test.init(t, client, test.enrollment, test.enrollmentID, test.changeID)
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					IsUnitTest:               true,
 					Steps: []resource.TestStep{
 						{
@@ -788,7 +788,7 @@ func TestReadCPSUploadCertificate(t *testing.T) {
 			test.init(t, client, test.enrollment, test.enrollmentID, test.changeID)
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					IsUnitTest:               true,
 					Steps: []resource.TestStep{
 						{
@@ -1101,7 +1101,7 @@ func TestUpdateCPSUploadCertificate(t *testing.T) {
 			test.init(t, client, test.enrollment, test.enrollmentUpdated, test.enrollmentID, test.changeID, test.changeIDUpdated)
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					IsUnitTest:               true,
 					Steps: []resource.TestStep{
 						{
@@ -1180,7 +1180,7 @@ func TestResourceUploadCertificateImport(t *testing.T) {
 
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{
 						{
 							Config:           testutils.LoadFixtureString(t, "testdata/TestResCPSUploadCertificate/import/import_upload.tf"),

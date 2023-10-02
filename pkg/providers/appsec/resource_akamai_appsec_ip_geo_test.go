@@ -110,7 +110,7 @@ func TestAkamaiIPGeo_res_block(t *testing.T) {
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
 				IsUnitTest:               true,
-				ProtoV6ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestResIPGeo/match_by_id.tf"),
@@ -174,7 +174,7 @@ func TestAkamaiIPGeo_res_block(t *testing.T) {
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
 				IsUnitTest:               true,
-				ProtoV6ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestResIPGeo/ukraine_match_by_id.tf"),
@@ -215,7 +215,7 @@ func TestAkamaiIPGeo_res_block(t *testing.T) {
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
 				IsUnitTest:               true,
-				ProtoV6ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestResIPGeo/allow.tf"),
@@ -248,7 +248,7 @@ func TestAkamaiIPGeo_res_block(t *testing.T) {
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
 				IsUnitTest:               true,
-				ProtoV6ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestResIPGeo/block_with_empty_lists.tf"),
@@ -282,7 +282,7 @@ func TestAkamaiIPGeo_res_block(t *testing.T) {
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
 				IsUnitTest:               true,
-				ProtoV6ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestResIPGeo/allow_with_empty_lists.tf"),

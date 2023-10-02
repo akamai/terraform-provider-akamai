@@ -5,19 +5,32 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"testing"
 
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/subprovider"
+	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
-	"github.com/hashicorp/terraform-plugin-mux/tf5to6server"
 	"github.com/hashicorp/terraform-plugin-mux/tf6muxserver"
 	"github.com/stretchr/testify/require"
 )
 
 // tfTestTempDir specifies the location of tmp directory which will be used by provider SDK's testing framework
 const tfTestTempDir = "./test_tmp"
+
+// TestRunner executes common test setup and teardown in all subproviders
+func TestRunner(m *testing.M) {
+	if err := TFTestSetup(); err != nil {
+		log.Fatal(err)
+	}
+	exitCode := m.Run()
+	if err := TFTestTeardown(); err != nil {
+		log.Fatal(err)
+	}
+	os.Exit(exitCode)
+}
 
 // TFTestSetup contains common setup for tests in all subproviders
 func TFTestSetup() error {
@@ -54,26 +67,25 @@ func LoadFixtureString(t *testing.T, format string, args ...interface{}) string 
 	return string(LoadFixtureBytes(t, fmt.Sprintf(format, args...)))
 }
 
-// NewSDKProviderFactories uses provided subprovider to create provider factories for test purposes
-func NewSDKProviderFactories(subprovider subprovider.Subprovider) map[string]func() (tfprotov6.ProviderServer, error) {
-	testAccSDKProvider := akamai.NewSDKProvider(subprovider)()
-	testAccProviders := map[string]func() (tfprotov6.ProviderServer, error){
+// NewProtoV6ProviderFactory uses provided subprovider to create provider factory for test purposes
+func NewProtoV6ProviderFactory(subproviders ...subprovider.Subprovider) map[string]func() (tfprotov6.ProviderServer, error) {
+	return map[string]func() (tfprotov6.ProviderServer, error){
 		"akamai": func() (tfprotov6.ProviderServer, error) {
-			sdkProviderV6, err := tf5to6server.UpgradeServer(
-				context.Background(),
-				testAccSDKProvider.GRPCProvider,
-			)
+			ctx := context.Background()
+
+			sdkProviderV6, err := akamai.NewProtoV6SDKProvider(subproviders)
 			if err != nil {
 				return nil, err
 			}
 
 			providers := []func() tfprotov6.ProviderServer{
-				func() tfprotov6.ProviderServer {
-					return sdkProviderV6
-				},
+				sdkProviderV6,
+				providerserver.NewProtocol6(
+					akamai.NewFrameworkProvider(subproviders...)(),
+				),
 			}
 
-			muxServer, err := tf6muxserver.NewMuxServer(context.Background(), providers...)
+			muxServer, err := tf6muxserver.NewMuxServer(ctx, providers...)
 			if err != nil {
 				return nil, err
 			}
@@ -81,5 +93,4 @@ func NewSDKProviderFactories(subprovider subprovider.Subprovider) map[string]fun
 			return muxServer.ProviderServer(), nil
 		},
 	}
-	return testAccProviders
 }

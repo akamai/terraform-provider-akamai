@@ -5,11 +5,10 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/stretchr/testify/mock"
-
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestResourcePAPIPropertyActivation(t *testing.T) {
@@ -659,7 +658,7 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 			}
 			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					IsUnitTest:               true,
 					Steps:                    test.steps,
 				})

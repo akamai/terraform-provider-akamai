@@ -36,7 +36,7 @@ func TestAccAkamaiNetworkListDescription_res_basic(t *testing.T) {
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
 				IsUnitTest:               false,
-				ProtoV6ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestResNetworkListDescription/match_by_id.tf"),

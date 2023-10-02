@@ -767,7 +767,7 @@ func TestResProperty(t *testing.T) {
 
 		return func(t *testing.T) {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResProperty/ConfigError/%s.tf", fixtureName),
 					ExpectError: regexp.MustCompile(rx),
@@ -791,7 +791,7 @@ func TestResProperty(t *testing.T) {
 
 			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					IsUnitTest:               true,
 					Steps:                    tc.Steps(State, fixturePrefix),
 				})
@@ -886,7 +886,7 @@ func TestResProperty(t *testing.T) {
 			tc.ClientSetup(State)
 			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps:                    tc.Steps(State, ""),
 				})
 			})
@@ -998,7 +998,7 @@ func TestResProperty(t *testing.T) {
 
 			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{
 						{
 							Config: testutils.LoadFixtureString(t, "testdata/%s-step0.tf", t.Name()),
@@ -1047,7 +1047,7 @@ func TestResProperty(t *testing.T) {
 
 			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{
 						{
 							Config: testutils.LoadFixtureString(t, "testdata/%s/step0.tf", t.Name()),
@@ -1098,7 +1098,7 @@ func TestResProperty(t *testing.T) {
 			ExpectRemoveProperty(client, "prp_1", "", "")
 			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{
 						{
 							Config: testutils.LoadFixtureString(t, "testdata/TestResProperty/property_update_with_validation_error_for_rules.tf"),
@@ -1265,7 +1265,7 @@ func TestResProperty(t *testing.T) {
 
 			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{
 						{
 							Config: testutils.LoadFixtureString(t, "testdata/TestResProperty/CreationUpdateNoHostnames/creation/property_create.tf"),
@@ -1321,7 +1321,7 @@ func TestResProperty(t *testing.T) {
 
 			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{
 						{
 							Config:      testutils.LoadFixtureString(t, "testdata/TestResProperty/CreationUpdateNoHostnames/creation/property_create.tf"),
@@ -1369,7 +1369,7 @@ func TestResProperty(t *testing.T) {
 
 			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{
 						{
 							Config:      testutils.LoadFixtureString(t, "testdata/TestResProperty/CreationUpdateNoHostnames/creation/property_create.tf"),
@@ -1412,7 +1412,7 @@ func TestResProperty(t *testing.T) {
 
 			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{{
 						Config:      testutils.LoadFixtureString(t, "testdata/TestResProperty/Creation/property.tf"),
 						ExpectError: regexp.MustCompile("group not found: grp_0"),
@@ -1439,7 +1439,7 @@ func TestResProperty(t *testing.T) {
 			client.On("CreateProperty", AnyCTX, req).Return(nil, fmt.Errorf("given property name is not unique"))
 			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{
 						{
 							Config:      testutils.LoadFixtureString(t, "testdata/%s.tf", t.Name()),
@@ -1658,7 +1658,7 @@ func TestResProperty(t *testing.T) {
 
 			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{
 						{
 							Config: testutils.LoadFixtureString(t, "testdata/TestResProperty/CreationUpdateIncorrectEdgeHostname/create/property.tf"),

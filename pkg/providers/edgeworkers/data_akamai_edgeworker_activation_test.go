@@ -194,7 +194,7 @@ func TestDataEdgeWorkersActivation(t *testing.T) {
 			test.init(t, client, test.mockData)
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					IsUnitTest:               true,
 					Steps: []resource.TestStep{
 						{

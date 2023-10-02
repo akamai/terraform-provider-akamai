@@ -10,7 +10,7 @@ import (
 func TestDataWarnings(t *testing.T) {
 	t.Run("run warning datasource", func(t *testing.T) {
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testAccProviders,
+			ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 			IsUnitTest:               true,
 			Steps: []resource.TestStep{
 				{

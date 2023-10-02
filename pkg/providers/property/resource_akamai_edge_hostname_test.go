@@ -8,15 +8,14 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/hapi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/hapi"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 )
 
 func TestResourceEdgeHostname(t *testing.T) {
@@ -1053,7 +1052,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 			test.init(client, clientHapi)
 			useClient(client, clientHapi, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps:                    test.steps,
 				})
 			})
@@ -1135,7 +1134,7 @@ func TestResourceEdgeHostnames_WithImport(t *testing.T) {
 		expectGetEdgeHostnames(client, "ctr_1", "grp_2")
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						// please note that import does not support product id, that why we only define it in config for creation

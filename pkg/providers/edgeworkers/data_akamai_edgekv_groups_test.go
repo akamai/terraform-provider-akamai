@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/edgeworkers"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/test"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
@@ -21,7 +22,7 @@ func TestEdgeKVGroups(t *testing.T) {
 			Return([]string{"TestImportGroup", "TestGroup1", "TestGroup2", "TestGroup3", "TestGroup4"}, nil).Times(5)
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				IsUnitTest:               true,
 				Steps: []resource.TestStep{
 					{
@@ -47,7 +48,7 @@ func TestEdgeKVGroups(t *testing.T) {
 	t.Run("missed required `namespace_name` field", func(t *testing.T) {
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				IsUnitTest:               true,
 				Steps: []resource.TestStep{
 					{
@@ -64,7 +65,7 @@ func TestEdgeKVGroups(t *testing.T) {
 	t.Run("missed required `network` field", func(t *testing.T) {
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				IsUnitTest:               true,
 				Steps: []resource.TestStep{
 					{
@@ -81,7 +82,7 @@ func TestEdgeKVGroups(t *testing.T) {
 	t.Run("incorrect `network` field", func(t *testing.T) {
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				IsUnitTest:               true,
 				Steps: []resource.TestStep{
 					{

@@ -4,11 +4,10 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
-
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestDSCPCode(t *testing.T) {
@@ -28,7 +27,7 @@ func TestDSCPCode(t *testing.T) {
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{{
 					Config: testutils.LoadFixtureString(t, "testdata/TestDSCPCode/match_by_name.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
@@ -60,7 +59,7 @@ func TestDSCPCode(t *testing.T) {
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{{
 					Config: testutils.LoadFixtureString(t, "testdata/TestDSCPCode/match_by_name_output_products.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
@@ -94,7 +93,7 @@ func TestDSCPCode(t *testing.T) {
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{{
 					Config: testutils.LoadFixtureString(t, "testdata/TestDSCPCode/match_by_full_id.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
@@ -126,7 +125,7 @@ func TestDSCPCode(t *testing.T) {
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{{
 					Config: testutils.LoadFixtureString(t, "testdata/TestDSCPCode/match_by_unprefixed_id.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
@@ -155,7 +154,7 @@ func TestDSCPCode(t *testing.T) {
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestDSCPCode/match_by_unprefixed_id.tf"),
 					ExpectError: regexp.MustCompile(`cp code not found`),
@@ -179,7 +178,7 @@ func TestDSCPCode(t *testing.T) {
 		}}, nil).Times(3)
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				IsUnitTest:               true,
 				Steps: []resource.TestStep{{
 					Config: testutils.LoadFixtureString(t, "testdata/TestDSGroupNotFound/cp_code.tf"),

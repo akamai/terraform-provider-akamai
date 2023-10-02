@@ -84,7 +84,7 @@ func TestAkamaiAdvancedSettingsAttackPayloadLoggingConfig(t *testing.T) {
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
 				IsUnitTest:               true,
-				ProtoV6ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestResAdvancedSettingsAttackPayloadLogging/match_by_id.tf"),
@@ -123,7 +123,7 @@ func TestAkamaiAdvancedSettingsAttackPayloadLoggingConfig(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestResAdvancedSettingsAttackPayloadLogging/match_by_id.tf"),
@@ -163,7 +163,7 @@ func TestAkamaiAdvancedSettingsAttackPayloadLoggingConfig(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestResAdvancedSettingsAttackPayloadLogging/update_by_policy_id.tf"),
@@ -204,7 +204,7 @@ func TestAkamaiAdvancedSettingsAttackPayloadLoggingConfig(t *testing.T) {
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
 				IsUnitTest:               true,
-				ProtoV6ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestResAdvancedSettingsAttackPayloadLogging/update_by_policy_id.tf"),

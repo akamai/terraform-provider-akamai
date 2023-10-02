@@ -191,7 +191,7 @@ func TestCreateEdgeKVGroupItems(t *testing.T) {
 			test.init(client, test.attrs)
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{
 						{
 							Config:      testutils.LoadFixtureString(t, test.configPath),
@@ -356,7 +356,7 @@ func TestReadEdgeKVGroupItems(t *testing.T) {
 			test.init(client, test.attrsForCreate, test.attrsForUpdate)
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{
 						{
 							Config:      testutils.LoadFixtureString(t, test.configPathForCreate),
@@ -842,7 +842,7 @@ func TestUpdateEdgeKVGroupItems(t *testing.T) {
 			test.init(client, test.attrsForCreate, test.attrsForUpdate)
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					IsUnitTest:               true,
 					Steps: []resource.TestStep{
 						{
@@ -917,7 +917,7 @@ func TestDeleteEdgeKVGroupItems(t *testing.T) {
 			test.init(client, test.attrs)
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{
 						{
 							Config:      testutils.LoadFixtureString(t, test.configPath),
@@ -989,7 +989,7 @@ func TestImportEdgeKVGroupItems(t *testing.T) {
 			test.init(client, test.attrs)
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					IsUnitTest:               true,
 
 					Steps: []resource.TestStep{

@@ -101,7 +101,7 @@ func TestDataEnrollments(t *testing.T) {
 			test.init(t, client)
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					IsUnitTest:               true,
 					Steps:                    test.steps,
 				})
