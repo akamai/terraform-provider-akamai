@@ -2,6 +2,11 @@
 
 ## 5.x.0 (Oct xx, 2023)
 
+#### FEATURES/ENHANCEMENTS:
+
+* PAPI
+  * Added configurable timeout for `akamai_property_activation` and `akamai_property_include_activation` as `timeouts.default` field
+
 #### BUG FIXES:
 
 * IAM

@@ -15,6 +15,7 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 	"github.com/apex/log"
+	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/spf13/cast"
@@ -33,6 +34,12 @@ func resourcePropertyActivation() *schema.Resource {
 		Timeouts: &schema.ResourceTimeout{
 			Default: &PropertyResourceTimeout,
 		},
+		SchemaVersion: 1,
+		StateUpgraders: []schema.StateUpgrader{{
+			Version: 0,
+			Type:    resourcePropertyActivationV0().CoreConfigSchema().ImpliedType(),
+			Upgrade: migrateTimeoutsToCustom(),
+		}},
 	}
 }
 
@@ -112,6 +119,33 @@ var akamaiPropertyActivationSchema = map[string]*schema.Schema{
 		Description: "Provides an audit record when activating on a production network",
 		Elem:        complianceRecordSchema,
 	},
+	"timeouts": {
+		Type:        schema.TypeList,
+		Optional:    true,
+		MaxItems:    1,
+		Description: "Enables to set timeout for processing",
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"default": {
+					Type:             schema.TypeString,
+					Optional:         true,
+					ValidateDiagFunc: validateDurationFormat,
+				},
+			},
+		},
+	},
+}
+
+func validateDurationFormat(i interface{}, _ cty.Path) diag.Diagnostics {
+	duration, ok := i.(string)
+	if !ok {
+		return diag.Errorf("incorrect format: expected duration")
+	}
+	_, err := time.ParseDuration(duration)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("provided incorrect duration: %w", err))
+	}
+	return nil
 }
 
 func papiError() *schema.Resource {
@@ -535,6 +569,11 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 		ctx,
 		session.WithContextLog(logger),
 	)
+
+	if !d.HasChangeExcept("timeouts") {
+		logger.Debug("Only timeouts were updated, skipping")
+		return nil
+	}
 
 	propertyID, err := resolvePropertyID(d)
 	if err != nil {

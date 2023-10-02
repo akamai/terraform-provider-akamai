@@ -65,6 +65,7 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_property_activation.test", "activation_id", "atv_activation1"),
 						resource.TestCheckResourceAttr("akamai_property_activation.test", "status", "ACTIVE"),
 						resource.TestCheckResourceAttr("akamai_property_activation.test", "note", "property activation note for creating"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "timeouts.#", "0"),
 					),
 				},
 				{
@@ -80,6 +81,7 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_property_activation.test", "activation_id", "atv_update"),
 						resource.TestCheckResourceAttr("akamai_property_activation.test", "status", "ACTIVE"),
 						resource.TestCheckResourceAttr("akamai_property_activation.test", "note", "property activation note for updating"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "timeouts.#", "0"),
 					),
 				},
 			},
@@ -274,6 +276,58 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 				},
 			},
 		},
+		"activation with custom timeout - lifecycle": {
+			init: func(m *papi.Mock) {
+				// first step
+				// create
+				expectGetRuleTree(m, "prp_test", 1, ruleTreeResponseValid, nil).Once()
+				expectGetActivations(m, "prp_test", papi.GetActivationsResponse{}, nil).Once()
+				expectCreateActivation(m, "prp_test", papi.ActivationTypeActivate, 1, "STAGING",
+					[]string{"user@example.com"}, "property activation note for creating", "atv_activation1", true, nil).Once()
+				expectGetActivation(m, "prp_test", "atv_activation1", 1, "STAGING", papi.ActivationStatusActive, papi.ActivationTypeActivate, "property activation note for creating", []string{"user@example.com"}, nil).Once()
+				// read
+				expectGetActivations(m, "prp_test", generateActivationResponseMock("atv_activation1", "property activation note for creating", 1, papi.ActivationTypeActivate, "2020-10-28T15:04:05Z", []string{"user@example.com"}), nil).Once()
+
+				// second step
+				// read
+				expectGetActivations(m, "prp_test", generateActivationResponseMock("atv_activation1", "property activation note for creating", 1, papi.ActivationTypeActivate, "2020-10-28T15:04:05Z", []string{"user@example.com"}), nil).Once()
+				// no update for only timeout change
+
+				//read
+				expectGetActivations(m, "prp_test", generateActivationResponseMock("atv_activation1", "property activation note for creating", 1, papi.ActivationTypeActivate, "2020-10-28T15:04:05Z", []string{"user@example.com"}), nil).Once()
+
+				//// delete
+				// read
+				expectGetActivations(m, "prp_test", generateActivationResponseMock("atv_activation1", "property activation note for creating", 1, papi.ActivationTypeActivate, "2020-10-28T15:04:05Z", []string{"user@example.com"}), nil).Once()
+				expectCreateActivation(m, "prp_test", papi.ActivationTypeDeactivate, 1, "STAGING",
+					[]string{"user@example.com"}, "property activation note for creating", "atv_activation1", true, nil).Once()
+				expectGetActivation(m, "prp_test", "atv_activation1", 1, "STAGING", papi.ActivationStatusActive, papi.ActivationTypeDeactivate, "property activation note for updating", []string{"user@example.com"}, nil).Once()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "./testdata/TestPropertyActivation/timeouts/resource_property_activation_with_timeout.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "id", "prp_test:STAGING"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "property_id", "prp_test"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "version", "1"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "status", "ACTIVE"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "timeouts.#", "1"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "timeouts.0.default", "2h1m"),
+					),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "./testdata/TestPropertyActivation/timeouts/resource_property_activation_with_timeout_update.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "id", "prp_test:STAGING"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "property_id", "prp_test"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "version", "1"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "status", "ACTIVE"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "timeouts.#", "1"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "timeouts.0.default", "2h2m"),
+					),
+				},
+			},
+		},
 		"check schema property activation compliance record - error empty compliance_record block": {
 			steps: []resource.TestStep{
 				{
@@ -314,6 +368,14 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 				{
 					Config:      testutils.LoadFixtureString(t, "./testdata/TestPropertyActivation/no_contact/resource_property_activation.tf"),
 					ExpectError: regexp.MustCompile("Missing required argument"),
+				},
+			},
+		},
+		"check schema property activation - incorrect timeout duration": {
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestPropertyActivation/timeouts/resource_property_activation_incorrect_timeout.tf"),
+					ExpectError: regexp.MustCompile("provided incorrect duration"),
 				},
 			},
 		},

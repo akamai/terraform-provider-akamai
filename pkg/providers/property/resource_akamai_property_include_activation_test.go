@@ -37,6 +37,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 		version                                       int
 		notifyEmails                                  []string
 		autoAcknowledgeRuleWarnings                   bool
+		timeout                                       string
 	}
 
 	type State struct {
@@ -270,6 +271,15 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 				resource.TestCheckResourceAttr("akamai_property_include_activation.activation", "auto_acknowledge_rule_warnings", strconv.FormatBool(attrs.autoAcknowledgeRuleWarnings)),
 			}
 
+			if attrs.timeout != "" {
+				checks = append(checks, []resource.TestCheckFunc{
+					resource.TestCheckResourceAttr("akamai_property_include_activation.activation", "timeouts.#", "1"),
+					resource.TestCheckResourceAttr("akamai_property_include_activation.activation", "timeouts.0.default", attrs.timeout),
+				}...)
+			} else {
+				checks = append(checks, resource.TestCheckResourceAttr("akamai_property_include_activation.activation", "timeouts.#", "0"))
+			}
+
 			return resource.ComposeAggregateTestCheckFunc(checks...)
 		}
 	)
@@ -306,6 +316,65 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 							network:      "STAGING",
 							note:         note,
 							notifyEmails: []string{email},
+						}),
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
+
+	t.Run("include activation with timeout lifecycle", func(t *testing.T) {
+		client := new(papi.Mock)
+		state := State{}
+
+		// create
+		actReq := activateIncludeReq("STAGING", false)
+		state = expectCreate(client, state, actReq)
+
+		// read
+		expectRead(client, state, papi.ActivationNetworkStaging)
+
+		// update
+		// no actual update on only timeout change
+		expectRead(client, state, papi.ActivationNetworkStaging)
+		expectRead(client, state, papi.ActivationNetworkStaging)
+
+		// read
+		expectRead(client, state, papi.ActivationNetworkStaging)
+
+		// delete
+		deactReq := deactivateIncludeReq("STAGING", false)
+		_ = expectDelete(client, state, deactReq)
+
+		useClient(client, nil, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV5ProviderFactories: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/property_include_activation_with_timeout.tf", testDir)),
+						Check: checkAttributes(attrs{
+							includeID:    includeID,
+							contractID:   contractID,
+							groupID:      groupID,
+							version:      version,
+							network:      "STAGING",
+							note:         note,
+							notifyEmails: []string{email},
+							timeout:      "2h1m",
+						}),
+					},
+					{
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/property_include_activation_with_timeout_update.tf", testDir)),
+						Check: checkAttributes(attrs{
+							includeID:    includeID,
+							contractID:   contractID,
+							groupID:      groupID,
+							version:      version,
+							network:      "STAGING",
+							note:         note,
+							notifyEmails: []string{email},
+							timeout:      "2h2m",
 						}),
 					},
 				},
@@ -521,6 +590,21 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 			})
 		})
 		client.AssertExpectations(t)
+	})
+
+	t.Run("incorrect timeout format", func(t *testing.T) {
+
+		useClient(client, nil, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV5ProviderFactories: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/property_include_activation_incorrect_timeout.tf", testDir)),
+						ExpectError: regexp.MustCompile(`provided incorrect duration`),
+					},
+				},
+			})
+		})
 	})
 
 	t.Run("first create fails but second create works", func(t *testing.T) {

@@ -11,5 +11,6 @@
     "someNumber": "${env.someNumber}",
     "simpleJSON": "${env.simpleJSON}",
     "nestedJSON": "${env.nestedJSON}"
-  }
+  },
+  "comments": "${env.firstVariable}"
 }
