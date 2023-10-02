@@ -1,8 +1,14 @@
 # RELEASE NOTES
 
-## 5.4.x (Oct xx, 2023)
+## 5.x.0 (Oct xx, 2023)
 
 #### BUG FIXES:
+
+* IAM
+  * Terraform proposing modifications to user settings when using international phone numbers in `akamai_iam_user` resource.
+    * NOTE: 
+      * For international phone numbers there might be a diff during plan. Please apply suggested change to store the correct number.
+      * Invalid phone numbers will block the plan.
 
 * PAPI
   * Made `status_update_email` attribute optional in `akamai_edge_hostname` resource

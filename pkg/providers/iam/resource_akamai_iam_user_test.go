@@ -136,14 +136,14 @@ func TestResourceUser(t *testing.T) {
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "last_name", user.LastName),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "email", strings.ToLower(user.Email)),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "country", user.Country),
-			resource.TestCheckResourceAttr("akamai_iam_user.test", "phone", canonicalPhone(user.Phone)),
+			resource.TestCheckResourceAttr("akamai_iam_user.test", "phone", user.Phone),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "enable_tfa", fmt.Sprintf("%t", user.TFAEnabled)),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "contact_type", user.ContactType),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_name", user.UserName),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "job_title", user.JobTitle),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "time_zone", user.TimeZone),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "secondary_email", strings.ToLower(user.SecondaryEmail)),
-			resource.TestCheckResourceAttr("akamai_iam_user.test", "mobile_phone", canonicalPhone(user.MobilePhone)),
+			resource.TestCheckResourceAttr("akamai_iam_user.test", "mobile_phone", user.MobilePhone),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "address", user.Address),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "city", user.City),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "state", user.State),
@@ -224,6 +224,9 @@ func TestResourceUser(t *testing.T) {
 		AuthGrants:         authGrantsCreate,
 		Notifications:      notifications,
 	}
+	userUpdateInfo.UserBasicInfo.Phone = "+49 12345 6789"
+	userUpdateInfo.UserBasicInfo.MobilePhone = "+49 98765 4321"
+
 	userUpdateGrants := iam.User{
 		UserBasicInfo:      basicUserInfo,
 		IdentityID:         id,
@@ -298,6 +301,15 @@ func TestResourceUser(t *testing.T) {
 				{
 					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic_lock.tf"),
 					Check:  checkUserAttributes(userCreateLocked),
+				},
+			},
+		},
+		"basic invalid phone": {
+			init: func(m *iam.Mock) {},
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic_invalid_phone.tf"),
+					ExpectError: regexp.MustCompile(`"phone" contains invalid phone number`),
 				},
 			},
 		},
@@ -677,4 +689,73 @@ func expectResourceIAMUserDeletePhase(m *iam.Mock, user iam.User, anError error)
 		return on.Return(anError).Once()
 	}
 	return on.Return(nil)
+}
+
+func TestCanonicalPhone(t *testing.T) {
+	tests := map[string]struct {
+		phone         string
+		expectedPhone string
+	}{
+		"US phone number formatted": {
+			phone:         "(499) 876-5432",
+			expectedPhone: "(499) 876-5432",
+		},
+		"US phone number 1": {
+			phone:         "1234567890",
+			expectedPhone: "(123) 456-7890",
+		},
+		"US phone number with prefix 1": {
+			phone:         "11234567890",
+			expectedPhone: "(123) 456-7890",
+		},
+		"US phone number with prefix +1": {
+			phone:         "+11234567890",
+			expectedPhone: "(123) 456-7890",
+		},
+		"US phone number - invalid - too short": {
+			phone:         "+1234567890",
+			expectedPhone: "+1234567890", // as is
+		},
+		"US phone number - invalid - wrong separators": {
+			phone:         "617 . 444.3000",
+			expectedPhone: "617 . 444.3000", // as is
+		},
+		"US phone number with hyphens": {
+			phone:         "617-444-3000",
+			expectedPhone: "(617) 444-3000",
+		},
+		"US phone number with dots": {
+			phone:         "617.444.3000",
+			expectedPhone: "(617) 444-3000",
+		},
+		"US phone number with extension": {
+			phone:         "61744430002664",
+			expectedPhone: "(617) 444-3000 x2664",
+		},
+		"international phone number with spaces": {
+			phone:         "+49 12345 6789",
+			expectedPhone: "+49 12345 6789",
+		},
+		"only prefix": {
+			phone:         "+",
+			expectedPhone: "+", // as is
+		},
+		"only country code": {
+			phone:         "+49",
+			expectedPhone: "+49", // as is
+		},
+		"empty": {
+			phone:         "",
+			expectedPhone: "",
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			actualPhone := canonicalPhone(test.phone)
+
+			assert.Equal(t, test.expectedPhone, actualPhone)
+
+		})
+	}
 }
