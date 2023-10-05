@@ -4,6 +4,9 @@
 
 #### FEATURES/ENHANCEMENTS:
 
+* IAM
+  * Phone number is no longer required for IAM user in `akamai_iam_user` resource.
+
 * PAPI
   * Added configurable timeout for `akamai_property_activation` and `akamai_property_include_activation` as `timeouts.default` field
 

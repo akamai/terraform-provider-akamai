@@ -59,7 +59,7 @@ func resourceIAMUser() *schema.Resource {
 			},
 			"phone": {
 				Type:             schema.TypeString,
-				Required:         true,
+				Optional:         true,
 				Description:      "The user's main phone number",
 				DiffSuppressFunc: suppressPhone,
 				StateFunc:        statePhone,
@@ -611,6 +611,9 @@ func validatePhone(i interface{}, k string) (warnings []string, errors []error) 
 		return warnings, errors
 	}
 
+	if v == "" {
+		return warnings, errors
+	}
 	if !northAmerica.MatchString(v) && !international.MatchString(v) {
 		errors = append(errors, fmt.Errorf("%q contains invalid phone number: %q", k, v))
 	}

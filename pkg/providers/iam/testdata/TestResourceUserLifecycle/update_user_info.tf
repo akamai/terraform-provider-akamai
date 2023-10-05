@@ -7,7 +7,6 @@ resource "akamai_iam_user" "test" {
   last_name  = "Smith"
   email      = "jsmith@example.com"
   country    = "country"
-  phone      = "+49 12345 6789"
   enable_tfa = false
 
   contact_type       = "contact type"

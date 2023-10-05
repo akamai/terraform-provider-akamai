@@ -224,7 +224,7 @@ func TestResourceUser(t *testing.T) {
 		AuthGrants:         authGrantsCreate,
 		Notifications:      notifications,
 	}
-	userUpdateInfo.UserBasicInfo.Phone = "+49 12345 6789"
+	userUpdateInfo.UserBasicInfo.Phone = ""
 	userUpdateInfo.UserBasicInfo.MobilePhone = "+49 98765 4321"
 
 	userUpdateGrants := iam.User{
