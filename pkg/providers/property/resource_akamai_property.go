@@ -94,6 +94,11 @@ func resourceProperty() *schema.Resource {
 				Description: "Product ID to be assigned to the Property",
 				StateFunc:   addPrefixToState("prd_"),
 			},
+			"property_id": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Property ID",
+			},
 			"rule_format": {
 				Type:             schema.TypeString,
 				Optional:         true,
@@ -451,13 +456,19 @@ func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m inter
 	}
 	productID = tools.AddPrefix(productID, "prd_")
 
-	ruleFormat := d.Get("rule_format").(string)
-
-	propertyID, err := createProperty(ctx, client, propertyName, groupID, contractID, productID, ruleFormat)
-	if err != nil {
+	propertyID, err := tf.GetStringValue("property_id", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 
+	ruleFormat := d.Get("rule_format").(string)
+
+	if propertyID == "" {
+		propertyID, err = createProperty(ctx, client, propertyName, groupID, contractID, productID, ruleFormat)
+		if err != nil {
+			return interpretCreatePropertyError(ctx, err, meta, groupID, contractID, productID)
+		}
+	}
 	// Save minimum state BEFORE moving on
 	d.SetId(propertyID)
 	attrs := map[string]interface{}{
@@ -506,6 +517,31 @@ func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m inter
 	}
 
 	return resourcePropertyRead(ctx, d, m)
+}
+
+func interpretCreatePropertyError(ctx context.Context, err error, meta meta.Meta, groupID string, contractID string, productID string) diag.Diagnostics {
+	if strings.Contains(err.Error(), "\"statusCode\": 404") {
+		// find out what is missing from the request
+		if _, err = getGroup(ctx, meta, groupID); err != nil {
+			if errors.Is(err, ErrGroupNotFound) {
+				return diag.Errorf("%v: %s", ErrGroupNotFound, groupID)
+			}
+			return diag.FromErr(err)
+		}
+		if _, err = getContract(ctx, meta, contractID); err != nil {
+			if errors.Is(err, ErrContractNotFound) {
+				return diag.Errorf("%v: %s", ErrContractNotFound, contractID)
+			}
+			return diag.FromErr(err)
+		}
+		if _, err = getProduct(ctx, meta, productID, contractID); err != nil {
+			if errors.Is(err, ErrProductNotFound) {
+				return diag.Errorf("%v: %s", ErrProductNotFound, productID)
+			}
+			return diag.FromErr(err)
+		}
+	}
+	return diag.FromErr(err)
 }
 
 func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -626,6 +662,7 @@ func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 		"group_id",
 		"contract_id",
 		"product_id",
+		"property_id",
 	}
 	for _, attr := range immutable {
 		if d.HasChange(attr) {
@@ -748,9 +785,18 @@ func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 
 func resourcePropertyDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	ctx = log.NewContext(ctx, meta.Must(m).Log("PAPI", "resourcePropertyDelete"))
+	logger := log.FromContext(ctx)
 	client := Client(meta.Must(m))
 
-	propertyID := d.Id()
+	propertyID, err := tf.GetStringValue("property_id", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	if propertyID != "" {
+		logger.Infof("property is maintained by 'akamai_property_bootstrap' resource.")
+		return nil
+	}
+	propertyID = d.Id()
 	contractID := tools.AddPrefix(d.Get("contract_id").(string), "ctr_")
 	groupID := tools.AddPrefix(d.Get("group_id").(string), "grp_")
 
@@ -767,7 +813,12 @@ func resourcePropertyImport(ctx context.Context, d *schema.ResourceData, m inter
 	// User-supplied import ID is a comma-separated list of propertyID[,groupID[,contractID]]
 	// contractID and groupID are optional as long as the propertyID is sufficient to fetch the property
 	var propertyID, groupID, contractID, version string
+	var propertyBootstrap bool
 	parts := strings.Split(d.Id(), ",")
+	if parts[len(parts)-1] == "property-bootstrap" {
+		propertyBootstrap = true
+		parts = parts[:len(parts)-1]
+	}
 	switch len(parts) {
 	case 4:
 		version = parts[3]
@@ -793,7 +844,9 @@ func resourcePropertyImport(ctx context.Context, d *schema.ResourceData, m inter
 			"group_id":    groupID,
 			"contract_id": contractID,
 		}
-
+		if propertyBootstrap {
+			attrs["property_id"] = propertyID
+		}
 		// if we also get the optional version parameter, we need to parse it and set it in the schema
 		if !isDefaultVersion(version) {
 			if v, err := parseVersionNumber(version); err != nil {
@@ -801,7 +854,7 @@ func resourcePropertyImport(ctx context.Context, d *schema.ResourceData, m inter
 				if _, err := NetworkAlias(version); err != nil {
 					return nil, ErrPropertyVersionNotFound
 				}
-				// if we ran validation and we actually have a network name, we still need to fetch the desired version number
+				// if we ran validation, and we actually have a network name, we still need to fetch the desired version number
 				_, attrs["read_version"], err = fetchProperty(ctx, Client(meta.Must(m)), propertyID, groupID, contractID, version)
 				if err != nil {
 					return nil, err
@@ -835,6 +888,9 @@ func resourcePropertyImport(ctx context.Context, d *schema.ResourceData, m inter
 		"group_id":     property.GroupID,
 		"contract_id":  property.ContractID,
 		"read_version": v,
+	}
+	if propertyBootstrap {
+		attrs["property_id"] = propertyID
 	}
 	if err := tf.SetAttrs(d, attrs); err != nil {
 		return nil, err

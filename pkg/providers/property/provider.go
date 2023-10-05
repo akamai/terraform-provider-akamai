@@ -65,6 +65,7 @@ func (p *PluginSubprovider) Resources() map[string]*schema.Resource {
 		"akamai_edge_hostname":               resourceSecureEdgeHostName(),
 		"akamai_property":                    resourceProperty(),
 		"akamai_property_activation":         resourcePropertyActivation(),
+		"akamai_property_bootstrap":          resourcePropertyBootstrap(),
 		"akamai_property_include":            resourcePropertyInclude(),
 		"akamai_property_include_activation": resourcePropertyIncludeActivation(),
 	}
