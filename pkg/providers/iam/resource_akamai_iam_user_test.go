@@ -170,6 +170,11 @@ func TestResourceUser(t *testing.T) {
 		AuthGrants:         authGrantsCreate,
 		Notifications:      notifications,
 	}
+	basicUserInfoExtPhone := basicUserInfo
+	basicUserInfoExtPhone.Phone = "(617) 444-3000 x2664"
+
+	userCreateExtPhone := userCreate
+	userCreateExtPhone.UserBasicInfo = basicUserInfoExtPhone
 
 	userSubgroupCreate := iam.User{
 		UserBasicInfo:      basicUserInfo,
@@ -185,6 +190,12 @@ func TestResourceUser(t *testing.T) {
 
 	userCreateRequest := iam.CreateUserRequest{
 		UserBasicInfo: basicUserInfo,
+		AuthGrants:    authGrantsCreateRequest,
+		Notifications: notifications,
+	}
+
+	userCreateExtPhoneRequest := iam.CreateUserRequest{
+		UserBasicInfo: basicUserInfoExtPhone,
 		AuthGrants:    authGrantsCreateRequest,
 		Notifications: notifications,
 	}
@@ -285,6 +296,22 @@ func TestResourceUser(t *testing.T) {
 				{
 					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic.tf"),
 					Check:  checkUserAttributes(userCreate),
+				},
+			},
+		},
+		"basic with extension phone number": {
+			init: func(m *iam.Mock) {
+				// create
+				expectResourceIAMUserCreatePhase(m, userCreateExtPhoneRequest, userCreateExtPhone, false, nil, nil)
+				expectResourceIAMUserReadPhase(m, userCreateExtPhone, nil).Times(2)
+
+				// delete
+				expectResourceIAMUserDeletePhase(m, userCreateExtPhone, nil).Once()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic_ext_phone.tf"),
+					Check:  checkUserAttributes(userCreateExtPhone),
 				},
 			},
 		},
@@ -730,6 +757,10 @@ func TestCanonicalPhone(t *testing.T) {
 		},
 		"US phone number with extension": {
 			phone:         "61744430002664",
+			expectedPhone: "(617) 444-3000 x2664",
+		},
+		"US phone number with formatted extension": {
+			phone:         "(617) 444-3000 x2664",
 			expectedPhone: "(617) 444-3000 x2664",
 		},
 		"international phone number with spaces": {

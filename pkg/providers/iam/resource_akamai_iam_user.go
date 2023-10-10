@@ -20,7 +20,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-var northAmerica = regexp.MustCompile(`^(\s*\+\s*1\s*|\s*1\s*|\s*)(|-|\.|\\|\()([1-9][0-9]{2})(|-|\.|\\|\))\s*([0-9]{3})(|-|\.|\\|\s)([0-9]{4})((|-|\.|\\|\s)[0-9]{1,30})?$`)
+var northAmerica = regexp.MustCompile(`^(\s*\+\s*1\s*|\s*1\s*|\s*)(|-|\.|\\|\()([1-9][0-9]{2})(|-|\.|\\|\))\s*([0-9]{3})(|-|\.|\\|\s)([0-9]{4})(|-|\.|\\|\sx?)([0-9]{1,30})?$`)
 var international = regexp.MustCompile(`^\+[02-9][\d\s\-]{0,40}$`)
 
 func resourceIAMUser() *schema.Resource {
@@ -491,10 +491,10 @@ func resourceIAMUserErrorAdvice(e error) string {
 func canonicalPhone(in string) string {
 	if northAmerica.MatchString(in) {
 		ph := northAmerica.FindStringSubmatch(in)
-		if ph[8] == "" { // without extension
+		if ph[9] == "" { // without extension
 			return fmt.Sprintf("(%s) %s-%s", ph[3], ph[5], ph[7])
 		}
-		return fmt.Sprintf("(%s) %s-%s x%s", ph[3], ph[5], ph[7], ph[8])
+		return fmt.Sprintf("(%s) %s-%s x%s", ph[3], ph[5], ph[7], ph[9])
 	}
 	if international.MatchString(in) {
 		// remove spaces after +
