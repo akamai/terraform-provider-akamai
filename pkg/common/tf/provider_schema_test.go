@@ -51,7 +51,7 @@ func TestGetSchemaFieldNameFromPath(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			res, err := GetSchemaFieldNameFromPath(test.path)
 			if test.withError != nil {
-				assert.True(t, errors.Is(err, test.withError), "want: %s; got: %s", test.withError, err)
+				assert.ErrorIs(t, err, test.withError)
 				return
 			}
 			require.NoError(t, err)
@@ -101,7 +101,7 @@ func TestGetStringValue(t *testing.T) {
 			res, err := GetStringValue(test.key, m)
 			m.AssertExpectations(t)
 			if test.withError != nil {
-				assert.True(t, errors.Is(err, test.withError), "want: %s; got: %s", test.withError, err)
+				assert.ErrorIs(t, err, test.withError)
 				return
 			}
 			require.NoError(t, err)
@@ -151,7 +151,7 @@ func TestGetIntValue(t *testing.T) {
 			res, err := GetIntValue(test.key, m)
 			m.AssertExpectations(t)
 			if test.withError != nil {
-				assert.True(t, errors.Is(err, test.withError), "want: %s; got: %s", test.withError, err)
+				assert.ErrorIs(t, err, test.withError)
 				return
 			}
 			assert.Equal(t, test.expected, res)
@@ -200,7 +200,7 @@ func TestGetBoolValue(t *testing.T) {
 			res, err := GetBoolValue(test.key, m)
 			m.AssertExpectations(t)
 			if test.withError != nil {
-				assert.True(t, errors.Is(err, test.withError), "want: %s; got: %s", test.withError, err)
+				assert.ErrorIs(t, err, test.withError)
 				return
 			}
 			assert.Equal(t, test.expected, res)
@@ -249,7 +249,7 @@ func TestGetSetValue(t *testing.T) {
 			res, err := GetSetValue(test.key, m)
 			m.AssertExpectations(t)
 			if test.withError != nil {
-				assert.True(t, errors.Is(err, test.withError), "want: %s; got: %s", test.withError, err)
+				assert.ErrorIs(t, err, test.withError)
 				return
 			}
 			assert.Equal(t, test.expected, res)
@@ -299,7 +299,7 @@ func TestGetInterfaceArrayValue(t *testing.T) {
 			res, err := GetInterfaceArrayValue(test.key, m)
 			m.AssertExpectations(t)
 			if test.withError != nil {
-				assert.True(t, errors.Is(err, test.withError), "want: %s; got: %s", test.withError, err)
+				assert.ErrorIs(t, err, test.withError)
 				return
 			}
 			assert.Equal(t, test.expected, res)
@@ -448,12 +448,52 @@ func TestGetListValue(t *testing.T) {
 			res, err := GetListValue(test.key, m)
 			m.AssertExpectations(t)
 			if test.withError != nil {
-				assert.True(t, errors.Is(err, test.withError), "want: %s; got: %s", test.withError, err)
+				assert.ErrorIs(t, err, test.withError)
 				return
 			}
 			assert.Equal(t, test.expected, res)
 		})
 	}
+}
+
+func TestGetTypedListValue(t *testing.T) {
+	t.Parallel()
+
+	key := "key"
+
+	t.Run("list of strings", func(t *testing.T) {
+		t.Parallel()
+
+		m := &mocked{}
+		m.On("GetOk", key).Return([]any{"a", "b", "c"}, true).Once()
+
+		res, err := GetTypedListValue[string](key, m)
+		require.NoError(t, err)
+
+		assert.Equal(t, []string{"a", "b", "c"}, res)
+	})
+
+	t.Run("list of ints", func(t *testing.T) {
+		t.Parallel()
+
+		m := &mocked{}
+		m.On("GetOk", key).Return([]any{1, 2, 3}, true).Once()
+
+		res, err := GetTypedListValue[int](key, m)
+		require.NoError(t, err)
+
+		assert.Equal(t, []int{1, 2, 3}, res)
+	})
+
+	t.Run("element of an unexpected type", func(t *testing.T) {
+		t.Parallel()
+
+		m := &mocked{}
+		m.On("GetOk", key).Return([]any{1, 2, 3}, true).Once()
+
+		_, err := GetTypedListValue[string](key, m)
+		assert.ErrorIs(t, err, ErrInvalidType)
+	})
 }
 
 func TestFindStringValues(t *testing.T) {
@@ -544,7 +584,7 @@ func TestResolveKeyState(t *testing.T) {
 			res, err := ResolveKeyStringState(m, key, fallbackKey)
 			m.AssertExpectations(t)
 			if test.withError != nil {
-				assert.True(t, errors.Is(err, test.withError), "want: %s; got: %s", test.withError, err)
+				assert.ErrorIs(t, err, test.withError)
 				return
 			}
 			assert.Equal(t, test.expected, res)
@@ -601,7 +641,7 @@ func TestGetExactlyOneOf(t *testing.T) {
 			foundKey, res, err := GetExactlyOneOf(m, keys)
 			m.AssertExpectations(t)
 			if test.withError != nil {
-				assert.True(t, errors.Is(err, test.withError), "want: %s; got: %s", test.withError, err)
+				assert.ErrorIs(t, err, test.withError)
 				return
 			}
 			assert.Equal(t, test.expected, res)

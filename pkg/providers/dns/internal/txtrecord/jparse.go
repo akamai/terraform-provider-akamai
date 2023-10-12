@@ -50,8 +50,24 @@ import (
 	"strings"
 )
 
-// ParseJ is compliant with akamai api
-func ParseJ(in string) (string, bool) {
+// NormalizeTarget tries to normalize txt record target. If it cannot be normalized in the
+// provided format, it escapes it and retries.
+func NormalizeTarget(r string) (string, error) {
+	normalized, ok := normalizeTarget(r)
+	if ok {
+		return normalized, nil
+	}
+
+	normalized, ok = normalizeTarget(fmt.Sprintf("%q", r))
+	if ok {
+		return normalized, nil
+	}
+
+	return "", fmt.Errorf("normalizing txt record targed '%s' failed", r)
+}
+
+// normalizeTarget is a txt record target normalization func compliant with akamai api
+func normalizeTarget(in string) (string, bool) {
 	var newRdata strings.Builder
 	for _, ch := range in {
 		if isSafeASCII(ch) {

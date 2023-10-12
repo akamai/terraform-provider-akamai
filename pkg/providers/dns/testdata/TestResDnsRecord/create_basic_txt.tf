@@ -8,6 +8,6 @@ resource "akamai_dns_record" "txt_record" {
   recordtype = "TXT"
   active     = true
   ttl        = 300
-  target     = ["Hel\\lo\"world"]
+  target     = ["Hel\\lo\"world", "\"extralongtargetwhichis\" \"intwoseparateparts\""]
 }
 

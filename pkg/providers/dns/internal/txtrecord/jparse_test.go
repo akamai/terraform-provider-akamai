@@ -2,10 +2,40 @@ package txtrecord
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-func TestParseJ(t *testing.T) {
+func TestNormalizeTarget(t *testing.T) {
+	tests := []struct {
+		in        string
+		expected  string
+		withError error
+	}{
+		{
+			in:       "Hel\\lo\"world",
+			expected: "\"Hel\\\\lo\\\"world\"",
+		},
+		{
+			in:       "\"Hel\\\\lo\\\"world\"",
+			expected: "\"Hel\\\\lo\\\"world\"",
+		},
+	}
 
+	for _, tc := range tests {
+		res, err := NormalizeTarget(tc.in)
+		if tc.withError != nil {
+			assert.Error(t, err)
+			continue
+		}
+
+		require.NoError(t, err)
+		assert.Equal(t, tc.expected, res)
+	}
+}
+
+func Test_normalizeTarget(t *testing.T) {
 	tests := []struct {
 		in  string
 		out string
@@ -111,10 +141,14 @@ func TestParseJ(t *testing.T) {
 			in: "(this ;",
 			ok: false,
 		},
+		{
+			in: "Hel\\lo\"world",
+			ok: false,
+		},
 	}
 
 	for _, tc := range tests {
-		out, ok := ParseJ(tc.in)
+		out, ok := normalizeTarget(tc.in)
 		if ok != tc.ok {
 			t.Errorf("oops tc.in: %q; ok: %v", tc.in, ok)
 		}
@@ -122,5 +156,4 @@ func TestParseJ(t *testing.T) {
 			t.Errorf("oops tc.in: %q; out: %q; tc.out: %q", tc.in, out, tc.out)
 		}
 	}
-
 }

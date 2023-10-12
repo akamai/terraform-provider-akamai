@@ -12,6 +12,9 @@
 
 #### BUG FIXES:
 
+* DNS
+  * Fixed handling of txt records which are longer than 255 bytes ([I#430](https://github.com/akamai/terraform-provider-akamai/issues/430))
+
 ## 5.4.0 (Oct 31, 2023)
 
 #### FEATURES/ENHANCEMENTS:
