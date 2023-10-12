@@ -9,6 +9,7 @@
 
 * PAPI
   * Added configurable timeout for `akamai_property_activation` and `akamai_property_include_activation` as `timeouts.default` field
+  * Changed `version` field in `akamai_property_activation` data source to optional. Now when `version` is not provided, datasource automatically finds the active one for given network.
 
 #### BUG FIXES:
 

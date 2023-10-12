@@ -8,6 +8,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestDataSourcePAPIPropertyActivation(t *testing.T) {
@@ -60,6 +61,33 @@ func TestDataSourcePAPIPropertyActivation(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "./testdata/TestDSPropertyActivation/ok/datasource_property_activation.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("data.akamai_property_activation.test", "id", "prp_test:STAGING"),
+						resource.TestCheckResourceAttr("data.akamai_property_activation.test", "property_id", "prp_test"),
+						resource.TestCheckResourceAttr("data.akamai_property_activation.test", "network", "STAGING"),
+						resource.TestCheckResourceAttr("data.akamai_property_activation.test", "version", "1"),
+						resource.TestCheckResourceAttr("data.akamai_property_activation.test", "activation_id", "atv_activation1"),
+						resource.TestCheckResourceAttr("data.akamai_property_activation.test", "status", "ACTIVE"),
+						resource.TestCheckResourceAttr("data.akamai_property_activation.test", "note", ""),
+					),
+				},
+			},
+		},
+		"version not provided: default to latest - OK": {
+			init: func(m *papi.Mock) {
+				m.On("GetLatestVersion", mock.Anything, papi.GetLatestVersionRequest{
+					PropertyID:  "prp_test",
+					ActivatedOn: fmt.Sprintf("%v", papi.ActivationNetworkStaging),
+				}).Return(&papi.GetPropertyVersionsResponse{
+					Version: papi.PropertyVersionGetItem{
+						PropertyVersion: 1,
+					},
+				}, nil).Times(5)
+				expectGetActivations(m, "prp_test", generateActivationResponseMock("atv_activation1", "", 1, papi.ActivationTypeActivate, "2020-10-28T14:04:05Z", nil), nil).Times(5)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "./testdata/TestDSPropertyActivation/ok/datasource_property_activation_no_version.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("data.akamai_property_activation.test", "id", "prp_test:STAGING"),
 						resource.TestCheckResourceAttr("data.akamai_property_activation.test", "property_id", "prp_test"),
