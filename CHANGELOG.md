@@ -16,10 +16,15 @@
 
 #### BUG FIXES:
 
+* GTM
+  * Fixed problem with wrong datacenters updated in `akamai_gtm_property`.
+
 * IAM
-  * Terraform proposing modifications to user settings when using international phone numbers in `akamai_iam_user` resource.
-    * NOTE: 
-      * For international phone numbers there might be a diff during plan. Please apply suggested change to store the correct number.
+  * Terraform proposing modifications to user settings when using international phone numbers in `akamai_iam_user`
+    resource.
+    * NOTE:
+      * For international phone numbers there might be a diff during plan. Please apply suggested change to store the
+        correct number.
       * Invalid phone numbers will block the plan.
 
 * PAPI
@@ -1086,8 +1091,8 @@ These are the operations supported in the Network Lists API v2:
 These are the operations supported in the Identity Management: User Administration API v2:
 
 * Create a new user
-* Update a userÃ¢ÂÂs profile
-* Update a userÃ¢ÂÂs role assignments
+* Update a user's profile
+* Update a user's role assignments
 * Delete a user
 
 ## 1.1.1 (Jan 8, 2021)
