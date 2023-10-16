@@ -3,9 +3,10 @@ provider "akamai" {
 }
 
 resource "akamai_networklist_activations" "test" {
-  name                = "Network list test"
+  network_list_id     = "86093_AGEOLIST"
   network             = "STAGING"
-  note                = "TEST Notes"
+  notes               = "Test Notes"
   notification_emails = ["user@example.com"]
+  sync_point          = 0
 }
 

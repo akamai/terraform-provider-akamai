@@ -4,6 +4,9 @@
 
 #### FEATURES/ENHANCEMENTS:
 
+* Appsec
+  * Suppressed trigger of new activation for `note` field change in `akamai_networklist_activations` and `akamai_appsec_activations` resources.
+
 * Client Lists
   * Support state import for `akamai_clientlist_list` and `akamai_clientlist_activation` resources
 

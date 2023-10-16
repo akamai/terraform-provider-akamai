@@ -7,7 +7,7 @@ resource "akamai_appsec_activations" "test" {
   config_id           = 43253
   version             = 7
   network             = "STAGING"
-  note                = "Test Notes"
+  note                = "Test Notes updated"
   notification_emails = ["user@example.com"]
 }
 

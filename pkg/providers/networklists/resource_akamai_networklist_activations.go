@@ -42,10 +42,11 @@ func resourceActivations() *schema.Resource {
 				Description: "The Akamai network on which the list is activated: STAGING or PRODUCTION",
 			},
 			"notes": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Default:     "Activation Comments",
-				Description: "Descriptive text to accompany the activation",
+				Type:             schema.TypeString,
+				Optional:         true,
+				Default:          "Activation Comments",
+				Description:      "Descriptive text to accompany the activation",
+				DiffSuppressFunc: suppressNoteFieldForNetworkListActivation,
 			},
 			"notification_emails": {
 				Type:        schema.TypeSet,
@@ -262,4 +263,11 @@ func lookupActivation(ctx context.Context, client networklists.NTWRKLISTS, query
 		return nil, err
 	}
 	return activation, nil
+}
+
+func suppressNoteFieldForNetworkListActivation(_, oldValue, newValue string, d *schema.ResourceData) bool {
+	if oldValue != newValue && d.HasChanges("network_list_id", "network") {
+		return false
+	}
+	return true
 }
