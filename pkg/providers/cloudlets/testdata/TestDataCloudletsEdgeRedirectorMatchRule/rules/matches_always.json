@@ -1,0 +1,14 @@
+[
+  {
+    "name": "rule",
+    "type": "erMatchRule",
+    "start": 10,
+    "end": 10000,
+    "matchesAlways": true,
+    "useRelativeUrl": "copy_scheme_hostname",
+    "statusCode": 307,
+    "redirectURL": "/abc/sss",
+    "useIncomingQueryString": false,
+    "useIncomingSchemeAndHost": true
+  }
+]

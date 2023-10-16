@@ -4,6 +4,9 @@
 
 #### FEATURES/ENHANCEMENTS:
 
+* Cloudlets
+  * Added `matches_alway` field to `akamai_cloudlets_edge_redirector_match_rule` data source
+
 * IAM
   * Phone number is no longer required for IAM user in `akamai_iam_user` resource.
 
