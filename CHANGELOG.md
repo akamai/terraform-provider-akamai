@@ -4,6 +4,12 @@
 
 #### FEATURES/ENHANCEMENTS:
 
+* BOTMAN
+  * Added resource:
+    * `akamai_botman_custom_code` - read and update
+  * Added data source:
+    * `akamai_botman_custom_code` - read
+
 * Cloudlets
   * Add `origin_description` field to `akamai_cloudlets_application_load_balancer` resource
 

@@ -3,9 +3,9 @@ provider "akamai" {
   cache_enabled = false
 }
 
-resource "akamai_botman_custom_bot_category" "test" {
+resource "akamai_botman_custom_code" "test" {
   config_id = 43253
-  custom_bot_category = jsonencode(
+  custom_code = jsonencode(
     {
       "testKey" : "updated_testValue3"
     }

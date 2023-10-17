@@ -4,10 +4,10 @@ provider "akamai" {
 }
 
 resource "akamai_botman_conditional_action" "test" {
-  config_id          = 43253
-  conditional_action = <<-EOF
-{
-  "testKey": "testValue3"
-}
-EOF
+  config_id = 43253
+  conditional_action = jsonencode(
+    {
+      "testKey" : "testValue3"
+    }
+  )
 }

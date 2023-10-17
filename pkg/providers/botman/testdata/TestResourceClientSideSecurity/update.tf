@@ -4,10 +4,10 @@ provider "akamai" {
 }
 
 resource "akamai_botman_client_side_security" "test" {
-  config_id            = 43253
-  client_side_security = <<-EOF
-{
-  "testKey": "updated_testValue3"
-}
-EOF
+  config_id = 43253
+  client_side_security = jsonencode(
+    {
+      "testKey" : "updated_testValue3"
+    }
+  )
 }
