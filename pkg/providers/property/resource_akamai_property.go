@@ -466,7 +466,7 @@ func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m inter
 	if propertyID == "" {
 		propertyID, err = createProperty(ctx, client, propertyName, groupID, contractID, productID, ruleFormat)
 		if err != nil {
-			return interpretCreatePropertyError(ctx, err, meta, groupID, contractID, productID)
+			return interpretCreatePropertyError(ctx, err, client, groupID, contractID, productID)
 		}
 	}
 	// Save minimum state BEFORE moving on
@@ -519,22 +519,22 @@ func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m inter
 	return resourcePropertyRead(ctx, d, m)
 }
 
-func interpretCreatePropertyError(ctx context.Context, err error, meta meta.Meta, groupID string, contractID string, productID string) diag.Diagnostics {
+func interpretCreatePropertyError(ctx context.Context, err error, client papi.PAPI, groupID string, contractID string, productID string) diag.Diagnostics {
 	if strings.Contains(err.Error(), "\"statusCode\": 404") {
 		// find out what is missing from the request
-		if _, err = getGroup(ctx, meta, groupID); err != nil {
+		if _, err = getGroup(ctx, client, groupID); err != nil {
 			if errors.Is(err, ErrGroupNotFound) {
 				return diag.Errorf("%v: %s", ErrGroupNotFound, groupID)
 			}
 			return diag.FromErr(err)
 		}
-		if _, err = getContract(ctx, meta, contractID); err != nil {
+		if _, err = getContract(ctx, client, contractID); err != nil {
 			if errors.Is(err, ErrContractNotFound) {
 				return diag.Errorf("%v: %s", ErrContractNotFound, contractID)
 			}
 			return diag.FromErr(err)
 		}
-		if _, err = getProduct(ctx, meta, productID, contractID); err != nil {
+		if _, err = getProduct(ctx, client, productID, contractID); err != nil {
 			if errors.Is(err, ErrProductNotFound) {
 				return diag.Errorf("%v: %s", ErrProductNotFound, productID)
 			}

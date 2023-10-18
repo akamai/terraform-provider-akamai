@@ -219,6 +219,22 @@ func TestResProperty(t *testing.T) {
 		}
 	}
 
+	// propertyLifecycleWithPropertyID covers lifecycle when property_id is set
+	propertyLifecycleWithPropertyID := func(propertyName, propertyID, groupID string, rules papi.RulesUpdate) BehaviorFunc {
+		return func(state *TestState) {
+			state.Property.PropertyID = "prp_0"
+			state.Property.LatestVersion = 1
+			state.Property.ContractID = "ctr_0"
+			state.Property.GroupID = "grp_0"
+			state.Property.PropertyName = "test_property"
+			state.Rules = rules
+			state.RuleFormat = "v2020-01-01"
+			getProperty(propertyID)(state)
+			GetVersionResources(propertyID, "ctr_0", "grp_0", 1)(state)
+			// no deletion since it should be covered by property_bootstrap resource
+		}
+	}
+
 	propertyLifecycleWithDrift := func(propertyName, propertyID, groupID string, rulesToSend, rulesToReceive papi.RulesUpdate) BehaviorFunc {
 		return func(state *TestState) {
 			createProperty(propertyName, propertyID, rulesToSend)(state)
@@ -229,8 +245,8 @@ func TestResProperty(t *testing.T) {
 
 	importProperty := func(propertyID string) BehaviorFunc {
 		return func(state *TestState) {
-			// Depending on how much of the import ID is given, the initial property lookup may not have group/contract
-			ExpectGetProperty(state.Client, "prp_0", "grp_0", "", &state.Property).Maybe()
+			// Depending on how much of the import ID is given, the initial property lookup may not have group and contract
+			ExpectGetProperty(state.Client, "prp_0", "grp_0", "ctr_0", &state.Property).Maybe()
 			ExpectGetProperty(state.Client, "prp_0", "", "", &state.Property).Maybe()
 		}
 	}
@@ -267,6 +283,14 @@ func TestResProperty(t *testing.T) {
 			resource.TestCheckResourceAttr("akamai_property.test", "product_id", "prd_0"),
 			resource.TestCheckResourceAttr("akamai_property.test", "rule_warnings.#", "0"),
 			resource.TestCheckResourceAttr("akamai_property.test", "rules", rules),
+		)
+	}
+
+	// addPropertyIDAttrCheck adds resource.TestCheckFunc that checks if property_id attribute was set correctly
+	addPropertyIDAttrCheck := func(checks resource.TestCheckFunc, propertyID string) resource.TestCheckFunc {
+		return resource.ComposeAggregateTestCheckFunc(
+			resource.TestCheckResourceAttr("akamai_property.test", "property_id", propertyID),
+			checks,
 		)
 	}
 
@@ -438,6 +462,35 @@ func TestResProperty(t *testing.T) {
 					Config: testutils.LoadFixtureString(t, "%s/step1.tf", FixturePath),
 					Check: checkAttrs("prp_0", "to2.test.domain", "2", "0", "1", "ehn_123",
 						"{\"rules\":{\"name\":\"default\",\"options\":{}}}"),
+				},
+			}
+		},
+	}
+
+	// withPropertyID covers case when property was initially created with property_bootstrap resource
+	withPropertyID := LifecycleTestCase{
+		Name: "Create with propertyID",
+		ClientSetup: composeBehaviors(
+			propertyLifecycleWithPropertyID("test_property", "prp_0", "grp_0",
+				papi.RulesUpdate{Rules: papi.Rules{Name: "default"}}),
+			getPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive),
+			setHostnames("prp_0", 1, "to.test.domain"),
+			setHostnames("prp_0", 1, "to2.test.domain"),
+		),
+		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
+			return []resource.TestStep{
+				{
+					PreConfig: func() {
+						State.VersionItems = papi.PropertyVersionItems{Items: []papi.PropertyVersionGetItem{{PropertyVersion: 1, ProductionStatus: papi.VersionStatusInactive}}}
+					},
+					Config: testutils.LoadFixtureString(t, "%s/step0.tf", FixturePath),
+					Check: checkAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
+						"{\"rules\":{\"name\":\"default\",\"options\":{}}}"),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "%s/step1.tf", FixturePath),
+					Check: addPropertyIDAttrCheck(checkAttrs("prp_0", "to2.test.domain", "1", "0", "0", "ehn_123",
+						"{\"rules\":{\"name\":\"default\",\"options\":{}}}"), "prp_0"),
 				},
 			}
 		},
@@ -760,11 +813,21 @@ func TestResProperty(t *testing.T) {
 			client.Test(T{t})
 
 			parameters := strings.Split(importID, ",")
+			var propertyBootstrap bool
+			if parameters[len(parameters)-1] == "property-bootstrap" {
+				propertyBootstrap = true
+				parameters = parameters[:len(parameters)-1]
+			}
 			numberParameters := len(parameters)
 			lastParameter := parameters[len(parameters)-1]
+			if propertyBootstrap {
+				setup = append(setup, propertyLifecycleWithPropertyID("test_property", "prp_0", "grp_0",
+					papi.RulesUpdate{Rules: papi.Rules{Name: "default"}}))
+			} else {
+				setup = append(setup, propertyLifecycle("test_property", "prp_0", "grp_0",
+					papi.RulesUpdate{Rules: papi.Rules{Name: "default"}}))
+			}
 			setup = append(setup,
-				propertyLifecycle("test_property", "prp_0", "grp_0",
-					papi.RulesUpdate{Rules: papi.Rules{Name: "default"}}),
 				getPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive),
 				setHostnames("prp_0", 1, "to.test.domain"),
 				importProperty("prp_0"),
@@ -814,7 +877,7 @@ func TestResProperty(t *testing.T) {
 							ResourceName:            "akamai_property.test",
 							Config:                  testutils.LoadFixtureString(t, fixturePath),
 							ImportStateVerifyIgnore: []string{"product", "read_version"},
-							Check:                   checkAttrs("prp_0", "to.test.domain", "1", "1", "0", "ehn_123", rules),
+							Check:                   addPropertyIDAttrCheck(checkAttrs("prp_0", "to.test.domain", "1", "1", "0", "ehn_123", rules), "prp_0"),
 						},
 					}
 				},
@@ -836,6 +899,11 @@ func TestResProperty(t *testing.T) {
 		return assertImportableWithOptions(t, testName, importID, "importable.tf", "{\"rules\":{\"name\":\"default\",\"options\":{}}}", []BehaviorFunc{})
 	}
 
+	// assertImportableWithBootstrap covers imports when property-bootstrap flag is provided
+	assertImportableWithBootstrap := func(t *testing.T, testName, importID string) func(t *testing.T) {
+		return assertImportableWithOptions(t, testName, importID, "importable-with-bootstrap.tf", "{\"rules\":{\"name\":\"default\",\"options\":{}}}", []BehaviorFunc{})
+	}
+
 	suppressLogging(t, func() {
 
 		// Test Schema Configuration
@@ -850,6 +918,7 @@ func TestResProperty(t *testing.T) {
 
 		// Test Lifecycle
 
+		t.Run("Lifecycle: create with propertyID", assertLifecycle(t, t.Name(), "with-propertyID", withPropertyID))
 		t.Run("Lifecycle: latest version is not active (normal)", assertLifecycle(t, t.Name(), "normal", latestVersionNotActive))
 		t.Run("Lifecycle: latest version is active in staging (normal)", assertLifecycle(t, t.Name(), "normal", latestVersionActiveInStaging))
 		t.Run("Lifecycle: latest version is active in production (normal)", assertLifecycle(t, t.Name(), "normal", latestVersionActiveInProd))
@@ -887,6 +956,7 @@ func TestResProperty(t *testing.T) {
 							},
 						}})},
 		))
+		t.Run("Importable: property_id with property-bootstrap", assertImportableWithBootstrap(t, "property_id", "prp_0,property-bootstrap"))
 		t.Run("Importable: property_id", assertImportable(t, "property_id", "prp_0"))
 		t.Run("Importable: property_id and ver_# version", assertImportable(t, "property_id and ver_# version", "prp_0,ver_1"))
 		t.Run("Importable: property_id and # version", assertImportable(t, "property_id and # version", "prp_0,1"))

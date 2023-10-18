@@ -65,7 +65,6 @@ func (p *PluginSubprovider) Resources() map[string]*schema.Resource {
 		"akamai_edge_hostname":               resourceSecureEdgeHostName(),
 		"akamai_property":                    resourceProperty(),
 		"akamai_property_activation":         resourcePropertyActivation(),
-		"akamai_property_bootstrap":          resourcePropertyBootstrap(),
 		"akamai_property_include":            resourcePropertyInclude(),
 		"akamai_property_include_activation": resourcePropertyIncludeActivation(),
 	}
@@ -98,7 +97,9 @@ func (p *PluginSubprovider) DataSources() map[string]*schema.Resource {
 
 // Resources returns terraform resources for property
 func (p *FrameworkSubprovider) Resources() []func() resource.Resource {
-	return []func() resource.Resource{}
+	return []func() resource.Resource{
+		NewBootstrapResource,
+	}
 }
 
 // DataSources returns terraform data sources for property
