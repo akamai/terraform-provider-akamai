@@ -52,6 +52,7 @@ func TestResourceClientList(t *testing.T) {
 					ItemsCount: int64(len(req.Items)),
 				},
 				ContractID: req.ContractID,
+				GroupID:    req.GroupID,
 				GroupName:  "Group-Name",
 				Items:      mapItemsPayloadToContent(req.Items),
 			}
@@ -126,6 +127,8 @@ func TestResourceClientList(t *testing.T) {
 			clientList := clientlists.GetClientListResponse{
 				ListContent: list,
 				Items:       items,
+				ContractID:  "12_ABC",
+				GroupID:     12,
 			}
 			client.On("GetClientList", mock.Anything, clientListGetReq).Return(&clientList, nil).Times(callTimes)
 		}
@@ -782,6 +785,40 @@ func TestResourceClientList(t *testing.T) {
 					{
 						Config:      loadFixtureString(fmt.Sprintf("%s/list_and_duplicate_items_create.tf", testDir)),
 						ExpectError: regexp.MustCompile("Error: 'Items' collection contains duplicate values for 'value' field. Duplicate value: 12"),
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
+
+	t.Run("Import clientlist resource", func(t *testing.T) {
+		client := new(clientlists.Mock)
+
+		clientList := expectCreateList(t, client, clientlists.CreateClientListRequest{
+			Name:       "List Name",
+			Notes:      "List Notes",
+			Tags:       []string{"a", "b"},
+			Type:       clientlists.ASN,
+			ContractID: "12_ABC",
+			GroupID:    12,
+			Items:      []clientlists.ListItemPayload{},
+		})
+		expectReadList(t, client, clientList.ListContent, []clientlists.ListItemContent{}, 3)
+		expectDeleteList(t, client, clientList.ListContent)
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProviderFactories: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString(fmt.Sprintf("%s/list_create.tf", testDir)),
+					},
+					{
+						ImportState:       true,
+						ImportStateVerify: true,
+						ImportStateId:     "1_AB",
+						ResourceName:      "akamai_clientlist_list.test_list",
 					},
 				},
 			})

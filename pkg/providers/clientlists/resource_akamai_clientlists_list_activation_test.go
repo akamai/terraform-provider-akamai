@@ -66,6 +66,24 @@ func TestClientListActivationResource(t *testing.T) {
 			return &res
 		}
 
+		expectGetActivationStatus = func(t *testing.T, client *clientlists.Mock, req clientlists.GetActivationStatusRequest, attrs ActivationAttrs, times int) *clientlists.GetActivationStatusResponse {
+			res := clientlists.GetActivationStatusResponse{
+				Action:                 clientlists.Activate,
+				ActivationID:           int64(attrs.ActivationID),
+				ActivationStatus:       clientlists.ActivationStatus(attrs.Status),
+				Comments:               attrs.Comments,
+				ListID:                 attrs.ListID,
+				Network:                clientlists.ActivationNetwork(attrs.Network),
+				NotificationRecipients: attrs.NotificationRecipients,
+				SiebelTicketID:         attrs.SiebelTicketID,
+				Version:                int64(attrs.Version),
+			}
+
+			client.On("GetActivationStatus", mock.Anything, req).Return(&res, nil).Times(times)
+
+			return &res
+		}
+
 		expectGetClientlist = func(t *testing.T, client *clientlists.Mock, listID string, version int64, callTimes int) {
 			clientListGetReq := clientlists.GetClientListRequest{
 				ListID:       listID,
@@ -107,12 +125,8 @@ func TestClientListActivationResource(t *testing.T) {
 				Status:                 status,
 			}
 		}
-	)
 
-	t.Run("create activation", func(t *testing.T) {
-		client := new(clientlists.Mock)
-
-		activationReq := clientlists.CreateActivationRequest{
+		activationReq = clientlists.CreateActivationRequest{
 			ListID: "12_AB",
 			ActivationParams: clientlists.ActivationParams{
 				Action:                 clientlists.Activate,
@@ -122,6 +136,11 @@ func TestClientListActivationResource(t *testing.T) {
 				Comments:               "Activation Comments",
 			},
 		}
+	)
+
+	t.Run("create activation", func(t *testing.T) {
+		client := new(clientlists.Mock)
+
 		activationRes := expectCreateActivation(t, client, activationReq, 2, 33)
 
 		expectReadActivation(t, client,
@@ -451,6 +470,45 @@ func TestClientListActivationResource(t *testing.T) {
 					{
 						Config:      loadFixtureString(fmt.Sprintf("%s/activation_create.tf", testDir)),
 						ExpectError: regexp.MustCompile(createActivationAPIError),
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
+
+	t.Run("Import activation resource", func(t *testing.T) {
+		client := new(clientlists.Mock)
+
+		activationRes := expectCreateActivation(t, client, activationReq, 2, 33)
+
+		expectReadActivation(t, client,
+			clientlists.GetActivationRequest{ActivationID: activationRes.ActivationID},
+			getActivationAttrs(activationRes, clientlists.PendingActivation), 3)
+
+		expectReadActivation(t, client,
+			clientlists.GetActivationRequest{ActivationID: activationRes.ActivationID},
+			getActivationAttrs(activationRes, clientlists.Active), 4)
+
+		expectGetClientlist(t, client, "12_AB", 2, 3)
+
+		expectGetActivationStatus(t, client, clientlists.GetActivationStatusRequest{
+			Network: clientlists.Staging,
+			ListID:  activationReq.ListID,
+		}, getActivationAttrs(activationRes, clientlists.Active), 1)
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProviderFactories: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString(fmt.Sprintf("%s/activation_create.tf", testDir)),
+					},
+					{
+						ImportState:       true,
+						ImportStateVerify: true,
+						ImportStateId:     "12_AB:STAGING",
+						ResourceName:      "akamai_clientlist_activation.activation_ASN_LIST_1",
 					},
 				},
 			})

@@ -4,6 +4,9 @@
 
 #### FEATURES/ENHANCEMENTS:
 
+* Client Lists
+  * Support state import for `akamai_clientlist_list` and `akamai_clientlist_activation` resources
+
 * Cloudlets
   * Added `matches_alway` field to `akamai_cloudlets_edge_redirector_match_rule` data source
   * Added configurable timeout for following resources as `timeouts.default` field

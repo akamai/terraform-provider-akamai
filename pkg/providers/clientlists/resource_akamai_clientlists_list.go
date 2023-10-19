@@ -26,6 +26,9 @@ func resourceClientList() *schema.Resource {
 		CustomizeDiff: customdiff.All(
 			markVersionComputedIfListModified,
 		),
+		Importer: &schema.ResourceImporter{
+			StateContext: schema.ImportStatePassthroughContext,
+		},
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:        schema.TypeString,
@@ -146,6 +149,8 @@ func resourceClientListRead(ctx context.Context, d *schema.ResourceData, m inter
 	}
 
 	fields := map[string]interface{}{
+		"contract_id": list.ContractID,
+		"group_id":    list.GroupID,
 		"name":        list.Name,
 		"type":        list.Type,
 		"notes":       list.Notes,
