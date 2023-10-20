@@ -929,7 +929,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 					},
 					"throttled_cp_code": {
 						Optional:    true,
-						Description: "Specifies the CP code as an object.",
+						Description: "Specifies the CP code as an object. You only need to provide the initial `id`, stripping any `cpc_` prefix to pass the integer to the rule tree. Additional CP code details may reflect back in subsequent read-only data.",
 						Type:        schema.TypeList,
 						MaxItems:    1,
 						Elem: &schema.Resource{
@@ -2313,7 +2313,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 		"common_media_client_data": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "This behavior can be used in includes.",
+			Description: "Use this behavior to send expanded playback information as CMCD metadata in requests from a media player. Edge servers may use this metadata for segment prefetching to optimize your content's delivery, or for logging. For more details and additional property requirements, see the `Adaptive Media Delivery` documentation. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -2335,7 +2335,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 					},
 					"enable_cmcd_segment_prefetch": {
 						Optional:    true,
-						Description: "",
+						Description: "Uses Common Media Client Data (CMCD) metadata to determine the segment URLs your origin server prefetches to speed up content delivery.",
 						Type:        schema.TypeBool,
 					},
 				},
@@ -3235,7 +3235,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 		"cp_code": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Content Provider Codes (CP codes) allow you to distinguish various reporting and billing segments. You receive a CP code when purchasing Akamai service, and you need it to access properties. This behavior allows you to apply any valid CP code, including additional ones you may request from Akamai Professional Services. For a CP code to be valid, it needs to belong to the same contract and be associated with the same product as the property, and the group needs access to it. This behavior can be used in includes.",
+			Description: "Content Provider Codes (CP codes) allow you to distinguish various reporting and billing traffic segments, and you need them to access properties. You receive an initial CP code when purchasing Akamai, and you can run the `Create a new CP code` operation to generate more. This behavior applies any valid CP code, either as required as a default at the top of the rule tree, or subsequently to override the default. For a CP code to be valid, it needs to be assigned the same contract and product as the property, and the group needs access to it.  For available values, run the `List CP codes` operation. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -3257,7 +3257,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 					},
 					"value": {
 						Optional:    true,
-						Description: "Specifies a `value` object, which includes an `id` key and a descriptive `name`.",
+						Description: "Specifies the CP code as an object. You only need to provide the initial `id`, stripping any `cpc_` prefix to pass the integer to the rule tree. Additional CP code details may reflect back in subsequent read-only data.",
 						Type:        schema.TypeList,
 						MaxItems:    1,
 						Elem: &schema.Resource{
@@ -5427,7 +5427,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 					},
 					"cp_code": {
 						Optional:    true,
-						Description: "Specifies a CP code for which to log errors for the NetStorage location.",
+						Description: "Specifies a CP code for which to log errors for the NetStorage location. You only need to provide the initial `id`, stripping any `cpc_` prefix to pass the integer to the rule tree. Additional CP code details may reflect back in subsequent read-only data.",
 						Type:        schema.TypeList,
 						MaxItems:    1,
 						Elem: &schema.Resource{
@@ -6598,7 +6598,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 					},
 					"cp_code_original": {
 						Optional:    true,
-						Description: "Assigns a CP code to track traffic and billing for original images that the Image and Video Manager has not modified.",
+						Description: "Assigns a CP code to track traffic and billing for original images that the Image and Video Manager has not modified. You only need to provide the initial `id`, stripping any `cpc_` prefix to pass the integer to the rule tree. Additional CP code details may reflect back in subsequent read-only data.",
 						Type:        schema.TypeList,
 						MaxItems:    1,
 						Elem: &schema.Resource{
@@ -6661,7 +6661,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 					},
 					"cp_code_transformed": {
 						Optional:    true,
-						Description: "Assigns a separate CP code to track traffic and billing for derived images.",
+						Description: "Assigns a separate CP code to track traffic and billing for derived images. You only need to provide the initial `id`, stripping any `cpc_` prefix to pass the integer to the rule tree. Additional CP code details may reflect back in subsequent read-only data.",
 						Type:        schema.TypeList,
 						MaxItems:    1,
 						Elem: &schema.Resource{
@@ -6813,7 +6813,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 					},
 					"cp_code_original": {
 						Optional:    true,
-						Description: "Select the CP code for which to track Image and Video Manager video traffic. Use this along with `cpCodeTransformed` to track traffic to derivative video content.",
+						Description: "Specifies the CP code for which to track Image and Video Manager video traffic. Use this along with `cpCodeTransformed` to track traffic to derivative video content. You only need to provide the initial `id`, stripping any `cpc_` prefix to pass the integer to the rule tree. Additional CP code details may reflect back in subsequent read-only data.",
 						Type:        schema.TypeList,
 						MaxItems:    1,
 						Elem: &schema.Resource{
@@ -6876,7 +6876,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 					},
 					"cp_code_transformed": {
 						Optional:    true,
-						Description: "Select the CP code to identify derivative transformed video content.",
+						Description: "Specifies the CP code to identify derivative transformed video content. You only need to provide the initial `id`, stripping any `cpc_` prefix to pass the integer to the rule tree. Additional CP code details may reflect back in subsequent read-only data.",
 						Type:        schema.TypeList,
 						MaxItems:    1,
 						Elem: &schema.Resource{
@@ -6966,7 +6966,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 					},
 					"policy_token_default": {
 						Optional:    true,
-						Description: "Specify the default policy identifier, which is registered with the `Image and Video Manager API` once you activate this property.",
+						Description: "Specifies the default policy identifier, which is registered with the `Image and Video Manager API` once you activate this property.",
 						Type:        schema.TypeString,
 					},
 				},
@@ -9081,30 +9081,30 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 					},
 					"property_id_tag": {
 						Optional:    true,
-						Description: "Whether to include the property identifier for this delivery configuration as an additional identifier tag in the Assume Role verification call to AWS. You'll need to include the property identifier (`AK_ARLID`) in a condition in your `AWS IAM policy` for validation.",
+						Description: "",
 						Type:        schema.TypeBool,
 					},
 					"hostname_tag": {
 						Optional:    true,
-						Description: "Whether to include the hostname used to access this delivery configuration as an additional identifier tag in the Assume Role verification call to AWS. You'll need to include this hostname (`AK_HOST`) in a condition in your `AWS IAM policy` for validation.",
+						Description: "",
 						Type:        schema.TypeBool,
 					},
 					"role_arn": {
 						ValidateDiagFunc: validateRegexOrVariable("^[a-zA-Z0-9][a-zA-Z0-9_\\+=,.@\\-:/]{0,2047}$"),
 						Optional:         true,
-						Description:      "The Amazon Resource Name (ARN) of the `AWS IAM role` you want to use. This role needs to be configured with the proper permissions for your target resources. The `AWS IAM policy` needs to contain the trust relationships defining other users that can assume this role.",
+						Description:      "",
 						Type:             schema.TypeString,
 					},
 					"aws_ar_region": {
 						ValidateDiagFunc: validateRegexOrVariable("^[a-zA-Z0-9][a-zA-Z0-9\\-]{0,63}$"),
 						Optional:         true,
-						Description:      "Specifies the AWS region code that represents the location of your AWS bucket.",
+						Description:      "",
 						Type:             schema.TypeString,
 					},
 					"end_point_service": {
 						ValidateDiagFunc: validateRegexOrVariable("^[a-zA-Z0-9][a-zA-Z0-9\\-]{0,63}$"),
 						Optional:         true,
-						Description:      "Specifies the code of your AWS service. It precedes `.amazonaws.com` or the region code in your AWS hostname.",
+						Description:      "",
 						Type:             schema.TypeString,
 					},
 					"origin_location_title": {
@@ -13396,7 +13396,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 					},
 					"waiting_room_cp_code": {
 						Optional:    true,
-						Description: "Specifies a `cpcode` object for requests sent to the waiting room, including a numeric `id` key and a descriptive `name`.",
+						Description: "Specifies a CP code for requests sent to the waiting room. You only need to provide the initial `id`, stripping any `cpc_` prefix to pass the integer to the rule tree. Additional CP code details may reflect back in subsequent read-only data.",
 						Type:        schema.TypeList,
 						MaxItems:    1,
 						Elem: &schema.Resource{
@@ -14676,7 +14676,7 @@ func getCriteriaSchemaV20230530() map[string]*schema.Schema {
 					},
 					"value": {
 						Optional:    true,
-						Description: "Specifies an object that encodes the matching `value`, including an `id` key and a descriptive `name`.",
+						Description: "Specifies the CP code as an object. You only need to provide the initial `id` to match the CP code, stripping any `cpc_` prefix to pass the integer to the rule tree. Additional CP code details may reflect back in subsequent read-only data.",
 						Type:        schema.TypeList,
 						MaxItems:    1,
 						Elem: &schema.Resource{
