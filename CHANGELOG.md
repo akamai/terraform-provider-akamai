@@ -36,7 +36,10 @@
     * `akamai_property_include_activation`
     * `akamai_edge_hostname`
   * Added configurable timeout for `akamai_cp_code` resource as `timeouts.update` field
-  * Changed `version` field in `akamai_property_activation` data source to optional. Now when `version` is not provided, datasource automatically finds the active one for given network.
+  * Changed `version` field in `akamai_property_activation` data source to optional. Now when `version` is not provided,
+    datasource automatically finds the active one for given network.
+  * Allowed empty values for some fields
+    in `akamai_property_builder` ([I#481](https://github.com/akamai/terraform-provider-akamai/issues/481))
 
 #### BUG FIXES:
 

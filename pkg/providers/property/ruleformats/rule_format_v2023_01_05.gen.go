@@ -3335,7 +3335,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Type:        schema.TypeString,
 					},
 					"stream_type": {
-						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"BEACON", "LOG", "BEACON_AND_LOG"}, false)),
+						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validation.ToDiagFunc(validation.StringInSlice([]string{"BEACON", "LOG", "BEACON_AND_LOG"}, false))),
 						Optional:         true,
 						Description:      "Specify the DataStream type.",
 						Type:             schema.TypeString,
@@ -3351,7 +3351,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"datastream_ids": {
-						ValidateDiagFunc: validateRegexOrVariable("^[0-9]+(-[0-9]+)*$"),
+						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validateRegexOrVariable("^[0-9]+(-[0-9]+)*$")),
 						Optional:         true,
 						Description:      "A set of dash-separated DataStream ID values to limit the scope of reported data. By default, all active streams report. Use the DataStream application to gather stream ID values that apply to this property configuration. Specifying IDs for any streams that don't apply to this property has no effect, and results in no data reported.",
 						Type:             schema.TypeString,
@@ -3533,13 +3533,13 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Type:        schema.TypeString,
 					},
 					"substring_start": {
-						ValidateDiagFunc: validateRegexOrVariable("^[0-9]+$"),
+						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validateRegexOrVariable("^[0-9]+$")),
 						Optional:         true,
 						Description:      "The zero-based index offset of the first character to extract. If the index is out of bound from the string's length, authentication may fail.",
 						Type:             schema.TypeString,
 					},
 					"substring_end": {
-						ValidateDiagFunc: validateRegexOrVariable("^[0-9]+$"),
+						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validateRegexOrVariable("^[0-9]+$")),
 						Optional:         true,
 						Description:      "The zero-based index offset of the last character to extract, where `-1` selects the remainder of the string. If the index is out of bound from the string's length, authentication may fail.",
 						Type:             schema.TypeString,
@@ -4550,7 +4550,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Type:             schema.TypeString,
 					},
 					"cookie_name": {
-						ValidateDiagFunc: validateRegexOrVariable("^[^\\s;]+$"),
+						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validateRegexOrVariable("^[^\\s;]+$")),
 						Optional:         true,
 						Description:      "If using session persistence, this specifies the value of the cookie named in the corresponding `edgeLoadBalancingOrigin` behavior's `cookie_name` option.",
 						Type:             schema.TypeString,
@@ -5814,7 +5814,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						},
 					},
 					"secret_key": {
-						ValidateDiagFunc: validateRegexOrVariable("^[0-9a-zA-Z]{24}$"),
+						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validateRegexOrVariable("^[0-9a-zA-Z]{24}$")),
 						Optional:         true,
 						Description:      "Specifies the shared secret key.",
 						Type:             schema.TypeString,
@@ -7545,13 +7545,13 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Type:        schema.TypeString,
 					},
 					"api_key": {
-						ValidateDiagFunc: validateRegexOrVariable("^$|^[a-zA-Z2-9]{5}-[a-zA-Z2-9]{5}-[a-zA-Z2-9]{5}-[a-zA-Z2-9]{5}-[a-zA-Z2-9]{5}$"),
+						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validateRegexOrVariable("^$|^[a-zA-Z2-9]{5}-[a-zA-Z2-9]{5}-[a-zA-Z2-9]{5}-[a-zA-Z2-9]{5}-[a-zA-Z2-9]{5}$")),
 						Optional:         true,
 						Description:      "This generated value uniquely identifies sections of your website for you to analyze independently. To access this value, see `Enable mPulse in Property Manager`.",
 						Type:             schema.TypeString,
 					},
 					"buffer_size": {
-						ValidateDiagFunc: validateRegexOrVariable("^(1[5-9][0-9]|1[0-9]{3}|[2-9][0-9]{2,3})$"),
+						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validateRegexOrVariable("^(1[5-9][0-9]|1[0-9]{3}|[2-9][0-9]{2,3})$")),
 						Optional:         true,
 						Description:      "Allows you to override the browser's default (150) maximum number of reported performance timeline entries.",
 						Type:             schema.TypeString,
@@ -7609,13 +7609,13 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Type:             schema.TypeString,
 					},
 					"hls_preferred_bitrate": {
-						ValidateDiagFunc: validateRegexOrVariable("^\\d+$"),
+						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validateRegexOrVariable("^\\d+$")),
 						Optional:         true,
 						Description:      "Sets the preferred bit rate in Kbps. This causes the media playlist specified in the `#EXT-X-STREAM-INF` tag that most closely matches the value to list first. All other playlists maintain their current position in the manifest.",
 						Type:             schema.TypeString,
 					},
 					"hls_filter_in_bitrates": {
-						ValidateDiagFunc: validateRegexOrVariable("^\\d+(,\\d+)*$"),
+						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validateRegexOrVariable("^\\d+(,\\d+)*$")),
 						Optional:         true,
 						Description:      "Specifies a comma-delimited set of preferred bit rates, such as `100,200,400`. Playlists specified in the `#EXT-X-STREAM-INF` tag with bit rates outside of any of those values by up to 100 Kbps are excluded from the manifest.",
 						Type:             schema.TypeString,
@@ -7631,13 +7631,13 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"hls_query_param_secret_key": {
-						ValidateDiagFunc: validateRegexOrVariable("^(0x)?[0-9a-fA-F]{32}$"),
+						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validateRegexOrVariable("^(0x)?[0-9a-fA-F]{32}$")),
 						Optional:         true,
 						Description:      "Specifies a primary key as a token to accompany the request.",
 						Type:             schema.TypeString,
 					},
 					"hls_query_param_transition_key": {
-						ValidateDiagFunc: validateRegexOrVariable("^(0x)?[0-9a-fA-F]{32}$"),
+						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validateRegexOrVariable("^(0x)?[0-9a-fA-F]{32}$")),
 						Optional:         true,
 						Description:      "Specifies a transition key as a token to accompany the request.",
 						Type:             schema.TypeString,
@@ -9211,7 +9211,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						},
 					},
 					"secret_key": {
-						ValidateDiagFunc: validateRegexOrVariable("^[0-9a-zA-Z]{24}$"),
+						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validateRegexOrVariable("^[0-9a-zA-Z]{24}$")),
 						Optional:         true,
 						Description:      "Specifies the shared secret key.",
 						Type:             schema.TypeString,
@@ -9280,7 +9280,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Type:             schema.TypeString,
 					},
 					"aws_host": {
-						ValidateDiagFunc: validateRegexOrVariable("^(([a-zA-Z0-9]([a-zA-Z0-9_\\-]*[a-zA-Z0-9])?)\\.)+([a-zA-Z]+|xn--[a-zA-Z0-9]+)$"),
+						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validateRegexOrVariable("^(([a-zA-Z0-9]([a-zA-Z0-9_\\-]*[a-zA-Z0-9])?)\\.)+([a-zA-Z]+|xn--[a-zA-Z0-9]+)$")),
 						Optional:         true,
 						Description:      "This specifies the AWS hostname, without `http://` or `https://` prefixes. If you leave this option empty, it inherits the hostname from the `origin` behavior.",
 						Type:             schema.TypeString,
@@ -11190,7 +11190,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Type:             schema.TypeInt,
 					},
 					"rum_group_name": {
-						ValidateDiagFunc: validateRegexOrVariable("^[0-9a-zA-Z]*$"),
+						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validateRegexOrVariable("^[0-9a-zA-Z]*$")),
 						Optional:         true,
 						Description:      "A deprecated option to specify an alternate name under which to batch this set of web traffic in your report. Do not use it.",
 						Type:             schema.TypeString,
@@ -11655,13 +11655,13 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"transition_key": {
-						ValidateDiagFunc: validateRegexOrVariable("^(0x)?[0-9a-fA-F]{32}$"),
+						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validateRegexOrVariable("^(0x)?[0-9a-fA-F]{32}$")),
 						Optional:         true,
 						Description:      "An alternate encryption key to match along with the `key` field, allowing you to rotate keys with no down time.",
 						Type:             schema.TypeString,
 					},
 					"salt": {
-						ValidateDiagFunc: validation.ToDiagFunc(validation.StringLenBetween(16, 16)),
+						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validation.ToDiagFunc(validation.StringLenBetween(16, 16))),
 						Optional:         true,
 						Description:      "Specifies a salt as input into the token for added security. This value needs to match the salt used in the token generation code.",
 						Type:             schema.TypeString,
@@ -13214,13 +13214,13 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Type:             schema.TypeString,
 					},
 					"transition_key": {
-						ValidateDiagFunc: validateRegexOrVariable("^(0x)?[0-9a-fA-F]{64}$"),
+						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validateRegexOrVariable("^(0x)?[0-9a-fA-F]{64}$")),
 						Optional:         true,
 						Description:      "Specifies a transition key as a hex value.",
 						Type:             schema.TypeString,
 					},
 					"salt": {
-						ValidateDiagFunc: validation.ToDiagFunc(validation.StringLenBetween(16, 16)),
+						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validation.ToDiagFunc(validation.StringLenBetween(16, 16))),
 						Optional:         true,
 						Description:      "Specifies a salt string for input when generating the token, which needs to match the salt value used in the token generation code.",
 						Type:             schema.TypeString,
