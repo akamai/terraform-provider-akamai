@@ -40,6 +40,7 @@
     datasource automatically finds the active one for given network.
   * Allowed empty values for some fields
     in `akamai_property_builder` ([I#481](https://github.com/akamai/terraform-provider-akamai/issues/481))
+  * Added support for new rule format `v2023-09-20`
 
 #### BUG FIXES:
 
