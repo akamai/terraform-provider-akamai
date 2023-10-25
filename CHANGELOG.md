@@ -1,6 +1,6 @@
 # RELEASE NOTES
 
-## 5.x.0 (Oct xx, 2023)
+## 5.4.0 (Oct 30, 2023)
 
 #### FEATURES/ENHANCEMENTS:
 
@@ -8,7 +8,7 @@
   * Suppressed trigger of new activation for `note` field change in `akamai_networklist_activations` and `akamai_appsec_activations` resources.
 
 * Client Lists
-  * Support state import for `akamai_clientlist_list` and `akamai_clientlist_activation` resources
+  * Added support for state import for `akamai_clientlist_list` and `akamai_clientlist_activation` resources
 
 * Cloudlets
   * Added `matches_alway` field to `akamai_cloudlets_edge_redirector_match_rule` data source
@@ -51,7 +51,7 @@
   * Fixed problem with wrong datacenters updated in `akamai_gtm_property`.
 
 * IAM
-  * Terraform proposing modifications to user settings when using international phone numbers in `akamai_iam_user`
+  * Fixed Terraform proposing modifications to user settings when using international phone numbers in `akamai_iam_user`
     resource.
     * NOTE:
       * For international phone numbers there might be a diff during plan. Please apply suggested change to store the
