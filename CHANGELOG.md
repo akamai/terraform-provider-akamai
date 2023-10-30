@@ -1,6 +1,6 @@
 # RELEASE NOTES
 
-## 5.4.0 (Oct 30, 2023)
+## 5.4.0 (Oct 31, 2023)
 
 #### FEATURES/ENHANCEMENTS:
 

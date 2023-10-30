@@ -255,11 +255,6 @@ func resourceEdgeWorkerUpdate(ctx context.Context, d *schema.ResourceData, m int
 	client := inst.Client(meta)
 	logger.Debug("Updating EdgeWorker version")
 
-	if !d.HasChangeExcept("timeouts") {
-		logger.Debug("Only timeouts were updated, skipping")
-		return nil
-	}
-
 	edgeWorkerID := d.Id()
 	edgeWorkerIDReq, err := strconv.Atoi(edgeWorkerID)
 	if err != nil {
