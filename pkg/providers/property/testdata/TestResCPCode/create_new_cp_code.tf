@@ -7,4 +7,7 @@ resource "akamai_cp_code" "test" {
   contract_id = "ctr_1"
   group_id    = "grp_1"
   product_id  = "prd_1"
+  timeouts {
+    update = "1h"
+  }
 }

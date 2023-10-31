@@ -64,4 +64,7 @@ resource "akamai_cps_third_party_enrollment" "third_party" {
     postal_code      = "12345"
     region           = "MA"
   }
+  timeouts {
+    default = "2h"
+  }
 }

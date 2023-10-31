@@ -15,6 +15,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cloudlets"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/timeouts"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -30,6 +31,12 @@ func resourceCloudletsPolicyActivation() *schema.Resource {
 		Timeouts: &schema.ResourceTimeout{
 			Default: &PolicyActivationResourceTimeout,
 		},
+		SchemaVersion: 1,
+		StateUpgraders: []schema.StateUpgrader{{
+			Version: 0,
+			Type:    resourceCloudletsPolicyActivationV0().CoreConfigSchema().ImpliedType(),
+			Upgrade: timeouts.MigrateToExplicit(),
+		}},
 	}
 }
 
@@ -64,6 +71,21 @@ func resourceCloudletsPolicyActivationSchema() map[string]*schema.Schema {
 			Elem:        &schema.Schema{Type: schema.TypeString},
 			MinItems:    1,
 			Description: "Set of property IDs to link to this Cloudlets policy",
+		},
+		"timeouts": {
+			Type:        schema.TypeList,
+			Optional:    true,
+			MaxItems:    1,
+			Description: "Enables to set timeout for processing",
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"default": {
+						Type:             schema.TypeString,
+						Optional:         true,
+						ValidateDiagFunc: timeouts.ValidateDurationFormat,
+					},
+				},
+			},
 		},
 	}
 }
@@ -162,6 +184,11 @@ func resourcePolicyActivationUpdate(ctx context.Context, rd *schema.ResourceData
 
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
 	client := inst.Client(meta)
+
+	if !rd.HasChangeExcept("timeouts") {
+		logger.Debug("Only timeouts were updated, skipping")
+		return nil
+	}
 
 	// 2. In such case, create a new version to activate (for creation, look into resource policy)
 	policyID, err := tf.GetIntValue("policy_id", rd)

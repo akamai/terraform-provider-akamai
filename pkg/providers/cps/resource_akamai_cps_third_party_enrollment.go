@@ -10,6 +10,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cps"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/timeouts"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
 	cpstools "github.com/akamai/terraform-provider-akamai/v5/pkg/providers/cps/tools"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
@@ -144,6 +145,21 @@ func resourceCPSThirdPartyEnrollment() *schema.Resource {
 				Optional:    true,
 				Description: "When true, SANs are excluded from the CSR",
 			},
+			"timeouts": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				MaxItems:    1,
+				Description: "Enables to set timeout for processing",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"default": {
+							Type:             schema.TypeString,
+							Optional:         true,
+							ValidateDiagFunc: timeouts.ValidateDurationFormat,
+						},
+					},
+				},
+			},
 		},
 		CustomizeDiff: customdiff.Sequence(
 			func(ctx context.Context, diff *schema.ResourceDiff, i interface{}) error {
@@ -159,6 +175,9 @@ func resourceCPSThirdPartyEnrollment() *schema.Resource {
 				}
 				return nil
 			}),
+		Timeouts: &schema.ResourceTimeout{
+			Default: &timeouts.SDKDefaultTimeout,
+		},
 	}
 }
 
@@ -289,6 +308,11 @@ func resourceCPSThirdPartyEnrollmentUpdate(ctx context.Context, d *schema.Resour
 	)
 	client := inst.Client(meta)
 	logger.Debug("Updating enrollment")
+
+	if !d.HasChangeExcept("timeouts") {
+		logger.Debug("Only timeouts were updated, skipping")
+		return nil
+	}
 
 	acknowledgeWarnings, err := tf.GetBoolValue("acknowledge_pre_verification_warnings", d)
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {

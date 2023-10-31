@@ -33,6 +33,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 	type edgeWorkerAttributes struct {
 		groupID, name, localBundle, localBundleHash, version string
 		resourceTierID                                       int
+		timeouts                                             string
 	}
 
 	var (
@@ -362,6 +363,12 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 				resource.TestCheckResourceAttr("akamai_edgeworker.edgeworker", "local_bundle", attrs.localBundle),
 				resource.TestCheckResourceAttr("akamai_edgeworker.edgeworker", "local_bundle_hash", attrs.localBundleHash),
 			}
+			if attrs.timeouts != "" {
+				checks = append(checks, resource.TestCheckResourceAttr("akamai_edgeworker.edgeworker", "timeouts.#", "1"))
+				checks = append(checks, resource.TestCheckResourceAttr("akamai_edgeworker.edgeworker", "timeouts.0.default", attrs.timeouts))
+			} else {
+				checks = append(checks, resource.TestCheckResourceAttr("akamai_edgeworker.edgeworker", "timeouts.#", "0"))
+			}
 			return resource.ComposeAggregateTestCheckFunc(checks...)
 		}
 	)
@@ -390,6 +397,39 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 							localBundle:     bundlePathForCreate,
 							localBundleHash: bundleHashForCreate,
 							version:         "1.0",
+						}),
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
+
+	t.Run("create a new edgeworker lifecycle with timeout", func(t *testing.T) {
+		testDir := "testdata/TestResEdgeWorkersEdgeWorker/edgeworker_lifecycle"
+		client := new(edgeworkers.Mock)
+
+		timeForCreation := time.Now().Format(time.RFC3339)
+
+		edgeWorker, edgeWorkerVersion := expectCreateEdgeWorkerWithVersion(t, client, "example", bundlePathForCreate, timeForCreation, 12345, 54321, 123)
+		expectReadEdgeWorkerWithOneVersion(t, client, edgeWorker.Name, bundlePathForCreate, edgeWorkerVersion.Version, timeForCreation, int(edgeWorker.GroupID), edgeWorker.ResourceTierID, edgeWorkerVersion.EdgeWorkerID, 2)
+
+		expectDeleteEdgeWorkerWithOneVersion(t, client, edgeWorker.ResourceTierID, edgeWorkerVersion.EdgeWorkerID, timeForCreation)
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProviderFactories: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworker_create_with_timeout.tf", testDir)),
+						Check: checkAttributes(edgeWorkerAttributes{
+							name:            "example",
+							groupID:         "12345",
+							resourceTierID:  54321,
+							localBundle:     bundlePathForCreate,
+							localBundleHash: bundleHashForCreate,
+							version:         "1.0",
+							timeouts:        "2h",
 						}),
 					},
 				},

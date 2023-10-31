@@ -12,7 +12,7 @@
         "createDate": "2020-10-07T12:30:49Z",
         "createdBy": "lap2lreucgguhekn",
         "dispatchCount": 1,
-        "network": "STAGING",
+        "network": "PRODUCTION",
         "reasons": [],
-        "status": "ACTIVATED"
+        "status": "ACTIVATED" 
     }

@@ -380,6 +380,19 @@ func TestCreateCPSUploadCertificate(t *testing.T) {
 			checkFunc:    checkAttrs(createMockData(certECDSAForTests, trustChainECDSAForTests, certRSAForTests, trustChainRSAForTests, true, true, false, false, nil)),
 			error:        nil,
 		},
+		"successful create - with timeout": {
+			init: func(t *testing.T, m *cps.Mock, enrollment *cps.Enrollment, enrollmentID, changeID int) {
+				mockCheckUnacknowledgedWarnings(m, enrollmentID, changeID, 3, enrollment, waitUploadThirdParty)
+				mockCreateWithACKPostWarnings(m, enrollmentID, changeID, enrollment)
+				mockReadAndCheckUnacknowledgedWarnings(m, enrollmentID, changeID, enrollment, certRSAForTests, trustChainRSAForTests, RSA, waitAckChangeManagement)
+			},
+			enrollment:   createEnrollment(2, 22, true, true),
+			enrollmentID: 2,
+			changeID:     22,
+			configPath:   "testdata/TestResCPSUploadCertificate/certificates/create_certificate_timeouts.tf",
+			checkFunc:    checkAttrs(testDataForAttrs{certificateRSA: certRSAForTests, trustChainRSA: trustChainRSAForTests, acknowledgePostVerificationWarnings: true, timeouts: "3h"}),
+			error:        nil,
+		},
 		"create: auto_approve_warnings match": {
 			init: func(t *testing.T, m *cps.Mock, enrollment *cps.Enrollment, enrollmentID, changeID int) {
 				mockCheckUnacknowledgedWarnings(m, enrollmentID, changeID, 3, enrollment, waitUploadThirdParty)
@@ -1667,13 +1680,28 @@ var (
 		certificateCheck = append(certificateCheck, resource.TestCheckResourceAttr("akamai_cps_upload_certificate.test", "trust_chain_ecdsa_pem", data.trustChainECDSA))
 		certificateCheck = append(certificateCheck, resource.TestCheckResourceAttr("akamai_cps_upload_certificate.test", "trust_chain_rsa_pem", data.trustChainRSA))
 
-		return resource.ComposeAggregateTestCheckFunc(
+		checkFuncs := []resource.TestCheckFunc{
 			resource.TestCheckResourceAttr("akamai_cps_upload_certificate.test", "enrollment_id", "2"),
 			resource.TestCheckResourceAttr("akamai_cps_upload_certificate.test", "acknowledge_post_verification_warnings", strconv.FormatBool(data.acknowledgePostVerificationWarnings)),
 			resource.TestCheckResourceAttr("akamai_cps_upload_certificate.test", "acknowledge_change_management", strconv.FormatBool(data.acknowledgeChangeManagement)),
 			resource.TestCheckResourceAttr("akamai_cps_upload_certificate.test", "wait_for_deployment", strconv.FormatBool(data.waitForDeployment)),
 			resource.ComposeAggregateTestCheckFunc(warningsCheck...),
 			resource.ComposeAggregateTestCheckFunc(certificateCheck...),
+		}
+
+		if data.timeouts != "" {
+			checkFuncs = append(checkFuncs,
+				resource.TestCheckResourceAttr("akamai_cps_upload_certificate.test", "timeouts.#", "1"),
+				resource.TestCheckResourceAttr("akamai_cps_upload_certificate.test", "timeouts.0.default", data.timeouts),
+			)
+		} else {
+			checkFuncs = append(checkFuncs,
+				resource.TestCheckResourceAttr("akamai_cps_upload_certificate.test", "timeouts.#", "0"),
+			)
+		}
+
+		return resource.ComposeAggregateTestCheckFunc(
+			checkFuncs...,
 		)
 	}
 )
@@ -1689,4 +1717,5 @@ type testDataForAttrs struct {
 	isAutoApproveWarningsSet            bool
 	waitForDeployment                   bool
 	autoApproveWarnings                 []string
+	timeouts                            string
 }

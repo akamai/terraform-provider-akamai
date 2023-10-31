@@ -21,6 +21,7 @@ func TestResourcePolicy(t *testing.T) {
 
 	type policyAttributes struct {
 		name, version, matchRulesPath string
+		timeouts                      string
 	}
 
 	var (
@@ -189,7 +190,7 @@ func TestResourcePolicy(t *testing.T) {
 			if attrs.matchRulesPath != "" {
 				matchRulesPath = testutils.LoadFixtureString(t, attrs.matchRulesPath)
 			}
-			return resource.ComposeAggregateTestCheckFunc(
+			checkFunc := []resource.TestCheckFunc{
 				resource.TestCheckResourceAttr("akamai_cloudlets_policy.policy", "id", "2"),
 				resource.TestCheckResourceAttr("akamai_cloudlets_policy.policy", "cloudlet_code", "ER"),
 				resource.TestCheckResourceAttr("akamai_cloudlets_policy.policy", "cloudlet_id", "0"),
@@ -199,7 +200,20 @@ func TestResourcePolicy(t *testing.T) {
 				resource.TestCheckResourceAttr("akamai_cloudlets_policy.policy", "name", attrs.name),
 				resource.TestCheckResourceAttr("akamai_cloudlets_policy.policy", "version", attrs.version),
 				resource.TestCheckResourceAttr("akamai_cloudlets_policy.policy", "match_rules", matchRulesPath),
-			)
+			}
+
+			if attrs.timeouts != "" {
+				checkFunc = append(checkFunc,
+					resource.TestCheckResourceAttr("akamai_cloudlets_policy.policy", "timeouts.#", "1"),
+					resource.TestCheckResourceAttr("akamai_cloudlets_policy.policy", "timeouts.0.default", attrs.timeouts),
+				)
+			} else {
+				checkFunc = append(checkFunc,
+					resource.TestCheckResourceAttr("akamai_cloudlets_policy.policy", "timeouts.#", "0"),
+				)
+			}
+
+			return resource.ComposeAggregateTestCheckFunc(checkFunc...)
 		}
 	)
 
@@ -657,6 +671,44 @@ func TestResourcePolicy(t *testing.T) {
 							name:           "test_policy",
 							version:        "1",
 							matchRulesPath: "",
+						}),
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
+
+	t.Run("create policy with timeout", func(t *testing.T) {
+		testDir := "testdata/TestResPolicy/timeouts"
+
+		matchRules := cloudlets.MatchRules{
+			&cloudlets.MatchRuleER{
+				Name:                     "r1",
+				Type:                     "erMatchRule",
+				UseRelativeURL:           "copy_scheme_hostname",
+				StatusCode:               301,
+				RedirectURL:              "/ddd",
+				MatchURL:                 "abc.com",
+				UseIncomingSchemeAndHost: true,
+			},
+		}
+
+		client := new(cloudlets.Mock)
+		policy, version := expectCreatePolicy(t, client, 2, "test_policy", matchRules)
+		expectReadPolicy(t, client, policy, version, 2)
+		expectRemovePolicy(t, client, 2, 1, 0)
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProviderFactories: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Check: checkPolicyAttributes(policyAttributes{
+							name:           "test_policy",
+							version:        "1",
+							matchRulesPath: fmt.Sprintf("%s/match_rules/match_rules.json", testDir),
+							timeouts:       "4h",
 						}),
 					},
 				},

@@ -7,14 +7,13 @@ resource "akamai_iam_user" "test" {
   last_name  = "Smith"
   email      = "jsmith@example.com"
   country    = "country"
-  phone      = "(111) 111-1111"
   enable_tfa = false
 
   contact_type       = "contact type"
   job_title          = "job title"
   time_zone          = "timezone"
   secondary_email    = "secondary.email@example.com"
-  mobile_phone       = "(222) 222-2222"
+  mobile_phone       = "+49 98765 4321"
   address            = "123 B Street"
   city               = "B-Town"
   state              = "state"

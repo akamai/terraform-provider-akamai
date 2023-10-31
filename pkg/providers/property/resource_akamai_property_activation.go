@@ -12,6 +12,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/timeouts"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 	"github.com/apex/log"
@@ -33,6 +34,12 @@ func resourcePropertyActivation() *schema.Resource {
 		Timeouts: &schema.ResourceTimeout{
 			Default: &PropertyResourceTimeout,
 		},
+		SchemaVersion: 1,
+		StateUpgraders: []schema.StateUpgrader{{
+			Version: 0,
+			Type:    resourcePropertyActivationV0().CoreConfigSchema().ImpliedType(),
+			Upgrade: timeouts.MigrateToExplicit(),
+		}},
 	}
 }
 
@@ -111,6 +118,21 @@ var akamaiPropertyActivationSchema = map[string]*schema.Schema{
 		MaxItems:    1,
 		Description: "Provides an audit record when activating on a production network",
 		Elem:        complianceRecordSchema,
+	},
+	"timeouts": {
+		Type:        schema.TypeList,
+		Optional:    true,
+		MaxItems:    1,
+		Description: "Enables to set timeout for processing",
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"default": {
+					Type:             schema.TypeString,
+					Optional:         true,
+					ValidateDiagFunc: timeouts.ValidateDurationFormat,
+				},
+			},
+		},
 	},
 }
 
@@ -535,6 +557,11 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 		ctx,
 		session.WithContextLog(logger),
 	)
+
+	if !d.HasChangeExcept("timeouts") {
+		logger.Debug("Only timeouts were updated, skipping")
+		return nil
+	}
 
 	propertyID, err := resolvePropertyID(d)
 	if err != nil {

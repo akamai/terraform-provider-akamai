@@ -12,6 +12,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
 
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/timeouts"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/logger"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
@@ -30,6 +31,9 @@ func resourceSecureEdgeHostName() *schema.Resource {
 			StateContext: resourceSecureEdgeHostNameImport,
 		},
 		Schema: akamaiSecureEdgeHostNameSchema,
+		Timeouts: &schema.ResourceTimeout{
+			Default: &timeouts.SDKDefaultTimeout,
+		},
 	}
 }
 
@@ -66,7 +70,7 @@ var akamaiSecureEdgeHostNameSchema = map[string]*schema.Schema{
 		Type:        schema.TypeList,
 		Optional:    true,
 		Elem:        &schema.Schema{Type: schema.TypeString},
-		Description: "Email address that should receive updates on the IP behavior update request. Required for update operation.",
+		Description: "Email address that should receive updates on the IP behavior update request.",
 	},
 	"certificate": {
 		Type:     schema.TypeInt,
@@ -79,6 +83,21 @@ var akamaiSecureEdgeHostNameSchema = map[string]*schema.Schema{
 		ForceNew:         true,
 		DiffSuppressFunc: suppressEdgeHostnameUseCases,
 		Description:      "A JSON encoded list of use cases",
+	},
+	"timeouts": {
+		Type:        schema.TypeList,
+		Optional:    true,
+		MaxItems:    1,
+		Description: "Enables to set timeout for processing",
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"default": {
+					Type:             schema.TypeString,
+					Optional:         true,
+					ValidateDiagFunc: timeouts.ValidateDurationFormat,
+				},
+			},
+		},
 	},
 }
 
@@ -270,6 +289,11 @@ func resourceSecureEdgeHostNameUpdate(ctx context.Context, d *schema.ResourceDat
 	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourceSecureEdgeHostNameUpdate")
 
+	if !d.HasChangeExcept("timeouts") {
+		logger.Debug("Only timeouts were updated, skipping")
+		return nil
+	}
+
 	if d.HasChange("ip_behavior") {
 		edgeHostname, err := tf.GetStringValue("edge_hostname", d)
 		if err != nil {
@@ -284,13 +308,6 @@ func resourceSecureEdgeHostNameUpdate(ctx context.Context, d *schema.ResourceDat
 		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return diag.FromErr(err)
 		}
-		if len(emails) == 0 {
-			return diag.Errorf(`"status_update_email" is a required parameter to update an edge hostname`)
-		}
-		statusUpdateEmails := make([]string, len(emails))
-		for i, email := range emails {
-			statusUpdateEmails[i] = email.(string)
-		}
 
 		logger.Debugf("Proceeding to update /ipVersionBehavior for %s", edgeHostname)
 		// IPV6_COMPLIANCE type has to mapped to IPV6_IPV4_DUALSTACK which is only accepted value by HAPI client
@@ -298,12 +315,10 @@ func resourceSecureEdgeHostNameUpdate(ctx context.Context, d *schema.ResourceDat
 			ipBehavior = "IPV6_IPV4_DUALSTACK"
 		}
 
-		hapiClient := HapiClient(meta)
-		resp, err := hapiClient.UpdateEdgeHostname(ctx, hapi.UpdateEdgeHostnameRequest{
-			DNSZone:           dnsZone,
-			RecordName:        strings.ReplaceAll(edgeHostname, "."+dnsZone, ""),
-			Comments:          fmt.Sprintf("change /ipVersionBehavior to %s", ipBehavior),
-			StatusUpdateEmail: statusUpdateEmails,
+		req := hapi.UpdateEdgeHostnameRequest{
+			DNSZone:    dnsZone,
+			RecordName: strings.ReplaceAll(edgeHostname, "."+dnsZone, ""),
+			Comments:   fmt.Sprintf("change /ipVersionBehavior to %s", ipBehavior),
 			Body: []hapi.UpdateEdgeHostnameRequestBody{
 				{
 					Op:    "replace",
@@ -311,7 +326,17 @@ func resourceSecureEdgeHostNameUpdate(ctx context.Context, d *schema.ResourceDat
 					Value: ipBehavior,
 				},
 			},
-		})
+		}
+		if len(emails) != 0 {
+			statusUpdateEmails := make([]string, len(emails))
+			for i, email := range emails {
+				statusUpdateEmails[i] = email.(string)
+			}
+			req.StatusUpdateEmail = statusUpdateEmails
+		}
+
+		hapiClient := HapiClient(meta)
+		resp, err := hapiClient.UpdateEdgeHostname(ctx, req)
 		if err != nil {
 			if err2 := tf.RestoreOldValues(d, []string{"ip_behavior"}); err2 != nil {
 				return diag.Errorf(`%s failed. No changes were written to server:

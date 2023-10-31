@@ -5,18 +5,21 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/clientlists"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 var (
 	pollActivationInterval = 30 * time.Second
+	errActivationFailed    = errors.New("activation failed")
 )
 
 func resourceClientListActivation() *schema.Resource {
@@ -25,6 +28,12 @@ func resourceClientListActivation() *schema.Resource {
 		CreateContext: resourceActivationCreate,
 		UpdateContext: resourceActivationUpdate,
 		DeleteContext: resourceActivationDelete,
+		CustomizeDiff: customdiff.All(
+			markStatusComputed,
+		),
+		Importer: &schema.ResourceImporter{
+			StateContext: resourceActivationImport,
+		},
 		Schema: map[string]*schema.Schema{
 			"list_id": {
 				Type:        schema.TypeString,
@@ -148,7 +157,7 @@ func resourceActivationCreate(ctx context.Context, d *schema.ResourceData, m int
 
 	d.SetId(fmt.Sprintf("%d", res.ActivationID))
 
-	err = waitForActivationCompletion(ctx, client, res.ActivationID)
+	_, err = waitForActivationCompletion(ctx, client, res.ActivationID)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -162,7 +171,10 @@ func resourceActivationUpdate(ctx context.Context, d *schema.ResourceData, m int
 	logger := meta.Log("CLIENTLIST", "resourceActivationUpdate")
 	logger.Debug("Updating client list activation")
 
-	if d.HasChanges("list_id", "version", "network") {
+	isActiveStatus := d.Get("status").(string) == string(clientlists.Active)
+	hasChanges := d.HasChanges("list_id", "version", "network")
+
+	if !isActiveStatus || hasChanges {
 		attrs, err := getResourceAttrs(d)
 		if err != nil {
 			return diag.FromErr(err)
@@ -187,7 +199,7 @@ func resourceActivationUpdate(ctx context.Context, d *schema.ResourceData, m int
 
 		d.SetId(fmt.Sprintf("%d", res.ActivationID))
 
-		err = waitForActivationCompletion(ctx, client, res.ActivationID)
+		_, err = waitForActivationCompletion(ctx, client, res.ActivationID)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -259,22 +271,22 @@ func getResourceAttrs(d *schema.ResourceData) (*resourceAttrs, error) {
 	}, nil
 }
 
-func waitForActivationCompletion(ctx context.Context, client clientlists.ClientLists, activationID int64) error {
+func waitForActivationCompletion(ctx context.Context, client clientlists.ClientLists, activationID int64) (*clientlists.GetActivationResponse, error) {
 	for {
 		select {
 		case <-time.After(pollActivationInterval):
-			r, err := client.GetActivation(ctx, clientlists.GetActivationRequest{ActivationID: activationID})
+			activation, err := client.GetActivation(ctx, clientlists.GetActivationRequest{ActivationID: activationID})
 			if err != nil {
-				return fmt.Errorf("polling activation failed: %s", err)
+				return nil, fmt.Errorf("polling activation failed: %s", err)
 			}
 
-			if r.ActivationStatus == clientlists.Active {
-				return nil
-			} else if r.ActivationStatus == clientlists.Failed {
-				return fmt.Errorf("activation failed")
+			if activation.ActivationStatus == clientlists.Active {
+				return activation, nil
+			} else if activation.ActivationStatus == clientlists.Failed {
+				return nil, errActivationFailed
 			}
 		case <-ctx.Done():
-			return fmt.Errorf("activation context terminated: %s", ctx.Err())
+			return nil, fmt.Errorf("activation context terminated: %s", ctx.Err())
 		}
 	}
 }
@@ -286,4 +298,88 @@ func suppressCommentsDiff(_, oldValue, newValue string, d *schema.ResourceData) 
 		return false
 	}
 	return true
+}
+
+func resourceActivationImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	meta := meta.Must(m)
+	client := inst.Client(meta)
+	logger := meta.Log("CLIENTLIST", "importActivationState")
+	logger.Debug("Importing client list activation")
+
+	listID, network, err := parseActivationImportArg(d.Id())
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := client.GetActivationStatus(ctx, clientlists.GetActivationStatusRequest{
+		ListID:  listID,
+		Network: clientlists.ActivationNetwork(network),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if res.ActivationStatus == clientlists.PendingActivation {
+		activation, err := waitForActivationCompletion(ctx, client, res.ActivationID)
+		if err != nil && !errors.Is(err, errActivationFailed) {
+			return nil, err
+		}
+		res.ActivationStatus = activation.ActivationStatus
+	}
+
+	fields := map[string]interface{}{
+		"list_id":                 res.ListID,
+		"comments":                res.Comments,
+		"network":                 res.Network,
+		"notification_recipients": res.NotificationRecipients,
+		"siebel_ticket_id":        res.SiebelTicketID,
+		"version":                 res.Version,
+		"status":                  res.ActivationStatus,
+	}
+
+	d.SetId(fmt.Sprintf("%d", res.ActivationID))
+
+	if err = tf.SetAttrs(d, fields); err != nil {
+		return nil, err
+	}
+
+	return []*schema.ResourceData{d}, nil
+}
+
+func parseActivationImportArg(arg string) (string, string, error) {
+	id := strings.Split(arg, ":")
+	if len(id) != 2 {
+		return "", "", fmt.Errorf("invalid client list activation identifier: %s. "+
+			"Correct format is: list_id:network. For example: 123_ABC:PRODUCTION", arg)
+	}
+
+	listID, network := id[0], id[1]
+
+	if network != string(clientlists.Staging) && network != string(clientlists.Production) {
+		return "", "", fmt.Errorf("invalid network attribute: %s ", network)
+	}
+
+	return listID, network, nil
+}
+
+// markStatusComputed is a schema.CustomizeDiffFunc for akamai_clientlist_activation resource,
+// which sets status field as computed
+// if status client list activation is required
+func markStatusComputed(_ context.Context, d *schema.ResourceDiff, m interface{}) error {
+	meta := meta.Must(m)
+	logger := meta.Log("CLIENTLIST", "markStatusComputed")
+
+	status, err := tf.GetStringValue("status", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
+		return err
+	}
+
+	if status != string(clientlists.Active) {
+		logger.Debug("setting status as new computed")
+		if err := d.SetNewComputed("status"); err != nil {
+			return fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
+		}
+	}
+
+	return nil
 }

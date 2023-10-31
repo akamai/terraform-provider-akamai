@@ -20,6 +20,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
+var northAmerica = regexp.MustCompile(`^(\s*\+\s*1\s*|\s*1\s*|\s*)(|-|\.|\\|\()([1-9][0-9]{2})(|-|\.|\\|\))\s*([0-9]{3})(|-|\.|\\|\s)([0-9]{4})(|-|\.|\\|\sx?)([0-9]{1,30})?$`)
+var international = regexp.MustCompile(`^\+[02-9][\d\s\-]{0,40}$`)
+
 func resourceIAMUser() *schema.Resource {
 	return &schema.Resource{
 		Description:   "Manage a user in your account",
@@ -56,10 +59,11 @@ func resourceIAMUser() *schema.Resource {
 			},
 			"phone": {
 				Type:             schema.TypeString,
-				Required:         true,
+				Optional:         true,
 				Description:      "The user's main phone number",
 				DiffSuppressFunc: suppressPhone,
 				StateFunc:        statePhone,
+				ValidateFunc:     validatePhone,
 			},
 			"enable_tfa": {
 				Type:        schema.TypeBool,
@@ -106,6 +110,7 @@ func resourceIAMUser() *schema.Resource {
 				Description:      "The user's mobile phone number",
 				DiffSuppressFunc: suppressPhone,
 				StateFunc:        statePhone,
+				ValidateFunc:     validatePhone,
 			},
 			"address": {
 				Type:        schema.TypeString,
@@ -290,12 +295,12 @@ func resourceIAMUserRead(ctx context.Context, d *schema.ResourceData, m interfac
 		"last_name":              user.LastName,
 		"user_name":              user.UserName,
 		"email":                  user.Email,
-		"phone":                  canonicalPhone(user.Phone),
+		"phone":                  user.Phone,
 		"time_zone":              user.TimeZone,
 		"job_title":              user.JobTitle,
 		"enable_tfa":             user.TFAEnabled,
 		"secondary_email":        user.SecondaryEmail,
-		"mobile_phone":           canonicalPhone(user.MobilePhone),
+		"mobile_phone":           user.MobilePhone,
 		"address":                user.Address,
 		"city":                   user.City,
 		"state":                  user.State,
@@ -484,12 +489,18 @@ func resourceIAMUserErrorAdvice(e error) string {
 }
 
 func canonicalPhone(in string) string {
-	ph := regexp.MustCompile(`\D+`).ReplaceAllLiteralString(in, "")
-	if len(ph) < 10 {
-		return in
+	if northAmerica.MatchString(in) {
+		ph := northAmerica.FindStringSubmatch(in)
+		if ph[9] == "" { // without extension
+			return fmt.Sprintf("(%s) %s-%s", ph[3], ph[5], ph[7])
+		}
+		return fmt.Sprintf("(%s) %s-%s x%s", ph[3], ph[5], ph[7], ph[9])
 	}
-
-	return fmt.Sprintf("(%s) %s-%s", ph[0:3], ph[3:6], ph[6:10])
+	if international.MatchString(in) {
+		// remove spaces after +
+		return regexp.MustCompile(`^+( +)`).ReplaceAllString(in, "")
+	}
+	return in
 }
 
 func validateAuthGrantsJS(v interface{}, _ cty.Path) diag.Diagnostics {
@@ -591,4 +602,21 @@ func suppressEmail(_, oldVal, newVal string, _ *schema.ResourceData) bool {
 
 func stateEmail(v interface{}) string {
 	return strings.ToLower(v.(string))
+}
+
+func validatePhone(i interface{}, k string) (warnings []string, errors []error) {
+	v, ok := i.(string)
+	if !ok {
+		errors = append(errors, fmt.Errorf("expected type of %s to be a string, but got %T", k, k))
+		return warnings, errors
+	}
+
+	if v == "" {
+		return warnings, errors
+	}
+	if !northAmerica.MatchString(v) && !international.MatchString(v) {
+		errors = append(errors, fmt.Errorf("%q contains invalid phone number: %q", k, v))
+	}
+
+	return warnings, errors
 }

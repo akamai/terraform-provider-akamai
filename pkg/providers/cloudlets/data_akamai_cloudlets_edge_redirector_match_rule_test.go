@@ -37,6 +37,10 @@ func TestDataCloudletsEdgeRedirectorMatchRule(t *testing.T) {
 			configPath:       "testdata/TestDataCloudletsEdgeRedirectorMatchRule/omv_object.tf",
 			expectedJSONPath: "testdata/TestDataCloudletsEdgeRedirectorMatchRule/rules/omv_object_rules.json",
 		},
+		"matches always": {
+			configPath:       "testdata/TestDataCloudletsEdgeRedirectorMatchRule/matches_always.tf",
+			expectedJSONPath: "testdata/TestDataCloudletsEdgeRedirectorMatchRule/rules/matches_always.json",
+		},
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
@@ -91,6 +95,10 @@ func TestIncorrectDataCloudletsEdgeRedirectorMatchRule(t *testing.T) {
 		"match criteria ER - no match_value and object_match_value": {
 			configPath: "testdata/TestDataCloudletsEdgeRedirectorMatchRule/no_match_value_and_omv.tf",
 			withError:  `(?s)cannot be blank when ObjectMatchValue is blank.*cannot be blank when MatchValue is blank`,
+		},
+		"match criteria ER - matches with matches always": {
+			configPath: "testdata/TestDataCloudletsEdgeRedirectorMatchRule/matches_with_matches_always.tf",
+			withError:  `(?s)Matches/MatchesAlways: only one of \[ "Matches", "MatchesAlways" \] can be specified`,
 		},
 	}
 	for name, test := range tests {

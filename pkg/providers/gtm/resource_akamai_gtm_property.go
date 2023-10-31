@@ -10,7 +10,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/gtm"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/logger"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -180,10 +179,10 @@ func resourceGTMv1Property() *schema.Resource {
 				Computed: true,
 			},
 			"traffic_target": {
-				Type:             schema.TypeList,
-				Optional:         true,
-				MinItems:         1,
-				DiffSuppressFunc: trafficTargetDiffSuppress,
+				Type:     schema.TypeList,
+				Optional: true,
+				Computed: true,
+				MinItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"datacenter_id": {
@@ -389,7 +388,19 @@ func validateTestObject(_ context.Context, d *schema.ResourceDiff, m interface{}
 		}
 	}
 
-	return nil
+	trafficTarget, err := tf.GetListValue("traffic_target", d)
+	if err != nil {
+		return err
+	}
+	sortTrafficTargets(trafficTarget)
+	err = d.SetNew("traffic_target", trafficTarget)
+	return err
+}
+
+func sortTrafficTargets(targets []interface{}) {
+	sort.Slice(targets, func(i, j int) bool {
+		return targets[i].(map[string]interface{})["datacenter_id"].(int) < targets[j].(map[string]interface{})["datacenter_id"].(int)
+	})
 }
 
 // validateTTL is a SchemaValidateDiagFunc to validate dynamic_ttl and static_ttl.
@@ -1026,7 +1037,12 @@ func populateTerraformTrafficTargetState(d *schema.ResourceData, prop *gtm.Prope
 			ttStateList = append(ttStateList, ttNew)
 		}
 	}
-	_ = d.Set("traffic_target", ttStateList)
+	sortTrafficTargets(ttStateList)
+	err := d.Set("traffic_target", ttStateList)
+	if err != nil {
+		logger.Errorf("Invalid configuration: %s", err.Error())
+	}
+
 }
 
 // Populate existing static_rr_sets object from resource data
@@ -1286,86 +1302,4 @@ func reconcileTerraformLists(terraList []interface{}, newList []interface{}, m i
 	logger.Debugf("Updated Terra List: %v", updatedList)
 	return updatedList
 
-}
-
-func trafficTargetDiffSuppress(_, _, _ string, d *schema.ResourceData) bool {
-	logger := logger.Get("Akamai GTM", "trafficTargetDiffSuppress")
-	oldTarget, newTarget := d.GetChange("traffic_target")
-
-	oldTrafficTarget, ok := oldTarget.([]interface{})
-	if !ok {
-		logger.Warnf("wrong type conversion: expected []interface{}, got %T", oldTrafficTarget)
-		return false
-	}
-
-	newTrafficTarget, ok := newTarget.([]interface{})
-	if !ok {
-		logger.Warnf("wrong type conversion: expected []interface{}, got %T", oldTrafficTarget)
-		return false
-	}
-
-	if len(oldTrafficTarget) != len(newTrafficTarget) {
-		return false
-	}
-
-	sort.Slice(oldTrafficTarget, func(i, j int) bool {
-		return oldTrafficTarget[i].(map[string]interface{})["datacenter_id"].(int) < oldTrafficTarget[j].(map[string]interface{})["datacenter_id"].(int)
-	})
-	sort.Slice(newTrafficTarget, func(i, j int) bool {
-		return newTrafficTarget[i].(map[string]interface{})["datacenter_id"].(int) < newTrafficTarget[j].(map[string]interface{})["datacenter_id"].(int)
-	})
-
-	length := len(oldTrafficTarget)
-	for i := 0; i < length; i++ {
-		for k, v := range oldTrafficTarget[i].(map[string]interface{}) {
-			if k == "servers" {
-				oldServers := oldTrafficTarget[i].(map[string]interface{})["servers"]
-				newServers := newTrafficTarget[i].(map[string]interface{})["servers"]
-				if !serversEqual(oldServers, newServers) {
-					return false
-				}
-			} else {
-				if newTrafficTarget[i].(map[string]interface{})[k] != v {
-					return false
-				}
-			}
-		}
-	}
-
-	return true
-}
-
-// serversEqual checks whether provided sets of ip addresses contain the same entries
-func serversEqual(old, new interface{}) bool {
-	logger := logger.Get("Akamai GTM", "serversEqual")
-
-	oldServers, ok := old.(*schema.Set)
-	if !ok {
-		logger.Warnf("wrong type conversion: expected *schema.Set, got %T", oldServers)
-		return false
-	}
-
-	newServers, ok := new.(*schema.Set)
-	if !ok {
-		logger.Warnf("wrong type conversion: expected *schema.Set, got %T", newServers)
-		return false
-	}
-
-	if oldServers.Len() != newServers.Len() {
-		return false
-	}
-
-	addresses := make(map[string]bool, oldServers.Len())
-	for _, server := range oldServers.List() {
-		addresses[server.(string)] = true
-	}
-
-	for _, server := range newServers.List() {
-		_, ok := addresses[server.(string)]
-		if !ok {
-			return false
-		}
-	}
-
-	return true
 }

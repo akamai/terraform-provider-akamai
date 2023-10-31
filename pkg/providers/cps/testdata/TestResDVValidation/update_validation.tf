@@ -8,4 +8,7 @@ resource "akamai_cps_dv_validation" "dv_validation" {
     "san.test.akamai.com",
     "san2.test.akamai.com",
   ]
+  timeouts {
+    default = "1h"
+  }
 }

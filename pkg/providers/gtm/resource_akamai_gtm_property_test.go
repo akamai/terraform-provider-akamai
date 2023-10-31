@@ -471,6 +471,7 @@ func TestResourceGTMTrafficTargetOrder(t *testing.T) {
 		pathForUpdate string
 		nonEmptyPlan  bool
 		planOnly      bool
+		expectError   *regexp.Regexp
 	}{
 		"second apply - no diff": {
 			client:        getMocks(),
@@ -485,6 +486,14 @@ func TestResourceGTMTrafficTargetOrder(t *testing.T) {
 			pathForUpdate: "testdata/TestResGtmProperty/traffic_target/diff_order.tf",
 			nonEmptyPlan:  false,
 			planOnly:      true,
+		},
+		"re-ordered traffic targets and weight change - diff": {
+			client:        getMocks(),
+			pathForCreate: "testdata/TestResGtmProperty/multiple_servers.tf",
+			pathForUpdate: "testdata/TestResGtmProperty/traffic_target/diff_order_and_weight.tf",
+			nonEmptyPlan:  false,
+			planOnly:      true,
+			expectError:   regexp.MustCompile(`~ traffic_target {\n +~ weight += 200 -> 400\n +# \(4 unchanged attributes hidden\)\n`),
 		},
 		"re-ordered traffic target with no datacenter_id - no diff": {
 			client:        getMocks(),
@@ -514,11 +523,25 @@ func TestResourceGTMTrafficTargetOrder(t *testing.T) {
 			nonEmptyPlan:  true,
 			planOnly:      true,
 		},
+		"changed 'handout_limit' field outside traffic target - diff": {
+			client:        getMocks(),
+			pathForCreate: "testdata/TestResGtmProperty/multiple_servers.tf",
+			pathForUpdate: "testdata/TestResGtmProperty/traffic_target/change_handout_limit.tf",
+			nonEmptyPlan:  true,
+			planOnly:      true,
+		},
 		"changed 'enabled' field in re-ordered traffic target - diff (messy)": {
 			client:        getMocks(),
 			pathForCreate: "testdata/TestResGtmProperty/multiple_servers.tf",
 			pathForUpdate: "testdata/TestResGtmProperty/traffic_target/change_enabled_field_diff_order.tf",
 			nonEmptyPlan:  true,
+			planOnly:      true,
+		},
+		"changed order of servers and re-ordered traffic target - no diff": {
+			client:        getMocks(),
+			pathForCreate: "testdata/TestResGtmProperty/traffic_target/diff_order_and_servers_1.tf",
+			pathForUpdate: "testdata/TestResGtmProperty/traffic_target/diff_order_and_servers_2.tf",
+			nonEmptyPlan:  false,
 			planOnly:      true,
 		},
 		"re-ordered servers in traffic targets - no diff": {
@@ -572,6 +595,7 @@ func TestResourceGTMTrafficTargetOrder(t *testing.T) {
 							Config:             testutils.LoadFixtureString(t, test.pathForUpdate),
 							PlanOnly:           test.planOnly,
 							ExpectNonEmptyPlan: test.nonEmptyPlan,
+							ExpectError:        test.expectError,
 						},
 					},
 				})

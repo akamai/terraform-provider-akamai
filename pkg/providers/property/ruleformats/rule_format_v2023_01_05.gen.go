@@ -919,7 +919,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 					},
 					"throttled_cp_code": {
 						Optional:    true,
-						Description: "Specifies the CP code as an object.",
+						Description: "Specifies the CP code as an object. You only need to provide the initial `id`, stripping any `cpc_` prefix to pass the integer to the rule tree. Additional CP code details may reflect back in subsequent read-only data.",
 						Type:        schema.TypeList,
 						MaxItems:    1,
 						Elem: &schema.Resource{
@@ -3194,7 +3194,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"cp_code": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Content Provider Codes (CP codes) allow you to distinguish various reporting and billing segments. You receive a CP code when purchasing Akamai service, and you need it to access properties. This behavior allows you to apply any valid CP code, including additional ones you may request from Akamai Professional Services. For a CP code to be valid, it needs to belong to the same contract and be associated with the same product as the property, and the group needs access to it. This behavior can be used in includes.",
+			Description: "Content Provider Codes (CP codes) allow you to distinguish various reporting and billing traffic segments, and you need them to access properties. You receive an initial CP code when purchasing Akamai, and you can run the `Create a new CP code` operation to generate more. This behavior applies any valid CP code, either as required as a default at the top of the rule tree, or subsequently to override the default. For a CP code to be valid, it needs to be assigned the same contract and product as the property, and the group needs access to it.  For available values, run the `List CP codes` operation. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -3216,7 +3216,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 					},
 					"value": {
 						Optional:    true,
-						Description: "Specifies a `value` object, which includes an `id` key and a descriptive `name`.",
+						Description: "Specifies the CP code as an object. You only need to provide the initial `id`, stripping any `cpc_` prefix to pass the integer to the rule tree. Additional CP code details may reflect back in subsequent read-only data.",
 						Type:        schema.TypeList,
 						MaxItems:    1,
 						Elem: &schema.Resource{
@@ -3335,7 +3335,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Type:        schema.TypeString,
 					},
 					"stream_type": {
-						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"BEACON", "LOG", "BEACON_AND_LOG"}, false)),
+						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validation.ToDiagFunc(validation.StringInSlice([]string{"BEACON", "LOG", "BEACON_AND_LOG"}, false))),
 						Optional:         true,
 						Description:      "Specify the DataStream type.",
 						Type:             schema.TypeString,
@@ -3351,7 +3351,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"datastream_ids": {
-						ValidateDiagFunc: validateRegexOrVariable("^[0-9]+(-[0-9]+)*$"),
+						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validateRegexOrVariable("^[0-9]+(-[0-9]+)*$")),
 						Optional:         true,
 						Description:      "A set of dash-separated DataStream ID values to limit the scope of reported data. By default, all active streams report. Use the DataStream application to gather stream ID values that apply to this property configuration. Specifying IDs for any streams that don't apply to this property has no effect, and results in no data reported.",
 						Type:             schema.TypeString,
@@ -3533,13 +3533,13 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Type:        schema.TypeString,
 					},
 					"substring_start": {
-						ValidateDiagFunc: validateRegexOrVariable("^[0-9]+$"),
+						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validateRegexOrVariable("^[0-9]+$")),
 						Optional:         true,
 						Description:      "The zero-based index offset of the first character to extract. If the index is out of bound from the string's length, authentication may fail.",
 						Type:             schema.TypeString,
 					},
 					"substring_end": {
-						ValidateDiagFunc: validateRegexOrVariable("^[0-9]+$"),
+						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validateRegexOrVariable("^[0-9]+$")),
 						Optional:         true,
 						Description:      "The zero-based index offset of the last character to extract, where `-1` selects the remainder of the string. If the index is out of bound from the string's length, authentication may fail.",
 						Type:             schema.TypeString,
@@ -4550,7 +4550,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Type:             schema.TypeString,
 					},
 					"cookie_name": {
-						ValidateDiagFunc: validateRegexOrVariable("^[^\\s;]+$"),
+						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validateRegexOrVariable("^[^\\s;]+$")),
 						Optional:         true,
 						Description:      "If using session persistence, this specifies the value of the cookie named in the corresponding `edgeLoadBalancingOrigin` behavior's `cookie_name` option.",
 						Type:             schema.TypeString,
@@ -5383,7 +5383,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 					},
 					"cp_code": {
 						Optional:    true,
-						Description: "Specifies a CP code for which to log errors for the NetStorage location.",
+						Description: "Specifies a CP code for which to log errors for the NetStorage location. You only need to provide the initial `id`, stripping any `cpc_` prefix to pass the integer to the rule tree. Additional CP code details may reflect back in subsequent read-only data.",
 						Type:        schema.TypeList,
 						MaxItems:    1,
 						Elem: &schema.Resource{
@@ -5726,7 +5726,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"front_end_optimization": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "This behavior is deprecated, but you should not disable or remove it if present. This behavior cannot be used in includes.",
+			Description: "This behavior is deprecated, but you shouldn't disable or remove it if present. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -5814,7 +5814,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						},
 					},
 					"secret_key": {
-						ValidateDiagFunc: validateRegexOrVariable("^[0-9a-zA-Z]{24}$"),
+						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validateRegexOrVariable("^[0-9a-zA-Z]{24}$")),
 						Optional:         true,
 						Description:      "Specifies the shared secret key.",
 						Type:             schema.TypeString,
@@ -6585,7 +6585,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 					},
 					"cp_code_original": {
 						Optional:    true,
-						Description: "Assigns a CP code to track traffic and billing for original images that the Image and Video Manager has not modified.",
+						Description: "Assigns a CP code to track traffic and billing for original images that the Image and Video Manager has not modified. You only need to provide the initial `id`, stripping any `cpc_` prefix to pass the integer to the rule tree. Additional CP code details may reflect back in subsequent read-only data.",
 						Type:        schema.TypeList,
 						MaxItems:    1,
 						Elem: &schema.Resource{
@@ -6648,7 +6648,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 					},
 					"cp_code_transformed": {
 						Optional:    true,
-						Description: "Assigns a separate CP code to track traffic and billing for derived images.",
+						Description: "Assigns a separate CP code to track traffic and billing for derived images. You only need to provide the initial `id`, stripping any `cpc_` prefix to pass the integer to the rule tree. Additional CP code details may reflect back in subsequent read-only data.",
 						Type:        schema.TypeList,
 						MaxItems:    1,
 						Elem: &schema.Resource{
@@ -6800,7 +6800,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 					},
 					"cp_code_original": {
 						Optional:    true,
-						Description: "Select the CP code for which to track Image and Video Manager video traffic. Use this along with `cpCodeTransformed` to track traffic to derivative video content.",
+						Description: "Specifies the CP code for which to track Image and Video Manager video traffic. Use this along with `cpCodeTransformed` to track traffic to derivative video content. You only need to provide the initial `id`, stripping any `cpc_` prefix to pass the integer to the rule tree. Additional CP code details may reflect back in subsequent read-only data.",
 						Type:        schema.TypeList,
 						MaxItems:    1,
 						Elem: &schema.Resource{
@@ -6863,7 +6863,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 					},
 					"cp_code_transformed": {
 						Optional:    true,
-						Description: "Select the CP code to identify derivative transformed video content.",
+						Description: "Specifies the CP code to identify derivative transformed video content. You only need to provide the initial `id`, stripping any `cpc_` prefix to pass the integer to the rule tree. Additional CP code details may reflect back in subsequent read-only data.",
 						Type:        schema.TypeList,
 						MaxItems:    1,
 						Elem: &schema.Resource{
@@ -6953,7 +6953,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 					},
 					"policy_token_default": {
 						Optional:    true,
-						Description: "Specify the default policy identifier, which is registered with the `Image and Video Manager API` once you activate this property.",
+						Description: "Specifies the default policy identifier, which is registered with the `Image and Video Manager API` once you activate this property.",
 						Type:        schema.TypeString,
 					},
 				},
@@ -7545,13 +7545,13 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Type:        schema.TypeString,
 					},
 					"api_key": {
-						ValidateDiagFunc: validateRegexOrVariable("^$|^[a-zA-Z2-9]{5}-[a-zA-Z2-9]{5}-[a-zA-Z2-9]{5}-[a-zA-Z2-9]{5}-[a-zA-Z2-9]{5}$"),
+						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validateRegexOrVariable("^$|^[a-zA-Z2-9]{5}-[a-zA-Z2-9]{5}-[a-zA-Z2-9]{5}-[a-zA-Z2-9]{5}-[a-zA-Z2-9]{5}$")),
 						Optional:         true,
 						Description:      "This generated value uniquely identifies sections of your website for you to analyze independently. To access this value, see `Enable mPulse in Property Manager`.",
 						Type:             schema.TypeString,
 					},
 					"buffer_size": {
-						ValidateDiagFunc: validateRegexOrVariable("^(1[5-9][0-9]|1[0-9]{3}|[2-9][0-9]{2,3})$"),
+						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validateRegexOrVariable("^(1[5-9][0-9]|1[0-9]{3}|[2-9][0-9]{2,3})$")),
 						Optional:         true,
 						Description:      "Allows you to override the browser's default (150) maximum number of reported performance timeline entries.",
 						Type:             schema.TypeString,
@@ -7609,13 +7609,13 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Type:             schema.TypeString,
 					},
 					"hls_preferred_bitrate": {
-						ValidateDiagFunc: validateRegexOrVariable("^\\d+$"),
+						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validateRegexOrVariable("^\\d+$")),
 						Optional:         true,
 						Description:      "Sets the preferred bit rate in Kbps. This causes the media playlist specified in the `#EXT-X-STREAM-INF` tag that most closely matches the value to list first. All other playlists maintain their current position in the manifest.",
 						Type:             schema.TypeString,
 					},
 					"hls_filter_in_bitrates": {
-						ValidateDiagFunc: validateRegexOrVariable("^\\d+(,\\d+)*$"),
+						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validateRegexOrVariable("^\\d+(,\\d+)*$")),
 						Optional:         true,
 						Description:      "Specifies a comma-delimited set of preferred bit rates, such as `100,200,400`. Playlists specified in the `#EXT-X-STREAM-INF` tag with bit rates outside of any of those values by up to 100 Kbps are excluded from the manifest.",
 						Type:             schema.TypeString,
@@ -7631,13 +7631,13 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"hls_query_param_secret_key": {
-						ValidateDiagFunc: validateRegexOrVariable("^(0x)?[0-9a-fA-F]{32}$"),
+						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validateRegexOrVariable("^(0x)?[0-9a-fA-F]{32}$")),
 						Optional:         true,
 						Description:      "Specifies a primary key as a token to accompany the request.",
 						Type:             schema.TypeString,
 					},
 					"hls_query_param_transition_key": {
-						ValidateDiagFunc: validateRegexOrVariable("^(0x)?[0-9a-fA-F]{32}$"),
+						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validateRegexOrVariable("^(0x)?[0-9a-fA-F]{32}$")),
 						Optional:         true,
 						Description:      "Specifies a transition key as a token to accompany the request.",
 						Type:             schema.TypeString,
@@ -9211,7 +9211,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						},
 					},
 					"secret_key": {
-						ValidateDiagFunc: validateRegexOrVariable("^[0-9a-zA-Z]{24}$"),
+						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validateRegexOrVariable("^[0-9a-zA-Z]{24}$")),
 						Optional:         true,
 						Description:      "Specifies the shared secret key.",
 						Type:             schema.TypeString,
@@ -9280,7 +9280,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Type:             schema.TypeString,
 					},
 					"aws_host": {
-						ValidateDiagFunc: validateRegexOrVariable("^(([a-zA-Z0-9]([a-zA-Z0-9_\\-]*[a-zA-Z0-9])?)\\.)+([a-zA-Z]+|xn--[a-zA-Z0-9]+)$"),
+						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validateRegexOrVariable("^(([a-zA-Z0-9]([a-zA-Z0-9_\\-]*[a-zA-Z0-9])?)\\.)+([a-zA-Z]+|xn--[a-zA-Z0-9]+)$")),
 						Optional:         true,
 						Description:      "This specifies the AWS hostname, without `http://` or `https://` prefixes. If you leave this option empty, it inherits the hostname from the `origin` behavior.",
 						Type:             schema.TypeString,
@@ -11190,7 +11190,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Type:             schema.TypeInt,
 					},
 					"rum_group_name": {
-						ValidateDiagFunc: validateRegexOrVariable("^[0-9a-zA-Z]*$"),
+						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validateRegexOrVariable("^[0-9a-zA-Z]*$")),
 						Optional:         true,
 						Description:      "A deprecated option to specify an alternate name under which to batch this set of web traffic in your report. Do not use it.",
 						Type:             schema.TypeString,
@@ -11655,13 +11655,13 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"transition_key": {
-						ValidateDiagFunc: validateRegexOrVariable("^(0x)?[0-9a-fA-F]{32}$"),
+						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validateRegexOrVariable("^(0x)?[0-9a-fA-F]{32}$")),
 						Optional:         true,
 						Description:      "An alternate encryption key to match along with the `key` field, allowing you to rotate keys with no down time.",
 						Type:             schema.TypeString,
 					},
 					"salt": {
-						ValidateDiagFunc: validation.ToDiagFunc(validation.StringLenBetween(16, 16)),
+						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validation.ToDiagFunc(validation.StringLenBetween(16, 16))),
 						Optional:         true,
 						Description:      "Specifies a salt as input into the token for added security. This value needs to match the salt used in the token generation code.",
 						Type:             schema.TypeString,
@@ -13214,13 +13214,13 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 						Type:             schema.TypeString,
 					},
 					"transition_key": {
-						ValidateDiagFunc: validateRegexOrVariable("^(0x)?[0-9a-fA-F]{64}$"),
+						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validateRegexOrVariable("^(0x)?[0-9a-fA-F]{64}$")),
 						Optional:         true,
 						Description:      "Specifies a transition key as a hex value.",
 						Type:             schema.TypeString,
 					},
 					"salt": {
-						ValidateDiagFunc: validation.ToDiagFunc(validation.StringLenBetween(16, 16)),
+						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validation.ToDiagFunc(validation.StringLenBetween(16, 16))),
 						Optional:         true,
 						Description:      "Specifies a salt string for input when generating the token, which needs to match the salt value used in the token generation code.",
 						Type:             schema.TypeString,
@@ -13569,7 +13569,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 					},
 					"waiting_room_cp_code": {
 						Optional:    true,
-						Description: "Specifies a `cpcode` object for requests sent to the waiting room, including a numeric `id` key and a descriptive `name`.",
+						Description: "Specifies a CP code for requests sent to the waiting room. You only need to provide the initial `id`, stripping any `cpc_` prefix to pass the integer to the rule tree. Additional CP code details may reflect back in subsequent read-only data.",
 						Type:        schema.TypeList,
 						MaxItems:    1,
 						Elem: &schema.Resource{
@@ -14849,7 +14849,7 @@ func getCriteriaSchemaV20230105() map[string]*schema.Schema {
 					},
 					"value": {
 						Optional:    true,
-						Description: "Specifies an object that encodes the matching `value`, including an `id` key and a descriptive `name`.",
+						Description: "Specifies the CP code as an object. You only need to provide the initial `id` to match the CP code, stripping any `cpc_` prefix to pass the integer to the rule tree. Additional CP code details may reflect back in subsequent read-only data.",
 						Type:        schema.TypeList,
 						MaxItems:    1,
 						Elem: &schema.Resource{

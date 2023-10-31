@@ -1,5 +1,66 @@
 # RELEASE NOTES
 
+## 5.4.0 (Oct 31, 2023)
+
+#### FEATURES/ENHANCEMENTS:
+
+* Appsec
+  * Suppressed trigger of new activation for `note` field change in `akamai_networklist_activations` and `akamai_appsec_activations` resources.
+
+* Client Lists
+  * Added support for state import for `akamai_clientlist_list` and `akamai_clientlist_activation` resources
+
+* Cloudlets
+  * Added `matches_alway` field to `akamai_cloudlets_edge_redirector_match_rule` data source
+  * Added configurable timeout for following resources as `timeouts.default` field
+    * `akamai_cloudlets_application_load_balancer_activation`
+    * `akamai_cloudlets_policy_activation`
+    * `akamai_cloudlets_policy`
+
+* CPS
+  * Added configurable timeout for following resources as `timeouts.default` field ([I#440](https://github.com/akamai/terraform-provider-akamai/issues/440))
+    * `akamai_cps_dv_enrollment`
+    * `akamai_cps_dv_validation`
+    * `akamai_cps_third_party_enrollment`
+    * `akamai_cps_upload_certificate`
+
+* Edgeworkers
+  * Added configurable timeout for following resources as `timeouts.default` field
+    * `akamai_edgekv_group_items`
+    * `akamai_edgeworker`
+  * Added configurable timeout for `akamai_edgeworkers_activation` resource as `timeouts.default` and `timeouts.delete` fields
+
+* IAM
+  * Phone number is no longer required for IAM user in `akamai_iam_user` resource.
+
+* PAPI
+  * Added configurable timeout for following resources as `timeouts.default` field ([I#440](https://github.com/akamai/terraform-provider-akamai/issues/440))
+    * `akamai_property_activation`
+    * `akamai_property_include_activation`
+    * `akamai_edge_hostname`
+  * Added configurable timeout for `akamai_cp_code` resource as `timeouts.update` field
+  * Changed `version` field in `akamai_property_activation` data source to optional. Now when `version` is not provided,
+    datasource automatically finds the active one for given network.
+  * Allowed empty values for some fields
+    in `akamai_property_builder` ([I#481](https://github.com/akamai/terraform-provider-akamai/issues/481))
+  * Added support for new rule format `v2023-09-20`
+
+#### BUG FIXES:
+
+* GTM
+  * Fixed problem with wrong datacenters updated in `akamai_gtm_property`.
+
+* IAM
+  * Fixed Terraform proposing modifications to user settings when using international phone numbers in `akamai_iam_user`
+    resource.
+    * NOTE:
+      * For international phone numbers there might be a diff during plan. Please apply suggested change to store the
+        correct number.
+      * Invalid phone numbers will block the plan.
+
+* PAPI
+  * Made `status_update_email` attribute optional in `akamai_edge_hostname` resource
+
 ## 5.3.0 (Sep 26, 2023)
 
 #### FEATURES/ENHANCEMENTS:
@@ -1061,8 +1122,8 @@ These are the operations supported in the Network Lists API v2:
 These are the operations supported in the Identity Management: User Administration API v2:
 
 * Create a new user
-* Update a userÃ¢ÂÂs profile
-* Update a userÃ¢ÂÂs role assignments
+* Update a user's profile
+* Update a user's role assignments
 * Delete a user
 
 ## 1.1.1 (Jan 8, 2021)

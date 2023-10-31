@@ -159,6 +159,11 @@ func dataSourceCloudletsEdgeRedirectorMatchRule() *schema.Resource {
 								},
 							},
 						},
+						"matches_always": {
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Description: "Is used in some cloudlets to support default rules (rule that is always matched)",
+						},
 						"use_relative_url": {
 							Type:     schema.TypeString,
 							Optional: true,
@@ -289,6 +294,7 @@ func getMatchRulesER(matchRules []interface{}) (cloudlets.MatchRules, error) {
 			Type:                     cloudlets.MatchRuleTypeER,
 			Start:                    getInt64Value(matchRuleMap, "start"),
 			End:                      getInt64Value(matchRuleMap, "end"),
+			MatchesAlways:            getBoolValue(matchRuleMap, "matches_always"),
 			Matches:                  matches,
 			UseRelativeURL:           getStringValue(matchRuleMap, "use_relative_url"),
 			StatusCode:               getIntValue(matchRuleMap, "status_code"),

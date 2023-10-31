@@ -26,10 +26,9 @@ var dataSourcePropertyActivationSchema = map[string]*schema.Schema{
 		Description: "The property's unique identifier, including optional `prp_` prefix",
 	},
 	"version": {
-		Type:             schema.TypeInt,
-		Required:         true,
-		ValidateDiagFunc: tf.IsNotBlank,
-		Description:      "The activated property version. To always use the latest version, enter this value `{resource}.{resource identifier}.{field name}`",
+		Type:        schema.TypeInt,
+		Optional:    true,
+		Description: "The activated property version. When not provided, defaults to latest.",
 	},
 	"network": {
 		Type:        schema.TypeString,

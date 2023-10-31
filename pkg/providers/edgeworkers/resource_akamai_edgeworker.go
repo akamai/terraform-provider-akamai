@@ -17,6 +17,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/edgeworkers"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/timeouts"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -42,6 +43,9 @@ func resourceEdgeWorker() *schema.Resource {
 		CustomizeDiff: customdiff.All(
 			bundleHashCustomDiff,
 		),
+		Timeouts: &schema.ResourceTimeout{
+			Default: &timeouts.SDKDefaultTimeout,
+		},
 		Schema: map[string]*schema.Schema{
 			"edgeworker_id": {
 				Type:        schema.TypeInt,
@@ -87,6 +91,21 @@ func resourceEdgeWorker() *schema.Resource {
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Computed:    true,
 				Description: "The list of warnings returned by EdgeWorker validation",
+			},
+			"timeouts": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				MaxItems:    1,
+				Description: "Enables to set timeout for processing",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"default": {
+							Type:             schema.TypeString,
+							Optional:         true,
+							ValidateDiagFunc: timeouts.ValidateDurationFormat,
+						},
+					},
+				},
 			},
 		},
 	}
@@ -235,6 +254,7 @@ func resourceEdgeWorkerUpdate(ctx context.Context, d *schema.ResourceData, m int
 	)
 	client := inst.Client(meta)
 	logger.Debug("Updating EdgeWorker version")
+
 	edgeWorkerID := d.Id()
 	edgeWorkerIDReq, err := strconv.Atoi(edgeWorkerID)
 	if err != nil {

@@ -12,6 +12,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/edgeworkers"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/timeouts"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -33,6 +34,12 @@ func resourceEdgeworkersActivation() *schema.Resource {
 			Default: &edgeworkersActivationResourceDefaultTimeout,
 		},
 		CustomizeDiff: checkEdgeworkerExistsOnDiff,
+		SchemaVersion: 1,
+		StateUpgraders: []schema.StateUpgrader{{
+			Version: 0,
+			Type:    resourceEdgeworkersActivationV0().CoreConfigSchema().ImpliedType(),
+			Upgrade: timeouts.MigrateToExplicit(),
+		}},
 	}
 }
 
@@ -59,6 +66,26 @@ func resourceEdgeworkersActivationSchema() map[string]*schema.Schema {
 			Type:        schema.TypeInt,
 			Computed:    true,
 			Description: "A unique identifier of the activation",
+		},
+		"timeouts": {
+			Type:        schema.TypeList,
+			Optional:    true,
+			MaxItems:    1,
+			Description: "Enables to set timeout for processing",
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"default": {
+						Type:             schema.TypeString,
+						Optional:         true,
+						ValidateDiagFunc: timeouts.ValidateDurationFormat,
+					},
+					"delete": {
+						Type:             schema.TypeString,
+						Optional:         true,
+						ValidateDiagFunc: timeouts.ValidateDurationFormat,
+					},
+				},
+			},
 		},
 	}
 }
@@ -137,6 +164,11 @@ func resourceEdgeworkersActivationUpdate(ctx context.Context, rd *schema.Resourc
 	client := inst.Client(meta)
 
 	logger.Debug("Updating edgeworker activation")
+
+	if !rd.HasChangeExcept("timeouts") {
+		logger.Debug("Only timeouts were updated, skipping")
+		return nil
+	}
 
 	return upsertActivation(ctx, rd, m, client)
 }

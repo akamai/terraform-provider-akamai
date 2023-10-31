@@ -11,6 +11,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cps"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/timeouts"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
 	cpstools "github.com/akamai/terraform-provider-akamai/v5/pkg/providers/cps/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -18,7 +19,6 @@ import (
 )
 
 var (
-	changeAckDeadline      = 5 * time.Minute
 	changeAckRetryInterval = 10 * time.Second
 )
 
@@ -26,6 +26,7 @@ func resourceCPSDVValidation() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceCPSDVValidationCreate,
 		ReadContext:   resourceCPSDVValidationRead,
+		UpdateContext: resourceCPSDVValidationUpdate,
 		DeleteContext: resourceCPSDVValidationDelete,
 
 		Schema: map[string]*schema.Schema{
@@ -47,6 +48,24 @@ func resourceCPSDVValidation() *schema.Resource {
 				Computed:    true,
 				Description: "Status of validation",
 			},
+			"timeouts": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				MaxItems:    1,
+				Description: "Enables to set timeout for processing",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"default": {
+							Type:             schema.TypeString,
+							Optional:         true,
+							ValidateDiagFunc: timeouts.ValidateDurationFormat,
+						},
+					},
+				},
+			},
+		},
+		Timeouts: &schema.ResourceTimeout{
+			Default: &timeouts.SDKDefaultTimeout,
 		},
 	}
 }
@@ -120,8 +139,6 @@ func resourceCPSDVValidationCreate(ctx context.Context, d *schema.ResourceData, 
 
 	// in case of error, attempt retry
 	logger.Debugf("error sending acknowledgement request: %s", err)
-	ackCtx, cancel := context.WithTimeout(ctx, changeAckDeadline)
-	defer cancel()
 	for {
 		select {
 		case <-time.After(changeAckRetryInterval):
@@ -134,7 +151,7 @@ func resourceCPSDVValidationCreate(ctx context.Context, d *schema.ResourceData, 
 				d.SetId(strconv.Itoa(enrollmentID))
 				return resourceCPSDVValidationRead(ctx, d, m)
 			}
-		case <-ackCtx.Done():
+		case <-ctx.Done():
 			return diag.Errorf("retry timeout reached - error sending acknowledgement request: %s", err)
 		}
 	}
@@ -182,6 +199,18 @@ func resourceCPSDVValidationRead(ctx context.Context, d *schema.ResourceData, m 
 		}
 	}
 	return nil
+}
+
+func resourceCPSDVValidationUpdate(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := meta.Must(m)
+	logger := meta.Log("CPS", "resourceCPSDVValidationUpdate")
+
+	if !d.HasChangeExcept("timeouts") {
+		logger.Debug("Only timeouts were updated, skipping")
+		return nil
+	}
+
+	return diag.Errorf("Update in this resource is not allowed") //all fields are force new - it should never reach here
 }
 
 func resourceCPSDVValidationDelete(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {

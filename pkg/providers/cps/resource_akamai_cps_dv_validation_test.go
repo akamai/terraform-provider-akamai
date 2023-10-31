@@ -104,6 +104,7 @@ func TestDVValidation(t *testing.T) {
 							resource.TestCheckResourceAttr("akamai_cps_dv_validation.dv_validation", "id", "1"),
 							resource.TestCheckResourceAttr("akamai_cps_dv_validation.dv_validation", "status", "coodinate-domain-validation"),
 							resource.TestCheckResourceAttr("akamai_cps_dv_validation.dv_validation", "sans.#", "1"),
+							resource.TestCheckResourceAttr("akamai_cps_dv_validation.dv_validation", "timeouts.#", "0"),
 						),
 					},
 					{
@@ -112,6 +113,8 @@ func TestDVValidation(t *testing.T) {
 							resource.TestCheckResourceAttr("akamai_cps_dv_validation.dv_validation", "id", "1"),
 							resource.TestCheckResourceAttr("akamai_cps_dv_validation.dv_validation", "status", "coodinate-domain-validation"),
 							resource.TestCheckResourceAttr("akamai_cps_dv_validation.dv_validation", "sans.#", "2"),
+							resource.TestCheckResourceAttr("akamai_cps_dv_validation.dv_validation", "timeouts.#", "1"),
+							resource.TestCheckResourceAttr("akamai_cps_dv_validation.dv_validation", "timeouts.0.default", "1h"),
 						),
 					},
 				},
@@ -182,7 +185,6 @@ func TestDVValidation(t *testing.T) {
 	t.Run("retry acknowledgement with timeout", func(t *testing.T) {
 		client := &cps.Mock{}
 		changeAckRetryInterval = 1 * time.Millisecond
-		changeAckDeadline = 2 * time.Millisecond
 		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&cps.Enrollment{PendingChanges: []cps.PendingChange{
 				{
@@ -208,7 +210,7 @@ func TestDVValidation(t *testing.T) {
 				ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
-						Config:      testutils.LoadFixtureString(t, "testdata/TestResDVValidation/create_validation.tf"),
+						Config:      testutils.LoadFixtureString(t, "testdata/TestResDVValidation/create_validation_with_timeout.tf"),
 						ExpectError: regexp.MustCompile("retry timeout reached - error sending acknowledgement request: oops"),
 					},
 				},

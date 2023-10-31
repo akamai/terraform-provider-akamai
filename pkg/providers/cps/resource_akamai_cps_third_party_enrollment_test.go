@@ -143,12 +143,16 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 						Config: testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/lifecycle/create_enrollment.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_cps_third_party_enrollment.third_party", "contract_id", "ctr_1"),
+							resource.TestCheckResourceAttr("akamai_cps_third_party_enrollment.third_party", "timeouts.#", "1"),
+							resource.TestCheckResourceAttr("akamai_cps_third_party_enrollment.third_party", "timeouts.0.default", "2h"),
 						),
 					},
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/lifecycle/update_enrollment.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_cps_third_party_enrollment.third_party", "contract_id", "ctr_1"),
+							resource.TestCheckResourceAttr("akamai_cps_third_party_enrollment.third_party", "timeouts.#", "1"),
+							resource.TestCheckResourceAttr("akamai_cps_third_party_enrollment.third_party", "timeouts.0.default", "2h"),
 						),
 					},
 				},
@@ -272,6 +276,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 						Config: testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/lifecycle_no_sans/create_enrollment.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_cps_third_party_enrollment.third_party", "contract_id", "ctr_1"),
+							resource.TestCheckResourceAttr("akamai_cps_third_party_enrollment.third_party", "timeouts.#", "0"),
 						),
 					},
 					{

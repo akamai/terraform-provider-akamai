@@ -9,6 +9,9 @@ resource "akamai_edge_hostname" "edgehostname" {
   edge_hostname = "test2.edgesuite.net"
   certificate   = 123
   ip_behavior   = "IPV6_COMPLIANCE"
+  timeouts {
+    default = "55m"
+  }
 }
 
 output "edge_hostname" {

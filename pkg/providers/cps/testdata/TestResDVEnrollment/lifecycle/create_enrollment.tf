@@ -65,6 +65,9 @@ resource "akamai_cps_dv_enrollment" "dv" {
     postal_code      = "12345"
     region           = "MA"
   }
+  timeouts {
+    default = "2h"
+  }
 }
 
 locals {

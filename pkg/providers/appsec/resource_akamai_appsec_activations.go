@@ -48,9 +48,10 @@ func resourceActivations() *schema.Resource {
 				Description: "Network on which to activate the configuration version (STAGING or PRODUCTION)",
 			},
 			"note": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "Note describing the activation. Will use timestamp if omitted.",
+				Type:             schema.TypeString,
+				Optional:         true,
+				Description:      "Note describing the activation. Will use timestamp if omitted.",
+				DiffSuppressFunc: suppressNoteFieldForAppSecActivation,
 			},
 			"notification_emails": {
 				Type:        schema.TypeSet,
@@ -449,4 +450,11 @@ func defaultActivationNote(deactivating bool) (string, error) {
 		return fmt.Sprintf("Deactivation request %s", formattedTime), nil
 	}
 	return fmt.Sprintf("Activation request %s", formattedTime), nil
+}
+
+func suppressNoteFieldForAppSecActivation(_, oldValue, newValue string, d *schema.ResourceData) bool {
+	if oldValue != newValue && d.HasChanges("config_id", "version", "network") {
+		return false
+	}
+	return true
 }
