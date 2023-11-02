@@ -379,13 +379,45 @@ func waitForChange(ctx context.Context, client hapi.HAPI, changeID int) error {
 	}
 }
 
-func resourceSecureEdgeHostNameDelete(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceSecureEdgeHostNameDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	logger := meta.Log("PAPI", "resourceSecureEdgeHostNameDelete")
-	logger.Debug("DELETING")
-	logger.Info("PAPI does not support edge hostname deletion - resource will only be removed from state")
-	d.SetId("")
-	logger.Debugf("DONE")
+	logger := meta.Log("HAPI", "resourceSecureEdgeHostNameDelete")
+
+	edgeHostname, err := tf.GetStringValue("edge_hostname", d)
+	dnsZone, _ := parseEdgeHostname(edgeHostname)
+	recordName := strings.ReplaceAll(edgeHostname, "."+dnsZone, "")
+
+	logger.Debugf("edge_hostname = %v", edgeHostname)
+	logger.Debugf("dnsZone = %v, recordName = %v", dnsZone, recordName)
+	req := hapi.DeleteEdgeHostnameRequest{
+		DNSZone:    dnsZone,
+		RecordName: recordName,
+		Comments:   fmt.Sprintf("remove %s", edgeHostname),
+	}
+
+	emails, err := tf.GetListValue("status_update_email", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+
+	if len(emails) != 0 {
+		statusUpdateEmails := make([]string, len(emails))
+		for i, email := range emails {
+			statusUpdateEmails[i] = email.(string)
+		}
+		req.StatusUpdateEmail = statusUpdateEmails
+	}
+
+	hapiClient := HapiClient(meta)
+	logger.Debugf("hapiClient.DeleteEdgeHostname: req = %v", req)
+	resp, err := hapiClient.DeleteEdgeHostname(ctx, req)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err = waitForChange(ctx, hapiClient, resp.ChangeID); err != nil {
+		return diag.FromErr(err)
+	}
 	return nil
 }
 
