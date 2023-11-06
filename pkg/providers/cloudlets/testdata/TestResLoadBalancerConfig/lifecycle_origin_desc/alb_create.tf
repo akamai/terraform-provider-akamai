@@ -3,9 +3,10 @@ provider "akamai" {
 }
 
 resource "akamai_cloudlets_application_load_balancer" "alb" {
-  origin_id      = "test_origin"
-  description    = "test description"
-  balancing_type = "WEIGHTED"
+  origin_id          = "test_origin"
+  origin_description = "origin description"
+  description        = "test description"
+  balancing_type     = "WEIGHTED"
   data_centers {
     cloud_server_host_header_override = false
     cloud_service                     = true

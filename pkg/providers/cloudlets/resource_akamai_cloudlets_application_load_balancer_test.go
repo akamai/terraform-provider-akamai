@@ -18,12 +18,15 @@ import (
 func TestResourceApplicationLoadBalancer(t *testing.T) {
 
 	type loadBalancerAttributes struct {
-		originID, version, description, balancingType string
+		originID, version, originDescription, description, balancingType string
 	}
 	var (
-		expectCreateLoadBalancer = func(_ *testing.T, client *cloudlets.Mock, originID, description, balancingType string, version int64, livenessHosts []string) (*cloudlets.Origin, *cloudlets.LoadBalancerVersion) {
+		expectCreateLoadBalancer = func(_ *testing.T, client *cloudlets.Mock, originID, originDescription, description, balancingType string, version int64, livenessHosts []string) (*cloudlets.Origin, *cloudlets.LoadBalancerVersion) {
 			loadBalancerConfig := cloudlets.CreateOriginRequest{
 				OriginID: originID,
+				Description: cloudlets.Description{
+					Description: originDescription,
+				},
 			}
 			loadBalancerVersionReq := cloudlets.LoadBalancerVersion{
 				Description:   description,
@@ -67,7 +70,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 			}
 			origin := cloudlets.Origin{
 				OriginID:    originID,
-				Description: description,
+				Description: originDescription,
 				Type:        "APPLICATION_LOAD_BALANCER",
 			}
 			origins := []cloudlets.OriginResponse{
@@ -91,6 +94,9 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 		}
 
 		expectReadLoadBalancer = func(_ *testing.T, client *cloudlets.Mock, origin *cloudlets.Origin, loadBalancerVersion *cloudlets.LoadBalancerVersion, times int) {
+			client.On("GetOrigin", mock.Anything, cloudlets.GetOriginRequest{
+				OriginID: origin.OriginID,
+			}).Return(origin, nil).Times(times)
 			client.On("GetLoadBalancerVersion", mock.Anything, cloudlets.GetLoadBalancerVersionRequest{
 				OriginID:       origin.OriginID,
 				Version:        loadBalancerVersion.Version,
@@ -126,6 +132,23 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 				LoadBalancerVersion: newVersionReq,
 			}).Return(&newVersionResp, nil).Once()
 			return &newVersionResp
+		}
+
+		expectOriginDescriptionUpdate = func(t *testing.T, client *cloudlets.Mock, origin *cloudlets.Origin, description string) *cloudlets.Origin {
+			var newOrigin cloudlets.Origin
+			err := copier.CopyWithOption(&newOrigin, origin, copier.Option{DeepCopy: true})
+			require.NoError(t, err)
+
+			newOrigin.Description = description
+
+			client.On("UpdateOrigin", mock.Anything, cloudlets.UpdateOriginRequest{
+				OriginID: origin.OriginID,
+				Description: cloudlets.Description{
+					Description: description,
+				},
+			}).Return(&newOrigin, nil)
+
+			return &newOrigin
 		}
 
 		expectUpdateLoadBalancerVersion = func(t *testing.T, client *cloudlets.Mock, originID string, loadBalancerVersion *cloudlets.LoadBalancerVersion, newBalancingType, description string) *cloudlets.LoadBalancerVersion {
@@ -173,6 +196,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 		checkAttributes = func(attrs loadBalancerAttributes) resource.TestCheckFunc {
 			checks := []resource.TestCheckFunc{
 				resource.TestCheckResourceAttr("akamai_cloudlets_application_load_balancer.alb", "id", attrs.originID),
+				resource.TestCheckResourceAttr("akamai_cloudlets_application_load_balancer.alb", "origin_description", attrs.originDescription),
 				resource.TestCheckResourceAttr("akamai_cloudlets_application_load_balancer.alb", "description", attrs.description),
 				resource.TestCheckResourceAttr("akamai_cloudlets_application_load_balancer.alb", "balancing_type", attrs.balancingType),
 				resource.TestCheckResourceAttr("akamai_cloudlets_application_load_balancer.alb", "data_centers.#", "1"),
@@ -201,7 +225,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle"
 		client := new(cloudlets.Mock)
 
-		origin, lbVersion := expectCreateLoadBalancer(t, client, "test_origin", "test description", "WEIGHTED", 1, []string{"tf.test"})
+		origin, lbVersion := expectCreateLoadBalancer(t, client, "test_origin", "", "test description", "WEIGHTED", 1, []string{"tf.test"})
 
 		expectReadLoadBalancer(t, client, origin, lbVersion, 3)
 
@@ -241,7 +265,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle"
 		client := new(cloudlets.Mock)
 
-		origin, lbVersion := expectCreateLoadBalancer(t, client, "test_origin", "test description", "WEIGHTED", 1, []string{"tf.test"})
+		origin, lbVersion := expectCreateLoadBalancer(t, client, "test_origin", "", "test description", "WEIGHTED", 1, []string{"tf.test"})
 
 		expectReadLoadBalancer(t, client, origin, lbVersion, 3)
 
@@ -277,11 +301,11 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 
-	t.Run("update only origin description", func(t *testing.T) {
+	t.Run("update only description", func(t *testing.T) {
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle_origin_update"
 		client := new(cloudlets.Mock)
 
-		origin, lbVersion := expectCreateLoadBalancer(t, client, "test_origin", "test description", "WEIGHTED", 1, []string{"tf.test"})
+		origin, lbVersion := expectCreateLoadBalancer(t, client, "test_origin", "", "test description", "WEIGHTED", 1, []string{"tf.test"})
 
 		expectReadLoadBalancer(t, client, origin, lbVersion, 3)
 
@@ -321,7 +345,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle_version_update"
 		client := new(cloudlets.Mock)
 
-		origin, lbVersion := expectCreateLoadBalancer(t, client, "test_origin", "test description", "WEIGHTED", 1, []string{"tf.test"})
+		origin, lbVersion := expectCreateLoadBalancer(t, client, "test_origin", "", "test description", "WEIGHTED", 1, []string{"tf.test"})
 
 		expectReadLoadBalancer(t, client, origin, lbVersion, 3)
 
@@ -360,7 +384,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle_no_liveness_settings"
 		client := new(cloudlets.Mock)
 
-		origin, lbVersion := expectCreateLoadBalancer(t, client, "test_origin", "test description", "WEIGHTED", 1, []string{"tf.test"})
+		origin, lbVersion := expectCreateLoadBalancer(t, client, "test_origin", "", "test description", "WEIGHTED", 1, []string{"tf.test"})
 
 		expectReadLoadBalancer(t, client, origin, lbVersion, 3)
 
@@ -505,7 +529,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle"
 		client := new(cloudlets.Mock)
 
-		origin, lbVersion := expectCreateLoadBalancer(t, client, "test_origin", "test description", "WEIGHTED", 1, []string{"tf.test"})
+		origin, lbVersion := expectCreateLoadBalancer(t, client, "test_origin", "", "test description", "WEIGHTED", 1, []string{"tf.test"})
 
 		expectReadLoadBalancer(t, client, origin, lbVersion, 3)
 
@@ -541,11 +565,58 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 
+	t.Run("load balancer lifecycle with origin description", func(t *testing.T) {
+		testDir := "testdata/TestResLoadBalancerConfig/lifecycle_origin_desc"
+		client := new(cloudlets.Mock)
+
+		origin, lbVersion := expectCreateLoadBalancer(t, client, "test_origin", "origin description", "test description", "WEIGHTED", 1, []string{"tf.test"})
+
+		expectReadLoadBalancer(t, client, origin, lbVersion, 3)
+
+		origin = expectOriginDescriptionUpdate(t, client, origin, "update origin description")
+		lbVersion = expectCreateLoadBalancerVersion(t, client, origin.OriginID, lbVersion, "PERFORMANCE", "test description updated")
+
+		expectReadLoadBalancer(t, client, origin, lbVersion, 2)
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProviderFactories: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_create.tf", testDir)),
+						Check: checkAttributes(loadBalancerAttributes{
+							originID:          "test_origin",
+							version:           "1",
+							originDescription: "origin description",
+							description:       "test description",
+							balancingType:     "WEIGHTED",
+						}),
+					},
+					{
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_update.tf", testDir)),
+						Check: checkAttributes(loadBalancerAttributes{
+							originID:          "test_origin",
+							version:           "2",
+							originDescription: "update origin description",
+							description:       "test description updated",
+							balancingType:     "PERFORMANCE",
+						}),
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
+
 	t.Run("error fetching version", func(t *testing.T) {
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle"
 		client := new(cloudlets.Mock)
 
-		_, _ = expectCreateLoadBalancer(t, client, "test_origin", "test description", "WEIGHTED", 1, []string{"tf.test"})
+		origin, _ := expectCreateLoadBalancer(t, client, "test_origin", "", "test description", "WEIGHTED", 1, []string{"tf.test"})
+
+		client.On("GetOrigin", mock.Anything, cloudlets.GetOriginRequest{
+			OriginID: "test_origin",
+		}).Return(origin, nil).Once()
 
 		client.On("GetLoadBalancerVersion", mock.Anything, cloudlets.GetLoadBalancerVersionRequest{
 			OriginID:       "test_origin",
@@ -571,7 +642,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle"
 		client := new(cloudlets.Mock)
 
-		origin, lbVersion := expectCreateLoadBalancer(t, client, "test_origin", "test description", "WEIGHTED", 1, []string{"tf.test"})
+		origin, lbVersion := expectCreateLoadBalancer(t, client, "test_origin", "", "test description", "WEIGHTED", 1, []string{"tf.test"})
 
 		expectReadLoadBalancer(t, client, origin, lbVersion, 3)
 
@@ -600,7 +671,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle"
 		client := new(cloudlets.Mock)
 
-		origin, lbVersion := expectCreateLoadBalancer(t, client, "test_origin", "test description", "WEIGHTED", 1, []string{"tf.test"})
+		origin, lbVersion := expectCreateLoadBalancer(t, client, "test_origin", "", "test description", "WEIGHTED", 1, []string{"tf.test"})
 
 		expectReadLoadBalancer(t, client, origin, lbVersion, 2)
 
@@ -629,7 +700,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle"
 		client := new(cloudlets.Mock)
 
-		origin, lbVersion := expectCreateLoadBalancer(t, client, "test_origin", "test description", "WEIGHTED", 1, []string{"tf.test"})
+		origin, lbVersion := expectCreateLoadBalancer(t, client, "test_origin", "", "test description", "WEIGHTED", 1, []string{"tf.test"})
 
 		expectReadLoadBalancer(t, client, origin, lbVersion, 2)
 
@@ -658,7 +729,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle"
 		client := new(cloudlets.Mock)
 
-		origin, lbVersion := expectCreateLoadBalancer(t, client, "test_origin", "test description", "WEIGHTED", 1, []string{"tf.test"})
+		origin, lbVersion := expectCreateLoadBalancer(t, client, "test_origin", "", "test description", "WEIGHTED", 1, []string{"tf.test"})
 
 		expectReadLoadBalancer(t, client, origin, lbVersion, 2)
 
@@ -728,7 +799,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 		}
 		client.On("ListOrigins", mock.Anything, mock.Anything).Return(origins, nil).Times(2)
 
-		origin, lbVersion := expectCreateLoadBalancer(t, client, "test_origin", "test description", "WEIGHTED", 1, []string{})
+		origin, lbVersion := expectCreateLoadBalancer(t, client, "test_origin", "", "test description", "WEIGHTED", 1, []string{})
 
 		expectReadLoadBalancer(t, client, origin, lbVersion, 3)
 
