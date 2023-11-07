@@ -2,16 +2,16 @@ package property
 
 import (
 	"context"
+	"errors"
 	"strconv"
-
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func dataSourcePropertyHostnames() *schema.Resource {
@@ -36,8 +36,9 @@ func dataSourcePropertyHostnames() *schema.Resource {
 			},
 			"version": {
 				Type:        schema.TypeInt,
+				Optional:    true,
 				Computed:    true,
-				Description: "This is a computed value - provider will always use 'latest' version, providing own version number is not supported",
+				Description: "Version of property to fetch hostnames for. If not provided, 'latest' is used",
 			},
 			"hostnames": {
 				Type:        schema.TypeList,
@@ -91,20 +92,35 @@ func dataPropertyHostnamesRead(ctx context.Context, d *schema.ResourceData, m in
 	}
 	propertyID = tools.AddPrefix(propertyID, "prp_")
 
-	latestVersion, err := client.GetLatestVersion(ctx, papi.GetLatestVersionRequest{
-		PropertyID: propertyID,
-		ContractID: contractID,
-		GroupID:    groupID,
-	})
+	version, err := tf.GetIntValue("version", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+
+	var prpVersion *papi.GetPropertyVersionsResponse
+	if version == 0 {
+		prpVersion, err = client.GetLatestVersion(ctx, papi.GetLatestVersionRequest{
+			PropertyID: propertyID,
+			ContractID: contractID,
+			GroupID:    groupID,
+		})
+	} else {
+		prpVersion, err = client.GetPropertyVersion(ctx, papi.GetPropertyVersionRequest{
+			PropertyID:      propertyID,
+			PropertyVersion: version,
+			ContractID:      contractID,
+			GroupID:         groupID,
+		})
+	}
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	version := latestVersion.Version.PropertyVersion
-	contractID = latestVersion.ContractID
-	groupID = latestVersion.GroupID
+	version = prpVersion.Version.PropertyVersion
+	contractID = prpVersion.ContractID
+	groupID = prpVersion.GroupID
 
-	if err := d.Set("version", version); err != nil {
+	if err = d.Set("version", version); err != nil {
 		return diag.FromErr(err)
 	}
 
