@@ -2164,7 +2164,7 @@ func getBehaviorsSchemaV20230920() map[string]*schema.Schema {
 		"client_certificate_auth": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "This behavior can be used in includes.",
+			Description: "Sends a `Client-To-Edge` header to your origin server with details from the mutual TLS certificate sent from the requesting client to the edge network. This establishes transitive trust between the client and your origin server. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -2186,17 +2186,17 @@ func getBehaviorsSchemaV20230920() map[string]*schema.Schema {
 					},
 					"enable": {
 						Optional:    true,
-						Description: "",
+						Description: "Constructs the `Client-To-Edge` authentication header using information from the client to edge mTLS handshake and forwards it to your origin. You can configure your origin to acknowledge the header to enable transitive trust. Some form of the client x.509 certificate needs to be included in the header. You can include the full certificate or specific attributes.",
 						Type:        schema.TypeBool,
 					},
 					"enable_complete_client_certificate": {
 						Optional:    true,
-						Description: "",
+						Description: "Whether to include the complete client certificate in the header, in its binary (DER) format. DER-formatted certificates leave out the `BEGIN CERTIFICATE/END CERTIFICATE` statements and most often use the `.der` extension. Alternatively, you can specify individual `clientCertificateAttributes` you want included in the request.",
 						Type:        schema.TypeBool,
 					},
 					"client_certificate_attributes": {
 						Optional:    true,
-						Description: "",
+						Description: "Specify client certificate attributes to include in the `Client-To-Edge` authentication header that's sent to your origin server.",
 						Type:        schema.TypeList,
 						Elem: &schema.Schema{
 							Type: schema.TypeString,
@@ -2204,7 +2204,7 @@ func getBehaviorsSchemaV20230920() map[string]*schema.Schema {
 					},
 					"enable_client_certificate_validation_status": {
 						Optional:    true,
-						Description: "",
+						Description: "Whether to include the current validation status of the client certificate in the `Client-To-Edge` authentication header. This verifies the validation status of the certificate, regardless of the certificate attributes you're including in the header.",
 						Type:        schema.TypeBool,
 					},
 				},
@@ -5025,7 +5025,7 @@ func getBehaviorsSchemaV20230920() map[string]*schema.Schema {
 		"enforce_mtls_settings": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "This behavior can be used in includes.",
+			Description: "This behavior repeats mTLS validation checks between a requesting client and the edge network. If the checks fail, you can deny the request or apply custom error handling. To use this behavior, you need to add either the `hostname` or `clientCertificate` criteria to the same rule. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -5047,12 +5047,12 @@ func getBehaviorsSchemaV20230920() map[string]*schema.Schema {
 					},
 					"enable_auth_set": {
 						Optional:    true,
-						Description: "",
+						Description: "Whether to require a specific mutual transport layer security (mTLS) certificate authority (CA) set in a request from a client to the edge network.",
 						Type:        schema.TypeBool,
 					},
 					"certificate_authority_set": {
 						Optional:    true,
-						Description: "",
+						Description: "Specify the client certificate authority (CA) sets you want to support in client requests. Run the `List CA Sets` operation in the mTLS Edge TrustStore API to get the `setId` value and pass it in this option as a string. If a request includes a set not defined here, it will be denied. The preset list items you can select are contingent on the CA sets you've created using the mTLS Edge Truststore, and then associated with a certificate in the `Certificate Provisioning System`.",
 						Type:        schema.TypeList,
 						Elem: &schema.Schema{
 							Type: schema.TypeString,
@@ -5060,12 +5060,12 @@ func getBehaviorsSchemaV20230920() map[string]*schema.Schema {
 					},
 					"enable_ocsp_status": {
 						Optional:    true,
-						Description: "",
+						Description: "Whether the mutual transport layer security requests from a client should use the online certificate support protocol (OCSP). OCSP can determine the x.509 certificate revocation status during the TLS handshake.",
 						Type:        schema.TypeBool,
 					},
 					"enable_deny_request": {
 						Optional:    true,
-						Description: "",
+						Description: "This denies a request from a client that doesn't match what you've set for the options in this behavior. When disabled, non-matching requests are allowed, but you can incorporate a custom handling operation, such as reviewing generated log entries to see the discrepancies, enable the `Client-To-Edge` authentication header, or issue a custom message.",
 						Type:        schema.TypeBool,
 					},
 				},
@@ -11130,7 +11130,7 @@ func getBehaviorsSchemaV20230920() map[string]*schema.Schema {
 		"restrict_object_caching": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "You need this behavior to deploy the Object Caching product. It disables serving HTML content and limits the maximum object size to 100MB. Contact Akamai Professional Services for help configuring it. This behavior is for internal usage only. This behavior can be used in includes.",
+			Description: "You need this behavior to deploy the Object Caching product. It disables serving HTML content and limits the maximum object size to 100MB. Contact Akamai Professional Services for help configuring it. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -14264,7 +14264,7 @@ func getCriteriaSchemaV20230920() map[string]*schema.Schema {
 					},
 					"enforce_mtls": {
 						Optional:    true,
-						Description: "",
+						Description: "Specifies custom handling of requests if any of the checks in the `enforceMtlsSettings` behavior fail. Enable this and use with behaviors such as `logCustom` so that they execute if the check fails. You need to add the `enforceMtlsSettings` behavior to a parent rule, with its own unique match condition and `enableDenyRequest` option disabled.",
 						Type:        schema.TypeBool,
 					},
 				},

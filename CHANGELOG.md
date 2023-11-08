@@ -1,14 +1,16 @@
 # RELEASE NOTES
 
-## 5.5.0 (xx xx, 2023)
+## 5.5.0 (Dec xx, 2023)
 
 #### FEATURES/ENHANCEMENTS:
 
 * Cloudlets
   * Add `origin_description` field to `akamai_cloudlets_application_load_balancer` resource
-
 * PAPI
+  * Behavior `restrict_object_caching` is public ([I#314](https://github.com/akamai/terraform-provider-akamai/issues/314) and [#277](https://github.com/akamai/terraform-provider-akamai/issues/277))
   * Added version support for `akamai_property_hostnames` data source ([I#413](https://github.com/akamai/terraform-provider-akamai/issues/413))
+
+#### BUG FIXES:
 
 ## 5.4.0 (Oct 31, 2023)
 
