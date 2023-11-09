@@ -17,6 +17,9 @@ var (
 	customBotCategoryActionMutex sync.Mutex
 	akamaiBotCategoryActionMutex sync.Mutex
 	transactionalEndpointMutex   sync.Mutex
+	akamaiBotCategoryMutex       sync.Mutex
+	akamaiDefinedBotMutex        sync.Mutex
+	botDetectionMutex            sync.Mutex
 )
 
 // getBotDetectionAction reads from the cache if present, or makes a getAll call to fetch all Bot Detection Actions for a security policy, stores in the cache and filters the required Bot Detection Action using ID.
@@ -265,4 +268,189 @@ func filterTransactionalEndpoint(transactionalEndpoints *botman.GetTransactional
 		}
 	}
 	return nil, fmt.Errorf("TransactionalEndpoint with id: %s does not exist", request.OperationID)
+}
+
+func getAkamaiBotCategoryList(ctx context.Context, request botman.GetAkamaiBotCategoryListRequest, m interface{}) (*botman.GetAkamaiBotCategoryListResponse, error) {
+	meta := akameta.Must(m)
+	client := inst.Client(meta)
+	logger := meta.Log("BotMan", "getAkamaiBotCategory")
+
+	cacheKey := fmt.Sprintf("%s", "getAkamaiBotCategory")
+	akamaiBotCategoryList := &botman.GetAkamaiBotCategoryListResponse{}
+	err := cache.Get(cache.BucketName(SubproviderName), cacheKey, akamaiBotCategoryList)
+	// if cache is disabled make a direct all to GetAkamaiBotCategoryList
+	if errors.Is(err, cache.ErrDisabled) {
+		return client.GetAkamaiBotCategoryList(ctx, request)
+	}
+	if err == nil {
+		return filterAkamaiBotCategoryList(akamaiBotCategoryList, request), nil
+	}
+
+	akamaiBotCategoryMutex.Lock()
+	defer func() {
+		logger.Debugf("Unlocking mutex")
+		akamaiBotCategoryMutex.Unlock()
+	}()
+
+	err = cache.Get(cache.BucketName(SubproviderName), cacheKey, akamaiBotCategoryList)
+	if err == nil {
+		return filterAkamaiBotCategoryList(akamaiBotCategoryList, request), nil
+	}
+
+	if !errors.Is(err, cache.ErrEntryNotFound) && !errors.Is(err, cache.ErrDisabled) {
+		logger.Errorf("error reading from cache: %s", err.Error())
+		return nil, err
+	}
+
+	// fetch all akamaiBotCategoryList to store in cache and then filter based on request
+	akamaiBotCategoryList, err = client.GetAkamaiBotCategoryList(ctx, botman.GetAkamaiBotCategoryListRequest{})
+	if err != nil {
+		logger.Errorf("calling 'GetAkamaiBotCategoryList': %s", err.Error())
+		return nil, err
+	}
+
+	err = cache.Set(cache.BucketName(SubproviderName), cacheKey, akamaiBotCategoryList)
+	if err != nil && !errors.Is(err, cache.ErrDisabled) {
+		logger.Errorf("error caching akamaiBotCategoryList into cache: %s", err.Error())
+		return nil, err
+	}
+
+	return filterAkamaiBotCategoryList(akamaiBotCategoryList, request), nil
+}
+
+func filterAkamaiBotCategoryList(akamaiBotCategoryList *botman.GetAkamaiBotCategoryListResponse, request botman.GetAkamaiBotCategoryListRequest) *botman.GetAkamaiBotCategoryListResponse {
+	if request.CategoryName == "" {
+		return akamaiBotCategoryList
+	}
+	var filteredResult botman.GetAkamaiBotCategoryListResponse
+	for _, category := range akamaiBotCategoryList.Categories {
+		if category["categoryName"].(string) == request.CategoryName {
+			filteredResult.Categories = append(filteredResult.Categories, category)
+			return &filteredResult
+		}
+	}
+	return &filteredResult
+}
+
+func getAkamaiDefinedBotList(ctx context.Context, request botman.GetAkamaiDefinedBotListRequest, m interface{}) (*botman.GetAkamaiDefinedBotListResponse, error) {
+	meta := akameta.Must(m)
+	client := inst.Client(meta)
+	logger := meta.Log("BotMan", "getAkamaiDefinedBot")
+
+	cacheKey := fmt.Sprintf("%s", "getAkamaiDefinedBot")
+	akamaiDefinedBotList := &botman.GetAkamaiDefinedBotListResponse{}
+	err := cache.Get(cache.BucketName(SubproviderName), cacheKey, akamaiDefinedBotList)
+	// if cache is disabled make a direct all to GetAkamaiDefinedBotList
+	if errors.Is(err, cache.ErrDisabled) {
+		return client.GetAkamaiDefinedBotList(ctx, request)
+	}
+	if err == nil {
+		return filterAkamaiDefinedBotList(akamaiDefinedBotList, request), nil
+	}
+
+	akamaiDefinedBotMutex.Lock()
+	defer func() {
+		logger.Debugf("Unlocking mutex")
+		akamaiDefinedBotMutex.Unlock()
+	}()
+
+	err = cache.Get(cache.BucketName(SubproviderName), cacheKey, akamaiDefinedBotList)
+	if err == nil {
+		return filterAkamaiDefinedBotList(akamaiDefinedBotList, request), nil
+	}
+
+	if !errors.Is(err, cache.ErrEntryNotFound) && !errors.Is(err, cache.ErrDisabled) {
+		logger.Errorf("error reading from cache: %s", err.Error())
+		return nil, err
+	}
+
+	// fetch all akamaiDefinedBotList to store in cache and then filter based on request
+	akamaiDefinedBotList, err = client.GetAkamaiDefinedBotList(ctx, botman.GetAkamaiDefinedBotListRequest{})
+	if err != nil {
+		logger.Errorf("calling 'GetAkamaiDefinedBotList': %s", err.Error())
+		return nil, err
+	}
+
+	err = cache.Set(cache.BucketName(SubproviderName), cacheKey, akamaiDefinedBotList)
+	if err != nil && !errors.Is(err, cache.ErrDisabled) {
+		logger.Errorf("error caching akamaiDefinedBotList into cache: %s", err.Error())
+		return nil, err
+	}
+
+	return filterAkamaiDefinedBotList(akamaiDefinedBotList, request), nil
+}
+
+func filterAkamaiDefinedBotList(akamaiDefinedBotList *botman.GetAkamaiDefinedBotListResponse, request botman.GetAkamaiDefinedBotListRequest) *botman.GetAkamaiDefinedBotListResponse {
+	if request.BotName == "" {
+		return akamaiDefinedBotList
+	}
+	var filteredResult botman.GetAkamaiDefinedBotListResponse
+	for _, bot := range akamaiDefinedBotList.Bots {
+		if bot["botName"].(string) == request.BotName {
+			filteredResult.Bots = append(filteredResult.Bots, bot)
+			return &filteredResult
+		}
+	}
+	return &filteredResult
+}
+func getBotDetectionList(ctx context.Context, request botman.GetBotDetectionListRequest, m interface{}) (*botman.GetBotDetectionListResponse, error) {
+	meta := akameta.Must(m)
+	client := inst.Client(meta)
+	logger := meta.Log("BotMan", "getBotDetection")
+
+	cacheKey := fmt.Sprintf("%s", "getBotDetection")
+	botDetectionList := &botman.GetBotDetectionListResponse{}
+	err := cache.Get(cache.BucketName(SubproviderName), cacheKey, botDetectionList)
+	// if cache is disabled make a direct all to GetBotDetectionList
+	if errors.Is(err, cache.ErrDisabled) {
+		return client.GetBotDetectionList(ctx, request)
+	}
+	if err == nil {
+		return filterBotDetectionList(botDetectionList, request), nil
+	}
+
+	botDetectionMutex.Lock()
+	defer func() {
+		logger.Debugf("Unlocking mutex")
+		botDetectionMutex.Unlock()
+	}()
+
+	err = cache.Get(cache.BucketName(SubproviderName), cacheKey, botDetectionList)
+	if err == nil {
+		return filterBotDetectionList(botDetectionList, request), nil
+	}
+
+	if !errors.Is(err, cache.ErrEntryNotFound) && !errors.Is(err, cache.ErrDisabled) {
+		logger.Errorf("error reading from cache: %s", err.Error())
+		return nil, err
+	}
+
+	// fetch all botDetectionList to store in cache and then filter based on request
+	botDetectionList, err = client.GetBotDetectionList(ctx, botman.GetBotDetectionListRequest{})
+	if err != nil {
+		logger.Errorf("calling 'GetBotDetectionList': %s", err.Error())
+		return nil, err
+	}
+
+	err = cache.Set(cache.BucketName(SubproviderName), cacheKey, botDetectionList)
+	if err != nil && !errors.Is(err, cache.ErrDisabled) {
+		logger.Errorf("error caching botDetectionList into cache: %s", err.Error())
+		return nil, err
+	}
+
+	return filterBotDetectionList(botDetectionList, request), nil
+}
+
+func filterBotDetectionList(botDetectionList *botman.GetBotDetectionListResponse, request botman.GetBotDetectionListRequest) *botman.GetBotDetectionListResponse {
+	if request.DetectionName == "" {
+		return botDetectionList
+	}
+	var filteredResult botman.GetBotDetectionListResponse
+	for _, detection := range botDetectionList.Detections {
+		if detection["detectionName"].(string) == request.DetectionName {
+			filteredResult.Detections = append(filteredResult.Detections, detection)
+			return &filteredResult
+		}
+	}
+	return &filteredResult
 }

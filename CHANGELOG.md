@@ -8,7 +8,8 @@
   * Added resource:
     * `akamai_botman_custom_code` - read and update
   * Added data source:
-    * `akamai_botman_custom_code` - read
+    * `akamai_botman_custom_code` - read 
+  * Cache api calls for `akamai_botman_akamai_bot_category`, `akamai_botman_akamai_defined_bot` and `akamai_botman_bot_detection` data sources to improve performance.
 
 * Cloudlets
   * Add `origin_description` field to `akamai_cloudlets_application_load_balancer` resource

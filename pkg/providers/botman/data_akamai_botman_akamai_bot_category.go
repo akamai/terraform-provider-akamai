@@ -31,7 +31,6 @@ func dataSourceAkamaiBotCategory() *schema.Resource {
 
 func dataSourceAkamaiBotCategoryRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
 	logger := meta.Log("botman", "dataSourceAkamaiBotCategoryRead")
 
 	categoryName, err := tf.GetStringValue("category_name", d)
@@ -43,7 +42,7 @@ func dataSourceAkamaiBotCategoryRead(ctx context.Context, d *schema.ResourceData
 		CategoryName: categoryName,
 	}
 
-	response, err := client.GetAkamaiBotCategoryList(ctx, request)
+	response, err := getAkamaiBotCategoryList(ctx, request, m)
 	if err != nil {
 		logger.Errorf("calling 'GetAkamaiBotCategoryList': %s", err.Error())
 		return diag.FromErr(err)

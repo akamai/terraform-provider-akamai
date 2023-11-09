@@ -31,7 +31,6 @@ func dataSourceAkamaiDefinedBot() *schema.Resource {
 
 func dataSourceAkamaiDefinedBotRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
 	logger := meta.Log("botman", "dataSourceAkamaiDefinedBotRead")
 
 	botName, err := tf.GetStringValue("bot_name", d)
@@ -43,7 +42,7 @@ func dataSourceAkamaiDefinedBotRead(ctx context.Context, d *schema.ResourceData,
 		BotName: botName,
 	}
 
-	response, err := client.GetAkamaiDefinedBotList(ctx, request)
+	response, err := getAkamaiDefinedBotList(ctx, request, m)
 	if err != nil {
 		logger.Errorf("calling 'GetAkamaiDefinedBotList': %s", err.Error())
 		return diag.FromErr(err)
