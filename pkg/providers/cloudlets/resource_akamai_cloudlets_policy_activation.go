@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -27,7 +28,10 @@ func resourceCloudletsPolicyActivation() *schema.Resource {
 		ReadContext:   resourcePolicyActivationRead,
 		UpdateContext: resourcePolicyActivationUpdate,
 		DeleteContext: resourcePolicyActivationDelete,
-		Schema:        resourceCloudletsPolicyActivationSchema(),
+		Importer: &schema.ResourceImporter{
+			StateContext: resourcePolicyActivationImport,
+		},
+		Schema: resourceCloudletsPolicyActivationSchema(),
 		Timeouts: &schema.ResourceTimeout{
 			Default: &PolicyActivationResourceTimeout,
 		},
@@ -455,6 +459,55 @@ func resourcePolicyActivationRead(ctx context.Context, rd *schema.ResourceData, 
 	}
 
 	return nil
+}
+
+func resourcePolicyActivationImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	meta := meta.Must(m)
+	logger := meta.Log("Cloudlets", "resourcePolicyActivationImport")
+	logger.Debugf("Import Policy Activation")
+
+	resID := d.Id()
+	parts := strings.Split(resID, ":")
+
+	if len(parts) != 2 {
+		return nil, fmt.Errorf("import id should be of format: <policy_id>:<network>, for example: 1234:staging")
+	}
+
+	policyID, err := strconv.Atoi(parts[0])
+	if err != nil {
+		return nil, err
+	}
+	network := parts[1]
+
+	client := inst.Client(meta)
+	activations, err := client.ListPolicyActivations(ctx, cloudlets.ListPolicyActivationsRequest{
+		PolicyID: int64(policyID),
+		Network:  cloudlets.PolicyActivationNetwork(network),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var activation *cloudlets.PolicyActivation
+	for _, act := range activations {
+		if string(act.Network) == network && act.PolicyInfo.Status == cloudlets.PolicyActivationStatusActive {
+			activation = &act
+			break
+		}
+	}
+	if activation == nil || len(activations) == 0 {
+		return nil, fmt.Errorf("no active activation has been found for policy_id: '%d' and network: '%s'", policyID, network)
+	}
+
+	if err = d.Set("network", activation.Network); err != nil {
+		return nil, err
+	}
+	if err = d.Set("policy_id", activation.PolicyInfo.PolicyID); err != nil {
+		return nil, err
+	}
+	d.SetId(fmt.Sprintf("%d:%s", policyID, activation.Network))
+
+	return []*schema.ResourceData{d}, nil
 }
 
 func formatPolicyActivationID(policyID int64, network cloudlets.PolicyActivationNetwork) string {

@@ -54,10 +54,12 @@
 * PAPI
  * Added `name` validation for `akamai_property_include` resource
 
+* Cloudlets
+    * Added import for `akamai_cloudlets_policy_activation`
+
 * GTM
   * Added data sources:
     * `akamai_gtm_asmap` - reads information for a specific GTM asmap
-
 * GTM
   * Added data sources:
     * `akamai_gtm_resources` - reads information for a specific GTM resources under given domain
