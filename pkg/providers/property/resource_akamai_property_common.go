@@ -8,14 +8,15 @@ import (
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/logger"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 )
 
-func getGroup(ctx context.Context, meta meta.Meta, groupID string) (*papi.Group, error) {
-	logger := meta.Log("PAPI", "getGroup")
-	client := Client(meta)
-	logger.Debugf("Fetching groups")
+func getGroup(ctx context.Context, client papi.PAPI, groupID string) (*papi.Group, error) {
+	log := logger.FromContext(ctx)
+	log.Debugf("Fetching groups")
+
 	res, err := client.GetGroups(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %s", ErrFetchingGroups, err.Error())
@@ -34,14 +35,14 @@ func getGroup(ctx context.Context, meta meta.Meta, groupID string) (*papi.Group,
 	if !groupFound {
 		return nil, fmt.Errorf("%w: %s", ErrGroupNotFound, groupID)
 	}
-	logger.Debugf("Group found: %s", group.GroupID)
+	log.Debugf("Group found: %s", group.GroupID)
 	return group, nil
 }
 
-func getContract(ctx context.Context, meta meta.Meta, contractID string) (*papi.Contract, error) {
-	logger := meta.Log("PAPI", "getContract")
-	client := Client(meta)
-	logger.Debugf("Fetching contract")
+func getContract(ctx context.Context, client papi.PAPI, contractID string) (*papi.Contract, error) {
+	log := logger.FromContext(ctx)
+	log.Debugf("Fetching contract")
+
 	res, err := client.GetContracts(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %s", ErrFetchingContracts, err.Error())
@@ -59,17 +60,18 @@ func getContract(ctx context.Context, meta meta.Meta, contractID string) (*papi.
 		return nil, fmt.Errorf("%w: %s", ErrContractNotFound, contractID)
 	}
 
-	logger.Debugf("Contract found: %s", contract.ContractID)
+	log.Debugf("Contract found: %s", contract.ContractID)
 	return contract, nil
 }
 
-func getProduct(ctx context.Context, meta meta.Meta, productID, contractID string) (*papi.ProductItem, error) {
-	logger := meta.Log("PAPI", "getProduct")
-	client := Client(meta)
+func getProduct(ctx context.Context, client papi.PAPI, productID, contractID string) (*papi.ProductItem, error) {
 	if contractID == "" {
 		return nil, ErrNoContractProvided
 	}
-	logger.Debugf("Fetching product")
+
+	log := logger.FromContext(ctx)
+	log.Debugf("Fetching product")
+
 	res, err := client.GetProducts(ctx, papi.GetProductsRequest{ContractID: contractID})
 	if err != nil {
 		return nil, fmt.Errorf("%w: %s", ErrProductFetch, err.Error())
@@ -87,7 +89,7 @@ func getProduct(ctx context.Context, meta meta.Meta, productID, contractID strin
 		return nil, fmt.Errorf("%w: %s", ErrProductNotFound, productID)
 	}
 
-	logger.Debugf("Product found: %s", product.ProductID)
+	log.Debugf("Product found: %s", product.ProductID)
 	return &product, nil
 }
 

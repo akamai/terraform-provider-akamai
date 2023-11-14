@@ -122,7 +122,6 @@ var complianceRecordSchema = &schema.Resource{
 
 // Convert given hostnames to the map form that can be stored in a schema.ResourceData
 // Setting only statuses for default certs if they exist
-// TODO Set certstatus object for cps managed certs and default certs once PAPI adds support
 func flattenHostnames(Hostnames []papi.Hostname) []map[string]interface{} {
 	var res []map[string]interface{}
 	for _, hn := range Hostnames {
@@ -148,22 +147,22 @@ func flattenHostnames(Hostnames []papi.Hostname) []map[string]interface{} {
 	}
 	return res
 }
-func papiErrorsToList(Errors []*papi.Error) []interface{} {
-	if len(Errors) == 0 {
+
+func papiErrorsToList(errors []*papi.Error) []map[string]interface{} {
+	if len(errors) == 0 {
 		return nil
 	}
 
-	var RuleErrors []interface{}
-
-	for _, err := range Errors {
+	var ruleErrors []map[string]interface{}
+	for _, err := range errors {
 		if err == nil {
 			continue
 		}
 
-		RuleErrors = append(RuleErrors, papiErrorToMap(err))
+		ruleErrors = append(ruleErrors, papiErrorToMap(err))
 	}
 
-	return RuleErrors
+	return ruleErrors
 }
 
 func papiErrorToMap(err *papi.Error) map[string]interface{} {
@@ -184,7 +183,6 @@ func papiErrorToMap(err *papi.Error) map[string]interface{} {
 
 // NetworkAlias parses the given network name or alias and returns its full name and any error
 func NetworkAlias(network string) (string, error) {
-
 	networks := map[string]papi.ActivationNetwork{
 		"STAGING":    papi.ActivationNetworkStaging,
 		"STAGE":      papi.ActivationNetworkStaging,

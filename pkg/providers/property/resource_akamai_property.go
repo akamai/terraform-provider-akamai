@@ -25,15 +25,17 @@ import (
 
 func resourceProperty() *schema.Resource {
 	papiError := func() *schema.Resource {
-		return &schema.Resource{Schema: map[string]*schema.Schema{
-			"type":           {Type: schema.TypeString, Optional: true},
-			"title":          {Type: schema.TypeString, Optional: true},
-			"detail":         {Type: schema.TypeString, Optional: true},
-			"instance":       {Type: schema.TypeString, Optional: true},
-			"behavior_name":  {Type: schema.TypeString, Optional: true},
-			"error_location": {Type: schema.TypeString, Optional: true},
-			"status_code":    {Type: schema.TypeInt, Optional: true},
-		}}
+		return &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"type":           {Type: schema.TypeString, Optional: true},
+				"title":          {Type: schema.TypeString, Optional: true},
+				"detail":         {Type: schema.TypeString, Optional: true},
+				"instance":       {Type: schema.TypeString, Optional: true},
+				"behavior_name":  {Type: schema.TypeString, Optional: true},
+				"error_location": {Type: schema.TypeString, Optional: true},
+				"status_code":    {Type: schema.TypeInt, Optional: true},
+			},
+		}
 	}
 
 	hashHostname := func(v interface{}) int {
@@ -242,7 +244,6 @@ func validatePropertyName(v interface{}, _ cty.Path) diag.Diagnostics {
 // returns no difference for these fields
 func rulesCustomDiff(_ context.Context, diff *schema.ResourceDiff, _ interface{}) error {
 	o, n := diff.GetChange("rules")
-
 	oldValue := o.(string)
 	newValue := n.(string)
 
@@ -394,32 +395,8 @@ func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m inter
 
 	ruleFormat := d.Get("rule_format").(string)
 
-	rulesJSON := []byte(d.Get("rules").(string))
-
 	propertyID, err := createProperty(ctx, client, propertyName, groupID, contractID, productID, ruleFormat)
 	if err != nil {
-		if strings.Contains(err.Error(), "\"statusCode\": 404") {
-			// find out what is missing from the request
-			if _, err = getGroup(ctx, meta, groupID); err != nil {
-				if errors.Is(err, ErrGroupNotFound) {
-					return diag.Errorf("%v: %s", ErrGroupNotFound, groupID)
-				}
-				return diag.FromErr(err)
-			}
-			if _, err = getContract(ctx, meta, contractID); err != nil {
-				if errors.Is(err, ErrContractNotFound) {
-					return diag.Errorf("%v: %s", ErrContractNotFound, contractID)
-				}
-				return diag.FromErr(err)
-			}
-			if _, err = getProduct(ctx, meta, productID, contractID); err != nil {
-				if errors.Is(err, ErrProductNotFound) {
-					return diag.Errorf("%v: %s", ErrProductNotFound, productID)
-				}
-				return diag.FromErr(err)
-			}
-			return diag.FromErr(err)
-		}
 		return diag.FromErr(err)
 	}
 
@@ -430,7 +407,7 @@ func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m inter
 		"contract_id": contractID,
 		"product_id":  productID,
 	}
-	if err := rdSetAttrs(ctx, d, attrs); err != nil {
+	if err := tf.SetAttrs(d, attrs); err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -442,35 +419,28 @@ func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m inter
 		ProductID:     productID,
 		LatestVersion: 1,
 	}
+
 	hostnameVal, err := tf.GetSetValue("hostnames", d)
-	if err == nil {
+	if err != nil {
+		logger.Warnf("hostnames not set in ResourceData: %s", err.Error())
+	} else {
 		hostnames := mapToHostnames(hostnameVal.List())
 		if len(hostnames) > 0 {
 			if err := updatePropertyHostnames(ctx, client, property, hostnames); err != nil {
 				return diag.FromErr(err)
 			}
 		}
-	} else {
-		logger.Warnf("hostnames not set in ResourceData: %s", err.Error())
 	}
 
-	if len(rulesJSON) > 0 {
-		var rules papi.RulesUpdate
-		if err := json.Unmarshal(rulesJSON, &rules); err != nil {
-			logger.WithError(err).Error("failed to unmarshal property rules")
-			return diag.Errorf("rules are not valid JSON: %s", err)
+	rulesJSON := d.Get("rules").(string)
+	if rulesJSON != "" {
+		var rulesUpdate papi.RulesUpdate
+		if err := json.Unmarshal([]byte(rulesJSON), &rulesUpdate); err != nil {
+			d.Partial(true)
+			return diag.Errorf("property rules are not valid JSON: %s", err)
 		}
 
-		ctx := ctx
-		if ruleFormat != "" {
-			h := http.Header{
-				"Content-Type": []string{fmt.Sprintf("application/vnd.akamai.papirules.%s+json", ruleFormat)},
-			}
-
-			ctx = session.ContextWithOptions(ctx, session.WithContextHeaders(h))
-		}
-
-		if err := updatePropertyRules(ctx, client, property, rules); err != nil {
+		if err := updatePropertyRules(ctx, client, property, rulesUpdate, ruleFormat); err != nil {
 			d.Partial(true)
 			return diag.FromErr(err)
 		}
@@ -484,7 +454,6 @@ func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interfa
 	logger := log.FromContext(ctx)
 	client := Client(meta.Must(m))
 
-	// Schema guarantees group_id, and contract_id are strings
 	propertyID := d.Id()
 	contractID := tools.AddPrefix(d.Get("contract_id").(string), "ctr_")
 	groupID := tools.AddPrefix(d.Get("group_id").(string), "grp_")
@@ -516,17 +485,16 @@ func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interfa
 		productionVersion = *property.ProductionVersion
 	}
 
-	// TODO: Load hostnames asynchronously
 	hostnames, err := fetchPropertyVersionHostnames(ctx, client, *property, v)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	// TODO: Load rules asynchronously
 	rules, ruleFormat, ruleErrors, ruleWarnings, err := fetchPropertyVersionRules(ctx, client, *property, v)
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
 	if len(ruleErrors) > 0 {
 		if err := d.Set("rule_errors", papiErrorsToList(ruleErrors)); err != nil {
 			return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
@@ -537,6 +505,7 @@ func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interfa
 		}
 		logger.Errorf("property has rule errors %s", msg)
 	}
+
 	if len(ruleWarnings) > 0 {
 		msg, err := json.MarshalIndent(papiErrorsToList(ruleWarnings), "", "\t")
 		if err != nil {
@@ -545,16 +514,17 @@ func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interfa
 		logger.Warnf("property has rule warnings %s", msg)
 	}
 
-	rulesJSON, err := json.Marshal(rules)
-	if err != nil {
-		logger.WithError(err).Error("could not render rules as JSON")
-		return diag.Errorf("received rules that could not be rendered to JSON: %s", err)
-	}
 	res, err := fetchPropertyVersion(ctx, client, propertyID, groupID, contractID, v)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	property.ProductID = res.Version.ProductID
+
+	rulesJSON, err := json.Marshal(rules)
+	if err != nil {
+		logger.WithError(err).Error("could not render rules as JSON")
+		return diag.Errorf("received rules that could not be rendered to JSON: %s", err)
+	}
 
 	attrs := map[string]interface{}{
 		"name":               property.PropertyName,
@@ -572,7 +542,7 @@ func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interfa
 	if property.ProductID != "" {
 		attrs["product_id"] = property.ProductID
 	}
-	if err := rdSetAttrs(ctx, d, attrs); err != nil {
+	if err := tf.SetAttrs(d, attrs); err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -609,7 +579,6 @@ func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 		return nil
 	}
 
-	// Schema guarantees these types
 	var stagingVersion, productionVersion *int
 	if v, ok := d.GetOk("staging_version"); ok && v.(int) != 0 {
 		i := v.(int)
@@ -632,7 +601,6 @@ func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 		ProductionVersion: productionVersion,
 	}
 
-	// Schema guarantees group_id, and contract_id are strings
 	propertyID := d.Id()
 	contractID := d.Get("contract_id").(string)
 	groupID := d.Get("group_id").(string)
@@ -664,7 +632,6 @@ func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 		}
 	}
 
-	// hostnames
 	if d.HasChange("hostnames") {
 		hostnamesVal, err := tf.GetSetValue("hostnames", d)
 		if err == nil {
@@ -680,13 +647,20 @@ func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 		}
 	}
 
-	ruleFormat := d.Get("rule_format").(string)
-	rulesJSON := []byte(d.Get("rules").(string))
-	rulesNeedUpdate := len(rulesJSON) > 0 && d.HasChange("rules")
-	formatNeedsUpdate := len(ruleFormat) > 0 && d.HasChange("rule_format")
+	if shouldUpdateRuleTree(d) {
+		ruleFormat := d.Get("rule_format").(string)
+		rulesJSON := d.Get("rules").(string)
 
-	if err := needsUpdate(ctx, d, formatNeedsUpdate, rulesNeedUpdate, rulesJSON, ruleFormat, client, property); err != nil {
-		return diag.FromErr(err)
+		var rulesUpdate papi.RulesUpdate
+		if err := json.Unmarshal([]byte(rulesJSON), &rulesUpdate); err != nil {
+			d.Partial(true)
+			return diag.Errorf("property rules are not valid JSON: %s", err)
+		}
+
+		if err := updatePropertyRules(ctx, client, property, rulesUpdate, ruleFormat); err != nil {
+			d.Partial(true)
+			return diag.FromErr(err)
+		}
 	}
 
 	return resourcePropertyRead(ctx, d, m)
@@ -757,7 +731,7 @@ func resourcePropertyImport(ctx context.Context, d *schema.ResourceData, m inter
 				attrs["read_version"] = v
 			}
 		}
-		if err := rdSetAttrs(ctx, d, attrs); err != nil {
+		if err := tf.SetAttrs(d, attrs); err != nil {
 			return nil, err
 		}
 
@@ -782,7 +756,7 @@ func resourcePropertyImport(ctx context.Context, d *schema.ResourceData, m inter
 		"contract_id":  property.ContractID,
 		"read_version": v,
 	}
-	if err := rdSetAttrs(ctx, d, attrs); err != nil {
+	if err := tf.SetAttrs(d, attrs); err != nil {
 		return nil, err
 	}
 
@@ -796,7 +770,7 @@ func isDefaultVersion(version string) bool {
 
 var versionRegexp = regexp.MustCompile(`^ver_(\d+)$`)
 
-// parse a version number (format "ver_#" or "#") or throw an error
+// parseVersionNumber parses a version number (format "ver_#" or "#") or throws an error
 func parseVersionNumber(version string) (int, error) {
 	v := tools.AddPrefix(version, "ver_")
 	r := versionRegexp
@@ -808,7 +782,7 @@ func parseVersionNumber(version string) (int, error) {
 	return versionNumber, err
 }
 
-func createProperty(ctx context.Context, client papi.PAPI, propertyName, groupID, contractID, productID, ruleFormat string) (propertyID string, err error) {
+func createProperty(ctx context.Context, client papi.PAPI, propertyName, groupID, contractID, productID, ruleFormat string) (string, error) {
 	req := papi.CreatePropertyRequest{
 		ContractID: contractID,
 		GroupID:    groupID,
@@ -820,17 +794,50 @@ func createProperty(ctx context.Context, client papi.PAPI, propertyName, groupID
 	}
 
 	logger := log.FromContext(ctx).WithFields(logFields(req))
-
 	logger.Debug("creating property")
-	res, err := client.CreateProperty(ctx, req)
-	if err != nil {
-		logger.WithError(err).Error("could not create property")
-		return
-	}
-	propertyID = res.PropertyID
 
-	logger.WithFields(logFields(*res)).Info("property created")
-	return
+	res, err := client.CreateProperty(ctx, req)
+	if err == nil {
+		logger.WithFields(logFields(*res)).Info("property created")
+		return res.PropertyID, nil
+	}
+
+	logger.WithError(err).Error("could not create property")
+
+	var targetErr *papi.Error
+	if errors.As(err, &targetErr) && targetErr.StatusCode == http.StatusNotFound {
+		if interpretedErr := interpretCreatePropertyBadRequest(ctx, client, req); interpretedErr != nil {
+			return "", interpretedErr
+		}
+		return "", err
+	}
+
+	return "", err
+}
+
+func interpretCreatePropertyBadRequest(ctx context.Context, client papi.PAPI, req papi.CreatePropertyRequest) error {
+	if _, err := getGroup(ctx, client, req.GroupID); err != nil {
+		if errors.Is(err, ErrGroupNotFound) {
+			return fmt.Errorf("%v: %s", ErrGroupNotFound, req.GroupID)
+		}
+		return err
+	}
+
+	if _, err := getContract(ctx, client, req.ContractID); err != nil {
+		if errors.Is(err, ErrContractNotFound) {
+			return fmt.Errorf("%v: %s", ErrContractNotFound, req.ContractID)
+		}
+		return err
+	}
+
+	if _, err := getProduct(ctx, client, req.Property.ProductID, req.ContractID); err != nil {
+		if errors.Is(err, ErrProductNotFound) {
+			return fmt.Errorf("%v: %s", ErrProductNotFound, req.Property.ProductID)
+		}
+		return err
+	}
+
+	return nil
 }
 
 func removeProperty(ctx context.Context, client papi.PAPI, propertyID, groupID, contractID string) error {
@@ -880,7 +887,7 @@ func fetchLatestProperty(ctx context.Context, client papi.PAPI, propertyID, grou
 	return res.Property, nil
 }
 
-// fetchProperty Retrieves basic info for a Property
+// fetchProperty retrieves basic info for a Property
 func fetchProperty(ctx context.Context, client papi.PAPI, propertyID, groupID, contractID, version string) (*papi.Property, int, error) {
 	req := papi.GetPropertyVersionsRequest{
 		PropertyID: propertyID,
@@ -935,8 +942,8 @@ func fetchProperty(ctx context.Context, client papi.PAPI, propertyID, groupID, c
 		PropertyID:        res.PropertyID,
 		PropertyName:      res.PropertyName,
 		LatestVersion:     getLatestVersionNumber(res.Versions.Items),
-		StagingVersion:    getNetworkActiveVersionNumber(res.Versions.Items, string(papi.ActivationNetworkStaging)),
-		ProductionVersion: getNetworkActiveVersionNumber(res.Versions.Items, string(papi.ActivationNetworkProduction)),
+		StagingVersion:    getNetworkActiveVersionNumber(res.Versions.Items, papi.ActivationNetworkStaging),
+		ProductionVersion: getNetworkActiveVersionNumber(res.Versions.Items, papi.ActivationNetworkProduction),
 		AssetID:           res.AssetID,
 		Note:              versionItem.Note,
 		ProductID:         versionItem.ProductID,
@@ -953,7 +960,7 @@ func fetchProperty(ctx context.Context, client papi.PAPI, propertyID, groupID, c
 func filterStaging(items []papi.PropertyVersionGetItem) ([]papi.PropertyVersionGetItem, error) {
 	var output []papi.PropertyVersionGetItem
 	for _, it := range items {
-		if it.StagingStatus == "ACTIVE" {
+		if it.StagingStatus == papi.VersionStatusActive {
 			output = append(output, it)
 		}
 	}
@@ -968,7 +975,7 @@ func filterStaging(items []papi.PropertyVersionGetItem) ([]papi.PropertyVersionG
 func filterProduction(items []papi.PropertyVersionGetItem) ([]papi.PropertyVersionGetItem, error) {
 	var output []papi.PropertyVersionGetItem
 	for _, it := range items {
-		if it.ProductionStatus == "ACTIVE" {
+		if it.ProductionStatus == papi.VersionStatusActive {
 			output = append(output, it)
 		}
 	}
@@ -992,15 +999,15 @@ func getLatestVersionNumber(items []papi.PropertyVersionGetItem) int {
 
 // getNetworkActiveVersionNumber returns from the given list the *papi.PropertyVersionGetItem
 // active in the given network
-func getNetworkActiveVersionNumber(items []papi.PropertyVersionGetItem, network string) *int {
+func getNetworkActiveVersionNumber(items []papi.PropertyVersionGetItem, network papi.ActivationNetwork) *int {
 	for _, it := range items {
 		switch network {
-		case string(papi.ActivationNetworkStaging):
-			if it.StagingStatus == "ACTIVE" {
+		case papi.ActivationNetworkStaging:
+			if it.StagingStatus == papi.VersionStatusActive {
 				return &it.PropertyVersion
 			}
-		case string(papi.ActivationNetworkProduction):
-			if it.ProductionStatus == "ACTIVE" {
+		case papi.ActivationNetworkProduction:
+			if it.ProductionStatus == papi.VersionStatusActive {
 				return &it.PropertyVersion
 			}
 		}
@@ -1017,7 +1024,7 @@ func getVersionItem(items []papi.PropertyVersionGetItem, versionNumber int) (*pa
 	return nil, ErrPropertyVersionNotFound
 }
 
-// load status for what we currently have as a given property version.  GetLatestVersion may also work here.
+// fetchPropertyVersion loads status for what we currently have as a given property version. GetLatestVersion may also work here.
 func fetchPropertyVersion(ctx context.Context, client papi.PAPI, propertyID, groupID, contractID string, propertyVersion int) (*papi.GetPropertyVersionsResponse, error) {
 	req := papi.GetPropertyVersionRequest{
 		PropertyID:      propertyID,
@@ -1038,7 +1045,7 @@ func fetchPropertyVersion(ctx context.Context, client papi.PAPI, propertyID, gro
 	return res, err
 }
 
-// Fetch hostnames for latest version of given property
+// fetchPropertyVersionHostnames fetchs hostnames for latest version of given property.
 func fetchPropertyVersionHostnames(ctx context.Context, client papi.PAPI, property papi.Property, version int) ([]papi.Hostname, error) {
 	req := papi.GetPropertyVersionHostnamesRequest{
 		PropertyID:        property.PropertyID,
@@ -1061,7 +1068,6 @@ func fetchPropertyVersionHostnames(ctx context.Context, client papi.PAPI, proper
 	return res.Hostnames.Items, nil
 }
 
-// Fetch rules for latest version of given property
 func fetchPropertyVersionRules(ctx context.Context, client papi.PAPI, property papi.Property, version int) (rules papi.RulesUpdate, format string, errors, warnings []*papi.Error, err error) {
 	req := papi.GetRuleTreeRequest{
 		PropertyID:      property.PropertyID,
@@ -1092,8 +1098,19 @@ func fetchPropertyVersionRules(ctx context.Context, client papi.PAPI, property p
 	return
 }
 
-// Set rules for the latest version of the given property
-func updatePropertyRules(ctx context.Context, client papi.PAPI, property papi.Property, rules papi.RulesUpdate) error {
+func shouldUpdateRuleTree(rd *schema.ResourceData) bool {
+	_, rulesOk := rd.GetOk("rules")
+	_, formatOk := rd.GetOk("rule_format")
+
+	rulesNeedUpdate := rulesOk && rd.HasChange("rules")
+	formatNeedsUpdate := formatOk && rd.HasChange("rule_format")
+
+	return rulesNeedUpdate || formatNeedsUpdate
+}
+
+func updatePropertyRules(ctx context.Context, client papi.PAPI, property papi.Property, rules papi.RulesUpdate, ruleFormat string) error {
+	logger := log.FromContext(ctx)
+
 	req := papi.UpdateRulesRequest{
 		PropertyID:      property.PropertyID,
 		GroupID:         property.GroupID,
@@ -1103,9 +1120,13 @@ func updatePropertyRules(ctx context.Context, client papi.PAPI, property papi.Pr
 		ValidateRules:   true,
 	}
 
-	logger := log.FromContext(ctx).WithFields(logFields(req))
+	if ruleFormat != "" {
+		MIME := fmt.Sprintf("application/vnd.akamai.papirules.%s+json", ruleFormat)
+		h := http.Header{"Content-Type": []string{MIME}}
+		ctx = session.ContextWithOptions(ctx, session.WithContextHeaders(h))
+	}
 
-	logger.Debug("fetching property rules")
+	logger.Debug("updating property rules")
 	res, err := client.UpdateRuleTree(ctx, req)
 	if err != nil {
 		logger.WithError(err).Error("could not update property rules")
@@ -1116,7 +1137,7 @@ func updatePropertyRules(ctx context.Context, client papi.PAPI, property papi.Pr
 	return nil
 }
 
-// Create a new property version based on the latest version of the given property
+// createPropertyVersion creates a new property version based on the latest version of the given property.
 func createPropertyVersion(ctx context.Context, client papi.PAPI, property papi.Property, version int) (newVersion int, err error) {
 	req := papi.CreatePropertyVersionRequest{
 		PropertyID: property.PropertyID,
@@ -1141,7 +1162,7 @@ func createPropertyVersion(ctx context.Context, client papi.PAPI, property papi.
 	return
 }
 
-// Set hostnames of the latest version of the given property
+// updatePropertyHostnames sets hostnames of the latest version of the given property.
 func updatePropertyHostnames(ctx context.Context, client papi.PAPI, property papi.Property, hostnames []papi.Hostname) error {
 	if hostnames == nil {
 		hostnames = []papi.Hostname{}
@@ -1183,17 +1204,17 @@ func updatePropertyHostnames(ctx context.Context, client papi.PAPI, property pap
 	return nil
 }
 
-// Convert the given map from a schema.ResourceData to a slice of papi.Hostnames /input to papi request
+// mapToHostnames converts the given map from a schema.ResourceData to a slice of papi.Hostnames input to papi request.
 func mapToHostnames(givenList []interface{}) []papi.Hostname {
-	var Hostnames []papi.Hostname
+	var hostnames []papi.Hostname
 
 	for _, givenMap := range givenList {
-		var r = givenMap.(map[string]interface{})
+		r := givenMap.(map[string]interface{})
 		cnameFrom := r["cname_from"]
 		cnameTo := r["cname_to"]
 		certProvisioningType := r["cert_provisioning_type"]
 		if len(r) != 0 {
-			Hostnames = append(Hostnames, papi.Hostname{
+			hostnames = append(hostnames, papi.Hostname{
 				CnameType:            "EDGE_HOSTNAME",
 				CnameFrom:            cnameFrom.(string),
 				CnameTo:              cnameTo.(string), // guaranteed by schema to be a string
@@ -1201,39 +1222,5 @@ func mapToHostnames(givenList []interface{}) []papi.Hostname {
 			})
 		}
 	}
-	return Hostnames
-}
-
-// Set many attributes of a schema.ResourceData in one call
-func rdSetAttrs(ctx context.Context, d *schema.ResourceData, AttributeValues map[string]interface{}) error {
-	logger := log.FromContext(ctx)
-
-	for attr, value := range AttributeValues {
-		if err := d.Set(attr, value); err != nil {
-			logger.WithError(err).Errorf("could not set %q", attr)
-			return err
-		}
-	}
-
-	return nil
-}
-
-func needsUpdate(ctx context.Context, d *schema.ResourceData, formatNeedsUpdate, rulesNeedUpdate bool, rulesJSON []byte, ruleFormat string, client papi.PAPI, property papi.Property) error {
-	if formatNeedsUpdate || rulesNeedUpdate {
-		var Rules papi.RulesUpdate
-		if err := json.Unmarshal(rulesJSON, &Rules); err != nil {
-			d.Partial(true)
-			return fmt.Errorf("rules are not valid JSON: %s", err)
-		}
-
-		MIME := fmt.Sprintf("application/vnd.akamai.papirules.%s+json", ruleFormat)
-		h := http.Header{"Content-Type": []string{MIME}}
-		ctx := session.ContextWithOptions(ctx, session.WithContextHeaders(h))
-
-		if err := updatePropertyRules(ctx, client, property, Rules); err != nil {
-			d.Partial(true)
-			return err
-		}
-	}
-	return nil
+	return hostnames
 }

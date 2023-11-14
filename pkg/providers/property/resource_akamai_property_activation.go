@@ -285,7 +285,7 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 		"activation_id": activation.ActivationID,
 		"version":       version,
 	}
-	if err := rdSetAttrs(ctx, d, attrs); err != nil {
+	if err := tf.SetAttrs(d, attrs); err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -696,7 +696,7 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 		"activation_id": propertyActivation.ActivationID,
 		"version":       version,
 	}
-	if err := rdSetAttrs(ctx, d, attrs); err != nil {
+	if err := tf.SetAttrs(d, attrs); err != nil {
 		return diag.FromErr(err)
 	}
 
