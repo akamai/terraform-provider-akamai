@@ -4,11 +4,17 @@
 
 #### FEATURES/ENHANCEMENTS:
 
+* APSSEC
+  * Updated resource:
+    * `akamai_appsec_ip_geo` - added `asn_network_lists` attribute to support blocking by ASN client lists
+  * Updated data source:
+    * `akamai_appsec_ip_geo` - added `asn_network_lists` attribute to list ASN client lists
+
 * BOTMAN
   * Added resource:
     * `akamai_botman_custom_code` - read and update
   * Added data source:
-    * `akamai_botman_custom_code` - read 
+    * `akamai_botman_custom_code` - read
   * Cache api calls for `akamai_botman_akamai_bot_category`, `akamai_botman_akamai_defined_bot` and `akamai_botman_bot_detection` data sources to improve performance.
 
 * Cloudlets

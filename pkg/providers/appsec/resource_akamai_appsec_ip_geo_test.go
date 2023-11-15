@@ -72,6 +72,14 @@ func TestAkamaiIPGeo_res_block(t *testing.T) {
 			Version:  7,
 			PolicyID: "AAAA_81230",
 			Block:    "blockSpecificIPGeo",
+			ASNControls: &appsec.IPGeoASNControls{
+				BlockedIPNetworkLists: &appsec.IPGeoNetworkLists{
+					NetworkList: []string{
+						"40721_ASNLIST1",
+						"44811_ASNLIST2",
+					},
+				},
+			},
 			GeoControls: &appsec.IPGeoGeoControls{
 				BlockedIPNetworkLists: &appsec.IPGeoNetworkLists{
 					NetworkList: []string{
@@ -126,6 +134,14 @@ func TestAkamaiIPGeo_res_block(t *testing.T) {
 			Version:  7,
 			PolicyID: "AAAA_81230",
 			Block:    "blockSpecificIPGeo",
+			ASNControls: &appsec.IPGeoASNControls{
+				BlockedIPNetworkLists: &appsec.IPGeoNetworkLists{
+					NetworkList: []string{
+						"40721_ASNLIST1",
+						"44811_ASNLIST2",
+					},
+				},
+			},
 			GeoControls: &appsec.IPGeoGeoControls{
 				BlockedIPNetworkLists: &appsec.IPGeoNetworkLists{
 					NetworkList: []string{

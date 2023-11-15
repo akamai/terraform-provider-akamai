@@ -62,6 +62,12 @@ func resourceIPGeo() *schema.Resource {
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "List of IDs of IP network list to be blocked",
 			},
+			"asn_network_lists": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "List of IDs of ASN network list to be blocked",
+			},
 			"exception_ip_network_lists": {
 				Type:        schema.TypeList,
 				Optional:    true,
@@ -100,6 +106,15 @@ func geoControlsFromBlockLists(blockedGeoLists []interface{}) *appsec.IPGeoGeoCo
 	if len(blockedGeoLists) > 0 {
 		return &appsec.IPGeoGeoControls{
 			BlockedIPNetworkLists: ipGeoNetworkListsFromStringList(blockedGeoLists),
+		}
+	}
+	return nil
+}
+
+func asnControlsFromBlockLists(blockedASNLists []interface{}) *appsec.IPGeoASNControls {
+	if len(blockedASNLists) > 0 {
+		return &appsec.IPGeoASNControls{
+			BlockedIPNetworkLists: ipGeoNetworkListsFromStringList(blockedASNLists),
 		}
 	}
 	return nil
@@ -149,6 +164,10 @@ func resourceIPGeoCreate(ctx context.Context, d *schema.ResourceData, m interfac
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
+	blockedASNLists, err := tf.GetListValue("asn_network_lists", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
+		return diag.FromErr(err)
+	}
 	exceptionIPLists, err := tf.GetListValue("exception_ip_network_lists", d)
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
@@ -171,6 +190,7 @@ func resourceIPGeoCreate(ctx context.Context, d *schema.ResourceData, m interfac
 	if mode == Block {
 		request.Block = "blockSpecificIPGeo"
 		request.GeoControls = geoControlsFromBlockLists(blockedGeoLists)
+		request.ASNControls = asnControlsFromBlockLists(blockedASNLists)
 		request.IPControls = ipControlsFromBlockAndAllowLists(blockedIPLists, exceptionIPLists)
 		if ukraineGeoControlAction != "" {
 			request.UkraineGeoControls = &appsec.UkraineGeoControl{Action: ukraineGeoControlAction}
@@ -272,6 +292,15 @@ func readForBlockSpecificIPGeo(d *schema.ResourceData, ipgeo *appsec.GetIPGeoRes
 			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 		}
 	}
+	if ipgeo.ASNControls != nil && ipgeo.ASNControls.BlockedIPNetworkLists != nil && ipgeo.ASNControls.BlockedIPNetworkLists.NetworkList != nil {
+		if err := d.Set("asn_network_lists", ipgeo.ASNControls.BlockedIPNetworkLists.NetworkList); err != nil {
+			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
+		}
+	} else {
+		if err := d.Set("asn_network_lists", make([]string, 0)); err != nil {
+			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
+		}
+	}
 	if ipgeo.IPControls != nil && ipgeo.IPControls.AllowedIPNetworkLists != nil && ipgeo.IPControls.AllowedIPNetworkLists.NetworkList != nil {
 		if err := d.Set("exception_ip_network_lists", ipgeo.IPControls.AllowedIPNetworkLists.NetworkList); err != nil {
 			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
@@ -312,6 +341,10 @@ func resourceIPGeoUpdate(ctx context.Context, d *schema.ResourceData, m interfac
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
+	blockedASNLists, err := tf.GetListValue("asn_network_lists", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
+		return diag.FromErr(err)
+	}
 	blockedGeoLists, err := tf.GetListValue("geo_network_lists", d)
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
@@ -340,6 +373,7 @@ func resourceIPGeoUpdate(ctx context.Context, d *schema.ResourceData, m interfac
 	}
 	if mode == Block {
 		request.Block = "blockSpecificIPGeo"
+		request.ASNControls = asnControlsFromBlockLists(blockedASNLists)
 		request.GeoControls = geoControlsFromBlockLists(blockedGeoLists)
 		request.IPControls = ipControlsFromBlockAndAllowLists(blockedIPLists, exceptionIPLists)
 		if ukraineGeoControlAction != "" {
