@@ -343,7 +343,7 @@ func resourceActivationsDelete(ctx context.Context, d *schema.ResourceData, m in
 	}
 
 	getActivationRequest := appsec.GetActivationsRequest{
-		ActivationID: activationID,
+		ActivationID: postresp.ActivationID,
 	}
 
 	activation, err := lookupActivation(ctx, client, getActivationRequest)
