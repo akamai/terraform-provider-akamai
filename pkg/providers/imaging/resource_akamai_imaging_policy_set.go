@@ -25,10 +25,11 @@ func resourceImagingPolicySet() *schema.Resource {
 		},
 		Schema: map[string]*schema.Schema{
 			"contract_id": {
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "The unique identifier for the Akamai Contract containing the Policy Set(s)",
-				ForceNew:    true,
+				Type:             schema.TypeString,
+				Required:         true,
+				Description:      "The unique identifier for the Akamai Contract containing the Policy Set(s)",
+				ForceNew:         true,
+				DiffSuppressFunc: diffSuppressPolicySetContract,
 			},
 			"name": {
 				Type:        schema.TypeString,
@@ -63,7 +64,7 @@ func resourceImagingPolicySetImport(_ context.Context, rd *schema.ResourceData, 
 	}
 
 	policySetID := parts[0]
-	contractID := parts[1]
+	contractID := strings.TrimPrefix(parts[1], "ctr_")
 
 	if err := rd.Set("contract_id", contractID); err != nil {
 		return nil, fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
@@ -89,6 +90,7 @@ func resourceImagingPolicySetCreate(ctx context.Context, rd *schema.ResourceData
 	if err != nil {
 		return diag.FromErr(err)
 	}
+	contractID = strings.TrimPrefix(contractID, "ctr_")
 	name, err := tf.GetStringValue("name", rd)
 	if err != nil {
 		return diag.FromErr(err)
@@ -134,6 +136,7 @@ func resourceImagingPolicySetRead(ctx context.Context, rd *schema.ResourceData, 
 	if err != nil {
 		return diag.FromErr(err)
 	}
+	contractID = strings.TrimPrefix(contractID, "ctr_")
 
 	policySet, err := client.GetPolicySet(ctx, imaging.GetPolicySetRequest{
 		PolicySetID: rd.Id(),
@@ -170,6 +173,7 @@ func resourceImagingPolicySetUpdate(ctx context.Context, rd *schema.ResourceData
 	if err != nil {
 		return diag.FromErr(err)
 	}
+	contractID = strings.TrimPrefix(contractID, "ctr_")
 	name, err := tf.GetStringValue("name", rd)
 	if err != nil {
 		return diag.FromErr(err)
@@ -209,6 +213,7 @@ func resourceImagingPolicySetDelete(ctx context.Context, rd *schema.ResourceData
 	if err != nil {
 		return diag.FromErr(err)
 	}
+	contractID = strings.TrimPrefix(contractID, "ctr_")
 
 	listPoliciesResponse, err := client.ListPolicies(ctx, imaging.ListPoliciesRequest{
 		ContractID:  contractID,
@@ -264,4 +269,8 @@ func filterRemainingPolicies(listPoliciesResponse *imaging.ListPoliciesResponse)
 		}
 	}
 	return remainingPolicies
+}
+
+func diffSuppressPolicySetContract(_, old, new string, _ *schema.ResourceData) bool {
+	return strings.TrimPrefix(old, "ctr_") == strings.TrimPrefix(new, "ctr_")
 }

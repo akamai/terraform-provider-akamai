@@ -6,6 +6,7 @@
 
 * Cloudlets
   * Add `origin_description` field to `akamai_cloudlets_application_load_balancer` resource
+
 * PAPI
   * Behavior `restrict_object_caching` is public ([I#314](https://github.com/akamai/terraform-provider-akamai/issues/314) and [#277](https://github.com/akamai/terraform-provider-akamai/issues/277))
   * Added version support for `akamai_property_hostnames` data source ([I#413](https://github.com/akamai/terraform-provider-akamai/issues/413))
@@ -14,6 +15,9 @@
 
 * DNS
   * Fixed handling of txt records which are longer than 255 bytes ([I#430](https://github.com/akamai/terraform-provider-akamai/issues/430))
+
+* Image and Video Manager
+  * Added suppression when providing `ctr_` prefix in `akamai_imaging_policy_set` ([I#491](https://github.com/akamai/terraform-provider-akamai/issues/491))
 
 ## 5.4.0 (Oct 31, 2023)
 
