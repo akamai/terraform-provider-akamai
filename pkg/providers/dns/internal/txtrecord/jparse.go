@@ -1,7 +1,7 @@
 // Akamai Provider for Terraform
 // Copyright© Akamai Technologies, Inc.  All Rights Reserved.
 // Akamai Provider for Terraform is licensed under the Mozilla Public License Version 2.0,
-// a copy of which is reproduced at the end of this document.
+// a copy of which is reproduced in the LICENSE file.
 // Akamai Provider for Terraform uses a version of dnsjava that was modified by Akamai.
 // dnsjava is used under the terms of the BSD 3-clause license, as shown in the notice below.
 //
@@ -39,6 +39,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 // EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // ======================
+// dnsjava version used - v3.5.2 (785639f66732d6c10db89abe277981039d367e18)
 
 package txtrecord
 

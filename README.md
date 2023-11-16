@@ -9,10 +9,9 @@ Akamai Provider for Terraform
 
 Use the Akamai Provider to manage and provision your Akamai configurations in Terraform. You can use the Akamai Provider for many Akamai products.
 
-
 ## Requirements
 
--	[Terraform](https://www.terraform.io/downloads.html) 0.12.x
+- [Terraform](https://www.terraform.io/downloads.html) 0.12.x
 
 ## Installation
 
@@ -21,3 +20,7 @@ To automatically install the Akamai Provider, run `terraform init` on a configur
 ## Documentation
 
 You can find documentation for the Akamai Provider on the [Terraform Website](https://registry.terraform.io/providers/akamai/akamai/latest/docs).
+
+## Credits
+
+Akamai Provider for Terraform uses a version of `dnsjava` that was modified by Akamai. `dnsjava` is used under the terms of the BSD 3-clause license, as shown in [this notice](pkg/providers/dns/internal/txtrecord/jparse.go).
