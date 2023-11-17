@@ -68,6 +68,11 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 				}{{ConfigID: 43253, ConfigVersion: 7}}},
 		).Return(&removeActivationsResponse, nil)
 
+		client.On("GetActivations",
+			mock.Anything,
+			appsec.GetActivationsRequest{ActivationID: 547695},
+		).Return(&getActivationsDeleteResponse, nil)
+
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
 				IsUnitTest:        true,
@@ -143,6 +148,11 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 					ConfigVersion int `json:"configVersion"`
 				}{{ConfigID: 43253, ConfigVersion: 7}}},
 		).Return(&removeActivationsResponse, nil)
+
+		client.On("GetActivations",
+			mock.Anything,
+			appsec.GetActivationsRequest{ActivationID: 547695},
+		).Return(&getActivationsResponseDelete, nil)
 
 		// update only note field change suppressed
 
@@ -263,6 +273,16 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 					ConfigID      int `json:"configId"`
 					ConfigVersion int `json:"configVersion"`
 				}{{ConfigID: 43253, ConfigVersion: 7}}},
+		).Return(&removeActivationsUpdatedResponse, nil)
+
+		client.On("GetActivations",
+			mock.Anything,
+			appsec.GetActivationsRequest{ActivationID: 547695},
+		).Return(&getActivationsResponseDelete, nil)
+
+		client.On("GetActivations",
+			mock.Anything,
+			appsec.GetActivationsRequest{ActivationID: 547695},
 		).Return(&removeActivationsUpdatedResponse, nil)
 
 		useClient(client, func() {

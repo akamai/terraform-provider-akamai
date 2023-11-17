@@ -149,7 +149,7 @@ func resourceActivationsCreate(ctx context.Context, d *schema.ResourceData, m in
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	for activation.Status != appsec.StatusActive {
+	for activation.Status != appsec.StatusActive && activation.Status != appsec.StatusAborted && activation.Status != appsec.StatusFailed {
 		select {
 		case <-time.After(tf.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
 			act, err := client.GetActivations(ctx, getActivationRequest)
@@ -260,7 +260,7 @@ func resourceActivationsUpdate(ctx context.Context, d *schema.ResourceData, m in
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	for activation.Status != appsec.StatusActive {
+	for activation.Status != appsec.StatusActive && activation.Status != appsec.StatusAborted && activation.Status != appsec.StatusFailed {
 		select {
 		case <-time.After(tf.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
 			act, err := client.GetActivations(ctx, getActivationRequest)
@@ -350,7 +350,7 @@ func resourceActivationsDelete(ctx context.Context, d *schema.ResourceData, m in
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	for activation.Status != appsec.StatusDeactivated {
+	for activation.Status != appsec.StatusDeactivated && activation.Status != appsec.StatusAborted && activation.Status != appsec.StatusFailed {
 		select {
 		case <-time.After(tf.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
 			act, err := client.GetActivations(ctx, getActivationRequest)
