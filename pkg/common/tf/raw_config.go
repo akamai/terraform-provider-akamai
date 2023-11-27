@@ -6,8 +6,12 @@ import (
 
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/go-cty/cty/gocty"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
+
+// RawConfigGetter is used to retrieve raw config.
+type RawConfigGetter interface {
+	GetRawConfig() cty.Value
+}
 
 // RawConfig is used to query attributes from the raw config.
 type RawConfig struct {
@@ -15,8 +19,8 @@ type RawConfig struct {
 }
 
 // NewRawConfig creates a new RawConfig which uses the raw config retrieved from data.
-func NewRawConfig(data *schema.ResourceData) *RawConfig {
-	return &RawConfig{data: data.GetRawConfig()}
+func NewRawConfig(g RawConfigGetter) *RawConfig {
+	return &RawConfig{data: g.GetRawConfig()}
 }
 
 // GetOk returns the data for the given key and whether or not the key was set to a non-zero value.

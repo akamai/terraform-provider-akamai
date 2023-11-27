@@ -1,0 +1,1 @@
+{"comments":"lifecycleTest","rules":{"behaviors":[{"name":"caching","options":{"behavior":"MAX_AGE","mustRevalidate":false,"ttl":"12d"}}],"name":"default","options":{}}}

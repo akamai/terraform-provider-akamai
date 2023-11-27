@@ -38,26 +38,6 @@ func resourceProperty() *schema.Resource {
 		}
 	}
 
-	hashHostname := func(v interface{}) int {
-		m, ok := v.(map[string]interface{})
-		if !ok {
-			return 0
-		}
-		cnameFrom, ok := m["cname_from"]
-		if !ok {
-			return 0
-		}
-		cnameTo, ok := m["cname_to"]
-		if !ok {
-			return 0
-		}
-		certProvisioningType, ok := m["cert_provisioning_type"]
-		if !ok {
-			return 0
-		}
-		return schema.HashString(fmt.Sprintf("%s.%s.%s", cnameFrom, cnameTo, certProvisioningType))
-	}
-
 	validateRules := func(val interface{}, _ cty.Path) diag.Diagnostics {
 		if len(val.(string)) == 0 {
 			return nil
@@ -75,10 +55,10 @@ func resourceProperty() *schema.Resource {
 		ReadContext:   resourcePropertyRead,
 		UpdateContext: resourcePropertyUpdate,
 		DeleteContext: resourcePropertyDelete,
-		CustomizeDiff: customdiff.All(
-			rulesCustomDiff,
+		CustomizeDiff: customdiff.Sequence(
 			hostNamesCustomDiff,
-			setPropertyVersionsComputedOnRulesChange,
+			propertyRulesCustomDiff,
+			setPropertyVersionsComputed,
 		),
 		Importer: &schema.ResourceImporter{
 			StateContext: resourcePropertyImport,
@@ -128,8 +108,15 @@ func resourceProperty() *schema.Resource {
 				Computed:         true,
 				Description:      "Property Rules as JSON",
 				ValidateDiagFunc: validateRules,
-				DiffSuppressFunc: diffSuppressRules,
+				DiffSuppressFunc: diffSuppressPropertyRules,
 				StateFunc:        rulesStateFunc,
+			},
+			"version_notes": {
+				Type:             schema.TypeString,
+				Optional:         true,
+				Computed:         true,
+				Description:      "Property version notes",
+				DiffSuppressFunc: propertyVersionNotesDiffSupress,
 			},
 			"hostnames": {
 				Type:     schema.TypeSet,
@@ -222,10 +209,10 @@ var rulesStateFunc = func(v interface{}) string {
 	return v.(string)
 }
 
-// isValidPropertyName is a function that validates if given string contains only letters, numbers, and these characters: . _ -
+// isValidPropertyName is a function that validates if given string contains only letters, numbers, and these characters: '.', '_', '-'.
 var isValidPropertyName = regexp.MustCompile(`^[A-Za-z0-9.\-_]+$`).MatchString
 
-// validatePropertyName validates if name property contains valid characters
+// validatePropertyName validates if name property contains valid characters.
 func validatePropertyName(v interface{}, _ cty.Path) diag.Diagnostics {
 	name := v.(string)
 	maxPropertyNameLength := 85
@@ -239,18 +226,48 @@ func validatePropertyName(v interface{}, _ cty.Path) diag.Diagnostics {
 	return nil
 }
 
-// rulesCustomDiff compares Rules.Criteria and Rules.Children fields from terraform state and from a new configuration.
-// If some of these fields are empty lists in the new configuration and are nil in the terraform state, then this function
-// returns no difference for these fields
-func rulesCustomDiff(_ context.Context, diff *schema.ResourceDiff, _ interface{}) error {
+// ErrCalculatingHostnamesHash is used when calculating hash value for set of hostnames failed.
+var ErrCalculatingHostnamesHash = errors.New("calculating hostnames set hash failed")
+
+func hashHostname(v any) int {
+	m, ok := v.(map[string]any)
+	if !ok {
+		panic(fmt.Errorf("%w: expected map[string]any, got: %T", ErrCalculatingHostnamesHash, v))
+	}
+	cnameFrom, ok := m["cname_from"]
+	if !ok {
+		panic(fmt.Errorf("%w: 'cname_from' was not provided", ErrCalculatingHostnamesHash))
+	}
+	cnameTo, ok := m["cname_to"]
+	if !ok {
+		panic(fmt.Errorf("%w: 'cname_to' was not provided", ErrCalculatingHostnamesHash))
+	}
+	certProvisioningType, ok := m["cert_provisioning_type"]
+	if !ok {
+		panic(fmt.Errorf("%w: 'cert_provisioning_type' was not provided", ErrCalculatingHostnamesHash))
+	}
+	return schema.HashString(fmt.Sprintf("%s.%s.%s", cnameFrom, cnameTo, certProvisioningType))
+}
+
+// propertyRulesCustomDiff compares Rules.Criteria and Rules.Children fields from terraform state
+// and from a new configuration. If some of these fields are empty lists in the new configuration and
+// are nil in the terraform state, then this function returns no difference for these fields.
+func propertyRulesCustomDiff(_ context.Context, diff *schema.ResourceDiff, _ interface{}) error {
 	o, n := diff.GetChange("rules")
-	oldValue := o.(string)
-	newValue := n.(string)
+	oldValue, newValue := o.(string), n.(string)
 
-	var oldRulesUpdate, newRulesUpdate papi.RulesUpdate
+	handleCreate := diff.Id() == "" && newValue != ""
+	if !handleCreate && oldValue == "" {
+		return nil
+	}
 
-	if diff.Id() == "" && newValue != "" {
-		rules, err := unifyRulesDiff(newValue)
+	var newRulesUpdate papi.RulesUpdate
+	if err := json.Unmarshal([]byte(newValue), &newRulesUpdate); err != nil {
+		return fmt.Errorf("cannot parse rules JSON from config: %s", err)
+	}
+
+	if handleCreate {
+		rules, err := unifyRulesDiff(newRulesUpdate)
 		if err != nil {
 			return err
 		}
@@ -260,28 +277,26 @@ func rulesCustomDiff(_ context.Context, diff *schema.ResourceDiff, _ interface{}
 		return nil
 	}
 
-	if oldValue == "" || newValue == "" {
-		return nil
-	}
-
-	err := json.Unmarshal([]byte(oldValue), &oldRulesUpdate)
-	if err != nil {
+	var oldRulesUpdate papi.RulesUpdate
+	if err := json.Unmarshal([]byte(oldValue), &oldRulesUpdate); err != nil {
 		return fmt.Errorf("cannot parse rules JSON from state: %s", err)
 	}
 
-	err = json.Unmarshal([]byte(newValue), &newRulesUpdate)
-	if err != nil {
-		return fmt.Errorf("cannot parse rules JSON from config: %s", err)
+	normalizeFields(&oldRulesUpdate, &newRulesUpdate)
+	if rulesEqual(&oldRulesUpdate.Rules, &newRulesUpdate.Rules) && oldRulesUpdate.Comments == newRulesUpdate.Comments {
+		return nil
 	}
 
-	normalizeFields(&oldRulesUpdate, &newRulesUpdate)
+	versionNotes, _ := tf.NewRawConfig(diff).GetOk("version_notes")
+	if versionNotes != nil {
+		newRulesUpdate.Comments = oldRulesUpdate.Comments
+	}
+
 	rules, err := json.Marshal(newRulesUpdate)
 	if err != nil {
 		return fmt.Errorf("cannot encode rules JSON %s", err)
 	}
-	if ruleTreesEqual(&oldRulesUpdate, &newRulesUpdate) {
-		return nil
-	}
+
 	if err = diff.SetNew("rules", string(rules)); err != nil {
 		return fmt.Errorf("cannot set a new diff value for 'rules' %s", err)
 	}
@@ -291,12 +306,7 @@ func rulesCustomDiff(_ context.Context, diff *schema.ResourceDiff, _ interface{}
 // unifyRulesDiff is invoked on first planning for property creation
 // Its main purpose is to unify the rules JSON with what we expect will be created by PAPI
 // It is used in order to prevent diffs on output on subsequent terraform applies
-func unifyRulesDiff(newValue string) (string, error) {
-	var newRulesUpdate papi.RulesUpdate
-	err := json.Unmarshal([]byte(newValue), &newRulesUpdate)
-	if err != nil {
-		return "", fmt.Errorf("cannot parse rules JSON from config: %s", err)
-	}
+func unifyRulesDiff(newRulesUpdate papi.RulesUpdate) (string, error) {
 	removeNilOptions(&newRulesUpdate.Rules)
 	rulesBytes, err := json.Marshal(newRulesUpdate)
 	if err != nil {
@@ -339,21 +349,53 @@ func hostNamesCustomDiff(_ context.Context, d *schema.ResourceDiff, m interface{
 	return nil
 }
 
-// setPropertyVersionsComputedOnRulesChange is a schema.CustomizeDiffFunc for akamai_property resource,
-// which sets latest_version, staging_version and production_version fields as computed
-// if a new version of the property is expected to be created.
-func setPropertyVersionsComputedOnRulesChange(_ context.Context, rd *schema.ResourceDiff, _ interface{}) error {
-	oldHostnames, newHostnames := rd.GetChange("hostnames")
-	hostnamesEqual := oldHostnames.(*schema.Set).HashEqual(newHostnames.(*schema.Set))
-	ruleFormatChanged := rd.HasChange("rule_format")
-
-	oldRules, newRules := rd.GetChange("rules")
-	rulesEqual, err := rulesJSONEqual(oldRules.(string), newRules.(string))
-	if err != nil {
-		return err
+// canTriggerNewPropertyVersion is a diff time utility for recognizing if changes
+// to the configuration may result in creating a new property version.
+//
+// Things that might trigger creating a new property version:
+//   - updating hostnames,
+//   - updating property rules (excluding comments if version_notes are set)
+//   - updating rule_format, updating rules.
+//
+// To properly recognize version_notes being removed from config, use rd
+// implementation which uses raw config.
+func canTriggerNewPropertyVersion(rc tf.ResourceChangeFetcher, rd tf.ResourceDataFetcher) (bool, error) {
+	oldHostnames, newHostnames := rc.GetChange("hostnames")
+	if !oldHostnames.(*schema.Set).HashEqual(newHostnames.(*schema.Set)) {
+		return true, nil
 	}
 
-	if !ruleFormatChanged && hostnamesEqual && rulesEqual {
+	if rc.HasChange("rule_format") {
+		return true, nil
+	}
+
+	o, n := rc.GetChange("rules")
+	var oldRules papi.RulesUpdate
+	if err := json.Unmarshal([]byte(o.(string)), &oldRules); err != nil {
+		return false, fmt.Errorf("'old' = %s, unmarshal: %w", o.(string), err)
+	}
+
+	var newRules papi.RulesUpdate
+	if err := json.Unmarshal([]byte(n.(string)), &newRules); err != nil {
+		return false, fmt.Errorf("'new' = %s, unmarshal: %w", n.(string), err)
+	}
+
+	versionNotes, _ := rd.GetOk("version_notes")
+	if versionNotes == nil && oldRules.Comments != newRules.Comments {
+		return true, nil
+	}
+
+	return !rulesEqual(&oldRules.Rules, &newRules.Rules), nil
+}
+
+// setPropertyVersionsComputed implements a schema.CustomizeDiffFunc for akamai_property resource.
+//
+// It sets certain attributes as computed if a new version of the property is expected to be
+// created. For latest_version staging_version and production_version attributes it's crucial
+// for avoiding inconsistent plan errors if any of them are used in akamai_property_activation resource.
+func setPropertyVersionsComputed(_ context.Context, rd *schema.ResourceDiff, _ interface{}) error {
+	rawData := tf.NewRawConfig(rd)
+	if ok, err := canTriggerNewPropertyVersion(rd, rawData); err != nil || !ok {
 		return nil
 	}
 
@@ -364,6 +406,15 @@ func setPropertyVersionsComputedOnRulesChange(_ context.Context, rd *schema.Reso
 	}
 
 	return nil
+}
+
+func propertyVersionNotesDiffSupress(_, _, _ string, rd *schema.ResourceData) bool {
+	rawData := tf.NewRawConfig(rd)
+	if ok, err := canTriggerNewPropertyVersion(rd, rawData); ok || err != nil {
+		return false
+	}
+
+	return true
 }
 
 func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -433,11 +484,12 @@ func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m inter
 	}
 
 	rulesJSON := d.Get("rules").(string)
-	if rulesJSON != "" {
-		var rulesUpdate papi.RulesUpdate
-		if err := json.Unmarshal([]byte(rulesJSON), &rulesUpdate); err != nil {
+	versionNotes := d.Get("version_notes").(string)
+	if rulesJSON != "" || versionNotes != "" {
+		rulesUpdate, err := newRulesUpdate(rulesJSON, versionNotes)
+		if err != nil {
 			d.Partial(true)
-			return diag.Errorf("property rules are not valid JSON: %s", err)
+			return diag.FromErr(err)
 		}
 
 		if err := updatePropertyRules(ctx, client, property, rulesUpdate, ruleFormat); err != nil {
@@ -538,6 +590,7 @@ func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interfa
 		"rule_format":        ruleFormat,
 		"rule_errors":        papiErrorsToList(ruleErrors),
 		"read_version":       readVersionID,
+		"version_notes":      res.Version.Note,
 	}
 	if property.ProductID != "" {
 		attrs["product_id"] = property.ProductID
@@ -647,20 +700,34 @@ func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 		}
 	}
 
-	if shouldUpdateRuleTree(d) {
-		ruleFormat := d.Get("rule_format").(string)
-		rulesJSON := d.Get("rules").(string)
+	if !shouldUpdateRuleTree(d) {
+		return resourcePropertyRead(ctx, d, m)
+	}
 
-		var rulesUpdate papi.RulesUpdate
-		if err := json.Unmarshal([]byte(rulesJSON), &rulesUpdate); err != nil {
-			d.Partial(true)
-			return diag.Errorf("property rules are not valid JSON: %s", err)
-		}
+	ruleFormat, err := tf.GetStringValue("rule_format", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
+		return diag.FromErr(err)
+	}
 
-		if err := updatePropertyRules(ctx, client, property, rulesUpdate, ruleFormat); err != nil {
-			d.Partial(true)
-			return diag.FromErr(err)
-		}
+	rulesJSON, err := tf.GetStringValue("rules", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+
+	versionNotes, err := tf.GetStringValue("version_notes", tf.NewRawConfig(d))
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+
+	rulesUpdate, err := newRulesUpdate(rulesJSON, versionNotes)
+	if err != nil {
+		d.Partial(true)
+		return diag.FromErr(err)
+	}
+
+	if err := updatePropertyRules(ctx, client, property, rulesUpdate, ruleFormat); err != nil {
+		d.Partial(true)
+		return diag.FromErr(err)
 	}
 
 	return resourcePropertyRead(ctx, d, m)
@@ -1099,13 +1166,28 @@ func fetchPropertyVersionRules(ctx context.Context, client papi.PAPI, property p
 }
 
 func shouldUpdateRuleTree(rd *schema.ResourceData) bool {
-	_, rulesOk := rd.GetOk("rules")
-	_, formatOk := rd.GetOk("rule_format")
+	rules, _ := rd.GetOk("rules")
+	format, _ := rd.GetOk("rule_format")
 
-	rulesNeedUpdate := rulesOk && rd.HasChange("rules")
-	formatNeedsUpdate := formatOk && rd.HasChange("rule_format")
+	rulesNeedUpdate := rules != nil && rd.HasChange("rules")
+	formatNeedsUpdate := format != nil && rd.HasChange("rule_format")
 
 	return rulesNeedUpdate || formatNeedsUpdate
+}
+
+// newRulesUpdate returns new papi.RulesUpdate, created using provided rules in JSON and comments.
+// If comments are not empty, it overwrites comments unmarshalled from JSON with them.
+func newRulesUpdate(rulesJSON, comments string) (papi.RulesUpdate, error) {
+	var rules papi.RulesUpdate
+	if err := json.Unmarshal([]byte(rulesJSON), &rules); err != nil {
+		return papi.RulesUpdate{}, fmt.Errorf("property rules are not valid JSON: %s", err)
+	}
+
+	if comments != "" {
+		rules.Comments = comments
+	}
+
+	return rules, nil
 }
 
 func updatePropertyRules(ctx context.Context, client papi.PAPI, property papi.Property, rules papi.RulesUpdate, ruleFormat string) error {

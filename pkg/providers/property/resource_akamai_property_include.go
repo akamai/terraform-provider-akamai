@@ -31,7 +31,7 @@ func resourcePropertyInclude() *schema.Resource {
 			StateContext: resourcePropertyIncludeImport,
 		},
 		CustomizeDiff: customdiff.All(
-			rulesCustomDiff,
+			propertyIncludeRulesCustomDiff,
 			setIncludeVersionsComputedOnRulesChange,
 		),
 		Schema: map[string]*schema.Schema{
@@ -81,7 +81,7 @@ func resourcePropertyInclude() *schema.Resource {
 				Computed:         true,
 				Description:      "Property Rules as JSON",
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsJSON),
-				DiffSuppressFunc: tf.ComposeDiffSuppress(suppressDefaultRules, diffSuppressRules),
+				DiffSuppressFunc: tf.DiffSuppressAny(suppressDefaultRules, diffSuppressPropertyRules),
 				StateFunc:        rulesStateFunc,
 			},
 			"rule_errors": {
@@ -111,6 +111,57 @@ func resourcePropertyInclude() *schema.Resource {
 			},
 		},
 	}
+}
+
+// propertyIncludeRulesCustomDiff compares Rules.Criteria and Rules.Children fields from terraform state
+// and from a new configuration. If some of these fields are empty lists in the new configuration and
+// are nil in the terraform state, then this function returns no difference for these fields.
+//
+// TODO: reuse propertyRulesCustomDiff when version_notes attr is added to akamai_property_include resource.
+func propertyIncludeRulesCustomDiff(_ context.Context, diff *schema.ResourceDiff, _ interface{}) error {
+	o, n := diff.GetChange("rules")
+	oldValue, newValue := o.(string), n.(string)
+
+	handleCreate := diff.Id() == "" && newValue != ""
+	if !handleCreate && (oldValue == "" || newValue == "") {
+		return nil
+	}
+
+	var newRulesUpdate papi.RulesUpdate
+	if err := json.Unmarshal([]byte(newValue), &newRulesUpdate); err != nil {
+		return fmt.Errorf("cannot parse rules JSON from config: %s", err)
+	}
+
+	if handleCreate {
+		rules, err := unifyRulesDiff(newRulesUpdate)
+		if err != nil {
+			return err
+		}
+		if err = diff.SetNew("rules", rules); err != nil {
+			return fmt.Errorf("cannot set a new diff value for 'rules' %s", err)
+		}
+		return nil
+	}
+
+	var oldRulesUpdate papi.RulesUpdate
+	if err := json.Unmarshal([]byte(oldValue), &oldRulesUpdate); err != nil {
+		return fmt.Errorf("cannot parse rules JSON from state: %s", err)
+	}
+
+	normalizeFields(&oldRulesUpdate, &newRulesUpdate)
+	if rulesEqual(&oldRulesUpdate.Rules, &newRulesUpdate.Rules) && oldRulesUpdate.Comments == newRulesUpdate.Comments {
+		return nil
+	}
+
+	rules, err := json.Marshal(newRulesUpdate)
+	if err != nil {
+		return fmt.Errorf("cannot encode rules JSON %s", err)
+	}
+
+	if err = diff.SetNew("rules", string(rules)); err != nil {
+		return fmt.Errorf("cannot set a new diff value for 'rules' %s", err)
+	}
+	return nil
 }
 
 func resourcePropertyIncludeCreate(ctx context.Context, rd *schema.ResourceData, m interface{}) diag.Diagnostics {

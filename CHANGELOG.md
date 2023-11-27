@@ -43,6 +43,8 @@
 
 #### FEATURES/ENHANCEMENTS:
 
+* PAPI
+  * Added `version_notes` attribute to `akamai_property` resource
 
 
 

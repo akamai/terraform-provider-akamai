@@ -1,9 +1,11 @@
 package property
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
+	"path"
 	"regexp"
 	"strings"
 	"testing"
@@ -15,6 +17,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestResProperty(t *testing.T) {
@@ -1522,6 +1525,224 @@ func TestResProperty(t *testing.T) {
 			client.AssertExpectations(t)
 		})
 	})
+}
+
+func TestPropertyResource_versionNotesLifecycle(t *testing.T) {
+	testdataDir := "testdata/TestResProperty/Lifecycle/versionNotes"
+	resourceName := "akamai_property.test"
+
+	name := "test_property"
+	ruleFormat := "v2023-01-05"
+	ctr, grp, prd, id := "ctr_123", "grp_123", "prd_123", "prp_123"
+	propertyVersion := 1
+
+	versionNotes1, versionNotes2, versionNotes3 := "lifecycleTest", "updatedNotes", "updatedNotes2"
+	rulesFile1And2, rulesFile3, rulesFile4And5 := "01_02_rules.json", "03_rules.json", "04_05_rules.json"
+
+	client := &papi.Mock{}
+
+	mockRead := func(notes string, rules papi.Rules) []*mock.Call {
+		getPropertyCall := client.On("GetProperty", mock.Anything, papi.GetPropertyRequest{
+			PropertyID: id,
+			ContractID: ctr,
+			GroupID:    grp,
+		}).Return(&papi.GetPropertyResponse{
+			Property: &papi.Property{
+				ContractID:    ctr,
+				GroupID:       grp,
+				PropertyID:    id,
+				PropertyName:  name,
+				LatestVersion: propertyVersion,
+			},
+		}, nil)
+
+		getHostnamesCall := client.On("GetPropertyVersionHostnames", mock.Anything, papi.GetPropertyVersionHostnamesRequest{
+			ContractID:        ctr,
+			GroupID:           grp,
+			PropertyID:        id,
+			PropertyVersion:   propertyVersion,
+			IncludeCertStatus: true,
+		}).Return(&papi.GetPropertyVersionHostnamesResponse{}, nil)
+
+		getRuleTreeCall := client.On("GetRuleTree", mock.Anything, papi.GetRuleTreeRequest{
+			PropertyID:      id,
+			ContractID:      ctr,
+			GroupID:         grp,
+			PropertyVersion: propertyVersion,
+			ValidateRules:   true,
+			ValidateMode:    papi.RuleValidateModeFull,
+		}).Return(&papi.GetRuleTreeResponse{
+			Rules:      rules,
+			Comments:   notes,
+			RuleFormat: ruleFormat,
+		}, nil)
+
+		getPropertyVersionCall := client.On("GetPropertyVersion", mock.Anything, papi.GetPropertyVersionRequest{
+			PropertyID:      id,
+			PropertyVersion: propertyVersion,
+			ContractID:      ctr,
+			GroupID:         grp,
+		}).Return(&papi.GetPropertyVersionsResponse{
+			Version: papi.PropertyVersionGetItem{
+				Note:             notes,
+				ProductID:        prd,
+				ProductionStatus: papi.VersionStatusInactive,
+				StagingStatus:    papi.VersionStatusInactive,
+			},
+		}, nil)
+
+		return []*mock.Call{getPropertyCall, getHostnamesCall, getRuleTreeCall, getPropertyVersionCall}
+	}
+
+	mockUpdate := func(currentNotes, newNotes string, rules papi.Rules) {
+		client.On("GetPropertyVersion", mock.Anything, papi.GetPropertyVersionRequest{
+			PropertyID:      id,
+			PropertyVersion: propertyVersion,
+			ContractID:      ctr,
+			GroupID:         grp,
+		}).Return(&papi.GetPropertyVersionsResponse{
+			Version: papi.PropertyVersionGetItem{
+				Note:             currentNotes,
+				ProductID:        prd,
+				ProductionStatus: papi.VersionStatusInactive,
+				StagingStatus:    papi.VersionStatusInactive,
+			},
+		}, nil).Once()
+
+		client.On("UpdateRuleTree", mock.Anything, papi.UpdateRulesRequest{
+			PropertyID:      id,
+			GroupID:         grp,
+			ContractID:      ctr,
+			PropertyVersion: propertyVersion,
+			Rules: papi.RulesUpdate{
+				Rules:    rules,
+				Comments: newNotes,
+			},
+			ValidateRules: true,
+		}).Return(&papi.UpdateRulesResponse{}, nil).Once()
+	}
+
+	// step 1 - create + read + plan
+	client.On("CreateProperty", mock.Anything, papi.CreatePropertyRequest{
+		ContractID: ctr,
+		GroupID:    grp,
+		Property: papi.PropertyCreate{
+			ProductID:    prd,
+			PropertyName: name,
+			RuleFormat:   ruleFormat,
+		},
+	}).Return(&papi.CreatePropertyResponse{
+		PropertyID: id,
+	}, nil).Once()
+
+	rulesJSON := testutils.LoadFixtureBytes(t, path.Join(testdataDir, rulesFile1And2))
+	var rules1And2 papi.RulesUpdate
+	err := json.Unmarshal(rulesJSON, &rules1And2)
+	require.NoError(t, err)
+
+	client.On("UpdateRuleTree", mock.Anything, papi.UpdateRulesRequest{
+		PropertyID:      id,
+		GroupID:         grp,
+		ContractID:      ctr,
+		PropertyVersion: propertyVersion,
+		Rules: papi.RulesUpdate{
+			Rules:    rules1And2.Rules,
+			Comments: versionNotes1,
+		},
+		ValidateRules: true,
+	}).Return(&papi.UpdateRulesResponse{}, nil).Once()
+
+	for _, m := range mockRead(versionNotes1, rules1And2.Rules) {
+		m.Times(2)
+	}
+
+	// step 2 - refresh + plan
+	for _, m := range mockRead(versionNotes2, rules1And2.Rules) {
+		m.Times(2)
+	}
+
+	// step 3 - refresh + update + read + plan
+	for _, m := range mockRead(versionNotes2, rules1And2.Rules) {
+		m.Times(1)
+	}
+
+	var rules3 papi.RulesUpdate
+	rulesJSON = testutils.LoadFixtureBytes(t, path.Join(testdataDir, rulesFile3))
+	err = json.Unmarshal(rulesJSON, &rules3)
+	require.NoError(t, err)
+
+	mockUpdate(versionNotes3, "updatedNotes2", rules3.Rules)
+
+	for _, m := range mockRead(versionNotes3, rules3.Rules) {
+		m.Times(2)
+	}
+
+	// step 4 - refresh + update + read + plan
+	for _, m := range mockRead(versionNotes3, rules3.Rules) {
+		m.Times(1)
+	}
+
+	var rules4And5 papi.RulesUpdate
+	rulesJSON = testutils.LoadFixtureBytes(t, path.Join(testdataDir, rulesFile4And5))
+	err = json.Unmarshal(rulesJSON, &rules4And5)
+	require.NoError(t, err)
+
+	mockUpdate(versionNotes3, rules4And5.Comments, rules4And5.Rules)
+
+	for _, m := range mockRead(rules4And5.Comments, rules4And5.Rules) {
+		m.Times(2)
+	}
+
+	// step 5 - refresh + plan
+	for _, m := range mockRead(rules4And5.Comments, rules4And5.Rules) {
+		m.Times(2)
+	}
+
+	// cleanup
+	client.On("RemoveProperty", mock.Anything, papi.RemovePropertyRequest{
+		PropertyID: id,
+		ContractID: ctr,
+		GroupID:    grp,
+	}).Return(&papi.RemovePropertyResponse{}, nil)
+
+	useClient(client, nil, func() {
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV5ProviderFactories: testAccProviders,
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, path.Join(testdataDir, "01_with_notes_and_comments.tf")),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						testCheckResourceAttrJSON(resourceName, "rules", testutils.LoadFixtureString(t, path.Join(testdataDir, "01_expected_rules.json"))),
+						resource.TestCheckResourceAttr("akamai_property.test", "version_notes", "lifecycleTest"),
+					),
+				},
+				{
+					Config:   testutils.LoadFixtureString(t, path.Join(testdataDir, "02_update_notes_no_diff.tf")),
+					PlanOnly: true,
+				},
+				{
+					Config: testutils.LoadFixtureString(t, path.Join(testdataDir, "03_update_notes_and_rules.tf")),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						testCheckResourceAttrJSON(resourceName, "rules", testutils.LoadFixtureString(t, path.Join(testdataDir, "03_expected_rules.json"))),
+						resource.TestCheckResourceAttr("akamai_property.test", "version_notes", "updatedNotes2"),
+					),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, path.Join(testdataDir, "04_05_remove_notes_update_comments.tf")),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						testCheckResourceAttrJSON(resourceName, "rules", testutils.LoadFixtureString(t, path.Join(testdataDir, "04_expected_rules.json"))),
+						resource.TestCheckResourceAttr("akamai_property.test", "version_notes", "Rules_04"),
+					),
+				},
+				{
+					Config:   testutils.LoadFixtureString(t, path.Join(testdataDir, "04_05_remove_notes_update_comments.tf")),
+					PlanOnly: true,
+				},
+			},
+		})
+	})
+
+	client.AssertExpectations(t)
 }
 
 func TestValidatePropertyName(t *testing.T) {
