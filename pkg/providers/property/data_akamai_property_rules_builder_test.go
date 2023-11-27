@@ -93,7 +93,7 @@ func TestDataPropertyRulesBuilder(t *testing.T) {
 	t.Run("valid rule with 3 children - v2023-09-20", func(t *testing.T) {
 		useClient(nil, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{{
 					Config: testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/rules_v2023_09_20.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
