@@ -93,3 +93,11 @@ func TestForEachInSlice(t *testing.T) {
 		assert.Equal(t, test.want, test.s)
 	}
 }
+
+func TestStringInSlice(t *testing.T) {
+	assert.False(t, StringInSlice([]string{}, "a"))
+	assert.True(t, StringInSlice([]string{"a"}, "a"))
+	assert.True(t, StringInSlice([]string{"b", "a"}, "a"))
+	assert.False(t, StringInSlice([]string{"b", "c"}, "a"))
+	assert.False(t, StringInSlice([]string{"", "b"}, "a"))
+}

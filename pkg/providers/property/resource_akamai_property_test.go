@@ -11,8 +11,8 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -1312,7 +1312,7 @@ func TestResProperty(t *testing.T) {
 					CertProvisioningType: "DEFAULT",
 				}}, &papi.Error{
 					StatusCode: http.StatusTooManyRequests,
-					Remaining:  tools.IntPtr(0),
+					Remaining:  ptr.To(0),
 					LimitKey:   "DEFAULT_CERTS_PER_CONTRACT",
 				},
 			).Once()

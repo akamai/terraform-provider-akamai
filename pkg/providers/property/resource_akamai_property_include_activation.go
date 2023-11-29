@@ -13,11 +13,11 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/str"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/timeouts"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/logger"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -369,18 +369,18 @@ func (p *propertyIncludeActivationData) populateFromResource(d *schema.ResourceD
 	if err != nil {
 		return err
 	}
-	p.includeID = tools.AddPrefix(includeID, "inc_")
+	p.includeID = str.AddPrefix(includeID, "inc_")
 
 	contractID, err := tf.GetStringValue("contract_id", d)
 	if err != nil {
 		return err
 	}
-	p.contractID = tools.AddPrefix(contractID, "ctr_")
+	p.contractID = str.AddPrefix(contractID, "ctr_")
 	groupID, err := tf.GetStringValue("group_id", d)
 	if err != nil {
 		return err
 	}
-	p.groupID = tools.AddPrefix(groupID, "grp_")
+	p.groupID = str.AddPrefix(groupID, "grp_")
 	p.network, err = tf.GetStringValue("network", d)
 	if err != nil {
 		return err

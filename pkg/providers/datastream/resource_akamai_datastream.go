@@ -10,10 +10,10 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/datastream"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/collections"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/logger"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 	"github.com/apex/log"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
@@ -973,7 +973,7 @@ func resourceDatastreamCreate(ctx context.Context, d *schema.ResourceData, m int
 // FilePrefixSuffixSet is used to set the blank value for prefix and suffix for https based destination as https based destination does not support prefix and suffix
 func FilePrefixSuffixSet(httpsBaseConnectorName string, config *datastream.DeliveryConfiguration) (*datastream.DeliveryConfiguration, error) {
 
-	if tools.ContainsString(ConnectorsWithoutFilenameOptionsConfig, httpsBaseConnectorName) {
+	if collections.StringInSlice(ConnectorsWithoutFilenameOptionsConfig, httpsBaseConnectorName) {
 
 		config.UploadFilePrefix = ""
 		config.UploadFileSuffix = ""
@@ -1033,7 +1033,7 @@ func resourceDatastreamRead(ctx context.Context, d *schema.ResourceData, m inter
 	if connectorKey != "" {
 		attrs[connectorKey] = []interface{}{connectorProps}
 
-		if tools.ContainsString(ConnectorsWithoutFilenameOptionsConfig, connectorKey) {
+		if collections.StringInSlice(ConnectorsWithoutFilenameOptionsConfig, connectorKey) {
 			// some connectors don't allow setting upload file prefix/suffix (API is ignoring them),
 			// but the documentation specifies default value for these fields (ak/ds respectively)
 			// so these fields should have default values in terraform provider too

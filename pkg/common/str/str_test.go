@@ -1,4 +1,4 @@
-package tools
+package str
 
 import (
 	"encoding/json"
@@ -7,7 +7,7 @@ import (
 	"github.com/tj/assert"
 )
 
-func TestConvertToString(t *testing.T) {
+func TestFrom(t *testing.T) {
 	type testStr string
 
 	tests := map[string]struct {
@@ -71,24 +71,16 @@ func TestConvertToString(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			var res string
 			assert.NotPanics(t, func() {
-				res = ConvertToString(test.val)
+				res = From(test.val)
 			})
 			assert.Equal(t, test.expected, res)
 		})
 	}
 }
 
-func TestGetFirstNotEmpty(t *testing.T) {
-	assert.Equal(t, GetFirstNotEmpty("", "def"), "def")
-	assert.Equal(t, GetFirstNotEmpty("val", "def"), "val")
-	assert.Equal(t, GetFirstNotEmpty("val", ""), "val")
-	assert.Equal(t, GetFirstNotEmpty("", ""), "")
-}
-
-func TestContainsString(t *testing.T) {
-	assert.False(t, ContainsString([]string{}, "a"))
-	assert.True(t, ContainsString([]string{"a"}, "a"))
-	assert.True(t, ContainsString([]string{"b", "a"}, "a"))
-	assert.False(t, ContainsString([]string{"b", "c"}, "a"))
-	assert.False(t, ContainsString([]string{"", "b"}, "a"))
+func TestFirstNotEmpty(t *testing.T) {
+	assert.Equal(t, "def", FirstNotEmpty("", "def"))
+	assert.Equal(t, "val", FirstNotEmpty("val", "def"))
+	assert.Equal(t, "val", FirstNotEmpty("val", ""))
+	assert.Equal(t, "", FirstNotEmpty("", ""))
 }

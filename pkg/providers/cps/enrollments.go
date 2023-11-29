@@ -11,10 +11,10 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cps"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
 	cpstools "github.com/akamai/terraform-provider-akamai/v5/pkg/providers/cps/tools"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 	"github.com/apex/log"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -365,7 +365,7 @@ func enrollmentDelete(ctx context.Context, d *schema.ResourceData, m interface{}
 	}
 	req := cps.RemoveEnrollmentRequest{
 		EnrollmentID:              enrollmentID,
-		AllowCancelPendingChanges: tools.BoolPtr(true),
+		AllowCancelPendingChanges: ptr.To(true),
 	}
 	if _, err = client.RemoveEnrollment(ctx, req); err != nil {
 		return diag.FromErr(err)

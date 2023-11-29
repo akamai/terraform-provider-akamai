@@ -12,10 +12,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/str"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/timeouts"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 )
 
 // PAPI CP Code
@@ -105,19 +105,19 @@ func resourceCPCodeCreate(ctx context.Context, d *schema.ResourceData, m interfa
 	if err != nil {
 		return diag.Errorf("`product_id` must be specified for creation")
 	}
-	productID = tools.AddPrefix(productID, "prd_")
+	productID = str.AddPrefix(productID, "prd_")
 
 	contractID, err := tf.GetStringValue("contract_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	contractID = tools.AddPrefix(contractID, "ctr_")
+	contractID = str.AddPrefix(contractID, "ctr_")
 
 	groupID, err := tf.GetStringValue("group_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	groupID = tools.AddPrefix(groupID, "grp_")
+	groupID = str.AddPrefix(groupID, "grp_")
 
 	var cpCodeID string
 	// Because CPCodes can't be deleted, we re-use an existing CPCode if it's there
@@ -149,13 +149,13 @@ func resourceCPCodeRead(ctx context.Context, d *schema.ResourceData, m interface
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	contractID = tools.AddPrefix(contractID, "ctr_")
+	contractID = str.AddPrefix(contractID, "ctr_")
 
 	groupID, err := tf.GetStringValue("group_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	groupID = tools.AddPrefix(groupID, "grp_")
+	groupID = str.AddPrefix(groupID, "grp_")
 
 	if err := d.Set("group_id", groupID); err != nil {
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
@@ -210,12 +210,12 @@ func resourceCPCodeUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	contractID = tools.AddPrefix(contractID, "ctr_")
+	contractID = str.AddPrefix(contractID, "ctr_")
 	groupID, err := tf.GetStringValue("group_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	groupID = tools.AddPrefix(groupID, "grp_")
+	groupID = str.AddPrefix(groupID, "grp_")
 
 	// trimCPCodeID is needed here for backwards compatibility
 	cpCodeID, err := strconv.Atoi(strings.TrimPrefix(d.Id(), cpCodePrefix))
@@ -248,7 +248,7 @@ func resourceCPCodeUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 	// Because we use CPRG API for update, we need to ensure that changes are also present when fetching cpCode with PAPI
 	if err := waitForCPCodeNameUpdate(ctx, client, contractID, groupID, d.Id(), name); err != nil {
 		if errors.Is(err, ErrCPCodeUpdateTimeout) {
-			return append(tools.DiagWarningf("%s", err), tools.DiagWarningf("Resource has been updated, but the change is still ongoing on the server")...)
+			return append(tf.DiagWarningf("%s", err), tf.DiagWarningf("Resource has been updated, but the change is still ongoing on the server")...)
 		}
 		return diag.FromErr(err)
 	}
@@ -271,8 +271,8 @@ func resourceCPCodeImport(ctx context.Context, d *schema.ResourceData, m interfa
 		return nil, errors.New("CP Code is a mandatory parameter")
 	}
 	cpCodeID := parts[0]
-	contractID := tools.AddPrefix(parts[1], "ctr_")
-	groupID := tools.AddPrefix(parts[2], "grp_")
+	contractID := str.AddPrefix(parts[1], "ctr_")
+	groupID := str.AddPrefix(parts[2], "grp_")
 
 	cpCodeResp, err := client.GetCPCode(ctx, papi.GetCPCodeRequest{
 		CPCodeID:   cpCodeID,

@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/edgeworkers"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -1031,7 +1031,7 @@ var (
 			},
 			ItemID:   itemID,
 			ItemData: edgeworkers.Item(itemData),
-		}).Return(tools.StringPtr("value1"), nil).Times(timesToRun)
+		}).Return(ptr.To("value1"), nil).Times(timesToRun)
 	}
 
 	// mockListItems mocks 'ListItems' call with provided data
@@ -1066,7 +1066,7 @@ var (
 				Network:     attrs.network,
 				GroupID:     attrs.groupID,
 			},
-		}).Return(tools.StringPtr(responseMessage), nil).Times(timesToRun)
+		}).Return(ptr.To(responseMessage), nil).Times(timesToRun)
 	}
 
 	// mockListGroupsWithinNamespace mocks 'ListGroupsWithinNamespace' call with provided data

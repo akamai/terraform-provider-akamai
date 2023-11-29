@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/botman"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/str"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -62,7 +62,7 @@ func TestResourceCustomBotCategorySequence(t *testing.T) {
 						Config: testutils.LoadFixtureString(t, "testdata/TestResourceCustomBotCategorySequence/create.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_botman_custom_bot_category_sequence.test", "id", "43253"),
-							resource.TestCheckResourceAttr("akamai_botman_custom_bot_category_sequence.test", "category_ids.#", tools.ConvertToString(len(createCategoryIds))),
+							resource.TestCheckResourceAttr("akamai_botman_custom_bot_category_sequence.test", "category_ids.#", str.From(len(createCategoryIds))),
 							resource.TestCheckResourceAttr("akamai_botman_custom_bot_category_sequence.test", "category_ids.0", createCategoryIds[0]),
 							resource.TestCheckResourceAttr("akamai_botman_custom_bot_category_sequence.test", "category_ids.1", createCategoryIds[1]),
 							resource.TestCheckResourceAttr("akamai_botman_custom_bot_category_sequence.test", "category_ids.2", createCategoryIds[2])),
@@ -71,7 +71,7 @@ func TestResourceCustomBotCategorySequence(t *testing.T) {
 						Config: testutils.LoadFixtureString(t, "testdata/TestResourceCustomBotCategorySequence/update.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_botman_custom_bot_category_sequence.test", "id", "43253"),
-							resource.TestCheckResourceAttr("akamai_botman_custom_bot_category_sequence.test", "category_ids.#", tools.ConvertToString(len(updateCategoryIds))),
+							resource.TestCheckResourceAttr("akamai_botman_custom_bot_category_sequence.test", "category_ids.#", str.From(len(updateCategoryIds))),
 							resource.TestCheckResourceAttr("akamai_botman_custom_bot_category_sequence.test", "category_ids.0", updateCategoryIds[0]),
 							resource.TestCheckResourceAttr("akamai_botman_custom_bot_category_sequence.test", "category_ids.1", updateCategoryIds[1]),
 							resource.TestCheckResourceAttr("akamai_botman_custom_bot_category_sequence.test", "category_ids.2", updateCategoryIds[2])),

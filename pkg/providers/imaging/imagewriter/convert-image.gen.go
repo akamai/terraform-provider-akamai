@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/imaging"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/tools"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/ptr"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -1203,7 +1203,7 @@ func appendGravityPriorityVariableInline(d *schema.ResourceData, key string) *im
 	nameRaw, existVar := extract(d, key+"_var")
 	existVar = existVar && nameRaw.(string) != ""
 	if existVar {
-		name = tools.StringPtr(nameRaw.(string))
+		name = ptr.To(nameRaw.(string))
 	}
 
 	if existVal || existVar {
@@ -1229,7 +1229,7 @@ func compositePlacementVariableInline(d *schema.ResourceData, key string) *imagi
 	nameRaw, existVar := extract(d, key+"_var")
 	existVar = existVar && nameRaw.(string) != ""
 	if existVar {
-		name = tools.StringPtr(nameRaw.(string))
+		name = ptr.To(nameRaw.(string))
 	}
 
 	if existVal || existVar {
@@ -1255,7 +1255,7 @@ func compositePostPlacementVariableInline(d *schema.ResourceData, key string) *i
 	nameRaw, existVar := extract(d, key+"_var")
 	existVar = existVar && nameRaw.(string) != ""
 	if existVar {
-		name = tools.StringPtr(nameRaw.(string))
+		name = ptr.To(nameRaw.(string))
 	}
 
 	if existVal || existVar {
@@ -1281,7 +1281,7 @@ func compositePostScaleDimensionVariableInline(d *schema.ResourceData, key strin
 	nameRaw, existVar := extract(d, key+"_var")
 	existVar = existVar && nameRaw.(string) != ""
 	if existVar {
-		name = tools.StringPtr(nameRaw.(string))
+		name = ptr.To(nameRaw.(string))
 	}
 
 	if existVal || existVar {
@@ -1307,7 +1307,7 @@ func compositeScaleDimensionVariableInline(d *schema.ResourceData, key string) *
 	nameRaw, existVar := extract(d, key+"_var")
 	existVar = existVar && nameRaw.(string) != ""
 	if existVar {
-		name = tools.StringPtr(nameRaw.(string))
+		name = ptr.To(nameRaw.(string))
 	}
 
 	if existVal || existVar {
@@ -1333,7 +1333,7 @@ func faceCropAlgorithmVariableInline(d *schema.ResourceData, key string) *imagin
 	nameRaw, existVar := extract(d, key+"_var")
 	existVar = existVar && nameRaw.(string) != ""
 	if existVar {
-		name = tools.StringPtr(nameRaw.(string))
+		name = ptr.To(nameRaw.(string))
 	}
 
 	if existVal || existVar {
@@ -1359,7 +1359,7 @@ func faceCropFocusVariableInline(d *schema.ResourceData, key string) *imaging.Fa
 	nameRaw, existVar := extract(d, key+"_var")
 	existVar = existVar && nameRaw.(string) != ""
 	if existVar {
-		name = tools.StringPtr(nameRaw.(string))
+		name = ptr.To(nameRaw.(string))
 	}
 
 	if existVal || existVar {
@@ -1385,7 +1385,7 @@ func faceCropStyleVariableInline(d *schema.ResourceData, key string) *imaging.Fa
 	nameRaw, existVar := extract(d, key+"_var")
 	existVar = existVar && nameRaw.(string) != ""
 	if existVar {
-		name = tools.StringPtr(nameRaw.(string))
+		name = ptr.To(nameRaw.(string))
 	}
 
 	if existVal || existVar {
@@ -1411,7 +1411,7 @@ func featureCropStyleVariableInline(d *schema.ResourceData, key string) *imaging
 	nameRaw, existVar := extract(d, key+"_var")
 	existVar = existVar && nameRaw.(string) != ""
 	if existVar {
-		name = tools.StringPtr(nameRaw.(string))
+		name = ptr.To(nameRaw.(string))
 	}
 
 	if existVal || existVar {
@@ -1437,7 +1437,7 @@ func gravityPostVariableInline(d *schema.ResourceData, key string) *imaging.Grav
 	nameRaw, existVar := extract(d, key+"_var")
 	existVar = existVar && nameRaw.(string) != ""
 	if existVar {
-		name = tools.StringPtr(nameRaw.(string))
+		name = ptr.To(nameRaw.(string))
 	}
 
 	if existVal || existVar {
@@ -1463,7 +1463,7 @@ func gravityVariableInline(d *schema.ResourceData, key string) *imaging.GravityV
 	nameRaw, existVar := extract(d, key+"_var")
 	existVar = existVar && nameRaw.(string) != ""
 	if existVar {
-		name = tools.StringPtr(nameRaw.(string))
+		name = ptr.To(nameRaw.(string))
 	}
 
 	if existVal || existVar {
@@ -1489,7 +1489,7 @@ func grayscaleTypeVariableInline(d *schema.ResourceData, key string) *imaging.Gr
 	nameRaw, existVar := extract(d, key+"_var")
 	existVar = existVar && nameRaw.(string) != ""
 	if existVar {
-		name = tools.StringPtr(nameRaw.(string))
+		name = ptr.To(nameRaw.(string))
 	}
 
 	if existVal || existVar {
@@ -1515,7 +1515,7 @@ func ifDimensionDimensionVariableInline(d *schema.ResourceData, key string) *ima
 	nameRaw, existVar := extract(d, key+"_var")
 	existVar = existVar && nameRaw.(string) != ""
 	if existVar {
-		name = tools.StringPtr(nameRaw.(string))
+		name = ptr.To(nameRaw.(string))
 	}
 
 	if existVal || existVar {
@@ -1541,7 +1541,7 @@ func ifDimensionPostDimensionVariableInline(d *schema.ResourceData, key string) 
 	nameRaw, existVar := extract(d, key+"_var")
 	existVar = existVar && nameRaw.(string) != ""
 	if existVar {
-		name = tools.StringPtr(nameRaw.(string))
+		name = ptr.To(nameRaw.(string))
 	}
 
 	if existVal || existVar {
@@ -1567,7 +1567,7 @@ func outputImagePerceptualQualityVariableInline(d *schema.ResourceData, key stri
 	nameRaw, existVar := extract(d, key+"_var")
 	existVar = existVar && nameRaw.(string) != ""
 	if existVar {
-		name = tools.StringPtr(nameRaw.(string))
+		name = ptr.To(nameRaw.(string))
 	}
 
 	if existVal || existVar {
@@ -1593,7 +1593,7 @@ func regionOfInterestCropStyleVariableInline(d *schema.ResourceData, key string)
 	nameRaw, existVar := extract(d, key+"_var")
 	existVar = existVar && nameRaw.(string) != ""
 	if existVar {
-		name = tools.StringPtr(nameRaw.(string))
+		name = ptr.To(nameRaw.(string))
 	}
 
 	if existVal || existVar {
@@ -1619,7 +1619,7 @@ func resizeAspectVariableInline(d *schema.ResourceData, key string) *imaging.Res
 	nameRaw, existVar := extract(d, key+"_var")
 	existVar = existVar && nameRaw.(string) != ""
 	if existVar {
-		name = tools.StringPtr(nameRaw.(string))
+		name = ptr.To(nameRaw.(string))
 	}
 
 	if existVal || existVar {
@@ -1645,7 +1645,7 @@ func resizeTypeVariableInline(d *schema.ResourceData, key string) *imaging.Resiz
 	nameRaw, existVar := extract(d, key+"_var")
 	existVar = existVar && nameRaw.(string) != ""
 	if existVar {
-		name = tools.StringPtr(nameRaw.(string))
+		name = ptr.To(nameRaw.(string))
 	}
 
 	if existVal || existVar {
@@ -1666,13 +1666,13 @@ func booleanVariableInline(d *schema.ResourceData, key string) *imaging.BooleanV
 	existVal = existVal && valueRaw.(string) != ""
 	if existVal {
 		valueMapped, _ := strconv.ParseBool(valueRaw.(string))
-		value = tools.BoolPtr(valueMapped)
+		value = ptr.To(valueMapped)
 	}
 
 	nameRaw, existVar := extract(d, key+"_var")
 	existVar = existVar && nameRaw.(string) != ""
 	if existVar {
-		name = tools.StringPtr(nameRaw.(string))
+		name = ptr.To(nameRaw.(string))
 	}
 
 	if existVal || existVar {
@@ -1692,13 +1692,13 @@ func integerVariableInline(d *schema.ResourceData, key string) *imaging.IntegerV
 	existVal = existVal && valueRaw.(string) != ""
 	if existVal {
 		valueMapped, _ := strconv.Atoi(valueRaw.(string))
-		value = tools.IntPtr(valueMapped)
+		value = ptr.To(valueMapped)
 	}
 
 	nameRaw, existVar := extract(d, key+"_var")
 	existVar = existVar && nameRaw.(string) != ""
 	if existVar {
-		name = tools.StringPtr(nameRaw.(string))
+		name = ptr.To(nameRaw.(string))
 	}
 
 	if existVal || existVar {
@@ -1718,13 +1718,13 @@ func numberVariableInline(d *schema.ResourceData, key string) *imaging.NumberVar
 	existVal = existVal && valueRaw.(string) != ""
 	if existVal {
 		valueMapped, _ := strconv.ParseFloat(valueRaw.(string), 64)
-		value = tools.Float64Ptr(valueMapped)
+		value = ptr.To(valueMapped)
 	}
 
 	nameRaw, existVar := extract(d, key+"_var")
 	existVar = existVar && nameRaw.(string) != ""
 	if existVar {
-		name = tools.StringPtr(nameRaw.(string))
+		name = ptr.To(nameRaw.(string))
 	}
 
 	if existVal || existVar {
@@ -1742,7 +1742,7 @@ func queryVariableInline(d *schema.ResourceData, key string) *imaging.QueryVaria
 	nameRaw, existVar := extract(d, key+"_var")
 	existVar = existVar && nameRaw.(string) != ""
 	if existVar {
-		name = tools.StringPtr(nameRaw.(string))
+		name = ptr.To(nameRaw.(string))
 	}
 
 	if existVar {
@@ -1761,13 +1761,13 @@ func stringVariableInline(d *schema.ResourceData, key string) *imaging.StringVar
 	existVal = existVal && valueRaw.(string) != ""
 	if existVal {
 		valueMapped := valueRaw.(string)
-		value = tools.StringPtr(valueMapped)
+		value = ptr.To(valueMapped)
 	}
 
 	nameRaw, existVar := extract(d, key+"_var")
 	existVar = existVar && nameRaw.(string) != ""
 	if existVar {
-		name = tools.StringPtr(nameRaw.(string))
+		name = ptr.To(nameRaw.(string))
 	}
 
 	if existVal || existVar {
@@ -1809,7 +1809,7 @@ func stringReader(d *schema.ResourceData, key string) string {
 func stringReaderPtr(d *schema.ResourceData, key string) *string {
 	value, exist := extract(d, key)
 	if exist {
-		return tools.StringPtr(value.(string))
+		return ptr.To(value.(string))
 	}
 	return nil
 }

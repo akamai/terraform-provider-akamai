@@ -9,9 +9,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/hash"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 )
 
 func dataSourcePropertyMultipleGroups() *schema.Resource {
@@ -90,7 +90,7 @@ func dataPropertyMultipleGroupsRead(ctx context.Context, d *schema.ResourceData,
 		return diag.FromErr(err)
 	}
 
-	d.SetId(tools.GetSHAString(string(jsonBody)))
+	d.SetId(hash.GetSHAString(string(jsonBody)))
 
 	logger.Debugf("[Akamai Property Groups] Done")
 

@@ -7,10 +7,10 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cps"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/collections"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
 	toolsCPS "github.com/akamai/terraform-provider-akamai/v5/pkg/providers/cps/tools"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -83,7 +83,7 @@ func dataCPSCSRRead(ctx context.Context, d *schema.ResourceData, m interface{}) 
 
 		statuses := []string{"wait-upload-third-party", "verify-third-party-cert", "wait-review-third-party-cert"}
 
-		if tools.ContainsString(statuses, changeStatus.StatusInfo.Status) {
+		if collections.StringInSlice(statuses, changeStatus.StatusInfo.Status) {
 			attrs, err = createCSRAttrsFromChange(ctx, client, changeID, enrollmentID)
 			if err != nil {
 				return diag.Errorf("could not get third party CSR: %s", err)

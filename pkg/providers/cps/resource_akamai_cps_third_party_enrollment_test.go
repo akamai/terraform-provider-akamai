@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cps"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/jinzhu/copier"
@@ -401,9 +401,9 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			withMTLS(cps.ClientMutualAuthentication{
 				AuthenticationOptions: &cps.AuthenticationOptions{
 					OCSP: &cps.OCSP{
-						Enabled: tools.BoolPtr(true),
+						Enabled: ptr.To(true),
 					},
-					SendCAListToClient: tools.BoolPtr(false),
+					SendCAListToClient: ptr.To(false),
 				},
 				SetID: "12345",
 			}),
@@ -414,7 +414,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			cps.UpdateEnrollmentRequest{
 				EnrollmentID:              1,
 				Enrollment:                enrollmentUpdate,
-				AllowCancelPendingChanges: tools.BoolPtr(true),
+				AllowCancelPendingChanges: ptr.To(true),
 			},
 		).Return(&cps.UpdateEnrollmentResponse{
 			ID:         1,

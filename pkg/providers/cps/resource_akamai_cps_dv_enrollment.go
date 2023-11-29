@@ -10,7 +10,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cps"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/tools"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/timeouts"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
@@ -351,7 +351,7 @@ func resourceCPSDVEnrollmentCreate(ctx context.Context, d *schema.ResourceData, 
 		req := cps.UpdateEnrollmentRequest{
 			EnrollmentID:              res.ID,
 			Enrollment:                enrollment,
-			AllowCancelPendingChanges: tools.BoolPtr(true),
+			AllowCancelPendingChanges: ptr.To(true),
 		}
 		_, err := client.UpdateEnrollment(ctx, req)
 		if err != nil {

@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cloudlets"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -39,15 +39,15 @@ func TestDataApplicationLoadBalancer(t *testing.T) {
 							Country:                       "US",
 							City:                          "Cambridge",
 							Hostname:                      "example.com",
-							Latitude:                      tools.Float64Ptr(102.78108),
-							StateOrProvince:               tools.StringPtr("MA"),
+							Latitude:                      ptr.To(102.78108),
+							StateOrProvince:               ptr.To("MA"),
 							LivenessHosts: []string{
 								"clorigin3.www.example.com",
 							},
-							Longitude: tools.Float64Ptr(-116.07064),
+							Longitude: ptr.To(-116.07064),
 
 							OriginID: "alb_test_krk_dc1",
-							Percent:  tools.Float64Ptr(100.0),
+							Percent:  ptr.To(100.0),
 						},
 					},
 					Deleted:          false,

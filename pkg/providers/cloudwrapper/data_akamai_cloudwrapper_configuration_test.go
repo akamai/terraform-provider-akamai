@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cloudwrapper"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -27,7 +27,7 @@ var (
 
 	configuration = testDataForCWConfiguration{
 		ID:                      1,
-		CapacityAlertsThreshold: tools.IntPtr(1),
+		CapacityAlertsThreshold: ptr.To(1),
 		Comments:                "Test comments",
 		ContractID:              "Test contract",
 		Locations: []cloudwrapper.ConfigLocationResp{
@@ -95,7 +95,7 @@ var (
 			DataStreams: &cloudwrapper.DataStreams{
 				DataStreamIDs: []int64{1, 2},
 				Enabled:       true,
-				SamplingRate:  tools.IntPtr(10),
+				SamplingRate:  ptr.To(10),
 			},
 			EnableSoftAlerts: true,
 			Origins: []cloudwrapper.Origin{
@@ -115,8 +115,8 @@ var (
 		ConfigName:         "Test config name",
 		LastUpdatedBy:      "Test user",
 		LastUpdatedDate:    "Test date",
-		LastActivatedBy:    tools.StringPtr("Test user 2"),
-		LastActivatedDate:  tools.StringPtr("Test date 2"),
+		LastActivatedBy:    ptr.To("Test user 2"),
+		LastActivatedDate:  ptr.To("Test date 2"),
 		NotificationEmails: []string{"1@a.com", "2@a.com"},
 		PropertyIDs:        []string{"11", "22"},
 		RetainIdleObjects:  true,

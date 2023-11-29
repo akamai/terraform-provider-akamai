@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/edgeworkers"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -22,7 +22,7 @@ func Test_populateEKV(t *testing.T) {
 	maxUpsertAttempts = 1
 	namespaceName, staging, ekvGroup := "DevExpTest", edgeworkers.ItemStagingNetwork, "greetings"
 	anError, nsCreationError := "an error", "The requested namespace does not exist or namespace type is not configured for 12345"
-	success := tools.StringPtr("Item was upserted in KV store with database 123456, namespace DevExpTest, group greetings, and key FR.")
+	success := ptr.To("Item was upserted in KV store with database 123456, namespace DevExpTest, group greetings, and key FR.")
 	tests := map[string]struct {
 		data      []interface{}
 		network   edgeworkers.ItemNetwork
@@ -166,7 +166,7 @@ func TestResourceEdgeKV(t *testing.T) {
 	}
 	initStatusOneAttempt := []*edgeworkers.EdgeKVInitializationStatus{initialized}
 	initNoErrorsOneAttempt := []error{nil}
-	namespaceName, net, retention, retentionUpdated, groupID := "DevExpTest", "staging", tools.IntPtr(86401), tools.IntPtr(88401), tools.IntPtr(1234)
+	namespaceName, net, retention, retentionUpdated, groupID := "DevExpTest", "staging", ptr.To(86401), ptr.To(88401), ptr.To(1234)
 	var noData []map[string]interface{}
 	id := fmt.Sprintf("%s:%s", namespaceName, net)
 	tests := map[string]struct {
@@ -199,7 +199,7 @@ func TestResourceEdgeKV(t *testing.T) {
 		"basic - retention 0": {
 			init: func(m *edgeworkers.Mock) {
 				// create
-				retention := tools.IntPtr(0)
+				retention := ptr.To(0)
 				stubResourceEdgeKVCreatePhase(m, namespaceName, net, retention, groupID, "", "",
 					initStatusOneAttempt, initNoErrorsOneAttempt, noData)
 				// read
@@ -572,7 +572,7 @@ func stubResourceEdgeKVCreatePhase(m *edgeworkers.Mock, namespaceName, net strin
 		if err, ok := item["error"]; ok {
 			onUpsert.Return(nil, fmt.Errorf("%s: %s", edgeworkers.ErrUpsertItem, err)).Once()
 		} else {
-			onUpsert.Return(tools.StringPtr("OK"), nil).Once()
+			onUpsert.Return(ptr.To("OK"), nil).Once()
 		}
 	}
 }

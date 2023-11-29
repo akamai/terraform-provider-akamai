@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/botman"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/str"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -62,7 +62,7 @@ func TestResourceCustomClientSequence(t *testing.T) {
 						Config: testutils.LoadFixtureString(t, "testdata/TestResourceCustomClientSequence/create.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_botman_custom_client_sequence.test", "id", "43253"),
-							resource.TestCheckResourceAttr("akamai_botman_custom_client_sequence.test", "custom_client_ids.#", tools.ConvertToString(len(createCustomClientIds))),
+							resource.TestCheckResourceAttr("akamai_botman_custom_client_sequence.test", "custom_client_ids.#", str.From(len(createCustomClientIds))),
 							resource.TestCheckResourceAttr("akamai_botman_custom_client_sequence.test", "custom_client_ids.0", createCustomClientIds[0]),
 							resource.TestCheckResourceAttr("akamai_botman_custom_client_sequence.test", "custom_client_ids.1", createCustomClientIds[1]),
 							resource.TestCheckResourceAttr("akamai_botman_custom_client_sequence.test", "custom_client_ids.2", createCustomClientIds[2])),
@@ -71,7 +71,7 @@ func TestResourceCustomClientSequence(t *testing.T) {
 						Config: testutils.LoadFixtureString(t, "testdata/TestResourceCustomClientSequence/update.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_botman_custom_client_sequence.test", "id", "43253"),
-							resource.TestCheckResourceAttr("akamai_botman_custom_client_sequence.test", "custom_client_ids.#", tools.ConvertToString(len(updateCustomClientIds))),
+							resource.TestCheckResourceAttr("akamai_botman_custom_client_sequence.test", "custom_client_ids.#", str.From(len(updateCustomClientIds))),
 							resource.TestCheckResourceAttr("akamai_botman_custom_client_sequence.test", "custom_client_ids.0", updateCustomClientIds[0]),
 							resource.TestCheckResourceAttr("akamai_botman_custom_client_sequence.test", "custom_client_ids.1", updateCustomClientIds[1]),
 							resource.TestCheckResourceAttr("akamai_botman_custom_client_sequence.test", "custom_client_ids.2", updateCustomClientIds[2])),

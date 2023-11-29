@@ -20,9 +20,9 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/logger"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/providers/dns/internal/txtrecord"
 
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/hash"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 	"github.com/apex/log"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -764,7 +764,7 @@ func resourceDNSRecordCreate(ctx context.Context, d *schema.ResourceData, m inte
 	logger.WithField("bind-object", recordCreate).Debug("Record Create")
 
 	extractString := strings.Join(recordCreate.Target, " ")
-	sha1hash := tools.GetSHAString(extractString)
+	sha1hash := hash.GetSHAString(extractString)
 
 	logger.Debugf("SHA sum for recordcreate [%s]", sha1hash)
 	// First try to get the zone from the API
@@ -935,7 +935,7 @@ func resourceDNSRecordUpdate(ctx context.Context, d *schema.ResourceData, m inte
 		})
 	}
 	extractString := strings.Join(recordCreate.Target, " ")
-	sha1hash := tools.GetSHAString(extractString)
+	sha1hash := hash.GetSHAString(extractString)
 
 	logger.Debugf("UPDATE SHA sum for recordupdate [%s]", sha1hash)
 	// First try to get the zone from the API
@@ -960,7 +960,7 @@ func resourceDNSRecordUpdate(ctx context.Context, d *schema.ResourceData, m inte
 		return resourceDNSRecordRead(ctx, d, meta)
 	}
 	extractString = strings.Join(rdata, " ")
-	sha1hashtest := tools.GetSHAString(extractString)
+	sha1hashtest := hash.GetSHAString(extractString)
 	logger.Debugf("UPDATE SHA sum from recordread [%s]", sha1hashtest)
 	sort.Strings(rdata)
 	// If there's no existing record we'll create a blank one
@@ -1048,7 +1048,7 @@ func resourceDNSRecordRead(ctx context.Context, d *schema.ResourceData, m interf
 	}).Debugf("READ record JSON from bind records: %s ", string(b))
 
 	extractString := strings.Join(recordCreate.Target, " ")
-	sha1hash := tools.GetSHAString(extractString)
+	sha1hash := hash.GetSHAString(extractString)
 	sort.Strings(recordCreate.Target)
 	logger.Debugf("READ SHA sum for Existing SHA test %s %s", extractString, sha1hash)
 
@@ -1099,7 +1099,7 @@ func resourceDNSRecordRead(ctx context.Context, d *schema.ResourceData, m interf
 		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return diag.FromErr(err)
 		}
-		shaRdata := tools.GetSHAString(rdataString)
+		shaRdata := hash.GetSHAString(rdataString)
 		if d.HasChange("target") {
 			logger.Debug("MX READ. TARGET HAS CHANGED")
 			// has remote changed independently of TF?
@@ -1129,7 +1129,7 @@ func resourceDNSRecordRead(ctx context.Context, d *schema.ResourceData, m interf
 	case RRTypeAaaa:
 		sort.Strings(record.Target)
 		rdataString := strings.Join(record.Target, " ")
-		shaRdata := tools.GetSHAString(rdataString)
+		shaRdata := hash.GetSHAString(rdataString)
 		if sha1hash == shaRdata {
 			return nil
 		}
@@ -1184,14 +1184,14 @@ func resourceDNSRecordRead(ctx context.Context, d *schema.ResourceData, m interf
 			logger.Debug("READ SOA RECORD CHANGE: SOA OK")
 			if ok := validateSOARecord(d, logger); ok {
 				extractSoaString := strings.Join(targets, " ")
-				sha1hash = tools.GetSHAString(extractSoaString)
+				sha1hash = hash.GetSHAString(extractSoaString)
 				logger.Debug("READ SOA RECORD CHANGE: SOA OK")
 			}
 		}
 	}
 	if recordType == "AKAMAITLC" {
 		extractTlcString := strings.Join(targets, " ")
-		sha1hash = tools.GetSHAString(extractTlcString)
+		sha1hash = hash.GetSHAString(extractTlcString)
 	}
 	if err := d.Set("record_sha", sha1hash); err != nil {
 		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
@@ -1306,7 +1306,7 @@ func resourceDNSRecordImport(d *schema.ResourceData, m interface{}) ([]*schema.R
 		sort.Strings(targets)
 	}
 	importTargetString = strings.Join(targets, " ")
-	sha1hash := tools.GetSHAString(importTargetString)
+	sha1hash := hash.GetSHAString(importTargetString)
 	if err := d.Set("record_sha", sha1hash); err != nil {
 		return nil, fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 	}

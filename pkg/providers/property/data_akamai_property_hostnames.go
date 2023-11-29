@@ -7,9 +7,9 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/str"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -79,18 +79,18 @@ func dataPropertyHostnamesRead(ctx context.Context, d *schema.ResourceData, m in
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	groupID = tools.AddPrefix(groupID, "grp_")
+	groupID = str.AddPrefix(groupID, "grp_")
 	contractID, err := tf.GetStringValue("contract_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	contractID = tools.AddPrefix(contractID, "ctr_")
+	contractID = str.AddPrefix(contractID, "ctr_")
 
 	propertyID, err := tf.GetStringValue("property_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	propertyID = tools.AddPrefix(propertyID, "prp_")
+	propertyID = str.AddPrefix(propertyID, "prp_")
 
 	version, err := tf.GetIntValue("version", d)
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {

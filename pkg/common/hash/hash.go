@@ -1,4 +1,5 @@
-package tools
+// Package hash contains convenience functions for calculating hashes.
+package hash
 
 import (
 	"bytes"
@@ -18,9 +19,9 @@ func GetSHAString(rdata string) string {
 	return sha1hashtest
 }
 
-// GetMd5Sum calculates md5Sum for any given interface{}.
-// Passing a nil pointer to GetMd5Sum will panic, as they cannot be transmitted by gob.
-func GetMd5Sum(key interface{}) (string, error) {
+// GetMD5Sum calculates md5Sum for any given interface{}.
+// Passing a nil pointer to GetMD5Sum will panic, as they cannot be transmitted by gob.
+func GetMD5Sum(key interface{}) (string, error) {
 	var buffer bytes.Buffer
 	encoder := gob.NewEncoder(&buffer)
 	err := encoder.Encode(key)

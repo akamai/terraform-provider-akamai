@@ -8,8 +8,8 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/imaging"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -48,7 +48,7 @@ func TestResourcePolicyVideo(t *testing.T) {
 				},
 			},
 			Version: 1,
-			Video:   tools.BoolPtr(true),
+			Video:   ptr.To(true),
 		}
 		defaultBreakpointsWidths = &imaging.Breakpoints{
 			Widths: []int{320, 640, 1024, 2048, 5000},
@@ -81,7 +81,7 @@ func TestResourcePolicyVideo(t *testing.T) {
 			Hosts:       defaultHosts,
 			Variables:   defaultVariables,
 			Version:     1,
-			Video:       tools.BoolPtr(true),
+			Video:       ptr.To(true),
 		}
 
 		expectUpsertPolicy = func(client *imaging.Mock, policyID, contractID, policySetID string, network imaging.PolicyNetwork, policy imaging.PolicyInput) {

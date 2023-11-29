@@ -9,8 +9,8 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -358,12 +358,12 @@ var (
 
 		var stagingVersion *int
 		if !nilStagVer {
-			stagingVersion = tools.IntPtr(10)
+			stagingVersion = ptr.To(10)
 		}
 
 		var productionVersion *int
 		if !nilStagVer {
-			productionVersion = tools.IntPtr(10)
+			productionVersion = ptr.To(10)
 		}
 
 		for i := 0; i < includesNumber; i++ {

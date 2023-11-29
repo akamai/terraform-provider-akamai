@@ -8,8 +8,8 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/imaging"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 	"github.com/tj/assert"
@@ -40,7 +40,7 @@ func TestResourcePolicyImage(t *testing.T) {
 			Transformations: []imaging.TransformationType{
 				&imaging.MaxColors{
 					Colors: &imaging.IntegerVariableInline{
-						Value: tools.IntPtr(2),
+						Value: ptr.To(2),
 					},
 					Transformation: imaging.MaxColorsTransformationMaxColors,
 				},
@@ -58,13 +58,13 @@ func TestResourcePolicyImage(t *testing.T) {
 			Transformations: []imaging.TransformationType{
 				&imaging.MaxColors{
 					Colors: &imaging.IntegerVariableInline{
-						Value: tools.IntPtr(2),
+						Value: ptr.To(2),
 					},
 					Transformation: imaging.MaxColorsTransformationMaxColors,
 				},
 			},
 			Version: 1,
-			Video:   tools.BoolPtr(false),
+			Video:   ptr.To(false),
 		}
 		defaultAllowedFormats = []imaging.OutputImageAllowedFormats{
 			imaging.OutputImageAllowedFormats("jpeg"),
@@ -124,7 +124,7 @@ func TestResourcePolicyImage(t *testing.T) {
 			},
 			Variables: defaultVariables,
 			Version:   1,
-			Video:     tools.BoolPtr(false),
+			Video:     ptr.To(false),
 		}
 
 		expectUpsertPolicy = func(client *imaging.Mock, policyID, policySetID, contractID string, network imaging.PolicyNetwork, policy imaging.PolicyInput) {
@@ -578,7 +578,7 @@ func TestResourcePolicyImage(t *testing.T) {
 		testDir := "testdata/TestResPolicyImage/regular_policy_update_rollout_duration"
 
 		policyInputWithRollout := imaging.PolicyInputImage{
-			RolloutDuration: tools.IntPtr(3600),
+			RolloutDuration: ptr.To(3600),
 			Breakpoints: &imaging.Breakpoints{
 				Widths: []int{320, 640, 1024, 2048, 5000},
 			},
@@ -590,7 +590,7 @@ func TestResourcePolicyImage(t *testing.T) {
 			Transformations: []imaging.TransformationType{
 				&imaging.MaxColors{
 					Colors: &imaging.IntegerVariableInline{
-						Value: tools.IntPtr(2),
+						Value: ptr.To(2),
 					},
 					Transformation: imaging.MaxColorsTransformationMaxColors,
 				},
@@ -830,7 +830,7 @@ func TestResourcePolicyImage(t *testing.T) {
 		testDir := "testdata/TestResPolicyImage/regular_policy_import"
 
 		policyInput := policyInput
-		policyInput.RolloutDuration = tools.IntPtr(3600)
+		policyInput.RolloutDuration = ptr.To(3600)
 
 		client := new(imaging.Mock)
 		expectUpsertPolicy(client, "test_policy", "test_policy_set", "test_contract", imaging.PolicyNetworkStaging, &policyInput)
@@ -970,7 +970,7 @@ func getPolicyOutputV2(policyOutput imaging.PolicyOutputImage) imaging.PolicyOut
 	policyOutputV2.Transformations = []imaging.TransformationType{
 		&imaging.MaxColors{
 			Colors: &imaging.IntegerVariableInline{
-				Value: tools.IntPtr(3),
+				Value: ptr.To(3),
 			},
 			Transformation: imaging.MaxColorsTransformationMaxColors,
 		},
@@ -984,7 +984,7 @@ func getPolicyInputV2(policyInput imaging.PolicyInputImage) imaging.PolicyInputI
 	policyInputV2.Transformations = []imaging.TransformationType{
 		&imaging.MaxColors{
 			Colors: &imaging.IntegerVariableInline{
-				Value: tools.IntPtr(3),
+				Value: ptr.To(3),
 			},
 			Transformation: imaging.MaxColorsTransformationMaxColors,
 		},
@@ -996,12 +996,12 @@ func getPolicyOutputOrderV2(policyOutput imaging.PolicyOutputImage) imaging.Poli
 	var policyOutputV2 = policyOutput
 	policyOutputV2.Transformations = []imaging.TransformationType{
 		&imaging.Blur{
-			Sigma:          &imaging.NumberVariableInline{Value: tools.Float64Ptr(5)},
+			Sigma:          &imaging.NumberVariableInline{Value: ptr.To(5.0)},
 			Transformation: imaging.BlurTransformationBlur,
 		},
 		&imaging.MaxColors{
 			Colors: &imaging.IntegerVariableInline{
-				Value: tools.IntPtr(4),
+				Value: ptr.To(4),
 			},
 			Transformation: imaging.MaxColorsTransformationMaxColors,
 		},

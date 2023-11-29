@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/ptr"
 	"github.com/tj/assert"
 )
 
@@ -56,18 +56,18 @@ func TestRulesEqual(t *testing.T) {
 				UUID: "43242",
 				Variables: []papi.RuleVariable{
 					{
-						Description: tools.StringPtr("var1"),
+						Description: ptr.To("var1"),
 						Hidden:      true,
 						Name:        "VAR1",
 						Sensitive:   true,
-						Value:       tools.StringPtr("value 1"),
+						Value:       ptr.To("value 1"),
 					},
 					{
-						Description: tools.StringPtr("var1"),
+						Description: ptr.To("var1"),
 						Hidden:      true,
 						Name:        "VAR2",
 						Sensitive:   true,
-						Value:       tools.StringPtr("value 1"),
+						Value:       ptr.To("value 1"),
 					}},
 			},
 			new: &papi.Rules{
@@ -111,18 +111,18 @@ func TestRulesEqual(t *testing.T) {
 				UUID: "43242",
 				Variables: []papi.RuleVariable{
 					{
-						Description: tools.StringPtr("var1"),
+						Description: ptr.To("var1"),
 						Hidden:      true,
 						Name:        "VAR1",
 						Sensitive:   true,
-						Value:       tools.StringPtr("value 1"),
+						Value:       ptr.To("value 1"),
 					},
 					{
-						Description: tools.StringPtr("var1"),
+						Description: ptr.To("var1"),
 						Hidden:      true,
 						Name:        "VAR2",
 						Sensitive:   true,
-						Value:       tools.StringPtr("value 1"),
+						Value:       ptr.To("value 1"),
 					},
 				},
 			},
@@ -180,18 +180,18 @@ func TestRulesEqual(t *testing.T) {
 				UUID: "43242",
 				Variables: []papi.RuleVariable{
 					{
-						Description: tools.StringPtr("var1"),
+						Description: ptr.To("var1"),
 						Hidden:      true,
 						Name:        "VAR2",
 						Sensitive:   true,
-						Value:       tools.StringPtr("value 1"),
+						Value:       ptr.To("value 1"),
 					},
 					{
-						Description: tools.StringPtr("var1"),
+						Description: ptr.To("var1"),
 						Hidden:      true,
 						Name:        "VAR1",
 						Sensitive:   true,
-						Value:       tools.StringPtr("value 1"),
+						Value:       ptr.To("value 1"),
 					},
 				},
 			},
@@ -245,18 +245,18 @@ func TestRulesEqual(t *testing.T) {
 				UUID: "43242",
 				Variables: []papi.RuleVariable{
 					{
-						Description: tools.StringPtr("var1"),
+						Description: ptr.To("var1"),
 						Hidden:      true,
 						Name:        "VAR1",
 						Sensitive:   true,
-						Value:       tools.StringPtr("value 1"),
+						Value:       ptr.To("value 1"),
 					},
 					{
-						Description: tools.StringPtr("var1"),
+						Description: ptr.To("var1"),
 						Hidden:      true,
 						Name:        "VAR2",
 						Sensitive:   true,
-						Value:       tools.StringPtr("value 1"),
+						Value:       ptr.To("value 1"),
 					},
 				},
 			},

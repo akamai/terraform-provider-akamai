@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/tools"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/ptr"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -360,15 +360,15 @@ func updateRuleTreeWithVariablesStep1() *papi.RulesUpdate {
 	return updateRuleTreeWithVariables([]papi.RuleVariable{
 		{
 			Name:        "TEST_EMPTY_FIELDS",
-			Value:       tools.StringPtr(""),
-			Description: tools.StringPtr(""),
+			Value:       ptr.To(""),
+			Description: ptr.To(""),
 			Hidden:      true,
 			Sensitive:   false,
 		},
 		{
 			Name:        "TEST_NIL_FIELD",
-			Description: tools.StringPtr(""),
-			Value:       tools.StringPtr(""),
+			Description: ptr.To(""),
+			Value:       ptr.To(""),
 			Hidden:      true,
 			Sensitive:   false,
 		},
@@ -379,15 +379,15 @@ func updateRuleTreeWithVariablesStep0() *papi.RulesUpdate {
 	return updateRuleTreeWithVariables([]papi.RuleVariable{
 		{
 			Name:        "TEST_EMPTY_FIELDS",
-			Value:       tools.StringPtr(""),
-			Description: tools.StringPtr(""),
+			Value:       ptr.To(""),
+			Description: ptr.To(""),
 			Hidden:      true,
 			Sensitive:   false,
 		},
 		{
 			Name:        "TEST_NIL_FIELD",
 			Description: nil,
-			Value:       tools.StringPtr(""),
+			Value:       ptr.To(""),
 			Hidden:      true,
 			Sensitive:   false,
 		},

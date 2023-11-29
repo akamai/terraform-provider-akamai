@@ -9,11 +9,11 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cps"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/timeouts"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
 	cpstools "github.com/akamai/terraform-provider-akamai/v5/pkg/providers/cps/tools"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -236,7 +236,7 @@ func resourceCPSThirdPartyEnrollmentCreate(ctx context.Context, d *schema.Resour
 		req := cps.UpdateEnrollmentRequest{
 			EnrollmentID:              res.ID,
 			Enrollment:                *enrollment,
-			AllowCancelPendingChanges: tools.BoolPtr(true),
+			AllowCancelPendingChanges: ptr.To(true),
 		}
 		_, err := client.UpdateEnrollment(ctx, req)
 		if err != nil {

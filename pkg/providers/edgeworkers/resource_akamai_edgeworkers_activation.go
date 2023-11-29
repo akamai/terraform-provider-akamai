@@ -11,10 +11,10 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/edgeworkers"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/collections"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/timeouts"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -245,7 +245,7 @@ func resourceEdgeworkersActivationDelete(ctx context.Context, rd *schema.Resourc
 	if _, err := waitForEdgeworkerDeactivation(ctx, client, edgeworkerID, deactivation.DeactivationID); err != nil {
 		if errors.Is(err, ErrEdgeworkerDeactivationTimeout) {
 			rd.SetId("")
-			return append(tools.DiagWarningf("%s: %s", ErrEdgeworkerDeactivation, err), tools.DiagWarningf("Resource has been removed from the state, but deactivation is still ongoing on the server")...)
+			return append(tf.DiagWarningf("%s: %s", ErrEdgeworkerDeactivation, err), tf.DiagWarningf("Resource has been removed from the state, but deactivation is still ongoing on the server")...)
 		}
 		return diag.Errorf("%s: %s", ErrEdgeworkerDeactivation, err)
 	}
@@ -271,7 +271,7 @@ func resourceEdgeworkersActivationImport(_ context.Context, rd *schema.ResourceD
 	}
 
 	network := parts[1]
-	if !tools.ContainsString(validEdgeworkerActivationNetworks, network) {
+	if !collections.StringInSlice(validEdgeworkerActivationNetworks, network) {
 		return nil, fmt.Errorf("%s import: network must be 'STAGING' or 'PRODUCTION', got '%s'", ErrEdgeworkerActivation, network)
 	}
 

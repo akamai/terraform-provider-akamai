@@ -12,9 +12,9 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/str"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 	"github.com/apex/log"
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -445,19 +445,19 @@ func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m inter
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	groupID = tools.AddPrefix(groupID, "grp_")
+	groupID = str.AddPrefix(groupID, "grp_")
 
 	contractID, err := tf.GetStringValue("contract_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	contractID = tools.AddPrefix(contractID, "ctr_")
+	contractID = str.AddPrefix(contractID, "ctr_")
 
 	productID, err := tf.GetStringValue("product_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	productID = tools.AddPrefix(productID, "prd_")
+	productID = str.AddPrefix(productID, "prd_")
 
 	propertyID, err := tf.GetStringValue("property_id", d)
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
@@ -553,8 +553,8 @@ func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interfa
 	client := Client(meta.Must(m))
 
 	propertyID := d.Id()
-	contractID := tools.AddPrefix(d.Get("contract_id").(string), "ctr_")
-	groupID := tools.AddPrefix(d.Get("group_id").(string), "grp_")
+	contractID := str.AddPrefix(d.Get("contract_id").(string), "ctr_")
+	groupID := str.AddPrefix(d.Get("group_id").(string), "grp_")
 	readVersionID := d.Get("read_version").(int)
 
 	var property *papi.Property
@@ -827,14 +827,14 @@ func resourcePropertyImport(ctx context.Context, d *schema.ResourceData, m inter
 		version = parts[3]
 		fallthrough
 	case 3:
-		propertyID = tools.AddPrefix(parts[0], "prp_")
-		contractID = tools.AddPrefix(parts[1], "ctr_")
-		groupID = tools.AddPrefix(parts[2], "grp_")
+		propertyID = str.AddPrefix(parts[0], "prp_")
+		contractID = str.AddPrefix(parts[1], "ctr_")
+		groupID = str.AddPrefix(parts[2], "grp_")
 	case 2:
 		version = parts[1]
 		fallthrough
 	case 1:
-		propertyID = tools.AddPrefix(parts[0], "prp_")
+		propertyID = str.AddPrefix(parts[0], "prp_")
 
 	default:
 		return nil, fmt.Errorf("invalid property identifier: %q", d.Id())
@@ -911,7 +911,7 @@ var versionRegexp = regexp.MustCompile(`^ver_(\d+)$`)
 
 // parseVersionNumber parses a version number (format "ver_#" or "#") or throws an error
 func parseVersionNumber(version string) (int, error) {
-	v := tools.AddPrefix(version, "ver_")
+	v := str.AddPrefix(version, "ver_")
 	r := versionRegexp
 	matches := r.FindStringSubmatch(v)
 	if len(matches) < 2 {

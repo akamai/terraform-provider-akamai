@@ -9,10 +9,10 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/edgeworkers"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/collections"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/timeouts"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -207,7 +207,7 @@ func resourceEdgeKVGroupItemsUpdate(ctx context.Context, rd *schema.ResourceData
 		if !ok {
 			return diag.Errorf("could not cast value of type %T to string", valueRaw)
 		}
-		if !tools.ContainsString(remoteStateItemsArray, key) {
+		if !collections.StringInSlice(remoteStateItemsArray, key) {
 			_, err = client.UpsertItem(ctx, edgeworkers.UpsertItemRequest{
 				ItemID:   key,
 				ItemData: edgeworkers.Item(value),
@@ -295,7 +295,7 @@ func resourceEdgeKVGroupItemsDelete(ctx context.Context, rd *schema.ResourceData
 	}
 
 	for key := range attrs.items {
-		if !tools.ContainsString(remoteStateItemsArray, key) {
+		if !collections.StringInSlice(remoteStateItemsArray, key) {
 			return diag.Errorf("item with key '%s' does not exist in the remote state of the database", key)
 		}
 		_, err = client.DeleteItem(ctx, edgeworkers.DeleteItemRequest{
@@ -338,7 +338,7 @@ func waitForEdgeKVGroupCreation(ctx context.Context, client edgeworkers.Edgework
 				return fmt.Errorf("could not list groups within network: `%s` and namespace_name: `%s`: %s", attrs.network, attrs.namespace, err)
 			}
 
-			if tools.ContainsString(groups, groupName) {
+			if collections.StringInSlice(groups, groupName) {
 				groupExists = true
 			}
 		case <-ctx.Done():
@@ -364,7 +364,7 @@ func waitForEdgeKVGroupDeletion(ctx context.Context, client edgeworkers.Edgework
 				return fmt.Errorf("could not list groups within network: `%s` and namespace_name: `%s`: %s", attrs.network, attrs.namespace, err)
 			}
 
-			if !tools.ContainsString(groups, groupName) {
+			if !collections.StringInSlice(groups, groupName) {
 				groupExists = false
 			}
 		case <-ctx.Done():

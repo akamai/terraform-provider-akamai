@@ -3,7 +3,7 @@ package property
 import (
 	"context"
 
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/str"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -63,7 +63,7 @@ func upgradePropV0(_ context.Context, rawState map[string]interface{}, _ interfa
 
 	// Deprecated attribute contract checked for prefixed ID and copied to contract_id
 	if v, ok := rawState["contract"]; ok {
-		s := tools.AddPrefix(v.(string), "ctr_") // Schema guarantees this is a string
+		s := str.AddPrefix(v.(string), "ctr_") // Schema guarantees this is a string
 
 		rawState["contract_id"] = s
 		rawState["contract"] = s
@@ -71,7 +71,7 @@ func upgradePropV0(_ context.Context, rawState map[string]interface{}, _ interfa
 
 	// Deprecated attribute group checked for prefixed ID and copied to group_id
 	if v, ok := rawState["group"]; ok {
-		s := tools.AddPrefix(v.(string), "grp_") // Schema guarantees this is a string
+		s := str.AddPrefix(v.(string), "grp_") // Schema guarantees this is a string
 
 		rawState["group_id"] = s
 		rawState["group"] = s
@@ -79,7 +79,7 @@ func upgradePropV0(_ context.Context, rawState map[string]interface{}, _ interfa
 
 	// Deprecated attribute product checked for prefixed ID and copied to product_id
 	if v, ok := rawState["product"]; ok {
-		s := tools.AddPrefix(v.(string), "prd_") // Schema guarantees this is a string
+		s := str.AddPrefix(v.(string), "prd_") // Schema guarantees this is a string
 
 		rawState["product_id"] = s
 		rawState["product"] = s

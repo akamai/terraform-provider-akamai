@@ -1,4 +1,5 @@
-package tools
+// Package str contains useful functions for string manipulation.
+package str
 
 import (
 	"encoding/json"
@@ -6,8 +7,9 @@ import (
 	"strconv"
 )
 
-// ConvertToString will convert different types to strings.
-func ConvertToString(data interface{}) (res string) {
+// From converts any type to string.
+func From(data interface{}) string {
+	var res string
 	switch v := data.(type) {
 	case float32, float64:
 		res = fmt.Sprintf("%g", v)
@@ -24,25 +26,16 @@ func ConvertToString(data interface{}) (res string) {
 	default:
 		res = fmt.Sprintf("%v", data)
 	}
-	return
+
+	return res
 }
 
-// GetFirstNotEmpty returns first not empty string
-func GetFirstNotEmpty(values ...string) string {
+// FirstNotEmpty returns first not empty string
+func FirstNotEmpty(values ...string) string {
 	for _, s := range values {
 		if s != "" {
 			return s
 		}
 	}
 	return ""
-}
-
-// ContainsString determines if the searched string appears in the array
-func ContainsString(s []string, searchTerm string) bool {
-	for _, v := range s {
-		if v == searchTerm {
-			return true
-		}
-	}
-	return false
 }

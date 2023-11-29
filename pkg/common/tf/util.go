@@ -1,4 +1,3 @@
-// Package tf is where provider functions were dropped
 package tf
 
 import (

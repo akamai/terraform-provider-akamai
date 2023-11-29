@@ -11,11 +11,11 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/hapi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
 
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/str"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/timeouts"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/logger"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -111,7 +111,7 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	groupID = tools.AddPrefix(groupID, "grp_")
+	groupID = str.AddPrefix(groupID, "grp_")
 	if err := d.Set("group_id", groupID); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 	}
@@ -120,7 +120,7 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	contractID = tools.AddPrefix(contractID, "ctr_")
+	contractID = str.AddPrefix(contractID, "ctr_")
 	if err := d.Set("contract_id", contractID); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 	}
@@ -133,7 +133,7 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 	if err != nil {
 		return diag.Errorf("`product_id` must be specified for creation")
 	}
-	productID = tools.AddPrefix(productID, "prd_")
+	productID = str.AddPrefix(productID, "prd_")
 	if err := d.Set("product_id", productID); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 	}
@@ -218,7 +218,7 @@ func resourceSecureEdgeHostNameRead(ctx context.Context, d *schema.ResourceData,
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	groupID = tools.AddPrefix(groupID, "grp_")
+	groupID = str.AddPrefix(groupID, "grp_")
 	if err := d.Set("group_id", groupID); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 	}
@@ -227,7 +227,7 @@ func resourceSecureEdgeHostNameRead(ctx context.Context, d *schema.ResourceData,
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	contractID = tools.AddPrefix(contractID, "ctr_")
+	contractID = str.AddPrefix(contractID, "ctr_")
 	// set contract/contract_id into ResourceData
 	if err := d.Set("contract_id", contractID); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
@@ -238,7 +238,7 @@ func resourceSecureEdgeHostNameRead(ctx context.Context, d *schema.ResourceData,
 	if got, ok := d.GetOk("product_id"); ok {
 		productID = got.(string)
 	}
-	productID = tools.AddPrefix(productID, "prd_")
+	productID = str.AddPrefix(productID, "prd_")
 	if err := d.Set("product_id", productID); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 	}
@@ -399,8 +399,8 @@ func resourceSecureEdgeHostNameImport(ctx context.Context, d *schema.ResourceDat
 	}
 
 	edgehostID := parts[0]
-	contractID := tools.AddPrefix(parts[1], "ctr_")
-	groupID := tools.AddPrefix(parts[2], "grp_")
+	contractID := str.AddPrefix(parts[1], "ctr_")
+	groupID := str.AddPrefix(parts[2], "grp_")
 
 	edgehostnameDetails, err := client.GetEdgeHostname(ctx, papi.GetEdgeHostnameRequest{
 		EdgeHostnameID: edgehostID,
