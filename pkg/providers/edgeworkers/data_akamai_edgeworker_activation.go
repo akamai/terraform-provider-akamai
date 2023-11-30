@@ -2,6 +2,7 @@ package edgeworkers
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/edgeworkers"
@@ -69,7 +70,7 @@ func dataEdgeWorkerActivationRead(ctx context.Context, d *schema.ResourceData, m
 	}
 
 	activation, err := getCurrentActivation(ctx, client, edgeworkerID, network, false)
-	if err != nil {
+	if err != nil && !errors.Is(err, ErrEdgeworkerNoCurrentActivation) {
 		return diag.Errorf("could not get current activation: %s", err)
 	}
 

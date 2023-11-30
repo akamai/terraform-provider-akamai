@@ -387,7 +387,7 @@ func checkEdgeWorkerActivations(ctx context.Context, client edgeworkers.Edgework
 
 	for _, network := range validEdgeworkerActivationNetworks {
 		act, err := getCurrentActivation(ctx, client, edgeWorkerID, network, false)
-		if err != nil {
+		if err != nil && !errors.Is(err, ErrEdgeworkerNoCurrentActivation) {
 			return nil, err
 		}
 		if act != nil {

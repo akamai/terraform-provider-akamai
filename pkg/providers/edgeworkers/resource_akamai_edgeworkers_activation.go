@@ -97,23 +97,29 @@ func resourceEdgeworkersActivationSchema() map[string]*schema.Schema {
 }
 
 const (
-	stagingNetwork                     = "STAGING"
-	productionNetwork                  = "PRODUCTION"
-	activationStatusComplete           = "COMPLETE"
-	activationStatusPresubmit          = "PRESUBMIT"
-	activationStatusPending            = "PENDING"
-	activationStatusInProgress         = "IN_PROGRESS"
+	stagingNetwork             = "STAGING"
+	productionNetwork          = "PRODUCTION"
+	activationStatusComplete   = "COMPLETE"
+	activationStatusPresubmit  = "PRESUBMIT"
+	activationStatusPending    = "PENDING"
+	activationStatusInProgress = "IN_PROGRESS"
+)
+
+const (
 	errorCodeVersionIsBeingDeactivated = "EW1031"
 	errorCodeVersionAlreadyDeactivated = "EW1032"
 )
+
+var validEdgeworkerActivationNetworks = []string{stagingNetwork, productionNetwork}
 
 var (
 	activationPollMinimum                       = time.Minute
 	activationPollInterval                      = activationPollMinimum
 	edgeworkersActivationResourceDefaultTimeout = time.Minute * 30
 	edgeworkersActivationResourceDeleteTimeout  = time.Minute * 60
-	validEdgeworkerActivationNetworks           = []string{stagingNetwork, productionNetwork}
 )
+
+const timeLayout = time.RFC3339
 
 func resourceEdgeworkersActivationCreate(ctx context.Context, rd *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
@@ -146,11 +152,10 @@ func resourceEdgeworkersActivationRead(ctx context.Context, rd *schema.ResourceD
 
 	activation, err := getCurrentActivation(ctx, client, edgeworkerID, network, false)
 	if err != nil {
+		if errors.Is(err, ErrEdgeworkerNoCurrentActivation) {
+			return diag.Errorf(`%s read: no version active on network '%s' for edgeworker with id=%d`, ErrEdgeworkerActivation, network, edgeworkerID)
+		}
 		return diag.Errorf("%s read: %s", ErrEdgeworkerActivation, err)
-	}
-
-	if activation == nil {
-		return diag.Errorf(`%s read: no version active on network '%s' for edgeworker with id=%d`, ErrEdgeworkerActivation, network, edgeworkerID)
 	}
 
 	if err := rd.Set("version", activation.Version); err != nil {
@@ -211,6 +216,7 @@ func resourceEdgeworkersActivationDelete(ctx context.Context, rd *schema.Resourc
 		return diag.FromErr(err)
 	}
 
+	findLatestDeactivation := false
 	deactivation, err := client.DeactivateVersion(ctx, edgeworkers.DeactivateVersionRequest{
 		EdgeWorkerID: edgeworkerID,
 		DeactivateVersion: edgeworkers.DeactivateVersion{
@@ -220,26 +226,23 @@ func resourceEdgeworkersActivationDelete(ctx context.Context, rd *schema.Resourc
 		},
 	})
 	if err != nil {
-		var e *edgeworkers.Error
-		ok := errors.As(err, &e)
-		if !ok {
-			return diag.Errorf("%s: %s", ErrEdgeworkerDeactivation, err)
-		}
-
-		switch e.ErrorCode {
-		case errorCodeVersionAlreadyDeactivated:
+		if errors.Is(err, edgeworkers.ErrVersionAlreadyDeactivated) {
 			logger.Info(fmt.Sprintf("Version '%s' has already been deactivated on network '%s' for edgeworker with id=%d. Removing from state", version, network, edgeworkerID))
-			rd.SetId("")
 			return nil
-		case errorCodeVersionIsBeingDeactivated:
-			deactivations, err := getDeactivationsByVersionAndNetwork(ctx, client, edgeworkerID, version, network)
-			if err != nil {
-				return diag.Errorf("%s: %s", ErrEdgeworkerDeactivation, err)
-			}
-			deactivation = &deactivations[0]
-		default:
+		}
+		if errors.Is(err, edgeworkers.ErrVersionBeingDeactivated) {
+			findLatestDeactivation = true
+		} else {
 			return diag.Errorf("%s: %s", ErrEdgeworkerDeactivation, err)
 		}
+	}
+
+	if findLatestDeactivation {
+		deactivations, err := getDeactivationsByVersionAndNetwork(ctx, client, edgeworkerID, version, network)
+		if err != nil {
+			return diag.Errorf("%s: %s", ErrEdgeworkerDeactivation, err)
+		}
+		deactivation = &deactivations[0]
 	}
 
 	if _, err := waitForEdgeworkerDeactivation(ctx, client, edgeworkerID, deactivation.DeactivationID); err != nil {
@@ -250,7 +253,6 @@ func resourceEdgeworkersActivationDelete(ctx context.Context, rd *schema.Resourc
 		return diag.Errorf("%s: %s", ErrEdgeworkerDeactivation, err)
 	}
 
-	rd.SetId("")
 	return nil
 }
 
@@ -313,7 +315,7 @@ func upsertActivation(ctx context.Context, rd *schema.ResourceData, m interface{
 	}
 
 	currentActivation, err := getCurrentActivation(ctx, client, edgeworkerID, network, true)
-	if err != nil {
+	if err != nil && !errors.Is(err, ErrEdgeworkerNoCurrentActivation) {
 		return diag.Errorf("%s: %s", ErrEdgeworkerActivation, err.Error())
 	}
 
@@ -358,46 +360,53 @@ func getCurrentActivation(ctx context.Context, client edgeworkers.Edgeworkers, e
 
 	activations := sortActivationsByDate(filterActivationsByNetwork(activationsResp.Activations, network))
 	if len(activations) == 0 {
-		return nil, nil
+		return nil, ErrEdgeworkerNoCurrentActivation
 	}
-	latestActivation := &activations[0]
 
-	switch latestActivation.Status {
-	case activationStatusComplete:
-		// do nothing
-	case activationStatusPresubmit, activationStatusPending, activationStatusInProgress:
+	latestActivation := &activations[0]
+	if !statusOngoingOrReady(latestActivation.Status) {
+		return nil, ErrEdgeworkerNoCurrentActivation
+	}
+
+	if statusOngoing(latestActivation.Status) {
 		latestActivation, err = waitForEdgeworkerActivation(ctx, client, edgeworkerID, latestActivation.ActivationID)
 		if err != nil {
 			return nil, err
 		}
 		return latestActivation, nil
-	default:
-		return nil, nil
 	}
 
 	latestDeactivation, err := getLatestCompletedDeactivation(ctx, client, edgeworkerID, latestActivation.Version, network, waitForDeactivation)
 	if err != nil {
+		if errors.Is(err, ErrEdgeworkerNoLatestDeactivation) {
+			return latestActivation, nil
+		}
 		return nil, err
 	}
-	if latestDeactivation == nil {
-		return latestActivation, nil
+
+	isDeactivated, err := wasDeactivationLater(latestActivation, latestDeactivation)
+	if err != nil {
+		return nil, err
 	}
 
-	timeLayout := time.RFC3339
-	activationTime, err := time.Parse(timeLayout, latestActivation.CreatedTime)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse activation time")
-	}
-	deactivationTime, err := time.Parse(timeLayout, latestDeactivation.CreatedTime)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse deactivation time")
-	}
-
-	if deactivationTime.After(activationTime) {
-		return nil, nil
+	if isDeactivated {
+		return nil, ErrEdgeworkerNoCurrentActivation
 	}
 
 	return latestActivation, nil
+}
+
+func wasDeactivationLater(activation *edgeworkers.Activation, deactivation *edgeworkers.Deactivation) (bool, error) {
+	activationTime, err := time.Parse(timeLayout, activation.CreatedTime)
+	if err != nil {
+		return false, fmt.Errorf("failed to parse activation time")
+	}
+	deactivationTime, err := time.Parse(timeLayout, deactivation.CreatedTime)
+	if err != nil {
+		return false, fmt.Errorf("failed to parse deactivation time")
+	}
+
+	return deactivationTime.After(activationTime), nil
 }
 
 func getDeactivationsByVersionAndNetwork(ctx context.Context, client edgeworkers.Edgeworkers, edgeworkerID int, version, network string) ([]edgeworkers.Deactivation, error) {
@@ -418,12 +427,12 @@ func getLatestCompletedDeactivation(ctx context.Context, client edgeworkers.Edge
 		return nil, err
 	}
 	if len(deactivations) == 0 {
-		return nil, nil
+		return nil, ErrEdgeworkerNoLatestDeactivation
 	}
 
 	for i := range deactivations {
 		d := &deactivations[i]
-		if wait && (d.Status == activationStatusPresubmit || d.Status == activationStatusPending || d.Status == activationStatusInProgress) {
+		if wait && statusOngoing(d.Status) {
 			d, err = waitForEdgeworkerDeactivation(ctx, client, edgeworkerID, d.DeactivationID)
 			if err != nil {
 				return nil, err
@@ -433,7 +442,7 @@ func getLatestCompletedDeactivation(ctx context.Context, client edgeworkers.Edge
 			return d, nil
 		}
 	}
-	return nil, nil
+	return nil, ErrEdgeworkerNoLatestDeactivation
 }
 
 func versionExists(version string, versions []edgeworkers.EdgeWorkerVersion) bool {
@@ -454,7 +463,7 @@ func waitForEdgeworkerActivation(ctx context.Context, client edgeworkers.Edgewor
 		return nil, err
 	}
 	for activation != nil && activation.Status != activationStatusComplete {
-		if activation.Status != activationStatusPresubmit && activation.Status != activationStatusPending && activation.Status != activationStatusInProgress {
+		if !statusOngoing(activation.Status) {
 			return nil, ErrEdgeworkerActivationFailure
 		}
 		select {
@@ -488,7 +497,7 @@ func waitForEdgeworkerDeactivation(ctx context.Context, client edgeworkers.Edgew
 		return nil, err
 	}
 	for deactivation != nil && deactivation.Status != activationStatusComplete {
-		if deactivation.Status != activationStatusPresubmit && deactivation.Status != activationStatusPending && deactivation.Status != activationStatusInProgress {
+		if !statusOngoing(deactivation.Status) {
 			return nil, ErrEdgeworkerDeactivationFailure
 		}
 		select {
@@ -533,7 +542,6 @@ func filterDeactivationsByNetwork(deacts []edgeworkers.Deactivation, net string)
 
 func sortActivationsByDate(activations []edgeworkers.Activation) []edgeworkers.Activation {
 	sort.Slice(activations, func(i, j int) bool {
-		timeLayout := time.RFC3339
 		t1, err := time.Parse(timeLayout, activations[i].CreatedTime)
 		if err != nil {
 			panic(err)
@@ -549,7 +557,6 @@ func sortActivationsByDate(activations []edgeworkers.Activation) []edgeworkers.A
 
 func sortDeactivationsByDate(deactivations []edgeworkers.Deactivation) []edgeworkers.Deactivation {
 	sort.Slice(deactivations, func(i, j int) bool {
-		timeLayout := time.RFC3339
 		t1, err := time.Parse(timeLayout, deactivations[i].CreatedTime)
 		if err != nil {
 			panic(err)
@@ -602,4 +609,12 @@ func suppressNoteFieldForEdgeWorkersActivation(_, oldValue, newValue string, d *
 		return false
 	}
 	return true
+}
+
+func statusOngoing(status string) bool {
+	return status == activationStatusInProgress || status == activationStatusPending || status == activationStatusPresubmit
+}
+
+func statusOngoingOrReady(status string) bool {
+	return status == activationStatusComplete || statusOngoing(status)
 }

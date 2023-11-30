@@ -738,7 +738,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 
 				// test cleanup - destroy
 				expectDeactivateVersion(m, edgeworkerID, 1, net, version, note,
-					fmt.Errorf("%w: %s", &edgeworkers.Error{ErrorCode: errorCodeVersionAlreadyDeactivated}, "oops"))
+					fmt.Errorf("%w: %s", edgeworkers.ErrVersionAlreadyDeactivated, "oops"))
 			},
 			steps: []resource.TestStep{
 				{
@@ -774,7 +774,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 
 				// test cleanup - destroy
 				expectDeactivateVersion(m, edgeworkerID, 1, net, version, note,
-					fmt.Errorf("%w: %s", &edgeworkers.Error{ErrorCode: errorCodeVersionIsBeingDeactivated}, "oops"))
+					fmt.Errorf("%w: %s", edgeworkers.ErrVersionBeingDeactivated, "oops"))
 				expectListDeactivations(m, edgeworkerID, version, []edgeworkers.Deactivation{
 					*createStubDeactivation(edgeworkerID, 1, net, version, activationStatusInProgress, ""),
 				}, nil)
