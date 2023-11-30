@@ -489,8 +489,8 @@ var (
 		},
 	}
 
-	// status is gtm.ResponseStatus structure used in tests
-	status = &gtm.ResponseStatus{
+	// testStatus is gtm.ResponseStatus structure used in tests
+	testStatus = &gtm.ResponseStatus{
 		ChangeId: "40e36abd-bfb2-4635-9fca-62175cf17007",
 		Links: &[]gtm.Link{
 			{
@@ -520,7 +520,7 @@ var (
 		ModificationComments:        "Edit Property test_property",
 		Name:                        gtmTestDomain,
 		Properties:                  properties,
-		Status:                      status,
+		Status:                      testStatus,
 		Type:                        "weighted",
 	}
 
@@ -539,7 +539,7 @@ var (
 		ModificationComments:        "Edit Property test_property",
 		Name:                        gtmTestDomain,
 		Properties:                  properties,
-		Status:                      status,
+		Status:                      testStatus,
 		Type:                        "weighted",
 	}
 

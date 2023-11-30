@@ -51,9 +51,9 @@
     * Added data sources:
         * `akamai_gtm_resource` - reads information for a specific GTM resource
 
-
-
-
+* GTM
+    * Added data sources:
+        * `akamai_gtm_domain` - reads information for a specific GTM domain
 
 * PAPI
   * Improve errors for `akamai_contract` and `akamai_group` datasources when there are multiple groups or contracts.
