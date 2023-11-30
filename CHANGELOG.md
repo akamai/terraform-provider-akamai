@@ -56,6 +56,8 @@
 
 * Cloudlets
     * Added import for `akamai_cloudlets_policy_activation`
+    * Added support for Shared Cloudlets Policies. To use it, provide `is_shared` field in `akamai_cloudlets_policy` resource as `true`. 
+    * Added validation to prevent changing `cloudlet_code` field in `akamai_cloudlets_policy` resource to prevent modifying of this immutable field.
 
 * GTM
   * Added data sources:

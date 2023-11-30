@@ -10,6 +10,7 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cloudlets"
+	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cloudlets/v3"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -45,6 +46,19 @@ func useClient(client cloudlets.Cloudlets, f func()) {
 
 	defer func() {
 		inst.client = orig
+		clientLock.Unlock()
+	}()
+
+	f()
+}
+
+func useClientV3(client v3.Cloudlets, f func()) {
+	clientLock.Lock()
+	orig := inst.v3Client
+	inst.v3Client = client
+
+	defer func() {
+		inst.v3Client = orig
 		clientLock.Unlock()
 	}()
 
