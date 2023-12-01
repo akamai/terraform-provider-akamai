@@ -391,7 +391,7 @@ var (
 		},
 	}
 
-	// links is gtm.Link structure used in tests
+	// links is gtm.link structure used in tests
 	links = []*gtm.Link{
 		{
 			Href: "https://akab-ymtebc45gco3ypzj-apz4yxpek55y7fyv.luna.akamaiapis.net/config-gtm/v1/domains/gtmdomtest.akadns.net",

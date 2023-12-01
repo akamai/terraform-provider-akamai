@@ -47,6 +47,10 @@
   * Added `version_notes` attribute to `akamai_property` resource
 
 
+* GTM
+    * Added data sources:
+        * `akamai_gtm_resource` - reads information for a specific GTM resource
+
 
 
 
