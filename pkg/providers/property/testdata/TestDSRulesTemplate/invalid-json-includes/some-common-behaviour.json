@@ -1,0 +1,9 @@
+"behaviors": [
+  {
+    "name": "mPulse",
+    "options": {
+      "enabled": true,
+      "configOverride": ""
+    }
+  }
+]

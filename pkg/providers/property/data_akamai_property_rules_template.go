@@ -171,9 +171,9 @@ func dataPropertyRulesTemplateRead(_ context.Context, d *schema.ResourceData, m 
 		}
 
 		dir = filepath.Dir(file)
-		if filepath.Ext(file) != ".json" || !json.Valid(fileData) {
-			logger.Errorf("snippets file should be with .json extension and valid json data: %s", file)
-			return diag.Errorf("snippets file should be with .json extension and valid json data. Invalid file: %s ", file)
+		if filepath.Ext(file) != ".json" || len(fileData) == 0 {
+			logger.Errorf("snippets file should be with .json extension and cannot be empty: %s", file)
+			return diag.Errorf("snippets file should be with .json extension and cannot be empty. Invalid file: %s ", file)
 		}
 	}
 
@@ -226,7 +226,7 @@ func dataPropertyRulesTemplateRead(_ context.Context, d *schema.ResourceData, m 
 					return fmt.Errorf("%w: %s", ErrReadFile, err)
 				}
 
-				if json.Valid(pathData) {
+				if len(pathData) > 0 {
 					logger.Debugf("Template snippet found: %s", path)
 					templateFiles[strings.TrimPrefix(filepath.ToSlash(path), fmt.Sprintf("%s/", filepath.ToSlash(dir)))] = path
 				}

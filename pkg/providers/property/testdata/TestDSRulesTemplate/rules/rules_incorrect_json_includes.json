@@ -1,0 +1,44 @@
+{
+  "rules": {
+    "name": "test",
+    "children": [
+      {
+        "name": "inner-test",
+        "behaviors": [
+          {
+            "name": "mPulse",
+            "options": {
+              "enabled": true,
+              "configOverride": ""
+            }
+          }
+        ],
+        "criteria": [],
+        "criteriaMustSatisfy": "all"
+      }
+    ],
+    "variables": [
+      {
+        "name": "ONE_VAR",
+        "value": "",
+        "description": "",
+        "hidden": false,
+        "sensitive": false
+      },
+      {
+        "name": "SECOND_VAR",
+        "value": null,
+        "description": null,
+        "hidden": false,
+        "sensitive": false
+      },
+      {
+        "name": "THIRD_VAR",
+        "value": null,
+        "description": null,
+        "hidden": false,
+        "sensitive": false
+      }
+    ]
+  }
+}

@@ -25,6 +25,7 @@
   * Added version support for `akamai_property_hostnames` data source ([I#413](https://github.com/akamai/terraform-provider-akamai/issues/413))
   * `data_akamai_property_rules_builder` is now supporting `v2023-10-30` rule format
   * Improved error handling and added retries in `akamai_property_activation` resource
+  * Relaxed validation used for includes used in `akamai_property_rules_template`. Files cannot be empty but do not necessary have to be valid json files.
 
 #### BUG FIXES:
 

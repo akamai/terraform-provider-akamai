@@ -81,6 +81,22 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 			})
 		})
 	})
+	t.Run("valid nested template with including jsons that are not valid", func(t *testing.T) {
+		client := papi.Mock{}
+		useClient(&client, nil, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV5ProviderFactories: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_not_valid_json_includes.tf"),
+						Check: resource.ComposeAggregateTestCheckFunc(
+							resource.TestCheckResourceAttr("data.akamai_property_rules_template.test", "json", testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/rules/rules_incorrect_json_includes.json")),
+						),
+					},
+				},
+			})
+		})
+	})
 	t.Run("null values do not overwrite defaults", func(t *testing.T) {
 		client := papi.Mock{}
 		useClient(&client, nil, func() {
@@ -217,7 +233,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_invalid_json.tf"),
-						ExpectError: regexp.MustCompile(`snippets file should be with .json extension and valid json data. Invalid file: testdata/TestDSRulesTemplate/property-snippets/template_invalid_json.json`),
+						ExpectError: regexp.MustCompile(`invalid JSON result:`),
 					},
 				},
 			})
@@ -246,43 +262,12 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_file_is_empty.tf"),
-						ExpectError: regexp.MustCompile(`Error: snippets file should be with .json extension and valid json data. Invalid file: testdata/TestDSRulesTemplate/property-snippets/empty_json.json`),
+						ExpectError: regexp.MustCompile(`Error: snippets file should be with .json extension and cannot be empty. Invalid file: testdata/TestDSRulesTemplate/property-snippets/empty_json.json`),
 					},
 				},
 			})
 		})
 	})
-
-	t.Run("snippets files are under incorrect folder deeply nested", func(t *testing.T) {
-		client := papi.Mock{}
-		useClient(&client, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
-				Steps: []resource.TestStep{
-					{
-						Config:      testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_invalid_snippets_folder_json.tf"),
-						ExpectError: regexp.MustCompile(`Error: snippets file should be with .json extension and valid json data. Invalid file: testdata/TestDSRulesTemplate/output/template_invalid_json.json`),
-					},
-				},
-			})
-		})
-	})
-
-	t.Run("snippets files are under incorrect folder e.g. property-snippets/rules.json", func(t *testing.T) {
-		client := papi.Mock{}
-		useClient(&client, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
-				Steps: []resource.TestStep{
-					{
-						Config:      testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_invalid_snippets_only_one_folder_json.tf"),
-						ExpectError: regexp.MustCompile(`Error: snippets file should be with .json extension and valid json data. Invalid file: property-snippet/template_invalid_json.json`),
-					},
-				},
-			})
-		})
-	})
-
 }
 
 func TestFormatValue(t *testing.T) {
