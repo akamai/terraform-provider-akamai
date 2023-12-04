@@ -11,7 +11,8 @@
   * Behavior `restrict_object_caching` is public ([I#314](https://github.com/akamai/terraform-provider-akamai/issues/314) and [#277](https://github.com/akamai/terraform-provider-akamai/issues/277))
   * Added version support for `akamai_property_hostnames` data source ([I#413](https://github.com/akamai/terraform-provider-akamai/issues/413))
   * `data_akamai_property_rules_builder` is now supporting `v2023-10-30` rule format
-  
+  * Improved error handling and added retries in `akamai_property_activation` resource
+
 #### BUG FIXES:
 
 * DNS

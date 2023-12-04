@@ -16,6 +16,7 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 	"github.com/apex/log"
+	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/spf13/cast"
@@ -54,6 +55,9 @@ var (
 
 	// PropertyResourceTimeout is the default timeout for the resource operations
 	PropertyResourceTimeout = time.Minute * 90
+
+	// CreateActivationRetry poll wait time code waits between retries for activation creation
+	CreateActivationRetry = 10 * time.Second
 )
 
 var akamaiPropertyActivationSchema = map[string]*schema.Schema{
@@ -249,14 +253,15 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 			},
 		}
 
-		create, err := client.CreateActivation(ctx, addPropertyComplianceRecord(complianceRecord, createActivationRequest))
-		if err != nil {
-			return diag.FromErr(fmt.Errorf("create activation failed: %w", err))
+		logger.Debug("creating activation")
+		activationID, diagErr := createActivation(ctx, client, addPropertyComplianceRecord(complianceRecord, createActivationRequest))
+		if diagErr != nil {
+			return diagErr
 		}
 
 		// query the activation to retrieve the initial status
 		act, err := client.GetActivation(ctx, papi.GetActivationRequest{
-			ActivationID: create.ActivationID,
+			ActivationID: activationID,
 			PropertyID:   propertyID,
 		})
 		if err != nil {
@@ -367,17 +372,16 @@ func resourcePropertyActivationDelete(ctx context.Context, d *schema.ResourceDat
 			},
 		}
 
-		deleteActivation, err := client.CreateActivation(ctx, addPropertyComplianceRecord(complianceRecord, deleteActivationRequest))
-
-		if err != nil {
-			return diag.FromErr(fmt.Errorf("create deactivation failed: %w", err))
+		deleteActivationID, diagErr := createActivation(ctx, client, addPropertyComplianceRecord(complianceRecord, deleteActivationRequest))
+		if diagErr != nil {
+			return diagErr
 		}
 		// update with id we are now polling on
-		d.SetId(deleteActivation.ActivationID)
+		d.SetId(deleteActivationID)
 
 		// query the activation to retrieve the initial status
 		act, err := client.GetActivation(ctx, papi.GetActivationRequest{
-			ActivationID: deleteActivation.ActivationID,
+			ActivationID: deleteActivationID,
 			PropertyID:   propertyID,
 		})
 		if err != nil {
@@ -652,14 +656,14 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 			},
 		}
 
-		create, err := client.CreateActivation(ctx, addPropertyComplianceRecord(complianceRecord, createActivationRequest))
-		if err != nil {
-			return diag.FromErr(fmt.Errorf("create activation failed: %w", err))
+		activationID, diagErr := createActivation(ctx, client, addPropertyComplianceRecord(complianceRecord, createActivationRequest))
+		if diagErr != nil {
+			return diagErr
 		}
 
 		// query the activation to retrieve the initial status
 		act, err := client.GetActivation(ctx, papi.GetActivationRequest{
-			ActivationID: create.ActivationID,
+			ActivationID: activationID,
 			PropertyID:   propertyID,
 		})
 		if err != nil {
@@ -910,6 +914,10 @@ func networkAlias(d *schema.ResourceData) (papi.ActivationNetwork, error) {
 }
 
 func pollActivation(ctx context.Context, client papi.PAPI, activation *papi.Activation, propertyID string) (*papi.Activation, diag.Diagnostics) {
+
+	retriesMax := 5
+	retries5xx := 0
+
 	for activation.Status != papi.ActivationStatusActive {
 		if activation.Status == papi.ActivationStatusAborted {
 			return nil, diag.FromErr(fmt.Errorf("activation request aborted"))
@@ -924,8 +932,21 @@ func pollActivation(ctx context.Context, client papi.PAPI, activation *papi.Acti
 				PropertyID:   propertyID,
 			})
 			if err != nil {
+				var target = &papi.Error{}
+				if !errors.As(err, &target) {
+					return nil, diag.Errorf("error has unexpected type: %T", err)
+				}
+				if target.StatusCode >= 500 {
+					retries5xx = retries5xx + 1
+					if retries5xx > retriesMax {
+						return nil, diag.Errorf("reached max number of 5xx retries: %d", retries5xx)
+					}
+					continue
+				}
+
 				return nil, diag.FromErr(err)
 			}
+			retries5xx = 0
 			activation = act.Activation
 
 		case <-ctx.Done():
@@ -945,4 +966,139 @@ func suppressNoteFieldForPropertyActivation(_, oldValue, newValue string, d *sch
 		return false
 	}
 	return true
+}
+
+func createActivation(ctx context.Context, client papi.PAPI, request papi.CreateActivationRequest) (string, diag.Diagnostics) {
+	log := hclog.FromContext(ctx)
+
+	errMsg := "create failed"
+	switch request.Activation.ActivationType {
+	case papi.ActivationTypeActivate:
+		errMsg = "create activation failed"
+	case papi.ActivationTypeDeactivate:
+		errMsg = "create deactivation failed"
+	}
+
+	createActivationRetry := CreateActivationRetry
+
+	retries := 10
+
+	for {
+		log.Debug("creating activation")
+		create, err := client.CreateActivation(ctx, request)
+		if err == nil {
+			return create.ActivationID, nil
+		}
+
+		if !isCreateActivationErrorRetryable(err) {
+			return "", diag.Errorf("%s: %s", errMsg, err)
+		}
+
+		if actID, ok := isActivationPedingOrActive(ctx, client, expectedActivation{
+			PropertyID: request.PropertyID,
+			Version:    request.Activation.PropertyVersion,
+			Network:    request.Activation.Network,
+			Type:       request.Activation.ActivationType,
+		}); ok {
+			return actID, nil
+		}
+
+		retries = retries - 1
+		log.Debug("reties left %d", retries)
+		if retries == 0 {
+			return "", diag.Errorf("%s: reached limit of retries: %s", errMsg, err)
+		}
+
+		select {
+		case <-time.After(createActivationRetry):
+			createActivationRetry = capDuration(createActivationRetry*2, ActivationPollInterval)
+			continue
+
+		case <-ctx.Done():
+			if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+				return "", diag.Diagnostics{DiagWarnActivationTimeout}
+			} else if errors.Is(ctx.Err(), context.Canceled) {
+				return "", diag.Diagnostics{DiagWarnActivationCanceled}
+			}
+			return "", diag.FromErr(fmt.Errorf("activation context terminated: %w", ctx.Err()))
+		}
+	}
+}
+
+func capDuration(t time.Duration, tMax time.Duration) time.Duration {
+	if t > tMax {
+		return tMax
+	}
+	return t
+}
+
+func isCreateActivationErrorRetryable(err error) bool {
+	var responseErr = &papi.Error{}
+	if !errors.As(err, &responseErr) {
+		return false
+	}
+	if responseErr.StatusCode < 500 &&
+		responseErr.StatusCode != 422 &&
+		responseErr.StatusCode != 409 {
+		return false
+	}
+	return true
+}
+
+type expectedActivation struct {
+	PropertyID string
+	Version    int
+	Network    papi.ActivationNetwork
+	Type       papi.ActivationType
+}
+
+// isActivationPedingOrActive check if latest activation is of specified version and has status Pending or Active
+func isActivationPedingOrActive(ctx context.Context, client papi.PAPI, expected expectedActivation) (string, bool) {
+	log := hclog.FromContext(ctx)
+
+	log.Debug("getting activation")
+	acts, err := client.GetActivations(ctx, papi.GetActivationsRequest{
+		PropertyID: expected.PropertyID,
+	})
+	if err != nil {
+		return "", false
+	}
+	activations := acts.Activations.Items
+
+	sort.Slice(activations, func(i, j int) bool {
+		return activations[i].UpdateDate > activations[j].UpdateDate
+	})
+
+	activations = filterActivationsByNetwork(activations, expected.Network)
+
+	if len(activations) == 0 { // job might be scheduled but no activation created yet (unlikely)
+		log.Debug("no activation items; retrying")
+		return "", false
+	}
+	latestActivationItem := activations[0] // grab the lastest one returned by api
+
+	if latestActivationItem.PropertyVersion != expected.Version {
+		log.Debug("latest version mismatch; retrying")
+		return "", false
+	}
+	if latestActivationItem.ActivationType != expected.Type {
+		log.Debug("activation type mismatch; retrying")
+		return "", false
+	}
+	if latestActivationItem.Status == papi.ActivationStatusPending ||
+		latestActivationItem.Status == papi.ActivationStatusActive {
+		return latestActivationItem.ActivationID, true
+	}
+	return "", false
+}
+
+func filterActivationsByNetwork(activations []*papi.Activation, network papi.ActivationNetwork) []*papi.Activation {
+	var filteredActivations []*papi.Activation
+	for _, activation := range activations {
+		if activation.Network == network {
+			filteredActivations = append(filteredActivations, activation)
+		}
+	}
+
+	return filteredActivations
 }
