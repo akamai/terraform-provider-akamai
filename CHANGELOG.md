@@ -1,6 +1,6 @@
 # RELEASE NOTES
 
-## 5.5.0 (Dec xx, 2023)
+## 5.5.0 (Dec 07, 2023)
 
 #### FEATURES/ENHANCEMENTS:
 
@@ -15,10 +15,10 @@
     * `akamai_botman_custom_code` - read and update
   * Added data source:
     * `akamai_botman_custom_code` - read
-  * Cache api calls for `akamai_botman_akamai_bot_category`, `akamai_botman_akamai_defined_bot` and `akamai_botman_bot_detection` data sources to improve performance.
+  * Cached api calls for `akamai_botman_akamai_bot_category`, `akamai_botman_akamai_defined_bot` and `akamai_botman_bot_detection` data sources to improve performance.
 
 * Cloudlets
-  * Add `origin_description` field to `akamai_cloudlets_application_load_balancer` resource
+  * Added `origin_description` field to `akamai_cloudlets_application_load_balancer` resource
 
 * PAPI
   * Behavior `restrict_object_caching` is public ([I#314](https://github.com/akamai/terraform-provider-akamai/issues/314) and [#277](https://github.com/akamai/terraform-provider-akamai/issues/277))
