@@ -298,3 +298,556 @@ func TestLookupActivation(t *testing.T) {
 		})
 	}
 }
+
+func TestCreateActivation(t *testing.T) {
+
+	defer func(t time.Duration) {
+		CreateActivationRetry = t
+	}(CreateActivationRetry) // restore previous value
+	CreateActivationRetry = time.Microsecond
+
+	propID := "someID"
+
+	createReq := papi.CreateActivationRequest{
+		PropertyID: propID,
+		Activation: papi.Activation{
+			ActivationType:  papi.ActivationTypeActivate,
+			PropertyID:      "someID",
+			PropertyVersion: 1,
+			Network:         papi.ActivationNetworkProduction,
+		},
+	}
+
+	t.Run("create 201 no get", func(t *testing.T) {
+		m := &papi.Mock{}
+
+		m.On("CreateActivation", mock.Anything, createReq).Return(&papi.CreateActivationResponse{
+			ActivationID: "atv_123",
+		}, nil)
+
+		ctx := context.Background()
+		actID, diagErr := createActivation(ctx, m, createReq)
+		assert.Nil(t, diagErr)
+		assert.Equal(t, "atv_123", actID)
+
+	})
+
+	t.Run("create 500 get ok pending", func(t *testing.T) {
+		m := &papi.Mock{}
+
+		m.On("CreateActivation", mock.Anything, createReq).Return(nil, error(&papi.Error{StatusCode: 500})).Once()
+		m.On("GetActivations", mock.Anything, papi.GetActivationsRequest{
+			PropertyID: propID,
+		}).Return(&papi.GetActivationsResponse{
+			Activations: papi.ActivationsItems{
+				Items: []*papi.Activation{
+					{
+						ActivationID:    "atv_123",
+						ActivationType:  papi.ActivationTypeActivate,
+						PropertyID:      propID,
+						PropertyVersion: 1,
+						Network:         papi.ActivationNetworkProduction,
+						Status:          papi.ActivationStatusPending,
+						UpdateDate:      "2023-11-28T13:24:29Z",
+					},
+				},
+			},
+		}, nil).Once()
+
+		ctx := context.Background()
+		actID, diagErr := createActivation(ctx, m, createReq)
+		assert.Nil(t, diagErr)
+		assert.Equal(t, "atv_123", actID)
+	})
+
+	t.Run("create 400 nonretryable", func(t *testing.T) {
+		m := &papi.Mock{}
+
+		m.On("CreateActivation", mock.Anything, createReq).Return(nil, error(&papi.Error{StatusCode: 400})).Once()
+
+		ctx := context.Background()
+		actID, diagErr := createActivation(ctx, m, createReq)
+		assert.NotNil(t, diagErr)
+		assert.Equal(t, "", actID)
+	})
+
+	t.Run("create 500 retry on empty get", func(t *testing.T) {
+		m := &papi.Mock{}
+
+		m.On("CreateActivation", mock.Anything, createReq).Return(nil, error(&papi.Error{StatusCode: 500})).Once()
+		m.On("GetActivations", mock.Anything, papi.GetActivationsRequest{
+			PropertyID: propID,
+		}).Return(&papi.GetActivationsResponse{
+			Activations: papi.ActivationsItems{
+				Items: []*papi.Activation{},
+			},
+		}, nil).Once()
+
+		m.On("CreateActivation", mock.Anything, createReq).Return(nil, error(&papi.Error{StatusCode: 500})).Once()
+		m.On("GetActivations", mock.Anything, papi.GetActivationsRequest{
+			PropertyID: propID,
+		}).Return(&papi.GetActivationsResponse{
+			Activations: papi.ActivationsItems{
+				Items: []*papi.Activation{
+					{
+						ActivationID:    "atv_123",
+						ActivationType:  papi.ActivationTypeActivate,
+						PropertyID:      propID,
+						PropertyVersion: 1,
+						Network:         papi.ActivationNetworkProduction,
+						Status:          papi.ActivationStatusPending,
+						UpdateDate:      "2023-11-28T13:24:29Z",
+					},
+				},
+			},
+		}, nil)
+
+		ctx := context.Background()
+		actID, diagErr := createActivation(ctx, m, createReq)
+		assert.Nil(t, diagErr)
+		assert.Equal(t, "atv_123", actID)
+	})
+	t.Run("create 500 retry 3 times before ok", func(t *testing.T) {
+		m := &papi.Mock{}
+
+		m.On("CreateActivation", mock.Anything, createReq).Return(nil, error(&papi.Error{StatusCode: 500})).Times(3)
+		m.On("GetActivations", mock.Anything, papi.GetActivationsRequest{
+			PropertyID: propID,
+		}).Return(&papi.GetActivationsResponse{
+			Activations: papi.ActivationsItems{
+				Items: []*papi.Activation{
+					{
+						ActivationID:    "atv_123",
+						ActivationType:  papi.ActivationTypeActivate,
+						PropertyID:      propID,
+						PropertyVersion: 2,
+						Network:         papi.ActivationNetworkProduction,
+						Status:          papi.ActivationStatusPending,
+						UpdateDate:      "2023-11-28T13:24:29Z",
+					},
+				},
+			},
+		}, nil).Times(3)
+
+		m.On("CreateActivation", mock.Anything, createReq).Return(nil, error(&papi.Error{StatusCode: 500})).Once()
+		m.On("GetActivations", mock.Anything, papi.GetActivationsRequest{
+			PropertyID: propID,
+		}).Return(&papi.GetActivationsResponse{
+			Activations: papi.ActivationsItems{
+				Items: []*papi.Activation{
+					{
+						ActivationID:    "atv_123",
+						ActivationType:  papi.ActivationTypeActivate,
+						PropertyID:      propID,
+						PropertyVersion: 1,
+						Network:         papi.ActivationNetworkProduction,
+						Status:          papi.ActivationStatusPending,
+						UpdateDate:      "2023-11-28T13:27:55Z",
+					},
+					{
+						ActivationID:    "atv_123",
+						ActivationType:  papi.ActivationTypeActivate,
+						PropertyID:      propID,
+						PropertyVersion: 2,
+						Network:         papi.ActivationNetworkProduction,
+						Status:          papi.ActivationStatusPending,
+						UpdateDate:      "2023-11-28T13:24:29Z",
+					},
+				},
+			},
+		}, nil).Once()
+
+		ctx := context.Background()
+		actID, diagErr := createActivation(ctx, m, createReq)
+		assert.Nil(t, diagErr)
+		assert.Equal(t, "atv_123", actID)
+
+	})
+	t.Run("create 422 get valid", func(t *testing.T) {
+		m := &papi.Mock{}
+
+		m.On("CreateActivation", mock.Anything, createReq).Return(nil, error(&papi.Error{StatusCode: 422})).Once()
+
+		m.On("GetActivations", mock.Anything, papi.GetActivationsRequest{
+			PropertyID: propID,
+		}).Return(&papi.GetActivationsResponse{
+			Activations: papi.ActivationsItems{
+				Items: []*papi.Activation{
+					{
+						ActivationID:    "atv_123",
+						ActivationType:  papi.ActivationTypeActivate,
+						PropertyID:      propID,
+						PropertyVersion: 1,
+						Network:         papi.ActivationNetworkProduction,
+						Status:          papi.ActivationStatusActive,
+						UpdateDate:      "2023-11-28T13:24:29Z",
+					},
+				},
+			},
+		}, nil).Once()
+
+		ctx := context.Background()
+		actID, diagErr := createActivation(ctx, m, createReq)
+		assert.Nil(t, diagErr)
+		assert.Equal(t, "atv_123", actID)
+	})
+	t.Run("create 409 get valid", func(t *testing.T) {
+		m := &papi.Mock{}
+
+		m.On("CreateActivation", mock.Anything, createReq).Return(nil, error(&papi.Error{StatusCode: 409})).Once()
+
+		m.On("GetActivations", mock.Anything, papi.GetActivationsRequest{
+			PropertyID: propID,
+		}).Return(&papi.GetActivationsResponse{
+			Activations: papi.ActivationsItems{
+				Items: []*papi.Activation{
+					{
+						ActivationID:    "atv_123",
+						ActivationType:  papi.ActivationTypeActivate,
+						PropertyID:      propID,
+						PropertyVersion: 1,
+						Network:         papi.ActivationNetworkProduction,
+						Status:          papi.ActivationStatusActive,
+						UpdateDate:      "2023-11-28T13:24:29Z",
+					},
+				},
+			},
+		}, nil).Once()
+
+		ctx := context.Background()
+		actID, diagErr := createActivation(ctx, m, createReq)
+		assert.Nil(t, diagErr)
+		assert.Equal(t, "atv_123", actID)
+	})
+	t.Run("create 400 return err ", func(t *testing.T) {
+		m := &papi.Mock{}
+
+		expectedError := fmt.Errorf("some err: %w", error(&papi.Error{StatusCode: 400}))
+
+		m.On("CreateActivation", mock.Anything, createReq).Return(nil, expectedError).Once()
+
+		ctx := context.Background()
+		actID, diagErr := createActivation(ctx, m, createReq)
+		assert.NotEmpty(t, diagErr)
+		assert.Contains(t, diagErr[0].Summary, expectedError.Error())
+		assert.Equal(t, "", actID)
+	})
+	t.Run("create 500 retry on unexpected version", func(t *testing.T) {
+		m := &papi.Mock{}
+
+		m.On("CreateActivation", mock.Anything, createReq).Return(nil, error(&papi.Error{StatusCode: 500})).Once()
+		m.On("GetActivations", mock.Anything, papi.GetActivationsRequest{
+			PropertyID: propID,
+		}).Return(&papi.GetActivationsResponse{
+			Activations: papi.ActivationsItems{
+				Items: []*papi.Activation{
+					{
+						ActivationID:    "atv_123",
+						ActivationType:  papi.ActivationTypeActivate,
+						PropertyID:      propID,
+						PropertyVersion: 2,
+						Network:         papi.ActivationNetworkProduction,
+						Status:          papi.ActivationStatusPending,
+						UpdateDate:      "2023-11-28T13:24:29Z",
+					},
+				},
+			},
+		}, nil).Once()
+
+		m.On("CreateActivation", mock.Anything, createReq).Return(nil, error(&papi.Error{StatusCode: 500})).Once()
+		m.On("GetActivations", mock.Anything, papi.GetActivationsRequest{
+			PropertyID: propID,
+		}).Return(&papi.GetActivationsResponse{
+			Activations: papi.ActivationsItems{
+				Items: []*papi.Activation{
+					{
+						ActivationID:    "atv_000",
+						ActivationType:  papi.ActivationTypeActivate,
+						PropertyID:      propID,
+						PropertyVersion: 1,
+						Network:         papi.ActivationNetworkProduction,
+						Status:          papi.ActivationStatusPending,
+						UpdateDate:      "2023-11-28T13:27:55Z",
+					},
+					{
+						ActivationID:    "atv_123",
+						ActivationType:  papi.ActivationTypeActivate,
+						PropertyID:      propID,
+						PropertyVersion: 2,
+						Network:         papi.ActivationNetworkProduction,
+						Status:          papi.ActivationStatusActive,
+						UpdateDate:      "2023-11-28T13:24:29Z",
+					},
+				},
+			},
+		}, nil).Once()
+
+		ctx := context.Background()
+		actID, diagErr := createActivation(ctx, m, createReq)
+		assert.Nil(t, diagErr)
+		assert.Equal(t, "atv_000", actID)
+	})
+	t.Run("create 500 retry on failed status", func(t *testing.T) {
+		m := &papi.Mock{}
+
+		m.On("CreateActivation", mock.Anything, createReq).Return(nil, error(&papi.Error{StatusCode: 500})).Once()
+
+		m.On("GetActivations", mock.Anything, papi.GetActivationsRequest{
+			PropertyID: propID,
+		}).Return(&papi.GetActivationsResponse{
+			Activations: papi.ActivationsItems{
+				Items: []*papi.Activation{
+					{
+						ActivationID:    "atv_123",
+						ActivationType:  papi.ActivationTypeActivate,
+						PropertyID:      propID,
+						PropertyVersion: 1,
+						Network:         papi.ActivationNetworkProduction,
+						Status:          papi.ActivationStatusFailed,
+						UpdateDate:      "2023-11-28T13:24:29Z",
+					},
+				},
+			},
+		}, nil).Once()
+
+		m.On("CreateActivation", mock.Anything, createReq).Return(nil, error(&papi.Error{StatusCode: 500})).Once()
+
+		m.On("GetActivations", mock.Anything, papi.GetActivationsRequest{
+			PropertyID: propID,
+		}).Return(&papi.GetActivationsResponse{
+			Activations: papi.ActivationsItems{
+				Items: []*papi.Activation{
+					{
+						ActivationID:    "atv_000",
+						ActivationType:  papi.ActivationTypeActivate,
+						PropertyID:      propID,
+						PropertyVersion: 1,
+						Network:         papi.ActivationNetworkProduction,
+						Status:          papi.ActivationStatusPending,
+						UpdateDate:      "2023-11-28T13:27:55Z",
+					},
+					{
+						ActivationID:    "atv_123",
+						ActivationType:  papi.ActivationTypeActivate,
+						PropertyID:      propID,
+						PropertyVersion: 1,
+						Network:         papi.ActivationNetworkProduction,
+						Status:          papi.ActivationStatusFailed,
+						UpdateDate:      "2023-11-28T13:24:29Z",
+					},
+				},
+			},
+		}, nil).Once()
+
+		ctx := context.Background()
+		actID, diagErr := createActivation(ctx, m, createReq)
+		assert.Nil(t, diagErr)
+		assert.Equal(t, "atv_000", actID)
+	})
+
+	t.Run("create 500 retry on network missmatch", func(t *testing.T) {
+		m := &papi.Mock{}
+
+		m.On("CreateActivation", mock.Anything, createReq).Return(nil, error(&papi.Error{StatusCode: 500})).Once()
+		m.On("GetActivations", mock.Anything, papi.GetActivationsRequest{
+			PropertyID: propID,
+		}).Return(&papi.GetActivationsResponse{
+			Activations: papi.ActivationsItems{
+				Items: []*papi.Activation{
+					{
+						ActivationID:    "atv_000",
+						ActivationType:  papi.ActivationTypeActivate,
+						PropertyID:      propID,
+						PropertyVersion: 1,
+						Network:         papi.ActivationNetworkStaging,
+						Status:          papi.ActivationStatusActive,
+						UpdateDate:      "2023-11-28T13:24:29Z",
+					},
+				},
+			},
+		}, nil).Once()
+
+		m.On("CreateActivation", mock.Anything, createReq).Return(nil, error(&papi.Error{StatusCode: 500})).Once()
+		m.On("GetActivations", mock.Anything, papi.GetActivationsRequest{
+			PropertyID: propID,
+		}).Return(&papi.GetActivationsResponse{
+			Activations: papi.ActivationsItems{
+				Items: []*papi.Activation{
+					{
+						ActivationID:    "atv_123",
+						ActivationType:  papi.ActivationTypeActivate,
+						PropertyID:      propID,
+						PropertyVersion: 1,
+						Network:         papi.ActivationNetworkProduction,
+						Status:          papi.ActivationStatusPending,
+						UpdateDate:      "2023-11-28T13:27:55Z",
+					},
+					{
+						ActivationID:    "atv_000",
+						ActivationType:  papi.ActivationTypeActivate,
+						PropertyID:      propID,
+						PropertyVersion: 1,
+						Network:         papi.ActivationNetworkStaging,
+						Status:          papi.ActivationStatusActive,
+						UpdateDate:      "2023-11-28T13:24:29Z",
+					},
+				},
+			},
+		}, nil).Once()
+
+		ctx := context.Background()
+		actID, diagErr := createActivation(ctx, m, createReq)
+		assert.Nil(t, diagErr)
+		assert.Equal(t, "atv_123", actID)
+	})
+	t.Run("create 500 retry on type missmatch", func(t *testing.T) {
+		m := &papi.Mock{}
+
+		m.On("CreateActivation", mock.Anything, createReq).Return(nil, error(&papi.Error{StatusCode: 500})).Once()
+		m.On("GetActivations", mock.Anything, papi.GetActivationsRequest{
+			PropertyID: propID,
+		}).Return(&papi.GetActivationsResponse{
+			Activations: papi.ActivationsItems{
+				Items: []*papi.Activation{
+					{
+						ActivationID:    "atv_000",
+						ActivationType:  papi.ActivationTypeDeactivate,
+						PropertyID:      propID,
+						PropertyVersion: 1,
+						Network:         papi.ActivationNetworkProduction,
+						Status:          papi.ActivationStatusActive,
+						UpdateDate:      "2023-11-28T13:24:29Z",
+					},
+				},
+			},
+		}, nil).Once()
+
+		m.On("CreateActivation", mock.Anything, createReq).Return(nil, error(&papi.Error{StatusCode: 500})).Once()
+		m.On("GetActivations", mock.Anything, papi.GetActivationsRequest{
+			PropertyID: propID,
+		}).Return(&papi.GetActivationsResponse{
+			Activations: papi.ActivationsItems{
+				Items: []*papi.Activation{
+					{
+						ActivationID:    "atv_123",
+						ActivationType:  papi.ActivationTypeActivate,
+						PropertyID:      propID,
+						PropertyVersion: 1,
+						Network:         papi.ActivationNetworkProduction,
+						Status:          papi.ActivationStatusPending,
+						UpdateDate:      "2023-11-28T13:27:55Z",
+					},
+					{
+						ActivationID:    "atv_000",
+						ActivationType:  papi.ActivationTypeDeactivate,
+						PropertyID:      propID,
+						PropertyVersion: 1,
+						Network:         papi.ActivationNetworkProduction,
+						Status:          papi.ActivationStatusActive,
+						UpdateDate:      "2023-11-28T13:24:29Z",
+					},
+				},
+			},
+		}, nil).Once()
+
+		ctx := context.Background()
+		actID, diagErr := createActivation(ctx, m, createReq)
+		assert.Nil(t, diagErr)
+		assert.Equal(t, "atv_123", actID)
+	})
+
+	t.Run("expect list is sorted and network is filtered", func(t *testing.T) {
+		m := &papi.Mock{}
+
+		m.On("CreateActivation", mock.Anything, createReq).Return(nil, error(&papi.Error{StatusCode: 500})).Once()
+		m.On("GetActivations", mock.Anything, papi.GetActivationsRequest{
+			PropertyID: propID,
+		}).Return(&papi.GetActivationsResponse{
+			Activations: papi.ActivationsItems{
+				// expect sorted -> tested by: mixed elements order
+				// expect filter correct network -> tested by: first is incorrect network
+				// expect correct type -> tested by: first is incorrect type (should retry)
+				Items: []*papi.Activation{
+					{
+						ActivationID:    "atv_000",
+						ActivationType:  papi.ActivationTypeActivate,
+						PropertyID:      propID,
+						PropertyVersion: 1,
+						Network:         papi.ActivationNetworkStaging,
+						Status:          papi.ActivationStatusActive,
+						UpdateDate:      "2023-11-28T08:43:33Z",
+					},
+					{
+						ActivationID:    "atv_002",
+						ActivationType:  papi.ActivationTypeDeactivate,
+						PropertyID:      propID,
+						PropertyVersion: 1,
+						Network:         papi.ActivationNetworkStaging,
+						Status:          papi.ActivationStatusPending,
+						UpdateDate:      "2023-11-28T13:24:29Z",
+					},
+					{
+						ActivationID:    "atv_001",
+						ActivationType:  papi.ActivationTypeDeactivate,
+						PropertyID:      propID,
+						PropertyVersion: 1,
+						Network:         papi.ActivationNetworkProduction,
+						Status:          papi.ActivationStatusActive,
+						UpdateDate:      "2023-11-28T13:20:21Z",
+					},
+				},
+			},
+		}, nil).Once()
+
+		m.On("CreateActivation", mock.Anything, createReq).Return(nil, error(&papi.Error{StatusCode: 500})).Once()
+		m.On("GetActivations", mock.Anything, papi.GetActivationsRequest{
+			PropertyID: propID,
+		}).Return(&papi.GetActivationsResponse{
+			Activations: papi.ActivationsItems{
+				Items: []*papi.Activation{
+					{
+						ActivationID:    "atv_000",
+						ActivationType:  papi.ActivationTypeActivate,
+						PropertyID:      propID,
+						PropertyVersion: 1,
+						Network:         papi.ActivationNetworkStaging,
+						Status:          papi.ActivationStatusActive,
+						UpdateDate:      "2023-11-28T08:43:33Z",
+					},
+					{
+						ActivationID:    "atv_002",
+						ActivationType:  papi.ActivationTypeDeactivate,
+						PropertyID:      propID,
+						PropertyVersion: 1,
+						Network:         papi.ActivationNetworkStaging,
+						Status:          papi.ActivationStatusActive,
+						UpdateDate:      "2023-11-28T13:24:29Z",
+					},
+					{
+						ActivationID:    "atv_001",
+						ActivationType:  papi.ActivationTypeDeactivate,
+						PropertyID:      propID,
+						PropertyVersion: 1,
+						Network:         papi.ActivationNetworkProduction,
+						Status:          papi.ActivationStatusActive,
+						UpdateDate:      "2023-11-28T13:20:21Z",
+					},
+					{
+						ActivationID:    "atv_123",
+						ActivationType:  papi.ActivationTypeActivate,
+						PropertyID:      propID,
+						PropertyVersion: 1,
+						Network:         papi.ActivationNetworkProduction,
+						Status:          papi.ActivationStatusPending,
+						UpdateDate:      "2023-11-28T13:55:55Z",
+					},
+				},
+			},
+		}, nil).Once()
+
+		ctx := context.Background()
+		actID, diagErr := createActivation(ctx, m, createReq)
+		assert.Nil(t, diagErr)
+		assert.Equal(t, "atv_123", actID)
+	})
+}

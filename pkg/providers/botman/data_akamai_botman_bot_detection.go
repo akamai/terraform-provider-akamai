@@ -31,7 +31,6 @@ func dataSourceBotDetection() *schema.Resource {
 
 func dataSourceBotDetectionRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
 	logger := meta.Log("botman", "dataSourceBotDetectionRead")
 
 	detectionName, err := tf.GetStringValue("detection_name", d)
@@ -43,7 +42,7 @@ func dataSourceBotDetectionRead(ctx context.Context, d *schema.ResourceData, m i
 		DetectionName: detectionName,
 	}
 
-	response, err := client.GetBotDetectionList(ctx, request)
+	response, err := getBotDetectionList(ctx, request, m)
 	if err != nil {
 		logger.Errorf("calling 'GetBotDetectionList': %s", err.Error())
 		return diag.FromErr(err)

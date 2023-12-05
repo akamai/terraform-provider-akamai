@@ -4,10 +4,10 @@ provider "akamai" {
 }
 
 resource "akamai_botman_challenge_interception_rules" "test" {
-  config_id                    = 43253
-  challenge_interception_rules = <<-EOF
-{
-  "testKey": "testValue3"
-}
-EOF
+  config_id = 43253
+  challenge_interception_rules = jsonencode(
+    {
+      "testKey" : "testValue3"
+    }
+  )
 }

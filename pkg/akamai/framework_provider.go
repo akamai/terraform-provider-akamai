@@ -5,7 +5,7 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/config"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf/validators"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/subprovider"
 	"github.com/akamai/terraform-provider-akamai/v5/version"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -77,7 +78,34 @@ func (p *Provider) Schema(_ context.Context, _ provider.SchemaRequest, resp *pro
 			},
 		},
 		Blocks: map[string]schema.Block{
-			"config": config.FrameworkOptions(),
+			"config": schema.SetNestedBlock{
+				NestedObject: schema.NestedBlockObject{
+					Attributes: map[string]schema.Attribute{
+						"host": schema.StringAttribute{
+							Required:   true,
+							Validators: []validator.String{validators.NotEmptyString()},
+						},
+						"access_token": schema.StringAttribute{
+							Required:   true,
+							Validators: []validator.String{validators.NotEmptyString()},
+						},
+						"client_token": schema.StringAttribute{
+							Required:   true,
+							Validators: []validator.String{validators.NotEmptyString()},
+						},
+						"client_secret": schema.StringAttribute{
+							Required:   true,
+							Validators: []validator.String{validators.NotEmptyString()},
+						},
+						"max_body": schema.Int64Attribute{
+							Optional: true,
+						},
+						"account_key": schema.StringAttribute{
+							Optional: true,
+						},
+					},
+				},
+			},
 		},
 	}
 }

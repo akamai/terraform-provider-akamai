@@ -4,10 +4,10 @@ provider "akamai" {
 }
 
 resource "akamai_botman_custom_deny_action" "test" {
-  config_id          = 43253
-  custom_deny_action = <<-EOF
-{
-  "testKey": "testValue3"
-}
-EOF
+  config_id = 43253
+  custom_deny_action = jsonencode(
+    {
+      "testKey" : "testValue3"
+    }
+  )
 }

@@ -4,11 +4,11 @@ provider "akamai" {
 }
 
 resource "akamai_botman_bot_category_exception" "test" {
-  config_id              = 43253
-  security_policy_id     = "AAAA_81230"
-  bot_category_exception = <<-EOF
-{
-  "testKey": "updated_testValue3"
-}
-EOF
+  config_id          = 43253
+  security_policy_id = "AAAA_81230"
+  bot_category_exception = jsonencode(
+    {
+      "testKey" : "updated_testValue3"
+    }
+  )
 }

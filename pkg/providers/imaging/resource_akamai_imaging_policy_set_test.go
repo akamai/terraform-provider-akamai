@@ -6,12 +6,11 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/stretchr/testify/mock"
-	"github.com/tj/assert"
-
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/imaging"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/stretchr/testify/mock"
+	"github.com/tj/assert"
 )
 
 func TestResourceImagingPolicySet(t *testing.T) {
@@ -104,6 +103,39 @@ func TestResourceImagingPolicySet(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_imaging_policy_set.test_image_set", "name", "test_policy_set"),
 						resource.TestCheckResourceAttr("akamai_imaging_policy_set.test_image_set", "region", string(imaging.RegionEMEA)),
 						resource.TestCheckResourceAttr("akamai_imaging_policy_set.test_image_set", "type", string(imaging.TypeImage)),
+						resource.TestCheckResourceAttr("akamai_imaging_policy_set.test_image_set", "contract_id", contractID),
+					),
+				},
+			},
+		},
+		"ok create with ctr_ prefix in configuration": {
+			init: func(m *imaging.Mock) {
+				createdPolicySet := &imaging.PolicySet{Name: policySetName, ID: policySetID, Region: imaging.Region(EMEA), Type: mediaType}
+
+				// create
+				expectPolicySetCreation(t, m, contractID, policySetName, EMEA, mediaType, createdPolicySet, nil)
+
+				// read
+				expectPolicySetRead(t, m, contractID, policySetID, createdPolicySet, nil, 2)
+
+				// delete
+				expectPolicySetDelete(t, m, contractID, policySetID, "", &imaging.ListPoliciesResponse{
+					ItemKind: "POLICY",
+					Items: []imaging.PolicyOutput{
+						&imaging.PolicyOutputImage{ID: ".auto"},
+					},
+					TotalItems: 1,
+				}, nil, nil)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "%s/suppress_contract_prefix/create.tf", testDir),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_imaging_policy_set.test_image_set", "id", "testID"),
+						resource.TestCheckResourceAttr("akamai_imaging_policy_set.test_image_set", "name", "test_policy_set"),
+						resource.TestCheckResourceAttr("akamai_imaging_policy_set.test_image_set", "region", string(imaging.RegionEMEA)),
+						resource.TestCheckResourceAttr("akamai_imaging_policy_set.test_image_set", "type", string(imaging.TypeImage)),
+						resource.TestCheckResourceAttr("akamai_imaging_policy_set.test_image_set", "contract_id", "ctr_"+contractID),
 					),
 				},
 			},
@@ -182,6 +214,7 @@ func TestResourceImagingPolicySet(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_imaging_policy_set.test_image_set", "name", "test_policy_set"),
 						resource.TestCheckResourceAttr("akamai_imaging_policy_set.test_image_set", "region", string(imaging.RegionEMEA)),
 						resource.TestCheckResourceAttr("akamai_imaging_policy_set.test_image_set", "type", string(imaging.TypeImage)),
+						resource.TestCheckResourceAttr("akamai_imaging_policy_set.test_image_set", "contract_id", contractID),
 					),
 				},
 				{
@@ -191,6 +224,53 @@ func TestResourceImagingPolicySet(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_imaging_policy_set.test_image_set", "name", "test_policy_set"),
 						resource.TestCheckResourceAttr("akamai_imaging_policy_set.test_image_set", "region", string(imaging.RegionUS)),
 						resource.TestCheckResourceAttr("akamai_imaging_policy_set.test_image_set", "type", string(imaging.TypeImage)),
+						resource.TestCheckResourceAttr("akamai_imaging_policy_set.test_image_set", "contract_id", contractID),
+					),
+				},
+			},
+		},
+		"ok create, update with removed prefix": {
+			init: func(m *imaging.Mock) {
+				createdPolicySet := &imaging.PolicySet{Name: policySetName, ID: policySetID, Region: imaging.Region(EMEA), Type: mediaType}
+				//updatedPolicySet := &imaging.PolicySet{Name: policySetName, ID: policySetID, Region: imaging.Region(US), Type: mediaType}
+
+				// create
+				expectPolicySetCreation(t, m, contractID, policySetName, EMEA, mediaType, createdPolicySet, nil)
+
+				// create -> read, test -> read, refresh
+				expectPolicySetRead(t, m, contractID, policySetID, createdPolicySet, nil, 3)
+
+				// read after diff suppress
+				expectPolicySetRead(t, m, contractID, policySetID, createdPolicySet, nil, 1)
+
+				// delete
+				expectPolicySetDelete(t, m, contractID, policySetID, "", &imaging.ListPoliciesResponse{
+					ItemKind: "POLICY",
+					Items: []imaging.PolicyOutput{
+						&imaging.PolicyOutputImage{ID: ".auto"},
+					},
+					TotalItems: 1,
+				}, nil, nil)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "%s/suppress_contract_prefix/create.tf", testDir),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_imaging_policy_set.test_image_set", "id", "testID"),
+						resource.TestCheckResourceAttr("akamai_imaging_policy_set.test_image_set", "name", "test_policy_set"),
+						resource.TestCheckResourceAttr("akamai_imaging_policy_set.test_image_set", "region", string(imaging.RegionEMEA)),
+						resource.TestCheckResourceAttr("akamai_imaging_policy_set.test_image_set", "type", string(imaging.TypeImage)),
+						resource.TestCheckResourceAttr("akamai_imaging_policy_set.test_image_set", "contract_id", "ctr_"+contractID),
+					),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "%s/suppress_contract_prefix/update.tf", testDir),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_imaging_policy_set.test_image_set", "id", "testID"),
+						resource.TestCheckResourceAttr("akamai_imaging_policy_set.test_image_set", "name", "test_policy_set"),
+						resource.TestCheckResourceAttr("akamai_imaging_policy_set.test_image_set", "region", string(imaging.RegionEMEA)),
+						resource.TestCheckResourceAttr("akamai_imaging_policy_set.test_image_set", "type", string(imaging.TypeImage)),
+						resource.TestCheckResourceAttr("akamai_imaging_policy_set.test_image_set", "contract_id", "ctr_"+contractID),
 					),
 				},
 			},

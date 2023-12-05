@@ -3,6 +3,7 @@ package cloudlets
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -35,9 +36,14 @@ func resourceCloudletsApplicationLoadBalancer() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "The conditional origin’s unique identifier",
+				Description: "The conditional origin's unique identifier",
 			},
 			"description": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "The load balancer configuration version description",
+			},
+			"origin_description": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "The load balancer configuration description",
@@ -310,12 +316,20 @@ func resourceALBCreate(ctx context.Context, d *schema.ResourceData, m interface{
 		return diag.FromErr(err)
 	}
 
+	originDescription, err := tf.GetStringValue("origin_description", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+
 	if err := validateLivenessHosts(ctx, client, d); err != nil {
 		return diag.FromErr(err)
 	}
 
 	createLBConfigResp, err := client.CreateOrigin(ctx, cloudlets.CreateOriginRequest{
 		OriginID: originID,
+		Description: cloudlets.Description{
+			Description: originDescription,
+		},
 	})
 	if err != nil {
 		return diag.FromErr(err)
@@ -349,6 +363,13 @@ func resourceALBRead(ctx context.Context, d *schema.ResourceData, m interface{})
 	loadBalancerConfigAttrs := map[string]interface{}{
 		"origin_id": originID,
 	}
+	origin, err := client.GetOrigin(ctx, cloudlets.GetOriginRequest{
+		OriginID: originID,
+	})
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	if err := tf.SetAttrs(d, loadBalancerConfigAttrs); err != nil {
 		return diag.FromErr(err)
 	}
@@ -365,6 +386,7 @@ func resourceALBRead(ctx context.Context, d *schema.ResourceData, m interface{})
 		return diag.FromErr(err)
 	}
 	attrs := make(map[string]interface{})
+	attrs["origin_description"] = origin.Description
 	attrs["balancing_type"] = loadBalancerVersion.BalancingType
 	attrs["version"] = loadBalancerVersion.Version
 	attrs["description"] = loadBalancerVersion.Description
@@ -405,6 +427,22 @@ func resourceALBUpdate(ctx context.Context, d *schema.ResourceData, m interface{
 
 	if err := validateLivenessHosts(ctx, client, d); err != nil {
 		return diag.FromErr(err)
+	}
+
+	if d.HasChange("origin_description") {
+		originDescription, err := tf.GetStringValue("origin_description", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		_, err = client.UpdateOrigin(ctx, cloudlets.UpdateOriginRequest{
+			OriginID: originID,
+			Description: cloudlets.Description{
+				Description: originDescription,
+			},
+		})
+		if err != nil {
+			return diag.FromErr(err)
+		}
 	}
 
 	// if version-related attributes have changed, load balancer version has to be either created or updated (depending on whether it's active or not)

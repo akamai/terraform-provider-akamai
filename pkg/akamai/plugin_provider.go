@@ -14,7 +14,6 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/cache"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/collections"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/config"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/subprovider"
 )
 
@@ -34,9 +33,36 @@ func NewPluginProvider(subprovs ...subprovider.Plugin) plugin.ProviderFunc {
 			"config": {
 				Optional:      true,
 				Type:          schema.TypeSet,
-				Elem:          config.PluginOptions(),
 				MaxItems:      1,
 				ConflictsWith: []string{"edgerc", "config_section"},
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"host": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+						"access_token": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+						"client_token": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+						"client_secret": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+						"max_body": {
+							Type:     schema.TypeInt,
+							Optional: true,
+						},
+						"account_key": {
+							Type:     schema.TypeString,
+							Optional: true,
+						},
+					},
+				},
 			},
 			"cache_enabled": {
 				Optional: true,

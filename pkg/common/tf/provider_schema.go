@@ -218,6 +218,29 @@ func GetListValue(key string, rd ResourceDataFetcher) ([]interface{}, error) {
 	return val, nil
 }
 
+// GetTypedListValue fetches value with given key from ResourceData object and attempts to create []T
+//
+// if value is not present on provided resource, ErrNotFound is returned
+// if casting is not successful, ErrInvalidType is returned
+func GetTypedListValue[T any](key string, rd ResourceDataFetcher) ([]T, error) {
+	values, err := GetListValue(key, rd)
+	if err != nil {
+		return []T{}, err
+	}
+
+	out := make([]T, 0, len(values))
+	for _, val := range values {
+		v, ok := val.(T)
+		if !ok {
+			var e T
+			return []T{}, fmt.Errorf("%w: %s, %q", ErrInvalidType, key, fmt.Sprintf("%T", e))
+		}
+		out = append(out, v)
+	}
+
+	return out, nil
+}
+
 // GetMapValue fetches value with given key from ResourceData object and attempts type cast to map[string]interface{}
 //
 // if value is not present on provided resource, ErrNotFound is returned
