@@ -981,14 +981,13 @@ func createActivation(ctx context.Context, client papi.PAPI, request papi.Create
 
 	createActivationRetry := CreateActivationRetry
 
-	retries := 10
-
 	for {
 		log.Debug("creating activation")
 		create, err := client.CreateActivation(ctx, request)
 		if err == nil {
 			return create.ActivationID, nil
 		}
+		log.Debug("%s: retrying: %w", errMsg, err)
 
 		if !isCreateActivationErrorRetryable(err) {
 			return "", diag.Errorf("%s: %s", errMsg, err)
@@ -1003,15 +1002,9 @@ func createActivation(ctx context.Context, client papi.PAPI, request papi.Create
 			return actID, nil
 		}
 
-		retries = retries - 1
-		log.Debug("reties left %d", retries)
-		if retries == 0 {
-			return "", diag.Errorf("%s: reached limit of retries: %s", errMsg, err)
-		}
-
 		select {
 		case <-time.After(createActivationRetry):
-			createActivationRetry = capDuration(createActivationRetry*2, ActivationPollInterval)
+			createActivationRetry = capDuration(createActivationRetry*2, 5*time.Minute)
 			continue
 
 		case <-ctx.Done():
