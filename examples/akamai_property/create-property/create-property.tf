@@ -34,7 +34,7 @@ data "akamai_group" "group" {
 }
 
 data "akamai_contract" "contract" {
-  group_name = data.akamai_group.group.name
+  group_name = data.akamai_group.group.group_name
 }
 
 resource "akamai_cp_code" "cp_code" {

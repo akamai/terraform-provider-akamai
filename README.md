@@ -19,7 +19,7 @@ To automatically install the Akamai Provider, run `terraform init` on a configur
 
 ## Documentation
 
-You can find documentation for the Akamai Provider on the [Terraform Website](https://registry.terraform.io/providers/akamai/akamai/latest/docs).
+You can find documentation for the Akamai Provider on the [Terraform Website](https://techdocs.akamai.com/terraform/docs/overview).
 
 ## Credits
 
