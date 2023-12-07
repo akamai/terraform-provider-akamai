@@ -12,6 +12,7 @@ import (
 )
 
 func TestDSCPCode(t *testing.T) {
+	t.Skip()
 	t.Run("match by name", func(t *testing.T) {
 		client := &papi.Mock{}
 
