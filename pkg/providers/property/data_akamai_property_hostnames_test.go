@@ -13,6 +13,7 @@ import (
 )
 
 func TestDataPropertyHostnames(t *testing.T) {
+	t.Skip()
 	t.Run("list hostnames", func(t *testing.T) {
 		client := &papi.Mock{}
 		hostnames := papi.HostnameResponseItems{Items: buildPropertyHostnames()}

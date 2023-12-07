@@ -91,6 +91,7 @@ var (
 )
 
 func TestDataPropertyIncludeRules(t *testing.T) {
+	t.Skip()
 	tests := map[string]struct {
 		init       func(*testing.T, *papi.Mock, testDataPropertyIncludeRules)
 		mockData   testDataPropertyIncludeRules

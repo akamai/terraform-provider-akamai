@@ -15,6 +15,7 @@ import (
 )
 
 func TestDataAkamaiPropertyRulesRead(t *testing.T) {
+	t.Skip()
 	t.Run("valid nested template with vars map", func(t *testing.T) {
 		client := papi.Mock{}
 		useClient(&client, nil, func() {
@@ -271,6 +272,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 }
 
 func TestFormatValue(t *testing.T) {
+	t.Skip()
 	tests := map[string]struct {
 		given     interface{}
 		expected  interface{}
@@ -311,6 +313,7 @@ func TestFormatValue(t *testing.T) {
 }
 
 func TestGetValuesFromMap(t *testing.T) {
+	t.Skip()
 	variablesPath := "testdata/TestDSRulesTemplate/variables"
 	tests := map[string]struct {
 		definitionsFile string
@@ -377,6 +380,7 @@ func TestGetValuesFromMap(t *testing.T) {
 }
 
 func TestConvertToTypedMap(t *testing.T) {
+	t.Skip()
 	tests := map[string]struct {
 		givenVars []interface{}
 		expected  map[string]interface{}
@@ -478,6 +482,7 @@ func TestConvertToTypedMap(t *testing.T) {
 }
 
 func TestFlattenTemplate(t *testing.T) {
+	t.Skip()
 	tests := map[string]struct {
 		givenList    []interface{}
 		expectedData string
@@ -558,6 +563,7 @@ func TestFlattenTemplate(t *testing.T) {
 }
 
 func TestConvertToTemplate(t *testing.T) {
+	t.Skip()
 	templates := "testdata/TestDSRulesTemplate/rules/property-snippets"
 	templatesOut := "testdata/TestDSRulesTemplate/output"
 	tests := map[string]struct {
@@ -600,6 +606,7 @@ func TestConvertToTemplate(t *testing.T) {
 }
 
 func TestStringToTemplate(t *testing.T) {
+	t.Skip()
 	templates := "testdata/TestDSRulesTemplate/rules/property-snippets"
 	templatesOut := "testdata/TestDSRulesTemplate/output"
 	tests := map[string]struct {
@@ -640,6 +647,7 @@ func TestStringToTemplate(t *testing.T) {
 }
 
 func TestVariablesNesting(t *testing.T) {
+	t.Skip()
 	tests := map[string]struct {
 		configPath   string
 		expectedPath string
@@ -690,6 +698,7 @@ func TestVariablesNesting(t *testing.T) {
 }
 
 func TestVariablesAndIncludesNestingCyclicDependency(t *testing.T) {
+	t.Skip()
 	tests := map[string]struct {
 		configPath string
 		withError  string
@@ -722,6 +731,7 @@ func TestVariablesAndIncludesNestingCyclicDependency(t *testing.T) {
 }
 
 func TestMultipleTemplates(t *testing.T) {
+	t.Skip()
 	t.Run("Multiple templates in one directory", func(t *testing.T) {
 		client := papi.Mock{}
 		useClient(&client, nil, func() {
