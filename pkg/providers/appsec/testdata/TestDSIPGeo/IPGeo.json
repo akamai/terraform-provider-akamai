@@ -1,5 +1,12 @@
 {
     "block": "blockSpecificIPGeo",
+    "asnControls": {
+        "blockedIPNetworkLists": {
+            "networkList": [
+                "89871_TEST1"
+            ]
+        }
+    },
     "geoControls": {
         "blockedIPNetworkLists": {
             "networkList": [

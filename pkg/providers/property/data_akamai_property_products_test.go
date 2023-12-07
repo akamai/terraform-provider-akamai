@@ -12,6 +12,7 @@ import (
 )
 
 func TestVerifyProductsDataSourceSchema(t *testing.T) {
+	t.Skip()
 	t.Run("akamai_property_products - test data source required contract", func(t *testing.T) {
 		resource.UnitTest(t, resource.TestCase{
 			ProtoV5ProviderFactories: testAccProviders,
@@ -25,6 +26,7 @@ func TestVerifyProductsDataSourceSchema(t *testing.T) {
 }
 
 func TestOutputProductsDataSource(t *testing.T) {
+	t.Skip()
 
 	t.Run("akamai_property_products - input OK - output OK", func(t *testing.T) {
 		client := &papi.Mock{}

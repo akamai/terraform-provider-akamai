@@ -4,10 +4,10 @@ provider "akamai" {
 }
 
 resource "akamai_botman_bot_analytics_cookie" "test" {
-  config_id            = 43253
-  bot_analytics_cookie = <<-EOF
-{
-  "testKey": "updated_testValue3"
-}
-EOF
+  config_id = 43253
+  bot_analytics_cookie = jsonencode(
+    {
+      "testKey" : "updated_testValue3"
+    }
+  )
 }

@@ -10882,7 +10882,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 		"restrict_object_caching": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "You need this behavior to deploy the Object Caching product. It disables serving HTML content and limits the maximum object size to 100MB. Contact Akamai Professional Services for help configuring it. This behavior is for internal usage only. This behavior can be used in includes.",
+			Description: "You need this behavior to deploy the Object Caching product. It disables serving HTML content and limits the maximum object size to 100MB. Contact Akamai Professional Services for help configuring it. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{

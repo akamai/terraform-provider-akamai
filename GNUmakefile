@@ -62,6 +62,10 @@ fmt: $(goimports)
 terraform-fmtcheck:
 	terraform fmt -recursive -check
 
+.PHONY: terraform-fmt
+terraform-fmt:
+	terraform fmt -recursive
+
 .PHONY: lint
 lint: $(golangci-lint)
 	$(golangci-lint) run

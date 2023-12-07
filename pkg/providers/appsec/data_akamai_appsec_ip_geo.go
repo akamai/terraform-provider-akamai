@@ -30,6 +30,12 @@ func dataSourceIPGeo() *schema.Resource {
 				Computed:    true,
 				Description: "IPGeo mode",
 			},
+			"asn_network_lists": {
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "List of unique identifiers of available ASN network lists",
+			},
 			"geo_network_lists": {
 				Type:        schema.TypeSet,
 				Computed:    true,
@@ -46,7 +52,7 @@ func dataSourceIPGeo() *schema.Resource {
 				Type:        schema.TypeSet,
 				Computed:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
-				Description: "List of unique identifiers of network lists allowed through the firewall regardless of mode, geo_network_lists and ip_network_lists values",
+				Description: "List of unique identifiers of network lists allowed through the firewall regardless of mode, asn_network_lists, geo_network_lists and ip_network_lists values",
 			},
 			"ukraine_geo_control_action": {
 				Type:        schema.TypeString,
@@ -102,6 +108,17 @@ func dataSourceIPGeoRead(ctx context.Context, d *schema.ResourceData, m interfac
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
+	res := setAttributes(d, ipgeo)
+	if res != nil {
+		return res
+	}
+
+	d.SetId(strconv.Itoa(getIPGeo.ConfigID))
+
+	return nil
+}
+
+func setAttributes(d *schema.ResourceData, ipgeo *appsec.GetIPGeoResponse) diag.Diagnostics {
 	if ipgeo.Block == "blockAllTrafficExceptAllowedIPs" {
 		if err := d.Set("mode", Allow); err != nil {
 			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
@@ -116,9 +133,19 @@ func dataSourceIPGeoRead(ctx context.Context, d *schema.ResourceData, m interfac
 			}
 		}
 	}
+
 	if ipgeo.Block == "blockSpecificIPGeo" {
 		if err := d.Set("mode", Block); err != nil {
 			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
+		}
+		if ipgeo.ASNControls != nil && ipgeo.ASNControls.BlockedIPNetworkLists != nil && ipgeo.ASNControls.BlockedIPNetworkLists.NetworkList != nil {
+			if err := d.Set("asn_network_lists", ipgeo.ASNControls.BlockedIPNetworkLists.NetworkList); err != nil {
+				return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
+			}
+		} else {
+			if err := d.Set("asn_network_lists", []string{}); err != nil {
+				return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
+			}
 		}
 		if ipgeo.GeoControls != nil && ipgeo.GeoControls.BlockedIPNetworkLists != nil && ipgeo.GeoControls.BlockedIPNetworkLists.NetworkList != nil {
 			if err := d.Set("geo_network_lists", ipgeo.GeoControls.BlockedIPNetworkLists.NetworkList); err != nil {
@@ -144,8 +171,5 @@ func dataSourceIPGeoRead(ctx context.Context, d *schema.ResourceData, m interfac
 			}
 		}
 	}
-
-	d.SetId(strconv.Itoa(getIPGeo.ConfigID))
-
 	return nil
 }

@@ -18,6 +18,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/dns"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/logger"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/providers/dns/internal/txtrecord"
 
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
@@ -999,11 +1000,7 @@ func resourceDNSRecordRead(ctx context.Context, d *schema.ResourceData, m interf
 	meta := meta.Must(m)
 	logger := meta.Log("AkamaiDNS", "resourceDNSRecordRead")
 	logger.Info("Record Read")
-	// create a context with logging for api calls
-	ctx = session.ContextWithOptions(
-		ctx,
-		session.WithContextLog(logger),
-	)
+	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
 
 	var zone, host, recordType string
 	var err error
@@ -1013,10 +1010,12 @@ func resourceDNSRecordRead(ctx context.Context, d *schema.ResourceData, m interf
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
+
 	host, err = tf.GetStringValue("name", d)
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
+
 	recordType, err = tf.GetStringValue("recordtype", d)
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
@@ -1036,6 +1035,7 @@ func resourceDNSRecordRead(ctx context.Context, d *schema.ResourceData, m interf
 			Detail:   err.Error(),
 		})
 	}
+
 	b, err := json.Marshal(recordCreate.Target)
 	if err != nil {
 		logger.Errorf("Read Target Marshal Failure: %s", err.Error())
@@ -1070,9 +1070,6 @@ func resourceDNSRecordRead(ctx context.Context, d *schema.ResourceData, m interf
 				Detail:   e.Error(),
 			})
 		}
-	}
-	if e != nil {
-		// record doesn't exist
 		logger.Errorf("READ Record Not Found: %s", e.Error())
 		d.SetId("")
 		return diag.Errorf("Record not found")
@@ -1089,8 +1086,10 @@ func resourceDNSRecordRead(ctx context.Context, d *schema.ResourceData, m interf
 		})
 	}
 	logger.Debugf("READ record data read JSON %s", string(b1))
+
 	rdataFieldMap := inst.Client(meta).ParseRData(ctx, recordType, record.Target) // returns map[string]interface{}
 	targets := inst.Client(meta).ProcessRdata(ctx, record.Target, recordType)
+
 	switch recordType {
 	case RRTypeMx:
 		// calc rdata sha from read record
@@ -1144,19 +1143,19 @@ func resourceDNSRecordRead(ctx context.Context, d *schema.ResourceData, m interf
 		}
 		targets = newrdata
 	case RRTypeTxt:
-		for fname, fvalue := range rdataFieldMap {
-			if fvalue, ok := fvalue.([]string); ok {
-				for i, v := range fvalue {
-					fvalue[i] = txtRecordUnescape(v)
-				}
-				if err := d.Set(fname, fvalue); err != nil {
-					return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
-				}
-			} else {
-				return diag.Errorf("Invalid type conversion")
-			}
+		oldTargets, err := tf.GetTypedListValue[string]("target", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
+			return diag.FromErr(err)
 		}
 
+		resolvedTargets, err := resolveTxtRecordTargets(oldTargets, targets)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		if err := d.Set("target", resolvedTargets); err != nil {
+			return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
+		}
 	default:
 		// Parse Rdata. MX special
 		for fname, fvalue := range rdataFieldMap {
@@ -1402,28 +1401,27 @@ func padvalue(str string, logger log.Interface) string {
 
 // Used to pad coordinates to x.xxm format
 func padCoordinates(str string, logger log.Interface) string {
-
 	s := strings.Split(str, " ")
 	if len(s) < 12 {
 		logger.Debug("coordinates string is too short")
 		return ""
 	}
+
 	latD, latM, latS, latDir, longD, longM, longS, longDir, altitude, size, horizPrecision, vertPrecision := s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], s[8], s[9], s[10], s[11]
 	return fmt.Sprintf("%s %s %s %s %s %s %s %s %sm %sm %sm %sm", latD, latM, latS, latDir, longD, longM, longS, longDir, padvalue(altitude, logger), padvalue(size, logger), padvalue(horizPrecision, logger), padvalue(vertPrecision, logger))
 }
 
 func bindRecord(ctx context.Context, meta meta.Meta, d *schema.ResourceData, logger log.Interface) (dns.RecordBody, error) {
+	host, err := tf.GetStringValue("name", d)
+	if err != nil {
+		return dns.RecordBody{}, err
+	}
 
-	var host, recordType string
-	var err error
-	host, err = tf.GetStringValue("name", d)
+	recordType, err := tf.GetStringValue("recordtype", d)
 	if err != nil {
 		return dns.RecordBody{}, err
 	}
-	recordType, err = tf.GetStringValue("recordtype", d)
-	if err != nil {
-		return dns.RecordBody{}, err
-	}
+
 	ttl, err := tf.GetIntValue("ttl", d)
 	if err != nil {
 		return dns.RecordBody{}, err
@@ -1433,6 +1431,7 @@ func bindRecord(ctx context.Context, meta meta.Meta, d *schema.ResourceData, log
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return dns.RecordBody{}, err
 	}
+
 	records, err := buildRecordsList(target, recordType, logger)
 	if err != nil {
 		return dns.RecordBody{}, nil
@@ -1443,6 +1442,7 @@ func bindRecord(ctx context.Context, meta meta.Meta, d *schema.ResourceData, log
 		sort.Strings(records)
 		return dns.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}, nil
 	}
+
 	return newRecordCreate(ctx, meta, d, recordType, target, host, ttl, logger)
 }
 
@@ -2074,13 +2074,13 @@ func buildRecordsList(target []interface{}, recordType string, logger log.Interf
 			}
 			records = append(records, recContentStr)
 		case RRTypeTxt:
-			logger.Debugf("Bind TXT Data IN: [%s]", recContentStr)
-			recContentStr = strings.Trim(recContentStr, `"`)
-			recContentStr = txtRecordEscape(recContentStr)
-
-			logger.Debugf("Bind TXT Data %s", recContentStr)
-			logger.Debugf("Bind TXT Data OUT: [%s]", recContentStr)
-			records = append(records, recContentStr)
+			logger.Debugf("Bind TXT Data IN: [%q]", recContentStr)
+			normalized, err := txtrecord.NormalizeTarget(recContentStr)
+			if err != nil {
+				return nil, err
+			}
+			logger.Debugf("Bind TXT Data OUT: [%s]", normalized)
+			records = append(records, normalized)
 		case RRTypeCaa:
 			caaparts := strings.Split(recContentStr, " ")
 			if len(caaparts) < 3 {
@@ -2437,6 +2437,7 @@ func checkNsec3Record(d *schema.ResourceData) error {
 	if typeBitmaps == "" {
 		return fmt.Errorf("configuration argument typeBitMaps must be set for NSEC3")
 	}
+
 	return nil
 }
 
@@ -2658,7 +2659,6 @@ func checkSshfpRecord(d *schema.ResourceData) error {
 }
 
 func checkSoaRecord(d *schema.ResourceData) error {
-
 	nameserver, err := tf.GetStringValue("name_server", d)
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
@@ -2712,12 +2712,10 @@ func checkSoaRecord(d *schema.ResourceData) error {
 }
 
 func checkAkamaiTlcRecord(*schema.ResourceData) error {
-
 	return fmt.Errorf("AKAMAITLC is a READ ONLY record")
 }
 
 func checkCaaRecord(d *schema.ResourceData) error {
-
 	if err := checkBasicRecordTypes(d); err != nil {
 		return err
 	}
@@ -2780,12 +2778,11 @@ func checkCertRecord(d *schema.ResourceData) error {
 	if certificate == "" {
 		return fmt.Errorf("configuration argument certificate must be set for CERT")
 	}
-	return nil
 
+	return nil
 }
 
 func checkTlsaRecord(d *schema.ResourceData) error {
-
 	usage, err := tf.GetIntValue("usage", d)
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
@@ -2810,30 +2807,15 @@ func checkTlsaRecord(d *schema.ResourceData) error {
 	return nil
 }
 
-func txtRecordEscape(s string) string {
-	s = strings.ReplaceAll(s, "\\", "\\\\")
-	s = strings.ReplaceAll(s, "\"", "\\\"")
-	return "\"" + s + "\""
-}
-
-func txtRecordUnescape(s string) string {
-	s = s[1 : len(s)-1]
-	s = strings.ReplaceAll(s, "\\\"", "\"")
-	return strings.ReplaceAll(s, "\\\\", "\\")
-}
-
 func checkSvcbRecord(d *schema.ResourceData) error {
-
 	return checkServiceRecord(d, "SVCB")
 }
 
 func checkHTTPSRecord(d *schema.ResourceData) error {
-
 	return checkServiceRecord(d, "HTTPS")
 }
 
 func checkServiceRecord(d *schema.ResourceData, rtype string) error {
-
 	pri, err := tf.GetIntValue("svc_priority", d)
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
@@ -2868,7 +2850,43 @@ func checkServiceRecord(d *schema.ResourceData, rtype string) error {
 	}
 
 	return nil
+}
 
+func resolveTxtRecordTargets(denormalized, normalized []string) ([]string, error) {
+	return resolveTargets(denormalized, normalized, func(dt, nt string) (bool, error) {
+		normalizedTarget, err := txtrecord.NormalizeTarget(dt)
+		if err != nil {
+			return false, err
+		}
+		return normalizedTarget == nt, nil
+	})
+}
+
+// resolveTargets replaces normalized targets with a corresponding denormalized target
+// if they are found to be equal using the compare func.
+// The comparison is performed only if there is an element with a corresponding index in denormalized.
+// The output is always the same length as normalized.
+func resolveTargets(denormalized, normalized []string, compare func(string, string) (bool, error)) ([]string, error) {
+	n := len(normalized)
+	res := make([]string, n)
+	copy(res, normalized)
+
+	for i := 0; i < n; i++ {
+		if i >= len(denormalized) {
+			continue
+		}
+
+		equal, err := compare(denormalized[i], normalized[i])
+		if err != nil {
+			return nil, err
+		}
+
+		if equal {
+			res[i] = denormalized[i]
+		}
+	}
+
+	return res, nil
 }
 
 // Resource record types supported by the Akamai Edge DNS API

@@ -1,0 +1,14 @@
+{
+  "rules": {
+    "name": "test",
+    "children": [
+      "#include:child-beginning.json",
+      "#include:some-common-behaviour.json",
+      "#include:child-end.json"
+    ],
+    "variables": [
+      "#include:one-var.json",
+      "#include:more-vars.json"
+    ]
+  }
+}

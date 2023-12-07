@@ -1,5 +1,40 @@
 # RELEASE NOTES
 
+## 5.5.0 (Dec 07, 2023)
+
+#### FEATURES/ENHANCEMENTS:
+
+* APSSEC
+  * Updated resource:
+    * `akamai_appsec_ip_geo` - added `asn_network_lists` attribute to support blocking by ASN client lists
+  * Updated data source:
+    * `akamai_appsec_ip_geo` - added `asn_network_lists` attribute to list ASN client lists
+
+* BOTMAN
+  * Added resource:
+    * `akamai_botman_custom_code` - read and update
+  * Added data source:
+    * `akamai_botman_custom_code` - read
+  * Cached api calls for `akamai_botman_akamai_bot_category`, `akamai_botman_akamai_defined_bot` and `akamai_botman_bot_detection` data sources to improve performance.
+
+* Cloudlets
+  * Added `origin_description` field to `akamai_cloudlets_application_load_balancer` resource
+
+* PAPI
+  * Behavior `restrict_object_caching` is public ([I#314](https://github.com/akamai/terraform-provider-akamai/issues/314) and [#277](https://github.com/akamai/terraform-provider-akamai/issues/277))
+  * Added version support for `akamai_property_hostnames` data source ([I#413](https://github.com/akamai/terraform-provider-akamai/issues/413))
+  * `data_akamai_property_rules_builder` is now supporting `v2023-10-30` rule format
+  * Improved error handling and added retries in `akamai_property_activation` resource
+  * Relaxed validation used for includes used in `akamai_property_rules_template`. Files cannot be empty but do not necessary have to be valid json files.
+
+#### BUG FIXES:
+
+* DNS
+  * Fixed handling of txt records which are longer than 255 bytes ([I#430](https://github.com/akamai/terraform-provider-akamai/issues/430))
+
+* Image and Video Manager
+  * Added suppression when providing `ctr_` prefix in `akamai_imaging_policy_set` ([I#491](https://github.com/akamai/terraform-provider-akamai/issues/491))
+
 ## 5.4.0 (Oct 31, 2023)
 
 #### FEATURES/ENHANCEMENTS:
