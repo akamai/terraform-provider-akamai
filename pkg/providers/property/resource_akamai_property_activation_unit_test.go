@@ -38,7 +38,6 @@ func (c ctxt) Value(_ interface{}) interface{} {
 }
 
 func TestResolveVersion(t *testing.T) {
-	t.Skip()
 	tests := map[string]struct {
 		versionData       int
 		versionDataExists bool
@@ -110,7 +109,7 @@ func TestResolveVersion(t *testing.T) {
 }
 
 func TestLookupActivation(t *testing.T) {
-	t.Skip()
+
 	tests := map[string]struct {
 		init                     func(*papi.Mock)
 		query                    lookupActivationRequest
@@ -301,7 +300,7 @@ func TestLookupActivation(t *testing.T) {
 }
 
 func TestCreateActivation(t *testing.T) {
-	t.Skip()
+
 	defer func(t time.Duration) {
 		CreateActivationRetry = t
 	}(CreateActivationRetry) // restore previous value

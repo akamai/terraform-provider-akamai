@@ -9,7 +9,6 @@ import (
 )
 
 func TestRulesEqual(t *testing.T) {
-	t.Skip()
 	tests := map[string]struct {
 		old      *papi.Rules
 		new      *papi.Rules
@@ -610,7 +609,6 @@ func TestRulesEqual(t *testing.T) {
 }
 
 func TestRemoveNil(t *testing.T) {
-	t.Skip()
 	input := map[string]any{
 		"a": "aval",
 		"b": nil,

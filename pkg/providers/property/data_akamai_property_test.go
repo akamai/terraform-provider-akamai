@@ -15,7 +15,6 @@ import (
 )
 
 func TestDataProperty(t *testing.T) {
-	t.Skip()
 	tests := map[string]struct {
 		givenTF            string
 		init               func(*papi.Mock)

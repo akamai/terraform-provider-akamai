@@ -12,7 +12,6 @@ import (
 )
 
 func TestDataSourceMultipleGroups_basic(t *testing.T) {
-	t.Skip()
 	t.Run("test output", func(t *testing.T) {
 		client := &papi.Mock{}
 		contractIDs := []string{"ctr_1234"}
@@ -52,7 +51,6 @@ func TestDataSourceMultipleGroups_basic(t *testing.T) {
 }
 
 func TestGroup_ContractNotFoundInState(t *testing.T) {
-	t.Skip()
 	t.Run("contractId not found in state", func(t *testing.T) {
 		client := &papi.Mock{}
 		contractIDs := []string{"ctr_contractID"}

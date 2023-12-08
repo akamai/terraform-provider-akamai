@@ -16,7 +16,6 @@ import (
 )
 
 func TestDataPropertyIncludes(t *testing.T) {
-	t.Skip()
 	tests := map[string]struct {
 		attrs      attributes
 		init       func(*testing.T, *papi.Mock, attributes)

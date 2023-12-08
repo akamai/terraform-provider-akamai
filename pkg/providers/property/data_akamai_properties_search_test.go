@@ -12,7 +12,6 @@ import (
 )
 
 func TestDSPropertiesSearch(t *testing.T) {
-	t.Skip()
 	t.Run("match by hostname", func(t *testing.T) {
 		client := &papi.Mock{}
 

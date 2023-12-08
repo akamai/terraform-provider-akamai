@@ -12,7 +12,6 @@ import (
 )
 
 func TestDataPropertyRulesBuilder(t *testing.T) {
-	t.Skip()
 	t.Run("valid rule with 3 children - v2023-01-05", func(t *testing.T) {
 		useClient(nil, nil, func() {
 			resource.UnitTest(t, resource.TestCase{

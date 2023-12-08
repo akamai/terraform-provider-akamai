@@ -22,7 +22,6 @@ import (
 var AnyCTX = mock.Anything
 
 func TestResCPCode(t *testing.T) {
-	t.Skip()
 	// Helper to set up an expected call to mock papi.GetCPCode
 	expectGetCPCode := func(m *papi.Mock, contractID, groupID string, CPCodeID int, CPCodes *[]papi.CPCode, err error) *mock.Call {
 		var call *mock.Call
