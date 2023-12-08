@@ -21,7 +21,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 	t.Run("lifecycle test", func(t *testing.T) {
 		PollForChangeStatusInterval = 1 * time.Millisecond
 		client := &cps.Mock{}
-		enrollment := cps.Enrollment{
+		enrollment := cps.GetEnrollmentResponse{
 			AdminContact: &cps.Contact{
 				AddressLineOne:   "150 Broadway",
 				City:             "Cambridge",
@@ -86,12 +86,13 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 			ValidationType: "dv",
 		}
+		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
 		client.On("CreateEnrollment",
 			mock.Anything,
 			cps.CreateEnrollmentRequest{
-				Enrollment: enrollment,
-				ContractID: "1",
+				EnrollmentRequestBody: enrollmentReqBody,
+				ContractID:            "1",
 			},
 		).Return(&cps.CreateEnrollmentResponse{
 			ID:         1,
@@ -181,7 +182,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 		}}, nil).Times(3)
 
-		var enrollmentUpdate cps.Enrollment
+		var enrollmentUpdate cps.GetEnrollmentResponse
 		err := copier.CopyWithOption(&enrollmentUpdate, enrollment, copier.Option{DeepCopy: true})
 		require.NoError(t, err)
 		enrollmentUpdate.AdminContact.FirstName = "R5"
@@ -191,11 +192,13 @@ func TestResourceDVEnrollment(t *testing.T) {
 		enrollmentUpdate.NetworkConfiguration.DNSNameSettings.DNSNames = []string{"san2.test.akamai.com", "san.test.akamai.com"}
 		enrollmentUpdate.Location = ""
 		enrollmentUpdate.PendingChanges = nil
+
+		enrollmentUpdateReqBody := createEnrollmentReqBodyFromEnrollment(enrollmentUpdate)
 		allowCancel := true
 		client.On("UpdateEnrollment",
 			mock.Anything,
 			cps.UpdateEnrollmentRequest{
-				Enrollment:                enrollmentUpdate,
+				EnrollmentRequestBody:     enrollmentUpdateReqBody,
 				EnrollmentID:              1,
 				AllowCancelPendingChanges: &allowCancel,
 			},
@@ -315,7 +318,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 	t.Run("create enrollment, empty sans", func(t *testing.T) {
 		PollForChangeStatusInterval = 1 * time.Millisecond
 		client := &cps.Mock{}
-		enrollment := cps.Enrollment{
+		enrollment := cps.GetEnrollmentResponse{
 			AdminContact: &cps.Contact{
 				AddressLineOne:   "150 Broadway",
 				City:             "Cambridge",
@@ -377,12 +380,13 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 			ValidationType: "dv",
 		}
+		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
 		client.On("CreateEnrollment",
 			mock.Anything,
 			cps.CreateEnrollmentRequest{
-				Enrollment: enrollment,
-				ContractID: "1",
+				EnrollmentRequestBody: enrollmentReqBody,
+				ContractID:            "1",
 			},
 		).Return(&cps.CreateEnrollmentResponse{
 			ID:         1,
@@ -397,7 +401,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 				ChangeType: "new-certificate",
 			},
 		}
-		var enrollmentGet cps.Enrollment
+		var enrollmentGet cps.GetEnrollmentResponse
 		require.NoError(t, copier.CopyWithOption(&enrollmentGet, enrollment, copier.Option{DeepCopy: true}))
 		enrollmentGet.CSR.SANS = []string{enrollment.CSR.CN}
 		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
@@ -501,7 +505,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 	t.Run("create enrollment, MTLS", func(t *testing.T) {
 		PollForChangeStatusInterval = 1 * time.Millisecond
 		client := &cps.Mock{}
-		enrollment := cps.Enrollment{
+		enrollment := cps.GetEnrollmentResponse{
 			AdminContact: &cps.Contact{
 				AddressLineOne:   "150 Broadway",
 				City:             "Cambridge",
@@ -563,12 +567,13 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 			ValidationType: "dv",
 		}
+		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
 		client.On("CreateEnrollment",
 			mock.Anything,
 			cps.CreateEnrollmentRequest{
-				Enrollment: enrollment,
-				ContractID: "1",
+				EnrollmentRequestBody: enrollmentReqBody,
+				ContractID:            "1",
 			},
 		).Return(&cps.CreateEnrollmentResponse{
 			ID:         1,
@@ -576,7 +581,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			Changes:    []string{"/cps/v2/enrollments/1/changes/2"},
 		}, nil).Once()
 
-		var enrollmentUpdate cps.Enrollment
+		var enrollmentUpdate cps.GetEnrollmentResponse
 		require.NoError(t, copier.CopyWithOption(&enrollmentUpdate, enrollment, copier.Option{DeepCopy: true, IgnoreEmpty: true}))
 		enrollmentUpdate.NetworkConfiguration.ClientMutualAuthentication = &cps.ClientMutualAuthentication{
 			AuthenticationOptions: &cps.AuthenticationOptions{
@@ -587,11 +592,13 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 			SetID: "12345",
 		}
+		enrollmentUpdateReqBody := createEnrollmentReqBodyFromEnrollment(enrollmentUpdate)
+
 		client.On("UpdateEnrollment",
 			mock.Anything,
 			cps.UpdateEnrollmentRequest{
 				EnrollmentID:              1,
-				Enrollment:                enrollmentUpdate,
+				EnrollmentRequestBody:     enrollmentUpdateReqBody,
 				AllowCancelPendingChanges: ptr.To(true),
 			},
 		).Return(&cps.UpdateEnrollmentResponse{
@@ -607,7 +614,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 				ChangeType: "new-certificate",
 			},
 		}
-		var enrollmentGet cps.Enrollment
+		var enrollmentGet cps.GetEnrollmentResponse
 		require.NoError(t, copier.CopyWithOption(&enrollmentGet, enrollmentUpdate, copier.Option{DeepCopy: true}))
 		enrollmentGet.CSR.SANS = []string{enrollmentUpdate.CSR.CN}
 		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
@@ -710,7 +717,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 		PollForChangeStatusInterval = 1 * time.Millisecond
 		client := &cps.Mock{}
 		commonName := "test.akamai.com"
-		enrollment := cps.Enrollment{
+		enrollment := cps.GetEnrollmentResponse{
 			AdminContact: &cps.Contact{
 				AddressLineOne:   "150 Broadway",
 				City:             "Cambridge",
@@ -774,12 +781,13 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 			ValidationType: "dv",
 		}
+		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
 		client.On("CreateEnrollment",
 			mock.Anything,
 			cps.CreateEnrollmentRequest{
-				Enrollment: enrollment,
-				ContractID: "1",
+				EnrollmentRequestBody: enrollmentReqBody,
+				ContractID:            "1",
 			},
 		).Return(&cps.CreateEnrollmentResponse{
 			ID:         1,
@@ -914,7 +922,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 
 	t.Run("set challenges arrays to empty if no allowedInput found", func(t *testing.T) {
 		client := &cps.Mock{}
-		enrollment := cps.Enrollment{
+		enrollment := cps.GetEnrollmentResponse{
 			AdminContact: &cps.Contact{
 				AddressLineOne:   "150 Broadway",
 				City:             "Cambridge",
@@ -979,12 +987,13 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 			ValidationType: "dv",
 		}
+		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
 		client.On("CreateEnrollment",
 			mock.Anything,
 			cps.CreateEnrollmentRequest{
-				Enrollment: enrollment,
-				ContractID: "1",
+				EnrollmentRequestBody: enrollmentReqBody,
+				ContractID:            "1",
 			},
 		).Return(&cps.CreateEnrollmentResponse{
 			ID:         1,
@@ -1059,7 +1068,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 
 	t.Run("update with acknowledge warnings change, no enrollment update", func(t *testing.T) {
 		client := &cps.Mock{}
-		enrollment := cps.Enrollment{
+		enrollment := cps.GetEnrollmentResponse{
 			AdminContact: &cps.Contact{
 				AddressLineOne:   "150 Broadway",
 				City:             "Cambridge",
@@ -1115,12 +1124,13 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 			ValidationType: "dv",
 		}
+		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
 		client.On("CreateEnrollment",
 			mock.Anything,
 			cps.CreateEnrollmentRequest{
-				Enrollment: enrollment,
-				ContractID: "1",
+				EnrollmentRequestBody: enrollmentReqBody,
+				ContractID:            "1",
 			},
 		).Return(&cps.CreateEnrollmentResponse{
 			ID:         1,
@@ -1280,7 +1290,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 	t.Run("acknowledge warnings", func(t *testing.T) {
 		client := &cps.Mock{}
 		PollForChangeStatusInterval = 1 * time.Millisecond
-		enrollment := cps.Enrollment{
+		enrollment := cps.GetEnrollmentResponse{
 			AdminContact: &cps.Contact{
 				AddressLineOne:   "150 Broadway",
 				City:             "Cambridge",
@@ -1336,12 +1346,13 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 			ValidationType: "dv",
 		}
+		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
 		client.On("CreateEnrollment",
 			mock.Anything,
 			cps.CreateEnrollmentRequest{
-				Enrollment: enrollment,
-				ContractID: "1",
+				EnrollmentRequestBody: enrollmentReqBody,
+				ContractID:            "1",
 			},
 		).Return(&cps.CreateEnrollmentResponse{
 			ID:         1,
@@ -1461,7 +1472,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 	t.Run("create enrollment, allow duplicate common name", func(t *testing.T) {
 		PollForChangeStatusInterval = 1 * time.Millisecond
 		client := &cps.Mock{}
-		enrollment := cps.Enrollment{
+		enrollment := cps.GetEnrollmentResponse{
 			AdminContact: &cps.Contact{
 				AddressLineOne:   "150 Broadway",
 				City:             "Cambridge",
@@ -1523,13 +1534,14 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 			ValidationType: "dv",
 		}
+		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
 		client.On("CreateEnrollment",
 			mock.Anything,
 			cps.CreateEnrollmentRequest{
-				Enrollment:       enrollment,
-				ContractID:       "1",
-				AllowDuplicateCN: true,
+				EnrollmentRequestBody: enrollmentReqBody,
+				ContractID:            "1",
+				AllowDuplicateCN:      true,
 			},
 		).Return(&cps.CreateEnrollmentResponse{
 			ID:         1,
@@ -1544,7 +1556,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 				ChangeType: "new-certificate",
 			},
 		}
-		var enrollmentGet cps.Enrollment
+		var enrollmentGet cps.GetEnrollmentResponse
 		require.NoError(t, copier.CopyWithOption(&enrollmentGet, enrollment, copier.Option{DeepCopy: true}))
 		enrollmentGet.CSR.SANS = []string{enrollment.CSR.CN}
 		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
@@ -1656,7 +1668,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 	t.Run("verification failed with warnings, no acknowledgement", func(t *testing.T) {
 		client := &cps.Mock{}
 		PollForChangeStatusInterval = 1 * time.Millisecond
-		enrollment := cps.Enrollment{
+		enrollment := cps.GetEnrollmentResponse{
 			AdminContact: &cps.Contact{
 				AddressLineOne:   "150 Broadway",
 				City:             "Cambridge",
@@ -1712,12 +1724,13 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 			ValidationType: "dv",
 		}
+		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
 		client.On("CreateEnrollment",
 			mock.Anything,
 			cps.CreateEnrollmentRequest{
-				Enrollment: enrollment,
-				ContractID: "1",
+				EnrollmentRequestBody: enrollmentReqBody,
+				ContractID:            "1",
 			},
 		).Return(&cps.CreateEnrollmentResponse{
 			ID:         1,
@@ -1777,7 +1790,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 	t.Run("create enrollment returns an error", func(t *testing.T) {
 		client := &cps.Mock{}
 		PollForChangeStatusInterval = 1 * time.Millisecond
-		enrollment := cps.Enrollment{
+		enrollment := cps.GetEnrollmentResponse{
 			AdminContact: &cps.Contact{
 				AddressLineOne:   "150 Broadway",
 				City:             "Cambridge",
@@ -1833,12 +1846,13 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 			ValidationType: "dv",
 		}
+		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
 		client.On("CreateEnrollment",
 			mock.Anything,
 			cps.CreateEnrollmentRequest{
-				Enrollment: enrollment,
-				ContractID: "1",
+				EnrollmentRequestBody: enrollmentReqBody,
+				ContractID:            "1",
 			},
 		).Return(nil, fmt.Errorf("error creating enrollment")).Once()
 
@@ -1863,7 +1877,7 @@ func TestResourceDVEnrollmentImport(t *testing.T) {
 		client := &cps.Mock{}
 		id := "1,ctr_1"
 
-		enrollment := cps.Enrollment{
+		enrollment := cps.GetEnrollmentResponse{
 			AdminContact: &cps.Contact{
 				AddressLineOne:   "150 Broadway",
 				City:             "Cambridge",
@@ -1920,11 +1934,13 @@ func TestResourceDVEnrollmentImport(t *testing.T) {
 			},
 			ValidationType: "dv",
 		}
+		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
+
 		client.On("CreateEnrollment",
 			mock.Anything,
 			cps.CreateEnrollmentRequest{
-				Enrollment: enrollment,
-				ContractID: "1",
+				EnrollmentRequestBody: enrollmentReqBody,
+				ContractID:            "1",
 			},
 		).Return(&cps.CreateEnrollmentResponse{
 			ID:         1,
@@ -2025,7 +2041,7 @@ func TestResourceDVEnrollmentImport(t *testing.T) {
 		client := &cps.Mock{}
 		id := "1,ctr_1"
 
-		enrollment := cps.Enrollment{
+		enrollment := cps.GetEnrollmentResponse{
 			ValidationType: "third-party",
 		}
 
@@ -2047,4 +2063,24 @@ func TestResourceDVEnrollmentImport(t *testing.T) {
 			})
 		})
 	})
+}
+
+func createEnrollmentReqBodyFromEnrollment(en cps.GetEnrollmentResponse) cps.EnrollmentRequestBody {
+	return cps.EnrollmentRequestBody{
+		AdminContact:                   en.AdminContact,
+		AutoRenewalStartTime:           en.AutoRenewalStartTime,
+		CertificateChainType:           en.CertificateChainType,
+		CertificateType:                en.CertificateType,
+		ChangeManagement:               en.ChangeManagement,
+		CSR:                            en.CSR,
+		EnableMultiStackedCertificates: en.EnableMultiStackedCertificates,
+		NetworkConfiguration:           en.NetworkConfiguration,
+		Org:                            en.Org,
+		OrgID:                          en.OrgID,
+		RA:                             en.RA,
+		SignatureAlgorithm:             en.SignatureAlgorithm,
+		TechContact:                    en.TechContact,
+		ThirdParty:                     en.ThirdParty,
+		ValidationType:                 en.ValidationType,
+	}
 }

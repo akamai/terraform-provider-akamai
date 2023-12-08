@@ -208,20 +208,20 @@ func resourceCPSThirdPartyEnrollmentCreate(ctx context.Context, d *schema.Resour
 		return diag.FromErr(err)
 	}
 
-	enrollment, err := prepareThirdPartyEnrollment(d)
+	enrollmentReqBody, err := prepareThirdPartyEnrollment(d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	// save ClientMutualAuthentication and unset it in enrollment request struct
 	// create request must not have it set; in case its not nil, we will run update later to add it
-	clientMutualAuthentication := enrollment.NetworkConfiguration.ClientMutualAuthentication
-	enrollment.NetworkConfiguration.ClientMutualAuthentication = nil
+	clientMutualAuthentication := enrollmentReqBody.NetworkConfiguration.ClientMutualAuthentication
+	enrollmentReqBody.NetworkConfiguration.ClientMutualAuthentication = nil
 
 	req := cps.CreateEnrollmentRequest{
-		Enrollment:       *enrollment,
-		ContractID:       strings.TrimPrefix(contractID, "ctr_"),
-		AllowDuplicateCN: allowDuplicateCN,
+		EnrollmentRequestBody: *enrollmentReqBody,
+		ContractID:            strings.TrimPrefix(contractID, "ctr_"),
+		AllowDuplicateCN:      allowDuplicateCN,
 	}
 	res, err := client.CreateEnrollment(ctx, req)
 	if err != nil {
@@ -232,10 +232,10 @@ func resourceCPSThirdPartyEnrollmentCreate(ctx context.Context, d *schema.Resour
 	// when clientMutualAuthentication was provided, insert it back to enrollment and send the update request
 	if clientMutualAuthentication != nil {
 		logger.Debug("Updating ClientMutualAuthentication configuration")
-		enrollment.NetworkConfiguration.ClientMutualAuthentication = clientMutualAuthentication
+		enrollmentReqBody.NetworkConfiguration.ClientMutualAuthentication = clientMutualAuthentication
 		req := cps.UpdateEnrollmentRequest{
 			EnrollmentID:              res.ID,
-			Enrollment:                *enrollment,
+			EnrollmentRequestBody:     *enrollmentReqBody,
 			AllowCancelPendingChanges: ptr.To(true),
 		}
 		_, err := client.UpdateEnrollment(ctx, req)
@@ -344,14 +344,14 @@ func resourceCPSThirdPartyEnrollmentUpdate(ctx context.Context, d *schema.Resour
 		}
 		return resourceCPSThirdPartyEnrollmentRead(ctx, d, m)
 	}
-	enrollment, err := prepareThirdPartyEnrollment(d)
+	enrollmentReqBody, err := prepareThirdPartyEnrollment(d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	allowCancel := true
 	req := cps.UpdateEnrollmentRequest{
-		Enrollment:                *enrollment,
+		EnrollmentRequestBody:     *enrollmentReqBody,
 		EnrollmentID:              enrollmentID,
 		AllowCancelPendingChanges: &allowCancel,
 	}
@@ -367,8 +367,8 @@ func resourceCPSThirdPartyEnrollmentUpdate(ctx context.Context, d *schema.Resour
 	return resourceCPSThirdPartyEnrollmentRead(ctx, d, m)
 }
 
-func prepareThirdPartyEnrollment(d *schema.ResourceData) (*cps.Enrollment, error) {
-	enrollment := cps.Enrollment{
+func prepareThirdPartyEnrollment(d *schema.ResourceData) (*cps.EnrollmentRequestBody, error) {
+	enrollmentReqBody := cps.EnrollmentRequestBody{
 		CertificateType: "third-party",
 		ValidationType:  "third-party",
 		RA:              "third-party",
@@ -382,7 +382,7 @@ func prepareThirdPartyEnrollment(d *schema.ResourceData) (*cps.Enrollment, error
 	if err != nil {
 		return nil, fmt.Errorf("'admin_contact' - %s", err)
 	}
-	enrollment.AdminContact = adminContact
+	enrollmentReqBody.AdminContact = adminContact
 	techContactSet, err := tf.GetSetValue("tech_contact", d)
 	if err != nil {
 		return nil, err
@@ -391,52 +391,52 @@ func prepareThirdPartyEnrollment(d *schema.ResourceData) (*cps.Enrollment, error
 	if err != nil {
 		return nil, fmt.Errorf("'tech_contact' - %s", err)
 	}
-	enrollment.TechContact = techContact
+	enrollmentReqBody.TechContact = techContact
 
 	certificateChainType, err := tf.GetStringValue("certificate_chain_type", d)
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return nil, err
 	}
-	enrollment.CertificateChainType = certificateChainType
+	enrollmentReqBody.CertificateChainType = certificateChainType
 
 	csr, err := cpstools.GetCSR(d)
 	if err != nil {
 		return nil, err
 	}
-	enrollment.CSR = csr
+	enrollmentReqBody.CSR = csr
 
 	// for third-party certificates, multi-stack it is always enabled
-	enrollment.EnableMultiStackedCertificates = true
+	enrollmentReqBody.EnableMultiStackedCertificates = true
 
 	networkConfig, err := cpstools.GetNetworkConfig(d)
 	if err != nil {
 		return nil, err
 	}
-	enrollment.NetworkConfiguration = networkConfig
+	enrollmentReqBody.NetworkConfiguration = networkConfig
 	signatureAlgorithm, err := tf.GetStringValue("signature_algorithm", d)
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return nil, err
 	}
-	enrollment.SignatureAlgorithm = signatureAlgorithm
+	enrollmentReqBody.SignatureAlgorithm = signatureAlgorithm
 
 	organization, err := cpstools.GetOrg(d)
 	if err != nil {
 		return nil, err
 	}
-	enrollment.Org = organization
+	enrollmentReqBody.Org = organization
 	changeManagement, err := tf.GetBoolValue("change_management", d)
 	if err != nil {
 		return nil, err
 	}
-	enrollment.ChangeManagement = changeManagement
+	enrollmentReqBody.ChangeManagement = changeManagement
 	excludeSANS, err := tf.GetBoolValue("exclude_sans", d)
 	if err != nil {
 		return nil, err
 	}
-	enrollment.ThirdParty = &cps.ThirdParty{
+	enrollmentReqBody.ThirdParty = &cps.ThirdParty{
 		ExcludeSANS: excludeSANS,
 	}
-	return &enrollment, nil
+	return &enrollmentReqBody, nil
 }
 
 func resourceCPSThirdPartyEnrollmentDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {

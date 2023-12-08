@@ -275,10 +275,14 @@ func createAttrs(en *cps.Enrollment, enID int) map[string]interface{} {
 		"certificate_type":                  en.CertificateType,
 		"validation_type":                   en.ValidationType,
 		"registration_authority":            en.RA,
+		"org_id":                            en.OrgID,
+		"assigned_slots":                    en.AssignedSlots,
+		"staging_slots":                     en.StagingSlots,
+		"production_slots":                  en.ProductionSlots,
 	}
 }
 
-func getChallengesAttrs(ctx context.Context, en *cps.Enrollment, client cps.CPS) (map[string]interface{}, error) {
+func getChallengesAttrs(ctx context.Context, en *cps.GetEnrollmentResponse, client cps.CPS) (map[string]interface{}, error) {
 	changeID, err := cpstools.GetChangeIDFromPendingChanges(en.PendingChanges)
 
 	if err != nil {
@@ -373,7 +377,7 @@ func enrollmentDelete(ctx context.Context, d *schema.ResourceData, m interface{}
 	return nil
 }
 
-func readAttrs(enrollment *cps.Enrollment, d *schema.ResourceData) (map[string]interface{}, error) {
+func readAttrs(enrollment *cps.GetEnrollmentResponse, d *schema.ResourceData) (map[string]interface{}, error) {
 	attrs := make(map[string]interface{})
 	adminContact := cpstools.ContactInfoToMap(*enrollment.AdminContact)
 	attrs["common_name"] = enrollment.CSR.CN

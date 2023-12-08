@@ -47,7 +47,8 @@
 
 
 
-
+* CPS
+    * Added fields: `org_id`, `assigned_slots`, `staging_slots` and `production_slots` to `data_akamai_cps_enrollment` and `data_akamai_cps_enrollments` data sources
 
 
 

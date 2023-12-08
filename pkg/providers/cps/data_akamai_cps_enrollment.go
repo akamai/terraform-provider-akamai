@@ -228,6 +228,11 @@ func dataSourceCPSEnrollment() *schema.Resource {
 					},
 				},
 			},
+			"org_id": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "The Digicert unique identifier for the organization",
+			},
 			"contract_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -303,6 +308,24 @@ func dataSourceCPSEnrollment() *schema.Resource {
 				},
 				Set: cpstools.HashFromChallengesMap,
 			},
+			"assigned_slots": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeInt},
+				Description: "Slots where the certificate either will be deployed or is already deployed",
+			},
+			"staging_slots": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeInt},
+				Description: "Slots where the certificate is deployed on the staging network",
+			},
+			"production_slots": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeInt},
+				Description: "Slots where the certificate is deployed on the production network",
+			},
 		},
 	}
 }
@@ -327,7 +350,7 @@ func dataCPSEnrollmentRead(ctx context.Context, d *schema.ResourceData, m interf
 		return diag.FromErr(err)
 	}
 
-	attrs := createAttrs(enrollment, enrollmentID)
+	attrs := createAttrs(convertGetEnrollmentResponseToEnrollment(enrollment), enrollmentID)
 
 	attrs["pending_changes"] = len(enrollment.PendingChanges) > 0
 
@@ -346,4 +369,8 @@ func dataCPSEnrollmentRead(ctx context.Context, d *schema.ResourceData, m interf
 
 	d.SetId(strconv.Itoa(enrollmentID))
 	return nil
+}
+
+func convertGetEnrollmentResponseToEnrollment(getEnrollmentResp *cps.GetEnrollmentResponse) *cps.Enrollment {
+	return (*cps.Enrollment)(getEnrollmentResp)
 }

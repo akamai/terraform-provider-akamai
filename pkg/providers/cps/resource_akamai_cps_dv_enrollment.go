@@ -249,18 +249,18 @@ func resourceCPSDVEnrollmentCreate(ctx context.Context, d *schema.ResourceData, 
 	client := inst.Client(meta)
 	logger.Debug("Creating enrollment")
 
-	enrollment := cps.Enrollment{
+	enrollmentReqBody := cps.EnrollmentRequestBody{
 		CertificateType: "san",
 		ValidationType:  "dv",
 		RA:              "lets-encrypt",
 	}
-	if err := d.Set("certificate_type", enrollment.CertificateType); err != nil {
+	if err := d.Set("certificate_type", enrollmentReqBody.CertificateType); err != nil {
 		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
-	if err := d.Set("validation_type", enrollment.ValidationType); err != nil {
+	if err := d.Set("validation_type", enrollmentReqBody.ValidationType); err != nil {
 		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
-	if err := d.Set("registration_authority", enrollment.RA); err != nil {
+	if err := d.Set("registration_authority", enrollmentReqBody.RA); err != nil {
 		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
 	adminContactSet, err := tf.GetSetValue("admin_contact", d)
@@ -271,7 +271,7 @@ func resourceCPSDVEnrollmentCreate(ctx context.Context, d *schema.ResourceData, 
 	if err != nil {
 		return diag.Errorf("'admin_contact' - %s", err)
 	}
-	enrollment.AdminContact = adminContact
+	enrollmentReqBody.AdminContact = adminContact
 	techContactSet, err := tf.GetSetValue("tech_contact", d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -280,39 +280,39 @@ func resourceCPSDVEnrollmentCreate(ctx context.Context, d *schema.ResourceData, 
 	if err != nil {
 		return diag.Errorf("'tech_contact' - %s", err)
 	}
-	enrollment.TechContact = techContact
+	enrollmentReqBody.TechContact = techContact
 
 	certificateChainType, err := tf.GetStringValue("certificate_chain_type", d)
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	enrollment.CertificateChainType = certificateChainType
+	enrollmentReqBody.CertificateChainType = certificateChainType
 
 	csr, err := cpstools.GetCSR(d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	enrollment.CSR = csr
+	enrollmentReqBody.CSR = csr
 
 	// DV does not support multi stack certificates
-	enrollment.EnableMultiStackedCertificates = false
+	enrollmentReqBody.EnableMultiStackedCertificates = false
 
 	networkConfig, err := cpstools.GetNetworkConfig(d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	enrollment.NetworkConfiguration = networkConfig
+	enrollmentReqBody.NetworkConfiguration = networkConfig
 	signatureAlgorithm, err := tf.GetStringValue("signature_algorithm", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	enrollment.SignatureAlgorithm = signatureAlgorithm
+	enrollmentReqBody.SignatureAlgorithm = signatureAlgorithm
 
 	organization, err := cpstools.GetOrg(d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	enrollment.Org = organization
+	enrollmentReqBody.Org = organization
 
 	contractID, err := tf.GetStringValue("contract_id", d)
 	if err != nil {
@@ -325,13 +325,13 @@ func resourceCPSDVEnrollmentCreate(ctx context.Context, d *schema.ResourceData, 
 
 	// save ClientMutualAuthentication and unset it in enrollment request struct
 	// create request must not have it set; in case its not nil, we will run update later to add it
-	clientMutualAuthentication := enrollment.NetworkConfiguration.ClientMutualAuthentication
-	enrollment.NetworkConfiguration.ClientMutualAuthentication = nil
+	clientMutualAuthentication := enrollmentReqBody.NetworkConfiguration.ClientMutualAuthentication
+	enrollmentReqBody.NetworkConfiguration.ClientMutualAuthentication = nil
 
 	req := cps.CreateEnrollmentRequest{
-		Enrollment:       enrollment,
-		ContractID:       strings.TrimPrefix(contractID, "ctr_"),
-		AllowDuplicateCN: allowDuplicateCN,
+		EnrollmentRequestBody: enrollmentReqBody,
+		ContractID:            strings.TrimPrefix(contractID, "ctr_"),
+		AllowDuplicateCN:      allowDuplicateCN,
 	}
 	res, err := client.CreateEnrollment(ctx, req)
 	if err != nil {
@@ -347,10 +347,10 @@ func resourceCPSDVEnrollmentCreate(ctx context.Context, d *schema.ResourceData, 
 	// when clientMutualAuthentication was provided, insert it back to enrollment and send the update request
 	if clientMutualAuthentication != nil {
 		logger.Debug("Updating ClientMutualAuthentication configuration")
-		enrollment.NetworkConfiguration.ClientMutualAuthentication = clientMutualAuthentication
+		enrollmentReqBody.NetworkConfiguration.ClientMutualAuthentication = clientMutualAuthentication
 		req := cps.UpdateEnrollmentRequest{
 			EnrollmentID:              res.ID,
-			Enrollment:                enrollment,
+			EnrollmentRequestBody:     enrollmentReqBody,
 			AllowCancelPendingChanges: ptr.To(true),
 		}
 		_, err := client.UpdateEnrollment(ctx, req)
@@ -508,7 +508,7 @@ func resourceCPSDVEnrollmentUpdate(ctx context.Context, d *schema.ResourceData, 
 		}
 		return resourceCPSDVEnrollmentRead(ctx, d, m)
 	}
-	enrollment := cps.Enrollment{
+	enrollmentReqBody := cps.EnrollmentRequestBody{
 		CertificateType: "san",
 		ValidationType:  "dv",
 		RA:              "lets-encrypt",
@@ -531,7 +531,7 @@ func resourceCPSDVEnrollmentUpdate(ctx context.Context, d *schema.ResourceData, 
 	if err != nil {
 		return diag.Errorf("'admin_contact' - %s", err)
 	}
-	enrollment.AdminContact = adminContact
+	enrollmentReqBody.AdminContact = adminContact
 	techContactSet, err := tf.GetSetValue("tech_contact", d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -540,43 +540,43 @@ func resourceCPSDVEnrollmentUpdate(ctx context.Context, d *schema.ResourceData, 
 	if err != nil {
 		return diag.Errorf("'tech_contact' - %s", err)
 	}
-	enrollment.TechContact = techContact
+	enrollmentReqBody.TechContact = techContact
 
 	certificateChainType, err := tf.GetStringValue("certificate_chain_type", d)
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	enrollment.CertificateChainType = certificateChainType
+	enrollmentReqBody.CertificateChainType = certificateChainType
 
 	csr, err := cpstools.GetCSR(d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	enrollment.CSR = csr
+	enrollmentReqBody.CSR = csr
 
 	// DV does not support multi stack certificates
-	enrollment.EnableMultiStackedCertificates = false
+	enrollmentReqBody.EnableMultiStackedCertificates = false
 
 	networkConfig, err := cpstools.GetNetworkConfig(d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	enrollment.NetworkConfiguration = networkConfig
+	enrollmentReqBody.NetworkConfiguration = networkConfig
 	signatureAlgorithm, err := tf.GetStringValue("signature_algorithm", d)
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	enrollment.SignatureAlgorithm = signatureAlgorithm
+	enrollmentReqBody.SignatureAlgorithm = signatureAlgorithm
 
 	organization, err := cpstools.GetOrg(d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	enrollment.Org = organization
+	enrollmentReqBody.Org = organization
 
 	allowCancel := true
 	req := cps.UpdateEnrollmentRequest{
-		Enrollment:                enrollment,
+		EnrollmentRequestBody:     enrollmentReqBody,
 		EnrollmentID:              enrollmentID,
 		AllowCancelPendingChanges: &allowCancel,
 	}

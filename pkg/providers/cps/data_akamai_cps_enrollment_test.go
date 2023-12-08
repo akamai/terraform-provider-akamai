@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cps"
+	"github.com/akamai/cli-terraform/pkg/tools"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
@@ -21,18 +22,19 @@ const (
 )
 
 var (
-	enrollmentDV1 = &cps.Enrollment{AdminContact: &cps.Contact{
-		AddressLineOne:   "150 Broadway",
-		City:             "Cambridge",
-		Country:          "US",
-		Email:            "r1d1@akamai.com",
-		FirstName:        "R1",
-		LastName:         "D1",
-		OrganizationName: "Akamai",
-		Phone:            "123123123",
-		PostalCode:       "12345",
-		Region:           "MA",
-	},
+	enrollmentDV1 = &cps.GetEnrollmentResponse{
+		AdminContact: &cps.Contact{
+			AddressLineOne:   "150 Broadway",
+			City:             "Cambridge",
+			Country:          "US",
+			Email:            "r1d1@akamai.com",
+			FirstName:        "R1",
+			LastName:         "D1",
+			OrganizationName: "Akamai",
+			Phone:            "123123123",
+			PostalCode:       "12345",
+			Region:           "MA",
+		},
 		CertificateChainType: "default",
 		CertificateType:      "san",
 		ChangeManagement:     false,
@@ -71,6 +73,7 @@ var (
 			PostalCode:     "12345",
 			Region:         "MA",
 		},
+		OrgID:              tools.IntPtr(123),
 		RA:                 "lets-encrypt",
 		SignatureAlgorithm: "SHA-256",
 		TechContact: &cps.Contact{
@@ -85,8 +88,12 @@ var (
 			PostalCode:       "12345",
 			Region:           "MA",
 		},
-		ValidationType: "dv"}
-	enrollmentDV2 = &cps.Enrollment{
+		ValidationType:  "dv",
+		AssignedSlots:   []int{1},
+		StagingSlots:    []int{2},
+		ProductionSlots: []int{3},
+	}
+	enrollmentDV2 = &cps.GetEnrollmentResponse{
 		AdminContact: &cps.Contact{
 			AddressLineOne:   "150 Broadway",
 			City:             "Cambridge",
@@ -138,6 +145,7 @@ var (
 			PostalCode:     "55555",
 			Region:         "MA",
 		},
+		OrgID:              tools.IntPtr(123),
 		RA:                 "lets-encrypt",
 		SignatureAlgorithm: "SHA-256",
 		TechContact: &cps.Contact{
@@ -161,9 +169,12 @@ var (
 				ChangeType: "new-certificate",
 			},
 		},
-		ValidationType: "dv",
+		ValidationType:  "dv",
+		AssignedSlots:   []int{1},
+		StagingSlots:    []int{2},
+		ProductionSlots: []int{3},
 	}
-	enrollmentThirdParty = &cps.Enrollment{
+	enrollmentThirdParty = &cps.GetEnrollmentResponse{
 		AdminContact: &cps.Contact{
 			AddressLineOne:   "150 Broadway",
 			City:             "Cambridge",
@@ -215,6 +226,7 @@ var (
 			PostalCode:     "55555",
 			Region:         "MA",
 		},
+		OrgID:              tools.IntPtr(123),
 		RA:                 "lets-encrypt",
 		SignatureAlgorithm: "SHA-256",
 		TechContact: &cps.Contact{
@@ -238,9 +250,12 @@ var (
 				ChangeType: "new-certificate",
 			},
 		},
-		ValidationType: "third-party",
+		ValidationType:  "third-party",
+		AssignedSlots:   []int{1},
+		StagingSlots:    []int{2},
+		ProductionSlots: []int{3},
 	}
-	enrollmentEV = &cps.Enrollment{
+	enrollmentEV = &cps.GetEnrollmentResponse{
 		AdminContact: &cps.Contact{
 			AddressLineOne:   "150 Broadway",
 			City:             "Cambridge",
@@ -292,6 +307,7 @@ var (
 			PostalCode:     "55555",
 			Region:         "MA",
 		},
+		OrgID:              tools.IntPtr(123),
 		RA:                 "lets-encrypt",
 		SignatureAlgorithm: "SHA-256",
 		TechContact: &cps.Contact{
@@ -315,13 +331,16 @@ var (
 				ChangeType: "new-certificate",
 			},
 		},
-		ValidationType: "ev",
+		ValidationType:  "ev",
+		AssignedSlots:   []int{1},
+		StagingSlots:    []int{2},
+		ProductionSlots: []int{3},
 	}
 )
 
 func TestDataEnrollment(t *testing.T) {
 	tests := map[string]struct {
-		enrollment   *cps.Enrollment
+		enrollment   *cps.GetEnrollmentResponse
 		enrollmentID int
 		init         func(*testing.T, *cps.Mock)
 		steps        []resource.TestStep
@@ -495,7 +514,7 @@ func TestDataEnrollment(t *testing.T) {
 	}
 }
 
-func checkAttributesForEnrollment(en *cps.Enrollment, enID int, changes *cps.Change, dvArray *cps.DVArray) resource.TestCheckFunc {
+func checkAttributesForEnrollment(en *cps.GetEnrollmentResponse, enID int, changes *cps.Change, dvArray *cps.DVArray) resource.TestCheckFunc {
 	return resource.ComposeAggregateTestCheckFunc(
 		checkCommonAttrs(en, enID),
 		checkSetTypeAttrs(en),
@@ -504,7 +523,7 @@ func checkAttributesForEnrollment(en *cps.Enrollment, enID int, changes *cps.Cha
 	)
 }
 
-func checkCommonAttrs(en *cps.Enrollment, enID int) resource.TestCheckFunc {
+func checkCommonAttrs(en *cps.GetEnrollmentResponse, enID int) resource.TestCheckFunc {
 	return resource.ComposeAggregateTestCheckFunc(
 		// Admin Contact
 		resource.TestCheckResourceAttr("data.akamai_cps_enrollment.test", "admin_contact.#", "1"),
@@ -569,10 +588,14 @@ func checkCommonAttrs(en *cps.Enrollment, enID int) resource.TestCheckFunc {
 		resource.TestCheckResourceAttr("data.akamai_cps_enrollment.test", "signature_algorithm", en.SignatureAlgorithm),
 		resource.TestCheckResourceAttr("data.akamai_cps_enrollment.test", "sni_only", strconv.FormatBool(en.NetworkConfiguration.SNIOnly)),
 		resource.TestCheckResourceAttr("data.akamai_cps_enrollment.test", "secure_network", en.NetworkConfiguration.SecureNetwork),
+		resource.TestCheckResourceAttr("data.akamai_cps_enrollment.test", "org_id", strconv.Itoa(*en.OrgID)),
+		resource.TestCheckResourceAttr("data.akamai_cps_enrollment.test", "assigned_slots.#", strconv.Itoa(len(en.AssignedSlots))),
+		resource.TestCheckResourceAttr("data.akamai_cps_enrollment.test", "staging_slots.#", strconv.Itoa(len(en.StagingSlots))),
+		resource.TestCheckResourceAttr("data.akamai_cps_enrollment.test", "production_slots.#", strconv.Itoa(len(en.ProductionSlots))),
 	)
 }
 
-func checkSetTypeAttrs(en *cps.Enrollment) resource.TestCheckFunc {
+func checkSetTypeAttrs(en *cps.GetEnrollmentResponse) resource.TestCheckFunc {
 	var checkFunctions []resource.TestCheckFunc
 	sansCount := len(en.CSR.SANS)
 	checkFunctions = append(checkFunctions, resource.TestCheckResourceAttr("data.akamai_cps_enrollment.test", "sans.#", strconv.Itoa(sansCount)))
@@ -638,7 +661,7 @@ func checkChallenges(changes *cps.Change, dvArray *cps.DVArray) resource.TestChe
 	return resource.ComposeAggregateTestCheckFunc(checkFunctions...)
 }
 
-func checkPendingChangesEnrollment(en *cps.Enrollment) resource.TestCheckFunc {
+func checkPendingChangesEnrollment(en *cps.GetEnrollmentResponse) resource.TestCheckFunc {
 	if len(en.PendingChanges) > 0 {
 		return resource.TestCheckResourceAttr("data.akamai_cps_enrollment.test", "pending_changes", "true")
 	}

@@ -13,7 +13,7 @@ import (
 )
 
 type testDataForCPSCSR struct {
-	Enrollment               cps.Enrollment
+	Enrollment               cps.GetEnrollmentResponse
 	EnrollmentID             int
 	GetChangeStatusResponse  cps.Change
 	GetChangeHistoryResponse *cps.GetChangeHistoryResponse
@@ -25,7 +25,7 @@ var (
 		getEnrollmentReq := cps.GetEnrollmentRequest{
 			EnrollmentID: data.EnrollmentID,
 		}
-		getEnrollmentRes := &data.Enrollment
+		getEnrollmentRes := data.Enrollment
 
 		changeID, _ := tools.GetChangeIDFromPendingChanges(data.Enrollment.PendingChanges)
 
@@ -41,7 +41,7 @@ var (
 		}
 		getChangeThirdPartyCSRRes := &data.ThirdPartyCSRResponse
 
-		client.On("GetEnrollment", mock.Anything, getEnrollmentReq).Return(getEnrollmentRes, nil).Times(timesToRun)
+		client.On("GetEnrollment", mock.Anything, getEnrollmentReq).Return(&getEnrollmentRes, nil).Times(timesToRun)
 		client.On("GetChangeStatus", mock.Anything, getChangeStatusReq).Return(getChangeStatusRes, nil).Times(timesToRun)
 		client.On("GetChangeThirdPartyCSR", mock.Anything, getChangeThirdPartyCSRReq).Return(getChangeThirdPartyCSRRes, nil).Times(timesToRun)
 	}
@@ -50,7 +50,7 @@ var (
 		getEnrollmentReq := cps.GetEnrollmentRequest{
 			EnrollmentID: data.EnrollmentID,
 		}
-		getEnrollmentRes := &data.Enrollment
+		getEnrollmentRes := data.Enrollment
 
 		changeID, _ := tools.GetChangeIDFromPendingChanges(data.Enrollment.PendingChanges)
 
@@ -65,7 +65,7 @@ var (
 			Changes: data.GetChangeHistoryResponse.Changes,
 		}
 
-		client.On("GetEnrollment", mock.Anything, getEnrollmentReq).Return(getEnrollmentRes, nil).Times(timesToRun)
+		client.On("GetEnrollment", mock.Anything, getEnrollmentReq).Return(&getEnrollmentRes, nil).Times(timesToRun)
 		client.On("GetChangeStatus", mock.Anything, getChangeStatusReq).Return(getChangeStatusRes, nil).Times(timesToRun)
 		client.On("GetChangeHistory", mock.Anything, getChangeHistoryReq).Return(&getChangeHistoryRes, nil).Times(timesToRun)
 	}
@@ -88,7 +88,7 @@ var (
 		getEnrollmentReq := cps.GetEnrollmentRequest{
 			EnrollmentID: data.EnrollmentID,
 		}
-		getEnrollmentRes := &data.Enrollment
+		getEnrollmentRes := data.Enrollment
 
 		changeID, _ := tools.GetChangeIDFromPendingChanges(data.Enrollment.PendingChanges)
 		getChangeStatusReq := cps.GetChangeStatusRequest{
@@ -102,7 +102,7 @@ var (
 			ChangeID:     changeID,
 		}
 
-		client.On("GetEnrollment", mock.Anything, getEnrollmentReq).Return(getEnrollmentRes, nil).Once()
+		client.On("GetEnrollment", mock.Anything, getEnrollmentReq).Return(&getEnrollmentRes, nil).Once()
 		client.On("GetChangeStatus", mock.Anything, getChangeStatusReq).Return(getChangeStatusRes, nil).Once()
 		client.On("GetChangeThirdPartyCSR", mock.Anything, getChangeThirdPartyCSRReq).Return(nil, fmt.Errorf(errorMessage)).Once()
 	}
@@ -112,13 +112,13 @@ var (
 		getEnrollmentReq := cps.GetEnrollmentRequest{
 			EnrollmentID: data.EnrollmentID,
 		}
-		getEnrollmentRes := &data.Enrollment
+		getEnrollmentRes := data.Enrollment
 
 		getChangeHistoryReq := cps.GetChangeHistoryRequest{EnrollmentID: data.EnrollmentID}
 		getChangeHistoryRes := cps.GetChangeHistoryResponse{
 			Changes: data.GetChangeHistoryResponse.Changes,
 		}
-		client.On("GetEnrollment", mock.Anything, getEnrollmentReq).Return(getEnrollmentRes, nil).Times(timesToRun)
+		client.On("GetEnrollment", mock.Anything, getEnrollmentReq).Return(&getEnrollmentRes, nil).Times(timesToRun)
 		client.On("GetChangeHistory", mock.Anything, getChangeHistoryReq).Return(&getChangeHistoryRes, nil).Times(timesToRun)
 	}
 

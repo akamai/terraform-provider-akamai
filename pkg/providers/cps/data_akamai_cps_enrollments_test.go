@@ -17,11 +17,15 @@ const contractID = "testing"
 
 var (
 	enrollmentsList = &cps.ListEnrollmentsResponse{
-		Enrollments: []cps.Enrollment{*enrollmentDV1, *enrollmentDV2},
+		Enrollments: []cps.Enrollment{*convertGetEnrollmentResponseToEnrollment(enrollmentDV1), *convertGetEnrollmentResponseToEnrollment(enrollmentDV2)},
 	}
 	emptyEnrollmentList       = &cps.ListEnrollmentsResponse{}
 	enrollmentsThirdPartyList = &cps.ListEnrollmentsResponse{
-		Enrollments: []cps.Enrollment{*enrollmentDV1, *enrollmentDV2, *enrollmentThirdParty, *enrollmentEV},
+		Enrollments: []cps.Enrollment{
+			*convertGetEnrollmentResponseToEnrollment(enrollmentDV1),
+			*convertGetEnrollmentResponseToEnrollment(enrollmentDV2),
+			*convertGetEnrollmentResponseToEnrollment(enrollmentThirdParty),
+			*convertGetEnrollmentResponseToEnrollment(enrollmentEV)},
 	}
 )
 
@@ -33,7 +37,7 @@ func TestDataEnrollments(t *testing.T) {
 		steps       []resource.TestStep
 	}{
 		"happy path": {
-			enrollments: cps.ListEnrollmentsResponse{Enrollments: []cps.Enrollment{*enrollmentDV1, *enrollmentDV2}},
+			enrollments: *enrollmentsList,
 			init: func(t *testing.T, m *cps.Mock) {
 				m.On("ListEnrollments", mock.Anything, cps.ListEnrollmentsRequest{
 					ContractID: contractID,
@@ -47,7 +51,7 @@ func TestDataEnrollments(t *testing.T) {
 			},
 		},
 		"could not fetch list of enrollments": {
-			enrollments: cps.ListEnrollmentsResponse{Enrollments: []cps.Enrollment{*enrollmentDV1, *enrollmentDV2}},
+			enrollments: *enrollmentsList,
 			init: func(t *testing.T, m *cps.Mock) {
 				m.On("ListEnrollments", mock.Anything, cps.ListEnrollmentsRequest{
 					ContractID: contractID,
@@ -61,7 +65,7 @@ func TestDataEnrollments(t *testing.T) {
 			},
 		},
 		"different change type enrollments": {
-			enrollments: cps.ListEnrollmentsResponse{Enrollments: []cps.Enrollment{*enrollmentDV1, *enrollmentDV2, *enrollmentThirdParty, *enrollmentEV}},
+			enrollments: *enrollmentsThirdPartyList,
 			init: func(t *testing.T, m *cps.Mock) {
 				m.On("ListEnrollments", mock.Anything, cps.ListEnrollmentsRequest{
 					ContractID: contractID,
