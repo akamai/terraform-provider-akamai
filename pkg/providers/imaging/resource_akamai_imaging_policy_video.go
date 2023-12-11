@@ -180,7 +180,7 @@ func resourcePolicyVideoRead(ctx context.Context, d *schema.ResourceData, m inte
 		return diag.FromErr(err)
 	}
 
-	policyInput.RolloutDuration, err = getRolloutDuration(d)
+	policyInput.RolloutDuration, err = getNotUpdateableField(d, extractRolloutDuration)
 	if err != nil {
 		return diag.FromErr(err)
 	}

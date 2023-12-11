@@ -653,6 +653,12 @@ func PolicyOutputImage(depth int) map[string]*schema.Schema {
 			Description:      "The amount of time in seconds that the policy takes to rollout. During the rollout an increasing proportion of images/videos will begin to use the new policy instead of the cached images/videos from the previous version. This value has no effect on the staging network.",
 			ValidateDiagFunc: stringAsIntBetween(3600, 604800),
 		},
+		"serve_stale_duration": {
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "The amount of time in seconds that the policy will serve stale images. During the serve stale period realtime images will attempt to use the offline image from the previous policy version first if possible.",
+			ValidateDiagFunc: stringAsIntBetween(0, 2592000),
+		},
 		"transformations": {
 			Type:        schema.TypeList,
 			Optional:    true,
@@ -2075,6 +2081,12 @@ func outputImage(_ int) map[string]*schema.Schema {
 			Description:      "Override the quality of image to serve when Image & Video Manager detects a slow connection. Specifying lower values lets users with slow connections browse your site with reduced load times without impacting the quality of images for users with faster connections.",
 			ValidateDiagFunc: stringAsIntBetween(1, 100),
 		},
+		"allow_pristine_on_downsize": {
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "Whether a pristine image wider than the requested breakpoint is allowed as a derivative image if it has the fewest bytes. This will not have an affect if transformations are present.",
+			ValidateDiagFunc: validateIsTypeBool(),
+		},
 		"allowed_formats": {
 			Type:        schema.TypeList,
 			Optional:    true,
@@ -2103,6 +2115,12 @@ func outputImage(_ int) map[string]*schema.Schema {
 			Type:        schema.TypeString,
 			Optional:    true,
 			Description: "Mutually exclusive with quality. The perceptual quality to use when comparing resulting images, which overrides the `quality` setting. Perceptual quality tunes each image format's quality parameter dynamically based on the human-perceived quality of the output image. This can result in better byte savings (as compared to using regular quality) as many images can be encoded at a much lower quality without compromising perception of the image. In addition, certain images may need to be encoded at a slightly higher quality in order to maintain human-perceived quality. Values are tiered `high`, `mediumHigh`, `medium`, `mediumLow`, or `low`.",
+		},
+		"prefer_modern_formats": {
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "Whether derivative image formats should be selected with a preference for modern formats (such as WebP and Avif) instead the format that results in the fewest bytes.",
+			ValidateDiagFunc: validateIsTypeBool(),
 		},
 		"quality": {
 			Type:             schema.TypeString,
