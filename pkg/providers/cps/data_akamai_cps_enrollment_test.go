@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cps"
-	"github.com/akamai/cli-terraform/pkg/tools"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
@@ -73,7 +73,7 @@ var (
 			PostalCode:     "12345",
 			Region:         "MA",
 		},
-		OrgID:              tools.IntPtr(123),
+		OrgID:              ptr.To(123),
 		RA:                 "lets-encrypt",
 		SignatureAlgorithm: "SHA-256",
 		TechContact: &cps.Contact{
@@ -145,7 +145,7 @@ var (
 			PostalCode:     "55555",
 			Region:         "MA",
 		},
-		OrgID:              tools.IntPtr(123),
+		OrgID:              ptr.To(123),
 		RA:                 "lets-encrypt",
 		SignatureAlgorithm: "SHA-256",
 		TechContact: &cps.Contact{
@@ -226,7 +226,7 @@ var (
 			PostalCode:     "55555",
 			Region:         "MA",
 		},
-		OrgID:              tools.IntPtr(123),
+		OrgID:              ptr.To(123),
 		RA:                 "lets-encrypt",
 		SignatureAlgorithm: "SHA-256",
 		TechContact: &cps.Contact{
@@ -307,7 +307,7 @@ var (
 			PostalCode:     "55555",
 			Region:         "MA",
 		},
-		OrgID:              tools.IntPtr(123),
+		OrgID:              ptr.To(123),
 		RA:                 "lets-encrypt",
 		SignatureAlgorithm: "SHA-256",
 		TechContact: &cps.Contact{

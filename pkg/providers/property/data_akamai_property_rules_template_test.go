@@ -85,7 +85,7 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 		client := papi.Mock{}
 		useClient(&client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_not_valid_json_includes.tf"),
