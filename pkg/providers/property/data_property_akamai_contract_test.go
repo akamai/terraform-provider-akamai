@@ -156,6 +156,33 @@ func Test_DSReadContract(t *testing.T) {
 			configPath: "testdata/TestDSContractRequired/ds_contract_with_group_id.tf",
 			error:      nil,
 		},
+		"group with multiple contracts - expect error": {
+			init: func(t *testing.T, m *papi.Mock, testData testDataForPAPIGroups) {
+				expectGetGroups(m, testData, 5)
+			},
+			mockData: testDataForPAPIGroups{
+				accountID:   "act_1-1TJZFB",
+				accountName: "example.com",
+				groups: papi.GroupItems{
+					Items: []*papi.Group{
+						{
+							GroupID:       "grp_12345",
+							GroupName:     "Example.com-1-1TJZH5",
+							ParentGroupID: "grp_parent",
+							ContractIDs:   []string{"ctr_1234", "ctr_1235"},
+						},
+						{
+							GroupID:       "grp_12346",
+							GroupName:     "Second-Example.com-1-1TJZH5",
+							ParentGroupID: "grp_parent",
+							ContractIDs:   []string{"ctr_1234"},
+						},
+					},
+				},
+			},
+			configPath: "testdata/TestDSContractRequired/ds_contract_with_group_id.tf",
+			error:      regexp.MustCompile("multiple contracts found for given group"),
+		},
 	}
 
 	for name, test := range tests {

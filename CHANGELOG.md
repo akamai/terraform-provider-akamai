@@ -49,8 +49,8 @@
 
 
 
-
-
+* PAPI
+  * Improve errors for `akamai_contract` and `akamai_group` datasources when there are multiple groups or contracts.
 
 
 
@@ -81,6 +81,7 @@
 
 
 #### BUG FIXES:
+
 
 
 
