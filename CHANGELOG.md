@@ -6,7 +6,7 @@
 
 * PAPI
     * Added validation to raise an error if the creation of the `akamai_edge_hostname` resource is attempted with an existing edge hostname.
-    * Added validation to raise an error during the update of `akamai_edge_hostname` resource for the fields 'product_id' and 'certificate'.
+    * Added validation to raise an error during the update of `akamai_edge_hostname` resource for the immutable fields: 'product_id' and 'certificate'.
 
 
 
