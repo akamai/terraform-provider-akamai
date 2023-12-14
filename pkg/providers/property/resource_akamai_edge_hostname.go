@@ -161,7 +161,7 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 	newHostname.IPVersionBehavior = strings.ToUpper(d.Get("ip_behavior").(string))
 	for _, h := range edgeHostnames.EdgeHostnames.Items {
 		if h.DomainPrefix == newHostname.DomainPrefix && h.DomainSuffix == newHostname.DomainSuffix {
-			return diag.FromErr(fmt.Errorf("edgehostname %s already exist", edgeHostname))
+			return diag.Errorf("edgehostname '%s' already exists", edgeHostname)
 		}
 	}
 	certEnrollmentID, err := tf.GetIntValue("certificate", d)
@@ -286,33 +286,24 @@ func resourceSecureEdgeHostNameUpdate(ctx context.Context, d *schema.ResourceDat
 		logger.Debug("Only timeouts were updated, skipping")
 		return nil
 	}
-	var diagnostics []diag.Diagnostic
-	handleError := func(err error) diag.Diagnostics {
-		return append(diag.FromErr(err), diagnostics...)
-	}
 
 	if d.HasChange("product_id") || d.HasChange("certificate") {
-		warningDiagnostic := diag.Diagnostic{
-			Severity: diag.Warning,
-			Summary:  "Attempted update of non-updatable field. Modifying only local state",
-			Detail:   "The field 'product_id' and 'certificate' is not updatable and should not be modified.",
-		}
-		diagnostics = append(diagnostics, warningDiagnostic)
+		return diag.Errorf("Error: Update failed for non-updatable fields 'product_id' and 'certificate'.")
 	}
 
 	if d.HasChange("ip_behavior") {
 		edgeHostname, err := tf.GetStringValue("edge_hostname", d)
 		if err != nil {
-			return handleError(err)
+			return diag.FromErr(err)
 		}
 		dnsZone, _ := parseEdgeHostname(edgeHostname)
 		ipBehavior, err := tf.GetStringValue("ip_behavior", d)
 		if err != nil {
-			return handleError(err)
+			return diag.FromErr(err)
 		}
 		emails, err := tf.GetListValue("status_update_email", d)
 		if err != nil && !errors.Is(err, tf.ErrNotFound) {
-			return handleError(err)
+			return diag.FromErr(err)
 		}
 
 		logger.Debugf("Proceeding to update /ipVersionBehavior for %s", edgeHostname)
@@ -345,17 +336,17 @@ func resourceSecureEdgeHostNameUpdate(ctx context.Context, d *schema.ResourceDat
 		resp, err := hapiClient.UpdateEdgeHostname(ctx, req)
 		if err != nil {
 			if err2 := tf.RestoreOldValues(d, []string{"ip_behavior"}); err2 != nil {
-				return handleError(fmt.Errorf(`%s failed. No changes were written to server:
+				return diag.Errorf(`%s failed. No changes were written to server:
 %s
 
 Failed to restore previous local schema values. The schema will remain in tainted state:
-%s`, hapi.ErrUpdateEdgeHostname, err.Error(), err2.Error()))
+%s`, hapi.ErrUpdateEdgeHostname, err.Error(), err2.Error())
 			}
-			return handleError(err)
+			return diag.FromErr(err)
 		}
 
 		if err = waitForChange(ctx, hapiClient, resp.ChangeID); err != nil {
-			return handleError(err)
+			return diag.FromErr(err)
 		}
 	}
 

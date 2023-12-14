@@ -425,7 +425,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/%s", testDir, "new_akamaized_net.tf")),
-					ExpectError: regexp.MustCompile("edgehostname test.akamaized.net already exist"),
+					ExpectError: regexp.MustCompile("edgehostname 'test.akamaized.net' already exists"),
 				},
 			},
 		},
@@ -470,8 +470,6 @@ func TestResourceEdgeHostname(t *testing.T) {
 						DomainSuffix:      "akamaized.net",
 						SecureNetwork:     "SHARED_CERT",
 						IPVersionBehavior: "IPV4",
-						CertEnrollmentID:  0,
-						SlotNumber:        0,
 					},
 				}).Return(&papi.CreateEdgeHostnameResponse{
 					EdgeHostnameID: "eh_123",
@@ -617,8 +615,6 @@ func TestResourceEdgeHostname(t *testing.T) {
 						DomainSuffix:      "akamaized.net",
 						SecureNetwork:     "SHARED_CERT",
 						IPVersionBehavior: "IPV4",
-						CertEnrollmentID:  0,
-						SlotNumber:        0,
 					},
 				}).Return(&papi.CreateEdgeHostnameResponse{
 					EdgeHostnameID: "eh_123",
@@ -791,8 +787,6 @@ func TestResourceEdgeHostname(t *testing.T) {
 						DomainSuffix:      "akamaized.net",
 						SecureNetwork:     "SHARED_CERT",
 						IPVersionBehavior: "IPV4",
-						CertEnrollmentID:  0,
-						SlotNumber:        0,
 					},
 				}).Return(&papi.CreateEdgeHostnameResponse{
 					EdgeHostnameID: "eh_123",
@@ -1025,8 +1019,6 @@ func TestResourceEdgeHostname(t *testing.T) {
 						DomainSuffix:      "akamaized.net",
 						SecureNetwork:     "SHARED_CERT",
 						IPVersionBehavior: "IPV4",
-						CertEnrollmentID:  0,
-						SlotNumber:        0,
 					},
 				}).Return(&papi.CreateEdgeHostnameResponse{
 					EdgeHostnameID: "eh_123",
