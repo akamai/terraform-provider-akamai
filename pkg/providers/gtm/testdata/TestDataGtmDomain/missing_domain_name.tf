@@ -1,5 +1,5 @@
 provider "akamai" {
-    edgerc = "../../test/edgerc"
+  edgerc = "../../test/edgerc"
 }
 
 data "akamai_gtm_domain" "domain" {
