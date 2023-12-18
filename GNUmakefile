@@ -10,23 +10,31 @@ build_dir = .build
 TF_PLUGIN_DIR ?= ~/.terraform.d/plugins
 install_path = $(TF_PLUGIN_DIR)/$(registry_name)/$(namespace)/$(PKG_NAME)/$(version)/$$(go env GOOS)_$$(go env GOARCH)
 
-# Developer tools
-TOOLS_MOD_FILE := $(CURDIR)/tools/go.mod
-TOOLS_BIN_DIR := $(CURDIR)/tools/bin
-TOOL_PKGS := $(shell go list -f '{{join .Imports " "}}' tools/tools.go)
-TOOLS := $(foreach TOOL,$(notdir $(TOOL_PKGS)),$(TOOLS_BIN_DIR)/$(TOOL))
-$(foreach TOOL,$(TOOLS),$(eval $(notdir $(TOOL)) := $(TOOL))) # Allows to use e.g. $(golangci-lint) instead of $(TOOLS_BIN_DIR)/golangci-lint
+BIN      = $(CURDIR)/bin
+GOCMD = go
+GOTEST = $(GOCMD) test
+GOBUILD = $(GOCMD) build
+M = $(shell echo ">")
+TFLINT = $(BIN)/tflint
+$(BIN)/tflint: $(BIN) ; $(info $(M) Installing tflint...)
+	@export TFLINT_INSTALL_PATH=$(BIN); \
+	curl -sSfL https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh  | bash
 
-$(TOOLS_BIN_DIR):
-	@mkdir -p $(TOOLS_BIN_DIR)
+$(BIN):
+	@mkdir -p $@
+$(BIN)/%: | $(BIN) ; $(info $(M) Installing $(PACKAGE)...)
+	@tmp=$$(mktemp -d); \
+	   env GO111MODULE=off GOPATH=$$tmp GOBIN=$(BIN) $(GOCMD) get $(PACKAGE) \
+		|| ret=$$?; \
+	   rm -rf $$tmp ; exit $$ret
 
-$(TOOLS_MOD_FILE): tidy
+GOIMPORTS = $(BIN)/goimports
+$(BIN)/goimports: PACKAGE=golang.org/x/tools/cmd/goimports
 
-$(TOOLS): $(TOOLS_MOD_FILE) | $(TOOLS_BIN_DIR)
-	$(eval TOOL := $(filter %/$(@F),$(TOOL_PKGS)))
-	$(eval TOOL_VERSION := $(shell grep -m 1 $(shell echo $(TOOL) | cut -d/ -f 1-3) $(TOOLS_MOD_FILE) | cut -d' ' -f2))
-	@echo "Installing $(TOOL)@$(TOOL_VERSION)"
-	@GOBIN=$(TOOLS_BIN_DIR) go install -modfile=$(TOOLS_MOD_FILE) $(TOOL)
+GOLANGCI_LINT_VERSION = v1.55.2
+GOLANGCILINT = $(BIN)/golangci-lint
+$(BIN)/golangci-lint: ; $(info $(M) Installing golangci-lint...) @
+	$Q curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(BIN) $(GOLANGCI_LINT_VERSION)
 
 # Targets
 default: build
@@ -55,8 +63,17 @@ testacc:
 	TF_ACC=1 go test $(TEST) -v $(TESTARGS) -timeout 300m
 
 .PHONY: fmt
-fmt: $(goimports)
-	$(goimports) -w .
+fmt:  | $(GOIMPORTS); $(info $(M) Running goimports...) @ ## Run goimports on all source files
+	$Q $(GOIMPORTS) -w .
+
+.PHONY: fmt-check
+fmt-check: | $(GOIMPORTS); $(info $(M) Running format and imports check...) @ ## Run goimports on all source files
+	$(eval OUTPUT = $(shell $(GOIMPORTS) -l .))
+	@if [ "$(OUTPUT)" != "" ]; then\
+		echo "Found following files with incorrect format and/or imports:";\
+		echo "$(OUTPUT)";\
+		false;\
+	fi
 
 .PHONY: terraform-fmtcheck
 terraform-fmtcheck:
@@ -67,12 +84,12 @@ terraform-fmt:
 	terraform fmt -recursive
 
 .PHONY: lint
-lint: $(golangci-lint)
-	$(golangci-lint) run
+lint: | $(GOLANGCILINT) ; $(info $(M) Running golangci-lint...) @
+	$Q $(BIN)/golangci-lint run
 
 .PHONY: terraform-lint
-terraform-lint: $(tflint)
-	@find ./examples -type f -name "*.tf" | xargs -I % dirname % | sort -u | xargs -I @ sh -c "echo @ && $(tflint) @"
+terraform-lint: | $(TFLINT) ; $(info $(M) Checking source code against tflint...) @ ## Run tflint on all HCL files in the project
+	@find ./examples -type f -name "*.tf" | xargs -I % dirname % | sort -u | xargs -I @ sh -c "echo @ && $(TFLINT) --filter @"
 
 .PHONY: test-compile
 test-compile:
