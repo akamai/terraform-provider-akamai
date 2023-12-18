@@ -833,19 +833,6 @@ type (
 		Links                 []link       `tfsdk:"links"`
 	}
 
-	link struct {
-		Rel  types.String `tfsdk:"rel"`
-		Href types.String `tfsdk:"href"`
-	}
-
-	resourceInstance struct {
-		LoadObject           types.String   `tfsdk:"load_object"`
-		LoadObjectPort       types.Int64    `tfsdk:"load_object_port"`
-		LoadServers          []types.String `tfsdk:"load_servers"`
-		DatacenterID         types.Int64    `tfsdk:"datacenter_id"`
-		UseDefaultLoadObject types.Bool     `tfsdk:"use_default_load_object"`
-	}
-
 	domainResource struct {
 		AggregationType             types.String       `tfsdk:"aggregation_type"`
 		ConstrainedProperty         types.String       `tfsdk:"constrained_property"`
@@ -1485,7 +1472,7 @@ func getResources(resources []*gtm.Resource) []domainResource {
 				resInstances[i] = resourceInstance{
 					LoadObject:           types.StringValue(ri.LoadObject.LoadObject),
 					LoadObjectPort:       types.Int64Value(int64(ri.LoadObject.LoadObjectPort)),
-					DatacenterID:         types.Int64Value(int64(ri.DatacenterId)),
+					DataCenterID:         types.Int64Value(int64(ri.DatacenterId)),
 					UseDefaultLoadObject: types.BoolValue(ri.UseDefaultLoadObject),
 				}
 				if ri.LoadObject.LoadServers != nil {

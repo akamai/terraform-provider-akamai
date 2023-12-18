@@ -77,8 +77,8 @@ func (f *FrameworkSubprovider) Resources() []func() resource.Resource {
 // DataSources returns the GTM data sources implemented using terraform-plugin-framework
 func (f *FrameworkSubprovider) DataSources() []func() datasource.DataSource {
 	return []func() datasource.DataSource{
-		NewGTMResourceDataSource,
 		NewGTMDomainDataSource,
+		NewGTMResourceDataSource,
 	}
 }
 
