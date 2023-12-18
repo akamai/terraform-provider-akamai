@@ -18,11 +18,15 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func resourceSecureEdgeHostName() *schema.Resource {
 	return &schema.Resource{
+		CustomizeDiff: customdiff.All(
+			validateNonUpdatableFields,
+		),
 		CreateContext: resourceSecureEdgeHostNameCreate,
 		ReadContext:   resourceSecureEdgeHostNameRead,
 		UpdateContext: resourceSecureEdgeHostNameUpdate,
@@ -287,10 +291,6 @@ func resourceSecureEdgeHostNameUpdate(ctx context.Context, d *schema.ResourceDat
 		return nil
 	}
 
-	if d.HasChange("product_id") || d.HasChange("certificate") {
-		return diag.Errorf("Error: Update failed for non-updatable fields 'product_id' and 'certificate'.")
-	}
-
 	if d.HasChange("ip_behavior") {
 		edgeHostname, err := tf.GetStringValue("edge_hostname", d)
 		if err != nil {
@@ -530,4 +530,11 @@ func parseEdgeHostname(hostname string) (string, string) {
 		return "akamaized.net", papi.EHSecureNetworkSharedCert
 	}
 	return "edgesuite.net", ""
+}
+
+func validateNonUpdatableFields(_ context.Context, diff *schema.ResourceDiff, _ interface{}) error {
+	if diff.Id() != "" && (diff.HasChange("product_id") || diff.HasChange("certificate")) {
+		return fmt.Errorf("error: Changes to non-updatable fields 'product_id' and 'certificate' are not permitted")
+	}
+	return nil
 }
