@@ -25,7 +25,7 @@ import (
 func resourceSecureEdgeHostName() *schema.Resource {
 	return &schema.Resource{
 		CustomizeDiff: customdiff.All(
-			validateNonUpdatableFields,
+			validateImmutableFields,
 		),
 		CreateContext: resourceSecureEdgeHostNameCreate,
 		ReadContext:   resourceSecureEdgeHostNameRead,
@@ -532,9 +532,17 @@ func parseEdgeHostname(hostname string) (string, string) {
 	return "edgesuite.net", ""
 }
 
-func validateNonUpdatableFields(_ context.Context, diff *schema.ResourceDiff, _ interface{}) error {
-	if diff.Id() != "" && (diff.HasChange("product_id") || diff.HasChange("certificate")) {
-		return fmt.Errorf("error: Changes to non-updatable fields 'product_id' and 'certificate' are not permitted")
+func validateImmutableFields(_ context.Context, diff *schema.ResourceDiff, _ interface{}) error {
+	if diff.Id() != "" {
+		old, new := diff.GetChange("product_id")
+		oldValue, oldOk := old.(string)
+		newValue, newOk := new.(string)
+
+		if diff.HasChange("certificate") ||
+			(!oldOk || !newOk || (oldValue != "" || newValue != "") &&
+				str.AddPrefix(oldValue, "prd_") != str.AddPrefix(newValue, "prd_")) {
+			return fmt.Errorf("error: Changes to non-updatable fields 'product_id' and 'certificate' are not permitted")
+		}
 	}
 	return nil
 }
