@@ -534,13 +534,11 @@ func parseEdgeHostname(hostname string) (string, string) {
 
 func validateImmutableFields(_ context.Context, diff *schema.ResourceDiff, _ interface{}) error {
 	if diff.Id() != "" {
-		old, new := diff.GetChange("product_id")
-		oldValue, oldOk := old.(string)
-		newValue, newOk := new.(string)
+		oldValue, newValue := diff.GetChange("product_id")
+		o := oldValue.(string)
+		n := newValue.(string)
 
-		if diff.HasChange("certificate") ||
-			(!oldOk || !newOk || (oldValue != "" || newValue != "") &&
-				str.AddPrefix(oldValue, "prd_") != str.AddPrefix(newValue, "prd_")) {
+		if diff.HasChange("certificate") || str.AddPrefix(o, "prd_") != str.AddPrefix(n, "prd_") {
 			return fmt.Errorf("error: Changes to non-updatable fields 'product_id' and 'certificate' are not permitted")
 		}
 	}
