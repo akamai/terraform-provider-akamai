@@ -438,26 +438,9 @@ func TestResourceEdgeHostname(t *testing.T) {
 					ContractID: "ctr_2",
 					GroupID:    "grp_2",
 				}).Return(&papi.GetEdgeHostnamesResponse{
-					ContractID: "ctr_2",
-					GroupID:    "grp_2",
-					EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
-						{
-							ID:                "eh_123",
-							Domain:            "test1.akamaized.net",
-							ProductID:         "prd_2",
-							DomainPrefix:      "test1",
-							DomainSuffix:      "akamaized.net",
-							IPVersionBehavior: "IPV4",
-						},
-						{
-							ID:                "eh_2",
-							Domain:            "test2.akamaized.net",
-							ProductID:         "prd_2",
-							DomainPrefix:      "test2",
-							DomainSuffix:      "akamaized.net",
-							IPVersionBehavior: "IPV4",
-						},
-					}},
+					ContractID:    "ctr_2",
+					GroupID:       "grp_2",
+					EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{}},
 				}, nil).Once()
 
 				mp.On("CreateEdgeHostname", mock.Anything, papi.CreateEdgeHostnameRequest{
