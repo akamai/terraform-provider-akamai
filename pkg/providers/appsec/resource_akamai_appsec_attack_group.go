@@ -152,6 +152,7 @@ func resourceAttackGroupRead(ctx context.Context, d *schema.ResourceData, m inte
 	attackgroup, err := client.GetAttackGroup(ctx, getAttackGroup)
 	if err != nil {
 		logger.Warnf("calling 'getAttackGroup': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	if err := d.Set("config_id", getAttackGroup.ConfigID); err != nil {

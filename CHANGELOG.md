@@ -120,6 +120,8 @@
 * GTM
   * Fixed 'Inconsistent Final Plan' error for `akamai_gtm_property` resource
   * The diff when reordering `traffic_target` in `akamai_gtm_property` resource at the same time as changing any attribute value inside `traffic_target` will be extensive
+* Appsec
+  * Fixed provider plugin crash in `appsec_attack_group` and `appsec_eval_group` after executing terraform plan ([I#480](https://github.com/akamai/terraform-provider-akamai/issues/480))
 
 
 * CPS

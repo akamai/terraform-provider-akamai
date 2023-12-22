@@ -153,6 +153,7 @@ func resourceEvalGroupRead(ctx context.Context, d *schema.ResourceData, m interf
 	attackgroup, err := client.GetEvalGroup(ctx, getAttackGroup)
 	if err != nil {
 		logger.Warnf("calling 'getEvalGroup': %s", err.Error())
+		return diag.FromErr(err)
 	}
 
 	if err := d.Set("config_id", getAttackGroup.ConfigID); err != nil {
