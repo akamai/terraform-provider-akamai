@@ -78,6 +78,7 @@ func (f *FrameworkSubprovider) Resources() []func() resource.Resource {
 func (f *FrameworkSubprovider) DataSources() []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		NewGTMDomainDataSource,
+		NewGTMDomainsDataSource,
 		NewGTMResourceDataSource,
 		NewGTMResourcesDataSource,
 	}
