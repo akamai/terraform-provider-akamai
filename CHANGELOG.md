@@ -62,6 +62,10 @@
     * Added data sources:
         * `akamai_gtm_domain` - reads information for a specific GTM domain
 
+* GTM
+    * Added data sources:
+        * `akamai_gtm_domains` - reads list of GTM domains under a given contract.
+    
 * PAPI
   * Improve errors for `akamai_contract` and `akamai_group` datasources when there are multiple groups or contracts.
 

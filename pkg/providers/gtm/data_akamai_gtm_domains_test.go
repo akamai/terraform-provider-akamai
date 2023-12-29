@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestDataGtmDomains(t *testing.T) {
+func TestDataGTMDomains(t *testing.T) {
 	tests := map[string]struct {
 		givenTF                   string
 		init                      func(*gtm.Mock)
@@ -32,7 +32,7 @@ func TestDataGtmDomains(t *testing.T) {
 						ModificationComments: "Add AS Map New Map 1",
 						SignAndServe:         false,
 						Status:               "2023-02-01 09:47 GMT: Current configuration has been propagated to all GTM nameservers",
-						AcgID:                "G-29RS4N8",
+						AcgId:                "TestACGID-1",
 						Links: []*gtm.Link{{
 							Rel:  "self",
 							Href: "https://akaa-ouijhfns55qwgfuc-knsod5nrjl2w2gmt.luna-dev.akamaiapis.net/config-gtm/v1/domains/test.dev.exp.cli.terraform.import.akadns.net",
@@ -48,7 +48,7 @@ func TestDataGtmDomains(t *testing.T) {
 						ModificationComments: "terraform test gtm domain",
 						SignAndServe:         false,
 						Status:               "2023-12-21 08:37 GMT: Current configuration has been propagated to all GTM nameservers",
-						AcgID:                "G-29RS4N8",
+						AcgId:                "TestACGID-1",
 						Links: []*gtm.Link{{
 							Rel:  "self",
 							Href: "https://akaa-ouijhfns55qwgfuc-knsod5nrjl2w2gmt.luna-dev.akamaiapis.net/config-gtm/v1/domains/devexpautomatedtest_rsh7a1.devexp.terraformtesting",
@@ -64,7 +64,7 @@ func TestDataGtmDomains(t *testing.T) {
 						ModificationComments: "terraform test gtm domain",
 						SignAndServe:         false,
 						Status:               "2023-12-22 08:46 GMT: Current configuration has been propagated to all GTM nameservers",
-						AcgID:                "G-29RS4N8",
+						AcgId:                "TestACGID-1",
 						Links: []*gtm.Link{{
 							Rel:  "self",
 							Href: "https://akaa-ouijhfns55qwgfuc-knsod5nrjl2w2gmt.luna-dev.akamaiapis.net/config-gtm/v1/domains/devexpautomatedtest_dx4dfc.devexp.terraformtesting",
@@ -81,17 +81,12 @@ func TestDataGtmDomains(t *testing.T) {
 				"domains.1.name":           "devexpautomatedtest_rsh7a1.devexp.terraformtesting",
 				"domains.2.name":           "test.dev.exp.cli.terraform.import.akadns.net",
 			},
-			expectedMissingAttributes: nil,
-			expectError:               nil,
 		},
 		"no domains found": {
 			givenTF: "valid.tf",
 			init: func(m *gtm.Mock) {
 				m.On("ListDomains", mock.Anything).Return([]*gtm.DomainItem{}, nil)
 			},
-			expectedAttributes:        nil,
-			expectedMissingAttributes: nil,
-			expectError:               nil,
 		},
 		"error response from api": {
 			givenTF: "valid.tf",

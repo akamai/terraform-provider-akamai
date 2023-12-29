@@ -24,7 +24,7 @@ func TestResGtmDomain(t *testing.T) {
 		})
 
 		dr := gtm.DomainResponse{}
-		dr.Resource = &domain
+		dr.Resource = &testDomain
 		dr.Status = &pendingResponseStatus
 		client.On("CreateDomain",
 			mock.Anything, // ctx is irrelevant for this test
@@ -38,7 +38,7 @@ func TestResGtmDomain(t *testing.T) {
 			mock.Anything, // ctx is irrelevant for this test
 			mock.AnythingOfType("string"),
 			mock.AnythingOfType("string"),
-		).Return(&domain)
+		).Return(&testDomain)
 
 		client.On("GetDomainStatus",
 			mock.Anything, // ctx is irrelevant for this test
@@ -96,7 +96,7 @@ func TestResGtmDomain(t *testing.T) {
 		})
 
 		dr := gtm.DomainResponse{}
-		dr.Resource = &domain
+		dr.Resource = &testDomain
 		dr.Status = &pendingResponseStatus
 		client.On("CreateDomain",
 			mock.Anything, // ctx is irrelevant for this test
@@ -110,7 +110,7 @@ func TestResGtmDomain(t *testing.T) {
 			mock.Anything, // ctx is irrelevant for this test
 			mock.AnythingOfType("string"),
 			mock.AnythingOfType("string"),
-		).Return(&domain)
+		).Return(&testDomain)
 
 		client.On("GetDomainStatus",
 			mock.Anything, // ctx is irrelevant for this test
@@ -160,7 +160,7 @@ func TestResGtmDomain(t *testing.T) {
 			mock.Anything, // ctx is irrelevant for this test
 			mock.AnythingOfType("string"),
 			mock.AnythingOfType("string"),
-		).Return(&domain)
+		).Return(&testDomain)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -181,7 +181,7 @@ func TestResGtmDomain(t *testing.T) {
 		client := &gtm.Mock{}
 
 		dr := gtm.DomainResponse{}
-		dr.Resource = &domain
+		dr.Resource = &testDomain
 		dr.Status = &deniedResponseStatus
 		client.On("CreateDomain",
 			mock.Anything, // ctx is irrelevant for this test
@@ -193,7 +193,7 @@ func TestResGtmDomain(t *testing.T) {
 			mock.Anything, // ctx is irrelevant for this test
 			mock.AnythingOfType("string"),
 			mock.AnythingOfType("string"),
-		).Return(&domain)
+		).Return(&testDomain)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -221,7 +221,7 @@ func TestResGtmDomain(t *testing.T) {
 		})
 
 		dr := gtm.DomainResponse{}
-		dr.Resource = &domain
+		dr.Resource = &testDomain
 		dr.Status = &pendingResponseStatus
 		client.On("CreateDomain",
 			mock.Anything,
@@ -235,7 +235,7 @@ func TestResGtmDomain(t *testing.T) {
 			mock.Anything,
 			mock.AnythingOfType("string"),
 			mock.AnythingOfType("string"),
-		).Return(&domain)
+		).Return(&testDomain)
 
 		client.On("GetDomainStatus",
 			mock.Anything,
@@ -348,7 +348,7 @@ func getGTMDomainMocks() *gtm.Mock {
 		mock.Anything, // ctx is irrelevant for this test
 		mock.AnythingOfType("string"),
 		mock.AnythingOfType("string"),
-	).Return(&domain)
+	).Return(&testDomain)
 
 	client.On("GetDomainStatus",
 		mock.Anything, // ctx is irrelevant for this test
@@ -524,7 +524,7 @@ var (
 		Type:                        "weighted",
 	}
 
-	domain = gtm.Domain{
+	testDomain = gtm.Domain{
 		Datacenters:                 datacenters,
 		DefaultErrorPenalty:         75,
 		DefaultSslClientCertificate: "",

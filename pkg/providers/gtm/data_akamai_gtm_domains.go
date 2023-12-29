@@ -16,7 +16,7 @@ var _ datasource.DataSource = &domainsDataSource{}
 
 var _ datasource.DataSourceWithConfigure = &domainsDataSource{}
 
-// NewGTMDomainsDataSource returns a new GTM domain data source
+// NewGTMDomainsDataSource returns a new GTM domains data source
 func NewGTMDomainsDataSource() datasource.DataSource {
 	return &domainsDataSource{}
 }
@@ -101,10 +101,10 @@ type domainsDataSource struct {
 type (
 	domainsDataSourceModel struct {
 		ID      types.String `tfsdk:"id"`
-		Domains []domains    `tfsdk:"domains"`
+		Domains []domain     `tfsdk:"domains"`
 	}
 
-	domains struct {
+	domain struct {
 		Name                  types.String `tfsdk:"name"`
 		Status                types.String `tfsdk:"status"`
 		AcgID                 types.String `tfsdk:"acg_id"`
@@ -135,7 +135,7 @@ func (d *domainsDataSource) Schema(_ context.Context, _ datasource.SchemaRequest
 	}
 }
 
-// Configure  configures data source at the beginning of the lifecycle
+// Configure configures data source at the beginning of the lifecycle
 func (d *domainsDataSource) Configure(_ context.Context, request datasource.ConfigureRequest, response *datasource.ConfigureResponse) {
 	if request.ProviderData == nil {
 		return
@@ -176,14 +176,14 @@ func (d *domainsDataSource) Read(ctx context.Context, request datasource.ReadReq
 	response.Diagnostics.Append(response.State.Set(ctx, &data)...)
 }
 
-func getDomains(domainList []*gtm.DomainItem) []domains {
-	var result []domains
+func getDomains(domainList []*gtm.DomainItem) []domain {
+	var result []domain
 	for _, dom := range domainList {
-		resource := domains{
+		domain := domain{
 			Name:                  types.StringValue(dom.Name),
 			LastModified:          types.StringValue(dom.LastModified),
 			Status:                types.StringValue(dom.Status),
-			AcgID:                 types.StringValue(dom.AcgID),
+			AcgID:                 types.StringValue(dom.AcgId),
 			LastModifiedBy:        types.StringValue(dom.LastModifiedBy),
 			ChangeID:              types.StringValue(dom.ChangeID),
 			ActivationState:       types.StringValue(dom.ActivationState),
@@ -194,11 +194,7 @@ func getDomains(domainList []*gtm.DomainItem) []domains {
 			Links:                 getLinks(dom.Links),
 		}
 
-		if dom.Links != nil {
-			resource.Links = populateLinks(dom.Links)
-		}
-
-		result = append(result, resource)
+		result = append(result, domain)
 	}
 	return result
 }
