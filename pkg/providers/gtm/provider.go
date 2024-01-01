@@ -79,6 +79,7 @@ func (f *FrameworkSubprovider) DataSources() []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		NewGTMDomainDataSource,
 		NewGTMResourceDataSource,
+		NewGTMResourcesDataSource,
 	}
 }
 

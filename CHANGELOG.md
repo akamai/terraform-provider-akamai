@@ -43,6 +43,10 @@
 
 #### FEATURES/ENHANCEMENTS:
 
+* GTM
+  * Added data sources:
+    * `akamai_gtm_resources` - reads information for a specific GTM resources
+
 * PAPI
   * Added `version_notes` attribute to `akamai_property` resource
 
