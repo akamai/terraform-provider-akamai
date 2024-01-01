@@ -16,7 +16,7 @@ var (
 	_ datasource.DataSourceWithConfigure = &resourcesDataSource{}
 )
 
-// resourcesDataSourceModel describes the data source data model for GTM resources data source.
+// resourcesDataSourceModel describes the data source data model for GTM resources data source
 type resourcesDataSourceModel struct {
 	ID        types.String     `tfsdk:"id"`
 	Domain    types.String     `tfsdk:"domain"`
@@ -89,7 +89,7 @@ func NewGTMResourcesDataSource() datasource.DataSource {
 	return &resourcesDataSource{}
 }
 
-// resourcesDataSource defines the data source implementation for fetching GTM resources information.
+// resourcesDataSource defines the data source implementation for fetching GTM resources information
 type resourcesDataSource struct {
 	meta meta.Meta
 }
@@ -136,7 +136,7 @@ func (d *resourcesDataSource) Schema(_ context.Context, _ datasource.SchemaReque
 	}
 }
 
-// Read is called when the provider must read data source values in order to update state.
+// Read is called when the provider must read data source values in order to update state
 func (d *resourcesDataSource) Read(ctx context.Context, request datasource.ReadRequest, response *datasource.ReadResponse) {
 	tflog.Debug(ctx, "GTM Resources DataSource Read")
 
