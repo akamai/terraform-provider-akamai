@@ -3,6 +3,7 @@ package gtm
 import (
 	"context"
 	"fmt"
+
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
