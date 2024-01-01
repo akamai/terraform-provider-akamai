@@ -24,9 +24,9 @@ func TestDataGTMDomains(t *testing.T) {
 			init: func(m *gtm.Mock) {
 				m.On("ListDomains", mock.Anything).Return([]*gtm.DomainItem{
 					{
-						Name:                 "test.dev.exp.cli.terraform.import.akadns.net",
+						Name:                 "test1.terraformtesting.net",
 						LastModified:         "2023-02-01T09:36:28.000+00:00",
-						LastModifiedBy:       "dl-terraform-dev+5",
+						LastModifiedBy:       "test-user",
 						ChangeID:             "ca4de6db-8d69-4980-8e2a-036b655f2e66",
 						ActivationState:      "COMPLETE",
 						ModificationComments: "Add AS Map New Map 1",
@@ -35,14 +35,14 @@ func TestDataGTMDomains(t *testing.T) {
 						AcgId:                "TestACGID-1",
 						Links: []*gtm.Link{{
 							Rel:  "self",
-							Href: "https://akaa-ouijhfns55qwgfuc-knsod5nrjl2w2gmt.luna-dev.akamaiapis.net/config-gtm/v1/domains/test.dev.exp.cli.terraform.import.akadns.net",
+							Href: "https://test-domain.net/config-gtm/v1/domains/test1.terraformtesting.net",
 						},
 						},
 					},
 					{
-						Name:                 "devexpautomatedtest_rsh7a1.devexp.terraformtesting",
+						Name:                 "test2.terraformtesting.net",
 						LastModified:         "2023-12-21T08:34:31.463+00:00",
-						LastModifiedBy:       "dl-terraform-dev+5",
+						LastModifiedBy:       "test-user",
 						ChangeID:             "acca0158-398b-4a03-8886-81adc6328f56",
 						ActivationState:      "COMPLETE",
 						ModificationComments: "terraform test gtm domain",
@@ -51,14 +51,14 @@ func TestDataGTMDomains(t *testing.T) {
 						AcgId:                "TestACGID-1",
 						Links: []*gtm.Link{{
 							Rel:  "self",
-							Href: "https://akaa-ouijhfns55qwgfuc-knsod5nrjl2w2gmt.luna-dev.akamaiapis.net/config-gtm/v1/domains/devexpautomatedtest_rsh7a1.devexp.terraformtesting",
+							Href: "https://test-domain.net/config-gtm/v1/domains/test2.terraformtesting.net",
 						},
 						},
 					},
 					{
-						Name:                 "devexpautomatedtest_dx4dfc.devexp.terraformtesting",
+						Name:                 "test3.terraformtesting.net",
 						LastModified:         "2023-12-22T08:43:47.553+00:00",
-						LastModifiedBy:       "dl-terraform-dev+5",
+						LastModifiedBy:       "test-user",
 						ChangeID:             "abf5b76f-f9de-4404-bb2c-9d15e7b9ff5d",
 						ActivationState:      "COMPLETE",
 						ModificationComments: "terraform test gtm domain",
@@ -67,19 +67,19 @@ func TestDataGTMDomains(t *testing.T) {
 						AcgId:                "TestACGID-1",
 						Links: []*gtm.Link{{
 							Rel:  "self",
-							Href: "https://akaa-ouijhfns55qwgfuc-knsod5nrjl2w2gmt.luna-dev.akamaiapis.net/config-gtm/v1/domains/devexpautomatedtest_dx4dfc.devexp.terraformtesting",
+							Href: "https://test-domain.net/config-gtm/v1/domains/test3.terraformtesting.net",
 						},
 						},
 					},
 				}, nil)
 			},
 			expectedAttributes: map[string]string{
-				"domains.0.name":           "devexpautomatedtest_dx4dfc.devexp.terraformtesting",
+				"domains.0.name":           "test3.terraformtesting.net",
 				"domains.0.sign_and_serve": "false",
-				"domains.0.links.0.href":   "https://akaa-ouijhfns55qwgfuc-knsod5nrjl2w2gmt.luna-dev.akamaiapis.net/config-gtm/v1/domains/devexpautomatedtest_dx4dfc.devexp.terraformtesting",
+				"domains.0.links.0.href":   "https://test-domain.net/config-gtm/v1/domains/test3.terraformtesting.net",
 				"domains.0.links.0.rel":    "self",
-				"domains.1.name":           "devexpautomatedtest_rsh7a1.devexp.terraformtesting",
-				"domains.2.name":           "test.dev.exp.cli.terraform.import.akadns.net",
+				"domains.1.name":           "test2.terraformtesting.net",
+				"domains.2.name":           "test1.terraformtesting.net",
 			},
 		},
 		"no domains found": {
