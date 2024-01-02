@@ -17,7 +17,6 @@ import (
 )
 
 func TestResourcePropertyInclude(t *testing.T) {
-	t.Skip()
 	type testData struct {
 		groupID           string
 		rulesPath         string
