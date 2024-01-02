@@ -35,7 +35,7 @@ func TestDataGTMResources(t *testing.T) {
 						DecayRate:                   0,
 						Links: []*gtm.Link{{
 							Rel: "self",
-							Href: "https://akaa-ouijhfns55qwgfuc-knsod5nrjl2w2gmt.luna-dev.akamaiapis.net/config-gtm/v1/domains/" +
+							Href: "https://test.domain1.net/config-gtm/v1/domains/" +
 								"test.cli.domain.net/resources/resource1",
 						},
 						},
@@ -62,7 +62,7 @@ func TestDataGTMResources(t *testing.T) {
 						DecayRate:                   0,
 						Links: []*gtm.Link{{
 							Rel: "self1",
-							Href: "https://akaa-ouijhfns55qwgfuc-knsod5nrjl2w2gmt.luna-dev.akamaiapis.net/config-gtm/v1/domains/" +
+							Href: "https://test.domain1.net/config-gtm/v1/domains/" +
 								"test.cli.domain.net/resources/resource2",
 						},
 						},

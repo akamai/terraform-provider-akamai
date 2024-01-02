@@ -16,7 +16,7 @@ var (
 	_ datasource.DataSourceWithConfigure = &resourcesDataSource{}
 )
 
-// resourcesDataSourceModel describes the data source data model for GTM resources data source
+// resourcesDataSourceModel describes the data source data model for GTM resources data source.
 type resourcesDataSourceModel struct {
 	ID        types.String     `tfsdk:"id"`
 	Domain    types.String     `tfsdk:"domain"`
@@ -26,7 +26,7 @@ type resourcesDataSourceModel struct {
 var (
 	resourcesBlock = map[string]schema.Block{
 		"resources": schema.SetNestedBlock{
-			Description: "GTM Resource data source.",
+			Description: "GTM Resources data source.",
 			NestedObject: schema.NestedBlockObject{
 				Attributes: map[string]schema.Attribute{
 					"name": schema.StringAttribute{
@@ -47,7 +47,7 @@ var (
 					},
 					"description": schema.StringAttribute{
 						Computed:    true,
-						Description: "A descriptive note to help you track what the resource constraints.",
+						Description: "A descriptive note which allows to track what is constrained by this resource.",
 					},
 					"host_header": schema.StringAttribute{
 						Computed:    true,
@@ -55,7 +55,7 @@ var (
 					},
 					"leader_string": schema.StringAttribute{
 						Computed:    true,
-						Description: "Specifies the text that comes before the loadObject.",
+						Description: "Specifies the text that comes before the load object.",
 					},
 					"least_squares_decay": schema.Float64Attribute{
 						Computed:    true,
@@ -63,7 +63,7 @@ var (
 					},
 					"load_imbalance_percentage": schema.Float64Attribute{
 						Computed:    true,
-						Description: "Indicates the percent of load imbalance factor for the domain.",
+						Description: "Indicates the percentage of load imbalance for the domain.",
 					},
 					"max_u_multiplicative_increment": schema.Float64Attribute{
 						Computed:    true,
@@ -71,7 +71,7 @@ var (
 					},
 					"type": schema.StringAttribute{
 						Computed:    true,
-						Description: "Indicates the kind of loadObject format used to determine the load on the resource.",
+						Description: "Indicates the type of load object used to determine the load on the resource.",
 					},
 					"upper_bound": schema.Int64Attribute{
 						Computed:    true,
@@ -89,12 +89,12 @@ func NewGTMResourcesDataSource() datasource.DataSource {
 	return &resourcesDataSource{}
 }
 
-// resourcesDataSource defines the data source implementation for fetching GTM resources information
+// resourcesDataSource defines the data source implementation for fetching GTM resources information.
 type resourcesDataSource struct {
 	meta meta.Meta
 }
 
-// Metadata configures data source's meta information
+// Metadata configures data source's meta information.
 func (d *resourcesDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = "akamai_gtm_resources"
 }
@@ -118,7 +118,7 @@ func (d *resourcesDataSource) Configure(_ context.Context, req datasource.Config
 	d.meta = meta.Must(req.ProviderData)
 }
 
-// Schema is used to define data source's terraform schema
+// Schema is used to define data source's terraform schema.
 func (d *resourcesDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "GTM Resources data source",
@@ -136,7 +136,7 @@ func (d *resourcesDataSource) Schema(_ context.Context, _ datasource.SchemaReque
 	}
 }
 
-// Read is called when the provider must read data source values in order to update state
+// Read is called when the provider must read data source values in order to update state.
 func (d *resourcesDataSource) Read(ctx context.Context, request datasource.ReadRequest, response *datasource.ReadResponse) {
 	tflog.Debug(ctx, "GTM Resources DataSource Read")
 
@@ -152,6 +152,7 @@ func (d *resourcesDataSource) Read(ctx context.Context, request datasource.ReadR
 		return
 	}
 
+	//ID is always set to akamai_gtm_resources.
 	data.ID = types.StringValue("akamai_gtm_resources")
 	data.Resources = getResources(resources)
 
