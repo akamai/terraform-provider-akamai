@@ -45,7 +45,7 @@
 
 * GTM
   * Added data sources:
-    * `akamai_gtm_resources` - reads information for a specific GTM resources
+    * `akamai_gtm_resources` - reads information for a specific GTM resources under given domain
 
 * PAPI
   * Added `version_notes` attribute to `akamai_property` resource
