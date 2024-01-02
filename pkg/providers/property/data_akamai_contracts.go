@@ -14,7 +14,6 @@ import (
 )
 
 func dataSourceContracts() *schema.Resource {
-
 	return &schema.Resource{
 		ReadContext: dataContractsRead,
 		Schema: map[string]*schema.Schema{
