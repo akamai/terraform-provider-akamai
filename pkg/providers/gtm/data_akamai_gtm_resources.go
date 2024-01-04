@@ -125,6 +125,7 @@ func (d *resourcesDataSource) Schema(_ context.Context, _ datasource.SchemaReque
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				MarkdownDescription: "Identifier of the data source.",
+				DeprecationMessage:  "Required by the terraform plugin testing framework, always set to `akamai_gtm_resources`.",
 				Computed:            true,
 			},
 			"domain": schema.StringAttribute{
@@ -152,7 +153,6 @@ func (d *resourcesDataSource) Read(ctx context.Context, request datasource.ReadR
 		return
 	}
 
-	//ID is always set to akamai_gtm_resources.
 	data.ID = types.StringValue("akamai_gtm_resources")
 	data.Resources = getResources(resources)
 
