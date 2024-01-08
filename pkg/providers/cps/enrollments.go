@@ -450,7 +450,7 @@ func waitForVerification(ctx context.Context, logger log.Interface, client cps.C
 
 				// for DV autoApproveWarnings is always empty
 				if !acknowledgeWarnings && len(autoApproveWarnings) == 0 {
-					return fmt.Errorf("enrollment pre-verification returned warnings and the enrollment cannot be validated. Please fix the issues or set acknowledge_pre_validation_warnings flag to true then run 'terraform apply' again: %s",
+					return fmt.Errorf("enrollment pre-verification returned warnings and the enrollment cannot be validated. Please fix the issues or set acknowledge_pre_verification_warnings flag to true then run 'terraform apply' again: %s",
 						warnings.Warnings)
 				}
 
