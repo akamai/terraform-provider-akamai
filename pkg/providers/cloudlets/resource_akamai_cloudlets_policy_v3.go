@@ -13,11 +13,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-type v3Strategy struct {
+type v3PolicyStrategy struct {
 	client cloudlets.Cloudlets
 }
 
-func (v3 v3Strategy) createPolicy(ctx context.Context, cloudletName string, cloudletCode string, groupID int64) (int64, error, error) {
+func (v3 v3PolicyStrategy) createPolicy(ctx context.Context, cloudletName, cloudletCode string, groupID int64) (int64, error, error) {
 	createPolicyReq := cloudlets.CreatePolicyRequest{
 		Name:         cloudletName,
 		CloudletType: cloudlets.CloudletType(cloudletCode),
@@ -38,7 +38,7 @@ func (v3 v3Strategy) createPolicy(ctx context.Context, cloudletName string, clou
 	return createPolicyResp.ID, nil, err
 }
 
-func (v3 v3Strategy) updatePolicyVersion(ctx context.Context, d *schema.ResourceData, policyID int64, description string, matchRulesJSON string, version int64, newVersionRequired bool) (error, error) {
+func (v3 v3PolicyStrategy) updatePolicyVersion(ctx context.Context, d *schema.ResourceData, policyID, version int64, description, matchRulesJSON string, newVersionRequired bool) (error, error) {
 	matchRules := make(cloudlets.MatchRules, 0)
 	if matchRulesJSON != "" {
 		if err := json.Unmarshal([]byte(matchRulesJSON), &matchRules); err != nil {
@@ -80,7 +80,7 @@ func (v3 v3Strategy) updatePolicyVersion(ctx context.Context, d *schema.Resource
 	return setWarnings(d, updatePolicyRes.MatchRulesWarnings), nil
 }
 
-func (v3 v3Strategy) updatePolicy(ctx context.Context, policyID int64, _ string, groupID int64) error {
+func (v3 v3PolicyStrategy) updatePolicy(ctx context.Context, policyID, groupID int64, _ string) error {
 	updatePolicyReq := cloudlets.UpdatePolicyRequest{
 		PolicyID: policyID,
 		BodyParams: cloudlets.UpdatePolicyBodyParams{
@@ -91,7 +91,7 @@ func (v3 v3Strategy) updatePolicy(ctx context.Context, policyID int64, _ string,
 	return err
 }
 
-func (v3 v3Strategy) newPolicyVersionIsNeeded(ctx context.Context, policyID, version int64) (bool, error) {
+func (v3 v3PolicyStrategy) newPolicyVersionIsNeeded(ctx context.Context, policyID, version int64) (bool, error) {
 	policyVersion, err := v3.client.GetPolicyVersion(ctx, cloudlets.GetPolicyVersionRequest{
 		PolicyID: policyID,
 		Version:  version,
@@ -104,7 +104,7 @@ func (v3 v3Strategy) newPolicyVersionIsNeeded(ctx context.Context, policyID, ver
 
 }
 
-func (v3 v3Strategy) readPolicy(ctx context.Context, policyID int64, version *int64) (map[string]any, error) {
+func (v3 v3PolicyStrategy) readPolicy(ctx context.Context, policyID int64, version *int64) (map[string]any, error) {
 	policy, err := v3.client.GetPolicy(ctx, cloudlets.GetPolicyRequest{PolicyID: policyID})
 	if err != nil {
 		return nil, err
@@ -144,7 +144,7 @@ func (v3 v3Strategy) readPolicy(ctx context.Context, policyID int64, version *in
 	return attrs, nil
 }
 
-func (v3 v3Strategy) deletePolicy(ctx context.Context, policyID int64) error {
+func (v3 v3PolicyStrategy) deletePolicy(ctx context.Context, policyID int64) error {
 	err := deactivatePolicyVersions(ctx, policyID, v3.client)
 	if err != nil {
 		return err

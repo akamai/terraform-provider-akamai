@@ -215,7 +215,7 @@ func resourcePolicyCreate(ctx context.Context, d *schema.ResourceData, m interfa
 		return diag.Errorf("invalid group_id provided: %s", err)
 	}
 
-	executionStrategy, err := getExecutionStrategy(d, meta)
+	executionStrategy, err := getPolicyExecutionStrategy(d, meta)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -257,7 +257,7 @@ func resourcePolicyCreate(ctx context.Context, d *schema.ResourceData, m interfa
 		}
 	}
 
-	err, updateError := executionStrategy.updatePolicyVersion(ctx, d, policyID, description, matchRulesJSON, 1, false)
+	err, updateError := executionStrategy.updatePolicyVersion(ctx, d, policyID, 1, description, matchRulesJSON, false)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -286,22 +286,20 @@ func resourcePolicyRead(ctx context.Context, d *schema.ResourceData, m interface
 		return diag.FromErr(err)
 	}
 
-	failCreateVersion := false
-	version, err := tf.GetIntValue("version", d)
-	if err != nil {
-		if errors.Is(err, tf.ErrNotFound) {
-			failCreateVersion = true
-		} else {
-			return diag.FromErr(err)
-		}
-	}
-
 	var versionProcessed *int64
-	if !failCreateVersion {
-		versionProcessed = tools.Int64Ptr(int64(version))
+
+	policyVersionStrategy, err := getPolicyVersionExecutionStrategy(d, meta)
+	if err != nil {
+		return diag.FromErr(err)
 	}
 
-	executionStrategy, err := getExecutionStrategy(d, meta)
+	policyVersion, err := policyVersionStrategy.findLatestPolicyVersion(ctx, policyID)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	versionProcessed = tools.Int64Ptr(policyVersion)
+
+	executionStrategy, err := getPolicyExecutionStrategy(d, meta)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -331,7 +329,7 @@ func resourcePolicyUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 		return nil
 	}
 
-	executionStrategy, err := getExecutionStrategy(d, meta)
+	executionStrategy, err := getPolicyExecutionStrategy(d, meta)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -354,7 +352,7 @@ func resourcePolicyUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 			return diag.FromErr(err)
 		}
 
-		err = executionStrategy.updatePolicy(ctx, policyID, name, int64(groupIDNum))
+		err = executionStrategy.updatePolicy(ctx, policyID, int64(groupIDNum), name)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -377,7 +375,7 @@ func resourcePolicyUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 			return diag.FromErr(err)
 		}
 
-		err, updateVersionErr := executionStrategy.updatePolicyVersion(ctx, d, policyID, description, matchRulesJSON, int64(version), isNewVersionNeeded)
+		err, updateVersionErr := executionStrategy.updatePolicyVersion(ctx, d, policyID, int64(version), description, matchRulesJSON, isNewVersionNeeded)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -402,7 +400,7 @@ func resourcePolicyDelete(ctx context.Context, d *schema.ResourceData, m interfa
 	)
 	logger.Debug("Deleting policy")
 
-	executionStrategy, err := getExecutionStrategy(d, meta)
+	executionStrategy, err := getPolicyExecutionStrategy(d, meta)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -440,7 +438,12 @@ func resourcePolicyImport(ctx context.Context, d *schema.ResourceData, m interfa
 
 	d.SetId(strconv.FormatInt(policy.PolicyID, 10))
 
-	version, err := findLatestPolicyVersion(ctx, policy.PolicyID, client)
+	versionExecutionStrategy, err := getPolicyVersionExecutionStrategy(d, meta)
+	if err != nil {
+		return nil, err
+	}
+
+	version, err := versionExecutionStrategy.findLatestPolicyVersion(ctx, policy.PolicyID)
 	if err != nil {
 		return nil, err
 	}
@@ -538,25 +541,25 @@ func setWarnings[W cloudlets.Warning | v3.MatchRulesWarning](d *schema.ResourceD
 	return d.Set("warnings", string(warningsJSON))
 }
 
-func getExecutionStrategy(d *schema.ResourceData, meta meta.Meta) (strategy, error) {
-	var executionStrategy strategy
+func getPolicyExecutionStrategy(d *schema.ResourceData, meta meta.Meta) (policyExecutionStrategy, error) {
+	var executionStrategy policyExecutionStrategy
 	isV3, err := tf.GetBoolValue("is_shared", d)
 	if err != nil {
 		return nil, err
 	}
 
 	if isV3 {
-		executionStrategy = v3Strategy{inst.V3Client(meta)}
+		executionStrategy = v3PolicyStrategy{inst.V3Client(meta)}
 	} else {
-		executionStrategy = v2Strategy{inst.Client(meta)}
+		executionStrategy = v2PolicyStrategy{inst.Client(meta)}
 	}
 	return executionStrategy, nil
 }
 
-type strategy interface {
-	createPolicy(ctx context.Context, cloudletName string, cloudletCode string, groupID int64) (int64, error, error)
-	updatePolicyVersion(ctx context.Context, d *schema.ResourceData, policyID int64, description string, matchRulesJSON string, version int64, newVersionRequired bool) (error, error)
-	updatePolicy(ctx context.Context, policyID int64, cloudletName string, groupID int64) error
+type policyExecutionStrategy interface {
+	createPolicy(ctx context.Context, cloudletName, cloudletCode string, groupID int64) (int64, error, error)
+	updatePolicyVersion(ctx context.Context, d *schema.ResourceData, policyID, version int64, description, matchRulesJSON string, newVersionRequired bool) (error, error)
+	updatePolicy(ctx context.Context, policyID, groupID int64, cloudletName string) error
 	newPolicyVersionIsNeeded(ctx context.Context, policyID, version int64) (bool, error)
 	readPolicy(ctx context.Context, policyID int64, version *int64) (map[string]any, error)
 	deletePolicy(ctx context.Context, policyID int64) error

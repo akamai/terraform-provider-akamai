@@ -14,7 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-type v2Strategy struct {
+type v2PolicyStrategy struct {
 	client cloudlets.Cloudlets
 }
 
@@ -32,7 +32,7 @@ var cloudletIDs = map[string]int{
 	"MMA": 11,
 }
 
-func (v2 v2Strategy) createPolicy(ctx context.Context, cloudletName string, cloudletCode string, groupID int64) (int64, error, error) {
+func (v2 v2PolicyStrategy) createPolicy(ctx context.Context, cloudletName, cloudletCode string, groupID int64) (int64, error, error) {
 	createPolicyReq := cloudlets.CreatePolicyRequest{
 		Name:       cloudletName,
 		CloudletID: int64(cloudletIDs[cloudletCode]),
@@ -45,7 +45,7 @@ func (v2 v2Strategy) createPolicy(ctx context.Context, cloudletName string, clou
 	return createPolicyResp.PolicyID, nil, nil
 }
 
-func (v2 v2Strategy) updatePolicyVersion(ctx context.Context, d *schema.ResourceData, policyID int64, description string, matchRulesJSON string, version int64, newVersionRequired bool) (error, error) {
+func (v2 v2PolicyStrategy) updatePolicyVersion(ctx context.Context, d *schema.ResourceData, policyID, version int64, description, matchRulesJSON string, newVersionRequired bool) (error, error) {
 	matchRules := make(cloudlets.MatchRules, 0)
 	if matchRulesJSON != "" {
 		if err := json.Unmarshal([]byte(matchRulesJSON), &matchRules); err != nil {
@@ -94,7 +94,7 @@ func (v2 v2Strategy) updatePolicyVersion(ctx context.Context, d *schema.Resource
 	return setWarnings(d, updateVersionResp.Warnings), nil
 }
 
-func (v2 v2Strategy) updatePolicy(ctx context.Context, policyID int64, cloudletName string, groupID int64) error {
+func (v2 v2PolicyStrategy) updatePolicy(ctx context.Context, policyID, groupID int64, cloudletName string) error {
 	updatePolicyReq := cloudlets.UpdatePolicyRequest{
 		UpdatePolicy: cloudlets.UpdatePolicy{
 			Name:    cloudletName,
@@ -106,7 +106,7 @@ func (v2 v2Strategy) updatePolicy(ctx context.Context, policyID int64, cloudletN
 	return err
 }
 
-func (v2 v2Strategy) newPolicyVersionIsNeeded(ctx context.Context, policyID, version int64) (bool, error) {
+func (v2 v2PolicyStrategy) newPolicyVersionIsNeeded(ctx context.Context, policyID, version int64) (bool, error) {
 	versionResp, err := v2.client.GetPolicyVersion(ctx, cloudlets.GetPolicyVersionRequest{
 		PolicyID:  policyID,
 		Version:   version,
@@ -119,7 +119,7 @@ func (v2 v2Strategy) newPolicyVersionIsNeeded(ctx context.Context, policyID, ver
 	return len(versionResp.Activations) > 0, nil
 }
 
-func (v2 v2Strategy) readPolicy(ctx context.Context, policyID int64, version *int64) (map[string]any, error) {
+func (v2 v2PolicyStrategy) readPolicy(ctx context.Context, policyID int64, version *int64) (map[string]any, error) {
 	policy, err := v2.client.GetPolicy(ctx, cloudlets.GetPolicyRequest{PolicyID: policyID})
 	if err != nil {
 		return nil, err
@@ -155,8 +155,8 @@ func (v2 v2Strategy) readPolicy(ctx context.Context, policyID int64, version *in
 
 }
 
-func (v2 v2Strategy) deletePolicy(ctx context.Context, policyID int64) error {
-	policyVersions, err := getAllPolicyVersions(ctx, policyID, v2.client)
+func (v2 v2PolicyStrategy) deletePolicy(ctx context.Context, policyID int64) error {
+	policyVersions, err := getAllV2PolicyVersions(ctx, policyID, v2.client)
 	if err != nil {
 		return err
 	}

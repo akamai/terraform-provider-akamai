@@ -137,7 +137,8 @@
     resources from required to optional. ([PR#513](https://github.com/akamai/terraform-provider-akamai/pull/513))
   * Changed `state` inside `csr` attribute for `akamai_cps_third_party_enrollment` and `akamai_cps_dv_enrollment` resources from required to optional.
 
-
+* Cloudlets
+  * Fixed handling of version drift for cloudlets policies ([I#478](https://github.com/akamai/terraform-provider-akamai/issues/478))
 
 
 

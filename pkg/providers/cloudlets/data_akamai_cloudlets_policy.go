@@ -3,7 +3,6 @@ package cloudlets
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
@@ -296,10 +295,8 @@ func dataSourceCloudletsPolicyRead(ctx context.Context, d *schema.ResourceData, 
 
 	var version int64
 	if v, err := tf.GetIntValue("version", d); err != nil {
-		if !errors.Is(err, tf.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		version, err = findLatestPolicyVersion(ctx, int64(policyID), client)
+		policyVersionStrategy := v2VersionStrategy{inst.Client(meta)}
+		version, err = policyVersionStrategy.findLatestPolicyVersion(ctx, int64(policyID))
 		if err != nil {
 			return diag.FromErr(err)
 		}

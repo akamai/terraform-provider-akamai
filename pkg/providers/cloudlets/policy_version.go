@@ -2,51 +2,24 @@ package cloudlets
 
 import (
 	"context"
-	"fmt"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cloudlets"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func getAllPolicyVersions(ctx context.Context, policyID int64, client cloudlets.Cloudlets) ([]cloudlets.PolicyVersion, error) {
-	pageSize, offset := 1000, 0
-	allPolicyVersions := make([]cloudlets.PolicyVersion, 0)
-
-	for {
-		versions, err := client.ListPolicyVersions(ctx, cloudlets.ListPolicyVersionsRequest{
-			PolicyID:     policyID,
-			IncludeRules: false,
-			PageSize:     &pageSize,
-			Offset:       offset,
-		})
-		if err != nil {
-			return nil, err
-		}
-
-		allPolicyVersions = append(allPolicyVersions, versions...)
-		if len(versions) < pageSize {
-			break
-		}
-		offset += pageSize
+func getPolicyVersionExecutionStrategy(d *schema.ResourceData, meta meta.Meta) (versionStrategy, error) {
+	isV3, err := tf.GetBoolValue("is_shared", d)
+	if err != nil {
+		return nil, err
 	}
 
-	return allPolicyVersions, nil
+	if isV3 {
+		return v3VersionStrategy{inst.V3Client(meta)}, nil
+	}
+	return v2VersionStrategy{inst.Client(meta)}, nil
 }
 
-func findLatestPolicyVersion(ctx context.Context, policyID int64, client cloudlets.Cloudlets) (int64, error) {
-	var version int64
-	versions, err := getAllPolicyVersions(ctx, policyID, client)
-	if err != nil {
-		return version, err
-	}
-	if len(versions) == 0 {
-		return version, fmt.Errorf("no policy version found")
-	}
-
-	for _, v := range versions {
-		if v.Version > version {
-			version = v.Version
-		}
-	}
-
-	return version, nil
+type versionStrategy interface {
+	findLatestPolicyVersion(ctx context.Context, policyID int64) (int64, error)
 }

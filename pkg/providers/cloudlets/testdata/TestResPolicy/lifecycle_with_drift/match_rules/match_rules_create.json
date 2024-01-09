@@ -1,0 +1,30 @@
+[
+  {
+    "name": "r1",
+    "type": "erMatchRule",
+    "useRelativeUrl": "copy_scheme_hostname",
+    "statusCode": 301,
+    "redirectURL": "/ddd",
+    "matchURL": "abc.com",
+    "useIncomingQueryString": false,
+    "useIncomingSchemeAndHost": true
+  },
+  {
+    "name": "r3",
+    "type": "erMatchRule",
+    "matches": [
+      {
+        "matchType": "hostname",
+        "matchValue": "3333.dom",
+        "matchOperator": "equals",
+        "caseSensitive": true,
+        "negate": false
+      }
+    ],
+    "useRelativeUrl": "copy_scheme_hostname",
+    "statusCode": 307,
+    "redirectURL": "/abc/sss",
+    "useIncomingQueryString": false,
+    "useIncomingSchemeAndHost": true
+  }
+]
