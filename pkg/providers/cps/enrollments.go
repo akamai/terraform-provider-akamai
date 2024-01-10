@@ -234,7 +234,7 @@ var (
 			},
 			"organizational_unit": {
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				Description: "Organizational unit of organization",
 			},
 			"preferred_trust_chain": {
