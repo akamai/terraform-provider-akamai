@@ -424,7 +424,7 @@ func resourcePolicyImport(ctx context.Context, d *schema.ResourceData, m interfa
 	logger := meta.Log("Cloudlets", "resourcePolicyImport")
 	logger.Debugf("Import Policy")
 
-	client := inst.Client(meta)
+	client := Client(meta)
 
 	name := d.Id()
 	if name == "" {
@@ -549,9 +549,9 @@ func getPolicyExecutionStrategy(d *schema.ResourceData, meta meta.Meta) (policyE
 	}
 
 	if isV3 {
-		executionStrategy = v3PolicyStrategy{inst.V3Client(meta)}
+		executionStrategy = v3PolicyStrategy{ClientV3(meta)}
 	} else {
-		executionStrategy = v2PolicyStrategy{inst.Client(meta)}
+		executionStrategy = v2PolicyStrategy{Client(meta)}
 	}
 	return executionStrategy, nil
 }

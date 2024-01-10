@@ -309,7 +309,7 @@ func resourceALBCreate(ctx context.Context, d *schema.ResourceData, m interface{
 		ctx,
 		session.WithContextLog(logger),
 	)
-	client := inst.Client(meta)
+	client := Client(meta)
 	logger.Debug("Creating load balancer configuration")
 	originID, err := tf.GetStringValue("origin_id", d)
 	if err != nil {
@@ -357,7 +357,7 @@ func resourceALBRead(ctx context.Context, d *schema.ResourceData, m interface{})
 		ctx,
 		session.WithContextLog(logger),
 	)
-	client := inst.Client(meta)
+	client := Client(meta)
 	logger.Debug("Reading load balancer configuration")
 	originID := d.Id()
 	loadBalancerConfigAttrs := map[string]interface{}{
@@ -416,7 +416,7 @@ func resourceALBUpdate(ctx context.Context, d *schema.ResourceData, m interface{
 		ctx,
 		session.WithContextLog(logger),
 	)
-	client := inst.Client(meta)
+	client := Client(meta)
 	logger.Debug("Updating load balancer configuration")
 	originID := d.Id()
 
@@ -501,7 +501,7 @@ func resourceALBImport(ctx context.Context, d *schema.ResourceData, m interface{
 	logger := meta.Log("Cloudlets", "resourceALBImport")
 	logger.Debug("Import ALB")
 
-	client := inst.Client(meta)
+	client := Client(meta)
 	logger.Debug("Importing load balancer configuration")
 
 	originID := d.Id()

@@ -288,7 +288,7 @@ func TestResourcePolicy(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -371,7 +371,7 @@ func TestResourcePolicy(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -426,7 +426,7 @@ func TestResourcePolicy(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -484,7 +484,7 @@ func TestResourcePolicy(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -551,7 +551,7 @@ func TestResourcePolicy(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -618,7 +618,7 @@ func TestResourcePolicy(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -694,7 +694,7 @@ func TestResourcePolicy(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -756,7 +756,7 @@ func TestResourcePolicy(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -792,7 +792,7 @@ func TestResourcePolicy(t *testing.T) {
 		expectRemovePolicy(t, client, 2, 1, 0)
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -819,7 +819,7 @@ func TestResourcePolicy(t *testing.T) {
 		expectRemovePolicy(t, client, 2, 1, 0)
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -858,7 +858,7 @@ func TestResourcePolicy(t *testing.T) {
 		expectRemovePolicy(t, client, 2, 1, 0)
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -888,7 +888,7 @@ func TestResourcePolicy(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -989,7 +989,7 @@ func TestResourcePolicy(t *testing.T) {
 			testCases[i].Expectations(client)
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProviderFactories: testAccProviders,
+					ProtoV5ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
 							Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -1013,7 +1013,7 @@ func TestResourcePolicy(t *testing.T) {
 		expectRemovePolicy(t, client, 2, 1, 0)
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -1040,7 +1040,7 @@ func TestResourcePolicy(t *testing.T) {
 		expectRemovePolicy(t, client, 2, 1, 0)
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -1097,7 +1097,7 @@ func TestResourcePolicy(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -1196,7 +1196,7 @@ func TestResourcePolicy(t *testing.T) {
 			testCases[i].Expectations(client)
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProviderFactories: testAccProviders,
+					ProtoV5ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
 							Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -1218,7 +1218,7 @@ func TestResourcePolicy(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -1270,7 +1270,7 @@ func TestResourcePolicy(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -1301,7 +1301,7 @@ func TestResourcePolicy(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -1330,7 +1330,7 @@ func TestResourcePolicy(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -1358,7 +1358,7 @@ func TestResourcePolicy(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -1619,7 +1619,7 @@ func TestResourcePolicyV3(t *testing.T) {
 
 		useClientV3(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -1697,7 +1697,7 @@ func TestResourcePolicyV3(t *testing.T) {
 
 		useClientV3(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -1807,7 +1807,7 @@ func TestResourcePolicyV3(t *testing.T) {
 
 		useClientV3(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -1908,7 +1908,7 @@ func TestResourcePolicyV3(t *testing.T) {
 
 		useClientV3(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -1965,7 +1965,7 @@ func TestResourcePolicyV3(t *testing.T) {
 
 		useClientV3(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -2030,7 +2030,7 @@ func TestResourcePolicyV3(t *testing.T) {
 
 		useClientV3(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -2095,7 +2095,7 @@ func TestResourcePolicyV3(t *testing.T) {
 
 		useClientV3(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -2168,7 +2168,7 @@ func TestResourcePolicyV3(t *testing.T) {
 
 		useClientV3(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -2227,7 +2227,7 @@ func TestResourcePolicyV3(t *testing.T) {
 
 		useClientV3(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -2262,7 +2262,7 @@ func TestResourcePolicyV3(t *testing.T) {
 		expectRemovePolicy(t, client, 2)
 		useClientV3(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -2288,7 +2288,7 @@ func TestResourcePolicyV3(t *testing.T) {
 		expectRemovePolicy(t, client, 2)
 		useClientV3(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -2326,7 +2326,7 @@ func TestResourcePolicyV3(t *testing.T) {
 		expectRemovePolicy(t, client, 2)
 		useClientV3(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -2356,7 +2356,7 @@ func TestResourcePolicyV3(t *testing.T) {
 
 		useClientV3(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -2423,7 +2423,7 @@ func TestResourcePolicyV3(t *testing.T) {
 			testCases[i].Expectations(client)
 			useClientV3(client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProviderFactories: testAccProviders,
+					ProtoV5ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
 							Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -2533,7 +2533,7 @@ func TestResourcePolicyV3(t *testing.T) {
 			testCases[i].Expectations(client)
 			useClientV3(client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProviderFactories: testAccProviders,
+					ProtoV5ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
 							Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -2559,7 +2559,7 @@ func TestResourcePolicyV3(t *testing.T) {
 		expectRemovePolicy(t, client, 2)
 		useClientV3(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -2588,7 +2588,7 @@ func TestResourcePolicyV3(t *testing.T) {
 		expectRemovePolicy(t, client, 2)
 		useClientV3(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -2643,7 +2643,7 @@ func TestResourcePolicyV3(t *testing.T) {
 
 		useClientV3(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -2737,7 +2737,7 @@ func TestResourcePolicyV3(t *testing.T) {
 			testCases[i].Expectations(client)
 			useClientV3(client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProviderFactories: testAccProviders,
+					ProtoV5ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
 							Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),

@@ -2,8 +2,8 @@
 package cloudlets
 
 import (
-	"sync"
-
+	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cloudlets"
@@ -13,60 +13,49 @@ import (
 )
 
 type (
-	// Subprovider gathers cloudlets resources and data sources
-	Subprovider struct {
-		client   cloudlets.Cloudlets
-		v3Client v3.Cloudlets
-	}
+	// PluginSubprovider gathers property resources and data sources written using terraform-plugin-sdk
+	PluginSubprovider struct{}
 
-	option func(p *Subprovider)
+	// FrameworkSubprovider gathers property resources and data sources written using terraform-plugin-framework
+	FrameworkSubprovider struct{}
 )
 
 var (
-	once sync.Once
-
-	inst *Subprovider
+	client   cloudlets.Cloudlets
+	v3Client v3.Cloudlets
 )
 
-var _ subprovider.Plugin = &Subprovider{}
+var _ subprovider.Plugin = &PluginSubprovider{}
+var _ subprovider.Framework = &FrameworkSubprovider{}
 
-// NewSubprovider returns a core sub provider
-func NewSubprovider(opts ...option) *Subprovider {
-	once.Do(func() {
-		inst = &Subprovider{}
-
-		for _, opt := range opts {
-			opt(inst)
-		}
-	})
-
-	return inst
+// NewPluginSubprovider returns a core SDKv2 based sub provider
+func NewPluginSubprovider() *PluginSubprovider {
+	return &PluginSubprovider{}
 }
 
-func withClient(c cloudlets.Cloudlets) option {
-	return func(p *Subprovider) {
-		p.client = c
-	}
+// NewFrameworkSubprovider returns a core Framework based sub provider
+func NewFrameworkSubprovider() *FrameworkSubprovider {
+	return &FrameworkSubprovider{}
 }
 
-// Client returns the Cloudlets interface for v2
-func (p *Subprovider) Client(meta meta.Meta) cloudlets.Cloudlets {
-	if p.client != nil {
-		return p.client
+// Client returns the cloudlets interface
+func Client(meta meta.Meta) cloudlets.Cloudlets {
+	if client != nil {
+		return client
 	}
 	return cloudlets.Client(meta.Session())
 }
 
-// V3Client returns the Cloudlets interface for v3
-func (p *Subprovider) V3Client(meta meta.Meta) v3.Cloudlets {
-	if p.v3Client != nil {
-		return p.v3Client
+// ClientV3 returns the cloudlets v3 interface
+func ClientV3(meta meta.Meta) v3.Cloudlets {
+	if v3Client != nil {
+		return v3Client
 	}
 	return v3.Client(meta.Session())
 }
 
 // Resources returns terraform resources for cloudlets
-func (p *Subprovider) Resources() map[string]*schema.Resource {
+func (p *PluginSubprovider) Resources() map[string]*schema.Resource {
 	return map[string]*schema.Resource{
 		"akamai_cloudlets_application_load_balancer":            resourceCloudletsApplicationLoadBalancer(),
 		"akamai_cloudlets_application_load_balancer_activation": resourceCloudletsApplicationLoadBalancerActivation(),
@@ -76,7 +65,7 @@ func (p *Subprovider) Resources() map[string]*schema.Resource {
 }
 
 // DataSources returns terraform data sources for cloudlets
-func (p *Subprovider) DataSources() map[string]*schema.Resource {
+func (p *PluginSubprovider) DataSources() map[string]*schema.Resource {
 	return map[string]*schema.Resource{
 		"akamai_cloudlets_api_prioritization_match_rule":        dataSourceCloudletsAPIPrioritizationMatchRule(),
 		"akamai_cloudlets_application_load_balancer":            dataSourceCloudletsApplicationLoadBalancer(),
@@ -88,5 +77,17 @@ func (p *Subprovider) DataSources() map[string]*schema.Resource {
 		"akamai_cloudlets_request_control_match_rule":           dataSourceCloudletsRequestControlMatchRule(),
 		"akamai_cloudlets_visitor_prioritization_match_rule":    dataSourceCloudletsVisitorPrioritizationMatchRule(),
 		"akamai_cloudlets_policy":                               dataSourceCloudletsPolicy(),
+	}
+}
+
+// Resources returns terraform resources for cloudlets
+func (p *FrameworkSubprovider) Resources() []func() resource.Resource {
+	return []func() resource.Resource{}
+}
+
+// DataSources returns terraform data sources for cloudlets
+func (p *FrameworkSubprovider) DataSources() []func() datasource.DataSource {
+	return []func() datasource.DataSource{
+		NewSharedPolicyDataSource,
 	}
 }

@@ -124,7 +124,7 @@ func resourcePolicyActivationDelete(ctx context.Context, rd *schema.ResourceData
 	logger := meta.Log("Cloudlets", "resourcePolicyActivationDelete")
 	logger.Debug("Deleting cloudlets policy activation")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	client := inst.Client(meta)
+	client := Client(meta)
 
 	pID, err := tf.GetIntValue("policy_id", rd)
 	if err != nil {
@@ -187,7 +187,7 @@ func resourcePolicyActivationUpdate(ctx context.Context, rd *schema.ResourceData
 	logger := meta.Log("Cloudlets", "resourcePolicyActivationUpdate")
 
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	client := inst.Client(meta)
+	client := Client(meta)
 
 	if !rd.HasChangeExcept("timeouts") {
 		logger.Debug("Only timeouts were updated, skipping")
@@ -303,7 +303,7 @@ func resourcePolicyActivationCreate(ctx context.Context, rd *schema.ResourceData
 	meta := meta.Must(m)
 	logger := meta.Log("Cloudlets", "resourcePolicyActivationCreate")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	client := inst.Client(meta)
+	client := Client(meta)
 
 	logger.Debug("Creating policy activation")
 
@@ -414,7 +414,7 @@ func resourcePolicyActivationRead(ctx context.Context, rd *schema.ResourceData, 
 	meta := meta.Must(m)
 	logger := meta.Log("Cloudlets", "resourcePolicyActivationRead")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	client := inst.Client(meta)
+	client := Client(meta)
 
 	logger.Debug("Reading policy activations")
 
@@ -479,7 +479,7 @@ func resourcePolicyActivationImport(ctx context.Context, d *schema.ResourceData,
 	}
 	network := parts[1]
 
-	client := inst.Client(meta)
+	client := Client(meta)
 	activations, err := client.ListPolicyActivations(ctx, cloudlets.ListPolicyActivationsRequest{
 		PolicyID: int64(policyID),
 		Network:  cloudlets.PolicyActivationNetwork(network),

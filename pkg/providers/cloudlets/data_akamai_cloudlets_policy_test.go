@@ -248,7 +248,7 @@ func TestDataCloudletsPolicy(t *testing.T) {
 				client.On("GetPolicy", mock.Anything, mock.Anything).Return(&test.getPolicyReturn, nil)
 				client.On("GetPolicyVersion", mock.Anything, mock.Anything).Return(&test.getPolicyVersionReturn, nil)
 				resource.UnitTest(t, resource.TestCase{
-					ProviderFactories: testAccProviders,
+					ProtoV5ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
 							Config: testutils.LoadFixtureString(t, test.configPath),

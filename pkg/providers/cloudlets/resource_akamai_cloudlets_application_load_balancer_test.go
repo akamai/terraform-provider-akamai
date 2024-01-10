@@ -235,7 +235,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_create.tf", testDir)),
@@ -275,7 +275,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_create.tf", testDir)),
@@ -315,7 +315,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_create.tf", testDir)),
@@ -355,7 +355,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_create.tf", testDir)),
@@ -402,7 +402,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_create.tf", testDir)),
@@ -447,7 +447,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_create.tf", testDir)),
@@ -513,7 +513,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_create.tf", testDir)),
@@ -539,7 +539,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_create.tf", testDir)),
@@ -580,7 +580,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_create.tf", testDir)),
@@ -626,7 +626,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_create.tf", testDir)),
@@ -650,7 +650,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_create.tf", testDir)),
@@ -679,7 +679,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_create.tf", testDir)),
@@ -706,7 +706,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_create.tf", testDir)),
@@ -737,7 +737,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_create.tf", testDir)),
@@ -771,7 +771,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_create.tf", testDir)),
@@ -805,7 +805,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_create.tf", testDir)),
@@ -827,7 +827,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_create.tf", testDir)),
