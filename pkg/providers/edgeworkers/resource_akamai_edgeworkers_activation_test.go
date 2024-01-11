@@ -26,6 +26,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				net := edgeworkers.ActivationNetworkStaging
 				version := "test"
 				activationID := 1
+				note := "note for edgeworkers activation"
 
 				// version verification
 				expectListEdgeWorkerVersions(m, edgeworkerID, []edgeworkers.EdgeWorkerVersion{
@@ -33,15 +34,15 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				}, nil).Once()
 
 				// create
-				expectFullActivation(m, edgeworkerID, activationID, net, version)
+				expectFullActivation(m, edgeworkerID, activationID, net, version, note)
 
 				// read
 				expectFullRead(m, edgeworkerID, version, []edgeworkers.Activation{
-					*createStubActivation(edgeworkerID, activationID, net, version, activationStatusComplete, ""),
+					*createStubActivation(edgeworkerID, activationID, net, version, activationStatusComplete, "", note),
 				}, []edgeworkers.Deactivation{}, 2)
 
 				// test cleanup - destroy
-				expectFullDeactivation(m, edgeworkerID, 1, net, version)
+				expectFullDeactivation(m, edgeworkerID, 1, net, version, note)
 			},
 			steps: []resource.TestStep{
 				{
@@ -50,6 +51,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "note", "note for edgeworkers activation"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "timeouts.#", "0"),
 					),
 				},
@@ -60,6 +62,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				net := edgeworkers.ActivationNetworkStaging
 				version := "test"
 				activationID := 1
+				note := "note for edgeworkers activation"
 
 				// version verification
 				expectListEdgeWorkerVersions(m, edgeworkerID, []edgeworkers.EdgeWorkerVersion{
@@ -67,15 +70,15 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				}, nil).Once()
 
 				// create
-				expectFullActivation(m, edgeworkerID, activationID, net, version)
+				expectFullActivation(m, edgeworkerID, activationID, net, version, note)
 
 				// read
 				expectFullRead(m, edgeworkerID, version, []edgeworkers.Activation{
-					*createStubActivation(edgeworkerID, activationID, net, version, activationStatusComplete, ""),
+					*createStubActivation(edgeworkerID, activationID, net, version, activationStatusComplete, "", note),
 				}, []edgeworkers.Deactivation{}, 2)
 
 				// test cleanup - destroy
-				expectFullDeactivation(m, edgeworkerID, 1, net, version)
+				expectFullDeactivation(m, edgeworkerID, 1, net, version, note)
 			},
 			steps: []resource.TestStep{
 				{
@@ -84,6 +87,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "note", "note for edgeworkers activation"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "timeouts.#", "1"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "timeouts.0.default", "2h"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "timeouts.0.delete", "3h"),
@@ -96,14 +100,15 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				net := edgeworkers.ActivationNetworkStaging
 				version := "test"
 				activationID := 8
+				note := "note for edgeworkers activation"
 				activations := []edgeworkers.Activation{
-					*createStubActivation(edgeworkerID, 7, edgeworkers.ActivationNetworkProduction, "current", activationStatusComplete, "2022-01-25T12:30:06Z"),
-					*createStubActivation(edgeworkerID, 6, net, "past2", activationStatusComplete, "2022-01-25T12:30:06Z"),
-					*createStubActivation(edgeworkerID, 5, net, "past1", activationStatusComplete, "2022-01-24T12:30:06Z"),
-					*createStubActivation(edgeworkerID, 4, edgeworkers.ActivationNetworkProduction, "past1", activationStatusComplete, "2022-01-23T12:30:06Z"),
-					*createStubActivation(edgeworkerID, 3, net, "past2", activationStatusComplete, "2022-01-23T18:30:06Z"),
-					*createStubActivation(edgeworkerID, 2, net, "past2", activationStatusComplete, "2022-01-23T12:30:06Z"),
-					*createStubActivation(edgeworkerID, 1, net, "past1", activationStatusComplete, "2022-01-22T12:30:06Z"),
+					*createStubActivation(edgeworkerID, 7, edgeworkers.ActivationNetworkProduction, "current", activationStatusComplete, "2022-01-25T12:30:06Z", note),
+					*createStubActivation(edgeworkerID, 6, net, "past2", activationStatusComplete, "2022-01-25T12:30:06Z", note),
+					*createStubActivation(edgeworkerID, 5, net, "past1", activationStatusComplete, "2022-01-24T12:30:06Z", note),
+					*createStubActivation(edgeworkerID, 4, edgeworkers.ActivationNetworkProduction, "past1", activationStatusComplete, "2022-01-23T12:30:06Z", note),
+					*createStubActivation(edgeworkerID, 3, net, "past2", activationStatusComplete, "2022-01-23T18:30:06Z", note),
+					*createStubActivation(edgeworkerID, 2, net, "past2", activationStatusComplete, "2022-01-23T12:30:06Z", note),
+					*createStubActivation(edgeworkerID, 1, net, "past1", activationStatusComplete, "2022-01-22T12:30:06Z", note),
 				}
 
 				// version verification
@@ -122,17 +127,17 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				}, nil).Once()
 
 				// activate
-				expectActivateVersion(m, edgeworkerID, activationID, net, version, nil).Once()
+				expectActivateVersion(m, edgeworkerID, activationID, net, version, note, nil).Once()
 				expectGetActivation(m, edgeworkerID, activationID, net, version, activationStatusComplete, nil).Once()
 
 				// read
 				expectFullRead(m, edgeworkerID, version, append([]edgeworkers.Activation{
-					*createStubActivation(edgeworkerID, activationID, net, version, activationStatusComplete, "")},
+					*createStubActivation(edgeworkerID, activationID, net, version, activationStatusComplete, "", note)},
 					activations...,
 				), []edgeworkers.Deactivation{}, 2)
 
 				// test cleanup - destroy
-				expectFullDeactivation(m, edgeworkerID, 4, net, version)
+				expectFullDeactivation(m, edgeworkerID, 4, net, version, note)
 			},
 			steps: []resource.TestStep{
 				{
@@ -141,6 +146,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "8"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "note", "note for edgeworkers activation"),
 					),
 				},
 			},
@@ -150,6 +156,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				net := edgeworkers.ActivationNetworkStaging
 				version := "test"
 				activationID := 1
+				note := "note for edgeworkers activation"
 
 				// version verification
 				expectListEdgeWorkerVersions(m, edgeworkerID, []edgeworkers.EdgeWorkerVersion{
@@ -158,17 +165,17 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 
 				// get current activation
 				expectListActivations(m, edgeworkerID, "", []edgeworkers.Activation{
-					*createStubActivation(edgeworkerID, activationID, net, version, activationStatusComplete, ""),
+					*createStubActivation(edgeworkerID, activationID, net, version, activationStatusComplete, "", note),
 				}, nil).Once()
 				expectListDeactivations(m, edgeworkerID, version, []edgeworkers.Deactivation{}, nil).Once()
 
 				// read
 				expectFullRead(m, edgeworkerID, version, []edgeworkers.Activation{
-					*createStubActivation(edgeworkerID, activationID, net, version, activationStatusComplete, ""),
+					*createStubActivation(edgeworkerID, activationID, net, version, activationStatusComplete, "", note),
 				}, []edgeworkers.Deactivation{}, 2)
 
 				// test cleanup - destroy
-				expectFullDeactivation(m, edgeworkerID, 1, net, version)
+				expectFullDeactivation(m, edgeworkerID, 1, net, version, note)
 			},
 			steps: []resource.TestStep{
 				{
@@ -177,6 +184,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "note", "note for edgeworkers activation"),
 					),
 				},
 			},
@@ -186,6 +194,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				net := edgeworkers.ActivationNetworkStaging
 				version := "test"
 				activationID := 1
+				note := "note for edgeworkers activation"
 
 				// version verification
 				expectListEdgeWorkerVersions(m, edgeworkerID, []edgeworkers.EdgeWorkerVersion{
@@ -196,7 +205,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				expectListActivations(m, edgeworkerID, "", []edgeworkers.Activation{}, nil).Once()
 
 				// activate
-				expectActivateVersion(m, edgeworkerID, activationID, net, version, nil).Once()
+				expectActivateVersion(m, edgeworkerID, activationID, net, version, note, nil).Once()
 				expectGetActivation(m, edgeworkerID, activationID, net, version, activationStatusPresubmit, nil).Times(2)
 				expectGetActivation(m, edgeworkerID, activationID, net, version, activationStatusPending, nil).Times(2)
 				expectGetActivation(m, edgeworkerID, activationID, net, version, activationStatusInProgress, nil).Times(2)
@@ -204,11 +213,11 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 
 				// read
 				expectFullRead(m, edgeworkerID, version, []edgeworkers.Activation{
-					*createStubActivation(edgeworkerID, activationID, net, version, activationStatusComplete, ""),
+					*createStubActivation(edgeworkerID, activationID, net, version, activationStatusComplete, "", note),
 				}, []edgeworkers.Deactivation{}, 2)
 
 				// test cleanup - destroy
-				expectFullDeactivation(m, edgeworkerID, 1, net, version)
+				expectFullDeactivation(m, edgeworkerID, 1, net, version, note)
 			},
 			steps: []resource.TestStep{
 				{
@@ -217,6 +226,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "note", "note for edgeworkers activation"),
 					),
 				},
 			},
@@ -226,6 +236,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				net := edgeworkers.ActivationNetworkStaging
 				version := "test"
 				activationID := 1
+				note := "note for edgeworkers activation"
 
 				// version verification
 				expectListEdgeWorkerVersions(m, edgeworkerID, []edgeworkers.EdgeWorkerVersion{
@@ -234,7 +245,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 
 				// get current activation
 				expectListActivations(m, edgeworkerID, "", []edgeworkers.Activation{
-					*createStubActivation(edgeworkerID, activationID, net, version, activationStatusPending, ""),
+					*createStubActivation(edgeworkerID, activationID, net, version, activationStatusPending, "", note),
 				}, nil).Once()
 				expectGetActivation(m, edgeworkerID, activationID, net, version, activationStatusPending, nil).Once()
 				expectGetActivation(m, edgeworkerID, activationID, net, version, activationStatusInProgress, nil).Once()
@@ -242,11 +253,11 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 
 				// read
 				expectFullRead(m, edgeworkerID, version, []edgeworkers.Activation{
-					*createStubActivation(edgeworkerID, activationID, net, version, activationStatusComplete, ""),
+					*createStubActivation(edgeworkerID, activationID, net, version, activationStatusComplete, "", note),
 				}, []edgeworkers.Deactivation{}, 2)
 
 				// test cleanup - destroy
-				expectFullDeactivation(m, edgeworkerID, 1, net, version)
+				expectFullDeactivation(m, edgeworkerID, 1, net, version, note)
 			},
 			steps: []resource.TestStep{
 				{
@@ -255,6 +266,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "note", "note for edgeworkers activation"),
 					),
 				},
 			},
@@ -264,6 +276,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				createNet, updateNet := edgeworkers.ActivationNetworkStaging, edgeworkers.ActivationNetworkProduction
 				version := "test"
 				createActivationID, updateActivationID := 1, 2
+				note := "note for edgeworkers activation"
 
 				// create + update - version verification
 				expectListEdgeWorkerVersions(m, edgeworkerID, []edgeworkers.EdgeWorkerVersion{
@@ -271,25 +284,25 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				}, nil).Times(2)
 
 				// create
-				expectFullActivation(m, edgeworkerID, createActivationID, createNet, version)
+				expectFullActivation(m, edgeworkerID, createActivationID, createNet, version, note)
 
 				// read + plan + refresh
 				activations := []edgeworkers.Activation{
-					*createStubActivation(edgeworkerID, createActivationID, createNet, version, activationStatusComplete, ""),
+					*createStubActivation(edgeworkerID, createActivationID, createNet, version, activationStatusComplete, "", note),
 				}
 				expectFullRead(m, edgeworkerID, version, activations, []edgeworkers.Deactivation{}, 3)
 
 				// update - activate
-				expectFullUpdate(m, edgeworkerID, updateActivationID, updateNet, version, "", activations)
+				expectFullUpdate(m, edgeworkerID, updateActivationID, updateNet, version, "", note, activations)
 
 				// read + plan
 				expectFullRead(m, edgeworkerID, version, []edgeworkers.Activation{
-					*createStubActivation(edgeworkerID, updateActivationID, updateNet, version, activationStatusComplete, ""),
-					*createStubActivation(edgeworkerID, createActivationID, createNet, version, activationStatusComplete, ""),
+					*createStubActivation(edgeworkerID, updateActivationID, updateNet, version, activationStatusComplete, "", note),
+					*createStubActivation(edgeworkerID, createActivationID, createNet, version, activationStatusComplete, "", note),
 				}, []edgeworkers.Deactivation{}, 2)
 
 				// test cleanup - destroy
-				expectFullDeactivation(m, edgeworkerID, 1, updateNet, version)
+				expectFullDeactivation(m, edgeworkerID, 1, updateNet, version, note)
 			},
 			steps: []resource.TestStep{
 				{
@@ -298,6 +311,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "note", "note for edgeworkers activation"),
 					),
 				},
 				{
@@ -306,6 +320,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "2"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", productionNetwork),
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "note", "note for edgeworkers activation"),
 					),
 				},
 			},
@@ -315,6 +330,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				net := edgeworkers.ActivationNetworkStaging
 				createVersion, updateVersion := "test", "test1"
 				createActivationID, updateActivationID := 1, 2
+				note := "note for edgeworkers activation"
 
 				// create + update - version verification
 				expectListEdgeWorkerVersions(m, edgeworkerID, []edgeworkers.EdgeWorkerVersion{
@@ -323,25 +339,25 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				}, nil).Times(2)
 
 				// create
-				expectFullActivation(m, edgeworkerID, createActivationID, net, createVersion)
+				expectFullActivation(m, edgeworkerID, createActivationID, net, createVersion, note)
 
 				// read + plan + refresh
 				activations := []edgeworkers.Activation{
-					*createStubActivation(edgeworkerID, createActivationID, net, createVersion, activationStatusComplete, ""),
+					*createStubActivation(edgeworkerID, createActivationID, net, createVersion, activationStatusComplete, "", note),
 				}
 				expectFullRead(m, edgeworkerID, createVersion, activations, []edgeworkers.Deactivation{}, 3)
 
 				// update - activate
-				expectFullUpdate(m, edgeworkerID, updateActivationID, net, updateVersion, createVersion, activations)
+				expectFullUpdate(m, edgeworkerID, updateActivationID, net, updateVersion, createVersion, note, activations)
 
 				// read + plan
 				expectFullRead(m, edgeworkerID, updateVersion, []edgeworkers.Activation{
-					*createStubActivation(edgeworkerID, updateActivationID, net, updateVersion, activationStatusComplete, ""),
-					*createStubActivation(edgeworkerID, createActivationID, net, createVersion, activationStatusComplete, ""),
+					*createStubActivation(edgeworkerID, updateActivationID, net, updateVersion, activationStatusComplete, "", note),
+					*createStubActivation(edgeworkerID, createActivationID, net, createVersion, activationStatusComplete, "", note),
 				}, []edgeworkers.Deactivation{}, 2)
 
 				// test cleanup - destroy
-				expectFullDeactivation(m, edgeworkerID, 1, net, updateVersion)
+				expectFullDeactivation(m, edgeworkerID, 1, net, updateVersion, note)
 			},
 			steps: []resource.TestStep{
 				{
@@ -350,6 +366,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "note", "note for edgeworkers activation"),
 					),
 				},
 				{
@@ -358,6 +375,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "2"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test1"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "note", "note for edgeworkers activation"),
 					),
 				},
 			},
@@ -367,6 +385,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				net := edgeworkers.ActivationNetworkStaging
 				createVersion, updateVersion := "test", "test1"
 				createActivationID, updateActivationID := 1, 3
+				note := "note for edgeworkers activation"
 
 				// create + update - version verification
 				expectListEdgeWorkerVersions(m, edgeworkerID, []edgeworkers.EdgeWorkerVersion{
@@ -376,32 +395,32 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				}, nil).Times(2)
 
 				// create
-				expectFullActivation(m, edgeworkerID, createActivationID, net, createVersion)
+				expectFullActivation(m, edgeworkerID, createActivationID, net, createVersion, note)
 
 				// read + plan
 				expectFullRead(m, edgeworkerID, createVersion, []edgeworkers.Activation{
-					*createStubActivation(edgeworkerID, createActivationID, net, createVersion, activationStatusComplete, ""),
+					*createStubActivation(edgeworkerID, createActivationID, net, createVersion, activationStatusComplete, "", note),
 				}, []edgeworkers.Deactivation{}, 2)
 
 				// refresh
 				activations := []edgeworkers.Activation{
-					*createStubActivation(edgeworkerID, 2, net, "someOtherVersion", activationStatusComplete, ""),
-					*createStubActivation(edgeworkerID, createActivationID, net, createVersion, activationStatusComplete, ""),
+					*createStubActivation(edgeworkerID, 2, net, "someOtherVersion", activationStatusComplete, "", note),
+					*createStubActivation(edgeworkerID, createActivationID, net, createVersion, activationStatusComplete, "", note),
 				}
 				expectFullRead(m, edgeworkerID, "someOtherVersion", activations, []edgeworkers.Deactivation{}, 1)
 
 				// update - activate
-				expectFullUpdate(m, edgeworkerID, updateActivationID, net, updateVersion, "someOtherVersion", activations)
+				expectFullUpdate(m, edgeworkerID, updateActivationID, net, updateVersion, "someOtherVersion", note, activations)
 
 				// read + plan
 				expectFullRead(m, edgeworkerID, updateVersion, []edgeworkers.Activation{
-					*createStubActivation(edgeworkerID, updateActivationID, net, updateVersion, activationStatusComplete, ""),
-					*createStubActivation(edgeworkerID, 2, net, "someOtherVersion", activationStatusComplete, ""),
-					*createStubActivation(edgeworkerID, createActivationID, net, createVersion, activationStatusComplete, ""),
+					*createStubActivation(edgeworkerID, updateActivationID, net, updateVersion, activationStatusComplete, "", note),
+					*createStubActivation(edgeworkerID, 2, net, "someOtherVersion", activationStatusComplete, "", note),
+					*createStubActivation(edgeworkerID, createActivationID, net, createVersion, activationStatusComplete, "", note),
 				}, []edgeworkers.Deactivation{}, 2)
 
 				// test cleanup - destroy
-				expectFullDeactivation(m, edgeworkerID, 1, net, updateVersion)
+				expectFullDeactivation(m, edgeworkerID, 1, net, updateVersion, note)
 			},
 			steps: []resource.TestStep{
 				{
@@ -410,6 +429,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "note", "note for edgeworkers activation"),
 					),
 				},
 				{
@@ -418,6 +438,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "3"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test1"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "note", "note for edgeworkers activation"),
 					),
 				},
 			},
@@ -427,6 +448,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				net := edgeworkers.ActivationNetworkStaging
 				createVersion, updateVersion := "test", "test1"
 				createActivationID, updateActivationID := 1, 2
+				note := "note for edgeworkers activation"
 
 				// create + update - version verification
 				expectListEdgeWorkerVersions(m, edgeworkerID, []edgeworkers.EdgeWorkerVersion{
@@ -435,21 +457,21 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				}, nil).Once()
 
 				// create
-				expectFullActivation(m, edgeworkerID, createActivationID, net, createVersion)
+				expectFullActivation(m, edgeworkerID, createActivationID, net, createVersion, note)
 
 				// read + plan
 				expectFullRead(m, edgeworkerID, createVersion, []edgeworkers.Activation{
-					*createStubActivation(edgeworkerID, createActivationID, net, createVersion, activationStatusComplete, ""),
+					*createStubActivation(edgeworkerID, createActivationID, net, createVersion, activationStatusComplete, "", note),
 				}, []edgeworkers.Deactivation{}, 2)
 
 				// refresh
 				expectFullRead(m, edgeworkerID, updateVersion, []edgeworkers.Activation{
-					*createStubActivation(edgeworkerID, updateActivationID, net, updateVersion, activationStatusComplete, ""),
-					*createStubActivation(edgeworkerID, createActivationID, net, createVersion, activationStatusComplete, ""),
+					*createStubActivation(edgeworkerID, updateActivationID, net, updateVersion, activationStatusComplete, "", note),
+					*createStubActivation(edgeworkerID, createActivationID, net, createVersion, activationStatusComplete, "", note),
 				}, []edgeworkers.Deactivation{}, 2)
 
 				// test cleanup - destroy
-				expectFullDeactivation(m, edgeworkerID, 1, net, updateVersion)
+				expectFullDeactivation(m, edgeworkerID, 1, net, updateVersion, note)
 			},
 			steps: []resource.TestStep{
 				{
@@ -458,6 +480,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "note", "note for edgeworkers activation"),
 					),
 				},
 				{
@@ -466,6 +489,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "2"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test1"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "note", "note for edgeworkers activation"),
 					),
 				},
 			},
@@ -475,6 +499,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				createNet, updateNet := edgeworkers.ActivationNetworkStaging, edgeworkers.ActivationNetworkProduction
 				version := "test"
 				createActivationID, updateActivationID := 1, 2
+				note := "note for edgeworkers activation"
 
 				// create + update - version verification
 				expectListEdgeWorkerVersions(m, edgeworkerID, []edgeworkers.EdgeWorkerVersion{
@@ -482,17 +507,17 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				}, nil).Times(2)
 
 				// create
-				expectFullActivation(m, edgeworkerID, createActivationID, createNet, version)
+				expectFullActivation(m, edgeworkerID, createActivationID, createNet, version, note)
 
 				// read + plan
 				expectFullRead(m, edgeworkerID, version, []edgeworkers.Activation{
-					*createStubActivation(edgeworkerID, createActivationID, createNet, version, activationStatusComplete, ""),
+					*createStubActivation(edgeworkerID, createActivationID, createNet, version, activationStatusComplete, "", note),
 				}, []edgeworkers.Deactivation{}, 2)
 
 				// refresh
 				activations := []edgeworkers.Activation{
-					*createStubActivation(edgeworkerID, updateActivationID, updateNet, version, activationStatusComplete, ""),
-					*createStubActivation(edgeworkerID, createActivationID, createNet, version, activationStatusComplete, ""),
+					*createStubActivation(edgeworkerID, updateActivationID, updateNet, version, activationStatusComplete, "", note),
+					*createStubActivation(edgeworkerID, createActivationID, createNet, version, activationStatusComplete, "", note),
 				}
 				expectFullRead(m, edgeworkerID, version, activations, []edgeworkers.Deactivation{}, 1)
 
@@ -504,7 +529,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				expectFullRead(m, edgeworkerID, version, activations, []edgeworkers.Deactivation{}, 2)
 
 				// test cleanup - destroy
-				expectFullDeactivation(m, edgeworkerID, 2, updateNet, version)
+				expectFullDeactivation(m, edgeworkerID, 2, updateNet, version, note)
 			},
 			steps: []resource.TestStep{
 				{
@@ -513,6 +538,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "note", "note for edgeworkers activation"),
 					),
 				},
 				{
@@ -521,6 +547,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "2"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", productionNetwork),
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "note", "note for edgeworkers activation"),
 					),
 				},
 			},
@@ -531,6 +558,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				version := "test"
 				activationID := 1
 				updateEdgeworkerID := 4321
+				note := "note for edgeworkers activation"
 
 				expectListEdgeWorkersID(m, nil, edgeworkerID, updateEdgeworkerID)
 
@@ -540,15 +568,15 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				}, nil).Once()
 
 				// create
-				expectFullActivation(m, edgeworkerID, activationID, net, version)
+				expectFullActivation(m, edgeworkerID, activationID, net, version, note)
 
 				// read + plan + refresh
 				expectFullRead(m, edgeworkerID, version, []edgeworkers.Activation{
-					*createStubActivation(edgeworkerID, activationID, net, version, activationStatusComplete, ""),
+					*createStubActivation(edgeworkerID, activationID, net, version, activationStatusComplete, "", note),
 				}, []edgeworkers.Deactivation{}, 3)
 
 				// destroy
-				expectFullDeactivation(m, edgeworkerID, 1, net, version)
+				expectFullDeactivation(m, edgeworkerID, 1, net, version, note)
 
 				// create - version verification
 				expectListEdgeWorkerVersions(m, updateEdgeworkerID, []edgeworkers.EdgeWorkerVersion{
@@ -556,15 +584,15 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				}, nil).Once()
 
 				// create
-				expectFullActivation(m, updateEdgeworkerID, activationID, net, version)
+				expectFullActivation(m, updateEdgeworkerID, activationID, net, version, note)
 
 				// read + plan
 				expectFullRead(m, updateEdgeworkerID, version, []edgeworkers.Activation{
-					*createStubActivation(updateEdgeworkerID, activationID, net, version, activationStatusComplete, ""),
+					*createStubActivation(updateEdgeworkerID, activationID, net, version, activationStatusComplete, "", note),
 				}, []edgeworkers.Deactivation{}, 2)
 
 				// test cleanup - destroy
-				expectFullDeactivation(m, updateEdgeworkerID, 1, net, version)
+				expectFullDeactivation(m, updateEdgeworkerID, 1, net, version, note)
 			},
 			steps: []resource.TestStep{
 				{
@@ -588,11 +616,112 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			},
 			omitDefaultMock: true,
 		},
+		"update note - diff suppressed when other fields not changed": {
+			init: func(m *edgeworkers.Mock) {
+				createNet := edgeworkers.ActivationNetworkStaging
+				version := "test1"
+				createActivationID := 1
+				note := "note for edgeworkers activation"
+
+				// create  - version verification
+				expectListEdgeWorkerVersions(m, edgeworkerID, []edgeworkers.EdgeWorkerVersion{
+					*createStubEdgeworkerVersion(edgeworkerID, version),
+				}, nil).Times(1)
+
+				// create
+				expectFullActivation(m, edgeworkerID, createActivationID, createNet, version, note)
+
+				// read + plan + refresh
+				activations := []edgeworkers.Activation{
+					*createStubActivation(edgeworkerID, createActivationID, createNet, version, activationStatusComplete, "", note),
+				}
+				expectFullRead(m, edgeworkerID, version, activations, []edgeworkers.Deactivation{}, 4)
+
+				// test cleanup - destroy
+				expectFullDeactivation(m, edgeworkerID, 1, createNet, version, note)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworkers_activation_version_test1_stag.tf", workdir)),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test1"),
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "note", "note for edgeworkers activation"),
+					),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworkers_activation_note_update_no_activation.tf", workdir)),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test1"),
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "note", "note for edgeworkers activation"),
+					),
+				},
+			},
+		},
+		"update note - when other fields changed it does not update but creates new activation ": {
+			init: func(m *edgeworkers.Mock) {
+				createNet, updateNet := edgeworkers.ActivationNetworkStaging, edgeworkers.ActivationNetworkProduction
+				version := "test1"
+				createActivationID, updateActivationID := 1, 2
+				note, updatedNote := "note for edgeworkers activation", "note for edgeworkers activation updated"
+
+				// create - version verification
+				expectListEdgeWorkerVersions(m, edgeworkerID, []edgeworkers.EdgeWorkerVersion{
+					*createStubEdgeworkerVersion(edgeworkerID, version),
+				}, nil).Times(2)
+
+				// create
+				expectFullActivation(m, edgeworkerID, createActivationID, createNet, version, note)
+
+				// read + plan + refresh
+				activations := []edgeworkers.Activation{
+					*createStubActivation(edgeworkerID, createActivationID, createNet, version, activationStatusComplete, "", note),
+				}
+				expectFullRead(m, edgeworkerID, version, activations, []edgeworkers.Deactivation{}, 3)
+
+				// update - activate
+				expectFullUpdate(m, edgeworkerID, updateActivationID, updateNet, version, "", updatedNote, activations)
+
+				// read + plan
+				expectFullRead(m, edgeworkerID, version, []edgeworkers.Activation{
+					*createStubActivation(edgeworkerID, updateActivationID, updateNet, version, activationStatusComplete, "", updatedNote),
+					*createStubActivation(edgeworkerID, createActivationID, createNet, version, activationStatusComplete, "", note),
+				}, []edgeworkers.Deactivation{}, 2)
+
+				// test cleanup - destroy
+				expectFullDeactivation(m, edgeworkerID, 1, updateNet, version, updatedNote)
+
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworkers_activation_version_test1_stag.tf", workdir)),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test1"),
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "note", "note for edgeworkers activation"),
+					),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworkers_activation_note_update.tf", workdir)),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "2"),
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test1"),
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", productionNetwork),
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "note", "note for edgeworkers activation updated"),
+					),
+				},
+			},
+		},
 		"destroy - version already deactivated": {
 			init: func(m *edgeworkers.Mock) {
 				net := edgeworkers.ActivationNetworkStaging
 				version := "test"
 				activationID := 1
+				note := "note for edgeworkers activation"
 
 				// version verification
 				expectListEdgeWorkerVersions(m, edgeworkerID, []edgeworkers.EdgeWorkerVersion{
@@ -600,15 +729,15 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				}, nil).Once()
 
 				// create
-				expectFullActivation(m, edgeworkerID, activationID, net, version)
+				expectFullActivation(m, edgeworkerID, activationID, net, version, note)
 
 				// read
 				expectFullRead(m, edgeworkerID, version, []edgeworkers.Activation{
-					*createStubActivation(edgeworkerID, activationID, net, version, activationStatusComplete, ""),
+					*createStubActivation(edgeworkerID, activationID, net, version, activationStatusComplete, "", note),
 				}, []edgeworkers.Deactivation{}, 2)
 
 				// test cleanup - destroy
-				expectDeactivateVersion(m, edgeworkerID, 1, net, version,
+				expectDeactivateVersion(m, edgeworkerID, 1, net, version, note,
 					fmt.Errorf("%w: %s", &edgeworkers.Error{ErrorCode: errorCodeVersionAlreadyDeactivated}, "oops"))
 			},
 			steps: []resource.TestStep{
@@ -618,6 +747,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "note", "note for edgeworkers activation"),
 					),
 				},
 			},
@@ -627,6 +757,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				net := edgeworkers.ActivationNetworkStaging
 				version := "test"
 				activationID := 1
+				note := "note for edgeworkers activation"
 
 				// version verification
 				expectListEdgeWorkerVersions(m, edgeworkerID, []edgeworkers.EdgeWorkerVersion{
@@ -634,15 +765,15 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				}, nil).Once()
 
 				// create
-				expectFullActivation(m, edgeworkerID, activationID, net, version)
+				expectFullActivation(m, edgeworkerID, activationID, net, version, note)
 
 				// read
 				expectFullRead(m, edgeworkerID, version, []edgeworkers.Activation{
-					*createStubActivation(edgeworkerID, activationID, net, version, activationStatusComplete, ""),
+					*createStubActivation(edgeworkerID, activationID, net, version, activationStatusComplete, "", note),
 				}, []edgeworkers.Deactivation{}, 2)
 
 				// test cleanup - destroy
-				expectDeactivateVersion(m, edgeworkerID, 1, net, version,
+				expectDeactivateVersion(m, edgeworkerID, 1, net, version, note,
 					fmt.Errorf("%w: %s", &edgeworkers.Error{ErrorCode: errorCodeVersionIsBeingDeactivated}, "oops"))
 				expectListDeactivations(m, edgeworkerID, version, []edgeworkers.Deactivation{
 					*createStubDeactivation(edgeworkerID, 1, net, version, activationStatusInProgress, ""),
@@ -657,6 +788,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "note", "note for edgeworkers activation"),
 					),
 				},
 			},
@@ -666,6 +798,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				net := edgeworkers.ActivationNetworkStaging
 				version := "test"
 				activationID := 1
+				note := "note for edgeworkers activation"
 
 				// version verification
 				expectListEdgeWorkerVersions(m, edgeworkerID, []edgeworkers.EdgeWorkerVersion{
@@ -673,15 +806,15 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				}, nil).Once()
 
 				// create
-				expectFullActivation(m, edgeworkerID, activationID, net, version)
+				expectFullActivation(m, edgeworkerID, activationID, net, version, note)
 
 				// read
 				expectFullRead(m, edgeworkerID, version, []edgeworkers.Activation{
-					*createStubActivation(edgeworkerID, activationID, net, version, activationStatusComplete, ""),
+					*createStubActivation(edgeworkerID, activationID, net, version, activationStatusComplete, "", note),
 				}, []edgeworkers.Deactivation{}, 2)
 
 				// test cleanup - destroy
-				expectDeactivateVersion(m, edgeworkerID, 1, net, version, nil)
+				expectDeactivateVersion(m, edgeworkerID, 1, net, version, note, nil)
 				expectGetDeactivation(m, edgeworkerID, 1, net, version, activationStatusPresubmit, nil).Times(2)
 				expectGetDeactivation(m, edgeworkerID, 1, net, version, activationStatusPending, nil).Times(2)
 				expectGetDeactivation(m, edgeworkerID, 1, net, version, activationStatusInProgress, nil).Times(2)
@@ -694,6 +827,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "note", "note for edgeworkers activation"),
 					),
 				},
 			},
@@ -703,6 +837,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				net := edgeworkers.ActivationNetworkStaging
 				version := "test"
 				activationID := 1
+				note := "note for edgeworkers activation"
 
 				// version verification
 				expectListEdgeWorkerVersions(m, edgeworkerID, []edgeworkers.EdgeWorkerVersion{
@@ -710,16 +845,16 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				}, nil).Once()
 
 				// create
-				expectFullActivation(m, edgeworkerID, activationID, net, version)
+				expectFullActivation(m, edgeworkerID, activationID, net, version, note)
 
 				// read
 				expectFullRead(m, edgeworkerID, version, []edgeworkers.Activation{
-					*createStubActivation(edgeworkerID, activationID, net, version, activationStatusComplete, ""),
+					*createStubActivation(edgeworkerID, activationID, net, version, activationStatusComplete, "", note),
 				}, []edgeworkers.Deactivation{}, 2)
 
 				// test cleanup - destroy
 				// A bit hack to simulate timeout is returning ErrEdgeworkerDeactivationTimeout on GetDeactivation
-				expectDeactivateVersion(m, edgeworkerID, 1, net, version, nil)
+				expectDeactivateVersion(m, edgeworkerID, 1, net, version, note, nil)
 				expectGetDeactivation(m, edgeworkerID, 1, net, version, activationStatusPresubmit, nil).Times(2)
 				expectGetDeactivation(m, edgeworkerID, 1, net, version, activationStatusPending, nil).Times(2)
 				expectGetDeactivation(m, edgeworkerID, 1, net, version, activationStatusInProgress, nil).Times(2)
@@ -732,6 +867,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "note", "note for edgeworkers activation"),
 					),
 				},
 			},
@@ -748,18 +884,52 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				}, nil).Once()
 
 				// create
-				expectFullActivation(m, edgeworkerID, activationID, net, version)
+				expectFullActivation(m, edgeworkerID, activationID, net, version, "")
 
 				expectFullRead(m, edgeworkerID, version, []edgeworkers.Activation{
-					*createStubActivation(edgeworkerID, activationID, net, version, activationStatusComplete, ""),
+					*createStubActivation(edgeworkerID, activationID, net, version, activationStatusComplete, "", ""),
 				}, []edgeworkers.Deactivation{}, 3)
 
 				// test cleanup - destroy
-				expectFullDeactivation(m, edgeworkerID, 1, net, version)
+				expectFullDeactivation(m, edgeworkerID, 1, net, version, "")
 			},
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworkers_activation_import.tf", workdir)),
+				},
+				{
+					ImportState:       true,
+					ImportStateId:     fmt.Sprintf("%d:STAGING", edgeworkerID),
+					ResourceName:      "akamai_edgeworkers_activation.test",
+					ImportStateVerify: true,
+				},
+			},
+		},
+		"import activation on staging with note": {
+			init: func(m *edgeworkers.Mock) {
+				net := edgeworkers.ActivationNetworkStaging
+				version := "test1"
+				activationID := 1
+				note := "note for edgeworkers activation updated"
+
+				// version verification
+				expectListEdgeWorkerVersions(m, edgeworkerID, []edgeworkers.EdgeWorkerVersion{
+					*createStubEdgeworkerVersion(edgeworkerID, version),
+				}, nil).Once()
+
+				// create
+				expectFullActivation(m, edgeworkerID, activationID, net, version, note)
+
+				expectFullRead(m, edgeworkerID, version, []edgeworkers.Activation{
+					*createStubActivation(edgeworkerID, activationID, net, version, activationStatusComplete, "", note),
+				}, []edgeworkers.Deactivation{}, 3)
+
+				// test cleanup - destroy
+				expectFullDeactivation(m, edgeworkerID, 1, net, version, note)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworkers_activation_note_update_no_activation.tf", workdir)),
 				},
 				{
 					ImportState:       true,
@@ -826,7 +996,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				}, nil).Once()
 
 				expectListActivations(m, edgeworkerID, "", []edgeworkers.Activation{
-					*createStubActivation(edgeworkerID, 1, edgeworkers.ActivationNetworkStaging, "test", activationStatusComplete, ""),
+					*createStubActivation(edgeworkerID, 1, edgeworkers.ActivationNetworkStaging, "test", activationStatusComplete, "", ""),
 				}, nil)
 				expectListDeactivations(m, edgeworkerID, "test", []edgeworkers.Deactivation{}, fmt.Errorf("oops"))
 			},
@@ -857,7 +1027,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				}, nil).Once()
 
 				expectListActivations(m, edgeworkerID, "", []edgeworkers.Activation{}, nil)
-				expectActivateVersion(m, edgeworkerID, 1, edgeworkers.ActivationNetworkStaging, "test", fmt.Errorf("oops"))
+				expectActivateVersion(m, edgeworkerID, 1, edgeworkers.ActivationNetworkStaging, "test", "note for edgeworkers activation", fmt.Errorf("oops"))
 			},
 			steps: []resource.TestStep{
 				{
@@ -871,13 +1041,15 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				version := "test"
 				net := edgeworkers.ActivationNetworkStaging
 				activationID := 1
+				note := "note for edgeworkers activation"
+
 				// create - version verification
 				expectListEdgeWorkerVersions(m, edgeworkerID, []edgeworkers.EdgeWorkerVersion{
 					*createStubEdgeworkerVersion(edgeworkerID, version),
 				}, nil).Once()
 
 				expectListActivations(m, edgeworkerID, "", []edgeworkers.Activation{}, nil)
-				expectActivateVersion(m, edgeworkerID, activationID, net, version, nil)
+				expectActivateVersion(m, edgeworkerID, activationID, net, version, note, nil)
 				expectGetActivation(m, edgeworkerID, activationID, net, version, activationStatusPresubmit, nil).Once()
 				expectGetActivation(m, edgeworkerID, activationID, net, version, activationStatusPending, nil).Once()
 				expectGetActivation(m, edgeworkerID, activationID, net, version, activationStatusInProgress, nil).Once()
@@ -895,13 +1067,15 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				version := "test"
 				net := edgeworkers.ActivationNetworkStaging
 				activationID := 1
+				note := "note for edgeworkers activation"
+
 				// create - version verification
 				expectListEdgeWorkerVersions(m, edgeworkerID, []edgeworkers.EdgeWorkerVersion{
 					*createStubEdgeworkerVersion(edgeworkerID, version),
 				}, nil).Once()
 
 				expectListActivations(m, edgeworkerID, "", []edgeworkers.Activation{}, nil)
-				expectActivateVersion(m, edgeworkerID, activationID, net, version, nil)
+				expectActivateVersion(m, edgeworkerID, activationID, net, version, note, nil)
 				expectGetActivation(m, edgeworkerID, activationID, net, version, activationStatusPresubmit, nil).Once()
 				expectGetActivation(m, edgeworkerID, activationID, net, version, activationStatusPending, nil).Once()
 				expectGetActivation(m, edgeworkerID, activationID, net, version, activationStatusInProgress, nil).Once()
@@ -919,6 +1093,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				net := edgeworkers.ActivationNetworkStaging
 				createVersion, updateVersion := "test", "test1"
 				createActivationID := 1
+				note := "note for edgeworkers activation"
 
 				// create + update - version verification
 				expectListEdgeWorkerVersions(m, edgeworkerID, []edgeworkers.EdgeWorkerVersion{
@@ -926,15 +1101,15 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				}, nil).Times(2)
 
 				// create
-				expectFullActivation(m, edgeworkerID, createActivationID, net, createVersion)
+				expectFullActivation(m, edgeworkerID, createActivationID, net, createVersion, note)
 
 				// read + plan + refresh
 				expectFullRead(m, edgeworkerID, createVersion, []edgeworkers.Activation{
-					*createStubActivation(edgeworkerID, createActivationID, net, createVersion, activationStatusComplete, ""),
+					*createStubActivation(edgeworkerID, createActivationID, net, createVersion, activationStatusComplete, "", note),
 				}, []edgeworkers.Deactivation{}, 3)
 
 				// test cleanup - destroy
-				expectFullDeactivation(m, edgeworkerID, 1, net, updateVersion)
+				expectFullDeactivation(m, edgeworkerID, 1, net, updateVersion, note)
 			},
 			steps: []resource.TestStep{
 				{
@@ -943,6 +1118,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "note", "note for edgeworkers activation"),
 					),
 				},
 				{
@@ -956,6 +1132,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				net := edgeworkers.ActivationNetworkStaging
 				version := "test"
 				activationID := 1
+				note := "note for edgeworkers activation"
 
 				// create version verification
 				expectListEdgeWorkerVersions(m, edgeworkerID, []edgeworkers.EdgeWorkerVersion{
@@ -963,15 +1140,15 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				}, nil).Once()
 
 				// create
-				expectFullActivation(m, edgeworkerID, activationID, net, version)
+				expectFullActivation(m, edgeworkerID, activationID, net, version, note)
 
 				// read + plan
 				expectFullRead(m, edgeworkerID, version, []edgeworkers.Activation{
-					*createStubActivation(edgeworkerID, activationID, net, version, activationStatusComplete, ""),
+					*createStubActivation(edgeworkerID, activationID, net, version, activationStatusComplete, "", note),
 				}, []edgeworkers.Deactivation{}, 3)
 
 				// test cleanup - destroy
-				expectFullDeactivation(m, edgeworkerID, 1, net, version)
+				expectFullDeactivation(m, edgeworkerID, 1, net, version, note)
 			},
 			steps: []resource.TestStep{
 				{
@@ -980,6 +1157,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "note", "note for edgeworkers activation"),
 					),
 				},
 				{
@@ -993,6 +1171,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				net := edgeworkers.ActivationNetworkStaging
 				createVersion, updateVersion := "test", "test1"
 				createActivationID := 1
+				note := "note for edgeworkers activation"
 
 				// create + update - version verification
 				expectListEdgeWorkerVersions(m, edgeworkerID, []edgeworkers.EdgeWorkerVersion{
@@ -1001,22 +1180,22 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				}, nil).Once()
 
 				// create
-				expectFullActivation(m, edgeworkerID, createActivationID, net, createVersion)
+				expectFullActivation(m, edgeworkerID, createActivationID, net, createVersion, note)
 
 				// read + plan
 				expectFullRead(m, edgeworkerID, createVersion, []edgeworkers.Activation{
-					*createStubActivation(edgeworkerID, createActivationID, net, createVersion, activationStatusComplete, ""),
+					*createStubActivation(edgeworkerID, createActivationID, net, createVersion, activationStatusComplete, "", note),
 				}, []edgeworkers.Deactivation{}, 2)
 
 				// refresh
 				expectFullRead(m, edgeworkerID, createVersion, []edgeworkers.Activation{
-					*createStubActivation(edgeworkerID, createActivationID, net, createVersion, activationStatusComplete, "2022-01-25T12:30:06Z"),
+					*createStubActivation(edgeworkerID, createActivationID, net, createVersion, activationStatusComplete, "2022-01-25T12:30:06Z", note),
 				}, []edgeworkers.Deactivation{
 					*createStubDeactivation(edgeworkerID, 1, net, createVersion, activationStatusComplete, "2022-01-26T12:30:06Z"),
 				}, 1)
 
 				// test cleanup - destroy
-				expectFullDeactivation(m, edgeworkerID, 1, net, createVersion)
+				expectFullDeactivation(m, edgeworkerID, 1, net, createVersion, note)
 			},
 			steps: []resource.TestStep{
 				{
@@ -1025,6 +1204,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "note", "note for edgeworkers activation"),
 					),
 				},
 				{
@@ -1038,6 +1218,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				net := edgeworkers.ActivationNetworkStaging
 				createVersion, updateVersion := "test", "test1"
 				createActivationID := 1
+				note := "note for edgeworkers activation"
 
 				// create + update - version verification
 				expectListEdgeWorkerVersions(m, edgeworkerID, []edgeworkers.EdgeWorkerVersion{
@@ -1046,11 +1227,11 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				}, nil).Times(2)
 
 				// create
-				expectFullActivation(m, edgeworkerID, createActivationID, net, createVersion)
+				expectFullActivation(m, edgeworkerID, createActivationID, net, createVersion, note)
 
 				// read + plan + refresh
 				activations := []edgeworkers.Activation{
-					*createStubActivation(edgeworkerID, createActivationID, net, createVersion, activationStatusComplete, ""),
+					*createStubActivation(edgeworkerID, createActivationID, net, createVersion, activationStatusComplete, "", note),
 				}
 				expectFullRead(m, edgeworkerID, createVersion, activations, []edgeworkers.Deactivation{}, 3)
 
@@ -1063,7 +1244,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				expectGetDeactivation(m, edgeworkerID, 1, net, createVersion, "", fmt.Errorf("oops")).Once()
 
 				// test cleanup - destroy
-				expectFullDeactivation(m, edgeworkerID, 1, net, updateVersion)
+				expectFullDeactivation(m, edgeworkerID, 1, net, updateVersion, note)
 			},
 			steps: []resource.TestStep{
 				{
@@ -1072,6 +1253,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
+						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "note", "note for edgeworkers activation"),
 					),
 				},
 				{
@@ -1105,14 +1287,14 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				}, nil).Once()
 
 				// create
-				expectFullActivation(m, edgeworkerID, activationID, net, version)
+				expectFullActivation(m, edgeworkerID, activationID, net, version, "")
 
 				expectFullRead(m, edgeworkerID, version, []edgeworkers.Activation{
-					*createStubActivation(edgeworkerID, activationID, net, version, activationStatusComplete, ""),
+					*createStubActivation(edgeworkerID, activationID, net, version, activationStatusComplete, "", ""),
 				}, []edgeworkers.Deactivation{}, 2)
 
 				// test cleanup - destroy
-				expectFullDeactivation(m, edgeworkerID, 1, net, version)
+				expectFullDeactivation(m, edgeworkerID, 1, net, version, "")
 			},
 			steps: []resource.TestStep{
 				{
@@ -1138,14 +1320,14 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				}, nil).Once()
 
 				// create
-				expectFullActivation(m, edgeworkerID, activationID, net, version)
+				expectFullActivation(m, edgeworkerID, activationID, net, version, "")
 
 				expectFullRead(m, edgeworkerID, version, []edgeworkers.Activation{
-					*createStubActivation(edgeworkerID, activationID, net, version, activationStatusComplete, ""),
+					*createStubActivation(edgeworkerID, activationID, net, version, activationStatusComplete, "", ""),
 				}, []edgeworkers.Deactivation{}, 2)
 
 				// test cleanup - destroy
-				expectFullDeactivation(m, edgeworkerID, 1, net, version)
+				expectFullDeactivation(m, edgeworkerID, 1, net, version, "")
 			},
 			steps: []resource.TestStep{
 				{
@@ -1184,19 +1366,20 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 	}
 }
 
-func expectActivateVersion(m *edgeworkers.Mock, edgeworkerID, activationID int, net edgeworkers.ActivationNetwork, version string, e error) *mock.Call {
+func expectActivateVersion(m *edgeworkers.Mock, edgeworkerID, activationID int, net edgeworkers.ActivationNetwork, version, note string, e error) *mock.Call {
 	req := edgeworkers.ActivateVersionRequest{
 		EdgeWorkerID: edgeworkerID,
 		ActivateVersion: edgeworkers.ActivateVersion{
 			Network: net,
 			Version: version,
+			Note:    note,
 		},
 	}
 	if e != nil {
 		return m.On("ActivateVersion", mock.Anything, req).Return(nil, e)
 	}
 
-	return m.On("ActivateVersion", mock.Anything, req).Return(createStubActivation(edgeworkerID, activationID, net, version, activationStatusPresubmit, ""), nil)
+	return m.On("ActivateVersion", mock.Anything, req).Return(createStubActivation(edgeworkerID, activationID, net, version, activationStatusPresubmit, "", note), nil)
 }
 
 func expectGetActivation(m *edgeworkers.Mock, edgeworkerID, activationID int, net edgeworkers.ActivationNetwork, version, status string, e error) *mock.Call {
@@ -1208,7 +1391,7 @@ func expectGetActivation(m *edgeworkers.Mock, edgeworkerID, activationID int, ne
 		return m.On("GetActivation", mock.Anything, req).Return(nil, e)
 	}
 
-	return m.On("GetActivation", mock.Anything, req).Return(createStubActivation(edgeworkerID, activationID, net, version, status, ""), nil)
+	return m.On("GetActivation", mock.Anything, req).Return(createStubActivation(edgeworkerID, activationID, net, version, status, "", ""), nil)
 }
 
 func expectListActivations(m *edgeworkers.Mock, edgeworkerID int, version string, activations []edgeworkers.Activation, e error) *mock.Call {
@@ -1239,12 +1422,13 @@ func expectListDeactivations(m *edgeworkers.Mock, edgeworkerID int, version stri
 	}, nil)
 }
 
-func expectDeactivateVersion(m *edgeworkers.Mock, edgeworkerID, deactivationID int, net edgeworkers.ActivationNetwork, version string, e error) *mock.Call {
+func expectDeactivateVersion(m *edgeworkers.Mock, edgeworkerID, deactivationID int, net edgeworkers.ActivationNetwork, version, note string, e error) *mock.Call {
 	req := edgeworkers.DeactivateVersionRequest{
 		EdgeWorkerID: edgeworkerID,
 		DeactivateVersion: edgeworkers.DeactivateVersion{
 			Network: net,
 			Version: version,
+			Note:    note,
 		},
 	}
 	if e != nil {
@@ -1293,15 +1477,15 @@ func expectListEdgeWorkersID(m *edgeworkers.Mock, e error, ewIDs ...int) *mock.C
 	}, nil)
 }
 
-func expectFullActivation(m *edgeworkers.Mock, edgeworkerID, activationID int, net edgeworkers.ActivationNetwork, version string) {
+func expectFullActivation(m *edgeworkers.Mock, edgeworkerID, activationID int, net edgeworkers.ActivationNetwork, version, note string) {
 	expectListActivations(m, edgeworkerID, "", []edgeworkers.Activation{}, nil).Once()
-	expectActivateVersion(m, edgeworkerID, activationID, net, version, nil).Once()
+	expectActivateVersion(m, edgeworkerID, activationID, net, version, note, nil).Once()
 	expectGetActivation(m, edgeworkerID, activationID, net, version, activationStatusComplete, nil).Once()
 }
 
-func expectFullUpdate(m *edgeworkers.Mock, edgeworkerID, activationID int, net edgeworkers.ActivationNetwork, version, listDeactivationsVersion string, activations []edgeworkers.Activation) {
+func expectFullUpdate(m *edgeworkers.Mock, edgeworkerID, activationID int, net edgeworkers.ActivationNetwork, version, listDeactivationsVersion, note string, activations []edgeworkers.Activation) {
 	expectListActivations(m, edgeworkerID, "", activations, nil).Once()
-	expectActivateVersion(m, edgeworkerID, activationID, net, version, nil).Once()
+	expectActivateVersion(m, edgeworkerID, activationID, net, version, note, nil).Once()
 	if listDeactivationsVersion != "" {
 		expectListDeactivations(m, edgeworkerID, listDeactivationsVersion, []edgeworkers.Deactivation{}, nil).Once()
 	}
@@ -1313,12 +1497,12 @@ func expectFullRead(m *edgeworkers.Mock, edgeworkerID int, version string, acts 
 	expectListDeactivations(m, edgeworkerID, version, deacts, nil).Times(times)
 }
 
-func expectFullDeactivation(m *edgeworkers.Mock, edgeworkerID, deactivationID int, net edgeworkers.ActivationNetwork, version string) {
-	expectDeactivateVersion(m, edgeworkerID, deactivationID, net, version, nil).Once()
+func expectFullDeactivation(m *edgeworkers.Mock, edgeworkerID, deactivationID int, net edgeworkers.ActivationNetwork, version, note string) {
+	expectDeactivateVersion(m, edgeworkerID, deactivationID, net, version, note, nil).Once()
 	expectGetDeactivation(m, edgeworkerID, deactivationID, net, version, activationStatusComplete, nil).Once()
 }
 
-func createStubActivation(edgeworkerID, activationID int, net edgeworkers.ActivationNetwork, version, status, time string) *edgeworkers.Activation {
+func createStubActivation(edgeworkerID, activationID int, net edgeworkers.ActivationNetwork, version, status, time, note string) *edgeworkers.Activation {
 	if time == "" {
 		time = "2022-01-25T12:30:06Z"
 	}
@@ -1332,6 +1516,7 @@ func createStubActivation(edgeworkerID, activationID int, net edgeworkers.Activa
 		Network:          string(net),
 		Status:           status,
 		Version:          version,
+		Note:             note,
 	}
 }
 

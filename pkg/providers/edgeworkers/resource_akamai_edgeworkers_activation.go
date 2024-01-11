@@ -67,6 +67,12 @@ func resourceEdgeworkersActivationSchema() map[string]*schema.Schema {
 			Computed:    true,
 			Description: "A unique identifier of the activation",
 		},
+		"note": {
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "Assigns a log message to the activation request",
+			DiffSuppressFunc: suppressNoteFieldForEdgeWorkersActivation,
+		},
 		"timeouts": {
 			Type:        schema.TypeList,
 			Optional:    true,
@@ -154,6 +160,10 @@ func resourceEdgeworkersActivationRead(ctx context.Context, rd *schema.ResourceD
 	if err := rd.Set("activation_id", activation.ActivationID); err != nil {
 		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
+
+	if err := rd.Set("note", activation.Note); err != nil {
+		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
+	}
 	return nil
 }
 
@@ -196,11 +206,17 @@ func resourceEdgeworkersActivationDelete(ctx context.Context, rd *schema.Resourc
 		return diag.FromErr(err)
 	}
 
+	note, err := tf.GetStringValue("note", rd)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+
 	deactivation, err := client.DeactivateVersion(ctx, edgeworkers.DeactivateVersionRequest{
 		EdgeWorkerID: edgeworkerID,
 		DeactivateVersion: edgeworkers.DeactivateVersion{
 			Version: version,
 			Network: edgeworkers.ActivationNetwork(network),
+			Note:    note,
 		},
 	})
 	if err != nil {
@@ -306,11 +322,17 @@ func upsertActivation(ctx context.Context, rd *schema.ResourceData, m interface{
 		return resourceEdgeworkersActivationRead(ctx, rd, m)
 	}
 
+	note, err := tf.GetStringValue("note", rd)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+
 	activation, err := client.ActivateVersion(ctx, edgeworkers.ActivateVersionRequest{
 		EdgeWorkerID: edgeworkerID,
 		ActivateVersion: edgeworkers.ActivateVersion{
 			Network: edgeworkers.ActivationNetwork(network),
 			Version: version,
+			Note:    note,
 		},
 	})
 
@@ -573,4 +595,11 @@ func checkEdgeworkerExistsOnDiff(ctx context.Context, rd *schema.ResourceDiff, m
 	}
 
 	return fmt.Errorf("%w: edgeworker with id=%d was not found", ErrEdgeworkerActivation, edgeworkerID)
+}
+
+func suppressNoteFieldForEdgeWorkersActivation(_, oldValue, newValue string, d *schema.ResourceData) bool {
+	if oldValue != newValue && d.HasChanges("version", "network") {
+		return false
+	}
+	return true
 }

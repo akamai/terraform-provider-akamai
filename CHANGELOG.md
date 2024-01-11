@@ -47,6 +47,9 @@
   * Added data sources:
     * `akamai_gtm_resources` - reads information for a specific GTM resources under given domain
 
+* Edgeworkers
+  * Added `note` attribute to `resource_akamai_edgeworkers_activation` resource
+
 * PAPI
   * Added `version_notes` attribute to `akamai_property` resource
 

@@ -3,8 +3,8 @@ provider "akamai" {
 }
 
 resource "akamai_edgeworkers_activation" "test" {
-  edgeworker_id = 4321
+  edgeworker_id = 1234
   network       = "STAGING"
-  version       = "test"
-  note          = "note for edgeworkers activation"
+  version       = "test1"
+  note          = "note for edgeworkers activation updated"
 }
