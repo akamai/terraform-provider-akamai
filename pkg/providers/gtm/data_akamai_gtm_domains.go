@@ -13,7 +13,6 @@ import (
 )
 
 var _ datasource.DataSource = &domainsDataSource{}
-
 var _ datasource.DataSourceWithConfigure = &domainsDataSource{}
 
 // NewGTMDomainsDataSource returns a new GTM domains data source
