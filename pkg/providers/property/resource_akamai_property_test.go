@@ -162,14 +162,14 @@ func TestResProperty(t *testing.T) {
 	GetVersionResources := func(propertyID, contractID, groupID string, version int) BehaviorFunc {
 		return func(state *TestState) {
 			ExpectGetPropertyVersionHostnames(state.Client, propertyID, groupID, contractID, version, &state.Hostnames)
-			ExpectGetRuleTree(state.Client, propertyID, groupID, contractID, version, &state.Rules, &state.RuleFormat)
+			ExpectGetRuleTree(state.Client, propertyID, groupID, contractID, version, &state.Rules, &state.RuleFormat, nil, nil)
 		}
 	}
 
 	GetVersionResourcesDrift := func(propertyID, contractID, groupID string, version int, rules papi.RulesUpdate) BehaviorFunc {
 		return func(state *TestState) {
 			ExpectGetPropertyVersionHostnames(state.Client, propertyID, groupID, contractID, version, &state.Hostnames)
-			ExpectGetRuleTree(state.Client, propertyID, groupID, contractID, version, &rules, &state.RuleFormat)
+			ExpectGetRuleTree(state.Client, propertyID, groupID, contractID, version, &rules, &state.RuleFormat, nil, nil)
 		}
 	}
 
@@ -1042,6 +1042,93 @@ func TestResProperty(t *testing.T) {
 
 			client.AssertExpectations(t)
 		})
+		t.Run("validation warning when creating property with rules tree", func(t *testing.T) {
+			client := &papi.Mock{}
+			client.Test(T{t})
+			ExpectCreateProperty(
+				client, "test_property", "grp_0",
+				"ctr_0", "prd_0", "prp_1",
+			)
+			rules := papi.Rules{
+				Behaviors: []papi.RuleBehavior{
+					{
+						Name: "origin",
+						Options: papi.RuleOptionsMap{
+							"hostname":  "1.2.3.4",
+							"httpPort":  float64(80),
+							"httpsPort": float64(443),
+						},
+					},
+				},
+			}
+			var req = papi.UpdateRulesRequest{
+				PropertyID:      "prp_1",
+				ContractID:      "ctr_0",
+				GroupID:         "grp_0",
+				PropertyVersion: 1,
+				Rules:           papi.RulesUpdate{Rules: rules},
+				ValidateRules:   true,
+			}
+			warning := papi.RuleWarnings{
+				Type:          "https://problems.luna.akamaiapis.net/papi/v0/validation/validation_message.ip_address_origin",
+				ErrorLocation: "#/rules/behaviors/1",
+				Detail:        "Using an IP address for the `Origin Server` is not recommended. IP addresses may be changed or reassigned without notice which can severely impact your property or cause a DoS. Please use a properly formatted hostname instead.",
+			}
+			client.On("UpdateRuleTree", AnyCTX, req).Return(&papi.UpdateRulesResponse{
+				AccountID:       "",
+				ContractID:      "ctr_0",
+				Comments:        "",
+				GroupID:         "grp_0",
+				PropertyID:      "prp_1",
+				PropertyVersion: 1,
+				Etag:            "",
+				RuleFormat:      "",
+				Rules:           rules,
+				Errors:          nil,
+				Warnings:        []papi.RuleWarnings{warning},
+			}, nil).Once()
+			ExpectGetProperty(
+				client, "prp_1", "grp_0", "ctr_0",
+				&papi.Property{
+					PropertyID: "prp_1", GroupID: "grp_0", ContractID: "ctr_0", LatestVersion: 1,
+					PropertyName: "test_property",
+				},
+			)
+
+			ExpectGetPropertyVersionHostnames(
+				client, "prp_1", "grp_0", "ctr_0", 1,
+				&[]papi.Hostname{},
+			).Times(2)
+			ruleFormat := ""
+			ExpectGetRuleTree(
+				client, "prp_1", "grp_0", "ctr_0", 1,
+				&papi.RulesUpdate{
+					Rules: rules,
+				}, &ruleFormat, nil, []*papi.Error{
+					{
+						Type:          "https://problems.luna.akamaiapis.net/papi/v0/validation/validation_message.ip_address_origin",
+						ErrorLocation: "#/rules/behaviors/1",
+						Detail:        "Using an IP address for the `Origin Server` is not recommended. IP addresses may be changed or reassigned without notice which can severely impact your property or cause a DoS. Please use a properly formatted hostname instead.",
+					},
+				})
+			ExpectGetPropertyVersion(client, "prp_1", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive)
+
+			ExpectRemoveProperty(client, "prp_1", "ctr_0", "grp_0")
+			useClient(client, nil, func() {
+				resource.UnitTest(t, resource.TestCase{
+					ProtoV5ProviderFactories: testAccProviders,
+					Steps: []resource.TestStep{
+						{
+							Config: testutils.LoadFixtureString(t, "testdata/TestResProperty/property_with_validation_warning_for_rules.tf"),
+							Check: resource.ComposeAggregateTestCheckFunc(
+								resource.TestCheckResourceAttr("akamai_property.test", "rule_warnings.0.detail", "Using an IP address for the `Origin Server` is not recommended. IP addresses may be changed or reassigned without notice which can severely impact your property or cause a DoS. Please use a properly formatted hostname instead.")),
+						},
+					},
+				})
+			})
+
+			client.AssertExpectations(t)
+		})
 
 		t.Run("validation - when updating a property hostnames to empty it should return error", func(t *testing.T) {
 			client := &papi.Mock{}
@@ -1092,8 +1179,7 @@ func TestResProperty(t *testing.T) {
 			ruleFormat := ""
 			ExpectGetRuleTree(
 				client, "prp_0", "grp_0", "ctr_0", 1,
-				&papi.RulesUpdate{}, &ruleFormat,
-			)
+				&papi.RulesUpdate{}, &ruleFormat, nil, nil)
 
 			ExpectRemoveProperty(client, "prp_0", "ctr_0", "grp_0")
 

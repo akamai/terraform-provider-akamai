@@ -196,6 +196,12 @@ func resourceProperty() *schema.Resource {
 				Computed: true,
 				Elem:     papiError(),
 			},
+			"rule_warnings": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Elem:        papiError(),
+				Description: "Rule validation warnings",
+			},
 		},
 	}
 }
@@ -557,14 +563,20 @@ func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interfa
 			return diag.FromErr(fmt.Errorf("error marshaling API error: %s", err))
 		}
 		logger.Errorf("property has rule errors %s", msg)
+	} else {
+		if err := d.Set("rule_warnings", nil); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
+		}
 	}
 
 	if len(ruleWarnings) > 0 {
-		msg, err := json.MarshalIndent(papiErrorsToList(ruleWarnings), "", "\t")
-		if err != nil {
-			return diag.FromErr(fmt.Errorf("error marshaling API warnings: %s", err))
+		if err := d.Set("rule_warnings", papiErrorsToList(ruleWarnings)); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 		}
-		logger.Warnf("property has rule warnings %s", msg)
+	} else {
+		if err := d.Set("rule_warnings", nil); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
+		}
 	}
 
 	res, err := fetchPropertyVersion(ctx, client, propertyID, groupID, contractID, v)

@@ -54,8 +54,7 @@
   * Added `note` attribute to `resource_akamai_edgeworkers_activation` resource
 
 * PAPI
-  * Added `version_notes` attribute to `akamai_property` resource
-
+  * Added `version_notes` and `rule_warnings` attributes to `akamai_property` resource
 
 * GTM
     * Added data sources:
