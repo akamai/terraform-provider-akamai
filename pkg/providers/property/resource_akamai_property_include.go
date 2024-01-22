@@ -57,10 +57,11 @@ func resourcePropertyInclude() *schema.Resource {
 				StateFunc:   addPrefixToState("prd_"),
 			},
 			"name": {
-				Type:        schema.TypeString,
-				Required:    true,
-				ForceNew:    true,
-				Description: "A descriptive name for the include",
+				Type:             schema.TypeString,
+				Required:         true,
+				ForceNew:         true,
+				ValidateDiagFunc: validateNameWithBound(3),
+				Description:      "A descriptive name for the include",
 			},
 			"rule_format": {
 				Type:             schema.TypeString,

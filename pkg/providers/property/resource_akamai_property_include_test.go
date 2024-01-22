@@ -5,12 +5,15 @@ import (
 	"fmt"
 	"path"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/hapi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/test"
+	"github.com/hashicorp/go-cty/cty"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -296,7 +299,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 				includeID:   includeID,
 				ruleFormat:  "v2022-06-28",
 				contractID:  "ctr_123",
-				includeName: "test include",
+				includeName: "test_include",
 				includeType: papi.IncludeTypeMicroServices,
 			},
 			init: func(m *papi.Mock, testData *testData) {
@@ -311,7 +314,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_property_include.test", "group_id", "grp_123"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "contract_id", "ctr_123"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "product_id", "prd_test"),
-						resource.TestCheckResourceAttr("akamai_property_include.test", "name", "test include"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "name", "test_include"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_format", "v2022-06-28"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "type", "MICROSERVICES"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "latest_version", "1"),
@@ -332,7 +335,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 				includeID:   includeID,
 				ruleFormat:  "v2022-06-28",
 				contractID:  "ctr_123",
-				includeName: "test include",
+				includeName: "test_include",
 				includeType: papi.IncludeTypeMicroServices,
 				rules:       simpleRules,
 			},
@@ -348,7 +351,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_property_include.test", "group_id", "grp_123"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "contract_id", "ctr_123"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "product_id", "prd_test"),
-						resource.TestCheckResourceAttr("akamai_property_include.test", "name", "test include"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "name", "test_include"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_format", "v2022-06-28"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "type", "MICROSERVICES"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "latest_version", "1"),
@@ -369,7 +372,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 				includeID:   includeID,
 				ruleFormat:  "v2022-06-28",
 				contractID:  "ctr_123",
-				includeName: "test include",
+				includeName: "test_include",
 				includeType: papi.IncludeTypeMicroServices,
 				rules:       simpleRulesWithComment,
 			},
@@ -385,7 +388,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_property_include.test", "group_id", "grp_123"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "contract_id", "ctr_123"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "product_id", "prd_test"),
-						resource.TestCheckResourceAttr("akamai_property_include.test", "name", "test include"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "name", "test_include"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_format", "v2022-06-28"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "type", "MICROSERVICES"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "latest_version", "1"),
@@ -406,7 +409,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 				includeID:   includeID,
 				ruleFormat:  "v2022-06-28",
 				contractID:  "ctr_123",
-				includeName: "test include",
+				includeName: "test_include",
 				includeType: papi.IncludeTypeMicroServices,
 				rules:       simpleRules,
 			},
@@ -423,7 +426,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_property_include.test", "group_id", "grp_123"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "contract_id", "ctr_123"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "product_id", "prd_test"),
-						resource.TestCheckResourceAttr("akamai_property_include.test", "name", "test include"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "name", "test_include"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_format", "v2022-06-28"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "type", "MICROSERVICES"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "latest_version", "1"),
@@ -443,7 +446,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 				includeID:   includeID,
 				ruleFormat:  "v2022-06-28",
 				contractID:  "ctr_123",
-				includeName: "test include",
+				includeName: "test_include",
 				includeType: papi.IncludeTypeMicroServices,
 				rules:       simpleRules,
 			},
@@ -460,7 +463,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_property_include.test", "group_id", "grp_123"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "contract_id", "ctr_123"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "product_id", "prd_test"),
-						resource.TestCheckResourceAttr("akamai_property_include.test", "name", "test include"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "name", "test_include"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_format", "v2022-06-28"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "type", "MICROSERVICES"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "latest_version", "1"),
@@ -481,7 +484,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 				includeID:   includeID,
 				ruleFormat:  "v2022-06-28",
 				contractID:  "ctr_123",
-				includeName: "test include",
+				includeName: "test_include",
 				includeType: papi.IncludeTypeMicroServices,
 				rules:       simpleRules,
 			},
@@ -498,7 +501,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_property_include.test", "group_id", "grp_123"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "contract_id", "ctr_123"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "product_id", "prd_test"),
-						resource.TestCheckResourceAttr("akamai_property_include.test", "name", "test include"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "name", "test_include"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_format", "v2022-06-28"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "type", "MICROSERVICES"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "latest_version", "1"),
@@ -519,7 +522,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 				includeID:   includeID,
 				ruleFormat:  "v2022-06-28",
 				contractID:  "ctr_123",
-				includeName: "test include",
+				includeName: "test_include",
 				includeType: papi.IncludeTypeMicroServices,
 				rules:       simpleRules,
 			},
@@ -541,7 +544,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_property_include.test", "group_id", "grp_123"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "contract_id", "ctr_123"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "product_id", "prd_test"),
-						resource.TestCheckResourceAttr("akamai_property_include.test", "name", "test include"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "name", "test_include"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_format", "v2022-06-28"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "type", "MICROSERVICES"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "latest_version", "1"),
@@ -558,7 +561,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_property_include.test", "group_id", "grp_123"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "contract_id", "ctr_123"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "product_id", "prd_test"),
-						resource.TestCheckResourceAttr("akamai_property_include.test", "name", "test include"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "name", "test_include"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_format", "v2022-06-28"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "type", "MICROSERVICES"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "latest_version", "1"),
@@ -579,7 +582,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 				includeID:   includeID,
 				ruleFormat:  "v2022-06-28",
 				contractID:  "ctr_123",
-				includeName: "test include",
+				includeName: "test_include",
 				includeType: papi.IncludeTypeMicroServices,
 				rules:       simpleRules,
 			},
@@ -601,7 +604,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_property_include.test", "group_id", "grp_123"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "contract_id", "ctr_123"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "product_id", "prd_test"),
-						resource.TestCheckResourceAttr("akamai_property_include.test", "name", "test include"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "name", "test_include"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_format", "v2022-06-28"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "type", "MICROSERVICES"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "latest_version", "1"),
@@ -618,7 +621,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_property_include.test", "group_id", "grp_123"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "contract_id", "ctr_123"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "product_id", "prd_test"),
-						resource.TestCheckResourceAttr("akamai_property_include.test", "name", "test include"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "name", "test_include"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_format", "v2022-06-28"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "type", "MICROSERVICES"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "latest_version", "1"),
@@ -638,7 +641,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 				includeID:        includeID,
 				ruleFormat:       "v2022-06-28",
 				contractID:       "ctr_123",
-				includeName:      "test include",
+				includeName:      "test_include",
 				includeType:      papi.IncludeTypeMicroServices,
 				stagingStatus:    papi.VersionStatusInactive,
 				productionStatus: papi.VersionStatusInactive,
@@ -663,7 +666,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_property_include.test", "group_id", "grp_123"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "contract_id", "ctr_123"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "product_id", "prd_test"),
-						resource.TestCheckResourceAttr("akamai_property_include.test", "name", "test include"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "name", "test_include"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_format", "v2022-06-28"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "type", "MICROSERVICES"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "latest_version", "1"),
@@ -680,7 +683,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_property_include.test", "group_id", "grp_123"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "contract_id", "ctr_123"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "product_id", "prd_test"),
-						resource.TestCheckResourceAttr("akamai_property_include.test", "name", "test include"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "name", "test_include"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_format", "v2022-06-28"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "type", "MICROSERVICES"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "latest_version", "1"),
@@ -700,7 +703,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 				includeID:        includeID,
 				ruleFormat:       "v2022-06-28",
 				contractID:       "ctr_123",
-				includeName:      "test include",
+				includeName:      "test_include",
 				includeType:      papi.IncludeTypeMicroServices,
 				stagingStatus:    papi.VersionStatusInactive,
 				productionStatus: papi.VersionStatusInactive,
@@ -730,7 +733,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_property_include.test", "group_id", "grp_123"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "contract_id", "ctr_123"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "product_id", "prd_test"),
-						resource.TestCheckResourceAttr("akamai_property_include.test", "name", "test include"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "name", "test_include"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_format", "v2022-06-28"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "type", "MICROSERVICES"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "latest_version", "1"),
@@ -747,7 +750,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_property_include.test", "group_id", "grp_123"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "contract_id", "ctr_123"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "product_id", "prd_test"),
-						resource.TestCheckResourceAttr("akamai_property_include.test", "name", "test include"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "name", "test_include"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_format", "v2022-06-28"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "type", "MICROSERVICES"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "latest_version", "2"),
@@ -767,7 +770,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 				includeID:        includeID,
 				ruleFormat:       "v2022-06-28",
 				contractID:       "ctr_123",
-				includeName:      "test include",
+				includeName:      "test_include",
 				includeType:      papi.IncludeTypeMicroServices,
 				stagingStatus:    papi.VersionStatusInactive,
 				productionStatus: papi.VersionStatusInactive,
@@ -836,7 +839,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 				includeID:   includeID,
 				ruleFormat:  "v2023-01-05",
 				contractID:  "ctr_123",
-				includeName: "test include",
+				includeName: "test_include",
 				includeType: papi.IncludeTypeMicroServices,
 				rules:       nullRules,
 			},
@@ -849,7 +852,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 				{
 					Config: testutils.LoadFixtureString(t, "%s/property_include_null_cpcode.tf", workdir),
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_property_include.test", "name", "test include"),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "name", "test_include"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "rules", testutils.LoadFixtureString(t, "%s/expected/rules_cpcode_null.json", workdir)),
 					),
 				},
@@ -863,7 +866,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 				includeID:   includeID,
 				ruleFormat:  "v2022-06-28",
 				contractID:  "ctr_123",
-				includeName: "test include",
+				includeName: "test_include",
 				includeType: papi.IncludeTypeMicroServices,
 				rules:       simpleRules,
 			},
@@ -893,7 +896,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 				includeID:   includeID,
 				ruleFormat:  "v2022-06-28",
 				contractID:  "ctr_123",
-				includeName: "test include",
+				includeName: "test_include",
 				includeType: papi.IncludeTypeMicroServices,
 				rules:       simpleRules,
 			},
@@ -975,6 +978,70 @@ func TestResourcePropertyInclude(t *testing.T) {
 				})
 			})
 			client.AssertExpectations(t)
+		})
+	}
+}
+
+func TestValidatePropertyIncludeName(t *testing.T) {
+	invalidNameCharacters := diag.Errorf("a name must only contain letters, numbers, and these characters: . _ -")
+	invalidNameLength := diag.Errorf("a name must be longer than 2 characters and shorter than 86 characters")
+
+	tests := map[string]struct {
+		propertyName   string
+		expectedReturn diag.Diagnostics
+	}{
+		"name contains only valid characters": {
+			propertyName:   "Test_Name.With_Valid-Chars.123",
+			expectedReturn: nil,
+		},
+		"name contains only numbers": {
+			propertyName:   "123",
+			expectedReturn: nil,
+		},
+		"name contains only letters": {
+			propertyName:   "TestName",
+			expectedReturn: nil,
+		},
+		"name contains invalid char !": {
+			propertyName:   "Invalid_Char_!",
+			expectedReturn: invalidNameCharacters,
+		},
+		"name contains invalid char @": {
+			propertyName:   "@_Invalid_Char",
+			expectedReturn: invalidNameCharacters,
+		},
+		"name contains invalid spaces": {
+			propertyName:   "test name",
+			expectedReturn: invalidNameCharacters,
+		},
+		"name too long (86 chars)": {
+			propertyName:   strings.Repeat("a", 86),
+			expectedReturn: invalidNameLength,
+		},
+		"name of max length (85 chars)": {
+			propertyName:   strings.Repeat("a", 85),
+			expectedReturn: nil,
+		},
+		"name too short (2 chars)": {
+			propertyName:   strings.Repeat("a", 2),
+			expectedReturn: invalidNameLength,
+		},
+		"name of min length (3 char)": {
+			propertyName:   strings.Repeat("a", 3),
+			expectedReturn: nil,
+		},
+		"name empty": {
+			propertyName:   "",
+			expectedReturn: invalidNameLength,
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			ret := validateNameWithBound(3)(test.propertyName, cty.Path{})
+
+			assert.Equal(t, test.expectedReturn, ret)
+
 		})
 	}
 }

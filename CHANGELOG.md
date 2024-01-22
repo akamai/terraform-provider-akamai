@@ -43,6 +43,9 @@
 
 #### FEATURES/ENHANCEMENTS:
 
+* PAPI
+ * Added `name` validation for `akamai_property_include` resource
+
 * GTM
   * Added data sources:
     * `akamai_gtm_resources` - reads information for a specific GTM resources under given domain

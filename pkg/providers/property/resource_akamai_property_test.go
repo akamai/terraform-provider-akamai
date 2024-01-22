@@ -13,6 +13,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
+	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/assert"
@@ -845,7 +846,7 @@ func TestResProperty(t *testing.T) {
 		t.Run("Schema Configuration Error: product_id not given", assertConfigError(t, "product_id not given", `Missing required argument`))
 		t.Run("Schema Configuration Error: invalid json rules", assertConfigError(t, "invalid json rules", `rules are not valid JSON`))
 		t.Run("Schema Configuration Error: invalid name given", assertConfigError(t, "invalid name given", `a name must only contain letters, numbers, and these characters: . _ -`))
-		t.Run("Schema Configuration Error: name given too long", assertConfigError(t, "name given too long", `a name must be shorter than 86 characters`))
+		t.Run("Schema Configuration Error: name given too long", assertConfigError(t, "name given too long", `a name must be longer than 0 characters and shorter than 86 characters`))
 
 		// Test Lifecycle
 
@@ -1747,7 +1748,7 @@ func TestPropertyResource_versionNotesLifecycle(t *testing.T) {
 
 func TestValidatePropertyName(t *testing.T) {
 	invalidNameCharacters := diag.Errorf("a name must only contain letters, numbers, and these characters: . _ -")
-	invalidNameLength := diag.Errorf("a name must be shorter than 86 characters")
+	invalidNameLength := diag.Errorf("a name must be longer than 0 characters and shorter than 86 characters")
 
 	tests := map[string]struct {
 		propertyName   string
@@ -1791,13 +1792,13 @@ func TestValidatePropertyName(t *testing.T) {
 		},
 		"name empty": {
 			propertyName:   "",
-			expectedReturn: invalidNameCharacters,
+			expectedReturn: invalidNameLength,
 		},
 	}
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			ret := validatePropertyName(test.propertyName, nil)
+			ret := validateNameWithBound(1)(test.propertyName, cty.Path{})
 
 			assert.Equal(t, test.expectedReturn, ret)
 

@@ -10,17 +10,16 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/apex/log"
-	"github.com/hashicorp/go-cty/cty"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
+	"github.com/apex/log"
+	"github.com/hashicorp/go-cty/cty"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func resourceProperty() *schema.Resource {
@@ -74,7 +73,7 @@ func resourceProperty() *schema.Resource {
 				Type:             schema.TypeString,
 				Required:         true,
 				ForceNew:         true,
-				ValidateDiagFunc: validatePropertyName,
+				ValidateDiagFunc: validateNameWithBound(1),
 				Description:      "Name to give to the Property (must be unique)",
 			},
 			"group_id": {
@@ -212,18 +211,20 @@ var rulesStateFunc = func(v interface{}) string {
 // isValidPropertyName is a function that validates if given string contains only letters, numbers, and these characters: '.', '_', '-'.
 var isValidPropertyName = regexp.MustCompile(`^[A-Za-z0-9.\-_]+$`).MatchString
 
-// validatePropertyName validates if name property contains valid characters.
-func validatePropertyName(v interface{}, _ cty.Path) diag.Diagnostics {
-	name := v.(string)
-	maxPropertyNameLength := 85
+// validateNameWithBound validates if name property contains valid characters and validates length.
+func validateNameWithBound(lowerBound int) func(v interface{}, _ cty.Path) diag.Diagnostics {
+	return func(v interface{}, _ cty.Path) diag.Diagnostics {
+		name := v.(string)
+		maxPropertyNameLength := 85
 
-	if len(name) > maxPropertyNameLength {
-		return diag.Errorf("a name must be shorter than %d characters", maxPropertyNameLength+1)
+		if len(name) > maxPropertyNameLength || len(name) < lowerBound {
+			return diag.Errorf("a name must be longer than %d characters and shorter than %d characters", lowerBound-1, maxPropertyNameLength+1)
+		}
+		if !isValidPropertyName(name) {
+			return diag.Errorf("a name must only contain letters, numbers, and these characters: . _ -")
+		}
+		return nil
 	}
-	if !isValidPropertyName(name) {
-		return diag.Errorf("a name must only contain letters, numbers, and these characters: . _ -")
-	}
-	return nil
 }
 
 // ErrCalculatingHostnamesHash is used when calculating hash value for set of hostnames failed.
