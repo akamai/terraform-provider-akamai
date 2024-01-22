@@ -32,20 +32,20 @@ var cloudletIDs = map[string]int{
 	"MMA": 11,
 }
 
-func (v2 v2PolicyStrategy) createPolicy(ctx context.Context, cloudletName, cloudletCode string, groupID int64) (int64, error, error) {
+func (strategy v2PolicyStrategy) createPolicy(ctx context.Context, cloudletName, cloudletCode string, groupID int64) (int64, error, error) {
 	createPolicyReq := cloudlets.CreatePolicyRequest{
 		Name:       cloudletName,
 		CloudletID: int64(cloudletIDs[cloudletCode]),
 		GroupID:    groupID,
 	}
-	createPolicyResp, err := v2.client.CreatePolicy(ctx, createPolicyReq)
+	createPolicyResp, err := strategy.client.CreatePolicy(ctx, createPolicyReq)
 	if err != nil {
 		return 0, err, nil
 	}
 	return createPolicyResp.PolicyID, nil, nil
 }
 
-func (v2 v2PolicyStrategy) updatePolicyVersion(ctx context.Context, d *schema.ResourceData, policyID, version int64, description, matchRulesJSON string, newVersionRequired bool) (error, error) {
+func (strategy v2PolicyStrategy) updatePolicyVersion(ctx context.Context, d *schema.ResourceData, policyID, version int64, description, matchRulesJSON string, newVersionRequired bool) (error, error) {
 	matchRules := make(cloudlets.MatchRules, 0)
 	if matchRulesJSON != "" {
 		if err := json.Unmarshal([]byte(matchRulesJSON), &matchRules); err != nil {
@@ -67,7 +67,7 @@ func (v2 v2PolicyStrategy) updatePolicyVersion(ctx context.Context, d *schema.Re
 			},
 			PolicyID: policyID,
 		}
-		createVersionResp, err := v2.client.CreatePolicyVersion(ctx, createVersionRequest)
+		createVersionResp, err := strategy.client.CreatePolicyVersion(ctx, createVersionRequest)
 		if err != nil {
 			return err, nil
 		}
@@ -87,14 +87,14 @@ func (v2 v2PolicyStrategy) updatePolicyVersion(ctx context.Context, d *schema.Re
 		Version:  version,
 	}
 
-	updateVersionResp, err := v2.client.UpdatePolicyVersion(ctx, updateVersionRequest)
+	updateVersionResp, err := strategy.client.UpdatePolicyVersion(ctx, updateVersionRequest)
 	if err != nil {
 		return nil, err
 	}
 	return setWarnings(d, updateVersionResp.Warnings), nil
 }
 
-func (v2 v2PolicyStrategy) updatePolicy(ctx context.Context, policyID, groupID int64, cloudletName string) error {
+func (strategy v2PolicyStrategy) updatePolicy(ctx context.Context, policyID, groupID int64, cloudletName string) error {
 	updatePolicyReq := cloudlets.UpdatePolicyRequest{
 		UpdatePolicy: cloudlets.UpdatePolicy{
 			Name:    cloudletName,
@@ -102,12 +102,12 @@ func (v2 v2PolicyStrategy) updatePolicy(ctx context.Context, policyID, groupID i
 		},
 		PolicyID: policyID,
 	}
-	_, err := v2.client.UpdatePolicy(ctx, updatePolicyReq)
+	_, err := strategy.client.UpdatePolicy(ctx, updatePolicyReq)
 	return err
 }
 
-func (v2 v2PolicyStrategy) newPolicyVersionIsNeeded(ctx context.Context, policyID, version int64) (bool, error) {
-	versionResp, err := v2.client.GetPolicyVersion(ctx, cloudlets.GetPolicyVersionRequest{
+func (strategy v2PolicyStrategy) newPolicyVersionIsNeeded(ctx context.Context, policyID, version int64) (bool, error) {
+	versionResp, err := strategy.client.GetPolicyVersion(ctx, cloudlets.GetPolicyVersionRequest{
 		PolicyID:  policyID,
 		Version:   version,
 		OmitRules: true,
@@ -119,13 +119,13 @@ func (v2 v2PolicyStrategy) newPolicyVersionIsNeeded(ctx context.Context, policyI
 	return len(versionResp.Activations) > 0, nil
 }
 
-func (v2 v2PolicyStrategy) readPolicy(ctx context.Context, policyID int64, version *int64) (map[string]any, error) {
-	policy, err := v2.client.GetPolicy(ctx, cloudlets.GetPolicyRequest{PolicyID: policyID})
+func (strategy v2PolicyStrategy) readPolicy(ctx context.Context, policyID int64, version *int64) (map[string]any, error) {
+	policy, err := strategy.client.GetPolicy(ctx, cloudlets.GetPolicyRequest{PolicyID: policyID})
 	if err != nil {
 		return nil, err
 	}
 
-	policyVersion, err := v2.client.GetPolicyVersion(ctx, cloudlets.GetPolicyVersionRequest{
+	policyVersion, err := strategy.client.GetPolicyVersion(ctx, cloudlets.GetPolicyVersionRequest{
 		PolicyID: policyID,
 		Version:  *version,
 	})
@@ -155,13 +155,13 @@ func (v2 v2PolicyStrategy) readPolicy(ctx context.Context, policyID int64, versi
 
 }
 
-func (v2 v2PolicyStrategy) deletePolicy(ctx context.Context, policyID int64) error {
-	policyVersions, err := getAllV2PolicyVersions(ctx, policyID, v2.client)
+func (strategy v2PolicyStrategy) deletePolicy(ctx context.Context, policyID int64) error {
+	policyVersions, err := getAllV2PolicyVersions(ctx, policyID, strategy.client)
 	if err != nil {
 		return err
 	}
 	for _, ver := range policyVersions {
-		if err := v2.client.DeletePolicyVersion(ctx, cloudlets.DeletePolicyVersionRequest{
+		if err := strategy.client.DeletePolicyVersion(ctx, cloudlets.DeletePolicyVersionRequest{
 			PolicyID: policyID,
 			Version:  ver.Version,
 		}); err != nil {
@@ -173,7 +173,7 @@ func (v2 v2PolicyStrategy) deletePolicy(ctx context.Context, policyID int64) err
 	for activationPending {
 		select {
 		case <-time.After(DeletionPolicyPollInterval):
-			if err = v2.client.RemovePolicy(ctx, cloudlets.RemovePolicyRequest{PolicyID: policyID}); err != nil {
+			if err = strategy.client.RemovePolicy(ctx, cloudlets.RemovePolicyRequest{PolicyID: policyID}); err != nil {
 				statusErr := new(cloudlets.Error)
 				// if error does not contain information about pending activations, return it as it is not expected
 				if errors.As(err, &statusErr) && !strings.Contains(statusErr.Detail, "Unable to delete policy because an activation for this policy is still pending") {

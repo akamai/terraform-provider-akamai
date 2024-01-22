@@ -102,7 +102,11 @@
 
 
 
-
+* Cloudlets
+  * Changes for `akamai_cloudlets_policy_activation` resource
+    * Added support for shared (V3) policies
+    * Field `associated_properties` was changed to optional but is still required for non-shared policies
+    * Added `is_shared` computed field to indicate if processing policy is shared
 
 
 

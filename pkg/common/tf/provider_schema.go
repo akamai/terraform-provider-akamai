@@ -112,6 +112,18 @@ func GetIntValue(key string, rd ResourceDataFetcher) (int, error) {
 	return num, nil
 }
 
+// GetIntValueAsInt64 fetches value with given key from ResourceData object and attempts type cast to int, if succeed, it returns value as int64
+//
+// if value is not present on provided resource, ErrNotFound is returned
+// if casting is not successful, ErrInvalidType is returned
+func GetIntValueAsInt64(key string, rd ResourceDataFetcher) (int64, error) {
+	num, err := GetIntValue(key, rd)
+	if err != nil {
+		return 0, err
+	}
+	return int64(num), nil
+}
+
 // GetInt64Value fetches value with given key from ResourceData object and attempts type cast to int64
 //
 // if value is not present on provided resource, ErrNotFound is returned

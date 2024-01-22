@@ -7,39 +7,39 @@ import (
 	"strconv"
 	"time"
 
-	cloudlets "github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cloudlets/v3"
+	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cloudlets/v3"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 type v3PolicyStrategy struct {
-	client cloudlets.Cloudlets
+	client v3.Cloudlets
 }
 
-func (v3 v3PolicyStrategy) createPolicy(ctx context.Context, cloudletName, cloudletCode string, groupID int64) (int64, error, error) {
-	createPolicyReq := cloudlets.CreatePolicyRequest{
+func (strategy v3PolicyStrategy) createPolicy(ctx context.Context, cloudletName, cloudletCode string, groupID int64) (int64, error, error) {
+	createPolicyReq := v3.CreatePolicyRequest{
 		Name:         cloudletName,
-		CloudletType: cloudlets.CloudletType(cloudletCode),
+		CloudletType: v3.CloudletType(cloudletCode),
 		GroupID:      groupID,
 	}
-	createPolicyResp, err := v3.client.CreatePolicy(ctx, createPolicyReq)
+	createPolicyResp, err := strategy.client.CreatePolicy(ctx, createPolicyReq)
 	if err != nil {
 		return 0, err, nil
 	}
 
 	// v2 is creating version implicitly, but v3 does it explicitly
-	_, err = v3.client.CreatePolicyVersion(ctx, cloudlets.CreatePolicyVersionRequest{
+	_, err = strategy.client.CreatePolicyVersion(ctx, v3.CreatePolicyVersionRequest{
 		PolicyID: createPolicyResp.ID,
-		CreatePolicyVersion: cloudlets.CreatePolicyVersion{
-			MatchRules: make(cloudlets.MatchRules, 0),
+		CreatePolicyVersion: v3.CreatePolicyVersion{
+			MatchRules: make(v3.MatchRules, 0),
 		},
 	})
 	return createPolicyResp.ID, nil, err
 }
 
-func (v3 v3PolicyStrategy) updatePolicyVersion(ctx context.Context, d *schema.ResourceData, policyID, version int64, description, matchRulesJSON string, newVersionRequired bool) (error, error) {
-	matchRules := make(cloudlets.MatchRules, 0)
+func (strategy v3PolicyStrategy) updatePolicyVersion(ctx context.Context, d *schema.ResourceData, policyID, version int64, description, matchRulesJSON string, newVersionRequired bool) (error, error) {
+	matchRules := make(v3.MatchRules, 0)
 	if matchRulesJSON != "" {
 		if err := json.Unmarshal([]byte(matchRulesJSON), &matchRules); err != nil {
 			return fmt.Errorf("unmarshalling match rules JSON: %s", err), nil
@@ -47,15 +47,15 @@ func (v3 v3PolicyStrategy) updatePolicyVersion(ctx context.Context, d *schema.Re
 	}
 
 	if newVersionRequired {
-		createPolicyReq := cloudlets.CreatePolicyVersionRequest{
-			CreatePolicyVersion: cloudlets.CreatePolicyVersion{
+		createPolicyReq := v3.CreatePolicyVersionRequest{
+			CreatePolicyVersion: v3.CreatePolicyVersion{
 				MatchRules:  matchRules,
 				Description: tools.StringPtr(description),
 			},
 			PolicyID: policyID,
 		}
 
-		createPolicyRes, err := v3.client.CreatePolicyVersion(ctx, createPolicyReq)
+		createPolicyRes, err := strategy.client.CreatePolicyVersion(ctx, createPolicyReq)
 		if err != nil {
 			return err, nil
 		}
@@ -65,34 +65,34 @@ func (v3 v3PolicyStrategy) updatePolicyVersion(ctx context.Context, d *schema.Re
 		return setWarnings(d, createPolicyRes.MatchRulesWarnings), nil
 	}
 
-	updatePolicyVersionReq := cloudlets.UpdatePolicyVersionRequest{
-		UpdatePolicyVersion: cloudlets.UpdatePolicyVersion{
+	updatePolicyVersionReq := v3.UpdatePolicyVersionRequest{
+		UpdatePolicyVersion: v3.UpdatePolicyVersion{
 			MatchRules:  matchRules,
 			Description: tools.StringPtr(description),
 		},
 		PolicyID: policyID,
 		Version:  version,
 	}
-	updatePolicyRes, err := v3.client.UpdatePolicyVersion(ctx, updatePolicyVersionReq)
+	updatePolicyRes, err := strategy.client.UpdatePolicyVersion(ctx, updatePolicyVersionReq)
 	if err != nil {
 		return nil, err
 	}
 	return setWarnings(d, updatePolicyRes.MatchRulesWarnings), nil
 }
 
-func (v3 v3PolicyStrategy) updatePolicy(ctx context.Context, policyID, groupID int64, _ string) error {
-	updatePolicyReq := cloudlets.UpdatePolicyRequest{
+func (strategy v3PolicyStrategy) updatePolicy(ctx context.Context, policyID, groupID int64, _ string) error {
+	updatePolicyReq := v3.UpdatePolicyRequest{
 		PolicyID: policyID,
-		BodyParams: cloudlets.UpdatePolicyBodyParams{
+		BodyParams: v3.UpdatePolicyBodyParams{
 			GroupID: groupID,
 		},
 	}
-	_, err := v3.client.UpdatePolicy(ctx, updatePolicyReq)
+	_, err := strategy.client.UpdatePolicy(ctx, updatePolicyReq)
 	return err
 }
 
-func (v3 v3PolicyStrategy) newPolicyVersionIsNeeded(ctx context.Context, policyID, version int64) (bool, error) {
-	policyVersion, err := v3.client.GetPolicyVersion(ctx, cloudlets.GetPolicyVersionRequest{
+func (strategy v3PolicyStrategy) newPolicyVersionIsNeeded(ctx context.Context, policyID, version int64) (bool, error) {
+	policyVersion, err := strategy.client.GetPolicyVersion(ctx, v3.GetPolicyVersionRequest{
 		PolicyID: policyID,
 		Version:  version,
 	})
@@ -104,8 +104,8 @@ func (v3 v3PolicyStrategy) newPolicyVersionIsNeeded(ctx context.Context, policyI
 
 }
 
-func (v3 v3PolicyStrategy) readPolicy(ctx context.Context, policyID int64, version *int64) (map[string]any, error) {
-	policy, err := v3.client.GetPolicy(ctx, cloudlets.GetPolicyRequest{PolicyID: policyID})
+func (strategy v3PolicyStrategy) readPolicy(ctx context.Context, policyID int64, version *int64) (map[string]any, error) {
+	policy, err := strategy.client.GetPolicy(ctx, v3.GetPolicyRequest{PolicyID: policyID})
 	if err != nil {
 		return nil, err
 	}
@@ -122,7 +122,7 @@ func (v3 v3PolicyStrategy) readPolicy(ctx context.Context, policyID int64, versi
 		return attrs, nil
 	}
 
-	policyVersion, err := v3.client.GetPolicyVersion(ctx, cloudlets.GetPolicyVersionRequest{
+	policyVersion, err := strategy.client.GetPolicyVersion(ctx, v3.GetPolicyVersionRequest{
 		PolicyID: policyID,
 		Version:  *version,
 	})
@@ -144,19 +144,19 @@ func (v3 v3PolicyStrategy) readPolicy(ctx context.Context, policyID int64, versi
 	return attrs, nil
 }
 
-func (v3 v3PolicyStrategy) deletePolicy(ctx context.Context, policyID int64) error {
-	err := deactivatePolicyVersions(ctx, policyID, v3.client)
+func (strategy v3PolicyStrategy) deletePolicy(ctx context.Context, policyID int64) error {
+	err := deactivatePolicyVersions(ctx, policyID, strategy.client)
 	if err != nil {
 		return err
 	}
 
-	err = v3.client.DeletePolicy(ctx, cloudlets.DeletePolicyRequest{PolicyID: policyID})
+	err = strategy.client.DeletePolicy(ctx, v3.DeletePolicyRequest{PolicyID: policyID})
 
 	return err
 }
 
-func deactivatePolicyVersions(ctx context.Context, policyID int64, client cloudlets.Cloudlets) error {
-	policy, err := client.GetPolicy(ctx, cloudlets.GetPolicyRequest{
+func deactivatePolicyVersions(ctx context.Context, policyID int64, client v3.Cloudlets) error {
+	policy, err := client.GetPolicy(ctx, v3.GetPolicyRequest{
 		PolicyID: policyID,
 	})
 	if err != nil {
@@ -171,8 +171,8 @@ func deactivatePolicyVersions(ctx context.Context, policyID int64, client cloudl
 	}
 
 	anyDeactivationTriggered := false
-	if policy.CurrentActivations.Staging.Effective != nil && policy.CurrentActivations.Staging.Effective.Operation == cloudlets.OperationActivation {
-		_, err := client.DeactivatePolicy(ctx, cloudlets.DeactivatePolicyRequest{
+	if policy.CurrentActivations.Staging.Effective != nil && policy.CurrentActivations.Staging.Effective.Operation == v3.OperationActivation {
+		_, err := client.DeactivatePolicy(ctx, v3.DeactivatePolicyRequest{
 			PolicyID:      policyID,
 			Network:       policy.CurrentActivations.Staging.Effective.Network,
 			PolicyVersion: int(policy.CurrentActivations.Staging.Effective.PolicyVersion),
@@ -182,8 +182,8 @@ func deactivatePolicyVersions(ctx context.Context, policyID int64, client cloudl
 		}
 		anyDeactivationTriggered = true
 	}
-	if policy.CurrentActivations.Production.Effective != nil && policy.CurrentActivations.Production.Effective.Operation == cloudlets.OperationActivation {
-		_, err := client.DeactivatePolicy(ctx, cloudlets.DeactivatePolicyRequest{
+	if policy.CurrentActivations.Production.Effective != nil && policy.CurrentActivations.Production.Effective.Operation == v3.OperationActivation {
+		_, err := client.DeactivatePolicy(ctx, v3.DeactivatePolicyRequest{
 			PolicyID:      policyID,
 			Network:       policy.CurrentActivations.Production.Effective.Network,
 			PolicyVersion: int(policy.CurrentActivations.Production.Effective.PolicyVersion),
@@ -214,16 +214,16 @@ func deactivatePolicyVersions(ctx context.Context, policyID int64, client cloudl
 	}
 }
 
-func policyHasOngoingActivations(policy *cloudlets.Policy) bool {
-	return (policy.CurrentActivations.Staging.Latest != nil && policy.CurrentActivations.Staging.Latest.Status == cloudlets.ActivationStatusInProgress) ||
-		(policy.CurrentActivations.Production.Latest != nil && policy.CurrentActivations.Production.Latest.Status == cloudlets.ActivationStatusInProgress)
+func policyHasOngoingActivations(policy *v3.Policy) bool {
+	return (policy.CurrentActivations.Staging.Latest != nil && policy.CurrentActivations.Staging.Latest.Status == v3.ActivationStatusInProgress) ||
+		(policy.CurrentActivations.Production.Latest != nil && policy.CurrentActivations.Production.Latest.Status == v3.ActivationStatusInProgress)
 }
 
-func waitForOngoingActivations(ctx context.Context, policyID int64, client cloudlets.Cloudlets) (*cloudlets.Policy, error) {
+func waitForOngoingActivations(ctx context.Context, policyID int64, client v3.Cloudlets) (*v3.Policy, error) {
 	for {
 		select {
 		case <-time.After(DeletionPolicyPollInterval):
-			policy, err := client.GetPolicy(ctx, cloudlets.GetPolicyRequest{PolicyID: policyID})
+			policy, err := client.GetPolicy(ctx, v3.GetPolicyRequest{PolicyID: policyID})
 			if err != nil {
 				return nil, err
 			}
@@ -236,14 +236,14 @@ func waitForOngoingActivations(ctx context.Context, policyID int64, client cloud
 	}
 }
 
-func verifyVersionDeactivated(ctx context.Context, policyID int64, client cloudlets.Cloudlets) (bool, error) {
-	policy, err := client.GetPolicy(ctx, cloudlets.GetPolicyRequest{
+func verifyVersionDeactivated(ctx context.Context, policyID int64, client v3.Cloudlets) (bool, error) {
+	policy, err := client.GetPolicy(ctx, v3.GetPolicyRequest{
 		PolicyID: policyID,
 	})
 	if err != nil {
 		return false, err
 	}
 
-	return (policy.CurrentActivations.Staging.Effective == nil || policy.CurrentActivations.Staging.Effective.Operation == cloudlets.OperationDeactivation) &&
-		(policy.CurrentActivations.Production.Effective == nil || policy.CurrentActivations.Production.Effective.Operation == cloudlets.OperationDeactivation), nil
+	return (policy.CurrentActivations.Staging.Effective == nil || policy.CurrentActivations.Staging.Effective.Operation == v3.OperationDeactivation) &&
+		(policy.CurrentActivations.Production.Effective == nil || policy.CurrentActivations.Production.Effective.Operation == v3.OperationDeactivation), nil
 }

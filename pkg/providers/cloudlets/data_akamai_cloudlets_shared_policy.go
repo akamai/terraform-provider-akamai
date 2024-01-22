@@ -113,7 +113,7 @@ func (d *sharedPolicyDataSource) Schema(_ context.Context, _ datasource.SchemaRe
 		},
 		"network": schema.StringAttribute{
 			Computed:    true,
-			Description: "he networks where you can activate or deactivate the policy version, either 'PRODUCTION' or 'STAGING'.",
+			Description: "The networks where you can activate or deactivate the policy version, either 'PRODUCTION' or 'STAGING'.",
 		},
 		"operation": schema.StringAttribute{
 			Computed:    true,

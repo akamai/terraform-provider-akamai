@@ -89,3 +89,20 @@ func useClientV3(cloudletsV3Client v3.Cloudlets, f func()) {
 
 	f()
 }
+
+// useClientV2AndV3 swaps out both client (v2) and client v3 on the global instances for the duration of the given func. To be used in by tests for data sources and resources that use both V2 & V3 cloudlets
+func useClientV2AndV3(cloudletsV2Client cloudlets.Cloudlets, cloudletsV3Client v3.Cloudlets, f func()) {
+	clientLock.Lock()
+	origV2 := client
+	client = cloudletsV2Client
+	origV3 := v3Client
+	v3Client = cloudletsV3Client
+
+	defer func() {
+		client = origV2
+		v3Client = origV3
+		clientLock.Unlock()
+	}()
+
+	f()
+}
