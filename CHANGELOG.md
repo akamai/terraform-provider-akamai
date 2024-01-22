@@ -42,6 +42,8 @@
 
 
 #### FEATURES/ENHANCEMENTS:
+* Appsec
+  * Added retries in `akamai_appsec_activations` and `akamai_networklist_activations` resources
 
 * DNS
   * Enhanced handling of `akamai_dns_zone` resource when no `group` is provided:

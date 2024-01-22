@@ -10,6 +10,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
+	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -81,6 +82,9 @@ var (
 
 	// AppsecResourceTimeout is the default timeout for the resource operations
 	AppsecResourceTimeout = time.Minute * 90
+
+	// CreateActivationRetry poll wait time code waits between retries for activation creation
+	CreateActivationRetry = 10 * time.Second
 )
 
 func resourceActivationsCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -119,7 +123,7 @@ func resourceActivationsCreate(ctx context.Context, d *schema.ResourceData, m in
 	notificationEmails := tf.SetToStringSlice(notificationEmailsSet)
 
 	createActivationRequest := appsec.CreateActivationsRequest{
-		Action:             "ACTIVATE",
+		Action:             string(appsec.ActivationTypeActivate),
 		Network:            network,
 		Note:               note,
 		NotificationEmails: notificationEmails,
@@ -129,40 +133,28 @@ func resourceActivationsCreate(ctx context.Context, d *schema.ResourceData, m in
 		ConfigVersion: version,
 	})
 
-	postresp, err := client.CreateActivations(ctx, createActivationRequest, true)
+	activationResp, err := createActivation(ctx, client, createActivationRequest)
 	if err != nil {
-		logger.Errorf("calling 'createActivations': %s", err.Error())
 		return diag.FromErr(err)
 	}
 
-	d.SetId(strconv.Itoa(postresp.ActivationID))
+	d.SetId(strconv.Itoa(activationResp.ActivationID))
 
-	if err := d.Set("status", postresp.Status); err != nil {
+	if err := d.Set("status", activationResp.Status); err != nil {
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	getActivationRequest := appsec.GetActivationsRequest{
-		ActivationID: postresp.ActivationID,
+		ActivationID: activationResp.ActivationID,
 	}
 
 	activation, err := lookupActivation(ctx, client, getActivationRequest)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	for activation.Status != appsec.StatusActive && activation.Status != appsec.StatusAborted && activation.Status != appsec.StatusFailed {
-		select {
-		case <-time.After(tf.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
-			act, err := client.GetActivations(ctx, getActivationRequest)
-			if err != nil {
-				return diag.FromErr(err)
-			}
-			activation = act
-
-		case <-ctx.Done():
-			return diag.Errorf("activation context terminated: %s", ctx.Err())
-		}
+	if err = pollActivation(ctx, client, activation.Status, getActivationRequest); err != nil {
+		return diag.FromErr(err)
 	}
-
 	return resourceActivationsRead(ctx, d, m)
 }
 
@@ -230,7 +222,7 @@ func resourceActivationsUpdate(ctx context.Context, d *schema.ResourceData, m in
 	notificationEmails := tf.SetToStringSlice(notificationEmailsSet)
 
 	createActivationRequest := appsec.CreateActivationsRequest{
-		Action:             "ACTIVATE",
+		Action:             string(appsec.ActivationTypeActivate),
 		Network:            network,
 		Note:               note,
 		NotificationEmails: notificationEmails,
@@ -240,39 +232,27 @@ func resourceActivationsUpdate(ctx context.Context, d *schema.ResourceData, m in
 		ConfigVersion: version,
 	})
 
-	postresp, err := client.CreateActivations(ctx, createActivationRequest, true)
+	activationResp, err := createActivation(ctx, client, createActivationRequest)
 	if err != nil {
-		logger.Errorf("calling 'createActivations': %s", err.Error())
 		return diag.FromErr(err)
 	}
 
-	d.SetId(strconv.Itoa(postresp.ActivationID))
+	d.SetId(strconv.Itoa(activationResp.ActivationID))
 
-	if err := d.Set("status", postresp.Status); err != nil {
+	if err := d.Set("status", activationResp.Status); err != nil {
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	getActivationRequest := appsec.GetActivationsRequest{
-		ActivationID: postresp.ActivationID,
+		ActivationID: activationResp.ActivationID,
 	}
 
 	activation, err := lookupActivation(ctx, client, getActivationRequest)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	for activation.Status != appsec.StatusActive && activation.Status != appsec.StatusAborted && activation.Status != appsec.StatusFailed {
-		select {
-		case <-time.After(tf.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
-			act, err := client.GetActivations(ctx, getActivationRequest)
-
-			if err != nil {
-				return diag.FromErr(err)
-			}
-			activation = act
-
-		case <-ctx.Done():
-			return diag.Errorf("activation context terminated: %s", ctx.Err())
-		}
+	if err = pollActivation(ctx, client, activation.Status, getActivationRequest); err != nil {
+		return diag.FromErr(err)
 	}
 
 	return resourceActivationsRead(ctx, d, m)
@@ -320,7 +300,7 @@ func resourceActivationsDelete(ctx context.Context, d *schema.ResourceData, m in
 
 	removeActivationRequest := appsec.RemoveActivationsRequest{
 		ActivationID:       activationID,
-		Action:             "DEACTIVATE",
+		Action:             string(appsec.ActivationTypeDeactivate),
 		Network:            network,
 		Note:               note,
 		NotificationEmails: notificationEmails,
@@ -457,4 +437,94 @@ func suppressNoteFieldForAppSecActivation(_, oldValue, newValue string, d *schem
 		return false
 	}
 	return true
+}
+
+func createActivation(ctx context.Context, client appsec.APPSEC, request appsec.CreateActivationsRequest) (*appsec.CreateActivationsResponse, error) {
+	log := hclog.FromContext(ctx)
+
+	errMsg := "create failed"
+	switch request.Action {
+	case string(appsec.ActivationTypeActivate):
+		errMsg = "create activation failed"
+	case string(appsec.ActivationTypeDeactivate):
+		errMsg = "create deactivation failed"
+	}
+
+	createActivationRetry := CreateActivationRetry
+
+	for {
+		log.Debug("creating activation")
+		create, err := client.CreateActivations(ctx, request, true)
+
+		if err == nil {
+			return create, nil
+		}
+		log.Debug("%s: retrying: %w", errMsg, err)
+
+		if !isCreateActivationErrorRetryable(err) {
+			return nil, fmt.Errorf("%s: %s", errMsg, err)
+		}
+
+		select {
+		case <-time.After(createActivationRetry):
+			createActivationRetry = capDuration(createActivationRetry*2, 5*time.Minute)
+			continue
+
+		case <-ctx.Done():
+			return nil, fmt.Errorf("activation context terminated: %w", ctx.Err())
+		}
+	}
+
+}
+
+func pollActivation(ctx context.Context, client appsec.APPSEC, activationStatus appsec.StatusValue, getActivationRequest appsec.GetActivationsRequest) error {
+	retriesMax := 5
+	retries5xx := 0
+
+	for activationStatus != appsec.StatusActive && activationStatus != appsec.StatusAborted && activationStatus != appsec.StatusFailed {
+		select {
+		case <-time.After(tf.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
+			act, err := client.GetActivations(ctx, getActivationRequest)
+			if err != nil {
+				var target = &appsec.Error{}
+				if !errors.As(err, &target) {
+					return fmt.Errorf("error has unexpected type: %T", err)
+				}
+				if isCreateActivationErrorRetryable(target) {
+					retries5xx = retries5xx + 1
+					if retries5xx > retriesMax {
+						return fmt.Errorf("reached max number of 5xx retries: %d", retries5xx)
+					}
+					continue
+				}
+				return err
+			}
+			retries5xx = 0
+			activationStatus = act.Status
+
+		case <-ctx.Done():
+			return fmt.Errorf("activation context terminated: %s", ctx.Err())
+		}
+	}
+	return nil
+}
+
+func isCreateActivationErrorRetryable(err error) bool {
+	var responseErr = &appsec.Error{}
+	if !errors.As(err, &responseErr) {
+		return false
+	}
+	if responseErr.StatusCode < 500 &&
+		responseErr.StatusCode != 422 &&
+		responseErr.StatusCode != 409 {
+		return false
+	}
+	return true
+}
+
+func capDuration(t time.Duration, tMax time.Duration) time.Duration {
+	if t > tMax {
+		return tMax
+	}
+	return t
 }
