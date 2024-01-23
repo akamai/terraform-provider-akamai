@@ -16,16 +16,17 @@ import (
 )
 
 type testDataForSharedPolicy struct {
-	id           string
-	policyID     int64
-	version      int64
-	groupID      int64
-	name         string
-	cloudletType v3.CloudletType
-	description  string
-	matchRules   v3.MatchRules
-	warnings     []v3.MatchRulesWarning
-	activations  v3.CurrentActivations
+	id                 string
+	policyID           int64
+	version            int64
+	versionDescription *string
+	groupID            int64
+	name               string
+	cloudletType       v3.CloudletType
+	description        string
+	matchRules         v3.MatchRules
+	warnings           []v3.MatchRulesWarning
+	activations        v3.CurrentActivations
 }
 
 func TestSharedPolicyDataSource(t *testing.T) {
@@ -40,13 +41,14 @@ func TestSharedPolicyDataSource(t *testing.T) {
 		"success with version attribute - no activations": {
 			config: "with_version.tf",
 			data: testDataForSharedPolicy{
-				id:           "akamai_cloudlets_shared_policy",
-				policyID:     1,
-				version:      2,
-				groupID:      12,
-				name:         "TestName",
-				cloudletType: v3.CloudletTypeAP,
-				description:  "TestDescription",
+				id:                 "akamai_cloudlets_shared_policy",
+				policyID:           1,
+				version:            2,
+				versionDescription: tools.StringPtr("version 2 description"),
+				groupID:            12,
+				name:               "TestName",
+				cloudletType:       v3.CloudletTypeAP,
+				description:        "TestDescription",
 				matchRules: v3.MatchRules{
 					v3.MatchRuleER{
 						Name:  "TestName",
@@ -290,6 +292,13 @@ func checkAttrsForSharedPolicy(data testDataForSharedPolicy) resource.TestCheckF
 			resource.TestCheckNoResourceAttr("data.akamai_cloudlets_shared_policy.test", "match_rules"),
 			resource.TestCheckNoResourceAttr("data.akamai_cloudlets_shared_policy.test", "warnings"))
 	} else {
+		if data.versionDescription != nil {
+			checkFuncs = append(checkFuncs,
+				resource.TestCheckResourceAttr("data.akamai_cloudlets_shared_policy.test", "version_description", *data.versionDescription))
+		} else {
+			checkFuncs = append(checkFuncs,
+				resource.TestCheckNoResourceAttr("data.akamai_cloudlets_shared_policy.test", "version_description"))
+		}
 		checkFuncs = append(checkFuncs,
 			resource.TestCheckResourceAttr("data.akamai_cloudlets_shared_policy.test", "version", strconv.FormatInt(data.version, 10)),
 			resource.TestCheckResourceAttr("data.akamai_cloudlets_shared_policy.test", "match_rules", string(matchRules)),
@@ -352,7 +361,7 @@ func mockGetPolicyVersion(m *v3.Mock, data testDataForSharedPolicy, times int) {
 	}).Return(&v3.PolicyVersion{
 		PolicyID:           data.policyID,
 		Version:            data.version,
-		Description:        tools.StringPtr(data.description),
+		Description:        data.versionDescription,
 		ID:                 123,
 		Immutable:          false,
 		MatchRules:         data.matchRules,

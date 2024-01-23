@@ -15,16 +15,17 @@ import (
 )
 
 type sharedPolicyModel struct {
-	ID           types.String     `tfsdk:"id"`
-	PolicyID     types.Int64      `tfsdk:"policy_id"`
-	Version      types.Int64      `tfsdk:"version"`
-	GroupID      types.Int64      `tfsdk:"group_id"`
-	Name         types.String     `tfsdk:"name"`
-	CloudletType types.String     `tfsdk:"cloudlet_type"`
-	Description  types.String     `tfsdk:"description"`
-	MatchRules   types.String     `tfsdk:"match_rules"`
-	Warnings     types.String     `tfsdk:"warnings"`
-	Activations  *activationModel `tfsdk:"activations"`
+	ID                 types.String     `tfsdk:"id"`
+	PolicyID           types.Int64      `tfsdk:"policy_id"`
+	Version            types.Int64      `tfsdk:"version"`
+	VersionDescription types.String     `tfsdk:"version_description"`
+	GroupID            types.Int64      `tfsdk:"group_id"`
+	Name               types.String     `tfsdk:"name"`
+	CloudletType       types.String     `tfsdk:"cloudlet_type"`
+	Description        types.String     `tfsdk:"description"`
+	MatchRules         types.String     `tfsdk:"match_rules"`
+	Warnings           types.String     `tfsdk:"warnings"`
+	Activations        *activationModel `tfsdk:"activations"`
 }
 
 type activationModel struct {
@@ -163,6 +164,10 @@ func (d *sharedPolicyDataSource) Schema(_ context.Context, _ datasource.SchemaRe
 				Optional:    true,
 				Description: "The number of the policy version.",
 			},
+			"version_description": schema.StringAttribute{
+				Computed:    true,
+				Description: "A human-readable label for the policy version.",
+			},
 			"group_id": schema.Int64Attribute{
 				Computed:    true,
 				Description: "Identifies the group where to which policy is assigned.",
@@ -177,7 +182,7 @@ func (d *sharedPolicyDataSource) Schema(_ context.Context, _ datasource.SchemaRe
 			},
 			"description": schema.StringAttribute{
 				Computed:    true,
-				Description: "A human-readable label for the policy version.",
+				Description: "A human-readable label for the policy.",
 			},
 			"match_rules": schema.StringAttribute{
 				Computed:    true,
@@ -268,6 +273,9 @@ func (d *sharedPolicyDataSource) Read(ctx context.Context, req datasource.ReadRe
 		}
 		data.MatchRules = types.StringValue(string(matchRules))
 		data.Version = types.Int64Value(version)
+		if policyVersion.Description != nil {
+			data.VersionDescription = types.StringValue(*policyVersion.Description)
+		}
 	}
 
 	data.setPolicyData(policy)
