@@ -59,7 +59,8 @@ func resourceActivations() *schema.Resource {
 				Required:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "List of email addresses to be notified with the results of the activation",
-			}, "status": {
+			},
+			"status": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The results of the activation",
@@ -177,6 +178,18 @@ func resourceActivationsRead(ctx context.Context, d *schema.ResourceData, m inte
 	if err != nil {
 		logger.Errorf("calling 'getActivations': %s", err.Error())
 		return diag.FromErr(err)
+	}
+
+	network, err := tf.GetStringValue("network", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+
+	if activations.Action == string(appsec.ActivationTypeActivate) &&
+		activations.Status == appsec.StatusDeactivated &&
+		(string(activations.Network) == network) {
+		d.SetId("")
+		return nil
 	}
 
 	if err := d.Set("status", activations.Status); err != nil {

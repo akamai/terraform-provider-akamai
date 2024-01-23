@@ -44,6 +44,7 @@
 #### FEATURES/ENHANCEMENTS:
 * Appsec
   * Added retries in `akamai_appsec_activations` and `akamai_networklist_activations` resources
+  * Added reactivation support for `akamai_appsec_activations` if the config was deactivated manually
 
 * DNS
   * Enhanced handling of `akamai_dns_zone` resource when no `group` is provided:
@@ -170,7 +171,7 @@
 
 #### FEATURES/ENHANCEMENTS:
 
-* APSSEC
+* Appsec
   * Updated resource:
     * `akamai_appsec_ip_geo` - added `asn_network_lists` attribute to support blocking by ASN client lists
   * Updated data source:
