@@ -48,6 +48,10 @@
 
 * GTM
   * Added data sources:
+    * `akamai_gtm_asmap` - reads information for a specific GTM asmap
+
+* GTM
+  * Added data sources:
     * `akamai_gtm_resources` - reads information for a specific GTM resources under given domain
 
 * Edgeworkers
