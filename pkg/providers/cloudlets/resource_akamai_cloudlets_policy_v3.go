@@ -9,6 +9,7 @@ import (
 
 	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cloudlets/v3"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -153,6 +154,14 @@ func (strategy v3PolicyStrategy) deletePolicy(ctx context.Context, policyID int6
 	err = strategy.client.DeletePolicy(ctx, v3.DeletePolicyRequest{PolicyID: policyID})
 
 	return err
+}
+
+func (strategy v3PolicyStrategy) getVersionStrategy(meta meta.Meta) versionStrategy {
+	return v3VersionStrategy{ClientV3(meta)}
+}
+
+func (strategy v3PolicyStrategy) setPolicyType(d *schema.ResourceData) error {
+	return d.Set("is_shared", true)
 }
 
 func deactivatePolicyVersions(ctx context.Context, policyID int64, client v3.Cloudlets) error {

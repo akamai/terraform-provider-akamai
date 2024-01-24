@@ -424,61 +424,32 @@ func resourcePolicyImport(ctx context.Context, d *schema.ResourceData, m interfa
 	logger := meta.Log("Cloudlets", "resourcePolicyImport")
 	logger.Debugf("Import Policy")
 
-	client := Client(meta)
-
 	name := d.Id()
 	if name == "" {
 		return nil, fmt.Errorf("policy name cannot be empty")
 	}
 
-	policy, err := findPolicyByName(ctx, name, client)
+	policyStrategy, policyID, err := discoverPolicyExecutionStrategy(ctx, meta, name)
+	if err != nil {
+		return nil, err
+	}
+	if err = policyStrategy.setPolicyType(d); err != nil {
+		return nil, err
+	}
+
+	policyVersionStrategy := policyStrategy.getVersionStrategy(meta)
+
+	version, err := policyVersionStrategy.findLatestPolicyVersion(ctx, policyID)
 	if err != nil {
 		return nil, err
 	}
 
-	d.SetId(strconv.FormatInt(policy.PolicyID, 10))
-
-	versionExecutionStrategy, err := getPolicyVersionExecutionStrategy(d, meta)
-	if err != nil {
+	if err = d.Set("version", version); err != nil {
 		return nil, err
 	}
-
-	version, err := versionExecutionStrategy.findLatestPolicyVersion(ctx, policy.PolicyID)
-	if err != nil {
-		return nil, err
-	}
-
-	err = d.Set("version", version)
-	if err != nil {
-		return nil, err
-	}
+	d.SetId(strconv.FormatInt(policyID, 10))
 
 	return []*schema.ResourceData{d}, nil
-}
-
-func findPolicyByName(ctx context.Context, name string, client cloudlets.Cloudlets) (*cloudlets.Policy, error) {
-	pageSize, offset := 1000, 0
-	var policy *cloudlets.Policy
-	for {
-		policies, err := client.ListPolicies(ctx, cloudlets.ListPoliciesRequest{
-			Offset:   offset,
-			PageSize: &pageSize,
-		})
-		if err != nil {
-			return nil, err
-		}
-		for _, p := range policies {
-			if p.Name == name {
-				policy = &p
-				return policy, nil
-			}
-		}
-		if len(policies) < pageSize {
-			break
-		}
-		offset += pageSize
-	}
-	return nil, fmt.Errorf("policy '%s' does not exist", name)
 }
 
 func diffSuppressGroupID(_, old, new string, _ *schema.ResourceData) bool {
@@ -563,4 +534,106 @@ type policyExecutionStrategy interface {
 	newPolicyVersionIsNeeded(ctx context.Context, policyID, version int64) (bool, error)
 	readPolicy(ctx context.Context, policyID int64, version *int64) (map[string]any, error)
 	deletePolicy(ctx context.Context, policyID int64) error
+	getVersionStrategy(meta meta.Meta) versionStrategy
+	setPolicyType(d *schema.ResourceData) error
+}
+
+func discoverPolicyExecutionStrategy(ctx context.Context, meta meta.Meta, policyName string) (policyExecutionStrategy, int64, error) {
+
+	strategy, policyID, errV2 := checkForV2Policy(ctx, meta, policyName)
+	if strategy != nil {
+		return strategy, policyID, nil
+	}
+
+	strategy, policyID, errV3 := checkForV3Policy(ctx, meta, policyName)
+	if strategy != nil {
+		return strategy, policyID, nil
+	}
+
+	var errMessage string
+	if errV2 != nil {
+		errMessage += fmt.Sprintf("could not list V2 policies: %s\n", errV2)
+	}
+	if errV3 != nil {
+		errMessage += fmt.Sprintf("could not list V3 policies: %s", errV3)
+	}
+	if errMessage != "" {
+		return nil, 0, fmt.Errorf(errMessage)
+	}
+
+	return nil, 0, fmt.Errorf("policy '%s' does not exist", policyName)
+}
+
+func checkForV2Policy(ctx context.Context, meta meta.Meta, policyName string) (policyExecutionStrategy, int64, error) {
+	v2Client := Client(meta)
+	size, offset := 1000, 0
+	var errV2 error
+	for {
+		policies, err := v2Client.ListPolicies(ctx, cloudlets.ListPoliciesRequest{
+			Offset:   offset,
+			PageSize: tools.IntPtr(size),
+		})
+		if err == nil {
+			if policyID := findPolicyV2ByName(policies, policyName); policyID != 0 {
+				return v2PolicyStrategy{
+					client: v2Client,
+				}, policyID, nil
+			}
+			if len(policies) < size {
+				break
+			}
+			offset++
+		} else {
+			errV2 = err
+			break
+		}
+	}
+
+	return nil, 0, errV2
+}
+
+func checkForV3Policy(ctx context.Context, meta meta.Meta, policyName string) (policyExecutionStrategy, int64, error) {
+	v3Client := ClientV3(meta)
+	size, page := 1000, 0
+	var errV3 error
+	for {
+		policiesV3, err := v3Client.ListPolicies(ctx, v3.ListPoliciesRequest{
+			Page: page,
+			Size: size,
+		})
+		if err == nil {
+			if policyID := findPolicyV3ByName(policiesV3.Content, policyName); policyID != 0 {
+				return v3PolicyStrategy{
+					client: v3Client,
+				}, policyID, nil
+			}
+			if len(policiesV3.Content) < size {
+				break
+			}
+			page++
+		} else {
+			errV3 = err
+			break
+		}
+	}
+
+	return nil, 0, errV3
+}
+
+func findPolicyV3ByName(policies []v3.Policy, policyName string) int64 {
+	for _, policy := range policies {
+		if policy.Name == policyName {
+			return policy.ID
+		}
+	}
+	return 0
+}
+
+func findPolicyV2ByName(policies []cloudlets.Policy, policyName string) int64 {
+	for _, policy := range policies {
+		if policy.Name == policyName {
+			return policy.PolicyID
+		}
+	}
+	return 0
 }

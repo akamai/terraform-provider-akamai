@@ -1,12 +1,9 @@
 package cloudlets
 
 import (
-	"context"
 	"fmt"
 	"regexp"
 	"testing"
-
-	"golang.org/x/exp/slices"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cloudlets"
 	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cloudlets/v3"
@@ -18,9 +15,10 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"github.com/tj/assert"
+	"golang.org/x/exp/slices"
 )
 
-func TestResourcePolicy(t *testing.T) {
+func TestResourcePolicyV2(t *testing.T) {
 
 	type policyAttributes struct {
 		name, version, matchRulesPath string
@@ -100,7 +98,6 @@ func TestResourcePolicy(t *testing.T) {
 					latestVersion = version
 				}
 			}
-			//latestVersion := versions[0]
 			client.On("GetPolicy", mock.Anything, cloudlets.GetPolicyRequest{PolicyID: policy.PolicyID}).Return(policy, nil).Times(times)
 			var versionWithoutWarnings cloudlets.PolicyVersion
 			err := copier.CopyWithOption(&versionWithoutWarnings, latestVersion, copier.Option{DeepCopy: true})
@@ -195,7 +192,6 @@ func TestResourcePolicy(t *testing.T) {
 			}
 			client.On("RemovePolicy", mock.Anything, cloudlets.RemovePolicyRequest{PolicyID: policyID}).Return(nil).Once()
 		}
-
 		expectImportPolicy = func(_ *testing.T, client *cloudlets.Mock, policyID int64, policyName string, numVersions int) {
 			var versionList []cloudlets.PolicyVersion
 			for i := 1; i <= numVersions; i++ {
@@ -1288,18 +1284,108 @@ func TestResourcePolicy(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 
-	t.Run("error importing policy not found", func(t *testing.T) {
-		testDir := "testdata/TestResPolicy/import_no_match_rules"
+	t.Run("import policy - test checkForV2Policy()", func(t *testing.T) {
+		testDir := "testdata/TestResPolicy/import"
 		client := new(cloudlets.Mock)
+		policyID := int64(2)
 
-		policy, version := expectCreatePolicy(t, client, 2, "test_policy", nil, "test policy description")
+		matchRules := cloudlets.MatchRules{
+			&cloudlets.MatchRuleER{
+				Name:                     "r1",
+				Type:                     "erMatchRule",
+				UseRelativeURL:           "copy_scheme_hostname",
+				StatusCode:               301,
+				RedirectURL:              "/ddd",
+				MatchURL:                 "abc.com",
+				UseIncomingSchemeAndHost: true,
+			},
+			&cloudlets.MatchRuleER{
+				Name: "r3",
+				Type: "erMatchRule",
+				Matches: []cloudlets.MatchCriteriaER{
+					{
+						MatchType:     "hostname",
+						MatchValue:    "3333.dom",
+						MatchOperator: "equals",
+						CaseSensitive: true,
+					},
+				},
+				UseRelativeURL:           "copy_scheme_hostname",
+				StatusCode:               307,
+				RedirectURL:              "/abc/sss",
+				UseIncomingSchemeAndHost: true,
+			},
+		}
+
+		policy, version := expectCreatePolicy(t, client, policyID, "test_policy", matchRules, "test policy description")
 		policyVersions := []cloudlets.PolicyVersion{*version}
-		expectReadPolicy(t, client, policy, policyVersions, 2)
-		client.On("ListPolicies", mock.Anything, cloudlets.ListPoliciesRequest{PageSize: tools.IntPtr(1000), Offset: 0}).
-			Return([]cloudlets.Policy{}, nil).Once()
+		expectReadPolicy(t, client, policy, policyVersions, 3)
+		// custom import mocks
+		var versionList []cloudlets.PolicyVersion
+		for i := 1; i <= 2; i++ {
+			versionList = append(versionList, cloudlets.PolicyVersion{PolicyID: policyID, Version: int64(i)})
+		}
+		client.On("ListPolicyVersions", mock.Anything, cloudlets.ListPolicyVersionsRequest{
+			PolicyID: policyID,
+			PageSize: tools.IntPtr(1000),
+			Offset:   0,
+		}).Return(versionList, nil).Once()
+		// mock that 1000 policies are returned, desired not found
+		client.On("ListPolicies", mock.Anything, cloudlets.ListPoliciesRequest{
+			PageSize: tools.IntPtr(1000),
+			Offset:   0,
+		}).Return(make([]cloudlets.Policy, 1000), nil).Once()
+		// mock that desired policy is on the next page
+		client.On("ListPolicies", mock.Anything, cloudlets.ListPoliciesRequest{
+			PageSize: tools.IntPtr(1000),
+			Offset:   1,
+		}).Return([]cloudlets.Policy{
+			{
+				PolicyID: policyID,
+				Name:     "test_policy",
+			},
+		}, nil).Once()
 		expectRemovePolicy(t, client, 2, 1, 0)
 
 		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV5ProviderFactories: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
+					},
+					{
+						ImportState:             true,
+						ImportStateId:           "test_policy",
+						ResourceName:            "akamai_cloudlets_policy.policy",
+						ImportStateVerify:       true,
+						ImportStateVerifyIgnore: []string{"warnings"},
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
+
+	t.Run("error importing policy not found", func(t *testing.T) {
+		testDir := "testdata/TestResPolicy/import_no_match_rules"
+		clientV2 := new(cloudlets.Mock)
+		clientV3 := new(v3.Mock)
+
+		policy, version := expectCreatePolicy(t, clientV2, 2, "test_policy", nil, "test policy description")
+		policyVersions := []cloudlets.PolicyVersion{*version}
+		expectReadPolicy(t, clientV2, policy, policyVersions, 2)
+		clientV2.On("ListPolicies", mock.Anything, cloudlets.ListPoliciesRequest{PageSize: tools.IntPtr(1000), Offset: 0}).
+			Return([]cloudlets.Policy{}, nil).Once()
+		clientV3.On("ListPolicies", mock.Anything, v3.ListPoliciesRequest{
+			Page: 0,
+			Size: 1000,
+		}).Return(&v3.ListPoliciesResponse{
+			Content: []v3.Policy{},
+		}, nil).Once()
+		expectRemovePolicy(t, clientV2, 2, 1, 0)
+
+		useClientV2AndV3(clientV2, clientV3, func() {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV5ProviderFactories: testAccProviders,
 				Steps: []resource.TestStep{
@@ -1315,7 +1401,8 @@ func TestResourcePolicy(t *testing.T) {
 				},
 			})
 		})
-		client.AssertExpectations(t)
+		clientV2.AssertExpectations(t)
+		clientV3.AssertExpectations(t)
 	})
 
 	t.Run("error importing policy no version found", func(t *testing.T) {
@@ -1546,6 +1633,36 @@ func TestResourcePolicyV3(t *testing.T) {
 			}, nil).Once()
 
 			client.On("DeletePolicy", mock.Anything, v3.DeletePolicyRequest{PolicyID: policyID}).Return(nil).Once()
+		}
+
+		expectImportPolicy = func(_ *testing.T, clientV3 *v3.Mock, clientV2 *cloudlets.Mock, policyID int64, policyName string, numVersions int) {
+			listPolicyVersionsResp := v3.ListPolicyVersions{PolicyVersions: []v3.ListPolicyVersionsItem{}}
+			for i := 1; i <= numVersions; i++ {
+				listPolicyVersionsResp.PolicyVersions = append(listPolicyVersionsResp.PolicyVersions, v3.ListPolicyVersionsItem{PolicyID: policyID, Version: int64(i)})
+			}
+			listPoliciesV2Resp := []cloudlets.Policy{
+				{
+					Name: "other-name",
+				},
+			}
+			clientV2.On("ListPolicies", mock.Anything, cloudlets.ListPoliciesRequest{
+				PageSize: tools.IntPtr(1000),
+				Offset:   0,
+			}).Return(listPoliciesV2Resp, nil).Once()
+			clientV3.On("ListPolicies", mock.Anything, v3.ListPoliciesRequest{
+				Size: 1000, Page: 0,
+			}).Return(&v3.ListPoliciesResponse{
+				Content: []v3.Policy{
+					{
+						ID: policyID, Name: policyName,
+					},
+				},
+			}, nil).Once()
+			clientV3.On("ListPolicyVersions", mock.Anything, v3.ListPolicyVersionsRequest{
+				PolicyID: policyID,
+				Page:     0,
+				Size:     1000,
+			}).Return(&listPolicyVersionsResp, nil).Once()
 		}
 
 		checkPolicyAttributes = func(attrs policyAttributes) resource.TestCheckFunc {
@@ -2752,6 +2869,271 @@ func TestResourcePolicyV3(t *testing.T) {
 			client.AssertExpectations(t)
 		}
 	})
+
+	t.Run("import policy v3", func(t *testing.T) {
+		testDir := "testdata/TestResPolicyV3"
+		clientV2 := new(cloudlets.Mock)
+		clientV3 := new(v3.Mock)
+
+		policy, version := expectCreatePolicy(t, clientV3, 2, 123, nil, "test policy description")
+		expectReadPolicy(t, clientV3, policy, version, 3)
+		expectImportPolicy(t, clientV3, clientV2, policy.ID, "test_policy", 2)
+		expectRemovePolicy(t, clientV3, policy.ID)
+
+		useClientV2AndV3(clientV2, clientV3, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV5ProviderFactories: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/create_no_match_rules/policy_create.tf", testDir)),
+						Check: checkPolicyAttributes(policyAttributes{
+							groupID:     123,
+							version:     "1",
+							description: "test policy description",
+						}),
+					},
+					{
+						ImportState:             true,
+						ImportStateId:           "test_policy",
+						ResourceName:            "akamai_cloudlets_policy.policy",
+						ImportStateVerify:       true,
+						ImportStateVerifyIgnore: []string{"warnings"},
+					},
+				},
+			})
+		})
+		clientV2.AssertExpectations(t)
+		clientV3.AssertExpectations(t)
+	})
+
+	t.Run("import policy v3 - no policy found", func(t *testing.T) {
+		testDir := "testdata/TestResPolicyV3"
+		clientV2 := new(cloudlets.Mock)
+		clientV3 := new(v3.Mock)
+
+		policy, version := expectCreatePolicy(t, clientV3, 2, 123, nil, "test policy description")
+		expectReadPolicy(t, clientV3, policy, version, 2)
+		clientV2.On("ListPolicies", mock.Anything, cloudlets.ListPoliciesRequest{
+			PageSize: tools.IntPtr(1000),
+			Offset:   0,
+		}).Return([]cloudlets.Policy{}, nil).Once()
+		clientV3.On("ListPolicies", mock.Anything, v3.ListPoliciesRequest{
+			Size: 1000, Page: 0,
+		}).Return(&v3.ListPoliciesResponse{
+			Content: []v3.Policy{},
+		}, nil).Once()
+		expectRemovePolicy(t, clientV3, policy.ID)
+
+		useClientV2AndV3(clientV2, clientV3, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV5ProviderFactories: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/create_no_match_rules/policy_create.tf", testDir)),
+						Check: checkPolicyAttributes(policyAttributes{
+							groupID:     123,
+							version:     "1",
+							description: "test policy description",
+						}),
+					},
+					{
+						ImportState:             true,
+						ImportStateId:           "test_policy",
+						ResourceName:            "akamai_cloudlets_policy.policy",
+						ImportStateVerify:       true,
+						ImportStateVerifyIgnore: []string{"warnings"},
+						ExpectError:             regexp.MustCompile("policy 'test_policy' does not exist"),
+					},
+				},
+			})
+		})
+		clientV2.AssertExpectations(t)
+		clientV3.AssertExpectations(t)
+	})
+
+	t.Run("import policy v3 - v2 api error, v3 policy found", func(t *testing.T) {
+		testDir := "testdata/TestResPolicyV3"
+		clientV2 := new(cloudlets.Mock)
+		clientV3 := new(v3.Mock)
+
+		policy, version := expectCreatePolicy(t, clientV3, 2, 123, nil, "test policy description")
+		expectReadPolicy(t, clientV3, policy, version, 3)
+		listPolicyVersionsResp := v3.ListPolicyVersions{PolicyVersions: []v3.ListPolicyVersionsItem{}}
+		for i := 1; i <= 2; i++ {
+			listPolicyVersionsResp.PolicyVersions = append(listPolicyVersionsResp.PolicyVersions, v3.ListPolicyVersionsItem{PolicyID: policy.ID, Version: int64(i)})
+		}
+		clientV2.On("ListPolicies", mock.Anything, cloudlets.ListPoliciesRequest{
+			PageSize: tools.IntPtr(1000),
+			Offset:   0,
+		}).Return(nil, fmt.Errorf("v2 api error")).Once()
+		clientV3.On("ListPolicies", mock.Anything, v3.ListPoliciesRequest{
+			Size: 1000, Page: 0,
+		}).Return(&v3.ListPoliciesResponse{
+			Content: []v3.Policy{
+				{
+					ID: policy.ID, Name: policy.Name,
+				},
+			},
+		}, nil).Once()
+		clientV3.On("ListPolicyVersions", mock.Anything, v3.ListPolicyVersionsRequest{
+			PolicyID: policy.ID,
+			Page:     0,
+			Size:     1000,
+		}).Return(&listPolicyVersionsResp, nil).Once()
+		expectRemovePolicy(t, clientV3, policy.ID)
+
+		useClientV2AndV3(clientV2, clientV3, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV5ProviderFactories: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/create_no_match_rules/policy_create.tf", testDir)),
+						Check: checkPolicyAttributes(policyAttributes{
+							groupID:     123,
+							version:     "1",
+							description: "test policy description",
+						}),
+					},
+					{
+						ImportState:             true,
+						ImportStateId:           "test_policy",
+						ResourceName:            "akamai_cloudlets_policy.policy",
+						ImportStateVerify:       true,
+						ImportStateVerifyIgnore: []string{"warnings"},
+					},
+				},
+			})
+		})
+		clientV2.AssertExpectations(t)
+		clientV3.AssertExpectations(t)
+	})
+
+	t.Run("import policy v3 - v2 and v3 api error", func(t *testing.T) {
+		testDir := "testdata/TestResPolicyV3"
+		clientV2 := new(cloudlets.Mock)
+		clientV3 := new(v3.Mock)
+
+		policy, version := expectCreatePolicy(t, clientV3, 2, 123, nil, "test policy description")
+		expectReadPolicy(t, clientV3, policy, version, 2)
+		clientV2.On("ListPolicies", mock.Anything, cloudlets.ListPoliciesRequest{
+			PageSize: tools.IntPtr(1000),
+			Offset:   0,
+		}).Return(nil, fmt.Errorf("v2 api error")).Once()
+		clientV3.On("ListPolicies", mock.Anything, v3.ListPoliciesRequest{
+			Size: 1000, Page: 0,
+		}).Return(nil, fmt.Errorf("v3 api error")).Once()
+		expectRemovePolicy(t, clientV3, policy.ID)
+
+		useClientV2AndV3(clientV2, clientV3, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV5ProviderFactories: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/create_no_match_rules/policy_create.tf", testDir)),
+						Check: checkPolicyAttributes(policyAttributes{
+							groupID:     123,
+							version:     "1",
+							description: "test policy description",
+						}),
+					},
+					{
+						ImportState:             true,
+						ImportStateId:           "test_policy",
+						ResourceName:            "akamai_cloudlets_policy.policy",
+						ImportStateVerify:       true,
+						ImportStateVerifyIgnore: []string{"warnings"},
+						ExpectError:             regexp.MustCompile("could not list V2 policies: v2 api error\ncould not list V3 policies: v3 api error"),
+					},
+				},
+			})
+		})
+		clientV2.AssertExpectations(t)
+		clientV3.AssertExpectations(t)
+	})
+
+	t.Run("import policy v3 - test checkForV3Policy()", func(t *testing.T) {
+		testDir := "testdata/TestResPolicyV3"
+		clientV2 := new(cloudlets.Mock)
+		clientV3 := new(v3.Mock)
+		policyID := int64(2)
+
+		policy, version := expectCreatePolicy(t, clientV3, policyID, 123, nil, "test policy description")
+		expectReadPolicy(t, clientV3, policy, version, 3)
+		// custom import mocks
+		listPolicyVersionsResp := v3.ListPolicyVersions{PolicyVersions: []v3.ListPolicyVersionsItem{}}
+		for i := 1; i <= 2; i++ {
+			listPolicyVersionsResp.PolicyVersions = append(listPolicyVersionsResp.PolicyVersions, v3.ListPolicyVersionsItem{PolicyID: policyID, Version: int64(i)})
+		}
+		listPoliciesV2Resp := []cloudlets.Policy{
+			{
+				Name: "other-name",
+			},
+		}
+		clientV2.On("ListPolicies", mock.Anything, cloudlets.ListPoliciesRequest{
+			PageSize: tools.IntPtr(1000),
+			Offset:   0,
+		}).Return(listPoliciesV2Resp, nil).Once()
+		// mock that 1000 policies are returned, desired one not found
+		clientV3.On("ListPolicies", mock.Anything, v3.ListPoliciesRequest{
+			Size: 1000, Page: 0,
+		}).Return(&v3.ListPoliciesResponse{
+			Content: make([]v3.Policy, 1000),
+			Page: v3.Page{
+				Number:        0,
+				Size:          1000,
+				TotalElements: 1001,
+				TotalPages:    2,
+			},
+		}, nil).Once()
+		// mock that desired policy is on the next page
+		clientV3.On("ListPolicies", mock.Anything, v3.ListPoliciesRequest{
+			Size: 1000, Page: 1,
+		}).Return(&v3.ListPoliciesResponse{
+			Content: []v3.Policy{
+				{
+					Name: "test_policy",
+					ID:   policyID,
+				},
+			},
+			Page: v3.Page{
+				Number:        1,
+				Size:          1000,
+				TotalElements: 1001,
+				TotalPages:    2,
+			},
+		}, nil).Once()
+		clientV3.On("ListPolicyVersions", mock.Anything, v3.ListPolicyVersionsRequest{
+			PolicyID: policyID,
+			Page:     0,
+			Size:     1000,
+		}).Return(&listPolicyVersionsResp, nil).Once()
+		expectRemovePolicy(t, clientV3, policy.ID)
+
+		useClientV2AndV3(clientV2, clientV3, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV5ProviderFactories: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/create_no_match_rules/policy_create.tf", testDir)),
+						Check: checkPolicyAttributes(policyAttributes{
+							groupID:     123,
+							version:     "1",
+							description: "test policy description",
+						}),
+					},
+					{
+						ImportState:             true,
+						ImportStateId:           "test_policy",
+						ResourceName:            "akamai_cloudlets_policy.policy",
+						ImportStateVerify:       true,
+						ImportStateVerifyIgnore: []string{"warnings"},
+					},
+				},
+			})
+		})
+		clientV2.AssertExpectations(t)
+		clientV3.AssertExpectations(t)
+	})
 }
 
 func TestDiffSuppressMatchRules(t *testing.T) {
@@ -2793,86 +3175,6 @@ func TestDiffSuppressMatchRules(t *testing.T) {
 			newJSON := testutils.LoadFixtureString(t, fmt.Sprintf("%s/%s", basePath, test.newPath))
 			res := diffSuppressMatchRules("", oldJSON, newJSON, nil)
 			assert.Equal(t, test.expected, res)
-		})
-	}
-}
-
-func TestFindPolicyByName(t *testing.T) {
-	preparePoliciesPage := func(pageSize, startingID int64) []cloudlets.Policy {
-		policies := make([]cloudlets.Policy, 0, pageSize)
-		for i := startingID; i < startingID+pageSize; i++ {
-			policies = append(policies, cloudlets.Policy{PolicyID: i, Name: fmt.Sprintf("%d", i)})
-		}
-		return policies
-	}
-	tests := map[string]struct {
-		policyName string
-		init       func(m *cloudlets.Mock)
-		expectedID int64
-		withError  bool
-	}{
-		"policy found in first iteration": {
-			policyName: "test_policy",
-			init: func(m *cloudlets.Mock) {
-				m.On("ListPolicies", mock.Anything, cloudlets.ListPoliciesRequest{PageSize: tools.IntPtr(1000), Offset: 0}).Return([]cloudlets.Policy{
-					{PolicyID: 9999999, Name: "some_policy"},
-					{PolicyID: 1234567, Name: "test_policy"},
-				}, nil).Once()
-			},
-			expectedID: 1234567,
-		},
-		"policy found on 3rd page": {
-			policyName: "test_policy",
-			init: func(m *cloudlets.Mock) {
-				m.On("ListPolicies", mock.Anything, cloudlets.ListPoliciesRequest{PageSize: tools.IntPtr(1000), Offset: 0}).
-					Return(preparePoliciesPage(1000, 0), nil).Once()
-				m.On("ListPolicies", mock.Anything, cloudlets.ListPoliciesRequest{PageSize: tools.IntPtr(1000), Offset: 1000}).
-					Return(preparePoliciesPage(1000, 1000), nil).Once()
-				m.On("ListPolicies", mock.Anything, cloudlets.ListPoliciesRequest{PageSize: tools.IntPtr(1000), Offset: 2000}).Return([]cloudlets.Policy{
-					{PolicyID: 9999999, Name: "some_policy"},
-					{PolicyID: 1234567, Name: "test_policy"},
-				}, nil).Once()
-
-			},
-			expectedID: 1234567,
-		},
-		"policy not found": {
-			policyName: "test_policy",
-			init: func(m *cloudlets.Mock) {
-				m.On("ListPolicies", mock.Anything, cloudlets.ListPoliciesRequest{PageSize: tools.IntPtr(1000), Offset: 0}).
-					Return(preparePoliciesPage(1000, 0), nil).Once()
-				m.On("ListPolicies", mock.Anything, cloudlets.ListPoliciesRequest{PageSize: tools.IntPtr(1000), Offset: 1000}).
-					Return(preparePoliciesPage(1000, 1000), nil).Once()
-				m.On("ListPolicies", mock.Anything, cloudlets.ListPoliciesRequest{PageSize: tools.IntPtr(1000), Offset: 2000}).
-					Return(preparePoliciesPage(250, 2000), nil).Once()
-
-			},
-			withError: true,
-		},
-		"error listing policies": {
-			policyName: "test_policy",
-			init: func(m *cloudlets.Mock) {
-				m.On("ListPolicies", mock.Anything, cloudlets.ListPoliciesRequest{PageSize: tools.IntPtr(1000), Offset: 0}).
-					Return(preparePoliciesPage(1000, 0), nil).Once()
-				m.On("ListPolicies", mock.Anything, cloudlets.ListPoliciesRequest{PageSize: tools.IntPtr(1000), Offset: 1000}).
-					Return(nil, fmt.Errorf("oops")).Once()
-
-			},
-			withError: true,
-		},
-	}
-	for name, test := range tests {
-		t.Run(name, func(t *testing.T) {
-			m := new(cloudlets.Mock)
-			test.init(m)
-			policy, err := findPolicyByName(context.Background(), test.policyName, m)
-			m.AssertExpectations(t)
-			if test.withError {
-				assert.Error(t, err)
-				return
-			}
-			require.NoError(t, err)
-			assert.Equal(t, test.expectedID, policy.PolicyID)
 		})
 	}
 }

@@ -11,6 +11,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cloudlets"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -187,4 +188,12 @@ func (strategy v2PolicyStrategy) deletePolicy(ctx context.Context, policyID int6
 		}
 	}
 	return err
+}
+
+func (strategy v2PolicyStrategy) getVersionStrategy(meta meta.Meta) versionStrategy {
+	return v2VersionStrategy{Client(meta)}
+}
+
+func (strategy v2PolicyStrategy) setPolicyType(d *schema.ResourceData) error {
+	return d.Set("is_shared", false)
 }
