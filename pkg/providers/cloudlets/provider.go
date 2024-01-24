@@ -88,6 +88,7 @@ func (p *FrameworkSubprovider) Resources() []func() resource.Resource {
 // DataSources returns terraform data sources for cloudlets
 func (p *FrameworkSubprovider) DataSources() []func() datasource.DataSource {
 	return []func() datasource.DataSource{
+		NewPolicyActivationDataSource,
 		NewSharedPolicyDataSource,
 	}
 }

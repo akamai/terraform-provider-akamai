@@ -701,4 +701,5 @@ type activationStrategy interface {
 	readActivationFromServer(ctx context.Context, policyID int64, network string) (map[string]any, error)
 	isReactivationNotNeeded(ctx context.Context, policyID, version int64, hasVersionChange bool) (bool, string, error)
 	deactivatePolicy(ctx context.Context, policyID, version int64, network string) error
+	getPolicyActivation(ctx context.Context, policyID int64, network string) (*policyActivationDataSourceModel, error)
 }
