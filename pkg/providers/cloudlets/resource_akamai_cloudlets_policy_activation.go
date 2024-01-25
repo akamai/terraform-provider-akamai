@@ -363,42 +363,28 @@ func resourcePolicyActivationImport(ctx context.Context, d *schema.ResourceData,
 		return nil, fmt.Errorf("import id should be of format: <policy_id>:<network>, for example: 1234:staging")
 	}
 
-	policyID, err := strconv.Atoi(parts[0])
+	policyID, err := strconv.ParseInt(parts[0], 10, 64)
 	if err != nil {
 		return nil, err
 	}
 	network := parts[1]
 
-	client := Client(meta)
-	activations, err := client.ListPolicyActivations(ctx, cloudlets.ListPolicyActivationsRequest{
-		PolicyID: int64(policyID),
-		Network:  cloudlets.PolicyActivationNetwork(network),
-	})
+	strategy, _, err := discoverActivationStrategy(ctx, policyID, meta, logger)
 	if err != nil {
 		return nil, err
 	}
 
-	var activation *cloudlets.PolicyActivation
-	for _, act := range activations {
-		if string(act.Network) == network && act.PolicyInfo.Status == cloudlets.PolicyActivationStatusActive {
-			activation = &act
-			break
-		}
-	}
-	if activation == nil || len(activations) == 0 {
-		return nil, fmt.Errorf("no active activation has been found for policy_id: '%d' and network: '%s'", policyID, network)
+	attrs, id, err := strategy.fetchValuesForImport(ctx, policyID, network)
+	if err != nil {
+		return nil, err
 	}
 
-	if err = d.Set("network", activation.Network); err != nil {
+	err = tf.SetAttrs(d, attrs)
+	if err != nil {
 		return nil, err
 	}
-	if err = d.Set("policy_id", activation.PolicyInfo.PolicyID); err != nil {
-		return nil, err
-	}
-	if err = d.Set("is_shared", false); err != nil {
-		return nil, err
-	}
-	d.SetId(fmt.Sprintf("%d:%s", policyID, activation.Network))
+
+	d.SetId(id)
 
 	return []*schema.ResourceData{d}, nil
 }
@@ -687,7 +673,7 @@ func discoverActivationStrategy(ctx context.Context, policyID int64, meta meta.M
 		return &v3ActivationStrategy{client: v3Client, logger: logger}, true, nil
 	}
 
-	return nil, false, fmt.Errorf("could not get policy %d: either as V2 %s or as V3 %s", policyID, v2Err, V3err)
+	return nil, false, fmt.Errorf("could not get policy %d: neither as V2 (%s) nor as V3 (%s)", policyID, v2Err, V3err)
 
 }
 
@@ -702,4 +688,5 @@ type activationStrategy interface {
 	isReactivationNotNeeded(ctx context.Context, policyID, version int64, hasVersionChange bool) (bool, string, error)
 	deactivatePolicy(ctx context.Context, policyID, version int64, network string) error
 	getPolicyActivation(ctx context.Context, policyID int64, network string) (*policyActivationDataSourceModel, error)
+	fetchValuesForImport(ctx context.Context, policyID int64, network string) (map[string]any, string, error)
 }

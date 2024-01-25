@@ -85,7 +85,7 @@ func (d *policyActivationDataSource) Schema(_ context.Context, _ datasource.Sche
 			},
 			"version": schema.Int64Attribute{
 				Computed:    true,
-				Description: "Latest version of cloudlets policy.",
+				Description: "Policy version that is activated on provided network",
 			},
 			"status": schema.StringAttribute{
 				Computed:    true,

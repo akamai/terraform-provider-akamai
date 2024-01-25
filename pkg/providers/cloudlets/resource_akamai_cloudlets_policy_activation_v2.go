@@ -226,3 +226,30 @@ func (strategy *v2ActivationStrategy) deactivatePolicy(ctx context.Context, poli
 func (strategy *v2ActivationStrategy) shouldRetryActivation(err error) bool {
 	return err != nil && policyActivationRetryRegexp.MatchString(strings.ToLower(err.Error()))
 }
+
+func (strategy *v2ActivationStrategy) fetchValuesForImport(ctx context.Context, policyID int64, network string) (map[string]any, string, error) {
+	activations, err := strategy.client.ListPolicyActivations(ctx, cloudlets.ListPolicyActivationsRequest{
+		PolicyID: policyID,
+		Network:  cloudlets.PolicyActivationNetwork(network),
+	})
+	if err != nil {
+		return nil, "", err
+	}
+
+	var activation *cloudlets.PolicyActivation
+	for _, act := range activations {
+		if string(act.Network) == network && act.PolicyInfo.Status == cloudlets.PolicyActivationStatusActive {
+			activation = &act
+			break
+		}
+	}
+	if activation == nil || len(activations) == 0 {
+		return nil, "", fmt.Errorf("no active activation has been found for policy_id: '%d' and network: '%s'", policyID, network)
+	}
+
+	return map[string]any{
+		"network":   activation.Network,
+		"policy_id": activation.PolicyInfo.PolicyID,
+		"is_shared": false,
+	}, fmt.Sprintf("%d:%s", policyID, activation.Network), nil
+}

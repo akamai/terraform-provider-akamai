@@ -22,16 +22,23 @@ type v3ActivationStrategy struct {
 }
 
 func (strategy *v3ActivationStrategy) setupCloudletSpecificData(_ *schema.ResourceData, network string) error {
-	strategy.network = strategy.parseNetwork(network)
+	net, err := strategy.parseNetwork(network)
+	if err != nil {
+		return err
+	}
+	strategy.network = net
 	return nil
 }
 
-func (strategy *v3ActivationStrategy) parseNetwork(network string) v3.Network {
-	network = strings.ToLower(network)
-	if network == "s" || network == "stag" || network == "staging" {
-		return v3.StagingNetwork
+func (strategy *v3ActivationStrategy) parseNetwork(network string) (v3.Network, error) {
+	switch tf.StateNetwork(strings.ToLower(network)) {
+	case "staging":
+		return v3.StagingNetwork, nil
+	case "production":
+		return v3.ProductionNetwork, nil
 	}
-	return v3.ProductionNetwork
+
+	return v3.StagingNetwork, fmt.Errorf("'%s' is an invalid network value: should be 'production', 'prod', 'p', 'staging', 'stag' or 's'", network)
 }
 func (strategy *v3ActivationStrategy) isVersionAlreadyActive(ctx context.Context, policyID, version int64) (bool, string, error) {
 	policy, err := strategy.client.GetPolicy(ctx, v3.GetPolicyRequest{
@@ -44,12 +51,12 @@ func (strategy *v3ActivationStrategy) isVersionAlreadyActive(ctx context.Context
 		return policy.CurrentActivations.Staging.Effective != nil &&
 			policy.CurrentActivations.Staging.Effective.PolicyVersion == version &&
 			policy.CurrentActivations.Staging.Effective.Status == v3.ActivationStatusSuccess &&
-			policy.CurrentActivations.Staging.Effective.Operation == v3.OperationActivation, strategy.getID(policyID), nil
+			policy.CurrentActivations.Staging.Effective.Operation == v3.OperationActivation, strategy.getID(policyID, strategy.network), nil
 	}
 	return policy.CurrentActivations.Production.Effective != nil &&
 		policy.CurrentActivations.Production.Effective.PolicyVersion == version &&
 		policy.CurrentActivations.Production.Effective.Status == v3.ActivationStatusSuccess &&
-		policy.CurrentActivations.Production.Effective.Operation == v3.OperationActivation, strategy.getID(policyID), nil
+		policy.CurrentActivations.Production.Effective.Operation == v3.OperationActivation, strategy.getID(policyID, strategy.network), nil
 }
 
 func (strategy *v3ActivationStrategy) activateVersion(ctx context.Context, policyID, version int64) error {
@@ -82,7 +89,7 @@ func (strategy *v3ActivationStrategy) waitForActivation(ctx context.Context, pol
 			if activation != nil {
 				switch activation.Status {
 				case v3.ActivationStatusSuccess:
-					return strategy.getID(policyID), nil
+					return strategy.getID(policyID, strategy.network), nil
 				case v3.ActivationStatusFailed:
 					return "", fmt.Errorf("activation failed for policy %d", policyID)
 				}
@@ -99,8 +106,8 @@ func (strategy *v3ActivationStrategy) waitForActivation(ctx context.Context, pol
 	}
 }
 
-func (strategy *v3ActivationStrategy) getID(policyID int64) string {
-	return fmt.Sprintf("%d:%s", policyID, strategy.network)
+func (strategy *v3ActivationStrategy) getID(policyID int64, network v3.Network) string {
+	return fmt.Sprintf("%d:%s", policyID, network)
 }
 
 func (strategy *v3ActivationStrategy) readActivationFromServer(ctx context.Context, policyID int64, network string) (map[string]any, error) {
@@ -111,11 +118,17 @@ func (strategy *v3ActivationStrategy) readActivationFromServer(ctx context.Conte
 		return nil, err
 	}
 
-	if strategy.parseNetwork(network) == v3.StagingNetwork {
+	net, err := strategy.parseNetwork(network)
+	if err != nil {
+		return nil, err
+	}
+
+	switch net {
+	case v3.StagingNetwork:
 		if policy.CurrentActivations.Staging.Effective != nil {
 			return extractAttrsForActivation(policy.CurrentActivations.Staging.Effective), nil
 		}
-	} else {
+	case v3.ProductionNetwork:
 		if policy.CurrentActivations.Production.Effective != nil {
 			return extractAttrsForActivation(policy.CurrentActivations.Production.Effective), nil
 		}
@@ -149,10 +162,14 @@ func (strategy *v3ActivationStrategy) isReactivationNotNeeded(ctx context.Contex
 }
 
 func (strategy *v3ActivationStrategy) deactivatePolicy(ctx context.Context, policyID, version int64, network string) error {
+	net, err := strategy.parseNetwork(network)
+	if err != nil {
+		return err
+	}
 	deactivation, err := strategy.client.DeactivatePolicy(ctx, v3.DeactivatePolicyRequest{
 		PolicyID:      policyID,
 		PolicyVersion: int(version),
-		Network:       strategy.parseNetwork(network),
+		Network:       net,
 	})
 	if err != nil {
 		return err
@@ -174,4 +191,33 @@ func (strategy *v3ActivationStrategy) shouldRetryActivation(err error) bool {
 		return true
 	}
 	return false
+}
+
+func (strategy *v3ActivationStrategy) fetchValuesForImport(ctx context.Context, policyID int64, network string) (map[string]any, string, error) {
+	net, err := strategy.parseNetwork(network)
+	if err != nil {
+		return nil, "", err
+	}
+	policy, err := strategy.client.GetPolicy(ctx, v3.GetPolicyRequest{PolicyID: policyID})
+	if err != nil {
+		return nil, "", err
+	}
+	var activationToCheck *v3.PolicyActivation
+
+	switch net {
+	case v3.StagingNetwork:
+		activationToCheck = policy.CurrentActivations.Staging.Effective
+	case v3.ProductionNetwork:
+		activationToCheck = policy.CurrentActivations.Production.Effective
+	}
+
+	if activationToCheck == nil || activationToCheck.Operation != v3.OperationActivation || activationToCheck.Status != v3.ActivationStatusSuccess {
+		return nil, "", fmt.Errorf("no active activation has been found for policy_id: '%d' and network: '%s'", policyID, network)
+	}
+
+	return map[string]any{
+		"network":   activationToCheck.Network,
+		"policy_id": policy.ID,
+		"is_shared": true,
+	}, strategy.getID(policyID, net), nil
 }
