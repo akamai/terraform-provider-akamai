@@ -349,5 +349,18 @@ func compareMatchTargets(oldTarget, newTarget *appsec.CreateMatchTargetResponse)
 		p2 := newTarget.Apis[j]
 		return p1.ID < p2.ID || ((p1.ID == p2.ID) && p1.Name < p2.Name)
 	})
+
+	sort.Slice(oldTarget.BypassNetworkLists, func(i, j int) bool {
+		p1 := oldTarget.BypassNetworkLists[i]
+		p2 := oldTarget.BypassNetworkLists[j]
+		return p1.ID < p2.ID || ((p1.ID == p2.ID) && p1.Name < p2.Name)
+	})
+
+	sort.Slice(newTarget.BypassNetworkLists, func(i, j int) bool {
+		p1 := newTarget.BypassNetworkLists[i]
+		p2 := newTarget.BypassNetworkLists[j]
+		return p1.ID < p2.ID || ((p1.ID == p2.ID) && p1.Name < p2.Name)
+	})
+
 	return reflect.DeepEqual(oldTarget, newTarget)
 }

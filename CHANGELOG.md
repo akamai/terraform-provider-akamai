@@ -126,6 +126,7 @@
 * Appsec
   * Fixed provider plugin crash in `appsec_attack_group` and `appsec_eval_group` after executing terraform plan ([I#480](https://github.com/akamai/terraform-provider-akamai/issues/480))
 
+  * Fixed drift for struct and list reordering in `akamai_appsec_match_target`
 
 * CPS
   * Changed `organizational_unit` inside `csr` attribute for `akamai_cps_third_party_enrollment` and `akamai_cps_dv_enrollment`
