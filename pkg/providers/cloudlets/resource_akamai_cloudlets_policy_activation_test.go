@@ -1948,14 +1948,14 @@ func expectActivateV3PolicyVersion(m *v3.Mock, policyID, version, activationID i
 		return m.On("ActivatePolicy", mock.Anything, v3.ActivatePolicyRequest{
 			PolicyID:      policyID,
 			Network:       network,
-			PolicyVersion: int(version),
+			PolicyVersion: version,
 		}).Return(nil, err)
 	}
 
 	return m.On("ActivatePolicy", mock.Anything, v3.ActivatePolicyRequest{
 		PolicyID:      policyID,
 		Network:       network,
-		PolicyVersion: int(version),
+		PolicyVersion: version,
 	}).Return(&v3.PolicyActivation{
 		ID:        activationID,
 		Status:    v3.ActivationStatusInProgress,
@@ -1992,14 +1992,14 @@ func expectDeactivateV3PolicyVersion(m *v3.Mock, policyID, version, activationID
 		return m.On("DeactivatePolicy", mock.Anything, v3.DeactivatePolicyRequest{
 			PolicyID:      policyID,
 			Network:       network,
-			PolicyVersion: int(version),
+			PolicyVersion: version,
 		}).Return(nil, err)
 	}
 
 	return m.On("DeactivatePolicy", mock.Anything, v3.DeactivatePolicyRequest{
 		PolicyID:      policyID,
 		Network:       network,
-		PolicyVersion: int(version),
+		PolicyVersion: version,
 	}).Return(&v3.PolicyActivation{
 		ID:        activationID,
 		Status:    v3.ActivationStatusInProgress,

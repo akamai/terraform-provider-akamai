@@ -245,15 +245,15 @@ func (d *sharedPolicyDataSource) Read(ctx context.Context, req datasource.ReadRe
 		}
 
 		if len(policyVersions.PolicyVersions) != 0 {
-			version = policyVersions.PolicyVersions[0].Version
+			version = policyVersions.PolicyVersions[0].PolicyVersion
 		}
 	}
 
 	var policyVersion *v3.PolicyVersion
 	if version != 0 {
 		policyVersion, err = client.GetPolicyVersion(ctx, v3.GetPolicyVersionRequest{
-			PolicyID: data.PolicyID.ValueInt64(),
-			Version:  version,
+			PolicyID:      data.PolicyID.ValueInt64(),
+			PolicyVersion: version,
 		})
 		if err != nil {
 			resp.Diagnostics.AddError("Reading Cloudlets Shared Policy Failed", err.Error())

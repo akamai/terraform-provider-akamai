@@ -62,7 +62,7 @@ func (strategy *v3ActivationStrategy) isVersionAlreadyActive(ctx context.Context
 func (strategy *v3ActivationStrategy) activateVersion(ctx context.Context, policyID, version int64) error {
 	activation, err := strategy.client.ActivatePolicy(ctx, v3.ActivatePolicyRequest{
 		PolicyID:      policyID,
-		PolicyVersion: int(version),
+		PolicyVersion: version,
 		Network:       strategy.network,
 	})
 	if activation != nil {
@@ -168,7 +168,7 @@ func (strategy *v3ActivationStrategy) deactivatePolicy(ctx context.Context, poli
 	}
 	deactivation, err := strategy.client.DeactivatePolicy(ctx, v3.DeactivatePolicyRequest{
 		PolicyID:      policyID,
-		PolicyVersion: int(version),
+		PolicyVersion: version,
 		Network:       net,
 	})
 	if err != nil {

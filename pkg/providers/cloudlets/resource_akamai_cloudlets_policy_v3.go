@@ -60,7 +60,7 @@ func (strategy v3PolicyStrategy) updatePolicyVersion(ctx context.Context, d *sch
 		if err != nil {
 			return err, nil
 		}
-		if err = d.Set("version", createPolicyRes.Version); err != nil {
+		if err = d.Set("version", createPolicyRes.PolicyVersion); err != nil {
 			return fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()), nil
 		}
 		return setWarnings(d, createPolicyRes.MatchRulesWarnings), nil
@@ -71,8 +71,8 @@ func (strategy v3PolicyStrategy) updatePolicyVersion(ctx context.Context, d *sch
 			MatchRules:  matchRules,
 			Description: tools.StringPtr(description),
 		},
-		PolicyID: policyID,
-		Version:  version,
+		PolicyID:      policyID,
+		PolicyVersion: version,
 	}
 	updatePolicyRes, err := strategy.client.UpdatePolicyVersion(ctx, updatePolicyVersionReq)
 	if err != nil {
@@ -94,8 +94,8 @@ func (strategy v3PolicyStrategy) updatePolicy(ctx context.Context, policyID, gro
 
 func (strategy v3PolicyStrategy) newPolicyVersionIsNeeded(ctx context.Context, policyID, version int64) (bool, error) {
 	policyVersion, err := strategy.client.GetPolicyVersion(ctx, v3.GetPolicyVersionRequest{
-		PolicyID: policyID,
-		Version:  version,
+		PolicyID:      policyID,
+		PolicyVersion: version,
 	})
 	if err != nil {
 		return false, err
@@ -124,8 +124,8 @@ func (strategy v3PolicyStrategy) readPolicy(ctx context.Context, policyID int64,
 	}
 
 	policyVersion, err := strategy.client.GetPolicyVersion(ctx, v3.GetPolicyVersionRequest{
-		PolicyID: policyID,
-		Version:  *version,
+		PolicyID:      policyID,
+		PolicyVersion: *version,
 	})
 	if err != nil {
 		return nil, err
@@ -140,7 +140,7 @@ func (strategy v3PolicyStrategy) readPolicy(ctx context.Context, policyID int64,
 		}
 	}
 	attrs["match_rules"] = string(matchRulesJSON)
-	attrs["version"] = policyVersion.Version
+	attrs["version"] = policyVersion.PolicyVersion
 
 	return attrs, nil
 }
@@ -184,7 +184,7 @@ func deactivatePolicyVersions(ctx context.Context, policyID int64, client v3.Clo
 		_, err := client.DeactivatePolicy(ctx, v3.DeactivatePolicyRequest{
 			PolicyID:      policyID,
 			Network:       policy.CurrentActivations.Staging.Effective.Network,
-			PolicyVersion: int(policy.CurrentActivations.Staging.Effective.PolicyVersion),
+			PolicyVersion: policy.CurrentActivations.Staging.Effective.PolicyVersion,
 		})
 		if err != nil {
 			return err
@@ -195,7 +195,7 @@ func deactivatePolicyVersions(ctx context.Context, policyID int64, client v3.Clo
 		_, err := client.DeactivatePolicy(ctx, v3.DeactivatePolicyRequest{
 			PolicyID:      policyID,
 			Network:       policy.CurrentActivations.Production.Effective.Network,
-			PolicyVersion: int(policy.CurrentActivations.Production.Effective.PolicyVersion),
+			PolicyVersion: policy.CurrentActivations.Production.Effective.PolicyVersion,
 		})
 		if err != nil {
 			return err

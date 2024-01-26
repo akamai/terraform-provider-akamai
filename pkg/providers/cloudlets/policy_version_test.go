@@ -101,7 +101,7 @@ func TestFindingLatestPolicyVersionV3(t *testing.T) {
 	preparePolicyVersionsPage := func(pageSize, startingVersion int64) []v3.ListPolicyVersionsItem {
 		versions := make([]v3.ListPolicyVersionsItem, 0, pageSize)
 		for i := startingVersion; i < startingVersion+pageSize; i++ {
-			versions = append(versions, v3.ListPolicyVersionsItem{Version: i})
+			versions = append(versions, v3.ListPolicyVersionsItem{PolicyVersion: i})
 		}
 		return versions
 	}
@@ -132,7 +132,7 @@ func TestFindingLatestPolicyVersionV3(t *testing.T) {
 		"first policy version on 1st page found": {
 			init: func(m *v3.Mock) {
 				policyVersionsPage := preparePolicyVersionsPage(500, 0)
-				policyVersionsPage[0] = v3.ListPolicyVersionsItem{Version: 500}
+				policyVersionsPage[0] = v3.ListPolicyVersionsItem{PolicyVersion: 500}
 				m.On("ListPolicyVersions", mock.Anything, v3.ListPolicyVersionsRequest{
 					PolicyID: policyID,
 					Size:     pageSize,

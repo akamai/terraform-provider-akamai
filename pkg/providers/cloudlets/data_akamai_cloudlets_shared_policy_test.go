@@ -356,11 +356,11 @@ func mockGetPolicy(m *v3.Mock, data testDataForSharedPolicy, times int) {
 
 func mockGetPolicyVersion(m *v3.Mock, data testDataForSharedPolicy, times int) {
 	m.On("GetPolicyVersion", mock.Anything, v3.GetPolicyVersionRequest{
-		PolicyID: data.policyID,
-		Version:  data.version,
+		PolicyID:      data.policyID,
+		PolicyVersion: data.version,
 	}).Return(&v3.PolicyVersion{
 		PolicyID:           data.policyID,
-		Version:            data.version,
+		PolicyVersion:      data.version,
 		Description:        data.versionDescription,
 		ID:                 123,
 		Immutable:          false,
@@ -373,11 +373,11 @@ func createPolicyVersions(policyID int64, numberOfVersions, pageNumber int) *v3.
 	var policyVersions v3.ListPolicyVersions
 	for i := numberOfVersions; i > 0; i-- {
 		policyVersions.PolicyVersions = append(policyVersions.PolicyVersions, v3.ListPolicyVersionsItem{
-			Description: tools.StringPtr(fmt.Sprintf("Description%d", i)),
-			ID:          int64(i),
-			Immutable:   true,
-			PolicyID:    policyID,
-			Version:     int64(i),
+			Description:   tools.StringPtr(fmt.Sprintf("Description%d", i)),
+			ID:            int64(i),
+			Immutable:     true,
+			PolicyID:      policyID,
+			PolicyVersion: int64(i),
 		})
 	}
 	policyVersions.Page.Number = pageNumber

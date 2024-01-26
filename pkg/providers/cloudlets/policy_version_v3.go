@@ -44,5 +44,5 @@ func (v3 v3VersionStrategy) findLatestPolicyVersion(ctx context.Context, policyI
 		return 0, fmt.Errorf("no policy version found")
 	}
 	//API returns list of versions sorted in descending order, and it can be assumed that first element is the latest version
-	return versions[0].Version, nil
+	return versions[0].PolicyVersion, nil
 }
