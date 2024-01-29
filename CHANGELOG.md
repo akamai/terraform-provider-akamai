@@ -43,8 +43,8 @@
 
 #### FEATURES/ENHANCEMENTS:
 * Appsec
-  * Added retries in `akamai_appsec_activations` and `akamai_networklist_activations` resources
-  * Added reactivation support for `akamai_appsec_activations` if the config was deactivated manually
+  * Added retries in `akamai_appsec_activations` and `akamai_networklist_activations` resources ([I#471](https://github.com/akamai/terraform-provider-akamai/issues/471))
+  * Added reactivation support for `akamai_appsec_activations` if the config was deactivated manually ([I#441](https://github.com/akamai/terraform-provider-akamai/issues/441) and [I#442](https://github.com/akamai/terraform-provider-akamai/issues/442))
 
 * DNS
   * Enhanced handling of `akamai_dns_zone` resource when no `group` is provided:
