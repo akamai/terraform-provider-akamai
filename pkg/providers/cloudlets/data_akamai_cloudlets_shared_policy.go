@@ -178,7 +178,7 @@ func (d *sharedPolicyDataSource) Schema(_ context.Context, _ datasource.SchemaRe
 			},
 			"cloudlet_type": schema.StringAttribute{
 				Computed:    true,
-				Description: "The two- or three- letter code of the Cloudlet that the shared policy is for (AP, CD, ER, FR, IG, AS, VWR).",
+				Description: "The two-letter code of the Cloudlet that the shared policy is for (AP, AS, CD, ER, FR, IG).",
 			},
 			"description": schema.StringAttribute{
 				Computed:    true,
