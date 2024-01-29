@@ -57,7 +57,7 @@
 * Cloudlets
     * Added import for `akamai_cloudlets_policy_activation`
     * Added support for Shared Cloudlets Policies. To use it, provide `is_shared` field in `akamai_cloudlets_policy` resource as `true`. ([I#276](https://github.com/akamai/terraform-provider-akamai/issues/276)) 
-    * Added validation to prevent changing `cloudlet_code` field in `akamai_cloudlets_policy` resource to prevent modifying of this immutable field.
+    * Added validation to prevent changing immutable `cloudlet_code` field in `akamai_cloudlets_policy` resource.
     * Added new data source:
       * `akamai_cloudlets_policy_activation` - read
       * `akamai_cloudlets_shared_policy` - read
