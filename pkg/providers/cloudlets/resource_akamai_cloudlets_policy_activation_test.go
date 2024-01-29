@@ -1182,8 +1182,20 @@ func TestResourceV3CloudletsPolicyActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config:      testutils.LoadFixtureString(t, "./testdata/TestResCloudletsPolicyActivation/policy_activation_version1.tf"),
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestResCloudletsPolicyV3Activation/shared_policy_activation_version1.tf"),
 					ExpectError: regexp.MustCompile("policy activation create: activation failed for policy 1234"),
+				},
+			},
+		},
+		"cannot modify 'associated_properties' for shared policy": {
+			init: func(m2 *cloudlets.Mock, m3 *v3.Mock) {
+				policyID := int64(1234)
+				expectToDiscoverPolicyAsV3(m2, m3, policyID)
+			},
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestResCloudletsPolicyV3Activation/policy_activation_version_invalid.tf"),
+					ExpectError: regexp.MustCompile("cannot provide 'associated_properties' for shared policy"),
 				},
 			},
 		},

@@ -21,7 +21,10 @@ type v3ActivationStrategy struct {
 	activationID int64
 }
 
-func (strategy *v3ActivationStrategy) setupCloudletSpecificData(_ *schema.ResourceData, network string) error {
+func (strategy *v3ActivationStrategy) setupCloudletSpecificData(rd *schema.ResourceData, network string) error {
+	if rd.HasChange("associated_properties") {
+		return fmt.Errorf("cannot provide 'associated_properties' for shared policy")
+	}
 	net, err := strategy.parseNetwork(network)
 	if err != nil {
 		return err
