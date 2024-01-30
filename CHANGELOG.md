@@ -59,6 +59,7 @@
 
 * PAPI
   * Added `version_notes` and `rule_warnings` attributes to `akamai_property` resource
+  * Added support for new rule format v2024-01-09 in `data_akamai_property_rules_builder`
 
 * GTM
     * Added data sources:

@@ -2425,7 +2425,7 @@ func getBehaviorsSchemaV20230920() map[string]*schema.Schema {
 		"construct_response": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "This behavior constructs an HTTP response, complete with HTTP status code and body, to serve from the edge independently of your origin. It supports all request methods except for `POST`. This behavior can be used in includes.",
+			Description: "This behavior constructs an HTTP response, complete with HTTP status code and body, to serve from the edge independently of your origin. For example, you might want to send a customized response if the URL doesn't point to an object on the origin server, or if the end user is not authorized to view the requested content. You can use it with all request methods you allow for your property, including POST. For more details, see the `allowOptions`, `allowPatch`, `allowPost`, `allowPut`, and `allowDelete` behaviors. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -2463,7 +2463,7 @@ func getBehaviorsSchemaV20230920() map[string]*schema.Schema {
 					},
 					"force_eviction": {
 						Optional:    true,
-						Description: "Removes the underlying object from the cache, since it is not being served.",
+						Description: "For GET requests from clients, this forces edge servers to evict the underlying object from cache. Defaults to `false`.",
 						Type:        schema.TypeBool,
 					},
 					"ignore_purge": {
@@ -9608,7 +9608,7 @@ func getBehaviorsSchemaV20230920() map[string]*schema.Schema {
 					},
 					"permissions_policy_directive": {
 						Optional:    true,
-						Description: "Each directive represents a browser feature. Specify the ones you want enabled in a client browser that accesses your content. Include values from the pre-set list or add a custom entry.",
+						Description: "Each directive represents a browser feature. Specify the ones you want enabled in a client browser that accesses your content. You can add custom entries or provide pre-set values from the list. For more details on each value, see the `guide section` for this behavior.",
 						Type:        schema.TypeList,
 						Elem: &schema.Schema{
 							Type: schema.TypeString,
@@ -10743,7 +10743,7 @@ func getBehaviorsSchemaV20230920() map[string]*schema.Schema {
 					},
 					"accept_ch": {
 						Optional:    true,
-						Description: "The client hint data objects you want to receive from the browser. You can provide pre-set values from this list, or add custom entries. If you've configured your origin server to pass along data objects, they merge with the ones you set in this array, before the list is sent to the client.",
+						Description: "The client hint data objects you want to receive from the browser.  You can add custom entries or provide pre-set values from the list. For more details on each value, see the `guide section` for this behavior. If you've configured your origin server to pass along data objects, they merge with the ones you set in this array, before the list is sent to the client.",
 						Type:        schema.TypeList,
 						Elem: &schema.Schema{
 							Type: schema.TypeString,
@@ -10751,7 +10751,7 @@ func getBehaviorsSchemaV20230920() map[string]*schema.Schema {
 					},
 					"accept_critical_ch": {
 						Optional:    true,
-						Description: "The critical client hint data objects you want to receive from the browser. The original request from the browser needs to include these objects. Otherwise, a new response header is sent back to the client, asking for all of these client hint data objects. You can provide pre-set values from the list, or add custom entries.",
+						Description: "The critical client hint data objects you want to receive from the browser. The original request from the browser needs to include these objects. Otherwise, a new response header is sent back to the client, asking for all of these client hint data objects. You can add custom entries or provide pre-set values from the list. For more details on each value, see the `guide section` for this behavior.",
 						Type:        schema.TypeList,
 						Elem: &schema.Schema{
 							Type: schema.TypeString,
