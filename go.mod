@@ -23,6 +23,7 @@ require (
 	github.com/iancoleman/strcase v0.3.0
 	github.com/jedib0t/go-pretty/v6 v6.0.4
 	github.com/jinzhu/copier v0.3.2
+	github.com/mgwoj/go-retryablehttp v0.0.1
 	github.com/spf13/cast v1.5.0
 	github.com/stretchr/testify v1.8.4
 	github.com/tj/assert v0.0.3
