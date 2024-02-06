@@ -43,6 +43,11 @@
 
 #### FEATURES/ENHANCEMENTS:
 
+* DNS
+  * Enhanced handling of `akamai_dns_zone` resource when no `group` is provided:
+    * When there is only one group present, the processing should continue with a descriptive warning
+    * When there are more then one groups present, the processing will fail with descriptive error asking to provide group in the configuration
+
 * PAPI
  * Added `name` validation for `akamai_property_include` resource
 

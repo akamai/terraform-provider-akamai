@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -152,12 +153,31 @@ func resourceDNSv2ZoneCreate(ctx context.Context, d *schema.ResourceData, m inte
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	groupStr, err := tf.GetStringValue("group", d)
+
+	group, err := tf.GetStringValue("group", d)
 	if err != nil {
-		return diag.FromErr(err)
+		if errors.Is(err, tf.ErrNotFound) {
+			groupList, err := inst.Client(meta).ListGroups(ctx, dns.ListGroupRequest{})
+			if err != nil {
+				return diag.FromErr(err)
+			}
+			if len(groupList.Groups) == 0 {
+				return diag.Errorf("no group found. Please provide the group.")
+			}
+			if len(groupList.Groups) == 1 {
+				group = strconv.Itoa(groupList.Groups[0].GroupID)
+				logger.Warnf("Please modify configuration and provide group identifier. It will be required in the future version of the resource.")
+			}
+			if len(groupList.Groups) > 1 {
+				return diag.Errorf("group is a required field when there is more than one group present.")
+			}
+		} else {
+			return diag.FromErr(err)
+		}
 	}
+
 	contract := strings.TrimPrefix(contractStr, "ctr_")
-	group := strings.TrimPrefix(groupStr, "grp_")
+	group = strings.TrimPrefix(group, "grp_")
 	zoneQueryString := dns.ZoneQueryString{Contract: contract, Group: group}
 	zoneCreate := &dns.ZoneCreate{Zone: hostname, Type: zoneType}
 	if err := populateDNSv2ZoneObject(d, zoneCreate, logger); err != nil {
