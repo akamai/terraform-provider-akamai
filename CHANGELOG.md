@@ -114,7 +114,9 @@
 
 #### BUG FIXES:
 
-
+* GTM
+  * Fixed 'Inconsistent Final Plan' error for `akamai_gtm_property` resource
+  * The diff when reordering `traffic_target` in `akamai_gtm_property` resource at the same time as changing any attribute value inside `traffic_target` will be extensive
 
 
 * CPS
