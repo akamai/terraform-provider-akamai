@@ -220,26 +220,12 @@ func resourcePolicyCreate(ctx context.Context, d *schema.ResourceData, m interfa
 		return diag.FromErr(err)
 	}
 
-	policyID, err, createVersionErr := executionStrategy.createPolicy(ctx, name, cloudletCode, int64(groupIDNum))
+	policyID, err := executionStrategy.createPolicy(ctx, name, cloudletCode, int64(groupIDNum))
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	if createVersionErr != nil {
-		// Here the policy was created but policy version creation failed (which can happen only to V3 as in V2 first version is implicit).
-		// We need to tell Terraform that this resource was created (by SetId) but is tainted (because we return error in this flow).
-		// Otherwise, on next apply Terraform will try to create the same policy which will from API. When resource is tainted, it'll trigger destroy before create.
-		d.SetId(strconv.FormatInt(policyID, 10))
-		// We still want to have actual (server's) values in state. Otherwise, the values from config would be put into the state as default.
-		if errPolicyRead := resourcePolicyRead(ctx, d, m); errPolicyRead != nil {
-			return append(errPolicyRead, diag.FromErr(createVersionErr)...)
-		}
-		return diag.FromErr(createVersionErr)
-	}
 
 	d.SetId(strconv.FormatInt(policyID, 10))
-	if err := d.Set("version", 1); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
-	}
 
 	description, err := tf.GetStringValue("description", d)
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
@@ -257,7 +243,7 @@ func resourcePolicyCreate(ctx context.Context, d *schema.ResourceData, m interfa
 		}
 	}
 
-	err, updateError := executionStrategy.updatePolicyVersion(ctx, d, policyID, 1, description, matchRulesJSON, false)
+	err, updateError := executionStrategy.updatePolicyVersion(ctx, d, policyID, 1, description, matchRulesJSON, !executionStrategy.isFirstVersionCreated())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -286,8 +272,6 @@ func resourcePolicyRead(ctx context.Context, d *schema.ResourceData, m interface
 		return diag.FromErr(err)
 	}
 
-	var versionProcessed *int64
-
 	policyVersionStrategy, err := getPolicyVersionExecutionStrategy(d, meta)
 	if err != nil {
 		return diag.FromErr(err)
@@ -297,14 +281,13 @@ func resourcePolicyRead(ctx context.Context, d *schema.ResourceData, m interface
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	versionProcessed = tools.Int64Ptr(policyVersion)
 
 	executionStrategy, err := getPolicyExecutionStrategy(d, meta)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	attrs, err := executionStrategy.readPolicy(ctx, policyID, versionProcessed)
+	attrs, err := executionStrategy.readPolicy(ctx, policyID, policyVersion)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -358,13 +341,19 @@ func resourcePolicyUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 		}
 	}
 	if d.HasChanges("description", "match_rules", "match_rule_format") {
+		var isNewVersionNeeded bool
 		version, err := tf.GetIntValue("version", d)
 		if err != nil {
-			return diag.FromErr(err)
-		}
-		isNewVersionNeeded, err := executionStrategy.newPolicyVersionIsNeeded(ctx, policyID, int64(version))
-		if err != nil {
-			return diag.FromErr(err)
+			if errors.Is(err, tf.ErrNotFound) {
+				isNewVersionNeeded = true
+			} else {
+				return diag.FromErr(err)
+			}
+		} else {
+			isNewVersionNeeded, err = executionStrategy.newPolicyVersionIsNeeded(ctx, policyID, int64(version))
+			if err != nil {
+				return diag.FromErr(err)
+			}
 		}
 		matchRulesJSON, err := tf.GetStringValue("match_rules", d)
 		if err != nil && !errors.Is(err, tf.ErrNotFound) {
@@ -437,16 +426,6 @@ func resourcePolicyImport(ctx context.Context, d *schema.ResourceData, m interfa
 		return nil, err
 	}
 
-	policyVersionStrategy := policyStrategy.getVersionStrategy(meta)
-
-	version, err := policyVersionStrategy.findLatestPolicyVersion(ctx, policyID)
-	if err != nil {
-		return nil, err
-	}
-
-	if err = d.Set("version", version); err != nil {
-		return nil, err
-	}
 	d.SetId(strconv.FormatInt(policyID, 10))
 
 	return []*schema.ResourceData{d}, nil
@@ -528,7 +507,7 @@ func getPolicyExecutionStrategy(d *schema.ResourceData, meta meta.Meta) (policyE
 }
 
 type policyExecutionStrategy interface {
-	createPolicy(ctx context.Context, cloudletName, cloudletCode string, groupID int64) (int64, error, error)
+	createPolicy(ctx context.Context, cloudletName, cloudletCode string, groupID int64) (int64, error)
 	updatePolicyVersion(ctx context.Context, d *schema.ResourceData, policyID, version int64, description, matchRulesJSON string, newVersionRequired bool) (error, error)
 	updatePolicy(ctx context.Context, policyID, groupID int64, cloudletName string) error
 	newPolicyVersionIsNeeded(ctx context.Context, policyID, version int64) (bool, error)
@@ -536,6 +515,7 @@ type policyExecutionStrategy interface {
 	deletePolicy(ctx context.Context, policyID int64) error
 	getVersionStrategy(meta meta.Meta) versionStrategy
 	setPolicyType(d *schema.ResourceData) error
+	isFirstVersionCreated() bool
 }
 
 func discoverPolicyExecutionStrategy(ctx context.Context, meta meta.Meta, policyName string) (policyExecutionStrategy, int64, error) {

@@ -7,6 +7,7 @@ import (
 
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
@@ -293,7 +294,7 @@ func dataSourceCloudletsPolicyRead(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 
-	var version int64
+	var version *int64
 	if v, err := tf.GetIntValue("version", d); err != nil {
 		policyVersionStrategy := v2VersionStrategy{Client(meta)}
 		version, err = policyVersionStrategy.findLatestPolicyVersion(ctx, int64(policyID))
@@ -301,24 +302,26 @@ func dataSourceCloudletsPolicyRead(ctx context.Context, d *schema.ResourceData, 
 			return diag.FromErr(err)
 		}
 	} else {
-		version = int64(v)
+		version = tools.Int64Ptr(int64(v))
 	}
 
-	log.Debug("Getting Policy Version")
-	policyVersion, err := client.GetPolicyVersion(ctx, cloudlets.GetPolicyVersionRequest{
-		PolicyID: int64(policyID),
-		Version:  version,
-	})
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	if policyVersion.Deleted {
-		return diag.Errorf("specified policy version is deleted: version = %d", version)
-	}
+	if version != nil {
+		log.Debug("Getting Policy Version")
+		policyVersion, err := client.GetPolicyVersion(ctx, cloudlets.GetPolicyVersionRequest{
+			PolicyID: int64(policyID),
+			Version:  *version,
+		})
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		if policyVersion.Deleted {
+			return diag.Errorf("specified policy version is deleted: version = %d", *version)
+		}
 
-	err = populateSchemaFieldsWithPolicyVersion(policyVersion, d)
-	if err != nil {
-		return diag.FromErr(err)
+		err = populateSchemaFieldsWithPolicyVersion(policyVersion, d)
+		if err != nil {
+			return diag.FromErr(err)
+		}
 	}
 
 	log.Debug("Getting Policy")
@@ -335,7 +338,11 @@ func dataSourceCloudletsPolicyRead(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 
-	d.SetId(fmt.Sprintf("%d:%d", policyID, version))
+	if version != nil {
+		d.SetId(fmt.Sprintf("%d:%d", policyID, *version))
+	} else {
+		d.SetId(fmt.Sprintf("%d", policyID))
+	}
 
 	return nil
 }

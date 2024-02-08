@@ -21,5 +21,5 @@ func getPolicyVersionExecutionStrategy(d *schema.ResourceData, meta meta.Meta) (
 }
 
 type versionStrategy interface {
-	findLatestPolicyVersion(ctx context.Context, policyID int64) (int64, error)
+	findLatestPolicyVersion(ctx context.Context, policyID int64) (*int64, error)
 }

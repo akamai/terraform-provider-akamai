@@ -7,6 +7,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cloudlets"
 	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cloudlets/v3"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"github.com/tj/assert"
@@ -26,7 +27,7 @@ func TestFindingLatestPolicyVersion(t *testing.T) {
 
 	tests := map[string]struct {
 		init      func(m *cloudlets.Mock)
-		expected  int64
+		expected  *int64
 		withError bool
 	}{
 		"last policy version on 1st page found": {
@@ -42,7 +43,7 @@ func TestFindingLatestPolicyVersion(t *testing.T) {
 					Offset:   1000,
 				}).Return([]cloudlets.PolicyVersion{}, nil).Once()
 			},
-			expected: 0,
+			expected: tools.Int64Ptr(0),
 		},
 		"first policy version on 1st page found": {
 			init: func(m *cloudlets.Mock) {
@@ -54,7 +55,7 @@ func TestFindingLatestPolicyVersion(t *testing.T) {
 					Offset:   0,
 				}).Return(policyVersionsPage, nil).Once()
 			},
-			expected: 500,
+			expected: tools.Int64Ptr(500),
 		},
 		"no policy versions found": {
 			init: func(m *cloudlets.Mock) {
@@ -64,7 +65,7 @@ func TestFindingLatestPolicyVersion(t *testing.T) {
 					Offset:   0,
 				}).Return([]cloudlets.PolicyVersion{}, nil).Once()
 			},
-			withError: true,
+			expected: nil,
 		},
 		"error listing policy versions": {
 			init: func(m *cloudlets.Mock) {
@@ -90,7 +91,11 @@ func TestFindingLatestPolicyVersion(t *testing.T) {
 					assert.Error(t, err)
 				} else {
 					require.NoError(t, err)
-					assert.Equal(t, test.expected, version)
+					if test.expected != nil {
+						assert.Equal(t, *test.expected, *version)
+					} else {
+						assert.Nil(t, version)
+					}
 				}
 			})
 		})
@@ -111,7 +116,7 @@ func TestFindingLatestPolicyVersionV3(t *testing.T) {
 
 	tests := map[string]struct {
 		init      func(m *v3.Mock)
-		expected  int64
+		expected  *int64
 		withError bool
 	}{
 		"last policy version on 1st page found": {
@@ -127,7 +132,7 @@ func TestFindingLatestPolicyVersionV3(t *testing.T) {
 					Page:     1,
 				}).Return(&v3.ListPolicyVersions{PolicyVersions: []v3.ListPolicyVersionsItem{}}, nil).Once()
 			},
-			expected: 0,
+			expected: tools.Int64Ptr(0),
 		},
 		"first policy version on 1st page found": {
 			init: func(m *v3.Mock) {
@@ -139,7 +144,7 @@ func TestFindingLatestPolicyVersionV3(t *testing.T) {
 					Page:     0,
 				}).Return(&v3.ListPolicyVersions{PolicyVersions: policyVersionsPage}, nil).Once()
 			},
-			expected: 500,
+			expected: tools.Int64Ptr(500),
 		},
 		"no policy versions found": {
 			init: func(m *v3.Mock) {
@@ -149,7 +154,7 @@ func TestFindingLatestPolicyVersionV3(t *testing.T) {
 					Page:     0,
 				}).Return(&v3.ListPolicyVersions{PolicyVersions: []v3.ListPolicyVersionsItem{}}, nil).Once()
 			},
-			withError: true,
+			expected: nil,
 		},
 		"error listing policy versions": {
 			init: func(m *v3.Mock) {
@@ -175,7 +180,11 @@ func TestFindingLatestPolicyVersionV3(t *testing.T) {
 					assert.Error(t, err)
 				} else {
 					require.NoError(t, err)
-					assert.Equal(t, test.expected, version)
+					if test.expected != nil {
+						assert.Equal(t, *test.expected, *version)
+					} else {
+						assert.Nil(t, version)
+					}
 				}
 			})
 		})

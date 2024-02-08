@@ -33,7 +33,7 @@ var cloudletIDs = map[string]int{
 	"MMA": 11,
 }
 
-func (strategy v2PolicyStrategy) createPolicy(ctx context.Context, cloudletName, cloudletCode string, groupID int64) (int64, error, error) {
+func (strategy v2PolicyStrategy) createPolicy(ctx context.Context, cloudletName, cloudletCode string, groupID int64) (int64, error) {
 	createPolicyReq := cloudlets.CreatePolicyRequest{
 		Name:       cloudletName,
 		CloudletID: int64(cloudletIDs[cloudletCode]),
@@ -41,9 +41,9 @@ func (strategy v2PolicyStrategy) createPolicy(ctx context.Context, cloudletName,
 	}
 	createPolicyResp, err := strategy.client.CreatePolicy(ctx, createPolicyReq)
 	if err != nil {
-		return 0, err, nil
+		return 0, err
 	}
-	return createPolicyResp.PolicyID, nil, nil
+	return createPolicyResp.PolicyID, nil
 }
 
 func (strategy v2PolicyStrategy) updatePolicyVersion(ctx context.Context, d *schema.ResourceData, policyID, version int64, description, matchRulesJSON string, newVersionRequired bool) (error, error) {
@@ -121,9 +121,21 @@ func (strategy v2PolicyStrategy) newPolicyVersionIsNeeded(ctx context.Context, p
 }
 
 func (strategy v2PolicyStrategy) readPolicy(ctx context.Context, policyID int64, version *int64) (map[string]any, error) {
+
 	policy, err := strategy.client.GetPolicy(ctx, cloudlets.GetPolicyRequest{PolicyID: policyID})
 	if err != nil {
 		return nil, err
+	}
+
+	attrs := make(map[string]interface{})
+	attrs["name"] = policy.Name
+	attrs["group_id"] = strconv.FormatInt(policy.GroupID, 10)
+	attrs["cloudlet_code"] = policy.CloudletCode
+	attrs["cloudlet_id"] = policy.CloudletID
+	attrs["is_shared"] = false
+
+	if version == nil {
+		return attrs, nil
 	}
 
 	policyVersion, err := strategy.client.GetPolicyVersion(ctx, cloudlets.GetPolicyVersionRequest{
@@ -134,11 +146,6 @@ func (strategy v2PolicyStrategy) readPolicy(ctx context.Context, policyID int64,
 		return nil, err
 	}
 
-	attrs := make(map[string]interface{})
-	attrs["name"] = policy.Name
-	attrs["group_id"] = strconv.FormatInt(policy.GroupID, 10)
-	attrs["cloudlet_code"] = policy.CloudletCode
-	attrs["cloudlet_id"] = policy.CloudletID
 	attrs["description"] = policyVersion.Description
 	attrs["match_rule_format"] = policyVersion.MatchRuleFormat
 	var matchRulesJSON []byte
@@ -150,7 +157,6 @@ func (strategy v2PolicyStrategy) readPolicy(ctx context.Context, policyID int64,
 	}
 	attrs["match_rules"] = string(matchRulesJSON)
 	attrs["version"] = policyVersion.Version
-	attrs["is_shared"] = false
 
 	return attrs, nil
 
@@ -196,4 +202,8 @@ func (strategy v2PolicyStrategy) getVersionStrategy(meta meta.Meta) versionStrat
 
 func (strategy v2PolicyStrategy) setPolicyType(d *schema.ResourceData) error {
 	return d.Set("is_shared", false)
+}
+
+func (strategy v2PolicyStrategy) isFirstVersionCreated() bool {
+	return true
 }

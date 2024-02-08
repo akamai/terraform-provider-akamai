@@ -2,7 +2,6 @@ package cloudlets
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cloudlets"
 )
@@ -36,14 +35,14 @@ func getAllV2PolicyVersions(ctx context.Context, policyID int64, client cloudlet
 
 }
 
-func (v2 v2VersionStrategy) findLatestPolicyVersion(ctx context.Context, policyID int64) (int64, error) {
+func (v2 v2VersionStrategy) findLatestPolicyVersion(ctx context.Context, policyID int64) (*int64, error) {
 	versions, err := getAllV2PolicyVersions(ctx, policyID, v2.client)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 	if len(versions) == 0 {
-		return 0, fmt.Errorf("no policy version found")
+		return nil, nil
 	}
 	//API returns list of versions sorted in descending order, and it can be assumed that first element is the latest version
-	return versions[0].Version, nil
+	return &versions[0].Version, nil
 }

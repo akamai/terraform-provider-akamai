@@ -18,7 +18,7 @@ type v3PolicyStrategy struct {
 	client v3.Cloudlets
 }
 
-func (strategy v3PolicyStrategy) createPolicy(ctx context.Context, cloudletName, cloudletCode string, groupID int64) (int64, error, error) {
+func (strategy v3PolicyStrategy) createPolicy(ctx context.Context, cloudletName, cloudletCode string, groupID int64) (int64, error) {
 	createPolicyReq := v3.CreatePolicyRequest{
 		Name:         cloudletName,
 		CloudletType: v3.CloudletType(cloudletCode),
@@ -26,17 +26,10 @@ func (strategy v3PolicyStrategy) createPolicy(ctx context.Context, cloudletName,
 	}
 	createPolicyResp, err := strategy.client.CreatePolicy(ctx, createPolicyReq)
 	if err != nil {
-		return 0, err, nil
+		return 0, err
 	}
 
-	// v2 is creating version implicitly, but v3 does it explicitly
-	_, err = strategy.client.CreatePolicyVersion(ctx, v3.CreatePolicyVersionRequest{
-		PolicyID: createPolicyResp.ID,
-		CreatePolicyVersion: v3.CreatePolicyVersion{
-			MatchRules: make(v3.MatchRules, 0),
-		},
-	})
-	return createPolicyResp.ID, nil, err
+	return createPolicyResp.ID, nil
 }
 
 func (strategy v3PolicyStrategy) updatePolicyVersion(ctx context.Context, d *schema.ResourceData, policyID, version int64, description, matchRulesJSON string, newVersionRequired bool) (error, error) {
@@ -58,7 +51,7 @@ func (strategy v3PolicyStrategy) updatePolicyVersion(ctx context.Context, d *sch
 
 		createPolicyRes, err := strategy.client.CreatePolicyVersion(ctx, createPolicyReq)
 		if err != nil {
-			return err, nil
+			return nil, err
 		}
 		if err = d.Set("version", createPolicyRes.PolicyVersion); err != nil {
 			return fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()), nil
@@ -255,4 +248,8 @@ func verifyVersionDeactivated(ctx context.Context, policyID int64, client v3.Clo
 
 	return (policy.CurrentActivations.Staging.Effective == nil || policy.CurrentActivations.Staging.Effective.Operation == v3.OperationDeactivation) &&
 		(policy.CurrentActivations.Production.Effective == nil || policy.CurrentActivations.Production.Effective.Operation == v3.OperationDeactivation), nil
+}
+
+func (strategy v3PolicyStrategy) isFirstVersionCreated() bool {
+	return false
 }
