@@ -85,6 +85,7 @@ terraform-fmt:
 
 .PHONY: lint
 lint: | $(GOLANGCILINT) ; $(info $(M) Running golangci-lint...) @
+	go mod tidy
 	$Q $(BIN)/golangci-lint run
 
 .PHONY: terraform-lint

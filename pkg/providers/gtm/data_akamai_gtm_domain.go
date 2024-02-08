@@ -8,6 +8,7 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
@@ -566,7 +567,7 @@ var (
 									Computed:    true,
 									Description: "Specifies the TCP port to connect to when requesting the load object.",
 								},
-								"load_servers": schema.SetAttribute{
+								"load_servers": schema.ListAttribute{
 									Computed:    true,
 									ElementType: types.StringType,
 									Description: "Specifies the list of servers to requests the load object from.",
@@ -796,7 +797,7 @@ type (
 		DefaultSSLClientPrivateKey   types.String     `tfsdk:"default_ssl_client_private_key"`
 		DefaultTimeoutPenalty        types.Int64      `tfsdk:"default_timeout_penalty"`
 		DefaultUnreachableThreshold  types.Float64    `tfsdk:"default_unreachable_threshold"`
-		EmailNotificationList        []types.String   `tfsdk:"email_notification_list"`
+		EmailNotificationList        types.List       `tfsdk:"email_notification_list"`
 		EndUserMappingEnabled        types.Bool       `tfsdk:"end_user_mapping_enabled"`
 		LastModified                 types.String     `tfsdk:"last_modified"`
 		LastModifiedBy               types.String     `tfsdk:"last_modified_by"`
@@ -883,18 +884,18 @@ type (
 	}
 
 	staticRRSet struct {
-		Type  types.String   `tfsdk:"type"`
-		TTL   types.Int64    `tfsdk:"ttl"`
-		RData []types.String `tfsdk:"rdata"`
+		Type  types.String `tfsdk:"type"`
+		TTL   types.Int64  `tfsdk:"ttl"`
+		RData types.List   `tfsdk:"rdata"`
 	}
 
 	trafficTarget struct {
-		DatacenterID types.Int64    `tfsdk:"datacenter_id"`
-		Enabled      types.Bool     `tfsdk:"enabled"`
-		Weight       types.Float64  `tfsdk:"weight"`
-		HandoutCNAME types.String   `tfsdk:"handout_cname"`
-		Name         types.String   `tfsdk:"name"`
-		Servers      []types.String `tfsdk:"servers"`
+		DatacenterID types.Int64   `tfsdk:"datacenter_id"`
+		Enabled      types.Bool    `tfsdk:"enabled"`
+		Weight       types.Float64 `tfsdk:"weight"`
+		HandoutCNAME types.String  `tfsdk:"handout_cname"`
+		Name         types.String  `tfsdk:"name"`
+		Servers      types.List    `tfsdk:"servers"`
 	}
 
 	property struct {
@@ -935,9 +936,9 @@ type (
 	}
 
 	loadObject struct {
-		LoadObject     types.String   `tfsdk:"load_object"`
-		LoadObjectPort types.Int64    `tfsdk:"load_object_port"`
-		LoadServers    []types.String `tfsdk:"load_servers"`
+		LoadObject     types.String `tfsdk:"load_object"`
+		LoadObjectPort types.Int64  `tfsdk:"load_object_port"`
+		LoadServers    types.List   `tfsdk:"load_servers"`
 	}
 
 	datacenter struct {
@@ -967,9 +968,9 @@ type (
 	}
 
 	geographicMapAssignment struct {
-		Countries    []types.String `tfsdk:"countries"`
-		DatacenterID types.Int64    `tfsdk:"datacenter_id"`
-		Nickname     types.String   `tfsdk:"nickname"`
+		Countries    types.Set    `tfsdk:"countries"`
+		DatacenterID types.Int64  `tfsdk:"datacenter_id"`
+		Nickname     types.String `tfsdk:"nickname"`
 	}
 
 	cidrMap struct {
@@ -980,9 +981,9 @@ type (
 	}
 
 	cidrMapAssignment struct {
-		DatacenterID types.Int64    `tfsdk:"datacenter_id"`
-		Nickname     types.String   `tfsdk:"nickname"`
-		Blocks       []types.String `tfsdk:"blocks"`
+		DatacenterID types.Int64  `tfsdk:"datacenter_id"`
+		Nickname     types.String `tfsdk:"nickname"`
+		Blocks       types.Set    `tfsdk:"blocks"`
 	}
 
 	asMap struct {
@@ -1158,7 +1159,7 @@ func (d *domainDataSource) Metadata(_ context.Context, _ datasource.MetadataRequ
 // Read is called when the provider must read data source values in order to update state
 func (d *domainDataSource) Read(ctx context.Context, request datasource.ReadRequest, response *datasource.ReadResponse) {
 	tflog.Debug(ctx, "GTM Domain DataSource Read")
-	var data domainDataSourceModel
+	var data *domainDataSourceModel
 	response.Diagnostics.Append(request.Config.Get(ctx, &data)...)
 	if response.Diagnostics.HasError() {
 		return
@@ -1171,12 +1172,36 @@ func (d *domainDataSource) Read(ctx context.Context, request datasource.ReadRequ
 		return
 	}
 
-	data = populateDomain(domain)
+	data, diags := populateDomain(ctx, domain)
+	if diags.HasError() {
+		response.Diagnostics.Append(diags...)
+		return
+	}
 	response.Diagnostics.Append(response.State.Set(ctx, &data)...)
 }
 
-func populateDomain(domain *gtm.Domain) domainDataSourceModel {
-	return domainDataSourceModel{
+func populateDomain(ctx context.Context, domain *gtm.Domain) (*domainDataSourceModel, diag.Diagnostics) {
+	emailNotificationList, diags := types.ListValueFrom(ctx, types.StringType, domain.EmailNotificationList)
+	if diags.HasError() {
+		return nil, diags
+	}
+	datacenters, diags := getDatacenters(ctx, domain.Datacenters)
+	if diags.HasError() {
+		return nil, diags
+	}
+	properties, diags := getProperties(ctx, domain.Properties)
+	if diags.HasError() {
+		return nil, diags
+	}
+	cidrMaps, diags := getCIDRMaps(ctx, domain.CidrMaps)
+	if diags.HasError() {
+		return nil, diags
+	}
+	geoMaps, diags := getGeographicMaps(ctx, domain.GeographicMaps)
+	if diags.HasError() {
+		return nil, diags
+	}
+	return &domainDataSourceModel{
 		Name:                         types.StringValue(domain.Name),
 		CNameCoalescingEnabled:       types.BoolValue(domain.CnameCoalescingEnabled),
 		DefaultErrorPenalty:          types.Int64Value(int64(domain.DefaultErrorPenalty)),
@@ -1188,7 +1213,7 @@ func populateDomain(domain *gtm.Domain) domainDataSourceModel {
 		DefaultSSLClientPrivateKey:   types.StringValue(domain.DefaultSslClientPrivateKey),
 		DefaultTimeoutPenalty:        types.Int64Value(int64(domain.DefaultTimeoutPenalty)),
 		DefaultUnreachableThreshold:  types.Float64Value(float64(domain.DefaultUnreachableThreshold)),
-		EmailNotificationList:        getEmailNotification(domain.EmailNotificationList),
+		EmailNotificationList:        emailNotificationList,
 		EndUserMappingEnabled:        types.BoolValue(domain.EndUserMappingEnabled),
 		LastModified:                 types.StringValue(domain.LastModified),
 		LastModifiedBy:               types.StringValue(domain.LastModifiedBy),
@@ -1209,13 +1234,13 @@ func populateDomain(domain *gtm.Domain) domainDataSourceModel {
 		ID:                           types.StringValue(domain.Name),
 		Status:                       getStatus(domain.Status),
 		Resources:                    getResources(domain.Resources),
-		Properties:                   getProperties(domain.Properties),
-		Datacenters:                  getDatacenters(domain.Datacenters),
-		GeographicMaps:               getGeographicMaps(domain.GeographicMaps),
-		CIDRMaps:                     getCIDRMaps(domain.CidrMaps),
+		Properties:                   properties,
+		Datacenters:                  datacenters,
+		GeographicMaps:               geoMaps,
+		CIDRMaps:                     cidrMaps,
 		ASMaps:                       getASMaps(domain.AsMaps),
 		Links:                        getLinks(domain.Links),
-	}
+	}, nil
 }
 
 func getLinks(links []*gtm.Link) []link {
@@ -1261,7 +1286,7 @@ func getASMaps(maps []*gtm.AsMap) []asMap {
 	return result
 }
 
-func getCIDRMaps(maps []*gtm.CidrMap) []cidrMap {
+func getCIDRMaps(ctx context.Context, maps []*gtm.CidrMap) ([]cidrMap, diag.Diagnostics) {
 	var result []cidrMap
 	for _, cm := range maps {
 		cidrMapInstance := cidrMap{
@@ -1283,15 +1308,19 @@ func getCIDRMaps(maps []*gtm.CidrMap) []cidrMap {
 		if cm.Assignments != nil {
 			cidrMapInstance.Assignments = make([]cidrMapAssignment, len(cm.Assignments))
 			for i, asg := range cm.Assignments {
-				cidrMapInstance.Assignments[i] = populateCIDRMapAssignment(asg)
+				popCIDRMapAssignment, diags := populateCIDRMapAssignment(ctx, asg)
+				if diags.HasError() {
+					return nil, diags
+				}
+				cidrMapInstance.Assignments[i] = popCIDRMapAssignment
 			}
 		}
 		result = append(result, cidrMapInstance)
 	}
-	return result
+	return result, nil
 }
 
-func getGeographicMaps(maps []*gtm.GeoMap) []geographicMap {
+func getGeographicMaps(ctx context.Context, maps []*gtm.GeoMap) ([]geographicMap, diag.Diagnostics) {
 	var result []geographicMap
 	for _, gm := range maps {
 		geoMapInstance := geographicMap{
@@ -1313,15 +1342,19 @@ func getGeographicMaps(maps []*gtm.GeoMap) []geographicMap {
 		if gm.Assignments != nil {
 			geoMapInstance.Assignments = make([]geographicMapAssignment, len(gm.Assignments))
 			for i, asg := range gm.Assignments {
-				geoMapInstance.Assignments[i] = populateGeographicMapAssignment(asg)
+				popGeoMap, diags := populateGeographicMapAssignment(ctx, asg)
+				if diags.HasError() {
+					return nil, diags
+				}
+				geoMapInstance.Assignments[i] = popGeoMap
 			}
 		}
 		result = append(result, geoMapInstance)
 	}
-	return result
+	return result, nil
 }
 
-func getDatacenters(datacenters []*gtm.Datacenter) []datacenter {
+func getDatacenters(ctx context.Context, datacenters []*gtm.Datacenter) ([]datacenter, diag.Diagnostics) {
 	var result []datacenter
 	for _, dc := range datacenters {
 		dataCenterInstance := datacenter{
@@ -1342,7 +1375,10 @@ func getDatacenters(datacenters []*gtm.Datacenter) []datacenter {
 		}
 
 		if dc.DefaultLoadObject != nil {
-			loadObj := populateLoadObject(dc.DefaultLoadObject)
+			loadObj, diags := populateLoadObject(ctx, dc.DefaultLoadObject)
+			if diags.HasError() {
+				return nil, diags
+			}
 			dataCenterInstance.DefaultLoadObject = []loadObject{loadObj}
 		}
 
@@ -1352,10 +1388,10 @@ func getDatacenters(datacenters []*gtm.Datacenter) []datacenter {
 
 		result = append(result, dataCenterInstance)
 	}
-	return result
+	return result, nil
 }
 
-func getProperties(properties []*gtm.Property) []property {
+func getProperties(ctx context.Context, properties []*gtm.Property) ([]property, diag.Diagnostics) {
 	var result []property
 	for _, prop := range properties {
 		propertyInstance := property{
@@ -1401,14 +1437,22 @@ func getProperties(properties []*gtm.Property) []property {
 		if prop.StaticRRSets != nil {
 			propertyInstance.StaticRRSets = make([]staticRRSet, len(prop.StaticRRSets))
 			for i, s := range prop.StaticRRSets {
-				propertyInstance.StaticRRSets[i] = populateStaticRRSet(s)
+				popStaticRRSet, diags := populateStaticRRSet(ctx, s)
+				if diags.HasError() {
+					return nil, diags
+				}
+				propertyInstance.StaticRRSets[i] = popStaticRRSet
 			}
 		}
 
 		if prop.TrafficTargets != nil {
 			propertyInstance.TrafficTargets = make([]trafficTarget, len(prop.TrafficTargets))
 			for i, t := range prop.TrafficTargets {
-				propertyInstance.TrafficTargets[i] = populateTrafficTarget(t)
+				popTrafficTarget, diags := populateTrafficTarget(ctx, t)
+				if diags.HasError() {
+					return nil, diags
+				}
+				propertyInstance.TrafficTargets[i] = popTrafficTarget
 			}
 		}
 
@@ -1418,11 +1462,7 @@ func getProperties(properties []*gtm.Property) []property {
 
 		result = append(result, propertyInstance)
 	}
-	return result
-}
-
-func getEmailNotification(email []string) []types.String {
-	return convertString(email)
+	return result, nil
 }
 
 func getStatus(st *gtm.ResponseStatus) *status {
@@ -1535,12 +1575,16 @@ func populateHTTPHeaders(headers []*gtm.HttpHeader) []httpHeader {
 	return result
 }
 
-func populateStaticRRSet(s *gtm.StaticRRSet) staticRRSet {
+func populateStaticRRSet(ctx context.Context, s *gtm.StaticRRSet) (staticRRSet, diag.Diagnostics) {
+	Rdata, diags := types.ListValueFrom(ctx, types.StringType, s.Rdata)
+	if diags.HasError() {
+		return staticRRSet{}, diags
+	}
 	return staticRRSet{
 		Type:  types.StringValue(s.Type),
 		TTL:   types.Int64Value(int64(s.TTL)),
-		RData: convertString(s.Rdata),
-	}
+		RData: Rdata,
+	}, diags
 }
 
 func populateLinks(links []*gtm.Link) []link {
@@ -1554,63 +1598,68 @@ func populateLinks(links []*gtm.Link) []link {
 	return result
 }
 
-func convertString(source []string) []types.String {
-	if source == nil {
-		return nil
+func populateTrafficTarget(ctx context.Context, t *gtm.TrafficTarget) (trafficTarget, diag.Diagnostics) {
+	servers, diags := types.ListValueFrom(ctx, types.StringType, t.Servers)
+	if diags.HasError() {
+		return trafficTarget{}, diags
 	}
-	result := make([]types.String, len(source))
-	for i, s := range source {
-		result[i] = types.StringValue(s)
-	}
-	return result
-}
-
-func populateTrafficTarget(t *gtm.TrafficTarget) trafficTarget {
 	return trafficTarget{
 		DatacenterID: types.Int64Value(int64(t.DatacenterId)),
 		Enabled:      types.BoolValue(t.Enabled),
 		Weight:       types.Float64Value(t.Weight),
 		HandoutCNAME: types.StringValue(t.HandoutCName),
 		Name:         types.StringValue(t.Name),
-		Servers:      convertString(t.Servers),
-	}
+		Servers:      servers,
+	}, nil
 }
 
-func populateLoadObject(lo *gtm.LoadObject) loadObject {
+func populateLoadObject(ctx context.Context, lo *gtm.LoadObject) (loadObject, diag.Diagnostics) {
 	loadObj := loadObject{
 		LoadObject:     types.StringValue(lo.LoadObject),
 		LoadObjectPort: types.Int64Value(int64(lo.LoadObjectPort)),
 	}
 	if lo.LoadServers != nil {
-		loadObj.LoadServers = convertString(lo.LoadServers)
+		loadServers, diags := types.ListValueFrom(ctx, types.StringType, lo.LoadServers)
+		if diags.HasError() {
+			return loadObj, diags
+		}
+		loadObj.LoadServers = loadServers
 	}
-	return loadObj
+	return loadObj, nil
 }
 
-func populateGeographicMapAssignment(asg *gtm.GeoAssignment) geographicMapAssignment {
+func populateGeographicMapAssignment(ctx context.Context, asg *gtm.GeoAssignment) (geographicMapAssignment, diag.Diagnostics) {
 	result := geographicMapAssignment{}
 
 	if asg.Countries != nil {
-		result.Countries = convertString(asg.Countries)
+		countries, diags := types.SetValueFrom(ctx, types.StringType, asg.Countries)
+		if diags.HasError() {
+			return result, diags
+		}
+		result.Countries = countries
 	}
 
 	result.Nickname = types.StringValue(asg.DatacenterBase.Nickname)
 	result.DatacenterID = types.Int64Value(int64(asg.DatacenterBase.DatacenterId))
 
-	return result
+	return result, nil
 }
 
-func populateCIDRMapAssignment(asg *gtm.CidrAssignment) cidrMapAssignment {
+func populateCIDRMapAssignment(ctx context.Context, asg *gtm.CidrAssignment) (cidrMapAssignment, diag.Diagnostics) {
 	result := cidrMapAssignment{}
 
 	if asg.Blocks != nil {
-		result.Blocks = convertString(asg.Blocks)
+		lstStr, diags := types.SetValueFrom(ctx, types.StringType, asg.Blocks)
+		if diags.HasError() {
+			return result, diags
+		}
+		result.Blocks = lstStr
 	}
 
 	result.Nickname = types.StringValue(asg.DatacenterBase.Nickname)
 	result.DatacenterID = types.Int64Value(int64(asg.DatacenterBase.DatacenterId))
 
-	return result
+	return result, nil
 }
 
 func populateASMapAssignment(asg *gtm.AsAssignment) asMapAssignment {
