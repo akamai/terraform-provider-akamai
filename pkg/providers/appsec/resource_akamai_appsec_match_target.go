@@ -246,7 +246,7 @@ func compareMatchTargetsOrder(oldTarget, newTarget *appsec.GetMatchTargetRespons
 		return fmt.Errorf("%s", err.Error())
 	}
 
-	newJSONStr, err := json.Marshal(oldTarget)
+	newJSONStr, err := json.Marshal(newTarget)
 	if err != nil {
 		return fmt.Errorf("%s", err.Error())
 	}

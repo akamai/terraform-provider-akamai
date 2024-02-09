@@ -36,7 +36,8 @@ resource "akamai_appsec_match_target" "test" {
       "hostnames" : [
         "m1.example.com",
         "www.example.net",
-        "example.com"
+        "example.com",
+        "www.test.com"
       ],
       "isNegativeFileExtensionMatch" : false,
       "isNegativePathMatch" : false,
