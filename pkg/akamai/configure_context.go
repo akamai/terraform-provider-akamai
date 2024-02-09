@@ -51,6 +51,11 @@ func configureContext(cfg contextConfig) (*meta.OperationMeta, error) {
 	retryClient.Postprocess = func(r *http.Request) error {
 		return sess.Sign(r)
 	}
+
+	retryClient.HTTPClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+		return sess.Sign(req)
+	}
+
 	retryClient.CheckRetry = func(ctx context.Context, resp *http.Response, err error) (bool, error) {
 		var urlErr *url.Error
 		if resp != nil && resp.Request.Method == "GET" ||
