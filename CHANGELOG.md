@@ -133,7 +133,8 @@
 
 
 
-
+* GTM
+  * Added `ForceNew` to the `name` attribute for `akamai_gtm_property` resource as it is not possible to rename it using API.
 
 
 
