@@ -1,183 +1,76 @@
 # RELEASE NOTES
 
-## X.X.X (X X, X)
-
-#### BREAKING CHANGES:
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+## 5.6.0 (Feb 15, 2024)
 
 #### FEATURES/ENHANCEMENTS:
+
 * Appsec
   * Added retries in `akamai_appsec_activations` and `akamai_networklist_activations` resources ([I#471](https://github.com/akamai/terraform-provider-akamai/issues/471))
   * Added reactivation support for `akamai_appsec_activations` if the config was deactivated manually ([I#441](https://github.com/akamai/terraform-provider-akamai/issues/441) and [I#442](https://github.com/akamai/terraform-provider-akamai/issues/442))
 
+* Cloudlets
+  * Added support for Shared Cloudlets Policies. To use it, provide `is_shared` field in `akamai_cloudlets_policy` resource as `true`. ([I#276](https://github.com/akamai/terraform-provider-akamai/issues/276))
+  * Added validation to prevent changing immutable `cloudlet_code` field in `akamai_cloudlets_policy` resource
+  * Added support for importing policies without any version
+  * Added new data source:
+    * `akamai_cloudlets_policy_activation` - read
+    * `akamai_cloudlets_shared_policy` - read
+  * Changes for `akamai_cloudlets_policy_activation` resource
+    * Added support for shared (V3) policies
+    * Added import for `akamai_cloudlets_policy_activation`
+    * Field `associated_properties` was changed to optional but is still required for non-shared policies
+    * Added `is_shared` computed field to indicate if processing policy is shared
+
 * DNS
   * Enhanced handling of `akamai_dns_zone` resource when no `group` is provided:
     * When there is only one group present, the processing should continue with a descriptive warning
-    * When there are more then one groups present, the processing will fail with descriptive error asking to provide group in the configuration
-
-* PAPI
- * Added `name` validation for `akamai_property_include` resource
-
-* Cloudlets
-    * Added import for `akamai_cloudlets_policy_activation`
-    * Added support for Shared Cloudlets Policies. To use it, provide `is_shared` field in `akamai_cloudlets_policy` resource as `true`. ([I#276](https://github.com/akamai/terraform-provider-akamai/issues/276)) 
-    * Added validation to prevent changing immutable `cloudlet_code` field in `akamai_cloudlets_policy` resource
-    * Added support for importing policies without any version
-    * Added new data source:
-      * `akamai_cloudlets_policy_activation` - read
-      * `akamai_cloudlets_shared_policy` - read
-* GTM
-  * Added data sources:
-    * `akamai_gtm_asmap` - reads information for a specific GTM asmap
-* GTM
-  * Added data sources:
-    * `akamai_gtm_resources` - reads information for a specific GTM resources under given domain
+    * When there are more than one group present, the processing will fail with descriptive error asking to provide group in the configuration
 
 * Edgeworkers
   * Added `note` attribute to `resource_akamai_edgeworkers_activation` resource
 
-* PAPI
-  * Added `version_notes` and `rule_warnings` attributes to `akamai_property` resource
-  * Added support for new rule format v2024-01-09 in `data_akamai_property_rules_builder`
-
 * GTM
-    * Added data sources:
-        * `akamai_gtm_resource` - reads information for a specific GTM resource
-
-* GTM
-    * Added data sources:
-        * `akamai_gtm_domain` - reads information for a specific GTM domain
-
-* GTM
-    * Added data sources:
-        * `akamai_gtm_domains` - reads list of GTM domains under a given contract.
-
-* GTM
-    * Added data sources:
-        * `akamai_gtm_cidrmap` - reads information for a specific GTM cidrmap    
-    
-* PAPI
-  * Improve errors for `akamai_contract` and `akamai_group` datasources when there are multiple groups or contracts.
-
-
-
-
-
-
-
-
-
-
-* Cloudlets
-  * Changes for `akamai_cloudlets_policy_activation` resource
-    * Added support for shared (V3) policies
-    * Field `associated_properties` was changed to optional but is still required for non-shared policies
-    * Added `is_shared` computed field to indicate if processing policy is shared
-
-
-
-
-
-
+  * Added data sources:
+    * `akamai_gtm_asmap` - reads information for a specific GTM asmap
+    * `akamai_gtm_resources` - reads information for a specific GTM resources under given domain
+    * `akamai_gtm_resource` - reads information for a specific GTM resource
+    * `akamai_gtm_domain` - reads information for a specific GTM domain
+    * `akamai_gtm_domains` - reads list of GTM domains under a given contract
+    * `akamai_gtm_cidrmap` - reads information for a specific GTM cidrmap
 
 * IVM
   * Extended `akamai_imaging_policy_image` with new fields:
     * `serve_stale_duration` available under `policy`
-    * `allow_pristine_on_downsize` and `prefer_modern_formats` available under `policy.output`
+    * `allow_pristine_on_downsize` and `prefer_modern_formats` available under `policy.output` 
 
+* PAPI
+  * Added new resource:
+    * `akamai_property_bootstrap` - create, read, update and delete property without specifying rules or edgehostnames. To be used with `akamai_property` resource and its new field `property_id` ([I#466](https://github.com/akamai/terraform-provider-akamai/issues/466))
+  * Added `version_notes`, `rule_warnings` and `property_id` attributes to `akamai_property` resource
+  * Added support for new rule format v2024-01-09 in `data_akamai_property_rules_builder`
+  * Improved errors for `akamai_contract` and `akamai_group` datasources when there are multiple groups or contracts
+  * Added `name` validation for `akamai_property_include` resource
 
-
-
-
-
-
+* Updated various dependencies
 
 #### BUG FIXES:
 
-* GTM
-  * Fixed 'Inconsistent Final Plan' error for `akamai_gtm_property` resource
-  * The diff when reordering `traffic_target` in `akamai_gtm_property` resource at the same time as changing any attribute value inside `traffic_target` will be extensive
 * Appsec
   * Fixed provider plugin crash in `appsec_attack_group` and `appsec_eval_group` after executing terraform plan ([I#480](https://github.com/akamai/terraform-provider-akamai/issues/480))
-
   * Fixed drift for struct and list reordering in `akamai_appsec_match_target`
+
+* Cloudlets
+  * Fixed handling of version drift for cloudlets policies ([I#478](https://github.com/akamai/terraform-provider-akamai/issues/478))
 
 * CPS
   * Changed `organizational_unit` inside `csr` attribute for `akamai_cps_third_party_enrollment` and `akamai_cps_dv_enrollment`
     resources from required to optional. ([PR#513](https://github.com/akamai/terraform-provider-akamai/pull/513))
   * Changed `state` inside `csr` attribute for `akamai_cps_third_party_enrollment` and `akamai_cps_dv_enrollment` resources from required to optional.
 
-* Cloudlets
-  * Fixed handling of version drift for cloudlets policies ([I#478](https://github.com/akamai/terraform-provider-akamai/issues/478))
-
-
-
-
-
 * GTM
-  * Added `ForceNew` to the `name` attribute for `akamai_gtm_property` resource as it is not possible to rename it using API.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  * Fixed 'Inconsistent Final Plan' error for `akamai_gtm_property` resource
+  * The diff when reordering `traffic_target` in `akamai_gtm_property` resource at the same time as changing any attribute value inside `traffic_target` will be extensive
+  * Added `ForceNew` to the `name` attribute for `akamai_gtm_property` resource as it is not possible to rename it using API
 
 ## 5.5.0 (Dec 07, 2023)
 
