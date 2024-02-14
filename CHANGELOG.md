@@ -46,7 +46,7 @@
 * PAPI
   * Added new resource:
     * `akamai_property_bootstrap` - create, read, update and delete property without specifying rules or edgehostnames. To be used with `akamai_property` resource and its new field `property_id` ([I#466](https://github.com/akamai/terraform-provider-akamai/issues/466))
-  * Added `version_notes`, `rule_warnings` and `property_id` attributes to `akamai_property` resource
+  * Added `version_notes`, `rule_warnings` and `property_id` attributes to `akamai_property` resource ([I#494](https://github.com/akamai/terraform-provider-akamai/issues/494))
   * Added support for new rule format v2024-01-09 in `data_akamai_property_rules_builder`
   * Improved errors for `akamai_contract` and `akamai_group` datasources when there are multiple groups or contracts
   * Added `name` validation for `akamai_property_include` resource
