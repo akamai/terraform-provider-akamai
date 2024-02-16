@@ -51,6 +51,14 @@
 
 
 
+* Global
+  * Requests limit value is configurable via field `request_limit` or environment variable `AKAMAI_REQUEST_LIMIT` 
+  * Added retryable logic for all GET requests to the API. 
+    This behavior can be disabled using `retry_disabled` field from `akamai` provider configuration or via environment variable `AKAMAI_RETRY_DISABLED`.
+    It can be fine-tuned using following fields or environment variables:
+    * `retry_max` or `AKAMAI_RETRY_MAX` - The maximum number retires of API requests, default is 10
+    * `retry_wait_min` or `AKAMAI_RETRY_WAIT_MIN` - The minimum wait time in seconds between API requests retries, default is 1 sec
+    * `retry_wait_max` or `AKAMAI_RETRY_WAIT_MAX` - The maximum wait time in minutes between API requests retries, default is 30 sec
 
 
 

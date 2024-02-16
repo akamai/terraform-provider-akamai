@@ -994,7 +994,7 @@ func createActivation(ctx context.Context, client papi.PAPI, request papi.Create
 			return "", diag.Errorf("%s: %s", errMsg, err)
 		}
 
-		if actID, ok := isActivationPedingOrActive(ctx, client, expectedActivation{
+		if actID, ok := isActivationPendingOrActive(ctx, client, expectedActivation{
 			PropertyID: request.PropertyID,
 			Version:    request.Activation.PropertyVersion,
 			Network:    request.Activation.Network,
@@ -1046,8 +1046,8 @@ type expectedActivation struct {
 	Type       papi.ActivationType
 }
 
-// isActivationPedingOrActive check if latest activation is of specified version and has status Pending or Active
-func isActivationPedingOrActive(ctx context.Context, client papi.PAPI, expected expectedActivation) (string, bool) {
+// isActivationPendingOrActive check if latest activation is of specified version and has status Pending or Active
+func isActivationPendingOrActive(ctx context.Context, client papi.PAPI, expected expectedActivation) (string, bool) {
 	log := hclog.FromContext(ctx)
 
 	log.Debug("getting activation")
@@ -1069,7 +1069,7 @@ func isActivationPedingOrActive(ctx context.Context, client papi.PAPI, expected 
 		log.Debug("no activation items; retrying")
 		return "", false
 	}
-	latestActivationItem := activations[0] // grab the lastest one returned by api
+	latestActivationItem := activations[0] // grab the latest one returned by api
 
 	if latestActivationItem.PropertyVersion != expected.Version {
 		log.Debug("latest version mismatch; retrying")

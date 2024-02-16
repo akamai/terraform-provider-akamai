@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/cache"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/collections"
@@ -73,6 +74,26 @@ func NewSDKProvider(subprovs ...subprovider.Subprovider) plugin.ProviderFunc {
 				Optional:    true,
 				Type:        schema.TypeInt,
 				Description: "The maximum number of API requests to be made per second (0 for no limit)",
+			},
+			"retry_max": {
+				Optional:    true,
+				Type:        schema.TypeInt,
+				Description: "The maximum number retires of API requests, default 10",
+			},
+			"retry_wait_min": {
+				Optional:    true,
+				Type:        schema.TypeInt,
+				Description: "The minimum wait time in seconds between API requests retries, default is 1 sec",
+			},
+			"retry_wait_max": {
+				Optional:    true,
+				Type:        schema.TypeInt,
+				Description: "The maximum wait time in seconds between API requests retries, default is 30 sec",
+			},
+			"retry_disabled": {
+				Optional:    true,
+				Type:        schema.TypeBool,
+				Description: "Should the retries of API requests be disabled, default false",
 			},
 		},
 		ResourcesMap:   make(map[string]*schema.Resource),
@@ -148,17 +169,29 @@ func configureProviderContext(p *schema.Provider) schema.ConfigureContextFunc {
 			return nil, diag.FromErr(err)
 		}
 
-		requestLimit, err := tf.GetIntValue("request_limit", d)
+		requestLimit, err := getPluginConfigInt(d, "request_limit", "AKAMAI_REQUEST_LIMIT")
 		if err != nil {
-			if !errors.Is(err, tf.ErrNotFound) {
-				return nil, diag.FromErr(err)
-			}
-			if v := os.Getenv("AKAMAI_REQUEST_LIMIT"); v != "" {
-				requestLimit, err = strconv.Atoi(v)
-				if err != nil {
-					return nil, diag.FromErr(err)
-				}
-			}
+			return nil, diag.FromErr(err)
+		}
+
+		retryMax, err := getPluginConfigInt(d, "retry_max", "AKAMAI_RETRY_MAX")
+		if err != nil {
+			return nil, diag.FromErr(err)
+		}
+
+		retryWaitMin, err := getPluginConfigInt(d, "retry_wait_min", "AKAMAI_RETRY_WAIT_MIN")
+		if err != nil {
+			return nil, diag.FromErr(err)
+		}
+
+		retryWaitMax, err := getPluginConfigInt(d, "retry_wait_max", "AKAMAI_RETRY_WAIT_MAX")
+		if err != nil {
+			return nil, diag.FromErr(err)
+		}
+
+		retryDisabled, err := getPluginConfigBool(d, "retry_disabled", "AKAMAI_RETRY_DISABLED")
+		if err != nil {
+			return nil, diag.FromErr(err)
 		}
 
 		meta, err := configureContext(contextConfig{
@@ -167,6 +200,10 @@ func configureProviderContext(p *schema.Provider) schema.ConfigureContextFunc {
 			ctx:            ctx,
 			requestLimit:   requestLimit,
 			enableCache:    cacheEnabled,
+			retryMax:       retryMax,
+			retryWaitMin:   time.Duration(retryWaitMin) * time.Second,
+			retryWaitMax:   time.Duration(retryWaitMax) * time.Second,
+			retryDisabled:  retryDisabled,
 		})
 		if err != nil {
 			return nil, diag.FromErr(err)
@@ -185,4 +222,36 @@ func NewProtoV6SDKProvider(subproviders []subprovider.Subprovider) (func() tfpro
 	return func() tfprotov6.ProviderServer {
 		return pluginProvider
 	}, err
+}
+
+func getPluginConfigInt(d *schema.ResourceData, key string, envKey string) (int, error) {
+	value, err := tf.GetIntValue(key, d)
+	if err != nil {
+		if !errors.Is(err, tf.ErrNotFound) {
+			return 0, err
+		}
+		if v := os.Getenv(envKey); v != "" {
+			value, err = strconv.Atoi(v)
+			if err != nil {
+				return 0, err
+			}
+		}
+	}
+	return value, nil
+}
+
+func getPluginConfigBool(d *schema.ResourceData, key string, envKey string) (bool, error) {
+	value, err := tf.GetBoolValue(key, d)
+	if err != nil {
+		if !errors.Is(err, tf.ErrNotFound) {
+			return false, err
+		}
+		if v := os.Getenv(envKey); v != "" {
+			value, err = strconv.ParseBool(v)
+			if err != nil {
+				return false, err
+			}
+		}
+	}
+	return value, nil
 }
