@@ -268,17 +268,12 @@ func propertyRulesCustomDiff(_ context.Context, diff *schema.ResourceDiff, _ int
 	o, n := diff.GetChange("rules")
 	oldValue, newValue := o.(string), n.(string)
 
-	handleCreate := diff.Id() == "" && newValue != ""
-	if !handleCreate && oldValue == "" {
-		return nil
-	}
-
 	var newRulesUpdate papi.RulesUpdate
-	if err := json.Unmarshal([]byte(newValue), &newRulesUpdate); err != nil {
-		return fmt.Errorf("cannot parse rules JSON from config: %s", err)
-	}
 
-	if handleCreate {
+	if diff.Id() == "" && newValue != "" {
+		if err := json.Unmarshal([]byte(newValue), &newRulesUpdate); err != nil {
+			return fmt.Errorf("cannot parse rules JSON from config: %s", err)
+		}
 		rules, err := unifyRulesDiff(newRulesUpdate)
 		if err != nil {
 			return err
@@ -289,9 +284,17 @@ func propertyRulesCustomDiff(_ context.Context, diff *schema.ResourceDiff, _ int
 		return nil
 	}
 
+	if oldValue == "" || newValue == "" {
+		return nil
+	}
+
 	var oldRulesUpdate papi.RulesUpdate
 	if err := json.Unmarshal([]byte(oldValue), &oldRulesUpdate); err != nil {
 		return fmt.Errorf("cannot parse rules JSON from state: %s", err)
+	}
+
+	if err := json.Unmarshal([]byte(newValue), &newRulesUpdate); err != nil {
+		return fmt.Errorf("cannot parse rules JSON from config: %s", err)
 	}
 
 	normalizeFields(&oldRulesUpdate, &newRulesUpdate)
