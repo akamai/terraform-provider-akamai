@@ -1,26 +1,51 @@
 package cloudlets
 
 import (
+	"context"
 	"log"
 	"os"
 	"sync"
 	"testing"
 
+	"github.com/hashicorp/terraform-plugin-framework/provider"
+	"github.com/hashicorp/terraform-plugin-framework/providerserver"
+	"github.com/hashicorp/terraform-plugin-go/tfprotov5"
+	"github.com/hashicorp/terraform-plugin-mux/tf5muxserver"
+
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cloudlets"
+	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cloudlets/v3"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-var testAccProviders map[string]func() (*schema.Provider, error)
-var testAccProvider *schema.Provider
+var (
+	testAccProviders         map[string]func() (tfprotov5.ProviderServer, error)
+	testAccPluginProvider    *schema.Provider
+	testAccFrameworkProvider provider.Provider
+)
 
 func TestMain(m *testing.M) {
-	testAccProvider = akamai.NewPluginProvider(NewSubprovider())()
-	testAccProviders = map[string]func() (*schema.Provider, error){
-		"akamai": func() (*schema.Provider, error) {
-			return testAccProvider, nil
+	testAccPluginProvider = akamai.NewPluginProvider(NewPluginSubprovider())()
+	testAccFrameworkProvider = akamai.NewFrameworkProvider(NewFrameworkSubprovider())()
+
+	testAccProviders = map[string]func() (tfprotov5.ProviderServer, error){
+		"akamai": func() (tfprotov5.ProviderServer, error) {
+			ctx := context.Background()
+			providers := []func() tfprotov5.ProviderServer{
+				testAccPluginProvider.GRPCProvider,
+				providerserver.NewProtocol5(
+					testAccFrameworkProvider,
+				),
+			}
+
+			muxServer, err := tf5muxserver.NewMuxServer(ctx, providers...)
+			if err != nil {
+				return nil, err
+			}
+
+			return muxServer.ProviderServer(), nil
 		},
 	}
 
@@ -38,13 +63,44 @@ func TestMain(m *testing.M) {
 var clientLock sync.Mutex
 
 // useClient swaps out the client on the global instance for the duration of the given func
-func useClient(client cloudlets.Cloudlets, f func()) {
+func useClient(cloudletsClient cloudlets.Cloudlets, f func()) {
 	clientLock.Lock()
-	orig := inst.client
-	inst.client = client
+	orig := client
+	client = cloudletsClient
 
 	defer func() {
-		inst.client = orig
+		client = orig
+		clientLock.Unlock()
+	}()
+
+	f()
+}
+
+// useClientV3 swaps out the client v3 on the global instance for the duration of the given func
+func useClientV3(cloudletsV3Client v3.Cloudlets, f func()) {
+	clientLock.Lock()
+	orig := v3Client
+	v3Client = cloudletsV3Client
+
+	defer func() {
+		v3Client = orig
+		clientLock.Unlock()
+	}()
+
+	f()
+}
+
+// useClientV2AndV3 swaps out both client (v2) and client v3 on the global instances for the duration of the given func. To be used in by tests for data sources and resources that use both V2 & V3 cloudlets
+func useClientV2AndV3(cloudletsV2Client cloudlets.Cloudlets, cloudletsV3Client v3.Cloudlets, f func()) {
+	clientLock.Lock()
+	origV2 := client
+	client = cloudletsV2Client
+	origV3 := v3Client
+	v3Client = cloudletsV3Client
+
+	defer func() {
+		client = origV2
+		v3Client = origV3
 		clientLock.Unlock()
 	}()
 

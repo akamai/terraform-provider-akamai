@@ -71,9 +71,6 @@ func dataPropertyGroupRead(ctx context.Context, d *schema.ResourceData, m interf
 		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
 
-	if len(group.ContractIDs) != 0 {
-		contractID = group.ContractIDs[0]
-	}
 	if err = d.Set("contract_id", contractID); err != nil {
 		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}

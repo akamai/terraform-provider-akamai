@@ -13,7 +13,6 @@ import (
 )
 
 func TestResourcePAPIPropertyActivation(t *testing.T) {
-	t.Skip()
 	tests := map[string]struct {
 		init  func(*papi.Mock)
 		steps []resource.TestStep

@@ -217,7 +217,8 @@ func ExpectRemoveProperty(client *papi.Mock, PropertyID, ContractID, GroupID str
 
 // Sets up an expected call to papi.GetRuleTree() which returns a value depending on the value of the
 // pointer to State and FormatState.
-func ExpectGetRuleTree(client *papi.Mock, PropertyID, GroupID, ContractID string, PropertyVersion int, State *papi.RulesUpdate, RuleFormatState *string) *mock.Call {
+func ExpectGetRuleTree(client *papi.Mock, PropertyID, GroupID, ContractID string, PropertyVersion int, State *papi.RulesUpdate, RuleFormatState *string,
+	Errors []*papi.Error, Warnings []*papi.Error) *mock.Call {
 	req := papi.GetRuleTreeRequest{
 		PropertyID:      PropertyID,
 		GroupID:         GroupID,
@@ -234,6 +235,10 @@ func ExpectGetRuleTree(client *papi.Mock, PropertyID, GroupID, ContractID string
 		}
 
 		res := papi.GetRuleTreeResponse{
+			Response: papi.Response{
+				Errors:   Errors,
+				Warnings: Warnings,
+			},
 			PropertyID:      PropertyID,
 			PropertyVersion: PropertyVersion,
 			RuleFormat:      *RuleFormatState,

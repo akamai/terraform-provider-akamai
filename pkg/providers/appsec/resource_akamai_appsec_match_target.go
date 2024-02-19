@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"reflect"
+	"sort"
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/appsec"
@@ -121,6 +123,18 @@ func resourceMatchTargetRead(ctx context.Context, d *schema.ResourceData, m inte
 		logger.Errorf("calling 'getMatchTarget': %s", err.Error())
 		return diag.FromErr(err)
 	}
+	matchTargetConfigVal, err := tf.GetStringValue("match_target", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	var response *appsec.GetMatchTargetResponse
+	if err := json.Unmarshal([]byte(matchTargetConfigVal), &response); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := compareMatchTargetsOrder(matchtarget, response); err != nil {
+		return diag.FromErr(err)
+	}
 
 	jsonBody, err := json.Marshal(matchtarget)
 	if err != nil {
@@ -216,6 +230,76 @@ func resourceMatchTargetDelete(ctx context.Context, d *schema.ResourceData, m in
 	if err != nil {
 		logger.Errorf("calling 'removeMatchTarget': %s", err.Error())
 		return diag.FromErr(err)
+	}
+	return nil
+}
+
+func compareMatchTargetsOrder(oldTarget, newTarget *appsec.GetMatchTargetResponse) error {
+
+	oldJSONStr, err := json.Marshal(oldTarget)
+	if err != nil {
+		return fmt.Errorf("%s", err.Error())
+	}
+
+	var oldJSON appsec.GetMatchTargetResponse
+	if err = json.Unmarshal(oldJSONStr, &oldJSON); err != nil {
+		return fmt.Errorf("%s", err.Error())
+	}
+
+	newJSONStr, err := json.Marshal(newTarget)
+	if err != nil {
+		return fmt.Errorf("%s", err.Error())
+	}
+
+	var newJSON appsec.GetMatchTargetResponse
+	if err = json.Unmarshal(newJSONStr, &newJSON); err != nil {
+		return fmt.Errorf("%s", err.Error())
+	}
+
+	sort.Strings(oldJSON.FilePaths)
+	sort.Strings(newJSON.FilePaths)
+	if reflect.DeepEqual(oldJSON.FilePaths, newJSON.FilePaths) {
+		oldTarget.FilePaths = newTarget.FilePaths
+	}
+
+	sort.Strings(oldJSON.FileExtensions)
+	sort.Strings(newJSON.FileExtensions)
+	if reflect.DeepEqual(oldJSON.FileExtensions, newJSON.FileExtensions) {
+		oldTarget.FileExtensions = newTarget.FileExtensions
+	}
+
+	sort.Strings(oldJSON.Hostnames)
+	sort.Strings(newJSON.Hostnames)
+	if reflect.DeepEqual(oldJSON.Hostnames, newJSON.Hostnames) {
+		oldTarget.Hostnames = newTarget.Hostnames
+	}
+
+	sort.Slice(oldJSON.Apis, func(i, j int) bool {
+		p1 := oldJSON.Apis[i]
+		p2 := oldJSON.Apis[j]
+		return p1.ID < p2.ID || ((p1.ID == p2.ID) && p1.Name < p2.Name)
+	})
+	sort.Slice(newJSON.Apis, func(i, j int) bool {
+		p1 := newJSON.Apis[i]
+		p2 := newJSON.Apis[j]
+		return p1.ID < p2.ID || ((p1.ID == p2.ID) && p1.Name < p2.Name)
+	})
+	if reflect.DeepEqual(oldJSON.Apis, newJSON.Apis) {
+		oldTarget.Apis = newTarget.Apis
+	}
+
+	sort.Slice(oldJSON.BypassNetworkLists, func(i, j int) bool {
+		p1 := oldJSON.BypassNetworkLists[i]
+		p2 := oldJSON.BypassNetworkLists[j]
+		return p1.ID < p2.ID || ((p1.ID == p2.ID) && p1.Name < p2.Name)
+	})
+	sort.Slice(newJSON.BypassNetworkLists, func(i, j int) bool {
+		p1 := newJSON.BypassNetworkLists[i]
+		p2 := newJSON.BypassNetworkLists[j]
+		return p1.ID < p2.ID || ((p1.ID == p2.ID) && p1.Name < p2.Name)
+	})
+	if reflect.DeepEqual(oldJSON.BypassNetworkLists, newJSON.BypassNetworkLists) {
+		oldTarget.BypassNetworkLists = newTarget.BypassNetworkLists
 	}
 	return nil
 }

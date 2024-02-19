@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cloudlets"
+	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cloudlets/v3"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
 
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
@@ -22,7 +23,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 var (
@@ -31,20 +31,6 @@ var (
 
 	// DeletionPolicyTimeout is the default timeout for the policy deletion
 	DeletionPolicyTimeout = time.Minute * 90
-
-	cloudletIDs = map[string]int{
-		"ER":  0,
-		"VP":  1,
-		"FR":  3,
-		"IG":  4,
-		"AP":  5,
-		"AS":  6,
-		"CD":  7,
-		"IV":  8,
-		"ALB": 9,
-		"MMB": 10,
-		"MMA": 11,
-	}
 )
 
 func resourceCloudletsPolicy() *schema.Resource {
@@ -52,6 +38,9 @@ func resourceCloudletsPolicy() *schema.Resource {
 		CustomizeDiff: customdiff.All(
 			EnforcePolicyVersionChange,
 			EnforceMatchRulesChange,
+			cloudletTypeChangesValidation,
+			cloudletCodeValidation,
+			cloudletCodeChangeValidation,
 		),
 		CreateContext: resourcePolicyCreate,
 		ReadContext:   resourcePolicyRead,
@@ -64,10 +53,9 @@ func resourceCloudletsPolicy() *schema.Resource {
 				Description: "The name of the policy. The name must be unique",
 			},
 			"cloudlet_code": {
-				Type:             schema.TypeString,
-				Required:         true,
-				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"ALB", "AP", "AS", "CD", "ER", "FR", "IG", "VP"}, true)),
-				Description:      "Code for the type of Cloudlet (ALB, AP, AS, CD, ER, FR, IG, or VP)",
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Code for the type of Cloudlet (ALB, AP, AS, CD, ER, FR, IG, or VP)",
 			},
 			"description": {
 				Type:        schema.TypeString,
@@ -92,10 +80,16 @@ func resourceCloudletsPolicy() *schema.Resource {
 				DiffSuppressFunc: diffSuppressMatchRules,
 				Description:      "A JSON structure that defines the rules for this policy",
 			},
+			"is_shared": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "The type of policy that you want to create",
+			},
 			"cloudlet_id": {
 				Type:        schema.TypeInt,
 				Computed:    true,
-				Description: "An integer that corresponds to a Cloudlets policy type (0 or 9)",
+				Description: "An integer that corresponds to a non-shared Cloudlets policy type (0 to 9). Not used for shared policies",
 			},
 			"version": {
 				Type:        schema.TypeInt,
@@ -132,13 +126,52 @@ func resourceCloudletsPolicy() *schema.Resource {
 	}
 }
 
+func cloudletCodeChangeValidation(_ context.Context, diff *schema.ResourceDiff, _ interface{}) error {
+	if diff.Id() != "" && diff.HasChange("cloudlet_code") {
+		return fmt.Errorf("cloudlet code cannot be changed after creation, please destroy policy and create new one with modified `cloudlet_code`")
+	}
+	return nil
+}
+
+func cloudletCodeValidation(_ context.Context, diff *schema.ResourceDiff, _ interface{}) error {
+	isShared := diff.Get("is_shared").(bool)
+	providedCode := diff.Get("cloudlet_code").(string)
+	if isShared {
+		possibleValues := []string{"AP", "AS", "CD", "ER", "FR", "IG"}
+		for _, code := range possibleValues {
+			if strings.ToLower(providedCode) == strings.ToLower(code) {
+				return nil
+			}
+		}
+		return fmt.Errorf("provided cloudlet code %s cannot be used in shared policy - use one of %s", providedCode, possibleValues)
+	}
+
+	possibleValues := []string{"ALB", "AP", "AS", "CD", "ER", "FR", "IG", "VP"}
+	for _, code := range possibleValues {
+		if strings.ToLower(providedCode) == strings.ToLower(code) {
+			return nil
+		}
+	}
+	return fmt.Errorf("provided cloudlet code %s cannot be used in legacy policy - use one of %s", providedCode, possibleValues)
+}
+
+// cloudletTypeChangesValidation is used to run validation for v2 -> v3 (or vice versa) related migrations
+func cloudletTypeChangesValidation(_ context.Context, diff *schema.ResourceDiff, _ interface{}) error {
+	if diff.Id() != "" {
+		if diff.HasChange("is_shared") {
+			return fmt.Errorf("it is impossible to convert shared cloudlet to legacy one or vice versa; create new policy with modified named for target policy type")
+		}
+		if diff.Get("is_shared").(bool) && diff.HasChange("name") {
+			return fmt.Errorf("it is impossible to rename shared policy")
+		}
+	}
+
+	return nil
+}
+
 // EnforcePolicyVersionChange enforces that change to any field will most likely result in creating a new version
 func EnforcePolicyVersionChange(_ context.Context, diff *schema.ResourceDiff, _ interface{}) error {
-	if diff.HasChange("name") ||
-		diff.HasChange("description") ||
-		diff.HasChange("cloudlet_id") ||
-		diff.HasChange("match_rule_format") ||
-		diff.HasChange("version") {
+	if diff.HasChanges("name", "description", "match_rule_format", "version") {
 		return diff.SetNewComputed("version")
 	}
 	return nil
@@ -164,13 +197,11 @@ func resourcePolicyCreate(ctx context.Context, d *schema.ResourceData, m interfa
 		ctx,
 		session.WithContextLog(logger),
 	)
-	client := inst.Client(meta)
 	logger.Debug("Creating policy")
 	cloudletCode, err := tf.GetStringValue("cloudlet_code", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	cloudletID := cloudletIDs[cloudletCode]
 	name, err := tf.GetStringValue("name", d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -183,58 +214,47 @@ func resourcePolicyCreate(ctx context.Context, d *schema.ResourceData, m interfa
 	if err != nil {
 		return diag.Errorf("invalid group_id provided: %s", err)
 	}
-	createPolicyReq := cloudlets.CreatePolicyRequest{
-		Name:       name,
-		CloudletID: int64(cloudletID),
-		GroupID:    int64(groupIDNum),
-	}
-	createPolicyResp, err := client.CreatePolicy(ctx, createPolicyReq)
+
+	executionStrategy, err := getPolicyExecutionStrategy(d, meta)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	d.SetId(strconv.FormatInt(createPolicyResp.PolicyID, 10))
-	if err := d.Set("version", 1); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
-	}
-	matchRuleFormat, err := tf.GetStringValue("match_rule_format", d)
-	if err != nil && !errors.Is(err, tf.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	matchRulesJSON, err := tf.GetStringValue("match_rules", d)
+
+	policyID, err := executionStrategy.createPolicy(ctx, name, cloudletCode, int64(groupIDNum))
 	if err != nil {
-		if errors.Is(err, tf.ErrNotFound) {
-			return resourcePolicyRead(ctx, d, m)
-		}
 		return diag.FromErr(err)
 	}
-	var matchRules cloudlets.MatchRules
-	if err := json.Unmarshal([]byte(matchRulesJSON), &matchRules); err != nil {
-		return diag.Errorf("unmarshalling match rules JSON: %s", err)
-	}
+
+	d.SetId(strconv.FormatInt(policyID, 10))
 
 	description, err := tf.GetStringValue("description", d)
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	updateVersionRequest := cloudlets.UpdatePolicyVersionRequest{
-		UpdatePolicyVersion: cloudlets.UpdatePolicyVersion{
-			MatchRuleFormat: cloudlets.MatchRuleFormat(matchRuleFormat),
-			MatchRules:      matchRules,
-			Description:     description,
-		},
-		PolicyID: createPolicyResp.PolicyID,
-		Version:  1,
+
+	matchRulesJSON, err := tf.GetStringValue("match_rules", d)
+	if err != nil {
+		if errors.Is(err, tf.ErrNotFound) {
+			if description == "" {
+				return resourcePolicyRead(ctx, d, m)
+			}
+		} else {
+			return diag.FromErr(err)
+		}
 	}
 
-	updateVersionResp, err := client.UpdatePolicyVersion(ctx, updateVersionRequest)
+	err, updateError := executionStrategy.updatePolicyVersion(ctx, d, policyID, 1, description, matchRulesJSON, !executionStrategy.isFirstVersionCreated())
 	if err != nil {
-		if errPolicyRead := resourcePolicyRead(ctx, d, m); errPolicyRead != nil {
-			return append(errPolicyRead, diag.FromErr(err)...)
-		}
 		return diag.FromErr(err)
 	}
-	if err := setWarnings(d, updateVersionResp.Warnings); err != nil {
-		return err
+
+	if updateError != nil {
+		// The resource will be created as tainted (because the setId was executed). So on next plan it'll delete it and create again.
+		// We still want to have actual (server's) values in state. Otherwise, the values from config would be put into the state as default.
+		if errPolicyRead := resourcePolicyRead(ctx, d, m); errPolicyRead != nil {
+			return append(errPolicyRead, diag.FromErr(updateError)...)
+		}
+		return diag.FromErr(updateError)
 	}
 	return resourcePolicyRead(ctx, d, m)
 }
@@ -246,43 +266,32 @@ func resourcePolicyRead(ctx context.Context, d *schema.ResourceData, m interface
 		ctx,
 		session.WithContextLog(logger),
 	)
-	client := inst.Client(meta)
 	logger.Debug("Reading policy")
 	policyID, err := strconv.ParseInt(d.Id(), 10, 0)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	policy, err := client.GetPolicy(ctx, cloudlets.GetPolicyRequest{PolicyID: policyID})
+
+	policyVersionStrategy, err := getPolicyVersionExecutionStrategy(d, meta)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := tf.GetIntValue("version", d)
+
+	policyVersion, err := policyVersionStrategy.findLatestPolicyVersion(ctx, policyID)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	policyVersion, err := client.GetPolicyVersion(ctx, cloudlets.GetPolicyVersionRequest{
-		PolicyID: policyID,
-		Version:  int64(version),
-	})
+
+	executionStrategy, err := getPolicyExecutionStrategy(d, meta)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	attrs := make(map[string]interface{})
-	attrs["name"] = policy.Name
-	attrs["group_id"] = strconv.FormatInt(policy.GroupID, 10)
-	attrs["cloudlet_code"] = policy.CloudletCode
-	attrs["cloudlet_id"] = policy.CloudletID
-	attrs["description"] = policyVersion.Description
-	attrs["match_rule_format"] = policyVersion.MatchRuleFormat
-	var matchRulesJSON []byte
-	if len(policyVersion.MatchRules) > 0 {
-		matchRulesJSON, err = json.MarshalIndent(policyVersion.MatchRules, "", "  ")
-		if err != nil {
-			return diag.FromErr(err)
-		}
+
+	attrs, err := executionStrategy.readPolicy(ctx, policyID, policyVersion)
+	if err != nil {
+		return diag.FromErr(err)
 	}
-	attrs["match_rules"] = string(matchRulesJSON)
-	attrs["version"] = policyVersion.Version
+
 	if err := tf.SetAttrs(d, attrs); err != nil {
 		return diag.FromErr(err)
 	}
@@ -296,12 +305,16 @@ func resourcePolicyUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 		ctx,
 		session.WithContextLog(logger),
 	)
-	client := inst.Client(meta)
 	logger.Debug("Updating policy")
 
 	if !d.HasChangeExcept("timeouts") {
 		logger.Debug("Only timeouts were updated, skipping")
 		return nil
+	}
+
+	executionStrategy, err := getPolicyExecutionStrategy(d, meta)
+	if err != nil {
+		return diag.FromErr(err)
 	}
 
 	policyID, err := strconv.ParseInt(d.Id(), 10, 0)
@@ -321,88 +334,47 @@ func resourcePolicyUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		updatePolicyReq := cloudlets.UpdatePolicyRequest{
-			UpdatePolicy: cloudlets.UpdatePolicy{
-				Name:    name,
-				GroupID: int64(groupIDNum),
-			},
-			PolicyID: policyID,
-		}
-		_, err = client.UpdatePolicy(ctx, updatePolicyReq)
+
+		err = executionStrategy.updatePolicy(ctx, policyID, int64(groupIDNum), name)
 		if err != nil {
 			return diag.FromErr(err)
 		}
 	}
 	if d.HasChanges("description", "match_rules", "match_rule_format") {
+		var isNewVersionNeeded bool
 		version, err := tf.GetIntValue("version", d)
 		if err != nil {
-			return diag.FromErr(err)
-		}
-		versionResp, err := client.GetPolicyVersion(ctx, cloudlets.GetPolicyVersionRequest{
-			PolicyID:  policyID,
-			Version:   int64(version),
-			OmitRules: true,
-		})
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		matchRuleFormat, err := tf.GetStringValue("match_rule_format", d)
-		if err != nil && !errors.Is(err, tf.ErrNotFound) {
-			return diag.FromErr(err)
+			if errors.Is(err, tf.ErrNotFound) {
+				isNewVersionNeeded = true
+			} else {
+				return diag.FromErr(err)
+			}
+		} else {
+			isNewVersionNeeded, err = executionStrategy.newPolicyVersionIsNeeded(ctx, policyID, int64(version))
+			if err != nil {
+				return diag.FromErr(err)
+			}
 		}
 		matchRulesJSON, err := tf.GetStringValue("match_rules", d)
 		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return diag.FromErr(err)
 		}
-		matchRules := make(cloudlets.MatchRules, 0)
-		if matchRulesJSON != "" {
-			if err := json.Unmarshal([]byte(matchRulesJSON), &matchRules); err != nil {
-				return diag.FromErr(err)
-			}
-		}
 		description, err := tf.GetStringValue("description", d)
 		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return diag.FromErr(err)
 		}
-		if len(versionResp.Activations) > 0 {
-			createVersionRequest := cloudlets.CreatePolicyVersionRequest{
-				CreatePolicyVersion: cloudlets.CreatePolicyVersion{
-					MatchRuleFormat: cloudlets.MatchRuleFormat(matchRuleFormat),
-					MatchRules:      matchRules,
-					Description:     description,
-				},
-				PolicyID: policyID,
-			}
-			createVersionResp, err := client.CreatePolicyVersion(ctx, createVersionRequest)
-			if err != nil {
-				return diag.FromErr(err)
-			}
-			if err := d.Set("version", createVersionResp.Version); err != nil {
-				return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
-			}
-			if err := setWarnings(d, createVersionResp.Warnings); err != nil {
-				return err
-			}
-			return resourcePolicyRead(ctx, d, m)
-		}
-		updateVersionReq := cloudlets.UpdatePolicyVersionRequest{
-			UpdatePolicyVersion: cloudlets.UpdatePolicyVersion{
-				MatchRuleFormat: cloudlets.MatchRuleFormat(matchRuleFormat),
-				MatchRules:      matchRules,
-				Description:     description,
-			},
-			PolicyID: policyID,
-			Version:  int64(version),
-		}
-		updateVersionResp, err := client.UpdatePolicyVersion(ctx, updateVersionReq)
+
+		err, updateVersionErr := executionStrategy.updatePolicyVersion(ctx, d, policyID, int64(version), description, matchRulesJSON, isNewVersionNeeded)
 		if err != nil {
-			if errPolicyRead := resourcePolicyRead(ctx, d, m); errPolicyRead != nil {
-				return append(errPolicyRead, diag.FromErr(err)...)
-			}
 			return diag.FromErr(err)
 		}
-		if err := setWarnings(d, updateVersionResp.Warnings); err != nil {
-			return err
+
+		if updateVersionErr != nil {
+			// We still want to have actual (server's) values in state. Otherwise, the values from config would be put into the state as default.
+			if errPolicyRead := resourcePolicyRead(ctx, d, m); errPolicyRead != nil {
+				return append(errPolicyRead, diag.FromErr(updateVersionErr)...)
+			}
+			return diag.FromErr(updateVersionErr)
 		}
 	}
 	return resourcePolicyRead(ctx, d, m)
@@ -415,41 +387,21 @@ func resourcePolicyDelete(ctx context.Context, d *schema.ResourceData, m interfa
 		ctx,
 		session.WithContextLog(logger),
 	)
-	client := inst.Client(meta)
 	logger.Debug("Deleting policy")
+
+	executionStrategy, err := getPolicyExecutionStrategy(d, meta)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	policyID, err := strconv.ParseInt(d.Id(), 10, 0)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	policyVersions, err := getAllPolicyVersions(ctx, policyID, client)
+
+	err = executionStrategy.deletePolicy(ctx, policyID)
 	if err != nil {
 		return diag.FromErr(err)
-	}
-	for _, ver := range policyVersions {
-		if err := client.DeletePolicyVersion(ctx, cloudlets.DeletePolicyVersionRequest{
-			PolicyID: policyID,
-			Version:  ver.Version,
-		}); err != nil {
-			return diag.FromErr(err)
-		}
-	}
-
-	activationPending := true
-	for activationPending {
-		select {
-		case <-time.After(DeletionPolicyPollInterval):
-			if err = client.RemovePolicy(ctx, cloudlets.RemovePolicyRequest{PolicyID: policyID}); err != nil {
-				statusErr := new(cloudlets.Error)
-				// if error does not contain information about pending activations, return it as it is not expected
-				if errors.As(err, &statusErr) && !strings.Contains(statusErr.Detail, "Unable to delete policy because an activation for this policy is still pending") {
-					return diag.Errorf("remove policy error: %s", err)
-				}
-				continue
-			}
-			activationPending = false
-		case <-ctx.Done():
-			return diag.Errorf("retry timeout reached: %s", ctx.Err())
-		}
 	}
 	d.SetId("")
 
@@ -461,56 +413,22 @@ func resourcePolicyImport(ctx context.Context, d *schema.ResourceData, m interfa
 	logger := meta.Log("Cloudlets", "resourcePolicyImport")
 	logger.Debugf("Import Policy")
 
-	client := inst.Client(meta)
-
 	name := d.Id()
 	if name == "" {
 		return nil, fmt.Errorf("policy name cannot be empty")
 	}
 
-	policy, err := findPolicyByName(ctx, name, client)
+	policyStrategy, policyID, err := discoverPolicyExecutionStrategy(ctx, meta, name)
 	if err != nil {
 		return nil, err
 	}
-
-	d.SetId(strconv.FormatInt(policy.PolicyID, 10))
-
-	version, err := findLatestPolicyVersion(ctx, policy.PolicyID, client)
-	if err != nil {
+	if err = policyStrategy.setPolicyType(d); err != nil {
 		return nil, err
 	}
 
-	err = d.Set("version", version)
-	if err != nil {
-		return nil, err
-	}
+	d.SetId(strconv.FormatInt(policyID, 10))
 
 	return []*schema.ResourceData{d}, nil
-}
-
-func findPolicyByName(ctx context.Context, name string, client cloudlets.Cloudlets) (*cloudlets.Policy, error) {
-	pageSize, offset := 1000, 0
-	var policy *cloudlets.Policy
-	for {
-		policies, err := client.ListPolicies(ctx, cloudlets.ListPoliciesRequest{
-			Offset:   offset,
-			PageSize: &pageSize,
-		})
-		if err != nil {
-			return nil, err
-		}
-		for _, p := range policies {
-			if p.Name == name {
-				policy = &p
-				return policy, nil
-			}
-		}
-		if len(policies) < pageSize {
-			break
-		}
-		offset += pageSize
-	}
-	return nil, fmt.Errorf("policy '%s' does not exist", name)
 }
 
 func diffSuppressGroupID(_, old, new string, _ *schema.ResourceData) bool {
@@ -550,7 +468,7 @@ func diffMatchRules(old, new string) bool {
 	return reflect.DeepEqual(oldRules, newRules)
 }
 
-func warningsToJSON(warnings []cloudlets.Warning) ([]byte, error) {
+func warningsToJSON[W cloudlets.Warning | v3.MatchRulesWarning](warnings []W) ([]byte, error) {
 	var warningsJSON []byte
 	if len(warnings) == 0 {
 		return warningsJSON, nil
@@ -564,14 +482,138 @@ func warningsToJSON(warnings []cloudlets.Warning) ([]byte, error) {
 	return warningsJSON, nil
 }
 
-func setWarnings(d *schema.ResourceData, warnings []cloudlets.Warning) diag.Diagnostics {
+func setWarnings[W cloudlets.Warning | v3.MatchRulesWarning](d *schema.ResourceData, warnings []W) error {
 	warningsJSON, err := warningsToJSON(warnings)
 	if err != nil {
-		return diag.FromErr(err)
+		return err
 	}
 
-	if err := d.Set("warnings", string(warningsJSON)); err != nil {
-		return diag.FromErr(err)
+	return d.Set("warnings", string(warningsJSON))
+}
+
+func getPolicyExecutionStrategy(d *schema.ResourceData, meta meta.Meta) (policyExecutionStrategy, error) {
+	var executionStrategy policyExecutionStrategy
+	isV3, err := tf.GetBoolValue("is_shared", d)
+	if err != nil {
+		return nil, err
 	}
-	return nil
+
+	if isV3 {
+		executionStrategy = v3PolicyStrategy{ClientV3(meta)}
+	} else {
+		executionStrategy = v2PolicyStrategy{Client(meta)}
+	}
+	return executionStrategy, nil
+}
+
+type policyExecutionStrategy interface {
+	createPolicy(ctx context.Context, cloudletName, cloudletCode string, groupID int64) (int64, error)
+	updatePolicyVersion(ctx context.Context, d *schema.ResourceData, policyID, version int64, description, matchRulesJSON string, newVersionRequired bool) (error, error)
+	updatePolicy(ctx context.Context, policyID, groupID int64, cloudletName string) error
+	newPolicyVersionIsNeeded(ctx context.Context, policyID, version int64) (bool, error)
+	readPolicy(ctx context.Context, policyID int64, version *int64) (map[string]any, error)
+	deletePolicy(ctx context.Context, policyID int64) error
+	getVersionStrategy(meta meta.Meta) versionStrategy
+	setPolicyType(d *schema.ResourceData) error
+	isFirstVersionCreated() bool
+}
+
+func discoverPolicyExecutionStrategy(ctx context.Context, meta meta.Meta, policyName string) (policyExecutionStrategy, int64, error) {
+
+	strategy, policyID, errV2 := checkForV2Policy(ctx, meta, policyName)
+	if strategy != nil {
+		return strategy, policyID, nil
+	}
+
+	strategy, policyID, errV3 := checkForV3Policy(ctx, meta, policyName)
+	if strategy != nil {
+		return strategy, policyID, nil
+	}
+
+	var errMessage string
+	if errV2 != nil {
+		errMessage += fmt.Sprintf("could not list V2 policies: %s\n", errV2)
+	}
+	if errV3 != nil {
+		errMessage += fmt.Sprintf("could not list V3 policies: %s", errV3)
+	}
+	if errMessage != "" {
+		return nil, 0, fmt.Errorf(errMessage)
+	}
+
+	return nil, 0, fmt.Errorf("policy '%s' does not exist", policyName)
+}
+
+func checkForV2Policy(ctx context.Context, meta meta.Meta, policyName string) (policyExecutionStrategy, int64, error) {
+	v2Client := Client(meta)
+	size, offset := 1000, 0
+	var errV2 error
+	for {
+		policies, err := v2Client.ListPolicies(ctx, cloudlets.ListPoliciesRequest{
+			Offset:   offset,
+			PageSize: tools.IntPtr(size),
+		})
+		if err == nil {
+			if policyID := findPolicyV2ByName(policies, policyName); policyID != 0 {
+				return v2PolicyStrategy{
+					client: v2Client,
+				}, policyID, nil
+			}
+			if len(policies) < size {
+				break
+			}
+			offset++
+		} else {
+			errV2 = err
+			break
+		}
+	}
+
+	return nil, 0, errV2
+}
+
+func checkForV3Policy(ctx context.Context, meta meta.Meta, policyName string) (policyExecutionStrategy, int64, error) {
+	v3Client := ClientV3(meta)
+	size, page := 1000, 0
+	var errV3 error
+	for {
+		policiesV3, err := v3Client.ListPolicies(ctx, v3.ListPoliciesRequest{
+			Page: page,
+			Size: size,
+		})
+		if err == nil {
+			if policyID := findPolicyV3ByName(policiesV3.Content, policyName); policyID != 0 {
+				return v3PolicyStrategy{
+					client: v3Client,
+				}, policyID, nil
+			}
+			if len(policiesV3.Content) < size {
+				break
+			}
+			page++
+		} else {
+			errV3 = err
+			break
+		}
+	}
+
+	return nil, 0, errV3
+}
+
+func findPolicyV3ByName(policies []v3.Policy, policyName string) int64 {
+	for _, policy := range policies {
+		if policy.Name == policyName {
+			return policy.ID
+		}
+	}
+	return 0
+}
+
+func findPolicyV2ByName(policies []cloudlets.Policy, policyName string) int64 {
+	for _, policy := range policies {
+		if policy.Name == policyName {
+			return policy.PolicyID
+		}
+	}
+	return 0
 }

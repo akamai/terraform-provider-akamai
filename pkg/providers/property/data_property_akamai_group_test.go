@@ -11,7 +11,6 @@ import (
 )
 
 func Test_DSReadGroup(t *testing.T) {
-	t.Skip()
 	tests := map[string]struct {
 		init       func(*testing.T, *papi.Mock, testDataForPAPIGroups)
 		mockData   testDataForPAPIGroups

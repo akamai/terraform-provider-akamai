@@ -1,0 +1,1 @@
+{"comments":"updatedNotes2","rules":{"behaviors":[{"name":"caching","options":{"behavior":"MAX_AGE","mustRevalidate":false,"ttl":"10d"}}],"name":"default","options":{}}}

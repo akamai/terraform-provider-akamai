@@ -13,7 +13,6 @@ import (
 )
 
 func TestDSPropertyRulesRead(t *testing.T) {
-	t.Skip()
 	t.Run("get datasource property rules", func(t *testing.T) {
 		client := &papi.Mock{}
 		mockImpl := func(m *papi.Mock) {
@@ -311,7 +310,6 @@ func TestDSPropertyRulesRead(t *testing.T) {
 }
 
 func TestDSPropertyRulesRead_Fail(t *testing.T) {
-	t.Skip()
 	resource.UnitTest(t, resource.TestCase{
 		ProtoV5ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{{

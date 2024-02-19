@@ -2376,7 +2376,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 		"construct_response": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "This behavior constructs an HTTP response, complete with HTTP status code and body, to serve from the edge independently of your origin. It supports all request methods except for `POST`. This behavior can be used in includes.",
+			Description: "This behavior constructs an HTTP response, complete with HTTP status code and body, to serve from the edge independently of your origin. For example, you might want to send a customized response if the URL doesn't point to an object on the origin server, or if the end user is not authorized to view the requested content. You can use it with all request methods you allow for your property, including POST. For more details, see the `allowOptions`, `allowPatch`, `allowPost`, `allowPut`, and `allowDelete` behaviors. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -2414,7 +2414,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 					},
 					"force_eviction": {
 						Optional:    true,
-						Description: "Removes the underlying object from the cache, since it is not being served.",
+						Description: "For GET requests from clients, this forces edge servers to evict the underlying object from cache. Defaults to `false`.",
 						Type:        schema.TypeBool,
 					},
 					"ignore_purge": {

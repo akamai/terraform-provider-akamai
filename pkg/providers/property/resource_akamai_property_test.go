@@ -1,9 +1,11 @@
 package property
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
+	"path"
 	"regexp"
 	"strings"
 	"testing"
@@ -11,14 +13,15 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
+	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestResProperty(t *testing.T) {
-	t.Skip()
 	// These more or less track the state of a Property in PAPI for the lifecycle tests
 	type TestState struct {
 		Client       *papi.Mock
@@ -159,14 +162,14 @@ func TestResProperty(t *testing.T) {
 	GetVersionResources := func(propertyID, contractID, groupID string, version int) BehaviorFunc {
 		return func(state *TestState) {
 			ExpectGetPropertyVersionHostnames(state.Client, propertyID, groupID, contractID, version, &state.Hostnames)
-			ExpectGetRuleTree(state.Client, propertyID, groupID, contractID, version, &state.Rules, &state.RuleFormat)
+			ExpectGetRuleTree(state.Client, propertyID, groupID, contractID, version, &state.Rules, &state.RuleFormat, nil, nil)
 		}
 	}
 
 	GetVersionResourcesDrift := func(propertyID, contractID, groupID string, version int, rules papi.RulesUpdate) BehaviorFunc {
 		return func(state *TestState) {
 			ExpectGetPropertyVersionHostnames(state.Client, propertyID, groupID, contractID, version, &state.Hostnames)
-			ExpectGetRuleTree(state.Client, propertyID, groupID, contractID, version, &rules, &state.RuleFormat)
+			ExpectGetRuleTree(state.Client, propertyID, groupID, contractID, version, &rules, &state.RuleFormat, nil, nil)
 		}
 	}
 
@@ -216,6 +219,22 @@ func TestResProperty(t *testing.T) {
 		}
 	}
 
+	// propertyLifecycleWithPropertyID covers lifecycle when property_id is set
+	propertyLifecycleWithPropertyID := func(propertyName, propertyID, groupID string, rules papi.RulesUpdate) BehaviorFunc {
+		return func(state *TestState) {
+			state.Property.PropertyID = "prp_0"
+			state.Property.LatestVersion = 1
+			state.Property.ContractID = "ctr_0"
+			state.Property.GroupID = "grp_0"
+			state.Property.PropertyName = "test_property"
+			state.Rules = rules
+			state.RuleFormat = "v2020-01-01"
+			getProperty(propertyID)(state)
+			GetVersionResources(propertyID, "ctr_0", "grp_0", 1)(state)
+			// no deletion since it should be covered by property_bootstrap resource
+		}
+	}
+
 	propertyLifecycleWithDrift := func(propertyName, propertyID, groupID string, rulesToSend, rulesToReceive papi.RulesUpdate) BehaviorFunc {
 		return func(state *TestState) {
 			createProperty(propertyName, propertyID, rulesToSend)(state)
@@ -226,8 +245,8 @@ func TestResProperty(t *testing.T) {
 
 	importProperty := func(propertyID string) BehaviorFunc {
 		return func(state *TestState) {
-			// Depending on how much of the import ID is given, the initial property lookup may not have group/contract
-			ExpectGetProperty(state.Client, "prp_0", "grp_0", "", &state.Property).Maybe()
+			// Depending on how much of the import ID is given, the initial property lookup may not have group and contract
+			ExpectGetProperty(state.Client, "prp_0", "grp_0", "ctr_0", &state.Property).Maybe()
 			ExpectGetProperty(state.Client, "prp_0", "", "", &state.Property).Maybe()
 		}
 	}
@@ -264,6 +283,14 @@ func TestResProperty(t *testing.T) {
 			resource.TestCheckResourceAttr("akamai_property.test", "product_id", "prd_0"),
 			resource.TestCheckResourceAttr("akamai_property.test", "rule_warnings.#", "0"),
 			resource.TestCheckResourceAttr("akamai_property.test", "rules", rules),
+		)
+	}
+
+	// addPropertyIDAttrCheck adds resource.TestCheckFunc that checks if property_id attribute was set correctly
+	addPropertyIDAttrCheck := func(checks resource.TestCheckFunc, propertyID string) resource.TestCheckFunc {
+		return resource.ComposeAggregateTestCheckFunc(
+			resource.TestCheckResourceAttr("akamai_property.test", "property_id", propertyID),
+			checks,
 		)
 	}
 
@@ -435,6 +462,35 @@ func TestResProperty(t *testing.T) {
 					Config: testutils.LoadFixtureString(t, "%s/step1.tf", FixturePath),
 					Check: checkAttrs("prp_0", "to2.test.domain", "2", "0", "1", "ehn_123",
 						"{\"rules\":{\"name\":\"default\",\"options\":{}}}"),
+				},
+			}
+		},
+	}
+
+	// withPropertyID covers case when property was initially created with property_bootstrap resource
+	withPropertyID := LifecycleTestCase{
+		Name: "Create with propertyID",
+		ClientSetup: composeBehaviors(
+			propertyLifecycleWithPropertyID("test_property", "prp_0", "grp_0",
+				papi.RulesUpdate{Rules: papi.Rules{Name: "default"}}),
+			getPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive),
+			setHostnames("prp_0", 1, "to.test.domain"),
+			setHostnames("prp_0", 1, "to2.test.domain"),
+		),
+		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
+			return []resource.TestStep{
+				{
+					PreConfig: func() {
+						State.VersionItems = papi.PropertyVersionItems{Items: []papi.PropertyVersionGetItem{{PropertyVersion: 1, ProductionStatus: papi.VersionStatusInactive}}}
+					},
+					Config: testutils.LoadFixtureString(t, "%s/step0.tf", FixturePath),
+					Check: checkAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
+						"{\"rules\":{\"name\":\"default\",\"options\":{}}}"),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "%s/step1.tf", FixturePath),
+					Check: addPropertyIDAttrCheck(checkAttrs("prp_0", "to2.test.domain", "1", "0", "0", "ehn_123",
+						"{\"rules\":{\"name\":\"default\",\"options\":{}}}"), "prp_0"),
 				},
 			}
 		},
@@ -757,11 +813,21 @@ func TestResProperty(t *testing.T) {
 			client.Test(T{t})
 
 			parameters := strings.Split(importID, ",")
+			var propertyBootstrap bool
+			if parameters[len(parameters)-1] == "property-bootstrap" {
+				propertyBootstrap = true
+				parameters = parameters[:len(parameters)-1]
+			}
 			numberParameters := len(parameters)
 			lastParameter := parameters[len(parameters)-1]
+			if propertyBootstrap {
+				setup = append(setup, propertyLifecycleWithPropertyID("test_property", "prp_0", "grp_0",
+					papi.RulesUpdate{Rules: papi.Rules{Name: "default"}}))
+			} else {
+				setup = append(setup, propertyLifecycle("test_property", "prp_0", "grp_0",
+					papi.RulesUpdate{Rules: papi.Rules{Name: "default"}}))
+			}
 			setup = append(setup,
-				propertyLifecycle("test_property", "prp_0", "grp_0",
-					papi.RulesUpdate{Rules: papi.Rules{Name: "default"}}),
 				getPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive),
 				setHostnames("prp_0", 1, "to.test.domain"),
 				importProperty("prp_0"),
@@ -811,7 +877,7 @@ func TestResProperty(t *testing.T) {
 							ResourceName:            "akamai_property.test",
 							Config:                  testutils.LoadFixtureString(t, fixturePath),
 							ImportStateVerifyIgnore: []string{"product", "read_version"},
-							Check:                   checkAttrs("prp_0", "to.test.domain", "1", "1", "0", "ehn_123", rules),
+							Check:                   addPropertyIDAttrCheck(checkAttrs("prp_0", "to.test.domain", "1", "1", "0", "ehn_123", rules), "prp_0"),
 						},
 					}
 				},
@@ -833,6 +899,11 @@ func TestResProperty(t *testing.T) {
 		return assertImportableWithOptions(t, testName, importID, "importable.tf", "{\"rules\":{\"name\":\"default\",\"options\":{}}}", []BehaviorFunc{})
 	}
 
+	// assertImportableWithBootstrap covers imports when property-bootstrap flag is provided
+	assertImportableWithBootstrap := func(t *testing.T, testName, importID string) func(t *testing.T) {
+		return assertImportableWithOptions(t, testName, importID, "importable-with-bootstrap.tf", "{\"rules\":{\"name\":\"default\",\"options\":{}}}", []BehaviorFunc{})
+	}
+
 	suppressLogging(t, func() {
 
 		// Test Schema Configuration
@@ -843,10 +914,11 @@ func TestResProperty(t *testing.T) {
 		t.Run("Schema Configuration Error: product_id not given", assertConfigError(t, "product_id not given", `Missing required argument`))
 		t.Run("Schema Configuration Error: invalid json rules", assertConfigError(t, "invalid json rules", `rules are not valid JSON`))
 		t.Run("Schema Configuration Error: invalid name given", assertConfigError(t, "invalid name given", `a name must only contain letters, numbers, and these characters: . _ -`))
-		t.Run("Schema Configuration Error: name given too long", assertConfigError(t, "name given too long", `a name must be shorter than 86 characters`))
+		t.Run("Schema Configuration Error: name given too long", assertConfigError(t, "name given too long", `a name must be longer than 0 characters and shorter than 86 characters`))
 
 		// Test Lifecycle
 
+		t.Run("Lifecycle: create with propertyID", assertLifecycle(t, t.Name(), "with-propertyID", withPropertyID))
 		t.Run("Lifecycle: latest version is not active (normal)", assertLifecycle(t, t.Name(), "normal", latestVersionNotActive))
 		t.Run("Lifecycle: latest version is active in staging (normal)", assertLifecycle(t, t.Name(), "normal", latestVersionActiveInStaging))
 		t.Run("Lifecycle: latest version is active in production (normal)", assertLifecycle(t, t.Name(), "normal", latestVersionActiveInProd))
@@ -884,6 +956,7 @@ func TestResProperty(t *testing.T) {
 							},
 						}})},
 		))
+		t.Run("Importable: property_id with property-bootstrap", assertImportableWithBootstrap(t, "property_id", "prp_0,property-bootstrap"))
 		t.Run("Importable: property_id", assertImportable(t, "property_id", "prp_0"))
 		t.Run("Importable: property_id and ver_# version", assertImportable(t, "property_id and ver_# version", "prp_0,ver_1"))
 		t.Run("Importable: property_id and # version", assertImportable(t, "property_id and # version", "prp_0,1"))
@@ -1039,6 +1112,93 @@ func TestResProperty(t *testing.T) {
 
 			client.AssertExpectations(t)
 		})
+		t.Run("validation warning when creating property with rules tree", func(t *testing.T) {
+			client := &papi.Mock{}
+			client.Test(T{t})
+			ExpectCreateProperty(
+				client, "test_property", "grp_0",
+				"ctr_0", "prd_0", "prp_1",
+			)
+			rules := papi.Rules{
+				Behaviors: []papi.RuleBehavior{
+					{
+						Name: "origin",
+						Options: papi.RuleOptionsMap{
+							"hostname":  "1.2.3.4",
+							"httpPort":  float64(80),
+							"httpsPort": float64(443),
+						},
+					},
+				},
+			}
+			var req = papi.UpdateRulesRequest{
+				PropertyID:      "prp_1",
+				ContractID:      "ctr_0",
+				GroupID:         "grp_0",
+				PropertyVersion: 1,
+				Rules:           papi.RulesUpdate{Rules: rules},
+				ValidateRules:   true,
+			}
+			warning := papi.RuleWarnings{
+				Type:          "https://problems.luna.akamaiapis.net/papi/v0/validation/validation_message.ip_address_origin",
+				ErrorLocation: "#/rules/behaviors/1",
+				Detail:        "Using an IP address for the `Origin Server` is not recommended. IP addresses may be changed or reassigned without notice which can severely impact your property or cause a DoS. Please use a properly formatted hostname instead.",
+			}
+			client.On("UpdateRuleTree", AnyCTX, req).Return(&papi.UpdateRulesResponse{
+				AccountID:       "",
+				ContractID:      "ctr_0",
+				Comments:        "",
+				GroupID:         "grp_0",
+				PropertyID:      "prp_1",
+				PropertyVersion: 1,
+				Etag:            "",
+				RuleFormat:      "",
+				Rules:           rules,
+				Errors:          nil,
+				Warnings:        []papi.RuleWarnings{warning},
+			}, nil).Once()
+			ExpectGetProperty(
+				client, "prp_1", "grp_0", "ctr_0",
+				&papi.Property{
+					PropertyID: "prp_1", GroupID: "grp_0", ContractID: "ctr_0", LatestVersion: 1,
+					PropertyName: "test_property",
+				},
+			)
+
+			ExpectGetPropertyVersionHostnames(
+				client, "prp_1", "grp_0", "ctr_0", 1,
+				&[]papi.Hostname{},
+			).Times(2)
+			ruleFormat := ""
+			ExpectGetRuleTree(
+				client, "prp_1", "grp_0", "ctr_0", 1,
+				&papi.RulesUpdate{
+					Rules: rules,
+				}, &ruleFormat, nil, []*papi.Error{
+					{
+						Type:          "https://problems.luna.akamaiapis.net/papi/v0/validation/validation_message.ip_address_origin",
+						ErrorLocation: "#/rules/behaviors/1",
+						Detail:        "Using an IP address for the `Origin Server` is not recommended. IP addresses may be changed or reassigned without notice which can severely impact your property or cause a DoS. Please use a properly formatted hostname instead.",
+					},
+				})
+			ExpectGetPropertyVersion(client, "prp_1", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive)
+
+			ExpectRemoveProperty(client, "prp_1", "ctr_0", "grp_0")
+			useClient(client, nil, func() {
+				resource.UnitTest(t, resource.TestCase{
+					ProtoV5ProviderFactories: testAccProviders,
+					Steps: []resource.TestStep{
+						{
+							Config: testutils.LoadFixtureString(t, "testdata/TestResProperty/property_with_validation_warning_for_rules.tf"),
+							Check: resource.ComposeAggregateTestCheckFunc(
+								resource.TestCheckResourceAttr("akamai_property.test", "rule_warnings.0.detail", "Using an IP address for the `Origin Server` is not recommended. IP addresses may be changed or reassigned without notice which can severely impact your property or cause a DoS. Please use a properly formatted hostname instead.")),
+						},
+					},
+				})
+			})
+
+			client.AssertExpectations(t)
+		})
 
 		t.Run("validation - when updating a property hostnames to empty it should return error", func(t *testing.T) {
 			client := &papi.Mock{}
@@ -1089,8 +1249,7 @@ func TestResProperty(t *testing.T) {
 			ruleFormat := ""
 			ExpectGetRuleTree(
 				client, "prp_0", "grp_0", "ctr_0", 1,
-				&papi.RulesUpdate{}, &ruleFormat,
-			)
+				&papi.RulesUpdate{}, &ruleFormat, nil, nil)
 
 			ExpectRemoveProperty(client, "prp_0", "ctr_0", "grp_0")
 
@@ -1525,10 +1684,227 @@ func TestResProperty(t *testing.T) {
 	})
 }
 
+func TestPropertyResource_versionNotesLifecycle(t *testing.T) {
+	testdataDir := "testdata/TestResProperty/Lifecycle/versionNotes"
+	resourceName := "akamai_property.test"
+
+	name := "test_property"
+	ruleFormat := "v2023-01-05"
+	ctr, grp, prd, id := "ctr_123", "grp_123", "prd_123", "prp_123"
+	propertyVersion := 1
+
+	versionNotes1, versionNotes2, versionNotes3 := "lifecycleTest", "updatedNotes", "updatedNotes2"
+	rulesFile1And2, rulesFile3, rulesFile4And5 := "01_02_rules.json", "03_rules.json", "04_05_rules.json"
+
+	client := &papi.Mock{}
+
+	mockRead := func(notes string, rules papi.Rules) []*mock.Call {
+		getPropertyCall := client.On("GetProperty", mock.Anything, papi.GetPropertyRequest{
+			PropertyID: id,
+			ContractID: ctr,
+			GroupID:    grp,
+		}).Return(&papi.GetPropertyResponse{
+			Property: &papi.Property{
+				ContractID:    ctr,
+				GroupID:       grp,
+				PropertyID:    id,
+				PropertyName:  name,
+				LatestVersion: propertyVersion,
+			},
+		}, nil)
+
+		getHostnamesCall := client.On("GetPropertyVersionHostnames", mock.Anything, papi.GetPropertyVersionHostnamesRequest{
+			ContractID:        ctr,
+			GroupID:           grp,
+			PropertyID:        id,
+			PropertyVersion:   propertyVersion,
+			IncludeCertStatus: true,
+		}).Return(&papi.GetPropertyVersionHostnamesResponse{}, nil)
+
+		getRuleTreeCall := client.On("GetRuleTree", mock.Anything, papi.GetRuleTreeRequest{
+			PropertyID:      id,
+			ContractID:      ctr,
+			GroupID:         grp,
+			PropertyVersion: propertyVersion,
+			ValidateRules:   true,
+			ValidateMode:    papi.RuleValidateModeFull,
+		}).Return(&papi.GetRuleTreeResponse{
+			Rules:      rules,
+			Comments:   notes,
+			RuleFormat: ruleFormat,
+		}, nil)
+
+		getPropertyVersionCall := client.On("GetPropertyVersion", mock.Anything, papi.GetPropertyVersionRequest{
+			PropertyID:      id,
+			PropertyVersion: propertyVersion,
+			ContractID:      ctr,
+			GroupID:         grp,
+		}).Return(&papi.GetPropertyVersionsResponse{
+			Version: papi.PropertyVersionGetItem{
+				Note:             notes,
+				ProductID:        prd,
+				ProductionStatus: papi.VersionStatusInactive,
+				StagingStatus:    papi.VersionStatusInactive,
+			},
+		}, nil)
+
+		return []*mock.Call{getPropertyCall, getHostnamesCall, getRuleTreeCall, getPropertyVersionCall}
+	}
+
+	mockUpdate := func(currentNotes, newNotes string, rules papi.Rules) {
+		client.On("GetPropertyVersion", mock.Anything, papi.GetPropertyVersionRequest{
+			PropertyID:      id,
+			PropertyVersion: propertyVersion,
+			ContractID:      ctr,
+			GroupID:         grp,
+		}).Return(&papi.GetPropertyVersionsResponse{
+			Version: papi.PropertyVersionGetItem{
+				Note:             currentNotes,
+				ProductID:        prd,
+				ProductionStatus: papi.VersionStatusInactive,
+				StagingStatus:    papi.VersionStatusInactive,
+			},
+		}, nil).Once()
+
+		client.On("UpdateRuleTree", mock.Anything, papi.UpdateRulesRequest{
+			PropertyID:      id,
+			GroupID:         grp,
+			ContractID:      ctr,
+			PropertyVersion: propertyVersion,
+			Rules: papi.RulesUpdate{
+				Rules:    rules,
+				Comments: newNotes,
+			},
+			ValidateRules: true,
+		}).Return(&papi.UpdateRulesResponse{}, nil).Once()
+	}
+
+	// step 1 - create + read + plan
+	client.On("CreateProperty", mock.Anything, papi.CreatePropertyRequest{
+		ContractID: ctr,
+		GroupID:    grp,
+		Property: papi.PropertyCreate{
+			ProductID:    prd,
+			PropertyName: name,
+			RuleFormat:   ruleFormat,
+		},
+	}).Return(&papi.CreatePropertyResponse{
+		PropertyID: id,
+	}, nil).Once()
+
+	rulesJSON := testutils.LoadFixtureBytes(t, path.Join(testdataDir, rulesFile1And2))
+	var rules1And2 papi.RulesUpdate
+	err := json.Unmarshal(rulesJSON, &rules1And2)
+	require.NoError(t, err)
+
+	client.On("UpdateRuleTree", mock.Anything, papi.UpdateRulesRequest{
+		PropertyID:      id,
+		GroupID:         grp,
+		ContractID:      ctr,
+		PropertyVersion: propertyVersion,
+		Rules: papi.RulesUpdate{
+			Rules:    rules1And2.Rules,
+			Comments: versionNotes1,
+		},
+		ValidateRules: true,
+	}).Return(&papi.UpdateRulesResponse{}, nil).Once()
+
+	for _, m := range mockRead(versionNotes1, rules1And2.Rules) {
+		m.Times(2)
+	}
+
+	// step 2 - refresh + plan
+	for _, m := range mockRead(versionNotes2, rules1And2.Rules) {
+		m.Times(2)
+	}
+
+	// step 3 - refresh + update + read + plan
+	for _, m := range mockRead(versionNotes2, rules1And2.Rules) {
+		m.Times(1)
+	}
+
+	var rules3 papi.RulesUpdate
+	rulesJSON = testutils.LoadFixtureBytes(t, path.Join(testdataDir, rulesFile3))
+	err = json.Unmarshal(rulesJSON, &rules3)
+	require.NoError(t, err)
+
+	mockUpdate(versionNotes3, "updatedNotes2", rules3.Rules)
+
+	for _, m := range mockRead(versionNotes3, rules3.Rules) {
+		m.Times(2)
+	}
+
+	// step 4 - refresh + update + read + plan
+	for _, m := range mockRead(versionNotes3, rules3.Rules) {
+		m.Times(1)
+	}
+
+	var rules4And5 papi.RulesUpdate
+	rulesJSON = testutils.LoadFixtureBytes(t, path.Join(testdataDir, rulesFile4And5))
+	err = json.Unmarshal(rulesJSON, &rules4And5)
+	require.NoError(t, err)
+
+	mockUpdate(versionNotes3, rules4And5.Comments, rules4And5.Rules)
+
+	for _, m := range mockRead(rules4And5.Comments, rules4And5.Rules) {
+		m.Times(2)
+	}
+
+	// step 5 - refresh + plan
+	for _, m := range mockRead(rules4And5.Comments, rules4And5.Rules) {
+		m.Times(2)
+	}
+
+	// cleanup
+	client.On("RemoveProperty", mock.Anything, papi.RemovePropertyRequest{
+		PropertyID: id,
+		ContractID: ctr,
+		GroupID:    grp,
+	}).Return(&papi.RemovePropertyResponse{}, nil)
+
+	useClient(client, nil, func() {
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV5ProviderFactories: testAccProviders,
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, path.Join(testdataDir, "01_with_notes_and_comments.tf")),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						testCheckResourceAttrJSON(resourceName, "rules", testutils.LoadFixtureString(t, path.Join(testdataDir, "01_expected_rules.json"))),
+						resource.TestCheckResourceAttr("akamai_property.test", "version_notes", "lifecycleTest"),
+					),
+				},
+				{
+					Config:   testutils.LoadFixtureString(t, path.Join(testdataDir, "02_update_notes_no_diff.tf")),
+					PlanOnly: true,
+				},
+				{
+					Config: testutils.LoadFixtureString(t, path.Join(testdataDir, "03_update_notes_and_rules.tf")),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						testCheckResourceAttrJSON(resourceName, "rules", testutils.LoadFixtureString(t, path.Join(testdataDir, "03_expected_rules.json"))),
+						resource.TestCheckResourceAttr("akamai_property.test", "version_notes", "updatedNotes2"),
+					),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, path.Join(testdataDir, "04_05_remove_notes_update_comments.tf")),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						testCheckResourceAttrJSON(resourceName, "rules", testutils.LoadFixtureString(t, path.Join(testdataDir, "04_expected_rules.json"))),
+						resource.TestCheckResourceAttr("akamai_property.test", "version_notes", "Rules_04"),
+					),
+				},
+				{
+					Config:   testutils.LoadFixtureString(t, path.Join(testdataDir, "04_05_remove_notes_update_comments.tf")),
+					PlanOnly: true,
+				},
+			},
+		})
+	})
+
+	client.AssertExpectations(t)
+}
+
 func TestValidatePropertyName(t *testing.T) {
-	t.Skip()
 	invalidNameCharacters := diag.Errorf("a name must only contain letters, numbers, and these characters: . _ -")
-	invalidNameLength := diag.Errorf("a name must be shorter than 86 characters")
+	invalidNameLength := diag.Errorf("a name must be longer than 0 characters and shorter than 86 characters")
 
 	tests := map[string]struct {
 		propertyName   string
@@ -1572,13 +1948,13 @@ func TestValidatePropertyName(t *testing.T) {
 		},
 		"name empty": {
 			propertyName:   "",
-			expectedReturn: invalidNameCharacters,
+			expectedReturn: invalidNameLength,
 		},
 	}
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			ret := validatePropertyName(test.propertyName, nil)
+			ret := validateNameWithBound(1)(test.propertyName, cty.Path{})
 
 			assert.Equal(t, test.expectedReturn, ret)
 

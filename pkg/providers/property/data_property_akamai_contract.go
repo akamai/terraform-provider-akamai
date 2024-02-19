@@ -46,7 +46,7 @@ func dataPropertyContractRead(ctx context.Context, d *schema.ResourceData, m int
 	// check if one of group_id/group_name exists.
 	group, err := tf.ResolveKeyStringState(d, "group_id", "group_name")
 	if err != nil {
-		// If no group found, just return the first contract
+		// If no group found, just return the first contract if only one exists
 		if !errors.Is(err, tf.ErrNotFound) {
 			return diag.FromErr(err)
 		}
@@ -56,6 +56,9 @@ func dataPropertyContractRead(ctx context.Context, d *schema.ResourceData, m int
 		}
 		if len(contracts.Contracts.Items) == 0 {
 			return diag.Errorf("%v", ErrNoContractsFound)
+		}
+		if len(contracts.Contracts.Items) > 1 {
+			return ErrMultipleContractsFound
 		}
 		d.SetId(contracts.Contracts.Items[0].ContractID)
 		return nil
@@ -83,6 +86,9 @@ func dataPropertyContractRead(ctx context.Context, d *schema.ResourceData, m int
 	}
 	if len(foundGroups[0].ContractIDs) == 0 {
 		return diag.Errorf("%v: %v", ErrLookingUpContract, group)
+	}
+	if len(foundGroups[0].ContractIDs) > 1 {
+		return ErrMultipleContractsInGroup
 	}
 
 	if err = d.Set("group_id", tools.AddPrefix(foundGroups[0].GroupID, "grp_")); err != nil {

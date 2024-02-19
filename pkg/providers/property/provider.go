@@ -97,7 +97,9 @@ func (p *PluginSubprovider) DataSources() map[string]*schema.Resource {
 
 // Resources returns terraform resources for property
 func (p *FrameworkSubprovider) Resources() []func() resource.Resource {
-	return []func() resource.Resource{}
+	return []func() resource.Resource{
+		NewBootstrapResource,
+	}
 }
 
 // DataSources returns terraform data sources for property

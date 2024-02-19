@@ -11,8 +11,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func diffSuppressRules(_, oldRules, newRules string, _ *schema.ResourceData) bool {
-	rulesEqual, err := rulesJSONEqual(oldRules, newRules)
+func diffSuppressPropertyRules(_, oldRulesJSON, newRulesJSON string, _ *schema.ResourceData) bool {
+	rulesEqual, err := rulesJSONEqual(oldRulesJSON, newRulesJSON)
 	if err != nil {
 		logger.Get("PAPI", "diffSuppressRules").Error(err.Error())
 	}
@@ -21,34 +21,26 @@ func diffSuppressRules(_, oldRules, newRules string, _ *schema.ResourceData) boo
 }
 
 // rulesJSONEqual handles comparison between two papi.RulesUpdate JSON representations.
-func rulesJSONEqual(old, new string) (bool, error) {
-	if old == "" || new == "" {
-		return old == new, nil
+func rulesJSONEqual(oldRulesJSON, newRulesJSON string) (bool, error) {
+	if oldRulesJSON == "" || newRulesJSON == "" {
+		return oldRulesJSON == newRulesJSON, nil
 	}
 
-	if old == new {
+	if oldRulesJSON == newRulesJSON {
 		return true, nil
 	}
 
 	var oldRules papi.RulesUpdate
-	if err := json.Unmarshal([]byte(old), &oldRules); err != nil {
-		return false, fmt.Errorf("'old' = %s, unmarshal: %w", old, err)
+	if err := json.Unmarshal([]byte(oldRulesJSON), &oldRules); err != nil {
+		return false, fmt.Errorf("'old' = %s, unmarshal: %w", oldRulesJSON, err)
 	}
 
 	var newRules papi.RulesUpdate
-	if err := json.Unmarshal([]byte(new), &newRules); err != nil {
-		return false, fmt.Errorf("'new' = %s, unmarshal: %w", new, err)
+	if err := json.Unmarshal([]byte(newRulesJSON), &newRules); err != nil {
+		return false, fmt.Errorf("'new' = %s, unmarshal: %w", newRulesJSON, err)
 	}
 
-	return ruleTreesEqual(&oldRules, &newRules), nil
-}
-
-func ruleTreesEqual(old, new *papi.RulesUpdate) bool {
-	if old.Comments != new.Comments {
-		return false
-	}
-
-	return rulesEqual(&old.Rules, &new.Rules)
+	return oldRules.Comments == newRules.Comments && rulesEqual(&oldRules.Rules, &newRules.Rules), nil
 }
 
 // rulesEqual handles comparison between two papi.Rules objects ignoring the order in

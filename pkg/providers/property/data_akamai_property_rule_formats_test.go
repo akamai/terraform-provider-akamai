@@ -11,7 +11,6 @@ import (
 )
 
 func Test_readPropertyRuleFormats(t *testing.T) {
-	t.Skip()
 	t.Run("get datasource property rule formats", func(t *testing.T) {
 		client := &papi.Mock{}
 		ruleFormats := papi.RuleFormatItems{

@@ -27,7 +27,7 @@ var (
 )
 
 func TestResourcePropertyIncludeActivation(t *testing.T) {
-	t.Skip()
+
 	// lower down the timeouts for testing purposes
 	activationPollInterval = time.Microsecond
 	getActivationInterval = time.Microsecond
@@ -834,7 +834,6 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 }
 
 func TestReadTimeoutFromEnvOrDefault(t *testing.T) {
-	t.Skip()
 	tests := map[string]struct {
 		envName      string
 		envValue     string

@@ -1,0 +1,29 @@
+{
+  "_ruleFormat_": "rules_v2024_01_09",
+  "rules": {
+    "behaviors": [
+      {
+        "name": "downstreamCache",
+        "options": {
+          "behavior": "TUNNEL_ORIGIN"
+        }
+      },
+      {
+        "name": "restrictObjectCaching",
+        "options": {}
+      }
+    ],
+    "criteria": [
+      {
+        "name": "cacheability",
+        "options": {
+          "matchOperator": "IS_NOT",
+          "value": "CACHEABLE"
+        }
+      }
+    ],
+    "name": "Dynamic Content",
+    "options": {},
+    "criteriaMustSatisfy": "all"
+  }
+}

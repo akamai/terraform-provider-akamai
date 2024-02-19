@@ -187,7 +187,16 @@ func resourcePolicyImageRead(ctx context.Context, d *schema.ResourceData, m inte
 		return diag.FromErr(err)
 	}
 
-	policyInput.RolloutDuration, err = getRolloutDuration(d)
+	policyInput.RolloutDuration, err = getNotUpdateableField(d, extractRolloutDuration)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	extractServeStaleDuration := func(input imaging.PolicyInputImage) *int {
+		return input.ServeStaleDuration
+	}
+
+	policyInput.ServeStaleDuration, err = getNotUpdateableField(d, extractServeStaleDuration)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -205,6 +214,10 @@ func resourcePolicyImageRead(ctx context.Context, d *schema.ResourceData, m inte
 	}
 
 	return nil
+}
+
+var extractRolloutDuration = func(input imaging.PolicyInputImage) *int {
+	return input.RolloutDuration
 }
 
 func repackPolicyImageOutputToInput(policy *imaging.PolicyOutputImage) (*imaging.PolicyInputImage, error) {
@@ -425,7 +438,7 @@ func enforcePolicyImageVersionChange(_ context.Context, diff *schema.ResourceDif
 	return nil
 }
 
-func getRolloutDuration(d *schema.ResourceData) (*int, error) {
+func getNotUpdateableField(d *schema.ResourceData, extractionFunc func(input imaging.PolicyInputImage) *int) (*int, error) {
 	inputJSON, err := tf.GetStringValue("json", d)
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return nil, err
@@ -436,7 +449,7 @@ func getRolloutDuration(d *schema.ResourceData) (*int, error) {
 		if err != nil {
 			return nil, err
 		}
-		return input.RolloutDuration, nil
+		return extractionFunc(input), nil
 	}
 	return nil, nil
 }

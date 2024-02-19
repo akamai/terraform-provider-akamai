@@ -22,9 +22,15 @@ var (
 	ErrEmptyPath = errors.New("path cannot be empty")
 )
 
-// ResourceDataFetcher ...
+// ResourceDataFetcher allows getting values from resource data.
 type ResourceDataFetcher interface {
-	GetOk(string) (interface{}, bool)
+	GetOk(string) (any, bool)
+}
+
+// ResourceChangeFetcher allows getting changes to the resource data.
+type ResourceChangeFetcher interface {
+	GetChange(string) (any, any)
+	HasChange(string) bool
 }
 
 // GetSchemaFieldNameFromPath returns schema field name from given path
@@ -53,7 +59,7 @@ func GetStringValue(key string, rd ResourceDataFetcher) (string, error) {
 	}
 
 	value, ok := rd.GetOk(key)
-	if ok {
+	if value != nil && ok {
 		str, ok := value.(string)
 		if !ok {
 			return "", fmt.Errorf("%w: %s, %q", ErrInvalidType, key, "string")
@@ -75,7 +81,7 @@ func GetInterfaceArrayValue(key string, rd ResourceDataFetcher) ([]interface{}, 
 	}
 
 	value, ok := rd.GetOk(key)
-	if ok {
+	if value != nil && ok {
 		interf, ok := value.([]interface{})
 		if !ok {
 			return nil, fmt.Errorf("%w: %s, %q", ErrInvalidType, key, "[]interface{}")
@@ -96,7 +102,7 @@ func GetIntValue(key string, rd ResourceDataFetcher) (int, error) {
 		return 0, fmt.Errorf("%w: %s", ErrEmptyKey, key)
 	}
 	value, ok := rd.GetOk(key)
-	if !ok {
+	if value == nil || !ok {
 		return 0, fmt.Errorf("%w: %s", ErrNotFound, key)
 	}
 	var num int
@@ -104,6 +110,18 @@ func GetIntValue(key string, rd ResourceDataFetcher) (int, error) {
 		return 0, fmt.Errorf("%w: %s, %q", ErrInvalidType, key, "int")
 	}
 	return num, nil
+}
+
+// GetIntValueAsInt64 fetches value with given key from ResourceData object and attempts type cast to int, if succeed, it returns value as int64
+//
+// if value is not present on provided resource, ErrNotFound is returned
+// if casting is not successful, ErrInvalidType is returned
+func GetIntValueAsInt64(key string, rd ResourceDataFetcher) (int64, error) {
+	num, err := GetIntValue(key, rd)
+	if err != nil {
+		return 0, err
+	}
+	return int64(num), nil
 }
 
 // GetInt64Value fetches value with given key from ResourceData object and attempts type cast to int64
@@ -115,7 +133,7 @@ func GetInt64Value(key string, rd ResourceDataFetcher) (int64, error) {
 		return 0, fmt.Errorf("%w: %s", ErrEmptyKey, key)
 	}
 	value, ok := rd.GetOk(key)
-	if !ok {
+	if value == nil || !ok {
 		return 0, fmt.Errorf("%w: %s", ErrNotFound, key)
 	}
 	var num int64
@@ -134,7 +152,7 @@ func GetFloat64Value(key string, rd ResourceDataFetcher) (float64, error) {
 		return 0, fmt.Errorf("%w: %s", ErrEmptyKey, key)
 	}
 	value, ok := rd.GetOk(key)
-	if !ok {
+	if value == nil || !ok {
 		return 0, fmt.Errorf("%w: %s", ErrNotFound, key)
 	}
 	var num float64
@@ -153,7 +171,7 @@ func GetFloat32Value(key string, rd ResourceDataFetcher) (float32, error) {
 		return 0, fmt.Errorf("%w: %s", ErrEmptyKey, key)
 	}
 	value, ok := rd.GetOk(key)
-	if !ok {
+	if value == nil || !ok {
 		return 0, fmt.Errorf("%w: %s", ErrNotFound, key)
 	}
 	var num float32
@@ -172,6 +190,9 @@ func GetBoolValue(key string, rd ResourceDataFetcher) (bool, error) {
 		return false, fmt.Errorf("%w: %s", ErrEmptyKey, key)
 	}
 	value, _ := rd.GetOk(key)
+	if value == nil {
+		return false, fmt.Errorf("%w: %s", ErrNotFound, key)
+	}
 
 	val, ok := value.(bool)
 	if !ok {
@@ -190,7 +211,7 @@ func GetSetValue(key string, rd ResourceDataFetcher) (*schema.Set, error) {
 	}
 	val := new(schema.Set)
 	value, ok := rd.GetOk(key)
-	if !ok {
+	if value == nil || !ok {
 		return val, fmt.Errorf("%w: %s", ErrNotFound, key)
 	}
 	if val, ok = value.(*schema.Set); !ok {
@@ -209,7 +230,7 @@ func GetListValue(key string, rd ResourceDataFetcher) ([]interface{}, error) {
 	}
 	value, ok := rd.GetOk(key)
 	val := make([]interface{}, 0)
-	if !ok {
+	if value == nil || !ok {
 		return val, fmt.Errorf("%w: %s", ErrNotFound, key)
 	}
 	if val, ok = value.([]interface{}); !ok {
@@ -251,7 +272,7 @@ func GetMapValue(key string, rd ResourceDataFetcher) (map[string]interface{}, er
 	}
 	val := make(map[string]interface{}, 0)
 	value, ok := rd.GetOk(key)
-	if !ok {
+	if value == nil || !ok {
 		return val, fmt.Errorf("%w: %s", ErrNotFound, key)
 	}
 	if val, ok = value.(map[string]interface{}); !ok {
@@ -269,7 +290,7 @@ func FindStringValues(rd ResourceDataFetcher, keys ...string) []string {
 
 	for _, key := range keys {
 		value, ok := rd.GetOk(key)
-		if ok {
+		if value != nil && ok {
 			str, ok := value.(string)
 			if !ok {
 				continue

@@ -6,7 +6,7 @@ resource "akamai_property_include" "test" {
   contract_id = "ctr_123"
   group_id    = "grp_123"
   product_id  = "prd_test"
-  name        = "test include"
+  name        = "test_include"
   type        = "MICROSERVICES"
   rule_format = data.akamai_property_rules_builder.rules_with_null.rule_format
   rules       = data.akamai_property_rules_builder.rules_with_null.json

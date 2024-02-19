@@ -2,34 +2,22 @@ provider "akamai" {
   edgerc = "../../test/edgerc"
 }
 
+locals {
+  gtmTestDomain = "gtm_terra_testdomain.akadns.net"
+}
+
 resource "akamai_gtm_property" "tfexample_prop_1" {
-  domain                 = "gtm_terra_testdomain.akadns.net"
-  name                   = "tfexample_prop_1"
+  domain                 = local.gtmTestDomain
+  name                   = "tfexample_prop_1-updated"
   type                   = "weighted-round-robin"
   score_aggregation_type = "median"
   handout_limit          = 5
   handout_mode           = "normal"
   traffic_target {
-    datacenter_id = 3132
-    enabled       = true
-    weight        = 200
-    servers       = ["1.2.3.6"]
-    handout_cname = "test"
-  }
-
-  traffic_target {
-    datacenter_id = 3133
-    enabled       = true
-    weight        = 200
-    servers       = ["1.2.3.8", "1.2.3.7"]
-    handout_cname = "test"
-  }
-
-  traffic_target {
     datacenter_id = 3131
     enabled       = true
     weight        = 200
-    servers       = ["1.2.3.5", "1.2.3.4"]
+    servers       = ["1.2.3.9"]
     handout_cname = "test"
   }
 
@@ -61,6 +49,18 @@ resource "akamai_gtm_property" "tfexample_prop_1" {
     test_object_port              = 1
     test_object_username          = ""
     timeout_penalty               = 0
+  }
+  liveness_test {
+    name                 = "lt2"
+    test_interval        = 30
+    test_object_protocol = "HTTP"
+    test_timeout         = 20
+    test_object          = "/junk"
+  }
+  static_rr_set {
+    type  = "MX"
+    ttl   = 300
+    rdata = ["100 test_e"]
   }
   failover_delay   = 0
   failback_delay   = 0

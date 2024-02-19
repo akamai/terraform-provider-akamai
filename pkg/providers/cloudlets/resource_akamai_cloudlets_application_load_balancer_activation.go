@@ -118,7 +118,7 @@ func resourceApplicationLoadBalancerActivationUpdate(ctx context.Context, rd *sc
 	logger.Debugf("version number or network has changed: proceeding to update application load balancer activation version")
 
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	client := inst.Client(meta)
+	client := Client(meta)
 
 	activation, err := resourceApplicationLoadBalancerActivationChange(ctx, rd, logger, client)
 	if err != nil {
@@ -132,7 +132,7 @@ func resourceApplicationLoadBalancerActivationCreate(ctx context.Context, rd *sc
 	meta := meta.Must(m)
 	logger := meta.Log("Cloudlets", "resourceApplicationLoadBalancerActivationCreate")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	client := inst.Client(meta)
+	client := Client(meta)
 
 	logger.Debug("Creating application load balancer activation")
 
@@ -244,7 +244,7 @@ func resourceApplicationLoadBalancerActivationRead(ctx context.Context, rd *sche
 	meta := meta.Must(m)
 	logger := meta.Log("Cloudlets", "resourceApplicationLoadBalancerActivationRead")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	client := inst.Client(meta)
+	client := Client(meta)
 
 	logger.Debug("Reading application load balancer activations")
 

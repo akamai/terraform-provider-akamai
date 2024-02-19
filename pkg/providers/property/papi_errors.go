@@ -22,8 +22,17 @@ var (
 
 	// PAPI Contract errors
 
-	// ErrLookingUpContract is returned when fetching contract from API client by contractID returned an error or no contract was found
+	// ErrLookingUpContract is returned when fetching contract from API client by groupId returned an error or no contract was found
 	ErrLookingUpContract = errors.New("looking up contract for provided group")
+	// ErrMultipleContractsInGroup is returned when fetching contract from API client by groupId returned multiple different contracts
+	ErrMultipleContractsInGroup = diag.Diagnostics{
+		diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "multiple contracts found for given group",
+			Detail: "Resource doesn't support groups with multiple contracts. " +
+				"Make sure your group has only one contract assigned before proceeding.",
+		},
+	}
 	// ErrNoContractProvided is retured when no contract ID was provided but "name" was
 	ErrNoContractProvided = errors.New("'contractId' is required for non-default name")
 	// ErrNoGroupProvided is returned when no "group" property is provided
@@ -34,6 +43,15 @@ var (
 	ErrContractNotFound = errors.New("contract not found")
 	// ErrFetchingContracts represents error while fetching contracts
 	ErrFetchingContracts = errors.New("fetching contracts")
+	// ErrMultipleContractsFound is returned when more than one contract was found
+	ErrMultipleContractsFound = diag.Diagnostics{
+		diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "multiple contracts found",
+			Detail: "Resource cannot unambiguously identify the contract. " +
+				"Please provide either a 'group_id' or 'group_name' for accurate identification.",
+		},
+	}
 
 	// PAPI Product errors
 

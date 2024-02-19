@@ -1,4 +1,4 @@
-FROM golang:1.20-alpine3.18
+FROM golang:1.21-alpine3.18
 
 ENV PROVIDER_VERSION="1.0.0" \
     CGO_ENABLED=0 \

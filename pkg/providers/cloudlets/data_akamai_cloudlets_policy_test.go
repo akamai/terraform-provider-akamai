@@ -238,6 +238,41 @@ func TestDataCloudletsPolicy(t *testing.T) {
 			},
 			withError: regexp.MustCompile("specified policy is deleted"),
 		},
+		"no version for a policy": {
+			configPath:               "testdata/TestDataCloudletsPolicy/policy.tf",
+			listPolicyVersionsReturn: []cloudlets.PolicyVersion{},
+			getPolicyReturn: cloudlets.Policy{
+				Location:         "/cloudlets/api/v2/policies/1234",
+				PolicyID:         1234,
+				GroupID:          2345,
+				Name:             "SomeName",
+				Description:      "Fancy Description",
+				CreatedBy:        "jsmith",
+				CreateDate:       1631190136928,
+				LastModifiedBy:   "jsmith",
+				LastModifiedDate: 1631190136928,
+				CloudletID:       0,
+				CloudletCode:     "ER",
+				APIVersion:       "2.0",
+				Deleted:          false,
+			},
+			checkFuncs: []resource.TestCheckFunc{
+				resource.TestCheckResourceAttr("data.akamai_cloudlets_policy.test", "id", "1234"),
+				resource.TestCheckNoResourceAttr("data.akamai_cloudlets_policy.test", "version"),
+				resource.TestCheckResourceAttr("data.akamai_cloudlets_policy.test", "group_id", "2345"),
+				resource.TestCheckResourceAttr("data.akamai_cloudlets_policy.test", "name", "SomeName"),
+				resource.TestCheckResourceAttr("data.akamai_cloudlets_policy.test", "description", "Fancy Description"),
+				resource.TestCheckNoResourceAttr("data.akamai_cloudlets_policy.test", "version_description"),
+				resource.TestCheckResourceAttr("data.akamai_cloudlets_policy.test", "cloudlet_id", "0"),
+				resource.TestCheckResourceAttr("data.akamai_cloudlets_policy.test", "cloudlet_code", "ER"),
+				resource.TestCheckResourceAttr("data.akamai_cloudlets_policy.test", "api_version", "2.0"),
+				resource.TestCheckNoResourceAttr("data.akamai_cloudlets_policy.test", "revision_id"),
+				resource.TestCheckNoResourceAttr("data.akamai_cloudlets_policy.test", "rules_locked"),
+				resource.TestCheckNoResourceAttr("data.akamai_cloudlets_policy.test", "match_rules"),
+				resource.TestCheckNoResourceAttr("data.akamai_cloudlets_policy.test", "match_rule_format"),
+				resource.TestCheckNoResourceAttr("data.akamai_cloudlets_policy.test", "warnings"),
+			},
+		},
 	}
 
 	for testName, test := range tests {
@@ -248,7 +283,7 @@ func TestDataCloudletsPolicy(t *testing.T) {
 				client.On("GetPolicy", mock.Anything, mock.Anything).Return(&test.getPolicyReturn, nil)
 				client.On("GetPolicyVersion", mock.Anything, mock.Anything).Return(&test.getPolicyVersionReturn, nil)
 				resource.UnitTest(t, resource.TestCase{
-					ProviderFactories: testAccProviders,
+					ProtoV5ProviderFactories: testAccProviders,
 					Steps: []resource.TestStep{
 						{
 							Config: testutils.LoadFixtureString(t, test.configPath),

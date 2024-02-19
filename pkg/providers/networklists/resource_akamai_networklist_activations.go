@@ -3,6 +3,7 @@ package networklists
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strconv"
 	"sync"
 	"time"
@@ -10,6 +11,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/networklists"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
+	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -76,6 +78,9 @@ const (
 var (
 	// ActivationPollInterval is the interval for polling an activation status on creation
 	ActivationPollInterval = ActivationPollMinimum
+
+	// CreateActivationRetry poll wait time code waits between retries for activation creation
+	CreateActivationRetry = 10 * time.Second
 )
 
 func resourceActivationsCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -101,15 +106,15 @@ func resourceActivationsCreate(ctx context.Context, d *schema.ResourceData, m in
 		return diag.Errorf("Activation Read failed")
 	}
 
-	createResponse, err := createActivation(ctx, client, networklists.CreateActivationsRequest{
+	createResponse, diagErr := createActivation(ctx, client, networklists.CreateActivationsRequest{
 		UniqueID:               networkListID,
 		Network:                network,
 		Comments:               comments,
-		Action:                 "ACTIVATE",
+		Action:                 string(networklists.ActivationTypeActivate),
 		NotificationRecipients: tf.SetToStringSlice(notificationEmails),
 	})
-	if err != nil {
-		return diag.FromErr(err)
+	if diagErr != nil {
+		return diagErr
 	}
 	d.SetId(strconv.Itoa(createResponse.ActivationID))
 	if err := d.Set("status", string(createResponse.ActivationStatus)); err != nil {
@@ -121,32 +126,53 @@ func resourceActivationsCreate(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(err)
 	}
 
-	for lookupResponse.ActivationStatus != "ACTIVATED" {
-		select {
-		case <-time.After(tf.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
-			act, err := client.GetActivation(ctx, networklists.GetActivationRequest{ActivationID: createResponse.ActivationID})
-
-			if err != nil {
-				return diag.FromErr(err)
-			}
-			lookupResponse = act
-
-		case <-ctx.Done():
-			return diag.Errorf("activation context terminated: %s", ctx.Err())
-		}
+	if err = pollActivation(ctx, client, lookupResponse.ActivationStatus, lookupResponse.ActivationID); err != nil {
+		return diag.FromErr(err)
 	}
 
 	return resourceActivationsRead(ctx, d, m)
 }
 
-func createActivation(ctx context.Context, client networklists.NTWRKLISTS, params networklists.CreateActivationsRequest) (*networklists.CreateActivationsResponse, error) {
+func createActivation(ctx context.Context, client networklists.NTWRKLISTS, params networklists.CreateActivationsRequest) (*networklists.CreateActivationsResponse, diag.Diagnostics) {
 	createNetworkListActivationMutex.Lock()
 	defer func() {
 		createNetworkListActivationMutex.Unlock()
 	}()
 
-	postResp, err := client.CreateActivations(ctx, params)
-	return postResp, err
+	log := hclog.FromContext(ctx)
+
+	errMsg := "create failed"
+	switch params.Action {
+	case string(networklists.ActivationTypeActivate):
+		errMsg = "create activation failed"
+	case string(networklists.ActivationTypeDeactivate):
+		errMsg = "create deactivation failed"
+	}
+
+	createActivationRetry := CreateActivationRetry
+
+	for {
+		log.Debug("creating activation")
+		create, err := client.CreateActivations(ctx, params)
+
+		if err == nil {
+			return create, nil
+		}
+		log.Debug("%s: retrying: %w", errMsg, err)
+
+		if !isCreateActivationErrorRetryable(err) {
+			return nil, diag.Errorf("%s: %s", errMsg, err)
+		}
+
+		select {
+		case <-time.After(createActivationRetry):
+			createActivationRetry = capDuration(createActivationRetry*2, 5*time.Minute)
+			continue
+
+		case <-ctx.Done():
+			return nil, diag.Errorf("activation context terminated: %s", ctx.Err())
+		}
+	}
 }
 
 func resourceActivationsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -207,40 +233,29 @@ func resourceActivationsUpdate(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(err)
 	}
 
-	response, err := client.CreateActivations(ctx, networklists.CreateActivationsRequest{
+	createResponse, diagErr := createActivation(ctx, client, networklists.CreateActivationsRequest{
 		UniqueID:               networkListID,
 		Network:                network,
 		Comments:               comments,
-		Action:                 "ACTIVATE",
+		Action:                 string(networklists.ActivationTypeActivate),
 		NotificationRecipients: tf.SetToStringSlice(notificationEmails),
 	})
-	if err != nil {
-		return diag.FromErr(err)
+	if diagErr != nil {
+		return diagErr
 	}
-	d.SetId(strconv.Itoa(response.ActivationID))
-	if err := d.Set("status", string(response.ActivationStatus)); err != nil {
+	d.SetId(strconv.Itoa(createResponse.ActivationID))
+	if err := d.Set("status", string(createResponse.ActivationStatus)); err != nil {
 		return diag.FromErr(err)
 	}
 
-	lookupRequest := networklists.GetActivationRequest{ActivationID: response.ActivationID}
+	lookupRequest := networklists.GetActivationRequest{ActivationID: createResponse.ActivationID}
 	lookupResponse, err := lookupActivation(ctx, client, lookupRequest)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	for lookupResponse.ActivationStatus != "ACTIVATED" {
-		select {
-		case <-time.After(tf.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
-			act, err := client.GetActivation(ctx, lookupRequest)
-
-			if err != nil {
-				return diag.FromErr(err)
-			}
-			lookupResponse = act
-
-		case <-ctx.Done():
-			return diag.Errorf("activation context terminated: %s", ctx.Err())
-		}
+	if err = pollActivation(ctx, client, lookupResponse.ActivationStatus, lookupResponse.ActivationID); err != nil {
+		return diag.FromErr(err)
 	}
 	return resourceActivationsRead(ctx, d, m)
 }
@@ -270,4 +285,57 @@ func suppressNoteFieldForNetworkListActivation(_, oldValue, newValue string, d *
 		return false
 	}
 	return true
+}
+
+func pollActivation(ctx context.Context, client networklists.NTWRKLISTS, activationStatus string, activationID int) error {
+	retriesMax := 5
+	retries5xx := 0
+
+	for activationStatus != string(networklists.StatusActive) {
+		select {
+		case <-time.After(tf.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
+			act, err := client.GetActivation(ctx, networklists.GetActivationRequest{ActivationID: activationID})
+
+			if err != nil {
+				var target = &networklists.Error{}
+				if !errors.As(err, &target) {
+					return fmt.Errorf("error has unexpected type: %T", err)
+				}
+				if isCreateActivationErrorRetryable(target) {
+					retries5xx = retries5xx + 1
+					if retries5xx > retriesMax {
+						return fmt.Errorf("reached max number of 5xx retries: %d", retries5xx)
+					}
+					continue
+				}
+				return err
+			}
+			retries5xx = 0
+			activationStatus = act.ActivationStatus
+
+		case <-ctx.Done():
+			return fmt.Errorf("activation context terminated: %s", ctx.Err())
+		}
+	}
+	return nil
+}
+
+func isCreateActivationErrorRetryable(err error) bool {
+	var responseErr = &networklists.Error{}
+	if !errors.As(err, &responseErr) {
+		return false
+	}
+	if responseErr.StatusCode < 500 &&
+		responseErr.StatusCode != 422 &&
+		responseErr.StatusCode != 409 {
+		return false
+	}
+	return true
+}
+
+func capDuration(t time.Duration, tMax time.Duration) time.Duration {
+	if t > tMax {
+		return tMax
+	}
+	return t
 }

@@ -23,6 +23,7 @@ func PolicyImageToEdgeGrid(d *schema.ResourceData, key string) imaging.PolicyInp
 		result.Output = getOutputImage(d, getKey(key, 0, "output"))
 		result.PostBreakpointTransformations = getPostBreakpointTransformations(d, getKey(key, 0, "post_breakpoint_transformations"))
 		result.RolloutDuration = intReaderPtr(d, getKey(key, 0, "rollout_duration"))
+		result.ServeStaleDuration = intReaderPtr(d, getKey(key, 0, "serve_stale_duration"))
 		result.Transformations = getTransformations(d, getKey(key, 0, "transformations"))
 		result.Variables = getVariableList(d, getKey(key, 0, "variables"))
 	}
@@ -534,12 +535,14 @@ func getOutputImage(d *schema.ResourceData, key string) *imaging.OutputImage {
 	_, exist := extract(d, key)
 	if exist {
 		result := imaging.OutputImage{
-			AdaptiveQuality:        intReaderPtr(d, getKey(key, 0, "adaptive_quality")),
-			AllowedFormats:         interfaceSliceToImagingOutputImageAllowedFormatsSlice(d, getKey(key, 0, "allowed_formats")),
-			ForcedFormats:          interfaceSliceToImagingOutputImageForcedFormatsSlice(d, getKey(key, 0, "forced_formats")),
-			PerceptualQuality:      outputImagePerceptualQualityVariableInline(d, getKey(key, 0, "perceptual_quality")),
-			PerceptualQualityFloor: intReaderPtr(d, getKey(key, 0, "perceptual_quality_floor")),
-			Quality:                integerVariableInline(d, getKey(key, 0, "quality")),
+			AdaptiveQuality:         intReaderPtr(d, getKey(key, 0, "adaptive_quality")),
+			AllowPristineOnDownsize: boolReaderPtr(d, getKey(key, 0, "allow_pristine_on_downsize")),
+			AllowedFormats:          interfaceSliceToImagingOutputImageAllowedFormatsSlice(d, getKey(key, 0, "allowed_formats")),
+			ForcedFormats:           interfaceSliceToImagingOutputImageForcedFormatsSlice(d, getKey(key, 0, "forced_formats")),
+			PerceptualQuality:       outputImagePerceptualQualityVariableInline(d, getKey(key, 0, "perceptual_quality")),
+			PerceptualQualityFloor:  intReaderPtr(d, getKey(key, 0, "perceptual_quality_floor")),
+			PreferModernFormats:     boolReaderPtr(d, getKey(key, 0, "prefer_modern_formats")),
+			Quality:                 integerVariableInline(d, getKey(key, 0, "quality")),
 		}
 		return &result
 	}
@@ -1807,6 +1810,17 @@ func stringReaderPtr(d *schema.ResourceData, key string) *string {
 	value, exist := extract(d, key)
 	if exist {
 		return tools.StringPtr(value.(string))
+	}
+	return nil
+}
+
+func boolReaderPtr(d *schema.ResourceData, key string) *bool {
+	value, exist := extract(d, key)
+	if exist {
+		if value.(string) == "true" {
+			return tools.BoolPtr(true)
+		}
+		return tools.BoolPtr(false)
 	}
 	return nil
 }

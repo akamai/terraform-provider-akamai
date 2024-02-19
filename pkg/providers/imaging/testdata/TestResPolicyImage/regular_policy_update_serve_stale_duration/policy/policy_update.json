@@ -1,0 +1,23 @@
+{
+  "breakpoints": {
+    "widths": [
+      320,
+      640,
+      1024,
+      2048,
+      5000
+    ]
+  },
+  "output": {
+    "allowPristineOnDownsize": true,
+    "perceptualQuality": "mediumHigh",
+    "preferModernFormats": false
+  },
+  "serveStaleDuration": 3600,
+  "transformations": [
+    {
+      "colors": 2,
+      "transformation": "MaxColors"
+    }
+  ]
+}

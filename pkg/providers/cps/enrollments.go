@@ -244,7 +244,7 @@ var (
 			},
 			"state": {
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				Description: "State or province of organization location",
 			},
 		},

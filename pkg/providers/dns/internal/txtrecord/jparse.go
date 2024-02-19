@@ -393,9 +393,8 @@ func (t *tokenizer) get(wantWhitespace bool, wantComment bool) (*token, error) {
 					return nil, errors.New("EOF in quoted string")
 				} else if t.sb.Len() == 0 {
 					return t.setCurrentToken(EOF, nil), nil
-				} else {
-					return t.setCurrentToken(tokenType, t.sb), nil
 				}
+				return t.setCurrentToken(tokenType, t.sb), nil
 			}
 			if t.sb.Len() == 0 && tokenType != QUOTEDSTRING {
 				if c == '(' {
@@ -455,15 +454,12 @@ func (t *tokenizer) get(wantWhitespace bool, wantComment bool) (*token, error) {
 						}
 						t.sb.Reset()
 						continue
-					} else {
-						return t.setCurrentToken(EOL, nil), nil
 					}
-				} else {
-					return nil, errors.New("Illegal state")
+					return t.setCurrentToken(EOL, nil), nil
 				}
-			} else {
-				t.ungetChar(c)
+				return nil, errors.New("Illegal state")
 			}
+			t.ungetChar(c)
 			break
 		} else if c == '\\' {
 			c, _ = t.getChar()

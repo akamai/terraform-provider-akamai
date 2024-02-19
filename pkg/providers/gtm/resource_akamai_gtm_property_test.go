@@ -11,71 +11,141 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-var prop = gtm.Property{
-	BackupCName:            "",
-	BackupIp:               "",
-	BalanceByDownloadScore: false,
-	CName:                  "www.boo.wow",
-	Comments:               "",
-	DynamicTTL:             300,
-	FailbackDelay:          0,
-	FailoverDelay:          0,
-	HandoutMode:            "normal",
-	HealthMax:              0,
-	HealthMultiplier:       0,
-	HealthThreshold:        0,
-	Ipv6:                   false,
-	LastModified:           "2019-04-25T14:53:12.000+00:00",
-	Links: []*gtm.Link{
-		{
-			Href: "https://akab-ymtebc45gco3ypzj-apz4yxpek55y7fyv.luna.akamaiapis.net/config-gtm/v1/domains/gtmdomtest.akadns.net/properties/test_property",
-			Rel:  "self",
-		},
-	},
-	LivenessTests: []*gtm.LivenessTest{
-		{
-			DisableNonstandardPortWarning: false,
-			HttpError3xx:                  true,
-			HttpError4xx:                  true,
-			HttpError5xx:                  true,
-			Name:                          "health check",
-			RequestString:                 "",
-			ResponseString:                "",
-			SslClientCertificate:          "",
-			SslClientPrivateKey:           "",
-			TestInterval:                  60,
-			TestObject:                    "/status",
-			TestObjectPassword:            "",
-			TestObjectPort:                80,
-			TestObjectProtocol:            "HTTP",
-			TestObjectUsername:            "",
-			TestTimeout:                   25.0,
-		},
-	},
-	LoadImbalancePercentage:   10.0,
-	MapName:                   "",
-	MaxUnreachablePenalty:     0,
-	Name:                      "tfexample_prop_1",
-	ScoreAggregationType:      "mean",
-	StaticTTL:                 600,
-	StickinessBonusConstant:   0,
-	StickinessBonusPercentage: 50,
-	TrafficTargets: []*gtm.TrafficTarget{
-		{
-			DatacenterId: 3131,
-			Enabled:      true,
-			HandoutCName: "",
-			Servers: []string{
-				"1.2.3.4",
-				"1.2.3.5",
+var (
+	prop = gtm.Property{
+		BackupCName:            "",
+		BackupIp:               "",
+		BalanceByDownloadScore: false,
+		CName:                  "www.boo.wow",
+		Comments:               "",
+		DynamicTTL:             300,
+		FailbackDelay:          0,
+		FailoverDelay:          0,
+		HandoutMode:            "normal",
+		HealthMax:              0,
+		HealthMultiplier:       0,
+		HealthThreshold:        0,
+		Ipv6:                   false,
+		LastModified:           "2019-04-25T14:53:12.000+00:00",
+		Links: []*gtm.Link{
+			{
+				Href: "https://akab-ymtebc45gco3ypzj-apz4yxpek55y7fyv.luna.akamaiapis.net/config-gtm/v1/domains/gtmdomtest.akadns.net/properties/test_property",
+				Rel:  "self",
 			},
-			Weight: 50.0,
 		},
-	},
-	Type:                 "weighted-round-robin",
-	UnreachableThreshold: 0,
-	UseComputedTargets:   false,
-}
+		LivenessTests: []*gtm.LivenessTest{
+			{
+				DisableNonstandardPortWarning: false,
+				HttpError3xx:                  true,
+				HttpError4xx:                  true,
+				HttpError5xx:                  true,
+				Name:                          "health check",
+				RequestString:                 "",
+				ResponseString:                "",
+				SslClientCertificate:          "",
+				SslClientPrivateKey:           "",
+				TestInterval:                  60,
+				TestObject:                    "/status",
+				TestObjectPassword:            "",
+				TestObjectPort:                80,
+				TestObjectProtocol:            "HTTP",
+				TestObjectUsername:            "",
+				TestTimeout:                   25.0,
+			},
+		},
+		LoadImbalancePercentage:   10.0,
+		MapName:                   "",
+		MaxUnreachablePenalty:     0,
+		Name:                      "tfexample_prop_1",
+		ScoreAggregationType:      "mean",
+		StaticTTL:                 600,
+		StickinessBonusConstant:   0,
+		StickinessBonusPercentage: 50,
+		TrafficTargets: []*gtm.TrafficTarget{
+			{
+				DatacenterId: 3131,
+				Enabled:      true,
+				HandoutCName: "",
+				Servers: []string{
+					"1.2.3.4",
+					"1.2.3.5",
+				},
+				Weight: 50.0,
+			},
+		},
+		Type:                 "weighted-round-robin",
+		UnreachableThreshold: 0,
+		UseComputedTargets:   false,
+	}
+
+	prop2 = gtm.Property{
+		BackupCName:            "",
+		BackupIp:               "",
+		BalanceByDownloadScore: false,
+		CName:                  "www.boo.wow",
+		Comments:               "",
+		DynamicTTL:             300,
+		FailbackDelay:          0,
+		FailoverDelay:          0,
+		HandoutMode:            "normal",
+		HealthMax:              0,
+		HealthMultiplier:       0,
+		HealthThreshold:        0,
+		Ipv6:                   false,
+		LastModified:           "2019-04-25T14:53:12.000+00:00",
+		Links: []*gtm.Link{
+			{
+				Href: "https://akab-ymtebc45gco3ypzj-apz4yxpek55y7fyv.luna.akamaiapis.net/config-gtm/v1/domains/gtmdomtest.akadns.net/properties/test_property",
+				Rel:  "self",
+			},
+		},
+		LivenessTests: []*gtm.LivenessTest{
+			{
+				DisableNonstandardPortWarning: false,
+				HttpError3xx:                  true,
+				HttpError4xx:                  true,
+				HttpError5xx:                  true,
+				Name:                          "health check",
+				RequestString:                 "",
+				ResponseString:                "",
+				SslClientCertificate:          "",
+				SslClientPrivateKey:           "",
+				TestInterval:                  60,
+				TestObject:                    "/status",
+				TestObjectPassword:            "",
+				TestObjectPort:                80,
+				TestObjectProtocol:            "HTTP",
+				TestObjectUsername:            "",
+				TestTimeout:                   25.0,
+			},
+		},
+		LoadImbalancePercentage:   10.0,
+		MapName:                   "",
+		MaxUnreachablePenalty:     0,
+		Name:                      "tfexample_prop_1-updated",
+		ScoreAggregationType:      "mean",
+		StaticTTL:                 600,
+		StickinessBonusConstant:   0,
+		StickinessBonusPercentage: 50,
+		TrafficTargets: []*gtm.TrafficTarget{
+			{
+				DatacenterId: 3131,
+				Enabled:      true,
+				HandoutCName: "",
+				Servers: []string{
+					"1.2.3.4",
+					"1.2.3.5",
+				},
+				Weight: 50.0,
+			},
+		},
+		Type:                 "weighted-round-robin",
+		UnreachableThreshold: 0,
+		UseComputedTargets:   false,
+	}
+
+	propertyResourceName = "akamai_gtm_property.tfexample_prop_1"
+)
 
 func TestResGtmProperty(t *testing.T) {
 
@@ -83,7 +153,7 @@ func TestResGtmProperty(t *testing.T) {
 		client := &gtm.Mock{}
 
 		getCall := client.On("GetProperty",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			mock.AnythingOfType("string"),
 			mock.AnythingOfType("string"),
 		).Return(nil, &gtm.Error{
@@ -94,7 +164,7 @@ func TestResGtmProperty(t *testing.T) {
 		resp.Resource = &prop
 		resp.Status = &pendingResponseStatus
 		client.On("CreateProperty",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			mock.AnythingOfType("*gtm.Property"),
 			mock.AnythingOfType("string"),
 		).Return(&resp, nil).Run(func(args mock.Arguments) {
@@ -102,7 +172,7 @@ func TestResGtmProperty(t *testing.T) {
 		})
 
 		client.On("NewProperty",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			mock.AnythingOfType("string"),
 			mock.AnythingOfType("string"),
 		).Return(&gtm.Property{
@@ -110,20 +180,20 @@ func TestResGtmProperty(t *testing.T) {
 		})
 
 		client.On("GetDomainStatus",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			mock.AnythingOfType("string"),
 		).Return(&completeResponseStatus, nil)
 
 		client.On("NewTrafficTarget",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 		).Return(&gtm.TrafficTarget{})
 
 		client.On("NewStaticRRSet",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 		).Return(&gtm.StaticRRSet{})
 
 		liveCall := client.On("NewLivenessTest",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			mock.AnythingOfType("string"),
 			mock.AnythingOfType("string"),
 			mock.AnythingOfType("int"),
@@ -142,7 +212,7 @@ func TestResGtmProperty(t *testing.T) {
 		}
 
 		client.On("UpdateProperty",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			mock.AnythingOfType("*gtm.Property"),
 			mock.AnythingOfType("string"),
 		).Return(&completeResponseStatus, nil).Run(func(args mock.Arguments) {
@@ -150,12 +220,10 @@ func TestResGtmProperty(t *testing.T) {
 		})
 
 		client.On("DeleteProperty",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			mock.AnythingOfType("*gtm.Property"),
 			mock.AnythingOfType("string"),
 		).Return(&completeResponseStatus, nil)
-
-		dataSourceName := "akamai_gtm_property.tfexample_prop_1"
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -164,15 +232,15 @@ func TestResGtmProperty(t *testing.T) {
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/create_basic.tf"),
 						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(dataSourceName, "name", "tfexample_prop_1"),
-							resource.TestCheckResourceAttr(dataSourceName, "type", "weighted-round-robin"),
+							resource.TestCheckResourceAttr(propertyResourceName, "name", "tfexample_prop_1"),
+							resource.TestCheckResourceAttr(propertyResourceName, "type", "weighted-round-robin"),
 						),
 					},
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/update_basic.tf"),
 						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(dataSourceName, "name", "tfexample_prop_1"),
-							resource.TestCheckResourceAttr(dataSourceName, "type", "weighted-round-robin"),
+							resource.TestCheckResourceAttr(propertyResourceName, "name", "tfexample_prop_1"),
+							resource.TestCheckResourceAttr(propertyResourceName, "type", "weighted-round-robin"),
 						),
 					},
 				},
@@ -186,7 +254,7 @@ func TestResGtmProperty(t *testing.T) {
 		client := &gtm.Mock{}
 
 		client.On("CreateProperty",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			mock.AnythingOfType("*gtm.Property"),
 			gtmTestDomain,
 		).Return(nil, &gtm.Error{
@@ -194,7 +262,7 @@ func TestResGtmProperty(t *testing.T) {
 		})
 
 		client.On("NewProperty",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			mock.AnythingOfType("string"),
 			mock.AnythingOfType("string"),
 		).Return(&gtm.Property{
@@ -202,15 +270,15 @@ func TestResGtmProperty(t *testing.T) {
 		})
 
 		client.On("NewTrafficTarget",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 		).Return(&gtm.TrafficTarget{})
 
 		client.On("NewStaticRRSet",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 		).Return(&gtm.StaticRRSet{})
 
 		liveCall := client.On("NewLivenessTest",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			mock.AnythingOfType("string"),
 			mock.AnythingOfType("string"),
 			mock.AnythingOfType("int"),
@@ -250,13 +318,13 @@ func TestResGtmProperty(t *testing.T) {
 		dr.Resource = &prop
 		dr.Status = &deniedResponseStatus
 		client.On("CreateProperty",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			mock.AnythingOfType("*gtm.Property"),
 			gtmTestDomain,
 		).Return(&dr, nil)
 
 		client.On("NewProperty",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			mock.AnythingOfType("string"),
 			mock.AnythingOfType("string"),
 		).Return(&gtm.Property{
@@ -264,15 +332,15 @@ func TestResGtmProperty(t *testing.T) {
 		})
 
 		client.On("NewTrafficTarget",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 		).Return(&gtm.TrafficTarget{})
 
 		client.On("NewStaticRRSet",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 		).Return(&gtm.StaticRRSet{})
 
 		liveCall := client.On("NewLivenessTest",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			mock.AnythingOfType("string"),
 			mock.AnythingOfType("string"),
 			mock.AnythingOfType("int"),
@@ -302,6 +370,113 @@ func TestResGtmProperty(t *testing.T) {
 			})
 		})
 
+		client.AssertExpectations(t)
+	})
+
+	t.Run("create property and update name - force new", func(t *testing.T) {
+		client := &gtm.Mock{}
+
+		getCall := client.On("GetProperty",
+			mock.Anything,
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
+		).Return(nil, &gtm.Error{
+			StatusCode: http.StatusNotFound,
+		})
+
+		resp := gtm.PropertyResponse{}
+		resp.Resource = &prop
+		resp.Status = &pendingResponseStatus
+		client.On("CreateProperty",
+			mock.Anything,
+			mock.AnythingOfType("*gtm.Property"),
+			mock.AnythingOfType("string"),
+		).Return(&resp, nil).Run(func(args mock.Arguments) {
+			getCall.ReturnArguments = mock.Arguments{args.Get(1).(*gtm.Property), nil}
+		}).Once()
+
+		client.On("NewProperty",
+			mock.Anything,
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
+		).Return(&gtm.Property{
+			Name: "tfexample_prop_1",
+		}).Once()
+
+		client.On("NewTrafficTarget",
+			mock.Anything,
+		).Return(&gtm.TrafficTarget{})
+
+		client.On("NewStaticRRSet",
+			mock.Anything,
+		).Return(&gtm.StaticRRSet{})
+
+		liveCall := client.On("NewLivenessTest",
+			mock.Anything,
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("int"),
+			mock.AnythingOfType("float32"),
+		)
+
+		liveCall.RunFn = func(args mock.Arguments) {
+			liveCall.ReturnArguments = mock.Arguments{
+				&gtm.LivenessTest{
+					Name:               args.String(1),
+					TestObjectProtocol: args.String(2),
+					TestInterval:       args.Int(3),
+					TestTimeout:        args.Get(4).(float32),
+				},
+			}
+		}
+
+		client.On("DeleteProperty",
+			mock.Anything,
+			mock.AnythingOfType("*gtm.Property"),
+			mock.AnythingOfType("string"),
+		).Return(&completeResponseStatus, nil)
+
+		// Create new property with updated name
+		client.On("NewProperty",
+			mock.Anything,
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
+		).Return(&gtm.Property{
+			Name: "tfexample_prop_1-updated",
+		}).Once()
+
+		resp2 := gtm.PropertyResponse{
+			Resource: &prop2,
+			Status:   &pendingResponseStatus,
+		}
+
+		client.On("CreateProperty",
+			mock.Anything,
+			mock.AnythingOfType("*gtm.Property"),
+			mock.AnythingOfType("string"),
+		).Return(&resp2, nil).Run(func(args mock.Arguments) {
+			getCall.ReturnArguments = mock.Arguments{args.Get(1).(*gtm.Property), nil}
+		}).Once()
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProviderFactories: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/create_basic.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr(propertyResourceName, "name", "tfexample_prop_1"),
+						),
+					},
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/update_name.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr(propertyResourceName, "name", "tfexample_prop_1-updated"),
+						),
+					},
+				},
+			})
+		})
 		client.AssertExpectations(t)
 	})
 
@@ -381,8 +556,6 @@ func TestResGtmProperty(t *testing.T) {
 			mock.AnythingOfType("string"),
 		).Return(&completeResponseStatus, nil)
 
-		dataSourceName := "akamai_gtm_property.tfexample_prop_1"
-
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				ProviderFactories: testAccProviders,
@@ -390,15 +563,15 @@ func TestResGtmProperty(t *testing.T) {
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/test_object/test_object_not_required.tf"),
 						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(dataSourceName, "name", "tfexample_prop_1"),
-							resource.TestCheckResourceAttr(dataSourceName, "type", "weighted-round-robin"),
+							resource.TestCheckResourceAttr(propertyResourceName, "name", "tfexample_prop_1"),
+							resource.TestCheckResourceAttr(propertyResourceName, "type", "weighted-round-robin"),
 						),
 					},
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/update_basic.tf"),
 						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(dataSourceName, "name", "tfexample_prop_1"),
-							resource.TestCheckResourceAttr(dataSourceName, "type", "weighted-round-robin"),
+							resource.TestCheckResourceAttr(propertyResourceName, "name", "tfexample_prop_1"),
+							resource.TestCheckResourceAttr(propertyResourceName, "type", "weighted-round-robin"),
 						),
 					},
 				},
@@ -471,7 +644,6 @@ func TestResourceGTMTrafficTargetOrder(t *testing.T) {
 		pathForUpdate string
 		nonEmptyPlan  bool
 		planOnly      bool
-		expectError   *regexp.Regexp
 	}{
 		"second apply - no diff": {
 			client:        getMocks(),
@@ -486,14 +658,6 @@ func TestResourceGTMTrafficTargetOrder(t *testing.T) {
 			pathForUpdate: "testdata/TestResGtmProperty/traffic_target/diff_order.tf",
 			nonEmptyPlan:  false,
 			planOnly:      true,
-		},
-		"re-ordered traffic targets and weight change - diff": {
-			client:        getMocks(),
-			pathForCreate: "testdata/TestResGtmProperty/multiple_servers.tf",
-			pathForUpdate: "testdata/TestResGtmProperty/traffic_target/diff_order_and_weight.tf",
-			nonEmptyPlan:  false,
-			planOnly:      true,
-			expectError:   regexp.MustCompile(`~ traffic_target {\n +~ weight += 200 -> 400\n +# \(4 unchanged attributes hidden\)\n`),
 		},
 		"re-ordered traffic target with no datacenter_id - no diff": {
 			client:        getMocks(),
@@ -523,25 +687,11 @@ func TestResourceGTMTrafficTargetOrder(t *testing.T) {
 			nonEmptyPlan:  true,
 			planOnly:      true,
 		},
-		"changed 'handout_limit' field outside traffic target - diff": {
-			client:        getMocks(),
-			pathForCreate: "testdata/TestResGtmProperty/multiple_servers.tf",
-			pathForUpdate: "testdata/TestResGtmProperty/traffic_target/change_handout_limit.tf",
-			nonEmptyPlan:  true,
-			planOnly:      true,
-		},
 		"changed 'enabled' field in re-ordered traffic target - diff (messy)": {
 			client:        getMocks(),
 			pathForCreate: "testdata/TestResGtmProperty/multiple_servers.tf",
 			pathForUpdate: "testdata/TestResGtmProperty/traffic_target/change_enabled_field_diff_order.tf",
 			nonEmptyPlan:  true,
-			planOnly:      true,
-		},
-		"changed order of servers and re-ordered traffic target - no diff": {
-			client:        getMocks(),
-			pathForCreate: "testdata/TestResGtmProperty/traffic_target/diff_order_and_servers_1.tf",
-			pathForUpdate: "testdata/TestResGtmProperty/traffic_target/diff_order_and_servers_2.tf",
-			nonEmptyPlan:  false,
 			planOnly:      true,
 		},
 		"re-ordered servers in traffic targets - no diff": {
@@ -595,7 +745,6 @@ func TestResourceGTMTrafficTargetOrder(t *testing.T) {
 							Config:             testutils.LoadFixtureString(t, test.pathForUpdate),
 							PlanOnly:           test.planOnly,
 							ExpectNonEmptyPlan: test.nonEmptyPlan,
-							ExpectError:        test.expectError,
 						},
 					},
 				})
