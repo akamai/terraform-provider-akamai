@@ -1,6 +1,6 @@
 # RELEASE NOTES
 
-## 5.6.0 (Feb 15, 2024)
+## 5.6.0 (Feb 19, 2024)
 
 #### FEATURES/ENHANCEMENTS:
 
