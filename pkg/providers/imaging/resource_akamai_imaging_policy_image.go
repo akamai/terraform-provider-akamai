@@ -148,6 +148,9 @@ func upsertPolicyImage(ctx context.Context, d *schema.ResourceData, m interface{
 		}
 		_, err := client.UpsertPolicy(ctx, upsertPolicyRequest)
 		if err != nil {
+			if errRestore := tf.RestoreOldValues(d, []string{"json"}); errRestore != nil {
+				return diag.Errorf("%s\n%s: %s", err.Error(), "Failed to restore old state", errRestore.Error())
+			}
 			return diag.FromErr(err)
 		}
 	}
@@ -177,8 +180,11 @@ func resourcePolicyImageRead(ctx context.Context, d *schema.ResourceData, m inte
 	if err != nil {
 		return diag.FromErr(err)
 	}
-
-	policy, err := getPolicyImage(ctx, client, policyID, contractID, policysetID, imaging.PolicyNetworkStaging)
+	network, err := getPolicyNetwork(d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	policy, err := getPolicyImage(ctx, client, policyID, contractID, policysetID, network)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -214,6 +220,18 @@ func resourcePolicyImageRead(ctx context.Context, d *schema.ResourceData, m inte
 	}
 
 	return nil
+}
+
+func getPolicyNetwork(d *schema.ResourceData) (networkType imaging.PolicyNetwork, err error) {
+	network := imaging.PolicyNetworkStaging
+	activateOnProduction, err := tf.GetBoolValue("activate_on_production", d)
+	if err != nil {
+		return "", err
+	}
+	if activateOnProduction {
+		network = imaging.PolicyNetworkProduction
+	}
+	return network, nil
 }
 
 var extractRolloutDuration = func(input imaging.PolicyInputImage) *int {

@@ -29,6 +29,10 @@
 
 #### FEATURES/ENHANCEMENTS:
 
+* IMAGING
+    * In the event of an API failure during a policy update, reverting to the previous state.
+    * When performing the read operation, if `activate_on_production` is true, fetch the policy state from the production network; otherwise, obtain it from the staging environment.
+
 
 
 
