@@ -63,7 +63,16 @@
 
 #### BUG FIXES:
 
-
+* Cloudlets
+    * Allowed empty value for match rules `json` attribute for data sources:
+        * `akamai_cloudlets_api_prioritization_match_rule`
+        * `akamai_cloudlets_application_load_balancer_match_rule`
+        * `akamai_cloudlets_audience_segmentation_match_rule`
+        * `akamai_cloudlets_edge_redirector_match_rule`
+        * `akamai_cloudlets_forward_rewrite_match_rule`
+        * `akamai_cloudlets_phased_release_match_rule`
+        * `akamai_cloudlets_request_control_match_rule`
+        * `akamai_cloudlets_visitor_prioritization_match_rule`
 
 
 

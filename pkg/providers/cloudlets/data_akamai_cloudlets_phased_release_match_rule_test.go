@@ -2,7 +2,6 @@ package cloudlets
 
 import (
 	"regexp"
-	"strconv"
 	"testing"
 
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
@@ -15,6 +14,7 @@ func TestDataCloudletsPhasedReleaseMatchRule(t *testing.T) {
 		configPath       string
 		expectedJSONPath string
 		matchRulesSize   int
+		emptyRules       bool
 	}{
 		"basic valid rule set": {
 			configPath:       "testdata/TestDataCloudletsPhasedReleaseMatchRule/basic.tf",
@@ -36,6 +36,10 @@ func TestDataCloudletsPhasedReleaseMatchRule(t *testing.T) {
 			expectedJSONPath: "testdata/TestDataCloudletsPhasedReleaseMatchRule/rules/omv_empty_rules.json",
 			matchRulesSize:   2,
 		},
+		"no match rules": {
+			configPath: "testdata/TestDataCloudletsPhasedReleaseMatchRule/no_match_rules.tf",
+			emptyRules: true,
+		},
 	}
 
 	for name, test := range tests {
@@ -45,15 +49,8 @@ func TestDataCloudletsPhasedReleaseMatchRule(t *testing.T) {
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, test.configPath),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr(
-								"data.akamai_cloudlets_phased_release_match_rule.test", "json",
-								testutils.LoadFixtureString(t, test.expectedJSONPath)),
-							resource.TestCheckResourceAttr(
-								"data.akamai_cloudlets_phased_release_match_rule.test", "match_rules.0.type", "cdMatchRule"),
-							resource.TestCheckResourceAttr(
-								"data.akamai_cloudlets_phased_release_match_rule.test", "match_rules.#", strconv.Itoa(test.matchRulesSize)),
-						),
+						Check: checkMatchRulesAttr(t, "cdMatchRule", "data.akamai_cloudlets_phased_release_match_rule.test",
+							test.expectedJSONPath, test.emptyRules, test.matchRulesSize),
 					},
 				},
 			})

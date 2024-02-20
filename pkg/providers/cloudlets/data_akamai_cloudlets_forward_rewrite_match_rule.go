@@ -215,7 +215,7 @@ func dataSourceCloudletsForwardRewriteMatchRule() *schema.Resource {
 func dataSourceCloudletsForwardRewriteMatchRuleRead(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
 	matchRulesList, err := tf.GetListValue("match_rules", d)
 	if err != nil {
-		return diag.FromErr(err)
+		return handleEmptyMatchRules(err, d, "data_akamai_cloudlets_forward_rewrite_match_rule")
 	}
 
 	if err = setMatchRuleSchemaType(matchRulesList, cloudlets.MatchRuleTypeFR); err != nil {

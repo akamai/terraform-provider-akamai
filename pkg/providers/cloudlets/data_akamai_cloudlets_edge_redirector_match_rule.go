@@ -215,7 +215,7 @@ func dataSourceCloudletsEdgeRedirectorMatchRule() *schema.Resource {
 func akamaiCloudletsEdgeRedirectorMatchRuleRead(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
 	matchRulesList, err := tf.GetListValue("match_rules", d)
 	if err != nil {
-		return diag.FromErr(err)
+		return handleEmptyMatchRules(err, d, "data_akamai_cloudlets_edge_redirector_match_rule")
 	}
 
 	err = setMatchRuleSchemaType(matchRulesList, cloudlets.MatchRuleTypeER)

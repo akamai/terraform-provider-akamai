@@ -210,7 +210,7 @@ func dataSourceCloudletsApplicationLoadBalancerMatchRule() *schema.Resource {
 func dataSourceCloudletsLoadBalancerMatchRuleRead(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
 	matchRules, err := tf.GetListValue("match_rules", d)
 	if err != nil {
-		return diag.FromErr(err)
+		return handleEmptyMatchRules(err, d, "data_akamai_cloudlets_application_load_balancer_match_rule")
 	}
 
 	err = setMatchRuleSchemaType(matchRules, cloudlets.MatchRuleTypeALB)

@@ -12,26 +12,37 @@ func TestDataCloudletsRequestControlMatchRule(t *testing.T) {
 	tests := map[string]struct {
 		configPath       string
 		expectedJSONPath string
+		matchRulesSize   int
+		emptyRules       bool
 	}{
 		"basic valid rule set": {
 			configPath:       "testdata/TestDataCloudletsRequestControlMatchRule/basic.tf",
 			expectedJSONPath: "testdata/TestDataCloudletsRequestControlMatchRule/rules/basic_rules.json",
+			matchRulesSize:   1,
 		},
 		"valid rule set with simple value": {
 			configPath:       "testdata/TestDataCloudletsRequestControlMatchRule/omv_simple.tf",
 			expectedJSONPath: "testdata/TestDataCloudletsRequestControlMatchRule/rules/omv_simple_rules.json",
+			matchRulesSize:   1,
 		},
 		"valid rule set with object value": {
 			configPath:       "testdata/TestDataCloudletsRequestControlMatchRule/omv_object.tf",
 			expectedJSONPath: "testdata/TestDataCloudletsRequestControlMatchRule/rules/omv_object_rules.json",
+			matchRulesSize:   1,
 		},
 		"valid rule set without value": {
 			configPath:       "testdata/TestDataCloudletsRequestControlMatchRule/omv_empty.tf",
 			expectedJSONPath: "testdata/TestDataCloudletsRequestControlMatchRule/rules/omv_empty_rules.json",
+			matchRulesSize:   1,
 		},
 		"valid complex rule set": {
 			configPath:       "testdata/TestDataCloudletsRequestControlMatchRule/omv_complex.tf",
 			expectedJSONPath: "testdata/TestDataCloudletsRequestControlMatchRule/rules/omv_complex_rules.json",
+			matchRulesSize:   2,
+		},
+		"no match rules": {
+			configPath: "testdata/TestDataCloudletsRequestControlMatchRule/no_match_rules.tf",
+			emptyRules: true,
 		},
 	}
 
@@ -42,13 +53,8 @@ func TestDataCloudletsRequestControlMatchRule(t *testing.T) {
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, test.configPath),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr(
-								"data.akamai_cloudlets_request_control_match_rule.test", "json",
-								testutils.LoadFixtureString(t, test.expectedJSONPath)),
-							resource.TestCheckResourceAttr(
-								"data.akamai_cloudlets_request_control_match_rule.test", "match_rules.0.type", "igMatchRule"),
-						),
+						Check: checkMatchRulesAttr(t, "igMatchRule", "data.akamai_cloudlets_request_control_match_rule.test",
+							test.expectedJSONPath, test.emptyRules, test.matchRulesSize),
 					},
 				},
 			})

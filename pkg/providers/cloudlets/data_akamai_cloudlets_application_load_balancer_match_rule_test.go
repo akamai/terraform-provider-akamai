@@ -13,26 +13,37 @@ func TestDataCloudletsLoadBalancerMatchRule(t *testing.T) {
 	tests := map[string]struct {
 		configPath       string
 		expectedJSONPath string
+		matchRulesSize   int
+		emptyRules       bool
 	}{
 		"basic valid rule set": {
 			configPath:       "testdata/TestDataCloudletsLoadBalancerMatchRule/basic.tf",
 			expectedJSONPath: "testdata/TestDataCloudletsLoadBalancerMatchRule/rules/basic_rules.json",
+			matchRulesSize:   1,
 		},
 		"match criteria ALB - ObjectMatchValue of Object type": {
 			configPath:       "testdata/TestDataCloudletsLoadBalancerMatchRule/omv_object.tf",
 			expectedJSONPath: "testdata/TestDataCloudletsLoadBalancerMatchRule/rules/omv_object_rules.json",
+			matchRulesSize:   2,
 		},
 		"match criteria ALB - ObjectMatchValue of Range type": {
 			configPath:       "testdata/TestDataCloudletsLoadBalancerMatchRule/omv_range.tf",
 			expectedJSONPath: "testdata/TestDataCloudletsLoadBalancerMatchRule/rules/omv_range_rules.json",
+			matchRulesSize:   1,
 		},
 		"match criteria ALB - ObjectMatchValue of Simple type": {
 			configPath:       "testdata/TestDataCloudletsLoadBalancerMatchRule/omv_simple.tf",
 			expectedJSONPath: "testdata/TestDataCloudletsLoadBalancerMatchRule/rules/omv_simple_rules.json",
+			matchRulesSize:   2,
 		},
 		"match criteria ALB - without ObjectMatchValue": {
 			configPath:       "testdata/TestDataCloudletsLoadBalancerMatchRule/omv_empty.tf",
 			expectedJSONPath: "testdata/TestDataCloudletsLoadBalancerMatchRule/rules/omv_empty_rules.json",
+			matchRulesSize:   2,
+		},
+		"no match rules": {
+			configPath: "testdata/TestDataCloudletsLoadBalancerMatchRule/no_match_rules.tf",
+			emptyRules: true,
 		},
 	}
 
@@ -43,13 +54,8 @@ func TestDataCloudletsLoadBalancerMatchRule(t *testing.T) {
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, test.configPath),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr(
-								"data.akamai_cloudlets_application_load_balancer_match_rule.test", "json",
-								testutils.LoadFixtureString(t, test.expectedJSONPath)),
-							resource.TestCheckResourceAttr(
-								"data.akamai_cloudlets_application_load_balancer_match_rule.test", "match_rules.0.type", "albMatchRule"),
-						),
+						Check: checkMatchRulesAttr(t, "albMatchRule", "data.akamai_cloudlets_application_load_balancer_match_rule.test",
+							test.expectedJSONPath, test.emptyRules, test.matchRulesSize),
 					},
 				},
 			})
