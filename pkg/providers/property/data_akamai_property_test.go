@@ -10,6 +10,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
@@ -45,10 +46,12 @@ func TestDataProperty(t *testing.T) {
 				}).Return(&papi.GetPropertyResponse{
 					Properties: papi.PropertiesItems{Items: []*papi.Property{
 						{
-							PropertyID:    "prp_123",
-							LatestVersion: 1,
-							ContractID:    "ctr_1",
-							GroupID:       "grp_1",
+							ContractID:        "ctr_1",
+							GroupID:           "grp_1",
+							LatestVersion:     1,
+							ProductionVersion: tools.IntPtr(1),
+							PropertyID:        "prp_123",
+							StagingVersion:    tools.IntPtr(1),
 						},
 					}},
 				}, nil)
@@ -74,10 +77,31 @@ func TestDataProperty(t *testing.T) {
 						CriteriaMustSatisfy: "all",
 					},
 				}, nil)
+				m.On("GetPropertyVersion", mock.Anything, papi.GetPropertyVersionRequest{
+					PropertyID:      "prp_123",
+					PropertyVersion: 1,
+					ContractID:      "ctr_1",
+					GroupID:         "grp_1",
+				}).Return(&papi.GetPropertyVersionsResponse{
+					Version: papi.PropertyVersionGetItem{
+						Note:       "note",
+						ProductID:  "prd_1",
+						RuleFormat: "latest",
+					},
+				}, nil)
 			},
 			expectedAttributes: map[string]string{
-				"name":  "property_name",
-				"rules": compactJSON(testutils.LoadFixtureBytes(t, "testdata/TestDataProperty/no_version_rules.json")),
+				"name":               "property_name",
+				"rules":              compactJSON(testutils.LoadFixtureBytes(t, "testdata/TestDataProperty/no_version_rules.json")),
+				"contract_id":        "ctr_1",
+				"group_id":           "grp_1",
+				"latest_version":     "1",
+				"note":               "note",
+				"product_id":         "prd_1",
+				"production_version": "1",
+				"property_id":        "prp_123",
+				"rule_format":        "latest",
+				"staging_version":    "1",
 			},
 		},
 		"valid rules, with version provided": {
@@ -104,10 +128,12 @@ func TestDataProperty(t *testing.T) {
 				}).Return(&papi.GetPropertyResponse{
 					Properties: papi.PropertiesItems{Items: []*papi.Property{
 						{
-							PropertyID:    "prp_123",
-							LatestVersion: 1,
-							ContractID:    "ctr_1",
-							GroupID:       "grp_1",
+							ContractID:        "ctr_1",
+							GroupID:           "grp_1",
+							LatestVersion:     1,
+							ProductionVersion: tools.IntPtr(2),
+							PropertyID:        "prp_123",
+							StagingVersion:    tools.IntPtr(3),
 						},
 					}},
 				}, nil)
@@ -133,10 +159,111 @@ func TestDataProperty(t *testing.T) {
 						CriteriaMustSatisfy: "all",
 					},
 				}, nil)
+				m.On("GetPropertyVersion", mock.Anything, papi.GetPropertyVersionRequest{
+					PropertyID:      "prp_123",
+					PropertyVersion: 2,
+					ContractID:      "ctr_1",
+					GroupID:         "grp_1",
+				}).Return(&papi.GetPropertyVersionsResponse{
+					Version: papi.PropertyVersionGetItem{
+						Note:       "note",
+						ProductID:  "prd_1",
+						RuleFormat: "latest",
+					},
+				}, nil)
 			},
 			expectedAttributes: map[string]string{
-				"name":  "property_name",
-				"rules": compactJSON(testutils.LoadFixtureBytes(t, "testdata/TestDataProperty/with_version_rules.json")),
+				"name":               "property_name",
+				"rules":              compactJSON(testutils.LoadFixtureBytes(t, "testdata/TestDataProperty/with_version_rules.json")),
+				"contract_id":        "ctr_1",
+				"group_id":           "grp_1",
+				"latest_version":     "2",
+				"note":               "note",
+				"product_id":         "prd_1",
+				"production_version": "2",
+				"property_id":        "prp_123",
+				"rule_format":        "latest",
+				"staging_version":    "3",
+			},
+		},
+		"valid rules, no version provided, no staging & production version returned": {
+			givenTF: "no_version.tf",
+			init: func(m *papi.Mock) {
+				m.On("SearchProperties", mock.Anything, papi.SearchRequest{
+					Key:   papi.SearchKeyPropertyName,
+					Value: "property_name",
+				}).Return(&papi.SearchResponse{
+					Versions: papi.SearchItems{
+						Items: []papi.SearchItem{
+							{
+								ContractID: "ctr_1",
+								GroupID:    "grp_1",
+								PropertyID: "prp_123",
+							},
+						},
+					},
+				}, nil)
+				m.On("GetProperty", mock.Anything, papi.GetPropertyRequest{
+					ContractID: "ctr_1",
+					GroupID:    "grp_1",
+					PropertyID: "prp_123",
+				}).Return(&papi.GetPropertyResponse{
+					Properties: papi.PropertiesItems{Items: []*papi.Property{
+						{
+							ContractID:    "ctr_1",
+							GroupID:       "grp_1",
+							LatestVersion: 1,
+							PropertyID:    "prp_123",
+						},
+					}},
+				}, nil)
+				m.On("GetRuleTree", mock.Anything, papi.GetRuleTreeRequest{
+					PropertyID:      "prp_123",
+					PropertyVersion: 1,
+					ContractID:      "ctr_1",
+					GroupID:         "grp_1",
+				}).Return(&papi.GetRuleTreeResponse{
+					Response: papi.Response{
+						ContractID: "ctr_1",
+						GroupID:    "grp_1",
+					},
+					PropertyID:      "prp_123",
+					PropertyVersion: 1,
+					Rules: papi.Rules{
+						Behaviors: []papi.RuleBehavior{
+							{
+								Name: "beh 1",
+							},
+						},
+						Name:                "rule 1",
+						CriteriaMustSatisfy: "all",
+					},
+				}, nil)
+				m.On("GetPropertyVersion", mock.Anything, papi.GetPropertyVersionRequest{
+					PropertyID:      "prp_123",
+					PropertyVersion: 1,
+					ContractID:      "ctr_1",
+					GroupID:         "grp_1",
+				}).Return(&papi.GetPropertyVersionsResponse{
+					Version: papi.PropertyVersionGetItem{
+						Note:       "note",
+						ProductID:  "prd_1",
+						RuleFormat: "latest",
+					},
+				}, nil)
+			},
+			expectedAttributes: map[string]string{
+				"name":               "property_name",
+				"rules":              compactJSON(testutils.LoadFixtureBytes(t, "testdata/TestDataProperty/no_version_rules.json")),
+				"contract_id":        "ctr_1",
+				"group_id":           "grp_1",
+				"latest_version":     "1",
+				"note":               "note",
+				"product_id":         "prd_1",
+				"production_version": "0",
+				"property_id":        "prp_123",
+				"rule_format":        "latest",
+				"staging_version":    "0",
 			},
 		},
 		"error searching for property": {
@@ -232,6 +359,70 @@ func TestDataProperty(t *testing.T) {
 			givenTF:   "no_name.tf",
 			init:      func(m *papi.Mock) {},
 			withError: regexp.MustCompile("Missing required argument"),
+		},
+		"error property version not found": {
+			givenTF: "no_version.tf",
+			init: func(m *papi.Mock) {
+				m.On("SearchProperties", mock.Anything, papi.SearchRequest{
+					Key:   papi.SearchKeyPropertyName,
+					Value: "property_name",
+				}).Return(&papi.SearchResponse{
+					Versions: papi.SearchItems{
+						Items: []papi.SearchItem{
+							{
+								ContractID: "ctr_1",
+								GroupID:    "grp_1",
+								PropertyID: "prp_123",
+							},
+						},
+					},
+				}, nil)
+				m.On("GetProperty", mock.Anything, papi.GetPropertyRequest{
+					ContractID: "ctr_1",
+					GroupID:    "grp_1",
+					PropertyID: "prp_123",
+				}).Return(&papi.GetPropertyResponse{
+					Properties: papi.PropertiesItems{Items: []*papi.Property{
+						{
+							ContractID:        "ctr_1",
+							GroupID:           "grp_1",
+							LatestVersion:     1,
+							ProductionVersion: tools.IntPtr(1),
+							PropertyID:        "prp_123",
+							StagingVersion:    tools.IntPtr(1),
+						},
+					}},
+				}, nil)
+				m.On("GetRuleTree", mock.Anything, papi.GetRuleTreeRequest{
+					PropertyID:      "prp_123",
+					PropertyVersion: 1,
+					ContractID:      "ctr_1",
+					GroupID:         "grp_1",
+				}).Return(&papi.GetRuleTreeResponse{
+					Response: papi.Response{
+						ContractID: "ctr_1",
+						GroupID:    "grp_1",
+					},
+					PropertyID:      "prp_123",
+					PropertyVersion: 1,
+					Rules: papi.Rules{
+						Behaviors: []papi.RuleBehavior{
+							{
+								Name: "beh 1",
+							},
+						},
+						Name:                "rule 1",
+						CriteriaMustSatisfy: "all",
+					},
+				}, nil)
+				m.On("GetPropertyVersion", mock.Anything, papi.GetPropertyVersionRequest{
+					PropertyID:      "prp_123",
+					PropertyVersion: 1,
+					ContractID:      "ctr_1",
+					GroupID:         "grp_1",
+				}).Return(nil, fmt.Errorf("oops"))
+			},
+			withError: regexp.MustCompile("oops"),
 		},
 	}
 	for name, test := range tests {
