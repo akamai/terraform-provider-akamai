@@ -57,7 +57,7 @@ var (
 			},
 			"organization": {
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				Description: "Organization where contact is hired",
 			},
 			"email": {
@@ -72,7 +72,7 @@ var (
 			},
 			"address_line_one": {
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				Description: "The address of the contact",
 			},
 			"address_line_two": {
@@ -82,22 +82,22 @@ var (
 			},
 			"city": {
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				Description: "City of residence of the contact",
 			},
 			"region": {
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				Description: "The region of the contact",
 			},
 			"postal_code": {
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				Description: "Postal code of the contact",
 			},
 			"country_code": {
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				Description: "Country code of the contact",
 			},
 		},

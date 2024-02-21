@@ -78,7 +78,15 @@
         * `akamai_cloudlets_request_control_match_rule`
         * `akamai_cloudlets_visitor_prioritization_match_rule`
 
-
+* CPS
+  * Changed below fields from required to optional in `akamai_cps_dv_enrollment` and `akamai_cps_third_party_enrollment`
+    for `admin_contact` and `tech_contact` attributes:
+    * `organization`
+    * `address_line_one`
+    * `city`
+    * `region`
+    * `postal_code`
+    * `country_code`
 
 
 
