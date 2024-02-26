@@ -52,6 +52,7 @@ func resourceSelectedHostname() *schema.Resource {
 				Description: "How the hostnames are to be applied (APPEND, REMOVE or REPLACE)",
 			},
 		},
+		DeprecationMessage: "This resource is deprecated with a scheduled end-of-life in v7.0.0 of our provider. Use the akamai_appsec_configuration instead.",
 	}
 }
 

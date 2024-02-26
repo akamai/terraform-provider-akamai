@@ -38,6 +38,7 @@ func dataSourceSelectedHostnames() *schema.Resource {
 				Description: "Text representation",
 			},
 		},
+		DeprecationMessage: "This data source is deprecated with a scheduled end-of-life in v7.0.0 of our provider. Use the akamai_appsec_configuration instead.",
 	}
 }
 

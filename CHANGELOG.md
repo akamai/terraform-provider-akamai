@@ -133,6 +133,11 @@
 
 
 
+#### DEPRECATIONS
+
+* Appsec
+  * `akamai_appsec_selected_hostnames` data source and resource are deprecated with a scheduled end-of-life in v7.0.0 of our provider. Use the `akamai_appsec_configuration` instead.
+
 ## 5.6.0 (Feb 19, 2024)
 
 #### FEATURES/ENHANCEMENTS:
