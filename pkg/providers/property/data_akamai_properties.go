@@ -81,31 +81,41 @@ func dataPropertiesRead(ctx context.Context, d *schema.ResourceData, m interface
 	// setting concatenated id to uniquely identify data
 	d.SetId(groupID + contractID)
 
-	if err := d.Set("properties", sliceResponseProperties(propertiesResponse)); err != nil {
+	properties, err := sliceResponseProperties(ctx, meta, propertiesResponse)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("properties", properties); err != nil {
 		return diag.Errorf("error setting properties: %s", err)
 	}
 
 	return nil
 }
 
-func sliceResponseProperties(propertiesResponse *papi.GetPropertiesResponse) []map[string]interface{} {
+func sliceResponseProperties(ctx context.Context, meta meta.Meta, propertiesResponse *papi.GetPropertiesResponse) ([]map[string]interface{}, error) {
 	var properties []map[string]interface{}
 	for _, item := range propertiesResponse.Properties.Items {
+
+		propVersion, err := getPropertyVersion(ctx, meta, item)
+		if err != nil {
+			return nil, err
+		}
 		property := map[string]interface{}{
 			"contract_id":        item.ContractID,
 			"group_id":           item.GroupID,
 			"latest_version":     item.LatestVersion,
 			"note":               item.Note,
-			"product_id":         item.ProductID,
+			"product_id":         propVersion.Version.ProductID,
 			"production_version": decodeVersion(item.ProductionVersion),
 			"property_id":        item.PropertyID,
 			"property_name":      item.PropertyName,
-			"rule_format":        item.RuleFormat,
+			"rule_format":        propVersion.Version.RuleFormat,
 			"staging_version":    decodeVersion(item.StagingVersion),
 		}
 		properties = append(properties, property)
 	}
-	return properties
+	return properties, nil
 }
 
 func decodeVersion(version interface{}) int {

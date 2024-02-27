@@ -14,12 +14,24 @@ func TestDataProperties(t *testing.T) {
 	t.Run("list properties", func(t *testing.T) {
 		client := &papi.Mock{}
 		props := papi.PropertiesItems{Items: buildPapiProperties()}
-		properties := decodePropertyItems(props.Items)
+		properties := decodePropertyItems(props.Items, "rule_format", "prd_1")
 
 		client.On("GetProperties",
 			mock.Anything,
 			papi.GetPropertiesRequest{GroupID: "grp_test", ContractID: "ctr_test"},
 		).Return(&papi.GetPropertiesResponse{Properties: props}, nil)
+
+		res := &papi.GetPropertyVersionsResponse{
+			Version: papi.PropertyVersionGetItem{
+				ProductID:  "prd_1",
+				RuleFormat: "rule_format",
+			},
+		}
+
+		client.On("GetPropertyVersion",
+			mock.Anything,
+			mock.Anything,
+		).Return(res, nil)
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -37,12 +49,24 @@ func TestDataProperties(t *testing.T) {
 	t.Run("list properties without group prefix", func(t *testing.T) {
 		client := &papi.Mock{}
 		props := papi.PropertiesItems{Items: buildPapiProperties()}
-		properties := decodePropertyItems(props.Items)
+		properties := decodePropertyItems(props.Items, "rule_format", "prd_1")
 
 		client.On("GetProperties",
 			mock.Anything,
 			papi.GetPropertiesRequest{GroupID: "grp_test", ContractID: "ctr_test"},
 		).Return(&papi.GetPropertiesResponse{Properties: props}, nil)
+
+		res := &papi.GetPropertyVersionsResponse{
+			Version: papi.PropertyVersionGetItem{
+				ProductID:  "prd_1",
+				RuleFormat: "rule_format",
+			},
+		}
+
+		client.On("GetPropertyVersion",
+			mock.Anything,
+			mock.Anything,
+		).Return(res, nil)
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -60,12 +84,24 @@ func TestDataProperties(t *testing.T) {
 	t.Run("list properties without contract prefix", func(t *testing.T) {
 		client := &papi.Mock{}
 		props := papi.PropertiesItems{Items: buildPapiProperties()}
-		properties := decodePropertyItems(props.Items)
+		properties := decodePropertyItems(props.Items, "rule_format", "prd_1")
 
 		client.On("GetProperties",
 			mock.Anything,
 			papi.GetPropertiesRequest{GroupID: "grp_test", ContractID: "ctr_test"},
 		).Return(&papi.GetPropertiesResponse{Properties: props}, nil)
+
+		res := &papi.GetPropertyVersionsResponse{
+			Version: papi.PropertyVersionGetItem{
+				ProductID:  "prd_1",
+				RuleFormat: "rule_format",
+			},
+		}
+
+		client.On("GetPropertyVersion",
+			mock.Anything,
+			mock.Anything,
+		).Return(res, nil)
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -91,11 +127,9 @@ func buildPapiProperties() []*papi.Property {
 			GroupID:           "grp_test",
 			LatestVersion:     1,
 			Note:              fmt.Sprintf("note%v", i),
-			ProductID:         "prd1",
 			ProductionVersion: nil,
 			PropertyID:        fmt.Sprintf("prp%v", i),
 			PropertyName:      fmt.Sprintf("prpname%v", i),
-			RuleFormat:        "latest",
 			StagingVersion:    nil,
 		}
 	}
@@ -121,7 +155,7 @@ func buildAggregatedTest(properties []map[string]interface{}, id, groupID, contr
 	return resource.ComposeAggregateTestCheckFunc(testVar...)
 }
 
-func decodePropertyItems(items []*papi.Property) []map[string]interface{} {
+func decodePropertyItems(items []*papi.Property, ruleFormat, productID string) []map[string]interface{} {
 	properties := make([]map[string]interface{}, 0)
 	for _, item := range items {
 		prop := map[string]interface{}{
@@ -129,11 +163,11 @@ func decodePropertyItems(items []*papi.Property) []map[string]interface{} {
 			"group_id":           item.GroupID,
 			"latest_version":     item.LatestVersion,
 			"note":               item.Note,
-			"product_id":         item.ProductID,
+			"product_id":         productID,
 			"production_version": decodeVersion(item.ProductionVersion),
 			"property_id":        item.PropertyID,
 			"property_name":      item.PropertyName,
-			"rule_format":        item.RuleFormat,
+			"rule_format":        ruleFormat,
 			"staging_version":    decodeVersion(item.StagingVersion),
 		}
 		properties = append(properties, prop)

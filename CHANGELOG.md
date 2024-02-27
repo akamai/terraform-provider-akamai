@@ -4,7 +4,8 @@
 
 #### BREAKING CHANGES:
 
-
+* PAPI
+    * Modified resource `akamai_properties` to properly populate fields `product_id`, `rule_format` and `note`
 
 
 
