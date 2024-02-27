@@ -5,13 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cloudlets"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cloudlets"
 )
 
 func dataSourceCloudletsPolicy() *schema.Resource {
@@ -302,7 +301,7 @@ func dataSourceCloudletsPolicyRead(ctx context.Context, d *schema.ResourceData, 
 			return diag.FromErr(err)
 		}
 	} else {
-		version = tools.Int64Ptr(int64(v))
+		version = ptr.To(int64(v))
 	}
 
 	if version != nil {

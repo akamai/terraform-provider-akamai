@@ -142,7 +142,7 @@ func resourceGTMv1ResourceCreate(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 	logger.Debugf("Proposed New Resource: [%v]", newRsrc)
-	cStatus, err := inst.Client(meta).CreateResource(ctx, newRsrc, domain)
+	cStatus, err := Client(meta).CreateResource(ctx, newRsrc, domain)
 	if err != nil {
 		logger.Errorf("Resource Create failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -209,7 +209,7 @@ func resourceGTMv1ResourceRead(ctx context.Context, d *schema.ResourceData, m in
 		logger.Errorf("Invalid resource Resource ID")
 		return diag.FromErr(err)
 	}
-	rsrc, err := inst.Client(meta).GetResource(ctx, resource, domain)
+	rsrc, err := Client(meta).GetResource(ctx, resource, domain)
 	if err != nil {
 		logger.Errorf("Resource Read failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -242,7 +242,7 @@ func resourceGTMv1ResourceUpdate(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 	// Get existing property
-	existRsrc, err := inst.Client(meta).GetResource(ctx, resource, domain)
+	existRsrc, err := Client(meta).GetResource(ctx, resource, domain)
 	if err != nil {
 		logger.Errorf("Resource Update failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -256,7 +256,7 @@ func resourceGTMv1ResourceUpdate(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 	logger.Debugf("Updating Resource PROPOSED: %v", existRsrc)
-	uStat, err := inst.Client(meta).UpdateResource(ctx, existRsrc, domain)
+	uStat, err := Client(meta).UpdateResource(ctx, existRsrc, domain)
 	if err != nil {
 		logger.Errorf("Resource Update failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -317,7 +317,7 @@ func resourceGTMv1ResourceImport(d *schema.ResourceData, m interface{}) ([]*sche
 	if err != nil {
 		return []*schema.ResourceData{d}, err
 	}
-	rsrc, err := inst.Client(meta).GetResource(ctx, resource, domain)
+	rsrc, err := Client(meta).GetResource(ctx, resource, domain)
 	if err != nil {
 		return nil, err
 	}
@@ -349,7 +349,7 @@ func resourceGTMv1ResourceDelete(ctx context.Context, d *schema.ResourceData, m 
 		logger.Errorf("Invalid resource ID")
 		return diag.FromErr(err)
 	}
-	existRsrc, err := inst.Client(meta).GetResource(ctx, resource, domain)
+	existRsrc, err := Client(meta).GetResource(ctx, resource, domain)
 	if err != nil {
 		logger.Errorf("Resource Delete Read failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -359,7 +359,7 @@ func resourceGTMv1ResourceDelete(ctx context.Context, d *schema.ResourceData, m 
 		})
 	}
 	logger.Debugf("Deleting Resource: %v", existRsrc)
-	uStat, err := inst.Client(meta).DeleteResource(ctx, existRsrc, domain)
+	uStat, err := Client(meta).DeleteResource(ctx, existRsrc, domain)
 	if err != nil {
 		logger.Errorf("Resource Delete failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -409,7 +409,7 @@ func resourceGTMv1ResourceDelete(ctx context.Context, d *schema.ResourceData, m 
 func populateNewResourceObject(ctx context.Context, meta meta.Meta, d *schema.ResourceData, m interface{}) (*gtm.Resource, error) {
 
 	name, _ := tf.GetStringValue("name", d)
-	rsrcObj := inst.Client(meta).NewResource(ctx, name)
+	rsrcObj := Client(meta).NewResource(ctx, name)
 	rsrcObj.ResourceInstances = make([]*gtm.ResourceInstance, 0)
 	err := populateResourceObject(ctx, d, rsrcObj, m)
 
@@ -565,7 +565,7 @@ func populateResourceInstancesObject(ctx context.Context, meta meta.Meta, d *sch
 		rsrcInstanceObjList := make([]*gtm.ResourceInstance, len(rsrcInstances)) // create new object list
 		for i, v := range rsrcInstances {
 			riMap := v.(map[string]interface{})
-			rsrcInstance := inst.Client(meta).NewResourceInstance(ctx, rsrc, riMap["datacenter_id"].(int)) // create new object
+			rsrcInstance := Client(meta).NewResourceInstance(ctx, rsrc, riMap["datacenter_id"].(int)) // create new object
 			rsrcInstance.UseDefaultLoadObject = riMap["use_default_load_object"].(bool)
 			if riMap["load_servers"] != nil {
 				loadServers, ok := riMap["load_servers"].(*schema.Set)

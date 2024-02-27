@@ -237,7 +237,7 @@ func resourceGTMv1DomainCreate(ctx context.Context, d *schema.ResourceData, m in
 			Detail:   err.Error(),
 		})
 	}
-	cStatus, err := inst.Client(meta).CreateDomain(ctx, newDom, queryArgs)
+	cStatus, err := Client(meta).CreateDomain(ctx, newDom, queryArgs)
 	if err != nil {
 		// Errored. Lets see if special hack
 		if !HashiAcc {
@@ -321,7 +321,7 @@ func resourceGTMv1DomainRead(ctx context.Context, d *schema.ResourceData, m inte
 	logger.Debugf("Reading Domain: %s", d.Id())
 	var diags diag.Diagnostics
 	// retrieve the domain
-	dom, err := inst.Client(meta).GetDomain(ctx, d.Id())
+	dom, err := Client(meta).GetDomain(ctx, d.Id())
 	if err != nil {
 		logger.Errorf("Domain Read error: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -348,7 +348,7 @@ func resourceGTMv1DomainUpdate(ctx context.Context, d *schema.ResourceData, m in
 	logger.Debugf("Updating Domain: %s", d.Id())
 	var diags diag.Diagnostics
 	// Get existing domain
-	existDom, err := inst.Client(meta).GetDomain(ctx, d.Id())
+	existDom, err := Client(meta).GetDomain(ctx, d.Id())
 	if err != nil {
 		logger.Errorf("Domain Update failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -373,7 +373,7 @@ func resourceGTMv1DomainUpdate(ctx context.Context, d *schema.ResourceData, m in
 			Detail:   err.Error(),
 		})
 	}
-	uStat, err := inst.Client(meta).UpdateDomain(ctx, existDom, args)
+	uStat, err := Client(meta).UpdateDomain(ctx, existDom, args)
 	if err != nil {
 		logger.Errorf("Domain Update failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -432,7 +432,7 @@ func resourceGTMv1DomainDelete(ctx context.Context, d *schema.ResourceData, m in
 	logger.Debugf("Deleting GTM Domain: %s", d.Id())
 	var diags diag.Diagnostics
 	// Get existing domain
-	existDom, err := inst.Client(meta).GetDomain(ctx, d.Id())
+	existDom, err := Client(meta).GetDomain(ctx, d.Id())
 	if err != nil {
 		logger.Errorf("Domain Delete failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -441,7 +441,7 @@ func resourceGTMv1DomainDelete(ctx context.Context, d *schema.ResourceData, m in
 			Detail:   err.Error(),
 		})
 	}
-	uStat, err := inst.Client(meta).DeleteDomain(ctx, existDom)
+	uStat, err := Client(meta).DeleteDomain(ctx, existDom)
 	if err != nil {
 		// Errored. Lets see if special hack
 		if !HashiAcc {
@@ -535,7 +535,7 @@ func validateDomainType(v interface{}, _ cty.Path) diag.Diagnostics {
 func populateNewDomainObject(ctx context.Context, meta meta.Meta, d *schema.ResourceData, m interface{}) (*gtm.Domain, error) {
 
 	name, _ := tf.GetStringValue("name", d)
-	domObj := inst.Client(meta).NewDomain(ctx, name, d.Get("type").(string))
+	domObj := Client(meta).NewDomain(ctx, name, d.Get("type").(string))
 	err := populateDomainObject(d, domObj, m)
 
 	return domObj, err
@@ -780,7 +780,7 @@ func waitForCompletion(ctx context.Context, domain string, m interface{}) (bool,
 	logger.Debugf("WAIT: Sleep Interval [%v]", sleepInterval/time.Second)
 	logger.Debugf("WAIT: Sleep Timeout [%v]", sleepTimeout/time.Second)
 	for {
-		propStat, err := inst.Client(meta).GetDomainStatus(ctx, domain)
+		propStat, err := Client(meta).GetDomainStatus(ctx, domain)
 		if err != nil {
 			return false, err
 		}

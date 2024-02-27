@@ -163,7 +163,7 @@ func (d *domainsDataSource) Read(ctx context.Context, request datasource.ReadReq
 		return
 	}
 
-	client := inst.Client(d.meta)
+	client := Client(d.meta)
 	domains, err := client.ListDomains(ctx)
 	if err != nil {
 		response.Diagnostics.AddError("fetching domains failed", err.Error())

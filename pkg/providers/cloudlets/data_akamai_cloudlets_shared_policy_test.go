@@ -9,8 +9,8 @@ import (
 	"time"
 
 	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cloudlets/v3"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -44,7 +44,7 @@ func TestSharedPolicyDataSource(t *testing.T) {
 				id:                 "akamai_cloudlets_shared_policy",
 				policyID:           1,
 				version:            2,
-				versionDescription: tools.StringPtr("version 2 description"),
+				versionDescription: ptr.To("version 2 description"),
 				groupID:            12,
 				name:               "TestName",
 				cloudletType:       v3.CloudletTypeAP,
@@ -263,7 +263,7 @@ func TestSharedPolicyDataSource(t *testing.T) {
 			useClientV3(client, func() {
 				resource.Test(t, resource.TestCase{
 					IsUnitTest:               true,
-					ProtoV5ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{{
 						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("testdata/TestDataCloudletsSharedPolicy/%s", test.config)),
 						Check:       checkAttrsForSharedPolicy(test.data),
@@ -347,7 +347,7 @@ func mockGetPolicy(m *v3.Mock, data testDataForSharedPolicy, times int) {
 	}).Return(&v3.Policy{
 		CloudletType:       data.cloudletType,
 		CurrentActivations: data.activations,
-		Description:        tools.StringPtr(data.description),
+		Description:        ptr.To(data.description),
 		GroupID:            data.groupID,
 		ID:                 data.policyID,
 		Name:               data.name,
@@ -373,7 +373,7 @@ func createPolicyVersions(policyID int64, numberOfVersions, pageNumber int) *v3.
 	var policyVersions v3.ListPolicyVersions
 	for i := numberOfVersions; i > 0; i-- {
 		policyVersions.PolicyVersions = append(policyVersions.PolicyVersions, v3.ListPolicyVersionsItem{
-			Description:   tools.StringPtr(fmt.Sprintf("Description%d", i)),
+			Description:   ptr.To(fmt.Sprintf("Description%d", i)),
 			ID:            int64(i),
 			Immutable:     true,
 			PolicyID:      policyID,

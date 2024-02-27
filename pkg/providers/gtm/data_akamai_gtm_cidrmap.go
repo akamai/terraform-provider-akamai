@@ -138,7 +138,7 @@ func (d *cidrmapDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		return
 	}
 
-	client := frameworkInst.Client(d.meta)
+	client := Client(d.meta)
 	cidrMap, err := client.GetCidrMap(ctx, data.Name.ValueString(), data.Domain.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("fetching GTM CIDRmap failed: ", err.Error())

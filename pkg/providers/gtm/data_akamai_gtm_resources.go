@@ -146,7 +146,7 @@ func (d *resourcesDataSource) Read(ctx context.Context, request datasource.ReadR
 		return
 	}
 
-	client := frameworkInst.Client(d.meta)
+	client := Client(d.meta)
 	resources, err := client.ListResources(ctx, data.Domain.ValueString())
 	if err != nil {
 		response.Diagnostics.AddError("fetching GTM resources failed:", err.Error())

@@ -102,7 +102,7 @@ func validateDefaultDC(ctx context.Context, meta meta.Meta, ddcField []interface
 	if !ok || dcID == 0 {
 		return fmt.Errorf("default Datacenter ID invalid")
 	}
-	dc, err := inst.Client(meta).GetDatacenter(ctx, dcID, domain)
+	dc, err := Client(meta).GetDatacenter(ctx, dcID, domain)
 	if dc == nil {
 		if err != nil {
 			apiError, ok := err.(*gtm.Error)
@@ -114,7 +114,7 @@ func validateDefaultDC(ctx context.Context, meta meta.Meta, ddcField []interface
 		if ddc["datacenter_id"].(int) != gtm.MapDefaultDC {
 			return fmt.Errorf(fmt.Sprintf("Default Datacenter %d does not exist", ddc["datacenter_id"].(int)))
 		}
-		_, err := inst.Client(meta).CreateMapsDefaultDatacenter(ctx, domain) // create if not already.
+		_, err := Client(meta).CreateMapsDefaultDatacenter(ctx, domain) // create if not already.
 		if err != nil {
 			return fmt.Errorf("MapCreate failed on Default Datacenter check: %s", err.Error())
 		}
@@ -164,7 +164,7 @@ func resourceGTMv1ASmapCreate(ctx context.Context, d *schema.ResourceData, m int
 
 	newAS := populateNewASmapObject(ctx, meta, d, m)
 	logger.Debugf("Proposed New asMap: [%v]", newAS)
-	cStatus, err := inst.Client(meta).CreateAsMap(ctx, newAS, domain)
+	cStatus, err := Client(meta).CreateAsMap(ctx, newAS, domain)
 	if err != nil {
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
@@ -226,7 +226,7 @@ func resourceGTMv1ASmapRead(ctx context.Context, d *schema.ResourceData, m inter
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	as, err := inst.Client(meta).GetAsMap(ctx, asMap, domain)
+	as, err := Client(meta).GetAsMap(ctx, asMap, domain)
 	if err != nil {
 		logger.Errorf("asMap Read error: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -259,7 +259,7 @@ func resourceGTMv1ASmapUpdate(ctx context.Context, d *schema.ResourceData, m int
 		return diag.FromErr(err)
 	}
 	// Get existingASmap
-	existAs, err := inst.Client(meta).GetAsMap(ctx, asMap, domain)
+	existAs, err := Client(meta).GetAsMap(ctx, asMap, domain)
 	if err != nil {
 		logger.Errorf("asMap Update read error: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -271,7 +271,7 @@ func resourceGTMv1ASmapUpdate(ctx context.Context, d *schema.ResourceData, m int
 	logger.Debugf("asMap BEFORE: %v", existAs)
 	populateASmapObject(d, existAs, m)
 	logger.Debugf("asMap PROPOSED: %v", existAs)
-	uStat, err := inst.Client(meta).UpdateAsMap(ctx, existAs, domain)
+	uStat, err := Client(meta).UpdateAsMap(ctx, existAs, domain)
 	if err != nil {
 		logger.Errorf("asMap pdate: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -329,7 +329,7 @@ func resourceGTMv1ASmapImport(ctx context.Context, d *schema.ResourceData, m int
 	if err != nil {
 		return []*schema.ResourceData{d}, err
 	}
-	as, err := inst.Client(meta).GetAsMap(ctx, asMap, domain)
+	as, err := Client(meta).GetAsMap(ctx, asMap, domain)
 	if err != nil {
 		return nil, err
 	}
@@ -364,7 +364,7 @@ func resourceGTMv1ASmapDelete(ctx context.Context, d *schema.ResourceData, m int
 		logger.Errorf("[ERROR] ASmap Delete: %s", err.Error())
 		return diag.FromErr(err)
 	}
-	existAs, err := inst.Client(meta).GetAsMap(ctx, asMap, domain)
+	existAs, err := Client(meta).GetAsMap(ctx, asMap, domain)
 	if err != nil {
 		logger.Errorf("ASmap Delete: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -374,7 +374,7 @@ func resourceGTMv1ASmapDelete(ctx context.Context, d *schema.ResourceData, m int
 		})
 	}
 	logger.Debugf("Deleting ASmap: %v", existAs)
-	uStat, err := inst.Client(meta).DeleteAsMap(ctx, existAs, domain)
+	uStat, err := Client(meta).DeleteAsMap(ctx, existAs, domain)
 	if err != nil {
 		logger.Errorf("ASmap Delete: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -422,7 +422,7 @@ func resourceGTMv1ASmapDelete(ctx context.Context, d *schema.ResourceData, m int
 func populateNewASmapObject(ctx context.Context, meta meta.Meta, d *schema.ResourceData, m interface{}) *gtm.AsMap {
 
 	asMapName, _ := tf.GetStringValue("name", d)
-	asObj := inst.Client(meta).NewAsMap(ctx, asMapName)
+	asObj := Client(meta).NewAsMap(ctx, asMapName)
 	asObj.DefaultDatacenter = &gtm.DatacenterBase{}
 	asObj.Assignments = make([]*gtm.AsAssignment, 1)
 	asObj.Links = make([]*gtm.Link, 1)

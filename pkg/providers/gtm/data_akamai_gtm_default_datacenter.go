@@ -75,14 +75,14 @@ func dataSourceGTMDefaultDatacenterRead(ctx context.Context, d *schema.ResourceD
 		"dcid":   dcid,
 	}).Debug("Start Default Datacenter Retrieval")
 
-	var defaultDC = inst.Client(meta).NewDatacenter(ctx)
+	var defaultDC = Client(meta).NewDatacenter(ctx)
 	switch dcid {
 	case gtm.MapDefaultDC:
-		defaultDC, err = inst.Client(meta).CreateMapsDefaultDatacenter(ctx, domain)
+		defaultDC, err = Client(meta).CreateMapsDefaultDatacenter(ctx, domain)
 	case gtm.Ipv4DefaultDC:
-		defaultDC, err = inst.Client(meta).CreateIPv4DefaultDatacenter(ctx, domain)
+		defaultDC, err = Client(meta).CreateIPv4DefaultDatacenter(ctx, domain)
 	case gtm.Ipv6DefaultDC:
-		defaultDC, err = inst.Client(meta).CreateIPv6DefaultDatacenter(ctx, domain)
+		defaultDC, err = Client(meta).CreateIPv6DefaultDatacenter(ctx, domain)
 	default:
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,

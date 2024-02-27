@@ -800,8 +800,8 @@ func resourcePropertyDelete(ctx context.Context, d *schema.ResourceData, m inter
 		return nil
 	}
 	propertyID = d.Id()
-	contractID := tools.AddPrefix(d.Get("contract_id").(string), "ctr_")
-	groupID := tools.AddPrefix(d.Get("group_id").(string), "grp_")
+	contractID := str.AddPrefix(d.Get("contract_id").(string), "ctr_")
+	groupID := str.AddPrefix(d.Get("group_id").(string), "grp_")
 
 	if err := removeProperty(ctx, client, propertyID, groupID, contractID); err != nil {
 		return diag.FromErr(err)

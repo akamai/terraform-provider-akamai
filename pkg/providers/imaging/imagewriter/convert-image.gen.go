@@ -1818,9 +1818,9 @@ func boolReaderPtr(d *schema.ResourceData, key string) *bool {
 	value, exist := extract(d, key)
 	if exist {
 		if value.(string) == "true" {
-			return tools.BoolPtr(true)
+			return ptr.To(true)
 		}
-		return tools.BoolPtr(false)
+		return ptr.To(false)
 	}
 	return nil
 }

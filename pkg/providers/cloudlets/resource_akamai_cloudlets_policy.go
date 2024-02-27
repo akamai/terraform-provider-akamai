@@ -13,13 +13,12 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cloudlets"
 	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cloudlets/v3"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
-
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/str"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/timeouts"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/logger"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -551,7 +550,7 @@ func checkForV2Policy(ctx context.Context, meta meta.Meta, policyName string) (p
 	for {
 		policies, err := v2Client.ListPolicies(ctx, cloudlets.ListPoliciesRequest{
 			Offset:   offset,
-			PageSize: tools.IntPtr(size),
+			PageSize: ptr.To(size),
 		})
 		if err == nil {
 			if policyID := findPolicyV2ByName(policies, policyName); policyID != 0 {

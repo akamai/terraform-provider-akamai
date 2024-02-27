@@ -188,7 +188,7 @@ func resourceGTMv1DatacenterCreate(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 	logger.Debugf("Proposed New Datacenter: [%v]", newDC)
-	cStatus, err := inst.Client(meta).CreateDatacenter(ctx, newDC, domain)
+	cStatus, err := Client(meta).CreateDatacenter(ctx, newDC, domain)
 	if err != nil {
 		logger.Errorf("Datacenter Create failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -259,7 +259,7 @@ func resourceGTMv1DatacenterRead(ctx context.Context, d *schema.ResourceData, m 
 			Detail:   err.Error(),
 		})
 	}
-	dc, err := inst.Client(meta).GetDatacenter(ctx, dcID, domain)
+	dc, err := Client(meta).GetDatacenter(ctx, dcID, domain)
 	if err != nil {
 		logger.Errorf("Datacenter Read failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -296,7 +296,7 @@ func resourceGTMv1DatacenterUpdate(ctx context.Context, d *schema.ResourceData, 
 		})
 	}
 	// Get existing datacenter
-	existDC, err := inst.Client(meta).GetDatacenter(ctx, dcID, domain)
+	existDC, err := Client(meta).GetDatacenter(ctx, dcID, domain)
 	if err != nil {
 		logger.Errorf("Datacenter Update failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -310,7 +310,7 @@ func resourceGTMv1DatacenterUpdate(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 	logger.Debugf("Updating Datacenter PROPOSED: %v", existDC)
-	uStat, err := inst.Client(meta).UpdateDatacenter(ctx, existDC, domain)
+	uStat, err := Client(meta).UpdateDatacenter(ctx, existDC, domain)
 	if err != nil {
 		logger.Errorf("Datacenter Update failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -363,7 +363,7 @@ func resourceGTMv1DatacenterImport(d *schema.ResourceData, m interface{}) ([]*sc
 	if err != nil {
 		return nil, fmt.Errorf("Invalid Datacenter resource ID")
 	}
-	dc, err := inst.Client(meta).GetDatacenter(ctx, dcID, domain)
+	dc, err := Client(meta).GetDatacenter(ctx, dcID, domain)
 	if err != nil {
 		logger.Errorf("Datacenter Import error: %s", err.Error())
 		return nil, err
@@ -402,7 +402,7 @@ func resourceGTMv1DatacenterDelete(ctx context.Context, d *schema.ResourceData, 
 		})
 	}
 	// Get existing datacenter
-	existDC, err := inst.Client(meta).GetDatacenter(ctx, dcID, domain)
+	existDC, err := Client(meta).GetDatacenter(ctx, dcID, domain)
 	if err != nil {
 		logger.Errorf("DatacenterDelete failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -412,7 +412,7 @@ func resourceGTMv1DatacenterDelete(ctx context.Context, d *schema.ResourceData, 
 		})
 	}
 	logger.Debugf("Deleting Datacenter: %v", existDC)
-	uStat, err := inst.Client(meta).DeleteDatacenter(ctx, existDC, domain)
+	uStat, err := Client(meta).DeleteDatacenter(ctx, existDC, domain)
 	if err != nil {
 		logger.Errorf("Datacenter Delete failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -461,7 +461,7 @@ func resourceGTMv1DatacenterDelete(ctx context.Context, d *schema.ResourceData, 
 // Create and populate a new datacenter object from resource data
 func populateNewDatacenterObject(ctx context.Context, meta meta.Meta, d *schema.ResourceData, m interface{}) (*gtm.Datacenter, error) {
 
-	dcObj := inst.Client(meta).NewDatacenter(ctx)
+	dcObj := Client(meta).NewDatacenter(ctx)
 	dcObj.DefaultLoadObject = gtm.NewLoadObject()
 	err := populateDatacenterObject(d, dcObj, m)
 

@@ -1165,7 +1165,7 @@ func (d *domainDataSource) Read(ctx context.Context, request datasource.ReadRequ
 		return
 	}
 
-	client := inst.Client(d.meta)
+	client := Client(d.meta)
 	domain, err := client.GetDomain(ctx, data.Name.ValueString())
 	if err != nil {
 		response.Diagnostics.AddError("fetching domain failed", err.Error())

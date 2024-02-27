@@ -152,7 +152,7 @@ func dataGTMDatacentersRead(ctx context.Context, d *schema.ResourceData, m inter
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "dataGTMDatacentersRead")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	client := inst.Client(meta)
+	client := Client(meta)
 
 	logger.Debug("Fetching datacenters")
 

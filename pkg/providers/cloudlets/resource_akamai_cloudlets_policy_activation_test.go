@@ -1755,7 +1755,7 @@ func TestResourceV3CloudletsPolicyActivation(t *testing.T) {
 			test.init(v2Client, v3client)
 			useClientV2AndV3(v2Client, v3client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProtoV5ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					IsUnitTest:               true,
 					Steps:                    test.steps,
 				})

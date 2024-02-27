@@ -118,7 +118,7 @@ func resourceGTMv1CidrMapCreate(ctx context.Context, d *schema.ResourceData, m i
 
 	newCidr := populateNewCidrMapObject(ctx, meta, d, m)
 	logger.Debugf("Proposed New CidrMap: [%v]", newCidr)
-	cStatus, err := inst.Client(meta).CreateCidrMap(ctx, newCidr, domain)
+	cStatus, err := Client(meta).CreateCidrMap(ctx, newCidr, domain)
 	if err != nil {
 		logger.Errorf("cidrMap Create failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -182,7 +182,7 @@ func resourceGTMv1CidrMapRead(ctx context.Context, d *schema.ResourceData, m int
 		logger.Errorf("Invalid cidrMap ID: %s", d.Id())
 		return diag.FromErr(err)
 	}
-	cidr, err := inst.Client(meta).GetCidrMap(ctx, cidrMap, domain)
+	cidr, err := Client(meta).GetCidrMap(ctx, cidrMap, domain)
 	if err != nil {
 		logger.Errorf("cidrMap Read error: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -215,7 +215,7 @@ func resourceGTMv1CidrMapUpdate(ctx context.Context, d *schema.ResourceData, m i
 		return diag.FromErr(err)
 	}
 	// Get existingCidrMap
-	existCidr, err := inst.Client(meta).GetCidrMap(ctx, cidrMap, domain)
+	existCidr, err := Client(meta).GetCidrMap(ctx, cidrMap, domain)
 	if err != nil {
 		logger.Errorf("cidrMap Update read failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -227,7 +227,7 @@ func resourceGTMv1CidrMapUpdate(ctx context.Context, d *schema.ResourceData, m i
 	logger.Debugf("Updating cidrMap BEFORE: %v", existCidr)
 	populateCidrMapObject(d, existCidr, m)
 	logger.Debugf("Updating cidrMap PROPOSED: %v", existCidr)
-	uStat, err := inst.Client(meta).UpdateCidrMap(ctx, existCidr, domain)
+	uStat, err := Client(meta).UpdateCidrMap(ctx, existCidr, domain)
 	if err != nil {
 		logger.Errorf("cidrMap Update failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -285,7 +285,7 @@ func resourceGTMv1CidrMapImport(d *schema.ResourceData, m interface{}) ([]*schem
 	if err != nil {
 		return []*schema.ResourceData{d}, err
 	}
-	cidr, err := inst.Client(meta).GetCidrMap(ctx, cidrMap, domain)
+	cidr, err := Client(meta).GetCidrMap(ctx, cidrMap, domain)
 	if err != nil {
 		return nil, err
 	}
@@ -320,7 +320,7 @@ func resourceGTMv1CidrMapDelete(ctx context.Context, d *schema.ResourceData, m i
 		logger.Errorf("Invalid cidrMap ID: %s", d.Id())
 		return diag.FromErr(err)
 	}
-	existCidr, err := inst.Client(meta).GetCidrMap(ctx, cidrMap, domain)
+	existCidr, err := Client(meta).GetCidrMap(ctx, cidrMap, domain)
 	if err != nil {
 		logger.Errorf("CidrMapDelete cidrMap doesn't exist: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -330,7 +330,7 @@ func resourceGTMv1CidrMapDelete(ctx context.Context, d *schema.ResourceData, m i
 		})
 	}
 	logger.Debugf("Deleting cidrMap: %v", existCidr)
-	uStat, err := inst.Client(meta).DeleteCidrMap(ctx, existCidr, domain)
+	uStat, err := Client(meta).DeleteCidrMap(ctx, existCidr, domain)
 	if err != nil {
 		logger.Errorf("cidrMap Delete failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -382,7 +382,7 @@ func populateNewCidrMapObject(ctx context.Context, meta meta.Meta, d *schema.Res
 		logger.Errorf("cidrMap name not found in ResourceData: %s", err.Error())
 	}
 
-	cidrObj := inst.Client(meta).NewCidrMap(ctx, cidrMapName)
+	cidrObj := Client(meta).NewCidrMap(ctx, cidrMapName)
 	cidrObj.DefaultDatacenter = &gtm.DatacenterBase{}
 	cidrObj.Assignments = make([]*gtm.CidrAssignment, 0)
 	cidrObj.Links = make([]*gtm.Link, 1)

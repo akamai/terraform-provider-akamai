@@ -459,7 +459,7 @@ func resourceGTMv1PropertyCreate(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 	logger.Debugf("Proposed New Property: [%v]", newProp)
-	cStatus, err := inst.Client(meta).CreateProperty(ctx, newProp, domain)
+	cStatus, err := Client(meta).CreateProperty(ctx, newProp, domain)
 	if err != nil {
 		logger.Errorf("Property Create failed: %s", err.Error())
 		return diag.Errorf("property Create failed: %s", err.Error())
@@ -515,7 +515,7 @@ func resourceGTMv1PropertyRead(ctx context.Context, d *schema.ResourceData, m in
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	prop, err := inst.Client(meta).GetProperty(ctx, property, domain)
+	prop, err := Client(meta).GetProperty(ctx, property, domain)
 	if errors.Is(err, gtm.ErrNotFound) {
 		d.SetId("")
 		return nil
@@ -546,7 +546,7 @@ func resourceGTMv1PropertyUpdate(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 	// Get existing property
-	existProp, err := inst.Client(meta).GetProperty(ctx, property, domain)
+	existProp, err := Client(meta).GetProperty(ctx, property, domain)
 	if err != nil {
 		logger.Errorf("Property Update failed: %s", err.Error())
 		return diag.FromErr(err)
@@ -557,7 +557,7 @@ func resourceGTMv1PropertyUpdate(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 	logger.Debugf("Updating Property PROPOSED: %v", existProp)
-	uStat, err := inst.Client(meta).UpdateProperty(ctx, existProp, domain)
+	uStat, err := Client(meta).UpdateProperty(ctx, existProp, domain)
 	if err != nil {
 		logger.Errorf("Property Update failed: %s", err.Error())
 		return diag.Errorf("property Update failed: %s", err.Error())
@@ -606,7 +606,7 @@ func resourceGTMv1PropertyImport(d *schema.ResourceData, m interface{}) ([]*sche
 	if err != nil {
 		return []*schema.ResourceData{d}, err
 	}
-	prop, err := inst.Client(meta).GetProperty(ctx, property, domain)
+	prop, err := Client(meta).GetProperty(ctx, property, domain)
 	if err != nil {
 		return nil, err
 	}
@@ -639,13 +639,13 @@ func resourceGTMv1PropertyDelete(ctx context.Context, d *schema.ResourceData, m 
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	existProp, err := inst.Client(meta).GetProperty(ctx, property, domain)
+	existProp, err := Client(meta).GetProperty(ctx, property, domain)
 	if err != nil {
 		logger.Errorf("Property Delete failed: %s", err.Error())
 		return diag.Errorf("property Delete failed: %s", err.Error())
 	}
 	logger.Debugf("Deleting Property: %v", existProp)
-	uStat, err := inst.Client(meta).DeleteProperty(ctx, existProp, domain)
+	uStat, err := Client(meta).DeleteProperty(ctx, existProp, domain)
 	if err != nil {
 		logger.Errorf("Property Delete failed: %s", err.Error())
 		return diag.Errorf("property Delete failed: %s", err.Error())
@@ -892,7 +892,7 @@ func populatePropertyObject(ctx context.Context, d *schema.ResourceData, prop *g
 func populateNewPropertyObject(ctx context.Context, meta meta.Meta, d *schema.ResourceData, m interface{}) (*gtm.Property, error) {
 
 	name, _ := tf.GetStringValue("name", d)
-	propObj := inst.Client(meta).NewProperty(ctx, name)
+	propObj := Client(meta).NewProperty(ctx, name)
 	propObj.TrafficTargets = make([]*gtm.TrafficTarget, 0)
 	propObj.LivenessTests = make([]*gtm.LivenessTest, 0)
 	err := populatePropertyObject(ctx, d, propObj, m)
@@ -967,7 +967,7 @@ func populateTrafficTargetObject(ctx context.Context, d *schema.ResourceData, pr
 		trafficObjList := make([]*gtm.TrafficTarget, len(traffTargList)) // create new object list
 		for i, v := range traffTargList {
 			ttMap := v.(map[string]interface{})
-			trafficTarget := inst.Client(meta).NewTrafficTarget(ctx) // create new object
+			trafficTarget := Client(meta).NewTrafficTarget(ctx) // create new object
 			trafficTarget.DatacenterId = ttMap["datacenter_id"].(int)
 			trafficTarget.Enabled = ttMap["enabled"].(bool)
 			trafficTarget.Weight = ttMap["weight"].(float64)
@@ -1042,7 +1042,7 @@ func populateStaticRRSetObject(ctx context.Context, meta meta.Meta, d *schema.Re
 		staticObjList := make([]*gtm.StaticRRSet, len(staticSetList)) // create new object list
 		for i, v := range staticSetList {
 			recMap := v.(map[string]interface{})
-			record := inst.Client(meta).NewStaticRRSet(ctx) // create new object
+			record := Client(meta).NewStaticRRSet(ctx) // create new object
 			record.TTL = recMap["ttl"].(int)
 			record.Type = recMap["type"].(string)
 			if recMap["rdata"] != nil {
@@ -1108,7 +1108,7 @@ func populateLivenessTestObject(ctx context.Context, meta meta.Meta, d *schema.R
 		liveTestObjList := make([]*gtm.LivenessTest, len(liveTestList)) // create new object list
 		for i, l := range liveTestList {
 			v := l.(map[string]interface{})
-			lt := inst.Client(meta).NewLivenessTest(ctx, v["name"].(string),
+			lt := Client(meta).NewLivenessTest(ctx, v["name"].(string),
 				v["test_object_protocol"].(string),
 				v["test_interval"].(int),
 				float32(v["test_timeout"].(float64))) // create new object

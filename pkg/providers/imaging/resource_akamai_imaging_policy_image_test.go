@@ -640,21 +640,21 @@ func TestResourcePolicyImage(t *testing.T) {
 		testDir := "testdata/TestResPolicyImage/regular_policy_update_serve_stale_duration"
 
 		policyInputWithServeStale := imaging.PolicyInputImage{
-			ServeStaleDuration: tools.IntPtr(3600),
+			ServeStaleDuration: ptr.To(3600),
 			Breakpoints: &imaging.Breakpoints{
 				Widths: []int{320, 640, 1024, 2048, 5000},
 			},
 			Output: &imaging.OutputImage{
-				AllowPristineOnDownsize: tools.BoolPtr(true),
+				AllowPristineOnDownsize: ptr.To(true),
 				PerceptualQuality: &imaging.OutputImagePerceptualQualityVariableInline{
 					Value: imaging.OutputImagePerceptualQualityPtr(imaging.OutputImagePerceptualQualityMediumHigh),
 				},
-				PreferModernFormats: tools.BoolPtr(false),
+				PreferModernFormats: ptr.To(false),
 			},
 			Transformations: []imaging.TransformationType{
 				&imaging.MaxColors{
 					Colors: &imaging.IntegerVariableInline{
-						Value: tools.IntPtr(2),
+						Value: ptr.To(2),
 					},
 					Transformation: imaging.MaxColorsTransformationMaxColors,
 				},
@@ -670,22 +670,22 @@ func TestResourcePolicyImage(t *testing.T) {
 				Widths: []int{320, 640, 1024, 2048, 5000},
 			},
 			Output: &imaging.OutputImage{
-				AllowPristineOnDownsize: tools.BoolPtr(true),
+				AllowPristineOnDownsize: ptr.To(true),
 				PerceptualQuality: &imaging.OutputImagePerceptualQualityVariableInline{
 					Value: imaging.OutputImagePerceptualQualityPtr(imaging.OutputImagePerceptualQualityMediumHigh),
 				},
-				PreferModernFormats: tools.BoolPtr(false),
+				PreferModernFormats: ptr.To(false),
 			},
 			Transformations: []imaging.TransformationType{
 				&imaging.MaxColors{
 					Colors: &imaging.IntegerVariableInline{
-						Value: tools.IntPtr(2),
+						Value: ptr.To(2),
 					},
 					Transformation: imaging.MaxColorsTransformationMaxColors,
 				},
 			},
 			Version: 1,
-			Video:   tools.BoolPtr(false),
+			Video:   ptr.To(false),
 		}
 
 		expectUpsertPolicy(client, "test_policy", "test_policy_set", "test_contract", imaging.PolicyNetworkStaging, &policyInputWithServeStale)
@@ -696,7 +696,7 @@ func TestResourcePolicyImage(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),

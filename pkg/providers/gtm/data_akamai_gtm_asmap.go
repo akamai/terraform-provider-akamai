@@ -144,7 +144,7 @@ func (d *asmapDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 		return
 	}
 
-	client := frameworkInst.Client(d.meta)
+	client := Client(d.meta)
 	asMap, err := client.GetAsMap(ctx, data.Name.ValueString(), data.Domain.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("fetching GTM ASmap failed: ", err.Error())

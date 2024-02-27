@@ -16,15 +16,13 @@ func TestMain(m *testing.M) {
 var clientLock sync.Mutex
 
 // useClient swaps out the client on the global instance for the duration of the given func
-func useClient(client gtm.GTM, f func()) {
+func useClient(gtmClient gtm.GTM, f func()) {
 	clientLock.Lock()
-	orig := inst.client
-	origFrameworkClient := frameworkInst.client
-	inst.client = client
-	frameworkInst.client = client
+	orig := client
+	client = gtmClient
+
 	defer func() {
-		inst.client = orig
-		frameworkInst.client = origFrameworkClient
+		client = orig
 		clientLock.Unlock()
 	}()
 

@@ -120,7 +120,7 @@ func resourceGTMv1GeomapCreate(ctx context.Context, d *schema.ResourceData, m in
 
 	newGeo := populateNewGeoMapObject(ctx, meta, d, m)
 	logger.Debugf("Proposed New geoMap: [%v]", newGeo)
-	cStatus, err := inst.Client(meta).CreateGeoMap(ctx, newGeo, domain)
+	cStatus, err := Client(meta).CreateGeoMap(ctx, newGeo, domain)
 	if err != nil {
 		logger.Errorf("geoMap Create failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -187,7 +187,7 @@ func resourceGTMv1GeomapRead(ctx context.Context, d *schema.ResourceData, m inte
 		logger.Errorf("Invalid geoMap ID")
 		return diag.FromErr(err)
 	}
-	geo, err := inst.Client(meta).GetGeoMap(ctx, geoMap, domain)
+	geo, err := Client(meta).GetGeoMap(ctx, geoMap, domain)
 	if err != nil {
 		logger.Errorf("geoMap Read error: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -220,7 +220,7 @@ func resourceGTMv1GeomapUpdate(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(err)
 	}
 	// Get existingGeoMap
-	existGeo, err := inst.Client(meta).GetGeoMap(ctx, geoMap, domain)
+	existGeo, err := Client(meta).GetGeoMap(ctx, geoMap, domain)
 	if err != nil {
 		logger.Errorf("geoMap Update failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -232,7 +232,7 @@ func resourceGTMv1GeomapUpdate(ctx context.Context, d *schema.ResourceData, m in
 	logger.Debugf("Updating geoMap BEFORE: %v", existGeo)
 	populateGeoMapObject(d, existGeo, m)
 	logger.Debugf("Updating geoMap PROPOSED: %v", existGeo)
-	uStat, err := inst.Client(meta).UpdateGeoMap(ctx, existGeo, domain)
+	uStat, err := Client(meta).UpdateGeoMap(ctx, existGeo, domain)
 	if err != nil {
 		logger.Errorf("geoMap Update failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -294,7 +294,7 @@ func resourceGTMv1GeomapImport(d *schema.ResourceData, m interface{}) ([]*schema
 	if err != nil {
 		return []*schema.ResourceData{d}, err
 	}
-	geo, err := inst.Client(meta).GetGeoMap(ctx, geoMap, domain)
+	geo, err := Client(meta).GetGeoMap(ctx, geoMap, domain)
 	if err != nil {
 		return nil, err
 	}
@@ -330,7 +330,7 @@ func resourceGTMv1GeomapDelete(ctx context.Context, d *schema.ResourceData, m in
 		logger.Errorf("Invalid geoMap ID: %s", d.Id())
 		return diag.FromErr(err)
 	}
-	existGeo, err := inst.Client(meta).GetGeoMap(ctx, geoMap, domain)
+	existGeo, err := Client(meta).GetGeoMap(ctx, geoMap, domain)
 	if err != nil {
 		logger.Errorf("geoMap Delete failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -340,7 +340,7 @@ func resourceGTMv1GeomapDelete(ctx context.Context, d *schema.ResourceData, m in
 		})
 	}
 	logger.Debugf("Deleting geoMap: %v", existGeo)
-	uStat, err := inst.Client(meta).DeleteGeoMap(ctx, existGeo, domain)
+	uStat, err := Client(meta).DeleteGeoMap(ctx, existGeo, domain)
 	if err != nil {
 		logger.Errorf("geoMap Delete failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -390,7 +390,7 @@ func resourceGTMv1GeomapDelete(ctx context.Context, d *schema.ResourceData, m in
 func populateNewGeoMapObject(ctx context.Context, meta meta.Meta, d *schema.ResourceData, m interface{}) *gtm.GeoMap {
 
 	name, _ := tf.GetStringValue("name", d)
-	geoObj := inst.Client(meta).NewGeoMap(ctx, name)
+	geoObj := Client(meta).NewGeoMap(ctx, name)
 	geoObj.DefaultDatacenter = &gtm.DatacenterBase{}
 	geoObj.Assignments = make([]*gtm.GeoAssignment, 1)
 	geoObj.Links = make([]*gtm.Link, 1)

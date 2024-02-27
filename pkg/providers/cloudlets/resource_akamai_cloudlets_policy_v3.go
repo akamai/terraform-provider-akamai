@@ -8,9 +8,9 @@ import (
 	"time"
 
 	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cloudlets/v3"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -44,7 +44,7 @@ func (strategy v3PolicyStrategy) updatePolicyVersion(ctx context.Context, d *sch
 		createPolicyReq := v3.CreatePolicyVersionRequest{
 			CreatePolicyVersion: v3.CreatePolicyVersion{
 				MatchRules:  matchRules,
-				Description: tools.StringPtr(description),
+				Description: ptr.To(description),
 			},
 			PolicyID: policyID,
 		}
@@ -62,7 +62,7 @@ func (strategy v3PolicyStrategy) updatePolicyVersion(ctx context.Context, d *sch
 	updatePolicyVersionReq := v3.UpdatePolicyVersionRequest{
 		UpdatePolicyVersion: v3.UpdatePolicyVersion{
 			MatchRules:  matchRules,
-			Description: tools.StringPtr(description),
+			Description: ptr.To(description),
 		},
 		PolicyID:      policyID,
 		PolicyVersion: version,

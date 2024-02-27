@@ -1186,7 +1186,7 @@ func TestResProperty(t *testing.T) {
 			ExpectRemoveProperty(client, "prp_1", "ctr_0", "grp_0")
 			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProtoV5ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{
 						{
 							Config: testutils.LoadFixtureString(t, "testdata/TestResProperty/property_with_validation_warning_for_rules.tf"),
@@ -1864,7 +1864,7 @@ func TestPropertyResource_versionNotesLifecycle(t *testing.T) {
 
 	useClient(client, nil, func() {
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV5ProviderFactories: testAccProviders,
+			ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, path.Join(testdataDir, "01_with_notes_and_comments.tf")),
