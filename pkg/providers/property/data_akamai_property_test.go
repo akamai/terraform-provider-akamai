@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/stretchr/testify/mock"
@@ -48,9 +48,9 @@ func TestDataProperty(t *testing.T) {
 							ContractID:        "ctr_1",
 							GroupID:           "grp_1",
 							LatestVersion:     1,
-							ProductionVersion: tools.IntPtr(1),
+							ProductionVersion: ptr.To(1),
 							PropertyID:        "prp_123",
-							StagingVersion:    tools.IntPtr(1),
+							StagingVersion:    ptr.To(1),
 						},
 					}},
 				}, nil)
@@ -130,9 +130,9 @@ func TestDataProperty(t *testing.T) {
 							ContractID:        "ctr_1",
 							GroupID:           "grp_1",
 							LatestVersion:     1,
-							ProductionVersion: tools.IntPtr(2),
+							ProductionVersion: ptr.To(2),
 							PropertyID:        "prp_123",
-							StagingVersion:    tools.IntPtr(3),
+							StagingVersion:    ptr.To(3),
 						},
 					}},
 				}, nil)
@@ -386,9 +386,9 @@ func TestDataProperty(t *testing.T) {
 							ContractID:        "ctr_1",
 							GroupID:           "grp_1",
 							LatestVersion:     1,
-							ProductionVersion: tools.IntPtr(1),
+							ProductionVersion: ptr.To(1),
 							PropertyID:        "prp_123",
-							StagingVersion:    tools.IntPtr(1),
+							StagingVersion:    ptr.To(1),
 						},
 					}},
 				}, nil)
