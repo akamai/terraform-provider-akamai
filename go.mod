@@ -1,5 +1,7 @@
 module github.com/akamai/terraform-provider-akamai/v5
 
+go 1.21
+
 require (
 	github.com/akamai/AkamaiOPEN-edgegrid-golang/v7 v7.6.1
 	github.com/allegro/bigcache/v2 v2.2.5
@@ -88,5 +90,3 @@ require (
 )
 
 // replace github.com/akamai/AkamaiOPEN-edgegrid-golang/v7 => ../AkamaiOPEN-edgegrid-golang
-
-go 1.18

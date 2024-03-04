@@ -3,7 +3,7 @@
 before:
   hooks:
     # this is just an example and not a requirement for provider building/publishing
-    - go mod tidy -compat=1.18
+    - go mod tidy -compat=1.21
 builds:
 - env:
     # goreleaser does not work with CGO, it could also complicate

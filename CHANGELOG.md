@@ -4,6 +4,8 @@
 
 #### BREAKING CHANGES:
 
+
+
 * PAPI
     * Added validation to raise an error if the creation of the `akamai_edge_hostname` resource is attempted with an existing edge hostname.
     * Added validation to raise an error during the update of `akamai_edge_hostname` resource for the immutable fields: 'product_id' and 'certificate'.
@@ -41,6 +43,7 @@
     * When performing the read operation, if `activate_on_production` is true, fetch the policy state from the production network; otherwise, obtain it from the staging environment.
 
 
+* Migrated to go 1.21
 
 
 
