@@ -15,7 +15,8 @@
 
 
 
-
+* General
+  * Migrated to terraform protocol version 6, hence minimal required terraform version is 1.0
 
 
 

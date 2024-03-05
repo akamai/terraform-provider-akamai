@@ -9,25 +9,22 @@ import (
 
 // From converts any type to string.
 func From(data interface{}) string {
-	var res string
 	switch v := data.(type) {
 	case float32, float64:
-		res = fmt.Sprintf("%g", v)
+		return fmt.Sprintf("%g", v)
 	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
-		res = fmt.Sprintf("%d", v)
+		return fmt.Sprintf("%d", v)
 	case json.Number:
-		res = v.String()
+		return v.String()
 	case string:
-		res = v
+		return v
 	case []byte:
-		res = string(v)
+		return string(v)
 	case bool:
-		res = strconv.FormatBool(v)
+		return strconv.FormatBool(v)
 	default:
-		res = fmt.Sprintf("%v", data)
+		return fmt.Sprintf("%v", data)
 	}
-
-	return res
 }
 
 // FirstNotEmpty returns first not empty string
