@@ -12,628 +12,239 @@ import (
 )
 
 var (
-	prop = gtm.Property{
-		BackupCName:            "",
-		BackupIP:               "",
-		BalanceByDownloadScore: false,
-		CName:                  "www.boo.wow",
-		Comments:               "",
-		DynamicTTL:             300,
-		FailbackDelay:          0,
-		FailoverDelay:          0,
-		HandoutMode:            "normal",
-		HealthMax:              0,
-		HealthMultiplier:       0,
-		HealthThreshold:        0,
-		IPv6:                   false,
-		LastModified:           "2019-04-25T14:53:12.000+00:00",
-		Links: []*gtm.Link{
-			{
-				Href: "https://akab-ymtebc45gco3ypzj-apz4yxpek55y7fyv.luna.akamaiapis.net/config-gtm/v1/domains/gtmdomtest.akadns.net/properties/test_property",
-				Rel:  "self",
-			},
-		},
-		LivenessTests: []*gtm.LivenessTest{
-			{
-				DisableNonstandardPortWarning: false,
-				HTTPError3xx:                  true,
-				HTTPError4xx:                  true,
-				HTTPError5xx:                  true,
-				Name:                          "health check",
-				RequestString:                 "",
-				ResponseString:                "",
-				SSLClientCertificate:          "",
-				SSLClientPrivateKey:           "",
-				TestInterval:                  60,
-				TestObject:                    "/status",
-				TestObjectPassword:            "",
-				TestObjectPort:                80,
-				TestObjectProtocol:            "HTTP",
-				TestObjectUsername:            "",
-				TestTimeout:                   25.0,
-			},
-		},
-		LoadImbalancePercentage:   10.0,
-		MapName:                   "",
-		MaxUnreachablePenalty:     0,
-		Name:                      "tfexample_prop_1",
-		ScoreAggregationType:      "mean",
-		StaticTTL:                 600,
-		StickinessBonusConstant:   0,
-		StickinessBonusPercentage: 50,
-		TrafficTargets: []*gtm.TrafficTarget{
-			{
-				DatacenterID: 3131,
-				Enabled:      true,
-				HandoutCName: "",
-				Servers: []string{
-					"1.2.3.4",
-					"1.2.3.5",
-				},
-				Weight: 50.0,
-			},
-		},
-		Type:                 "weighted-round-robin",
-		UnreachableThreshold: 0,
-		UseComputedTargets:   false,
-	}
-
-	prop2 = gtm.Property{
-		BackupCName:            "",
-		BackupIP:               "",
-		BalanceByDownloadScore: false,
-		CName:                  "www.boo.wow",
-		Comments:               "",
-		DynamicTTL:             300,
-		FailbackDelay:          0,
-		FailoverDelay:          0,
-		HandoutMode:            "normal",
-		HealthMax:              0,
-		HealthMultiplier:       0,
-		HealthThreshold:        0,
-		IPv6:                   false,
-		LastModified:           "2019-04-25T14:53:12.000+00:00",
-		Links: []*gtm.Link{
-			{
-				Href: "https://akab-ymtebc45gco3ypzj-apz4yxpek55y7fyv.luna.akamaiapis.net/config-gtm/v1/domains/gtmdomtest.akadns.net/properties/test_property",
-				Rel:  "self",
-			},
-		},
-		LivenessTests: []*gtm.LivenessTest{
-			{
-				DisableNonstandardPortWarning: false,
-				HTTPError3xx:                  true,
-				HTTPError4xx:                  true,
-				HTTPError5xx:                  true,
-				Name:                          "health check",
-				RequestString:                 "",
-				ResponseString:                "",
-				SSLClientCertificate:          "",
-				SSLClientPrivateKey:           "",
-				TestInterval:                  60,
-				TestObject:                    "/status",
-				TestObjectPassword:            "",
-				TestObjectPort:                80,
-				TestObjectProtocol:            "HTTP",
-				TestObjectUsername:            "",
-				TestTimeout:                   25.0,
-			},
-		},
-		LoadImbalancePercentage:   10.0,
-		MapName:                   "",
-		MaxUnreachablePenalty:     0,
-		Name:                      "tfexample_prop_1-updated",
-		ScoreAggregationType:      "mean",
-		StaticTTL:                 600,
-		StickinessBonusConstant:   0,
-		StickinessBonusPercentage: 50,
-		TrafficTargets: []*gtm.TrafficTarget{
-			{
-				DatacenterID: 3131,
-				Enabled:      true,
-				HandoutCName: "",
-				Servers: []string{
-					"1.2.3.4",
-					"1.2.3.5",
-				},
-				Weight: 50.0,
-			},
-		},
-		Type:                 "weighted-round-robin",
-		UnreachableThreshold: 0,
-		UseComputedTargets:   false,
-	}
-
 	propertyResourceName = "akamai_gtm_property.tfexample_prop_1"
+	propertyName         = "tfexample_prop_1"
+	updatedPropertyName  = "tfexample_prop_1-updated"
 )
 
 func TestResGTMProperty(t *testing.T) {
-
-	t.Run("create property", func(t *testing.T) {
-		client := &gtm.Mock{}
-
-		getCall := client.On("GetProperty",
-			mock.Anything,
-			mock.AnythingOfType("string"),
-			mock.AnythingOfType("string"),
-		).Return(nil, &gtm.Error{
-			StatusCode: http.StatusNotFound,
-		})
-
-		resp := gtm.PropertyResponse{}
-		resp.Resource = &prop
-		resp.Status = &pendingResponseStatus
-		client.On("CreateProperty",
-			mock.Anything,
-			mock.AnythingOfType("*gtm.Property"),
-			mock.AnythingOfType("string"),
-		).Return(&resp, nil).Run(func(args mock.Arguments) {
-			getCall.ReturnArguments = mock.Arguments{args.Get(1).(*gtm.Property), nil}
-		})
-
-		client.On("NewProperty",
-			mock.Anything,
-			mock.AnythingOfType("string"),
-			mock.AnythingOfType("string"),
-		).Return(&gtm.Property{
-			Name: "tfexample_prop_1",
-		})
-
-		client.On("GetDomainStatus",
-			mock.Anything,
-			mock.AnythingOfType("string"),
-		).Return(&completeResponseStatus, nil)
-
-		client.On("NewTrafficTarget",
-			mock.Anything,
-		).Return(&gtm.TrafficTarget{})
-
-		client.On("NewStaticRRSet",
-			mock.Anything,
-		).Return(&gtm.StaticRRSet{})
-
-		liveCall := client.On("NewLivenessTest",
-			mock.Anything,
-			mock.AnythingOfType("string"),
-			mock.AnythingOfType("string"),
-			mock.AnythingOfType("int"),
-			mock.AnythingOfType("float32"),
-		)
-
-		liveCall.RunFn = func(args mock.Arguments) {
-			liveCall.ReturnArguments = mock.Arguments{
-				&gtm.LivenessTest{
-					Name:               args.String(1),
-					TestObjectProtocol: args.String(2),
-					TestInterval:       args.Int(3),
-					TestTimeout:        args.Get(4).(float32),
+	tests := map[string]struct {
+		property *gtm.Property
+		init     func(*testing.T, *gtm.Mock)
+		steps    []resource.TestStep
+	}{
+		"create property": {
+			property: getBasicProperty(),
+			init: func(t *testing.T, m *gtm.Mock) {
+				mockNewProperty(m, propertyName)
+				mockNewTrafficTarget(m, 1)
+				mockNewStaticRRSet(m)
+				mockNewLivenessTest(m, "lt5", "HTTP", "/junk", 40, 1, 30)
+				mockNewLivenessTest(m, "lt2", "HTTP", "/junk", 30, 80, 20)
+				mockCreateProperty(m, getBasicProperty(), gtmTestDomain)
+				// read
+				mockGetProperty(m, getBasicProperty(), propertyName, gtmTestDomain, 4)
+				// update
+				mockNewTrafficTarget(m, 1)
+				mockNewStaticRRSet(m)
+				mockNewLivenessTest(m, "lt5", "HTTP", "/junk", 50, 1, 30)
+				mockNewLivenessTest(m, "lt2", "HTTP", "/junk", 30, 0, 20)
+				mockUpdateProperty(m, getUpdatedProperty(), gtmTestDomain)
+				// read
+				mockGetDomainStatus(m, gtmTestDomain, 2)
+				mockGetProperty(m, getUpdatedProperty(), propertyName, gtmTestDomain, 3)
+				// delete
+				mockDeleteProperty(m, getUpdatedProperty(), gtmTestDomain)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/create_basic.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr(propertyResourceName, "name", "tfexample_prop_1"),
+						resource.TestCheckResourceAttr(propertyResourceName, "type", "weighted-round-robin"),
+						resource.TestCheckResourceAttr(propertyResourceName, "weighted_hash_bits_for_ipv4", "0"),
+						resource.TestCheckResourceAttr(propertyResourceName, "weighted_hash_bits_for_ipv6", "0"),
+						resource.TestCheckResourceAttr(propertyResourceName, "id", "gtm_terra_testdomain.akadns.net:tfexample_prop_1"),
+					),
 				},
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/update_basic.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr(propertyResourceName, "name", "tfexample_prop_1"),
+						resource.TestCheckResourceAttr(propertyResourceName, "type", "weighted-round-robin"),
+						resource.TestCheckResourceAttr(propertyResourceName, "weighted_hash_bits_for_ipv4", "0"),
+						resource.TestCheckResourceAttr(propertyResourceName, "weighted_hash_bits_for_ipv6", "0"),
+						resource.TestCheckResourceAttr(propertyResourceName, "id", "gtm_terra_testdomain.akadns.net:tfexample_prop_1"),
+					),
+				},
+			},
+		},
+		"create property failed": {
+			property: getBasicProperty(),
+			init: func(t *testing.T, m *gtm.Mock) {
+				mockNewProperty(m, propertyName)
+				mockNewTrafficTarget(m, 1)
+				mockNewStaticRRSet(m)
+				mockNewLivenessTest(m, "lt5", "HTTP", "/junk", 40, 1, 30)
+				mockNewLivenessTest(m, "lt2", "HTTP", "/junk", 30, 80, 20)
+				// bad request status code returned
+				m.On("CreateProperty",
+					mock.Anything,
+					getBasicProperty(),
+					gtmTestDomain,
+				).Return(nil, &gtm.Error{
+					StatusCode: http.StatusBadRequest,
+				})
+			},
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/create_basic.tf"),
+					ExpectError: regexp.MustCompile("property Create failed"),
+				},
+			},
+		},
+		"create propery denied": {
+			property: nil,
+			init: func(t *testing.T, m *gtm.Mock) {
+				// create
+				mockNewProperty(m, propertyName)
+				mockNewTrafficTarget(m, 1)
+				mockNewStaticRRSet(m)
+				mockNewLivenessTest(m, "lt5", "HTTP", "/junk", 40, 1, 30)
+				mockNewLivenessTest(m, "lt2", "HTTP", "/junk", 30, 80, 20)
+				// denied response status returned
+				deniedResponse := gtm.PropertyResponse{
+					Resource: getBasicProperty(),
+					Status:   &deniedResponseStatus,
+				}
+				m.On("CreateProperty",
+					mock.Anything,
+					getBasicProperty(),
+					gtmTestDomain,
+				).Return(&deniedResponse, nil).Once()
+			},
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/create_basic.tf"),
+					ExpectError: regexp.MustCompile("Request could not be completed. Invalid credentials."),
+				},
+			},
+		},
+		"create property and update name - force new": {
+			property: getBasicProperty(),
+			init: func(t *testing.T, m *gtm.Mock) {
+				// create 1st property
+				mockNewProperty(m, propertyName)
+				mockNewTrafficTarget(m, 1)
+				mockNewStaticRRSet(m)
+				mockNewLivenessTest(m, "lt5", "HTTP", "/junk", 40, 1, 30)
+				mockNewLivenessTest(m, "lt2", "HTTP", "/junk", 30, 80, 20)
+				mockCreateProperty(m, getBasicProperty(), gtmTestDomain)
+				// read
+				mockGetProperty(m, getBasicProperty(), propertyName, gtmTestDomain, 4)
+				// force new -> delete 1st property and recreate 2nd with updated name
+				mockDeleteProperty(m, getBasicProperty(), gtmTestDomain)
+				propertyWithUpdatedName := getBasicProperty()
+				propertyWithUpdatedName.Name = updatedPropertyName
+				mockNewProperty(m, updatedPropertyName)
+				mockNewTrafficTarget(m, 1)
+				mockNewStaticRRSet(m)
+				mockNewLivenessTest(m, "lt5", "HTTP", "/junk", 40, 1, 30)
+				mockNewLivenessTest(m, "lt2", "HTTP", "/junk", 30, 80, 20)
+				mockCreateProperty(m, propertyWithUpdatedName, gtmTestDomain)
+				// read
+				mockGetProperty(m, propertyWithUpdatedName, updatedPropertyName, gtmTestDomain, 3)
+				// delete
+				mockDeleteProperty(m, propertyWithUpdatedName, gtmTestDomain)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/create_basic.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr(propertyResourceName, "name", "tfexample_prop_1"),
+						resource.TestCheckResourceAttr(propertyResourceName, "weighted_hash_bits_for_ipv4", "0"),
+						resource.TestCheckResourceAttr(propertyResourceName, "weighted_hash_bits_for_ipv6", "0"),
+						resource.TestCheckResourceAttr(propertyResourceName, "id", "gtm_terra_testdomain.akadns.net:tfexample_prop_1"),
+					),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/update_name.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr(propertyResourceName, "name", "tfexample_prop_1-updated"),
+						resource.TestCheckResourceAttr(propertyResourceName, "weighted_hash_bits_for_ipv4", "0"),
+						resource.TestCheckResourceAttr(propertyResourceName, "weighted_hash_bits_for_ipv6", "0"),
+						resource.TestCheckResourceAttr(propertyResourceName, "id", "gtm_terra_testdomain.akadns.net:tfexample_prop_1-updated"),
+					),
+				},
+			},
+		},
+		"test_object_protocol different than HTTP, HTTPS or FTP": {
+			property: getBasicProperty(),
+			init: func(t *testing.T, m *gtm.Mock) {
+				// create property with test_object_protocol in first liveness test different from HTTP, HTTPS, FTP
+				mockNewProperty(m, propertyName)
+				mockNewTrafficTarget(m, 1)
+				mockNewStaticRRSet(m)
+				mockNewLivenessTest(m, "lt5", "SNMP", "", 40, 1, 30)
+				mockNewLivenessTest(m, "lt2", "HTTP", "/junk", 30, 80, 20)
+				// alter mocked property
+				propertyWithLivenessTest := getBasicProperty()
+				propertyWithLivenessTest.LivenessTests[0].TestObject = ""
+				propertyWithLivenessTest.LivenessTests[0].TestObjectProtocol = "SNMP"
+				mockCreateProperty(m, propertyWithLivenessTest, gtmTestDomain)
+				// read
+				mockGetProperty(m, propertyWithLivenessTest, propertyName, gtmTestDomain, 3)
+				// delete
+				mockDeleteProperty(m, propertyWithLivenessTest, gtmTestDomain)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/test_object/test_object_not_required.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr(propertyResourceName, "name", "tfexample_prop_1"),
+						resource.TestCheckResourceAttr(propertyResourceName, "type", "weighted-round-robin"),
+						resource.TestCheckResourceAttr(propertyResourceName, "weighted_hash_bits_for_ipv4", "0"),
+						resource.TestCheckResourceAttr(propertyResourceName, "weighted_hash_bits_for_ipv6", "0"),
+						resource.TestCheckResourceAttr(propertyResourceName, "id", "gtm_terra_testdomain.akadns.net:tfexample_prop_1"),
+					),
+				},
+			},
+		},
+		"create property with test_object_protocol set to 'FTP' - test_object required error": {
+			property: getBasicProperty(),
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/test_object/test_object_protocol_ftp.tf"),
+					ExpectError: regexp.MustCompile(`Error: attribute 'test_object' is required when 'test_object_protocol' is set to 'HTTP', 'HTTPS' or 'FTP'`),
+				},
+			},
+		},
+		"create property with test_object_protocol set to 'HTTP' - test_object required error": {
+			property: getBasicProperty(),
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/test_object/test_object_protocol_http.tf"),
+					ExpectError: regexp.MustCompile(`Error: attribute 'test_object' is required when 'test_object_protocol' is set to 'HTTP', 'HTTPS' or 'FTP'`),
+				},
+			},
+		},
+		"create property with test_object_protocol set to 'HTTPS' - test_object required error": {
+			property: getBasicProperty(),
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/test_object/test_object_protocol_https.tf"),
+					ExpectError: regexp.MustCompile(`Error: attribute 'test_object' is required when 'test_object_protocol' is set to 'HTTP', 'HTTPS' or 'FTP'`),
+				},
+			},
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			client := new(gtm.Mock)
+			if test.init != nil {
+				test.init(t, client)
 			}
-		}
-
-		client.On("UpdateProperty",
-			mock.Anything,
-			mock.AnythingOfType("*gtm.Property"),
-			mock.AnythingOfType("string"),
-		).Return(&completeResponseStatus, nil).Run(func(args mock.Arguments) {
-			getCall.ReturnArguments = mock.Arguments{args.Get(1).(*gtm.Property), nil}
-		})
-
-		client.On("DeleteProperty",
-			mock.Anything,
-			mock.AnythingOfType("*gtm.Property"),
-			mock.AnythingOfType("string"),
-		).Return(&completeResponseStatus, nil)
-
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/create_basic.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(propertyResourceName, "name", "tfexample_prop_1"),
-							resource.TestCheckResourceAttr(propertyResourceName, "type", "weighted-round-robin"),
-						),
-					},
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/update_basic.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(propertyResourceName, "name", "tfexample_prop_1"),
-							resource.TestCheckResourceAttr(propertyResourceName, "type", "weighted-round-robin"),
-						),
-					},
-				},
+			useClient(client, func() {
+				resource.UnitTest(t, resource.TestCase{
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+					IsUnitTest:               true,
+					Steps:                    test.steps,
+				})
 			})
+			client.AssertExpectations(t)
 		})
-
-		client.AssertExpectations(t)
-	})
-
-	t.Run("create property failed", func(t *testing.T) {
-		client := &gtm.Mock{}
-
-		client.On("CreateProperty",
-			mock.Anything,
-			mock.AnythingOfType("*gtm.Property"),
-			gtmTestDomain,
-		).Return(nil, &gtm.Error{
-			StatusCode: http.StatusBadRequest,
-		})
-
-		client.On("NewProperty",
-			mock.Anything,
-			mock.AnythingOfType("string"),
-			mock.AnythingOfType("string"),
-		).Return(&gtm.Property{
-			Name: "tfexample_prop_1",
-		})
-
-		client.On("NewTrafficTarget",
-			mock.Anything,
-		).Return(&gtm.TrafficTarget{})
-
-		client.On("NewStaticRRSet",
-			mock.Anything,
-		).Return(&gtm.StaticRRSet{})
-
-		liveCall := client.On("NewLivenessTest",
-			mock.Anything,
-			mock.AnythingOfType("string"),
-			mock.AnythingOfType("string"),
-			mock.AnythingOfType("int"),
-			mock.AnythingOfType("float32"),
-		)
-
-		liveCall.RunFn = func(args mock.Arguments) {
-			liveCall.ReturnArguments = mock.Arguments{
-				&gtm.LivenessTest{
-					Name:               args.String(1),
-					TestObjectProtocol: args.String(2),
-					TestInterval:       args.Int(3),
-					TestTimeout:        args.Get(4).(float32),
-				},
-			}
-		}
-
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/create_basic.tf"),
-						ExpectError: regexp.MustCompile("property Create failed"),
-					},
-				},
-			})
-		})
-
-		client.AssertExpectations(t)
-	})
-
-	t.Run("create property denied", func(t *testing.T) {
-		client := &gtm.Mock{}
-
-		dr := gtm.PropertyResponse{}
-		dr.Resource = &prop
-		dr.Status = &deniedResponseStatus
-		client.On("CreateProperty",
-			mock.Anything,
-			mock.AnythingOfType("*gtm.Property"),
-			gtmTestDomain,
-		).Return(&dr, nil)
-
-		client.On("NewProperty",
-			mock.Anything,
-			mock.AnythingOfType("string"),
-			mock.AnythingOfType("string"),
-		).Return(&gtm.Property{
-			Name: "tfexample_prop_1",
-		})
-
-		client.On("NewTrafficTarget",
-			mock.Anything,
-		).Return(&gtm.TrafficTarget{})
-
-		client.On("NewStaticRRSet",
-			mock.Anything,
-		).Return(&gtm.StaticRRSet{})
-
-		liveCall := client.On("NewLivenessTest",
-			mock.Anything,
-			mock.AnythingOfType("string"),
-			mock.AnythingOfType("string"),
-			mock.AnythingOfType("int"),
-			mock.AnythingOfType("float32"),
-		)
-
-		liveCall.RunFn = func(args mock.Arguments) {
-			liveCall.ReturnArguments = mock.Arguments{
-				&gtm.LivenessTest{
-					Name:               args.String(1),
-					TestObjectProtocol: args.String(2),
-					TestInterval:       args.Int(3),
-					TestTimeout:        args.Get(4).(float32),
-				},
-			}
-		}
-
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/create_basic.tf"),
-						ExpectError: regexp.MustCompile("Request could not be completed. Invalid credentials."),
-					},
-				},
-			})
-		})
-
-		client.AssertExpectations(t)
-	})
-
-	t.Run("create property and update name - force new", func(t *testing.T) {
-		client := &gtm.Mock{}
-
-		getCall := client.On("GetProperty",
-			mock.Anything,
-			mock.AnythingOfType("string"),
-			mock.AnythingOfType("string"),
-		).Return(nil, &gtm.Error{
-			StatusCode: http.StatusNotFound,
-		})
-
-		resp := gtm.PropertyResponse{}
-		resp.Resource = &prop
-		resp.Status = &pendingResponseStatus
-		client.On("CreateProperty",
-			mock.Anything,
-			mock.AnythingOfType("*gtm.Property"),
-			mock.AnythingOfType("string"),
-		).Return(&resp, nil).Run(func(args mock.Arguments) {
-			getCall.ReturnArguments = mock.Arguments{args.Get(1).(*gtm.Property), nil}
-		}).Once()
-
-		client.On("NewProperty",
-			mock.Anything,
-			mock.AnythingOfType("string"),
-			mock.AnythingOfType("string"),
-		).Return(&gtm.Property{
-			Name: "tfexample_prop_1",
-		}).Once()
-
-		client.On("NewTrafficTarget",
-			mock.Anything,
-		).Return(&gtm.TrafficTarget{})
-
-		client.On("NewStaticRRSet",
-			mock.Anything,
-		).Return(&gtm.StaticRRSet{})
-
-		liveCall := client.On("NewLivenessTest",
-			mock.Anything,
-			mock.AnythingOfType("string"),
-			mock.AnythingOfType("string"),
-			mock.AnythingOfType("int"),
-			mock.AnythingOfType("float32"),
-		)
-
-		liveCall.RunFn = func(args mock.Arguments) {
-			liveCall.ReturnArguments = mock.Arguments{
-				&gtm.LivenessTest{
-					Name:               args.String(1),
-					TestObjectProtocol: args.String(2),
-					TestInterval:       args.Int(3),
-					TestTimeout:        args.Get(4).(float32),
-				},
-			}
-		}
-
-		client.On("DeleteProperty",
-			mock.Anything,
-			mock.AnythingOfType("*gtm.Property"),
-			mock.AnythingOfType("string"),
-		).Return(&completeResponseStatus, nil)
-
-		// Create new property with updated name
-		client.On("NewProperty",
-			mock.Anything,
-			mock.AnythingOfType("string"),
-			mock.AnythingOfType("string"),
-		).Return(&gtm.Property{
-			Name: "tfexample_prop_1-updated",
-		}).Once()
-
-		resp2 := gtm.PropertyResponse{
-			Resource: &prop2,
-			Status:   &pendingResponseStatus,
-		}
-
-		client.On("CreateProperty",
-			mock.Anything,
-			mock.AnythingOfType("*gtm.Property"),
-			mock.AnythingOfType("string"),
-		).Return(&resp2, nil).Run(func(args mock.Arguments) {
-			getCall.ReturnArguments = mock.Arguments{args.Get(1).(*gtm.Property), nil}
-		}).Once()
-
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/create_basic.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(propertyResourceName, "name", "tfexample_prop_1"),
-						),
-					},
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/update_name.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(propertyResourceName, "name", "tfexample_prop_1-updated"),
-						),
-					},
-				},
-			})
-		})
-		client.AssertExpectations(t)
-	})
-
-	t.Run("test_object_protocol different than HTTP, HTTPS or FTP", func(t *testing.T) {
-		client := &gtm.Mock{}
-
-		getCall := client.On("GetProperty",
-			mock.Anything,
-			mock.AnythingOfType("string"),
-			mock.AnythingOfType("string"),
-		).Return(nil, &gtm.Error{
-			StatusCode: http.StatusNotFound,
-		})
-
-		resp := gtm.PropertyResponse{}
-		resp.Resource = &prop
-		resp.Status = &pendingResponseStatus
-		client.On("CreateProperty",
-			mock.Anything,
-			mock.AnythingOfType("*gtm.Property"),
-			mock.AnythingOfType("string"),
-		).Return(&resp, nil).Run(func(args mock.Arguments) {
-			getCall.ReturnArguments = mock.Arguments{args.Get(1).(*gtm.Property), nil}
-		})
-
-		client.On("NewProperty",
-			mock.Anything,
-			mock.AnythingOfType("string"),
-			mock.AnythingOfType("string"),
-		).Return(&gtm.Property{
-			Name: "tfexample_prop_1",
-		})
-
-		client.On("GetDomainStatus",
-			mock.Anything,
-			mock.AnythingOfType("string"),
-		).Return(&completeResponseStatus, nil)
-
-		client.On("NewTrafficTarget",
-			mock.Anything,
-		).Return(&gtm.TrafficTarget{})
-
-		client.On("NewStaticRRSet",
-			mock.Anything,
-		).Return(&gtm.StaticRRSet{})
-
-		liveCall := client.On("NewLivenessTest",
-			mock.Anything,
-			mock.AnythingOfType("string"),
-			mock.AnythingOfType("string"),
-			mock.AnythingOfType("int"),
-			mock.AnythingOfType("float32"),
-		)
-
-		liveCall.RunFn = func(args mock.Arguments) {
-			liveCall.ReturnArguments = mock.Arguments{
-				&gtm.LivenessTest{
-					Name:               args.String(1),
-					TestObjectProtocol: args.String(2),
-					TestInterval:       args.Int(3),
-					TestTimeout:        args.Get(4).(float32),
-				},
-			}
-		}
-
-		client.On("UpdateProperty",
-			mock.Anything,
-			mock.AnythingOfType("*gtm.Property"),
-			mock.AnythingOfType("string"),
-		).Return(&completeResponseStatus, nil).Run(func(args mock.Arguments) {
-			getCall.ReturnArguments = mock.Arguments{args.Get(1).(*gtm.Property), nil}
-		})
-
-		client.On("DeleteProperty",
-			mock.Anything,
-			mock.AnythingOfType("*gtm.Property"),
-			mock.AnythingOfType("string"),
-		).Return(&completeResponseStatus, nil)
-
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/test_object/test_object_not_required.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(propertyResourceName, "name", "tfexample_prop_1"),
-							resource.TestCheckResourceAttr(propertyResourceName, "type", "weighted-round-robin"),
-						),
-					},
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/update_basic.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(propertyResourceName, "name", "tfexample_prop_1"),
-							resource.TestCheckResourceAttr(propertyResourceName, "type", "weighted-round-robin"),
-						),
-					},
-				},
-			})
-		})
-
-		client.AssertExpectations(t)
-	})
-
-	t.Run("create property with test_object_protocol set to 'FTP' - test_object required error", func(t *testing.T) {
-		client := &gtm.Mock{}
-
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/test_object/test_object_protocol_ftp.tf"),
-						ExpectError: regexp.MustCompile(`Error: attribute 'test_object' is required when 'test_object_protocol' is set to 'HTTP', 'HTTPS' or 'FTP'`),
-					},
-				},
-			})
-		})
-
-		client.AssertExpectations(t)
-	})
-
-	t.Run("create property with test_object_protocol set to 'HTTP' - test_object required error", func(t *testing.T) {
-		client := &gtm.Mock{}
-
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/test_object/test_object_protocol_http.tf"),
-						ExpectError: regexp.MustCompile(`Error: attribute 'test_object' is required when 'test_object_protocol' is set to 'HTTP', 'HTTPS' or 'FTP'`),
-					},
-				},
-			})
-		})
-
-		client.AssertExpectations(t)
-	})
-
-	t.Run("create property with test_object_protocol set to 'HTTPS' - test_object required error", func(t *testing.T) {
-		client := &gtm.Mock{}
-
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/test_object/test_object_protocol_https.tf"),
-						ExpectError: regexp.MustCompile(`Error: attribute 'test_object' is required when 'test_object_protocol' is set to 'HTTP', 'HTTPS' or 'FTP'`),
-					},
-				},
-			})
-		})
-
-		client.AssertExpectations(t)
-	})
+	}
 }
 
 func TestResourceGTMTrafficTargetOrder(t *testing.T) {
@@ -754,42 +365,267 @@ func TestResourceGTMTrafficTargetOrder(t *testing.T) {
 	}
 }
 
+// getUpdatedProperty gets the property with updated values taken from `update_basic.tf`
+func getUpdatedProperty() *gtm.Property {
+	return &gtm.Property{
+		BackupCName:            "",
+		BackupIP:               "",
+		BalanceByDownloadScore: false,
+		Comments:               "",
+		DynamicTTL:             300,
+		FailbackDelay:          0,
+		FailoverDelay:          0,
+		HandoutMode:            "normal",
+		HandoutLimit:           5,
+		HealthMax:              0,
+		HealthMultiplier:       0,
+		HealthThreshold:        0,
+		IPv6:                   false,
+		LivenessTests: []*gtm.LivenessTest{
+			{
+				DisableNonstandardPortWarning: false,
+				Name:                          "lt5",
+				RequestString:                 "",
+				ResponseString:                "",
+				SSLClientCertificate:          "",
+				SSLClientPrivateKey:           "",
+				TestInterval:                  50,
+				TestObject:                    "/junk",
+				TestObjectPassword:            "",
+				TestObjectPort:                1,
+				TestObjectProtocol:            "HTTP",
+				TestObjectUsername:            "",
+				TestTimeout:                   30.0,
+				HTTPHeaders: []*gtm.HTTPHeader{
+					{
+						Name:  "test_name",
+						Value: "test_value",
+					},
+				},
+			},
+			{
+				Name:                        "lt2",
+				TestInterval:                30,
+				TestObjectProtocol:          "HTTP",
+				TestTimeout:                 20,
+				TestObject:                  "/junk",
+				TestObjectPort:              80,
+				PeerCertificateVerification: true,
+				HTTPHeaders:                 []*gtm.HTTPHeader{},
+			},
+		},
+		MapName:               "",
+		MaxUnreachablePenalty: 0,
+		Name:                  "tfexample_prop_1",
+		ScoreAggregationType:  "median",
+		StaticRRSets: []*gtm.StaticRRSet{
+			{
+				Type:  "MX",
+				TTL:   300,
+				Rdata: []string{"100 test_e"},
+			},
+		},
+		StickinessBonusConstant: 0,
+		TrafficTargets: []*gtm.TrafficTarget{
+			{
+				DatacenterID: 3132,
+				Enabled:      true,
+				HandoutCName: "test",
+				Servers: []string{
+					"1.2.3.5",
+				},
+				Weight: 200.0,
+			},
+		},
+		Type:                 "weighted-round-robin",
+		UnreachableThreshold: 0,
+		UseComputedTargets:   false,
+	}
+}
+
+// getBasicProperty gets the property values taken from `create_basic.tf`
+func getBasicProperty() *gtm.Property {
+	return &gtm.Property{
+		BackupCName:            "",
+		BackupIP:               "",
+		BalanceByDownloadScore: false,
+		Comments:               "",
+		DynamicTTL:             300,
+		FailbackDelay:          0,
+		FailoverDelay:          0,
+		HandoutMode:            "normal",
+		HandoutLimit:           5,
+		HealthMax:              0,
+		HealthMultiplier:       0,
+		HealthThreshold:        0,
+		IPv6:                   false,
+		LivenessTests: []*gtm.LivenessTest{
+			{
+				DisableNonstandardPortWarning: false,
+				Name:                          "lt5",
+				RequestString:                 "",
+				ResponseString:                "",
+				SSLClientCertificate:          "",
+				SSLClientPrivateKey:           "",
+				TestInterval:                  40,
+				TestObject:                    "/junk",
+				TestObjectPassword:            "",
+				TestObjectPort:                1,
+				TestObjectProtocol:            "HTTP",
+				TestObjectUsername:            "",
+				TestTimeout:                   30.0,
+				HTTPHeaders: []*gtm.HTTPHeader{
+					{
+						Name:  "test_name",
+						Value: "test_value",
+					},
+				},
+			},
+			{
+				Name:                        "lt2",
+				TestInterval:                30,
+				TestObjectProtocol:          "HTTP",
+				TestTimeout:                 20,
+				TestObject:                  "/junk",
+				TestObjectPort:              80,
+				PeerCertificateVerification: true,
+				HTTPHeaders:                 []*gtm.HTTPHeader{},
+			},
+		},
+		MapName:               "",
+		MaxUnreachablePenalty: 0,
+		Name:                  "tfexample_prop_1",
+		ScoreAggregationType:  "median",
+		StaticRRSets: []*gtm.StaticRRSet{
+			{
+				Type:  "MX",
+				TTL:   300,
+				Rdata: []string{"100 test_e"},
+			},
+		},
+		StickinessBonusConstant: 0,
+		TrafficTargets: []*gtm.TrafficTarget{
+			{
+				DatacenterID: 3131,
+				Enabled:      true,
+				HandoutCName: "test",
+				Servers: []string{
+					"1.2.3.9",
+				},
+				Weight: 200.0,
+			},
+		},
+		Type:                 "weighted-round-robin",
+		UnreachableThreshold: 0,
+		UseComputedTargets:   false,
+	}
+}
+
+// getMocks is used for diff tests, where the contents of property not matter as much, as those tests aim to check the diffs
 func getMocks() *gtm.Mock {
-	client := &gtm.Mock{}
+	client := new(gtm.Mock)
 
 	// read
-	getPropertyCall := client.On("GetProperty", mock.Anything, "tfexample_prop_1", "gtm_terra_testdomain.akadns.net").
+	getPropertyCall := client.On("GetProperty", mock.Anything, "tfexample_prop_1", gtmTestDomain).
 		Return(nil, &gtm.Error{StatusCode: http.StatusNotFound})
-
 	// create
-	client.On("NewProperty", mock.Anything, "tfexample_prop_1").Return(&gtm.Property{
-		Name: "tfexample_prop_1",
-	}).Once()
-
-	client.On("NewTrafficTarget", mock.Anything).Return(&gtm.TrafficTarget{}).Times(1)
-	client.On("NewTrafficTarget", mock.Anything).Return(&gtm.TrafficTarget{}).Times(1)
-	client.On("NewTrafficTarget", mock.Anything).Return(&gtm.TrafficTarget{}).Times(1)
-
-	client.On("NewLivenessTest", mock.Anything, "lt5", "HTTP", 40, float32(30.0)).Return(&gtm.LivenessTest{
-		Name:               "lt5",
-		TestObjectProtocol: "HTTP",
-		TestInterval:       40,
-		TestTimeout:        30.0,
-	}).Once()
-
+	mockNewProperty(client, "tfexample_prop_1")
+	mockNewTrafficTarget(client, 3)
+	mockNewLivenessTest(client, "lt5", "HTTP", "/junk", 40, 80, 30.0)
+	// mock.AnythingOfType *gtm.Property is used is those mock calls as there are too many different test cases to mock
+	// each one and for those test it's not important, since we are only checking the diff
 	client.On("CreateProperty", mock.Anything, mock.AnythingOfType("*gtm.Property"), mock.AnythingOfType("string")).Return(&gtm.PropertyResponse{
-		Resource: &prop,
+		Resource: getBasicProperty(),
 		Status:   &pendingResponseStatus,
 	}, nil).Run(func(args mock.Arguments) {
 		getPropertyCall.ReturnArguments = mock.Arguments{args.Get(1).(*gtm.Property), nil}
 	})
-
 	// delete
 	client.On("DeleteProperty",
 		mock.Anything,
 		mock.AnythingOfType("*gtm.Property"),
-		mock.AnythingOfType("string"),
+		"gtm_terra_testdomain.akadns.net",
 	).Return(&completeResponseStatus, nil)
 
 	return client
+}
+
+func mockNewProperty(client *gtm.Mock, propertyName string) {
+	client.On("NewProperty",
+		mock.Anything,
+		propertyName,
+	).Return(&gtm.Property{
+		Name: propertyName,
+	}).Once()
+}
+
+func mockNewTrafficTarget(client *gtm.Mock, times int) {
+	client.On("NewTrafficTarget",
+		mock.Anything,
+	).Return(&gtm.TrafficTarget{}).Times(times)
+}
+
+func mockNewStaticRRSet(client *gtm.Mock) {
+	client.On("NewStaticRRSet",
+		mock.Anything,
+	).Return(&gtm.StaticRRSet{}).Once()
+}
+
+func mockNewLivenessTest(client *gtm.Mock, name, protocol, object string, interval, port int, timeout float32) {
+	client.On("NewLivenessTest",
+		mock.Anything,
+		name,
+		protocol,
+		interval,
+		timeout,
+	).Return(&gtm.LivenessTest{
+		Name:               name,
+		TestObjectProtocol: protocol,
+		TestInterval:       interval,
+		TestTimeout:        timeout,
+		TestObjectPort:     port,
+		TestObject:         object,
+	}).Once()
+}
+
+func mockCreateProperty(client *gtm.Mock, property *gtm.Property, domain string) {
+	resp := gtm.PropertyResponse{}
+	resp.Resource = property
+	resp.Status = &pendingResponseStatus
+	client.On("CreateProperty",
+		mock.Anything,
+		property,
+		domain,
+	).Return(&resp, nil).Once()
+}
+
+func mockGetProperty(client *gtm.Mock, property *gtm.Property, propertyName, domain string, times int) {
+	client.On("GetProperty",
+		mock.Anything,
+		propertyName,
+		domain,
+	).Return(property, nil).Times(times)
+}
+
+func mockUpdateProperty(client *gtm.Mock, property *gtm.Property, domain string) {
+	client.On("UpdateProperty",
+		mock.Anything,
+		property,
+		domain,
+	).Return(&completeResponseStatus, nil).Once()
+}
+
+func mockGetDomainStatus(client *gtm.Mock, domain string, times int) {
+	client.On("GetDomainStatus",
+		mock.Anything,
+		domain,
+	).Return(&completeResponseStatus, nil).Times(times)
+}
+
+func mockDeleteProperty(client *gtm.Mock, property *gtm.Property, domain string) {
+	client.On("DeleteProperty",
+		mock.Anything,
+		property,
+		domain,
+	).Return(&completeResponseStatus, nil).Once()
 }

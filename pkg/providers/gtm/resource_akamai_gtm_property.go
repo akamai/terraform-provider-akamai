@@ -491,9 +491,9 @@ func resourceGTMv1PropertyCreate(ctx context.Context, d *schema.ResourceData, m 
 	}
 
 	// Give terraform the ID. Format domain::property
-	propertyID := fmt.Sprintf("%s:%s", domain, cStatus.Resource.Name)
-	logger.Debugf("Generated Property resource ID: %s", propertyID)
-	d.SetId(propertyID)
+	propertyResourceID := fmt.Sprintf("%s:%s", domain, cStatus.Resource.Name)
+	logger.Debugf("Generated Property resource ID: %s", propertyResourceID)
+	d.SetId(propertyResourceID)
 	return resourceGTMv1PropertyRead(ctx, d, m)
 
 }
