@@ -14,7 +14,7 @@ import (
 var (
 	prop = gtm.Property{
 		BackupCName:            "",
-		BackupIp:               "",
+		BackupIP:               "",
 		BalanceByDownloadScore: false,
 		CName:                  "www.boo.wow",
 		Comments:               "",
@@ -25,7 +25,7 @@ var (
 		HealthMax:              0,
 		HealthMultiplier:       0,
 		HealthThreshold:        0,
-		Ipv6:                   false,
+		IPv6:                   false,
 		LastModified:           "2019-04-25T14:53:12.000+00:00",
 		Links: []*gtm.Link{
 			{
@@ -36,14 +36,14 @@ var (
 		LivenessTests: []*gtm.LivenessTest{
 			{
 				DisableNonstandardPortWarning: false,
-				HttpError3xx:                  true,
-				HttpError4xx:                  true,
-				HttpError5xx:                  true,
+				HTTPError3xx:                  true,
+				HTTPError4xx:                  true,
+				HTTPError5xx:                  true,
 				Name:                          "health check",
 				RequestString:                 "",
 				ResponseString:                "",
-				SslClientCertificate:          "",
-				SslClientPrivateKey:           "",
+				SSLClientCertificate:          "",
+				SSLClientPrivateKey:           "",
 				TestInterval:                  60,
 				TestObject:                    "/status",
 				TestObjectPassword:            "",
@@ -63,7 +63,7 @@ var (
 		StickinessBonusPercentage: 50,
 		TrafficTargets: []*gtm.TrafficTarget{
 			{
-				DatacenterId: 3131,
+				DatacenterID: 3131,
 				Enabled:      true,
 				HandoutCName: "",
 				Servers: []string{
@@ -80,7 +80,7 @@ var (
 
 	prop2 = gtm.Property{
 		BackupCName:            "",
-		BackupIp:               "",
+		BackupIP:               "",
 		BalanceByDownloadScore: false,
 		CName:                  "www.boo.wow",
 		Comments:               "",
@@ -91,7 +91,7 @@ var (
 		HealthMax:              0,
 		HealthMultiplier:       0,
 		HealthThreshold:        0,
-		Ipv6:                   false,
+		IPv6:                   false,
 		LastModified:           "2019-04-25T14:53:12.000+00:00",
 		Links: []*gtm.Link{
 			{
@@ -102,14 +102,14 @@ var (
 		LivenessTests: []*gtm.LivenessTest{
 			{
 				DisableNonstandardPortWarning: false,
-				HttpError3xx:                  true,
-				HttpError4xx:                  true,
-				HttpError5xx:                  true,
+				HTTPError3xx:                  true,
+				HTTPError4xx:                  true,
+				HTTPError5xx:                  true,
 				Name:                          "health check",
 				RequestString:                 "",
 				ResponseString:                "",
-				SslClientCertificate:          "",
-				SslClientPrivateKey:           "",
+				SSLClientCertificate:          "",
+				SSLClientPrivateKey:           "",
 				TestInterval:                  60,
 				TestObject:                    "/status",
 				TestObjectPassword:            "",
@@ -129,7 +129,7 @@ var (
 		StickinessBonusPercentage: 50,
 		TrafficTargets: []*gtm.TrafficTarget{
 			{
-				DatacenterId: 3131,
+				DatacenterID: 3131,
 				Enabled:      true,
 				HandoutCName: "",
 				Servers: []string{
@@ -147,7 +147,7 @@ var (
 	propertyResourceName = "akamai_gtm_property.tfexample_prop_1"
 )
 
-func TestResGtmProperty(t *testing.T) {
+func TestResGTMProperty(t *testing.T) {
 
 	t.Run("create property", func(t *testing.T) {
 		client := &gtm.Mock{}

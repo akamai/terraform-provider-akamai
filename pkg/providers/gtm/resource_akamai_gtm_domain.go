@@ -639,7 +639,7 @@ func populateDomainObject(d *schema.ResourceData, dom *gtm.Domain, m interface{}
 	}
 	vstr, err = tf.GetStringValue("default_ssl_client_private_key", d)
 	if err == nil || d.HasChange("default_ssl_client_private_key") {
-		dom.DefaultSslClientPrivateKey = vstr
+		dom.DefaultSSLClientPrivateKey = vstr
 	}
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		logger.Errorf("populateResourceObject() default_ssl_client_private_key failed: %v", err.Error())
@@ -660,7 +660,7 @@ func populateDomainObject(d *schema.ResourceData, dom *gtm.Domain, m interface{}
 		dom.MaxTestTimeout = vfloat
 	}
 	if cnameCoalescingEnabled, err := tf.GetBoolValue("cname_coalescing_enabled", d); err == nil {
-		dom.CnameCoalescingEnabled = cnameCoalescingEnabled
+		dom.CNameCoalescingEnabled = cnameCoalescingEnabled
 	}
 	vfloat, err = tf.GetFloat64Value("default_health_multiplier", d)
 	if err == nil {
@@ -704,7 +704,7 @@ func populateDomainObject(d *schema.ResourceData, dom *gtm.Domain, m interface{}
 	}
 	vstr, err = tf.GetStringValue("default_ssl_client_certificate", d)
 	if err == nil || d.HasChange("default_ssl_client_certificate") {
-		dom.DefaultSslClientCertificate = vstr
+		dom.DefaultSSLClientCertificate = vstr
 	}
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		logger.Errorf("populateResourceObject() default_ssl_client_certificate failed: %v", err.Error())
@@ -741,10 +741,10 @@ func populateTerraformState(d *schema.ResourceData, dom *gtm.Domain, m interface
 		"map_update_interval":             dom.MapUpdateInterval,
 		"max_properties":                  dom.MaxProperties,
 		"max_resources":                   dom.MaxResources,
-		"default_ssl_client_private_key":  dom.DefaultSslClientPrivateKey,
+		"default_ssl_client_private_key":  dom.DefaultSSLClientPrivateKey,
 		"default_error_penalty":           dom.DefaultErrorPenalty,
 		"max_test_timeout":                dom.MaxTestTimeout,
-		"cname_coalescing_enabled":        dom.CnameCoalescingEnabled,
+		"cname_coalescing_enabled":        dom.CNameCoalescingEnabled,
 		"default_health_multiplier":       dom.DefaultHealthMultiplier,
 		"servermonitor_pool":              dom.ServermonitorPool,
 		"load_feedback":                   dom.LoadFeedback,
@@ -754,7 +754,7 @@ func populateTerraformState(d *schema.ResourceData, dom *gtm.Domain, m interface
 		"comment":                         dom.ModificationComments,
 		"min_test_interval":               dom.MinTestInterval,
 		"ping_packet_size":                dom.PingPacketSize,
-		"default_ssl_client_certificate":  dom.DefaultSslClientCertificate,
+		"default_ssl_client_certificate":  dom.DefaultSSLClientCertificate,
 		"end_user_mapping_enabled":        dom.EndUserMappingEnabled} {
 		// walk through all state elements
 		err := d.Set(stateKey, stateValue)

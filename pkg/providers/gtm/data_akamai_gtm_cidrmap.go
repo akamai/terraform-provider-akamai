@@ -13,11 +13,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
-type cidrmapDataSource struct {
+type cidrMapDataSource struct {
 	meta meta.Meta
 }
 
-type cidrmapDataSourceModel struct {
+type cidrMapDataSourceModel struct {
 	ID                types.String        `tfsdk:"id"`
 	Domain            types.String        `tfsdk:"domain"`
 	Name              types.String        `tfsdk:"map_name"`
@@ -27,18 +27,18 @@ type cidrmapDataSourceModel struct {
 }
 
 var (
-	_ datasource.DataSource              = &cidrmapDataSource{}
-	_ datasource.DataSourceWithConfigure = &cidrmapDataSource{}
+	_ datasource.DataSource              = &cidrMapDataSource{}
+	_ datasource.DataSourceWithConfigure = &cidrMapDataSource{}
 )
 
-// NewGTMCidrmapDataSource returns a new GTM cidrmap data source
-func NewGTMCidrmapDataSource() datasource.DataSource { return &cidrmapDataSource{} }
+// NewGTMCIDRMapDataSource returns a new GTM CIDRMap data source
+func NewGTMCIDRMapDataSource() datasource.DataSource { return &cidrMapDataSource{} }
 
-func (d *cidrmapDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, response *datasource.MetadataResponse) {
+func (d *cidrMapDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, response *datasource.MetadataResponse) {
 	response.TypeName = "akamai_gtm_cidrmap"
 }
 
-func (d *cidrmapDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+func (d *cidrMapDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -54,7 +54,7 @@ func (d *cidrmapDataSource) Configure(_ context.Context, req datasource.Configur
 }
 
 var (
-	cidrmapBlocks = map[string]schema.Block{
+	cidrMapBlocks = map[string]schema.Block{
 		"assignments": schema.ListNestedBlock{
 			Description: "Contains information about the CIDR zone groupings of CIDR blocks.",
 			NestedObject: schema.NestedBlockObject{
@@ -106,7 +106,7 @@ var (
 	}
 )
 
-func (d *cidrmapDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+func (d *cidrMapDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "GTM CIDR map data source.",
 		Attributes: map[string]schema.Attribute{
@@ -124,14 +124,14 @@ func (d *cidrmapDataSource) Schema(_ context.Context, _ datasource.SchemaRequest
 				Description: "A descriptive label for the CIDR map.",
 			},
 		},
-		Blocks: cidrmapBlocks,
+		Blocks: cidrMapBlocks,
 	}
 }
 
-func (d *cidrmapDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+func (d *cidrMapDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	tflog.Debug(ctx, "GTM Cidrmap DataSource Read")
 
-	var data cidrmapDataSourceModel
+	var data cidrMapDataSourceModel
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -139,7 +139,7 @@ func (d *cidrmapDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	}
 
 	client := Client(d.meta)
-	cidrMap, err := client.GetCidrMap(ctx, data.Name.ValueString(), data.Domain.ValueString())
+	cidrMap, err := client.GetCIDRMap(ctx, data.Name.ValueString(), data.Domain.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("fetching GTM CIDRmap failed: ", err.Error())
 		return
@@ -154,11 +154,11 @@ func (d *cidrmapDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (m *cidrmapDataSourceModel) setAttributes(ctx context.Context, cidrmap *gtm.CidrMap) diag.Diagnostics {
-	m.Name = types.StringValue(cidrmap.Name)
-	m.setDefaultDatacenter(cidrmap.DefaultDatacenter)
-	m.setLinks(cidrmap.Links)
-	diags := m.setAssignments(ctx, cidrmap.Assignments)
+func (m *cidrMapDataSourceModel) setAttributes(ctx context.Context, cidrMap *gtm.CIDRMap) diag.Diagnostics {
+	m.Name = types.StringValue(cidrMap.Name)
+	m.setDefaultDatacenter(cidrMap.DefaultDatacenter)
+	m.setLinks(cidrMap.Links)
+	diags := m.setAssignments(ctx, cidrMap.Assignments)
 	if diags.HasError() {
 		return diags
 	}
@@ -167,14 +167,14 @@ func (m *cidrmapDataSourceModel) setAttributes(ctx context.Context, cidrmap *gtm
 	return nil
 }
 
-func (m *cidrmapDataSourceModel) setDefaultDatacenter(b *gtm.DatacenterBase) {
+func (m *cidrMapDataSourceModel) setDefaultDatacenter(b *gtm.DatacenterBase) {
 	m.DefaultDatacenter = &defaultDatacenter{
-		DatacenterID: types.Int64Value(int64(b.DatacenterId)),
+		DatacenterID: types.Int64Value(int64(b.DatacenterID)),
 		Nickname:     types.StringValue(b.Nickname),
 	}
 }
 
-func (m *cidrmapDataSourceModel) setLinks(links []*gtm.Link) {
+func (m *cidrMapDataSourceModel) setLinks(links []*gtm.Link) {
 	for _, l := range links {
 		linkObj := link{
 			Rel:  types.StringValue(l.Rel),
@@ -185,14 +185,14 @@ func (m *cidrmapDataSourceModel) setLinks(links []*gtm.Link) {
 	}
 }
 
-func (m *cidrmapDataSourceModel) setAssignments(ctx context.Context, assignments []*gtm.CidrAssignment) diag.Diagnostics {
+func (m *cidrMapDataSourceModel) setAssignments(ctx context.Context, assignments []*gtm.CIDRAssignment) diag.Diagnostics {
 	for _, a := range assignments {
 		blocks, diags := types.SetValueFrom(ctx, types.StringType, a.Blocks)
 		if diags.HasError() {
 			return diags
 		}
 		assignmentObj := cidrMapAssignment{
-			DatacenterID: types.Int64Value(int64(a.DatacenterId)),
+			DatacenterID: types.Int64Value(int64(a.DatacenterID)),
 			Nickname:     types.StringValue(a.Nickname),
 			Blocks:       blocks,
 		}

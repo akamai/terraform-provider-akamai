@@ -14,7 +14,7 @@ func TestAccDataSourceGTMDefaultDatacenter_basic(t *testing.T) {
 		client := &gtm.Mock{}
 
 		dc := gtm.Datacenter{
-			DatacenterId: 1000,
+			DatacenterID: 1000,
 		}
 
 		client.On("CreateMapsDefaultDatacenter",

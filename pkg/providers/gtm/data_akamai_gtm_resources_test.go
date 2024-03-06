@@ -40,7 +40,7 @@ func TestDataGTMResources(t *testing.T) {
 						},
 						},
 						ResourceInstances: []*gtm.ResourceInstance{{
-							DatacenterId:         3131,
+							DatacenterID:         3131,
 							UseDefaultLoadObject: false,
 							LoadObject: gtm.LoadObject{
 								LoadObject:     "/test1",
@@ -67,7 +67,7 @@ func TestDataGTMResources(t *testing.T) {
 						},
 						},
 						ResourceInstances: []*gtm.ResourceInstance{{
-							DatacenterId:         3132,
+							DatacenterID:         3132,
 							UseDefaultLoadObject: false,
 							LoadObject: gtm.LoadObject{
 								LoadObject:     "/test2",

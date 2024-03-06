@@ -14,14 +14,14 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func resourceGTMv1Geomap() *schema.Resource {
+func resourceGTMv1GeoMap() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceGTMv1GeomapCreate,
-		ReadContext:   resourceGTMv1GeomapRead,
-		UpdateContext: resourceGTMv1GeomapUpdate,
-		DeleteContext: resourceGTMv1GeomapDelete,
+		CreateContext: resourceGTMv1GeoMapCreate,
+		ReadContext:   resourceGTMv1GeoMapRead,
+		UpdateContext: resourceGTMv1GeoMapUpdate,
+		DeleteContext: resourceGTMv1GeoMapDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourceGTMv1GeomapImport,
+			State: resourceGTMv1GeoMapImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"domain": {
@@ -81,10 +81,9 @@ func resourceGTMv1Geomap() *schema.Resource {
 	}
 }
 
-// Create a new GTM GeoMap
-func resourceGTMv1GeomapCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceGTMv1GeoMapCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	logger := meta.Log("Akamai GTM", "resourceGTMv1GeomapCreate")
+	logger := meta.Log("Akamai GTM", "resourceGTMv1GeoMapCreate")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
 		ctx,
@@ -165,14 +164,12 @@ func resourceGTMv1GeomapCreate(ctx context.Context, d *schema.ResourceData, m in
 	geoMapID := fmt.Sprintf("%s:%s", domain, cStatus.Resource.Name)
 	logger.Debugf("Generated geoMap resource ID: %s", geoMapID)
 	d.SetId(geoMapID)
-	return resourceGTMv1GeomapRead(ctx, d, m)
-
+	return resourceGTMv1GeoMapRead(ctx, d, m)
 }
 
-// read geoMap. updates state with entire API result configuration.
-func resourceGTMv1GeomapRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceGTMv1GeoMapRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	logger := meta.Log("Akamai GTM", "resourceGTMv1GeomapRead")
+	logger := meta.Log("Akamai GTM", "resourceGTMv1GeoMapRead")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
 		ctx,
@@ -201,10 +198,9 @@ func resourceGTMv1GeomapRead(ctx context.Context, d *schema.ResourceData, m inte
 	return nil
 }
 
-// Update GTM GeoMap
-func resourceGTMv1GeomapUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceGTMv1GeoMapUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	logger := meta.Log("Akamai GTM", "resourceGTMv1GeomapUpdate")
+	logger := meta.Log("Akamai GTM", "resourceGTMv1GeoMapUpdate")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
 		ctx,
@@ -274,13 +270,12 @@ func resourceGTMv1GeomapUpdate(ctx context.Context, d *schema.ResourceData, m in
 
 	}
 
-	return resourceGTMv1GeomapRead(ctx, d, m)
+	return resourceGTMv1GeoMapRead(ctx, d, m)
 }
 
-// Import GTM GeoMap.
-func resourceGTMv1GeomapImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+func resourceGTMv1GeoMapImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	meta := meta.Must(m)
-	logger := meta.Log("Akamai GTM", "resourceGTMv1GeomapImport")
+	logger := meta.Log("Akamai GTM", "resourceGTMv1GeoMapImport")
 	// create a context with logging for api calls
 	ctx := context.Background()
 	ctx = session.ContextWithOptions(
@@ -312,10 +307,9 @@ func resourceGTMv1GeomapImport(d *schema.ResourceData, m interface{}) ([]*schema
 	return []*schema.ResourceData{d}, nil
 }
 
-// Delete GTM GeoMap.
-func resourceGTMv1GeomapDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceGTMv1GeoMapDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	logger := meta.Log("Akamai GTM", "resourceGTMv1GeomapDelete")
+	logger := meta.Log("Akamai GTM", "resourceGTMv1GeoMapDelete")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
 		ctx,
@@ -381,7 +375,6 @@ func resourceGTMv1GeomapDelete(ctx context.Context, d *schema.ResourceData, m in
 		}
 	}
 
-	// if successful ....
 	d.SetId("")
 	return nil
 }
@@ -401,7 +394,6 @@ func populateNewGeoMapObject(ctx context.Context, meta meta.Meta, d *schema.Reso
 
 // Populate existing geoMap object from geoMap data
 func populateGeoMapObject(d *schema.ResourceData, geo *gtm.GeoMap, m interface{}) {
-
 	if v, err := tf.GetStringValue("name", d); err == nil {
 		geo.Name = v
 	}
@@ -438,7 +430,7 @@ func populateGeoAssignmentsObject(d *schema.ResourceData, geo *gtm.GeoMap, m int
 				continue
 			}
 			geoAssignment := gtm.GeoAssignment{}
-			geoAssignment.DatacenterId = geoMap["datacenter_id"].(int)
+			geoAssignment.DatacenterID = geoMap["datacenter_id"].(int)
 			geoAssignment.Nickname = geoMap["nickname"].(string)
 			if geoMap["countries"] != nil {
 				countries, ok := geoMap["countries"].(*schema.Set)
@@ -465,7 +457,7 @@ func populateTerraformGeoAssignmentsState(d *schema.ResourceData, geo *gtm.GeoMa
 	objectInventory := make(map[int]*gtm.GeoAssignment, len(geo.Assignments))
 	if len(geo.Assignments) > 0 {
 		for _, aObj := range geo.Assignments {
-			objectInventory[aObj.DatacenterId] = aObj
+			objectInventory[aObj.DatacenterID] = aObj
 		}
 	}
 	aStateList, _ := tf.GetInterfaceArrayValue("assignment", d)
@@ -477,7 +469,7 @@ func populateTerraformGeoAssignmentsState(d *schema.ResourceData, geo *gtm.GeoMa
 			logger.Warnf("Geo Assignment %d NOT FOUND in returned GTM Object", a["datacenter_id"])
 			continue
 		}
-		a["datacenter_id"] = aObject.DatacenterId
+		a["datacenter_id"] = aObject.DatacenterID
 		a["nickname"] = aObject.Nickname
 		countries, ok := a["countries"].(*schema.Set)
 		if !ok {
@@ -492,7 +484,7 @@ func populateTerraformGeoAssignmentsState(d *schema.ResourceData, geo *gtm.GeoMa
 		// Objects not in the state yet. Add. Unfortunately, they not align with instance indices in the config
 		for _, maObj := range objectInventory {
 			aNew := map[string]interface{}{
-				"datacenter_id": maObj.DatacenterId,
+				"datacenter_id": maObj.DatacenterID,
 				"nickname":      maObj.Nickname,
 				"countries":     maObj.Countries,
 			}
@@ -515,12 +507,12 @@ func populateGeoDefaultDCObject(d *schema.ResourceData, geo *gtm.GeoMap, m inter
 		geoDefaultDCObj := gtm.DatacenterBase{} // create new object
 		geoMap := geoDefaultDCList[0].(map[string]interface{})
 		if geoMap["datacenter_id"] != nil && geoMap["datacenter_id"].(int) != 0 {
-			geoDefaultDCObj.DatacenterId = geoMap["datacenter_id"].(int)
+			geoDefaultDCObj.DatacenterID = geoMap["datacenter_id"].(int)
 			geoDefaultDCObj.Nickname = geoMap["nickname"].(string)
 		} else {
 			logger.Infof("No Default Datacenter specified")
 			var nilInt int
-			geoDefaultDCObj.DatacenterId = nilInt
+			geoDefaultDCObj.DatacenterID = nilInt
 			geoDefaultDCObj.Nickname = ""
 		}
 		geo.DefaultDatacenter = &geoDefaultDCObj
@@ -534,7 +526,7 @@ func populateTerraformGeoDefaultDCState(d *schema.ResourceData, geo *gtm.GeoMap,
 
 	ddcListNew := make([]interface{}, 1)
 	ddcNew := map[string]interface{}{
-		"datacenter_id": geo.DefaultDatacenter.DatacenterId,
+		"datacenter_id": geo.DefaultDatacenter.DatacenterID,
 		"nickname":      geo.DefaultDatacenter.Nickname,
 	}
 	ddcListNew[0] = ddcNew

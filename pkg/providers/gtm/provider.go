@@ -41,8 +41,8 @@ func (p *Subprovider) FrameworkResources() []func() resource.Resource {
 // FrameworkDataSources returns the gtm data sources implemented using terraform-plugin-framework
 func (p *Subprovider) FrameworkDataSources() []func() datasource.DataSource {
 	return []func() datasource.DataSource{
-		NewGTMAsmapDataSource,
-		NewGTMCidrmapDataSource,
+		NewGTMASMapDataSource,
+		NewGTMCIDRMapDataSource,
 		NewGTMDomainDataSource,
 		NewGTMDomainsDataSource,
 		NewGTMResourceDataSource,
@@ -57,9 +57,9 @@ func (p *Subprovider) SDKResources() map[string]*schema.Resource {
 		"akamai_gtm_property":   resourceGTMv1Property(),
 		"akamai_gtm_datacenter": resourceGTMv1Datacenter(),
 		"akamai_gtm_resource":   resourceGTMv1Resource(),
-		"akamai_gtm_asmap":      resourceGTMv1ASmap(),
-		"akamai_gtm_geomap":     resourceGTMv1Geomap(),
-		"akamai_gtm_cidrmap":    resourceGTMv1Cidrmap(),
+		"akamai_gtm_asmap":      resourceGTMv1ASMap(),
+		"akamai_gtm_geomap":     resourceGTMv1GeoMap(),
+		"akamai_gtm_cidrmap":    resourceGTMv1CIDRMap(),
 	}
 }
 

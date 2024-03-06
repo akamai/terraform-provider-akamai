@@ -229,7 +229,7 @@ func resourceGTMv1DatacenterCreate(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	// Give terraform the ID. Format domain::dcid
-	datacenterID := fmt.Sprintf("%s:%d", domain, cStatus.Resource.DatacenterId)
+	datacenterID := fmt.Sprintf("%s:%d", domain, cStatus.Resource.DatacenterID)
 	logger.Debugf("Generated DC resource ID: %s", datacenterID)
 	d.SetId(datacenterID)
 	return resourceGTMv1DatacenterRead(ctx, d, m)
@@ -598,7 +598,7 @@ func populateDatacenterObject(d *schema.ResourceData, dc *gtm.Datacenter, m inte
 	}
 	vint, err = tf.GetIntValue("datacenter_id", d)
 	if err == nil {
-		dc.DatacenterId = vint
+		dc.DatacenterID = vint
 	}
 	vint, err = tf.GetIntValue("score_penalty", d)
 	if err == nil {
@@ -651,7 +651,7 @@ func populateTerraformDCState(d *schema.ResourceData, dc *gtm.Datacenter, m inte
 	// walk through all state elements
 	for stateKey, stateValue := range map[string]interface{}{
 		"nickname":                          dc.Nickname,
-		"datacenter_id":                     dc.DatacenterId,
+		"datacenter_id":                     dc.DatacenterID,
 		"city":                              dc.City,
 		"clone_of":                          dc.CloneOf,
 		"cloud_server_host_header_override": dc.CloudServerHostHeaderOverride,

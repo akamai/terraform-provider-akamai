@@ -16,7 +16,7 @@ var dc = gtm.Datacenter{
 	CloudServerTargeting: false,
 	Continent:            "EU",
 	Country:              "IS",
-	DatacenterId:         3132,
+	DatacenterID:         3132,
 	DefaultLoadObject: &gtm.LoadObject{
 		LoadObject:     "/test",
 		LoadObjectPort: 80,
@@ -35,7 +35,7 @@ var dc = gtm.Datacenter{
 	Virtual:         true,
 }
 
-func TestResGtmDatacenter(t *testing.T) {
+func TestResGTMDatacenter(t *testing.T) {
 
 	t.Run("create datacenter", func(t *testing.T) {
 		client := &gtm.Mock{}

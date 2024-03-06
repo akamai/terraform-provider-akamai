@@ -24,7 +24,7 @@ func TestDataGtmDomain(t *testing.T) {
 			init: func(m *gtm.Mock) {
 				m.On("GetDomain", mock.Anything, "test.cli.devexp-terraform.akadns.net").Return(&gtm.Domain{
 					Name:                         "test.cli.devexp-terraform.akadns.net",
-					CnameCoalescingEnabled:       false,
+					CNameCoalescingEnabled:       false,
 					DefaultErrorPenalty:          75,
 					DefaultHealthMax:             0,
 					DefaultHealthMultiplier:      0,
@@ -37,7 +37,7 @@ func TestDataGtmDomain(t *testing.T) {
 					LastModified:                 "2023-01-25T10:21:45.000+00:00",
 					MaxTTL:                       172800,
 					Status: &gtm.ResponseStatus{
-						ChangeId:              "ca7e5b1d-1303-42d3-b6c0-8cb62ae849d4",
+						ChangeID:              "ca7e5b1d-1303-42d3-b6c0-8cb62ae849d4",
 						Message:               "ERROR: zone is child of existing GTM domain devexp-terraform.akadns.net, which is not allowed",
 						PassingValidation:     false,
 						PropagationStatus:     "DENIED",
@@ -51,17 +51,17 @@ func TestDataGtmDomain(t *testing.T) {
 						UpperBound:      100,
 					},
 					},
-					AsMaps: []*gtm.AsMap{{
+					ASMaps: []*gtm.ASMap{{
 						DefaultDatacenter: &gtm.DatacenterBase{
-							DatacenterId: 3133,
+							DatacenterID: 3133,
 							Nickname:     "Default (all others)",
 						},
-						Assignments: []*gtm.AsAssignment{{
+						Assignments: []*gtm.ASAssignment{{
 							DatacenterBase: gtm.DatacenterBase{
 								Nickname:     "New Zone 1",
-								DatacenterId: 3133,
+								DatacenterID: 3133,
 							},
-							AsNumbers: []int64{
+							ASNumbers: []int64{
 								12222,
 								17334,
 								16702,
@@ -74,15 +74,15 @@ func TestDataGtmDomain(t *testing.T) {
 						}},
 					},
 					},
-					CidrMaps: []*gtm.CidrMap{{
+					CIDRMaps: []*gtm.CIDRMap{{
 						DefaultDatacenter: &gtm.DatacenterBase{
-							DatacenterId: 3133,
+							DatacenterID: 3133,
 							Nickname:     "All Other CIDR Blocks",
 						},
-						Assignments: []*gtm.CidrAssignment{{
+						Assignments: []*gtm.CIDRAssignment{{
 							DatacenterBase: gtm.DatacenterBase{
 								Nickname:     "New Zone 1",
-								DatacenterId: 3133,
+								DatacenterID: 3133,
 							},
 							Blocks: []string{
 								"1.2.3.4/22",
@@ -97,13 +97,13 @@ func TestDataGtmDomain(t *testing.T) {
 					},
 					GeographicMaps: []*gtm.GeoMap{{
 						DefaultDatacenter: &gtm.DatacenterBase{
-							DatacenterId: 3131,
+							DatacenterID: 3131,
 							Nickname:     "terraform_datacenter_test",
 						},
 						Assignments: []*gtm.GeoAssignment{{
 							DatacenterBase: gtm.DatacenterBase{
 								Nickname:     "terraform_datacenter_test_1",
-								DatacenterId: 3133,
+								DatacenterID: 3133,
 							},
 							Countries: []string{
 								"GB",
@@ -137,11 +137,11 @@ func TestDataGtmDomain(t *testing.T) {
 						LivenessTests: []*gtm.LivenessTest{{
 							AnswersRequired:               false,
 							DisableNonstandardPortWarning: false,
-							HttpError3xx:                  true,
+							HTTPError3xx:                  true,
 							TestObjectProtocol:            "HTTP",
 						}},
 						TrafficTargets: []*gtm.TrafficTarget{{
-							DatacenterId: 3131,
+							DatacenterID: 3131,
 							Enabled:      true,
 							Servers: []string{
 								"1.2.3.4",

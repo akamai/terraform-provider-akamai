@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestDataGTMASmap(t *testing.T) {
+func TestDataGTMASMap(t *testing.T) {
 	tests := map[string]struct {
 		givenTF            string
 		init               func(*gtm.Mock)
@@ -21,18 +21,18 @@ func TestDataGTMASmap(t *testing.T) {
 		"happy path": {
 			givenTF: "valid.tf",
 			init: func(m *gtm.Mock) {
-				m.On("GetAsMap", mock.Anything, "map1", "test.domain.net").Return(&gtm.AsMap{
+				m.On("GetASMap", mock.Anything, "map1", "test.domain.net").Return(&gtm.ASMap{
 					Name: "TestName",
 					DefaultDatacenter: &gtm.DatacenterBase{
 						Nickname:     "TestDefaultDatacenterNickname",
-						DatacenterId: 1,
+						DatacenterID: 1,
 					},
-					Assignments: []*gtm.AsAssignment{{
+					Assignments: []*gtm.ASAssignment{{
 						DatacenterBase: gtm.DatacenterBase{
 							Nickname:     "TestAssignmentNickname",
-							DatacenterId: 1,
+							DatacenterID: 1,
 						},
-						AsNumbers: []int64{
+						ASNumbers: []int64{
 							1,
 							2,
 							3,
@@ -71,7 +71,7 @@ func TestDataGTMASmap(t *testing.T) {
 		"error response from api": {
 			givenTF: "valid.tf",
 			init: func(m *gtm.Mock) {
-				m.On("GetAsMap", mock.Anything, "map1", "test.domain.net").Return(
+				m.On("GetASMap", mock.Anything, "map1", "test.domain.net").Return(
 					nil, fmt.Errorf("test error"))
 			},
 			expectError: regexp.MustCompile("test error"),
@@ -79,13 +79,13 @@ func TestDataGTMASmap(t *testing.T) {
 		"no assignments": {
 			givenTF: "valid.tf",
 			init: func(m *gtm.Mock) {
-				m.On("GetAsMap", mock.Anything, "map1", "test.domain.net").Return(&gtm.AsMap{
+				m.On("GetASMap", mock.Anything, "map1", "test.domain.net").Return(&gtm.ASMap{
 					Name: "TestName",
 					DefaultDatacenter: &gtm.DatacenterBase{
 						Nickname:     "TestDefaultDatacenterNickname",
-						DatacenterId: 1,
+						DatacenterID: 1,
 					},
-					Assignments: []*gtm.AsAssignment{},
+					Assignments: []*gtm.ASAssignment{},
 					Links: []*gtm.Link{{
 						Href: "href.test",
 						Rel:  "TestRel",

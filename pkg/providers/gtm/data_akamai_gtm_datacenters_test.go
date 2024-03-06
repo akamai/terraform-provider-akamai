@@ -163,7 +163,7 @@ var (
 				Links:                         data.links,
 				Longitude:                     data.longitude,
 				Nickname:                      data.nickname,
-				DatacenterId:                  data.datacenterID,
+				DatacenterID:                  data.datacenterID,
 				ScorePenalty:                  data.scorePenalty,
 				ServermonitorPool:             data.serverMonitorPool,
 				StateOrProvince:               data.stateOrProvince,

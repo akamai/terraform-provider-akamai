@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestDataGTMCidrmap(t *testing.T) {
+func TestDataGTMCIDRmap(t *testing.T) {
 	tests := map[string]struct {
 		givenTF            string
 		init               func(mock *gtm.Mock)
@@ -21,16 +21,16 @@ func TestDataGTMCidrmap(t *testing.T) {
 		"happy path": {
 			givenTF: "valid.tf",
 			init: func(m *gtm.Mock) {
-				m.On("GetCidrMap", mock.Anything, "mapTest", "test.cidrmap.domain.net").Return(&gtm.CidrMap{
+				m.On("GetCIDRMap", mock.Anything, "mapTest", "test.cidrmap.domain.net").Return(&gtm.CIDRMap{
 					Name: "TestName",
 					DefaultDatacenter: &gtm.DatacenterBase{
 						Nickname:     "TestNickname",
-						DatacenterId: 1,
+						DatacenterID: 1,
 					},
-					Assignments: []*gtm.CidrAssignment{{
+					Assignments: []*gtm.CIDRAssignment{{
 						DatacenterBase: gtm.DatacenterBase{
 							Nickname:     "TestNicknameAssignments",
-							DatacenterId: 1,
+							DatacenterID: 1,
 						},
 						Blocks: []string{
 							"test1",
@@ -69,7 +69,7 @@ func TestDataGTMCidrmap(t *testing.T) {
 		"error response from api": {
 			givenTF: "valid.tf",
 			init: func(m *gtm.Mock) {
-				m.On("GetCidrMap", mock.Anything, "mapTest", "test.cidrmap.domain.net").Return(
+				m.On("GetCIDRMap", mock.Anything, "mapTest", "test.cidrmap.domain.net").Return(
 					nil, fmt.Errorf("error"))
 			},
 			expectError: regexp.MustCompile("error"),
@@ -77,13 +77,13 @@ func TestDataGTMCidrmap(t *testing.T) {
 		"no assignments": {
 			givenTF: "valid.tf",
 			init: func(m *gtm.Mock) {
-				m.On("GetCidrMap", mock.Anything, "mapTest", "test.cidrmap.domain.net").Return(&gtm.CidrMap{
+				m.On("GetCIDRMap", mock.Anything, "mapTest", "test.cidrmap.domain.net").Return(&gtm.CIDRMap{
 					Name: "TestName",
 					DefaultDatacenter: &gtm.DatacenterBase{
 						Nickname:     "TestNickname",
-						DatacenterId: 1,
+						DatacenterID: 1,
 					},
-					Assignments: []*gtm.CidrAssignment{},
+					Assignments: []*gtm.CIDRAssignment{},
 					Links: []*gtm.Link{{
 						Rel:  "TestRel",
 						Href: "TestHref",

@@ -726,7 +726,7 @@ func populatePropertyObject(ctx context.Context, d *schema.ResourceData, prop *g
 	}
 
 	if ipv6, err := tf.GetBoolValue("ipv6", d); err == nil {
-		prop.Ipv6 = ipv6
+		prop.IPv6 = ipv6
 	}
 	if uct, err := tf.GetBoolValue("use_computed_targets", d); err == nil {
 		prop.UseComputedTargets = uct
@@ -734,7 +734,7 @@ func populatePropertyObject(ctx context.Context, d *schema.ResourceData, prop *g
 
 	vstr, err = tf.GetStringValue("backup_ip", d)
 	if err == nil || d.HasChange("backup_ip") {
-		prop.BackupIp = vstr
+		prop.BackupIP = vstr
 	}
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		logger.Errorf("populateResourceObject() backup_ip failed: %v", err.Error())
@@ -909,13 +909,13 @@ func populateTerraformPropertyState(d *schema.ResourceData, prop *gtm.Property, 
 	for stateKey, stateValue := range map[string]interface{}{
 		"name":                        prop.Name,
 		"type":                        prop.Type,
-		"ipv6":                        prop.Ipv6,
+		"ipv6":                        prop.IPv6,
 		"score_aggregation_type":      prop.ScoreAggregationType,
 		"stickiness_bonus_percentage": prop.StickinessBonusPercentage,
 		"stickiness_bonus_constant":   prop.StickinessBonusConstant,
 		"health_threshold":            prop.HealthThreshold,
 		"use_computed_targets":        prop.UseComputedTargets,
-		"backup_ip":                   prop.BackupIp,
+		"backup_ip":                   prop.BackupIP,
 		"balance_by_download_score":   prop.BalanceByDownloadScore,
 		"unreachable_threshold":       prop.UnreachableThreshold,
 		"min_live_fraction":           prop.MinLiveFraction,
@@ -968,7 +968,7 @@ func populateTrafficTargetObject(ctx context.Context, d *schema.ResourceData, pr
 		for i, v := range traffTargList {
 			ttMap := v.(map[string]interface{})
 			trafficTarget := Client(meta).NewTrafficTarget(ctx) // create new object
-			trafficTarget.DatacenterId = ttMap["datacenter_id"].(int)
+			trafficTarget.DatacenterID = ttMap["datacenter_id"].(int)
 			trafficTarget.Enabled = ttMap["enabled"].(bool)
 			trafficTarget.Weight = ttMap["weight"].(float64)
 			if ttMap["servers"] != nil {
@@ -995,7 +995,7 @@ func populateTerraformTrafficTargetState(d *schema.ResourceData, prop *gtm.Prope
 	objectInventory := make(map[int]*gtm.TrafficTarget, len(prop.TrafficTargets))
 	if len(prop.TrafficTargets) > 0 {
 		for _, aObj := range prop.TrafficTargets {
-			objectInventory[aObj.DatacenterId] = aObj
+			objectInventory[aObj.DatacenterID] = aObj
 		}
 	}
 	ttStateList, _ := tf.GetInterfaceArrayValue("traffic_target", d)
@@ -1007,7 +1007,7 @@ func populateTerraformTrafficTargetState(d *schema.ResourceData, prop *gtm.Prope
 			logger.Warnf("Property TrafficTarget %d NOT FOUND in returned GTM Object", tt["datacenter_id"])
 			continue
 		}
-		tt["datacenter_id"] = ttObject.DatacenterId
+		tt["datacenter_id"] = ttObject.DatacenterID
 		tt["enabled"] = ttObject.Enabled
 		tt["weight"] = ttObject.Weight
 		tt["handout_cname"] = ttObject.HandoutCName
@@ -1018,9 +1018,9 @@ func populateTerraformTrafficTargetState(d *schema.ResourceData, prop *gtm.Prope
 	if len(objectInventory) > 0 {
 		// Objects not in the state yet. Add. Unfortunately, they not align with instance indices in the config
 		for _, mttObj := range objectInventory {
-			logger.Debugf("Property TrafficObject NEW State Object: %d", mttObj.DatacenterId)
+			logger.Debugf("Property TrafficObject NEW State Object: %d", mttObj.DatacenterID)
 			ttNew := map[string]interface{}{
-				"datacenter_id": mttObj.DatacenterId,
+				"datacenter_id": mttObj.DatacenterID,
 				"enabled":       mttObj.Enabled,
 				"weight":        mttObj.Weight,
 				"handout_cname": mttObj.HandoutCName,
@@ -1117,14 +1117,14 @@ func populateLivenessTestObject(ctx context.Context, meta meta.Meta, d *schema.R
 			lt.TestObject = v["test_object"].(string)
 			lt.RequestString = v["request_string"].(string)
 			lt.ResponseString = v["response_string"].(string)
-			lt.HttpError3xx = v["http_error3xx"].(bool)
-			lt.HttpError4xx = v["http_error4xx"].(bool)
-			lt.HttpError5xx = v["http_error5xx"].(bool)
+			lt.HTTPError3xx = v["http_error3xx"].(bool)
+			lt.HTTPError4xx = v["http_error4xx"].(bool)
+			lt.HTTPError5xx = v["http_error5xx"].(bool)
 			lt.Disabled = v["disabled"].(bool)
 			lt.TestObjectPassword = v["test_object_password"].(string)
 			lt.TestObjectPort = v["test_object_port"].(int)
-			lt.SslClientPrivateKey = v["ssl_client_private_key"].(string)
-			lt.SslClientCertificate = v["ssl_client_certificate"].(string)
+			lt.SSLClientPrivateKey = v["ssl_client_private_key"].(string)
+			lt.SSLClientCertificate = v["ssl_client_certificate"].(string)
 			lt.DisableNonstandardPortWarning = v["disable_nonstandard_port_warning"].(bool)
 			lt.TestObjectUsername = v["test_object_username"].(string)
 			lt.TimeoutPenalty = v["timeout_penalty"].(float64)
@@ -1133,15 +1133,15 @@ func populateLivenessTestObject(ctx context.Context, meta meta.Meta, d *schema.R
 			lt.RecursionRequested = v["recursion_requested"].(bool)
 			httpHeaderList := v["http_header"].([]interface{})
 			if httpHeaderList != nil {
-				headerObjList := make([]*gtm.HttpHeader, len(httpHeaderList)) // create new object list
+				headerObjList := make([]*gtm.HTTPHeader, len(httpHeaderList)) // create new object list
 				for i, h := range httpHeaderList {
 					recMap := h.(map[string]interface{})
-					record := lt.NewHttpHeader() // create new object
+					record := lt.NewHTTPHeader() // create new object
 					record.Name = recMap["name"].(string)
 					record.Value = recMap["value"].(string)
 					headerObjList[i] = record
 				}
-				lt.HttpHeaders = headerObjList
+				lt.HTTPHeaders = headerObjList
 			}
 			liveTestObjList[i] = lt
 		}
@@ -1176,15 +1176,15 @@ func populateTerraformLivenessTestState(d *schema.ResourceData, prop *gtm.Proper
 		lt["test_object"] = ltObject.TestObject
 		lt["request_string"] = ltObject.RequestString
 		lt["response_string"] = ltObject.ResponseString
-		lt["http_error3xx"] = ltObject.HttpError3xx
-		lt["http_error4xx"] = ltObject.HttpError4xx
-		lt["http_error5xx"] = ltObject.HttpError5xx
+		lt["http_error3xx"] = ltObject.HTTPError3xx
+		lt["http_error4xx"] = ltObject.HTTPError4xx
+		lt["http_error5xx"] = ltObject.HTTPError5xx
 		lt["disabled"] = ltObject.Disabled
 		lt["test_object_protocol"] = ltObject.TestObjectProtocol
 		lt["test_object_password"] = ltObject.TestObjectPassword
 		lt["test_object_port"] = ltObject.TestObjectPort
-		lt["ssl_client_private_key"] = ltObject.SslClientPrivateKey
-		lt["ssl_client_certificate"] = ltObject.SslClientCertificate
+		lt["ssl_client_private_key"] = ltObject.SSLClientPrivateKey
+		lt["ssl_client_certificate"] = ltObject.SSLClientCertificate
 		lt["disable_nonstandard_port_warning"] = ltObject.DisableNonstandardPortWarning
 		lt["test_object_username"] = ltObject.TestObjectUsername
 		lt["test_timeout"] = ltObject.TestTimeout
@@ -1192,8 +1192,8 @@ func populateTerraformLivenessTestState(d *schema.ResourceData, prop *gtm.Proper
 		lt["answers_required"] = ltObject.AnswersRequired
 		lt["resource_type"] = ltObject.ResourceType
 		lt["recursion_requested"] = ltObject.RecursionRequested
-		httpHeaderListNew := make([]interface{}, len(ltObject.HttpHeaders))
-		for i, r := range ltObject.HttpHeaders {
+		httpHeaderListNew := make([]interface{}, len(ltObject.HTTPHeaders))
+		for i, r := range ltObject.HTTPHeaders {
 			httpHeaderNew := map[string]interface{}{
 				"name":  r.Name,
 				"value": r.Value,
@@ -1216,15 +1216,15 @@ func populateTerraformLivenessTestState(d *schema.ResourceData, prop *gtm.Proper
 				"test_object":                      l.TestObject,
 				"request_string":                   l.RequestString,
 				"response_string":                  l.ResponseString,
-				"http_error3xx":                    l.HttpError3xx,
-				"http_error4xx":                    l.HttpError4xx,
-				"http_error5xx":                    l.HttpError5xx,
+				"http_error3xx":                    l.HTTPError3xx,
+				"http_error4xx":                    l.HTTPError4xx,
+				"http_error5xx":                    l.HTTPError5xx,
 				"disabled":                         l.Disabled,
 				"test_object_protocol":             l.TestObjectProtocol,
 				"test_object_password":             l.TestObjectPassword,
 				"test_object_port":                 l.TestObjectPort,
-				"ssl_client_private_key":           l.SslClientPrivateKey,
-				"ssl_client_certificate":           l.SslClientCertificate,
+				"ssl_client_private_key":           l.SSLClientPrivateKey,
+				"ssl_client_certificate":           l.SSLClientCertificate,
 				"disable_nonstandard_port_warning": l.DisableNonstandardPortWarning,
 				"test_object_username":             l.TestObjectUsername,
 				"test_timeout":                     l.TestTimeout,
@@ -1233,8 +1233,8 @@ func populateTerraformLivenessTestState(d *schema.ResourceData, prop *gtm.Proper
 				"resource_type":                    l.ResourceType,
 				"recursion_requested":              l.RecursionRequested,
 			}
-			httpHeaderListNew := make([]interface{}, len(l.HttpHeaders))
-			for i, r := range l.HttpHeaders {
+			httpHeaderListNew := make([]interface{}, len(l.HTTPHeaders))
+			for i, r := range l.HTTPHeaders {
 				httpHeaderNew := map[string]interface{}{
 					"name":  r.Name,
 					"value": r.Value,

@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestResGtmResource(t *testing.T) {
+func TestResGTMResource(t *testing.T) {
 
 	t.Run("create resource", func(t *testing.T) {
 		client := &gtm.Mock{}
@@ -57,7 +57,7 @@ func TestResGtmResource(t *testing.T) {
 		resInstCall.RunFn = func(args mock.Arguments) {
 			resInstCall.ReturnArguments = mock.Arguments{
 				&gtm.ResourceInstance{
-					DatacenterId: args.Int(2),
+					DatacenterID: args.Int(2),
 				},
 			}
 		}
@@ -141,7 +141,7 @@ func TestResGtmResource(t *testing.T) {
 		resInstCall.RunFn = func(args mock.Arguments) {
 			resInstCall.ReturnArguments = mock.Arguments{
 				&gtm.ResourceInstance{
-					DatacenterId: args.Int(2),
+					DatacenterID: args.Int(2),
 				},
 			}
 		}
@@ -195,7 +195,7 @@ func TestResGtmResource(t *testing.T) {
 		resInstCall.RunFn = func(args mock.Arguments) {
 			resInstCall.ReturnArguments = mock.Arguments{
 				&gtm.ResourceInstance{
-					DatacenterId: args.Int(2),
+					DatacenterID: args.Int(2),
 				},
 			}
 		}
@@ -336,7 +336,7 @@ func getGTMResourceMocks() *gtm.Mock {
 	resInstCall.RunFn = func(args mock.Arguments) {
 		resInstCall.ReturnArguments = mock.Arguments{
 			&gtm.ResourceInstance{
-				DatacenterId: args.Int(2),
+				DatacenterID: args.Int(2),
 			},
 		}
 	}
@@ -358,7 +358,7 @@ var (
 		Type:            "XML load object via HTTP",
 		ResourceInstances: []*gtm.ResourceInstance{
 			{
-				DatacenterId:         3131,
+				DatacenterID:         3131,
 				UseDefaultLoadObject: false,
 				LoadObject: gtm.LoadObject{
 					LoadObject:     "/test1",
@@ -367,7 +367,7 @@ var (
 				},
 			},
 			{
-				DatacenterId:         3132,
+				DatacenterID:         3132,
 				UseDefaultLoadObject: false,
 				LoadObject: gtm.LoadObject{
 					LoadObject:     "/test2",
@@ -384,7 +384,7 @@ var (
 		Type:            "XML load object via HTTP",
 		ResourceInstances: []*gtm.ResourceInstance{
 			{
-				DatacenterId:         3131,
+				DatacenterID:         3131,
 				UseDefaultLoadObject: false,
 				LoadObject: gtm.LoadObject{
 					LoadObject:     "/test1",

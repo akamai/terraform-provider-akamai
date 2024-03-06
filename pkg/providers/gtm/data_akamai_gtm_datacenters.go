@@ -169,7 +169,7 @@ func dataGTMDatacentersRead(ctx context.Context, d *schema.ResourceData, m inter
 	datacentersAttrs := make([]interface{}, len(datacenters))
 	for i, dc := range datacenters {
 		dcAttrs := getDatacenterAttributes(dc)
-		dcAttrs["datacenter_id"] = dc.DatacenterId
+		dcAttrs["datacenter_id"] = dc.DatacenterID
 		datacentersAttrs[i] = dcAttrs
 	}
 

@@ -26,7 +26,7 @@ func TestResDnsRecord(t *testing.T) {
 		StatusCode: http.StatusNotFound,
 	}
 
-	// This test peforms a full life-cycle (CRUD) test
+	// This test performs a full life-cycle (CRUD) test
 	t.Run("lifecycle test", func(t *testing.T) {
 		client := &dns.Mock{}
 

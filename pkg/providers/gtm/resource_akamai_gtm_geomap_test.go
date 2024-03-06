@@ -11,9 +11,9 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestResGtmGeomap(t *testing.T) {
+func TestResGTMGeoMap(t *testing.T) {
 	dc := gtm.Datacenter{
-		DatacenterId: geo.DefaultDatacenter.DatacenterId,
+		DatacenterID: geo.DefaultDatacenter.DatacenterID,
 		Nickname:     geo.DefaultDatacenter.Nickname,
 	}
 
@@ -312,27 +312,27 @@ var (
 	geoDiffOrder = gtm.GeoMap{
 		Name: "tfexample_geomap_1",
 		DefaultDatacenter: &gtm.DatacenterBase{
-			DatacenterId: 5400,
+			DatacenterID: 5400,
 			Nickname:     "default datacenter",
 		},
 		Assignments: []*gtm.GeoAssignment{
 			{
 				DatacenterBase: gtm.DatacenterBase{
-					DatacenterId: 3131,
+					DatacenterID: 3131,
 					Nickname:     "tfexample_dc_1",
 				},
 				Countries: []string{"GB", "PL", "US", "FR"},
 			},
 			{
 				DatacenterBase: gtm.DatacenterBase{
-					DatacenterId: 3132,
+					DatacenterID: 3132,
 					Nickname:     "tfexample_dc_2",
 				},
 				Countries: []string{"GB", "AU"},
 			},
 			{
 				DatacenterBase: gtm.DatacenterBase{
-					DatacenterId: 3133,
+					DatacenterID: 3133,
 					Nickname:     "tfexample_dc_3",
 				},
 				Countries: []string{"GB", "BG", "CN", "MC", "TR"},
@@ -343,13 +343,13 @@ var (
 	geo = gtm.GeoMap{
 		Name: "tfexample_geomap_1",
 		DefaultDatacenter: &gtm.DatacenterBase{
-			DatacenterId: 5400,
+			DatacenterID: 5400,
 			Nickname:     "default datacenter",
 		},
 		Assignments: []*gtm.GeoAssignment{
 			{
 				DatacenterBase: gtm.DatacenterBase{
-					DatacenterId: 3131,
+					DatacenterID: 3131,
 					Nickname:     "tfexample_dc_1",
 				},
 				Countries: []string{"GB"},

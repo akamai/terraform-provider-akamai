@@ -182,7 +182,7 @@ func getDomains(domainList []*gtm.DomainItem) []domain {
 			Name:                  types.StringValue(dom.Name),
 			LastModified:          types.StringValue(dom.LastModified),
 			Status:                types.StringValue(dom.Status),
-			AcgID:                 types.StringValue(dom.AcgId),
+			AcgID:                 types.StringValue(dom.AcgID),
 			LastModifiedBy:        types.StringValue(dom.LastModifiedBy),
 			ChangeID:              types.StringValue(dom.ChangeID),
 			ActivationState:       types.StringValue(dom.ActivationState),

@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestResGtmDomain(t *testing.T) {
+func TestResGTMDomain(t *testing.T) {
 
 	t.Run("create domain", func(t *testing.T) {
 		client := &gtm.Mock{}
@@ -371,7 +371,7 @@ var (
 			CloudServerTargeting: false,
 			Continent:            "EU",
 			Country:              "IS",
-			DatacenterId:         3132,
+			DatacenterID:         3132,
 			DefaultLoadObject: &gtm.LoadObject{
 				LoadObject:     "",
 				LoadObjectPort: 0,
@@ -423,7 +423,7 @@ var (
 	properties = []*gtm.Property{
 		{
 			BackupCName:            "",
-			BackupIp:               "",
+			BackupIP:               "",
 			BalanceByDownloadScore: false,
 			CName:                  "www.boo.wow",
 			Comments:               "",
@@ -434,7 +434,7 @@ var (
 			HealthMax:              0,
 			HealthMultiplier:       0,
 			HealthThreshold:        0,
-			Ipv6:                   false,
+			IPv6:                   false,
 			LastModified:           "2019-04-25T14:53:12.000+00:00",
 			Links: []*gtm.Link{
 				{
@@ -445,14 +445,14 @@ var (
 			LivenessTests: []*gtm.LivenessTest{
 				{
 					DisableNonstandardPortWarning: false,
-					HttpError3xx:                  true,
-					HttpError4xx:                  true,
-					HttpError5xx:                  true,
+					HTTPError3xx:                  true,
+					HTTPError4xx:                  true,
+					HTTPError5xx:                  true,
 					Name:                          "health check",
 					RequestString:                 "",
 					ResponseString:                "",
-					SslClientCertificate:          "",
-					SslClientPrivateKey:           "",
+					SSLClientCertificate:          "",
+					SSLClientPrivateKey:           "",
 					TestInterval:                  60,
 					TestObject:                    "/status",
 					TestObjectPassword:            "",
@@ -472,7 +472,7 @@ var (
 			StickinessBonusPercentage: 50,
 			TrafficTargets: []*gtm.TrafficTarget{
 				{
-					DatacenterId: 3131,
+					DatacenterID: 3131,
 					Enabled:      true,
 					HandoutCName: "",
 					Name:         "",
@@ -491,7 +491,7 @@ var (
 
 	// testStatus is gtm.ResponseStatus structure used in tests
 	testStatus = &gtm.ResponseStatus{
-		ChangeId: "40e36abd-bfb2-4635-9fca-62175cf17007",
+		ChangeID: "40e36abd-bfb2-4635-9fca-62175cf17007",
 		Links: &[]gtm.Link{
 			{
 				Href: "https://akab-ymtebc45gco3ypzj-apz4yxpek55y7fyv.luna.akamaiapis.net/config-gtm/v1/domains/gtmdomtest.akadns.net/status/current",
@@ -508,8 +508,8 @@ var (
 	domainWithOrderedEmails = gtm.Domain{
 		Datacenters:                 datacenters,
 		DefaultErrorPenalty:         75,
-		DefaultSslClientCertificate: "",
-		DefaultSslClientPrivateKey:  "",
+		DefaultSSLClientCertificate: "",
+		DefaultSSLClientPrivateKey:  "",
 		DefaultTimeoutPenalty:       25,
 		EmailNotificationList:       []string{"email1@nomail.com", "email2@nomail.com", "email3@nomail.com"},
 		LastModified:                "2019-04-25T14:53:12.000+00:00",
@@ -527,8 +527,8 @@ var (
 	testDomain = gtm.Domain{
 		Datacenters:                 datacenters,
 		DefaultErrorPenalty:         75,
-		DefaultSslClientCertificate: "",
-		DefaultSslClientPrivateKey:  "",
+		DefaultSSLClientCertificate: "",
+		DefaultSSLClientPrivateKey:  "",
 		DefaultTimeoutPenalty:       25,
 		EmailNotificationList:       make([]string, 0),
 		LastModified:                "2019-04-25T14:53:12.000+00:00",
@@ -544,7 +544,7 @@ var (
 	}
 
 	deniedResponseStatus = gtm.ResponseStatus{
-		ChangeId: "40e36abd-bfb2-4635-9fca-62175cf17007",
+		ChangeID: "40e36abd-bfb2-4635-9fca-62175cf17007",
 		Links: &[]gtm.Link{
 			{
 				Href: "https://akab-ymtebc45gco3ypzj-apz4yxpek55y7fyv.luna.akamaiapis.net/config-gtm/v1/domains/gtmdomtest.akadns.net/status/current",
@@ -558,7 +558,7 @@ var (
 	}
 
 	pendingResponseStatus = gtm.ResponseStatus{
-		ChangeId: "40e36abd-bfb2-4635-9fca-62175cf17007",
+		ChangeID: "40e36abd-bfb2-4635-9fca-62175cf17007",
 		Links: &[]gtm.Link{
 			{
 				Href: "https://akab-ymtebc45gco3ypzj-apz4yxpek55y7fyv.luna.akamaiapis.net/config-gtm/v1/domains/gtmdomtest.akadns.net/status/current",
@@ -572,7 +572,7 @@ var (
 	}
 
 	completeResponseStatus = gtm.ResponseStatus{
-		ChangeId: "40e36abd-bfb2-4635-9fca-62175cf17007",
+		ChangeID: "40e36abd-bfb2-4635-9fca-62175cf17007",
 		Links: &[]gtm.Link{
 			{
 				Href: "https://akab-ymtebc45gco3ypzj-apz4yxpek55y7fyv.luna.akamaiapis.net/config-gtm/v1/domains/gtmdomtest.akadns.net/status/current",

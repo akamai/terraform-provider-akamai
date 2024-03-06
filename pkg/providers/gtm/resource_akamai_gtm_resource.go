@@ -594,7 +594,7 @@ func populateTerraformResourceInstancesState(d *schema.ResourceData, rsrc *gtm.R
 	riObjectInventory := make(map[int]*gtm.ResourceInstance, len(rsrc.ResourceInstances))
 	if len(rsrc.ResourceInstances) > 0 {
 		for _, riObj := range rsrc.ResourceInstances {
-			riObjectInventory[riObj.DatacenterId] = riObj
+			riObjectInventory[riObj.DatacenterID] = riObj
 		}
 	}
 	riStateList, _ := tf.GetInterfaceArrayValue("resource_instance", d)
@@ -626,7 +626,7 @@ func populateTerraformResourceInstancesState(d *schema.ResourceData, rsrc *gtm.R
 		// Objects not in the state yet. Add. Unfortunately, they'll likely not align with instance indices in the config
 		for _, mriObj := range riObjectInventory {
 			riNew := make(map[string]interface{})
-			riNew["datacenter_id"] = mriObj.DatacenterId
+			riNew["datacenter_id"] = mriObj.DatacenterID
 			riNew["use_default_load_object"] = mriObj.UseDefaultLoadObject
 			riNew["load_object"] = mriObj.LoadObject.LoadObject
 			riNew["load_object_port"] = mriObj.LoadObjectPort

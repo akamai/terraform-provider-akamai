@@ -1193,7 +1193,7 @@ func populateDomain(ctx context.Context, domain *gtm.Domain) (*domainDataSourceM
 	if diags.HasError() {
 		return nil, diags
 	}
-	cidrMaps, diags := getCIDRMaps(ctx, domain.CidrMaps)
+	cidrMaps, diags := getCIDRMaps(ctx, domain.CIDRMaps)
 	if diags.HasError() {
 		return nil, diags
 	}
@@ -1203,14 +1203,14 @@ func populateDomain(ctx context.Context, domain *gtm.Domain) (*domainDataSourceM
 	}
 	return &domainDataSourceModel{
 		Name:                         types.StringValue(domain.Name),
-		CNameCoalescingEnabled:       types.BoolValue(domain.CnameCoalescingEnabled),
+		CNameCoalescingEnabled:       types.BoolValue(domain.CNameCoalescingEnabled),
 		DefaultErrorPenalty:          types.Int64Value(int64(domain.DefaultErrorPenalty)),
 		DefaultHealthMax:             types.Float64Value(domain.DefaultHealthMax),
 		DefaultHealthMultiplier:      types.Float64Value(domain.DefaultHealthMultiplier),
 		DefaultHealthThreshold:       types.Float64Value(domain.DefaultHealthThreshold),
 		DefaultMaxUnreachablePenalty: types.Int64Value(int64(domain.DefaultMaxUnreachablePenalty)),
-		DefaultSSLClientCertificate:  types.StringValue(domain.DefaultSslClientCertificate),
-		DefaultSSLClientPrivateKey:   types.StringValue(domain.DefaultSslClientPrivateKey),
+		DefaultSSLClientCertificate:  types.StringValue(domain.DefaultSSLClientCertificate),
+		DefaultSSLClientPrivateKey:   types.StringValue(domain.DefaultSSLClientPrivateKey),
 		DefaultTimeoutPenalty:        types.Int64Value(int64(domain.DefaultTimeoutPenalty)),
 		DefaultUnreachableThreshold:  types.Float64Value(float64(domain.DefaultUnreachableThreshold)),
 		EmailNotificationList:        emailNotificationList,
@@ -1238,7 +1238,7 @@ func populateDomain(ctx context.Context, domain *gtm.Domain) (*domainDataSourceM
 		Datacenters:                  datacenters,
 		GeographicMaps:               geoMaps,
 		CIDRMaps:                     cidrMaps,
-		ASMaps:                       getASMaps(domain.AsMaps),
+		ASMaps:                       getASMaps(domain.ASMaps),
 		Links:                        getLinks(domain.Links),
 	}, nil
 }
@@ -1257,7 +1257,7 @@ func getLinks(links []*gtm.Link) []link {
 	return result
 }
 
-func getASMaps(maps []*gtm.AsMap) []asMap {
+func getASMaps(maps []*gtm.ASMap) []asMap {
 	var result []asMap
 	for _, am := range maps {
 		asMapInstance := asMap{
@@ -1271,7 +1271,7 @@ func getASMaps(maps []*gtm.AsMap) []asMap {
 		if am.DefaultDatacenter != nil {
 			defaultDataCenter := defaultDatacenter{
 				Nickname:     types.StringValue(am.DefaultDatacenter.Nickname),
-				DatacenterID: types.Int64Value(int64(am.DefaultDatacenter.DatacenterId)),
+				DatacenterID: types.Int64Value(int64(am.DefaultDatacenter.DatacenterID)),
 			}
 			asMapInstance.DefaultDatacenter = defaultDataCenter
 		}
@@ -1286,7 +1286,7 @@ func getASMaps(maps []*gtm.AsMap) []asMap {
 	return result
 }
 
-func getCIDRMaps(ctx context.Context, maps []*gtm.CidrMap) ([]cidrMap, diag.Diagnostics) {
+func getCIDRMaps(ctx context.Context, maps []*gtm.CIDRMap) ([]cidrMap, diag.Diagnostics) {
 	var result []cidrMap
 	for _, cm := range maps {
 		cidrMapInstance := cidrMap{
@@ -1300,7 +1300,7 @@ func getCIDRMaps(ctx context.Context, maps []*gtm.CidrMap) ([]cidrMap, diag.Diag
 		if cm.DefaultDatacenter != nil {
 			defaultDataCenter := defaultDatacenter{
 				Nickname:     types.StringValue(cm.DefaultDatacenter.Nickname),
-				DatacenterID: types.Int64Value(int64(cm.DefaultDatacenter.DatacenterId)),
+				DatacenterID: types.Int64Value(int64(cm.DefaultDatacenter.DatacenterID)),
 			}
 			cidrMapInstance.DefaultDatacenter = defaultDataCenter
 		}
@@ -1334,7 +1334,7 @@ func getGeographicMaps(ctx context.Context, maps []*gtm.GeoMap) ([]geographicMap
 		if gm.DefaultDatacenter != nil {
 			defaultDataCenter := defaultDatacenter{
 				Nickname:     types.StringValue(gm.DefaultDatacenter.Nickname),
-				DatacenterID: types.Int64Value(int64(gm.DefaultDatacenter.DatacenterId)),
+				DatacenterID: types.Int64Value(int64(gm.DefaultDatacenter.DatacenterID)),
 			}
 			geoMapInstance.DefaultDatacenter = defaultDataCenter
 		}
@@ -1358,7 +1358,7 @@ func getDatacenters(ctx context.Context, datacenters []*gtm.Datacenter) ([]datac
 	var result []datacenter
 	for _, dc := range datacenters {
 		dataCenterInstance := datacenter{
-			DatacenterID:                  types.Int64Value(int64(dc.DatacenterId)),
+			DatacenterID:                  types.Int64Value(int64(dc.DatacenterID)),
 			Nickname:                      types.StringValue(dc.Nickname),
 			ScorePenalty:                  types.Int64Value(int64(dc.ScorePenalty)),
 			City:                          types.StringValue(dc.City),
@@ -1396,7 +1396,7 @@ func getProperties(ctx context.Context, properties []*gtm.Property) ([]property,
 	for _, prop := range properties {
 		propertyInstance := property{
 			BackupCNAME:               types.StringValue(prop.BackupCName),
-			BackupIP:                  types.StringValue(prop.BackupIp),
+			BackupIP:                  types.StringValue(prop.BackupIP),
 			BalanceByDownloadScore:    types.BoolValue(prop.BalanceByDownloadScore),
 			CName:                     types.StringValue(prop.CName),
 			Comments:                  types.StringValue(prop.Comments),
@@ -1422,7 +1422,7 @@ func getProperties(ctx context.Context, properties []*gtm.Property) ([]property,
 			Type:                      types.StringValue(prop.Type),
 			UnreachableThreshold:      types.Float64Value(prop.UnreachableThreshold),
 			UseComputedTargets:        types.BoolValue(prop.UseComputedTargets),
-			IPv6:                      types.BoolValue(prop.Ipv6),
+			IPv6:                      types.BoolValue(prop.IPv6),
 			WeightedHashBitsForIPv4:   types.Int64Value(int64(prop.WeightedHashBitsForIPv4)),
 			WeightedHashBitsForIPv6:   types.Int64Value(int64(prop.WeightedHashBitsForIPv6)),
 		}
@@ -1471,7 +1471,7 @@ func getStatus(st *gtm.ResponseStatus) *status {
 	}
 	statusInstance := status{
 		Message:               types.StringValue(st.Message),
-		ChangeID:              types.StringValue(st.ChangeId),
+		ChangeID:              types.StringValue(st.ChangeID),
 		PropagationStatus:     types.StringValue(st.PropagationStatus),
 		PropagationStatusDate: types.StringValue(st.PropagationStatusDate),
 		PassingValidation:     types.BoolValue(st.PassingValidation),
@@ -1512,7 +1512,7 @@ func getResources(resources []*gtm.Resource) []domainResource {
 				resInstances[i] = resourceInstance{
 					LoadObject:           types.StringValue(ri.LoadObject.LoadObject),
 					LoadObjectPort:       types.Int64Value(int64(ri.LoadObject.LoadObjectPort)),
-					DataCenterID:         types.Int64Value(int64(ri.DatacenterId)),
+					DataCenterID:         types.Int64Value(int64(ri.DatacenterID)),
 					UseDefaultLoadObject: types.BoolValue(ri.UseDefaultLoadObject),
 				}
 				if ri.LoadObject.LoadServers != nil {
@@ -1541,9 +1541,9 @@ func populateLivenessTest(lt *gtm.LivenessTest) livenessTest {
 		Disabled:                      types.BoolValue(lt.Disabled),
 		DisableNonstandardPortWarning: types.BoolValue(lt.DisableNonstandardPortWarning),
 		ErrorPenalty:                  types.Float64Value(lt.ErrorPenalty),
-		HTTPError3xx:                  types.BoolValue(lt.HttpError3xx),
-		HTTPError4xx:                  types.BoolValue(lt.HttpError4xx),
-		HTTPError5xx:                  types.BoolValue(lt.HttpError5xx),
+		HTTPError3xx:                  types.BoolValue(lt.HTTPError3xx),
+		HTTPError4xx:                  types.BoolValue(lt.HTTPError4xx),
+		HTTPError5xx:                  types.BoolValue(lt.HTTPError5xx),
 		Name:                          types.StringValue(lt.Name),
 		PeerCertificateVerification:   types.BoolValue(lt.PeerCertificateVerification),
 		RequestString:                 types.StringValue(lt.RequestString),
@@ -1558,13 +1558,13 @@ func populateLivenessTest(lt *gtm.LivenessTest) livenessTest {
 		TestObjectPassword:            types.StringValue(lt.TestObjectPassword),
 		TestTimeout:                   types.Float64Value(float64(lt.TestTimeout)),
 		TimeoutPenalty:                types.Float64Value(lt.TimeoutPenalty),
-		SSLClientCertificate:          types.StringValue(lt.SslClientCertificate),
-		SSLClientPrivateKey:           types.StringValue(lt.SslClientPrivateKey),
-		HTTPHeaders:                   populateHTTPHeaders(lt.HttpHeaders),
+		SSLClientCertificate:          types.StringValue(lt.SSLClientCertificate),
+		SSLClientPrivateKey:           types.StringValue(lt.SSLClientPrivateKey),
+		HTTPHeaders:                   populateHTTPHeaders(lt.HTTPHeaders),
 	}
 }
 
-func populateHTTPHeaders(headers []*gtm.HttpHeader) []httpHeader {
+func populateHTTPHeaders(headers []*gtm.HTTPHeader) []httpHeader {
 	result := make([]httpHeader, len(headers))
 	for i, h := range headers {
 		result[i] = httpHeader{
@@ -1604,7 +1604,7 @@ func populateTrafficTarget(ctx context.Context, t *gtm.TrafficTarget) (trafficTa
 		return trafficTarget{}, diags
 	}
 	return trafficTarget{
-		DatacenterID: types.Int64Value(int64(t.DatacenterId)),
+		DatacenterID: types.Int64Value(int64(t.DatacenterID)),
 		Enabled:      types.BoolValue(t.Enabled),
 		Weight:       types.Float64Value(t.Weight),
 		HandoutCNAME: types.StringValue(t.HandoutCName),
@@ -1640,12 +1640,12 @@ func populateGeographicMapAssignment(ctx context.Context, asg *gtm.GeoAssignment
 	}
 
 	result.Nickname = types.StringValue(asg.DatacenterBase.Nickname)
-	result.DatacenterID = types.Int64Value(int64(asg.DatacenterBase.DatacenterId))
+	result.DatacenterID = types.Int64Value(int64(asg.DatacenterBase.DatacenterID))
 
 	return result, nil
 }
 
-func populateCIDRMapAssignment(ctx context.Context, asg *gtm.CidrAssignment) (cidrMapAssignment, diag.Diagnostics) {
+func populateCIDRMapAssignment(ctx context.Context, asg *gtm.CIDRAssignment) (cidrMapAssignment, diag.Diagnostics) {
 	result := cidrMapAssignment{}
 
 	if asg.Blocks != nil {
@@ -1657,24 +1657,24 @@ func populateCIDRMapAssignment(ctx context.Context, asg *gtm.CidrAssignment) (ci
 	}
 
 	result.Nickname = types.StringValue(asg.DatacenterBase.Nickname)
-	result.DatacenterID = types.Int64Value(int64(asg.DatacenterBase.DatacenterId))
+	result.DatacenterID = types.Int64Value(int64(asg.DatacenterBase.DatacenterID))
 
 	return result, nil
 }
 
-func populateASMapAssignment(asg *gtm.AsAssignment) asMapAssignment {
+func populateASMapAssignment(asg *gtm.ASAssignment) asMapAssignment {
 	result := asMapAssignment{}
 
-	if asg.AsNumbers != nil {
-		asNumbers := make([]types.Int64, len(asg.AsNumbers))
-		for i, c := range asg.AsNumbers {
+	if asg.ASNumbers != nil {
+		asNumbers := make([]types.Int64, len(asg.ASNumbers))
+		for i, c := range asg.ASNumbers {
 			asNumbers[i] = types.Int64Value(c)
 		}
 		result.ASNumbers = asNumbers
 	}
 
 	result.Nickname = types.StringValue(asg.DatacenterBase.Nickname)
-	result.DatacenterID = types.Int64Value(int64(asg.DatacenterBase.DatacenterId))
+	result.DatacenterID = types.Int64Value(int64(asg.DatacenterBase.DatacenterID))
 
 	return result
 }
