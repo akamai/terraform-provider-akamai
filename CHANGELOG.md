@@ -114,7 +114,8 @@
 
 
 
-
+* PAPI
+  * Fixed case when `origin_certs_to_honor` field from `origin` behavior mandates presence of empty `custom_certificate_authorities` and/or `custom_certificates` options inside `origin` behavior for `akamai_property_rules_builder` datasource ([I#515](https://github.com/akamai/terraform-provider-akamai/issues/515))
 
 
 

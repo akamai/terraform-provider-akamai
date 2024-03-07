@@ -207,6 +207,24 @@ func TestDataPropertyRulesBuilder(t *testing.T) {
 			})
 		})
 	})
+	t.Run("rule empty options - v2024-01-09", func(t *testing.T) {
+		useClient(nil, nil, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{{
+					Config: testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/rules_v2024_01_09_with_empty_options.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("data.akamai_property_rules_builder.default",
+							"rule_format",
+							"v2024-01-09"),
+						testCheckResourceAttrJSON("data.akamai_property_rules_builder.default",
+							"json",
+							testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/default_v2024_01_09_with_empty_options.json")),
+					),
+				}},
+			})
+		})
+	})
 	t.Run("invalid rule with 3 children with different versions", func(t *testing.T) {
 		useClient(nil, nil, func() {
 			resource.UnitTest(t, resource.TestCase{

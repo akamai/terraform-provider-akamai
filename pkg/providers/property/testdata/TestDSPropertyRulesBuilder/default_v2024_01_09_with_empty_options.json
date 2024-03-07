@@ -1,0 +1,34 @@
+{
+  "_ruleFormat_": "rules_v2024_01_09",
+  "rules": {
+    "behaviors": [
+      {
+        "name": "origin",
+        "options": {
+          "cacheKeyHostname": "ORIGIN_HOSTNAME",
+          "compress": true,
+          "customCertificateAuthorities": [],
+          "customCertificates": [],
+          "enableTrueClientIp": true,
+          "forwardHostHeader": "REQUEST_HOST_HEADER",
+          "httpPort": 80,
+          "httpsPort": 443,
+          "originCertsToHonor": "COMBO",
+          "originSni": true,
+          "originType": "CUSTOMER",
+          "standardCertificateAuthorities": [],
+          "trueClientIpClientSetting": false,
+          "trueClientIpHeader": "True-Client-IP",
+          "useUniqueCacheKey": false,
+          "verificationMode": "CUSTOM"
+        }
+      }
+    ],
+    "comments": "test",
+    "name": "default",
+    "options": {},
+    "uuid": "test",
+    "templateUuid": "test",
+    "templateLink": "test"
+  }
+}
