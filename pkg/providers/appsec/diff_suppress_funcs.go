@@ -3,12 +3,14 @@ package appsec
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"log"
 	"reflect"
 	"sort"
 	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/logger"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -363,4 +365,22 @@ func compareMatchTargets(oldTarget, newTarget *appsec.CreateMatchTargetResponse)
 	})
 
 	return reflect.DeepEqual(oldTarget, newTarget)
+}
+
+// suppress the diff if ukraine_geo_control_action is not passed in terraform config
+func suppressDiffUkraineGeoControlAction(_, _, _ string, d *schema.ResourceData) bool {
+	key := "ukraine_geo_control_action"
+
+	oldValue, newValue := d.GetChange(key)
+	oldUkraineGeoControlAction, ok := oldValue.(string)
+	if !ok {
+		logger.Get("APPSEC", "diffSuppressRules").Error(fmt.Sprintf("cannot parse ukraine_geo_control_action state properly for old value %v", oldValue))
+		return true
+	}
+	newUkraineGeoControlAction, ok := newValue.(string)
+	if !ok {
+		logger.Get("APPSEC", "diffSuppressRules").Error(fmt.Sprintf("cannot parse ukraine_geo_control_action state properly for new value %v", oldValue))
+		return true
+	}
+	return oldUkraineGeoControlAction == newUkraineGeoControlAction
 }

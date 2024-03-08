@@ -189,6 +189,145 @@ func TestAkamaiIPGeo_res_block(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 
+	t.Run("match by Ukraine Geo ID field not included in config", func(t *testing.T) {
+		client := &appsec.Mock{}
+
+		configVersion(t, 43253, client)
+
+		updateRequest := appsec.UpdateIPGeoRequest{
+			ConfigID: 43253,
+			Version:  7,
+			PolicyID: "AAAA_81230",
+			Block:    "blockSpecificIPGeo",
+			ASNControls: &appsec.IPGeoASNControls{
+				BlockedIPNetworkLists: &appsec.IPGeoNetworkLists{
+					NetworkList: []string{
+						"40721_ASNLIST1",
+						"44811_ASNLIST2",
+					},
+				},
+			},
+			GeoControls: &appsec.IPGeoGeoControls{
+				BlockedIPNetworkLists: &appsec.IPGeoNetworkLists{
+					NetworkList: []string{
+						"40731_BMROLLOUTGEO",
+						"44831_ECSCGEOBLACKLIST",
+					},
+				},
+			},
+			IPControls: &appsec.IPGeoIPControls{
+				BlockedIPNetworkLists: &appsec.IPGeoNetworkLists{
+					NetworkList: []string{
+						"49181_ADTIPBLACKLIST",
+						"49185_ADTWAFBYPASSLIST",
+					},
+				},
+				AllowedIPNetworkLists: &appsec.IPGeoNetworkLists{
+					NetworkList: []string{
+						"68762_ADYEN",
+						"69601_ADYENPRODWHITELIST",
+					},
+				},
+			},
+		}
+		getIPGeoResponse(t, 43253, 7, "AAAA_81230", "testdata/TestResIPGeo/UkraineGeo.json", client)
+		updateIPGeoResponse(t, 43253, 7, "AAAA_81230", "testdata/TestResIPGeo/IPGeo.json", updateRequest, client)
+		updateIPGeoProtectionResponseAllProtectionsFalse(t, 43253, 7, "AAAA_81230", "testdata/TestResIPGeoProtection/PolicyProtections.json", client)
+		useClient(client, func() {
+			resource.Test(t, resource.TestCase{
+				IsUnitTest:        true,
+				ProviderFactories: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResIPGeo/match_by_id.tf"),
+						Check: resource.ComposeAggregateTestCheckFunc(
+							resource.TestCheckResourceAttr("akamai_appsec_ip_geo.test", "id", "43253:AAAA_81230"),
+						),
+					},
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResIPGeo/match_by_id.tf"),
+						Check: resource.ComposeAggregateTestCheckFunc(
+							resource.TestCheckResourceAttr("akamai_appsec_ip_geo.test", "id", "43253:AAAA_81230"),
+						),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
+	t.Run("match by Ukraine Geo ID field included with same action", func(t *testing.T) {
+		client := &appsec.Mock{}
+
+		configVersion(t, 43253, client)
+
+		updateRequest := appsec.UpdateIPGeoRequest{
+			ConfigID: 43253,
+			Version:  7,
+			PolicyID: "AAAA_81230",
+			Block:    "blockSpecificIPGeo",
+			ASNControls: &appsec.IPGeoASNControls{
+				BlockedIPNetworkLists: &appsec.IPGeoNetworkLists{
+					NetworkList: []string{
+						"40721_ASNLIST1",
+						"44811_ASNLIST2",
+					},
+				},
+			},
+			GeoControls: &appsec.IPGeoGeoControls{
+				BlockedIPNetworkLists: &appsec.IPGeoNetworkLists{
+					NetworkList: []string{
+						"40731_BMROLLOUTGEO",
+						"44831_ECSCGEOBLACKLIST",
+					},
+				},
+			},
+			IPControls: &appsec.IPGeoIPControls{
+				BlockedIPNetworkLists: &appsec.IPGeoNetworkLists{
+					NetworkList: []string{
+						"49181_ADTIPBLACKLIST",
+						"49185_ADTWAFBYPASSLIST",
+					},
+				},
+				AllowedIPNetworkLists: &appsec.IPGeoNetworkLists{
+					NetworkList: []string{
+						"68762_ADYEN",
+						"69601_ADYENPRODWHITELIST",
+					},
+				},
+			},
+			UkraineGeoControls: &appsec.UkraineGeoControl{
+				Action: "alert",
+			},
+		}
+		getIPGeoResponse(t, 43253, 7, "AAAA_81230", "testdata/TestResIPGeo/UkraineGeo.json", client)
+		updateIPGeoResponse(t, 43253, 7, "AAAA_81230", "testdata/TestResIPGeo/IPGeo.json", updateRequest, client)
+		updateIPGeoProtectionResponseAllProtectionsFalse(t, 43253, 7, "AAAA_81230", "testdata/TestResIPGeoProtection/PolicyProtections.json", client)
+		useClient(client, func() {
+			resource.Test(t, resource.TestCase{
+				IsUnitTest:        true,
+				ProviderFactories: testAccProviders,
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResIPGeo/ukraine_match_by_id.tf"),
+						Check: resource.ComposeAggregateTestCheckFunc(
+							resource.TestCheckResourceAttr("akamai_appsec_ip_geo.test1", "id", "43253:AAAA_81230"),
+						),
+					},
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResIPGeo/ukraine_match_by_id.tf"),
+						Check: resource.ComposeAggregateTestCheckFunc(
+							resource.TestCheckResourceAttr("akamai_appsec_ip_geo.test1", "id", "43253:AAAA_81230"),
+						),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
 	t.Run("match by IPGeo Allow ID", func(t *testing.T) {
 
 		client := &appsec.Mock{}

@@ -75,9 +75,10 @@ func resourceIPGeo() *schema.Resource {
 				Description: "List of IDs of network list that are always allowed",
 			},
 			"ukraine_geo_control_action": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "Action set for Ukraine geo control",
+				Type:             schema.TypeString,
+				Optional:         true,
+				DiffSuppressFunc: suppressDiffUkraineGeoControlAction,
+				Description:      "Action set for Ukraine geo control",
 			},
 		},
 	}
@@ -310,7 +311,7 @@ func readForBlockSpecificIPGeo(d *schema.ResourceData, ipgeo *appsec.GetIPGeoRes
 			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 		}
 	}
-	if ipgeo.UkraineGeoControls != nil {
+	if ipgeo.UkraineGeoControls != nil && ipgeo.UkraineGeoControls.Action != "" {
 		if err := d.Set("ukraine_geo_control_action", ipgeo.UkraineGeoControls.Action); err != nil {
 			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 		}
