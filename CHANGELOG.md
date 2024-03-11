@@ -96,6 +96,9 @@
 
 #### BUG FIXES:
 
+* Appsec
+  * Fixed ukraine_geo_control_action drift issue ([I#484](https://github.com/akamai/terraform-provider-akamai/issues/484))
+
 * Cloudlets
     * Allowed empty value for match rules `json` attribute for data sources:
         * `akamai_cloudlets_api_prioritization_match_rule`
@@ -145,7 +148,6 @@
 
 * Appsec
   * `akamai_appsec_selected_hostnames` data source and resource are deprecated with a scheduled end-of-life in v7.0.0 of our provider. Use the `akamai_appsec_configuration` instead.
-  * Fixed ukraine_geo_control_action drift issue ([I#484](https://github.com/akamai/terraform-provider-akamai/issues/484))
 
 ## 5.6.0 (Feb 19, 2024)
 
