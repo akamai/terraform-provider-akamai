@@ -47,7 +47,7 @@
 * Migrated to go 1.21
 
 
-
+* Bumped various dependencies
 
 
 
