@@ -1,4 +1,4 @@
-TEST ?= $$(go list ./...)
+TEST ?= $$(go list ./... | grep -v retryablehttp)
 PKG_NAME = akamai
 
 # Local provider install parameters

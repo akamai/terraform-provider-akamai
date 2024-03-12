@@ -14,8 +14,8 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/cache"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/logger"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/retryablehttp"
 	"github.com/google/uuid"
-	"github.com/mgwoj/go-retryablehttp"
 	"github.com/spf13/cast"
 )
 
