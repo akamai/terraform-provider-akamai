@@ -210,6 +210,29 @@ func compareAttackPayloadLoggingSettings(oldValue, newValue *appsec.UpdateAdvanc
 	return reflect.DeepEqual(oldValue, newValue)
 }
 
+func suppressEquivalentPenaltyBoxConditionsDiffs(_, oldValue, newValue string, _ *schema.ResourceData) bool {
+	var oldJSON, newJSON appsec.GetPenaltyBoxConditionsResponse
+	if oldValue == newValue {
+		return true
+	}
+	if err := json.Unmarshal([]byte(oldValue), &oldJSON); err != nil {
+		return false
+	}
+	if err := json.Unmarshal([]byte(newValue), &newJSON); err != nil {
+		return false
+	}
+	diff := comparePenaltyBoxConditions(&oldJSON, &newJSON)
+	return diff
+}
+
+func comparePenaltyBoxConditions(oldValue, newValue *appsec.GetPenaltyBoxConditionsResponse) bool {
+	if oldValue.ConditionOperator != newValue.ConditionOperator {
+		return false
+	}
+
+	return reflect.DeepEqual(oldValue, newValue)
+}
+
 func suppressCustomDenyJSONDiffs(_, oldString, newString string, _ *schema.ResourceData) bool {
 	var ob, nb bytes.Buffer
 	if err := json.Compact(&ob, []byte(oldString)); err != nil {

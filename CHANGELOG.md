@@ -35,6 +35,14 @@
 
 #### FEATURES/ENHANCEMENTS:
 
+* Appsec
+  * Added resource:
+    * `akamai_appsec_penalty_box_conditions` - read and update
+    * `akamai_appsec_eval_penalty_box_conditions` - read and update
+  * Added new data source:
+    * `akamai_appsec_penalty_box_conditions` - read
+    * `akamai_appsec_eval_penalty_box_conditions` - read
+
 * PAPI
   * Added attributes to akamai_property datasource:
     * `contract_id`, `group_id`, `latest_version`, `note`, `production_version`, `product_id`, `property_id`, `rule_format`, `staging_version`
