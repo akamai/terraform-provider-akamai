@@ -1698,7 +1698,7 @@ func TestPropertyResource_versionNotesLifecycle(t *testing.T) {
 
 	client := &papi.Mock{}
 
-	mockRead := func(notes string, rules papi.Rules) []*mock.Call {
+	mockRead := func(notes string, rules papi.Rules) testutils.MockCalls {
 		getPropertyCall := client.On("GetProperty", mock.Anything, papi.GetPropertyRequest{
 			PropertyID: id,
 			ContractID: ctr,
@@ -1748,7 +1748,7 @@ func TestPropertyResource_versionNotesLifecycle(t *testing.T) {
 			},
 		}, nil)
 
-		return []*mock.Call{getPropertyCall, getHostnamesCall, getRuleTreeCall, getPropertyVersionCall}
+		return testutils.MockCalls{getPropertyCall, getHostnamesCall, getRuleTreeCall, getPropertyVersionCall}
 	}
 
 	mockUpdate := func(currentNotes, newNotes string, rules papi.Rules) {
@@ -1809,19 +1809,13 @@ func TestPropertyResource_versionNotesLifecycle(t *testing.T) {
 		ValidateRules: true,
 	}).Return(&papi.UpdateRulesResponse{}, nil).Once()
 
-	for _, m := range mockRead(versionNotes1, rules1And2.Rules) {
-		m.Times(2)
-	}
+	mockRead(versionNotes1, rules1And2.Rules).Times(2)
 
 	// step 2 - refresh + plan
-	for _, m := range mockRead(versionNotes2, rules1And2.Rules) {
-		m.Times(2)
-	}
+	mockRead(versionNotes2, rules1And2.Rules).Times(2)
 
 	// step 3 - refresh + update + read + plan
-	for _, m := range mockRead(versionNotes2, rules1And2.Rules) {
-		m.Times(1)
-	}
+	mockRead(versionNotes2, rules1And2.Rules).Times(1)
 
 	var rules3 papi.RulesUpdate
 	rulesJSON = testutils.LoadFixtureBytes(t, path.Join(testdataDir, rulesFile3))
@@ -1830,14 +1824,10 @@ func TestPropertyResource_versionNotesLifecycle(t *testing.T) {
 
 	mockUpdate(versionNotes3, "updatedNotes2", rules3.Rules)
 
-	for _, m := range mockRead(versionNotes3, rules3.Rules) {
-		m.Times(2)
-	}
+	mockRead(versionNotes3, rules3.Rules).Times(2)
 
 	// step 4 - refresh + update + read + plan
-	for _, m := range mockRead(versionNotes3, rules3.Rules) {
-		m.Times(1)
-	}
+	mockRead(versionNotes3, rules3.Rules).Times(1)
 
 	var rules4And5 papi.RulesUpdate
 	rulesJSON = testutils.LoadFixtureBytes(t, path.Join(testdataDir, rulesFile4And5))
@@ -1846,14 +1836,10 @@ func TestPropertyResource_versionNotesLifecycle(t *testing.T) {
 
 	mockUpdate(versionNotes3, rules4And5.Comments, rules4And5.Rules)
 
-	for _, m := range mockRead(rules4And5.Comments, rules4And5.Rules) {
-		m.Times(2)
-	}
+	mockRead(rules4And5.Comments, rules4And5.Rules).Times(2)
 
 	// step 5 - refresh + plan
-	for _, m := range mockRead(rules4And5.Comments, rules4And5.Rules) {
-		m.Times(2)
-	}
+	mockRead(rules4And5.Comments, rules4And5.Rules).Times(2)
 
 	// cleanup
 	client.On("RemoveProperty", mock.Anything, papi.RemovePropertyRequest{
