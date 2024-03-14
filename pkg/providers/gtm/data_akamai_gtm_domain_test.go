@@ -5,6 +5,8 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/ptr"
+
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/gtm"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -36,6 +38,8 @@ func TestDataGtmDomain(t *testing.T) {
 					EndUserMappingEnabled:        false,
 					LastModified:                 "2023-01-25T10:21:45.000+00:00",
 					MaxTTL:                       172800,
+					SignAndServe:                 true,
+					SignAndServeAlgorithm:        ptr.To("RSA_SHA1"),
 					Status: &gtm.ResponseStatus{
 						ChangeID:              "ca7e5b1d-1303-42d3-b6c0-8cb62ae849d4",
 						Message:               "ERROR: zone is child of existing GTM domain devexp-terraform.akadns.net, which is not allowed",
@@ -134,12 +138,24 @@ func TestDataGtmDomain(t *testing.T) {
 							Href: "https://akaa-ouijhfns55qwgfuc-knsod5nrjl2w2gmt.luna-dev.akamaiapis.net/config-gtm/v1/domains/test.cli.devexp-terraform.akadns.net/properties/property",
 							Rel:  "self",
 						}},
-						LivenessTests: []*gtm.LivenessTest{{
-							AnswersRequired:               false,
-							DisableNonstandardPortWarning: false,
-							HTTPError3xx:                  true,
-							TestObjectProtocol:            "HTTP",
-						}},
+						LivenessTests: []*gtm.LivenessTest{
+							{
+								AnswersRequired:               false,
+								DisableNonstandardPortWarning: false,
+								HTTPError3xx:                  true,
+								TestObjectProtocol:            "HTTP",
+								AlternateCACertificates:       []string{"test1"},
+								Pre2023SecurityPosture:        true,
+								HTTPMethod:                    ptr.To("GET"),
+								HTTPRequestBody:               ptr.To("TestBody"),
+							},
+							{
+								AnswersRequired:               false,
+								DisableNonstandardPortWarning: false,
+								HTTPError3xx:                  true,
+								TestObjectProtocol:            "HTTP",
+							},
+						},
 						TrafficTargets: []*gtm.TrafficTarget{{
 							DatacenterID: 3131,
 							Enabled:      true,
@@ -147,7 +163,8 @@ func TestDataGtmDomain(t *testing.T) {
 								"1.2.3.4",
 								"2.3.4.5",
 							},
-							Weight: 1,
+							Weight:     1,
+							Precedence: ptr.To(10),
 						}},
 					}},
 				}, nil)
@@ -166,6 +183,8 @@ func TestDataGtmDomain(t *testing.T) {
 				"end_user_mapping_enabled":                                       "false",
 				"last_modified":                                                  "2023-01-25T10:21:45.000+00:00",
 				"max_ttl":                                                        "172800",
+				"sign_and_serve":                                                 "true",
+				"sign_and_serve_algorithm":                                       "RSA_SHA1",
 				"as_maps.0.name":                                                 "New Map 1",
 				"as_maps.0.default_datacenter.datacenter_id":                     "3133",
 				"as_maps.0.default_datacenter.nickname":                          "Default (all others)",
@@ -209,18 +228,27 @@ func TestDataGtmDomain(t *testing.T) {
 				"properties.0.liveness_tests.0.disable_nonstandard_port_warning": "false",
 				"properties.0.liveness_tests.0.http_error3xx":                    "true",
 				"properties.0.liveness_tests.0.test_object_protocol":             "HTTP",
+				"properties.0.liveness_tests.0.alternate_ca_certificates.0":      "test1",
+				"properties.0.liveness_tests.0.pre_2023_security_posture":        "true",
+				"properties.0.liveness_tests.0.http_method":                      "GET",
+				"properties.0.liveness_tests.0.http_request_body":                "TestBody",
+				"properties.0.liveness_tests.1.pre_2023_security_posture":        "false",
 				"properties.0.traffic_targets.0.datacenter_id":                   "3131",
 				"properties.0.traffic_targets.0.enabled":                         "true",
 				"properties.0.traffic_targets.0.servers.0":                       "1.2.3.4",
 				"properties.0.traffic_targets.0.servers.1":                       "2.3.4.5",
 				"properties.0.traffic_targets.0.weight":                          "1",
+				"properties.0.traffic_targets.0.precedence":                      "10",
 				"links.0.href":                                                   "https://akaa-ouijhfns55qwgfuc-knsod5nrjl2w2gmt.luna-dev.akamaiapis.net/config-gtm/v1/domains/test.cli.devexp-terraform.akadns.net/properties",
 				"links.0.rel":                                                    "properties",
 				"links.1.href":                                                   "https://akaa-ouijhfns55qwgfuc-knsod5nrjl2w2gmt.luna-dev.akamaiapis.net/config-gtm/v1/domains/test.cli.devexp-terraform.akadns.net/resources",
 				"links.1.rel":                                                    "resources",
 			},
-			expectedMissingAttributes: nil,
-			expectError:               nil,
+			expectedMissingAttributes: []string{
+				"properties.0.liveness_tests.1.http_method",
+				"properties.0.liveness_tests.1.http_request_body",
+				"properties.0.liveness_tests.1.alternate_ca_certificates",
+			},
 		},
 		"missing required argument name": {
 			givenTF:     "missing_domain_name.tf",

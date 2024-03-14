@@ -8,13 +8,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/go-cty/cty"
-
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/gtm"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
-
+	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -178,6 +177,16 @@ func resourceGTMv1Domain() *schema.Resource {
 				Type:     schema.TypeBool,
 				Optional: true,
 			},
+			"sign_and_serve": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Description: "If set (true) we will sign the domain's resource records so that they can be validated by a validating resolver.",
+			},
+			"sign_and_serve_algorithm": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "The signing algorithm to use for signAndServe. One of the following values: RSA_SHA1, RSA_SHA256, RSA_SHA512, ECDSA_P256_SHA256, ECDSA_P384_SHA384, ED25519, ED448.",
+			},
 		},
 	}
 }
@@ -239,7 +248,7 @@ func resourceGTMv1DomainCreate(ctx context.Context, d *schema.ResourceData, m in
 	}
 	cStatus, err := Client(meta).CreateDomain(ctx, newDom, queryArgs)
 	if err != nil {
-		// Errored. Lets see if special hack
+		// Errored. Let's see if special hack
 		if !HashiAcc {
 			logger.Errorf("Domain Create failed: %s", err.Error())
 			return append(diags, diag.Diagnostic{
@@ -443,7 +452,7 @@ func resourceGTMv1DomainDelete(ctx context.Context, d *schema.ResourceData, m in
 	}
 	uStat, err := Client(meta).DeleteDomain(ctx, existDom)
 	if err != nil {
-		// Errored. Lets see if special hack
+		// Errored. Let's see if special hack
 		if !HashiAcc {
 			logger.Errorf("Error Domain Delete: %s", err.Error())
 			return append(diags, diag.Diagnostic{
@@ -715,6 +724,19 @@ func populateDomainObject(d *schema.ResourceData, dom *gtm.Domain, m interface{}
 		dom.EndUserMappingEnabled = vbool
 	}
 
+	signAndServe, err := tf.GetBoolValue("sign_and_serve", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
+		return fmt.Errorf("could not get `sign_and_serve` attribute: %s", err)
+	}
+	dom.SignAndServe = signAndServe
+	signAndServeAlgorithm, err := tf.GetStringValue("sign_and_serve_algorithm", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
+		return fmt.Errorf("could not get `sign_and_serve_algorithm` attribute: %s", err)
+	}
+	if signAndServeAlgorithm != "" {
+		dom.SignAndServeAlgorithm = ptr.To(signAndServeAlgorithm)
+	}
+
 	return nil
 
 }
@@ -755,9 +777,17 @@ func populateTerraformState(d *schema.ResourceData, dom *gtm.Domain, m interface
 		"min_test_interval":               dom.MinTestInterval,
 		"ping_packet_size":                dom.PingPacketSize,
 		"default_ssl_client_certificate":  dom.DefaultSSLClientCertificate,
-		"end_user_mapping_enabled":        dom.EndUserMappingEnabled} {
+		"sign_and_serve":                  dom.SignAndServe,
+		"end_user_mapping_enabled":        dom.EndUserMappingEnabled,
+	} {
 		// walk through all state elements
 		err := d.Set(stateKey, stateValue)
+		if err != nil {
+			logger.Errorf("populateTerraformState failed: %s", err.Error())
+		}
+	}
+	if dom.SignAndServeAlgorithm != nil {
+		err := d.Set("sign_and_serve_algorithm", dom.SignAndServeAlgorithm)
 		if err != nil {
 			logger.Errorf("populateTerraformState failed: %s", err.Error())
 		}

@@ -5,6 +5,8 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/ptr"
+
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/gtm"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -68,6 +70,8 @@ func TestResGTMDomain(t *testing.T) {
 							resource.TestCheckResourceAttr(resourceName, "name", gtmTestDomain),
 							resource.TestCheckResourceAttr(resourceName, "type", "weighted"),
 							resource.TestCheckResourceAttr(resourceName, "load_imbalance_percentage", "10"),
+							resource.TestCheckResourceAttr(resourceName, "sign_and_serve", "false"),
+							resource.TestCheckNoResourceAttr(resourceName, "sign_and_serve_algorithm"),
 						),
 					},
 					{
@@ -76,6 +80,66 @@ func TestResGTMDomain(t *testing.T) {
 							resource.TestCheckResourceAttr(resourceName, "name", gtmTestDomain),
 							resource.TestCheckResourceAttr(resourceName, "type", "weighted"),
 							resource.TestCheckResourceAttr(resourceName, "load_imbalance_percentage", "20"),
+							resource.TestCheckResourceAttr(resourceName, "sign_and_serve", "false"),
+							resource.TestCheckNoResourceAttr(resourceName, "sign_and_serve_algorithm"),
+						),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
+	t.Run("create domain with sign and serve", func(t *testing.T) {
+		client := &gtm.Mock{}
+
+		getCall := client.On("GetDomain",
+			mock.Anything, // ctx is irrelevant for this test
+			gtmTestDomain,
+		).Return(nil, &gtm.Error{
+			StatusCode: http.StatusNotFound,
+		})
+
+		dr := gtm.DomainResponse{}
+		dr.Resource = &testDomainWithSignAndServe
+		dr.Status = &pendingResponseStatus
+		client.On("CreateDomain",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("*gtm.Domain"),
+			mock.AnythingOfType("map[string]string"),
+		).Return(&dr, nil).Run(func(args mock.Arguments) {
+			getCall.ReturnArguments = mock.Arguments{args.Get(1).(*gtm.Domain), nil}
+		})
+
+		client.On("NewDomain",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
+		).Return(&testDomainWithSignAndServe)
+
+		client.On("GetDomainStatus",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("string"),
+		).Return(&completeResponseStatus, nil)
+
+		client.On("DeleteDomain",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("*gtm.Domain"),
+		).Return(&completeResponseStatus, nil)
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmDomain/create_basic_with_sign_and_serve.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr(resourceName, "name", gtmTestDomain),
+							resource.TestCheckResourceAttr(resourceName, "type", "weighted"),
+							resource.TestCheckResourceAttr(resourceName, "load_imbalance_percentage", "10"),
+							resource.TestCheckResourceAttr(resourceName, "sign_and_serve", "true"),
+							resource.TestCheckResourceAttr(resourceName, "sign_and_serve_algorithm", "RSA-SHA1"),
 						),
 					},
 				},
@@ -132,6 +196,8 @@ func TestResGTMDomain(t *testing.T) {
 							resource.TestCheckResourceAttr(resourceName, "name", gtmTestDomain),
 							resource.TestCheckResourceAttr(resourceName, "type", "weighted"),
 							resource.TestCheckResourceAttr(resourceName, "load_imbalance_percentage", "10"),
+							resource.TestCheckResourceAttr(resourceName, "sign_and_serve", "false"),
+							resource.TestCheckNoResourceAttr(resourceName, "sign_and_serve_algorithm"),
 						),
 					},
 					{
@@ -257,6 +323,8 @@ func TestResGTMDomain(t *testing.T) {
 							resource.TestCheckResourceAttr(resourceName, "name", gtmTestDomain),
 							resource.TestCheckResourceAttr(resourceName, "type", "weighted"),
 							resource.TestCheckResourceAttr(resourceName, "load_imbalance_percentage", "10"),
+							resource.TestCheckResourceAttr(resourceName, "sign_and_serve", "false"),
+							resource.TestCheckNoResourceAttr(resourceName, "sign_and_serve_algorithm"),
 						),
 					},
 					{
@@ -541,6 +609,27 @@ var (
 		Properties:                  properties,
 		Status:                      testStatus,
 		Type:                        "weighted",
+	}
+
+	testDomainWithSignAndServe = gtm.Domain{
+		Datacenters:                 datacenters,
+		DefaultErrorPenalty:         75,
+		DefaultSSLClientCertificate: "",
+		DefaultSSLClientPrivateKey:  "",
+		DefaultTimeoutPenalty:       25,
+		EmailNotificationList:       make([]string, 0),
+		LastModified:                "2019-04-25T14:53:12.000+00:00",
+		LastModifiedBy:              "operator",
+		Links:                       links,
+		LoadFeedback:                false,
+		LoadImbalancePercentage:     10.0,
+		ModificationComments:        "Edit Property test_property",
+		Name:                        gtmTestDomain,
+		Properties:                  properties,
+		Status:                      testStatus,
+		Type:                        "weighted",
+		SignAndServeAlgorithm:       ptr.To("RSA-SHA1"),
+		SignAndServe:                true,
 	}
 
 	deniedResponseStatus = gtm.ResponseStatus{

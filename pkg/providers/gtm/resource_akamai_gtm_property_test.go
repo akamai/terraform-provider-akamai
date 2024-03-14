@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/gtm"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
@@ -27,7 +28,6 @@ func TestResGTMProperty(t *testing.T) {
 			property: getBasicProperty(),
 			init: func(t *testing.T, m *gtm.Mock) {
 				mockNewProperty(m, propertyName)
-				mockNewTrafficTarget(m, 1)
 				mockNewStaticRRSet(m)
 				mockNewLivenessTest(m, "lt5", "HTTP", "/junk", 40, 1, 30)
 				mockNewLivenessTest(m, "lt2", "HTTP", "/junk", 30, 80, 20)
@@ -35,7 +35,6 @@ func TestResGTMProperty(t *testing.T) {
 				// read
 				mockGetProperty(m, getBasicProperty(), propertyName, gtmTestDomain, 4)
 				// update
-				mockNewTrafficTarget(m, 1)
 				mockNewStaticRRSet(m)
 				mockNewLivenessTest(m, "lt5", "HTTP", "/junk", 50, 1, 30)
 				mockNewLivenessTest(m, "lt2", "HTTP", "/junk", 30, 0, 20)
@@ -54,6 +53,11 @@ func TestResGTMProperty(t *testing.T) {
 						resource.TestCheckResourceAttr(propertyResourceName, "type", "weighted-round-robin"),
 						resource.TestCheckResourceAttr(propertyResourceName, "weighted_hash_bits_for_ipv4", "0"),
 						resource.TestCheckResourceAttr(propertyResourceName, "weighted_hash_bits_for_ipv6", "0"),
+						resource.TestCheckResourceAttr(propertyResourceName, "liveness_test.0.http_method", ""),
+						resource.TestCheckResourceAttr(propertyResourceName, "liveness_test.0.http_request_body", ""),
+						resource.TestCheckResourceAttr(propertyResourceName, "liveness_test.0.alternate_ca_certificates.#", "0"),
+						resource.TestCheckResourceAttr(propertyResourceName, "liveness_test.0.pre_2023_security_posture", "false"),
+						resource.TestCheckResourceAttr(propertyResourceName, "traffic_target.0.precedence", "0"),
 						resource.TestCheckResourceAttr(propertyResourceName, "id", "gtm_terra_testdomain.akadns.net:tfexample_prop_1"),
 					),
 				},
@@ -64,6 +68,42 @@ func TestResGTMProperty(t *testing.T) {
 						resource.TestCheckResourceAttr(propertyResourceName, "type", "weighted-round-robin"),
 						resource.TestCheckResourceAttr(propertyResourceName, "weighted_hash_bits_for_ipv4", "0"),
 						resource.TestCheckResourceAttr(propertyResourceName, "weighted_hash_bits_for_ipv6", "0"),
+						resource.TestCheckResourceAttr(propertyResourceName, "liveness_test.0.http_method", ""),
+						resource.TestCheckResourceAttr(propertyResourceName, "liveness_test.0.http_request_body", ""),
+						resource.TestCheckResourceAttr(propertyResourceName, "liveness_test.0.alternate_ca_certificates.#", "0"),
+						resource.TestCheckResourceAttr(propertyResourceName, "liveness_test.0.pre_2023_security_posture", "false"),
+						resource.TestCheckResourceAttr(propertyResourceName, "traffic_target.0.precedence", "0"),
+						resource.TestCheckResourceAttr(propertyResourceName, "id", "gtm_terra_testdomain.akadns.net:tfexample_prop_1"),
+					),
+				},
+			},
+		},
+		"create property with additional liveness test fields": {
+			property: getBasicPropertyWithLivenessTests(),
+			init: func(t *testing.T, m *gtm.Mock) {
+				mockNewProperty(m, propertyName)
+				mockNewStaticRRSet(m)
+				mockNewLivenessTest(m, "lt5", "HTTP", "/junk", 40, 1, 30)
+				mockNewLivenessTest(m, "lt2", "HTTP", "/junk", 30, 80, 20)
+				mockCreateProperty(m, getBasicPropertyWithLivenessTests(), gtmTestDomain)
+				// read
+				mockGetProperty(m, getBasicPropertyWithLivenessTests(), propertyName, gtmTestDomain, 3)
+				// delete
+				mockDeleteProperty(m, getBasicPropertyWithLivenessTests(), gtmTestDomain)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/create_basic_additional_liveness_tests.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr(propertyResourceName, "name", "tfexample_prop_1"),
+						resource.TestCheckResourceAttr(propertyResourceName, "type", "weighted-round-robin"),
+						resource.TestCheckResourceAttr(propertyResourceName, "weighted_hash_bits_for_ipv4", "0"),
+						resource.TestCheckResourceAttr(propertyResourceName, "weighted_hash_bits_for_ipv6", "0"),
+						resource.TestCheckResourceAttr(propertyResourceName, "liveness_test.0.http_method", "GET"),
+						resource.TestCheckResourceAttr(propertyResourceName, "liveness_test.0.http_request_body", "Body"),
+						resource.TestCheckResourceAttr(propertyResourceName, "liveness_test.0.pre_2023_security_posture", "true"),
+						resource.TestCheckResourceAttr(propertyResourceName, "liveness_test.0.alternate_ca_certificates.0", "test1"),
+						resource.TestCheckResourceAttr(propertyResourceName, "traffic_target.0.precedence", "0"),
 						resource.TestCheckResourceAttr(propertyResourceName, "id", "gtm_terra_testdomain.akadns.net:tfexample_prop_1"),
 					),
 				},
@@ -73,7 +113,6 @@ func TestResGTMProperty(t *testing.T) {
 			property: getBasicProperty(),
 			init: func(t *testing.T, m *gtm.Mock) {
 				mockNewProperty(m, propertyName)
-				mockNewTrafficTarget(m, 1)
 				mockNewStaticRRSet(m)
 				mockNewLivenessTest(m, "lt5", "HTTP", "/junk", 40, 1, 30)
 				mockNewLivenessTest(m, "lt2", "HTTP", "/junk", 30, 80, 20)
@@ -93,12 +132,11 @@ func TestResGTMProperty(t *testing.T) {
 				},
 			},
 		},
-		"create propery denied": {
+		"create property denied": {
 			property: nil,
 			init: func(t *testing.T, m *gtm.Mock) {
 				// create
 				mockNewProperty(m, propertyName)
-				mockNewTrafficTarget(m, 1)
 				mockNewStaticRRSet(m)
 				mockNewLivenessTest(m, "lt5", "HTTP", "/junk", 40, 1, 30)
 				mockNewLivenessTest(m, "lt2", "HTTP", "/junk", 30, 80, 20)
@@ -125,7 +163,6 @@ func TestResGTMProperty(t *testing.T) {
 			init: func(t *testing.T, m *gtm.Mock) {
 				// create 1st property
 				mockNewProperty(m, propertyName)
-				mockNewTrafficTarget(m, 1)
 				mockNewStaticRRSet(m)
 				mockNewLivenessTest(m, "lt5", "HTTP", "/junk", 40, 1, 30)
 				mockNewLivenessTest(m, "lt2", "HTTP", "/junk", 30, 80, 20)
@@ -137,7 +174,6 @@ func TestResGTMProperty(t *testing.T) {
 				propertyWithUpdatedName := getBasicProperty()
 				propertyWithUpdatedName.Name = updatedPropertyName
 				mockNewProperty(m, updatedPropertyName)
-				mockNewTrafficTarget(m, 1)
 				mockNewStaticRRSet(m)
 				mockNewLivenessTest(m, "lt5", "HTTP", "/junk", 40, 1, 30)
 				mockNewLivenessTest(m, "lt2", "HTTP", "/junk", 30, 80, 20)
@@ -154,6 +190,11 @@ func TestResGTMProperty(t *testing.T) {
 						resource.TestCheckResourceAttr(propertyResourceName, "name", "tfexample_prop_1"),
 						resource.TestCheckResourceAttr(propertyResourceName, "weighted_hash_bits_for_ipv4", "0"),
 						resource.TestCheckResourceAttr(propertyResourceName, "weighted_hash_bits_for_ipv6", "0"),
+						resource.TestCheckResourceAttr(propertyResourceName, "liveness_test.0.http_method", ""),
+						resource.TestCheckResourceAttr(propertyResourceName, "liveness_test.0.http_request_body", ""),
+						resource.TestCheckResourceAttr(propertyResourceName, "liveness_test.0.alternate_ca_certificates.#", "0"),
+						resource.TestCheckResourceAttr(propertyResourceName, "liveness_test.0.pre_2023_security_posture", "false"),
+						resource.TestCheckResourceAttr(propertyResourceName, "traffic_target.0.precedence", "0"),
 						resource.TestCheckResourceAttr(propertyResourceName, "id", "gtm_terra_testdomain.akadns.net:tfexample_prop_1"),
 					),
 				},
@@ -163,6 +204,11 @@ func TestResGTMProperty(t *testing.T) {
 						resource.TestCheckResourceAttr(propertyResourceName, "name", "tfexample_prop_1-updated"),
 						resource.TestCheckResourceAttr(propertyResourceName, "weighted_hash_bits_for_ipv4", "0"),
 						resource.TestCheckResourceAttr(propertyResourceName, "weighted_hash_bits_for_ipv6", "0"),
+						resource.TestCheckResourceAttr(propertyResourceName, "liveness_test.0.http_method", ""),
+						resource.TestCheckResourceAttr(propertyResourceName, "liveness_test.0.http_request_body", ""),
+						resource.TestCheckResourceAttr(propertyResourceName, "liveness_test.0.alternate_ca_certificates.#", "0"),
+						resource.TestCheckResourceAttr(propertyResourceName, "liveness_test.0.pre_2023_security_posture", "false"),
+						resource.TestCheckResourceAttr(propertyResourceName, "traffic_target.0.precedence", "0"),
 						resource.TestCheckResourceAttr(propertyResourceName, "id", "gtm_terra_testdomain.akadns.net:tfexample_prop_1-updated"),
 					),
 				},
@@ -173,7 +219,6 @@ func TestResGTMProperty(t *testing.T) {
 			init: func(t *testing.T, m *gtm.Mock) {
 				// create property with test_object_protocol in first liveness test different from HTTP, HTTPS, FTP
 				mockNewProperty(m, propertyName)
-				mockNewTrafficTarget(m, 1)
 				mockNewStaticRRSet(m)
 				mockNewLivenessTest(m, "lt5", "SNMP", "", 40, 1, 30)
 				mockNewLivenessTest(m, "lt2", "HTTP", "/junk", 30, 80, 20)
@@ -195,7 +240,87 @@ func TestResGTMProperty(t *testing.T) {
 						resource.TestCheckResourceAttr(propertyResourceName, "type", "weighted-round-robin"),
 						resource.TestCheckResourceAttr(propertyResourceName, "weighted_hash_bits_for_ipv4", "0"),
 						resource.TestCheckResourceAttr(propertyResourceName, "weighted_hash_bits_for_ipv6", "0"),
+						resource.TestCheckResourceAttr(propertyResourceName, "liveness_test.0.http_method", ""),
+						resource.TestCheckResourceAttr(propertyResourceName, "liveness_test.0.http_request_body", ""),
+						resource.TestCheckResourceAttr(propertyResourceName, "liveness_test.0.alternate_ca_certificates.#", "0"),
+						resource.TestCheckResourceAttr(propertyResourceName, "liveness_test.0.pre_2023_security_posture", "false"),
+						resource.TestCheckResourceAttr(propertyResourceName, "traffic_target.0.precedence", "0"),
 						resource.TestCheckResourceAttr(propertyResourceName, "id", "gtm_terra_testdomain.akadns.net:tfexample_prop_1"),
+					),
+				},
+			},
+		},
+		"create property with 'ranked-failover' type and two empty precedences in traffic target - error": {
+			property: getRankedFailoverPropertyNoPrecedence(),
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/precedence/create_ranked_failover_empty_precedence.tf"),
+					ExpectError: regexp.MustCompile(`Error: property cannot have multiple primary traffic targets \(targets with lowest precedence\)`),
+				},
+			},
+		}, "create property with 'ranked-failover' type and no traffic targets - error": {
+			property: getRankedFailoverPropertyNoPrecedence(),
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/precedence/create_ranked_failover_no_traffic_targets.tf"),
+					ExpectError: regexp.MustCompile(`Error: at least one 'traffic_target' has to be defined and enabled`),
+				},
+			},
+		},
+		"create property with 'ranked-failover' type and allow single empty precedence value": {
+			property: getRankedFailoverPropertyWithPrecedence(),
+			init: func(t *testing.T, m *gtm.Mock) {
+				mockNewProperty(m, propertyName)
+				mockNewStaticRRSet(m)
+				mockNewLivenessTest(m, "lt5", "HTTP", "/junk", 40, 1, 30)
+				mockNewLivenessTest(m, "lt2", "HTTP", "/junk", 30, 80, 20)
+				mockCreateProperty(m, getRankedFailoverPropertyWithPrecedence(), gtmTestDomain)
+				// read
+				mockGetProperty(m, getRankedFailoverPropertyWithPrecedence(), propertyName, gtmTestDomain, 3)
+				// delete
+				mockDeleteProperty(m, getRankedFailoverPropertyWithPrecedence(), gtmTestDomain)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/precedence/create_ranked_failover_precedence.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr(propertyResourceName, "name", "tfexample_prop_1"),
+						resource.TestCheckResourceAttr(propertyResourceName, "weighted_hash_bits_for_ipv4", "0"),
+						resource.TestCheckResourceAttr(propertyResourceName, "weighted_hash_bits_for_ipv6", "0"),
+						resource.TestCheckResourceAttr(propertyResourceName, "id", "gtm_terra_testdomain.akadns.net:tfexample_prop_1"),
+						resource.TestCheckResourceAttr(propertyResourceName, "liveness_test.0.http_method", ""),
+						resource.TestCheckResourceAttr(propertyResourceName, "liveness_test.0.http_request_body", ""),
+						resource.TestCheckResourceAttr(propertyResourceName, "liveness_test.0.alternate_ca_certificates.#", "0"),
+						resource.TestCheckResourceAttr(propertyResourceName, "liveness_test.0.pre_2023_security_posture", "false"),
+						resource.TestCheckResourceAttr(propertyResourceName, "traffic_target.0.precedence", "10"),
+						resource.TestCheckResourceAttr(propertyResourceName, "traffic_target.1.precedence", "0"),
+					),
+				},
+			},
+		},
+		"create property with 'ranked-failover' type and 0 set as precedence value": {
+			property: getRankedFailoverPropertyWithPrecedence(),
+			init: func(t *testing.T, m *gtm.Mock) {
+				mockNewProperty(m, propertyName)
+				mockNewStaticRRSet(m)
+				mockNewLivenessTest(m, "lt5", "HTTP", "/junk", 40, 1, 30)
+				mockNewLivenessTest(m, "lt2", "HTTP", "/junk", 30, 80, 20)
+				mockCreateProperty(m, getRankedFailoverPropertyWithPrecedence(), gtmTestDomain)
+				// read
+				mockGetProperty(m, getRankedFailoverPropertyWithPrecedence(), propertyName, gtmTestDomain, 3)
+				// delete
+				mockDeleteProperty(m, getRankedFailoverPropertyWithPrecedence(), gtmTestDomain)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/precedence/create_ranked_failover_0_precedence.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr(propertyResourceName, "name", "tfexample_prop_1"),
+						resource.TestCheckResourceAttr(propertyResourceName, "weighted_hash_bits_for_ipv4", "0"),
+						resource.TestCheckResourceAttr(propertyResourceName, "weighted_hash_bits_for_ipv6", "0"),
+						resource.TestCheckResourceAttr(propertyResourceName, "id", "gtm_terra_testdomain.akadns.net:tfexample_prop_1"),
+						resource.TestCheckResourceAttr(propertyResourceName, "traffic_target.0.precedence", "10"),
+						resource.TestCheckResourceAttr(propertyResourceName, "traffic_target.1.precedence", "0"),
 					),
 				},
 			},
@@ -365,36 +490,20 @@ func TestResourceGTMTrafficTargetOrder(t *testing.T) {
 	}
 }
 
-// getUpdatedProperty gets the property with updated values taken from `update_basic.tf`
-func getUpdatedProperty() *gtm.Property {
+// getRankedFailoverPropertyWithPrecedence gets the property values taken from `create_ranked_failover_precedence.tf`
+func getRankedFailoverPropertyWithPrecedence() *gtm.Property {
 	return &gtm.Property{
-		BackupCName:            "",
-		BackupIP:               "",
-		BalanceByDownloadScore: false,
-		Comments:               "",
-		DynamicTTL:             300,
-		FailbackDelay:          0,
-		FailoverDelay:          0,
-		HandoutMode:            "normal",
-		HandoutLimit:           5,
-		HealthMax:              0,
-		HealthMultiplier:       0,
-		HealthThreshold:        0,
-		IPv6:                   false,
+		DynamicTTL:   300,
+		HandoutMode:  "normal",
+		HandoutLimit: 5,
 		LivenessTests: []*gtm.LivenessTest{
 			{
 				DisableNonstandardPortWarning: false,
 				Name:                          "lt5",
-				RequestString:                 "",
-				ResponseString:                "",
-				SSLClientCertificate:          "",
-				SSLClientPrivateKey:           "",
-				TestInterval:                  50,
+				TestInterval:                  40,
 				TestObject:                    "/junk",
-				TestObjectPassword:            "",
 				TestObjectPort:                1,
 				TestObjectProtocol:            "HTTP",
-				TestObjectUsername:            "",
 				TestTimeout:                   30.0,
 				HTTPHeaders: []*gtm.HTTPHeader{
 					{
@@ -414,10 +523,8 @@ func getUpdatedProperty() *gtm.Property {
 				HTTPHeaders:                 []*gtm.HTTPHeader{},
 			},
 		},
-		MapName:               "",
-		MaxUnreachablePenalty: 0,
-		Name:                  "tfexample_prop_1",
-		ScoreAggregationType:  "median",
+		Name:                 "tfexample_prop_1",
+		ScoreAggregationType: "median",
 		StaticRRSets: []*gtm.StaticRRSet{
 			{
 				Type:  "MX",
@@ -425,77 +532,40 @@ func getUpdatedProperty() *gtm.Property {
 				Rdata: []string{"100 test_e"},
 			},
 		},
-		StickinessBonusConstant: 0,
 		TrafficTargets: []*gtm.TrafficTarget{
+			{
+				DatacenterID: 3131,
+				Enabled:      true,
+				HandoutCName: "test",
+				Servers: []string{
+					"1.2.3.9",
+				},
+				Weight:     200.0,
+				Precedence: ptr.To(10),
+			},
 			{
 				DatacenterID: 3132,
 				Enabled:      true,
 				HandoutCName: "test",
 				Servers: []string{
-					"1.2.3.5",
+					"1.2.3.9",
 				},
-				Weight: 200.0,
+				Weight:     200.0,
+				Precedence: ptr.To(0),
 			},
 		},
-		Type:                 "weighted-round-robin",
-		UnreachableThreshold: 0,
-		UseComputedTargets:   false,
+		Type: "ranked-failover",
 	}
 }
 
-// getBasicProperty gets the property values taken from `create_basic.tf`
-func getBasicProperty() *gtm.Property {
+// getRankedFailoverPropertyNoPrecedence gets the property values taken from `create_ranked_failover_empty_precedence.tf`
+func getRankedFailoverPropertyNoPrecedence() *gtm.Property {
 	return &gtm.Property{
-		BackupCName:            "",
-		BackupIP:               "",
-		BalanceByDownloadScore: false,
-		Comments:               "",
-		DynamicTTL:             300,
-		FailbackDelay:          0,
-		FailoverDelay:          0,
-		HandoutMode:            "normal",
-		HandoutLimit:           5,
-		HealthMax:              0,
-		HealthMultiplier:       0,
-		HealthThreshold:        0,
-		IPv6:                   false,
-		LivenessTests: []*gtm.LivenessTest{
-			{
-				DisableNonstandardPortWarning: false,
-				Name:                          "lt5",
-				RequestString:                 "",
-				ResponseString:                "",
-				SSLClientCertificate:          "",
-				SSLClientPrivateKey:           "",
-				TestInterval:                  40,
-				TestObject:                    "/junk",
-				TestObjectPassword:            "",
-				TestObjectPort:                1,
-				TestObjectProtocol:            "HTTP",
-				TestObjectUsername:            "",
-				TestTimeout:                   30.0,
-				HTTPHeaders: []*gtm.HTTPHeader{
-					{
-						Name:  "test_name",
-						Value: "test_value",
-					},
-				},
-			},
-			{
-				Name:                        "lt2",
-				TestInterval:                30,
-				TestObjectProtocol:          "HTTP",
-				TestTimeout:                 20,
-				TestObject:                  "/junk",
-				TestObjectPort:              80,
-				PeerCertificateVerification: true,
-				HTTPHeaders:                 []*gtm.HTTPHeader{},
-			},
-		},
-		MapName:               "",
-		MaxUnreachablePenalty: 0,
-		Name:                  "tfexample_prop_1",
-		ScoreAggregationType:  "median",
+		DynamicTTL:           300,
+		HandoutMode:          "normal",
+		HandoutLimit:         5,
+		Name:                 "tfexample_prop_1",
+		ScoreAggregationType: "median",
 		StaticRRSets: []*gtm.StaticRRSet{
 			{
 				Type:  "MX",
@@ -503,7 +573,6 @@ func getBasicProperty() *gtm.Property {
 				Rdata: []string{"100 test_e"},
 			},
 		},
-		StickinessBonusConstant: 0,
 		TrafficTargets: []*gtm.TrafficTarget{
 			{
 				DatacenterID: 3131,
@@ -514,10 +583,192 @@ func getBasicProperty() *gtm.Property {
 				},
 				Weight: 200.0,
 			},
+			{
+				DatacenterID: 3132,
+				Enabled:      true,
+				HandoutCName: "test",
+				Servers: []string{
+					"1.2.3.9",
+				},
+				Weight: 200.0,
+			},
 		},
-		Type:                 "weighted-round-robin",
-		UnreachableThreshold: 0,
-		UseComputedTargets:   false,
+		Type: "ranked-failover",
+	}
+}
+
+// getUpdatedProperty gets the property with updated values taken from `update_basic.tf`
+func getUpdatedProperty() *gtm.Property {
+	return &gtm.Property{
+		DynamicTTL:   300,
+		HandoutMode:  "normal",
+		HandoutLimit: 5,
+		LivenessTests: []*gtm.LivenessTest{
+			{
+				Name:               "lt5",
+				TestInterval:       50,
+				TestObject:         "/junk",
+				TestObjectPort:     1,
+				TestObjectProtocol: "HTTP",
+				TestTimeout:        30.0,
+				HTTPHeaders: []*gtm.HTTPHeader{
+					{
+						Name:  "test_name",
+						Value: "test_value",
+					},
+				},
+			},
+			{
+				Name:                        "lt2",
+				TestInterval:                30,
+				TestObjectProtocol:          "HTTP",
+				TestTimeout:                 20,
+				TestObject:                  "/junk",
+				TestObjectPort:              80,
+				PeerCertificateVerification: true,
+				HTTPHeaders:                 []*gtm.HTTPHeader{},
+			},
+		},
+		Name:                 "tfexample_prop_1",
+		ScoreAggregationType: "median",
+		StaticRRSets: []*gtm.StaticRRSet{
+			{
+				Type:  "MX",
+				TTL:   300,
+				Rdata: []string{"100 test_e"},
+			},
+		},
+		TrafficTargets: []*gtm.TrafficTarget{
+			{
+				DatacenterID: 3132,
+				Enabled:      true,
+				HandoutCName: "test",
+				Servers: []string{
+					"1.2.3.5",
+				},
+				Weight:     200.0,
+				Precedence: ptr.To(0),
+			},
+		},
+		Type: "weighted-round-robin",
+	}
+}
+
+// getBasicProperty gets the property values taken from `create_basic.tf`
+func getBasicProperty() *gtm.Property {
+	return &gtm.Property{
+		DynamicTTL:   300,
+		HandoutMode:  "normal",
+		HandoutLimit: 5,
+		LivenessTests: []*gtm.LivenessTest{
+			{
+				Name:               "lt5",
+				TestInterval:       40,
+				TestObject:         "/junk",
+				TestObjectPort:     1,
+				TestObjectProtocol: "HTTP",
+				TestTimeout:        30.0,
+				HTTPHeaders: []*gtm.HTTPHeader{
+					{
+						Name:  "test_name",
+						Value: "test_value",
+					},
+				},
+			},
+			{
+				Name:                        "lt2",
+				TestInterval:                30,
+				TestObjectProtocol:          "HTTP",
+				TestTimeout:                 20,
+				TestObject:                  "/junk",
+				TestObjectPort:              80,
+				PeerCertificateVerification: true,
+				HTTPHeaders:                 []*gtm.HTTPHeader{},
+			},
+		},
+		Name:                 "tfexample_prop_1",
+		ScoreAggregationType: "median",
+		StaticRRSets: []*gtm.StaticRRSet{
+			{
+				Type:  "MX",
+				TTL:   300,
+				Rdata: []string{"100 test_e"},
+			},
+		},
+		TrafficTargets: []*gtm.TrafficTarget{
+			{
+				DatacenterID: 3131,
+				Enabled:      true,
+				HandoutCName: "test",
+				Servers: []string{
+					"1.2.3.9",
+				},
+				Weight:     200.0,
+				Precedence: ptr.To(0),
+			},
+		},
+		Type: "weighted-round-robin",
+	}
+}
+
+// getBasicPropertyWithLivenessTests gets the property values taken from `create_basic_additional_liveness_tests.tf`
+func getBasicPropertyWithLivenessTests() *gtm.Property {
+	return &gtm.Property{
+		DynamicTTL:   300,
+		HandoutMode:  "normal",
+		HandoutLimit: 5,
+		LivenessTests: []*gtm.LivenessTest{
+			{
+				Name:               "lt5",
+				TestInterval:       40,
+				TestObject:         "/junk",
+				TestObjectPort:     1,
+				TestObjectProtocol: "HTTP",
+				TestTimeout:        30.0,
+				HTTPHeaders: []*gtm.HTTPHeader{
+					{
+						Name:  "test_name",
+						Value: "test_value",
+					},
+				},
+				HTTPMethod:              ptr.To("GET"),
+				HTTPRequestBody:         ptr.To("Body"),
+				Pre2023SecurityPosture:  true,
+				AlternateCACertificates: []string{"test1"},
+			},
+			{
+				Name:                        "lt2",
+				TestInterval:                30,
+				TestObjectProtocol:          "HTTP",
+				TestTimeout:                 20,
+				TestObject:                  "/junk",
+				TestObjectPort:              80,
+				PeerCertificateVerification: true,
+				HTTPHeaders:                 []*gtm.HTTPHeader{},
+			},
+		},
+		Name:                 "tfexample_prop_1",
+		ScoreAggregationType: "median",
+		StaticRRSets: []*gtm.StaticRRSet{
+			{
+				Type:  "MX",
+				TTL:   300,
+				Rdata: []string{"100 test_e"},
+			},
+		},
+		TrafficTargets: []*gtm.TrafficTarget{
+			{
+				DatacenterID: 3131,
+				Enabled:      true,
+				HandoutCName: "test",
+				Servers: []string{
+					"1.2.3.9",
+				},
+				Weight:     200.0,
+				Precedence: ptr.To(0),
+			},
+		},
+		Type: "weighted-round-robin",
 	}
 }
 
@@ -530,7 +781,6 @@ func getMocks() *gtm.Mock {
 		Return(nil, &gtm.Error{StatusCode: http.StatusNotFound})
 	// create
 	mockNewProperty(client, "tfexample_prop_1")
-	mockNewTrafficTarget(client, 3)
 	mockNewLivenessTest(client, "lt5", "HTTP", "/junk", 40, 80, 30.0)
 	// mock.AnythingOfType *gtm.Property is used is those mock calls as there are too many different test cases to mock
 	// each one and for those test it's not important, since we are only checking the diff

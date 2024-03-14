@@ -9,6 +9,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/gtm"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/logger"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
@@ -24,7 +25,7 @@ func resourceGTMv1Property() *schema.Resource {
 		ReadContext:   resourceGTMv1PropertyRead,
 		UpdateContext: resourceGTMv1PropertyUpdate,
 		DeleteContext: resourceGTMv1PropertyDelete,
-		CustomizeDiff: validateTestObject,
+		CustomizeDiff: customDiffGTMProperty,
 		Importer: &schema.ResourceImporter{
 			State: resourceGTMv1PropertyImport,
 		},
@@ -215,6 +216,10 @@ func resourceGTMv1Property() *schema.Resource {
 							Type:     schema.TypeString,
 							Optional: true,
 						},
+						"precedence": {
+							Type:     schema.TypeInt,
+							Optional: true,
+						},
 					},
 				},
 			},
@@ -263,6 +268,14 @@ func resourceGTMv1Property() *schema.Resource {
 						},
 						"http_error5xx": {
 							Type:     schema.TypeBool,
+							Optional: true,
+						},
+						"http_method": {
+							Type:     schema.TypeString,
+							Optional: true,
+						},
+						"http_request_body": {
+							Type:     schema.TypeString,
 							Optional: true,
 						},
 						"disabled": {
@@ -334,6 +347,17 @@ func resourceGTMv1Property() *schema.Resource {
 							Type:     schema.TypeBool,
 							Optional: true,
 						},
+						"pre_2023_security_posture": {
+							Type:     schema.TypeBool,
+							Optional: true,
+						},
+						"alternate_ca_certificates": {
+							Type:     schema.TypeList,
+							Optional: true,
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
 					},
 				},
 			},
@@ -353,11 +377,64 @@ func parseResourceStringID(id string) (string, string, error) {
 
 }
 
-// validateTestObject checks if `test_object` is provided when `test_object_protocol` is set to `HTTP`, `HTTPS` or `FTP`
-func validateTestObject(_ context.Context, d *schema.ResourceDiff, m interface{}) error {
+func validatePrecedence(trafficTargets []interface{}) error {
+	precedenceCounter := map[int]int{}
+	minPrecedence := 256
+
+	for _, itemRaw := range trafficTargets {
+		item, ok := itemRaw.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("could not cast the value of type %T to map[string]interface{}", itemRaw)
+		}
+		precedence, ok := item["precedence"].(int)
+		if !ok {
+			return fmt.Errorf("could not cast the value of type %T to int", item["precedence"])
+		}
+		precedenceCounter[precedence]++
+
+		if precedence < minPrecedence {
+			minPrecedence = precedence
+		}
+	}
+
+	if precedenceCounter[minPrecedence] > 1 {
+		return fmt.Errorf("property cannot have multiple primary traffic targets (targets with lowest precedence)")
+	}
+
+	return nil
+}
+
+func validateTrafficTargets(d *schema.ResourceDiff) error {
+	propertyTypeRaw := d.Get("type")
+	propertyType, ok := propertyTypeRaw.(string)
+	if !ok {
+		return fmt.Errorf("could not cast the value of type %T to string", propertyType)
+	}
+	if propertyType == "ranked-failover" {
+		trafficTargetsRaw := d.Get("traffic_target")
+		trafficTargets, ok := trafficTargetsRaw.([]interface{})
+		if !ok {
+			return fmt.Errorf("could not cast the value of type %T to []interface{}", trafficTargets)
+		}
+		if len(trafficTargets) == 0 {
+			return fmt.Errorf("at least one 'traffic_target' has to be defined and enabled")
+		}
+		if err := validatePrecedence(trafficTargets); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// customDiffGTMProperty performs additional logic to the resource as part of custom diff function
+func customDiffGTMProperty(_ context.Context, d *schema.ResourceDiff, m interface{}) error {
 	meta := meta.Must(m)
-	logger := meta.Log("Akamai GTM", "validateTestObject")
-	logger.Debug("Validating test_object")
+	logger := meta.Log("Akamai GTM", "customDiffGTMProperty")
+	logger.Debug("customDiffGTMProperty")
+
+	if err := validateTrafficTargets(d); err != nil {
+		return err
+	}
 
 	livenessTestRaw, ok := d.GetOkExists("liveness_test")
 	if !ok {
@@ -880,7 +957,7 @@ func populatePropertyObject(ctx context.Context, d *schema.ResourceData, prop *g
 	}
 
 	if strings.ToUpper(ptype) != "STATIC" {
-		populateTrafficTargetObject(ctx, d, prop, m)
+		populateTrafficTargetObject(d, prop, m)
 	}
 	populateStaticRRSetObject(ctx, meta, d, prop)
 	populateLivenessTestObject(ctx, meta, d, prop)
@@ -951,13 +1028,17 @@ func populateTerraformPropertyState(d *schema.ResourceData, prop *gtm.Property, 
 			logger.Errorf("Error setting traffic target: %s", err)
 		}
 	}
-	populateTerraformStaticRRSetState(d, prop, m)
-	populateTerraformLivenessTestState(d, prop, m)
+	if err := populateTerraformStaticRRSetState(d, prop, m); err != nil {
+		logger.Errorf("error setting static RR set: %s", err)
+	}
+	if err := populateTerraformLivenessTestState(d, prop, m); err != nil {
+		logger.Errorf("error setting liveness test: %s", err)
+	}
 
 }
 
 // create and populate GTM Property TrafficTargets object
-func populateTrafficTargetObject(ctx context.Context, d *schema.ResourceData, prop *gtm.Property, m interface{}) {
+func populateTrafficTargetObject(d *schema.ResourceData, prop *gtm.Property, m interface{}) {
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "populateTrafficTargetObject")
 
@@ -967,8 +1048,9 @@ func populateTrafficTargetObject(ctx context.Context, d *schema.ResourceData, pr
 		trafficObjList := make([]*gtm.TrafficTarget, len(traffTargList)) // create new object list
 		for i, v := range traffTargList {
 			ttMap := v.(map[string]interface{})
-			trafficTarget := Client(meta).NewTrafficTarget(ctx) // create new object
+			trafficTarget := &gtm.TrafficTarget{}
 			trafficTarget.DatacenterID = ttMap["datacenter_id"].(int)
+			trafficTarget.Precedence = ptr.To(ttMap["precedence"].(int))
 			trafficTarget.Enabled = ttMap["enabled"].(bool)
 			trafficTarget.Weight = ttMap["weight"].(float64)
 			if ttMap["servers"] != nil {
@@ -1012,6 +1094,9 @@ func populateTerraformTrafficTargetState(d *schema.ResourceData, prop *gtm.Prope
 		tt["weight"] = ttObject.Weight
 		tt["handout_cname"] = ttObject.HandoutCName
 		tt["servers"] = ttObject.Servers
+		if ttObject.Precedence != nil {
+			tt["precedence"] = *ttObject.Precedence
+		}
 		// remove object
 		delete(objectInventory, objIndex)
 	}
@@ -1025,6 +1110,9 @@ func populateTerraformTrafficTargetState(d *schema.ResourceData, prop *gtm.Prope
 				"weight":        mttObj.Weight,
 				"handout_cname": mttObj.HandoutCName,
 				"servers":       mttObj.Servers,
+			}
+			if mttObj.Precedence != nil {
+				ttNew["precedence"] = mttObj.Precedence
 			}
 			ttStateList = append(ttStateList, ttNew)
 		}
@@ -1059,7 +1147,7 @@ func populateStaticRRSetObject(ctx context.Context, meta meta.Meta, d *schema.Re
 }
 
 // create and populate Terraform static_rr_sets schema
-func populateTerraformStaticRRSetState(d *schema.ResourceData, prop *gtm.Property, m interface{}) {
+func populateTerraformStaticRRSetState(d *schema.ResourceData, prop *gtm.Property, m interface{}) error {
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "populateTerraformStaticRRSetState")
 
@@ -1096,8 +1184,8 @@ func populateTerraformStaticRRSetState(d *schema.ResourceData, prop *gtm.Propert
 			rrStateList = append(rrStateList, rrNew)
 		}
 	}
-	_ = d.Set("static_rr_set", rrStateList)
 
+	return d.Set("static_rr_set", rrStateList)
 }
 
 // Populate existing Liveness test  object from resource data
@@ -1120,6 +1208,13 @@ func populateLivenessTestObject(ctx context.Context, meta meta.Meta, d *schema.R
 			lt.HTTPError3xx = v["http_error3xx"].(bool)
 			lt.HTTPError4xx = v["http_error4xx"].(bool)
 			lt.HTTPError5xx = v["http_error5xx"].(bool)
+			if v["http_method"].(string) != "" {
+				lt.HTTPMethod = ptr.To(v["http_method"].(string))
+			}
+			if v["http_request_body"].(string) != "" {
+				lt.HTTPRequestBody = ptr.To(v["http_request_body"].(string))
+			}
+			lt.Pre2023SecurityPosture = v["pre_2023_security_posture"].(bool)
 			lt.Disabled = v["disabled"].(bool)
 			lt.TestObjectPassword = v["test_object_password"].(string)
 			lt.TestObjectPort = v["test_object_port"].(int)
@@ -1143,6 +1238,14 @@ func populateLivenessTestObject(ctx context.Context, meta meta.Meta, d *schema.R
 				}
 				lt.HTTPHeaders = headerObjList
 			}
+			alternateCACerts := v["alternate_ca_certificates"].([]interface{})
+			if alternateCACerts != nil {
+				var certList []string
+				for _, certRaw := range alternateCACerts {
+					certList = append(certList, certRaw.(string))
+				}
+				lt.AlternateCACertificates = certList
+			}
 			liveTestObjList[i] = lt
 		}
 		prop.LivenessTests = liveTestObjList
@@ -1150,7 +1253,7 @@ func populateLivenessTestObject(ctx context.Context, meta meta.Meta, d *schema.R
 }
 
 // create and populate Terraform liveness_test schema
-func populateTerraformLivenessTestState(d *schema.ResourceData, prop *gtm.Property, m interface{}) {
+func populateTerraformLivenessTestState(d *schema.ResourceData, prop *gtm.Property, m interface{}) error {
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "populateTerraformLivenessTestState")
 
@@ -1192,6 +1295,16 @@ func populateTerraformLivenessTestState(d *schema.ResourceData, prop *gtm.Proper
 		lt["answers_required"] = ltObject.AnswersRequired
 		lt["resource_type"] = ltObject.ResourceType
 		lt["recursion_requested"] = ltObject.RecursionRequested
+		lt["pre_2023_security_posture"] = ltObject.Pre2023SecurityPosture
+		if ltObject.HTTPMethod != nil {
+			lt["http_method"] = ltObject.HTTPMethod
+		}
+		if ltObject.HTTPRequestBody != nil {
+			lt["http_request_body"] = ltObject.HTTPRequestBody
+		}
+		if ltObject.AlternateCACertificates != nil {
+			lt["alternate_ca_certificates"] = ltObject.AlternateCACertificates
+		}
 		httpHeaderListNew := make([]interface{}, len(ltObject.HTTPHeaders))
 		for i, r := range ltObject.HTTPHeaders {
 			httpHeaderNew := map[string]interface{}{
@@ -1232,6 +1345,16 @@ func populateTerraformLivenessTestState(d *schema.ResourceData, prop *gtm.Proper
 				"answers_required":                 l.AnswersRequired,
 				"resource_type":                    l.ResourceType,
 				"recursion_requested":              l.RecursionRequested,
+				"pre_2023_security_posture":        l.Pre2023SecurityPosture,
+			}
+			if l.HTTPMethod != nil {
+				ltNew["http_method"] = l.HTTPMethod
+			}
+			if l.HTTPRequestBody != nil {
+				ltNew["http_request_body"] = l.HTTPRequestBody
+			}
+			if l.AlternateCACertificates != nil {
+				ltNew["alternate_ca_certificates"] = l.AlternateCACertificates
 			}
 			httpHeaderListNew := make([]interface{}, len(l.HTTPHeaders))
 			for i, r := range l.HTTPHeaders {
@@ -1245,8 +1368,8 @@ func populateTerraformLivenessTestState(d *schema.ResourceData, prop *gtm.Proper
 			ltStateList = append(ltStateList, ltNew)
 		}
 	}
-	_ = d.Set("liveness_test", ltStateList)
 
+	return d.Set("liveness_test", ltStateList)
 }
 
 func convertStringToInterfaceList(stringList []string, m interface{}) []interface{} {
