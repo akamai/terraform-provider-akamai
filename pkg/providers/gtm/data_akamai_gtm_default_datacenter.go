@@ -75,7 +75,7 @@ func dataSourceGTMDefaultDatacenterRead(ctx context.Context, d *schema.ResourceD
 		"dcid":   dcID,
 	}).Debug("Start Default Datacenter Retrieval")
 
-	var defaultDC = Client(meta).NewDatacenter(ctx)
+	var defaultDC *gtm.Datacenter
 	switch dcID {
 	case gtm.MapDefaultDC:
 		defaultDC, err = Client(meta).CreateMapsDefaultDatacenter(ctx, domain)

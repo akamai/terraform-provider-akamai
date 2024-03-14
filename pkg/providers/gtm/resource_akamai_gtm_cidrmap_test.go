@@ -36,11 +36,6 @@ func TestResGTMCIDRMap(t *testing.T) {
 			getCall.ReturnArguments = mock.Arguments{resp.Resource, nil}
 		})
 
-		client.On("NewCIDRMap",
-			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("string"),
-		).Return(&cidr, nil)
-
 		client.On("GetDatacenter",
 			mock.Anything, // ctx is irrelevant for this test
 			mock.AnythingOfType("int"),
@@ -100,11 +95,6 @@ func TestResGTMCIDRMap(t *testing.T) {
 			StatusCode: http.StatusBadRequest,
 		})
 
-		client.On("NewCIDRMap",
-			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("string"),
-		).Return(&cidr, nil)
-
 		client.On("GetDatacenter",
 			mock.Anything, // ctx is irrelevant for this test
 			mock.AnythingOfType("int"),
@@ -137,11 +127,6 @@ func TestResGTMCIDRMap(t *testing.T) {
 			mock.AnythingOfType("*gtm.CIDRMap"),
 			gtmTestDomain,
 		).Return(&dr, nil)
-
-		client.On("NewCIDRMap",
-			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("string"),
-		).Return(&cidr, nil)
 
 		client.On("GetDatacenter",
 			mock.Anything, // ctx is irrelevant for this test
@@ -283,11 +268,6 @@ func getCIDRMapMocks() *gtm.Mock {
 	).Return(&resp, nil).Run(func(args mock.Arguments) {
 		mockGetCIDRMap.ReturnArguments = mock.Arguments{resp.Resource, nil}
 	})
-
-	client.On("NewCIDRMap",
-		mock.Anything, // ctx is irrelevant for this test
-		mock.AnythingOfType("string"),
-	).Return(&cidr, nil)
 
 	client.On("GetDatacenter",
 		mock.Anything, // ctx is irrelevant for this test

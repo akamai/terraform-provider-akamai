@@ -115,7 +115,7 @@ func resourceGTMv1CIDRMapCreate(ctx context.Context, d *schema.ResourceData, m i
 		})
 	}
 
-	newCidr := populateNewCIDRMapObject(ctx, meta, d, m)
+	newCidr := populateNewCIDRMapObject(meta, d, m)
 	logger.Debugf("Proposed New CidrMap: [%v]", newCidr)
 	cStatus, err := Client(meta).CreateCIDRMap(ctx, newCidr, domain)
 	if err != nil {
@@ -369,7 +369,7 @@ func resourceGTMv1CIDRMapDelete(ctx context.Context, d *schema.ResourceData, m i
 }
 
 // Create and populate a new cidrMap object from cidrMap data
-func populateNewCIDRMapObject(ctx context.Context, meta meta.Meta, d *schema.ResourceData, m interface{}) *gtm.CIDRMap {
+func populateNewCIDRMapObject(meta meta.Meta, d *schema.ResourceData, m interface{}) *gtm.CIDRMap {
 	logger := meta.Log("Akamai GTM", "populateNewCIDRMapObject")
 
 	cidrMapName, err := tf.GetStringValue("name", d)
@@ -377,10 +377,12 @@ func populateNewCIDRMapObject(ctx context.Context, meta meta.Meta, d *schema.Res
 		logger.Errorf("cidrMap name not found in ResourceData: %s", err.Error())
 	}
 
-	cidrObj := Client(meta).NewCIDRMap(ctx, cidrMapName)
-	cidrObj.DefaultDatacenter = &gtm.DatacenterBase{}
-	cidrObj.Assignments = make([]*gtm.CIDRAssignment, 0)
-	cidrObj.Links = make([]*gtm.Link, 1)
+	cidrObj := &gtm.CIDRMap{
+		Name:              cidrMapName,
+		DefaultDatacenter: &gtm.DatacenterBase{},
+		Assignments:       make([]*gtm.CIDRAssignment, 0),
+		Links:             make([]*gtm.Link, 1),
+	}
 	populateCIDRMapObject(d, cidrObj, m)
 
 	return cidrObj

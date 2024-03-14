@@ -27,17 +27,10 @@ func TestResGTMProperty(t *testing.T) {
 		"create property": {
 			property: getBasicProperty(),
 			init: func(t *testing.T, m *gtm.Mock) {
-				mockNewProperty(m, propertyName)
-				mockNewStaticRRSet(m)
-				mockNewLivenessTest(m, "lt5", "HTTP", "/junk", 40, 1, 30)
-				mockNewLivenessTest(m, "lt2", "HTTP", "/junk", 30, 80, 20)
 				mockCreateProperty(m, getBasicProperty(), gtmTestDomain)
 				// read
 				mockGetProperty(m, getBasicProperty(), propertyName, gtmTestDomain, 4)
 				// update
-				mockNewStaticRRSet(m)
-				mockNewLivenessTest(m, "lt5", "HTTP", "/junk", 50, 1, 30)
-				mockNewLivenessTest(m, "lt2", "HTTP", "/junk", 30, 0, 20)
 				mockUpdateProperty(m, getUpdatedProperty(), gtmTestDomain)
 				// read
 				mockGetDomainStatus(m, gtmTestDomain, 2)
@@ -81,10 +74,6 @@ func TestResGTMProperty(t *testing.T) {
 		"create property with additional liveness test fields": {
 			property: getBasicPropertyWithLivenessTests(),
 			init: func(t *testing.T, m *gtm.Mock) {
-				mockNewProperty(m, propertyName)
-				mockNewStaticRRSet(m)
-				mockNewLivenessTest(m, "lt5", "HTTP", "/junk", 40, 1, 30)
-				mockNewLivenessTest(m, "lt2", "HTTP", "/junk", 30, 80, 20)
 				mockCreateProperty(m, getBasicPropertyWithLivenessTests(), gtmTestDomain)
 				// read
 				mockGetProperty(m, getBasicPropertyWithLivenessTests(), propertyName, gtmTestDomain, 3)
@@ -112,10 +101,6 @@ func TestResGTMProperty(t *testing.T) {
 		"create property failed": {
 			property: getBasicProperty(),
 			init: func(t *testing.T, m *gtm.Mock) {
-				mockNewProperty(m, propertyName)
-				mockNewStaticRRSet(m)
-				mockNewLivenessTest(m, "lt5", "HTTP", "/junk", 40, 1, 30)
-				mockNewLivenessTest(m, "lt2", "HTTP", "/junk", 30, 80, 20)
 				// bad request status code returned
 				m.On("CreateProperty",
 					mock.Anything,
@@ -136,10 +121,6 @@ func TestResGTMProperty(t *testing.T) {
 			property: nil,
 			init: func(t *testing.T, m *gtm.Mock) {
 				// create
-				mockNewProperty(m, propertyName)
-				mockNewStaticRRSet(m)
-				mockNewLivenessTest(m, "lt5", "HTTP", "/junk", 40, 1, 30)
-				mockNewLivenessTest(m, "lt2", "HTTP", "/junk", 30, 80, 20)
 				// denied response status returned
 				deniedResponse := gtm.PropertyResponse{
 					Resource: getBasicProperty(),
@@ -162,10 +143,6 @@ func TestResGTMProperty(t *testing.T) {
 			property: getBasicProperty(),
 			init: func(t *testing.T, m *gtm.Mock) {
 				// create 1st property
-				mockNewProperty(m, propertyName)
-				mockNewStaticRRSet(m)
-				mockNewLivenessTest(m, "lt5", "HTTP", "/junk", 40, 1, 30)
-				mockNewLivenessTest(m, "lt2", "HTTP", "/junk", 30, 80, 20)
 				mockCreateProperty(m, getBasicProperty(), gtmTestDomain)
 				// read
 				mockGetProperty(m, getBasicProperty(), propertyName, gtmTestDomain, 4)
@@ -173,10 +150,6 @@ func TestResGTMProperty(t *testing.T) {
 				mockDeleteProperty(m, getBasicProperty(), gtmTestDomain)
 				propertyWithUpdatedName := getBasicProperty()
 				propertyWithUpdatedName.Name = updatedPropertyName
-				mockNewProperty(m, updatedPropertyName)
-				mockNewStaticRRSet(m)
-				mockNewLivenessTest(m, "lt5", "HTTP", "/junk", 40, 1, 30)
-				mockNewLivenessTest(m, "lt2", "HTTP", "/junk", 30, 80, 20)
 				mockCreateProperty(m, propertyWithUpdatedName, gtmTestDomain)
 				// read
 				mockGetProperty(m, propertyWithUpdatedName, updatedPropertyName, gtmTestDomain, 3)
@@ -218,10 +191,6 @@ func TestResGTMProperty(t *testing.T) {
 			property: getBasicProperty(),
 			init: func(t *testing.T, m *gtm.Mock) {
 				// create property with test_object_protocol in first liveness test different from HTTP, HTTPS, FTP
-				mockNewProperty(m, propertyName)
-				mockNewStaticRRSet(m)
-				mockNewLivenessTest(m, "lt5", "SNMP", "", 40, 1, 30)
-				mockNewLivenessTest(m, "lt2", "HTTP", "/junk", 30, 80, 20)
 				// alter mocked property
 				propertyWithLivenessTest := getBasicProperty()
 				propertyWithLivenessTest.LivenessTests[0].TestObject = ""
@@ -270,10 +239,6 @@ func TestResGTMProperty(t *testing.T) {
 		"create property with 'ranked-failover' type and allow single empty precedence value": {
 			property: getRankedFailoverPropertyWithPrecedence(),
 			init: func(t *testing.T, m *gtm.Mock) {
-				mockNewProperty(m, propertyName)
-				mockNewStaticRRSet(m)
-				mockNewLivenessTest(m, "lt5", "HTTP", "/junk", 40, 1, 30)
-				mockNewLivenessTest(m, "lt2", "HTTP", "/junk", 30, 80, 20)
 				mockCreateProperty(m, getRankedFailoverPropertyWithPrecedence(), gtmTestDomain)
 				// read
 				mockGetProperty(m, getRankedFailoverPropertyWithPrecedence(), propertyName, gtmTestDomain, 3)
@@ -301,10 +266,6 @@ func TestResGTMProperty(t *testing.T) {
 		"create property with 'ranked-failover' type and 0 set as precedence value": {
 			property: getRankedFailoverPropertyWithPrecedence(),
 			init: func(t *testing.T, m *gtm.Mock) {
-				mockNewProperty(m, propertyName)
-				mockNewStaticRRSet(m)
-				mockNewLivenessTest(m, "lt5", "HTTP", "/junk", 40, 1, 30)
-				mockNewLivenessTest(m, "lt2", "HTTP", "/junk", 30, 80, 20)
 				mockCreateProperty(m, getRankedFailoverPropertyWithPrecedence(), gtmTestDomain)
 				// read
 				mockGetProperty(m, getRankedFailoverPropertyWithPrecedence(), propertyName, gtmTestDomain, 3)
@@ -780,8 +741,6 @@ func getMocks() *gtm.Mock {
 	getPropertyCall := client.On("GetProperty", mock.Anything, "tfexample_prop_1", gtmTestDomain).
 		Return(nil, &gtm.Error{StatusCode: http.StatusNotFound})
 	// create
-	mockNewProperty(client, "tfexample_prop_1")
-	mockNewLivenessTest(client, "lt5", "HTTP", "/junk", 40, 80, 30.0)
 	// mock.AnythingOfType *gtm.Property is used is those mock calls as there are too many different test cases to mock
 	// each one and for those test it's not important, since we are only checking the diff
 	client.On("CreateProperty", mock.Anything, mock.AnythingOfType("*gtm.Property"), mock.AnythingOfType("string")).Return(&gtm.PropertyResponse{
@@ -798,44 +757,6 @@ func getMocks() *gtm.Mock {
 	).Return(&completeResponseStatus, nil)
 
 	return client
-}
-
-func mockNewProperty(client *gtm.Mock, propertyName string) {
-	client.On("NewProperty",
-		mock.Anything,
-		propertyName,
-	).Return(&gtm.Property{
-		Name: propertyName,
-	}).Once()
-}
-
-func mockNewTrafficTarget(client *gtm.Mock, times int) {
-	client.On("NewTrafficTarget",
-		mock.Anything,
-	).Return(&gtm.TrafficTarget{}).Times(times)
-}
-
-func mockNewStaticRRSet(client *gtm.Mock) {
-	client.On("NewStaticRRSet",
-		mock.Anything,
-	).Return(&gtm.StaticRRSet{}).Once()
-}
-
-func mockNewLivenessTest(client *gtm.Mock, name, protocol, object string, interval, port int, timeout float32) {
-	client.On("NewLivenessTest",
-		mock.Anything,
-		name,
-		protocol,
-		interval,
-		timeout,
-	).Return(&gtm.LivenessTest{
-		Name:               name,
-		TestObjectProtocol: protocol,
-		TestInterval:       interval,
-		TestTimeout:        timeout,
-		TestObjectPort:     port,
-		TestObject:         object,
-	}).Once()
 }
 
 func mockCreateProperty(client *gtm.Mock, property *gtm.Property, domain string) {

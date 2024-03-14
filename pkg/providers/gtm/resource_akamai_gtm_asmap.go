@@ -161,7 +161,14 @@ func resourceGTMv1ASMapCreate(ctx context.Context, d *schema.ResourceData, m int
 		})
 	}
 
-	newAS := populateNewASMapObject(ctx, meta, d, m)
+	newAS, err := populateNewASMapObject(d, m)
+	if err != nil {
+		return append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "asMap populate failed",
+			Detail:   err.Error(),
+		})
+	}
 	logger.Debugf("Proposed New asMap: [%v]", newAS)
 	cStatus, err := Client(meta).CreateASMap(ctx, newAS, domain)
 	if err != nil {
@@ -413,16 +420,21 @@ func resourceGTMv1ASMapDelete(ctx context.Context, d *schema.ResourceData, m int
 }
 
 // Create and populate a new asMap object from asMap data
-func populateNewASMapObject(ctx context.Context, meta meta.Meta, d *schema.ResourceData, m interface{}) *gtm.ASMap {
+func populateNewASMapObject(d *schema.ResourceData, m interface{}) (*gtm.ASMap, error) {
 
-	asMapName, _ := tf.GetStringValue("name", d)
-	asObj := Client(meta).NewASMap(ctx, asMapName)
-	asObj.DefaultDatacenter = &gtm.DatacenterBase{}
-	asObj.Assignments = make([]*gtm.ASAssignment, 1)
-	asObj.Links = make([]*gtm.Link, 1)
+	asMapName, err := tf.GetStringValue("name", d)
+	if err != nil {
+		return nil, err
+	}
+	asObj := &gtm.ASMap{
+		Name:              asMapName,
+		DefaultDatacenter: &gtm.DatacenterBase{},
+		Assignments:       make([]*gtm.ASAssignment, 1),
+		Links:             make([]*gtm.Link, 1),
+	}
 	populateASMapObject(d, asObj, m)
 
-	return asObj
+	return asObj, nil
 
 }
 

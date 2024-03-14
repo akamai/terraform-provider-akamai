@@ -183,7 +183,7 @@ func resourceGTMv1DatacenterCreate(ctx context.Context, d *schema.ResourceData, 
 	}
 	var diags diag.Diagnostics
 	logger.Infof("Creating datacenter [%s] in domain [%s]", datacenterName, domain)
-	newDC, err := populateNewDatacenterObject(ctx, meta, d, m)
+	newDC, err := populateNewDatacenterObject(d, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -459,10 +459,11 @@ func resourceGTMv1DatacenterDelete(ctx context.Context, d *schema.ResourceData, 
 }
 
 // Create and populate a new datacenter object from resource data
-func populateNewDatacenterObject(ctx context.Context, meta meta.Meta, d *schema.ResourceData, m interface{}) (*gtm.Datacenter, error) {
+func populateNewDatacenterObject(d *schema.ResourceData, m interface{}) (*gtm.Datacenter, error) {
 
-	dcObj := Client(meta).NewDatacenter(ctx)
-	dcObj.DefaultLoadObject = gtm.NewLoadObject()
+	dcObj := &gtm.Datacenter{
+		DefaultLoadObject: &gtm.LoadObject{},
+	}
 	err := populateDatacenterObject(d, dcObj, m)
 
 	return dcObj, err
@@ -532,7 +533,7 @@ func populateDatacenterObject(d *schema.ResourceData, dc *gtm.Datacenter, m inte
 	if dloList, err := tf.GetInterfaceArrayValue("default_load_object", d); err != nil || len(dloList) == 0 {
 		dc.DefaultLoadObject = nil
 	} else {
-		dloObject := gtm.NewLoadObject()
+		dloObject := &gtm.LoadObject{}
 		dloMap, ok := dloList[0].(map[string]interface{})
 		if !ok {
 			logger.Errorf("populateDatacenterObject default_load_object failed")

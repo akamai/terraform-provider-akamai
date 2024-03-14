@@ -231,7 +231,7 @@ func resourceGTMv1DomainCreate(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(err)
 	}
 	logger.Infof("Creating domain [%s]", dname)
-	newDom, err := populateNewDomainObject(ctx, meta, d, m)
+	newDom, err := populateNewDomainObject(d, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -541,11 +541,17 @@ func validateDomainType(v interface{}, _ cty.Path) diag.Diagnostics {
 }
 
 // Create and populate a new domain object from resource data
-func populateNewDomainObject(ctx context.Context, meta meta.Meta, d *schema.ResourceData, m interface{}) (*gtm.Domain, error) {
+func populateNewDomainObject(d *schema.ResourceData, m interface{}) (*gtm.Domain, error) {
 
-	name, _ := tf.GetStringValue("name", d)
-	domObj := Client(meta).NewDomain(ctx, name, d.Get("type").(string))
-	err := populateDomainObject(d, domObj, m)
+	name, err := tf.GetStringValue("name", d)
+	if err != nil {
+		return nil, err
+	}
+	domObj := &gtm.Domain{
+		Name: name,
+		Type: d.Get("type").(string),
+	}
+	err = populateDomainObject(d, domObj, m)
 
 	return domObj, err
 

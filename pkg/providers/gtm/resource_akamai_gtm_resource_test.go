@@ -35,33 +35,6 @@ func TestResGTMResource(t *testing.T) {
 			getCall.ReturnArguments = mock.Arguments{args.Get(1).(*gtm.Resource), nil}
 		})
 
-		resCall := client.On("NewResource",
-			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("string"),
-		)
-
-		resCall.RunFn = func(args mock.Arguments) {
-			resCall.ReturnArguments = mock.Arguments{
-				&gtm.Resource{
-					Name: args.String(1),
-				},
-			}
-		}
-
-		resInstCall := client.On("NewResourceInstance",
-			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("*gtm.Resource"),
-			mock.AnythingOfType("int"),
-		)
-
-		resInstCall.RunFn = func(args mock.Arguments) {
-			resInstCall.ReturnArguments = mock.Arguments{
-				&gtm.ResourceInstance{
-					DatacenterID: args.Int(2),
-				},
-			}
-		}
-
 		client.On("GetDomainStatus",
 			mock.Anything, // ctx is irrelevant for this test
 			mock.AnythingOfType("string"),
@@ -119,33 +92,6 @@ func TestResGTMResource(t *testing.T) {
 			StatusCode: http.StatusBadRequest,
 		})
 
-		resCall := client.On("NewResource",
-			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("string"),
-		)
-
-		resCall.RunFn = func(args mock.Arguments) {
-			resCall.ReturnArguments = mock.Arguments{
-				&gtm.Resource{
-					Name: args.String(1),
-				},
-			}
-		}
-
-		resInstCall := client.On("NewResourceInstance",
-			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("*gtm.Resource"),
-			mock.AnythingOfType("int"),
-		)
-
-		resInstCall.RunFn = func(args mock.Arguments) {
-			resInstCall.ReturnArguments = mock.Arguments{
-				&gtm.ResourceInstance{
-					DatacenterID: args.Int(2),
-				},
-			}
-		}
-
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
@@ -172,33 +118,6 @@ func TestResGTMResource(t *testing.T) {
 			mock.AnythingOfType("*gtm.Resource"),
 			gtmTestDomain,
 		).Return(&dr, nil)
-
-		resCall := client.On("NewResource",
-			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("string"),
-		)
-
-		resCall.RunFn = func(args mock.Arguments) {
-			resCall.ReturnArguments = mock.Arguments{
-				&gtm.Resource{
-					Name: args.String(1),
-				},
-			}
-		}
-
-		resInstCall := client.On("NewResourceInstance",
-			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("*gtm.Resource"),
-			mock.AnythingOfType("int"),
-		)
-
-		resInstCall.RunFn = func(args mock.Arguments) {
-			resInstCall.ReturnArguments = mock.Arguments{
-				&gtm.ResourceInstance{
-					DatacenterID: args.Int(2),
-				},
-			}
-		}
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -313,33 +232,6 @@ func getGTMResourceMocks() *gtm.Mock {
 	).Return(&resp, nil).Run(func(args mock.Arguments) {
 		mockGetResource.ReturnArguments = mock.Arguments{args.Get(1).(*gtm.Resource), nil}
 	})
-
-	resCall := client.On("NewResource",
-		mock.Anything, // ctx is irrelevant for this test
-		mock.AnythingOfType("string"),
-	)
-
-	resCall.RunFn = func(args mock.Arguments) {
-		resCall.ReturnArguments = mock.Arguments{
-			&gtm.Resource{
-				Name: args.String(1),
-			},
-		}
-	}
-
-	resInstCall := client.On("NewResourceInstance",
-		mock.Anything, // ctx is irrelevant for this test
-		mock.AnythingOfType("*gtm.Resource"),
-		mock.AnythingOfType("int"),
-	)
-
-	resInstCall.RunFn = func(args mock.Arguments) {
-		resInstCall.ReturnArguments = mock.Arguments{
-			&gtm.ResourceInstance{
-				DatacenterID: args.Int(2),
-			},
-		}
-	}
 
 	client.On("DeleteResource",
 		mock.Anything, // ctx is irrelevant for this test

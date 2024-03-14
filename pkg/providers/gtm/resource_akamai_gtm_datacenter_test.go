@@ -59,10 +59,6 @@ func TestResGTMDatacenter(t *testing.T) {
 			getCall.ReturnArguments = mock.Arguments{args.Get(1).(*gtm.Datacenter), nil}
 		})
 
-		client.On("NewDatacenter",
-			mock.Anything, // ctx is irrelevant for this test
-		).Return(&gtm.Datacenter{})
-
 		client.On("GetDomainStatus",
 			mock.Anything, // ctx is irrelevant for this test
 			mock.AnythingOfType("string"),
@@ -120,10 +116,6 @@ func TestResGTMDatacenter(t *testing.T) {
 			StatusCode: http.StatusBadRequest,
 		})
 
-		client.On("NewDatacenter",
-			mock.Anything, // ctx is irrelevant for this test
-		).Return(&dc)
-
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
@@ -150,10 +142,6 @@ func TestResGTMDatacenter(t *testing.T) {
 			mock.AnythingOfType("*gtm.Datacenter"),
 			gtmTestDomain,
 		).Return(&dr, nil)
-
-		client.On("NewDatacenter",
-			mock.Anything, // ctx is irrelevant for this test
-		).Return(&dc)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{

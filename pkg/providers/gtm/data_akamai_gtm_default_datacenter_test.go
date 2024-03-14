@@ -22,10 +22,6 @@ func TestAccDataSourceGTMDefaultDatacenter_basic(t *testing.T) {
 			mock.AnythingOfType("string"),
 		).Return(&dc, nil)
 
-		client.On("NewDatacenter",
-			mock.Anything, // ctx is irrelevant for this test
-		).Return(&dc)
-
 		dataSourceName := "data.akamai_gtm_default_datacenter.test"
 
 		useClient(client, func() {

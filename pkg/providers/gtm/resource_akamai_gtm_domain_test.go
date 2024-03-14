@@ -36,12 +36,6 @@ func TestResGTMDomain(t *testing.T) {
 			getCall.ReturnArguments = mock.Arguments{args.Get(1).(*gtm.Domain), nil}
 		})
 
-		client.On("NewDomain",
-			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("string"),
-			mock.AnythingOfType("string"),
-		).Return(&testDomain)
-
 		client.On("GetDomainStatus",
 			mock.Anything, // ctx is irrelevant for this test
 			mock.AnythingOfType("string"),
@@ -112,12 +106,6 @@ func TestResGTMDomain(t *testing.T) {
 			getCall.ReturnArguments = mock.Arguments{args.Get(1).(*gtm.Domain), nil}
 		})
 
-		client.On("NewDomain",
-			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("string"),
-			mock.AnythingOfType("string"),
-		).Return(&testDomainWithSignAndServe)
-
 		client.On("GetDomainStatus",
 			mock.Anything, // ctx is irrelevant for this test
 			mock.AnythingOfType("string"),
@@ -170,12 +158,6 @@ func TestResGTMDomain(t *testing.T) {
 			getCall.ReturnArguments = mock.Arguments{args.Get(1).(*gtm.Domain), nil}
 		})
 
-		client.On("NewDomain",
-			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("string"),
-			mock.AnythingOfType("string"),
-		).Return(&testDomain)
-
 		client.On("GetDomainStatus",
 			mock.Anything, // ctx is irrelevant for this test
 			mock.AnythingOfType("string"),
@@ -222,12 +204,6 @@ func TestResGTMDomain(t *testing.T) {
 			StatusCode: http.StatusBadRequest,
 		})
 
-		client.On("NewDomain",
-			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("string"),
-			mock.AnythingOfType("string"),
-		).Return(&testDomain)
-
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
@@ -254,12 +230,6 @@ func TestResGTMDomain(t *testing.T) {
 			mock.AnythingOfType("*gtm.Domain"),
 			mock.AnythingOfType("map[string]string"),
 		).Return(&dr, nil)
-
-		client.On("NewDomain",
-			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("string"),
-			mock.AnythingOfType("string"),
-		).Return(&testDomain)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -296,12 +266,6 @@ func TestResGTMDomain(t *testing.T) {
 		).Return(&dr, nil).Run(func(args mock.Arguments) {
 			getCall.ReturnArguments = mock.Arguments{args.Get(1).(*gtm.Domain), nil}
 		})
-
-		client.On("NewDomain",
-			mock.Anything,
-			mock.AnythingOfType("string"),
-			mock.AnythingOfType("string"),
-		).Return(&testDomain)
 
 		client.On("GetDomainStatus",
 			mock.Anything,
@@ -411,12 +375,6 @@ func getGTMDomainMocks() *gtm.Mock {
 	).Return(&dr, nil).Run(func(args mock.Arguments) {
 		mockGetDomain.ReturnArguments = mock.Arguments{args.Get(1).(*gtm.Domain), nil}
 	})
-
-	client.On("NewDomain",
-		mock.Anything, // ctx is irrelevant for this test
-		mock.AnythingOfType("string"),
-		mock.AnythingOfType("string"),
-	).Return(&testDomain)
 
 	client.On("GetDomainStatus",
 		mock.Anything, // ctx is irrelevant for this test

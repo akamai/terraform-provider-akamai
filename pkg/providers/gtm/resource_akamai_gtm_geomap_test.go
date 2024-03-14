@@ -39,11 +39,6 @@ func TestResGTMGeoMap(t *testing.T) {
 			getCall.ReturnArguments = mock.Arguments{args.Get(1).(*gtm.GeoMap), nil}
 		})
 
-		client.On("NewGeoMap",
-			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("string"),
-		).Return(&geo, nil)
-
 		client.On("GetDatacenter",
 			mock.Anything, // ctx is irrelevant for this test
 			mock.AnythingOfType("int"),
@@ -105,11 +100,6 @@ func TestResGTMGeoMap(t *testing.T) {
 			StatusCode: http.StatusBadRequest,
 		})
 
-		client.On("NewGeoMap",
-			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("string"),
-		).Return(&geo, nil)
-
 		client.On("GetDatacenter",
 			mock.Anything, // ctx is irrelevant for this test
 			mock.AnythingOfType("int"),
@@ -142,11 +132,6 @@ func TestResGTMGeoMap(t *testing.T) {
 			mock.AnythingOfType("*gtm.GeoMap"),
 			gtmTestDomain,
 		).Return(&dr, nil)
-
-		client.On("NewGeoMap",
-			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("string"),
-		).Return(&geo, nil)
 
 		client.On("GetDatacenter",
 			mock.Anything, // ctx is irrelevant for this test
@@ -281,11 +266,6 @@ func getGeoMapMocks() *gtm.Mock {
 	).Return(&resp, nil).Run(func(args mock.Arguments) {
 		mockGetGeoMap.ReturnArguments = mock.Arguments{args.Get(1).(*gtm.GeoMap), nil}
 	})
-
-	client.On("NewGeoMap",
-		mock.Anything, // ctx is irrelevant for this test
-		mock.AnythingOfType("string"),
-	).Return(&geo, nil)
 
 	client.On("GetDatacenter",
 		mock.Anything, // ctx is irrelevant for this test

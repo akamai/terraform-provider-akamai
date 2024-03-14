@@ -95,7 +95,7 @@ func resourceGTMv1GeoMapCreate(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(err)
 	}
 
-	name, _ := tf.GetStringValue("name", d)
+	name, err := tf.GetStringValue("name", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -117,7 +117,15 @@ func resourceGTMv1GeoMapCreate(ctx context.Context, d *schema.ResourceData, m in
 		})
 	}
 
-	newGeo := populateNewGeoMapObject(ctx, meta, d, m)
+	newGeo, err := populateNewGeoMapObject(d, m)
+	if err != nil {
+		logger.Errorf("geoMap populate failed: %s", err.Error())
+		return append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "geoMap populate failed",
+			Detail:   err.Error(),
+		})
+	}
 	logger.Debugf("Proposed New geoMap: [%v]", newGeo)
 	cStatus, err := Client(meta).CreateGeoMap(ctx, newGeo, domain)
 	if err != nil {
@@ -302,7 +310,10 @@ func resourceGTMv1GeoMapImport(d *schema.ResourceData, m interface{}) ([]*schema
 	populateTerraformGeoMapState(d, geo, m)
 
 	// use same Id as passed in
-	name, _ := tf.GetStringValue("name", d)
+	name, err := tf.GetStringValue("name", d)
+	if err != nil {
+		return []*schema.ResourceData{d}, err
+	}
 	logger.Infof("[Akamai GTM] geoMap [%s] [%s] Imported", d.Id(), name)
 	return []*schema.ResourceData{d}, nil
 }
@@ -380,16 +391,21 @@ func resourceGTMv1GeoMapDelete(ctx context.Context, d *schema.ResourceData, m in
 }
 
 // Create and populate a new geoMap object from geoMap data
-func populateNewGeoMapObject(ctx context.Context, meta meta.Meta, d *schema.ResourceData, m interface{}) *gtm.GeoMap {
+func populateNewGeoMapObject(d *schema.ResourceData, m interface{}) (*gtm.GeoMap, error) {
 
-	name, _ := tf.GetStringValue("name", d)
-	geoObj := Client(meta).NewGeoMap(ctx, name)
-	geoObj.DefaultDatacenter = &gtm.DatacenterBase{}
-	geoObj.Assignments = make([]*gtm.GeoAssignment, 1)
-	geoObj.Links = make([]*gtm.Link, 1)
+	name, err := tf.GetStringValue("name", d)
+	if err != nil {
+		return nil, err
+	}
+	geoObj := &gtm.GeoMap{
+		Name:              name,
+		DefaultDatacenter: &gtm.DatacenterBase{},
+		Assignments:       make([]*gtm.GeoAssignment, 1),
+		Links:             make([]*gtm.Link, 1),
+	}
 	populateGeoMapObject(d, geoObj, m)
 
-	return geoObj
+	return geoObj, nil
 }
 
 // Populate existing geoMap object from geoMap data

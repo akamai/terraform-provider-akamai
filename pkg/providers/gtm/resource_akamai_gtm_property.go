@@ -531,7 +531,7 @@ func resourceGTMv1PropertyCreate(ctx context.Context, d *schema.ResourceData, m 
 	}
 
 	logger.Infof("Creating property [%s] in domain [%s]", propertyName, domain)
-	newProp, err := populateNewPropertyObject(ctx, meta, d, m)
+	newProp, err := populateNewPropertyObject(d, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -629,7 +629,7 @@ func resourceGTMv1PropertyUpdate(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 	logger.Debugf("Updating Property BEFORE: %v", existProp)
-	err = populatePropertyObject(ctx, d, existProp, m)
+	err = populatePropertyObject(d, existProp, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -759,7 +759,7 @@ func resourceGTMv1PropertyDelete(ctx context.Context, d *schema.ResourceData, m 
 
 // nolint:gocyclo
 // Populate existing property object from resource data
-func populatePropertyObject(ctx context.Context, d *schema.ResourceData, prop *gtm.Property, m interface{}) error {
+func populatePropertyObject(d *schema.ResourceData, prop *gtm.Property, m interface{}) error {
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "populatePropertyObject")
 
@@ -959,20 +959,25 @@ func populatePropertyObject(ctx context.Context, d *schema.ResourceData, prop *g
 	if strings.ToUpper(ptype) != "STATIC" {
 		populateTrafficTargetObject(d, prop, m)
 	}
-	populateStaticRRSetObject(ctx, meta, d, prop)
-	populateLivenessTestObject(ctx, meta, d, prop)
+	populateStaticRRSetObject(d, prop)
+	populateLivenessTestObject(d, prop)
 
 	return nil
 }
 
 // Create and populate a new property object from resource data
-func populateNewPropertyObject(ctx context.Context, meta meta.Meta, d *schema.ResourceData, m interface{}) (*gtm.Property, error) {
+func populateNewPropertyObject(d *schema.ResourceData, m interface{}) (*gtm.Property, error) {
 
-	name, _ := tf.GetStringValue("name", d)
-	propObj := Client(meta).NewProperty(ctx, name)
-	propObj.TrafficTargets = make([]*gtm.TrafficTarget, 0)
-	propObj.LivenessTests = make([]*gtm.LivenessTest, 0)
-	err := populatePropertyObject(ctx, d, propObj, m)
+	name, err := tf.GetStringValue("name", d)
+	if err != nil {
+		return nil, err
+	}
+	propObj := &gtm.Property{
+		Name:           name,
+		TrafficTargets: make([]*gtm.TrafficTarget, 0),
+		LivenessTests:  make([]*gtm.LivenessTest, 0),
+	}
+	err = populatePropertyObject(d, propObj, m)
 
 	return propObj, err
 
@@ -1080,7 +1085,11 @@ func populateTerraformTrafficTargetState(d *schema.ResourceData, prop *gtm.Prope
 			objectInventory[aObj.DatacenterID] = aObj
 		}
 	}
-	ttStateList, _ := tf.GetInterfaceArrayValue("traffic_target", d)
+
+	ttStateList, err := tf.GetInterfaceArrayValue("traffic_target", d)
+	if err != nil {
+		return err
+	}
 	for _, ttMap := range ttStateList {
 		tt := ttMap.(map[string]interface{})
 		objIndex := tt["datacenter_id"].(int)
@@ -1122,7 +1131,7 @@ func populateTerraformTrafficTargetState(d *schema.ResourceData, prop *gtm.Prope
 }
 
 // Populate existing static_rr_sets object from resource data
-func populateStaticRRSetObject(ctx context.Context, meta meta.Meta, d *schema.ResourceData, prop *gtm.Property) {
+func populateStaticRRSetObject(d *schema.ResourceData, prop *gtm.Property) {
 
 	// pull apart List
 	staticSetList, err := tf.GetInterfaceArrayValue("static_rr_set", d)
@@ -1130,9 +1139,10 @@ func populateStaticRRSetObject(ctx context.Context, meta meta.Meta, d *schema.Re
 		staticObjList := make([]*gtm.StaticRRSet, len(staticSetList)) // create new object list
 		for i, v := range staticSetList {
 			recMap := v.(map[string]interface{})
-			record := Client(meta).NewStaticRRSet(ctx) // create new object
-			record.TTL = recMap["ttl"].(int)
-			record.Type = recMap["type"].(string)
+			record := &gtm.StaticRRSet{
+				TTL:  recMap["ttl"].(int),
+				Type: recMap["type"].(string),
+			}
 			if recMap["rdata"] != nil {
 				rls := make([]string, len(recMap["rdata"].([]interface{})))
 				for i, d := range recMap["rdata"].([]interface{}) {
@@ -1157,7 +1167,11 @@ func populateTerraformStaticRRSetState(d *schema.ResourceData, prop *gtm.Propert
 			objectInventory[aObj.Type] = aObj
 		}
 	}
-	rrStateList, _ := tf.GetInterfaceArrayValue("static_rr_set", d)
+
+	rrStateList, err := tf.GetInterfaceArrayValue("static_rr_set", d)
+	if err != nil {
+		return err
+	}
 	for _, rrMap := range rrStateList {
 		rr := rrMap.(map[string]interface{})
 		objIndex := rr["type"].(string)
@@ -1189,51 +1203,55 @@ func populateTerraformStaticRRSetState(d *schema.ResourceData, prop *gtm.Propert
 }
 
 // Populate existing Liveness test  object from resource data
-func populateLivenessTestObject(ctx context.Context, meta meta.Meta, d *schema.ResourceData, prop *gtm.Property) {
+func populateLivenessTestObject(d *schema.ResourceData, prop *gtm.Property) {
 
 	liveTestList, err := tf.GetInterfaceArrayValue("liveness_test", d)
 	if err == nil {
 		liveTestObjList := make([]*gtm.LivenessTest, len(liveTestList)) // create new object list
 		for i, l := range liveTestList {
 			v := l.(map[string]interface{})
-			lt := Client(meta).NewLivenessTest(ctx, v["name"].(string),
-				v["test_object_protocol"].(string),
-				v["test_interval"].(int),
-				float32(v["test_timeout"].(float64))) // create new object
-			lt.ErrorPenalty = v["error_penalty"].(float64)
-			lt.PeerCertificateVerification = v["peer_certificate_verification"].(bool)
-			lt.TestObject = v["test_object"].(string)
-			lt.RequestString = v["request_string"].(string)
-			lt.ResponseString = v["response_string"].(string)
-			lt.HTTPError3xx = v["http_error3xx"].(bool)
-			lt.HTTPError4xx = v["http_error4xx"].(bool)
-			lt.HTTPError5xx = v["http_error5xx"].(bool)
+
+			lt := &gtm.LivenessTest{
+				Name:                          v["name"].(string),
+				TestObjectProtocol:            v["test_object_protocol"].(string),
+				TestInterval:                  v["test_interval"].(int),
+				TestTimeout:                   float32(v["test_timeout"].(float64)),
+				ErrorPenalty:                  v["error_penalty"].(float64),
+				PeerCertificateVerification:   v["peer_certificate_verification"].(bool),
+				TestObject:                    v["test_object"].(string),
+				RequestString:                 v["request_string"].(string),
+				ResponseString:                v["response_string"].(string),
+				HTTPError3xx:                  v["http_error3xx"].(bool),
+				HTTPError4xx:                  v["http_error4xx"].(bool),
+				HTTPError5xx:                  v["http_error5xx"].(bool),
+				Pre2023SecurityPosture:        v["pre_2023_security_posture"].(bool),
+				Disabled:                      v["disabled"].(bool),
+				TestObjectPassword:            v["test_object_password"].(string),
+				TestObjectPort:                v["test_object_port"].(int),
+				SSLClientPrivateKey:           v["ssl_client_private_key"].(string),
+				SSLClientCertificate:          v["ssl_client_certificate"].(string),
+				DisableNonstandardPortWarning: v["disable_nonstandard_port_warning"].(bool),
+				TestObjectUsername:            v["test_object_username"].(string),
+				TimeoutPenalty:                v["timeout_penalty"].(float64),
+				AnswersRequired:               v["answers_required"].(bool),
+				ResourceType:                  v["resource_type"].(string),
+				RecursionRequested:            v["recursion_requested"].(bool),
+			}
 			if v["http_method"].(string) != "" {
 				lt.HTTPMethod = ptr.To(v["http_method"].(string))
 			}
 			if v["http_request_body"].(string) != "" {
 				lt.HTTPRequestBody = ptr.To(v["http_request_body"].(string))
 			}
-			lt.Pre2023SecurityPosture = v["pre_2023_security_posture"].(bool)
-			lt.Disabled = v["disabled"].(bool)
-			lt.TestObjectPassword = v["test_object_password"].(string)
-			lt.TestObjectPort = v["test_object_port"].(int)
-			lt.SSLClientPrivateKey = v["ssl_client_private_key"].(string)
-			lt.SSLClientCertificate = v["ssl_client_certificate"].(string)
-			lt.DisableNonstandardPortWarning = v["disable_nonstandard_port_warning"].(bool)
-			lt.TestObjectUsername = v["test_object_username"].(string)
-			lt.TimeoutPenalty = v["timeout_penalty"].(float64)
-			lt.AnswersRequired = v["answers_required"].(bool)
-			lt.ResourceType = v["resource_type"].(string)
-			lt.RecursionRequested = v["recursion_requested"].(bool)
 			httpHeaderList := v["http_header"].([]interface{})
 			if httpHeaderList != nil {
 				headerObjList := make([]*gtm.HTTPHeader, len(httpHeaderList)) // create new object list
 				for i, h := range httpHeaderList {
 					recMap := h.(map[string]interface{})
-					record := lt.NewHTTPHeader() // create new object
-					record.Name = recMap["name"].(string)
-					record.Value = recMap["value"].(string)
+					record := &gtm.HTTPHeader{
+						Name:  recMap["name"].(string),
+						Value: recMap["value"].(string),
+					}
 					headerObjList[i] = record
 				}
 				lt.HTTPHeaders = headerObjList
@@ -1263,7 +1281,11 @@ func populateTerraformLivenessTestState(d *schema.ResourceData, prop *gtm.Proper
 			objectInventory[aObj.Name] = aObj
 		}
 	}
-	ltStateList, _ := tf.GetInterfaceArrayValue("liveness_test", d)
+
+	ltStateList, err := tf.GetInterfaceArrayValue("liveness_test", d)
+	if err != nil {
+		return err
+	}
 	for _, ltMap := range ltStateList {
 		lt := ltMap.(map[string]interface{})
 		objIndex := lt["name"].(string)

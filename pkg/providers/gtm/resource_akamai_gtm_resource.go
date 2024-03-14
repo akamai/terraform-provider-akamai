@@ -137,7 +137,7 @@ func resourceGTMv1ResourceCreate(ctx context.Context, d *schema.ResourceData, m 
 	}
 	var diags diag.Diagnostics
 	logger.Infof("Creating resource [%s] in domain [%s]", name, domain)
-	newRsrc, err := populateNewResourceObject(ctx, meta, d, m)
+	newRsrc, err := populateNewResourceObject(d, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -252,7 +252,7 @@ func resourceGTMv1ResourceUpdate(ctx context.Context, d *schema.ResourceData, m 
 		})
 	}
 	logger.Debugf("Updating Resource BEFORE: %v", existRsrc)
-	if err := populateResourceObject(ctx, d, existRsrc, m); err != nil {
+	if err := populateResourceObject(d, existRsrc, m); err != nil {
 		return diag.FromErr(err)
 	}
 	logger.Debugf("Updating Resource PROPOSED: %v", existRsrc)
@@ -321,12 +321,22 @@ func resourceGTMv1ResourceImport(d *schema.ResourceData, m interface{}) ([]*sche
 	if err != nil {
 		return nil, err
 	}
-	_ = d.Set("domain", domain)
-	_ = d.Set("wait_on_complete", true)
+
+	err = d.Set("domain", domain)
+	if err != nil {
+		return nil, err
+	}
+	err = d.Set("wait_on_complete", true)
+	if err != nil {
+		return nil, err
+	}
 	populateTerraformResourceState(d, rsrc, m)
 
 	// use same Id as passed in
-	name, _ := tf.GetStringValue("name", d)
+	name, err := tf.GetStringValue("name", d)
+	if err != nil {
+		return nil, err
+	}
 	logger.Infof("Resource [%s] [%s] Imported", d.Id(), name)
 	return []*schema.ResourceData{d}, nil
 }
@@ -406,12 +416,17 @@ func resourceGTMv1ResourceDelete(ctx context.Context, d *schema.ResourceData, m 
 }
 
 // Create and populate a new resource object from resource data
-func populateNewResourceObject(ctx context.Context, meta meta.Meta, d *schema.ResourceData, m interface{}) (*gtm.Resource, error) {
+func populateNewResourceObject(d *schema.ResourceData, m interface{}) (*gtm.Resource, error) {
 
-	name, _ := tf.GetStringValue("name", d)
-	rsrcObj := Client(meta).NewResource(ctx, name)
-	rsrcObj.ResourceInstances = make([]*gtm.ResourceInstance, 0)
-	err := populateResourceObject(ctx, d, rsrcObj, m)
+	name, err := tf.GetStringValue("name", d)
+	if err != nil {
+		return nil, err
+	}
+	rsrcObj := &gtm.Resource{
+		Name:              name,
+		ResourceInstances: make([]*gtm.ResourceInstance, 0),
+	}
+	err = populateResourceObject(d, rsrcObj, m)
 
 	return rsrcObj, err
 
@@ -419,7 +434,7 @@ func populateNewResourceObject(ctx context.Context, meta meta.Meta, d *schema.Re
 
 // nolint:gocyclo
 // Populate existing resource object from resource data
-func populateResourceObject(ctx context.Context, d *schema.ResourceData, rsrc *gtm.Resource, m interface{}) error {
+func populateResourceObject(d *schema.ResourceData, rsrc *gtm.Resource, m interface{}) error {
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1ResourceDelete")
 
@@ -518,7 +533,7 @@ func populateResourceObject(ctx context.Context, d *schema.ResourceData, rsrc *g
 	}
 
 	if _, ok := d.GetOk("resource_instance"); ok {
-		populateResourceInstancesObject(ctx, meta, d, rsrc)
+		populateResourceInstancesObject(meta, d, rsrc)
 	} else if d.HasChange("resource_instance") {
 		rsrc.ResourceInstances = make([]*gtm.ResourceInstance, 0)
 	}
@@ -556,7 +571,7 @@ func populateTerraformResourceState(d *schema.ResourceData, rsrc *gtm.Resource, 
 }
 
 // create and populate GTM Resource ResourceInstances object
-func populateResourceInstancesObject(ctx context.Context, meta meta.Meta, d *schema.ResourceData, rsrc *gtm.Resource) {
+func populateResourceInstancesObject(meta meta.Meta, d *schema.ResourceData, rsrc *gtm.Resource) {
 	logger := meta.Log("Akamai GTM", "populateResourceInstancesObject")
 
 	// pull apart List
@@ -565,7 +580,7 @@ func populateResourceInstancesObject(ctx context.Context, meta meta.Meta, d *sch
 		rsrcInstanceObjList := make([]*gtm.ResourceInstance, len(rsrcInstances)) // create new object list
 		for i, v := range rsrcInstances {
 			riMap := v.(map[string]interface{})
-			rsrcInstance := Client(meta).NewResourceInstance(ctx, rsrc, riMap["datacenter_id"].(int)) // create new object
+			rsrcInstance := &gtm.ResourceInstance{DatacenterID: riMap["datacenter_id"].(int)}
 			rsrcInstance.UseDefaultLoadObject = riMap["use_default_load_object"].(bool)
 			if riMap["load_servers"] != nil {
 				loadServers, ok := riMap["load_servers"].(*schema.Set)
