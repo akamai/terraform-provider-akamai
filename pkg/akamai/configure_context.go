@@ -11,10 +11,10 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/edgegrid"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/cache"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/logger"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/retryablehttp"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/cache"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/logger"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/retryablehttp"
 	"github.com/google/uuid"
 	"github.com/spf13/cast"
 )

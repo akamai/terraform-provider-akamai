@@ -7,8 +7,8 @@ import (
 	"sync"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/cache"
-	akameta "github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/cache"
+	akameta "github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 )
 
 // Utility functions for determining current and latest versions of a security

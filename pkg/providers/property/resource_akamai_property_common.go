@@ -8,9 +8,9 @@ import (
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/str"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/logger"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/str"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/logger"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 )
 
 func getGroup(ctx context.Context, client papi.PAPI, groupID string) (*papi.Group, error) {

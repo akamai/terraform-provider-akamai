@@ -8,8 +8,8 @@ import (
 	"errors"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/providers/property/ruleformats"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/providers/property/ruleformats"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )

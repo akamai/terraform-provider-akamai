@@ -6,9 +6,9 @@ import (
 	"flag"
 	"log"
 
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/akamai"
-	_ "github.com/akamai/terraform-provider-akamai/v5/pkg/providers" // Load the providers
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/providers/registry"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/akamai"
+	_ "github.com/akamai/terraform-provider-akamai/v6/pkg/providers" // Load the providers
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/providers/registry"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
