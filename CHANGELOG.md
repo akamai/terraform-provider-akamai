@@ -44,7 +44,7 @@
   * Enhanced error handling in `akamai_gtm_asmap`, `akamai_gtm_domain`, `akamai_gtm_geomap`, `akamai_gtm_property` and `akamai_gtm_resource` resources
 
 * IMAGING
-  * In the event of an API failure during a policy update, reverting to the previous state.
+  * In the event of an API failure during a policy update, reverting to the previous state ([I#491](https://github.com/akamai/terraform-provider-akamai/issues/491), [I#493](https://github.com/akamai/terraform-provider-akamai/issues/493))
   * When performing the read operation, if `activate_on_production` is true, fetch the policy state from the production network; otherwise, obtain it from the staging environment.
 
 * PAPI
