@@ -1,39 +1,28 @@
 # RELEASE NOTES
 
-## X.X.X (X X, X)
+## 6.0.0 (Mar 26, 2024)
 
 #### BREAKING CHANGES:
 
-
+* General
+  * Migrated to terraform protocol version 6, hence minimal required terraform version is 1.0
 
 * PAPI
     * Added validation to raise an error if the creation of the `akamai_edge_hostname` resource is attempted with an existing edge hostname.
     * Added validation to raise an error during the update of `akamai_edge_hostname` resource for the immutable fields: 'product_id' and 'certificate'.
 
-
-
-
-
-
-* General
-  * Migrated to terraform protocol version 6, hence minimal required terraform version is 1.0
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 #### FEATURES/ENHANCEMENTS:
+
+* Global
+  * Requests limit value is configurable via field `request_limit` or environment variable `AKAMAI_REQUEST_LIMIT`
+  * Added retryable logic for all GET requests to the API.
+    This behavior can be disabled using `retry_disabled` field from `akamai` provider configuration or via environment variable `AKAMAI_RETRY_DISABLED`.
+    It can be fine-tuned using following fields or environment variables:
+    * `retry_max` or `AKAMAI_RETRY_MAX` - The maximum number retires of API requests, default is 10
+    * `retry_wait_min` or `AKAMAI_RETRY_WAIT_MIN` - The minimum wait time in seconds between API requests retries, default is 1 sec
+    * `retry_wait_max` or `AKAMAI_RETRY_WAIT_MAX` - The maximum wait time in minutes between API requests retries, default is 30 sec
+  * Migrated to go 1.21
+  * Bumped various dependencies
 
 * Appsec
   * Added resource:
@@ -43,58 +32,25 @@
     * `akamai_appsec_penalty_box_conditions` - read
     * `akamai_appsec_eval_penalty_box_conditions` - read
 
-* PAPI
-  * Added attributes to akamai_property datasource:
-    * `contract_id`, `group_id`, `latest_version`, `note`, `production_version`, `product_id`, `property_id`, `rule_format`, `staging_version`
-
-* IMAGING
-    * In the event of an API failure during a policy update, reverting to the previous state.
-    * When performing the read operation, if `activate_on_production` is true, fetch the policy state from the production network; otherwise, obtain it from the staging environment.
-
-
-* Migrated to go 1.21
-
-
-* Bumped various dependencies
-
-* PAPI
-  * `data_akamai_property_rules_builder` is now supporting `v2024-02-12` [rule format](https://techdocs.akamai.com/terraform/reference/rule-format-changes#v2024-02-12)
-
-* Global
-  * Requests limit value is configurable via field `request_limit` or environment variable `AKAMAI_REQUEST_LIMIT` 
-  * Added retryable logic for all GET requests to the API. 
-    This behavior can be disabled using `retry_disabled` field from `akamai` provider configuration or via environment variable `AKAMAI_RETRY_DISABLED`.
-    It can be fine-tuned using following fields or environment variables:
-    * `retry_max` or `AKAMAI_RETRY_MAX` - The maximum number retires of API requests, default is 10
-    * `retry_wait_min` or `AKAMAI_RETRY_WAIT_MIN` - The minimum wait time in seconds between API requests retries, default is 1 sec
-    * `retry_wait_max` or `AKAMAI_RETRY_WAIT_MAX` - The maximum wait time in minutes between API requests retries, default is 30 sec
-
-
-
 * CPS
-    * Added fields: `org_id`, `assigned_slots`, `staging_slots` and `production_slots` to `data_akamai_cps_enrollment` and `data_akamai_cps_enrollments` data sources
-
-
-
-
-
-
-
-
-
-
-
-
+  * Added fields: `org_id`, `assigned_slots`, `staging_slots` and `production_slots` to `data_akamai_cps_enrollment` and `data_akamai_cps_enrollments` data sources
 
 * GTM
   * Added fields:
     * `precedence` inside `traffic_target` in `akamai_gtm_property` resource and `akamai_gtm_domain` data source
     * `sign_and_serve` and `sign_and_serve_algorithm` in `akamai_gtm_domain` data source and resource
-    * `http_method`, `http_request_body`, `alternate_ca_certificates` and `pre_2023_security_posture` inside `liveness_test` in `akamai_gtm_property` resource and `akamai_gtm_domain` data source  
+    * `http_method`, `http_request_body`, `alternate_ca_certificates` and `pre_2023_security_posture` inside `liveness_test` in `akamai_gtm_property` resource and `akamai_gtm_domain` data source
   * Added support for `ranked-failover` properties in `akamai_gtm_property` resource
   * Enhanced error handling in `akamai_gtm_asmap`, `akamai_gtm_domain`, `akamai_gtm_geomap`, `akamai_gtm_property` and `akamai_gtm_resource` resources
 
+* IMAGING
+  * In the event of an API failure during a policy update, reverting to the previous state.
+  * When performing the read operation, if `activate_on_production` is true, fetch the policy state from the production network; otherwise, obtain it from the staging environment.
 
+* PAPI
+  * Added attributes to akamai_property datasource:
+    * `contract_id`, `group_id`, `latest_version`, `note`, `production_version`, `product_id`, `property_id`, `rule_format`, `staging_version`
+  * `data_akamai_property_rules_builder` is now supporting `v2024-02-12` [rule format](https://techdocs.akamai.com/terraform/reference/rule-format-changes#v2024-02-12)
 
 #### BUG FIXES:
 
@@ -122,29 +78,8 @@
     * `postal_code`
     * `country_code`
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 * PAPI
   * Fixed case when `origin_certs_to_honor` field from `origin` behavior mandates presence of empty `custom_certificate_authorities` and/or `custom_certificates` options inside `origin` behavior for `akamai_property_rules_builder` datasource ([I#515](https://github.com/akamai/terraform-provider-akamai/issues/515))
-
-
-
 
 #### DEPRECATIONS
 
