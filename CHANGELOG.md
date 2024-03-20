@@ -57,7 +57,8 @@
 
 * Bumped various dependencies
 
-
+* PAPI
+  * `data_akamai_property_rules_builder` is now supporting `v2024-02-12` [rule format](https://techdocs.akamai.com/terraform/reference/rule-format-changes#v2024-02-12)
 
 * Global
   * Requests limit value is configurable via field `request_limit` or environment variable `AKAMAI_REQUEST_LIMIT` 
