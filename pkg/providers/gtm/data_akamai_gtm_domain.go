@@ -472,7 +472,8 @@ var (
 									ElementType: types.StringType,
 								},
 								"pre_2023_security_posture": schema.BoolAttribute{
-									Computed: true,
+									Computed:    true,
+									Description: "Whether to enable backwards compatibility for liveness endpoints that use older TLS protocols",
 								},
 							},
 							Blocks: map[string]schema.Block{

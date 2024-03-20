@@ -348,8 +348,9 @@ func resourceGTMv1Property() *schema.Resource {
 							Optional: true,
 						},
 						"pre_2023_security_posture": {
-							Type:     schema.TypeBool,
-							Optional: true,
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Description: "Whether to enable backwards compatibility for liveness endpoints that use older TLS protocols",
 						},
 						"alternate_ca_certificates": {
 							Type:     schema.TypeList,
