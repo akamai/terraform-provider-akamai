@@ -2,6 +2,7 @@ package gtm
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/gtm"
@@ -201,7 +202,13 @@ func resourceGTMv1GeoMapRead(ctx context.Context, d *schema.ResourceData, m inte
 			Detail:   err.Error(),
 		})
 	}
-	populateTerraformGeoMapState(d, geo, m)
+	if err = populateTerraformGeoMapState(d, geo, m); err != nil {
+		return append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "geoMap Read populate state error",
+			Detail:   err.Error(),
+		})
+	}
 	logger.Debugf("READ %v", geo)
 	return nil
 }
@@ -307,7 +314,9 @@ func resourceGTMv1GeoMapImport(d *schema.ResourceData, m interface{}) ([]*schema
 	if err := d.Set("wait_on_complete", true); err != nil {
 		return nil, err
 	}
-	populateTerraformGeoMapState(d, geo, m)
+	if err = populateTerraformGeoMapState(d, geo, m); err != nil {
+		return nil, err
+	}
 
 	// use same Id as passed in
 	name, err := tf.GetStringValue("name", d)
@@ -418,7 +427,7 @@ func populateGeoMapObject(d *schema.ResourceData, geo *gtm.GeoMap, m interface{}
 }
 
 // Populate Terraform state from provided GeoMap object
-func populateTerraformGeoMapState(d *schema.ResourceData, geo *gtm.GeoMap, m interface{}) {
+func populateTerraformGeoMapState(d *schema.ResourceData, geo *gtm.GeoMap, m interface{}) error {
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "populateTerraformGeoMapState")
 
@@ -426,8 +435,10 @@ func populateTerraformGeoMapState(d *schema.ResourceData, geo *gtm.GeoMap, m int
 	if err := d.Set("name", geo.Name); err != nil {
 		logger.Errorf("populateTerraformGeoMapState failed: %s", err.Error())
 	}
-	populateTerraformGeoAssignmentsState(d, geo, m)
-	populateTerraformGeoDefaultDCState(d, geo, m)
+	if err := populateTerraformGeoAssignmentsState(d, geo, m); err != nil {
+		return err
+	}
+	return populateTerraformGeoDefaultDCState(d, geo, m)
 }
 
 // create and populate GTM GeoMap Assignments object
@@ -466,7 +477,7 @@ func populateGeoAssignmentsObject(d *schema.ResourceData, geo *gtm.GeoMap, m int
 }
 
 // create and populate Terraform geoMap assignments schema
-func populateTerraformGeoAssignmentsState(d *schema.ResourceData, geo *gtm.GeoMap, m interface{}) {
+func populateTerraformGeoAssignmentsState(d *schema.ResourceData, geo *gtm.GeoMap, m interface{}) error {
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "populateTerraformGeoAssignmentsState")
 
@@ -476,7 +487,10 @@ func populateTerraformGeoAssignmentsState(d *schema.ResourceData, geo *gtm.GeoMa
 			objectInventory[aObj.DatacenterID] = aObj
 		}
 	}
-	aStateList, _ := tf.GetInterfaceArrayValue("assignment", d)
+	aStateList, err := tf.GetInterfaceArrayValue("assignment", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
+		return err
+	}
 	for _, aMap := range aStateList {
 		a := aMap.(map[string]interface{})
 		objIndex := a["datacenter_id"].(int)
@@ -509,7 +523,9 @@ func populateTerraformGeoAssignmentsState(d *schema.ResourceData, geo *gtm.GeoMa
 	}
 	if err := d.Set("assignment", aStateList); err != nil {
 		logger.Errorf("populateTerraformGeoAssignmentsState failed: %s", err.Error())
+		return err
 	}
+	return nil
 }
 
 // create and populate GTM GeoMap DefaultDatacenter object
@@ -536,7 +552,7 @@ func populateGeoDefaultDCObject(d *schema.ResourceData, geo *gtm.GeoMap, m inter
 }
 
 // create and populate Terraform geoMap default_datacenter schema
-func populateTerraformGeoDefaultDCState(d *schema.ResourceData, geo *gtm.GeoMap, m interface{}) {
+func populateTerraformGeoDefaultDCState(d *schema.ResourceData, geo *gtm.GeoMap, m interface{}) error {
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "populateTerraformGeoDefault")
 
@@ -548,7 +564,9 @@ func populateTerraformGeoDefaultDCState(d *schema.ResourceData, geo *gtm.GeoMap,
 	ddcListNew[0] = ddcNew
 	if err := d.Set("default_datacenter", ddcListNew); err != nil {
 		logger.Errorf("populateTerraformGeoDefaultDCState failed: %s", err.Error())
+		return err
 	}
+	return nil
 }
 
 // countriesEqual checks whether countries are equal

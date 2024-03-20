@@ -1087,7 +1087,7 @@ func populateTerraformTrafficTargetState(d *schema.ResourceData, prop *gtm.Prope
 	}
 
 	ttStateList, err := tf.GetInterfaceArrayValue("traffic_target", d)
-	if err != nil {
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
 	for _, ttMap := range ttStateList {
@@ -1169,7 +1169,7 @@ func populateTerraformStaticRRSetState(d *schema.ResourceData, prop *gtm.Propert
 	}
 
 	rrStateList, err := tf.GetInterfaceArrayValue("static_rr_set", d)
-	if err != nil {
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
 	for _, rrMap := range rrStateList {
@@ -1283,7 +1283,7 @@ func populateTerraformLivenessTestState(d *schema.ResourceData, prop *gtm.Proper
 	}
 
 	ltStateList, err := tf.GetInterfaceArrayValue("liveness_test", d)
-	if err != nil {
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
 	for _, ltMap := range ltStateList {

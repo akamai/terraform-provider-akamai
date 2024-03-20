@@ -92,6 +92,7 @@
     * `sign_and_serve` and `sign_and_serve_algorithm` in `akamai_gtm_domain` data source and resource
     * `http_method`, `http_request_body`, `alternate_ca_certificates` and `pre_2023_security_posture` inside `liveness_test` in `akamai_gtm_property` resource and `akamai_gtm_domain` data source  
   * Added support for `ranked-failover` properties in `akamai_gtm_property` resource
+  * Enhanced error handling in `akamai_gtm_asmap`, `akamai_gtm_domain`, `akamai_gtm_geomap`, `akamai_gtm_property` and `akamai_gtm_resource` resources
 
 
 

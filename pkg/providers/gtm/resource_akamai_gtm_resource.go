@@ -218,7 +218,13 @@ func resourceGTMv1ResourceRead(ctx context.Context, d *schema.ResourceData, m in
 			Detail:   err.Error(),
 		})
 	}
-	populateTerraformResourceState(d, rsrc, m)
+	if err = populateTerraformResourceState(d, rsrc, m); err != nil {
+		return append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "Resource Read populate state",
+			Detail:   err.Error(),
+		})
+	}
 	logger.Debugf("READ %v", rsrc)
 	return nil
 }
@@ -330,7 +336,9 @@ func resourceGTMv1ResourceImport(d *schema.ResourceData, m interface{}) ([]*sche
 	if err != nil {
 		return nil, err
 	}
-	populateTerraformResourceState(d, rsrc, m)
+	if err = populateTerraformResourceState(d, rsrc, m); err != nil {
+		return nil, err
+	}
 
 	// use same Id as passed in
 	name, err := tf.GetStringValue("name", d)
@@ -542,7 +550,7 @@ func populateResourceObject(d *schema.ResourceData, rsrc *gtm.Resource, m interf
 }
 
 // Populate Terraform state from provided Resource object
-func populateTerraformResourceState(d *schema.ResourceData, rsrc *gtm.Resource, m interface{}) {
+func populateTerraformResourceState(d *schema.ResourceData, rsrc *gtm.Resource, m interface{}) error {
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "populateTerraformResourceState")
 
@@ -565,9 +573,10 @@ func populateTerraformResourceState(d *schema.ResourceData, rsrc *gtm.Resource, 
 		err := d.Set(stateKey, stateValue)
 		if err != nil {
 			logger.Errorf("populateTerraformResourceState failed: %s", err.Error())
+			return err
 		}
 	}
-	populateTerraformResourceInstancesState(d, rsrc, m)
+	return populateTerraformResourceInstancesState(d, rsrc, m)
 }
 
 // create and populate GTM Resource ResourceInstances object
@@ -602,7 +611,7 @@ func populateResourceInstancesObject(meta meta.Meta, d *schema.ResourceData, rsr
 }
 
 // create and populate Terraform resource_instances schema
-func populateTerraformResourceInstancesState(d *schema.ResourceData, rsrc *gtm.Resource, m interface{}) {
+func populateTerraformResourceInstancesState(d *schema.ResourceData, rsrc *gtm.Resource, m interface{}) error {
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "populateTerraformResourceInstancesState")
 
@@ -612,7 +621,10 @@ func populateTerraformResourceInstancesState(d *schema.ResourceData, rsrc *gtm.R
 			riObjectInventory[riObj.DatacenterID] = riObj
 		}
 	}
-	riStateList, _ := tf.GetInterfaceArrayValue("resource_instance", d)
+	riStateList, err := tf.GetInterfaceArrayValue("resource_instance", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
+		return err
+	}
 	for _, riMap := range riStateList {
 		ri := riMap.(map[string]interface{})
 		objIndex := ri["datacenter_id"].(int)
@@ -649,8 +661,7 @@ func populateTerraformResourceInstancesState(d *schema.ResourceData, rsrc *gtm.R
 			riStateList = append(riStateList, riNew)
 		}
 	}
-	_ = d.Set("resource_instance", riStateList)
-
+	return d.Set("resource_instance", riStateList)
 }
 
 func resourceInstanceDiffSuppress(_, _, _ string, d *schema.ResourceData) bool {
