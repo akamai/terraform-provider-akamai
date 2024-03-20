@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/edgeworkers"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/edgeworkers"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/collections"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/timeouts"

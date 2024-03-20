@@ -8,7 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cps"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/cps"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/subprovider"
 )

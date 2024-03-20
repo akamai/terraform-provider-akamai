@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/str"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
 	akameta "github.com/akamai/terraform-provider-akamai/v5/pkg/meta"

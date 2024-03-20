@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 
-	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cloudlets/v3"
+	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/cloudlets/v3"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"

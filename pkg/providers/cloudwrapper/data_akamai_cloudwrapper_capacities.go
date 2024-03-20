@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cloudwrapper"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/cloudwrapper"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/collections"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework/attr"

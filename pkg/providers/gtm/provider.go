@@ -2,7 +2,7 @@
 package gtm
 
 import (
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/gtm"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/gtm"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/subprovider"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"

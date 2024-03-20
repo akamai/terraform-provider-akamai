@@ -7,7 +7,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/botman"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/botman"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 )
 

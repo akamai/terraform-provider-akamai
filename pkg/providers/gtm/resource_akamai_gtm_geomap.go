@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/gtm"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/gtm"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/logger"
 
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"

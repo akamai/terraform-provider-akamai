@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/edgegrid"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/cache"
 

@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cloudlets"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/cloudlets"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"

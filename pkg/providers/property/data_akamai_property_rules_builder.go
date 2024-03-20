@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/providers/property/ruleformats"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"

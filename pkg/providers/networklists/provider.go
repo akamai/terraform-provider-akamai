@@ -4,7 +4,7 @@ package networklists
 import (
 	"sync"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/networklists"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/networklists"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/subprovider"
 

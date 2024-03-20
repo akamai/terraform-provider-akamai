@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/str"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/logger"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"

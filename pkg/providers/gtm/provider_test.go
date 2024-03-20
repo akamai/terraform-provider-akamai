@@ -4,7 +4,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/gtm"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/gtm"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 )
 

@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/networklists"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/networklists"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
