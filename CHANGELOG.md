@@ -35,6 +35,10 @@
 * CPS
   * Added fields: `org_id`, `assigned_slots`, `staging_slots` and `production_slots` to `data_akamai_cps_enrollment` and `data_akamai_cps_enrollments` data sources
 
+* Edgeworkers
+  * Improved error handling in `akamai_edgeworkers_activation` and `resource_akamai_edgeworker` resources
+  * Improved error handling in `akamai_edgeworker_activation` datasource
+
 * GTM
   * Added fields:
     * `precedence` inside `traffic_target` in `akamai_gtm_property` resource and `akamai_gtm_domain` data source
