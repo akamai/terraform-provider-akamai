@@ -7,12 +7,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
-	"github.com/stretchr/testify/assert"
-
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/iam"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/iam"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -42,7 +41,7 @@ func TestResourceUser(t *testing.T) {
 		Country:           "country",
 		ContactType:       "contact type",
 		PreferredLanguage: "language",
-		SessionTimeOut:    tools.IntPtr(2),
+		SessionTimeOut:    ptr.To(2),
 	}
 
 	authGrantsCreate := []iam.AuthGrant{
@@ -109,7 +108,7 @@ func TestResourceUser(t *testing.T) {
 
 	checkUserAttributes := func(user iam.User) resource.TestCheckFunc {
 		if user.SessionTimeOut == nil {
-			user.SessionTimeOut = tools.IntPtr(0)
+			user.SessionTimeOut = ptr.To(0)
 		}
 
 		var authGrantsJSON string
@@ -634,9 +633,9 @@ func TestResourceUser(t *testing.T) {
 			test.init(client)
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProviderFactories: testAccProviders,
-					IsUnitTest:        true,
-					Steps:             test.steps,
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+					IsUnitTest:               true,
+					Steps:                    test.steps,
 				})
 			})
 			client.AssertExpectations(t)

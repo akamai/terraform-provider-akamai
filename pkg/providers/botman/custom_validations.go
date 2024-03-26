@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/str"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -74,8 +74,8 @@ func verifyIDUnchanged(_ context.Context, d *schema.ResourceDiff, m interface{},
 	}
 
 	oldID, newID := d.GetChange(key)
-	oldValue := tools.ConvertToString(oldID)
-	newValue := tools.ConvertToString(newID)
+	oldValue := str.From(oldID)
+	newValue := str.From(newID)
 	logger.Errorf("%s value %s specified in configuration differs from resource ID's value %s", key, newID, oldValue)
 	return fmt.Errorf("%s value %s specified in configuration differs from resource ID's value %s", key, newValue, oldValue)
 }

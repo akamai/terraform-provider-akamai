@@ -5,13 +5,13 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/gtm"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/gtm"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
 
-func TestResGtmResource(t *testing.T) {
+func TestResGTMResource(t *testing.T) {
 
 	t.Run("create resource", func(t *testing.T) {
 		client := &gtm.Mock{}
@@ -34,33 +34,6 @@ func TestResGtmResource(t *testing.T) {
 		).Return(&resp, nil).Run(func(args mock.Arguments) {
 			getCall.ReturnArguments = mock.Arguments{args.Get(1).(*gtm.Resource), nil}
 		})
-
-		resCall := client.On("NewResource",
-			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("string"),
-		)
-
-		resCall.RunFn = func(args mock.Arguments) {
-			resCall.ReturnArguments = mock.Arguments{
-				&gtm.Resource{
-					Name: args.String(1),
-				},
-			}
-		}
-
-		resInstCall := client.On("NewResourceInstance",
-			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("*gtm.Resource"),
-			mock.AnythingOfType("int"),
-		)
-
-		resInstCall.RunFn = func(args mock.Arguments) {
-			resInstCall.ReturnArguments = mock.Arguments{
-				&gtm.ResourceInstance{
-					DatacenterId: args.Int(2),
-				},
-			}
-		}
 
 		client.On("GetDomainStatus",
 			mock.Anything, // ctx is irrelevant for this test
@@ -85,7 +58,7 @@ func TestResGtmResource(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmResource/create_basic.tf"),
@@ -119,36 +92,9 @@ func TestResGtmResource(t *testing.T) {
 			StatusCode: http.StatusBadRequest,
 		})
 
-		resCall := client.On("NewResource",
-			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("string"),
-		)
-
-		resCall.RunFn = func(args mock.Arguments) {
-			resCall.ReturnArguments = mock.Arguments{
-				&gtm.Resource{
-					Name: args.String(1),
-				},
-			}
-		}
-
-		resInstCall := client.On("NewResourceInstance",
-			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("*gtm.Resource"),
-			mock.AnythingOfType("int"),
-		)
-
-		resInstCall.RunFn = func(args mock.Arguments) {
-			resInstCall.ReturnArguments = mock.Arguments{
-				&gtm.ResourceInstance{
-					DatacenterId: args.Int(2),
-				},
-			}
-		}
-
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmResource/create_basic.tf"),
@@ -173,36 +119,9 @@ func TestResGtmResource(t *testing.T) {
 			gtmTestDomain,
 		).Return(&dr, nil)
 
-		resCall := client.On("NewResource",
-			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("string"),
-		)
-
-		resCall.RunFn = func(args mock.Arguments) {
-			resCall.ReturnArguments = mock.Arguments{
-				&gtm.Resource{
-					Name: args.String(1),
-				},
-			}
-		}
-
-		resInstCall := client.On("NewResourceInstance",
-			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("*gtm.Resource"),
-			mock.AnythingOfType("int"),
-		)
-
-		resInstCall.RunFn = func(args mock.Arguments) {
-			resInstCall.ReturnArguments = mock.Arguments{
-				&gtm.ResourceInstance{
-					DatacenterId: args.Int(2),
-				},
-			}
-		}
-
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmResource/create_basic.tf"),
@@ -272,8 +191,8 @@ func TestGTMResourceOrder(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			useClient(test.client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProviderFactories: testAccProviders,
-					IsUnitTest:        true,
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+					IsUnitTest:               true,
 					Steps: []resource.TestStep{
 						{
 							Config: testutils.LoadFixtureString(t, test.pathForCreate),
@@ -314,33 +233,6 @@ func getGTMResourceMocks() *gtm.Mock {
 		mockGetResource.ReturnArguments = mock.Arguments{args.Get(1).(*gtm.Resource), nil}
 	})
 
-	resCall := client.On("NewResource",
-		mock.Anything, // ctx is irrelevant for this test
-		mock.AnythingOfType("string"),
-	)
-
-	resCall.RunFn = func(args mock.Arguments) {
-		resCall.ReturnArguments = mock.Arguments{
-			&gtm.Resource{
-				Name: args.String(1),
-			},
-		}
-	}
-
-	resInstCall := client.On("NewResourceInstance",
-		mock.Anything, // ctx is irrelevant for this test
-		mock.AnythingOfType("*gtm.Resource"),
-		mock.AnythingOfType("int"),
-	)
-
-	resInstCall.RunFn = func(args mock.Arguments) {
-		resInstCall.ReturnArguments = mock.Arguments{
-			&gtm.ResourceInstance{
-				DatacenterId: args.Int(2),
-			},
-		}
-	}
-
 	client.On("DeleteResource",
 		mock.Anything, // ctx is irrelevant for this test
 		mock.AnythingOfType("*gtm.Resource"),
@@ -358,7 +250,7 @@ var (
 		Type:            "XML load object via HTTP",
 		ResourceInstances: []*gtm.ResourceInstance{
 			{
-				DatacenterId:         3131,
+				DatacenterID:         3131,
 				UseDefaultLoadObject: false,
 				LoadObject: gtm.LoadObject{
 					LoadObject:     "/test1",
@@ -367,7 +259,7 @@ var (
 				},
 			},
 			{
-				DatacenterId:         3132,
+				DatacenterID:         3132,
 				UseDefaultLoadObject: false,
 				LoadObject: gtm.LoadObject{
 					LoadObject:     "/test2",
@@ -384,7 +276,7 @@ var (
 		Type:            "XML load object via HTTP",
 		ResourceInstances: []*gtm.ResourceInstance{
 			{
-				DatacenterId:         3131,
+				DatacenterID:         3131,
 				UseDefaultLoadObject: false,
 				LoadObject: gtm.LoadObject{
 					LoadObject:     "/test1",

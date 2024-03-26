@@ -3,7 +3,7 @@ package imaging
 import (
 	"testing"
 
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
@@ -37,7 +37,7 @@ func TestDataPolicyImage(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, test.configPath),

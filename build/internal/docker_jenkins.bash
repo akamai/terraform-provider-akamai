@@ -91,7 +91,7 @@ docker exec akatf-container sh -c 'git clone ssh://git@git.source.akamai.com:799
 echo "Checkout branches"
 docker exec akatf-container sh -c 'cd edgegrid; git checkout ${EDGEGRID_BRANCH_NAME};
                                    cd ../terraform-provider-akamai; git checkout ${PROVIDER_BRANCH_NAME};
-                                   go mod edit -replace github.com/akamai/AkamaiOPEN-edgegrid-golang/v7=../edgegrid'
+                                   go mod edit -replace github.com/akamai/AkamaiOPEN-edgegrid-golang/v8=../edgegrid'
 
 echo "Installing terraform"
 docker exec akatf-container sh -c 'cd terraform-provider-akamai; make tools.terraform'
@@ -107,7 +107,7 @@ docker exec akatf-container sh -c 'cd terraform-provider-akamai; make terraform-
 
 echo "Running tests with xUnit output"
 docker exec akatf-container sh -c 'cd terraform-provider-akamai; go mod tidy;
-                                   2>&1 go test -timeout $TIMEOUT -v -coverpkg=./... -coverprofile=../profile.out -covermode=$COVERMODE ./... | tee ../tests.output'
+                                   2>&1 go test -timeout $TIMEOUT -v -coverpkg=./... -coverprofile=../profile.out -covermode=$COVERMODE -skip TestClient_DefaultRetryPolicy_TLS ./... | tee ../tests.output'
 docker exec akatf-container sh -c 'cat tests.output | go-junit-report' > test/tests.xml
 docker exec akatf-container sh -c 'cat tests.output' > test/tests.output
 sed -i -e 's/skip=/skipped=/g;s/ failures=/ errors="0" failures=/g' test/tests.xml

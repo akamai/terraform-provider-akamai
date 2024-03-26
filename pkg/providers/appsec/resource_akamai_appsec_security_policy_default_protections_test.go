@@ -6,8 +6,8 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -73,8 +73,8 @@ func TestAkamaiSecurityPolicyDefaultProtections_res_basic(t *testing.T) {
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
-				IsUnitTest:        true,
-				ProviderFactories: testAccProviders,
+				IsUnitTest:               true,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestResSecurityPolicyDefaultProtections/match_by_id.tf"),
@@ -117,8 +117,8 @@ func TestAkamaiSecurityPolicyDefaultProtections_res_failure_creating_policy(t *t
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
-				IsUnitTest:        true,
-				ProviderFactories: testAccProviders,
+				IsUnitTest:               true,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestResSecurityPolicyDefaultProtections/match_by_id.tf"),

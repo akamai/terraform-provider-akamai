@@ -18,6 +18,12 @@ issues:
   max-issues-per-linter: 0
   max-same-issues: 0
   exclude-rules:
+    - path: pkg/retryablehttp/.*\.go
+      linters:
+        - errcheck
+        - revive
+        - gocyclo
+        - ineffassign
     - path: gen\.go
       linters:
         - gocyclo

@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/dns"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/dns"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -31,7 +31,7 @@ func TestDataSourceDNSRecordSet_basic(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestDataDnsRecordSet/basic.tf"),
@@ -63,7 +63,7 @@ func TestDataSourceDNSRecordSet_basic(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, "testdata/TestDataDnsRecordSet/basic.tf"),

@@ -10,11 +10,11 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/imaging"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/logger"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/imaging"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/logger"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -141,6 +141,9 @@ func upsertPolicyVideo(ctx context.Context, d *schema.ResourceData, m interface{
 		}
 		_, err := client.UpsertPolicy(ctx, upsertPolicyRequest)
 		if err != nil {
+			if errRestore := tf.RestoreOldValues(d, []string{"json"}); errRestore != nil {
+				return diag.Errorf("%s\n%s: %s", err.Error(), "Failed to restore old state", errRestore.Error())
+			}
 			return diag.FromErr(err)
 		}
 	}
@@ -170,8 +173,11 @@ func resourcePolicyVideoRead(ctx context.Context, d *schema.ResourceData, m inte
 	if err != nil {
 		return diag.FromErr(err)
 	}
-
-	policy, err := getPolicyVideo(ctx, client, policyID, contractID, policysetID, imaging.PolicyNetworkStaging)
+	network, err := getPolicyNetwork(d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	policy, err := getPolicyVideo(ctx, client, policyID, contractID, policysetID, network)
 	if err != nil {
 		return diag.FromErr(err)
 	}

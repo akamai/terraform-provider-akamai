@@ -5,10 +5,10 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/botman"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/botman"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/hash"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -56,6 +56,6 @@ func dataSourceAkamaiBotCategoryRead(ctx context.Context, d *schema.ResourceData
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
-	d.SetId(tools.GetSHAString(string(jsonBody)))
+	d.SetId(hash.GetSHAString(string(jsonBody)))
 	return nil
 }

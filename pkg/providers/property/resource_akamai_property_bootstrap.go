@@ -7,10 +7,10 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/framework/modifiers"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/framework/modifiers"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/str"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -29,7 +29,7 @@ var (
 
 // BootstrapResource represents akamai_property_bootstrap resource
 type BootstrapResource struct {
-	client papi.PAPI
+	meta meta.Meta
 }
 
 // BootstrapResourceModel is a model for akamai_property_bootstrap resource
@@ -39,10 +39,6 @@ type BootstrapResourceModel struct {
 	GroupID    types.String `tfsdk:"group_id"`
 	ContractID types.String `tfsdk:"contract_id"`
 	ProductID  types.String `tfsdk:"product_id"`
-}
-
-func (r *BootstrapResource) setClient(client papi.PAPI) {
-	r.client = client
 }
 
 // NewBootstrapResource returns new property bootstrap resource
@@ -108,25 +104,21 @@ func (r *BootstrapResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 
 // Configure implements resource.ResourceWithConfigure.
 func (r *BootstrapResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
-	// Prevent panic if the provider has not been configured.
 	if req.ProviderData == nil {
+		// ProviderData is nil when Configure is run first time as part of ValidateDataSourceConfig in framework provider
 		return
 	}
 
-	if r.client != nil {
-		return
-	}
+	defer func() {
+		if r := recover(); r != nil {
+			resp.Diagnostics.AddError(
+				"Unexpected Resource Configure Type",
+				fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			)
+		}
+	}()
 
-	m, ok := req.ProviderData.(meta.Meta)
-	if !ok {
-		resp.Diagnostics.AddError(
-			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *http.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
-		)
-		return
-	}
-
-	r.client = papi.Client(m.Session())
+	r.meta = meta.Must(req.ProviderData)
 }
 
 // Create implements resource's Create method
@@ -140,13 +132,14 @@ func (r *BootstrapResource) Create(ctx context.Context, req resource.CreateReque
 		return
 	}
 
-	contractID := tools.AddPrefix(data.ContractID.ValueString(), "ctr_")
-	groupID := tools.AddPrefix(data.GroupID.ValueString(), "grp_")
-	productID := tools.AddPrefix(data.ProductID.ValueString(), "prd_")
+	contractID := str.AddPrefix(data.ContractID.ValueString(), "ctr_")
+	groupID := str.AddPrefix(data.GroupID.ValueString(), "grp_")
+	productID := str.AddPrefix(data.ProductID.ValueString(), "prd_")
 
-	propertyID, err := createProperty(ctx, r.client, data.Name.ValueString(), groupID, contractID, productID, "")
+	client := Client(r.meta)
+	propertyID, err := createProperty(ctx, client, data.Name.ValueString(), groupID, contractID, productID, "")
 	if err != nil {
-		err = interpretCreatePropertyErrorFramework(ctx, err, r.client, groupID, contractID, productID)
+		err = interpretCreatePropertyErrorFramework(ctx, err, client, groupID, contractID, productID)
 		if err != nil {
 			resp.Diagnostics.AddError(err.Error(), "")
 			return
@@ -193,10 +186,11 @@ func (r *BootstrapResource) Read(ctx context.Context, req resource.ReadRequest, 
 	}
 
 	propertyID := data.ID.ValueString()
-	contractID := tools.AddPrefix(data.ContractID.ValueString(), "ctr_")
-	groupID := tools.AddPrefix(data.GroupID.ValueString(), "grp_")
+	contractID := str.AddPrefix(data.ContractID.ValueString(), "ctr_")
+	groupID := str.AddPrefix(data.GroupID.ValueString(), "grp_")
 
-	_, err := fetchLatestProperty(ctx, r.client, propertyID, groupID, contractID)
+	client := Client(r.meta)
+	_, err := fetchLatestProperty(ctx, client, propertyID, groupID, contractID)
 	if errors.Is(err, papi.ErrNotFound) {
 		tflog.Warn(ctx, fmt.Sprintf("property %q removed on server. Removing from local state", propertyID))
 		resp.State.RemoveResource(ctx)
@@ -223,10 +217,11 @@ func (r *BootstrapResource) Delete(ctx context.Context, req resource.DeleteReque
 	}
 
 	propertyID := data.ID.ValueString()
-	contractID := tools.AddPrefix(data.ContractID.ValueString(), "ctr_")
-	groupID := tools.AddPrefix(data.GroupID.ValueString(), "grp_")
+	contractID := str.AddPrefix(data.ContractID.ValueString(), "ctr_")
+	groupID := str.AddPrefix(data.GroupID.ValueString(), "grp_")
 
-	if err := removeProperty(ctx, r.client, propertyID, groupID, contractID); err != nil {
+	client := Client(r.meta)
+	if err := removeProperty(ctx, client, propertyID, groupID, contractID); err != nil {
 		resp.Diagnostics.AddError("removeProperty:", err.Error())
 	}
 }
@@ -240,26 +235,27 @@ func (r *BootstrapResource) ImportState(ctx context.Context, req resource.Import
 
 	switch len(parts) {
 	case 3:
-		propertyID = tools.AddPrefix(parts[0], "prp_")
-		contractID = tools.AddPrefix(parts[1], "ctr_")
-		groupID = tools.AddPrefix(parts[2], "grp_")
+		propertyID = str.AddPrefix(parts[0], "prp_")
+		contractID = str.AddPrefix(parts[1], "ctr_")
+		groupID = str.AddPrefix(parts[2], "grp_")
 	case 2:
 		resp.Diagnostics.AddError("missing group id or contract id", "")
 		return
 	case 1:
-		propertyID = tools.AddPrefix(parts[0], "prp_")
+		propertyID = str.AddPrefix(parts[0], "prp_")
 	default:
 		resp.Diagnostics.AddError(fmt.Sprintf("invalid property identifier: %s", req.ID), "")
 		return
 	}
 
-	property, err := fetchLatestProperty(ctx, r.client, propertyID, groupID, contractID)
+	client := Client(r.meta)
+	property, err := fetchLatestProperty(ctx, client, propertyID, groupID, contractID)
 	if err != nil {
 		resp.Diagnostics.AddError(err.Error(), "")
 		return
 	}
 
-	res, err := fetchPropertyVersion(ctx, r.client, property.PropertyID, property.GroupID, property.ContractID, property.LatestVersion)
+	res, err := fetchPropertyVersion(ctx, client, property.PropertyID, property.GroupID, property.ContractID, property.LatestVersion)
 	if err != nil {
 		resp.Diagnostics.AddError(err.Error(), "")
 		return

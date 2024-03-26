@@ -5,9 +5,9 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cloudlets"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/cloudlets"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/jinzhu/copier"
@@ -38,12 +38,12 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 						Continent:       "NA",
 						Country:         "US",
 						Hostname:        "test-hostname",
-						Latitude:        tools.Float64Ptr(102.78108),
+						Latitude:        ptr.To(102.78108),
 						LivenessHosts:   livenessHosts,
-						Longitude:       tools.Float64Ptr(-116.07064),
+						Longitude:       ptr.To(-116.07064),
 						OriginID:        "test_origin",
-						Percent:         tools.Float64Ptr(100),
-						StateOrProvince: tools.StringPtr("MA"),
+						Percent:         ptr.To(100.0),
+						StateOrProvince: ptr.To("MA"),
 					},
 				},
 				LivenessSettings: &cloudlets.LivenessSettings{
@@ -235,7 +235,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_create.tf", testDir)),
@@ -275,7 +275,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_create.tf", testDir)),
@@ -315,7 +315,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_create.tf", testDir)),
@@ -355,7 +355,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_create.tf", testDir)),
@@ -402,7 +402,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_create.tf", testDir)),
@@ -447,7 +447,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_create.tf", testDir)),
@@ -486,12 +486,12 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 					Continent:       "NA",
 					Country:         "US",
 					Hostname:        "test-hostname",
-					Latitude:        tools.Float64Ptr(102.78108),
+					Latitude:        ptr.To(102.78108),
 					LivenessHosts:   []string{"tf.test"},
-					Longitude:       tools.Float64Ptr(-116.07064),
+					Longitude:       ptr.To(-116.07064),
 					OriginID:        "test_origin",
-					Percent:         tools.Float64Ptr(100),
-					StateOrProvince: tools.StringPtr("MA"),
+					Percent:         ptr.To(100.0),
+					StateOrProvince: ptr.To("MA"),
 				},
 			},
 			LivenessSettings: &cloudlets.LivenessSettings{
@@ -513,7 +513,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_create.tf", testDir)),
@@ -539,7 +539,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_create.tf", testDir)),
@@ -580,7 +580,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_create.tf", testDir)),
@@ -626,7 +626,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_create.tf", testDir)),
@@ -650,7 +650,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_create.tf", testDir)),
@@ -679,7 +679,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_create.tf", testDir)),
@@ -706,7 +706,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_create.tf", testDir)),
@@ -737,7 +737,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_create.tf", testDir)),
@@ -771,7 +771,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_create.tf", testDir)),
@@ -805,7 +805,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_create.tf", testDir)),
@@ -827,7 +827,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_create.tf", testDir)),

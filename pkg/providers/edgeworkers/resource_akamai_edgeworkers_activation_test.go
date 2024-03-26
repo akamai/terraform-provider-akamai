@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/edgeworkers"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/edgeworkers"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -738,7 +738,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 
 				// test cleanup - destroy
 				expectDeactivateVersion(m, edgeworkerID, 1, net, version, note,
-					fmt.Errorf("%w: %s", &edgeworkers.Error{ErrorCode: errorCodeVersionAlreadyDeactivated}, "oops"))
+					fmt.Errorf("%w: %s", edgeworkers.ErrVersionAlreadyDeactivated, "oops"))
 			},
 			steps: []resource.TestStep{
 				{
@@ -774,7 +774,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 
 				// test cleanup - destroy
 				expectDeactivateVersion(m, edgeworkerID, 1, net, version, note,
-					fmt.Errorf("%w: %s", &edgeworkers.Error{ErrorCode: errorCodeVersionIsBeingDeactivated}, "oops"))
+					fmt.Errorf("%w: %s", edgeworkers.ErrVersionBeingDeactivated, "oops"))
 				expectListDeactivations(m, edgeworkerID, version, []edgeworkers.Deactivation{
 					*createStubDeactivation(edgeworkerID, 1, net, version, activationStatusInProgress, ""),
 				}, nil)
@@ -1356,9 +1356,9 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			test.init(client)
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProviderFactories: testAccProviders,
-					IsUnitTest:        true,
-					Steps:             test.steps,
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+					IsUnitTest:               true,
+					Steps:                    test.steps,
 				})
 			})
 			client.AssertExpectations(t)

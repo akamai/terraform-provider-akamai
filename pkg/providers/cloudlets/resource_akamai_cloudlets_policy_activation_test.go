@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cloudlets"
-	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cloudlets/v3"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/cloudlets"
+	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/cloudlets/v3"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -1027,7 +1027,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 			test.init(client)
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProtoV5ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					IsUnitTest:               true,
 					Steps:                    test.steps,
 				})
@@ -1755,7 +1755,7 @@ func TestResourceV3CloudletsPolicyActivation(t *testing.T) {
 			test.init(v2Client, v3client)
 			useClientV2AndV3(v2Client, v3client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProtoV5ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					IsUnitTest:               true,
 					Steps:                    test.steps,
 				})

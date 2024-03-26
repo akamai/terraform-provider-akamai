@@ -1,5 +1,5 @@
 provider "akamai" {
-  edgerc = "../../test/edgerc"
+  edgerc = "../../common/testutils/edgerc"
 }
 
 resource "akamai_dns_record" "a_record" {

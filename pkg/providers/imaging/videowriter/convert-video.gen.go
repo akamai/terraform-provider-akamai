@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/imaging"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/imaging"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -107,7 +107,7 @@ func outputVideoPerceptualQualityVariableInline(d *schema.ResourceData, key stri
 	nameRaw, existVar := extract(d, key+"_var")
 	existVar = existVar && nameRaw.(string) != ""
 	if existVar {
-		name = tools.StringPtr(nameRaw.(string))
+		name = ptr.To(nameRaw.(string))
 	}
 
 	if existVal || existVar {
@@ -133,7 +133,7 @@ func outputVideoVideoAdaptiveQualityVariableInline(d *schema.ResourceData, key s
 	nameRaw, existVar := extract(d, key+"_var")
 	existVar = existVar && nameRaw.(string) != ""
 	if existVar {
-		name = tools.StringPtr(nameRaw.(string))
+		name = ptr.To(nameRaw.(string))
 	}
 
 	if existVal || existVar {
@@ -154,13 +154,13 @@ func stringVariableInline(d *schema.ResourceData, key string) *imaging.StringVar
 	existVal = existVal && valueRaw.(string) != ""
 	if existVal {
 		valueMapped := valueRaw.(string)
-		value = tools.StringPtr(valueMapped)
+		value = ptr.To(valueMapped)
 	}
 
 	nameRaw, existVar := extract(d, key+"_var")
 	existVar = existVar && nameRaw.(string) != ""
 	if existVar {
-		name = tools.StringPtr(nameRaw.(string))
+		name = ptr.To(nameRaw.(string))
 	}
 
 	if existVal || existVar {
@@ -202,7 +202,7 @@ func stringReader(d *schema.ResourceData, key string) string {
 func stringReaderPtr(d *schema.ResourceData, key string) *string {
 	value, exist := extract(d, key)
 	if exist {
-		return tools.StringPtr(value.(string))
+		return ptr.To(value.(string))
 	}
 	return nil
 }

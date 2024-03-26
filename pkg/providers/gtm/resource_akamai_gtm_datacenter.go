@@ -8,11 +8,11 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/gtm"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/gtm"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/session"
 
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -183,12 +183,12 @@ func resourceGTMv1DatacenterCreate(ctx context.Context, d *schema.ResourceData, 
 	}
 	var diags diag.Diagnostics
 	logger.Infof("Creating datacenter [%s] in domain [%s]", datacenterName, domain)
-	newDC, err := populateNewDatacenterObject(ctx, meta, d, m)
+	newDC, err := populateNewDatacenterObject(d, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	logger.Debugf("Proposed New Datacenter: [%v]", newDC)
-	cStatus, err := inst.Client(meta).CreateDatacenter(ctx, newDC, domain)
+	cStatus, err := Client(meta).CreateDatacenter(ctx, newDC, domain)
 	if err != nil {
 		logger.Errorf("Datacenter Create failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -229,7 +229,7 @@ func resourceGTMv1DatacenterCreate(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	// Give terraform the ID. Format domain::dcid
-	datacenterID := fmt.Sprintf("%s:%d", domain, cStatus.Resource.DatacenterId)
+	datacenterID := fmt.Sprintf("%s:%d", domain, cStatus.Resource.DatacenterID)
 	logger.Debugf("Generated DC resource ID: %s", datacenterID)
 	d.SetId(datacenterID)
 	return resourceGTMv1DatacenterRead(ctx, d, m)
@@ -259,7 +259,7 @@ func resourceGTMv1DatacenterRead(ctx context.Context, d *schema.ResourceData, m 
 			Detail:   err.Error(),
 		})
 	}
-	dc, err := inst.Client(meta).GetDatacenter(ctx, dcID, domain)
+	dc, err := Client(meta).GetDatacenter(ctx, dcID, domain)
 	if err != nil {
 		logger.Errorf("Datacenter Read failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -296,7 +296,7 @@ func resourceGTMv1DatacenterUpdate(ctx context.Context, d *schema.ResourceData, 
 		})
 	}
 	// Get existing datacenter
-	existDC, err := inst.Client(meta).GetDatacenter(ctx, dcID, domain)
+	existDC, err := Client(meta).GetDatacenter(ctx, dcID, domain)
 	if err != nil {
 		logger.Errorf("Datacenter Update failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -310,7 +310,7 @@ func resourceGTMv1DatacenterUpdate(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 	logger.Debugf("Updating Datacenter PROPOSED: %v", existDC)
-	uStat, err := inst.Client(meta).UpdateDatacenter(ctx, existDC, domain)
+	uStat, err := Client(meta).UpdateDatacenter(ctx, existDC, domain)
 	if err != nil {
 		logger.Errorf("Datacenter Update failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -363,7 +363,7 @@ func resourceGTMv1DatacenterImport(d *schema.ResourceData, m interface{}) ([]*sc
 	if err != nil {
 		return nil, fmt.Errorf("Invalid Datacenter resource ID")
 	}
-	dc, err := inst.Client(meta).GetDatacenter(ctx, dcID, domain)
+	dc, err := Client(meta).GetDatacenter(ctx, dcID, domain)
 	if err != nil {
 		logger.Errorf("Datacenter Import error: %s", err.Error())
 		return nil, err
@@ -402,7 +402,7 @@ func resourceGTMv1DatacenterDelete(ctx context.Context, d *schema.ResourceData, 
 		})
 	}
 	// Get existing datacenter
-	existDC, err := inst.Client(meta).GetDatacenter(ctx, dcID, domain)
+	existDC, err := Client(meta).GetDatacenter(ctx, dcID, domain)
 	if err != nil {
 		logger.Errorf("DatacenterDelete failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -412,7 +412,7 @@ func resourceGTMv1DatacenterDelete(ctx context.Context, d *schema.ResourceData, 
 		})
 	}
 	logger.Debugf("Deleting Datacenter: %v", existDC)
-	uStat, err := inst.Client(meta).DeleteDatacenter(ctx, existDC, domain)
+	uStat, err := Client(meta).DeleteDatacenter(ctx, existDC, domain)
 	if err != nil {
 		logger.Errorf("Datacenter Delete failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -459,10 +459,11 @@ func resourceGTMv1DatacenterDelete(ctx context.Context, d *schema.ResourceData, 
 }
 
 // Create and populate a new datacenter object from resource data
-func populateNewDatacenterObject(ctx context.Context, meta meta.Meta, d *schema.ResourceData, m interface{}) (*gtm.Datacenter, error) {
+func populateNewDatacenterObject(d *schema.ResourceData, m interface{}) (*gtm.Datacenter, error) {
 
-	dcObj := inst.Client(meta).NewDatacenter(ctx)
-	dcObj.DefaultLoadObject = gtm.NewLoadObject()
+	dcObj := &gtm.Datacenter{
+		DefaultLoadObject: &gtm.LoadObject{},
+	}
 	err := populateDatacenterObject(d, dcObj, m)
 
 	return dcObj, err
@@ -532,7 +533,7 @@ func populateDatacenterObject(d *schema.ResourceData, dc *gtm.Datacenter, m inte
 	if dloList, err := tf.GetInterfaceArrayValue("default_load_object", d); err != nil || len(dloList) == 0 {
 		dc.DefaultLoadObject = nil
 	} else {
-		dloObject := gtm.NewLoadObject()
+		dloObject := &gtm.LoadObject{}
 		dloMap, ok := dloList[0].(map[string]interface{})
 		if !ok {
 			logger.Errorf("populateDatacenterObject default_load_object failed")
@@ -598,7 +599,7 @@ func populateDatacenterObject(d *schema.ResourceData, dc *gtm.Datacenter, m inte
 	}
 	vint, err = tf.GetIntValue("datacenter_id", d)
 	if err == nil {
-		dc.DatacenterId = vint
+		dc.DatacenterID = vint
 	}
 	vint, err = tf.GetIntValue("score_penalty", d)
 	if err == nil {
@@ -651,7 +652,7 @@ func populateTerraformDCState(d *schema.ResourceData, dc *gtm.Datacenter, m inte
 	// walk through all state elements
 	for stateKey, stateValue := range map[string]interface{}{
 		"nickname":                          dc.Nickname,
-		"datacenter_id":                     dc.DatacenterId,
+		"datacenter_id":                     dc.DatacenterID,
 		"city":                              dc.City,
 		"clone_of":                          dc.CloneOf,
 		"cloud_server_host_header_override": dc.CloudServerHostHeaderOverride,

@@ -6,14 +6,11 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/cache"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/providers/registry"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/subprovider"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/cache"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/providers/registry"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
-	"github.com/hashicorp/terraform-plugin-framework/providerserver"
-	"github.com/hashicorp/terraform-plugin-go/tfprotov5"
-	"github.com/hashicorp/terraform-plugin-mux/tf5muxserver"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/assert"
 )
@@ -22,7 +19,7 @@ func TestFrameworkProvider(t *testing.T) {
 	t.Parallel()
 	resp := provider.SchemaResponse{}
 
-	prov := akamai.NewFrameworkProvider(registry.FrameworkSubproviders()...)()
+	prov := akamai.NewFrameworkProvider(registry.Subproviders()...)()
 	prov.Schema(context.Background(), provider.SchemaRequest{}, &resp)
 
 	assert.False(t, resp.Diagnostics.HasError())
@@ -49,7 +46,7 @@ func TestFramework_ConfigureCache_EnabledInContext(t *testing.T) {
 
 			resource.Test(t, resource.TestCase{
 				IsUnitTest:               true,
-				ProtoV5ProviderFactories: newProtoV5ProviderFactory(dummy{}),
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(dummy{}),
 				Steps: []resource.TestStep{
 					{
 						Config: fmt.Sprintf(`
@@ -92,7 +89,7 @@ func TestFramework_ConfigureEdgercInContext(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			resource.Test(t, resource.TestCase{
 				IsUnitTest:               true,
-				ProtoV5ProviderFactories: newProtoV5ProviderFactory(dummy{}),
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(dummy{}),
 				Steps: []resource.TestStep{
 					{
 						ExpectError: testcase.expectedError,
@@ -141,7 +138,7 @@ func TestFramework_EdgercValidate(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			resource.Test(t, resource.TestCase{
 				IsUnitTest:               true,
-				ProtoV5ProviderFactories: newProtoV5ProviderFactory(dummy{}),
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(dummy{}),
 				Steps: []resource.TestStep{
 					{
 						ExpectError: testcase.expectedError,
@@ -211,7 +208,7 @@ func TestFramework_EdgercFromConfig(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			resource.Test(t, resource.TestCase{
 				IsUnitTest:               true,
-				ProtoV5ProviderFactories: newProtoV5ProviderFactory(dummy{}),
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(dummy{}),
 				Steps: []resource.TestStep{
 					{
 						ExpectError: testcase.expectedError,
@@ -236,7 +233,7 @@ func TestFramework_EdgercFromConfig(t *testing.T) {
 func TestFramework_EdgercFromConfig_missing_required_attributes(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		IsUnitTest:               true,
-		ProtoV5ProviderFactories: newProtoV5ProviderFactory(dummy{}),
+		ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(dummy{}),
 		Steps: []resource.TestStep{
 			{
 				ExpectError: regexp.MustCompile("The argument \"host\" is required, but no definition was found"),
@@ -288,25 +285,4 @@ func TestFramework_EdgercFromConfig_missing_required_attributes(t *testing.T) {
 			},
 		},
 	})
-}
-
-func newProtoV5ProviderFactory(subproviders ...subprovider.Framework) map[string]func() (tfprotov5.ProviderServer, error) {
-	return map[string]func() (tfprotov5.ProviderServer, error){
-		"akamai": func() (tfprotov5.ProviderServer, error) {
-			ctx := context.Background()
-			providers := []func() tfprotov5.ProviderServer{
-				akamai.NewPluginProvider()().GRPCProvider,
-				providerserver.NewProtocol5(
-					akamai.NewFrameworkProvider(subproviders...)(),
-				),
-			}
-
-			muxServer, err := tf5muxserver.NewMuxServer(ctx, providers...)
-			if err != nil {
-				return nil, err
-			}
-
-			return muxServer.ProviderServer(), nil
-		},
-	}
 }

@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cps"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/cps"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -17,7 +17,7 @@ func TestDVValidation(t *testing.T) {
 		client := &cps.Mock{}
 		PollForChangeStatusInterval = 1 * time.Millisecond
 		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
-			Return(&cps.Enrollment{PendingChanges: []cps.PendingChange{
+			Return(&cps.GetEnrollmentResponse{PendingChanges: []cps.PendingChange{
 				{
 					Location:   "/cps/v2/enrollments/1/changes/2",
 					ChangeType: "new-certificate",
@@ -42,7 +42,7 @@ func TestDVValidation(t *testing.T) {
 		}).Return(nil)
 
 		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
-			Return(&cps.Enrollment{PendingChanges: []cps.PendingChange{
+			Return(&cps.GetEnrollmentResponse{PendingChanges: []cps.PendingChange{
 				{
 					Location:   "/cps/v2/enrollments/1/changes/2",
 					ChangeType: "new-certificate",
@@ -56,7 +56,7 @@ func TestDVValidation(t *testing.T) {
 			}}, nil).Times(3)
 
 		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
-			Return(&cps.Enrollment{PendingChanges: []cps.PendingChange{
+			Return(&cps.GetEnrollmentResponse{PendingChanges: []cps.PendingChange{
 				{
 					Location:   "/cps/v2/enrollments/1/changes/2",
 					ChangeType: "new-certificate",
@@ -81,7 +81,7 @@ func TestDVValidation(t *testing.T) {
 		}).Return(nil)
 
 		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
-			Return(&cps.Enrollment{PendingChanges: []cps.PendingChange{
+			Return(&cps.GetEnrollmentResponse{PendingChanges: []cps.PendingChange{
 				{
 					Location:   "/cps/v2/enrollments/1/changes/2",
 					ChangeType: "new-certificate",
@@ -96,7 +96,7 @@ func TestDVValidation(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestResDVValidation/create_validation.tf"),
@@ -126,7 +126,7 @@ func TestDVValidation(t *testing.T) {
 		client := &cps.Mock{}
 		changeAckRetryInterval = 1 * time.Millisecond
 		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
-			Return(&cps.Enrollment{PendingChanges: []cps.PendingChange{
+			Return(&cps.GetEnrollmentResponse{PendingChanges: []cps.PendingChange{
 				{
 					Location:   "/cps/v2/enrollments/1/changes/2",
 					ChangeType: "new-certificate",
@@ -152,7 +152,7 @@ func TestDVValidation(t *testing.T) {
 		}).Return(nil).Once()
 
 		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
-			Return(&cps.Enrollment{PendingChanges: []cps.PendingChange{
+			Return(&cps.GetEnrollmentResponse{PendingChanges: []cps.PendingChange{
 				{
 					Location:   "/cps/v2/enrollments/1/changes/2",
 					ChangeType: "new-certificate",
@@ -167,7 +167,7 @@ func TestDVValidation(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestResDVValidation/create_validation.tf"),
@@ -186,7 +186,7 @@ func TestDVValidation(t *testing.T) {
 		client := &cps.Mock{}
 		changeAckRetryInterval = 1 * time.Millisecond
 		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
-			Return(&cps.Enrollment{PendingChanges: []cps.PendingChange{
+			Return(&cps.GetEnrollmentResponse{PendingChanges: []cps.PendingChange{
 				{
 					Location:   "/cps/v2/enrollments/1/changes/2",
 					ChangeType: "new-certificate",
@@ -207,7 +207,7 @@ func TestDVValidation(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, "testdata/TestResDVValidation/create_validation_with_timeout.tf"),

@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/gtm"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/logger"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/gtm"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/logger"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -137,12 +137,12 @@ func resourceGTMv1ResourceCreate(ctx context.Context, d *schema.ResourceData, m 
 	}
 	var diags diag.Diagnostics
 	logger.Infof("Creating resource [%s] in domain [%s]", name, domain)
-	newRsrc, err := populateNewResourceObject(ctx, meta, d, m)
+	newRsrc, err := populateNewResourceObject(d, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	logger.Debugf("Proposed New Resource: [%v]", newRsrc)
-	cStatus, err := inst.Client(meta).CreateResource(ctx, newRsrc, domain)
+	cStatus, err := Client(meta).CreateResource(ctx, newRsrc, domain)
 	if err != nil {
 		logger.Errorf("Resource Create failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -209,7 +209,7 @@ func resourceGTMv1ResourceRead(ctx context.Context, d *schema.ResourceData, m in
 		logger.Errorf("Invalid resource Resource ID")
 		return diag.FromErr(err)
 	}
-	rsrc, err := inst.Client(meta).GetResource(ctx, resource, domain)
+	rsrc, err := Client(meta).GetResource(ctx, resource, domain)
 	if err != nil {
 		logger.Errorf("Resource Read failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -218,7 +218,13 @@ func resourceGTMv1ResourceRead(ctx context.Context, d *schema.ResourceData, m in
 			Detail:   err.Error(),
 		})
 	}
-	populateTerraformResourceState(d, rsrc, m)
+	if err = populateTerraformResourceState(d, rsrc, m); err != nil {
+		return append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "Resource Read populate state",
+			Detail:   err.Error(),
+		})
+	}
 	logger.Debugf("READ %v", rsrc)
 	return nil
 }
@@ -242,7 +248,7 @@ func resourceGTMv1ResourceUpdate(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 	// Get existing property
-	existRsrc, err := inst.Client(meta).GetResource(ctx, resource, domain)
+	existRsrc, err := Client(meta).GetResource(ctx, resource, domain)
 	if err != nil {
 		logger.Errorf("Resource Update failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -252,11 +258,11 @@ func resourceGTMv1ResourceUpdate(ctx context.Context, d *schema.ResourceData, m 
 		})
 	}
 	logger.Debugf("Updating Resource BEFORE: %v", existRsrc)
-	if err := populateResourceObject(ctx, d, existRsrc, m); err != nil {
+	if err := populateResourceObject(d, existRsrc, m); err != nil {
 		return diag.FromErr(err)
 	}
 	logger.Debugf("Updating Resource PROPOSED: %v", existRsrc)
-	uStat, err := inst.Client(meta).UpdateResource(ctx, existRsrc, domain)
+	uStat, err := Client(meta).UpdateResource(ctx, existRsrc, domain)
 	if err != nil {
 		logger.Errorf("Resource Update failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -317,16 +323,28 @@ func resourceGTMv1ResourceImport(d *schema.ResourceData, m interface{}) ([]*sche
 	if err != nil {
 		return []*schema.ResourceData{d}, err
 	}
-	rsrc, err := inst.Client(meta).GetResource(ctx, resource, domain)
+	rsrc, err := Client(meta).GetResource(ctx, resource, domain)
 	if err != nil {
 		return nil, err
 	}
-	_ = d.Set("domain", domain)
-	_ = d.Set("wait_on_complete", true)
-	populateTerraformResourceState(d, rsrc, m)
+
+	err = d.Set("domain", domain)
+	if err != nil {
+		return nil, err
+	}
+	err = d.Set("wait_on_complete", true)
+	if err != nil {
+		return nil, err
+	}
+	if err = populateTerraformResourceState(d, rsrc, m); err != nil {
+		return nil, err
+	}
 
 	// use same Id as passed in
-	name, _ := tf.GetStringValue("name", d)
+	name, err := tf.GetStringValue("name", d)
+	if err != nil {
+		return nil, err
+	}
 	logger.Infof("Resource [%s] [%s] Imported", d.Id(), name)
 	return []*schema.ResourceData{d}, nil
 }
@@ -349,7 +367,7 @@ func resourceGTMv1ResourceDelete(ctx context.Context, d *schema.ResourceData, m 
 		logger.Errorf("Invalid resource ID")
 		return diag.FromErr(err)
 	}
-	existRsrc, err := inst.Client(meta).GetResource(ctx, resource, domain)
+	existRsrc, err := Client(meta).GetResource(ctx, resource, domain)
 	if err != nil {
 		logger.Errorf("Resource Delete Read failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -359,7 +377,7 @@ func resourceGTMv1ResourceDelete(ctx context.Context, d *schema.ResourceData, m 
 		})
 	}
 	logger.Debugf("Deleting Resource: %v", existRsrc)
-	uStat, err := inst.Client(meta).DeleteResource(ctx, existRsrc, domain)
+	uStat, err := Client(meta).DeleteResource(ctx, existRsrc, domain)
 	if err != nil {
 		logger.Errorf("Resource Delete failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -406,12 +424,17 @@ func resourceGTMv1ResourceDelete(ctx context.Context, d *schema.ResourceData, m 
 }
 
 // Create and populate a new resource object from resource data
-func populateNewResourceObject(ctx context.Context, meta meta.Meta, d *schema.ResourceData, m interface{}) (*gtm.Resource, error) {
+func populateNewResourceObject(d *schema.ResourceData, m interface{}) (*gtm.Resource, error) {
 
-	name, _ := tf.GetStringValue("name", d)
-	rsrcObj := inst.Client(meta).NewResource(ctx, name)
-	rsrcObj.ResourceInstances = make([]*gtm.ResourceInstance, 0)
-	err := populateResourceObject(ctx, d, rsrcObj, m)
+	name, err := tf.GetStringValue("name", d)
+	if err != nil {
+		return nil, err
+	}
+	rsrcObj := &gtm.Resource{
+		Name:              name,
+		ResourceInstances: make([]*gtm.ResourceInstance, 0),
+	}
+	err = populateResourceObject(d, rsrcObj, m)
 
 	return rsrcObj, err
 
@@ -419,7 +442,7 @@ func populateNewResourceObject(ctx context.Context, meta meta.Meta, d *schema.Re
 
 // nolint:gocyclo
 // Populate existing resource object from resource data
-func populateResourceObject(ctx context.Context, d *schema.ResourceData, rsrc *gtm.Resource, m interface{}) error {
+func populateResourceObject(d *schema.ResourceData, rsrc *gtm.Resource, m interface{}) error {
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1ResourceDelete")
 
@@ -518,7 +541,7 @@ func populateResourceObject(ctx context.Context, d *schema.ResourceData, rsrc *g
 	}
 
 	if _, ok := d.GetOk("resource_instance"); ok {
-		populateResourceInstancesObject(ctx, meta, d, rsrc)
+		populateResourceInstancesObject(meta, d, rsrc)
 	} else if d.HasChange("resource_instance") {
 		rsrc.ResourceInstances = make([]*gtm.ResourceInstance, 0)
 	}
@@ -527,7 +550,7 @@ func populateResourceObject(ctx context.Context, d *schema.ResourceData, rsrc *g
 }
 
 // Populate Terraform state from provided Resource object
-func populateTerraformResourceState(d *schema.ResourceData, rsrc *gtm.Resource, m interface{}) {
+func populateTerraformResourceState(d *schema.ResourceData, rsrc *gtm.Resource, m interface{}) error {
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "populateTerraformResourceState")
 
@@ -550,13 +573,14 @@ func populateTerraformResourceState(d *schema.ResourceData, rsrc *gtm.Resource, 
 		err := d.Set(stateKey, stateValue)
 		if err != nil {
 			logger.Errorf("populateTerraformResourceState failed: %s", err.Error())
+			return err
 		}
 	}
-	populateTerraformResourceInstancesState(d, rsrc, m)
+	return populateTerraformResourceInstancesState(d, rsrc, m)
 }
 
 // create and populate GTM Resource ResourceInstances object
-func populateResourceInstancesObject(ctx context.Context, meta meta.Meta, d *schema.ResourceData, rsrc *gtm.Resource) {
+func populateResourceInstancesObject(meta meta.Meta, d *schema.ResourceData, rsrc *gtm.Resource) {
 	logger := meta.Log("Akamai GTM", "populateResourceInstancesObject")
 
 	// pull apart List
@@ -565,7 +589,7 @@ func populateResourceInstancesObject(ctx context.Context, meta meta.Meta, d *sch
 		rsrcInstanceObjList := make([]*gtm.ResourceInstance, len(rsrcInstances)) // create new object list
 		for i, v := range rsrcInstances {
 			riMap := v.(map[string]interface{})
-			rsrcInstance := inst.Client(meta).NewResourceInstance(ctx, rsrc, riMap["datacenter_id"].(int)) // create new object
+			rsrcInstance := &gtm.ResourceInstance{DatacenterID: riMap["datacenter_id"].(int)}
 			rsrcInstance.UseDefaultLoadObject = riMap["use_default_load_object"].(bool)
 			if riMap["load_servers"] != nil {
 				loadServers, ok := riMap["load_servers"].(*schema.Set)
@@ -587,17 +611,20 @@ func populateResourceInstancesObject(ctx context.Context, meta meta.Meta, d *sch
 }
 
 // create and populate Terraform resource_instances schema
-func populateTerraformResourceInstancesState(d *schema.ResourceData, rsrc *gtm.Resource, m interface{}) {
+func populateTerraformResourceInstancesState(d *schema.ResourceData, rsrc *gtm.Resource, m interface{}) error {
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "populateTerraformResourceInstancesState")
 
 	riObjectInventory := make(map[int]*gtm.ResourceInstance, len(rsrc.ResourceInstances))
 	if len(rsrc.ResourceInstances) > 0 {
 		for _, riObj := range rsrc.ResourceInstances {
-			riObjectInventory[riObj.DatacenterId] = riObj
+			riObjectInventory[riObj.DatacenterID] = riObj
 		}
 	}
-	riStateList, _ := tf.GetInterfaceArrayValue("resource_instance", d)
+	riStateList, err := tf.GetInterfaceArrayValue("resource_instance", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
+		return err
+	}
 	for _, riMap := range riStateList {
 		ri := riMap.(map[string]interface{})
 		objIndex := ri["datacenter_id"].(int)
@@ -626,7 +653,7 @@ func populateTerraformResourceInstancesState(d *schema.ResourceData, rsrc *gtm.R
 		// Objects not in the state yet. Add. Unfortunately, they'll likely not align with instance indices in the config
 		for _, mriObj := range riObjectInventory {
 			riNew := make(map[string]interface{})
-			riNew["datacenter_id"] = mriObj.DatacenterId
+			riNew["datacenter_id"] = mriObj.DatacenterID
 			riNew["use_default_load_object"] = mriObj.UseDefaultLoadObject
 			riNew["load_object"] = mriObj.LoadObject.LoadObject
 			riNew["load_object_port"] = mriObj.LoadObjectPort
@@ -634,8 +661,7 @@ func populateTerraformResourceInstancesState(d *schema.ResourceData, rsrc *gtm.R
 			riStateList = append(riStateList, riNew)
 		}
 	}
-	_ = d.Set("resource_instance", riStateList)
-
+	return d.Set("resource_instance", riStateList)
 }
 
 func resourceInstanceDiffSuppress(_, _, _ string, d *schema.ResourceData) bool {

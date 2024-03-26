@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/gtm"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/gtm"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -14,7 +14,6 @@ import (
 )
 
 var _ datasource.DataSource = &domainDataSource{}
-
 var _ datasource.DataSourceWithConfigure = &domainDataSource{}
 
 // NewGTMDomainDataSource returns a new GTM domain data source
@@ -356,6 +355,10 @@ var (
 									Computed:    true,
 									ElementType: types.StringType,
 								},
+								"precedence": schema.Int64Attribute{
+									Description: "Non-negative integer that ranks the order of the backups that GTM will hand out in the event that the primary Traffic Target has been declared down",
+									Computed:    true,
+								},
 							},
 						},
 					},
@@ -390,6 +393,14 @@ var (
 								"http_error5xx": schema.BoolAttribute{
 									Computed:    true,
 									Description: "Treats a 5xx HTTP response as a failure if the testObjectProtocol is http, https or ftp.",
+								},
+								"http_method": schema.StringAttribute{
+									Computed:    true,
+									Description: "Contains HTTP method to send if the `testObjectProtocol` is `http` or `https`. Supported values are `TRACE`, `HEAD`, `OPTIONS`, `GET`, `PUT`, `POST`, `PATCH`, `DELETE`. When omitted or `null`, this value defaults to `GET`.",
+								},
+								"http_request_body": schema.StringAttribute{
+									Computed:    true,
+									Description: "Contains Base64-encoded HTTP request body to send if the `testObjectProtocol` is `http` or `https`. When omitted or `null`, omits the request body from the request.",
 								},
 								"name": schema.StringAttribute{
 									Computed:    true,
@@ -454,6 +465,15 @@ var (
 								"ssl_client_private_key": schema.StringAttribute{
 									Computed:    true,
 									Description: "Indicates a base64-encoded private key.",
+								},
+								"alternate_ca_certificates": schema.ListAttribute{
+									Computed:    true,
+									Description: "List of alternate trust anchors (CA certificates)",
+									ElementType: types.StringType,
+								},
+								"pre_2023_security_posture": schema.BoolAttribute{
+									Computed:    true,
+									Description: "Whether to enable backwards compatibility for liveness endpoints that use older TLS protocols",
 								},
 							},
 							Blocks: map[string]schema.Block{
@@ -813,6 +833,8 @@ type (
 		ModificationComments         types.String     `tfsdk:"modification_comments"`
 		RoundRobinPrefix             types.String     `tfsdk:"round_robin_prefix"`
 		ServerMonitorPool            types.String     `tfsdk:"server_monitor_pool"`
+		SignAndServe                 types.Bool       `tfsdk:"sign_and_serve"`
+		SignAndServeAlgorithm        types.String     `tfsdk:"sign_and_serve_algorithm"`
 		Type                         types.String     `tfsdk:"type"`
 		Status                       *status          `tfsdk:"status"`
 		LoadImbalancePercentage      types.Float64    `tfsdk:"load_imbalance_percentage"`
@@ -852,6 +874,7 @@ type (
 	}
 
 	livenessTest struct {
+		AlternateCACertificates       types.List    `tfsdk:"alternate_ca_certificates"`
 		AnswersRequired               types.Bool    `tfsdk:"answers_required"`
 		Disabled                      types.Bool    `tfsdk:"disabled"`
 		DisableNonstandardPortWarning types.Bool    `tfsdk:"disable_nonstandard_port_warning"`
@@ -860,8 +883,11 @@ type (
 		HTTPError3xx                  types.Bool    `tfsdk:"http_error3xx"`
 		HTTPError4xx                  types.Bool    `tfsdk:"http_error4xx"`
 		HTTPError5xx                  types.Bool    `tfsdk:"http_error5xx"`
+		HTTPMethod                    types.String  `tfsdk:"http_method"`
+		HTTPRequestBody               types.String  `tfsdk:"http_request_body"`
 		Name                          types.String  `tfsdk:"name"`
 		PeerCertificateVerification   types.Bool    `tfsdk:"peer_certificate_verification"`
+		Pre2023SecurityPosture        types.Bool    `tfsdk:"pre_2023_security_posture"`
 		RequestString                 types.String  `tfsdk:"request_string"`
 		ResponseString                types.String  `tfsdk:"response_string"`
 		ResourceType                  types.String  `tfsdk:"resource_type"`
@@ -896,6 +922,7 @@ type (
 		HandoutCNAME types.String  `tfsdk:"handout_cname"`
 		Name         types.String  `tfsdk:"name"`
 		Servers      types.List    `tfsdk:"servers"`
+		Precedence   types.Int64   `tfsdk:"precedence"`
 	}
 
 	property struct {
@@ -1119,6 +1146,14 @@ func (d *domainDataSource) Schema(_ context.Context, _ datasource.SchemaRequest,
 				MarkdownDescription: "The name of the pool from which servermonitors are drawn for liveness tests in this datacenter. If omitted (null), the domain-wide default is used. (If no domain-wide default is specified, the pool used is all servermonitors in the same continent as the datacenter.)",
 				Computed:            true,
 			},
+			"sign_and_serve": schema.BoolAttribute{
+				MarkdownDescription: "If set (true) we will sign the domain's resource records so that they can be validated by a validating resolver.",
+				Computed:            true,
+			},
+			"sign_and_serve_algorithm": schema.StringAttribute{
+				MarkdownDescription: "The signing algorithm to use for signAndServe. One of the following values: RSA_SHA1, RSA_SHA256, RSA_SHA512, ECDSA_P256_SHA256, ECDSA_P384_SHA384, ED25519, ED448.",
+				Computed:            true,
+			},
 			"type": schema.StringAttribute{
 				MarkdownDescription: "Specifies the load balancing behavior for the property. ",
 				Computed:            true,
@@ -1165,7 +1200,7 @@ func (d *domainDataSource) Read(ctx context.Context, request datasource.ReadRequ
 		return
 	}
 
-	client := inst.Client(d.meta)
+	client := Client(d.meta)
 	domain, err := client.GetDomain(ctx, data.Name.ValueString())
 	if err != nil {
 		response.Diagnostics.AddError("fetching domain failed", err.Error())
@@ -1193,7 +1228,7 @@ func populateDomain(ctx context.Context, domain *gtm.Domain) (*domainDataSourceM
 	if diags.HasError() {
 		return nil, diags
 	}
-	cidrMaps, diags := getCIDRMaps(ctx, domain.CidrMaps)
+	cidrMaps, diags := getCIDRMaps(ctx, domain.CIDRMaps)
 	if diags.HasError() {
 		return nil, diags
 	}
@@ -1201,16 +1236,16 @@ func populateDomain(ctx context.Context, domain *gtm.Domain) (*domainDataSourceM
 	if diags.HasError() {
 		return nil, diags
 	}
-	return &domainDataSourceModel{
+	domainModel := &domainDataSourceModel{
 		Name:                         types.StringValue(domain.Name),
-		CNameCoalescingEnabled:       types.BoolValue(domain.CnameCoalescingEnabled),
+		CNameCoalescingEnabled:       types.BoolValue(domain.CNameCoalescingEnabled),
 		DefaultErrorPenalty:          types.Int64Value(int64(domain.DefaultErrorPenalty)),
 		DefaultHealthMax:             types.Float64Value(domain.DefaultHealthMax),
 		DefaultHealthMultiplier:      types.Float64Value(domain.DefaultHealthMultiplier),
 		DefaultHealthThreshold:       types.Float64Value(domain.DefaultHealthThreshold),
 		DefaultMaxUnreachablePenalty: types.Int64Value(int64(domain.DefaultMaxUnreachablePenalty)),
-		DefaultSSLClientCertificate:  types.StringValue(domain.DefaultSslClientCertificate),
-		DefaultSSLClientPrivateKey:   types.StringValue(domain.DefaultSslClientPrivateKey),
+		DefaultSSLClientCertificate:  types.StringValue(domain.DefaultSSLClientCertificate),
+		DefaultSSLClientPrivateKey:   types.StringValue(domain.DefaultSSLClientPrivateKey),
 		DefaultTimeoutPenalty:        types.Int64Value(int64(domain.DefaultTimeoutPenalty)),
 		DefaultUnreachableThreshold:  types.Float64Value(float64(domain.DefaultUnreachableThreshold)),
 		EmailNotificationList:        emailNotificationList,
@@ -1229,6 +1264,7 @@ func populateDomain(ctx context.Context, domain *gtm.Domain) (*domainDataSourceM
 		ModificationComments:         types.StringValue(domain.ModificationComments),
 		RoundRobinPrefix:             types.StringValue(domain.RoundRobinPrefix),
 		ServerMonitorPool:            types.StringValue(domain.ServermonitorPool),
+		SignAndServe:                 types.BoolValue(domain.SignAndServe),
 		Type:                         types.StringValue(domain.Type),
 		LoadImbalancePercentage:      types.Float64Value(domain.LoadImbalancePercentage),
 		ID:                           types.StringValue(domain.Name),
@@ -1238,9 +1274,13 @@ func populateDomain(ctx context.Context, domain *gtm.Domain) (*domainDataSourceM
 		Datacenters:                  datacenters,
 		GeographicMaps:               geoMaps,
 		CIDRMaps:                     cidrMaps,
-		ASMaps:                       getASMaps(domain.AsMaps),
+		ASMaps:                       getASMaps(domain.ASMaps),
 		Links:                        getLinks(domain.Links),
-	}, nil
+	}
+	if domain.SignAndServeAlgorithm != nil {
+		domainModel.SignAndServeAlgorithm = types.StringValue(*domain.SignAndServeAlgorithm)
+	}
+	return domainModel, nil
 }
 
 func getLinks(links []*gtm.Link) []link {
@@ -1257,7 +1297,7 @@ func getLinks(links []*gtm.Link) []link {
 	return result
 }
 
-func getASMaps(maps []*gtm.AsMap) []asMap {
+func getASMaps(maps []*gtm.ASMap) []asMap {
 	var result []asMap
 	for _, am := range maps {
 		asMapInstance := asMap{
@@ -1271,7 +1311,7 @@ func getASMaps(maps []*gtm.AsMap) []asMap {
 		if am.DefaultDatacenter != nil {
 			defaultDataCenter := defaultDatacenter{
 				Nickname:     types.StringValue(am.DefaultDatacenter.Nickname),
-				DatacenterID: types.Int64Value(int64(am.DefaultDatacenter.DatacenterId)),
+				DatacenterID: types.Int64Value(int64(am.DefaultDatacenter.DatacenterID)),
 			}
 			asMapInstance.DefaultDatacenter = defaultDataCenter
 		}
@@ -1286,7 +1326,7 @@ func getASMaps(maps []*gtm.AsMap) []asMap {
 	return result
 }
 
-func getCIDRMaps(ctx context.Context, maps []*gtm.CidrMap) ([]cidrMap, diag.Diagnostics) {
+func getCIDRMaps(ctx context.Context, maps []*gtm.CIDRMap) ([]cidrMap, diag.Diagnostics) {
 	var result []cidrMap
 	for _, cm := range maps {
 		cidrMapInstance := cidrMap{
@@ -1300,7 +1340,7 @@ func getCIDRMaps(ctx context.Context, maps []*gtm.CidrMap) ([]cidrMap, diag.Diag
 		if cm.DefaultDatacenter != nil {
 			defaultDataCenter := defaultDatacenter{
 				Nickname:     types.StringValue(cm.DefaultDatacenter.Nickname),
-				DatacenterID: types.Int64Value(int64(cm.DefaultDatacenter.DatacenterId)),
+				DatacenterID: types.Int64Value(int64(cm.DefaultDatacenter.DatacenterID)),
 			}
 			cidrMapInstance.DefaultDatacenter = defaultDataCenter
 		}
@@ -1334,7 +1374,7 @@ func getGeographicMaps(ctx context.Context, maps []*gtm.GeoMap) ([]geographicMap
 		if gm.DefaultDatacenter != nil {
 			defaultDataCenter := defaultDatacenter{
 				Nickname:     types.StringValue(gm.DefaultDatacenter.Nickname),
-				DatacenterID: types.Int64Value(int64(gm.DefaultDatacenter.DatacenterId)),
+				DatacenterID: types.Int64Value(int64(gm.DefaultDatacenter.DatacenterID)),
 			}
 			geoMapInstance.DefaultDatacenter = defaultDataCenter
 		}
@@ -1358,7 +1398,7 @@ func getDatacenters(ctx context.Context, datacenters []*gtm.Datacenter) ([]datac
 	var result []datacenter
 	for _, dc := range datacenters {
 		dataCenterInstance := datacenter{
-			DatacenterID:                  types.Int64Value(int64(dc.DatacenterId)),
+			DatacenterID:                  types.Int64Value(int64(dc.DatacenterID)),
 			Nickname:                      types.StringValue(dc.Nickname),
 			ScorePenalty:                  types.Int64Value(int64(dc.ScorePenalty)),
 			City:                          types.StringValue(dc.City),
@@ -1396,7 +1436,7 @@ func getProperties(ctx context.Context, properties []*gtm.Property) ([]property,
 	for _, prop := range properties {
 		propertyInstance := property{
 			BackupCNAME:               types.StringValue(prop.BackupCName),
-			BackupIP:                  types.StringValue(prop.BackupIp),
+			BackupIP:                  types.StringValue(prop.BackupIP),
 			BalanceByDownloadScore:    types.BoolValue(prop.BalanceByDownloadScore),
 			CName:                     types.StringValue(prop.CName),
 			Comments:                  types.StringValue(prop.Comments),
@@ -1422,7 +1462,7 @@ func getProperties(ctx context.Context, properties []*gtm.Property) ([]property,
 			Type:                      types.StringValue(prop.Type),
 			UnreachableThreshold:      types.Float64Value(prop.UnreachableThreshold),
 			UseComputedTargets:        types.BoolValue(prop.UseComputedTargets),
-			IPv6:                      types.BoolValue(prop.Ipv6),
+			IPv6:                      types.BoolValue(prop.IPv6),
 			WeightedHashBitsForIPv4:   types.Int64Value(int64(prop.WeightedHashBitsForIPv4)),
 			WeightedHashBitsForIPv6:   types.Int64Value(int64(prop.WeightedHashBitsForIPv6)),
 		}
@@ -1430,7 +1470,11 @@ func getProperties(ctx context.Context, properties []*gtm.Property) ([]property,
 		if prop.LivenessTests != nil {
 			propertyInstance.LivenessTests = make([]livenessTest, len(prop.LivenessTests))
 			for i, lt := range prop.LivenessTests {
-				propertyInstance.LivenessTests[i] = populateLivenessTest(lt)
+				ltModel, diags := populateLivenessTest(lt)
+				if diags.HasError() {
+					return nil, diags
+				}
+				propertyInstance.LivenessTests[i] = ltModel
 			}
 		}
 
@@ -1471,7 +1515,7 @@ func getStatus(st *gtm.ResponseStatus) *status {
 	}
 	statusInstance := status{
 		Message:               types.StringValue(st.Message),
-		ChangeID:              types.StringValue(st.ChangeId),
+		ChangeID:              types.StringValue(st.ChangeID),
 		PropagationStatus:     types.StringValue(st.PropagationStatus),
 		PropagationStatusDate: types.StringValue(st.PropagationStatusDate),
 		PassingValidation:     types.BoolValue(st.PassingValidation),
@@ -1512,7 +1556,7 @@ func getResources(resources []*gtm.Resource) []domainResource {
 				resInstances[i] = resourceInstance{
 					LoadObject:           types.StringValue(ri.LoadObject.LoadObject),
 					LoadObjectPort:       types.Int64Value(int64(ri.LoadObject.LoadObjectPort)),
-					DataCenterID:         types.Int64Value(int64(ri.DatacenterId)),
+					DataCenterID:         types.Int64Value(int64(ri.DatacenterID)),
 					UseDefaultLoadObject: types.BoolValue(ri.UseDefaultLoadObject),
 				}
 				if ri.LoadObject.LoadServers != nil {
@@ -1535,17 +1579,23 @@ func getResources(resources []*gtm.Resource) []domainResource {
 	return result
 }
 
-func populateLivenessTest(lt *gtm.LivenessTest) livenessTest {
-	return livenessTest{
+func populateLivenessTest(lt *gtm.LivenessTest) (livenessTest, diag.Diagnostics) {
+	altCACerts, diags := types.ListValueFrom(context.TODO(), types.StringType, lt.AlternateCACertificates)
+	if diags.HasError() {
+		return livenessTest{}, diags
+	}
+	ltModel := livenessTest{
 		AnswersRequired:               types.BoolValue(lt.AnswersRequired),
+		AlternateCACertificates:       altCACerts,
 		Disabled:                      types.BoolValue(lt.Disabled),
 		DisableNonstandardPortWarning: types.BoolValue(lt.DisableNonstandardPortWarning),
 		ErrorPenalty:                  types.Float64Value(lt.ErrorPenalty),
-		HTTPError3xx:                  types.BoolValue(lt.HttpError3xx),
-		HTTPError4xx:                  types.BoolValue(lt.HttpError4xx),
-		HTTPError5xx:                  types.BoolValue(lt.HttpError5xx),
+		HTTPError3xx:                  types.BoolValue(lt.HTTPError3xx),
+		HTTPError4xx:                  types.BoolValue(lt.HTTPError4xx),
+		HTTPError5xx:                  types.BoolValue(lt.HTTPError5xx),
 		Name:                          types.StringValue(lt.Name),
 		PeerCertificateVerification:   types.BoolValue(lt.PeerCertificateVerification),
+		Pre2023SecurityPosture:        types.BoolValue(lt.Pre2023SecurityPosture),
 		RequestString:                 types.StringValue(lt.RequestString),
 		ResponseString:                types.StringValue(lt.ResponseString),
 		ResourceType:                  types.StringValue(lt.ResourceType),
@@ -1558,13 +1608,20 @@ func populateLivenessTest(lt *gtm.LivenessTest) livenessTest {
 		TestObjectPassword:            types.StringValue(lt.TestObjectPassword),
 		TestTimeout:                   types.Float64Value(float64(lt.TestTimeout)),
 		TimeoutPenalty:                types.Float64Value(lt.TimeoutPenalty),
-		SSLClientCertificate:          types.StringValue(lt.SslClientCertificate),
-		SSLClientPrivateKey:           types.StringValue(lt.SslClientPrivateKey),
-		HTTPHeaders:                   populateHTTPHeaders(lt.HttpHeaders),
+		SSLClientCertificate:          types.StringValue(lt.SSLClientCertificate),
+		SSLClientPrivateKey:           types.StringValue(lt.SSLClientPrivateKey),
+		HTTPHeaders:                   populateHTTPHeaders(lt.HTTPHeaders),
 	}
+	if lt.HTTPMethod != nil {
+		ltModel.HTTPMethod = types.StringValue(*lt.HTTPMethod)
+	}
+	if lt.HTTPRequestBody != nil {
+		ltModel.HTTPRequestBody = types.StringValue(*lt.HTTPRequestBody)
+	}
+	return ltModel, diags
 }
 
-func populateHTTPHeaders(headers []*gtm.HttpHeader) []httpHeader {
+func populateHTTPHeaders(headers []*gtm.HTTPHeader) []httpHeader {
 	result := make([]httpHeader, len(headers))
 	for i, h := range headers {
 		result[i] = httpHeader{
@@ -1603,14 +1660,18 @@ func populateTrafficTarget(ctx context.Context, t *gtm.TrafficTarget) (trafficTa
 	if diags.HasError() {
 		return trafficTarget{}, diags
 	}
-	return trafficTarget{
-		DatacenterID: types.Int64Value(int64(t.DatacenterId)),
+	tt := trafficTarget{
+		DatacenterID: types.Int64Value(int64(t.DatacenterID)),
 		Enabled:      types.BoolValue(t.Enabled),
 		Weight:       types.Float64Value(t.Weight),
 		HandoutCNAME: types.StringValue(t.HandoutCName),
 		Name:         types.StringValue(t.Name),
 		Servers:      servers,
-	}, nil
+	}
+	if t.Precedence != nil {
+		tt.Precedence = types.Int64Value(int64(*t.Precedence))
+	}
+	return tt, nil
 }
 
 func populateLoadObject(ctx context.Context, lo *gtm.LoadObject) (loadObject, diag.Diagnostics) {
@@ -1640,12 +1701,12 @@ func populateGeographicMapAssignment(ctx context.Context, asg *gtm.GeoAssignment
 	}
 
 	result.Nickname = types.StringValue(asg.DatacenterBase.Nickname)
-	result.DatacenterID = types.Int64Value(int64(asg.DatacenterBase.DatacenterId))
+	result.DatacenterID = types.Int64Value(int64(asg.DatacenterBase.DatacenterID))
 
 	return result, nil
 }
 
-func populateCIDRMapAssignment(ctx context.Context, asg *gtm.CidrAssignment) (cidrMapAssignment, diag.Diagnostics) {
+func populateCIDRMapAssignment(ctx context.Context, asg *gtm.CIDRAssignment) (cidrMapAssignment, diag.Diagnostics) {
 	result := cidrMapAssignment{}
 
 	if asg.Blocks != nil {
@@ -1657,24 +1718,24 @@ func populateCIDRMapAssignment(ctx context.Context, asg *gtm.CidrAssignment) (ci
 	}
 
 	result.Nickname = types.StringValue(asg.DatacenterBase.Nickname)
-	result.DatacenterID = types.Int64Value(int64(asg.DatacenterBase.DatacenterId))
+	result.DatacenterID = types.Int64Value(int64(asg.DatacenterBase.DatacenterID))
 
 	return result, nil
 }
 
-func populateASMapAssignment(asg *gtm.AsAssignment) asMapAssignment {
+func populateASMapAssignment(asg *gtm.ASAssignment) asMapAssignment {
 	result := asMapAssignment{}
 
-	if asg.AsNumbers != nil {
-		asNumbers := make([]types.Int64, len(asg.AsNumbers))
-		for i, c := range asg.AsNumbers {
+	if asg.ASNumbers != nil {
+		asNumbers := make([]types.Int64, len(asg.ASNumbers))
+		for i, c := range asg.ASNumbers {
 			asNumbers[i] = types.Int64Value(c)
 		}
 		result.ASNumbers = asNumbers
 	}
 
 	result.Nickname = types.StringValue(asg.DatacenterBase.Nickname)
-	result.DatacenterID = types.Int64Value(int64(asg.DatacenterBase.DatacenterId))
+	result.DatacenterID = types.Int64Value(int64(asg.DatacenterBase.DatacenterID))
 
 	return result
 }

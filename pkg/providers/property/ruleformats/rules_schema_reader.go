@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -218,11 +218,46 @@ func (r *RulesSchemaReader) getRuleItems(key string) ([]RuleItem, error) {
 		if errors.Is(err, ErrNotFound) {
 			continue
 		}
+		item = normalizeItem(item)
 
 		listUnpacked = append(listUnpacked, item)
 	}
 
 	return listUnpacked, nil
+}
+
+func normalizeItem(item RuleItem) RuleItem {
+	item = clearSemiEmptyList(item, "origin", "custom_certificates")
+	item = clearSemiEmptyList(item, "origin", "custom_certificate_authorities")
+
+	return item
+}
+
+// clearSemiEmptyList handles a case that user provided option without arguments which should be treated as empty list, not list with one all-empty arguments
+// example: "a{}" normally is read as "a[{}]", while we want to make it "a[]"
+func clearSemiEmptyList(item RuleItem, itemName, optionName string) RuleItem {
+	if item.Name == itemName {
+		if optionListRow, ok := item.Item[optionName]; ok {
+			if optionList, ok := optionListRow.([]interface{}); ok {
+				if len(optionList) == 1 {
+					optionRow := optionList[0]
+					if option, ok := optionRow.(map[string]interface{}); ok {
+						allNull := true
+						for _, val := range option {
+							if val != nil {
+								allNull = false
+								break
+							}
+						}
+						if allNull {
+							item.Item[optionName] = []interface{}{}
+						}
+					}
+				}
+			}
+		}
+	}
+	return item
 }
 
 func (r *RulesSchemaReader) findRuleItem(itemsMap map[string]any) (RuleItem, error) {

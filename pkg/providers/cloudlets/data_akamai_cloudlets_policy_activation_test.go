@@ -3,15 +3,14 @@ package cloudlets
 import (
 	"fmt"
 	"net/http"
-	"time"
-
 	"regexp"
 	"testing"
+	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cloudlets"
-	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cloudlets/v3"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/cloudlets"
+	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/cloudlets/v3"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -144,7 +143,7 @@ func TestNonSharedPolicyActivationDataSource(t *testing.T) {
 			useClient(clientV2, func() {
 				resource.Test(t, resource.TestCase{
 					IsUnitTest:               true,
-					ProtoV5ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{{
 						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("testdata/TestDataCloudletsPolicyActivation/%s", test.config)),
 						Check:       test.check,
@@ -411,7 +410,7 @@ func TestSharedPolicyActivationDataSource(t *testing.T) {
 			useClientV2AndV3(clientV2, clientV3, func() {
 				resource.Test(t, resource.TestCase{
 					IsUnitTest:               true,
-					ProtoV5ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{{
 						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("testdata/TestDataCloudletsPolicyActivation/%s", test.config)),
 						Check:       test.check,
@@ -455,7 +454,7 @@ func mockGetPolicyV3(m *v3.Mock, data testDataForSharedPolicyActivation, times i
 	}).Return(&v3.Policy{
 		CloudletType:       data.cloudletType,
 		CurrentActivations: data.activations,
-		Description:        tools.StringPtr(data.description),
+		Description:        ptr.To(data.description),
 		GroupID:            data.groupID,
 		ID:                 data.policyID,
 		Name:               data.name,

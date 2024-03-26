@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/botman"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/botman"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/str"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
@@ -81,7 +81,7 @@ func resourceServeAlternateActionCreate(ctx context.Context, d *schema.ResourceD
 		return diag.FromErr(err)
 	}
 
-	d.SetId(fmt.Sprintf("%d:%s", configID, tools.ConvertToString((response)["actionId"])))
+	d.SetId(fmt.Sprintf("%d:%s", configID, str.From((response)["actionId"])))
 
 	return resourceServeAlternateActionRead(ctx, d, m)
 }

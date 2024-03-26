@@ -3,8 +3,8 @@ package botman
 import (
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/botman"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/test"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/botman"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -23,11 +23,11 @@ func TestDataBotManagementSettings(t *testing.T) {
 		useClient(mockedBotmanClient, func() {
 
 			resource.Test(t, resource.TestCase{
-				IsUnitTest:        true,
-				ProviderFactories: testAccProviders,
+				IsUnitTest:               true,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: test.Fixture("testdata/TestDataBotManagementSettings/basic.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestDataBotManagementSettings/basic.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("data.akamai_botman_bot_management_settings.test", "json", compactJSON(expectedJSON))),
 					},

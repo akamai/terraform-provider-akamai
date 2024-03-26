@@ -2,9 +2,10 @@ package cloudlets
 
 import (
 	"regexp"
+	"strconv"
 	"testing"
 
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
@@ -12,50 +13,58 @@ func TestDataCloudletsEdgeRedirectorMatchRule(t *testing.T) {
 	tests := map[string]struct {
 		configPath       string
 		expectedJSONPath string
+		matchRulesSize   int
+		emptyRules       bool
 	}{
 		"valid all vars map": {
 			configPath:       "testdata/TestDataCloudletsEdgeRedirectorMatchRule/vars_map.tf",
 			expectedJSONPath: "testdata/TestDataCloudletsEdgeRedirectorMatchRule/rules/rules_out.json",
+			matchRulesSize:   3,
 		},
 		"valid minimal vars map": {
 			configPath:       "testdata/TestDataCloudletsEdgeRedirectorMatchRule/minimal_vars_map.tf",
 			expectedJSONPath: "testdata/TestDataCloudletsEdgeRedirectorMatchRule/rules/minimal_rules_out.json",
+			matchRulesSize:   1,
 		},
 		"valid vars map wth empty use_relative_url": {
 			configPath:       "testdata/TestDataCloudletsEdgeRedirectorMatchRule/empty_relative_url_vars_map.tf",
 			expectedJSONPath: "testdata/TestDataCloudletsEdgeRedirectorMatchRule/rules/empty_relative_url_rules_out.json",
+			matchRulesSize:   2,
 		},
 		"match criteria ER - without ObjectMatchValue": {
 			configPath:       "testdata/TestDataCloudletsEdgeRedirectorMatchRule/omv_empty.tf",
 			expectedJSONPath: "testdata/TestDataCloudletsEdgeRedirectorMatchRule/rules/omv_empty_rules.json",
+			matchRulesSize:   1,
 		},
 		"match criteria ER -ObjectMatchValue of Simple type": {
 			configPath:       "testdata/TestDataCloudletsEdgeRedirectorMatchRule/omv_simple.tf",
 			expectedJSONPath: "testdata/TestDataCloudletsEdgeRedirectorMatchRule/rules/omv_simple_rules.json",
+			matchRulesSize:   1,
 		},
 		"match criteria ER -ObjectMatchValue of Object type": {
 			configPath:       "testdata/TestDataCloudletsEdgeRedirectorMatchRule/omv_object.tf",
 			expectedJSONPath: "testdata/TestDataCloudletsEdgeRedirectorMatchRule/rules/omv_object_rules.json",
+			matchRulesSize:   1,
 		},
 		"matches always": {
 			configPath:       "testdata/TestDataCloudletsEdgeRedirectorMatchRule/matches_always.tf",
 			expectedJSONPath: "testdata/TestDataCloudletsEdgeRedirectorMatchRule/rules/matches_always.json",
+			matchRulesSize:   1,
+		},
+		"no match rules": {
+			configPath: "testdata/TestDataCloudletsEdgeRedirectorMatchRule/no_match_rules.tf",
+			emptyRules: true,
 		},
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, test.configPath),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr(
-								"data.akamai_cloudlets_edge_redirector_match_rule.test", "json",
-								testutils.LoadFixtureString(t, test.expectedJSONPath)),
-							resource.TestCheckResourceAttr(
-								"data.akamai_cloudlets_edge_redirector_match_rule.test", "match_rules.0.type", "erMatchRule"),
-						),
+						Check: checkMatchRulesAttr(t, "erMatchRule", "data.akamai_cloudlets_edge_redirector_match_rule.test",
+							test.expectedJSONPath, test.emptyRules, test.matchRulesSize),
 					},
 				},
 			})
@@ -104,7 +113,7 @@ func TestIncorrectDataCloudletsEdgeRedirectorMatchRule(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, test.configPath),
@@ -118,4 +127,22 @@ func TestIncorrectDataCloudletsEdgeRedirectorMatchRule(t *testing.T) {
 			})
 		})
 	}
+}
+
+func checkMatchRulesAttr(t *testing.T, matchRulesType, dataSourceName, jsonPath string, emptyRules bool, matchRuleSize int) resource.TestCheckFunc {
+	if emptyRules {
+		return resource.ComposeAggregateTestCheckFunc(
+			resource.TestCheckResourceAttr(
+				dataSourceName, "json", ""),
+		)
+	}
+	return resource.ComposeAggregateTestCheckFunc(
+		resource.TestCheckResourceAttr(
+			dataSourceName, "json",
+			testutils.LoadFixtureString(t, jsonPath)),
+		resource.TestCheckResourceAttr(
+			dataSourceName, "match_rules.0.type", matchRulesType),
+		resource.TestCheckResourceAttr(
+			dataSourceName, "match_rules.#", strconv.Itoa(matchRuleSize)),
+	)
 }

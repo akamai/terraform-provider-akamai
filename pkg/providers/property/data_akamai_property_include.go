@@ -4,13 +4,13 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/papi"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 )
 
 var _ datasource.DataSource = &includeDataSource{}

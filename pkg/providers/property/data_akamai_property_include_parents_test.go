@@ -5,9 +5,9 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -32,20 +32,20 @@ func TestDataPropertyIncludeParents(t *testing.T) {
 							{
 								PropertyID:        "prop_1",
 								PropertyName:      "prop_name",
-								StagingVersion:    tools.IntPtr(3),
-								ProductionVersion: tools.IntPtr(2),
+								StagingVersion:    ptr.To(3),
+								ProductionVersion: ptr.To(2),
 							},
 							{
 								PropertyID:        "prop_2",
 								PropertyName:      "some_other_prop_name",
-								StagingVersion:    tools.IntPtr(5),
+								StagingVersion:    ptr.To(5),
 								ProductionVersion: nil,
 							},
 							{
 								PropertyID:        "prop_3",
 								PropertyName:      "third_prop_name",
-								StagingVersion:    tools.IntPtr(5),
-								ProductionVersion: tools.IntPtr(5),
+								StagingVersion:    ptr.To(5),
+								ProductionVersion: ptr.To(5),
 							},
 						},
 					},
@@ -68,8 +68,8 @@ func TestDataPropertyIncludeParents(t *testing.T) {
 								IncludeName:       "test_include",
 								IncludeType:       papi.IncludeTypeMicroServices,
 								LatestVersion:     1,
-								ProductionVersion: tools.IntPtr(2),
-								StagingVersion:    tools.IntPtr(3),
+								ProductionVersion: ptr.To(2),
+								StagingVersion:    ptr.To(3),
 							},
 						},
 					},
@@ -91,8 +91,8 @@ func TestDataPropertyIncludeParents(t *testing.T) {
 								IncludeName:       "test_include_2",
 								IncludeType:       papi.IncludeTypeMicroServices,
 								LatestVersion:     1,
-								ProductionVersion: tools.IntPtr(2),
-								StagingVersion:    tools.IntPtr(3),
+								ProductionVersion: ptr.To(2),
+								StagingVersion:    ptr.To(3),
 							},
 						},
 					},
@@ -161,7 +161,7 @@ func TestDataPropertyIncludeParents(t *testing.T) {
 			useClient(client, nil, func() {
 				resource.Test(t, resource.TestCase{
 					IsUnitTest:               true,
-					ProtoV5ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{{
 						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("testdata/TestDataPropertyIncludeParents/%s", test.givenTF)),
 						Check:       resource.ComposeAggregateTestCheckFunc(checkFuncs...),

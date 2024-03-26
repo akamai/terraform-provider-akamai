@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/date"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -260,7 +260,7 @@ func TestLookupActivation(t *testing.T) {
 				activationType: map[papi.ActivationType]struct{}{"ACTIVATE": {}},
 			},
 			mostRecentActivationDate: "2016-03-22T15:04:05Z",
-			expectedError:            tools.ErrDateFormat,
+			expectedError:            date.ErrDateFormat,
 			expectedActivation: &papi.Activation{
 				AccountID:       "act_1234",
 				ActivationID:    "1234",

@@ -4,15 +4,15 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/edgeworkers"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/test"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/edgeworkers"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
 
 func TestEdgeKVGroupItems(t *testing.T) {
 	client := &edgeworkers.Mock{}
-	client.Test(test.TattleT{T: t})
+	client.Test(testutils.TattleT{T: t})
 
 	items := map[string]string{
 		"TestItem1": "TestValue1",
@@ -35,11 +35,11 @@ func TestEdgeKVGroupItems(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
-				IsUnitTest:        true,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				IsUnitTest:               true,
 				Steps: []resource.TestStep{
 					{
-						Config: test.Fixture("testdata/TestDataEdgeKVGroupItems/basic.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestDataEdgeKVGroupItems/basic.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttrSet("data.akamai_edgekv_group_items.test", "id"),
 							resource.TestCheckResourceAttr("data.akamai_edgekv_group_items.test", "id", "test_namespace:staging:TestGroup"),
@@ -59,11 +59,11 @@ func TestEdgeKVGroupItems(t *testing.T) {
 	t.Run("missed required `namespace_name` field", func(t *testing.T) {
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
-				IsUnitTest:        true,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				IsUnitTest:               true,
 				Steps: []resource.TestStep{
 					{
-						Config:      test.Fixture("testdata/TestDataEdgeKVGroupItems/missed_namespace_name.tf"),
+						Config:      testutils.LoadFixtureString(t, "testdata/TestDataEdgeKVGroupItems/missed_namespace_name.tf"),
 						ExpectError: regexp.MustCompile(`The argument "namespace_name" is required, but no definition was found.`),
 					},
 				},
@@ -76,11 +76,11 @@ func TestEdgeKVGroupItems(t *testing.T) {
 	t.Run("missed required `network` field", func(t *testing.T) {
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
-				IsUnitTest:        true,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				IsUnitTest:               true,
 				Steps: []resource.TestStep{
 					{
-						Config:      test.Fixture("testdata/TestDataEdgeKVGroupItems/missed_network.tf"),
+						Config:      testutils.LoadFixtureString(t, "testdata/TestDataEdgeKVGroupItems/missed_network.tf"),
 						ExpectError: regexp.MustCompile(`The argument "network" is required, but no definition was found.`),
 					},
 				},
@@ -93,11 +93,11 @@ func TestEdgeKVGroupItems(t *testing.T) {
 	t.Run("missed required `group_name` field", func(t *testing.T) {
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
-				IsUnitTest:        true,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				IsUnitTest:               true,
 				Steps: []resource.TestStep{
 					{
-						Config:      test.Fixture("testdata/TestDataEdgeKVGroupItems/missed_group.tf"),
+						Config:      testutils.LoadFixtureString(t, "testdata/TestDataEdgeKVGroupItems/missed_group.tf"),
 						ExpectError: regexp.MustCompile(`The argument "group_name" is required, but no definition was found.`),
 					},
 				},
@@ -110,11 +110,11 @@ func TestEdgeKVGroupItems(t *testing.T) {
 	t.Run("incorrect `network` field", func(t *testing.T) {
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
-				IsUnitTest:        true,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				IsUnitTest:               true,
 				Steps: []resource.TestStep{
 					{
-						Config:      test.Fixture("testdata/TestDataEdgeKVGroupItems/incorrect_network.tf"),
+						Config:      testutils.LoadFixtureString(t, "testdata/TestDataEdgeKVGroupItems/incorrect_network.tf"),
 						ExpectError: regexp.MustCompile(`expected network to be one of \[staging production], got incorrect_network`),
 					},
 				},

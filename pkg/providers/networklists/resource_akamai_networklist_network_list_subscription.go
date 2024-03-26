@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/networklists"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/networklists"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/hash"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -53,7 +53,7 @@ func resourceNetworkListSubscriptionRead(ctx context.Context, d *schema.Resource
 	getNetworkListSubscription.Recipients = nru
 
 	extractString := strings.Join(getNetworkListSubscription.Recipients, " ")
-	recSHA := tools.GetSHAString(extractString)
+	recSHA := hash.GetSHAString(extractString)
 
 	uniqueIDs := d.Get("network_list").([]interface{})
 	IDs := make([]string, 0, len(uniqueIDs))
@@ -65,7 +65,7 @@ func resourceNetworkListSubscriptionRead(ctx context.Context, d *schema.Resource
 	getNetworkListSubscription.UniqueIds = IDs
 
 	extractStringUID := strings.Join(getNetworkListSubscription.UniqueIds, " ")
-	recSHAUID := tools.GetSHAString(extractStringUID)
+	recSHAUID := hash.GetSHAString(extractStringUID)
 
 	_, err := client.GetNetworkListSubscription(ctx, getNetworkListSubscription)
 	if err != nil {
@@ -124,7 +124,7 @@ func resourceNetworkListSubscriptionUpdate(ctx context.Context, d *schema.Resour
 	updateNetworkListSubscription.Recipients = nru
 
 	extractString := strings.Join(updateNetworkListSubscription.Recipients, " ")
-	recSHA := tools.GetSHAString(extractString)
+	recSHA := hash.GetSHAString(extractString)
 
 	uniqueIDs := d.Get("network_list").([]interface{})
 	IDs := make([]string, 0, len(uniqueIDs))
@@ -136,7 +136,7 @@ func resourceNetworkListSubscriptionUpdate(ctx context.Context, d *schema.Resour
 	updateNetworkListSubscription.UniqueIds = IDs
 
 	extractStringUID := strings.Join(updateNetworkListSubscription.UniqueIds, " ")
-	recSHAUID := tools.GetSHAString(extractStringUID)
+	recSHAUID := hash.GetSHAString(extractStringUID)
 
 	_, err := client.UpdateNetworkListSubscription(ctx, updateNetworkListSubscription)
 	if err != nil {

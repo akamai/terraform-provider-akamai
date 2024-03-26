@@ -9,12 +9,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/timeouts"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/date"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/str"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/timeouts"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/apex/log"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -435,7 +436,7 @@ func resourcePropertyActivationDelete(ctx context.Context, d *schema.ResourceDat
 func flattenErrorArray(errors []*papi.Error) string {
 	var errorStrArr = make([]string, len(errors))
 	for i, err := range errors {
-		strError := tools.ConvertToString(err.Error())
+		strError := str.From(err.Error())
 		errorStrArr[i] = strError
 	}
 	return strings.Join(errorStrArr, "\n")
@@ -831,7 +832,7 @@ func setErrorsAndWarnings(d *schema.ResourceData, errors, warnings string) error
 
 func resolvePropertyID(d *schema.ResourceData) (string, error) {
 	propertyID, err := tf.GetStringValue("property_id", d)
-	return tools.AddPrefix(propertyID, "prp_"), err
+	return str.AddPrefix(propertyID, "prp_"), err
 }
 
 type lookupActivationRequest struct {
@@ -873,7 +874,7 @@ func lookupActivation(ctx context.Context, client papi.PAPI, query lookupActivat
 		if a.PropertyVersion == query.version && matchingActivationType && a.Network == query.network {
 			// find the most recent activation
 
-			var aSubmitDate, err = tools.ParseDate(tools.DateTimeFormat, a.SubmitDate)
+			var aSubmitDate, err = date.Parse(a.SubmitDate)
 			if err != nil {
 				return nil, err
 			}
@@ -993,7 +994,7 @@ func createActivation(ctx context.Context, client papi.PAPI, request papi.Create
 			return "", diag.Errorf("%s: %s", errMsg, err)
 		}
 
-		if actID, ok := isActivationPedingOrActive(ctx, client, expectedActivation{
+		if actID, ok := isActivationPendingOrActive(ctx, client, expectedActivation{
 			PropertyID: request.PropertyID,
 			Version:    request.Activation.PropertyVersion,
 			Network:    request.Activation.Network,
@@ -1045,8 +1046,8 @@ type expectedActivation struct {
 	Type       papi.ActivationType
 }
 
-// isActivationPedingOrActive check if latest activation is of specified version and has status Pending or Active
-func isActivationPedingOrActive(ctx context.Context, client papi.PAPI, expected expectedActivation) (string, bool) {
+// isActivationPendingOrActive check if latest activation is of specified version and has status Pending or Active
+func isActivationPendingOrActive(ctx context.Context, client papi.PAPI, expected expectedActivation) (string, bool) {
 	log := hclog.FromContext(ctx)
 
 	log.Debug("getting activation")
@@ -1068,7 +1069,7 @@ func isActivationPedingOrActive(ctx context.Context, client papi.PAPI, expected 
 		log.Debug("no activation items; retrying")
 		return "", false
 	}
-	latestActivationItem := activations[0] // grab the lastest one returned by api
+	latestActivationItem := activations[0] // grab the latest one returned by api
 
 	if latestActivationItem.PropertyVersion != expected.Version {
 		log.Debug("latest version mismatch; retrying")

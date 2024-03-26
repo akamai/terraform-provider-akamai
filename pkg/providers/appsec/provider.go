@@ -4,9 +4,11 @@ package appsec
 import (
 	"sync"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/subprovider"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/subprovider"
+	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -25,9 +27,9 @@ var (
 	inst *Subprovider
 )
 
-var _ subprovider.Plugin = &Subprovider{}
+var _ subprovider.Subprovider = &Subprovider{}
 
-// NewSubprovider returns a core sub provider
+// NewSubprovider returns a new appsec subprovider
 func NewSubprovider(opts ...option) *Subprovider {
 	once.Do(func() {
 		inst = &Subprovider{}
@@ -46,7 +48,7 @@ func withClient(c appsec.APPSEC) option {
 	}
 }
 
-// Client returns the PAPI interface
+// Client returns the APPSEC interface
 func (p *Subprovider) Client(meta meta.Meta) appsec.APPSEC {
 	if p.client != nil {
 		return p.client
@@ -54,8 +56,8 @@ func (p *Subprovider) Client(meta meta.Meta) appsec.APPSEC {
 	return appsec.Client(meta.Session())
 }
 
-// Resources returns terraform resources for appsec
-func (p *Subprovider) Resources() map[string]*schema.Resource {
+// SDKResources returns the appsec resources implemented using terraform-plugin-sdk
+func (p *Subprovider) SDKResources() map[string]*schema.Resource {
 	return map[string]*schema.Resource{
 		"akamai_appsec_activations":                              resourceActivations(),
 		"akamai_appsec_advanced_settings_attack_payload_logging": resourceAdvancedSettingsAttackPayloadLogging(),
@@ -77,6 +79,7 @@ func (p *Subprovider) Resources() map[string]*schema.Resource {
 		"akamai_appsec_eval":                                     resourceEval(),
 		"akamai_appsec_eval_group":                               resourceEvalGroup(),
 		"akamai_appsec_eval_penalty_box":                         resourceEvalPenaltyBox(),
+		"akamai_appsec_eval_penalty_box_conditions":              resourceEvalPenaltyBoxConditions(),
 		"akamai_appsec_eval_rule":                                resourceEvalRule(),
 		"akamai_appsec_ip_geo":                                   resourceIPGeo(),
 		"akamai_appsec_ip_geo_protection":                        resourceIPGeoProtection(),
@@ -87,6 +90,7 @@ func (p *Subprovider) Resources() map[string]*schema.Resource {
 		"akamai_appsec_match_target":                             resourceMatchTarget(),
 		"akamai_appsec_match_target_sequence":                    resourceMatchTargetSequence(),
 		"akamai_appsec_penalty_box":                              resourcePenaltyBox(),
+		"akamai_appsec_penalty_box_conditions":                   resourcePenaltyBoxConditions(),
 		"akamai_appsec_rate_policy":                              resourceRatePolicy(),
 		"akamai_appsec_rate_policy_action":                       resourceRatePolicyAction(),
 		"akamai_appsec_rate_protection":                          resourceRateProtection(),
@@ -111,8 +115,8 @@ func (p *Subprovider) Resources() map[string]*schema.Resource {
 	}
 }
 
-// DataSources returns terraform data sources for appsec
-func (p *Subprovider) DataSources() map[string]*schema.Resource {
+// SDKDataSources returns the appsec data sources implemented using terraform-plugin-sdk
+func (p *Subprovider) SDKDataSources() map[string]*schema.Resource {
 	return map[string]*schema.Resource{
 		"akamai_appsec_advanced_settings_attack_payload_logging": dataSourceAdvancedSettingsAttackPayloadLogging(),
 		"akamai_appsec_advanced_settings_evasive_path_match":     dataSourceAdvancedSettingsEvasivePathMatch(),
@@ -134,6 +138,7 @@ func (p *Subprovider) DataSources() map[string]*schema.Resource {
 		"akamai_appsec_eval":                                     dataSourceEval(),
 		"akamai_appsec_eval_groups":                              dataSourceEvalGroups(),
 		"akamai_appsec_eval_penalty_box":                         dataSourceEvalPenaltyBox(),
+		"akamai_appsec_eval_penalty_box_conditions":              dataSourceEvalPenaltyBoxConditions(),
 		"akamai_appsec_eval_rules":                               dataSourceEvalRules(),
 		"akamai_appsec_export_configuration":                     dataSourceExportConfiguration(),
 		"akamai_appsec_failover_hostnames":                       dataSourceFailoverHostnames(),
@@ -146,6 +151,7 @@ func (p *Subprovider) DataSources() map[string]*schema.Resource {
 		"akamai_appsec_malware_policy_actions":                   dataSourceMalwarePolicyActions(),
 		"akamai_appsec_match_targets":                            dataSourceMatchTargets(),
 		"akamai_appsec_penalty_box":                              dataSourcePenaltyBox(),
+		"akamai_appsec_penalty_box_conditions":                   dataSourcePenaltyBoxConditions(),
 		"akamai_appsec_rate_policies":                            dataSourceRatePolicies(),
 		"akamai_appsec_rate_policy_actions":                      dataSourceRatePolicyActions(),
 		"akamai_appsec_reputation_profile_actions":               dataSourceReputationProfileActions(),
@@ -166,4 +172,14 @@ func (p *Subprovider) DataSources() map[string]*schema.Resource {
 		"akamai_appsec_waf_mode":                                 dataSourceWAFMode(),
 		"akamai_appsec_wap_selected_hostnames":                   dataSourceWAPSelectedHostnames(),
 	}
+}
+
+// FrameworkResources returns the appsec resources implemented using terraform-plugin-framework
+func (p *Subprovider) FrameworkResources() []func() resource.Resource {
+	return []func() resource.Resource{}
+}
+
+// FrameworkDataSources returns the appsec data sources implemented using terraform-plugin-framework
+func (p *Subprovider) FrameworkDataSources() []func() datasource.DataSource {
+	return []func() datasource.DataSource{}
 }

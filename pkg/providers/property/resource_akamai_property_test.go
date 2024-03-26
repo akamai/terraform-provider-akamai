@@ -10,9 +10,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -767,7 +767,7 @@ func TestResProperty(t *testing.T) {
 
 		return func(t *testing.T) {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResProperty/ConfigError/%s.tf", fixtureName),
 					ExpectError: regexp.MustCompile(rx),
@@ -791,7 +791,7 @@ func TestResProperty(t *testing.T) {
 
 			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProtoV5ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					IsUnitTest:               true,
 					Steps:                    tc.Steps(State, fixturePrefix),
 				})
@@ -886,7 +886,7 @@ func TestResProperty(t *testing.T) {
 			tc.ClientSetup(State)
 			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProtoV5ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps:                    tc.Steps(State, ""),
 				})
 			})
@@ -998,7 +998,7 @@ func TestResProperty(t *testing.T) {
 
 			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProtoV5ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{
 						{
 							Config: testutils.LoadFixtureString(t, "testdata/%s-step0.tf", t.Name()),
@@ -1047,7 +1047,7 @@ func TestResProperty(t *testing.T) {
 
 			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProtoV5ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{
 						{
 							Config: testutils.LoadFixtureString(t, "testdata/%s/step0.tf", t.Name()),
@@ -1098,7 +1098,7 @@ func TestResProperty(t *testing.T) {
 			ExpectRemoveProperty(client, "prp_1", "", "")
 			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProtoV5ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{
 						{
 							Config: testutils.LoadFixtureString(t, "testdata/TestResProperty/property_update_with_validation_error_for_rules.tf"),
@@ -1186,7 +1186,7 @@ func TestResProperty(t *testing.T) {
 			ExpectRemoveProperty(client, "prp_1", "ctr_0", "grp_0")
 			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProtoV5ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{
 						{
 							Config: testutils.LoadFixtureString(t, "testdata/TestResProperty/property_with_validation_warning_for_rules.tf"),
@@ -1265,7 +1265,7 @@ func TestResProperty(t *testing.T) {
 
 			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProtoV5ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{
 						{
 							Config: testutils.LoadFixtureString(t, "testdata/TestResProperty/CreationUpdateNoHostnames/creation/property_create.tf"),
@@ -1312,7 +1312,7 @@ func TestResProperty(t *testing.T) {
 					CertProvisioningType: "DEFAULT",
 				}}, &papi.Error{
 					StatusCode: http.StatusTooManyRequests,
-					Remaining:  tools.IntPtr(0),
+					Remaining:  ptr.To(0),
 					LimitKey:   "DEFAULT_CERTS_PER_CONTRACT",
 				},
 			).Once()
@@ -1321,7 +1321,7 @@ func TestResProperty(t *testing.T) {
 
 			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProtoV5ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{
 						{
 							Config:      testutils.LoadFixtureString(t, "testdata/TestResProperty/CreationUpdateNoHostnames/creation/property_create.tf"),
@@ -1369,7 +1369,7 @@ func TestResProperty(t *testing.T) {
 
 			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProtoV5ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{
 						{
 							Config:      testutils.LoadFixtureString(t, "testdata/TestResProperty/CreationUpdateNoHostnames/creation/property_create.tf"),
@@ -1412,7 +1412,7 @@ func TestResProperty(t *testing.T) {
 
 			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProtoV5ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{{
 						Config:      testutils.LoadFixtureString(t, "testdata/TestResProperty/Creation/property.tf"),
 						ExpectError: regexp.MustCompile("group not found: grp_0"),
@@ -1439,7 +1439,7 @@ func TestResProperty(t *testing.T) {
 			client.On("CreateProperty", AnyCTX, req).Return(nil, fmt.Errorf("given property name is not unique"))
 			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProtoV5ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{
 						{
 							Config:      testutils.LoadFixtureString(t, "testdata/%s.tf", t.Name()),
@@ -1658,7 +1658,7 @@ func TestResProperty(t *testing.T) {
 
 			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProtoV5ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{
 						{
 							Config: testutils.LoadFixtureString(t, "testdata/TestResProperty/CreationUpdateIncorrectEdgeHostname/create/property.tf"),
@@ -1698,7 +1698,7 @@ func TestPropertyResource_versionNotesLifecycle(t *testing.T) {
 
 	client := &papi.Mock{}
 
-	mockRead := func(notes string, rules papi.Rules) []*mock.Call {
+	mockRead := func(notes string, rules papi.Rules) testutils.MockCalls {
 		getPropertyCall := client.On("GetProperty", mock.Anything, papi.GetPropertyRequest{
 			PropertyID: id,
 			ContractID: ctr,
@@ -1748,7 +1748,7 @@ func TestPropertyResource_versionNotesLifecycle(t *testing.T) {
 			},
 		}, nil)
 
-		return []*mock.Call{getPropertyCall, getHostnamesCall, getRuleTreeCall, getPropertyVersionCall}
+		return testutils.MockCalls{getPropertyCall, getHostnamesCall, getRuleTreeCall, getPropertyVersionCall}
 	}
 
 	mockUpdate := func(currentNotes, newNotes string, rules papi.Rules) {
@@ -1809,19 +1809,13 @@ func TestPropertyResource_versionNotesLifecycle(t *testing.T) {
 		ValidateRules: true,
 	}).Return(&papi.UpdateRulesResponse{}, nil).Once()
 
-	for _, m := range mockRead(versionNotes1, rules1And2.Rules) {
-		m.Times(2)
-	}
+	mockRead(versionNotes1, rules1And2.Rules).Times(2)
 
 	// step 2 - refresh + plan
-	for _, m := range mockRead(versionNotes2, rules1And2.Rules) {
-		m.Times(2)
-	}
+	mockRead(versionNotes2, rules1And2.Rules).Times(2)
 
 	// step 3 - refresh + update + read + plan
-	for _, m := range mockRead(versionNotes2, rules1And2.Rules) {
-		m.Times(1)
-	}
+	mockRead(versionNotes2, rules1And2.Rules).Times(1)
 
 	var rules3 papi.RulesUpdate
 	rulesJSON = testutils.LoadFixtureBytes(t, path.Join(testdataDir, rulesFile3))
@@ -1830,14 +1824,10 @@ func TestPropertyResource_versionNotesLifecycle(t *testing.T) {
 
 	mockUpdate(versionNotes3, "updatedNotes2", rules3.Rules)
 
-	for _, m := range mockRead(versionNotes3, rules3.Rules) {
-		m.Times(2)
-	}
+	mockRead(versionNotes3, rules3.Rules).Times(2)
 
 	// step 4 - refresh + update + read + plan
-	for _, m := range mockRead(versionNotes3, rules3.Rules) {
-		m.Times(1)
-	}
+	mockRead(versionNotes3, rules3.Rules).Times(1)
 
 	var rules4And5 papi.RulesUpdate
 	rulesJSON = testutils.LoadFixtureBytes(t, path.Join(testdataDir, rulesFile4And5))
@@ -1846,14 +1836,10 @@ func TestPropertyResource_versionNotesLifecycle(t *testing.T) {
 
 	mockUpdate(versionNotes3, rules4And5.Comments, rules4And5.Rules)
 
-	for _, m := range mockRead(rules4And5.Comments, rules4And5.Rules) {
-		m.Times(2)
-	}
+	mockRead(rules4And5.Comments, rules4And5.Rules).Times(2)
 
 	// step 5 - refresh + plan
-	for _, m := range mockRead(rules4And5.Comments, rules4And5.Rules) {
-		m.Times(2)
-	}
+	mockRead(rules4And5.Comments, rules4And5.Rules).Times(2)
 
 	// cleanup
 	client.On("RemoveProperty", mock.Anything, papi.RemovePropertyRequest{
@@ -1864,7 +1850,7 @@ func TestPropertyResource_versionNotesLifecycle(t *testing.T) {
 
 	useClient(client, nil, func() {
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV5ProviderFactories: testAccProviders,
+			ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, path.Join(testdataDir, "01_with_notes_and_comments.tf")),

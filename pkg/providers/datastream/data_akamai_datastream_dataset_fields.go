@@ -5,11 +5,11 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/datastream"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/datastream"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/hash"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -99,7 +99,7 @@ func dataSourceDatasetFieldsRead(ctx context.Context, rd *schema.ResourceData, m
 	}
 
 	// ignoring the GetMd5Sum error, because `fields` is already initialized
-	md5Sum, _ := tools.GetMd5Sum(fmt.Sprintf("%v", fields))
+	md5Sum, _ := hash.GetMD5Sum(fmt.Sprintf("%v", fields))
 	rd.SetId(md5Sum)
 
 	return nil

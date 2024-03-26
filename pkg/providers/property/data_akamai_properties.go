@@ -6,11 +6,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/str"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 )
 
 func dataSourceProperties() *schema.Resource {
@@ -65,18 +65,18 @@ func dataPropertiesRead(ctx context.Context, d *schema.ResourceData, m interface
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	groupID = tools.AddPrefix(groupID, "grp_")
+	groupID = str.AddPrefix(groupID, "grp_")
 	contractID, err := tf.GetStringValue("contract_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	contractID = tools.AddPrefix(contractID, "ctr_")
+	contractID = str.AddPrefix(contractID, "ctr_")
 
 	propertiesResponse, err := getProperties(ctx, groupID, contractID, meta)
 	if err != nil {
 		return diag.Errorf("error listing properties: %v", err)
 	}
-	contractID = tools.AddPrefix(contractID, "ctr_")
+	contractID = str.AddPrefix(contractID, "ctr_")
 
 	// setting concatenated id to uniquely identify data
 	d.SetId(groupID + contractID)

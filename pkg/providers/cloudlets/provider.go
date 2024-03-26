@@ -6,18 +6,19 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cloudlets"
-	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cloudlets/v3"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/subprovider"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/cloudlets"
+	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/cloudlets/v3"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/subprovider"
 )
 
 type (
-	// PluginSubprovider gathers property resources and data sources written using terraform-plugin-sdk
-	PluginSubprovider struct{}
+	// Subprovider gathers cloudlets resources and data sources
+	Subprovider struct{}
+)
 
-	// FrameworkSubprovider gathers property resources and data sources written using terraform-plugin-framework
-	FrameworkSubprovider struct{}
+var (
+	_ subprovider.Subprovider = &Subprovider{}
 )
 
 var (
@@ -25,17 +26,9 @@ var (
 	v3Client v3.Cloudlets
 )
 
-var _ subprovider.Plugin = &PluginSubprovider{}
-var _ subprovider.Framework = &FrameworkSubprovider{}
-
-// NewPluginSubprovider returns a core SDKv2 based sub provider
-func NewPluginSubprovider() *PluginSubprovider {
-	return &PluginSubprovider{}
-}
-
-// NewFrameworkSubprovider returns a core Framework based sub provider
-func NewFrameworkSubprovider() *FrameworkSubprovider {
-	return &FrameworkSubprovider{}
+// NewSubprovider returns a new cloudlets subprovider
+func NewSubprovider() *Subprovider {
+	return &Subprovider{}
 }
 
 // Client returns the cloudlets interface
@@ -54,8 +47,8 @@ func ClientV3(meta meta.Meta) v3.Cloudlets {
 	return v3.Client(meta.Session())
 }
 
-// Resources returns terraform resources for cloudlets
-func (p *PluginSubprovider) Resources() map[string]*schema.Resource {
+// SDKResources returns the cloudlets resources implemented using terraform-plugin-sdk
+func (p *Subprovider) SDKResources() map[string]*schema.Resource {
 	return map[string]*schema.Resource{
 		"akamai_cloudlets_application_load_balancer":            resourceCloudletsApplicationLoadBalancer(),
 		"akamai_cloudlets_application_load_balancer_activation": resourceCloudletsApplicationLoadBalancerActivation(),
@@ -64,8 +57,8 @@ func (p *PluginSubprovider) Resources() map[string]*schema.Resource {
 	}
 }
 
-// DataSources returns terraform data sources for cloudlets
-func (p *PluginSubprovider) DataSources() map[string]*schema.Resource {
+// SDKDataSources returns the cloudlets data sources implemented using terraform-plugin-sdk
+func (p *Subprovider) SDKDataSources() map[string]*schema.Resource {
 	return map[string]*schema.Resource{
 		"akamai_cloudlets_api_prioritization_match_rule":        dataSourceCloudletsAPIPrioritizationMatchRule(),
 		"akamai_cloudlets_application_load_balancer":            dataSourceCloudletsApplicationLoadBalancer(),
@@ -80,13 +73,13 @@ func (p *PluginSubprovider) DataSources() map[string]*schema.Resource {
 	}
 }
 
-// Resources returns terraform resources for cloudlets
-func (p *FrameworkSubprovider) Resources() []func() resource.Resource {
+// FrameworkResources returns the cloudlets resources implemented using terraform-plugin-framework
+func (p *Subprovider) FrameworkResources() []func() resource.Resource {
 	return []func() resource.Resource{}
 }
 
-// DataSources returns terraform data sources for cloudlets
-func (p *FrameworkSubprovider) DataSources() []func() datasource.DataSource {
+// FrameworkDataSources returns the cloudlets data sources implemented using terraform-plugin-framework
+func (p *Subprovider) FrameworkDataSources() []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		NewPolicyActivationDataSource,
 		NewSharedPolicyDataSource,

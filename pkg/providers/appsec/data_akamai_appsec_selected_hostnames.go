@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -38,6 +38,7 @@ func dataSourceSelectedHostnames() *schema.Resource {
 				Description: "Text representation",
 			},
 		},
+		DeprecationMessage: "This data source is deprecated with a scheduled end-of-life in v7.0.0 of our provider. Use the akamai_appsec_configuration instead.",
 	}
 }
 

@@ -5,13 +5,13 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/gtm"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/gtm"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
 
-func TestDataGTMCidrmap(t *testing.T) {
+func TestDataGTMCIDRmap(t *testing.T) {
 	tests := map[string]struct {
 		givenTF            string
 		init               func(mock *gtm.Mock)
@@ -21,16 +21,16 @@ func TestDataGTMCidrmap(t *testing.T) {
 		"happy path": {
 			givenTF: "valid.tf",
 			init: func(m *gtm.Mock) {
-				m.On("GetCidrMap", mock.Anything, "mapTest", "test.cidrmap.domain.net").Return(&gtm.CidrMap{
+				m.On("GetCIDRMap", mock.Anything, "mapTest", "test.cidrmap.domain.net").Return(&gtm.CIDRMap{
 					Name: "TestName",
 					DefaultDatacenter: &gtm.DatacenterBase{
 						Nickname:     "TestNickname",
-						DatacenterId: 1,
+						DatacenterID: 1,
 					},
-					Assignments: []*gtm.CidrAssignment{{
+					Assignments: []*gtm.CIDRAssignment{{
 						DatacenterBase: gtm.DatacenterBase{
 							Nickname:     "TestNicknameAssignments",
-							DatacenterId: 1,
+							DatacenterID: 1,
 						},
 						Blocks: []string{
 							"test1",
@@ -69,7 +69,7 @@ func TestDataGTMCidrmap(t *testing.T) {
 		"error response from api": {
 			givenTF: "valid.tf",
 			init: func(m *gtm.Mock) {
-				m.On("GetCidrMap", mock.Anything, "mapTest", "test.cidrmap.domain.net").Return(
+				m.On("GetCIDRMap", mock.Anything, "mapTest", "test.cidrmap.domain.net").Return(
 					nil, fmt.Errorf("error"))
 			},
 			expectError: regexp.MustCompile("error"),
@@ -77,13 +77,13 @@ func TestDataGTMCidrmap(t *testing.T) {
 		"no assignments": {
 			givenTF: "valid.tf",
 			init: func(m *gtm.Mock) {
-				m.On("GetCidrMap", mock.Anything, "mapTest", "test.cidrmap.domain.net").Return(&gtm.CidrMap{
+				m.On("GetCIDRMap", mock.Anything, "mapTest", "test.cidrmap.domain.net").Return(&gtm.CIDRMap{
 					Name: "TestName",
 					DefaultDatacenter: &gtm.DatacenterBase{
 						Nickname:     "TestNickname",
-						DatacenterId: 1,
+						DatacenterID: 1,
 					},
-					Assignments: []*gtm.CidrAssignment{},
+					Assignments: []*gtm.CIDRAssignment{},
 					Links: []*gtm.Link{{
 						Rel:  "TestRel",
 						Href: "TestHref",
@@ -116,7 +116,7 @@ func TestDataGTMCidrmap(t *testing.T) {
 			useClient(client, func() {
 				resource.Test(t, resource.TestCase{
 					IsUnitTest:               true,
-					ProtoV5ProviderFactories: testAccProvidersProtoV5,
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{{
 						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("testdata/TestDataGtmCidrmap/%s", test.givenTF)),
 						Check:       resource.ComposeAggregateTestCheckFunc(checkFuncs...),

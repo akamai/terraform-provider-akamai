@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/gtm"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/gtm"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -163,7 +163,7 @@ func (d *domainsDataSource) Read(ctx context.Context, request datasource.ReadReq
 		return
 	}
 
-	client := inst.Client(d.meta)
+	client := Client(d.meta)
 	domains, err := client.ListDomains(ctx)
 	if err != nil {
 		response.Diagnostics.AddError("fetching domains failed", err.Error())
@@ -182,7 +182,7 @@ func getDomains(domainList []*gtm.DomainItem) []domain {
 			Name:                  types.StringValue(dom.Name),
 			LastModified:          types.StringValue(dom.LastModified),
 			Status:                types.StringValue(dom.Status),
-			AcgID:                 types.StringValue(dom.AcgId),
+			AcgID:                 types.StringValue(dom.AcgID),
 			LastModifiedBy:        types.StringValue(dom.LastModifiedBy),
 			ChangeID:              types.StringValue(dom.ChangeID),
 			ActivationState:       types.StringValue(dom.ActivationState),

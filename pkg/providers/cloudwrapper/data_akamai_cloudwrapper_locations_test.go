@@ -5,8 +5,8 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cloudwrapper"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/cloudwrapper"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -90,7 +90,7 @@ func TestDataLocations(t *testing.T) {
 			}
 
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: newProviderFactory(withMockClient(client)),
+				ProtoV6ProviderFactories: newProviderFactory(withMockClient(client)),
 				IsUnitTest:               true,
 				Steps: []resource.TestStep{
 					{

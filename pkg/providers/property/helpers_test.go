@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/papi"
 	"github.com/stretchr/testify/assert"
 )
 

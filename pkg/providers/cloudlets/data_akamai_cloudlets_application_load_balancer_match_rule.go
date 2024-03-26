@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cloudlets"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/cloudlets"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -210,7 +210,7 @@ func dataSourceCloudletsApplicationLoadBalancerMatchRule() *schema.Resource {
 func dataSourceCloudletsLoadBalancerMatchRuleRead(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
 	matchRules, err := tf.GetListValue("match_rules", d)
 	if err != nil {
-		return diag.FromErr(err)
+		return handleEmptyMatchRules(err, d, "data_akamai_cloudlets_application_load_balancer_match_rule")
 	}
 
 	err = setMatchRuleSchemaType(matchRules, cloudlets.MatchRuleTypeALB)

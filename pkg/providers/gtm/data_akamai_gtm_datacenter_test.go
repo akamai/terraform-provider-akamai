@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/gtm"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/gtm"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -67,8 +67,8 @@ func TestDataGTMDatacenter(t *testing.T) {
 			test.init(t, client, test.mockData)
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProviderFactories: testAccProviders,
-					IsUnitTest:        true,
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+					IsUnitTest:               true,
 					Steps: []resource.TestStep{
 						{
 							Config:      testutils.LoadFixtureString(t, test.configPath),
@@ -156,7 +156,7 @@ var (
 			Links:                         data.links,
 			Longitude:                     data.longitude,
 			Nickname:                      data.nickname,
-			DatacenterId:                  data.datacenterID,
+			DatacenterID:                  data.datacenterID,
 			ScorePenalty:                  data.scorePenalty,
 			ServermonitorPool:             data.serverMonitorPool,
 			StateOrProvince:               data.stateOrProvince,

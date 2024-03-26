@@ -8,9 +8,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -297,7 +297,7 @@ func TestDataPropertyIncludes(t *testing.T) {
 			test.init(t, client, test.attrs)
 			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProtoV5ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					IsUnitTest:               true,
 					Steps: []resource.TestStep{{
 						Config:      testutils.LoadFixtureString(t, test.configPath),
@@ -358,12 +358,12 @@ var (
 
 		var stagingVersion *int
 		if !nilStagVer {
-			stagingVersion = tools.IntPtr(10)
+			stagingVersion = ptr.To(10)
 		}
 
 		var productionVersion *int
 		if !nilStagVer {
-			productionVersion = tools.IntPtr(10)
+			productionVersion = ptr.To(10)
 		}
 
 		for i := 0; i < includesNumber; i++ {

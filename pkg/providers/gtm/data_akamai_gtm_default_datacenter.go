@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/gtm"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/gtm"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/session"
 
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/apex/log"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -63,37 +63,37 @@ func dataSourceGTMDefaultDatacenterRead(ctx context.Context, d *schema.ResourceD
 	}
 	var diags diag.Diagnostics
 	// get or create default dc
-	dcid, ok := d.Get("datacenter").(int)
+	dcID, ok := d.Get("datacenter").(int)
 	if !ok {
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  fmt.Sprintf("[Error] GTM dataSourceGTMDefaultDatacenterRead: invalid Default Datacenter %d in configuration", dcid),
+			Summary:  fmt.Sprintf("[Error] GTM dataSourceGTMDefaultDatacenterRead: invalid Default Datacenter %d in configuration", dcID),
 		})
 	}
 	logger.WithFields(log.Fields{
 		"domain": domain,
-		"dcid":   dcid,
+		"dcid":   dcID,
 	}).Debug("Start Default Datacenter Retrieval")
 
-	var defaultDC = inst.Client(meta).NewDatacenter(ctx)
-	switch dcid {
+	var defaultDC *gtm.Datacenter
+	switch dcID {
 	case gtm.MapDefaultDC:
-		defaultDC, err = inst.Client(meta).CreateMapsDefaultDatacenter(ctx, domain)
+		defaultDC, err = Client(meta).CreateMapsDefaultDatacenter(ctx, domain)
 	case gtm.Ipv4DefaultDC:
-		defaultDC, err = inst.Client(meta).CreateIPv4DefaultDatacenter(ctx, domain)
+		defaultDC, err = Client(meta).CreateIPv4DefaultDatacenter(ctx, domain)
 	case gtm.Ipv6DefaultDC:
-		defaultDC, err = inst.Client(meta).CreateIPv6DefaultDatacenter(ctx, domain)
+		defaultDC, err = Client(meta).CreateIPv6DefaultDatacenter(ctx, domain)
 	default:
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  fmt.Sprintf("[Error] GTM dataSourceGTMDefaultDatacenterRead: invalid Default Datacenter %d in configuration", dcid),
+			Summary:  fmt.Sprintf("[Error] GTM dataSourceGTMDefaultDatacenterRead: invalid Default Datacenter %d in configuration", dcID),
 		})
 	}
 
 	if err != nil {
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  fmt.Sprintf("[Error] GTM dataSourceGTMDefaultDatacenterRead: invalid Default Datacenter %d in configuration", dcid),
+			Summary:  fmt.Sprintf("[Error] GTM dataSourceGTMDefaultDatacenterRead: invalid Default Datacenter %d in configuration", dcID),
 			Detail:   err.Error(),
 		})
 	}
@@ -104,14 +104,14 @@ func dataSourceGTMDefaultDatacenterRead(ctx context.Context, d *schema.ResourceD
 			Detail:   err.Error(),
 		})
 	}
-	if err := d.Set("datacenter_id", defaultDC.DatacenterId); err != nil {
+	if err := d.Set("datacenter_id", defaultDC.DatacenterID); err != nil {
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
 			Summary:  "GTM dataSourceGTMDefaultDatacenterRead: setting datacenter id failed.",
 			Detail:   err.Error(),
 		})
 	}
-	defaultDatacenterID := fmt.Sprintf("%s:%s:%d", domain, "default_datcenter", defaultDC.DatacenterId)
+	defaultDatacenterID := fmt.Sprintf("%s:%s:%d", domain, "default_datcenter", defaultDC.DatacenterID)
 	logger.Debugf("DataSourceGTMDefaultDatacenterRead: generated Default DC Resource Id: %s", defaultDatacenterID)
 	d.SetId(defaultDatacenterID)
 

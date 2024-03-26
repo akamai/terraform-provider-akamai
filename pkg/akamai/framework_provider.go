@@ -4,10 +4,11 @@ import (
 	"context"
 	"os"
 	"strconv"
+	"time"
 
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf/validators"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/subprovider"
-	"github.com/akamai/terraform-provider-akamai/v5/version"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf/validators"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/subprovider"
+	"github.com/akamai/terraform-provider-akamai/v6/version"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
@@ -21,7 +22,7 @@ var _ provider.Provider = &Provider{}
 
 // Provider is the implementation of akamai terraform provider which uses terraform-plugin-framework
 type Provider struct {
-	subproviders []subprovider.Framework
+	subproviders []subprovider.Subprovider
 }
 
 // ProviderModel represents the model of Provider configuration
@@ -31,6 +32,10 @@ type ProviderModel struct {
 	EdgercConfig  types.Set    `tfsdk:"config"`
 	CacheEnabled  types.Bool   `tfsdk:"cache_enabled"`
 	RequestLimit  types.Int64  `tfsdk:"request_limit"`
+	RetryMax      types.Int64  `tfsdk:"retry_max"`
+	RetryWaitMin  types.Int64  `tfsdk:"retry_wait_min"`
+	RetryWaitMax  types.Int64  `tfsdk:"retry_wait_max"`
+	RetryDisabled types.Bool   `tfsdk:"retry_disabled"`
 }
 
 // ConfigModel represents the model of edgegrid configuration block
@@ -44,7 +49,7 @@ type ConfigModel struct {
 }
 
 // NewFrameworkProvider returns a function returning Provider as provider.Provider
-func NewFrameworkProvider(subproviders ...subprovider.Framework) func() provider.Provider {
+func NewFrameworkProvider(subproviders ...subprovider.Subprovider) func() provider.Provider {
 	return func() provider.Provider {
 		return &Provider{
 			subproviders: subproviders,
@@ -74,6 +79,22 @@ func (p *Provider) Schema(_ context.Context, _ provider.SchemaRequest, resp *pro
 			},
 			"request_limit": schema.Int64Attribute{
 				Description: "The maximum number of API requests to be made per second (0 for no limit)",
+				Optional:    true,
+			},
+			"retry_max": schema.Int64Attribute{
+				Description: "The maximum number retires of API requests, default 10",
+				Optional:    true,
+			},
+			"retry_wait_min": schema.Int64Attribute{
+				Description: "The minimum wait time in seconds between API requests retries, default is 1 sec",
+				Optional:    true,
+			},
+			"retry_wait_max": schema.Int64Attribute{
+				Description: "The maximum wait time in seconds between API requests retries, default is 30 sec",
+				Optional:    true,
+			},
+			"retry_disabled": schema.BoolAttribute{
+				Description: "Should the retries of API requests be disabled, default false",
 				Optional:    true,
 			},
 		},
@@ -169,12 +190,46 @@ func (p *Provider) Configure(ctx context.Context, req provider.ConfigureRequest,
 		return
 	}
 
+	requestLimit, err := getFrameworkConfigInt(data.RequestLimit, "AKAMAI_REQUEST_LIMIT")
+	if err != nil {
+		resp.Diagnostics.Append(diag.NewErrorDiagnostic("configuring context failed", err.Error()))
+		return
+	}
+
+	retryMax, err := getFrameworkConfigInt(data.RetryMax, "AKAMAI_RETRY_MAX")
+	if err != nil {
+		resp.Diagnostics.Append(diag.NewErrorDiagnostic("configuring context failed", err.Error()))
+		return
+	}
+
+	retryWaitMin, err := getFrameworkConfigInt(data.RetryWaitMin, "AKAMAI_RETRY_WAIT_MIN")
+	if err != nil {
+		resp.Diagnostics.Append(diag.NewErrorDiagnostic("configuring context failed", err.Error()))
+		return
+	}
+
+	retryWaitMax, err := getFrameworkConfigInt(data.RetryWaitMax, "AKAMAI_RETRY_WAIT_MAX")
+	if err != nil {
+		resp.Diagnostics.Append(diag.NewErrorDiagnostic("configuring context failed", err.Error()))
+		return
+	}
+
+	retryDisabled, err := getFrameworkConfigBool(data.RetryDisabled, "AKAMAI_RETRY_DISABLED")
+	if err != nil {
+		resp.Diagnostics.Append(diag.NewErrorDiagnostic("configuring context failed", err.Error()))
+		return
+	}
+
 	meta, err := configureContext(contextConfig{
 		edgegridConfig: edgegridConfig,
 		userAgent:      userAgent(req.TerraformVersion),
 		ctx:            ctx,
-		requestLimit:   int(data.RequestLimit.ValueInt64()),
+		requestLimit:   requestLimit,
 		enableCache:    data.CacheEnabled.ValueBool(),
+		retryMax:       retryMax,
+		retryWaitMin:   time.Duration(retryWaitMin) * time.Second,
+		retryWaitMax:   time.Duration(retryWaitMax) * time.Second,
+		retryDisabled:  retryDisabled,
 	})
 	if err != nil {
 		resp.Diagnostics.Append(diag.NewErrorDiagnostic("configuring context failed", err.Error()))
@@ -185,24 +240,52 @@ func (p *Provider) Configure(ctx context.Context, req provider.ConfigureRequest,
 	resp.ResourceData = meta
 }
 
-// Resources returns slice of fuctions used to instantiate resource implementations
+// Resources returns slice of functions used to instantiate resource implementations
 func (p *Provider) Resources(_ context.Context) []func() resource.Resource {
 	resources := make([]func() resource.Resource, 0)
 
 	for _, subprovider := range p.subproviders {
-		resources = append(resources, subprovider.Resources()...)
+		resources = append(resources, subprovider.FrameworkResources()...)
 	}
 
 	return resources
 }
 
-// DataSources returns slice of fuctions used to instantiate data source implementations
+// DataSources returns slice of functions used to instantiate data source implementations
 func (p *Provider) DataSources(_ context.Context) []func() datasource.DataSource {
 	dataSources := make([]func() datasource.DataSource, 0)
 
 	for _, subprovider := range p.subproviders {
-		dataSources = append(dataSources, subprovider.DataSources()...)
+		dataSources = append(dataSources, subprovider.FrameworkDataSources()...)
 	}
 
 	return dataSources
+}
+
+func getFrameworkConfigInt(tfValue types.Int64, envKey string) (int, error) {
+	ret := int(tfValue.ValueInt64())
+	if tfValue.IsNull() {
+		if v := os.Getenv(envKey); v != "" {
+			vv, err := strconv.Atoi(v)
+			if err != nil {
+				return 0, err
+			}
+			ret = vv
+		}
+	}
+	return ret, nil
+}
+
+func getFrameworkConfigBool(tfValue types.Bool, envKey string) (bool, error) {
+	ret := tfValue.ValueBool()
+	if tfValue.IsNull() {
+		if v := os.Getenv(envKey); v != "" {
+			vv, err := strconv.ParseBool(v)
+			if err != nil {
+				return false, err
+			}
+			ret = vv
+		}
+	}
+	return ret, nil
 }

@@ -3,11 +3,11 @@ package cps
 import (
 	"context"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cps"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
-	cpstools "github.com/akamai/terraform-provider-akamai/v5/pkg/providers/cps/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/cps"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
+	cpstools "github.com/akamai/terraform-provider-akamai/v6/pkg/providers/cps/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -238,6 +238,11 @@ func dataSourceCPSEnrollments() *schema.Resource {
 								},
 							},
 						},
+						"org_id": {
+							Type:        schema.TypeInt,
+							Computed:    true,
+							Description: "The Digicert unique identifier for the organization",
+						},
 						"certificate_type": {
 							Type:        schema.TypeString,
 							Computed:    true,
@@ -257,6 +262,24 @@ func dataSourceCPSEnrollments() *schema.Resource {
 							Type:        schema.TypeBool,
 							Computed:    true,
 							Description: "Whether some changes are pending",
+						},
+						"assigned_slots": {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Elem:        &schema.Schema{Type: schema.TypeInt},
+							Description: "Slots where the certificate either will be deployed or is already deployed",
+						},
+						"staging_slots": {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Elem:        &schema.Schema{Type: schema.TypeInt},
+							Description: "Slots where the certificate is deployed on the staging network",
+						},
+						"production_slots": {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Elem:        &schema.Schema{Type: schema.TypeInt},
+							Description: "Slots where the certificate is deployed on the production network",
 						},
 					},
 				},

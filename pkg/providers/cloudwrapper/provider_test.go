@@ -2,19 +2,18 @@ package cloudwrapper
 
 import (
 	"context"
-	"log"
-	"os"
 	"testing"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cloudwrapper"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/cloudwrapper"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
-	"github.com/hashicorp/terraform-plugin-go/tfprotov5"
-	"github.com/hashicorp/terraform-plugin-mux/tf5muxserver"
+	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
+	"github.com/hashicorp/terraform-plugin-mux/tf6muxserver"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 type (
@@ -53,8 +52,8 @@ func newTestSubprovider(opts ...testSubproviderOption) *TestSubprovider {
 	s := NewSubprovider()
 
 	ts := &TestSubprovider{
-		resources:   s.Resources(),
-		datasources: s.DataSources(),
+		resources:   s.FrameworkResources(),
+		datasources: s.FrameworkDataSources(),
 	}
 
 	for _, opt := range opts {
@@ -64,8 +63,15 @@ func newTestSubprovider(opts ...testSubproviderOption) *TestSubprovider {
 	return ts
 }
 
-// Resources returns terraform resources for cloudwrapper
-func (ts *TestSubprovider) Resources() []func() resource.Resource {
+func (ts *TestSubprovider) SDKResources() map[string]*schema.Resource {
+	return nil
+}
+
+func (ts *TestSubprovider) SDKDataSources() map[string]*schema.Resource {
+	return nil
+}
+
+func (ts *TestSubprovider) FrameworkResources() []func() resource.Resource {
 	for i, fn := range ts.resources {
 		// decorate
 		fn := fn
@@ -83,8 +89,7 @@ func (ts *TestSubprovider) Resources() []func() resource.Resource {
 	return ts.resources
 }
 
-// DataSources returns terraform data sources for cloudwrapper
-func (ts *TestSubprovider) DataSources() []func() datasource.DataSource {
+func (ts *TestSubprovider) FrameworkDataSources() []func() datasource.DataSource {
 	for i, fn := range ts.datasources {
 		fn := fn
 		// decorate
@@ -100,29 +105,22 @@ func (ts *TestSubprovider) DataSources() []func() datasource.DataSource {
 }
 
 func TestMain(m *testing.M) {
-	if err := testutils.TFTestSetup(); err != nil {
-		log.Fatal(err)
-	}
-	exitCode := m.Run()
-	if err := testutils.TFTestTeardown(); err != nil {
-		log.Fatal(err)
-	}
-	os.Exit(exitCode)
+	testutils.TestRunner(m)
 }
 
-func newProviderFactory(opts ...testSubproviderOption) map[string]func() (tfprotov5.ProviderServer, error) {
+func newProviderFactory(opts ...testSubproviderOption) map[string]func() (tfprotov6.ProviderServer, error) {
 	testAccProvider := akamai.NewFrameworkProvider(newTestSubprovider(opts...))()
 
-	return map[string]func() (tfprotov5.ProviderServer, error){
-		"akamai": func() (tfprotov5.ProviderServer, error) {
+	return map[string]func() (tfprotov6.ProviderServer, error){
+		"akamai": func() (tfprotov6.ProviderServer, error) {
 			ctx := context.Background()
-			providers := []func() tfprotov5.ProviderServer{
-				providerserver.NewProtocol5(
+			providers := []func() tfprotov6.ProviderServer{
+				providerserver.NewProtocol6(
 					testAccProvider,
 				),
 			}
 
-			muxServer, err := tf5muxserver.NewMuxServer(ctx, providers...)
+			muxServer, err := tf6muxserver.NewMuxServer(ctx, providers...)
 			if err != nil {
 				return nil, err
 			}

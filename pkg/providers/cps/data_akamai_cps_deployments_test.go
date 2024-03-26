@@ -5,8 +5,8 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cps"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/cps"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -23,7 +23,7 @@ func TestDataCPSDeployments(t *testing.T) {
 			init: func(m *cps.Mock) {
 				m.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{
 					EnrollmentID: 123,
-				}).Return(&cps.Enrollment{
+				}).Return(&cps.GetEnrollmentResponse{
 					Location:             "/cps/v2/enrollments/123",
 					AutoRenewalStartTime: "2024-10-17T12:08:13Z",
 				}, nil)
@@ -74,7 +74,7 @@ func TestDataCPSDeployments(t *testing.T) {
 			init: func(m *cps.Mock) {
 				m.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{
 					EnrollmentID: 123,
-				}).Return(&cps.Enrollment{
+				}).Return(&cps.GetEnrollmentResponse{
 					Location:             "/cps/v2/enrollments/123",
 					AutoRenewalStartTime: "2024-10-17T12:08:13Z",
 				}, nil)
@@ -125,7 +125,7 @@ func TestDataCPSDeployments(t *testing.T) {
 			init: func(m *cps.Mock) {
 				m.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{
 					EnrollmentID: 123,
-				}).Return(&cps.Enrollment{
+				}).Return(&cps.GetEnrollmentResponse{
 					Location:             "/cps/v2/enrollments/123",
 					AutoRenewalStartTime: "2024-10-17T12:08:13Z",
 				}, nil)
@@ -162,7 +162,7 @@ func TestDataCPSDeployments(t *testing.T) {
 			init: func(m *cps.Mock) {
 				m.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{
 					EnrollmentID: 123,
-				}).Return(&cps.Enrollment{
+				}).Return(&cps.GetEnrollmentResponse{
 					Location:             "/cps/v2/enrollments/123",
 					AutoRenewalStartTime: "2024-10-17T12:08:13Z",
 				}, nil)
@@ -212,7 +212,7 @@ func TestDataCPSDeployments(t *testing.T) {
 			init: func(m *cps.Mock) {
 				m.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{
 					EnrollmentID: 123,
-				}).Return(&cps.Enrollment{
+				}).Return(&cps.GetEnrollmentResponse{
 					Location:             "/cps/v2/enrollments/123",
 					AutoRenewalStartTime: "2024-10-17T12:08:13Z",
 				}, nil)
@@ -240,7 +240,7 @@ func TestDataCPSDeployments(t *testing.T) {
 			test.init(client)
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{
 						{
 							Config:      testutils.LoadFixtureString(t, test.configPath),

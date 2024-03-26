@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cps"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/cps"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/jinzhu/copier"
@@ -21,12 +21,13 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		PollForChangeStatusInterval = 1 * time.Millisecond
 		client := &cps.Mock{}
 		enrollment := newEnrollment()
+		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
 		client.On("CreateEnrollment",
 			mock.Anything,
 			cps.CreateEnrollmentRequest{
-				Enrollment: enrollment,
-				ContractID: "1",
+				EnrollmentRequestBody: enrollmentReqBody,
+				ContractID:            "1",
 			},
 		).Return(&cps.CreateEnrollmentResponse{
 			ID:         1,
@@ -85,7 +86,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 
 		enrollmentUpdate := newEnrollment(
 			WithBase(&enrollment),
-			WithUpdateFunc(func(e *cps.Enrollment) {
+			WithUpdateFunc(func(e *cps.GetEnrollmentResponse) {
 				e.AdminContact.FirstName = "R5"
 				e.AdminContact.LastName = "D5"
 				e.CSR.SANS = []string{"san2.test.akamai.com", "san.test.akamai.com"}
@@ -96,11 +97,12 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			}),
 		)
 
+		enrollmentUpdateReqBody := createEnrollmentReqBodyFromEnrollment(enrollmentUpdate)
 		allowCancel := true
 		client.On("UpdateEnrollment",
 			mock.Anything,
 			cps.UpdateEnrollmentRequest{
-				Enrollment:                enrollmentUpdate,
+				EnrollmentRequestBody:     enrollmentUpdateReqBody,
 				EnrollmentID:              1,
 				AllowCancelPendingChanges: &allowCancel,
 			},
@@ -137,7 +139,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/lifecycle/create_enrollment.tf"),
@@ -169,12 +171,13 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			WithCN(commonName),
 			WithEmptySans,
 		)
+		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
 		client.On("CreateEnrollment",
 			mock.Anything,
 			cps.CreateEnrollmentRequest{
-				Enrollment: enrollment,
-				ContractID: "1",
+				EnrollmentRequestBody: enrollmentReqBody,
+				ContractID:            "1",
 			},
 		).Return(&cps.CreateEnrollmentResponse{
 			ID:         1,
@@ -231,11 +234,12 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			WithSans(commonName),
 		)
 
+		enrollmentUpdateReqBody := createEnrollmentReqBodyFromEnrollment(enrollmentUpdate)
 		allowCancel := true
 		client.On("UpdateEnrollment",
 			mock.Anything,
 			cps.UpdateEnrollmentRequest{
-				Enrollment:                enrollmentUpdate,
+				EnrollmentRequestBody:     enrollmentUpdateReqBody,
 				EnrollmentID:              1,
 				AllowCancelPendingChanges: &allowCancel,
 			},
@@ -270,7 +274,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/lifecycle_no_sans/create_enrollment.tf"),
@@ -297,12 +301,13 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		client := &cps.Mock{}
 
 		enrollment := newEnrollment(WithEmptySans)
+		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
 		client.On("CreateEnrollment",
 			mock.Anything,
 			cps.CreateEnrollmentRequest{
-				Enrollment: enrollment,
-				ContractID: "1",
+				EnrollmentRequestBody: enrollmentReqBody,
+				ContractID:            "1",
 			},
 		).Return(&cps.CreateEnrollmentResponse{
 			ID:         1,
@@ -365,7 +370,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/empty_sans/create_enrollment.tf"),
@@ -383,12 +388,13 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		PollForChangeStatusInterval = 1 * time.Millisecond
 		client := &cps.Mock{}
 		enrollment := newEnrollment(WithEmptySans)
+		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
 		client.On("CreateEnrollment",
 			mock.Anything,
 			cps.CreateEnrollmentRequest{
-				Enrollment: enrollment,
-				ContractID: "1",
+				EnrollmentRequestBody: enrollmentReqBody,
+				ContractID:            "1",
 			},
 		).Return(&cps.CreateEnrollmentResponse{
 			ID:         1,
@@ -401,20 +407,21 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			withMTLS(cps.ClientMutualAuthentication{
 				AuthenticationOptions: &cps.AuthenticationOptions{
 					OCSP: &cps.OCSP{
-						Enabled: tools.BoolPtr(true),
+						Enabled: ptr.To(true),
 					},
-					SendCAListToClient: tools.BoolPtr(false),
+					SendCAListToClient: ptr.To(false),
 				},
 				SetID: "12345",
 			}),
 		)
+		enrollmentUpdateReqBody := createEnrollmentReqBodyFromEnrollment(enrollmentUpdate)
 
 		client.On("UpdateEnrollment",
 			mock.Anything,
 			cps.UpdateEnrollmentRequest{
 				EnrollmentID:              1,
-				Enrollment:                enrollmentUpdate,
-				AllowCancelPendingChanges: tools.BoolPtr(true),
+				EnrollmentRequestBody:     enrollmentUpdateReqBody,
+				AllowCancelPendingChanges: ptr.To(true),
 			},
 		).Return(&cps.UpdateEnrollmentResponse{
 			ID:         1,
@@ -479,7 +486,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/client_mutual_auth/create_enrollment.tf"),
@@ -502,12 +509,13 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			WithCN(commonName),
 			WithSans(commonName, "san.test.akamai.com"),
 		)
+		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
 		client.On("CreateEnrollment",
 			mock.Anything,
 			cps.CreateEnrollmentRequest{
-				Enrollment: enrollment,
-				ContractID: "1",
+				EnrollmentRequestBody: enrollmentReqBody,
+				ContractID:            "1",
 			},
 		).Return(&cps.CreateEnrollmentResponse{
 			ID:         1,
@@ -569,7 +577,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/lifecycle_cn_in_sans/create_enrollment.tf"),
@@ -597,12 +605,13 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			WithCN(commonName),
 			WithSans("san.test.akamai.com"),
 		)
+		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
 		client.On("CreateEnrollment",
 			mock.Anything,
 			cps.CreateEnrollmentRequest{
-				Enrollment: enrollment,
-				ContractID: "1",
+				EnrollmentRequestBody: enrollmentReqBody,
+				ContractID:            "1",
 			},
 		).Return(&cps.CreateEnrollmentResponse{
 			ID:         1,
@@ -668,7 +677,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/lifecycle_no_cn_in_sans/create_enrollment.tf"),
@@ -692,12 +701,13 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 	t.Run("set challenges arrays to empty if no allowedInput found", func(t *testing.T) {
 		client := &cps.Mock{}
 		enrollment := getSimpleEnrollment()
+		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
 		client.On("CreateEnrollment",
 			mock.Anything,
 			cps.CreateEnrollmentRequest{
-				Enrollment: enrollment,
-				ContractID: "1",
+				EnrollmentRequestBody: enrollmentReqBody,
+				ContractID:            "1",
 			},
 		).Return(&cps.CreateEnrollmentResponse{
 			ID:         1,
@@ -734,7 +744,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/lifecycle/create_enrollment.tf"),
@@ -753,7 +763,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		client := &cps.Mock{}
 		enrollment := newEnrollment(
 			WithEmptySans,
-			WithUpdateFunc(func(e *cps.Enrollment) {
+			WithUpdateFunc(func(e *cps.GetEnrollmentResponse) {
 				e.NetworkConfiguration = &cps.NetworkConfiguration{
 					DNSNameSettings: &cps.DNSNameSettings{
 						CloneDNSNames: false,
@@ -764,12 +774,13 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 				}
 			}),
 		)
+		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
 		client.On("CreateEnrollment",
 			mock.Anything,
 			cps.CreateEnrollmentRequest{
-				Enrollment: enrollment,
-				ContractID: "1",
+				EnrollmentRequestBody: enrollmentReqBody,
+				ContractID:            "1",
 			},
 		).Return(&cps.CreateEnrollmentResponse{
 			ID:         1,
@@ -825,7 +836,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/no_acknowledge_warnings/create_enrollment.tf"),
@@ -851,7 +862,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		PollForChangeStatusInterval = 1 * time.Millisecond
 		enrollment := newEnrollment(
 			WithEmptySans,
-			WithUpdateFunc(func(e *cps.Enrollment) {
+			WithUpdateFunc(func(e *cps.GetEnrollmentResponse) {
 				e.NetworkConfiguration = &cps.NetworkConfiguration{
 					DNSNameSettings: &cps.DNSNameSettings{
 						CloneDNSNames: false,
@@ -862,12 +873,13 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 				}
 			}),
 		)
+		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
 		client.On("CreateEnrollment",
 			mock.Anything,
 			cps.CreateEnrollmentRequest{
-				Enrollment: enrollment,
-				ContractID: "1",
+				EnrollmentRequestBody: enrollmentReqBody,
+				ContractID:            "1",
 			},
 		).Return(&cps.CreateEnrollmentResponse{
 			ID:         1,
@@ -935,7 +947,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/acknowledge_warnings/create_enrollment.tf"),
@@ -953,13 +965,14 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		PollForChangeStatusInterval = 1 * time.Millisecond
 		client := &cps.Mock{}
 		enrollment := newEnrollment(WithEmptySans)
+		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
 		client.On("CreateEnrollment",
 			mock.Anything,
 			cps.CreateEnrollmentRequest{
-				Enrollment:       enrollment,
-				ContractID:       "1",
-				AllowDuplicateCN: true,
+				EnrollmentRequestBody: enrollmentReqBody,
+				ContractID:            "1",
+				AllowDuplicateCN:      true,
 			},
 		).Return(&cps.CreateEnrollmentResponse{
 			ID:         1,
@@ -1022,7 +1035,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/allow_duplicate_cn/create_enrollment.tf"),
@@ -1043,7 +1056,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		PollForChangeStatusInterval = 1 * time.Millisecond
 		enrollment := newEnrollment(
 			WithEmptySans,
-			WithUpdateFunc(func(e *cps.Enrollment) {
+			WithUpdateFunc(func(e *cps.GetEnrollmentResponse) {
 				e.NetworkConfiguration = &cps.NetworkConfiguration{
 					DNSNameSettings: &cps.DNSNameSettings{
 						CloneDNSNames: false,
@@ -1054,12 +1067,13 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 				}
 			}),
 		)
+		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
 		client.On("CreateEnrollment",
 			mock.Anything,
 			cps.CreateEnrollmentRequest{
-				Enrollment: enrollment,
-				ContractID: "1",
+				EnrollmentRequestBody: enrollmentReqBody,
+				ContractID:            "1",
 			},
 		).Return(&cps.CreateEnrollmentResponse{
 			ID:         1,
@@ -1097,7 +1111,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/no_acknowledge_warnings/create_enrollment.tf"),
@@ -1115,7 +1129,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		PollForChangeStatusInterval = 1 * time.Millisecond
 		enrollment := newEnrollment(
 			WithEmptySans,
-			WithUpdateFunc(func(e *cps.Enrollment) {
+			WithUpdateFunc(func(e *cps.GetEnrollmentResponse) {
 				e.NetworkConfiguration = &cps.NetworkConfiguration{
 					DNSNameSettings: &cps.DNSNameSettings{
 						CloneDNSNames: false,
@@ -1126,18 +1140,19 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 				}
 			}),
 		)
+		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
 		client.On("CreateEnrollment",
 			mock.Anything,
 			cps.CreateEnrollmentRequest{
-				Enrollment: enrollment,
-				ContractID: "1",
+				EnrollmentRequestBody: enrollmentReqBody,
+				ContractID:            "1",
 			},
 		).Return(nil, fmt.Errorf("error creating enrollment")).Once()
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/no_acknowledge_warnings/create_enrollment.tf"),
@@ -1155,7 +1170,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		PollForChangeStatusInterval = 1 * time.Millisecond
 		enrollment := newEnrollment(
 			WithEmptySans,
-			WithUpdateFunc(func(e *cps.Enrollment) {
+			WithUpdateFunc(func(e *cps.GetEnrollmentResponse) {
 				e.NetworkConfiguration = &cps.NetworkConfiguration{
 					DNSNameSettings: &cps.DNSNameSettings{
 						CloneDNSNames: false,
@@ -1166,12 +1181,13 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 				}
 			}),
 		)
+		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
 		client.On("CreateEnrollment",
 			mock.Anything,
 			cps.CreateEnrollmentRequest{
-				Enrollment: enrollment,
-				ContractID: "1",
+				EnrollmentRequestBody: enrollmentReqBody,
+				ContractID:            "1",
 			},
 		).Return(&cps.CreateEnrollmentResponse{
 			ID:         1,
@@ -1239,7 +1255,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/auto_approve_warnings/create_enrollment.tf"),
@@ -1259,7 +1275,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		PollForChangeStatusInterval = 1 * time.Millisecond
 		enrollment := newEnrollment(
 			WithEmptySans,
-			WithUpdateFunc(func(e *cps.Enrollment) {
+			WithUpdateFunc(func(e *cps.GetEnrollmentResponse) {
 				e.NetworkConfiguration = &cps.NetworkConfiguration{
 					DNSNameSettings: &cps.DNSNameSettings{
 						CloneDNSNames: false,
@@ -1270,12 +1286,13 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 				}
 			}),
 		)
+		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
 		client.On("CreateEnrollment",
 			mock.Anything,
 			cps.CreateEnrollmentRequest{
-				Enrollment: enrollment,
-				ContractID: "1",
+				EnrollmentRequestBody: enrollmentReqBody,
+				ContractID:            "1",
 			},
 		).Return(&cps.CreateEnrollmentResponse{
 			ID:         1,
@@ -1313,7 +1330,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/auto_approve_warnings/create_enrollment.tf"),
@@ -1331,7 +1348,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		PollForChangeStatusInterval = 1 * time.Millisecond
 		enrollment := newEnrollment(
 			WithEmptySans,
-			WithUpdateFunc(func(e *cps.Enrollment) {
+			WithUpdateFunc(func(e *cps.GetEnrollmentResponse) {
 				e.NetworkConfiguration = &cps.NetworkConfiguration{
 					DNSNameSettings: &cps.DNSNameSettings{
 						CloneDNSNames: false,
@@ -1342,12 +1359,13 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 				}
 			}),
 		)
+		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
 		client.On("CreateEnrollment",
 			mock.Anything,
 			cps.CreateEnrollmentRequest{
-				Enrollment: enrollment,
-				ContractID: "1",
+				EnrollmentRequestBody: enrollmentReqBody,
+				ContractID:            "1",
 			},
 		).Return(&cps.CreateEnrollmentResponse{
 			ID:         1,
@@ -1391,7 +1409,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/auto_approve_warnings/create_enrollment.tf"),
@@ -1411,7 +1429,7 @@ func TestResourceThirdPartyEnrollmentImport(t *testing.T) {
 		id := "1,ctr_1"
 		enrollment := newEnrollment(
 			WithEmptySans,
-			WithUpdateFunc(func(e *cps.Enrollment) {
+			WithUpdateFunc(func(e *cps.GetEnrollmentResponse) {
 				e.NetworkConfiguration = &cps.NetworkConfiguration{
 					DNSNameSettings: &cps.DNSNameSettings{
 						CloneDNSNames: false,
@@ -1422,12 +1440,13 @@ func TestResourceThirdPartyEnrollmentImport(t *testing.T) {
 				}
 			}),
 		)
+		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
 		client.On("CreateEnrollment",
 			mock.Anything,
 			cps.CreateEnrollmentRequest{
-				Enrollment: enrollment,
-				ContractID: "1",
+				EnrollmentRequestBody: enrollmentReqBody,
+				ContractID:            "1",
 			},
 		).Return(&cps.CreateEnrollmentResponse{
 			ID:         1,
@@ -1474,7 +1493,7 @@ func TestResourceThirdPartyEnrollmentImport(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/import/import_enrollment.tf"),
@@ -1502,7 +1521,7 @@ func TestResourceThirdPartyEnrollmentImport(t *testing.T) {
 		client := &cps.Mock{}
 		id := "1,ctr_1"
 
-		enrollment := cps.Enrollment{
+		enrollment := cps.GetEnrollmentResponse{
 			ValidationType: "dv",
 		}
 
@@ -1511,7 +1530,7 @@ func TestResourceThirdPartyEnrollmentImport(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config:        testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/import/import_enrollment.tf"),
@@ -1531,12 +1550,13 @@ func TestSuppressingSignatureAlgorithm(t *testing.T) {
 		PollForChangeStatusInterval = 1 * time.Millisecond
 		client := &cps.Mock{}
 		enrollment := getSimpleEnrollment()
+		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
 		client.On("CreateEnrollment",
 			mock.Anything,
 			cps.CreateEnrollmentRequest{
-				Enrollment: enrollment,
-				ContractID: "1",
+				EnrollmentRequestBody: enrollmentReqBody,
+				ContractID:            "1",
 			},
 		).Return(&cps.CreateEnrollmentResponse{
 			ID:         1,
@@ -1565,7 +1585,7 @@ func TestSuppressingSignatureAlgorithm(t *testing.T) {
 			Return(&enrollmentGet, nil).Times(3)
 
 		enrollmentUpdate := newEnrollment(WithBase(&enrollment),
-			WithUpdateFunc(func(e *cps.Enrollment) {
+			WithUpdateFunc(func(e *cps.GetEnrollmentResponse) {
 				e.AdminContact.FirstName = "R5"
 				e.AdminContact.LastName = "D5"
 				e.CSR.SANS = []string{"san2.test.akamai.com", "san.test.akamai.com"}
@@ -1575,11 +1595,12 @@ func TestSuppressingSignatureAlgorithm(t *testing.T) {
 				e.SignatureAlgorithm = ""
 			}),
 		)
+		enrollmentUpdateReqBody := createEnrollmentReqBodyFromEnrollment(enrollmentUpdate)
 		allowCancel := true
 		client.On("UpdateEnrollment",
 			mock.Anything,
 			cps.UpdateEnrollmentRequest{
-				Enrollment:                enrollmentUpdate,
+				EnrollmentRequestBody:     enrollmentUpdateReqBody,
 				EnrollmentID:              1,
 				AllowCancelPendingChanges: &allowCancel,
 			},
@@ -1615,7 +1636,7 @@ func TestSuppressingSignatureAlgorithm(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/lifecycle/create_enrollment.tf"),
@@ -1637,8 +1658,8 @@ func TestSuppressingSignatureAlgorithm(t *testing.T) {
 	})
 }
 
-func getSimpleEnrollment() cps.Enrollment {
-	return cps.Enrollment{
+func getSimpleEnrollment() cps.GetEnrollmentResponse {
+	return cps.GetEnrollmentResponse{
 		AdminContact: &cps.Contact{
 			AddressLineOne:   "150 Broadway",
 			City:             "Cambridge",
@@ -1709,12 +1730,12 @@ func getSimpleEnrollment() cps.Enrollment {
 }
 
 type enrolOpt interface {
-	apply(*cps.Enrollment)
+	apply(response *cps.GetEnrollmentResponse)
 }
 
 type withPendingChangeID int
 
-func (w withPendingChangeID) apply(e *cps.Enrollment) {
+func (w withPendingChangeID) apply(e *cps.GetEnrollmentResponse) {
 	e.Location = "/cps/v2/enrollments/1"
 	e.PendingChanges = []cps.PendingChange{
 		{
@@ -1729,37 +1750,37 @@ func WithPendingChangeID(id int) enrolOpt {
 
 type withCN string
 
-func (w withCN) apply(e *cps.Enrollment) {
+func (w withCN) apply(e *cps.GetEnrollmentResponse) {
 	e.CSR.CN = string(w)
 }
 func WithCN(cn string) enrolOpt {
 	return withCN(cn)
 }
 
-type withFunc func(*cps.Enrollment)
+type withFunc func(response *cps.GetEnrollmentResponse)
 
-func (w withFunc) apply(e *cps.Enrollment) {
+func (w withFunc) apply(e *cps.GetEnrollmentResponse) {
 	w(e)
 }
-func WithUpdateFunc(f func(*cps.Enrollment)) enrolOpt {
+func WithUpdateFunc(f func(response *cps.GetEnrollmentResponse)) enrolOpt {
 	return withFunc(f)
 }
 
 type withMTLS cps.ClientMutualAuthentication
 
-func (w withMTLS) apply(e *cps.Enrollment) {
+func (w withMTLS) apply(e *cps.GetEnrollmentResponse) {
 	e.NetworkConfiguration.ClientMutualAuthentication = (*cps.ClientMutualAuthentication)(&w)
 }
 func WithMTLS(mtls cps.ClientMutualAuthentication) enrolOpt {
 	return withMTLS(mtls)
 }
 
-type withBase cps.Enrollment
+type withBase cps.GetEnrollmentResponse
 
-func (w withBase) apply(e *cps.Enrollment) {
-	*e = (cps.Enrollment)(w)
+func (w withBase) apply(e *cps.GetEnrollmentResponse) {
+	*e = (cps.GetEnrollmentResponse)(w)
 }
-func WithBase(e *cps.Enrollment) enrolOpt {
+func WithBase(e *cps.GetEnrollmentResponse) enrolOpt {
 	var newEn cps.Enrollment
 	err := copier.CopyWithOption(&newEn, e, copier.Option{DeepCopy: true, IgnoreEmpty: true})
 	if err != nil {
@@ -1770,7 +1791,7 @@ func WithBase(e *cps.Enrollment) enrolOpt {
 
 type withSans []string
 
-func (w withSans) apply(e *cps.Enrollment) {
+func (w withSans) apply(e *cps.GetEnrollmentResponse) {
 	e.CSR.SANS = w
 	e.NetworkConfiguration.DNSNameSettings.DNSNames = w
 }
@@ -1783,7 +1804,7 @@ func WithSans(sans ...string) enrolOpt {
 
 var WithEmptySans = WithSans()
 
-func newEnrollment(opts ...enrolOpt) cps.Enrollment {
+func newEnrollment(opts ...enrolOpt) cps.GetEnrollmentResponse {
 	enrollment := getSimpleEnrollment()
 	for _, o := range opts {
 		o.apply(&enrollment)

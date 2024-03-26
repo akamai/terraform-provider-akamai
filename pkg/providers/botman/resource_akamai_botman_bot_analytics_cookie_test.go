@@ -3,8 +3,8 @@ package botman
 import (
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/botman"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/test"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/botman"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -14,7 +14,7 @@ func TestResourceBotAnalyticsCookie(t *testing.T) {
 
 		mockedBotmanClient := &botman.Mock{}
 		createResponse := map[string]interface{}{"testKey": "testValue3"}
-		createRequest := test.FixtureBytes("testdata/JsonPayload/create.json")
+		createRequest := testutils.LoadFixtureBytes(t, "testdata/JsonPayload/create.json")
 		mockedBotmanClient.On("UpdateBotAnalyticsCookie",
 			mock.Anything,
 			botman.UpdateBotAnalyticsCookieRequest{
@@ -34,7 +34,7 @@ func TestResourceBotAnalyticsCookie(t *testing.T) {
 		expectedCreateJSON := `{"testKey":"testValue3"}`
 
 		updateResponse := map[string]interface{}{"testKey": "updated_testValue3"}
-		updateRequest := test.FixtureBytes("testdata/JsonPayload/update.json")
+		updateRequest := testutils.LoadFixtureBytes(t, "testdata/JsonPayload/update.json")
 		mockedBotmanClient.On("UpdateBotAnalyticsCookie",
 			mock.Anything,
 			botman.UpdateBotAnalyticsCookieRequest{
@@ -56,17 +56,17 @@ func TestResourceBotAnalyticsCookie(t *testing.T) {
 		useClient(mockedBotmanClient, func() {
 
 			resource.Test(t, resource.TestCase{
-				IsUnitTest:        true,
-				ProviderFactories: testAccProviders,
+				IsUnitTest:               true,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: test.Fixture("testdata/TestResourceBotAnalyticsCookie/create.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResourceBotAnalyticsCookie/create.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_botman_bot_analytics_cookie.test", "id", "43253"),
 							resource.TestCheckResourceAttr("akamai_botman_bot_analytics_cookie.test", "bot_analytics_cookie", expectedCreateJSON)),
 					},
 					{
-						Config: test.Fixture("testdata/TestResourceBotAnalyticsCookie/update.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResourceBotAnalyticsCookie/update.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_botman_bot_analytics_cookie.test", "id", "43253"),
 							resource.TestCheckResourceAttr("akamai_botman_bot_analytics_cookie.test", "bot_analytics_cookie", expectedUpdateJSON)),

@@ -6,22 +6,23 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/hapi"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/subprovider"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/hapi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/str"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/subprovider"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 type (
-	// PluginSubprovider gathers property resources and data sources written using terraform-plugin-sdk
-	PluginSubprovider struct{}
+	// Subprovider gathers property resources and data sources
+	Subprovider struct{}
+)
 
-	// FrameworkSubprovider gathers property resources and data sources written using terraform-plugin-framework
-	FrameworkSubprovider struct{}
+var (
+	_ subprovider.Subprovider = &Subprovider{}
 )
 
 var (
@@ -29,17 +30,9 @@ var (
 	hapiClient hapi.HAPI
 )
 
-var _ subprovider.Plugin = &PluginSubprovider{}
-var _ subprovider.Framework = &FrameworkSubprovider{}
-
-// NewPluginSubprovider returns a core SDKv2 based sub provider
-func NewPluginSubprovider() *PluginSubprovider {
-	return &PluginSubprovider{}
-}
-
-// NewFrameworkSubprovider returns a core Framework based sub provider
-func NewFrameworkSubprovider() *FrameworkSubprovider {
-	return &FrameworkSubprovider{}
+// NewSubprovider returns a new property subprovider
+func NewSubprovider() *Subprovider {
+	return &Subprovider{}
 }
 
 // Client returns the PAPI interface
@@ -58,8 +51,8 @@ func HapiClient(meta meta.Meta) hapi.HAPI {
 	return hapi.Client(meta.Session())
 }
 
-// Resources returns terraform resources for property
-func (p *PluginSubprovider) Resources() map[string]*schema.Resource {
+// SDKResources returns the property resources implemented using terraform-plugin-sdk
+func (p *Subprovider) SDKResources() map[string]*schema.Resource {
 	return map[string]*schema.Resource{
 		"akamai_cp_code":                     resourceCPCode(),
 		"akamai_edge_hostname":               resourceSecureEdgeHostName(),
@@ -70,8 +63,8 @@ func (p *PluginSubprovider) Resources() map[string]*schema.Resource {
 	}
 }
 
-// DataSources returns terraform data sources for property
-func (p *PluginSubprovider) DataSources() map[string]*schema.Resource {
+// SDKDataSources returns the property data sources implemented using terraform-plugin-sdk
+func (p *Subprovider) SDKDataSources() map[string]*schema.Resource {
 	return map[string]*schema.Resource{
 		"akamai_contract":                    dataSourcePropertyContract(),
 		"akamai_contracts":                   dataSourceContracts(),
@@ -95,15 +88,15 @@ func (p *PluginSubprovider) DataSources() map[string]*schema.Resource {
 	}
 }
 
-// Resources returns terraform resources for property
-func (p *FrameworkSubprovider) Resources() []func() resource.Resource {
+// FrameworkResources returns the property resources implemented using terraform-plugin-framework
+func (p *Subprovider) FrameworkResources() []func() resource.Resource {
 	return []func() resource.Resource{
 		NewBootstrapResource,
 	}
 }
 
-// DataSources returns terraform data sources for property
-func (p *FrameworkSubprovider) DataSources() []func() datasource.DataSource {
+// FrameworkDataSources returns the property data sources implemented using terraform-plugin-framework
+func (p *Subprovider) FrameworkDataSources() []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		NewIncludeDataSource,
 	}
@@ -125,6 +118,6 @@ func addPrefixToState(prefix string) schema.SchemaStateFunc {
 		if given.(string) == "" {
 			return ""
 		}
-		return tools.AddPrefix(given.(string), prefix)
+		return str.AddPrefix(given.(string), prefix)
 	}
 }

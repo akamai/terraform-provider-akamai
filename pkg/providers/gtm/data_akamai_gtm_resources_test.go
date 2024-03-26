@@ -5,8 +5,8 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/gtm"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/gtm"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -40,7 +40,7 @@ func TestDataGTMResources(t *testing.T) {
 						},
 						},
 						ResourceInstances: []*gtm.ResourceInstance{{
-							DatacenterId:         3131,
+							DatacenterID:         3131,
 							UseDefaultLoadObject: false,
 							LoadObject: gtm.LoadObject{
 								LoadObject:     "/test1",
@@ -67,7 +67,7 @@ func TestDataGTMResources(t *testing.T) {
 						},
 						},
 						ResourceInstances: []*gtm.ResourceInstance{{
-							DatacenterId:         3132,
+							DatacenterID:         3132,
 							UseDefaultLoadObject: false,
 							LoadObject: gtm.LoadObject{
 								LoadObject:     "/test2",
@@ -119,7 +119,7 @@ func TestDataGTMResources(t *testing.T) {
 			useClient(client, func() {
 				resource.Test(t, resource.TestCase{
 					IsUnitTest:               true,
-					ProtoV5ProviderFactories: testAccProvidersProtoV5,
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{{
 						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("testdata/TestDataGTMResources/%s", test.givenTF)),
 						Check:       resource.ComposeAggregateTestCheckFunc(checkFuncs...),

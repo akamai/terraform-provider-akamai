@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -75,9 +75,10 @@ func resourceIPGeo() *schema.Resource {
 				Description: "List of IDs of network list that are always allowed",
 			},
 			"ukraine_geo_control_action": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "Action set for Ukraine geo control",
+				Type:             schema.TypeString,
+				Optional:         true,
+				DiffSuppressFunc: suppressDiffUkraineGeoControlAction,
+				Description:      "Action set for Ukraine geo control",
 			},
 		},
 	}
@@ -310,7 +311,7 @@ func readForBlockSpecificIPGeo(d *schema.ResourceData, ipgeo *appsec.GetIPGeoRes
 			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 		}
 	}
-	if ipgeo.UkraineGeoControls != nil {
+	if ipgeo.UkraineGeoControls != nil && ipgeo.UkraineGeoControls.Action != "" {
 		if err := d.Set("ukraine_geo_control_action", ipgeo.UkraineGeoControls.Action); err != nil {
 			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 		}

@@ -5,15 +5,15 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/gtm"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/gtm"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
 
-func TestResGtmGeomap(t *testing.T) {
+func TestResGTMGeoMap(t *testing.T) {
 	dc := gtm.Datacenter{
-		DatacenterId: geo.DefaultDatacenter.DatacenterId,
+		DatacenterID: geo.DefaultDatacenter.DatacenterID,
 		Nickname:     geo.DefaultDatacenter.Nickname,
 	}
 
@@ -38,11 +38,6 @@ func TestResGtmGeomap(t *testing.T) {
 		).Return(&resp, nil).Run(func(args mock.Arguments) {
 			getCall.ReturnArguments = mock.Arguments{args.Get(1).(*gtm.GeoMap), nil}
 		})
-
-		client.On("NewGeoMap",
-			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("string"),
-		).Return(&geo, nil)
 
 		client.On("GetDatacenter",
 			mock.Anything, // ctx is irrelevant for this test
@@ -73,7 +68,7 @@ func TestResGtmGeomap(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmGeomap/create_basic.tf"),
@@ -105,11 +100,6 @@ func TestResGtmGeomap(t *testing.T) {
 			StatusCode: http.StatusBadRequest,
 		})
 
-		client.On("NewGeoMap",
-			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("string"),
-		).Return(&geo, nil)
-
 		client.On("GetDatacenter",
 			mock.Anything, // ctx is irrelevant for this test
 			mock.AnythingOfType("int"),
@@ -118,7 +108,7 @@ func TestResGtmGeomap(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmGeomap/create_basic.tf"),
@@ -143,11 +133,6 @@ func TestResGtmGeomap(t *testing.T) {
 			gtmTestDomain,
 		).Return(&dr, nil)
 
-		client.On("NewGeoMap",
-			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("string"),
-		).Return(&geo, nil)
-
 		client.On("GetDatacenter",
 			mock.Anything, // ctx is irrelevant for this test
 			mock.AnythingOfType("int"),
@@ -156,7 +141,7 @@ func TestResGtmGeomap(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmGeomap/create_basic.tf"),
@@ -240,8 +225,8 @@ func TestGTMGeoMapOrder(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			useClient(test.client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProviderFactories: testAccProviders,
-					IsUnitTest:        true,
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+					IsUnitTest:               true,
 					Steps: []resource.TestStep{
 						{
 							Config: testutils.LoadFixtureString(t, test.pathForCreate),
@@ -282,11 +267,6 @@ func getGeoMapMocks() *gtm.Mock {
 		mockGetGeoMap.ReturnArguments = mock.Arguments{args.Get(1).(*gtm.GeoMap), nil}
 	})
 
-	client.On("NewGeoMap",
-		mock.Anything, // ctx is irrelevant for this test
-		mock.AnythingOfType("string"),
-	).Return(&geo, nil)
-
 	client.On("GetDatacenter",
 		mock.Anything, // ctx is irrelevant for this test
 		mock.AnythingOfType("int"),
@@ -312,27 +292,27 @@ var (
 	geoDiffOrder = gtm.GeoMap{
 		Name: "tfexample_geomap_1",
 		DefaultDatacenter: &gtm.DatacenterBase{
-			DatacenterId: 5400,
+			DatacenterID: 5400,
 			Nickname:     "default datacenter",
 		},
 		Assignments: []*gtm.GeoAssignment{
 			{
 				DatacenterBase: gtm.DatacenterBase{
-					DatacenterId: 3131,
+					DatacenterID: 3131,
 					Nickname:     "tfexample_dc_1",
 				},
 				Countries: []string{"GB", "PL", "US", "FR"},
 			},
 			{
 				DatacenterBase: gtm.DatacenterBase{
-					DatacenterId: 3132,
+					DatacenterID: 3132,
 					Nickname:     "tfexample_dc_2",
 				},
 				Countries: []string{"GB", "AU"},
 			},
 			{
 				DatacenterBase: gtm.DatacenterBase{
-					DatacenterId: 3133,
+					DatacenterID: 3133,
 					Nickname:     "tfexample_dc_3",
 				},
 				Countries: []string{"GB", "BG", "CN", "MC", "TR"},
@@ -343,13 +323,13 @@ var (
 	geo = gtm.GeoMap{
 		Name: "tfexample_geomap_1",
 		DefaultDatacenter: &gtm.DatacenterBase{
-			DatacenterId: 5400,
+			DatacenterID: 5400,
 			Nickname:     "default datacenter",
 		},
 		Assignments: []*gtm.GeoAssignment{
 			{
 				DatacenterBase: gtm.DatacenterBase{
-					DatacenterId: 3131,
+					DatacenterID: 3131,
 					Nickname:     "tfexample_dc_1",
 				},
 				Countries: []string{"GB"},

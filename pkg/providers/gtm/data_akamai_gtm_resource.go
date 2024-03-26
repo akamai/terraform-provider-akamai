@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/gtm"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/gtm"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -194,7 +194,7 @@ func (d *resourceDataSource) Read(ctx context.Context, request datasource.ReadRe
 		return
 	}
 
-	client := frameworkInst.Client(d.meta)
+	client := Client(d.meta)
 	resource, err := client.GetResource(ctx, data.ResourceName.ValueString(), data.Domain.ValueString())
 	if err != nil {
 		response.Diagnostics.AddError("fetching GTM resource failed:", err.Error())
@@ -240,7 +240,7 @@ func (m *resourceDataSourceModel) setResourceInstances(resourceInstances []*gtm.
 
 	for _, res := range resourceInstances {
 		resourceInstanceObject := resourceInstance{
-			DataCenterID:         types.Int64Value(int64(res.DatacenterId)),
+			DataCenterID:         types.Int64Value(int64(res.DatacenterID)),
 			UseDefaultLoadObject: types.BoolValue(res.UseDefaultLoadObject),
 			LoadObject:           types.StringValue(res.LoadObject.LoadObject),
 			LoadObjectPort:       types.Int64Value(int64(res.LoadObject.LoadObjectPort)),

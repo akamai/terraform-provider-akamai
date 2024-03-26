@@ -4,11 +4,11 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cps"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
-	cpstools "github.com/akamai/terraform-provider-akamai/v5/pkg/providers/cps/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/cps"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
+	cpstools "github.com/akamai/terraform-provider-akamai/v6/pkg/providers/cps/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -228,6 +228,11 @@ func dataSourceCPSEnrollment() *schema.Resource {
 					},
 				},
 			},
+			"org_id": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "The Digicert unique identifier for the organization",
+			},
 			"contract_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -303,6 +308,24 @@ func dataSourceCPSEnrollment() *schema.Resource {
 				},
 				Set: cpstools.HashFromChallengesMap,
 			},
+			"assigned_slots": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeInt},
+				Description: "Slots where the certificate either will be deployed or is already deployed",
+			},
+			"staging_slots": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeInt},
+				Description: "Slots where the certificate is deployed on the staging network",
+			},
+			"production_slots": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeInt},
+				Description: "Slots where the certificate is deployed on the production network",
+			},
 		},
 	}
 }
@@ -327,7 +350,7 @@ func dataCPSEnrollmentRead(ctx context.Context, d *schema.ResourceData, m interf
 		return diag.FromErr(err)
 	}
 
-	attrs := createAttrs(enrollment, enrollmentID)
+	attrs := createAttrs(convertGetEnrollmentResponseToEnrollment(enrollment), enrollmentID)
 
 	attrs["pending_changes"] = len(enrollment.PendingChanges) > 0
 
@@ -346,4 +369,8 @@ func dataCPSEnrollmentRead(ctx context.Context, d *schema.ResourceData, m interf
 
 	d.SetId(strconv.Itoa(enrollmentID))
 	return nil
+}
+
+func convertGetEnrollmentResponseToEnrollment(getEnrollmentResp *cps.GetEnrollmentResponse) *cps.Enrollment {
+	return (*cps.Enrollment)(getEnrollmentResp)
 }

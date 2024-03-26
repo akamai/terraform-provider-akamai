@@ -4,11 +4,11 @@ import (
 	"context"
 	"errors"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
-	akameta "github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/str"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
+	akameta "github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -91,7 +91,7 @@ func dataPropertyContractRead(ctx context.Context, d *schema.ResourceData, m int
 		return ErrMultipleContractsInGroup
 	}
 
-	if err = d.Set("group_id", tools.AddPrefix(foundGroups[0].GroupID, "grp_")); err != nil {
+	if err = d.Set("group_id", str.AddPrefix(foundGroups[0].GroupID, "grp_")); err != nil {
 		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
 	if err = d.Set("group_name", foundGroups[0].GroupName); err != nil {
@@ -104,5 +104,5 @@ func dataPropertyContractRead(ctx context.Context, d *schema.ResourceData, m int
 }
 
 func isGroupEqual(group *papi.Group, target string) bool {
-	return group.GroupID == target || group.GroupID == tools.AddPrefix(target, "grp_") || group.GroupName == target
+	return group.GroupID == target || group.GroupID == str.AddPrefix(target, "grp_") || group.GroupName == target
 }

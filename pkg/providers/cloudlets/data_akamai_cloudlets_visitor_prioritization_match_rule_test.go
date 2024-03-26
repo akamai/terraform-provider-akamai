@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
@@ -17,6 +17,7 @@ func TestDataCloudletsVisitorPrioritizationMatchRule(t *testing.T) {
 		configPath       string
 		expectedJSONPath string
 		matchRulesSize   int
+		emptyRules       bool
 	}{
 		"valid all vars map": {
 			configPath:       fmt.Sprintf("%s/vars_map.tf", workdir),
@@ -38,23 +39,20 @@ func TestDataCloudletsVisitorPrioritizationMatchRule(t *testing.T) {
 			expectedJSONPath: fmt.Sprintf("%s/rules/omv_object_rules.json", workdir),
 			matchRulesSize:   1,
 		},
+		"no match rules": {
+			configPath: fmt.Sprintf("%s/no_match_rules.tf", workdir),
+			emptyRules: true,
+		},
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, test.configPath),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr(
-								"data.akamai_cloudlets_visitor_prioritization_match_rule.test", "json",
-								testutils.LoadFixtureString(t, test.expectedJSONPath)),
-							resource.TestCheckResourceAttr(
-								"data.akamai_cloudlets_visitor_prioritization_match_rule.test", "match_rules.0.type", "vpMatchRule"),
-							resource.TestCheckResourceAttr(
-								"data.akamai_cloudlets_visitor_prioritization_match_rule.test", "match_rules.#", strconv.Itoa(test.matchRulesSize)),
-						),
+						Check: checkMatchRulesAttr(t, "vpMatchRule", "data.akamai_cloudlets_visitor_prioritization_match_rule.test",
+							test.expectedJSONPath, test.emptyRules, test.matchRulesSize),
 					},
 				},
 			})
@@ -104,7 +102,7 @@ func TestIncorrectDataCloudletsVisitorPrioritizationMatchRule(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, test.configPath),

@@ -5,8 +5,8 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/iam"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/test"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/iam"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -15,7 +15,7 @@ func TestDataTimezones(t *testing.T) {
 	workDir := t.Name()
 	t.Run("happy path", func(t *testing.T) {
 		client := &iam.Mock{}
-		client.Test(test.TattleT{T: t})
+		client.Test(testutils.TattleT{T: t})
 
 		client.On("SupportedTimezones", mock.Anything).Return([]iam.Timezone{
 			{
@@ -41,11 +41,11 @@ func TestDataTimezones(t *testing.T) {
 		useClient(client, func() {
 			resourceName := "data.akamai_iam_timezones.test"
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
-				IsUnitTest:        true,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				IsUnitTest:               true,
 				Steps: []resource.TestStep{
 					{
-						Config: test.Fixture("testdata/%s/timezones.tf", workDir),
+						Config: testutils.LoadFixtureString(t, "testdata/%s/timezones.tf", workDir),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttrSet(resourceName, "id"),
 							resource.TestCheckResourceAttr(resourceName, "timezones.#", "3"),
@@ -72,16 +72,16 @@ func TestDataTimezones(t *testing.T) {
 
 	t.Run("fail path", func(t *testing.T) {
 		client := &iam.Mock{}
-		client.Test(test.TattleT{T: t})
+		client.Test(testutils.TattleT{T: t})
 		client.On("SupportedTimezones", mock.Anything).Return([]iam.Timezone{}, fmt.Errorf("supported timezones: timezones could not be fetched"))
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
-				IsUnitTest:        true,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				IsUnitTest:               true,
 				Steps: []resource.TestStep{
 					{
-						Config:      test.Fixture("testdata/%s/timezones.tf", workDir),
+						Config:      testutils.LoadFixtureString(t, "testdata/%s/timezones.tf", workDir),
 						ExpectError: regexp.MustCompile("supported timezones: timezones could not be fetched"),
 					},
 				},

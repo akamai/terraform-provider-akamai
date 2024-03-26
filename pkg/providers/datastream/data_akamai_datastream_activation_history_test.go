@@ -6,11 +6,10 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/datastream"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
-	"github.com/stretchr/testify/mock"
-
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/datastream"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestDataAkamaiDatastreamActivationHistoryRead(t *testing.T) {
@@ -77,7 +76,7 @@ func TestDataAkamaiDatastreamActivationHistoryRead(t *testing.T) {
 					client.On("GetActivationHistory", mock.Anything, mock.Anything).Return(test.getActivationHistoryReturn, nil)
 				}
 				resource.UnitTest(t, resource.TestCase{
-					ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{
 						{
 							Config: testutils.LoadFixtureString(t, test.configPath),

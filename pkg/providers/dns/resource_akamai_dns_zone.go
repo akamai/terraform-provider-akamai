@@ -12,11 +12,11 @@ import (
 
 	"github.com/apex/log"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/dns"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/dns"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/session"
 
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -245,7 +245,7 @@ func resourceDNSv2ZoneCreate(ctx context.Context, d *schema.ResourceData, m inte
 			Detail:   e.Error(),
 		})
 	}
-	d.SetId(fmt.Sprintf("%s#%s#%s", zone.VersionId, zone.Zone, hostname))
+	d.SetId(fmt.Sprintf("%s#%s#%s", zone.VersionID, zone.Zone, hostname))
 	return resourceDNSv2ZoneRead(ctx, d, meta)
 
 }
@@ -330,9 +330,9 @@ func resourceDNSv2ZoneRead(ctx context.Context, d *schema.ResourceData, m interf
 
 	logger.Debugf("READ content: %v", zone)
 	if strings.Contains(d.Id(), "#") {
-		d.SetId(fmt.Sprintf("%s#%s#%s", zone.VersionId, zone.Zone, hostname))
+		d.SetId(fmt.Sprintf("%s#%s#%s", zone.VersionID, zone.Zone, hostname))
 	} else {
-		d.SetId(fmt.Sprintf("%s-%s-%s", zone.VersionId, zone.Zone, hostname))
+		d.SetId(fmt.Sprintf("%s-%s-%s", zone.VersionID, zone.Zone, hostname))
 	}
 	return nil
 }
@@ -390,7 +390,7 @@ func resourceDNSv2ZoneUpdate(ctx context.Context, d *schema.ResourceData, m inte
 	zoneCreate.Target = zone.Target
 	zoneCreate.EndCustomerID = zone.EndCustomerID
 	zoneCreate.ContractID = zone.ContractID
-	zoneCreate.TsigKey = zone.TsigKey
+	zoneCreate.TSIGKey = zone.TSIGKey
 	if err := populateDNSv2ZoneObject(d, zoneCreate, logger); err != nil {
 		return diag.FromErr(err)
 	}
@@ -407,9 +407,9 @@ func resourceDNSv2ZoneUpdate(ctx context.Context, d *schema.ResourceData, m inte
 
 	// Give terraform the ID
 	if strings.Contains(d.Id(), "#") {
-		d.SetId(fmt.Sprintf("%s#%s#%s", zone.VersionId, zone.Zone, hostname))
+		d.SetId(fmt.Sprintf("%s#%s#%s", zone.VersionID, zone.Zone, hostname))
 	} else {
-		d.SetId(fmt.Sprintf("%s-%s-%s", zone.VersionId, zone.Zone, hostname))
+		d.SetId(fmt.Sprintf("%s-%s-%s", zone.VersionID, zone.Zone, hostname))
 	}
 	return resourceDNSv2ZoneRead(ctx, d, meta)
 }
@@ -458,7 +458,7 @@ func resourceDNSv2ZoneImport(d *schema.ResourceData, m interface{}) ([]*schema.R
 	}
 
 	// Give terraform the ID
-	d.SetId(fmt.Sprintf("%s:%s:%s", zone.VersionId, zone.Zone, hostname))
+	d.SetId(fmt.Sprintf("%s:%s:%s", zone.VersionID, zone.Zone, hostname))
 
 	return []*schema.ResourceData{d}, nil
 }
@@ -516,11 +516,11 @@ func populateDNSv2ZoneState(d *schema.ResourceData, zoneresp *dns.ZoneResponse) 
 		return fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 	}
 	tsigListNew := make([]interface{}, 0)
-	if zoneresp.TsigKey != nil {
+	if zoneresp.TSIGKey != nil {
 		tsigNew := map[string]interface{}{
-			"name":      zoneresp.TsigKey.Name,
-			"algorithm": zoneresp.TsigKey.Algorithm,
-			"secret":    zoneresp.TsigKey.Secret,
+			"name":      zoneresp.TSIGKey.Name,
+			"algorithm": zoneresp.TSIGKey.Algorithm,
+			"secret":    zoneresp.TSIGKey.Secret,
 		}
 		tsigListNew = append(tsigListNew, tsigNew)
 	}
@@ -533,7 +533,7 @@ func populateDNSv2ZoneState(d *schema.ResourceData, zoneresp *dns.ZoneResponse) 
 	if err := d.Set("alias_count", zoneresp.AliasCount); err != nil {
 		return fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 	}
-	if err := d.Set("version_id", zoneresp.VersionId); err != nil {
+	if err := d.Set("version_id", zoneresp.VersionID); err != nil {
 		return fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 	}
 	return nil
@@ -588,27 +588,27 @@ func populateDNSv2ZoneObject(d *schema.ResourceData, zone *dns.ZoneCreate, logge
 	if err == nil || d.HasChange("end_customer_id") {
 		zone.EndCustomerID = endCustomerID
 	}
-	tsigKey, err := tf.GetListValue("tsig_key", d)
+	TSIGKey, err := tf.GetListValue("tsig_key", d)
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		if !errors.Is(err, tf.ErrNotFound) {
 			return err
 		}
-		zone.TsigKey = nil
+		zone.TSIGKey = nil
 		return nil
 	}
-	if len(tsigKey) == 0 {
+	if len(TSIGKey) == 0 {
 		return nil
 	}
-	tsigKeyMap, ok := tsigKey[0].(map[string]interface{})
+	TSIGKeyMap, ok := TSIGKey[0].(map[string]interface{})
 	if !ok {
 		return fmt.Errorf("'tsig_key' entry is of invalid type; should be 'map[string]interface{}'")
 	}
-	zone.TsigKey = &dns.TSIGKey{
-		Name:      tsigKeyMap["name"].(string),
-		Algorithm: tsigKeyMap["algorithm"].(string),
-		Secret:    tsigKeyMap["secret"].(string),
+	zone.TSIGKey = &dns.TSIGKey{
+		Name:      TSIGKeyMap["name"].(string),
+		Algorithm: TSIGKeyMap["algorithm"].(string),
+		Secret:    TSIGKeyMap["secret"].(string),
 	}
-	logger.Debugf("Generated TsigKey [%v]", zone.TsigKey)
+	logger.Debugf("Generated TSIGKey [%v]", zone.TSIGKey)
 	return nil
 }
 
@@ -670,12 +670,12 @@ func checkZoneSOAandNSRecords(ctx context.Context, meta meta.Meta, zone *dns.Zon
 	var err error
 	if zone.ActivationState != "NEW" {
 		// See if SOA and NS recs exist already. Both or none.
-		resp, err = inst.Client(meta).GetRecordsets(ctx, zone.Zone, dns.RecordsetQueryArgs{Types: "SOA,NS"})
+		resp, err = inst.Client(meta).GetRecordSets(ctx, zone.Zone, dns.RecordSetQueryArgs{Types: "SOA,NS"})
 		if err != nil {
 			return err
 		}
 	}
-	if resp != nil && len(resp.Recordsets) >= 2 {
+	if resp != nil && len(resp.RecordSets) >= 2 {
 		return nil
 	}
 
@@ -687,28 +687,28 @@ func checkZoneSOAandNSRecords(ctx context.Context, meta meta.Meta, zone *dns.Zon
 	if len(nameservers) < 1 {
 		return fmt.Errorf("No authoritative nameservers exist for zone %s contract ID", zone.Zone)
 	}
-	rs := &dns.Recordsets{Recordsets: make([]dns.Recordset, 0)}
-	rs.Recordsets = append(rs.Recordsets, createSOARecord(zone.Zone, nameservers, logger))
-	rs.Recordsets = append(rs.Recordsets, createNSRecord(zone.Zone, nameservers, logger))
+	rs := &dns.RecordSets{RecordSets: make([]dns.RecordSet, 0)}
+	rs.RecordSets = append(rs.RecordSets, createSOARecord(zone.Zone, nameservers, logger))
+	rs.RecordSets = append(rs.RecordSets, createNSRecord(zone.Zone, nameservers, logger))
 
-	// create recordsets
-	err = inst.Client(meta).CreateRecordsets(ctx, rs, zone.Zone, true)
+	// create recordSets
+	err = inst.Client(meta).CreateRecordSets(ctx, rs, zone.Zone, true)
 
 	return err
 }
 
-func createSOARecord(zone string, nameservers []string, _ log.Interface) dns.Recordset {
-	rec := dns.Recordset{Name: zone, Type: "SOA"}
+func createSOARecord(zone string, nameservers []string, _ log.Interface) dns.RecordSet {
+	rec := dns.RecordSet{Name: zone, Type: "SOA"}
 	rec.TTL = 86400
-	pemail := fmt.Sprintf("hostmaster.%s.", zone)
-	soaData := fmt.Sprintf("%s %s 1 14400 7200 604800 1200", nameservers[0], pemail)
+	peMail := fmt.Sprintf("hostmaster.%s.", zone)
+	soaData := fmt.Sprintf("%s %s 1 14400 7200 604800 1200", nameservers[0], peMail)
 	rec.Rdata = []string{soaData}
 
 	return rec
 }
 
-func createNSRecord(zone string, nameservers []string, _ log.Interface) dns.Recordset {
-	rec := dns.Recordset{Name: zone, Type: "NS"}
+func createNSRecord(zone string, nameservers []string, _ log.Interface) dns.RecordSet {
+	rec := dns.RecordSet{Name: zone, Type: "NS"}
 	rec.TTL = 86400
 	rec.Rdata = nameservers
 

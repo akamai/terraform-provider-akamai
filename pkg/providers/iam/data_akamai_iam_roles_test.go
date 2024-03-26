@@ -5,8 +5,8 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/iam"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/test"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/iam"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -28,16 +28,16 @@ func TestDataRoles(t *testing.T) {
 
 		req := iam.ListRolesRequest{}
 
-		client.Test(test.TattleT{T: t})
+		client.Test(testutils.TattleT{T: t})
 		client.On("ListRoles", mock.Anything, req).Return(roles, nil)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
-				IsUnitTest:        true,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				IsUnitTest:               true,
 				Steps: []resource.TestStep{
 					{
-						Config: test.Fixture("testdata/%s.tf", t.Name()),
+						Config: testutils.LoadFixtureString(t, "testdata/%s.tf", t.Name()),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttrSet("data.akamai_iam_roles.test", "id"),
 							resource.TestCheckResourceAttr("data.akamai_iam_roles.test", "roles.0.name", "test role name"),
@@ -61,16 +61,16 @@ func TestDataRoles(t *testing.T) {
 		req := iam.ListRolesRequest{}
 
 		client := &iam.Mock{}
-		client.Test(test.TattleT{T: t})
+		client.Test(testutils.TattleT{T: t})
 		client.On("ListRoles", mock.Anything, req).Return(nil, errors.New("failed to get roles"))
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
-				IsUnitTest:        true,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				IsUnitTest:               true,
 				Steps: []resource.TestStep{
 					{
-						Config:      test.Fixture("testdata/%s/step0.tf", t.Name()),
+						Config:      testutils.LoadFixtureString(t, "testdata/%s/step0.tf", t.Name()),
 						ExpectError: regexp.MustCompile(`failed to get roles`),
 					},
 				},

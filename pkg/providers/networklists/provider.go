@@ -4,10 +4,12 @@ package networklists
 import (
 	"sync"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/networklists"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/subprovider"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/networklists"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/subprovider"
 
+	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -26,9 +28,9 @@ var (
 	inst *Subprovider
 )
 
-var _ subprovider.Plugin = &Subprovider{}
+var _ subprovider.Subprovider = &Subprovider{}
 
-// NewSubprovider returns a core sub provider
+// NewSubprovider returns new networklists subprovider
 func NewSubprovider(opts ...option) *Subprovider {
 	once.Do(func() {
 		inst = &Subprovider{}
@@ -47,7 +49,7 @@ func withClient(c networklists.NTWRKLISTS) option {
 	}
 }
 
-// Client returns the PAPI interface
+// Client returns the NTWRKLISTS interface
 func (p *Subprovider) Client(meta meta.Meta) networklists.NTWRKLISTS {
 	if p.client != nil {
 		return p.client
@@ -55,8 +57,8 @@ func (p *Subprovider) Client(meta meta.Meta) networklists.NTWRKLISTS {
 	return networklists.Client(meta.Session())
 }
 
-// Resources returns terraform resources for networklists
-func (p *Subprovider) Resources() map[string]*schema.Resource {
+// SDKResources returns the networklists resources implemented using terraform-plugin-sdk
+func (p *Subprovider) SDKResources() map[string]*schema.Resource {
 	return map[string]*schema.Resource{
 		"akamai_networklist_activations":  resourceActivations(),
 		"akamai_networklist_description":  resourceNetworkListDescription(),
@@ -65,9 +67,19 @@ func (p *Subprovider) Resources() map[string]*schema.Resource {
 	}
 }
 
-// DataSources returns terraform data sources for networklists
-func (p *Subprovider) DataSources() map[string]*schema.Resource {
+// SDKDataSources returns the networklists data sources implemented using terraform-plugin-sdk
+func (p *Subprovider) SDKDataSources() map[string]*schema.Resource {
 	return map[string]*schema.Resource{
 		"akamai_networklist_network_lists": dataSourceNetworkList(),
 	}
+}
+
+// FrameworkResources returns the networklists resources implemented using terraform-plugin-framework
+func (p *Subprovider) FrameworkResources() []func() resource.Resource {
+	return []func() resource.Resource{}
+}
+
+// FrameworkDataSources returns the networklists data sources implemented using terraform-plugin-framework
+func (p *Subprovider) FrameworkDataSources() []func() datasource.DataSource {
+	return []func() datasource.DataSource{}
 }

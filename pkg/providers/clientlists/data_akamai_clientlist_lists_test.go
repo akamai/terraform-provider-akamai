@@ -7,7 +7,8 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/clientlists"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/clientlists"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -92,8 +93,8 @@ func TestClientList_data_all_lists(t *testing.T) {
 				}
 
 				resource.Test(t, resource.TestCase{
-					IsUnitTest:        true,
-					ProviderFactories: testAccProviders,
+					IsUnitTest:               true,
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{
 						{
 							Config: test.config,

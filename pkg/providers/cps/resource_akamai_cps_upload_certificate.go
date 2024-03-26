@@ -8,12 +8,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cps"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/timeouts"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
-	toolsCPS "github.com/akamai/terraform-provider-akamai/v5/pkg/providers/cps/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/cps"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/timeouts"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
+	toolsCPS "github.com/akamai/terraform-provider-akamai/v6/pkg/providers/cps/tools"
 	"github.com/apex/log"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -91,9 +91,32 @@ func resourceCPSUploadCertificate() *schema.Resource {
 				Description: "Whether to wait for certificate to be deployed",
 			},
 			"unacknowledged_warnings": {
-				Type:        schema.TypeBool,
-				Computed:    true,
-				Description: "Used to distinguish whether there are unacknowledged warnings for a certificate",
+				Type:                  schema.TypeBool,
+				ConfigMode:            0,
+				Required:              false,
+				Optional:              false,
+				Computed:              true,
+				ForceNew:              false,
+				DiffSuppressFunc:      nil,
+				DiffSuppressOnRefresh: false,
+				Default:               nil,
+				DefaultFunc:           nil,
+				Description:           "Used to distinguish whether there are unacknowledged warnings for a certificate",
+				InputDefault:          "",
+				StateFunc:             nil,
+				Elem:                  nil,
+				MaxItems:              0,
+				MinItems:              0,
+				Set:                   nil,
+				ComputedWhen:          nil,
+				ConflictsWith:         nil,
+				ExactlyOneOf:          nil,
+				AtLeastOneOf:          nil,
+				RequiredWith:          nil,
+				Deprecated:            "",
+				ValidateFunc:          nil,
+				ValidateDiagFunc:      nil,
+				Sensitive:             false,
 			},
 			"timeouts": {
 				Type:        schema.TypeList,

@@ -3,8 +3,8 @@ package botman
 import (
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/botman"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/test"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/botman"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -40,11 +40,11 @@ func TestDataServeAlternateAction(t *testing.T) {
 		useClient(mockedBotmanClient, func() {
 
 			resource.Test(t, resource.TestCase{
-				IsUnitTest:        true,
-				ProviderFactories: testAccProviders,
+				IsUnitTest:               true,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: test.Fixture("testdata/TestDataServeAlternateAction/basic.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestDataServeAlternateAction/basic.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("data.akamai_botman_serve_alternate_action.test", "json", compactJSON(expectedJSON))),
 					},
@@ -76,11 +76,11 @@ func TestDataServeAlternateAction(t *testing.T) {
 		useClient(mockedBotmanClient, func() {
 
 			resource.Test(t, resource.TestCase{
-				IsUnitTest:        true,
-				ProviderFactories: testAccProviders,
+				IsUnitTest:               true,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: test.Fixture("testdata/TestDataServeAlternateAction/filter_by_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestDataServeAlternateAction/filter_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("data.akamai_botman_serve_alternate_action.test", "json", compactJSON(expectedJSON))),
 					},

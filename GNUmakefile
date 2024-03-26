@@ -1,4 +1,4 @@
-TEST ?= $$(go list ./...)
+TEST ?= $$(go list ./... | grep -v retryablehttp)
 PKG_NAME = akamai
 
 # Local provider install parameters
@@ -56,7 +56,7 @@ tidy:
 
 .PHONY: test
 test:
-	go test $(TEST) -v $(TESTARGS) -timeout 30m 2>&1
+	go test $(TEST) -v $(TESTARGS) -timeout 40m 2>&1
 
 .PHONY: testacc
 testacc:

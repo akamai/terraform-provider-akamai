@@ -7,10 +7,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/str"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 )
 
 func dataSourcePropertyRules() *schema.Resource {
@@ -116,13 +116,13 @@ func dataPropertyRulesRead(ctx context.Context, d *schema.ResourceData, m interf
 	}
 
 	if contractID != "" {
-		contractID = tools.AddPrefix(contractID, "ctr_")
+		contractID = str.AddPrefix(contractID, "ctr_")
 		if err := d.Set("contract_id", contractID); err != nil {
 			return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 		}
 	}
 	if groupID != "" {
-		groupID = tools.AddPrefix(groupID, "grp_")
+		groupID = str.AddPrefix(groupID, "grp_")
 		if err := d.Set("group_id", groupID); err != nil {
 			return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 		}

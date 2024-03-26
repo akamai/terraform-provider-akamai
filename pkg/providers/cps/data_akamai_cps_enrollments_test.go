@@ -6,9 +6,9 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cps"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/providers/cps/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/cps"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/providers/cps/tools"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -17,11 +17,15 @@ const contractID = "testing"
 
 var (
 	enrollmentsList = &cps.ListEnrollmentsResponse{
-		Enrollments: []cps.Enrollment{*enrollmentDV1, *enrollmentDV2},
+		Enrollments: []cps.Enrollment{*convertGetEnrollmentResponseToEnrollment(enrollmentDV1), *convertGetEnrollmentResponseToEnrollment(enrollmentDV2)},
 	}
 	emptyEnrollmentList       = &cps.ListEnrollmentsResponse{}
 	enrollmentsThirdPartyList = &cps.ListEnrollmentsResponse{
-		Enrollments: []cps.Enrollment{*enrollmentDV1, *enrollmentDV2, *enrollmentThirdParty, *enrollmentEV},
+		Enrollments: []cps.Enrollment{
+			*convertGetEnrollmentResponseToEnrollment(enrollmentDV1),
+			*convertGetEnrollmentResponseToEnrollment(enrollmentDV2),
+			*convertGetEnrollmentResponseToEnrollment(enrollmentThirdParty),
+			*convertGetEnrollmentResponseToEnrollment(enrollmentEV)},
 	}
 )
 
@@ -33,7 +37,7 @@ func TestDataEnrollments(t *testing.T) {
 		steps       []resource.TestStep
 	}{
 		"happy path": {
-			enrollments: cps.ListEnrollmentsResponse{Enrollments: []cps.Enrollment{*enrollmentDV1, *enrollmentDV2}},
+			enrollments: *enrollmentsList,
 			init: func(t *testing.T, m *cps.Mock) {
 				m.On("ListEnrollments", mock.Anything, cps.ListEnrollmentsRequest{
 					ContractID: contractID,
@@ -47,7 +51,7 @@ func TestDataEnrollments(t *testing.T) {
 			},
 		},
 		"could not fetch list of enrollments": {
-			enrollments: cps.ListEnrollmentsResponse{Enrollments: []cps.Enrollment{*enrollmentDV1, *enrollmentDV2}},
+			enrollments: *enrollmentsList,
 			init: func(t *testing.T, m *cps.Mock) {
 				m.On("ListEnrollments", mock.Anything, cps.ListEnrollmentsRequest{
 					ContractID: contractID,
@@ -61,7 +65,7 @@ func TestDataEnrollments(t *testing.T) {
 			},
 		},
 		"different change type enrollments": {
-			enrollments: cps.ListEnrollmentsResponse{Enrollments: []cps.Enrollment{*enrollmentDV1, *enrollmentDV2, *enrollmentThirdParty, *enrollmentEV}},
+			enrollments: *enrollmentsThirdPartyList,
 			init: func(t *testing.T, m *cps.Mock) {
 				m.On("ListEnrollments", mock.Anything, cps.ListEnrollmentsRequest{
 					ContractID: contractID,
@@ -101,9 +105,9 @@ func TestDataEnrollments(t *testing.T) {
 			test.init(t, client)
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProviderFactories: testAccProviders,
-					IsUnitTest:        true,
-					Steps:             test.steps,
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+					IsUnitTest:               true,
+					Steps:                    test.steps,
 				})
 			})
 			client.AssertExpectations(t)

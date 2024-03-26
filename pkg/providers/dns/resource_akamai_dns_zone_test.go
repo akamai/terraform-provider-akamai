@@ -6,14 +6,14 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/dns"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/dns"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
-func TestResDnsZone(t *testing.T) {
+func TestResDNSZone(t *testing.T) {
 	zone := &dns.ZoneResponse{
 		ContractID:      "ctr1",
 		Zone:            "primaryexampleterraform.io",
@@ -22,7 +22,7 @@ func TestResDnsZone(t *testing.T) {
 		SignAndServe:    false,
 		ActivationState: "PENDING",
 	}
-	recordsetsResp := &dns.RecordSetResponse{Recordsets: make([]dns.Recordset, 2, 2)}
+	recordSetsResp := &dns.RecordSetResponse{RecordSets: make([]dns.RecordSet, 2, 2)}
 
 	t.Run("when group is not provided and there is no group for the user ", func(t *testing.T) {
 		client := &dns.Mock{}
@@ -41,7 +41,7 @@ func TestResDnsZone(t *testing.T) {
 		}()
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, "testdata/TestResDnsZone/create_without_group.tf"),
@@ -103,11 +103,11 @@ func TestResDnsZone(t *testing.T) {
 			mock.AnythingOfType("*dns.ZoneCreate"),
 		).Return(nil)
 
-		client.On("GetRecordsets",
+		client.On("GetRecordSets",
 			mock.Anything,
 			zone.Zone,
-			mock.AnythingOfType("[]dns.RecordsetQueryArgs"),
-		).Return(recordsetsResp, nil)
+			mock.AnythingOfType("[]dns.RecordSetQueryArgs"),
+		).Return(recordSetsResp, nil)
 
 		dataSourceName := "akamai_dns_zone.test_without_group"
 
@@ -120,7 +120,7 @@ func TestResDnsZone(t *testing.T) {
 		}()
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestResDnsZone/create_without_group.tf"),
@@ -177,7 +177,7 @@ func TestResDnsZone(t *testing.T) {
 		}()
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, "testdata/TestResDnsZone/create_without_group.tf"),
@@ -228,11 +228,11 @@ func TestResDnsZone(t *testing.T) {
 			mock.AnythingOfType("*dns.ZoneCreate"),
 		).Return(nil)
 
-		client.On("GetRecordsets",
+		client.On("GetRecordSets",
 			mock.Anything,
 			zone.Zone,
-			mock.AnythingOfType("[]dns.RecordsetQueryArgs"),
-		).Return(recordsetsResp, nil)
+			mock.AnythingOfType("[]dns.RecordSetQueryArgs"),
+		).Return(recordSetsResp, nil)
 
 		dataSourceName := "akamai_dns_zone.primary_test_zone"
 
@@ -245,7 +245,7 @@ func TestResDnsZone(t *testing.T) {
 		}()
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestResDnsZone/create_primary.tf"),

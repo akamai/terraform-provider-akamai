@@ -4,7 +4,7 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
@@ -13,39 +13,44 @@ func TestDataCloudletsForwardRewriteMatchRule(t *testing.T) {
 	tests := map[string]struct {
 		configPath       string
 		expectedJSONPath string
+		matchRulesSize   int
+		emptyRules       bool
 	}{
 		"basic valid rule set": {
 			configPath:       "testdata/TestDataCloudletsForwardRewriteMatchRule/basic.tf",
 			expectedJSONPath: "testdata/TestDataCloudletsForwardRewriteMatchRule/rules/basic_rules.json",
+			matchRulesSize:   1,
 		},
 		"match criteria FR - ObjectMatchValue of Object type": {
 			configPath:       "testdata/TestDataCloudletsForwardRewriteMatchRule/omv_object.tf",
 			expectedJSONPath: "testdata/TestDataCloudletsForwardRewriteMatchRule/rules/omv_object_rules.json",
+			matchRulesSize:   2,
 		},
 		"match criteria FR - ObjectMatchValue of Simple type": {
 			configPath:       "testdata/TestDataCloudletsForwardRewriteMatchRule/omv_simple.tf",
 			expectedJSONPath: "testdata/TestDataCloudletsForwardRewriteMatchRule/rules/omv_simple_rules.json",
+			matchRulesSize:   2,
 		},
 		"match criteria FR - without ObjectMatchValue": {
 			configPath:       "testdata/TestDataCloudletsForwardRewriteMatchRule/omv_empty.tf",
 			expectedJSONPath: "testdata/TestDataCloudletsForwardRewriteMatchRule/rules/omv_empty_rules.json",
+			matchRulesSize:   2,
+		},
+		"no match rules": {
+			configPath: "testdata/TestDataCloudletsForwardRewriteMatchRule/no_match_rules.tf",
+			emptyRules: true,
 		},
 	}
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, test.configPath),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr(
-								"data.akamai_cloudlets_forward_rewrite_match_rule.test", "json",
-								testutils.LoadFixtureString(t, test.expectedJSONPath)),
-							resource.TestCheckResourceAttr(
-								"data.akamai_cloudlets_forward_rewrite_match_rule.test", "match_rules.0.type", "frMatchRule"),
-						),
+						Check: checkMatchRulesAttr(t, "frMatchRule", "data.akamai_cloudlets_forward_rewrite_match_rule.test",
+							test.expectedJSONPath, test.emptyRules, test.matchRulesSize),
 					},
 				},
 			})
@@ -86,7 +91,7 @@ func TestIncorrectDataCloudletsForwardRewriteMatchRule(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, test.configPath),

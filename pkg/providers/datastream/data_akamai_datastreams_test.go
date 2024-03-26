@@ -6,9 +6,9 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/datastream"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/datastream"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -80,7 +80,7 @@ func TestDataDatastreams(t *testing.T) {
 		"list streams with specified group id": {
 			init: func(t *testing.T, m *datastream.Mock) {
 				m.On("ListStreams", mock.Anything, datastream.ListStreamsRequest{
-					GroupID: tools.IntPtr(1234),
+					GroupID: ptr.To(1234),
 				}).Return(streamListForSpecificGroup, nil)
 			},
 			steps: []resource.TestStep{
@@ -93,7 +93,7 @@ func TestDataDatastreams(t *testing.T) {
 		"list streams with specified group id using grp prefix": {
 			init: func(t *testing.T, m *datastream.Mock) {
 				m.On("ListStreams", mock.Anything, datastream.ListStreamsRequest{
-					GroupID: tools.IntPtr(1234),
+					GroupID: ptr.To(1234),
 				}).Return(streamListForSpecificGroup, nil)
 			},
 			steps: []resource.TestStep{
@@ -144,9 +144,9 @@ func TestDataDatastreams(t *testing.T) {
 			test.init(t, client)
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProviderFactories: testAccProviders,
-					IsUnitTest:        true,
-					Steps:             test.steps,
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+					IsUnitTest:               true,
+					Steps:                    test.steps,
 				})
 			})
 			client.AssertExpectations(t)

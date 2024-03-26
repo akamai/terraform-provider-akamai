@@ -3,12 +3,15 @@ package cloudlets
 import (
 	"crypto/sha1"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cloudlets"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/cloudlets"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -174,6 +177,17 @@ func parseObjectMatchValue(criteriaMap map[string]interface{}, handler objectMat
 		}
 	}
 	return nil, nil
+}
+
+func handleEmptyMatchRules(err error, d *schema.ResourceData, dataSourceID string) diag.Diagnostics {
+	if errors.Is(err, tf.ErrNotFound) {
+		if err := d.Set("json", ""); err != nil {
+			return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
+		}
+		d.SetId(dataSourceID)
+		return nil
+	}
+	return diag.FromErr(err)
 }
 
 func getObjectMatchValueObjectOrSimpleOrRange(omv map[string]interface{}, t string) (interface{}, error) {

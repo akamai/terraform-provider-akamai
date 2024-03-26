@@ -9,12 +9,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cps"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
-	cpstools "github.com/akamai/terraform-provider-akamai/v5/pkg/providers/cps/tools"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/cps"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
+	cpstools "github.com/akamai/terraform-provider-akamai/v6/pkg/providers/cps/tools"
 	"github.com/apex/log"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -57,7 +57,7 @@ var (
 			},
 			"organization": {
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				Description: "Organization where contact is hired",
 			},
 			"email": {
@@ -72,7 +72,7 @@ var (
 			},
 			"address_line_one": {
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				Description: "The address of the contact",
 			},
 			"address_line_two": {
@@ -82,22 +82,22 @@ var (
 			},
 			"city": {
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				Description: "City of residence of the contact",
 			},
 			"region": {
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				Description: "The region of the contact",
 			},
 			"postal_code": {
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				Description: "Postal code of the contact",
 			},
 			"country_code": {
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				Description: "Country code of the contact",
 			},
 		},
@@ -275,10 +275,14 @@ func createAttrs(en *cps.Enrollment, enID int) map[string]interface{} {
 		"certificate_type":                  en.CertificateType,
 		"validation_type":                   en.ValidationType,
 		"registration_authority":            en.RA,
+		"org_id":                            en.OrgID,
+		"assigned_slots":                    en.AssignedSlots,
+		"staging_slots":                     en.StagingSlots,
+		"production_slots":                  en.ProductionSlots,
 	}
 }
 
-func getChallengesAttrs(ctx context.Context, en *cps.Enrollment, client cps.CPS) (map[string]interface{}, error) {
+func getChallengesAttrs(ctx context.Context, en *cps.GetEnrollmentResponse, client cps.CPS) (map[string]interface{}, error) {
 	changeID, err := cpstools.GetChangeIDFromPendingChanges(en.PendingChanges)
 
 	if err != nil {
@@ -365,7 +369,7 @@ func enrollmentDelete(ctx context.Context, d *schema.ResourceData, m interface{}
 	}
 	req := cps.RemoveEnrollmentRequest{
 		EnrollmentID:              enrollmentID,
-		AllowCancelPendingChanges: tools.BoolPtr(true),
+		AllowCancelPendingChanges: ptr.To(true),
 	}
 	if _, err = client.RemoveEnrollment(ctx, req); err != nil {
 		return diag.FromErr(err)
@@ -373,7 +377,7 @@ func enrollmentDelete(ctx context.Context, d *schema.ResourceData, m interface{}
 	return nil
 }
 
-func readAttrs(enrollment *cps.Enrollment, d *schema.ResourceData) (map[string]interface{}, error) {
+func readAttrs(enrollment *cps.GetEnrollmentResponse, d *schema.ResourceData) (map[string]interface{}, error) {
 	attrs := make(map[string]interface{})
 	adminContact := cpstools.ContactInfoToMap(*enrollment.AdminContact)
 	attrs["common_name"] = enrollment.CSR.CN

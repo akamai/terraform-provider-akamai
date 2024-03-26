@@ -3,11 +3,10 @@ package property
 import (
 	"testing"
 
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
-
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 )
 
 func Test_readPropertyRuleFormats(t *testing.T) {
@@ -23,7 +22,7 @@ func Test_readPropertyRuleFormats(t *testing.T) {
 		).Return(&papi.GetRuleFormatsResponse{RuleFormats: ruleFormats}, nil)
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{{
 					Config: testutils.LoadFixtureString(t, "testdata/TestDSPropertyRuleFormats/rule_formats.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(

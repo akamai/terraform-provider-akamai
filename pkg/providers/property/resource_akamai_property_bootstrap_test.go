@@ -6,9 +6,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/str"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
@@ -117,7 +117,7 @@ func TestBootstrapResourceCreate(t *testing.T) {
 
 			useClient(m, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProtoV5ProviderFactories: newProviderFactory(withMockClient(m)),
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					IsUnitTest:               true,
 					Steps: []resource.TestStep{
 						{
@@ -253,7 +253,7 @@ func TestBootstrapResourceUpdate(t *testing.T) {
 
 			useClient(m, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProtoV5ProviderFactories: newProviderFactory(withMockClient(m)),
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					IsUnitTest:               true,
 					Steps: []resource.TestStep{
 						{
@@ -378,7 +378,7 @@ func TestBootstrapResourceImport(t *testing.T) {
 
 			useClient(m, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProtoV5ProviderFactories: newProviderFactory(withMockClient(m)),
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					IsUnitTest:               true,
 					Steps: []resource.TestStep{
 						{
@@ -411,10 +411,10 @@ func checkPropertyBootstrapAttributes(data testDataForPropertyBootstrap) resourc
 			resource.TestCheckResourceAttr("akamai_property_bootstrap.test", "name", data.name))
 	}
 	return resource.ComposeAggregateTestCheckFunc(
-		resource.TestCheckResourceAttr("akamai_property_bootstrap.test", "id", tools.AddPrefix(data.propertyID, "prp_")),
-		resource.TestCheckResourceAttr("akamai_property_bootstrap.test", "group_id", tools.AddPrefix(data.groupID, "grp_")),
-		resource.TestCheckResourceAttr("akamai_property_bootstrap.test", "contract_id", tools.AddPrefix(data.contractID, "ctr_")),
-		resource.TestCheckResourceAttr("akamai_property_bootstrap.test", "product_id", tools.AddPrefix(data.productID, "prd_")),
+		resource.TestCheckResourceAttr("akamai_property_bootstrap.test", "id", str.AddPrefix(data.propertyID, "prp_")),
+		resource.TestCheckResourceAttr("akamai_property_bootstrap.test", "group_id", str.AddPrefix(data.groupID, "grp_")),
+		resource.TestCheckResourceAttr("akamai_property_bootstrap.test", "contract_id", str.AddPrefix(data.contractID, "ctr_")),
+		resource.TestCheckResourceAttr("akamai_property_bootstrap.test", "product_id", str.AddPrefix(data.productID, "prd_")),
 		resource.TestCheckResourceAttr("akamai_property_bootstrap.test", "name", data.name),
 	)
 }

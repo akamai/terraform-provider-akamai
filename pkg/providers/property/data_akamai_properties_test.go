@@ -4,11 +4,10 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
-
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
 )
 
 func TestDataProperties(t *testing.T) {
@@ -24,7 +23,7 @@ func TestDataProperties(t *testing.T) {
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{{
 					Config: testutils.LoadFixtureString(t, "testdata/TestDataProperties/properties.tf"),
 					Check:  buildAggregatedTest(properties, "grp_testctr_test", "grp_test", "ctr_test"),
@@ -47,7 +46,7 @@ func TestDataProperties(t *testing.T) {
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{{
 					Config: testutils.LoadFixtureString(t, "testdata/TestDataProperties/properties_no_group_prefix.tf"),
 					Check:  buildAggregatedTest(properties, "grp_testctr_test", "test", "ctr_test"),
@@ -70,7 +69,7 @@ func TestDataProperties(t *testing.T) {
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{{
 					Config: testutils.LoadFixtureString(t, "testdata/TestDataProperties/properties_no_contract_prefix.tf"),
 					Check:  buildAggregatedTest(properties, "grp_testctr_test", "grp_test", "test"),

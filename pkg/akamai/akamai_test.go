@@ -5,12 +5,13 @@ import (
 	"os"
 	"testing"
 
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/subprovider"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/subprovider"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
-	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	dataschema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func TestMain(m *testing.M) {
@@ -32,10 +33,20 @@ func TestMain(m *testing.M) {
 type dummy struct {
 }
 
-var _ subprovider.Framework = dummy{}
+// SDKDataSources implements subprovider.Subprovider.
+func (dummy) SDKDataSources() map[string]*schema.Resource {
+	return nil
+}
 
-// DataSources implements subprovider.Framework.
-func (dummy) DataSources() []func() datasource.DataSource {
+// SDKResources implements subprovider.Subprovider.
+func (dummy) SDKResources() map[string]*schema.Resource {
+	return nil
+}
+
+var _ subprovider.Subprovider = dummy{}
+
+// FrameworkDataSources implements subprovider.Subprovider.
+func (dummy) FrameworkDataSources() []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		func() datasource.DataSource {
 			return dummyDataSource{}
@@ -43,8 +54,8 @@ func (dummy) DataSources() []func() datasource.DataSource {
 	}
 }
 
-// Resources implements subprovider.Framework.
-func (dummy) Resources() []func() resource.Resource {
+// FrameworkResources implements subprovider.Subprovider.
+func (dummy) FrameworkResources() []func() resource.Resource {
 	return nil
 }
 
@@ -75,9 +86,9 @@ func (dummyDataSource) Read(ctx context.Context, req datasource.ReadRequest, res
 
 // Schema implements datasource.DataSource.
 func (dummyDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
-	resp.Schema = schema.Schema{
-		Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{
+	resp.Schema = dataschema.Schema{
+		Attributes: map[string]dataschema.Attribute{
+			"id": dataschema.StringAttribute{
 				Computed:    true,
 				Description: "id",
 			},

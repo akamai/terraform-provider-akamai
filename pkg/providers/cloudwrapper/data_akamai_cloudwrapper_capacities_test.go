@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cloudwrapper"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/cloudwrapper"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/assert"
@@ -105,7 +105,7 @@ func TestCapacitiesDataSource(t *testing.T) {
 			}
 
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: newProviderFactory(withMockClient(client)),
+				ProtoV6ProviderFactories: newProviderFactory(withMockClient(client)),
 				IsUnitTest:               true,
 				Steps: []resource.TestStep{
 					{
@@ -157,7 +157,7 @@ func dataCloudWrapperCapacityConfig(contracts []string) string {
 
 	return fmt.Sprintf(`
 provider "akamai" {
-	edgerc = "../../test/edgerc"
+	edgerc = "../../common/testutils/edgerc"
 }
 
 data "akamai_cloudwrapper_capacities" "test" {

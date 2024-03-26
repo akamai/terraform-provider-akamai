@@ -7,8 +7,12 @@ import (
 var (
 	// ErrEdgeworkerActivation is returned when edgeworker activation fails
 	ErrEdgeworkerActivation = errors.New("edgeworker activation")
+	// ErrEdgeworkerNoCurrentActivation is returned when edgeworker activation fails
+	ErrEdgeworkerNoCurrentActivation = errors.New("edgeworker is not active")
 	// ErrEdgeworkerDeactivation is returned when edgeworker deactivation fails
 	ErrEdgeworkerDeactivation = errors.New("edgeworker deactivation")
+	// ErrEdgeworkerNoLatestDeactivation is returned when edgeworker deactivation fails
+	ErrEdgeworkerNoLatestDeactivation = errors.New("edgeworker does not have any deactivations")
 	// ErrEdgeworkerActivationFailure is returned when edgeworker activation fails due to a timeout
 	ErrEdgeworkerActivationFailure = errors.New("edgeworker activation failure")
 	// ErrEdgeworkerDeactivationFailure is returned when edgeworker deactivation fails due to a timeout

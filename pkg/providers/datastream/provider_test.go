@@ -1,36 +1,15 @@
 package datastream
 
 import (
-	"log"
-	"os"
 	"sync"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/datastream"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/datastream"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 )
 
-var testAccProviders map[string]func() (*schema.Provider, error)
-
-var testAccProvider *schema.Provider
-
 func TestMain(m *testing.M) {
-	testAccProvider = akamai.NewPluginProvider(NewSubprovider())()
-	testAccProviders = map[string]func() (*schema.Provider, error){
-		"akamai": func() (*schema.Provider, error) {
-			return testAccProvider, nil
-		},
-	}
-	if err := testutils.TFTestSetup(); err != nil {
-		log.Fatal(err)
-	}
-	exitCode := m.Run()
-	if err := testutils.TFTestTeardown(); err != nil {
-		log.Fatal(err)
-	}
-	os.Exit(exitCode)
+	testutils.TestRunner(m)
 }
 
 // Only allow one test at a time to patch the client via useClient()

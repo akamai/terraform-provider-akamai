@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/gtm"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/gtm"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -14,16 +14,16 @@ import (
 )
 
 var (
-	_ datasource.DataSource              = &asmapDataSource{}
-	_ datasource.DataSourceWithConfigure = &asmapDataSource{}
+	_ datasource.DataSource              = &asMapDataSource{}
+	_ datasource.DataSourceWithConfigure = &asMapDataSource{}
 )
 
-// NewGTMAsmapDataSource returns a new GTM asmap data source
-func NewGTMAsmapDataSource() datasource.DataSource {
-	return &asmapDataSource{}
+// NewGTMASMapDataSource returns a new GTM ASMap data source
+func NewGTMASMapDataSource() datasource.DataSource {
+	return &asMapDataSource{}
 }
 
-type asmapDataSourceModel struct {
+type asMapDataSourceModel struct {
 	ID                types.String       `tfsdk:"id"`
 	Domain            types.String       `tfsdk:"domain"`
 	Name              types.String       `tfsdk:"map_name"`
@@ -32,12 +32,12 @@ type asmapDataSourceModel struct {
 	Links             []link             `tfsdk:"links"`
 }
 
-type asmapDataSource struct {
+type asMapDataSource struct {
 	meta meta.Meta
 }
 
 // Configure configures data source at the beginning of the lifecycle.
-func (d *asmapDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+func (d *asMapDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -54,12 +54,12 @@ func (d *asmapDataSource) Configure(_ context.Context, req datasource.ConfigureR
 }
 
 // Metadata configures data source's meta information.
-func (*asmapDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+func (*asMapDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = "akamai_gtm_asmap"
 }
 
 var (
-	asmapBlock = map[string]schema.Block{
+	asMapBlock = map[string]schema.Block{
 		"assignments": schema.ListNestedBlock{
 			Description: "Contains information about the AS zone groupings of AS IDs.",
 			NestedObject: schema.NestedBlockObject{
@@ -112,7 +112,7 @@ var (
 )
 
 // Schema is used to define data source's terraform schema.
-func (d *asmapDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+func (d *asMapDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "GTM AS map data source.",
 		Attributes: map[string]schema.Attribute{
@@ -130,24 +130,24 @@ func (d *asmapDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, 
 				Description: "A descriptive label for the AS map",
 			},
 		},
-		Blocks: asmapBlock,
+		Blocks: asMapBlock,
 	}
 }
 
 // Read is called when the provider must read data source values in order to update state.
-func (d *asmapDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+func (d *asMapDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	tflog.Debug(ctx, "GTM AS map DataSource Read")
 
-	var data asmapDataSourceModel
+	var data asMapDataSourceModel
 
 	if resp.Diagnostics.Append(req.Config.Get(ctx, &data)...); resp.Diagnostics.HasError() {
 		return
 	}
 
-	client := frameworkInst.Client(d.meta)
-	asMap, err := client.GetAsMap(ctx, data.Name.ValueString(), data.Domain.ValueString())
+	client := Client(d.meta)
+	asMap, err := client.GetASMap(ctx, data.Name.ValueString(), data.Domain.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError("fetching GTM ASmap failed: ", err.Error())
+		resp.Diagnostics.AddError("fetching GTM ASMap failed: ", err.Error())
 		return
 	}
 
@@ -157,24 +157,24 @@ func (d *asmapDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 
 }
 
-func (m *asmapDataSourceModel) setAttributes(asmap *gtm.AsMap) {
-	m.Name = types.StringValue(asmap.Name)
-	m.setDefaultDatacenter(asmap.DefaultDatacenter)
-	m.setAssignments(asmap.Assignments)
-	m.setLinks(asmap.Links)
+func (m *asMapDataSourceModel) setAttributes(asMap *gtm.ASMap) {
+	m.Name = types.StringValue(asMap.Name)
+	m.setDefaultDatacenter(asMap.DefaultDatacenter)
+	m.setAssignments(asMap.Assignments)
+	m.setLinks(asMap.Links)
 	m.ID = types.StringValue("gtm_asmap")
 
 }
 
-func (m *asmapDataSourceModel) setDefaultDatacenter(d *gtm.DatacenterBase) {
+func (m *asMapDataSourceModel) setDefaultDatacenter(d *gtm.DatacenterBase) {
 	m.DefaultDatacenter = &defaultDatacenter{
-		DatacenterID: types.Int64Value(int64(d.DatacenterId)),
+		DatacenterID: types.Int64Value(int64(d.DatacenterID)),
 		Nickname:     types.StringValue(d.Nickname),
 	}
 }
 
-func (m *asmapDataSourceModel) setAssignments(assignments []*gtm.AsAssignment) {
-	toBasetypesInt64Slice := func(n []int64) []basetypes.Int64Value {
+func (m *asMapDataSourceModel) setAssignments(assignments []*gtm.ASAssignment) {
+	toBaseTypesInt64Slice := func(n []int64) []basetypes.Int64Value {
 		out := make([]basetypes.Int64Value, 0, len(n))
 		for _, number := range n {
 			out = append(out, types.Int64Value(number))
@@ -184,15 +184,15 @@ func (m *asmapDataSourceModel) setAssignments(assignments []*gtm.AsAssignment) {
 
 	for _, a := range assignments {
 		assignmentObject := asMapAssignment{
-			DatacenterID: types.Int64Value(int64(a.DatacenterId)),
+			DatacenterID: types.Int64Value(int64(a.DatacenterID)),
 			Nickname:     types.StringValue(a.Nickname),
-			ASNumbers:    toBasetypesInt64Slice(a.AsNumbers),
+			ASNumbers:    toBaseTypesInt64Slice(a.ASNumbers),
 		}
 		m.Assignments = append(m.Assignments, assignmentObject)
 	}
 }
 
-func (m *asmapDataSourceModel) setLinks(links []*gtm.Link) {
+func (m *asMapDataSourceModel) setLinks(links []*gtm.Link) {
 	for _, l := range links {
 		linkObject := link{
 			Rel:  types.StringValue(l.Rel),

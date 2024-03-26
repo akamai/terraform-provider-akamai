@@ -5,16 +5,16 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
-
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
 )
 
 func TestVerifyProductsDataSourceSchema(t *testing.T) {
 	t.Run("akamai_property_products - test data source required contract", func(t *testing.T) {
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV5ProviderFactories: testAccProviders,
+			ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 			IsUnitTest:               true,
 			Steps: []resource.TestStep{{
 				Config:      testConfig(""),
@@ -38,7 +38,7 @@ func TestOutputProductsDataSource(t *testing.T) {
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				IsUnitTest:               true,
 				Steps: []resource.TestStep{{
 					Config: testConfig("contract_id = \"ctr_test\""),
@@ -55,7 +55,7 @@ func TestOutputProductsDataSource(t *testing.T) {
 func testConfig(contractIDConfig string) string {
 	return fmt.Sprintf(`
 	provider "akamai" {
-		edgerc = "../../test/edgerc"
+		edgerc = "../../common/testutils/edgerc"
 	}
 
 	data "akamai_property_products" "example" { %s }

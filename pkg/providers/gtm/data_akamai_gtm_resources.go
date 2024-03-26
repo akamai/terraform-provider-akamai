@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -146,7 +146,7 @@ func (d *resourcesDataSource) Read(ctx context.Context, request datasource.ReadR
 		return
 	}
 
-	client := frameworkInst.Client(d.meta)
+	client := Client(d.meta)
 	resources, err := client.ListResources(ctx, data.Domain.ValueString())
 	if err != nil {
 		response.Diagnostics.AddError("fetching GTM resources failed:", err.Error())

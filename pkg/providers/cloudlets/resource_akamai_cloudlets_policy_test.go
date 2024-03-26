@@ -5,10 +5,10 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cloudlets"
-	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cloudlets/v3"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/cloudlets"
+	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/cloudlets/v3"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/jinzhu/copier"
@@ -86,7 +86,7 @@ func TestResourcePolicyV2(t *testing.T) {
 			client.On("ListPolicyVersions", mock.Anything, cloudlets.ListPolicyVersionsRequest{
 				PolicyID: policyId,
 				Offset:   0,
-				PageSize: tools.IntPtr(1000),
+				PageSize: ptr.To(1000),
 			}).Return(versions, nil).Times(times)
 		}
 
@@ -196,7 +196,7 @@ func TestResourcePolicyV2(t *testing.T) {
 		}
 
 		expectImportPolicy = func(_ *testing.T, client *cloudlets.Mock, policyID int64, policyName string) {
-			client.On("ListPolicies", mock.Anything, cloudlets.ListPoliciesRequest{PageSize: tools.IntPtr(1000), Offset: 0}).Return([]cloudlets.Policy{
+			client.On("ListPolicies", mock.Anything, cloudlets.ListPoliciesRequest{PageSize: ptr.To(1000), Offset: 0}).Return([]cloudlets.Policy{
 				{
 					PolicyID: policyID, Name: policyName,
 				},
@@ -277,7 +277,7 @@ func TestResourcePolicyV2(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -360,7 +360,7 @@ func TestResourcePolicyV2(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -415,7 +415,7 @@ func TestResourcePolicyV2(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -473,7 +473,7 @@ func TestResourcePolicyV2(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -540,7 +540,7 @@ func TestResourcePolicyV2(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -607,7 +607,7 @@ func TestResourcePolicyV2(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -683,7 +683,7 @@ func TestResourcePolicyV2(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -745,7 +745,7 @@ func TestResourcePolicyV2(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -781,7 +781,7 @@ func TestResourcePolicyV2(t *testing.T) {
 		expectRemovePolicy(t, client, 2, 1, 0)
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -808,7 +808,7 @@ func TestResourcePolicyV2(t *testing.T) {
 		expectRemovePolicy(t, client, 2, 1, 0)
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -847,7 +847,7 @@ func TestResourcePolicyV2(t *testing.T) {
 		expectRemovePolicy(t, client, 2, 1, 0)
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -877,7 +877,7 @@ func TestResourcePolicyV2(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -978,7 +978,7 @@ func TestResourcePolicyV2(t *testing.T) {
 			testCases[i].Expectations(client)
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProtoV5ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{
 						{
 							Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -1002,7 +1002,7 @@ func TestResourcePolicyV2(t *testing.T) {
 		expectRemovePolicy(t, client, 2, 1, 0)
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -1029,7 +1029,7 @@ func TestResourcePolicyV2(t *testing.T) {
 		expectRemovePolicy(t, client, 2, 1, 0)
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -1086,7 +1086,7 @@ func TestResourcePolicyV2(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -1169,7 +1169,7 @@ func TestResourcePolicyV2(t *testing.T) {
 					client.On("GetPolicy", mock.Anything, cloudlets.GetPolicyRequest{PolicyID: policy.PolicyID}).Return(nil, fmt.Errorf("GetPolicyError"))
 					client.On("ListPolicyVersions", mock.Anything, cloudlets.ListPolicyVersionsRequest{PolicyID: policy.PolicyID,
 						Offset:   0,
-						PageSize: tools.IntPtr(1000),
+						PageSize: ptr.To(1000),
 					}).Return([]cloudlets.PolicyVersion{{
 						PolicyID: 2,
 						Version:  1,
@@ -1185,7 +1185,7 @@ func TestResourcePolicyV2(t *testing.T) {
 			testCases[i].Expectations(client)
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProtoV5ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{
 						{
 							Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -1207,7 +1207,7 @@ func TestResourcePolicyV2(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -1259,7 +1259,7 @@ func TestResourcePolicyV2(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -1316,12 +1316,12 @@ func TestResourcePolicyV2(t *testing.T) {
 		// custom import mocks
 		// mock that 1000 policies are returned, desired not found
 		client.On("ListPolicies", mock.Anything, cloudlets.ListPoliciesRequest{
-			PageSize: tools.IntPtr(1000),
+			PageSize: ptr.To(1000),
 			Offset:   0,
 		}).Return(make([]cloudlets.Policy, 1000), nil).Once()
 		// mock that desired policy is on the next page
 		client.On("ListPolicies", mock.Anything, cloudlets.ListPoliciesRequest{
-			PageSize: tools.IntPtr(1000),
+			PageSize: ptr.To(1000),
 			Offset:   1,
 		}).Return([]cloudlets.Policy{
 			{
@@ -1333,7 +1333,7 @@ func TestResourcePolicyV2(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -1359,7 +1359,7 @@ func TestResourcePolicyV2(t *testing.T) {
 		policy, version := expectCreatePolicy(t, clientV2, 2, "test_policy", nil, "test policy description")
 		policyVersions := []cloudlets.PolicyVersion{*version}
 		expectReadPolicy(t, clientV2, policy, policyVersions, 2)
-		clientV2.On("ListPolicies", mock.Anything, cloudlets.ListPoliciesRequest{PageSize: tools.IntPtr(1000), Offset: 0}).
+		clientV2.On("ListPolicies", mock.Anything, cloudlets.ListPoliciesRequest{PageSize: ptr.To(1000), Offset: 0}).
 			Return([]cloudlets.Policy{}, nil).Once()
 		clientV3.On("ListPolicies", mock.Anything, v3.ListPoliciesRequest{
 			Page: 0,
@@ -1371,7 +1371,7 @@ func TestResourcePolicyV2(t *testing.T) {
 
 		useClientV2AndV3(clientV2, clientV3, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -1402,7 +1402,7 @@ func TestResourcePolicyV2(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -1435,7 +1435,7 @@ func TestResourcePolicyV2(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -1475,7 +1475,7 @@ func TestResourcePolicyV3(t *testing.T) {
 			version := &v3.PolicyVersion{
 				PolicyID:      policyID,
 				PolicyVersion: 1,
-				Description:   tools.StringPtr(description),
+				Description:   ptr.To(description),
 				MatchRules:    matchRules,
 				MatchRulesWarnings: []v3.MatchRulesWarning{
 					{
@@ -1499,7 +1499,7 @@ func TestResourcePolicyV3(t *testing.T) {
 					PolicyID: policyID,
 					CreatePolicyVersion: v3.CreatePolicyVersion{
 						MatchRules:  matchRules,
-						Description: tools.StringPtr(description),
+						Description: ptr.To(description),
 					},
 				}).Return(version, nil).Once()
 			} else {
@@ -1507,7 +1507,7 @@ func TestResourcePolicyV3(t *testing.T) {
 					PolicyID: policyID,
 					CreatePolicyVersion: v3.CreatePolicyVersion{
 						MatchRules:  make(v3.MatchRules, 0),
-						Description: tools.StringPtr(description),
+						Description: ptr.To(description),
 					},
 				}).Return(version, nil).Once()
 			}
@@ -1579,7 +1579,7 @@ func TestResourcePolicyV3(t *testing.T) {
 
 			client.On("CreatePolicyVersion", mock.Anything, v3.CreatePolicyVersionRequest{
 				CreatePolicyVersion: v3.CreatePolicyVersion{
-					Description: tools.StringPtr("test policy description"),
+					Description: ptr.To("test policy description"),
 					MatchRules:  newMatchRules,
 				},
 				PolicyID: policyID,
@@ -1599,7 +1599,7 @@ func TestResourcePolicyV3(t *testing.T) {
 			versionUpdate.MatchRules = newMatchRules
 			client.On("UpdatePolicyVersion", mock.Anything, v3.UpdatePolicyVersionRequest{
 				UpdatePolicyVersion: v3.UpdatePolicyVersion{
-					Description: tools.StringPtr("test policy description"),
+					Description: ptr.To("test policy description"),
 					MatchRules:  newMatchRules,
 				},
 				PolicyID:      policyID,
@@ -1626,7 +1626,7 @@ func TestResourcePolicyV3(t *testing.T) {
 				},
 			}
 			clientV2.On("ListPolicies", mock.Anything, cloudlets.ListPoliciesRequest{
-				PageSize: tools.IntPtr(1000),
+				PageSize: ptr.To(1000),
 				Offset:   0,
 			}).Return(listPoliciesV2Resp, nil).Once()
 			clientV3.On("ListPolicies", mock.Anything, v3.ListPoliciesRequest{
@@ -1720,7 +1720,7 @@ func TestResourcePolicyV3(t *testing.T) {
 
 		useClientV3(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -1782,7 +1782,7 @@ func TestResourcePolicyV3(t *testing.T) {
 		version = &v3.PolicyVersion{
 			PolicyID:      2,
 			PolicyVersion: 2,
-			Description:   tools.StringPtr("new description after drift"),
+			Description:   ptr.To("new description after drift"),
 			MatchRules:    matchRules,
 			MatchRulesWarnings: []v3.MatchRulesWarning{
 				{
@@ -1798,7 +1798,7 @@ func TestResourcePolicyV3(t *testing.T) {
 
 		useClientV3(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -1908,7 +1908,7 @@ func TestResourcePolicyV3(t *testing.T) {
 
 		useClientV3(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -2009,7 +2009,7 @@ func TestResourcePolicyV3(t *testing.T) {
 
 		useClientV3(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -2066,7 +2066,7 @@ func TestResourcePolicyV3(t *testing.T) {
 
 		useClientV3(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -2131,7 +2131,7 @@ func TestResourcePolicyV3(t *testing.T) {
 
 		useClientV3(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -2196,7 +2196,7 @@ func TestResourcePolicyV3(t *testing.T) {
 
 		useClientV3(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -2269,7 +2269,7 @@ func TestResourcePolicyV3(t *testing.T) {
 
 		useClientV3(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -2328,7 +2328,7 @@ func TestResourcePolicyV3(t *testing.T) {
 
 		useClientV3(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -2363,7 +2363,7 @@ func TestResourcePolicyV3(t *testing.T) {
 		expectRemovePolicy(t, client, 2)
 		useClientV3(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -2388,13 +2388,13 @@ func TestResourcePolicyV3(t *testing.T) {
 		expectReadPolicy(t, client, policy, version, 3)
 
 		version = &v3.PolicyVersion{
-			Description:   tools.StringPtr("test policy description"),
+			Description:   ptr.To("test policy description"),
 			PolicyID:      2,
 			PolicyVersion: 1,
 		}
 		client.On("CreatePolicyVersion", mock.Anything, v3.CreatePolicyVersionRequest{
 			CreatePolicyVersion: v3.CreatePolicyVersion{
-				Description: tools.StringPtr("test policy description"),
+				Description: ptr.To("test policy description"),
 				MatchRules:  make(v3.MatchRules, 0),
 			},
 			PolicyID: 2,
@@ -2403,7 +2403,7 @@ func TestResourcePolicyV3(t *testing.T) {
 		expectRemovePolicy(t, client, 2)
 		useClientV3(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -2438,7 +2438,7 @@ func TestResourcePolicyV3(t *testing.T) {
 		expectRemovePolicy(t, client, 2)
 		useClientV3(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -2476,7 +2476,7 @@ func TestResourcePolicyV3(t *testing.T) {
 		expectRemovePolicy(t, client, 2)
 		useClientV3(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -2506,7 +2506,7 @@ func TestResourcePolicyV3(t *testing.T) {
 
 		useClientV3(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -2564,7 +2564,7 @@ func TestResourcePolicyV3(t *testing.T) {
 			}).Return(policy, nil)
 			client.On("CreatePolicyVersion", mock.Anything, v3.CreatePolicyVersionRequest{
 				CreatePolicyVersion: v3.CreatePolicyVersion{
-					Description: tools.StringPtr("test policy description"),
+					Description: ptr.To("test policy description"),
 					MatchRules:  matchRules,
 				},
 				PolicyID: 2,
@@ -2605,7 +2605,7 @@ func TestResourcePolicyV3(t *testing.T) {
 			testCases[i].Expectations(client)
 			useClientV3(client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProtoV5ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{
 						{
 							Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -2631,7 +2631,7 @@ func TestResourcePolicyV3(t *testing.T) {
 		expectRemovePolicy(t, client, 2)
 		useClientV3(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -2660,7 +2660,7 @@ func TestResourcePolicyV3(t *testing.T) {
 		expectRemovePolicy(t, client, 2)
 		useClientV3(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -2715,7 +2715,7 @@ func TestResourcePolicyV3(t *testing.T) {
 
 		useClientV3(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -2770,7 +2770,7 @@ func TestResourcePolicyV3(t *testing.T) {
 			}).Return(version, nil).Once()
 			client.On("UpdatePolicyVersion", mock.Anything, v3.UpdatePolicyVersionRequest{
 				UpdatePolicyVersion: v3.UpdatePolicyVersion{
-					Description: tools.StringPtr("test policy description"),
+					Description: ptr.To("test policy description"),
 					MatchRules:  matchRules[:1],
 				},
 				PolicyID:      policy.ID,
@@ -2809,7 +2809,7 @@ func TestResourcePolicyV3(t *testing.T) {
 			testCases[i].Expectations(client)
 			useClientV3(client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ProtoV5ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{
 						{
 							Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
@@ -2837,7 +2837,7 @@ func TestResourcePolicyV3(t *testing.T) {
 
 		useClientV2AndV3(clientV2, clientV3, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/create_no_match_rules/policy_create.tf", testDir)),
@@ -2873,7 +2873,7 @@ func TestResourcePolicyV3(t *testing.T) {
 
 		useClientV2AndV3(clientV2, clientV3, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/create_no_match_rules_no_description/policy_create.tf", testDir)),
@@ -2905,7 +2905,7 @@ func TestResourcePolicyV3(t *testing.T) {
 		policy, version := expectCreatePolicy(t, clientV3, 2, 123, nil, "test policy description")
 		expectReadPolicy(t, clientV3, policy, version, 2)
 		clientV2.On("ListPolicies", mock.Anything, cloudlets.ListPoliciesRequest{
-			PageSize: tools.IntPtr(1000),
+			PageSize: ptr.To(1000),
 			Offset:   0,
 		}).Return([]cloudlets.Policy{}, nil).Once()
 		clientV3.On("ListPolicies", mock.Anything, v3.ListPoliciesRequest{
@@ -2917,7 +2917,7 @@ func TestResourcePolicyV3(t *testing.T) {
 
 		useClientV2AndV3(clientV2, clientV3, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/create_no_match_rules/policy_create.tf", testDir)),
@@ -2950,7 +2950,7 @@ func TestResourcePolicyV3(t *testing.T) {
 		policy, version := expectCreatePolicy(t, clientV3, 2, 123, nil, "test policy description")
 		expectReadPolicy(t, clientV3, policy, version, 3)
 		clientV2.On("ListPolicies", mock.Anything, cloudlets.ListPoliciesRequest{
-			PageSize: tools.IntPtr(1000),
+			PageSize: ptr.To(1000),
 			Offset:   0,
 		}).Return(nil, fmt.Errorf("v2 api error")).Once()
 		clientV3.On("ListPolicies", mock.Anything, v3.ListPoliciesRequest{
@@ -2966,7 +2966,7 @@ func TestResourcePolicyV3(t *testing.T) {
 
 		useClientV2AndV3(clientV2, clientV3, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/create_no_match_rules/policy_create.tf", testDir)),
@@ -2998,7 +2998,7 @@ func TestResourcePolicyV3(t *testing.T) {
 		policy, version := expectCreatePolicy(t, clientV3, 2, 123, nil, "test policy description")
 		expectReadPolicy(t, clientV3, policy, version, 2)
 		clientV2.On("ListPolicies", mock.Anything, cloudlets.ListPoliciesRequest{
-			PageSize: tools.IntPtr(1000),
+			PageSize: ptr.To(1000),
 			Offset:   0,
 		}).Return(nil, fmt.Errorf("v2 api error")).Once()
 		clientV3.On("ListPolicies", mock.Anything, v3.ListPoliciesRequest{
@@ -3008,7 +3008,7 @@ func TestResourcePolicyV3(t *testing.T) {
 
 		useClientV2AndV3(clientV2, clientV3, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/create_no_match_rules/policy_create.tf", testDir)),
@@ -3048,7 +3048,7 @@ func TestResourcePolicyV3(t *testing.T) {
 			},
 		}
 		clientV2.On("ListPolicies", mock.Anything, cloudlets.ListPoliciesRequest{
-			PageSize: tools.IntPtr(1000),
+			PageSize: ptr.To(1000),
 			Offset:   0,
 		}).Return(listPoliciesV2Resp, nil).Once()
 		// mock that 1000 policies are returned, desired one not found
@@ -3084,7 +3084,7 @@ func TestResourcePolicyV3(t *testing.T) {
 
 		useClientV2AndV3(clientV2, clientV3, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/create_no_match_rules/policy_create.tf", testDir)),

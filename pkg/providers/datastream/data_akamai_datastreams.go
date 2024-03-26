@@ -5,12 +5,12 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/datastream"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/datastream"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -138,7 +138,7 @@ func dataDatastreamStreamsRead(ctx context.Context, d *schema.ResourceData, m in
 	resID := "akamai_datastreams"
 	if groupIDInt != 0 {
 
-		req.GroupID = tools.IntPtr(groupIDInt)
+		req.GroupID = ptr.To(groupIDInt)
 		resID = fmt.Sprintf("%s_%d", resID, groupIDInt)
 	}
 

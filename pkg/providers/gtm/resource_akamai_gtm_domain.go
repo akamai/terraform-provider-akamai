@@ -8,13 +8,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/gtm"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/go-cty/cty"
-
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/gtm"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -178,6 +177,16 @@ func resourceGTMv1Domain() *schema.Resource {
 				Type:     schema.TypeBool,
 				Optional: true,
 			},
+			"sign_and_serve": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Description: "If set (true) we will sign the domain's resource records so that they can be validated by a validating resolver.",
+			},
+			"sign_and_serve_algorithm": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "The signing algorithm to use for signAndServe. One of the following values: RSA_SHA1, RSA_SHA256, RSA_SHA512, ECDSA_P256_SHA256, ECDSA_P384_SHA384, ED25519, ED448.",
+			},
 		},
 	}
 }
@@ -222,7 +231,7 @@ func resourceGTMv1DomainCreate(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(err)
 	}
 	logger.Infof("Creating domain [%s]", dname)
-	newDom, err := populateNewDomainObject(ctx, meta, d, m)
+	newDom, err := populateNewDomainObject(d, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -237,9 +246,9 @@ func resourceGTMv1DomainCreate(ctx context.Context, d *schema.ResourceData, m in
 			Detail:   err.Error(),
 		})
 	}
-	cStatus, err := inst.Client(meta).CreateDomain(ctx, newDom, queryArgs)
+	cStatus, err := Client(meta).CreateDomain(ctx, newDom, queryArgs)
 	if err != nil {
-		// Errored. Lets see if special hack
+		// Errored. Let's see if special hack
 		if !HashiAcc {
 			logger.Errorf("Domain Create failed: %s", err.Error())
 			return append(diags, diag.Diagnostic{
@@ -321,7 +330,7 @@ func resourceGTMv1DomainRead(ctx context.Context, d *schema.ResourceData, m inte
 	logger.Debugf("Reading Domain: %s", d.Id())
 	var diags diag.Diagnostics
 	// retrieve the domain
-	dom, err := inst.Client(meta).GetDomain(ctx, d.Id())
+	dom, err := Client(meta).GetDomain(ctx, d.Id())
 	if err != nil {
 		logger.Errorf("Domain Read error: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -348,7 +357,7 @@ func resourceGTMv1DomainUpdate(ctx context.Context, d *schema.ResourceData, m in
 	logger.Debugf("Updating Domain: %s", d.Id())
 	var diags diag.Diagnostics
 	// Get existing domain
-	existDom, err := inst.Client(meta).GetDomain(ctx, d.Id())
+	existDom, err := Client(meta).GetDomain(ctx, d.Id())
 	if err != nil {
 		logger.Errorf("Domain Update failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -373,7 +382,7 @@ func resourceGTMv1DomainUpdate(ctx context.Context, d *schema.ResourceData, m in
 			Detail:   err.Error(),
 		})
 	}
-	uStat, err := inst.Client(meta).UpdateDomain(ctx, existDom, args)
+	uStat, err := Client(meta).UpdateDomain(ctx, existDom, args)
 	if err != nil {
 		logger.Errorf("Domain Update failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -432,7 +441,7 @@ func resourceGTMv1DomainDelete(ctx context.Context, d *schema.ResourceData, m in
 	logger.Debugf("Deleting GTM Domain: %s", d.Id())
 	var diags diag.Diagnostics
 	// Get existing domain
-	existDom, err := inst.Client(meta).GetDomain(ctx, d.Id())
+	existDom, err := Client(meta).GetDomain(ctx, d.Id())
 	if err != nil {
 		logger.Errorf("Domain Delete failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -441,9 +450,9 @@ func resourceGTMv1DomainDelete(ctx context.Context, d *schema.ResourceData, m in
 			Detail:   err.Error(),
 		})
 	}
-	uStat, err := inst.Client(meta).DeleteDomain(ctx, existDom)
+	uStat, err := Client(meta).DeleteDomain(ctx, existDom)
 	if err != nil {
-		// Errored. Lets see if special hack
+		// Errored. Let's see if special hack
 		if !HashiAcc {
 			logger.Errorf("Error Domain Delete: %s", err.Error())
 			return append(diags, diag.Diagnostic{
@@ -532,11 +541,17 @@ func validateDomainType(v interface{}, _ cty.Path) diag.Diagnostics {
 }
 
 // Create and populate a new domain object from resource data
-func populateNewDomainObject(ctx context.Context, meta meta.Meta, d *schema.ResourceData, m interface{}) (*gtm.Domain, error) {
+func populateNewDomainObject(d *schema.ResourceData, m interface{}) (*gtm.Domain, error) {
 
-	name, _ := tf.GetStringValue("name", d)
-	domObj := inst.Client(meta).NewDomain(ctx, name, d.Get("type").(string))
-	err := populateDomainObject(d, domObj, m)
+	name, err := tf.GetStringValue("name", d)
+	if err != nil {
+		return nil, err
+	}
+	domObj := &gtm.Domain{
+		Name: name,
+		Type: d.Get("type").(string),
+	}
+	err = populateDomainObject(d, domObj, m)
 
 	return domObj, err
 
@@ -639,7 +654,7 @@ func populateDomainObject(d *schema.ResourceData, dom *gtm.Domain, m interface{}
 	}
 	vstr, err = tf.GetStringValue("default_ssl_client_private_key", d)
 	if err == nil || d.HasChange("default_ssl_client_private_key") {
-		dom.DefaultSslClientPrivateKey = vstr
+		dom.DefaultSSLClientPrivateKey = vstr
 	}
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		logger.Errorf("populateResourceObject() default_ssl_client_private_key failed: %v", err.Error())
@@ -660,7 +675,7 @@ func populateDomainObject(d *schema.ResourceData, dom *gtm.Domain, m interface{}
 		dom.MaxTestTimeout = vfloat
 	}
 	if cnameCoalescingEnabled, err := tf.GetBoolValue("cname_coalescing_enabled", d); err == nil {
-		dom.CnameCoalescingEnabled = cnameCoalescingEnabled
+		dom.CNameCoalescingEnabled = cnameCoalescingEnabled
 	}
 	vfloat, err = tf.GetFloat64Value("default_health_multiplier", d)
 	if err == nil {
@@ -704,7 +719,7 @@ func populateDomainObject(d *schema.ResourceData, dom *gtm.Domain, m interface{}
 	}
 	vstr, err = tf.GetStringValue("default_ssl_client_certificate", d)
 	if err == nil || d.HasChange("default_ssl_client_certificate") {
-		dom.DefaultSslClientCertificate = vstr
+		dom.DefaultSSLClientCertificate = vstr
 	}
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		logger.Errorf("populateResourceObject() default_ssl_client_certificate failed: %v", err.Error())
@@ -713,6 +728,19 @@ func populateDomainObject(d *schema.ResourceData, dom *gtm.Domain, m interface{}
 
 	if vbool, err := tf.GetBoolValue("end_user_mapping_enabled", d); err == nil {
 		dom.EndUserMappingEnabled = vbool
+	}
+
+	signAndServe, err := tf.GetBoolValue("sign_and_serve", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
+		return fmt.Errorf("could not get `sign_and_serve` attribute: %s", err)
+	}
+	dom.SignAndServe = signAndServe
+	signAndServeAlgorithm, err := tf.GetStringValue("sign_and_serve_algorithm", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
+		return fmt.Errorf("could not get `sign_and_serve_algorithm` attribute: %s", err)
+	}
+	if signAndServeAlgorithm != "" {
+		dom.SignAndServeAlgorithm = ptr.To(signAndServeAlgorithm)
 	}
 
 	return nil
@@ -741,10 +769,10 @@ func populateTerraformState(d *schema.ResourceData, dom *gtm.Domain, m interface
 		"map_update_interval":             dom.MapUpdateInterval,
 		"max_properties":                  dom.MaxProperties,
 		"max_resources":                   dom.MaxResources,
-		"default_ssl_client_private_key":  dom.DefaultSslClientPrivateKey,
+		"default_ssl_client_private_key":  dom.DefaultSSLClientPrivateKey,
 		"default_error_penalty":           dom.DefaultErrorPenalty,
 		"max_test_timeout":                dom.MaxTestTimeout,
-		"cname_coalescing_enabled":        dom.CnameCoalescingEnabled,
+		"cname_coalescing_enabled":        dom.CNameCoalescingEnabled,
 		"default_health_multiplier":       dom.DefaultHealthMultiplier,
 		"servermonitor_pool":              dom.ServermonitorPool,
 		"load_feedback":                   dom.LoadFeedback,
@@ -754,10 +782,18 @@ func populateTerraformState(d *schema.ResourceData, dom *gtm.Domain, m interface
 		"comment":                         dom.ModificationComments,
 		"min_test_interval":               dom.MinTestInterval,
 		"ping_packet_size":                dom.PingPacketSize,
-		"default_ssl_client_certificate":  dom.DefaultSslClientCertificate,
-		"end_user_mapping_enabled":        dom.EndUserMappingEnabled} {
+		"default_ssl_client_certificate":  dom.DefaultSSLClientCertificate,
+		"sign_and_serve":                  dom.SignAndServe,
+		"end_user_mapping_enabled":        dom.EndUserMappingEnabled,
+	} {
 		// walk through all state elements
 		err := d.Set(stateKey, stateValue)
+		if err != nil {
+			logger.Errorf("populateTerraformState failed: %s", err.Error())
+		}
+	}
+	if dom.SignAndServeAlgorithm != nil {
+		err := d.Set("sign_and_serve_algorithm", dom.SignAndServeAlgorithm)
 		if err != nil {
 			logger.Errorf("populateTerraformState failed: %s", err.Error())
 		}
@@ -780,7 +816,7 @@ func waitForCompletion(ctx context.Context, domain string, m interface{}) (bool,
 	logger.Debugf("WAIT: Sleep Interval [%v]", sleepInterval/time.Second)
 	logger.Debugf("WAIT: Sleep Timeout [%v]", sleepTimeout/time.Second)
 	for {
-		propStat, err := inst.Client(meta).GetDomainStatus(ctx, domain)
+		propStat, err := Client(meta).GetDomainStatus(ctx, domain)
 		if err != nil {
 			return false, err
 		}

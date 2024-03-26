@@ -4,12 +4,10 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/stretchr/testify/mock"
-
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/cloudlets"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cloudlets"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestDataCloudletsPolicy(t *testing.T) {
@@ -283,7 +281,7 @@ func TestDataCloudletsPolicy(t *testing.T) {
 				client.On("GetPolicy", mock.Anything, mock.Anything).Return(&test.getPolicyReturn, nil)
 				client.On("GetPolicyVersion", mock.Anything, mock.Anything).Return(&test.getPolicyVersionReturn, nil)
 				resource.UnitTest(t, resource.TestCase{
-					ProtoV5ProviderFactories: testAccProviders,
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{
 						{
 							Config: testutils.LoadFixtureString(t, test.configPath),

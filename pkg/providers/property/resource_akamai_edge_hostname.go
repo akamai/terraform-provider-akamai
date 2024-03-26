@@ -8,21 +8,25 @@ import (
 	"strings"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/hapi"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/hapi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/papi"
 
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/timeouts"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/logger"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/str"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/timeouts"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/logger"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func resourceSecureEdgeHostName() *schema.Resource {
 	return &schema.Resource{
+		CustomizeDiff: customdiff.All(
+			validateImmutableFields,
+		),
 		CreateContext: resourceSecureEdgeHostNameCreate,
 		ReadContext:   resourceSecureEdgeHostNameRead,
 		UpdateContext: resourceSecureEdgeHostNameUpdate,
@@ -111,7 +115,7 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	groupID = tools.AddPrefix(groupID, "grp_")
+	groupID = str.AddPrefix(groupID, "grp_")
 	if err := d.Set("group_id", groupID); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 	}
@@ -120,7 +124,7 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	contractID = tools.AddPrefix(contractID, "ctr_")
+	contractID = str.AddPrefix(contractID, "ctr_")
 	if err := d.Set("contract_id", contractID); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 	}
@@ -133,7 +137,7 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 	if err != nil {
 		return diag.Errorf("`product_id` must be specified for creation")
 	}
-	productID = tools.AddPrefix(productID, "prd_")
+	productID = str.AddPrefix(productID, "prd_")
 	if err := d.Set("product_id", productID); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 	}
@@ -159,10 +163,9 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 
 	// ip_behavior is required value in schema.
 	newHostname.IPVersionBehavior = strings.ToUpper(d.Get("ip_behavior").(string))
-	var ehnID string
 	for _, h := range edgeHostnames.EdgeHostnames.Items {
 		if h.DomainPrefix == newHostname.DomainPrefix && h.DomainSuffix == newHostname.DomainSuffix {
-			ehnID = h.ID
+			return diag.Errorf("edgehostname '%s' already exists", edgeHostname)
 		}
 	}
 	certEnrollmentID, err := tf.GetIntValue("certificate", d)
@@ -189,22 +192,16 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 		newHostname.UseCases = useCases
 	}
 
-	if ehnID == "" {
-		logger.Debugf("Creating new edge hostname: %#v", newHostname)
-		hostname, err := client.CreateEdgeHostname(ctx, papi.CreateEdgeHostnameRequest{
-			EdgeHostname: newHostname,
-			ContractID:   contractID,
-			GroupID:      groupID,
-		})
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		d.SetId(hostname.EdgeHostnameID)
-		ehnID = hostname.EdgeHostnameID
-	} else {
-		d.SetId(ehnID)
+	logger.Debugf("Creating new edge hostname: %#v", newHostname)
+	hostname, err := client.CreateEdgeHostname(ctx, papi.CreateEdgeHostnameRequest{
+		EdgeHostname: newHostname,
+		ContractID:   contractID,
+		GroupID:      groupID,
+	})
+	if err != nil {
+		return diag.FromErr(err)
 	}
-	logger.Debugf("Resulting EHN Id: %s ", ehnID)
+	d.SetId(hostname.EdgeHostnameID)
 	return resourceSecureEdgeHostNameRead(ctx, d, meta)
 }
 
@@ -218,7 +215,7 @@ func resourceSecureEdgeHostNameRead(ctx context.Context, d *schema.ResourceData,
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	groupID = tools.AddPrefix(groupID, "grp_")
+	groupID = str.AddPrefix(groupID, "grp_")
 	if err := d.Set("group_id", groupID); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 	}
@@ -227,7 +224,7 @@ func resourceSecureEdgeHostNameRead(ctx context.Context, d *schema.ResourceData,
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	contractID = tools.AddPrefix(contractID, "ctr_")
+	contractID = str.AddPrefix(contractID, "ctr_")
 	// set contract/contract_id into ResourceData
 	if err := d.Set("contract_id", contractID); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
@@ -238,7 +235,7 @@ func resourceSecureEdgeHostNameRead(ctx context.Context, d *schema.ResourceData,
 	if got, ok := d.GetOk("product_id"); ok {
 		productID = got.(string)
 	}
-	productID = tools.AddPrefix(productID, "prd_")
+	productID = str.AddPrefix(productID, "prd_")
 	if err := d.Set("product_id", productID); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 	}
@@ -399,8 +396,8 @@ func resourceSecureEdgeHostNameImport(ctx context.Context, d *schema.ResourceDat
 	}
 
 	edgehostID := parts[0]
-	contractID := tools.AddPrefix(parts[1], "ctr_")
-	groupID := tools.AddPrefix(parts[2], "grp_")
+	contractID := str.AddPrefix(parts[1], "ctr_")
+	groupID := str.AddPrefix(parts[2], "grp_")
 
 	edgehostnameDetails, err := client.GetEdgeHostname(ctx, papi.GetEdgeHostnameRequest{
 		EdgeHostnameID: edgehostID,
@@ -533,4 +530,17 @@ func parseEdgeHostname(hostname string) (string, string) {
 		return "akamaized.net", papi.EHSecureNetworkSharedCert
 	}
 	return "edgesuite.net", ""
+}
+
+func validateImmutableFields(_ context.Context, diff *schema.ResourceDiff, _ interface{}) error {
+	if diff.Id() != "" {
+		oldValue, newValue := diff.GetChange("product_id")
+		o := oldValue.(string)
+		n := newValue.(string)
+
+		if diff.HasChange("certificate") || str.AddPrefix(o, "prd_") != str.AddPrefix(n, "prd_") {
+			return fmt.Errorf("error: Changes to non-updatable fields 'product_id' and 'certificate' are not permitted")
+		}
+	}
+	return nil
 }

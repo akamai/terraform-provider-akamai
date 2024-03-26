@@ -4,8 +4,8 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cloudwrapper"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/cloudwrapper"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/jinzhu/copier"
 	"github.com/stretchr/testify/assert"
@@ -48,7 +48,7 @@ func TestConfigurationResource(t *testing.T) {
 
 		resource.Test(t, resource.TestCase{
 			IsUnitTest:               true,
-			ProtoV5ProviderFactories: newProviderFactory(withMockClient(client)),
+			ProtoV6ProviderFactories: newProviderFactory(withMockClient(client)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResConfiguration/create.tf"),
@@ -106,7 +106,7 @@ func TestConfigurationResource(t *testing.T) {
 
 		resource.Test(t, resource.TestCase{
 			IsUnitTest:               true,
-			ProtoV5ProviderFactories: newProviderFactory(withMockClient(client)),
+			ProtoV6ProviderFactories: newProviderFactory(withMockClient(client)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResConfiguration/computed_email.tf"),
@@ -155,7 +155,7 @@ func TestConfigurationResource(t *testing.T) {
 
 		resource.Test(t, resource.TestCase{
 			IsUnitTest:               true,
-			ProtoV5ProviderFactories: newProviderFactory(withMockClient(client)),
+			ProtoV6ProviderFactories: newProviderFactory(withMockClient(client)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResConfiguration/computed_email.tf"),
@@ -233,7 +233,7 @@ func TestConfigurationResource(t *testing.T) {
 
 		resource.Test(t, resource.TestCase{
 			IsUnitTest:               true,
-			ProtoV5ProviderFactories: newProviderFactory(withMockClient(client)),
+			ProtoV6ProviderFactories: newProviderFactory(withMockClient(client)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResConfiguration/create.tf"),
@@ -318,7 +318,7 @@ func TestConfigurationResource(t *testing.T) {
 
 		resource.Test(t, resource.TestCase{
 			IsUnitTest:               true,
-			ProtoV5ProviderFactories: newProviderFactory(withMockClient(client)),
+			ProtoV6ProviderFactories: newProviderFactory(withMockClient(client)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResConfiguration/create.tf"),
@@ -405,7 +405,7 @@ func TestConfigurationResource(t *testing.T) {
 
 		resource.Test(t, resource.TestCase{
 			IsUnitTest:               true,
-			ProtoV5ProviderFactories: newProviderFactory(withMockClient(client)),
+			ProtoV6ProviderFactories: newProviderFactory(withMockClient(client)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResConfiguration/create.tf"),
@@ -466,7 +466,7 @@ func TestConfigurationResource(t *testing.T) {
 
 		resource.Test(t, resource.TestCase{
 			IsUnitTest:               true,
-			ProtoV5ProviderFactories: newProviderFactory(withMockClient(client)),
+			ProtoV6ProviderFactories: newProviderFactory(withMockClient(client)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResConfiguration/create.tf"),
@@ -573,7 +573,7 @@ func TestConfigurationResource(t *testing.T) {
 
 		resource.Test(t, resource.TestCase{
 			IsUnitTest:               true,
-			ProtoV5ProviderFactories: newProviderFactory(withMockClient(client)),
+			ProtoV6ProviderFactories: newProviderFactory(withMockClient(client)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResConfiguration/create.tf"),
@@ -644,7 +644,7 @@ func TestConfigurationResource(t *testing.T) {
 
 		resource.Test(t, resource.TestCase{
 			IsUnitTest:               true,
-			ProtoV5ProviderFactories: newProviderFactory(withMockClient(client)),
+			ProtoV6ProviderFactories: newProviderFactory(withMockClient(client)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResConfiguration/create.tf"),
@@ -706,7 +706,7 @@ func TestConfigurationResource(t *testing.T) {
 
 		resource.Test(t, resource.TestCase{
 			IsUnitTest:               true,
-			ProtoV5ProviderFactories: newProviderFactory(withMockClient(client)),
+			ProtoV6ProviderFactories: newProviderFactory(withMockClient(client)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResConfiguration/create.tf"),
@@ -805,7 +805,7 @@ func TestConfigurationResource(t *testing.T) {
 
 		resource.Test(t, resource.TestCase{
 			IsUnitTest:               true,
-			ProtoV5ProviderFactories: newProviderFactory(withMockClient(client)),
+			ProtoV6ProviderFactories: newProviderFactory(withMockClient(client)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResConfiguration/property_ids_with_prefix.tf"),
@@ -883,7 +883,7 @@ func TestConfigurationResource(t *testing.T) {
 
 		resource.Test(t, resource.TestCase{
 			IsUnitTest:               true,
-			ProtoV5ProviderFactories: newProviderFactory(withMockClient(client)),
+			ProtoV6ProviderFactories: newProviderFactory(withMockClient(client)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResConfiguration/property_ids_with_prefix.tf"),
@@ -962,7 +962,7 @@ func TestConfigurationResource(t *testing.T) {
 
 		resource.Test(t, resource.TestCase{
 			IsUnitTest:               true,
-			ProtoV5ProviderFactories: newProviderFactory(withMockClient(client)),
+			ProtoV6ProviderFactories: newProviderFactory(withMockClient(client)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResConfiguration/create.tf"),
@@ -1040,7 +1040,7 @@ func TestConfigurationResource(t *testing.T) {
 				t.Parallel()
 				resource.Test(t, resource.TestCase{
 					IsUnitTest:               true,
-					ProtoV5ProviderFactories: fact,
+					ProtoV6ProviderFactories: fact,
 					Steps: []resource.TestStep{
 						{
 							Config:      tc.config,

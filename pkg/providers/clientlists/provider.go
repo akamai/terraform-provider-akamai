@@ -4,9 +4,11 @@ package clientlists
 import (
 	"sync"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/clientlists"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/clientlists"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 
+	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -25,7 +27,7 @@ var (
 	inst *Subprovider
 )
 
-// NewSubprovider returns a core sub provider
+// NewSubprovider returns a new clientlists subprovider
 func NewSubprovider(opts ...Option) *Subprovider {
 	once.Do(func() {
 		inst = &Subprovider{}
@@ -45,7 +47,7 @@ func WithClient(c clientlists.ClientLists) Option {
 	}
 }
 
-// Client returns the CLIENTLISTS interface
+// Client returns the ClientLists interface
 func (p *Subprovider) Client(meta meta.Meta) clientlists.ClientLists {
 	if p.client != nil {
 		return p.client
@@ -53,17 +55,27 @@ func (p *Subprovider) Client(meta meta.Meta) clientlists.ClientLists {
 	return clientlists.Client(meta.Session())
 }
 
-// Resources returns terraform resources for clientlists
-func (p *Subprovider) Resources() map[string]*schema.Resource {
+// SDKResources returns the clientlists resources implemented using terraform-plugin-sdk
+func (p *Subprovider) SDKResources() map[string]*schema.Resource {
 	return map[string]*schema.Resource{
 		"akamai_clientlist_activation": resourceClientListActivation(),
 		"akamai_clientlist_list":       resourceClientList(),
 	}
 }
 
-// DataSources returns terraform data sources for clientlists
-func (p *Subprovider) DataSources() map[string]*schema.Resource {
+// SDKDataSources returns the clientlists data sources implemented using terraform-plugin-sdk
+func (p *Subprovider) SDKDataSources() map[string]*schema.Resource {
 	return map[string]*schema.Resource{
 		"akamai_clientlist_lists": dataSourceClientLists(),
 	}
+}
+
+// FrameworkResources returns the clientlists resources implemented using terraform-plugin-framework
+func (p *Subprovider) FrameworkResources() []func() resource.Resource {
+	return []func() resource.Resource{}
+}
+
+// FrameworkDataSources returns the clientlists data sources implemented using terraform-plugin-framework
+func (p *Subprovider) FrameworkDataSources() []func() datasource.DataSource {
+	return []func() datasource.DataSource{}
 }

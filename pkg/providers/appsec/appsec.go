@@ -1,12 +1,12 @@
 package appsec
 
 import (
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/providers/registry"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/providers/registry"
 )
 
 // SubproviderName defines name of the appsec subprovider
 const SubproviderName = "appsec"
 
 func init() {
-	registry.RegisterPluginSubprovider(NewSubprovider())
+	registry.RegisterSubprovider(NewSubprovider())
 }

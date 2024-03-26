@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -49,7 +49,7 @@ func TestDataPropertyHostnames(t *testing.T) {
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{{
 					Config: testutils.LoadFixtureString(t, "testdata/TestDataPropertyHostnames/property_hostnames.tf"),
 					Check:  buildAggregatedHostnamesTest(hostnameItems, "prp_test1", "grp_test", "ctr_test", "prp_test", 1),
@@ -96,7 +96,7 @@ func TestDataPropertyHostnames(t *testing.T) {
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{{
 					Config: testutils.LoadFixtureString(t, "testdata/TestDataPropertyHostnames/property_hostnames_no_group_prefix.tf"),
 					Check:  buildAggregatedHostnamesTest(hostnameItems, "prp_test1", "test", "ctr_test", "prp_test", 1),
@@ -143,7 +143,7 @@ func TestDataPropertyHostnames(t *testing.T) {
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{{
 					Config: testutils.LoadFixtureString(t, "testdata/TestDataPropertyHostnames/property_hostnames_no_contract_prefix.tf"),
 					Check:  buildAggregatedHostnamesTest(hostnameItems, "prp_test1", "grp_test", "test", "prp_test", 1),
@@ -190,7 +190,7 @@ func TestDataPropertyHostnames(t *testing.T) {
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{{
 					Config: testutils.LoadFixtureString(t, "testdata/TestDataPropertyHostnames/property_hostnames_no_property_prefix.tf"),
 					Check:  buildAggregatedHostnamesTest(hostnameItems, "prp_test1", "grp_test", "ctr_test", "prp_test", 1),
@@ -237,7 +237,7 @@ func TestDataPropertyHostnames(t *testing.T) {
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{{
 					Config: testutils.LoadFixtureString(t, "testdata/TestDataPropertyHostnames/property_hostnames_with_version.tf"),
 					Check:  buildAggregatedHostnamesTest(hostnameItems, "prp_test5", "grp_test", "ctr_test", "prp_test", 5),
@@ -260,7 +260,7 @@ func TestDataPropertyHostnames(t *testing.T) {
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestDataPropertyHostnames/property_hostnames_with_version.tf"),
 					ExpectError: regexp.MustCompile(`error fetching property version`),

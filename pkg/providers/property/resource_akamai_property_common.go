@@ -7,10 +7,10 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/logger"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/str"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/logger"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 )
 
 func getGroup(ctx context.Context, client papi.PAPI, groupID string) (*papi.Group, error) {
@@ -21,7 +21,7 @@ func getGroup(ctx context.Context, client papi.PAPI, groupID string) (*papi.Grou
 	if err != nil {
 		return nil, fmt.Errorf("%w: %s", ErrFetchingGroups, err.Error())
 	}
-	groupID = tools.AddPrefix(groupID, "grp_")
+	groupID = str.AddPrefix(groupID, "grp_")
 
 	var group *papi.Group
 	var groupFound bool

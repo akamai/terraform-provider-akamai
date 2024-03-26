@@ -5,8 +5,10 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/gtm"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
+
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/gtm"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -24,7 +26,7 @@ func TestDataGtmDomain(t *testing.T) {
 			init: func(m *gtm.Mock) {
 				m.On("GetDomain", mock.Anything, "test.cli.devexp-terraform.akadns.net").Return(&gtm.Domain{
 					Name:                         "test.cli.devexp-terraform.akadns.net",
-					CnameCoalescingEnabled:       false,
+					CNameCoalescingEnabled:       false,
 					DefaultErrorPenalty:          75,
 					DefaultHealthMax:             0,
 					DefaultHealthMultiplier:      0,
@@ -36,8 +38,10 @@ func TestDataGtmDomain(t *testing.T) {
 					EndUserMappingEnabled:        false,
 					LastModified:                 "2023-01-25T10:21:45.000+00:00",
 					MaxTTL:                       172800,
+					SignAndServe:                 true,
+					SignAndServeAlgorithm:        ptr.To("RSA_SHA1"),
 					Status: &gtm.ResponseStatus{
-						ChangeId:              "ca7e5b1d-1303-42d3-b6c0-8cb62ae849d4",
+						ChangeID:              "ca7e5b1d-1303-42d3-b6c0-8cb62ae849d4",
 						Message:               "ERROR: zone is child of existing GTM domain devexp-terraform.akadns.net, which is not allowed",
 						PassingValidation:     false,
 						PropagationStatus:     "DENIED",
@@ -51,17 +55,17 @@ func TestDataGtmDomain(t *testing.T) {
 						UpperBound:      100,
 					},
 					},
-					AsMaps: []*gtm.AsMap{{
+					ASMaps: []*gtm.ASMap{{
 						DefaultDatacenter: &gtm.DatacenterBase{
-							DatacenterId: 3133,
+							DatacenterID: 3133,
 							Nickname:     "Default (all others)",
 						},
-						Assignments: []*gtm.AsAssignment{{
+						Assignments: []*gtm.ASAssignment{{
 							DatacenterBase: gtm.DatacenterBase{
 								Nickname:     "New Zone 1",
-								DatacenterId: 3133,
+								DatacenterID: 3133,
 							},
-							AsNumbers: []int64{
+							ASNumbers: []int64{
 								12222,
 								17334,
 								16702,
@@ -74,15 +78,15 @@ func TestDataGtmDomain(t *testing.T) {
 						}},
 					},
 					},
-					CidrMaps: []*gtm.CidrMap{{
+					CIDRMaps: []*gtm.CIDRMap{{
 						DefaultDatacenter: &gtm.DatacenterBase{
-							DatacenterId: 3133,
+							DatacenterID: 3133,
 							Nickname:     "All Other CIDR Blocks",
 						},
-						Assignments: []*gtm.CidrAssignment{{
+						Assignments: []*gtm.CIDRAssignment{{
 							DatacenterBase: gtm.DatacenterBase{
 								Nickname:     "New Zone 1",
-								DatacenterId: 3133,
+								DatacenterID: 3133,
 							},
 							Blocks: []string{
 								"1.2.3.4/22",
@@ -97,13 +101,13 @@ func TestDataGtmDomain(t *testing.T) {
 					},
 					GeographicMaps: []*gtm.GeoMap{{
 						DefaultDatacenter: &gtm.DatacenterBase{
-							DatacenterId: 3131,
+							DatacenterID: 3131,
 							Nickname:     "terraform_datacenter_test",
 						},
 						Assignments: []*gtm.GeoAssignment{{
 							DatacenterBase: gtm.DatacenterBase{
 								Nickname:     "terraform_datacenter_test_1",
-								DatacenterId: 3133,
+								DatacenterID: 3133,
 							},
 							Countries: []string{
 								"GB",
@@ -134,20 +138,33 @@ func TestDataGtmDomain(t *testing.T) {
 							Href: "https://akaa-ouijhfns55qwgfuc-knsod5nrjl2w2gmt.luna-dev.akamaiapis.net/config-gtm/v1/domains/test.cli.devexp-terraform.akadns.net/properties/property",
 							Rel:  "self",
 						}},
-						LivenessTests: []*gtm.LivenessTest{{
-							AnswersRequired:               false,
-							DisableNonstandardPortWarning: false,
-							HttpError3xx:                  true,
-							TestObjectProtocol:            "HTTP",
-						}},
+						LivenessTests: []*gtm.LivenessTest{
+							{
+								AnswersRequired:               false,
+								DisableNonstandardPortWarning: false,
+								HTTPError3xx:                  true,
+								TestObjectProtocol:            "HTTP",
+								AlternateCACertificates:       []string{"test1"},
+								Pre2023SecurityPosture:        true,
+								HTTPMethod:                    ptr.To("GET"),
+								HTTPRequestBody:               ptr.To("TestBody"),
+							},
+							{
+								AnswersRequired:               false,
+								DisableNonstandardPortWarning: false,
+								HTTPError3xx:                  true,
+								TestObjectProtocol:            "HTTP",
+							},
+						},
 						TrafficTargets: []*gtm.TrafficTarget{{
-							DatacenterId: 3131,
+							DatacenterID: 3131,
 							Enabled:      true,
 							Servers: []string{
 								"1.2.3.4",
 								"2.3.4.5",
 							},
-							Weight: 1,
+							Weight:     1,
+							Precedence: ptr.To(10),
 						}},
 					}},
 				}, nil)
@@ -166,6 +183,8 @@ func TestDataGtmDomain(t *testing.T) {
 				"end_user_mapping_enabled":                                       "false",
 				"last_modified":                                                  "2023-01-25T10:21:45.000+00:00",
 				"max_ttl":                                                        "172800",
+				"sign_and_serve":                                                 "true",
+				"sign_and_serve_algorithm":                                       "RSA_SHA1",
 				"as_maps.0.name":                                                 "New Map 1",
 				"as_maps.0.default_datacenter.datacenter_id":                     "3133",
 				"as_maps.0.default_datacenter.nickname":                          "Default (all others)",
@@ -209,18 +228,27 @@ func TestDataGtmDomain(t *testing.T) {
 				"properties.0.liveness_tests.0.disable_nonstandard_port_warning": "false",
 				"properties.0.liveness_tests.0.http_error3xx":                    "true",
 				"properties.0.liveness_tests.0.test_object_protocol":             "HTTP",
+				"properties.0.liveness_tests.0.alternate_ca_certificates.0":      "test1",
+				"properties.0.liveness_tests.0.pre_2023_security_posture":        "true",
+				"properties.0.liveness_tests.0.http_method":                      "GET",
+				"properties.0.liveness_tests.0.http_request_body":                "TestBody",
+				"properties.0.liveness_tests.1.pre_2023_security_posture":        "false",
 				"properties.0.traffic_targets.0.datacenter_id":                   "3131",
 				"properties.0.traffic_targets.0.enabled":                         "true",
 				"properties.0.traffic_targets.0.servers.0":                       "1.2.3.4",
 				"properties.0.traffic_targets.0.servers.1":                       "2.3.4.5",
 				"properties.0.traffic_targets.0.weight":                          "1",
+				"properties.0.traffic_targets.0.precedence":                      "10",
 				"links.0.href":                                                   "https://akaa-ouijhfns55qwgfuc-knsod5nrjl2w2gmt.luna-dev.akamaiapis.net/config-gtm/v1/domains/test.cli.devexp-terraform.akadns.net/properties",
 				"links.0.rel":                                                    "properties",
 				"links.1.href":                                                   "https://akaa-ouijhfns55qwgfuc-knsod5nrjl2w2gmt.luna-dev.akamaiapis.net/config-gtm/v1/domains/test.cli.devexp-terraform.akadns.net/resources",
 				"links.1.rel":                                                    "resources",
 			},
-			expectedMissingAttributes: nil,
-			expectError:               nil,
+			expectedMissingAttributes: []string{
+				"properties.0.liveness_tests.1.http_method",
+				"properties.0.liveness_tests.1.http_request_body",
+				"properties.0.liveness_tests.1.alternate_ca_certificates",
+			},
 		},
 		"missing required argument name": {
 			givenTF:     "missing_domain_name.tf",
@@ -251,7 +279,7 @@ func TestDataGtmDomain(t *testing.T) {
 			useClient(client, func() {
 				resource.Test(t, resource.TestCase{
 					IsUnitTest:               true,
-					ProtoV5ProviderFactories: testAccProvidersProtoV5,
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{{
 						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("testdata/TestDataGtmDomain/%s", test.givenTF)),
 						Check:       resource.ComposeAggregateTestCheckFunc(checkFuncs...),

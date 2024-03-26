@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -304,7 +304,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/property_include_activation.tf", testDir)),
@@ -349,7 +349,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/property_include_activation_with_timeout.tf", testDir)),
@@ -424,7 +424,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/property_include_activation.tf", testDir)),
@@ -482,7 +482,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/property_include_activation.tf", testDir)),
@@ -530,7 +530,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/property_include_activation.tf", testDir)),
@@ -580,7 +580,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/no_compliance_record_on_production.tf", testDir)),
@@ -596,7 +596,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/property_include_activation_incorrect_timeout.tf", testDir)),
@@ -635,7 +635,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/property_include_activation.tf", testDir)),
@@ -691,7 +691,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/property_include_activation.tf", testDir)),
@@ -731,7 +731,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/property_include_activation.tf", testDir)),
@@ -799,7 +799,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV5ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/property_include_activation.tf", testDir)),

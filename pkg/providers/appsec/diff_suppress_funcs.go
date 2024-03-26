@@ -3,12 +3,14 @@ package appsec
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"log"
 	"reflect"
 	"sort"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/appsec"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/logger"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -208,6 +210,29 @@ func compareAttackPayloadLoggingSettings(oldValue, newValue *appsec.UpdateAdvanc
 	return reflect.DeepEqual(oldValue, newValue)
 }
 
+func suppressEquivalentPenaltyBoxConditionsDiffs(_, oldValue, newValue string, _ *schema.ResourceData) bool {
+	var oldJSON, newJSON appsec.GetPenaltyBoxConditionsResponse
+	if oldValue == newValue {
+		return true
+	}
+	if err := json.Unmarshal([]byte(oldValue), &oldJSON); err != nil {
+		return false
+	}
+	if err := json.Unmarshal([]byte(newValue), &newJSON); err != nil {
+		return false
+	}
+	diff := comparePenaltyBoxConditions(&oldJSON, &newJSON)
+	return diff
+}
+
+func comparePenaltyBoxConditions(oldValue, newValue *appsec.GetPenaltyBoxConditionsResponse) bool {
+	if oldValue.ConditionOperator != newValue.ConditionOperator {
+		return false
+	}
+
+	return reflect.DeepEqual(oldValue, newValue)
+}
+
 func suppressCustomDenyJSONDiffs(_, oldString, newString string, _ *schema.ResourceData) bool {
 	var ob, nb bytes.Buffer
 	if err := json.Compact(&ob, []byte(oldString)); err != nil {
@@ -363,4 +388,22 @@ func compareMatchTargets(oldTarget, newTarget *appsec.CreateMatchTargetResponse)
 	})
 
 	return reflect.DeepEqual(oldTarget, newTarget)
+}
+
+// suppress the diff if ukraine_geo_control_action is not passed in terraform config
+func suppressDiffUkraineGeoControlAction(_, _, _ string, d *schema.ResourceData) bool {
+	key := "ukraine_geo_control_action"
+
+	oldValue, newValue := d.GetChange(key)
+	oldUkraineGeoControlAction, ok := oldValue.(string)
+	if !ok {
+		logger.Get("APPSEC", "diffSuppressRules").Error(fmt.Sprintf("cannot parse ukraine_geo_control_action state properly for old value %v", oldValue))
+		return true
+	}
+	newUkraineGeoControlAction, ok := newValue.(string)
+	if !ok {
+		logger.Get("APPSEC", "diffSuppressRules").Error(fmt.Sprintf("cannot parse ukraine_geo_control_action state properly for new value %v", oldValue))
+		return true
+	}
+	return oldUkraineGeoControlAction == newUkraineGeoControlAction
 }

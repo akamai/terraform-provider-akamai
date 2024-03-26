@@ -9,9 +9,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 )
 
 func dataSourceProperty() *schema.Resource {
@@ -19,16 +19,64 @@ func dataSourceProperty() *schema.Resource {
 		ReadContext: dataPropertyRead,
 		Schema: map[string]*schema.Schema{
 			"name": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "The name of property.",
 			},
 			"version": {
-				Type:     schema.TypeInt,
-				Optional: true,
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Description: "The current version of the property.",
+			},
+			"contract_id": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Contract ID assigned to the property.",
+			},
+			"group_id": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Group ID assigned to the property.",
+			},
+			"latest_version": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Property's current latest version.",
+			},
+			"note": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The client property notes.",
+			},
+			"production_version": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Property's version currently activated in production (zero when not active in production).",
+			},
+			"product_id": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Product ID assigned to the property.",
+			},
+			"property_id": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The identifier of the property.",
 			},
 			"rules": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Property rules as JSON.",
+			},
+			"rule_format": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Rule format version.",
+			},
+			"staging_version": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Property's version currently activated in staging (zero when not active in staging).",
 			},
 		},
 	}
@@ -47,7 +95,6 @@ func dataPropertyRead(ctx context.Context, d *schema.ResourceData, m interface{}
 	if err != nil {
 		return diag.FromErr(err)
 	}
-
 	version, err := tf.GetIntValue("version", d)
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
@@ -58,7 +105,7 @@ func dataPropertyRead(ctx context.Context, d *schema.ResourceData, m interface{}
 
 	rules, err := getRulesForProperty(ctx, prop, meta)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", ErrRulesNotFound, err.Error()))
+		return diag.FromErr(err)
 	}
 
 	body, err := json.Marshal(rules)
@@ -66,10 +113,37 @@ func dataPropertyRead(ctx context.Context, d *schema.ResourceData, m interface{}
 		return diag.FromErr(err)
 	}
 	if err := d.Set("rules", string(body)); err != nil {
-		return diag.FromErr(fmt.Errorf("%w:%q", tf.ErrValueSet, err.Error()))
+		return diag.FromErr(fmt.Errorf("%w: %q", tf.ErrValueSet, err.Error()))
 	}
+
+	propVersion, err := getPropertyVersion(ctx, meta, prop)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	propertyAttr := getPropertyAttributes(prop, propVersion)
+	err = tf.SetAttrs(d, propertyAttr)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("%w: %q", tf.ErrValueSet, err.Error()))
+	}
+
 	d.SetId(prop.PropertyID)
 	return nil
+}
+
+func getPropertyVersion(ctx context.Context, meta meta.Meta, property *papi.Property) (*papi.GetPropertyVersionsResponse, error) {
+	client := Client(meta)
+	req := papi.GetPropertyVersionRequest{
+		PropertyID:      property.PropertyID,
+		PropertyVersion: property.LatestVersion,
+		ContractID:      property.ContractID,
+		GroupID:         property.GroupID,
+	}
+	resp, err := client.GetPropertyVersion(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %s", ErrPropertyVersionNotFound, err.Error())
+	}
+	return resp, nil
 }
 
 func getRulesForProperty(ctx context.Context, property *papi.Property, meta meta.Meta) (*papi.GetRuleTreeResponse, error) {
@@ -85,4 +159,20 @@ func getRulesForProperty(ctx context.Context, property *papi.Property, meta meta
 		return nil, fmt.Errorf("%w: %s", ErrRulesNotFound, err.Error())
 	}
 	return rules, nil
+}
+
+func getPropertyAttributes(propertyResponse *papi.Property, propertyVersionResponse *papi.GetPropertyVersionsResponse) map[string]interface{} {
+	propertyVersion := propertyVersionResponse.Version
+	property := map[string]interface{}{
+		"contract_id":        propertyResponse.ContractID,
+		"group_id":           propertyResponse.GroupID,
+		"latest_version":     propertyResponse.LatestVersion,
+		"note":               propertyVersion.Note,
+		"product_id":         propertyVersion.ProductID,
+		"production_version": decodeVersion(propertyResponse.ProductionVersion),
+		"property_id":        propertyResponse.PropertyID,
+		"rule_format":        propertyVersion.RuleFormat,
+		"staging_version":    decodeVersion(propertyResponse.StagingVersion),
+	}
+	return property
 }

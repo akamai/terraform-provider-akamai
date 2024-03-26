@@ -5,8 +5,8 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/gtm"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/gtm"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -16,7 +16,7 @@ var dc = gtm.Datacenter{
 	CloudServerTargeting: false,
 	Continent:            "EU",
 	Country:              "IS",
-	DatacenterId:         3132,
+	DatacenterID:         3132,
 	DefaultLoadObject: &gtm.LoadObject{
 		LoadObject:     "/test",
 		LoadObjectPort: 80,
@@ -35,7 +35,7 @@ var dc = gtm.Datacenter{
 	Virtual:         true,
 }
 
-func TestResGtmDatacenter(t *testing.T) {
+func TestResGTMDatacenter(t *testing.T) {
 
 	t.Run("create datacenter", func(t *testing.T) {
 		client := &gtm.Mock{}
@@ -58,10 +58,6 @@ func TestResGtmDatacenter(t *testing.T) {
 		).Return(&resp, nil).Run(func(args mock.Arguments) {
 			getCall.ReturnArguments = mock.Arguments{args.Get(1).(*gtm.Datacenter), nil}
 		})
-
-		client.On("NewDatacenter",
-			mock.Anything, // ctx is irrelevant for this test
-		).Return(&gtm.Datacenter{})
 
 		client.On("GetDomainStatus",
 			mock.Anything, // ctx is irrelevant for this test
@@ -86,7 +82,7 @@ func TestResGtmDatacenter(t *testing.T) {
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmDatacenter/create_basic.tf"),
@@ -120,13 +116,9 @@ func TestResGtmDatacenter(t *testing.T) {
 			StatusCode: http.StatusBadRequest,
 		})
 
-		client.On("NewDatacenter",
-			mock.Anything, // ctx is irrelevant for this test
-		).Return(&dc)
-
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmDatacenter/create_basic.tf"),
@@ -151,13 +143,9 @@ func TestResGtmDatacenter(t *testing.T) {
 			gtmTestDomain,
 		).Return(&dr, nil)
 
-		client.On("NewDatacenter",
-			mock.Anything, // ctx is irrelevant for this test
-		).Return(&dc)
-
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
-				ProviderFactories: testAccProviders,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmDatacenter/create_basic.tf"),

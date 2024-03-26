@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cloudwrapper"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/cloudwrapper"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -199,7 +199,7 @@ func TestActivation(t *testing.T) {
 			client := test.init()
 			resource.Test(t, resource.TestCase{
 				IsUnitTest:               true,
-				ProtoV5ProviderFactories: newProviderFactory(withMockClient(client), withInterval(time.Second)),
+				ProtoV6ProviderFactories: newProviderFactory(withMockClient(client), withInterval(time.Second)),
 				Steps:                    test.steps,
 			})
 			client.AssertExpectations(t)

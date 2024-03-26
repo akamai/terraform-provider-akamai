@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v7/pkg/cloudlets"
-	"github.com/akamai/terraform-provider-akamai/v5/pkg/common/tf"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/cloudlets"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -192,7 +192,7 @@ func dataSourceCloudletsVisitorPrioritizationMatchRule() *schema.Resource {
 func dataSourceCloudletsVisitorPrioritizationMatchRuleRead(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
 	matchRulesList, err := tf.GetListValue("match_rules", d)
 	if err != nil {
-		return diag.FromErr(err)
+		return handleEmptyMatchRules(err, d, "data_akamai_cloudlets_visitor_prioritization_match_rule")
 	}
 
 	if err := setMatchRuleSchemaType(matchRulesList, cloudlets.MatchRuleTypeVP); err != nil {
