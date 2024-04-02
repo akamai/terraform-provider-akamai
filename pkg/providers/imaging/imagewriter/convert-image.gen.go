@@ -734,6 +734,22 @@ func getShear(d *schema.ResourceData, key string) *imaging.Shear {
 	return nil
 }
 
+func getSmartCrop(d *schema.ResourceData, key string) *imaging.SmartCrop {
+	_, exist := extract(d, key)
+	if exist {
+		result := imaging.SmartCrop{
+			Debug:          booleanVariableInline(d, getKey(key, 0, "debug")),
+			Height:         integerVariableInline(d, getKey(key, 0, "height")),
+			Sloppy:         booleanVariableInline(d, getKey(key, 0, "sloppy")),
+			Style:          smartCropStyleVariableInline(d, getKey(key, 0, "style")),
+			Width:          integerVariableInline(d, getKey(key, 0, "width")),
+			Transformation: imaging.SmartCropTransformationSmartCrop,
+		}
+		return &result
+	}
+	return nil
+}
+
 func getTextImageType(d *schema.ResourceData, key string) *imaging.TextImageType {
 	_, exist := extract(d, key)
 	if exist {
@@ -1093,6 +1109,10 @@ func getTransformationType(d *schema.ResourceData, key string) imaging.Transform
 	_, exist = extract(d, key+".shear")
 	if exist {
 		return getShear(d, key+".shear")
+	}
+	_, exist = extract(d, key+".smart_crop")
+	if exist {
+		return getSmartCrop(d, key+".smart_crop")
 	}
 	_, exist = extract(d, key+".trim")
 	if exist {
@@ -1650,6 +1670,32 @@ func resizeTypeVariableInline(d *schema.ResourceData, key string) *imaging.Resiz
 
 	if existVal || existVar {
 		return &imaging.ResizeTypeVariableInline{
+			Name:  name,
+			Value: value,
+		}
+	}
+
+	return nil
+}
+
+func smartCropStyleVariableInline(d *schema.ResourceData, key string) *imaging.SmartCropStyleVariableInline {
+	var value *imaging.SmartCropStyle
+	var name *string
+
+	valueRaw, existVal := extract(d, key)
+	existVal = existVal && valueRaw.(string) != ""
+	if existVal {
+		value = imaging.SmartCropStylePtr(imaging.SmartCropStyle(valueRaw.(string)))
+	}
+
+	nameRaw, existVar := extract(d, key+"_var")
+	existVar = existVar && nameRaw.(string) != ""
+	if existVar {
+		name = ptr.To(nameRaw.(string))
+	}
+
+	if existVal || existVar {
+		return &imaging.SmartCropStyleVariableInline{
 			Name:  name,
 			Value: value,
 		}

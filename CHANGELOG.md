@@ -52,6 +52,8 @@
 
 
 
+* Image and Video Manager
+  * Added support for `SmartCrop` transformation in `akamai_imaging_policy_image` datasource
 
 
 
