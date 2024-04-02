@@ -49,6 +49,11 @@
 
 
 
+* DNS
+  * Added second mode to `akamai_dns_record` resource where it is possible to provide individual values for priority, weight and port to **every** `SRV` target.
+    In such case it is not allowed to provide values for resource level fields `priority`, `weight` and `port`.
+    It is not allowed to mix targets with and without those fields.
+    ([I#370](https://github.com/akamai/terraform-provider-akamai/issues/370))
 
 
 

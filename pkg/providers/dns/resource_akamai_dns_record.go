@@ -1894,19 +1894,35 @@ func newRecordCreate(ctx context.Context, meta meta.Meta, d *schema.ResourceData
 		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return dns.RecordBody{}, err
 		}
+		doSort := false
 		for _, recContent := range target {
 			recContentStr, ok := recContent.(string)
 			if !ok {
 				return dns.RecordBody{}, fmt.Errorf("record is of invalid type; should be 'string'")
 			}
-			record := strconv.Itoa(priority) + " " + strconv.Itoa(weight) + " " + strconv.Itoa(port) + " " + recContentStr
+			entryparts := strings.Split(recContentStr, " ")
+			if len(entryparts) != 1 && len(entryparts) != 4 {
+				return dns.RecordBody{}, fmt.Errorf("RData shcould consist of 1 part or 4 parts separated with ' '")
+			}
+			var record string
+			// if target has no priority, weight and port provided, use default values
+			if len(entryparts) == 1 {
+				record = strconv.Itoa(priority) + " " + strconv.Itoa(weight) + " " + strconv.Itoa(port) + " " + recContentStr
+				doSort = true
+			}
+			if len(entryparts) == 4 {
+				record = recContentStr
+			}
+
 			if !strings.HasSuffix(recContentStr, ".") {
 				record += "."
 			}
 			records = append(records, record)
 
 		}
-		sort.Strings(records)
+		if doSort {
+			sort.Strings(records)
+		}
 		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
 
 	case RRTypeSshfp:
@@ -2196,6 +2212,39 @@ func checkTargets(d *schema.ResourceData) error {
 		}
 	}
 	return nil
+}
+
+func isSRVTargetOldFormat(d *schema.ResourceData) (bool, error) {
+	target, err := tf.GetListValue("target", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
+		return false, err
+	}
+	if len(target) == 0 {
+		return false, fmt.Errorf("configuration argument target must be set")
+	}
+	simple, complete := 0, 0
+	for _, recContent := range target {
+		t, ok := recContent.(string)
+		if !ok {
+			return false, fmt.Errorf("target record is of invalid type; should be 'string'")
+		}
+		parts := strings.Split(t, " ")
+		switch len(parts) {
+		case 1:
+			simple++
+		case 4:
+			complete++
+		default:
+			return false, fmt.Errorf("target should consist of 1 part or 4 parts separated with ' '")
+		}
+	}
+	if simple > 0 && complete > 0 {
+		return false, fmt.Errorf("target should consist of only simple or complete items")
+	}
+	if simple > 0 {
+		return true, nil
+	}
+	return false, nil
 }
 
 func checkAsdfRecord(d *schema.ResourceData) error {
@@ -2606,20 +2655,37 @@ func checkSrvRecord(d *schema.ResourceData) error {
 		return err
 	}
 
-	if err := checkTargets(d); err != nil {
+	var required bool
+	if required, err = isSRVTargetOldFormat(d); err != nil {
 		return err
 	}
 
-	if priority < 0 || priority > 65535 {
-		return fmt.Errorf("configuration argument priority must be set for SRV")
-	}
+	// when required, provide valid values
+	if required {
+		if priority < 0 || priority > 65535 {
+			return fmt.Errorf("configuration argument priority must be set for SRV")
+		}
 
-	if weight < 0 || weight > 65535 {
-		return fmt.Errorf("configuration argument weight must not be %v for SRV", weight)
-	}
+		if weight < 0 || weight > 65535 {
+			return fmt.Errorf("configuration argument weight must not be %v for SRV", weight)
+		}
 
-	if port == 0 {
-		return fmt.Errorf("configuration argument port must be set for SRV")
+		if port == 0 {
+			return fmt.Errorf("configuration argument port must be set for SRV")
+		}
+	} else {
+		// when not required, we should not provide them
+		if priority != 0 {
+			return fmt.Errorf("configuration argument priority must not be set for SRV")
+		}
+
+		if weight != 0 {
+			return fmt.Errorf("configuration argument weight must not be set for SRV")
+		}
+
+		if port != 0 {
+			return fmt.Errorf("configuration argument port must not be set for SRV")
+		}
 	}
 
 	return nil
