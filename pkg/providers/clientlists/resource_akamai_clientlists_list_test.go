@@ -26,6 +26,7 @@ func TestResourceClientList(t *testing.T) {
 
 	var (
 		updateAPIError = "{\n      \"type\": \"https://problems.luna.akamaiapis.net/client-list-api/error-types/INVALID-INPUT-ERROR\",\n       \"status\": 400,\n       \"title\": \"Invalid Input Error\",\n       \"detail\": \"Validation failed: tags: tags exceeds max size of 5 entries\",\n       \"instance\": \"https://problems.luna.akamaiapis.net/client-list-api/error-instances/9ff3649993cb002b\",\n       \"\n }\n"
+		getAPIError    = "{\n      \"status\": \"403\",\n       \n }\n"
 
 		mapItemsPayloadToContent = func(items []clientlists.ListItemPayload) []clientlists.ListItemContent {
 			result := make([]clientlists.ListItemContent, 0, len(items))
@@ -144,6 +145,11 @@ func TestResourceClientList(t *testing.T) {
 		expectAPIErrorWithUpdateList = func(t *testing.T, client *clientlists.Mock, req clientlists.UpdateClientListRequest) {
 			err := fmt.Errorf(updateAPIError)
 			client.On("UpdateClientList", mock.Anything, req).Return(nil, err).Once()
+		}
+
+		expectAPIErrorWithGetList = func(t *testing.T, client *clientlists.Mock, req clientlists.GetClientListRequest) {
+			err := fmt.Errorf(getAPIError)
+			client.On("GetClientList", mock.Anything, req).Return(nil, err).Once()
 		}
 
 		checkAttributes = func(attrs listAttributes) resource.TestCheckFunc {
@@ -309,6 +315,38 @@ func TestResourceClientList(t *testing.T) {
 							Version:    1,
 							ItemsCount: 0,
 						}),
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
+
+	t.Run("Get client list returns an API error", func(t *testing.T) {
+		client := new(clientlists.Mock)
+		clientList := expectCreateList(t, client, clientlists.CreateClientListRequest{
+			Name:       "List Name",
+			Notes:      "List Notes",
+			Tags:       []string{"a", "b"},
+			Type:       clientlists.ASN,
+			ContractID: "12_ABC",
+			GroupID:    12,
+			Items:      []clientlists.ListItemPayload{},
+		})
+
+		expectAPIErrorWithGetList(t, client, clientlists.GetClientListRequest{
+			ListID:       clientList.ListID,
+			IncludeItems: true,
+		})
+		expectDeleteList(t, client, clientList.ListContent)
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config:      loadFixtureString(fmt.Sprintf("%s/list_create.tf", testDir)),
+						ExpectError: regexp.MustCompile(getAPIError),
 					},
 				},
 			})

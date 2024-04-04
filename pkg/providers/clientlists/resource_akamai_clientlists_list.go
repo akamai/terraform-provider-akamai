@@ -128,7 +128,7 @@ func resourceClientListRead(ctx context.Context, d *schema.ResourceData, m inter
 	}
 
 	list, err := client.GetClientList(ctx, getCLientList)
-	if e, ok := err.(*clientlists.Error); ok && e.StatusCode == http.StatusNotFound || list.Deprecated {
+	if e, ok := err.(*clientlists.Error); ok && e.StatusCode == http.StatusNotFound || (list != nil && list.Deprecated) {
 		d.SetId("")
 		return nil
 	} else if err != nil {
