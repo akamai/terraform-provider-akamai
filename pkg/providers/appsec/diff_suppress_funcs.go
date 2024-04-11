@@ -227,7 +227,7 @@ func compareLoggingSettings(oldResponse, newResponse *appsec.UpdateAdvancedSetti
 	return reflect.DeepEqual(oldResponse, newResponse)
 }
 
-func suppressEquivalentAttackPayloadLoggingSettingsDiffs(_, oldValue, newValue string, _ *schema.ResourceData) bool {
+func suppressEquivalentAttackPayloadLoggingSettingsDiffs(_, oldValue, newValue string, d *schema.ResourceData) bool {
 	var oldJSON, newJSON appsec.UpdateAdvancedSettingsAttackPayloadLoggingResponse
 	if oldValue == newValue {
 		return true
@@ -238,14 +238,19 @@ func suppressEquivalentAttackPayloadLoggingSettingsDiffs(_, oldValue, newValue s
 	if err := json.Unmarshal([]byte(newValue), &newJSON); err != nil {
 		return false
 	}
-	diff := compareAttackPayloadLoggingSettings(&oldJSON, &newJSON)
+	diff := compareAttackPayloadLoggingSettings(&oldJSON, &newJSON, d)
 	return diff
 }
 
-func compareAttackPayloadLoggingSettings(oldValue, newValue *appsec.UpdateAdvancedSettingsAttackPayloadLoggingResponse) bool {
-	if oldValue.Override != newValue.Override ||
-		oldValue.Enabled != newValue.Enabled ||
-		oldValue.RequestBody.Type != newValue.RequestBody.Type ||
+func compareAttackPayloadLoggingSettings(oldValue, newValue *appsec.UpdateAdvancedSettingsAttackPayloadLoggingResponse, d *schema.ResourceData) bool {
+	if !oldValue.Enabled && !newValue.Enabled {
+		return true
+	}
+	policyID := d.Get("security_policy_id")
+	if policyID != nil && policyID != "" && (!oldValue.Override && !newValue.Override) {
+		return true
+	}
+	if oldValue.RequestBody.Type != newValue.RequestBody.Type ||
 		oldValue.ResponseBody.Type != newValue.ResponseBody.Type {
 		return false
 	}

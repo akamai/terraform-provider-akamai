@@ -112,6 +112,9 @@
 
 * GTM
   * Fixed issue with order of `liveness_test` in `akamai_gtm_property` ([PR#404](https://github.com/akamai/terraform-provider-akamai/pull/404))
+* Appsec
+  * Resolved a drift issue with the `akamai_appsec_advanced_settings_attack_payload_logging` resource, which was caused by a pointer field in the override flag for policy level overrides, leading to failed diff checks.
+    The issue was rectified by updating the differential logic and converting the override boolean field from a pointer to a value type.
 
 
 
