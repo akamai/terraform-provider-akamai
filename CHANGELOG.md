@@ -89,7 +89,8 @@
 
 #### BUG FIXES:
 
-
+* CPS
+  * Fixed issue with terraform producing inconsistent final plan for `akamai_cps_upload_certificate` resource on SAN list modification in `akamai_cps_third_party_enrollment` resource.
 
 
 
