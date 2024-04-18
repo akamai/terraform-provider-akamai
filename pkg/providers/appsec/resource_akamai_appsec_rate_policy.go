@@ -40,7 +40,7 @@ func resourceRatePolicy() *schema.Resource {
 				Type:             schema.TypeString,
 				Required:         true,
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsJSON),
-				DiffSuppressFunc: suppressEquivalentJSONDiffsGeneric,
+				DiffSuppressFunc: suppressRatePolicyDiffs,
 				Description:      "JSON-formatted definition of the rate policy",
 			},
 			"rate_policy_id": {

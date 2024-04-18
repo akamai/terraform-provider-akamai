@@ -27,6 +27,49 @@ func suppressEquivalentJSONDiffsGeneric(_, oldString, newString string, _ *schem
 	return jsonBytesEqual(ob.Bytes(), nb.Bytes())
 }
 
+func suppressRatePolicyDiffs(_, oldString, newString string, _ *schema.ResourceData) bool {
+	var oldResp, newResp appsec.CreateRatePolicyResponse
+
+	if err := json.Unmarshal([]byte(oldString), &oldResp); err != nil {
+		log.Printf("unable to unmarshal old rate policy: %s", err)
+		return false
+	}
+	if err := json.Unmarshal([]byte(newString), &newResp); err != nil {
+		log.Printf("unable to unmarshal new rate policy: %s", err)
+		return false
+	}
+
+	// Set default value if not set, then check if there is a diff
+	if oldResp.CounterType != newResp.CounterType && len(newResp.CounterType) == 0 {
+		newResp.CounterType = "per_edge"
+	}
+
+	n, err := json.Marshal(newResp)
+	if err != nil {
+		log.Printf("unable to marshal new rate policy: %s", err)
+		return false
+	}
+
+	o, err := json.Marshal(oldResp)
+	if err != nil {
+		log.Printf("unable to marshal old rate policy: %s", err)
+		return false
+	}
+
+	var nb bytes.Buffer
+	if err := json.Compact(&nb, n); err != nil {
+		log.Printf("unable to compact new rate policy: %s", err)
+		return false
+	}
+	var ob bytes.Buffer
+	if err := json.Compact(&ob, o); err != nil {
+		log.Printf("unable to compact old rate policy: %s", err)
+		return false
+	}
+
+	return jsonBytesEqual(ob.Bytes(), nb.Bytes())
+}
+
 func jsonBytesEqual(b1, b2 []byte) bool {
 	var o1 interface{}
 	if err := json.Unmarshal(b1, &o1); err != nil {

@@ -67,5 +67,6 @@
             "useXForwardForHeaders": true,
             "used": false
         }
-    ]
+    ],
+    "counterType": "region_aggregated"
 }

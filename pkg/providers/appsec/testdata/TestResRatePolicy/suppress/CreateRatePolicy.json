@@ -13,8 +13,7 @@
         "positiveMatch": true,
         "values": [
             "/login/",
-            "/path/",
-            "sec/"
+            "/path/"
         ]
     },
     "pathMatchType": "Custom",
@@ -30,8 +29,7 @@
             "avi",
             "bin",
             "bmp",
-            "cab",
-            "pcx"
+            "cab"
         ]
     },
     "hostnames": [
@@ -63,6 +61,5 @@
             "positiveMatch": true,
             "valueInRange": false
         }
-    ],
-    "counterType": "region_aggregated"
+    ]
 }

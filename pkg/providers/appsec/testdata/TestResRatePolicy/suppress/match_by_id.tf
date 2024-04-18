@@ -1,3 +1,11 @@
+provider "akamai" {
+  edgerc        = "../../common/testutils/edgerc"
+  cache_enabled = false
+}
+
+resource "akamai_appsec_rate_policy" "test" {
+  config_id   = 43253
+  rate_policy = <<-EOF
     {
     "matchType": "path",
     "type": "WAF",
@@ -13,8 +21,7 @@
         "positiveMatch": true,
         "values": [
             "/login/",
-            "/path/",
-            "sec/"
+            "/path/"
         ]
     },
     "pathMatchType": "Custom",
@@ -30,8 +37,7 @@
             "avi",
             "bin",
             "bmp",
-            "cab",
-            "pcx"
+            "cab"
         ]
     },
     "hostnames": [
@@ -63,6 +69,7 @@
             "positiveMatch": true,
             "valueInRange": false
         }
-    ],
-    "counterType": "region_aggregated"
+    ]
+}
+EOF
 }

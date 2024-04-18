@@ -43,7 +43,8 @@
 
 #### FEATURES/ENHANCEMENTS:
 
-
+* APPSEC
+  * Suppress rate policy diff when `counterType` field absence is the only change for `akamai_appsec_rate_policy` resource
 
 
 
@@ -301,7 +302,7 @@
 * IVM
   * Extended `akamai_imaging_policy_image` with new fields:
     * `serve_stale_duration` available under `policy`
-    * `allow_pristine_on_downsize` and `prefer_modern_formats` available under `policy.output` 
+    * `allow_pristine_on_downsize` and `prefer_modern_formats` available under `policy.output`
 
 * PAPI
   * Added new resource:
