@@ -7,5 +7,4 @@ resource "akamai_edge_hostname" "importedgehostname" {
   group_id      = "grp_2"
   edge_hostname = "test.edgekey.net"
   ip_behavior   = "IPV4"
-  certificate   = 123456
 }

@@ -5,12 +5,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/hapi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/papi"
-
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/str"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/timeouts"
@@ -277,7 +277,38 @@ func resourceSecureEdgeHostNameRead(ctx context.Context, d *schema.ResourceData,
 		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 	}
 
-	d.SetId(foundEdgeHostname.ID)
+	hapiClient := HapiClient(meta)
+	edgeHostnameID, err := str.GetIntID(foundEdgeHostname.ID, "ehn_")
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	edgeHostnameResp, err := hapiClient.GetEdgeHostname(ctx, edgeHostnameID)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("error getting edge hostname with id '%d': %s", edgeHostnameID, err))
+	}
+
+	// get certificate id when network is ENHANCED-TLS
+	if edgeHostnameResp.SecurityType == "ENHANCED-TLS" {
+		certificate, err := hapiClient.GetCertificate(ctx, hapi.GetCertificateRequest{
+			DNSZone:    edgeHostnameResp.DNSZone,
+			RecordName: edgeHostnameResp.RecordName,
+		})
+		var certificateID int64
+		if err != nil {
+			if !errors.Is(err, hapi.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+			certificateID = 0
+		} else {
+			certificateID, err = strconv.ParseInt(certificate.CertificateID, 10, 64)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+		}
+		if err := d.Set("certificate", certificateID); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
+		}
+	}
 
 	return nil
 }
@@ -414,17 +445,7 @@ func resourceSecureEdgeHostNameImport(ctx context.Context, d *schema.ResourceDat
 	if err := d.Set("group_id", edgehostnameDetails.GroupID); err != nil {
 		return nil, fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 	}
-	useCasesJSON, err := useCases2JSON(edgehostnameDetails.EdgeHostname.UseCases)
-	if err != nil {
-		return nil, err
-	}
-	if err := d.Set("use_cases", string(useCasesJSON)); err != nil {
-		return nil, fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
-	}
 	if err := d.Set("edge_hostname", edgehostnameDetails.EdgeHostname.Domain); err != nil {
-		return nil, fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
-	}
-	if err := d.Set("ip_behavior", edgehostnameDetails.EdgeHostname.IPVersionBehavior); err != nil {
 		return nil, fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 	}
 	d.SetId(edgehostID)
