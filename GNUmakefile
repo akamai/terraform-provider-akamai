@@ -14,6 +14,7 @@ BIN      = $(CURDIR)/bin
 GOCMD = go
 GOTEST = $(GOCMD) test
 GOBUILD = $(GOCMD) build
+GOMODTIDY = $(GOCMD) mod tidy
 M = $(shell echo ">")
 TFLINT = $(BIN)/tflint
 $(BIN)/tflint: $(BIN) ; $(info $(M) Installing tflint...)
@@ -47,20 +48,20 @@ install: build
 .PHONY: build
 build:
 	mkdir -p $(build_dir)
-	go build -o $(build_dir)/$(bin_name)
+	$(GOBUILD) -o $(build_dir)/$(bin_name)
 
 .PHONY: tidy
-tidy:
-	@go mod tidy
-	@cd tools && go mod tidy
+tidy: ; $(info $(M) Running go mod tidy...) @
+	@$(GOMODTIDY)
+	@cd tools && $(GOMODTIDY)
 
 .PHONY: test
 test:
-	go test $(TEST) -v $(TESTARGS) -timeout 40m 2>&1
+	$(GOTEST) $(TEST) -v $(TESTARGS) -timeout 40m 2>&1
 
 .PHONY: testacc
 testacc:
-	TF_ACC=1 go test $(TEST) -v $(TESTARGS) -timeout 300m
+	TF_ACC=1 $(GOTEST) $(TEST) -v $(TESTARGS) -timeout 300m
 
 .PHONY: fmt
 fmt:  | $(GOIMPORTS); $(info $(M) Running goimports...) @ ## Run goimports on all source files
@@ -85,7 +86,6 @@ terraform-fmt:
 
 .PHONY: lint
 lint: | $(GOLANGCILINT) ; $(info $(M) Running golangci-lint...) @
-	go mod tidy
 	$Q $(BIN)/golangci-lint run
 
 .PHONY: terraform-lint
@@ -94,7 +94,7 @@ terraform-lint: | $(TFLINT) ; $(info $(M) Checking source code against tflint...
 
 .PHONY: test-compile
 test-compile:
-	go test -c ./akamai $(TESTARGS)
+	$(GOTEST) -c ./akamai $(TESTARGS)
 
 .PHONY: tools
 tools: $(TOOLS)

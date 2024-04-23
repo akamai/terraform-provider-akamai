@@ -1,5 +1,23 @@
 # RELEASE NOTES
 
+## 6.1.0 (Apr 23, 2024)
+
+#### FEATURES/ENHANCEMENTS:
+
+* DNS
+  * Added second mode to `akamai_dns_record` resource where it is possible to provide individual values for priority, weight and port to **every** `SRV` target.
+    In such case it is not allowed to provide values for resource level fields `priority`, `weight` and `port`.
+    It is not allowed to mix targets with and without those fields.
+    ([I#370](https://github.com/akamai/terraform-provider-akamai/issues/370))
+
+* Image and Video Manager
+  * Added support for `SmartCrop` transformation in `akamai_imaging_policy_image` datasource
+
+#### BUG FIXES:
+
+* CPS
+  * Fixed issue with terraform producing inconsistent final plan for `akamai_cps_upload_certificate` resource on SAN list modification in `akamai_cps_third_party_enrollment` resource.
+
 ## 6.0.0 (Mar 26, 2024)
 
 #### BREAKING CHANGES:

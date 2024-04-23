@@ -162,7 +162,9 @@ func resourceCPSUploadCertificateCreate(ctx context.Context, d *schema.ResourceD
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
 	client := inst.Client(meta)
 	logger.Debug("Creating upload certificate")
-
+	if err := d.Set("unacknowledged_warnings", false); err != nil {
+		return diag.Errorf("could not set `unacknowledged_warnings`: %s", err)
+	}
 	return upsertUploadCertificate(ctx, d, m, client, logger)
 }
 
@@ -237,7 +239,9 @@ func resourceCPSUploadCertificateUpdate(ctx context.Context, d *schema.ResourceD
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
 	client := inst.Client(meta)
 	logger.Debug("Updating upload certificate")
-
+	if err := d.Set("unacknowledged_warnings", false); err != nil {
+		return diag.Errorf("could not set `unacknowledged_warnings`: %s", err)
+	}
 	enrollmentID, err := tf.GetIntValue("enrollment_id", d)
 	if err != nil {
 		return diag.Errorf("could not get `enrollment_id` attribute: %s", err)
@@ -423,7 +427,7 @@ func checkUnacknowledgedWarnings(ctx context.Context, diff *schema.ResourceDiff,
 		return err
 	}
 	if changeStatus.StatusInfo.Status == waitReviewThirdPartyCert || changeStatus.StatusInfo.Status == waitUploadThirdParty {
-		if err := diff.SetNewComputed("unacknowledged_warnings"); err != nil {
+		if err := diff.SetNew("unacknowledged_warnings", true); err != nil {
 			return fmt.Errorf("could not set 'unacknowledged_warnings' attribute: %s", err)
 		}
 	}

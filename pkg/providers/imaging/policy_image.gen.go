@@ -422,6 +422,15 @@ func transformationType(depth int) map[string]*schema.Schema {
 			},
 		},
 
+		"smart_crop": {
+			Description: "Crops around whatever is most important in the image, to a region around a specified area of interest relative to the specified `width` and `height` values. The crop detects any faces present, otherwise features.",
+			Type:        schema.TypeList,
+			Optional:    true,
+			Elem: &schema.Resource{
+				Schema: smartCrop(depth - 1),
+			},
+		},
+
 		"trim": {
 			Description: "Automatically crops uniform backgrounds from the edges of an image.",
 			Type:        schema.TypeList,
@@ -2469,6 +2478,66 @@ func shear(_ int) map[string]*schema.Schema {
 			Type:        schema.TypeString,
 			Optional:    true,
 			Description: "The amount to shear along the y-axis, measured in multiples of the image's height. Must be set if xShear is not specified.",
+		},
+	}
+}
+
+func smartCrop(_ int) map[string]*schema.Schema {
+	return map[string]*schema.Schema{
+		"debug": {
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "When enabled, the SmartCrop transformation doesn't actually execute. Instead, it outlines found faces or features, the region of interest, and the crop area.",
+			ValidateDiagFunc: validateIsTypeBool(),
+		},
+		"debug_var": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "When enabled, the SmartCrop transformation doesn't actually execute. Instead, it outlines found faces or features, the region of interest, and the crop area.",
+		},
+		"height": {
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "The height in pixels of the output image relative to the specified `style` value.",
+			ValidateDiagFunc: validateIsTypeInt(),
+		},
+		"height_var": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "The height in pixels of the output image relative to the specified `style` value.",
+		},
+		"sloppy": {
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "Whether to sacrifice any image fidelity for transformation performance.",
+			ValidateDiagFunc: validateIsTypeBool(),
+		},
+		"sloppy_var": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "Whether to sacrifice any image fidelity for transformation performance.",
+		},
+		"style": {
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "Specifies how to crop or scale a crop area for the specified area of interest in the source image, `fill` by default. The output image resizes to the specified `width` and `height` values. A value of `crop` places raw crop around the point of interest.  A value of `fill` scales the crop area to include as much of the image and point of interest as possible, relative to the specified `width` and `height` values. A value of `zoom` scales the crop area as small as possible to fit the point of interest, relative to the specified `width` and `height` values.",
+			ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"crop", "fill", "zoom"}, false)),
+		},
+		"style_var": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "Specifies how to crop or scale a crop area for the specified area of interest in the source image, `fill` by default. The output image resizes to the specified `width` and `height` values. A value of `crop` places raw crop around the point of interest.  A value of `fill` scales the crop area to include as much of the image and point of interest as possible, relative to the specified `width` and `height` values. A value of `zoom` scales the crop area as small as possible to fit the point of interest, relative to the specified `width` and `height` values.",
+		},
+		"width": {
+			Type:             schema.TypeString,
+			Optional:         true,
+			Description:      "The width in pixels of the output image relative to the specified `style` value.",
+			ValidateDiagFunc: validateIsTypeInt(),
+		},
+		"width_var": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "The width in pixels of the output image relative to the specified `style` value.",
 		},
 	}
 }

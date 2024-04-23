@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -197,6 +198,220 @@ func TestResDnsRecord(t *testing.T) {
 							resource.TestCheckResourceAttr(resourceName, "target.0", "Hel\\lo\"world"),
 							resource.TestCheckResourceAttr(resourceName, "target.1", "\"extralongtargetwhichis\" \"intwoseparateparts\""),
 						),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
+	t.Run("SRV record test with default values", func(t *testing.T) {
+		client := &dns.Mock{}
+
+		targetBig := "10 60 5060 big.example.com."
+		targetSmall := "10 60 5060 small.example.com."
+		targetTiny := "10 60 5060 tiny.example.com."
+
+		client.On("GetRecord",
+			mock.Anything,
+			"origin.org",
+			"origin.example.org",
+			"SRV",
+		).Return(nil, notFound).Once()
+
+		client.On("CreateRecord",
+			mock.Anything,
+			&dns.RecordBody{
+				Name:       "origin.example.org",
+				RecordType: "SRV",
+				TTL:        300,
+				Active:     false,
+				Target:     []string{targetBig, targetSmall, targetTiny},
+			},
+			"origin.org",
+			[]bool{false},
+		).Return(nil)
+
+		client.On("GetRecord",
+			mock.Anything,
+			"origin.org",
+			"origin.example.org",
+			"SRV",
+		).Return(&dns.RecordBody{
+			Name:       "origin.example.org",
+			RecordType: "SRV",
+			TTL:        300,
+			Active:     false,
+			Target:     []string{targetBig, targetSmall, targetTiny},
+		}, nil).Once()
+
+		c := dns.Client(session.Must(session.New()))
+
+		client.On("ParseRData",
+			mock.Anything,
+			"SRV",
+			[]string{targetBig, targetSmall, targetTiny},
+		).Return(
+			c.ParseRData(context.Background(), "SRV", []string{targetBig, targetSmall, targetTiny}),
+		).Times(2)
+
+		client.On("ProcessRdata",
+			mock.Anything,
+			[]string{targetBig, targetSmall, targetTiny},
+			"SRV",
+		).Return([]string{targetBig, targetSmall, targetTiny}).Times(2)
+
+		client.On("GetRecord",
+			mock.Anything,
+			"origin.org",
+			"origin.example.org",
+			"SRV",
+		).Return(&dns.RecordBody{
+			Name:       "origin.example.org",
+			RecordType: "SRV",
+			TTL:        300,
+			Active:     false,
+			Target:     []string{targetBig, targetSmall, targetTiny},
+		}, nil).Once()
+
+		client.On("DeleteRecord",
+			mock.Anything,
+			mock.AnythingOfType("*dns.RecordBody"),
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("[]bool"),
+		).Return(nil)
+
+		resourceName := "akamai_dns_record.srv_record"
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResDnsRecord/create_basic_srv_default.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr(resourceName, "recordtype", "SRV"),
+							resource.TestCheckResourceAttr(resourceName, "target.#", "3"),
+							resource.TestCheckResourceAttr(resourceName, "target.0", "big.example.com."),
+							resource.TestCheckResourceAttr(resourceName, "target.1", "small.example.com."),
+							resource.TestCheckResourceAttr(resourceName, "target.2", "tiny.example.com."),
+						),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+	t.Run("SRV record test without default values", func(t *testing.T) {
+		client := &dns.Mock{}
+
+		targetBig := "10 60 5060 big.example.com."
+		targetSmall := "10 40 5060 small.example.com."
+		targetTiny := "20 100 5060 tiny.example.com."
+
+		client.On("GetRecord",
+			mock.Anything,
+			"origin.org",
+			"origin.example.org",
+			"SRV",
+		).Return(nil, notFound).Once()
+
+		client.On("CreateRecord",
+			mock.Anything,
+			&dns.RecordBody{
+				Name:       "origin.example.org",
+				RecordType: "SRV",
+				TTL:        300,
+				Active:     false,
+				Target:     []string{targetBig, targetSmall, targetTiny},
+			},
+			"origin.org",
+			[]bool{false},
+		).Return(nil)
+
+		client.On("GetRecord",
+			mock.Anything,
+			"origin.org",
+			"origin.example.org",
+			"SRV",
+		).Return(&dns.RecordBody{
+			Name:       "origin.example.org",
+			RecordType: "SRV",
+			TTL:        300,
+			Active:     false,
+			Target:     []string{targetBig, targetSmall, targetTiny},
+		}, nil).Once()
+
+		c := dns.Client(session.Must(session.New()))
+
+		client.On("ParseRData",
+			mock.Anything,
+			"SRV",
+			[]string{targetBig, targetSmall, targetTiny},
+		).Return(
+			c.ParseRData(context.Background(), "SRV", []string{targetBig, targetSmall, targetTiny}),
+		).Times(2)
+
+		client.On("ProcessRdata",
+			mock.Anything,
+			[]string{targetBig, targetSmall, targetTiny},
+			"SRV",
+		).Return([]string{targetBig, targetSmall, targetTiny}).Times(2)
+
+		client.On("GetRecord",
+			mock.Anything,
+			"origin.org",
+			"origin.example.org",
+			"SRV",
+		).Return(&dns.RecordBody{
+			Name:       "origin.example.org",
+			RecordType: "SRV",
+			TTL:        300,
+			Active:     false,
+			Target:     []string{targetBig, targetSmall, targetTiny},
+		}, nil).Once()
+
+		client.On("DeleteRecord",
+			mock.Anything,
+			mock.AnythingOfType("*dns.RecordBody"),
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("[]bool"),
+		).Return(nil)
+
+		resourceName := "akamai_dns_record.srv_record"
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResDnsRecord/create_basic_srv_no_default.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr(resourceName, "recordtype", "SRV"),
+							resource.TestCheckResourceAttr(resourceName, "target.#", "3"),
+							resource.TestCheckResourceAttr(resourceName, "target.0", "10 60 5060 big.example.com."),
+							resource.TestCheckResourceAttr(resourceName, "target.1", "10 40 5060 small.example.com."),
+							resource.TestCheckResourceAttr(resourceName, "target.2", "20 100 5060 tiny.example.com."),
+						),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+	t.Run("SRV record test with invalid mixed values", func(t *testing.T) {
+		client := &dns.Mock{}
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config:      testutils.LoadFixtureString(t, "testdata/TestResDnsRecord/create_basic_srv_mix_invalid.tf"),
+						ExpectError: regexp.MustCompile("target should consist of only simple or complete items"),
 					},
 				},
 			})
