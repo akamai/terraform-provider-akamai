@@ -3,7 +3,7 @@ Hi there,
 Thank you for opening an issue. Please note that we try to keep the Terraform issue tracker reserved for bug reports and feature requests. For general usage questions, please see: https://www.terraform.io/community.html.
 
 ### Terraform and Akamai Terraform Provider Versions
-Run `terraform -v` in the directory with the .tf files to show the terraform and /akamai provider versions. If you are not running the latest versions of Terraform and Akamai Terraform Provider, please upgrade because your issue may have already been fixed.
+Run `terraform -v` in the directory with the .tf files to show the terraform and akamai provider versions. If you are not running the latest versions of Terraform and Akamai Terraform Provider, please upgrade because your issue may have already been fixed.
 
 ### Affected Resource(s)
 Please list the resources as a list, for example:
