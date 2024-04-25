@@ -13,8 +13,8 @@ import (
 
 func TestResGTMGeoMap(t *testing.T) {
 	dc := gtm.Datacenter{
-		DatacenterID: geo.DefaultDatacenter.DatacenterID,
-		Nickname:     geo.DefaultDatacenter.Nickname,
+		DatacenterID: geomap.DefaultDatacenter.DatacenterID,
+		Nickname:     geomap.DefaultDatacenter.Nickname,
 	}
 
 	t.Run("create geomap", func(t *testing.T) {
@@ -22,47 +22,51 @@ func TestResGTMGeoMap(t *testing.T) {
 
 		getCall := client.On("GetGeoMap",
 			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("string"),
-			mock.AnythingOfType("string"),
+			mock.AnythingOfType("gtm.GetGeoMapRequest"),
 		).Return(nil, &gtm.Error{
 			StatusCode: http.StatusNotFound,
-		})
+		}).Once()
 
-		resp := gtm.GeoMapResponse{}
-		resp.Resource = &geo
-		resp.Status = &pendingResponseStatus
+		resp := geomap
 		client.On("CreateGeoMap",
 			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("*gtm.GeoMap"),
-			mock.AnythingOfType("string"),
-		).Return(&resp, nil).Run(func(args mock.Arguments) {
-			getCall.ReturnArguments = mock.Arguments{args.Get(1).(*gtm.GeoMap), nil}
+			mock.AnythingOfType("gtm.CreateGeoMapRequest"),
+		).Return(&gtm.CreateGeoMapResponse{
+			Resource: geoMapCreate.Resource,
+			Status:   geoMapCreate.Status,
+		}, nil).Run(func(args mock.Arguments) {
+			getCall.ReturnArguments = mock.Arguments{&resp, nil}
 		})
+
+		client.On("GetGeoMap",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("gtm.GetGeoMapRequest"),
+		).Return(&resp, nil).Times(3)
 
 		client.On("GetDatacenter",
 			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("int"),
-			mock.AnythingOfType("string"),
+			mock.AnythingOfType("gtm.GetDatacenterRequest"),
 		).Return(&dc, nil)
 
 		client.On("GetDomainStatus",
 			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("string"),
-		).Return(&completeResponseStatus, nil)
+			mock.AnythingOfType("gtm.GetDomainStatusRequest"),
+		).Return(getDomainStatusResponseStatus, nil)
 
 		client.On("UpdateGeoMap",
 			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("*gtm.GeoMap"),
-			mock.AnythingOfType("string"),
-		).Return(&completeResponseStatus, nil).Run(func(args mock.Arguments) {
-			getCall.ReturnArguments = mock.Arguments{args.Get(1).(*gtm.GeoMap), nil}
-		})
+			mock.AnythingOfType("gtm.UpdateGeoMapRequest"),
+		).Return(updateGeoMapResponseStatus, nil)
+
+		client.On("GetGeoMap",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("gtm.GetGeoMapRequest"),
+		).Return(&geomapUpdate, nil).Times(3)
 
 		client.On("DeleteGeoMap",
 			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("*gtm.GeoMap"),
-			mock.AnythingOfType("string"),
-		).Return(&completeResponseStatus, nil)
+			mock.AnythingOfType("gtm.DeleteGeoMapRequest"),
+		).Return(deleteGeoMapResponseStatus, nil)
 
 		dataSourceName := "akamai_gtm_geomap.tfexample_geomap_1"
 
@@ -94,16 +98,14 @@ func TestResGTMGeoMap(t *testing.T) {
 
 		client.On("CreateGeoMap",
 			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("*gtm.GeoMap"),
-			gtmTestDomain,
+			mock.AnythingOfType("gtm.CreateGeoMapRequest"),
 		).Return(nil, &gtm.Error{
 			StatusCode: http.StatusBadRequest,
 		})
 
 		client.On("GetDatacenter",
 			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("int"),
-			mock.AnythingOfType("string"),
+			mock.AnythingOfType("gtm.GetDatacenterRequest"),
 		).Return(&dc, nil)
 
 		useClient(client, func() {
@@ -124,19 +126,17 @@ func TestResGTMGeoMap(t *testing.T) {
 	t.Run("create geomap denied", func(t *testing.T) {
 		client := &gtm.Mock{}
 
-		dr := gtm.GeoMapResponse{}
-		dr.Resource = &geo
+		dr := gtm.CreateGeoMapResponse{}
+		dr.Resource = geoMapCreate.Resource
 		dr.Status = &deniedResponseStatus
 		client.On("CreateGeoMap",
 			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("*gtm.GeoMap"),
-			gtmTestDomain,
+			mock.AnythingOfType("gtm.CreateGeoMapRequest"),
 		).Return(&dr, nil)
 
 		client.On("GetDatacenter",
 			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("int"),
-			mock.AnythingOfType("string"),
+			mock.AnythingOfType("gtm.GetDatacenterRequest"),
 		).Return(&dc, nil)
 
 		useClient(client, func() {
@@ -250,52 +250,49 @@ func getGeoMapMocks() *gtm.Mock {
 
 	mockGetGeoMap := client.On("GetGeoMap",
 		mock.Anything, // ctx is irrelevant for this test
-		mock.AnythingOfType("string"),
-		mock.AnythingOfType("string"),
+		mock.AnythingOfType("gtm.GetGeoMapRequest"),
 	).Return(nil, &gtm.Error{
 		StatusCode: http.StatusNotFound,
 	})
 
-	resp := gtm.GeoMapResponse{}
-	resp.Resource = &geoDiffOrder
-	resp.Status = &pendingResponseStatus
+	resp := geoDiffOrder
 	client.On("CreateGeoMap",
 		mock.Anything, // ctx is irrelevant for this test
-		mock.AnythingOfType("*gtm.GeoMap"),
-		mock.AnythingOfType("string"),
-	).Return(&resp, nil).Run(func(args mock.Arguments) {
-		mockGetGeoMap.ReturnArguments = mock.Arguments{args.Get(1).(*gtm.GeoMap), nil}
+		mock.AnythingOfType("gtm.CreateGeoMapRequest"),
+	).Return(&gtm.CreateGeoMapResponse{
+		Resource: geoMapCreateDiif.Resource,
+		Status:   geoMapCreateDiif.Status,
+	}, nil).Run(func(args mock.Arguments) {
+		mockGetGeoMap.ReturnArguments = mock.Arguments{&resp, nil}
 	})
 
 	client.On("GetDatacenter",
 		mock.Anything, // ctx is irrelevant for this test
-		mock.AnythingOfType("int"),
-		mock.AnythingOfType("string"),
+		mock.AnythingOfType("gtm.GetDatacenterRequest"),
 	).Return(&dc, nil)
 
 	client.On("GetDomainStatus",
 		mock.Anything, // ctx is irrelevant for this test
-		mock.AnythingOfType("string"),
-	).Return(&completeResponseStatus, nil)
+		mock.AnythingOfType("gtm.GetDomainStatusRequest"),
+	).Return(getDomainStatusResponseStatus, nil)
 
 	client.On("DeleteGeoMap",
 		mock.Anything, // ctx is irrelevant for this test
-		mock.AnythingOfType("*gtm.GeoMap"),
-		mock.AnythingOfType("string"),
-	).Return(&completeResponseStatus, nil)
+		mock.AnythingOfType("gtm.DeleteGeoMapRequest"),
+	).Return(deleteGeoMapResponseStatus, nil)
 
 	return client
 }
 
 var (
 	// geoDiffOrder is gtm.GeoMap structure used in testing of the assignments order
-	geoDiffOrder = gtm.GeoMap{
+	geoDiffOrder = gtm.GetGeoMapResponse{
 		Name: "tfexample_geomap_1",
 		DefaultDatacenter: &gtm.DatacenterBase{
 			DatacenterID: 5400,
 			Nickname:     "default datacenter",
 		},
-		Assignments: []*gtm.GeoAssignment{
+		Assignments: []gtm.GeoAssignment{
 			{
 				DatacenterBase: gtm.DatacenterBase{
 					DatacenterID: 3131,
@@ -320,13 +317,59 @@ var (
 		},
 	}
 
-	geo = gtm.GeoMap{
+	geoMapCreateDiif = gtm.CreateGeoMapResponse{
+		Resource: &gtm.GeoMap{
+			Name: "tfexample_geomap_1",
+			DefaultDatacenter: &gtm.DatacenterBase{
+				DatacenterID: 5400,
+				Nickname:     "default datacenter",
+			},
+			Assignments: []gtm.GeoAssignment{
+				{
+					DatacenterBase: gtm.DatacenterBase{
+						DatacenterID: 3131,
+						Nickname:     "tfexample_dc_1",
+					},
+					Countries: []string{"GB", "PL", "US", "FR"},
+				},
+				{
+					DatacenterBase: gtm.DatacenterBase{
+						DatacenterID: 3132,
+						Nickname:     "tfexample_dc_2",
+					},
+					Countries: []string{"GB", "AU"},
+				},
+				{
+					DatacenterBase: gtm.DatacenterBase{
+						DatacenterID: 3133,
+						Nickname:     "tfexample_dc_3",
+					},
+					Countries: []string{"GB", "BG", "CN", "MC", "TR"},
+				},
+			},
+		},
+		Status: &gtm.ResponseStatus{
+			ChangeID: "40e36abd-bfb2-4635-9fca-62175cf17007",
+			Links: []gtm.Link{
+				{
+					Href: "https://akab-ymtebc45gco3ypzj-apz4yxpek55y7fyv.luna.akamaiapis.net/config-gtm/v1/domains/gtmdomtest.akadns.net/status/current",
+					Rel:  "self",
+				},
+			},
+			Message:               "Current configuration has been propagated to all GTM nameservers",
+			PassingValidation:     true,
+			PropagationStatus:     "COMPLETE",
+			PropagationStatusDate: "2019-04-25T14:54:00.000+00:00",
+		},
+	}
+
+	geomap = gtm.GetGeoMapResponse{
 		Name: "tfexample_geomap_1",
 		DefaultDatacenter: &gtm.DatacenterBase{
 			DatacenterID: 5400,
 			Nickname:     "default datacenter",
 		},
-		Assignments: []*gtm.GeoAssignment{
+		Assignments: []gtm.GeoAssignment{
 			{
 				DatacenterBase: gtm.DatacenterBase{
 					DatacenterID: 3131,
@@ -334,6 +377,86 @@ var (
 				},
 				Countries: []string{"GB"},
 			},
+		},
+	}
+
+	geomapUpdate = gtm.GetGeoMapResponse{
+		Name: "tfexample_geomap_1",
+		DefaultDatacenter: &gtm.DatacenterBase{
+			DatacenterID: 5400,
+			Nickname:     "default datacenter",
+		},
+		Assignments: []gtm.GeoAssignment{
+			{
+				DatacenterBase: gtm.DatacenterBase{
+					DatacenterID: 3132,
+					Nickname:     "tfexample_dc_2",
+				},
+				Countries: []string{"US"},
+			},
+		},
+	}
+
+	geoMapCreate = gtm.CreateGeoMapResponse{
+		Resource: &gtm.GeoMap{
+			Name: "tfexample_geomap_1",
+			DefaultDatacenter: &gtm.DatacenterBase{
+				DatacenterID: 5400,
+				Nickname:     "default datacenter",
+			},
+			Assignments: []gtm.GeoAssignment{
+				{
+					DatacenterBase: gtm.DatacenterBase{
+						DatacenterID: 3131,
+						Nickname:     "tfexample_dc_1",
+					},
+					Countries: []string{"GB"},
+				},
+			},
+		},
+		Status: &gtm.ResponseStatus{
+			ChangeID: "40e36abd-bfb2-4635-9fca-62175cf17007",
+			Links: []gtm.Link{
+				{
+					Href: "https://akab-ymtebc45gco3ypzj-apz4yxpek55y7fyv.luna.akamaiapis.net/config-gtm/v1/domains/gtmdomtest.akadns.net/status/current",
+					Rel:  "self",
+				},
+			},
+			Message:               "Current configuration has been propagated to all GTM nameservers",
+			PassingValidation:     true,
+			PropagationStatus:     "COMPLETE",
+			PropagationStatusDate: "2019-04-25T14:54:00.000+00:00",
+		},
+	}
+
+	updateGeoMapResponseStatus = &gtm.UpdateGeoMapResponse{
+		Status: &gtm.ResponseStatus{
+			ChangeID: "40e36abd-bfb2-4635-9fca-62175cf17007",
+			Links: []gtm.Link{
+				{
+					Href: "https://akab-ymtebc45gco3ypzj-apz4yxpek55y7fyv.luna.akamaiapis.net/config-gtm/v1/domains/gtmdomtest.akadns.net/status/current",
+					Rel:  "self",
+				},
+			},
+			Message:               "Current configuration has been propagated to all GTM nameservers",
+			PassingValidation:     true,
+			PropagationStatus:     "COMPLETE",
+			PropagationStatusDate: "2019-04-25T14:54:00.000+00:00",
+		},
+	}
+	deleteGeoMapResponseStatus = &gtm.DeleteGeoMapResponse{
+		Status: &gtm.ResponseStatus{
+			ChangeID: "40e36abd-bfb2-4635-9fca-62175cf17007",
+			Links: []gtm.Link{
+				{
+					Href: "https://akab-ymtebc45gco3ypzj-apz4yxpek55y7fyv.luna.akamaiapis.net/config-gtm/v1/domains/gtmdomtest.akadns.net/status/current",
+					Rel:  "self",
+				},
+			},
+			Message:               "Current configuration has been propagated to all GTM nameservers",
+			PassingValidation:     true,
+			PropagationStatus:     "COMPLETE",
+			PropagationStatusDate: "2019-04-25T14:54:00.000+00:00",
 		},
 	}
 )

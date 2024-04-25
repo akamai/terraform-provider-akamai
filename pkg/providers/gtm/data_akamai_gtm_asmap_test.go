@@ -21,13 +21,16 @@ func TestDataGTMASMap(t *testing.T) {
 		"happy path": {
 			givenTF: "valid.tf",
 			init: func(m *gtm.Mock) {
-				m.On("GetASMap", mock.Anything, "map1", "test.domain.net").Return(&gtm.ASMap{
+				m.On("GetASMap", mock.Anything, gtm.GetASMapRequest{
+					ASMapName:  "map1",
+					DomainName: "test.domain.net",
+				}).Return(&gtm.GetASMapResponse{
 					Name: "TestName",
 					DefaultDatacenter: &gtm.DatacenterBase{
 						Nickname:     "TestDefaultDatacenterNickname",
 						DatacenterID: 1,
 					},
-					Assignments: []*gtm.ASAssignment{{
+					Assignments: []gtm.ASAssignment{{
 						DatacenterBase: gtm.DatacenterBase{
 							Nickname:     "TestAssignmentNickname",
 							DatacenterID: 1,
@@ -38,7 +41,7 @@ func TestDataGTMASMap(t *testing.T) {
 							3,
 						},
 					}},
-					Links: []*gtm.Link{{
+					Links: []gtm.Link{{
 						Href: "href.test",
 						Rel:  "TestRel",
 					}},
@@ -71,7 +74,10 @@ func TestDataGTMASMap(t *testing.T) {
 		"error response from api": {
 			givenTF: "valid.tf",
 			init: func(m *gtm.Mock) {
-				m.On("GetASMap", mock.Anything, "map1", "test.domain.net").Return(
+				m.On("GetASMap", mock.Anything, gtm.GetASMapRequest{
+					ASMapName:  "map1",
+					DomainName: "test.domain.net",
+				}).Return(
 					nil, fmt.Errorf("test error"))
 			},
 			expectError: regexp.MustCompile("test error"),
@@ -79,17 +85,21 @@ func TestDataGTMASMap(t *testing.T) {
 		"no assignments": {
 			givenTF: "valid.tf",
 			init: func(m *gtm.Mock) {
-				m.On("GetASMap", mock.Anything, "map1", "test.domain.net").Return(&gtm.ASMap{
+				m.On("GetASMap", mock.Anything, gtm.GetASMapRequest{
+					ASMapName:  "map1",
+					DomainName: "test.domain.net",
+				}).Return(&gtm.GetASMapResponse{
 					Name: "TestName",
 					DefaultDatacenter: &gtm.DatacenterBase{
 						Nickname:     "TestDefaultDatacenterNickname",
 						DatacenterID: 1,
 					},
-					Assignments: []*gtm.ASAssignment{},
-					Links: []*gtm.Link{{
+					Assignments: []gtm.ASAssignment{},
+					Links: []gtm.Link{{
 						Href: "href.test",
 						Rel:  "TestRel",
-					}},
+					},
+					},
 				}, nil)
 
 			},

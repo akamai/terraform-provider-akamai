@@ -159,7 +159,10 @@ func dataGTMDatacenterRead(ctx context.Context, d *schema.ResourceData, m interf
 		return diag.Errorf("could not get 'datacenter_id' attribute: %s", err)
 	}
 
-	dc, err := client.GetDatacenter(ctx, dcID, domain)
+	dc, err := client.GetDatacenter(ctx, gtm.GetDatacenterRequest{
+		DatacenterID: dcID,
+		DomainName:   domain,
+	})
 	if err != nil {
 		return diag.Errorf("could not get datacenter: %s", err)
 	}

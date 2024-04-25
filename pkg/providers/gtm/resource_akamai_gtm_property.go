@@ -541,7 +541,10 @@ func resourceGTMv1PropertyCreate(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 	logger.Debugf("Proposed New Property: [%v]", newProp)
-	cStatus, err := createPropertyWithRetry(ctx, meta, logger, newProp, domain)
+	cStatus, err := Client(meta).CreateProperty(ctx, gtm.CreatePropertyRequest{
+		Property:   newProp,
+		DomainName: domain,
+	})
 	if err != nil {
 		logger.Errorf("Property Create failed: CreateProperty error: %s", err.Error())
 		return diag.Errorf("property Create failed: CreateProperty error: %s", err.Error())
@@ -588,7 +591,10 @@ func createPropertyWithRetry(ctx context.Context, meta meta.Meta, logger log.Int
 
 	for {
 		// Attempt to create the property
-		cStatus, err := Client(meta).CreateProperty(ctx, newProp, domain)
+		cStatus, err := Client(meta).CreateProperty(ctx, gtm.CreatePropertyRequest{
+			Property:   newProp,
+			DomainName: domain,
+		})
 		if err == nil {
 			// Success, return the created property
 			return cStatus, nil
@@ -638,7 +644,10 @@ func resourceGTMv1PropertyRead(ctx context.Context, d *schema.ResourceData, m in
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	prop, err := Client(meta).GetProperty(ctx, property, domain)
+	prop, err := Client(meta).GetProperty(ctx, gtm.GetPropertyRequest{
+		PropertyName: property,
+		DomainName:   domain,
+	})
 	if errors.Is(err, gtm.ErrNotFound) {
 		d.SetId("")
 		return nil
@@ -669,26 +678,33 @@ func resourceGTMv1PropertyUpdate(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 	// Get existing property
-	existProp, err := Client(meta).GetProperty(ctx, property, domain)
+	existProp, err := Client(meta).GetProperty(ctx, gtm.GetPropertyRequest{
+		PropertyName: property,
+		DomainName:   domain,
+	})
 	if err != nil {
 		logger.Errorf("Property Update failed: GetProperty error: %s", err.Error())
 		return diag.Errorf("property Update failed: GetProperty error: %s", err.Error())
 	}
+	newProp := createPropertyStruct(existProp)
 	logger.Debugf("Updating Property BEFORE: %v", existProp)
-	err = populatePropertyObject(d, existProp, m)
+	err = populatePropertyObject(d, newProp, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	logger.Debugf("Updating Property PROPOSED: %v", existProp)
-	uStat, err := Client(meta).UpdateProperty(ctx, existProp, domain)
+	uStat, err := Client(meta).UpdateProperty(ctx, gtm.UpdatePropertyRequest{
+		Property:   newProp,
+		DomainName: domain,
+	})
 	if err != nil {
 		logger.Errorf("Property Update failed: UpdateProperty error: %s", err.Error())
 		return diag.Errorf("property Update failed: UpdateProperty error: %s", err.Error())
 	}
 	logger.Debugf("Property Update  status: %v", uStat)
-	if uStat.PropagationStatus == "DENIED" {
-		logger.Debugf(uStat.Message)
-		return diag.FromErr(fmt.Errorf(uStat.Message))
+	if uStat.Status.PropagationStatus == "DENIED" {
+		logger.Debugf(uStat.Status.Message)
+		return diag.FromErr(fmt.Errorf(uStat.Status.Message))
 	}
 
 	waitOnComplete, err := tf.GetBoolValue("wait_on_complete", d)
@@ -729,7 +745,10 @@ func resourceGTMv1PropertyImport(d *schema.ResourceData, m interface{}) ([]*sche
 	if err != nil {
 		return []*schema.ResourceData{d}, err
 	}
-	prop, err := Client(meta).GetProperty(ctx, property, domain)
+	prop, err := Client(meta).GetProperty(ctx, gtm.GetPropertyRequest{
+		PropertyName: property,
+		DomainName:   domain,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("property Import failed: GetProperty error: %s", err.Error())
 	}
@@ -762,21 +781,28 @@ func resourceGTMv1PropertyDelete(ctx context.Context, d *schema.ResourceData, m 
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	existProp, err := Client(meta).GetProperty(ctx, property, domain)
+	existProp, err := Client(meta).GetProperty(ctx, gtm.GetPropertyRequest{
+		PropertyName: property,
+		DomainName:   domain,
+	})
 	if err != nil {
 		logger.Errorf("Property Delete failed: GetProperty error: %s", err.Error())
 		return diag.Errorf("property Delete failed: GetProperty error: %s", err.Error())
 	}
-	logger.Debugf("Deleting Property: %v", existProp)
-	uStat, err := Client(meta).DeleteProperty(ctx, existProp, domain)
+	newProp := createPropertyStruct(existProp)
+	logger.Debugf("Deleting Property: %v", newProp)
+	uStat, err := Client(meta).DeleteProperty(ctx, gtm.DeletePropertyRequest{
+		PropertyName: property,
+		DomainName:   domain,
+	})
 	if err != nil {
 		logger.Errorf("Property Delete failed: DeleteProperty error: %s", err.Error())
 		return diag.Errorf("property Delete failed: DeleteProperty error: %s", err.Error())
 	}
 	logger.Debugf("Property Delete status: %v", uStat)
-	if uStat.PropagationStatus == "DENIED" {
-		logger.Errorf(uStat.Message)
-		return diag.FromErr(fmt.Errorf(uStat.Message))
+	if uStat.Status.PropagationStatus == "DENIED" {
+		logger.Errorf(uStat.Status.Message)
+		return diag.FromErr(fmt.Errorf(uStat.Status.Message))
 	}
 
 	waitOnComplete, err := tf.GetBoolValue("wait_on_complete", d)
@@ -1020,8 +1046,8 @@ func populateNewPropertyObject(d *schema.ResourceData, m interface{}) (*gtm.Prop
 	}
 	propObj := &gtm.Property{
 		Name:           name,
-		TrafficTargets: make([]*gtm.TrafficTarget, 0),
-		LivenessTests:  make([]*gtm.LivenessTest, 0),
+		TrafficTargets: make([]gtm.TrafficTarget, 0),
+		LivenessTests:  make([]gtm.LivenessTest, 0),
 	}
 	err = populatePropertyObject(d, propObj, m)
 
@@ -1030,7 +1056,7 @@ func populateNewPropertyObject(d *schema.ResourceData, m interface{}) (*gtm.Prop
 }
 
 // Populate Terraform state from provided Property object
-func populateTerraformPropertyState(d *schema.ResourceData, prop *gtm.Property, m interface{}) {
+func populateTerraformPropertyState(d *schema.ResourceData, prop *gtm.GetPropertyResponse, m interface{}) {
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "populateTerraformPropertyState")
 
@@ -1096,10 +1122,10 @@ func populateTrafficTargetObject(d *schema.ResourceData, prop *gtm.Property, m i
 	// pull apart List
 	traffTargList, err := tf.GetInterfaceArrayValue("traffic_target", d)
 	if err == nil {
-		trafficObjList := make([]*gtm.TrafficTarget, len(traffTargList)) // create new object list
+		trafficObjList := make([]gtm.TrafficTarget, len(traffTargList)) // create new object list
 		for i, v := range traffTargList {
 			ttMap := v.(map[string]interface{})
-			trafficTarget := &gtm.TrafficTarget{}
+			trafficTarget := gtm.TrafficTarget{}
 			trafficTarget.DatacenterID = ttMap["datacenter_id"].(int)
 			trafficTarget.Precedence = ptr.To(ttMap["precedence"].(int))
 			trafficTarget.Enabled = ttMap["enabled"].(bool)
@@ -1121,11 +1147,11 @@ func populateTrafficTargetObject(d *schema.ResourceData, prop *gtm.Property, m i
 }
 
 // create and populate Terraform traffic_targets schema
-func populateTerraformTrafficTargetState(d *schema.ResourceData, prop *gtm.Property, m interface{}) error {
+func populateTerraformTrafficTargetState(d *schema.ResourceData, prop *gtm.GetPropertyResponse, m interface{}) error {
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "populateTerraformTrafficTargetState")
 
-	objectInventory := make(map[int]*gtm.TrafficTarget, len(prop.TrafficTargets))
+	objectInventory := make(map[int]gtm.TrafficTarget, len(prop.TrafficTargets))
 	if len(prop.TrafficTargets) > 0 {
 		for _, aObj := range prop.TrafficTargets {
 			objectInventory[aObj.DatacenterID] = aObj
@@ -1140,7 +1166,7 @@ func populateTerraformTrafficTargetState(d *schema.ResourceData, prop *gtm.Prope
 		tt := ttMap.(map[string]interface{})
 		objIndex := tt["datacenter_id"].(int)
 		ttObject := objectInventory[objIndex]
-		if ttObject == nil {
+		if &ttObject == nil {
 			logger.Warnf("Property TrafficTarget %d NOT FOUND in returned GTM Object", tt["datacenter_id"])
 			continue
 		}
@@ -1182,10 +1208,10 @@ func populateStaticRRSetObject(d *schema.ResourceData, prop *gtm.Property) {
 	// pull apart List
 	staticSetList, err := tf.GetInterfaceArrayValue("static_rr_set", d)
 	if err == nil {
-		staticObjList := make([]*gtm.StaticRRSet, len(staticSetList)) // create new object list
+		staticObjList := make([]gtm.StaticRRSet, len(staticSetList)) // create new object list
 		for i, v := range staticSetList {
 			recMap := v.(map[string]interface{})
-			record := &gtm.StaticRRSet{
+			record := gtm.StaticRRSet{
 				TTL:  recMap["ttl"].(int),
 				Type: recMap["type"].(string),
 			}
@@ -1203,11 +1229,11 @@ func populateStaticRRSetObject(d *schema.ResourceData, prop *gtm.Property) {
 }
 
 // create and populate Terraform static_rr_sets schema
-func populateTerraformStaticRRSetState(d *schema.ResourceData, prop *gtm.Property, m interface{}) error {
+func populateTerraformStaticRRSetState(d *schema.ResourceData, prop *gtm.GetPropertyResponse, m interface{}) error {
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "populateTerraformStaticRRSetState")
 
-	objectInventory := make(map[string]*gtm.StaticRRSet, len(prop.StaticRRSets))
+	objectInventory := make(map[string]gtm.StaticRRSet, len(prop.StaticRRSets))
 	if len(prop.StaticRRSets) > 0 {
 		for _, aObj := range prop.StaticRRSets {
 			objectInventory[aObj.Type] = aObj
@@ -1222,7 +1248,7 @@ func populateTerraformStaticRRSetState(d *schema.ResourceData, prop *gtm.Propert
 		rr := rrMap.(map[string]interface{})
 		objIndex := rr["type"].(string)
 		rrObject := objectInventory[objIndex]
-		if rrObject == nil {
+		if &rrObject == nil {
 			logger.Warnf("Property StaticRRSet %s NOT FOUND in returned GTM Object", rr["type"])
 			continue
 		}
@@ -1253,11 +1279,11 @@ func populateLivenessTestObject(d *schema.ResourceData, prop *gtm.Property) {
 
 	liveTestList, err := tf.GetInterfaceArrayValue("liveness_test", d)
 	if err == nil {
-		liveTestObjList := make([]*gtm.LivenessTest, len(liveTestList)) // create new object list
+		liveTestObjList := make([]gtm.LivenessTest, len(liveTestList)) // create new object list
 		for i, l := range liveTestList {
 			v := l.(map[string]interface{})
 
-			lt := &gtm.LivenessTest{
+			lt := gtm.LivenessTest{
 				Name:                          v["name"].(string),
 				TestObjectProtocol:            v["test_object_protocol"].(string),
 				TestInterval:                  v["test_interval"].(int),
@@ -1291,10 +1317,10 @@ func populateLivenessTestObject(d *schema.ResourceData, prop *gtm.Property) {
 			}
 			httpHeaderList := v["http_header"].([]interface{})
 			if httpHeaderList != nil {
-				headerObjList := make([]*gtm.HTTPHeader, len(httpHeaderList)) // create new object list
+				headerObjList := make([]gtm.HTTPHeader, len(httpHeaderList)) // create new object list
 				for i, h := range httpHeaderList {
 					recMap := h.(map[string]interface{})
-					record := &gtm.HTTPHeader{
+					record := gtm.HTTPHeader{
 						Name:  recMap["name"].(string),
 						Value: recMap["value"].(string),
 					}
@@ -1317,11 +1343,11 @@ func populateLivenessTestObject(d *schema.ResourceData, prop *gtm.Property) {
 }
 
 // create and populate Terraform liveness_test schema
-func populateTerraformLivenessTestState(d *schema.ResourceData, prop *gtm.Property, m interface{}) error {
+func populateTerraformLivenessTestState(d *schema.ResourceData, prop *gtm.GetPropertyResponse, m interface{}) error {
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "populateTerraformLivenessTestState")
 
-	objectInventory := make(map[string]*gtm.LivenessTest, len(prop.LivenessTests))
+	objectInventory := make(map[string]gtm.LivenessTest, len(prop.LivenessTests))
 	if len(prop.LivenessTests) > 0 {
 		for _, aObj := range prop.LivenessTests {
 			objectInventory[aObj.Name] = aObj
@@ -1336,7 +1362,7 @@ func populateTerraformLivenessTestState(d *schema.ResourceData, prop *gtm.Proper
 		lt := ltMap.(map[string]interface{})
 		objIndex := lt["name"].(string)
 		ltObject := objectInventory[objIndex]
-		if ltObject == nil {
+		if &ltObject == nil {
 			logger.Warnf("Property LivenessTest  %s NOT FOUND in returned GTM Object", lt["name"])
 			continue
 		}
@@ -1528,6 +1554,49 @@ func trafficTargetDiffSuppress(_, _, _ string, d *schema.ResourceData) bool {
 	}
 
 	return true
+}
+
+// createPropertyStruct converts response from GetPropertyResponse into Property
+func createPropertyStruct(prop *gtm.GetPropertyResponse) *gtm.Property {
+	if prop != nil {
+		return &gtm.Property{
+			Name:                      prop.CName,
+			Type:                      prop.Type,
+			IPv6:                      prop.IPv6,
+			ScoreAggregationType:      prop.ScoreAggregationType,
+			StickinessBonusPercentage: prop.StickinessBonusPercentage,
+			StickinessBonusConstant:   prop.StickinessBonusConstant,
+			HealthThreshold:           prop.HealthThreshold,
+			UseComputedTargets:        prop.UseComputedTargets,
+			BackupIP:                  prop.BackupIP,
+			BalanceByDownloadScore:    prop.BalanceByDownloadScore,
+			StaticTTL:                 prop.StaticTTL,
+			StaticRRSets:              prop.StaticRRSets,
+			LastModified:              prop.LastModified,
+			UnreachableThreshold:      prop.UnreachableThreshold,
+			MinLiveFraction:           prop.MinLiveFraction,
+			HealthMultiplier:          prop.HealthMultiplier,
+			DynamicTTL:                prop.DynamicTTL,
+			MaxUnreachablePenalty:     prop.MaxUnreachablePenalty,
+			MapName:                   prop.Name,
+			HandoutLimit:              prop.HandoutLimit,
+			HandoutMode:               prop.HandoutMode,
+			FailoverDelay:             prop.FailoverDelay,
+			BackupCName:               prop.BackupIP,
+			FailbackDelay:             prop.FailbackDelay,
+			LoadImbalancePercentage:   prop.LoadImbalancePercentage,
+			HealthMax:                 prop.HealthMax,
+			GhostDemandReporting:      prop.GhostDemandReporting,
+			Comments:                  prop.Comments,
+			CName:                     prop.CName,
+			WeightedHashBitsForIPv4:   prop.WeightedHashBitsForIPv4,
+			WeightedHashBitsForIPv6:   prop.WeightedHashBitsForIPv6,
+			TrafficTargets:            prop.TrafficTargets,
+			Links:                     prop.Links,
+			LivenessTests:             prop.LivenessTests,
+		}
+	}
+	return nil
 }
 
 func livenessTestsDiffSuppress(_, _, _ string, d *schema.ResourceData) bool {

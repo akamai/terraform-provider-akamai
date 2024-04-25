@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/apex/log"
-
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/dns"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
+	"github.com/apex/log"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -72,7 +72,11 @@ func dataSourceDNSRecordSetRead(ctx context.Context, d *schema.ResourceData, m i
 	}).Debug("Start Searching for records")
 	// Warning or Errors can be collected in a slice type
 	var diags diag.Diagnostics
-	rdata, err := inst.Client(meta).GetRdata(ctx, zone, host, recordType)
+	rdata, err := inst.Client(meta).GetRdata(ctx, dns.GetRdataRequest{
+		Name:       zone,
+		Zone:       host,
+		RecordType: recordType,
+	})
 	if err != nil {
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,

@@ -21,13 +21,16 @@ func TestDataGTMCIDRmap(t *testing.T) {
 		"happy path": {
 			givenTF: "valid.tf",
 			init: func(m *gtm.Mock) {
-				m.On("GetCIDRMap", mock.Anything, "mapTest", "test.cidrmap.domain.net").Return(&gtm.CIDRMap{
+				m.On("GetCIDRMap", mock.Anything, gtm.GetCIDRMapRequest{
+					MapName:    "mapTest",
+					DomainName: "test.cidrmap.domain.net",
+				}).Return(&gtm.GetCIDRMapResponse{
 					Name: "TestName",
 					DefaultDatacenter: &gtm.DatacenterBase{
 						Nickname:     "TestNickname",
 						DatacenterID: 1,
 					},
-					Assignments: []*gtm.CIDRAssignment{{
+					Assignments: []gtm.CIDRAssignment{{
 						DatacenterBase: gtm.DatacenterBase{
 							Nickname:     "TestNicknameAssignments",
 							DatacenterID: 1,
@@ -37,7 +40,7 @@ func TestDataGTMCIDRmap(t *testing.T) {
 							"test2",
 						},
 					}},
-					Links: []*gtm.Link{{
+					Links: []gtm.Link{{
 						Rel:  "TestRel",
 						Href: "TestHref",
 					}},
@@ -69,7 +72,10 @@ func TestDataGTMCIDRmap(t *testing.T) {
 		"error response from api": {
 			givenTF: "valid.tf",
 			init: func(m *gtm.Mock) {
-				m.On("GetCIDRMap", mock.Anything, "mapTest", "test.cidrmap.domain.net").Return(
+				m.On("GetCIDRMap", mock.Anything, gtm.GetCIDRMapRequest{
+					MapName:    "mapTest",
+					DomainName: "test.cidrmap.domain.net",
+				}).Return(
 					nil, fmt.Errorf("error"))
 			},
 			expectError: regexp.MustCompile("error"),
@@ -77,14 +83,17 @@ func TestDataGTMCIDRmap(t *testing.T) {
 		"no assignments": {
 			givenTF: "valid.tf",
 			init: func(m *gtm.Mock) {
-				m.On("GetCIDRMap", mock.Anything, "mapTest", "test.cidrmap.domain.net").Return(&gtm.CIDRMap{
+				m.On("GetCIDRMap", mock.Anything, gtm.GetCIDRMapRequest{
+					MapName:    "mapTest",
+					DomainName: "test.cidrmap.domain.net",
+				}).Return(&gtm.GetCIDRMapResponse{
 					Name: "TestName",
 					DefaultDatacenter: &gtm.DatacenterBase{
 						Nickname:     "TestNickname",
 						DatacenterID: 1,
 					},
-					Assignments: []*gtm.CIDRAssignment{},
-					Links: []*gtm.Link{{
+					Assignments: []gtm.CIDRAssignment{},
+					Links: []gtm.Link{{
 						Rel:  "TestRel",
 						Href: "TestHref",
 					}},

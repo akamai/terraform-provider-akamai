@@ -15,8 +15,39 @@ import (
 
 var (
 	propertyResourceName = "akamai_gtm_property.tfexample_prop_1"
-	propertyName         = "tfexample_prop_1"
 	updatedPropertyName  = "tfexample_prop_1-updated"
+
+	updatePropertyResponseStatus = &gtm.UpdatePropertyResponse{
+		Status: &gtm.ResponseStatus{
+			ChangeID: "40e36abd-bfb2-4635-9fca-62175cf17007",
+			Links: []gtm.Link{
+				{
+					Href: "https://akab-ymtebc45gco3ypzj-apz4yxpek55y7fyv.luna.akamaiapis.net/config-gtm/v1/domains/gtmdomtest.akadns.net/status/current",
+					Rel:  "self",
+				},
+			},
+			Message:               "Current configuration has been propagated to all GTM nameservers",
+			PassingValidation:     true,
+			PropagationStatus:     "COMPLETE",
+			PropagationStatusDate: "2019-04-25T14:54:00.000+00:00",
+		},
+	}
+
+	deletePropertyResponseStatus = &gtm.DeletePropertyResponse{
+		Status: &gtm.ResponseStatus{
+			ChangeID: "40e36abd-bfb2-4635-9fca-62175cf17007",
+			Links: []gtm.Link{
+				{
+					Href: "https://akab-ymtebc45gco3ypzj-apz4yxpek55y7fyv.luna.akamaiapis.net/config-gtm/v1/domains/gtmdomtest.akadns.net/status/current",
+					Rel:  "self",
+				},
+			},
+			Message:               "Current configuration has been propagated to all GTM nameservers",
+			PassingValidation:     true,
+			PropagationStatus:     "COMPLETE",
+			PropagationStatusDate: "2019-04-25T14:54:00.000+00:00",
+		},
+	}
 )
 
 func TestResGTMProperty(t *testing.T) {
@@ -28,16 +59,16 @@ func TestResGTMProperty(t *testing.T) {
 		"create property": {
 			property: getBasicProperty(),
 			init: func(t *testing.T, m *gtm.Mock) {
-				mockCreateProperty(m, getBasicProperty(), gtmTestDomain)
+				mockCreateProperty(m, getBasicProperty())
 				// read
-				mockGetProperty(m, getBasicProperty(), propertyName, gtmTestDomain, 4)
+				mockGetProperty(m, getBasicPropertyResponse(), 4)
 				// update
-				mockUpdateProperty(m, getUpdatedProperty(), gtmTestDomain)
+				mockUpdateProperty(m)
 				// read
-				mockGetDomainStatus(m, gtmTestDomain, 2)
-				mockGetProperty(m, getUpdatedProperty(), propertyName, gtmTestDomain, 3)
+				mockGetDomainStatus(m, 2)
+				mockGetProperty(m, getBasicPropertyResponseUpdate(), 3)
 				// delete
-				mockDeleteProperty(m, getUpdatedProperty(), gtmTestDomain)
+				mockDeleteProperty(m)
 			},
 			steps: []resource.TestStep{
 				{
@@ -75,11 +106,11 @@ func TestResGTMProperty(t *testing.T) {
 		"create property with additional liveness test fields": {
 			property: getBasicPropertyWithLivenessTests(),
 			init: func(t *testing.T, m *gtm.Mock) {
-				mockCreateProperty(m, getBasicPropertyWithLivenessTests(), gtmTestDomain)
+				mockCreateProperty(m, getBasicPropertyWithLivenessTests())
 				// read
-				mockGetProperty(m, getBasicPropertyWithLivenessTests(), propertyName, gtmTestDomain, 3)
+				mockGetProperty(m, getBasicPropertyResponseWithLivenessTests(), 3)
 				// delete
-				mockDeleteProperty(m, getBasicPropertyWithLivenessTests(), gtmTestDomain)
+				mockDeleteProperty(m)
 			},
 			steps: []resource.TestStep{
 				{
@@ -105,8 +136,7 @@ func TestResGTMProperty(t *testing.T) {
 				// bad request status code returned
 				m.On("CreateProperty",
 					mock.Anything,
-					getBasicProperty(),
-					gtmTestDomain,
+					mock.AnythingOfType("gtm.CreatePropertyRequest"),
 				).Return(nil, &gtm.Error{
 					StatusCode: http.StatusBadRequest,
 				})
@@ -210,14 +240,13 @@ func TestResGTMProperty(t *testing.T) {
 			init: func(t *testing.T, m *gtm.Mock) {
 				// create
 				// denied response status returned
-				deniedResponse := gtm.PropertyResponse{
+				deniedResponse := gtm.CreatePropertyResponse{
 					Resource: getBasicProperty(),
 					Status:   &deniedResponseStatus,
 				}
 				m.On("CreateProperty",
 					mock.Anything,
-					getBasicProperty(),
-					gtmTestDomain,
+					mock.AnythingOfType("gtm.CreatePropertyRequest"),
 				).Return(&deniedResponse, nil).Once()
 			},
 			steps: []resource.TestStep{
@@ -231,18 +260,20 @@ func TestResGTMProperty(t *testing.T) {
 			property: getBasicProperty(),
 			init: func(t *testing.T, m *gtm.Mock) {
 				// create 1st property
-				mockCreateProperty(m, getBasicProperty(), gtmTestDomain)
+				mockCreateProperty(m, getBasicProperty())
 				// read
-				mockGetProperty(m, getBasicProperty(), propertyName, gtmTestDomain, 4)
+				mockGetProperty(m, getBasicPropertyResponse(), 4)
 				// force new -> delete 1st property and recreate 2nd with updated name
-				mockDeleteProperty(m, getBasicProperty(), gtmTestDomain)
+				mockDeleteProperty(m)
 				propertyWithUpdatedName := getBasicProperty()
 				propertyWithUpdatedName.Name = updatedPropertyName
-				mockCreateProperty(m, propertyWithUpdatedName, gtmTestDomain)
+				propertyResponseWithUpdatedName := getBasicPropertyResponse()
+				propertyResponseWithUpdatedName.Name = updatedPropertyName
+				mockCreateProperty(m, propertyWithUpdatedName)
 				// read
-				mockGetProperty(m, propertyWithUpdatedName, updatedPropertyName, gtmTestDomain, 3)
+				mockGetProperty(m, propertyResponseWithUpdatedName, 3)
 				// delete
-				mockDeleteProperty(m, propertyWithUpdatedName, gtmTestDomain)
+				mockDeleteProperty(m)
 			},
 			steps: []resource.TestStep{
 				{
@@ -283,11 +314,14 @@ func TestResGTMProperty(t *testing.T) {
 				propertyWithLivenessTest := getBasicProperty()
 				propertyWithLivenessTest.LivenessTests[0].TestObject = ""
 				propertyWithLivenessTest.LivenessTests[0].TestObjectProtocol = "SNMP"
-				mockCreateProperty(m, propertyWithLivenessTest, gtmTestDomain)
+				propertyResponseWithLivenessTest := getBasicPropertyResponse()
+				propertyResponseWithLivenessTest.LivenessTests[0].TestObject = ""
+				propertyResponseWithLivenessTest.LivenessTests[0].TestObjectProtocol = "SNMP"
+				mockCreateProperty(m, propertyWithLivenessTest)
 				// read
-				mockGetProperty(m, propertyWithLivenessTest, propertyName, gtmTestDomain, 3)
+				mockGetProperty(m, propertyResponseWithLivenessTest, 3)
 				// delete
-				mockDeleteProperty(m, propertyWithLivenessTest, gtmTestDomain)
+				mockDeleteProperty(m)
 			},
 			steps: []resource.TestStep{
 				{
@@ -327,11 +361,11 @@ func TestResGTMProperty(t *testing.T) {
 		"create property with 'ranked-failover' type and allow single empty precedence value": {
 			property: getRankedFailoverPropertyWithPrecedence(),
 			init: func(t *testing.T, m *gtm.Mock) {
-				mockCreateProperty(m, getRankedFailoverPropertyWithPrecedence(), gtmTestDomain)
+				mockCreateProperty(m, getRankedFailoverPropertyWithPrecedence())
 				// read
-				mockGetProperty(m, getRankedFailoverPropertyWithPrecedence(), propertyName, gtmTestDomain, 3)
+				mockGetProperty(m, getRankedFailoverPropertyResponseWithPrecedence(), 3)
 				// delete
-				mockDeleteProperty(m, getRankedFailoverPropertyWithPrecedence(), gtmTestDomain)
+				mockDeleteProperty(m)
 			},
 			steps: []resource.TestStep{
 				{
@@ -354,11 +388,11 @@ func TestResGTMProperty(t *testing.T) {
 		"create property with 'ranked-failover' type and 0 set as precedence value": {
 			property: getRankedFailoverPropertyWithPrecedence(),
 			init: func(t *testing.T, m *gtm.Mock) {
-				mockCreateProperty(m, getRankedFailoverPropertyWithPrecedence(), gtmTestDomain)
+				mockCreateProperty(m, getRankedFailoverPropertyWithPrecedence())
 				// read
-				mockGetProperty(m, getRankedFailoverPropertyWithPrecedence(), propertyName, gtmTestDomain, 3)
+				mockGetProperty(m, getRankedFailoverPropertyResponseWithPrecedence(), 3)
 				// delete
-				mockDeleteProperty(m, getRankedFailoverPropertyWithPrecedence(), gtmTestDomain)
+				mockDeleteProperty(m)
 			},
 			steps: []resource.TestStep{
 				{
@@ -431,7 +465,7 @@ func TestResourceGTMTrafficTargetOrder(t *testing.T) {
 		planOnly      bool
 	}{
 		"second apply - no diff": {
-			client:        getMocks(),
+			client:        getMocksSecondApply(),
 			pathForCreate: "testdata/TestResGtmProperty/create_multiple_traffic_targets.tf",
 			pathForUpdate: "testdata/TestResGtmProperty/create_multiple_traffic_targets.tf",
 			nonEmptyPlan:  false,
@@ -445,7 +479,7 @@ func TestResourceGTMTrafficTargetOrder(t *testing.T) {
 			planOnly:      true,
 		},
 		"re-ordered traffic target with no datacenter_id - no diff": {
-			client:        getMocks(),
+			client:        getMocksWithoutDatacenterID(),
 			pathForCreate: "testdata/TestResGtmProperty/traffic_target/no_datacenter_id.tf",
 			pathForUpdate: "testdata/TestResGtmProperty/traffic_target/no_datacenter_id_diff_order.tf",
 			nonEmptyPlan:  false,
@@ -545,7 +579,7 @@ func getRankedFailoverPropertyWithPrecedence() *gtm.Property {
 		DynamicTTL:   300,
 		HandoutMode:  "normal",
 		HandoutLimit: 5,
-		LivenessTests: []*gtm.LivenessTest{
+		LivenessTests: []gtm.LivenessTest{
 			{
 				DisableNonstandardPortWarning: false,
 				Name:                          "lt5",
@@ -554,7 +588,7 @@ func getRankedFailoverPropertyWithPrecedence() *gtm.Property {
 				TestObjectPort:                1,
 				TestObjectProtocol:            "HTTP",
 				TestTimeout:                   30.0,
-				HTTPHeaders: []*gtm.HTTPHeader{
+				HTTPHeaders: []gtm.HTTPHeader{
 					{
 						Name:  "test_name",
 						Value: "test_value",
@@ -569,19 +603,87 @@ func getRankedFailoverPropertyWithPrecedence() *gtm.Property {
 				TestObject:                  "/junk",
 				TestObjectPort:              80,
 				PeerCertificateVerification: true,
-				HTTPHeaders:                 []*gtm.HTTPHeader{},
+				HTTPHeaders:                 []gtm.HTTPHeader{},
 			},
 		},
 		Name:                 "tfexample_prop_1",
 		ScoreAggregationType: "median",
-		StaticRRSets: []*gtm.StaticRRSet{
+		StaticRRSets: []gtm.StaticRRSet{
 			{
 				Type:  "MX",
 				TTL:   300,
 				Rdata: []string{"100 test_e"},
 			},
 		},
-		TrafficTargets: []*gtm.TrafficTarget{
+		TrafficTargets: []gtm.TrafficTarget{
+			{
+				DatacenterID: 3131,
+				Enabled:      true,
+				HandoutCName: "test",
+				Servers: []string{
+					"1.2.3.9",
+				},
+				Weight:     200.0,
+				Precedence: ptr.To(10),
+			},
+			{
+				DatacenterID: 3132,
+				Enabled:      true,
+				HandoutCName: "test",
+				Servers: []string{
+					"1.2.3.9",
+				},
+				Weight:     200.0,
+				Precedence: ptr.To(0),
+			},
+		},
+		Type: "ranked-failover",
+	}
+}
+
+// getRankedFailoverPropertyResponseWithPrecedence gets the property values taken from `create_ranked_failover_precedence.tf`
+func getRankedFailoverPropertyResponseWithPrecedence() *gtm.GetPropertyResponse {
+	return &gtm.GetPropertyResponse{
+		DynamicTTL:   300,
+		HandoutMode:  "normal",
+		HandoutLimit: 5,
+		LivenessTests: []gtm.LivenessTest{
+			{
+				DisableNonstandardPortWarning: false,
+				Name:                          "lt5",
+				TestInterval:                  40,
+				TestObject:                    "/junk",
+				TestObjectPort:                1,
+				TestObjectProtocol:            "HTTP",
+				TestTimeout:                   30.0,
+				HTTPHeaders: []gtm.HTTPHeader{
+					{
+						Name:  "test_name",
+						Value: "test_value",
+					},
+				},
+			},
+			{
+				Name:                        "lt2",
+				TestInterval:                30,
+				TestObjectProtocol:          "HTTP",
+				TestTimeout:                 20,
+				TestObject:                  "/junk",
+				TestObjectPort:              80,
+				PeerCertificateVerification: true,
+				HTTPHeaders:                 []gtm.HTTPHeader{},
+			},
+		},
+		Name:                 "tfexample_prop_1",
+		ScoreAggregationType: "median",
+		StaticRRSets: []gtm.StaticRRSet{
+			{
+				Type:  "MX",
+				TTL:   300,
+				Rdata: []string{"100 test_e"},
+			},
+		},
+		TrafficTargets: []gtm.TrafficTarget{
 			{
 				DatacenterID: 3131,
 				Enabled:      true,
@@ -615,14 +717,14 @@ func getRankedFailoverPropertyNoPrecedence() *gtm.Property {
 		HandoutLimit:         5,
 		Name:                 "tfexample_prop_1",
 		ScoreAggregationType: "median",
-		StaticRRSets: []*gtm.StaticRRSet{
+		StaticRRSets: []gtm.StaticRRSet{
 			{
 				Type:  "MX",
 				TTL:   300,
 				Rdata: []string{"100 test_e"},
 			},
 		},
-		TrafficTargets: []*gtm.TrafficTarget{
+		TrafficTargets: []gtm.TrafficTarget{
 			{
 				DatacenterID: 3131,
 				Enabled:      true,
@@ -766,7 +868,7 @@ func getUpdatedProperty() *gtm.Property {
 		DynamicTTL:   300,
 		HandoutMode:  "normal",
 		HandoutLimit: 5,
-		LivenessTests: []*gtm.LivenessTest{
+		LivenessTests: []gtm.LivenessTest{
 			{
 				Name:               "lt5",
 				TestInterval:       50,
@@ -774,7 +876,7 @@ func getUpdatedProperty() *gtm.Property {
 				TestObjectPort:     1,
 				TestObjectProtocol: "HTTP",
 				TestTimeout:        30.0,
-				HTTPHeaders: []*gtm.HTTPHeader{
+				HTTPHeaders: []gtm.HTTPHeader{
 					{
 						Name:  "test_name",
 						Value: "test_value",
@@ -789,19 +891,19 @@ func getUpdatedProperty() *gtm.Property {
 				TestObject:                  "/junk",
 				TestObjectPort:              80,
 				PeerCertificateVerification: true,
-				HTTPHeaders:                 []*gtm.HTTPHeader{},
+				HTTPHeaders:                 []gtm.HTTPHeader{},
 			},
 		},
 		Name:                 "tfexample_prop_1",
 		ScoreAggregationType: "median",
-		StaticRRSets: []*gtm.StaticRRSet{
+		StaticRRSets: []gtm.StaticRRSet{
 			{
 				Type:  "MX",
 				TTL:   300,
 				Rdata: []string{"100 test_e"},
 			},
 		},
-		TrafficTargets: []*gtm.TrafficTarget{
+		TrafficTargets: []gtm.TrafficTarget{
 			{
 				DatacenterID: 3132,
 				Enabled:      true,
@@ -817,13 +919,139 @@ func getUpdatedProperty() *gtm.Property {
 	}
 }
 
+// getBasicPropertyResponseDiff gets the property values taken from `create_basic.tf`
+func getBasicPropertyResponseDiff() gtm.GetPropertyResponse {
+	return gtm.GetPropertyResponse{
+		DynamicTTL:   300,
+		HandoutMode:  "normal",
+		HandoutLimit: 5,
+		LivenessTests: []gtm.LivenessTest{
+			{
+				AlternateCACertificates: []string{},
+				Name:                    "lt5",
+				TestInterval:            40,
+				TestObject:              "/junk",
+				TestObjectPort:          1,
+				TestObjectProtocol:      "HTTP",
+				TestTimeout:             30.0,
+				HTTPHeaders: []gtm.HTTPHeader{
+					{
+						Name:  "test_name",
+						Value: "test_value",
+					},
+				},
+			},
+		},
+		Name:                 "tfexample_prop_1",
+		ScoreAggregationType: "median",
+		TrafficTargets: []gtm.TrafficTarget{
+			{
+				DatacenterID: 3131,
+				Enabled:      true,
+				HandoutCName: "test",
+				Servers: []string{
+					"1.2.3.4",
+					"1.2.3.5",
+				},
+				Weight:     200.0,
+				Precedence: ptr.To(0),
+			},
+			{
+				DatacenterID: 3132,
+				Enabled:      true,
+				HandoutCName: "test",
+				Servers: []string{
+					"1.2.3.6",
+				},
+				Weight:     200.0,
+				Precedence: ptr.To(0),
+			},
+			{
+				DatacenterID: 3133,
+				Enabled:      true,
+				HandoutCName: "test",
+				Servers: []string{
+					"1.2.3.7",
+					"1.2.3.8",
+				},
+				Weight:     200.0,
+				Precedence: ptr.To(0),
+			},
+		},
+		Type: "weighted-round-robin",
+	}
+}
+
+// getBasicPropertyCopy gets the property values taken from `create_basic.tf`
+func getBasicPropertyDiff() *gtm.Property {
+	return &gtm.Property{
+		DynamicTTL:   300,
+		HandoutMode:  "normal",
+		HandoutLimit: 5,
+		LivenessTests: []gtm.LivenessTest{
+			{
+				AlternateCACertificates: []string{},
+				Name:                    "lt5",
+				TestInterval:            40,
+				TestObject:              "/junk",
+				TestObjectPort:          1,
+				TestObjectProtocol:      "HTTP",
+				TestTimeout:             30.0,
+				HTTPHeaders: []gtm.HTTPHeader{
+					{
+						Name:  "test_name",
+						Value: "test_value",
+					},
+				},
+			},
+		},
+		Name:                 "tfexample_prop_1",
+		ScoreAggregationType: "median",
+		TrafficTargets: []gtm.TrafficTarget{
+			{
+				DatacenterID: 3131,
+				Enabled:      true,
+				HandoutCName: "test",
+				Servers: []string{
+					"1.2.3.4",
+					"1.2.3.5",
+				},
+				Weight:     200.0,
+				Precedence: ptr.To(0),
+			},
+			{
+				DatacenterID: 3132,
+				Enabled:      true,
+				HandoutCName: "test",
+				Servers: []string{
+					"1.2.3.6",
+				},
+				Weight:     200.0,
+				Precedence: ptr.To(0),
+			},
+			{
+				DatacenterID: 3133,
+				Enabled:      true,
+				HandoutCName: "test",
+				Servers: []string{
+					"1.2.3.7",
+					"1.2.3.8",
+				},
+				Weight:     200.0,
+				Precedence: ptr.To(0),
+			},
+		},
+		Type: "weighted-round-robin",
+	}
+}
+
 // getBasicProperty gets the property values taken from `create_basic.tf`
 func getBasicProperty() *gtm.Property {
 	return &gtm.Property{
 		DynamicTTL:   300,
 		HandoutMode:  "normal",
 		HandoutLimit: 5,
-		LivenessTests: []*gtm.LivenessTest{
+		LivenessTests: []gtm.LivenessTest{
 			{
 				Name:               "lt5",
 				TestInterval:       40,
@@ -831,7 +1059,7 @@ func getBasicProperty() *gtm.Property {
 				TestObjectPort:     1,
 				TestObjectProtocol: "HTTP",
 				TestTimeout:        30.0,
-				HTTPHeaders: []*gtm.HTTPHeader{
+				HTTPHeaders: []gtm.HTTPHeader{
 					{
 						Name:  "test_name",
 						Value: "test_value",
@@ -846,19 +1074,19 @@ func getBasicProperty() *gtm.Property {
 				TestObject:                  "/junk",
 				TestObjectPort:              80,
 				PeerCertificateVerification: true,
-				HTTPHeaders:                 []*gtm.HTTPHeader{},
+				HTTPHeaders:                 []gtm.HTTPHeader{},
 			},
 		},
 		Name:                 "tfexample_prop_1",
 		ScoreAggregationType: "median",
-		StaticRRSets: []*gtm.StaticRRSet{
+		StaticRRSets: []gtm.StaticRRSet{
 			{
 				Type:  "MX",
 				TTL:   300,
 				Rdata: []string{"100 test_e"},
 			},
 		},
-		TrafficTargets: []*gtm.TrafficTarget{
+		TrafficTargets: []gtm.TrafficTarget{
 			{
 				DatacenterID: 3131,
 				Enabled:      true,
@@ -874,13 +1102,13 @@ func getBasicProperty() *gtm.Property {
 	}
 }
 
-// getBasicPropertyWithLivenessTests gets the property values taken from `create_basic_additional_liveness_tests.tf`
-func getBasicPropertyWithLivenessTests() *gtm.Property {
+// getBasicPropertySecondApply gets the property values taken from `create_multiple_traffic_targets.tf`
+func getBasicPropertySecondApply() *gtm.Property {
 	return &gtm.Property{
 		DynamicTTL:   300,
 		HandoutMode:  "normal",
 		HandoutLimit: 5,
-		LivenessTests: []*gtm.LivenessTest{
+		LivenessTests: []gtm.LivenessTest{
 			{
 				Name:               "lt5",
 				TestInterval:       40,
@@ -888,7 +1116,359 @@ func getBasicPropertyWithLivenessTests() *gtm.Property {
 				TestObjectPort:     1,
 				TestObjectProtocol: "HTTP",
 				TestTimeout:        30.0,
-				HTTPHeaders: []*gtm.HTTPHeader{
+				HTTPHeaders: []gtm.HTTPHeader{
+					{
+						Name:  "test_name",
+						Value: "test_value",
+					},
+				},
+			},
+		},
+		Name:                 "tfexample_prop_1",
+		ScoreAggregationType: "median",
+		TrafficTargets: []gtm.TrafficTarget{
+			{
+				DatacenterID: 3131,
+				Enabled:      true,
+				HandoutCName: "test",
+				Servers: []string{
+					"1.2.3.4",
+				},
+				Weight: 200,
+			},
+			{
+				DatacenterID: 3132,
+				Enabled:      true,
+				HandoutCName: "test",
+				Servers: []string{
+					"1.2.3.5",
+				},
+				Weight: 200,
+			},
+			{
+				DatacenterID: 3133,
+				Enabled:      true,
+				HandoutCName: "test",
+				Servers: []string{
+					"1.2.3.6",
+				},
+				Weight: 200,
+			},
+		},
+		Type: "weighted-round-robin",
+	}
+}
+
+// getBasicPropertyResponseSecondApply gets the property values taken from `create_multiple_traffic_targets.tf`
+func getBasicPropertyResponseSecondApply() gtm.GetPropertyResponse {
+	return gtm.GetPropertyResponse{
+		DynamicTTL:   300,
+		HandoutMode:  "normal",
+		HandoutLimit: 5,
+		LivenessTests: []gtm.LivenessTest{
+			{
+				Name:               "lt5",
+				TestInterval:       40,
+				TestObject:         "/junk",
+				TestObjectPort:     1,
+				TestObjectProtocol: "HTTP",
+				TestTimeout:        30.0,
+				HTTPHeaders: []gtm.HTTPHeader{
+					{
+						Name:  "test_name",
+						Value: "test_value",
+					},
+				},
+			},
+		},
+		Name:                 "tfexample_prop_1",
+		ScoreAggregationType: "median",
+		TrafficTargets: []gtm.TrafficTarget{
+			{
+				DatacenterID: 3131,
+				Enabled:      true,
+				HandoutCName: "test",
+				Servers: []string{
+					"1.2.3.4",
+				},
+				Weight: 200,
+			},
+			{
+				DatacenterID: 3132,
+				Enabled:      true,
+				HandoutCName: "test",
+				Servers: []string{
+					"1.2.3.5",
+				},
+				Weight: 200,
+			},
+			{
+				DatacenterID: 3133,
+				Enabled:      true,
+				HandoutCName: "test",
+				Servers: []string{
+					"1.2.3.6",
+				},
+				Weight: 200,
+			},
+		},
+		Type: "weighted-round-robin",
+	}
+}
+
+// getBasicPropertyResponse gets the property values taken from `create_basic.tf`
+func getBasicPropertyResponse() *gtm.GetPropertyResponse {
+	return &gtm.GetPropertyResponse{
+		DynamicTTL:   300,
+		HandoutMode:  "normal",
+		HandoutLimit: 5,
+		LivenessTests: []gtm.LivenessTest{
+			{
+				Name:               "lt5",
+				TestInterval:       40,
+				TestObject:         "/junk",
+				TestObjectPort:     1,
+				TestObjectProtocol: "HTTP",
+				TestTimeout:        30.0,
+				HTTPHeaders: []gtm.HTTPHeader{
+					{
+						Name:  "test_name",
+						Value: "test_value",
+					},
+				},
+			},
+			{
+				Name:                        "lt2",
+				TestInterval:                30,
+				TestObjectProtocol:          "HTTP",
+				TestTimeout:                 20,
+				TestObject:                  "/junk",
+				TestObjectPort:              80,
+				PeerCertificateVerification: true,
+				HTTPHeaders:                 []gtm.HTTPHeader{},
+			},
+		},
+		Name:                 "tfexample_prop_1",
+		ScoreAggregationType: "median",
+		StaticRRSets: []gtm.StaticRRSet{
+			{
+				Type:  "MX",
+				TTL:   300,
+				Rdata: []string{"100 test_e"},
+			},
+		},
+		TrafficTargets: []gtm.TrafficTarget{
+			{
+				DatacenterID: 3131,
+				Enabled:      true,
+				HandoutCName: "test",
+				Servers: []string{
+					"1.2.3.9",
+				},
+				Weight:     200.0,
+				Precedence: ptr.To(0),
+			},
+		},
+		Type: "weighted-round-robin",
+	}
+}
+
+// getBasicPropertyResponseUpdate gets the property values taken from `update_basic.tf`
+func getBasicPropertyResponseUpdate() *gtm.GetPropertyResponse {
+	return &gtm.GetPropertyResponse{
+		DynamicTTL:   300,
+		HandoutMode:  "normal",
+		HandoutLimit: 5,
+		LivenessTests: []gtm.LivenessTest{
+			{
+				Name:               "lt5",
+				TestInterval:       50,
+				TestObject:         "/junk",
+				TestObjectPort:     1,
+				TestObjectProtocol: "HTTP",
+				TestTimeout:        30.0,
+				HTTPHeaders: []gtm.HTTPHeader{
+					{
+						Name:  "test_name",
+						Value: "test_value",
+					},
+				},
+			},
+			{
+				Name:                        "lt2",
+				TestInterval:                30,
+				TestObjectProtocol:          "HTTP",
+				TestTimeout:                 20,
+				TestObject:                  "/junk",
+				TestObjectPort:              80,
+				PeerCertificateVerification: true,
+				HTTPHeaders:                 []gtm.HTTPHeader{},
+			},
+		},
+		Name:                 "tfexample_prop_1",
+		ScoreAggregationType: "median",
+		StaticRRSets: []gtm.StaticRRSet{
+			{
+				Type:  "MX",
+				TTL:   300,
+				Rdata: []string{"100 test_e"},
+			},
+		},
+		TrafficTargets: []gtm.TrafficTarget{
+			{
+				DatacenterID: 3132,
+				Enabled:      true,
+				HandoutCName: "test",
+				Servers: []string{
+					"1.2.3.5",
+				},
+				Weight:     200.0,
+				Precedence: ptr.To(0),
+			},
+		},
+		Type: "weighted-round-robin",
+	}
+}
+
+// getBasicPropertyWithoutDatacenterID gets the property values without DatacenterID
+func getBasicPropertyWithoutDatacenterID() *gtm.Property {
+	return &gtm.Property{
+		DynamicTTL:   300,
+		HandoutMode:  "normal",
+		HandoutLimit: 5,
+		LivenessTests: []gtm.LivenessTest{
+			{
+				AlternateCACertificates: []string{},
+				Name:                    "lt5",
+				TestInterval:            40,
+				TestObject:              "/junk",
+				TestObjectPort:          1,
+				TestObjectProtocol:      "HTTP",
+				TestTimeout:             30.0,
+				HTTPHeaders: []gtm.HTTPHeader{
+					{
+						Name:  "test_name",
+						Value: "test_value",
+					},
+				},
+			},
+		},
+		Name:                 "tfexample_prop_1",
+		ScoreAggregationType: "median",
+		TrafficTargets: []gtm.TrafficTarget{
+			{
+				DatacenterID: 3131,
+				Enabled:      true,
+				HandoutCName: "test",
+				Servers: []string{
+					"1.2.3.4",
+					"1.2.3.5",
+				},
+				Weight:     200.0,
+				Precedence: ptr.To(0),
+			},
+			{
+				DatacenterID: 3132,
+				Enabled:      true,
+				HandoutCName: "test",
+				Servers: []string{
+					"1.2.3.6",
+				},
+				Weight:     200.0,
+				Precedence: ptr.To(0),
+			},
+			{
+				Enabled:      true,
+				HandoutCName: "test",
+				Servers: []string{
+					"1.2.3.7",
+					"1.2.3.8",
+				},
+				Weight:     200.0,
+				Precedence: ptr.To(0),
+			},
+		},
+		Type: "weighted-round-robin",
+	}
+}
+
+// getBasicPropertyResponseWithoutDatacenterID gets the property values without DatacenterID
+func getBasicPropertyResponseWithoutDatacenterID() gtm.GetPropertyResponse {
+	return gtm.GetPropertyResponse{
+		DynamicTTL:   300,
+		HandoutMode:  "normal",
+		HandoutLimit: 5,
+		LivenessTests: []gtm.LivenessTest{
+			{
+				AlternateCACertificates: []string{},
+				Name:                    "lt5",
+				TestInterval:            40,
+				TestObject:              "/junk",
+				TestObjectPort:          1,
+				TestObjectProtocol:      "HTTP",
+				TestTimeout:             30.0,
+				HTTPHeaders: []gtm.HTTPHeader{
+					{
+						Name:  "test_name",
+						Value: "test_value",
+					},
+				},
+			},
+		},
+		Name:                 "tfexample_prop_1",
+		ScoreAggregationType: "median",
+		TrafficTargets: []gtm.TrafficTarget{
+			{
+				DatacenterID: 3131,
+				Enabled:      true,
+				HandoutCName: "test",
+				Servers: []string{
+					"1.2.3.4",
+					"1.2.3.5",
+				},
+				Weight:     200.0,
+				Precedence: ptr.To(0),
+			},
+			{
+				DatacenterID: 3132,
+				Enabled:      true,
+				HandoutCName: "test",
+				Servers: []string{
+					"1.2.3.6",
+				},
+				Weight:     200.0,
+				Precedence: ptr.To(0),
+			},
+			{
+				Enabled:      true,
+				HandoutCName: "test",
+				Servers: []string{
+					"1.2.3.7",
+					"1.2.3.8",
+				},
+				Weight:     200.0,
+				Precedence: ptr.To(0),
+			},
+		},
+		Type: "weighted-round-robin",
+	}
+}
+
+// getBasicPropertyWithLivenessTests gets the property values taken from `create_basic_additional_liveness_tests.tf`
+func getBasicPropertyWithLivenessTests() *gtm.Property {
+	return &gtm.Property{
+		DynamicTTL:   300,
+		HandoutMode:  "normal",
+		HandoutLimit: 5,
+		LivenessTests: []gtm.LivenessTest{
+			{
+				Name:               "lt5",
+				TestInterval:       40,
+				TestObject:         "/junk",
+				TestObjectPort:     1,
+				TestObjectProtocol: "HTTP",
+				TestTimeout:        30.0,
+				HTTPHeaders: []gtm.HTTPHeader{
 					{
 						Name:  "test_name",
 						Value: "test_value",
@@ -907,19 +1487,80 @@ func getBasicPropertyWithLivenessTests() *gtm.Property {
 				TestObject:                  "/junk",
 				TestObjectPort:              80,
 				PeerCertificateVerification: true,
-				HTTPHeaders:                 []*gtm.HTTPHeader{},
+				HTTPHeaders:                 []gtm.HTTPHeader{},
 			},
 		},
 		Name:                 "tfexample_prop_1",
 		ScoreAggregationType: "median",
-		StaticRRSets: []*gtm.StaticRRSet{
+		StaticRRSets: []gtm.StaticRRSet{
 			{
 				Type:  "MX",
 				TTL:   300,
 				Rdata: []string{"100 test_e"},
 			},
 		},
-		TrafficTargets: []*gtm.TrafficTarget{
+		TrafficTargets: []gtm.TrafficTarget{
+			{
+				DatacenterID: 3131,
+				Enabled:      true,
+				HandoutCName: "test",
+				Servers: []string{
+					"1.2.3.9",
+				},
+				Weight:     200.0,
+				Precedence: ptr.To(0),
+			},
+		},
+		Type: "weighted-round-robin",
+	}
+}
+
+// getBasicPropertyResponseWithLivenessTests gets the property values taken from `create_basic_additional_liveness_tests.tf`
+func getBasicPropertyResponseWithLivenessTests() *gtm.GetPropertyResponse {
+	return &gtm.GetPropertyResponse{
+		DynamicTTL:   300,
+		HandoutMode:  "normal",
+		HandoutLimit: 5,
+		LivenessTests: []gtm.LivenessTest{
+			{
+				Name:               "lt5",
+				TestInterval:       40,
+				TestObject:         "/junk",
+				TestObjectPort:     1,
+				TestObjectProtocol: "HTTP",
+				TestTimeout:        30.0,
+				HTTPHeaders: []gtm.HTTPHeader{
+					{
+						Name:  "test_name",
+						Value: "test_value",
+					},
+				},
+				HTTPMethod:              ptr.To("GET"),
+				HTTPRequestBody:         ptr.To("Body"),
+				Pre2023SecurityPosture:  true,
+				AlternateCACertificates: []string{"test1"},
+			},
+			{
+				Name:                        "lt2",
+				TestInterval:                30,
+				TestObjectProtocol:          "HTTP",
+				TestTimeout:                 20,
+				TestObject:                  "/junk",
+				TestObjectPort:              80,
+				PeerCertificateVerification: true,
+				HTTPHeaders:                 []gtm.HTTPHeader{},
+			},
+		},
+		Name:                 "tfexample_prop_1",
+		ScoreAggregationType: "median",
+		StaticRRSets: []gtm.StaticRRSet{
+			{
+				Type:  "MX",
+				TTL:   300,
+				Rdata: []string{"100 test_e"},
+			},
+		},
+		TrafficTargets: []gtm.TrafficTarget{
 			{
 				DatacenterID: 3131,
 				Enabled:      true,
@@ -940,65 +1581,128 @@ func getMocks() *gtm.Mock {
 	client := new(gtm.Mock)
 
 	// read
-	getPropertyCall := client.On("GetProperty", mock.Anything, "tfexample_prop_1", gtmTestDomain).
-		Return(nil, &gtm.Error{StatusCode: http.StatusNotFound})
+	getCall := client.On("GetProperty", mock.Anything, mock.AnythingOfType("gtm.GetPropertyRequest")).
+		Return(nil, &gtm.Error{StatusCode: http.StatusNotFound}).Once()
 	// create
 	// mock.AnythingOfType *gtm.Property is used is those mock calls as there are too many different test cases to mock
 	// each one and for those test it's not important, since we are only checking the diff
-	client.On("CreateProperty", mock.Anything, mock.AnythingOfType("*gtm.Property"), mock.AnythingOfType("string")).Return(&gtm.PropertyResponse{
-		Resource: getBasicProperty(),
+	resp := getBasicPropertyResponseDiff()
+	client.On("CreateProperty", mock.Anything, mock.AnythingOfType("gtm.CreatePropertyRequest")).Return(&gtm.CreatePropertyResponse{
+		Resource: getBasicPropertyDiff(),
 		Status:   &pendingResponseStatus,
 	}, nil).Run(func(args mock.Arguments) {
-		getPropertyCall.ReturnArguments = mock.Arguments{args.Get(1).(*gtm.Property), nil}
+		getCall.ReturnArguments = mock.Arguments{&resp, nil}
 	})
+
+	// read
+	client.On("GetProperty", mock.Anything, mock.AnythingOfType("gtm.GetPropertyRequest")).
+		Return(&resp, nil).Times(4)
+
 	// delete
 	client.On("DeleteProperty",
 		mock.Anything,
-		mock.AnythingOfType("*gtm.Property"),
-		"gtm_terra_testdomain.akadns.net",
-	).Return(&completeResponseStatus, nil)
+		mock.AnythingOfType("gtm.DeletePropertyRequest"),
+	).Return(deletePropertyResponseStatus, nil)
 
 	return client
 }
 
-func mockCreateProperty(client *gtm.Mock, property *gtm.Property, domain string) {
-	resp := gtm.PropertyResponse{}
+// getMocksNoDatacenterId is used for diff tests, where the contents of property not matter as much, as those tests aim to check the diffs
+func getMocksWithoutDatacenterID() *gtm.Mock {
+	client := new(gtm.Mock)
+
+	// read
+	getCall := client.On("GetProperty", mock.Anything, mock.AnythingOfType("gtm.GetPropertyRequest")).
+		Return(nil, &gtm.Error{StatusCode: http.StatusNotFound}).Once()
+	// create
+	// mock.AnythingOfType *gtm.Property is used is those mock calls as there are too many different test cases to mock
+	// each one and for those test it's not important, since we are only checking the diff
+	resp := getBasicPropertyResponseWithoutDatacenterID()
+	client.On("CreateProperty", mock.Anything, mock.AnythingOfType("gtm.CreatePropertyRequest")).Return(&gtm.CreatePropertyResponse{
+		Resource: getBasicPropertyWithoutDatacenterID(),
+		Status:   &pendingResponseStatus,
+	}, nil).Run(func(args mock.Arguments) {
+		getCall.ReturnArguments = mock.Arguments{&resp, nil}
+	})
+
+	// read
+	client.On("GetProperty", mock.Anything, mock.AnythingOfType("gtm.GetPropertyRequest")).
+		Return(&resp, nil).Times(4)
+
+	// delete
+	client.On("DeleteProperty",
+		mock.Anything,
+		mock.AnythingOfType("gtm.DeletePropertyRequest"),
+	).Return(deletePropertyResponseStatus, nil)
+
+	return client
+}
+
+// getMocksSecondApply is used for diff tests, where the contents of property not matter as much, as those tests aim to check the diffs
+func getMocksSecondApply() *gtm.Mock {
+	client := new(gtm.Mock)
+
+	// read
+	getCall := client.On("GetProperty", mock.Anything, mock.AnythingOfType("gtm.GetPropertyRequest")).
+		Return(nil, &gtm.Error{StatusCode: http.StatusNotFound}).Once()
+	// create
+	// mock.AnythingOfType *gtm.Property is used is those mock calls as there are too many different test cases to mock
+	// each one and for those test it's not important, since we are only checking the diff
+	resp := getBasicPropertyResponseSecondApply()
+	client.On("CreateProperty", mock.Anything, mock.AnythingOfType("gtm.CreatePropertyRequest")).Return(&gtm.CreatePropertyResponse{
+		Resource: getBasicPropertySecondApply(),
+		Status:   &pendingResponseStatus,
+	}, nil).Run(func(args mock.Arguments) {
+		getCall.ReturnArguments = mock.Arguments{&resp, nil}
+	})
+
+	// read
+	client.On("GetProperty", mock.Anything, mock.AnythingOfType("gtm.GetPropertyRequest")).
+		Return(&resp, nil).Times(4)
+
+	// delete
+	client.On("DeleteProperty",
+		mock.Anything,
+		mock.AnythingOfType("gtm.DeletePropertyRequest"),
+	).Return(deletePropertyResponseStatus, nil)
+
+	return client
+}
+
+func mockCreateProperty(client *gtm.Mock, property *gtm.Property) {
+	resp := gtm.CreatePropertyResponse{}
 	resp.Resource = property
 	resp.Status = &pendingResponseStatus
 	client.On("CreateProperty",
 		mock.Anything,
-		property,
-		domain,
+		mock.AnythingOfType("gtm.CreatePropertyRequest"),
 	).Return(&resp, nil).Once()
 }
 
-func mockGetProperty(client *gtm.Mock, property *gtm.Property, propertyName, domain string, times int) {
+func mockGetProperty(client *gtm.Mock, property *gtm.GetPropertyResponse, times int) {
 	client.On("GetProperty",
 		mock.Anything,
-		propertyName,
-		domain,
+		mock.AnythingOfType("gtm.GetPropertyRequest"),
 	).Return(property, nil).Times(times)
 }
 
-func mockUpdateProperty(client *gtm.Mock, property *gtm.Property, domain string) {
+func mockUpdateProperty(client *gtm.Mock) {
 	client.On("UpdateProperty",
 		mock.Anything,
-		property,
-		domain,
-	).Return(&completeResponseStatus, nil).Once()
+		mock.AnythingOfType("gtm.UpdatePropertyRequest"),
+	).Return(updatePropertyResponseStatus, nil).Once()
 }
 
-func mockGetDomainStatus(client *gtm.Mock, domain string, times int) {
+func mockGetDomainStatus(client *gtm.Mock, times int) {
 	client.On("GetDomainStatus",
 		mock.Anything,
-		domain,
-	).Return(&completeResponseStatus, nil).Times(times)
+		mock.AnythingOfType("gtm.GetDomainStatusRequest"),
+	).Return(getDomainStatusResponseStatus, nil).Times(times)
 }
 
-func mockDeleteProperty(client *gtm.Mock, property *gtm.Property, domain string) {
+func mockDeleteProperty(client *gtm.Mock) {
 	client.On("DeleteProperty",
 		mock.Anything,
-		property,
-		domain,
-	).Return(&completeResponseStatus, nil).Once()
+		mock.AnythingOfType("gtm.DeletePropertyRequest"),
+	).Return(deletePropertyResponseStatus, nil).Once()
 }

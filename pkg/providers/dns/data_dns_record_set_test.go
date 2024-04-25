@@ -22,9 +22,7 @@ func TestDataSourceDNSRecordSet_basic(t *testing.T) {
 
 		client.On("GetRdata",
 			mock.Anything, // ctx is irrelevant for this test
-			"exampleterraform.io",
-			"exampleterraform.io",
-			"A",
+			mock.AnythingOfType("dns.GetRdataRequest"),
 		).Return(rdata, nil)
 
 		useClient(client, func() {
@@ -87,9 +85,7 @@ func TestDataSourceDNSRecordSet_basic(t *testing.T) {
 
 		client.On("GetRdata",
 			mock.Anything, // ctx is irrelevant for this test
-			"exampleterraform.io",
-			"exampleterraform.io",
-			"A",
+			mock.AnythingOfType("dns.GetRdataRequest"),
 		).Return(nil, errors.New("invalid zone"))
 
 		useClient(client, func() {

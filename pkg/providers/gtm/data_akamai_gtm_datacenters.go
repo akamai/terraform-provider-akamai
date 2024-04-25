@@ -3,6 +3,7 @@ package gtm
 import (
 	"context"
 
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/gtm"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
@@ -161,14 +162,14 @@ func dataGTMDatacentersRead(ctx context.Context, d *schema.ResourceData, m inter
 		return diag.FromErr(err)
 	}
 
-	datacenters, err := client.ListDatacenters(ctx, domain)
+	datacenters, err := client.ListDatacenters(ctx, gtm.ListDatacentersRequest{DomainName: domain})
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	datacentersAttrs := make([]interface{}, len(datacenters))
 	for i, dc := range datacenters {
-		dcAttrs := getDatacenterAttributes(dc)
+		dcAttrs := getDatacenterAttributes(&dc)
 		dcAttrs["datacenter_id"] = dc.DatacenterID
 		datacentersAttrs[i] = dcAttrs
 	}

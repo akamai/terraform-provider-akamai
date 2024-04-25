@@ -20,49 +20,52 @@ func TestResGTMASMap(t *testing.T) {
 
 		getCall := client.On("GetASMap",
 			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("string"),
-			mock.AnythingOfType("string"),
+			mock.AnythingOfType("gtm.GetASMapRequest"),
 		).Return(nil, &gtm.Error{
 			StatusCode: http.StatusNotFound,
-		})
+		}).Once()
 
-		resp := gtm.ASMapResponse{}
-		resp.Resource = &asmap
-		resp.Status = &pendingResponseStatus
+		resp := asmap
 
 		client.On("GetDatacenter",
 			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("int"),
-			mock.AnythingOfType("string"),
+			mock.AnythingOfType("gtm.GetDatacenterRequest"),
 		).Return(&dc, nil)
 
 		client.On("CreateASMap",
 			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("*gtm.ASMap"),
-			mock.AnythingOfType("string"),
-		).Return(&gtm.ASMapResponse{
-			Resource: &asmap,
-			Status:   &gtm.ResponseStatus{},
+			mock.AnythingOfType("gtm.CreateASMapRequest"),
+		).Return(&gtm.CreateASMapResponse{
+			Resource: asMapCreate.Resource,
+			Status:   asMapCreate.Status,
 		}, nil).Run(func(args mock.Arguments) {
-			getCall.ReturnArguments = mock.Arguments{resp.Resource, nil}
+			getCall.ReturnArguments = mock.Arguments{&resp, nil}
 		})
+
+		client.On("GetASMap",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("gtm.GetASMapRequest"),
+		).Return(&resp, nil).Times(3)
 
 		client.On("GetDomainStatus",
 			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("string"),
-		).Return(&completeResponseStatus, nil)
+			mock.AnythingOfType("gtm.GetDomainStatusRequest"),
+		).Return(getDomainStatusResponseStatus, nil)
 
 		client.On("UpdateASMap",
 			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("*gtm.ASMap"),
-			mock.AnythingOfType("string"),
-		).Return(&completeResponseStatus, nil)
+			mock.AnythingOfType("gtm.UpdateASMapRequest"),
+		).Return(updateASMapResponseStatus, nil)
+
+		client.On("GetASMap",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("gtm.GetASMapRequest"),
+		).Return(&asMapUpdate, nil).Times(3)
 
 		client.On("DeleteASMap",
 			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("*gtm.ASMap"),
-			mock.AnythingOfType("string"),
-		).Return(&completeResponseStatus, nil)
+			mock.AnythingOfType("gtm.DeleteASMapRequest"),
+		).Return(deleteASMapResponseStatus, nil)
 
 		dataSourceName := "akamai_gtm_asmap.tfexample_as_1"
 
@@ -96,16 +99,14 @@ func TestResGTMASMap(t *testing.T) {
 
 		client.On("CreateASMap",
 			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("*gtm.ASMap"),
-			gtmTestDomain,
+			mock.AnythingOfType("gtm.CreateASMapRequest"),
 		).Return(nil, &gtm.Error{
 			StatusCode: http.StatusBadRequest,
 		})
 
 		client.On("GetDatacenter",
 			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("int"),
-			mock.AnythingOfType("string"),
+			mock.AnythingOfType("gtm.GetDatacenterRequest"),
 		).Return(&dc, nil)
 
 		useClient(client, func() {
@@ -126,21 +127,17 @@ func TestResGTMASMap(t *testing.T) {
 	t.Run("create asmap denied", func(t *testing.T) {
 		client := &gtm.Mock{}
 
-		asmap, dc := getASMapTestData()
-
-		dr := gtm.ASMapResponse{}
-		dr.Resource = &asmap
+		dr := gtm.CreateASMapResponse{}
+		dr.Resource = asMapCreate.Resource
 		dr.Status = &deniedResponseStatus
 		client.On("CreateASMap",
 			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("*gtm.ASMap"),
-			gtmTestDomain,
+			mock.AnythingOfType("gtm.CreateASMapRequest"),
 		).Return(&dr, nil)
 
 		client.On("GetDatacenter",
 			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("int"),
-			mock.AnythingOfType("string"),
+			mock.AnythingOfType("gtm.GetDatacenterRequest"),
 		).Return(&dc, nil)
 
 		useClient(client, func() {
@@ -165,35 +162,31 @@ func TestResGTMASMap(t *testing.T) {
 
 		client.On("GetDatacenter",
 			mock.Anything,
-			mock.AnythingOfType("int"),
-			mock.AnythingOfType("string"),
+			mock.AnythingOfType("gtm.GetDatacenterRequest"),
 		).Return(&dc, nil)
 
 		client.On("CreateASMap",
 			mock.Anything,
-			mock.AnythingOfType("*gtm.ASMap"),
-			mock.AnythingOfType("string"),
-		).Return(&gtm.ASMapResponse{
-			Resource: &asmap,
-			Status:   &gtm.ResponseStatus{},
+			mock.AnythingOfType("gtm.CreateASMapRequest"),
+		).Return(&gtm.CreateASMapResponse{
+			Resource: asMapCreate.Resource,
+			Status:   asMapCreate.Status,
 		}, nil)
 
 		client.On("GetDomainStatus",
 			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("string"),
-		).Return(&completeResponseStatus, nil)
+			mock.AnythingOfType("gtm.GetDomainStatusRequest"),
+		).Return(getDomainStatusResponseStatus, nil)
 
 		client.On("GetASMap",
 			mock.Anything,
-			mock.AnythingOfType("string"),
-			mock.AnythingOfType("string"),
+			mock.AnythingOfType("gtm.GetASMapRequest"),
 		).Return(&asmap, nil)
 
 		client.On("DeleteASMap",
 			mock.Anything,
-			mock.AnythingOfType("*gtm.ASMap"),
-			mock.AnythingOfType("string"),
-		).Return(&completeResponseStatus, nil)
+			mock.AnythingOfType("gtm.DeleteASMapRequest"),
+		).Return(deleteASMapResponseStatus, nil)
 
 		dataSourceName := "akamai_gtm_asmap.tfexample_as_1"
 
@@ -320,60 +313,161 @@ func TestGTMASMapOrder(t *testing.T) {
 
 // getASMapMocks mocks creation and deletion of a resource
 func getASMapMocks() *gtm.Mock {
-	asmap, dc := getASMapTestData()
-
 	client := &gtm.Mock{}
 
 	mockGetAsMap := client.On("GetASMap",
 		mock.Anything, // ctx is irrelevant for this test
-		mock.AnythingOfType("string"),
-		mock.AnythingOfType("string"),
+		mock.AnythingOfType("gtm.GetASMapRequest"),
 	).Return(nil, &gtm.Error{StatusCode: http.StatusNotFound})
 
-	resp := gtm.ASMapResponse{}
-	resp.Resource = &asMapDiffOrder
-	resp.Status = &pendingResponseStatus
+	resp := asMapDiffOrder
 
 	client.On("GetDatacenter",
 		mock.Anything, // ctx is irrelevant for this test
-		mock.AnythingOfType("int"),
-		mock.AnythingOfType("string"),
+		mock.AnythingOfType("gtm.GetDatacenterRequest"),
 	).Return(&dc, nil)
 
 	client.On("CreateASMap",
 		mock.Anything, // ctx is irrelevant for this test
-		mock.AnythingOfType("*gtm.ASMap"),
-		mock.AnythingOfType("string"),
-	).Return(&gtm.ASMapResponse{
-		Resource: &asmap,
-		Status:   &gtm.ResponseStatus{},
+		mock.AnythingOfType("gtm.CreateASMapRequest"),
+	).Return(&gtm.CreateASMapResponse{
+		Resource: asMapCreate.Resource,
+		Status:   asMapCreate.Status,
 	}, nil).Run(func(args mock.Arguments) {
-		mockGetAsMap.ReturnArguments = mock.Arguments{resp.Resource, nil}
+		mockGetAsMap.ReturnArguments = mock.Arguments{&resp, nil}
 	})
 
 	client.On("GetDomainStatus",
 		mock.Anything, // ctx is irrelevant for this test
-		mock.AnythingOfType("string"),
-	).Return(&completeResponseStatus, nil)
+		mock.AnythingOfType("gtm.GetDomainStatusRequest"),
+	).Return(getDomainStatusResponseStatus, nil)
 
 	client.On("DeleteASMap",
 		mock.Anything, // ctx is irrelevant for this test
-		mock.AnythingOfType("*gtm.ASMap"),
+		mock.AnythingOfType("gtm.DeleteASMapRequest"),
 		mock.AnythingOfType("string"),
-	).Return(&completeResponseStatus, nil)
+	).Return(deleteASMapResponseStatus, nil)
 
 	return client
 }
 
 var (
-	// asMapDiffOrder represents AsMap structure with values used in tests of the order of assignments and as_numbers
-	asMapDiffOrder = gtm.ASMap{
+	updateASMapResponseStatus = &gtm.UpdateASMapResponse{
+		Status: &gtm.ResponseStatus{
+			ChangeID: "40e36abd-bfb2-4635-9fca-62175cf17007",
+			Links: []gtm.Link{
+				{
+					Href: "https://akab-ymtebc45gco3ypzj-apz4yxpek55y7fyv.luna.akamaiapis.net/config-gtm/v1/domains/gtmdomtest.akadns.net/status/current",
+					Rel:  "self",
+				},
+			},
+			Message:               "Current configuration has been propagated to all GTM nameservers",
+			PassingValidation:     true,
+			PropagationStatus:     "COMPLETE",
+			PropagationStatusDate: "2019-04-25T14:54:00.000+00:00",
+		},
+	}
+	deleteASMapResponseStatus = &gtm.DeleteASMapResponse{
+		Status: &gtm.ResponseStatus{
+			ChangeID: "40e36abd-bfb2-4635-9fca-62175cf17007",
+			Links: []gtm.Link{
+				{
+					Href: "https://akab-ymtebc45gco3ypzj-apz4yxpek55y7fyv.luna.akamaiapis.net/config-gtm/v1/domains/gtmdomtest.akadns.net/status/current",
+					Rel:  "self",
+				},
+			},
+			Message:               "Current configuration has been propagated to all GTM nameservers",
+			PassingValidation:     true,
+			PropagationStatus:     "COMPLETE",
+			PropagationStatusDate: "2019-04-25T14:54:00.000+00:00",
+		},
+	}
+
+	getDomainStatusResponseStatus = &gtm.GetDomainStatusResponse{
+		ChangeID: "40e36abd-bfb2-4635-9fca-62175cf17007",
+		Links: []gtm.Link{
+			{
+				Href: "https://akab-ymtebc45gco3ypzj-apz4yxpek55y7fyv.luna.akamaiapis.net/config-gtm/v1/domains/gtmdomtest.akadns.net/status/current",
+				Rel:  "self",
+			},
+		},
+		Message:               "Current configuration has been propagated to all GTM nameservers",
+		PassingValidation:     true,
+		PropagationStatus:     "COMPLETE",
+		PropagationStatusDate: "2019-04-25T14:54:00.000+00:00",
+	}
+
+	asMapCreate = gtm.CreateASMapResponse{
+		Resource: &gtm.ASMap{
+			Name: "tfexample_as_1",
+			DefaultDatacenter: &gtm.DatacenterBase{
+				DatacenterID: 5400,
+				Nickname:     "default datacenter",
+			},
+			Assignments: []gtm.ASAssignment{
+				{
+					DatacenterBase: gtm.DatacenterBase{
+						DatacenterID: 3131,
+						Nickname:     "tfexample_dc_1",
+					},
+					ASNumbers: []int64{12222, 16702, 17334},
+				},
+				{
+					DatacenterBase: gtm.DatacenterBase{
+						DatacenterID: 3132,
+						Nickname:     "tfexample_dc_2",
+					},
+					ASNumbers: []int64{12229, 16703, 17335},
+				},
+			},
+		},
+		Status: &gtm.ResponseStatus{
+			ChangeID: "40e36abd-bfb2-4635-9fca-62175cf17007",
+			Links: []gtm.Link{
+				{
+					Href: "https://akab-ymtebc45gco3ypzj-apz4yxpek55y7fyv.luna.akamaiapis.net/config-gtm/v1/domains/gtmdomtest.akadns.net/status/current",
+					Rel:  "self",
+				},
+			},
+			Message:               "Current configuration has been propagated to all GTM nameservers",
+			PassingValidation:     true,
+			PropagationStatus:     "COMPLETE",
+			PropagationStatusDate: "2019-04-25T14:54:00.000+00:00",
+		},
+	}
+
+	asMapUpdate = gtm.GetASMapResponse{
 		Name: "tfexample_as_1",
 		DefaultDatacenter: &gtm.DatacenterBase{
 			DatacenterID: 5400,
 			Nickname:     "default datacenter",
 		},
-		Assignments: []*gtm.ASAssignment{
+		Assignments: []gtm.ASAssignment{
+			{
+				DatacenterBase: gtm.DatacenterBase{
+					DatacenterID: 3132,
+					Nickname:     "tfexample_dc_2",
+				},
+				ASNumbers: []int64{12223, 16701, 17333},
+			},
+			{
+				DatacenterBase: gtm.DatacenterBase{
+					DatacenterID: 3133,
+					Nickname:     "tfexample_dc_3",
+				},
+				ASNumbers: []int64{12228, 16704, 17336},
+			},
+		},
+	}
+
+	// asMapDiffOrder represents AsMap structure with values used in tests of the order of assignments and as_numbers
+	asMapDiffOrder = gtm.GetASMapResponse{
+		Name: "tfexample_as_1",
+		DefaultDatacenter: &gtm.DatacenterBase{
+			DatacenterID: 5400,
+			Nickname:     "default datacenter",
+		},
+		Assignments: []gtm.ASAssignment{
 			{
 				DatacenterBase: gtm.DatacenterBase{
 					DatacenterID: 3131,
@@ -399,14 +493,14 @@ var (
 	}
 )
 
-func getASMapTestData() (gtm.ASMap, gtm.Datacenter) {
-	asmap := gtm.ASMap{
+func getASMapTestData() (gtm.GetASMapResponse, gtm.Datacenter) {
+	asmap := gtm.GetASMapResponse{
 		Name: "tfexample_as_1",
 		DefaultDatacenter: &gtm.DatacenterBase{
 			DatacenterID: 5400,
 			Nickname:     "default datacenter",
 		},
-		Assignments: []*gtm.ASAssignment{
+		Assignments: []gtm.ASAssignment{
 			{
 				DatacenterBase: gtm.DatacenterBase{
 					DatacenterID: 3131,

@@ -5,9 +5,8 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
-
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/gtm"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
@@ -24,7 +23,9 @@ func TestDataGtmDomain(t *testing.T) {
 		"success - response is ok": {
 			givenTF: "valid.tf",
 			init: func(m *gtm.Mock) {
-				m.On("GetDomain", mock.Anything, "test.cli.devexp-terraform.akadns.net").Return(&gtm.Domain{
+				m.On("GetDomain", mock.Anything, gtm.GetDomainRequest{
+					DomainName: "test.cli.devexp-terraform.akadns.net",
+				}).Return(&gtm.GetDomainResponse{
 					Name:                         "test.cli.devexp-terraform.akadns.net",
 					CNameCoalescingEnabled:       false,
 					DefaultErrorPenalty:          75,
@@ -47,7 +48,7 @@ func TestDataGtmDomain(t *testing.T) {
 						PropagationStatus:     "DENIED",
 						PropagationStatusDate: "2023-01-25T10:21:00.000+00:00",
 					},
-					Resources: []*gtm.Resource{{
+					Resources: []gtm.Resource{{
 						AggregationType: "latest",
 						Description:     "terraform test resource",
 						Type:            "XML load object via HTTP",
@@ -55,12 +56,12 @@ func TestDataGtmDomain(t *testing.T) {
 						UpperBound:      100,
 					},
 					},
-					ASMaps: []*gtm.ASMap{{
+					ASMaps: []gtm.ASMap{{
 						DefaultDatacenter: &gtm.DatacenterBase{
 							DatacenterID: 3133,
 							Nickname:     "Default (all others)",
 						},
-						Assignments: []*gtm.ASAssignment{{
+						Assignments: []gtm.ASAssignment{{
 							DatacenterBase: gtm.DatacenterBase{
 								Nickname:     "New Zone 1",
 								DatacenterID: 3133,
@@ -72,18 +73,18 @@ func TestDataGtmDomain(t *testing.T) {
 							},
 						}},
 						Name: "New Map 1",
-						Links: []*gtm.Link{{
+						Links: []gtm.Link{{
 							Rel:  "self",
 							Href: "https://akaa-ouijhfns55qwgfuc-knsod5nrjl2w2gmt.luna-dev.akamaiapis.net/config-gtm/v1/domains/test.cli.devexp-terraform.akadns.net/as-maps/DevExpAutomatedTest_6Qil38",
 						}},
 					},
 					},
-					CIDRMaps: []*gtm.CIDRMap{{
+					CIDRMaps: []gtm.CIDRMap{{
 						DefaultDatacenter: &gtm.DatacenterBase{
 							DatacenterID: 3133,
 							Nickname:     "All Other CIDR Blocks",
 						},
-						Assignments: []*gtm.CIDRAssignment{{
+						Assignments: []gtm.CIDRAssignment{{
 							DatacenterBase: gtm.DatacenterBase{
 								Nickname:     "New Zone 1",
 								DatacenterID: 3133,
@@ -93,18 +94,18 @@ func TestDataGtmDomain(t *testing.T) {
 							},
 						}},
 						Name: "New Map 1",
-						Links: []*gtm.Link{{
+						Links: []gtm.Link{{
 							Rel:  "self",
 							Href: "https://akaa-ouijhfns55qwgfuc-knsod5nrjl2w2gmt.luna-dev.akamaiapis.net/config-gtm/v1/domains/test.cli.devexp-terraform.akadns.net/cidr-maps/New%20Map%201",
 						}},
 					},
 					},
-					GeographicMaps: []*gtm.GeoMap{{
+					GeographicMaps: []gtm.GeoMap{{
 						DefaultDatacenter: &gtm.DatacenterBase{
 							DatacenterID: 3131,
 							Nickname:     "terraform_datacenter_test",
 						},
-						Assignments: []*gtm.GeoAssignment{{
+						Assignments: []gtm.GeoAssignment{{
 							DatacenterBase: gtm.DatacenterBase{
 								Nickname:     "terraform_datacenter_test_1",
 								DatacenterID: 3133,
@@ -114,31 +115,31 @@ func TestDataGtmDomain(t *testing.T) {
 							},
 						}},
 						Name: "tfexample_geo_2",
-						Links: []*gtm.Link{{
+						Links: []gtm.Link{{
 							Rel:  "self",
 							Href: "https://akaa-ouijhfns55qwgfuc-knsod5nrjl2w2gmt.luna-dev.akamaiapis.net/config-gtm/v1/domains/test.cli.devexp-terraform.akadns.net/geographic-maps/tfexample_geo_2",
 						}},
 					},
 					},
-					Links: []*gtm.Link{{
+					Links: []gtm.Link{{
 						Rel:  "properties",
 						Href: "https://akaa-ouijhfns55qwgfuc-knsod5nrjl2w2gmt.luna-dev.akamaiapis.net/config-gtm/v1/domains/test.cli.devexp-terraform.akadns.net/properties",
 					}, {
 						Rel:  "resources",
 						Href: "https://akaa-ouijhfns55qwgfuc-knsod5nrjl2w2gmt.luna-dev.akamaiapis.net/config-gtm/v1/domains/test.cli.devexp-terraform.akadns.net/resources"},
 					},
-					Properties: []*gtm.Property{{
+					Properties: []gtm.Property{{
 						BalanceByDownloadScore: false,
 						DynamicTTL:             60,
 						GhostDemandReporting:   false,
 						HandoutMode:            "Normal",
 						LastModified:           "2023-01-25T09:58:09.000+00:00",
 						Name:                   "property",
-						Links: []*gtm.Link{{
+						Links: []gtm.Link{{
 							Href: "https://akaa-ouijhfns55qwgfuc-knsod5nrjl2w2gmt.luna-dev.akamaiapis.net/config-gtm/v1/domains/test.cli.devexp-terraform.akadns.net/properties/property",
 							Rel:  "self",
 						}},
-						LivenessTests: []*gtm.LivenessTest{
+						LivenessTests: []gtm.LivenessTest{
 							{
 								AnswersRequired:               false,
 								DisableNonstandardPortWarning: false,
@@ -156,7 +157,7 @@ func TestDataGtmDomain(t *testing.T) {
 								TestObjectProtocol:            "HTTP",
 							},
 						},
-						TrafficTargets: []*gtm.TrafficTarget{{
+						TrafficTargets: []gtm.TrafficTarget{{
 							DatacenterID: 3131,
 							Enabled:      true,
 							Servers: []string{
@@ -257,7 +258,9 @@ func TestDataGtmDomain(t *testing.T) {
 		"error response from api": {
 			givenTF: "valid.tf",
 			init: func(m *gtm.Mock) {
-				m.On("GetDomain", mock.Anything, "test.cli.devexp-terraform.akadns.net").Return(nil, fmt.Errorf("oops"))
+				m.On("GetDomain", mock.Anything, gtm.GetDomainRequest{
+					DomainName: "test.cli.devexp-terraform.akadns.net",
+				}).Return(nil, fmt.Errorf("oops"))
 			},
 			expectError: regexp.MustCompile("oops"),
 		},

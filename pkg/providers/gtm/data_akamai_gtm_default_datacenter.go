@@ -6,7 +6,6 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/gtm"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/session"
-
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/apex/log"

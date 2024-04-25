@@ -42,7 +42,10 @@ func TestDataGTMDatacenter(t *testing.T) {
 		},
 		"error - GetDatacenter fail": {
 			init: func(_ *testing.T, m *gtm.Mock, data testDataForGTMDatacenter) {
-				m.On("GetDatacenter", mock.Anything, data.datacenterID, data.domain).Return(
+				m.On("GetDatacenter", mock.Anything, gtm.GetDatacenterRequest{
+					DatacenterID: data.datacenterID,
+					DomainName:   data.domain,
+				}).Return(
 					nil, fmt.Errorf("GetDatacenter error")).Once()
 			},
 			mockData:   testGTMDatacenter,
@@ -138,7 +141,7 @@ type testDataForGTMDatacenter struct {
 	serverMonitorPool             string
 	cloudServerTargeting          bool
 	cloudServerHostHeaderOverride bool
-	links                         []*gtm.Link
+	links                         []gtm.Link
 }
 
 var (
@@ -162,7 +165,10 @@ var (
 			StateOrProvince:               data.stateOrProvince,
 			Virtual:                       data.virtual,
 		}
-		client.On("GetDatacenter", mock.Anything, data.datacenterID, data.domain).Return(&dc, nil).Times(timesToRun)
+		client.On("GetDatacenter", mock.Anything, gtm.GetDatacenterRequest{
+			DatacenterID: data.datacenterID,
+			DomainName:   data.domain,
+		}).Return(&dc, nil).Times(timesToRun)
 	}
 
 	testGTMDatacenter = testDataForGTMDatacenter{
@@ -186,7 +192,7 @@ var (
 		serverMonitorPool:             "serverMonitorPool",
 		cloudServerTargeting:          true,
 		cloudServerHostHeaderOverride: true,
-		links: []*gtm.Link{
+		links: []gtm.Link{
 			{
 				Rel:  "rel1",
 				Href: "href1",

@@ -22,7 +22,10 @@ func TestDataGTMResources(t *testing.T) {
 		"happy path - GTM data resources should be returned": {
 			givenTF: "valid.tf",
 			init: func(m *gtm.Mock) {
-				m.On("ListResources", mock.Anything, "test.domain.net").Return([]*gtm.Resource{
+				m.On("ListResources", mock.Anything,
+					gtm.ListResourcesRequest{
+						DomainName: "test.domain.net",
+					}).Return([]gtm.Resource{
 					{
 						Type:                        "XML load object via HTTP",
 						LeastSquaresDecay:           0,
@@ -33,13 +36,13 @@ func TestDataGTMResources(t *testing.T) {
 						Name:                        "property1",
 						MaxUMultiplicativeIncrement: 0,
 						DecayRate:                   0,
-						Links: []*gtm.Link{{
+						Links: []gtm.Link{{
 							Rel: "self",
 							Href: "https://test.domain1.net/config-gtm/v1/domains/" +
 								"test.cli.domain.net/resources/resource1",
 						},
 						},
-						ResourceInstances: []*gtm.ResourceInstance{{
+						ResourceInstances: []gtm.ResourceInstance{{
 							DatacenterID:         3131,
 							UseDefaultLoadObject: false,
 							LoadObject: gtm.LoadObject{
@@ -60,13 +63,13 @@ func TestDataGTMResources(t *testing.T) {
 						Name:                        "property2",
 						MaxUMultiplicativeIncrement: 0,
 						DecayRate:                   0,
-						Links: []*gtm.Link{{
+						Links: []gtm.Link{{
 							Rel: "self1",
 							Href: "https://test.domain1.net/config-gtm/v1/domains/" +
 								"test.cli.domain.net/resources/resource2",
 						},
 						},
-						ResourceInstances: []*gtm.ResourceInstance{{
+						ResourceInstances: []gtm.ResourceInstance{{
 							DatacenterID:         3132,
 							UseDefaultLoadObject: false,
 							LoadObject: gtm.LoadObject{
@@ -95,7 +98,9 @@ func TestDataGTMResources(t *testing.T) {
 		"error response from api": {
 			givenTF: "valid.tf",
 			init: func(m *gtm.Mock) {
-				m.On("ListResources", mock.Anything, "test.domain.net").Return(
+				m.On("ListResources", mock.Anything, gtm.ListResourcesRequest{
+					DomainName: "test.domain.net",
+				}).Return(
 					nil, fmt.Errorf("oops"))
 			},
 			expectError: regexp.MustCompile("oops"),

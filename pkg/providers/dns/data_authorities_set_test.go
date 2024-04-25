@@ -23,7 +23,7 @@ func TestDataSourceAuthoritiesSet_basic(t *testing.T) {
 
 		client.On("GetNameServerRecordList",
 			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("string"),
+			mock.AnythingOfType("dns.GetNameServerRecordListRequest"),
 		).Return(authorities, nil)
 
 		useClient(client, func() {
@@ -71,7 +71,7 @@ func TestDataSourceAuthoritiesSet_basic(t *testing.T) {
 
 		client.On("GetNameServerRecordList",
 			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("string"),
+			mock.AnythingOfType("dns.GetNameServerRecordListRequest"),
 		).Return(nil, errors.New("invalid contract"))
 
 		useClient(client, func() {

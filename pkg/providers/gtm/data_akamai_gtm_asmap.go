@@ -145,7 +145,10 @@ func (d *asMapDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 	}
 
 	client := Client(d.meta)
-	asMap, err := client.GetASMap(ctx, data.Name.ValueString(), data.Domain.ValueString())
+	asMap, err := client.GetASMap(ctx, gtm.GetASMapRequest{
+		ASMapName:  data.Name.ValueString(),
+		DomainName: data.Domain.ValueString(),
+	})
 	if err != nil {
 		resp.Diagnostics.AddError("fetching GTM ASMap failed: ", err.Error())
 		return
@@ -157,7 +160,7 @@ func (d *asMapDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 
 }
 
-func (m *asMapDataSourceModel) setAttributes(asMap *gtm.ASMap) {
+func (m *asMapDataSourceModel) setAttributes(asMap *gtm.GetASMapResponse) {
 	m.Name = types.StringValue(asMap.Name)
 	m.DefaultDatacenter = newDefaultDatacenter(*asMap.DefaultDatacenter)
 	m.setAssignments(asMap.Assignments)
@@ -165,7 +168,7 @@ func (m *asMapDataSourceModel) setAttributes(asMap *gtm.ASMap) {
 	m.ID = types.StringValue("gtm_asmap")
 }
 
-func (m *asMapDataSourceModel) setAssignments(assignments []*gtm.ASAssignment) {
+func (m *asMapDataSourceModel) setAssignments(assignments []gtm.ASAssignment) {
 	toBaseTypesInt64Slice := func(n []int64) []basetypes.Int64Value {
 		out := make([]basetypes.Int64Value, 0, len(n))
 		for _, number := range n {

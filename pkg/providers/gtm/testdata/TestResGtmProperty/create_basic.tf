@@ -20,7 +20,6 @@ resource "akamai_gtm_property" "tfexample_prop_1" {
     servers       = ["1.2.3.9"]
     handout_cname = "test"
   }
-
   liveness_test {
     name                             = "lt5"
     test_interval                    = 40

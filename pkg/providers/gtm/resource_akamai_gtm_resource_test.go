@@ -18,41 +18,46 @@ func TestResGTMResource(t *testing.T) {
 
 		getCall := client.On("GetResource",
 			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("string"),
-			mock.AnythingOfType("string"),
+			mock.AnythingOfType("gtm.GetResourceRequest"),
 		).Return(nil, &gtm.Error{
 			StatusCode: http.StatusNotFound,
-		})
+		}).Once()
 
-		resp := gtm.ResourceResponse{}
-		resp.Resource = &rsrc
-		resp.Status = &pendingResponseStatus
+		resp := rsrc
 		client.On("CreateResource",
 			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("*gtm.Resource"),
-			mock.AnythingOfType("string"),
-		).Return(&resp, nil).Run(func(args mock.Arguments) {
-			getCall.ReturnArguments = mock.Arguments{args.Get(1).(*gtm.Resource), nil}
+			mock.AnythingOfType("gtm.CreateResourceRequest"),
+		).Return(&gtm.CreateResourceResponse{
+			Resource: rsrcCreate.Resource,
+			Status:   rsrcCreate.Status,
+		}, nil).Run(func(args mock.Arguments) {
+			getCall.ReturnArguments = mock.Arguments{&resp, nil}
 		})
+
+		client.On("GetResource",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("gtm.GetResourceRequest"),
+		).Return(&resp, nil).Times(3)
 
 		client.On("GetDomainStatus",
 			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("string"),
-		).Return(&completeResponseStatus, nil)
+			mock.AnythingOfType("gtm.GetDomainStatusRequest"),
+		).Return(getDomainStatusResponseStatus, nil)
 
 		client.On("UpdateResource",
 			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("*gtm.Resource"),
-			mock.AnythingOfType("string"),
-		).Return(&completeResponseStatus, nil).Run(func(args mock.Arguments) {
-			getCall.ReturnArguments = mock.Arguments{args.Get(1).(*gtm.Resource), nil}
-		})
+			mock.AnythingOfType("gtm.UpdateResourceRequest"),
+		).Return(updateResourceResponseStatus, nil)
+
+		client.On("GetResource",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("gtm.GetResourceRequest"),
+		).Return(&rsrcUpdate, nil).Times(3)
 
 		client.On("DeleteResource",
 			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("*gtm.Resource"),
-			mock.AnythingOfType("string"),
-		).Return(&completeResponseStatus, nil)
+			mock.AnythingOfType("gtm.DeleteResourceRequest"),
+		).Return(deleteResourceResponseStatus, nil)
 
 		dataSourceName := "akamai_gtm_resource.tfexample_resource_1"
 
@@ -86,8 +91,7 @@ func TestResGTMResource(t *testing.T) {
 
 		client.On("CreateResource",
 			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("*gtm.Resource"),
-			gtmTestDomain,
+			mock.AnythingOfType("gtm.CreateResourceRequest"),
 		).Return(nil, &gtm.Error{
 			StatusCode: http.StatusBadRequest,
 		})
@@ -110,13 +114,12 @@ func TestResGTMResource(t *testing.T) {
 	t.Run("create resource denied", func(t *testing.T) {
 		client := &gtm.Mock{}
 
-		dr := gtm.ResourceResponse{}
-		dr.Resource = &rsrc
+		dr := gtm.CreateResourceResponse{}
+		dr.Resource = rsrcCreate.Resource
 		dr.Status = &deniedResponseStatus
 		client.On("CreateResource",
 			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("*gtm.Resource"),
-			gtmTestDomain,
+			mock.AnythingOfType("gtm.CreateResourceRequest"),
 		).Return(&dr, nil)
 
 		useClient(client, func() {
@@ -216,39 +219,37 @@ func getGTMResourceMocks() *gtm.Mock {
 
 	mockGetResource := client.On("GetResource",
 		mock.Anything, // ctx is irrelevant for this test
-		mock.AnythingOfType("string"),
-		mock.AnythingOfType("string"),
+		mock.AnythingOfType("gtm.GetResourceRequest"),
 	).Return(nil, &gtm.Error{
 		StatusCode: http.StatusNotFound,
 	})
 
-	resp := gtm.ResourceResponse{}
-	resp.Resource = &resourceForOrderTests
-	resp.Status = &pendingResponseStatus
+	resp := resourceForOrderTests
 	client.On("CreateResource",
 		mock.Anything, // ctx is irrelevant for this test
-		mock.AnythingOfType("*gtm.Resource"),
-		mock.AnythingOfType("string"),
-	).Return(&resp, nil).Run(func(args mock.Arguments) {
-		mockGetResource.ReturnArguments = mock.Arguments{args.Get(1).(*gtm.Resource), nil}
+		mock.AnythingOfType("gtm.CreateResourceRequest"),
+	).Return(&gtm.CreateResourceResponse{
+		Resource: rsrcCreate.Resource,
+		Status:   rsrcCreate.Status,
+	}, nil).Run(func(args mock.Arguments) {
+		mockGetResource.ReturnArguments = mock.Arguments{&resp, nil}
 	})
 
 	client.On("DeleteResource",
 		mock.Anything, // ctx is irrelevant for this test
-		mock.AnythingOfType("*gtm.Resource"),
-		mock.AnythingOfType("string"),
-	).Return(&completeResponseStatus, nil)
+		mock.AnythingOfType("gtm.DeleteResourceRequest"),
+	).Return(deleteResourceResponseStatus, nil)
 
 	return client
 }
 
 var (
 	// resourceForOrderTests is a gtm.Resource structure used in testing the order of resource_instance
-	resourceForOrderTests = gtm.Resource{
+	resourceForOrderTests = gtm.GetResourceResponse{
 		Name:            "tfexample_resource_1",
 		AggregationType: "latest",
 		Type:            "XML load object via HTTP",
-		ResourceInstances: []*gtm.ResourceInstance{
+		ResourceInstances: []gtm.ResourceInstance{
 			{
 				DatacenterID:         3131,
 				UseDefaultLoadObject: false,
@@ -270,11 +271,84 @@ var (
 		},
 	}
 
-	rsrc = gtm.Resource{
+	rsrcCreateForOrder = gtm.CreateResourceResponse{
+		Resource: &gtm.Resource{
+			Name:            "tfexample_resource_1",
+			AggregationType: "latest",
+			Type:            "XML load object via HTTP",
+			ResourceInstances: []gtm.ResourceInstance{
+				{
+					DatacenterID:         3131,
+					UseDefaultLoadObject: false,
+					LoadObject: gtm.LoadObject{
+						LoadObject:     "/test1",
+						LoadServers:    []string{"1.2.3.4", "1.2.3.5", "1.2.3.6"},
+						LoadObjectPort: 80,
+					},
+				},
+				{
+					DatacenterID:         3132,
+					UseDefaultLoadObject: false,
+					LoadObject: gtm.LoadObject{
+						LoadObject:     "/test2",
+						LoadServers:    []string{"1.2.3.7", "1.2.3.8", "1.2.3.9", "1.2.3.10"},
+						LoadObjectPort: 80,
+					},
+				},
+			},
+		},
+		Status: &gtm.ResponseStatus{
+			ChangeID: "40e36abd-bfb2-4635-9fca-62175cf17007",
+			Links: []gtm.Link{
+				{
+					Href: "https://akab-ymtebc45gco3ypzj-apz4yxpek55y7fyv.luna.akamaiapis.net/config-gtm/v1/domains/gtmdomtest.akadns.net/status/current",
+					Rel:  "self",
+				},
+			},
+			Message:               "Current configuration has been propagated to all GTM nameservers",
+			PassingValidation:     true,
+			PropagationStatus:     "COMPLETE",
+			PropagationStatusDate: "2019-04-25T14:54:00.000+00:00",
+		},
+	}
+
+	rsrcCreate = gtm.CreateResourceResponse{
+		Resource: &gtm.Resource{
+			Name:            "tfexample_resource_1",
+			AggregationType: "latest",
+			Type:            "XML load object via HTTP",
+			ResourceInstances: []gtm.ResourceInstance{
+				{
+					DatacenterID:         3131,
+					UseDefaultLoadObject: false,
+					LoadObject: gtm.LoadObject{
+						LoadObject:     "/test1",
+						LoadServers:    []string{"1.2.3.4"},
+						LoadObjectPort: 80,
+					},
+				},
+			},
+		},
+		Status: &gtm.ResponseStatus{
+			ChangeID: "40e36abd-bfb2-4635-9fca-62175cf17007",
+			Links: []gtm.Link{
+				{
+					Href: "https://akab-ymtebc45gco3ypzj-apz4yxpek55y7fyv.luna.akamaiapis.net/config-gtm/v1/domains/gtmdomtest.akadns.net/status/current",
+					Rel:  "self",
+				},
+			},
+			Message:               "Current configuration has been propagated to all GTM nameservers",
+			PassingValidation:     true,
+			PropagationStatus:     "COMPLETE",
+			PropagationStatusDate: "2019-04-25T14:54:00.000+00:00",
+		},
+	}
+
+	rsrc = gtm.GetResourceResponse{
 		Name:            "tfexample_resource_1",
 		AggregationType: "latest",
 		Type:            "XML load object via HTTP",
-		ResourceInstances: []*gtm.ResourceInstance{
+		ResourceInstances: []gtm.ResourceInstance{
 			{
 				DatacenterID:         3131,
 				UseDefaultLoadObject: false,
@@ -284,6 +358,53 @@ var (
 					LoadObjectPort: 80,
 				},
 			},
+		},
+	}
+
+	rsrcUpdate = gtm.GetResourceResponse{
+		Name:            "tfexample_resource_1",
+		AggregationType: "latest",
+		Type:            "XML load object via HTTP",
+		ResourceInstances: []gtm.ResourceInstance{
+			{
+				DatacenterID: 3132,
+				LoadObject: gtm.LoadObject{
+					LoadObject:     "/test2",
+					LoadServers:    []string{"1.2.3.5"},
+					LoadObjectPort: 80,
+				},
+			},
+		},
+	}
+
+	updateResourceResponseStatus = &gtm.UpdateResourceResponse{
+		Status: &gtm.ResponseStatus{
+			ChangeID: "40e36abd-bfb2-4635-9fca-62175cf17007",
+			Links: []gtm.Link{
+				{
+					Href: "https://akab-ymtebc45gco3ypzj-apz4yxpek55y7fyv.luna.akamaiapis.net/config-gtm/v1/domains/gtmdomtest.akadns.net/status/current",
+					Rel:  "self",
+				},
+			},
+			Message:               "Current configuration has been propagated to all GTM nameservers",
+			PassingValidation:     true,
+			PropagationStatus:     "COMPLETE",
+			PropagationStatusDate: "2019-04-25T14:54:00.000+00:00",
+		},
+	}
+	deleteResourceResponseStatus = &gtm.DeleteResourceResponse{
+		Status: &gtm.ResponseStatus{
+			ChangeID: "40e36abd-bfb2-4635-9fca-62175cf17007",
+			Links: []gtm.Link{
+				{
+					Href: "https://akab-ymtebc45gco3ypzj-apz4yxpek55y7fyv.luna.akamaiapis.net/config-gtm/v1/domains/gtmdomtest.akadns.net/status/current",
+					Rel:  "self",
+				},
+			},
+			Message:               "Current configuration has been propagated to all GTM nameservers",
+			PassingValidation:     true,
+			PropagationStatus:     "COMPLETE",
+			PropagationStatusDate: "2019-04-25T14:54:00.000+00:00",
 		},
 	}
 )

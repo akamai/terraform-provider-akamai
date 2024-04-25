@@ -142,7 +142,10 @@ func resourceGTMv1ResourceCreate(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 	logger.Debugf("Proposed New Resource: [%v]", newRsrc)
-	cStatus, err := Client(meta).CreateResource(ctx, newRsrc, domain)
+	cStatus, err := Client(meta).CreateResource(ctx, gtm.CreateResourceRequest{
+		Resource:   newRsrc,
+		DomainName: domain,
+	})
 	if err != nil {
 		logger.Errorf("Resource Create failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -209,7 +212,10 @@ func resourceGTMv1ResourceRead(ctx context.Context, d *schema.ResourceData, m in
 		logger.Errorf("Invalid resource Resource ID")
 		return diag.FromErr(err)
 	}
-	rsrc, err := Client(meta).GetResource(ctx, resource, domain)
+	rsrc, err := Client(meta).GetResource(ctx, gtm.GetResourceRequest{
+		ResourceName: resource,
+		DomainName:   domain,
+	})
 	if err != nil {
 		logger.Errorf("Resource Read failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -248,7 +254,10 @@ func resourceGTMv1ResourceUpdate(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 	// Get existing property
-	existRsrc, err := Client(meta).GetResource(ctx, resource, domain)
+	existRsrc, err := Client(meta).GetResource(ctx, gtm.GetResourceRequest{
+		ResourceName: resource,
+		DomainName:   domain,
+	})
 	if err != nil {
 		logger.Errorf("Resource Update failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -257,12 +266,16 @@ func resourceGTMv1ResourceUpdate(ctx context.Context, d *schema.ResourceData, m 
 			Detail:   err.Error(),
 		})
 	}
+	newRsrc := createResourceStruct(existRsrc)
 	logger.Debugf("Updating Resource BEFORE: %v", existRsrc)
-	if err := populateResourceObject(d, existRsrc, m); err != nil {
+	if err := populateResourceObject(d, newRsrc, m); err != nil {
 		return diag.FromErr(err)
 	}
 	logger.Debugf("Updating Resource PROPOSED: %v", existRsrc)
-	uStat, err := Client(meta).UpdateResource(ctx, existRsrc, domain)
+	uStat, err := Client(meta).UpdateResource(ctx, gtm.UpdateResourceRequest{
+		Resource:   newRsrc,
+		DomainName: domain,
+	})
 	if err != nil {
 		logger.Errorf("Resource Update failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -272,11 +285,11 @@ func resourceGTMv1ResourceUpdate(ctx context.Context, d *schema.ResourceData, m 
 		})
 	}
 	logger.Debugf("Resource Update status: %v", uStat)
-	if uStat.PropagationStatus == "DENIED" {
-		logger.Errorf(uStat.Message)
+	if uStat.Status.PropagationStatus == "DENIED" {
+		logger.Errorf(uStat.Status.Message)
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  uStat.Message,
+			Summary:  uStat.Status.Message,
 		})
 	}
 
@@ -323,11 +336,13 @@ func resourceGTMv1ResourceImport(d *schema.ResourceData, m interface{}) ([]*sche
 	if err != nil {
 		return []*schema.ResourceData{d}, err
 	}
-	rsrc, err := Client(meta).GetResource(ctx, resource, domain)
+	rsrc, err := Client(meta).GetResource(ctx, gtm.GetResourceRequest{
+		ResourceName: resource,
+		DomainName:   domain,
+	})
 	if err != nil {
 		return nil, err
 	}
-
 	err = d.Set("domain", domain)
 	if err != nil {
 		return nil, err
@@ -367,7 +382,10 @@ func resourceGTMv1ResourceDelete(ctx context.Context, d *schema.ResourceData, m 
 		logger.Errorf("Invalid resource ID")
 		return diag.FromErr(err)
 	}
-	existRsrc, err := Client(meta).GetResource(ctx, resource, domain)
+	existRsrc, err := Client(meta).GetResource(ctx, gtm.GetResourceRequest{
+		ResourceName: resource,
+		DomainName:   domain,
+	})
 	if err != nil {
 		logger.Errorf("Resource Delete Read failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -376,8 +394,12 @@ func resourceGTMv1ResourceDelete(ctx context.Context, d *schema.ResourceData, m 
 			Detail:   err.Error(),
 		})
 	}
-	logger.Debugf("Deleting Resource: %v", existRsrc)
-	uStat, err := Client(meta).DeleteResource(ctx, existRsrc, domain)
+	newRsrc := createResourceStruct(existRsrc)
+	logger.Debugf("Deleting Resource: %v", newRsrc)
+	uStat, err := Client(meta).DeleteResource(ctx, gtm.DeleteResourceRequest{
+		ResourceName: resource,
+		DomainName:   domain,
+	})
 	if err != nil {
 		logger.Errorf("Resource Delete failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -387,11 +409,11 @@ func resourceGTMv1ResourceDelete(ctx context.Context, d *schema.ResourceData, m 
 		})
 	}
 	logger.Debugf("Resource Delete status: %v", uStat)
-	if uStat.PropagationStatus == "DENIED" {
-		logger.Errorf(uStat.Message)
+	if uStat.Status.PropagationStatus == "DENIED" {
+		logger.Errorf(uStat.Status.Message)
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  uStat.Message,
+			Summary:  uStat.Status.Message,
 		})
 	}
 
@@ -432,7 +454,7 @@ func populateNewResourceObject(d *schema.ResourceData, m interface{}) (*gtm.Reso
 	}
 	rsrcObj := &gtm.Resource{
 		Name:              name,
-		ResourceInstances: make([]*gtm.ResourceInstance, 0),
+		ResourceInstances: make([]gtm.ResourceInstance, 0),
 	}
 	err = populateResourceObject(d, rsrcObj, m)
 
@@ -543,14 +565,14 @@ func populateResourceObject(d *schema.ResourceData, rsrc *gtm.Resource, m interf
 	if _, ok := d.GetOk("resource_instance"); ok {
 		populateResourceInstancesObject(meta, d, rsrc)
 	} else if d.HasChange("resource_instance") {
-		rsrc.ResourceInstances = make([]*gtm.ResourceInstance, 0)
+		rsrc.ResourceInstances = make([]gtm.ResourceInstance, 0)
 	}
 
 	return nil
 }
 
 // Populate Terraform state from provided Resource object
-func populateTerraformResourceState(d *schema.ResourceData, rsrc *gtm.Resource, m interface{}) error {
+func populateTerraformResourceState(d *schema.ResourceData, rsrc *gtm.GetResourceResponse, m interface{}) error {
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "populateTerraformResourceState")
 
@@ -586,10 +608,10 @@ func populateResourceInstancesObject(meta meta.Meta, d *schema.ResourceData, rsr
 	// pull apart List
 	rsrcInstances, err := tf.GetListValue("resource_instance", d)
 	if err == nil {
-		rsrcInstanceObjList := make([]*gtm.ResourceInstance, len(rsrcInstances)) // create new object list
+		rsrcInstanceObjList := make([]gtm.ResourceInstance, len(rsrcInstances)) // create new object list
 		for i, v := range rsrcInstances {
 			riMap := v.(map[string]interface{})
-			rsrcInstance := &gtm.ResourceInstance{DatacenterID: riMap["datacenter_id"].(int)}
+			rsrcInstance := gtm.ResourceInstance{DatacenterID: riMap["datacenter_id"].(int)}
 			rsrcInstance.UseDefaultLoadObject = riMap["use_default_load_object"].(bool)
 			if riMap["load_servers"] != nil {
 				loadServers, ok := riMap["load_servers"].(*schema.Set)
@@ -611,11 +633,11 @@ func populateResourceInstancesObject(meta meta.Meta, d *schema.ResourceData, rsr
 }
 
 // create and populate Terraform resource_instances schema
-func populateTerraformResourceInstancesState(d *schema.ResourceData, rsrc *gtm.Resource, m interface{}) error {
+func populateTerraformResourceInstancesState(d *schema.ResourceData, rsrc *gtm.GetResourceResponse, m interface{}) error {
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "populateTerraformResourceInstancesState")
 
-	riObjectInventory := make(map[int]*gtm.ResourceInstance, len(rsrc.ResourceInstances))
+	riObjectInventory := make(map[int]gtm.ResourceInstance, len(rsrc.ResourceInstances))
 	if len(rsrc.ResourceInstances) > 0 {
 		for _, riObj := range rsrc.ResourceInstances {
 			riObjectInventory[riObj.DatacenterID] = riObj
@@ -629,7 +651,7 @@ func populateTerraformResourceInstancesState(d *schema.ResourceData, rsrc *gtm.R
 		ri := riMap.(map[string]interface{})
 		objIndex := ri["datacenter_id"].(int)
 		riObject := riObjectInventory[objIndex]
-		if riObject == nil {
+		if &riObject == nil {
 			logger.Warnf("Resource_instance %d NOT FOUND in returned GTM Object", ri["datacenter_id"])
 			continue
 		}
@@ -713,6 +735,29 @@ func resourceInstanceDiffSuppress(_, _, _ string, d *schema.ResourceData) bool {
 	}
 
 	return true
+}
+
+// createResourceStruct converts response from GetResourceResponse into Resource
+func createResourceStruct(res *gtm.GetResourceResponse) *gtm.Resource {
+	if res != nil {
+		return &gtm.Resource{
+			Type:                        res.Type,
+			HostHeader:                  res.HostHeader,
+			LeastSquaresDecay:           res.LeastSquaresDecay,
+			Description:                 res.Description,
+			LeaderString:                res.LeaderString,
+			ConstrainedProperty:         res.ConstrainedProperty,
+			ResourceInstances:           res.ResourceInstances,
+			AggregationType:             res.AggregationType,
+			Links:                       res.Links,
+			LoadImbalancePercentage:     res.LoadImbalancePercentage,
+			UpperBound:                  res.UpperBound,
+			Name:                        res.Name,
+			MaxUMultiplicativeIncrement: res.MaxUMultiplicativeIncrement,
+			DecayRate:                   res.DecayRate,
+		}
+	}
+	return nil
 }
 
 // loadServersEqual checks whether load_servers are equal

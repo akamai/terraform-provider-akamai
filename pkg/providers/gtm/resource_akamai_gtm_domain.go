@@ -192,16 +192,16 @@ func resourceGTMv1Domain() *schema.Resource {
 }
 
 // GetQueryArgs retrieves optional query args. contractId, groupId [and accountSwitchKey] supported.
-func GetQueryArgs(d *schema.ResourceData) (map[string]string, error) {
+func GetQueryArgs(d *schema.ResourceData) (*gtm.DomainQueryArgs, error) {
 
-	qArgs := make(map[string]string)
+	qArgs := gtm.DomainQueryArgs{}
 	contractName, err := tf.GetStringValue("contract", d)
 	if err != nil {
 		return nil, fmt.Errorf("contract not present in resource data: %v", err.Error())
 	}
 	contract := strings.TrimPrefix(contractName, "ctr_")
 	if contract != "" && len(contract) > 0 {
-		qArgs["contractId"] = contract
+		qArgs.ContractID = contract
 	}
 	groupName, err := tf.GetStringValue("group", d)
 	if err != nil {
@@ -209,10 +209,10 @@ func GetQueryArgs(d *schema.ResourceData) (map[string]string, error) {
 	}
 	groupID := strings.TrimPrefix(groupName, "grp_")
 	if groupID != "" && len(groupID) > 0 {
-		qArgs["gid"] = groupID
+		qArgs.GroupID = groupID
 	}
 
-	return qArgs, nil
+	return &qArgs, nil
 }
 
 // Create a new GTM Domain
@@ -246,7 +246,10 @@ func resourceGTMv1DomainCreate(ctx context.Context, d *schema.ResourceData, m in
 			Detail:   err.Error(),
 		})
 	}
-	cStatus, err := Client(meta).CreateDomain(ctx, newDom, queryArgs)
+	cStatus, err := Client(meta).CreateDomain(ctx, gtm.CreateDomainRequest{
+		Domain:    newDom,
+		QueryArgs: queryArgs,
+	})
 	if err != nil {
 		// Errored. Let's see if special hack
 		if !HashiAcc {
@@ -330,7 +333,9 @@ func resourceGTMv1DomainRead(ctx context.Context, d *schema.ResourceData, m inte
 	logger.Debugf("Reading Domain: %s", d.Id())
 	var diags diag.Diagnostics
 	// retrieve the domain
-	dom, err := Client(meta).GetDomain(ctx, d.Id())
+	dom, err := Client(meta).GetDomain(ctx, gtm.GetDomainRequest{
+		DomainName: d.Id(),
+	})
 	if err != nil {
 		logger.Errorf("Domain Read error: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -357,7 +362,9 @@ func resourceGTMv1DomainUpdate(ctx context.Context, d *schema.ResourceData, m in
 	logger.Debugf("Updating Domain: %s", d.Id())
 	var diags diag.Diagnostics
 	// Get existing domain
-	existDom, err := Client(meta).GetDomain(ctx, d.Id())
+	existDom, err := Client(meta).GetDomain(ctx, gtm.GetDomainRequest{
+		DomainName: d.Id(),
+	})
 	if err != nil {
 		logger.Errorf("Domain Update failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -367,11 +374,12 @@ func resourceGTMv1DomainUpdate(ctx context.Context, d *schema.ResourceData, m in
 		})
 	}
 	logger.Debugf("Updating Domain BEFORE: %v", existDom)
-	err = populateDomainObject(d, existDom, m)
+	newDom := createDomainStruct(existDom)
+	err = populateDomainObject(d, newDom, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	logger.Debugf("Updating Domain PROPOSED: %v", existDom)
+	logger.Debugf("Updating Domain PROPOSED: %v", newDom)
 	//existDom := populateNewDomainObject(d)
 	args, err := GetQueryArgs(d)
 	if err != nil {
@@ -382,7 +390,11 @@ func resourceGTMv1DomainUpdate(ctx context.Context, d *schema.ResourceData, m in
 			Detail:   err.Error(),
 		})
 	}
-	uStat, err := Client(meta).UpdateDomain(ctx, existDom, args)
+
+	uStat, err := Client(meta).UpdateDomain(ctx, gtm.UpdateDomainRequest{
+		Domain:    newDom,
+		QueryArgs: args,
+	})
 	if err != nil {
 		logger.Errorf("Domain Update failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -392,11 +404,11 @@ func resourceGTMv1DomainUpdate(ctx context.Context, d *schema.ResourceData, m in
 		})
 	}
 	logger.Debugf("Update status: %v", uStat)
-	if uStat.PropagationStatus == "DENIED" {
-		logger.Errorf(uStat.Message)
+	if uStat.Status.PropagationStatus == "DENIED" {
+		logger.Errorf(uStat.Status.Message)
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  uStat.Message,
+			Summary:  uStat.Status.Message,
 		})
 	}
 
@@ -441,7 +453,9 @@ func resourceGTMv1DomainDelete(ctx context.Context, d *schema.ResourceData, m in
 	logger.Debugf("Deleting GTM Domain: %s", d.Id())
 	var diags diag.Diagnostics
 	// Get existing domain
-	existDom, err := Client(meta).GetDomain(ctx, d.Id())
+	existDom, err := Client(meta).GetDomain(ctx, gtm.GetDomainRequest{
+		DomainName: d.Id(),
+	})
 	if err != nil {
 		logger.Errorf("Domain Delete failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -450,7 +464,10 @@ func resourceGTMv1DomainDelete(ctx context.Context, d *schema.ResourceData, m in
 			Detail:   err.Error(),
 		})
 	}
-	uStat, err := Client(meta).DeleteDomain(ctx, existDom)
+	logger.Debugf("Deleting Domain: %v", existDom)
+	uStat, err := Client(meta).DeleteDomain(ctx, gtm.DeleteDomainRequest{
+		DomainName: d.Id(),
+	})
 	if err != nil {
 		// Errored. Let's see if special hack
 		if !HashiAcc {
@@ -748,7 +765,7 @@ func populateDomainObject(d *schema.ResourceData, dom *gtm.Domain, m interface{}
 }
 
 // Populate Terraform state from provided Domain object
-func populateTerraformState(d *schema.ResourceData, dom *gtm.Domain, m interface{}) {
+func populateTerraformState(d *schema.ResourceData, dom *gtm.GetDomainResponse, m interface{}) {
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "populateTerraformState")
 
@@ -800,6 +817,58 @@ func populateTerraformState(d *schema.ResourceData, dom *gtm.Domain, m interface
 	}
 }
 
+// createDomainStruct converts response from GetDomainResponse into Domain
+func createDomainStruct(domain *gtm.GetDomainResponse) *gtm.Domain {
+	if domain != nil {
+		return &gtm.Domain{
+			Name:                         domain.Name,
+			Type:                         domain.Type,
+			ASMaps:                       domain.ASMaps,
+			Resources:                    domain.Resources,
+			DefaultUnreachableThreshold:  domain.DefaultUnreachableThreshold,
+			EmailNotificationList:        domain.EmailNotificationList,
+			MinPingableRegionFraction:    domain.MinPingableRegionFraction,
+			DefaultTimeoutPenalty:        domain.DefaultTimeoutPenalty,
+			Datacenters:                  domain.Datacenters,
+			ServermonitorLivenessCount:   domain.ServermonitorLivenessCount,
+			RoundRobinPrefix:             domain.RoundRobinPrefix,
+			ServermonitorLoadCount:       domain.ServermonitorLoadCount,
+			PingInterval:                 domain.PingInterval,
+			MaxTTL:                       domain.MaxTTL,
+			LoadImbalancePercentage:      domain.LoadImbalancePercentage,
+			DefaultHealthMax:             domain.DefaultHealthMax,
+			LastModified:                 domain.LastModified,
+			Status:                       domain.Status,
+			MapUpdateInterval:            domain.MapUpdateInterval,
+			MaxProperties:                domain.MaxProperties,
+			MaxResources:                 domain.MaxResources,
+			DefaultSSLClientPrivateKey:   domain.DefaultSSLClientPrivateKey,
+			DefaultErrorPenalty:          domain.DefaultErrorPenalty,
+			Links:                        domain.Links,
+			Properties:                   domain.Properties,
+			MaxTestTimeout:               domain.MaxTestTimeout,
+			CNameCoalescingEnabled:       domain.CNameCoalescingEnabled,
+			DefaultHealthMultiplier:      domain.DefaultHealthMultiplier,
+			ServermonitorPool:            domain.ServermonitorPool,
+			LoadFeedback:                 domain.LoadFeedback,
+			MinTTL:                       domain.MinTTL,
+			GeographicMaps:               domain.GeographicMaps,
+			CIDRMaps:                     domain.CIDRMaps,
+			DefaultMaxUnreachablePenalty: domain.DefaultMaxUnreachablePenalty,
+			DefaultHealthThreshold:       domain.DefaultHealthThreshold,
+			LastModifiedBy:               domain.LastModifiedBy,
+			ModificationComments:         domain.ModificationComments,
+			MinTestInterval:              domain.MinTestInterval,
+			PingPacketSize:               domain.PingPacketSize,
+			DefaultSSLClientCertificate:  domain.DefaultSSLClientCertificate,
+			EndUserMappingEnabled:        domain.EndUserMappingEnabled,
+			SignAndServe:                 domain.SignAndServe,
+			SignAndServeAlgorithm:        domain.SignAndServeAlgorithm,
+		}
+	}
+	return nil
+}
+
 // Util function to wait for change deployment. return true if complete. false if not - error or nil (timeout)
 func waitForCompletion(ctx context.Context, domain string, m interface{}) (bool, error) {
 	meta := meta.Must(m)
@@ -816,7 +885,9 @@ func waitForCompletion(ctx context.Context, domain string, m interface{}) (bool,
 	logger.Debugf("WAIT: Sleep Interval [%v]", sleepInterval/time.Second)
 	logger.Debugf("WAIT: Sleep Timeout [%v]", sleepTimeout/time.Second)
 	for {
-		propStat, err := Client(meta).GetDomainStatus(ctx, domain)
+		propStat, err := Client(meta).GetDomainStatus(ctx, gtm.GetDomainStatusRequest{
+			DomainName: domain,
+		})
 		if err != nil {
 			return false, fmt.Errorf("GetDomainStatus error: %s", err.Error())
 		}

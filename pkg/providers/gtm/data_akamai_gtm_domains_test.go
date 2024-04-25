@@ -22,7 +22,7 @@ func TestDataGTMDomains(t *testing.T) {
 		"success - response is ok": {
 			givenTF: "valid.tf",
 			init: func(m *gtm.Mock) {
-				m.On("ListDomains", mock.Anything).Return([]*gtm.DomainItem{
+				m.On("ListDomains", mock.Anything).Return([]gtm.DomainItem{
 					{
 						Name:                 "test1.terraformtesting.net",
 						LastModified:         "2023-02-01T09:36:28.000+00:00",
@@ -33,7 +33,7 @@ func TestDataGTMDomains(t *testing.T) {
 						SignAndServe:         false,
 						Status:               "2023-02-01 09:47 GMT: Current configuration has been propagated to all GTM nameservers",
 						AcgID:                "TestACGID-1",
-						Links: []*gtm.Link{{
+						Links: []gtm.Link{{
 							Rel:  "self",
 							Href: "https://test-domain.net/config-gtm/v1/domains/test1.terraformtesting.net",
 						},
@@ -49,7 +49,7 @@ func TestDataGTMDomains(t *testing.T) {
 						SignAndServe:         false,
 						Status:               "2023-12-21 08:37 GMT: Current configuration has been propagated to all GTM nameservers",
 						AcgID:                "TestACGID-1",
-						Links: []*gtm.Link{{
+						Links: []gtm.Link{{
 							Rel:  "self",
 							Href: "https://test-domain.net/config-gtm/v1/domains/test2.terraformtesting.net",
 						},
@@ -65,7 +65,7 @@ func TestDataGTMDomains(t *testing.T) {
 						SignAndServe:         false,
 						Status:               "2023-12-22 08:46 GMT: Current configuration has been propagated to all GTM nameservers",
 						AcgID:                "TestACGID-1",
-						Links: []*gtm.Link{{
+						Links: []gtm.Link{{
 							Rel:  "self",
 							Href: "https://test-domain.net/config-gtm/v1/domains/test3.terraformtesting.net",
 						},
@@ -85,7 +85,7 @@ func TestDataGTMDomains(t *testing.T) {
 		"no domains found": {
 			givenTF: "valid.tf",
 			init: func(m *gtm.Mock) {
-				m.On("ListDomains", mock.Anything).Return([]*gtm.DomainItem{}, nil)
+				m.On("ListDomains", mock.Anything).Return([]gtm.DomainItem{}, nil)
 			},
 		},
 		"error response from api": {

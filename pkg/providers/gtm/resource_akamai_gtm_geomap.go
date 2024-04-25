@@ -7,9 +7,8 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/gtm"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/logger"
-
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/logger"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -128,7 +127,10 @@ func resourceGTMv1GeoMapCreate(ctx context.Context, d *schema.ResourceData, m in
 		})
 	}
 	logger.Debugf("Proposed New geoMap: [%v]", newGeo)
-	cStatus, err := Client(meta).CreateGeoMap(ctx, newGeo, domain)
+	cStatus, err := Client(meta).CreateGeoMap(ctx, gtm.CreateGeoMapRequest{
+		GeoMap:     newGeo,
+		DomainName: domain,
+	})
 	if err != nil {
 		logger.Errorf("geoMap Create failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -193,7 +195,10 @@ func resourceGTMv1GeoMapRead(ctx context.Context, d *schema.ResourceData, m inte
 		logger.Errorf("Invalid geoMap ID")
 		return diag.FromErr(err)
 	}
-	geo, err := Client(meta).GetGeoMap(ctx, geoMap, domain)
+	geo, err := Client(meta).GetGeoMap(ctx, gtm.GetGeoMapRequest{
+		MapName:    geoMap,
+		DomainName: domain,
+	})
 	if err != nil {
 		logger.Errorf("geoMap Read error: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -231,7 +236,10 @@ func resourceGTMv1GeoMapUpdate(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(err)
 	}
 	// Get existingGeoMap
-	existGeo, err := Client(meta).GetGeoMap(ctx, geoMap, domain)
+	existGeo, err := Client(meta).GetGeoMap(ctx, gtm.GetGeoMapRequest{
+		MapName:    geoMap,
+		DomainName: domain,
+	})
 	if err != nil {
 		logger.Errorf("geoMap Update failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -240,10 +248,14 @@ func resourceGTMv1GeoMapUpdate(ctx context.Context, d *schema.ResourceData, m in
 			Detail:   err.Error(),
 		})
 	}
-	logger.Debugf("Updating geoMap BEFORE: %v", existGeo)
-	populateGeoMapObject(d, existGeo, m)
+	newGeo := createGeoMapStruct(existGeo)
+	logger.Debugf("Updating geoMap BEFORE: %v", newGeo)
+	populateGeoMapObject(d, newGeo, m)
 	logger.Debugf("Updating geoMap PROPOSED: %v", existGeo)
-	uStat, err := Client(meta).UpdateGeoMap(ctx, existGeo, domain)
+	uStat, err := Client(meta).UpdateGeoMap(ctx, gtm.UpdateGeoMapRequest{
+		GeoMap:     newGeo,
+		DomainName: domain,
+	})
 	if err != nil {
 		logger.Errorf("geoMap Update failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -253,11 +265,11 @@ func resourceGTMv1GeoMapUpdate(ctx context.Context, d *schema.ResourceData, m in
 		})
 	}
 	logger.Debugf("geoMap Update  status: %v", uStat)
-	if uStat.PropagationStatus == "DENIED" {
-		logger.Errorf(uStat.Message)
+	if uStat.Status.PropagationStatus == "DENIED" {
+		logger.Errorf(uStat.Status.Message)
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  uStat.Message,
+			Summary:  uStat.Status.Message,
 		})
 	}
 
@@ -304,7 +316,10 @@ func resourceGTMv1GeoMapImport(d *schema.ResourceData, m interface{}) ([]*schema
 	if err != nil {
 		return []*schema.ResourceData{d}, err
 	}
-	geo, err := Client(meta).GetGeoMap(ctx, geoMap, domain)
+	geo, err := Client(meta).GetGeoMap(ctx, gtm.GetGeoMapRequest{
+		MapName:    geoMap,
+		DomainName: domain,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -344,7 +359,10 @@ func resourceGTMv1GeoMapDelete(ctx context.Context, d *schema.ResourceData, m in
 		logger.Errorf("Invalid geoMap ID: %s", d.Id())
 		return diag.FromErr(err)
 	}
-	existGeo, err := Client(meta).GetGeoMap(ctx, geoMap, domain)
+	existGeo, err := Client(meta).GetGeoMap(ctx, gtm.GetGeoMapRequest{
+		MapName:    geoMap,
+		DomainName: domain,
+	})
 	if err != nil {
 		logger.Errorf("geoMap Delete failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -353,8 +371,12 @@ func resourceGTMv1GeoMapDelete(ctx context.Context, d *schema.ResourceData, m in
 			Detail:   err.Error(),
 		})
 	}
-	logger.Debugf("Deleting geoMap: %v", existGeo)
-	uStat, err := Client(meta).DeleteGeoMap(ctx, existGeo, domain)
+	newGeo := createGeoMapStruct(existGeo)
+	logger.Debugf("Deleting geoMap: %v", newGeo)
+	uStat, err := Client(meta).DeleteGeoMap(ctx, gtm.DeleteGeoMapRequest{
+		MapName:    geoMap,
+		DomainName: domain,
+	})
 	if err != nil {
 		logger.Errorf("geoMap Delete failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -364,11 +386,11 @@ func resourceGTMv1GeoMapDelete(ctx context.Context, d *schema.ResourceData, m in
 		})
 	}
 	logger.Debugf("geoMap Delete status: %v", uStat)
-	if uStat.PropagationStatus == "DENIED" {
-		logger.Errorf(uStat.Message)
+	if uStat.Status.PropagationStatus == "DENIED" {
+		logger.Errorf(uStat.Status.Message)
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  uStat.Message,
+			Summary:  uStat.Status.Message,
 		})
 	}
 
@@ -409,8 +431,8 @@ func populateNewGeoMapObject(d *schema.ResourceData, m interface{}) (*gtm.GeoMap
 	geoObj := &gtm.GeoMap{
 		Name:              name,
 		DefaultDatacenter: &gtm.DatacenterBase{},
-		Assignments:       make([]*gtm.GeoAssignment, 1),
-		Links:             make([]*gtm.Link, 1),
+		Assignments:       make([]gtm.GeoAssignment, 1),
+		Links:             make([]gtm.Link, 1),
 	}
 	populateGeoMapObject(d, geoObj, m)
 
@@ -427,7 +449,7 @@ func populateGeoMapObject(d *schema.ResourceData, geo *gtm.GeoMap, m interface{}
 }
 
 // Populate Terraform state from provided GeoMap object
-func populateTerraformGeoMapState(d *schema.ResourceData, geo *gtm.GeoMap, m interface{}) error {
+func populateTerraformGeoMapState(d *schema.ResourceData, geo *gtm.GetGeoMapResponse, m interface{}) error {
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "populateTerraformGeoMapState")
 
@@ -449,7 +471,7 @@ func populateGeoAssignmentsObject(d *schema.ResourceData, geo *gtm.GeoMap, m int
 	// pull apart List
 	geoAssignmentsList, err := tf.GetListValue("assignment", d)
 	if err == nil {
-		geoAssignmentsObjList := make([]*gtm.GeoAssignment, len(geoAssignmentsList)) // create new object list
+		geoAssignmentsObjList := make([]gtm.GeoAssignment, len(geoAssignmentsList)) // create new object list
 		for i, v := range geoAssignmentsList {
 			geoMap, ok := v.(map[string]interface{})
 			if !ok {
@@ -470,18 +492,18 @@ func populateGeoAssignmentsObject(d *schema.ResourceData, geo *gtm.GeoMap, m int
 				}
 				geoAssignment.Countries = ls
 			}
-			geoAssignmentsObjList[i] = &geoAssignment
+			geoAssignmentsObjList[i] = geoAssignment
 		}
 		geo.Assignments = geoAssignmentsObjList
 	}
 }
 
 // create and populate Terraform geoMap assignments schema
-func populateTerraformGeoAssignmentsState(d *schema.ResourceData, geo *gtm.GeoMap, m interface{}) error {
+func populateTerraformGeoAssignmentsState(d *schema.ResourceData, geo *gtm.GetGeoMapResponse, m interface{}) error {
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "populateTerraformGeoAssignmentsState")
 
-	objectInventory := make(map[int]*gtm.GeoAssignment, len(geo.Assignments))
+	objectInventory := make(map[int]gtm.GeoAssignment, len(geo.Assignments))
 	if len(geo.Assignments) > 0 {
 		for _, aObj := range geo.Assignments {
 			objectInventory[aObj.DatacenterID] = aObj
@@ -495,7 +517,7 @@ func populateTerraformGeoAssignmentsState(d *schema.ResourceData, geo *gtm.GeoMa
 		a := aMap.(map[string]interface{})
 		objIndex := a["datacenter_id"].(int)
 		aObject := objectInventory[objIndex]
-		if aObject == nil {
+		if &aObject == nil {
 			logger.Warnf("Geo Assignment %d NOT FOUND in returned GTM Object", a["datacenter_id"])
 			continue
 		}
@@ -552,7 +574,7 @@ func populateGeoDefaultDCObject(d *schema.ResourceData, geo *gtm.GeoMap, m inter
 }
 
 // create and populate Terraform geoMap default_datacenter schema
-func populateTerraformGeoDefaultDCState(d *schema.ResourceData, geo *gtm.GeoMap, m interface{}) error {
+func populateTerraformGeoDefaultDCState(d *schema.ResourceData, geo *gtm.GetGeoMapResponse, m interface{}) error {
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "populateTerraformGeoDefault")
 
@@ -565,6 +587,19 @@ func populateTerraformGeoDefaultDCState(d *schema.ResourceData, geo *gtm.GeoMap,
 	if err := d.Set("default_datacenter", ddcListNew); err != nil {
 		logger.Errorf("populateTerraformGeoDefaultDCState failed: %s", err.Error())
 		return err
+	}
+	return nil
+}
+
+// createGeoMapStruct converts response from GetGeoMapResponse into GeoMap
+func createGeoMapStruct(geo *gtm.GetGeoMapResponse) *gtm.GeoMap {
+	if geo != nil {
+		return &gtm.GeoMap{
+			DefaultDatacenter: geo.DefaultDatacenter,
+			Assignments:       geo.Assignments,
+			Name:              geo.Name,
+			Links:             geo.Links,
+		}
 	}
 	return nil
 }

@@ -175,7 +175,7 @@ func (d *domainsDataSource) Read(ctx context.Context, request datasource.ReadReq
 	response.Diagnostics.Append(response.State.Set(ctx, &data)...)
 }
 
-func getDomains(domainList []*gtm.DomainItem) []domain {
+func getDomains(domainList []gtm.DomainItem) []domain {
 	var result []domain
 	for _, dom := range domainList {
 		domain := domain{
