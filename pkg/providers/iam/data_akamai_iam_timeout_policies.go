@@ -34,7 +34,7 @@ func dataIAMTimeoutPoliciesRead(ctx context.Context, d *schema.ResourceData, m i
 
 	res, err := client.ListTimeoutPolicies(ctx)
 	if err != nil {
-		logger.WithError(err).Error("Could not get supported timeout policies")
+		logger.Error("Could not get supported timeout policies", "error", err)
 		return diag.FromErr(err)
 	}
 
@@ -44,7 +44,7 @@ func dataIAMTimeoutPoliciesRead(ctx context.Context, d *schema.ResourceData, m i
 	}
 
 	if err := d.Set("policies", policies); err != nil {
-		logger.WithError(err).Error("Could not set timeout policies in state")
+		logger.Error("Could not set timeout policies in state", "error", err)
 		return diag.FromErr(err)
 	}
 

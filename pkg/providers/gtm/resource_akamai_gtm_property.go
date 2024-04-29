@@ -10,12 +10,12 @@ import (
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/gtm"
+	akalog "github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/log"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/logger"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/log"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
-	"github.com/apex/log"
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -599,7 +599,7 @@ func resourceGTMv1PropertyCreate(ctx context.Context, d *schema.ResourceData, m 
 
 }
 
-func createPropertyWithRetry(ctx context.Context, meta meta.Meta, logger log.Interface, createPropertyRequest gtm.CreatePropertyRequest) (*gtm.CreatePropertyResponse, error) {
+func createPropertyWithRetry(ctx context.Context, meta meta.Meta, logger akalog.Interface, createPropertyRequest gtm.CreatePropertyRequest) (*gtm.CreatePropertyResponse, error) {
 	// Initial backoff interval
 	retryInterval := time.Second * 10
 	// Maximum retry interval
@@ -1523,7 +1523,7 @@ func reconcileTerraformLists(terraList []interface{}, newList []interface{}, m i
 }
 
 func trafficTargetDiffSuppress(_, _, _ string, d *schema.ResourceData) bool {
-	logger := logger.Get("Akamai GTM", "trafficTargetDiffSuppress")
+	logger := log.Get("Akamai GTM", "trafficTargetDiffSuppress")
 	oldTarget, newTarget := d.GetChange("traffic_target")
 
 	oldTrafficTarget, ok := oldTarget.([]interface{})
@@ -1647,7 +1647,7 @@ func certificatesEqual(oldCertificates any, newLivenessTest any) bool {
 
 // serversEqual checks whether provided sets of ip addresses contain the same entries
 func serversEqual(old, new interface{}) bool {
-	logger := logger.Get("Akamai GTM", "serversEqual")
+	logger := log.Get("Akamai GTM", "serversEqual")
 
 	oldServers, ok := old.(*schema.Set)
 	if !ok {

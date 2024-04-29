@@ -13,7 +13,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/imaging"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/logger"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/log"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
@@ -387,7 +387,7 @@ func diffSuppressPolicyVideo(_, old, new string, _ *schema.ResourceData) bool {
 }
 
 func equalPolicyVideo(old, new string) bool {
-	logger := logger.Get("Imaging", "equalPolicyVideo")
+	logger := log.Get("Imaging", "equalPolicyVideo")
 	if old == new {
 		return true
 	}

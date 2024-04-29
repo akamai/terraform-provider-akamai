@@ -3,18 +3,18 @@ package property
 import (
 	"fmt"
 
-	"github.com/apex/log"
-
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/log"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/papi"
 )
 
 // Get loggable fields from given arguments
-func logFields(args ...interface{}) log.Fielder {
+func logFields(args ...interface{}) log.Fields {
 	switch len(args) {
 	case 0:
+		//return logger
 		return log.Fields{}
 	case 1:
-		return toLogFielder(args[0])
+		return toLogFielder(args[0]).Fields()
 	}
 
 	merge := make(mergeLogFields, len(args))
@@ -22,7 +22,7 @@ func logFields(args ...interface{}) log.Fielder {
 		merge[i] = toLogFielder(arg)
 	}
 
-	return merge
+	return merge.Fields()
 }
 
 type mergeLogFields []log.Fielder

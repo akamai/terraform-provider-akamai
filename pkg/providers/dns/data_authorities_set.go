@@ -48,7 +48,7 @@ func dataSourceAuthoritiesSetRead(ctx context.Context, d *schema.ResourceData, m
 	// Warning or Errors can be collected in a slice type
 	var diags diag.Diagnostics
 
-	logger.WithField("contractid", contractID).Debug("Start Searching for authority records")
+	logger.Debug("Start Searching for authority records", "contractid", contractID)
 
 	ns, err := inst.Client(meta).GetNameServerRecordList(ctx, dns.GetNameServerRecordListRequest{
 		ContractIDs: contractID,
@@ -60,7 +60,7 @@ func dataSourceAuthoritiesSetRead(ctx context.Context, d *schema.ResourceData, m
 			Detail:   err.Error(),
 		})
 	}
-	logger.WithField("records", ns).Debug("Searching for records")
+	logger.Debug("Searching for records", "records", ns)
 
 	sort.Strings(ns)
 	if err := d.Set("authorities", ns); err != nil {

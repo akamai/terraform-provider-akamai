@@ -34,7 +34,7 @@ func dataIAMContactTypesRead(ctx context.Context, d *schema.ResourceData, m inte
 
 	res, err := client.SupportedContactTypes(ctx)
 	if err != nil {
-		logger.WithError(err).Error("Could not get supported contact types")
+		logger.Error("Could not get supported contact types", "error", err)
 		return diag.FromErr(err)
 	}
 
@@ -44,7 +44,7 @@ func dataIAMContactTypesRead(ctx context.Context, d *schema.ResourceData, m inte
 	}
 
 	if err := d.Set("contact_types", types); err != nil {
-		logger.WithError(err).Error("Could not set contact types in state")
+		logger.Error("Could not set contact types in state", "error", err)
 		return diag.FromErr(err)
 	}
 

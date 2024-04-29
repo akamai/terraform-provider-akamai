@@ -17,7 +17,7 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/str"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/timeouts"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/logger"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/log"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
@@ -443,7 +443,7 @@ func diffSuppressMatchRules(_, old, new string, _ *schema.ResourceData) bool {
 }
 
 func diffMatchRules(old, new string) bool {
-	logger := logger.Get("Cloudlets", "diffMatchRules")
+	logger := log.Get("Cloudlets", "diffMatchRules")
 	if old == new {
 		return true
 	}

@@ -41,7 +41,7 @@ func dataIAMStatesRead(ctx context.Context, d *schema.ResourceData, m interface{
 	country := d.Get("country").(string)
 	res, err := client.ListStates(ctx, iam.ListStatesRequest{Country: country})
 	if err != nil {
-		logger.WithError(err).Error("Could not get states")
+		logger.Error("Could not get states", "error", err)
 		return diag.FromErr(err)
 	}
 
@@ -51,7 +51,7 @@ func dataIAMStatesRead(ctx context.Context, d *schema.ResourceData, m interface{
 	}
 
 	if err := d.Set("states", states); err != nil {
-		logger.WithError(err).Error("Could not set states in the state")
+		logger.Error("Could not set states in the state", "error", err)
 		return diag.FromErr(err)
 	}
 

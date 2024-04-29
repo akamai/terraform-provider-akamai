@@ -10,12 +10,12 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/log"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/papi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/str"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
-	"github.com/apex/log"
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
@@ -634,7 +634,7 @@ func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interfa
 
 	rulesJSON, err := json.Marshal(rules)
 	if err != nil {
-		logger.WithError(err).Error("could not render rules as JSON")
+		logger.Error("could not render rules as JSON", "error", err)
 		return diag.Errorf("received rules that could not be rendered to JSON: %s", err)
 	}
 
@@ -678,7 +678,7 @@ func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 	for _, attr := range immutable {
 		if d.HasChange(attr) {
 			err := fmt.Errorf(`property attribute %q cannot be changed after creation (immutable)`, attr)
-			logger.WithError(err).Error("could not update property")
+			logger.Error("could not update property", "error", err)
 			diags = append(diags, diag.FromErr(err)...)
 		}
 	}
@@ -981,16 +981,16 @@ func createProperty(ctx context.Context, client papi.PAPI, propertyName, groupID
 		},
 	}
 
-	logger := log.FromContext(ctx).WithFields(logFields(req))
+	logger := log.FromContext(ctx).With("request", logFields(req))
 	logger.Debug("creating property")
 
 	res, err := client.CreateProperty(ctx, req)
 	if err == nil {
-		logger.WithFields(logFields(*res)).Info("property created")
+		logger.Info("property created", logFields(*res))
 		return res.PropertyID, nil
 	}
 
-	logger.WithError(err).Error("could not create property")
+	logger.Error("could not create property", "error", err)
 
 	var targetErr *papi.Error
 	if errors.As(err, &targetErr) && targetErr.StatusCode == http.StatusNotFound {
@@ -1035,12 +1035,12 @@ func removeProperty(ctx context.Context, client papi.PAPI, propertyID, groupID, 
 		ContractID: contractID,
 	}
 
-	logger := log.FromContext(ctx).WithFields(logFields(req))
+	logger := log.FromContext(ctx).With("request", logFields(req))
 	logger.Debug("removing property")
 
 	_, err := client.RemoveProperty(ctx, req)
 	if err != nil {
-		logger.WithError(err).Error("could not remove property")
+		logger.Error("could not remove property", "error", err)
 		return err
 	}
 
@@ -1055,19 +1055,19 @@ func fetchLatestProperty(ctx context.Context, client papi.PAPI, propertyID, grou
 		ContractID: contractID,
 		GroupID:    groupID,
 	}
-	logger := log.FromContext(ctx).WithFields(logFields(req))
+	logger := log.FromContext(ctx).With("request", logFields(req))
 	logger.Debug("fetching property")
 	res, err := client.GetProperty(ctx, req)
 	if err != nil {
-		logger.WithError(err).Error("could not read property")
+		logger.Error("could not read property", "error", err)
 		return nil, err
 	}
 
-	logger = logger.WithFields(logFields(*res))
+	logger = logger.With("response", logFields(*res))
 
 	if res.Property == nil {
 		err := fmt.Errorf("PAPI::GetProperty() response did not contain a property")
-		logger.WithError(err).Error("could not look up property")
+		logger.Error("could not look up property", "error", err)
 		return nil, err
 	}
 
@@ -1082,11 +1082,11 @@ func fetchProperty(ctx context.Context, client papi.PAPI, propertyID, groupID, c
 		ContractID: contractID,
 		GroupID:    groupID,
 	}
-	logger := log.FromContext(ctx).WithFields(logFields(req))
+	logger := log.FromContext(ctx).With("request", logFields(req))
 	logger.Debugf("fetching property versions")
 	res, err := client.GetPropertyVersions(ctx, req)
 	if err != nil {
-		logger.WithError(err).Error("could not read property versions")
+		logger.Error("could not read property versions", "error", err)
 		return nil, 0, err
 	}
 
@@ -1218,15 +1218,15 @@ func fetchPropertyVersion(ctx context.Context, client papi.PAPI, propertyID, gro
 		GroupID:         groupID,
 		PropertyVersion: propertyVersion,
 	}
-	logger := log.FromContext(ctx).WithFields(logFields(req))
+	logger := log.FromContext(ctx).With("request", logFields(req))
 	logger.Debug("fetching property version")
 
 	res, err := client.GetPropertyVersion(ctx, req)
 	if err != nil {
-		logger.WithError(err).Error("could not read property version")
+		logger.Error("could not read property version", "error", err)
 		return nil, err
 	}
-	logger = logger.WithFields(logFields(*res))
+	logger = logger.With("response", logFields(*res))
 	logger.Debug("property version fetched")
 	return res, err
 }
@@ -1241,16 +1241,16 @@ func fetchPropertyVersionHostnames(ctx context.Context, client papi.PAPI, proper
 		IncludeCertStatus: true,
 	}
 
-	logger := log.FromContext(ctx).WithFields(logFields(req))
+	logger := log.FromContext(ctx).With("request", logFields(req))
 
 	logger.Debug("fetching property hostnames")
 	res, err := client.GetPropertyVersionHostnames(ctx, req)
 	if err != nil {
-		logger.WithError(err).Error("could not fetch property hostnames")
+		logger.Error("could not fetch property hostnames", "error", err)
 		return nil, err
 	}
 
-	logger.WithFields(logFields(*res)).Debug("fetched property hostnames")
+	logger.Debug("fetched property hostnames", logFields(*res))
 	return res.Hostnames.Items, nil
 }
 
@@ -1264,16 +1264,16 @@ func fetchPropertyVersionRules(ctx context.Context, client papi.PAPI, property p
 		ValidateMode:    papi.RuleValidateModeFull,
 	}
 
-	logger := log.FromContext(ctx).WithFields(logFields(req))
+	logger := log.FromContext(ctx).With("request", logFields(req))
 
 	logger.Debug("fetching property rules")
 	res, err := client.GetRuleTree(ctx, req)
 	if err != nil {
-		logger.WithError(err).Error("could not fetch property rules")
+		logger.Error("could not fetch property rules", "error", err)
 		return
 	}
 
-	logger.WithFields(logFields(*res)).Debug("fetched property rules")
+	logger.Debug("fetched property rules", logFields(*res))
 	rules = papi.RulesUpdate{
 		Rules:    res.Rules,
 		Comments: res.Comments,
@@ -1330,11 +1330,11 @@ func updatePropertyRules(ctx context.Context, client papi.PAPI, property papi.Pr
 	logger.Debug("updating property rules")
 	res, err := client.UpdateRuleTree(ctx, req)
 	if err != nil {
-		logger.WithError(err).Error("could not update property rules")
+		logger.Error("could not update property rules", "error", err)
 		return err
 	}
 
-	logger.WithFields(logFields(*res)).Info("updated property rules")
+	logger.Info("updated property rules", logFields(*res))
 	return nil
 }
 
@@ -1349,16 +1349,16 @@ func createPropertyVersion(ctx context.Context, client papi.PAPI, property papi.
 		},
 	}
 
-	logger := log.FromContext(ctx).WithFields(logFields(req))
+	logger := log.FromContext(ctx).With("request", logFields(req))
 
 	logger.Debug(fmt.Sprintf("creating new property version from previous version %d", version))
 	res, err := client.CreatePropertyVersion(ctx, req)
 	if err != nil {
-		logger.WithError(err).Error("could not create new property version")
+		logger.Error("could not create new property version", "error", err)
 		return
 	}
 
-	logger.WithFields(logFields(*res)).Info("property version created")
+	logger.Info("property version created", logFields(*res))
 	newVersion = res.PropertyVersion
 	return
 }
@@ -1376,7 +1376,7 @@ func updatePropertyHostnames(ctx context.Context, client papi.PAPI, property pap
 		Hostnames:       hostnames,
 	}
 
-	logger := log.FromContext(ctx).WithFields(logFields(req))
+	logger := log.FromContext(ctx).With("request", logFields(req))
 
 	logger.Debug("updating property hostnames")
 	res, err := client.UpdatePropertyVersionHostnames(ctx, req)
@@ -1397,11 +1397,11 @@ func updatePropertyHostnames(ctx context.Context, client papi.PAPI, property pap
 				err = fmt.Errorf("%s: not possible to use cert_provisioning_type = 'DEFAULT' as the limit for DEFAULT certificates has been reached", papi.ErrUpdatePropertyVersionHostnames)
 			}
 		}
-		logger.WithError(err).Error("could not modify the hostnames for a property version")
+		logger.Error("could not modify the hostnames for a property version", "error", err)
 		return err
 	}
 
-	logger.WithFields(logFields(*res)).Info("property hostnames updated")
+	logger.Info("property hostnames updated", logFields(*res))
 	return nil
 }
 

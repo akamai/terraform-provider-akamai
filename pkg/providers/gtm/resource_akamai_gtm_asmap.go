@@ -10,7 +10,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/gtm"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/logger"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/log"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -612,7 +612,7 @@ func populateTerraformASDefaultDCState(d *schema.ResourceData, as *gtm.GetASMapR
 
 // assignmentDiffSuppress is a diff suppress function used in gtm_asmap, gtm_cidrmap and gtm_geomap resources
 func assignmentDiffSuppress(_, _, _ string, d *schema.ResourceData) bool {
-	logger := logger.Get("Akamai GTM", "assignmentDiffSuppress")
+	logger := log.Get("Akamai GTM", "assignmentDiffSuppress")
 	oldVal, newVal := d.GetChange("assignment")
 
 	oldList, ok := oldVal.([]interface{})
@@ -687,7 +687,7 @@ func assignmentDiffSuppress(_, _, _ string, d *schema.ResourceData) bool {
 
 // asNumbersEqual checks whether the as_numbers are equal
 func asNumbersEqual(old, new interface{}) bool {
-	logger := logger.Get("Akamai GTM", "asNumbersEqual")
+	logger := log.Get("Akamai GTM", "asNumbersEqual")
 
 	oldVal, ok := old.(*schema.Set)
 	if !ok {

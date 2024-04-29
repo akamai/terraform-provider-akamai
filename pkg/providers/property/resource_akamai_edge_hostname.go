@@ -14,7 +14,7 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/str"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/timeouts"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/logger"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/log"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -640,7 +640,7 @@ func diffSuppressEdgeHostname(_, oldVal, newVal string, _ *schema.ResourceData) 
 }
 
 func suppressEdgeHostnameUseCases(_, oldVal, newVal string, _ *schema.ResourceData) bool {
-	logger := logger.Get("PAPI", "suppressEdgeHostnameUseCases")
+	logger := log.Get("PAPI", "suppressEdgeHostnameUseCases")
 	if oldVal == newVal {
 		return true
 	}

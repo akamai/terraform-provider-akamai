@@ -33,7 +33,7 @@ func dataIAMLanguagesRead(ctx context.Context, d *schema.ResourceData, m interfa
 	logger.Debug("Fetching supported supported languages")
 	res, err := client.SupportedLanguages(ctx)
 	if err != nil {
-		logger.WithError(err).Error("Could not get supported supported languages")
+		logger.Error("Could not get supported supported languages", "error", err)
 		return diag.FromErr(err)
 	}
 
@@ -43,7 +43,7 @@ func dataIAMLanguagesRead(ctx context.Context, d *schema.ResourceData, m interfa
 	}
 
 	if err := d.Set("languages", languages); err != nil {
-		logger.WithError(err).Error("Could not set supported languages in state")
+		logger.Error("Could not set supported languages in state", "error", err)
 		return diag.FromErr(err)
 	}
 

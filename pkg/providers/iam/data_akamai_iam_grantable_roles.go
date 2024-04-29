@@ -53,7 +53,7 @@ func dataIAMGrantableRolesRead(ctx context.Context, d *schema.ResourceData, m in
 
 	roles, err := client.ListGrantableRoles(ctx)
 	if err != nil {
-		logger.WithError(err).Error("could not get grantable roles")
+		logger.Error("could not get grantable roles", "error", err)
 		return diag.FromErr(err)
 	}
 
@@ -63,7 +63,7 @@ func dataIAMGrantableRolesRead(ctx context.Context, d *schema.ResourceData, m in
 	}
 
 	if err := d.Set("grantable_roles", grantableRoles); err != nil {
-		logger.WithError(err).Error("could not set grantable roles")
+		logger.Error("could not set grantable roles", "error", err)
 		return diag.FromErr(err)
 	}
 

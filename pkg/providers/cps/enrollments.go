@@ -10,12 +10,12 @@ import (
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/cps"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/log"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	cpstools "github.com/akamai/terraform-provider-akamai/v6/pkg/providers/cps/tools"
-	"github.com/apex/log"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -477,7 +477,7 @@ func waitForVerification(ctx context.Context, logger log.Interface, client cps.C
 					return err
 				}
 			}
-			log.Debugf("Change status: %s", status.StatusInfo.Status)
+			logger.Debugf("Change status: %s", status.StatusInfo.Status)
 			if status.StatusInfo != nil && status.StatusInfo.Error != nil && status.StatusInfo.Error.Description != "" {
 				return fmt.Errorf(status.StatusInfo.Error.Description)
 			}

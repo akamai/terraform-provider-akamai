@@ -11,10 +11,10 @@ import (
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/dns"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/log"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
-	"github.com/apex/log"
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -194,7 +194,7 @@ func resourceDNSv2ZoneCreate(ctx context.Context, d *schema.ResourceData, m inte
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	logger.WithField("zone", hostname).Info("Zone Create")
+	logger.Info("Zone Create", "zone", hostname)
 	zoneType, err := tf.GetStringValue("type", d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -335,7 +335,7 @@ func resourceDNSv2ZoneRead(ctx context.Context, d *schema.ResourceData, m interf
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	logger.WithField("zone", hostname).Info("Zone Read")
+	logger.Info("Zone Read", "zone", hostname)
 	masterSet, err := tf.GetSetValue("masters", d)
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
@@ -425,7 +425,7 @@ func resourceDNSv2ZoneUpdate(ctx context.Context, d *schema.ResourceData, m inte
 		ctx,
 		session.WithContextLog(logger),
 	)
-	logger.WithField("zone", hostname).Info("Zone Update")
+	logger.Info("Zone Update", "zone", hostname)
 
 	if err := checkDNSv2Zone(d); err != nil {
 		return diag.FromErr(err)
@@ -496,7 +496,7 @@ func resourceDNSv2ZoneImport(d *schema.ResourceData, m interface{}) ([]*schema.R
 		ctx,
 		session.WithContextLog(logger),
 	)
-	logger.WithField("zone", hostname).Info("Zone Import")
+	logger.Info("Zone Import", "zone", hostname)
 
 	// find the zone first
 	logger.Debugf("Searching for zone [%s]", hostname)
@@ -545,7 +545,7 @@ func resourceDNSv2ZoneDelete(_ context.Context, d *schema.ResourceData, m interf
 	}
 	meta := meta.Must(m)
 	logger := meta.Log("AkamaiDNS", "resourceDNSZoneDelete")
-	logger.WithField("zone", hostname).Info("Zone Delete")
+	logger.Info("Zone Delete", "zone", hostname)
 	// Ignore for Unit test Lifecycle
 	if _, ok := os.LookupEnv("DNS_ZONE_SKIP_DELETE"); ok {
 		logger.Info("DNS Zone delete: intentionally skipping")

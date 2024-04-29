@@ -8,7 +8,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/gtm"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/logger"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/log"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -632,7 +632,7 @@ func createGeoMapStruct(geo *gtm.GetGeoMapResponse) *gtm.GeoMap {
 
 // countriesEqual checks whether countries are equal
 func countriesEqual(old, new interface{}) bool {
-	logger := logger.Get("Akamai GTM", "countriesEqual")
+	logger := log.Get("Akamai GTM", "countriesEqual")
 
 	oldCountries, ok := old.(*schema.Set)
 	if !ok {

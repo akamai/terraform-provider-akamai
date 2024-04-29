@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/logger"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/log"
 	"github.com/allegro/bigcache/v2"
 )
 
@@ -59,7 +59,7 @@ func IsEnabled() bool {
 
 // Set sets the given value under the key in cache
 func Set(bucket Bucket, key string, val any) error {
-	log := logger.Get("cache", "CacheSet")
+	log := log.Get("cache", "CacheSet")
 
 	if !defaultCache.enabled {
 		log.Debug("cache disabled")
@@ -80,7 +80,7 @@ func Set(bucket Bucket, key string, val any) error {
 
 // Get returns value stored under the key from cache and writes it into out
 func Get(bucket Bucket, key string, out any) error {
-	log := logger.Get("cache", "CacheGet")
+	log := log.Get("cache", "CacheGet")
 
 	if !defaultCache.enabled {
 		log.Debug("cache disabled")

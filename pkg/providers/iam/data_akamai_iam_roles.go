@@ -80,12 +80,12 @@ func dataIAMRolesRead(ctx context.Context, d *schema.ResourceData, m interface{}
 
 	res, err := client.ListRoles(ctx, iam.ListRolesRequest{})
 	if err != nil {
-		logger.WithError(err).Error("Could not get roles")
+		logger.Error("Could not get roles", "error", err)
 		return diag.FromErr(err)
 	}
 
 	if err := d.Set("roles", rolesToState(res)); err != nil {
-		logger.WithError(err).Error("Could not set roles in state")
+		logger.Error("Could not set roles in state", "error", err)
 		return diag.FromErr(err)
 	}
 

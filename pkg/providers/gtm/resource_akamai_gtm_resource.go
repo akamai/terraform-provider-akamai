@@ -9,7 +9,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/gtm"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/logger"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/log"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -716,7 +716,7 @@ func populateTerraformResourceInstancesState(d *schema.ResourceData, rsrc *gtm.G
 }
 
 func resourceInstanceDiffSuppress(_, _, _ string, d *schema.ResourceData) bool {
-	logger := logger.Get("Akamai GTM", "resourceInstanceDiffSuppress")
+	logger := log.Get("Akamai GTM", "resourceInstanceDiffSuppress")
 	oldRes, newRes := d.GetChange("resource_instance")
 
 	oldList, ok := oldRes.([]interface{})
@@ -791,7 +791,7 @@ func createResourceStruct(res *gtm.GetResourceResponse) *gtm.Resource {
 
 // loadServersEqual checks whether load_servers are equal
 func loadServersEqual(oldVal, newVal interface{}) bool {
-	logger := logger.Get("Akamai GTM", "loadServersEqual")
+	logger := log.Get("Akamai GTM", "loadServersEqual")
 
 	oldServers, ok := oldVal.(*schema.Set)
 	if !ok {

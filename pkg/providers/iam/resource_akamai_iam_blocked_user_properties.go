@@ -71,7 +71,7 @@ func resourceIAMBlockedUserPropertiesCreate(ctx context.Context, d *schema.Resou
 
 	existingBlockedProperties, err := client.ListBlockedProperties(ctx, listRequest)
 	if err != nil {
-		logger.WithError(err).Errorf("failed to fetch blocked user properties")
+		logger.Error("failed to fetch blocked user properties", "error", err)
 		return diag.Errorf("failed to fetch blocked user properties: %s", err)
 	}
 	if len(existingBlockedProperties) > 0 {
@@ -92,7 +92,7 @@ func resourceIAMBlockedUserPropertiesCreate(ctx context.Context, d *schema.Resou
 
 	_, err = client.UpdateBlockedProperties(ctx, request)
 	if err != nil {
-		logger.WithError(err).Errorf("failed to create blocked user properties")
+		logger.Error("failed to create blocked user properties", "error", err)
 		return diag.Errorf("failed to create blocked user properties: %s", err)
 	}
 
@@ -126,7 +126,7 @@ func resourceIAMBlockedUserPropertiesRead(ctx context.Context, d *schema.Resourc
 
 	blockedProperties, err := client.ListBlockedProperties(ctx, request)
 	if err != nil {
-		logger.WithError(err).Errorf("failed to fetch blocked user properties")
+		logger.Error("failed to fetch blocked user properties", "error", err)
 		return diag.Errorf("failed to fetch blocked user properties: %s", err)
 	}
 
@@ -172,7 +172,7 @@ func resourceIAMBlockedUserPropertiesUpdate(ctx context.Context, d *schema.Resou
 
 	_, err = client.UpdateBlockedProperties(ctx, request)
 	if err != nil {
-		logger.WithError(err).Errorf("failed to update blocked user properties")
+		logger.Error("failed to update blocked user properties", "error", err)
 		return diag.Errorf("failed to update blocked user properties: %s", err)
 	}
 

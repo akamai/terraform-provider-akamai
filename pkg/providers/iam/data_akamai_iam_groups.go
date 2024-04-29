@@ -82,14 +82,14 @@ func dataIAMGroupsRead(ctx context.Context, d *schema.ResourceData, m interface{
 	logger.Debug("Fetching groups")
 	res, err := client.ListGroups(ctx, iam.ListGroupsRequest{})
 	if err != nil {
-		logger.WithError(err).Error("Could not get groups")
+		logger.Error("Could not get groups", "error", err)
 		return diag.FromErr(err)
 	}
 
 	groups := groupsToState(res)
 
 	if err := d.Set("groups", groups); err != nil {
-		logger.WithError(err).Error("Could not set groups in state")
+		logger.Error("Could not set groups in state", "error", err)
 		return diag.FromErr(err)
 	}
 

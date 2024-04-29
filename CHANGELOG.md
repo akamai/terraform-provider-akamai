@@ -6,6 +6,22 @@
 
 
 
+* Logging
+  * Changed logger from apex to new interface
+    * By default `slog` with custom handler is used.
+  * Log output structure have changed slightly,
+    * Time format was adjusted, logger will use 24-hour clock with milliseconds instead of 12-hour clock used previously.
+
+
+
+
+
+
+* Logging
+  * Changed logger from apex to new interface
+    * By default `slog` with custom handler is used.
+  * Log output structure have changed slightly,
+    * Time format was adjusted, logger will use 24-hour clock with milliseconds instead of 12-hour clock used previously.
 
 
 

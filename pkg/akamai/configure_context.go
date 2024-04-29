@@ -11,12 +11,12 @@ import (
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/edgegrid"
+	akalog "github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/log"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/cache"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/logger"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/log"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/retryablehttp"
-	"github.com/apex/log"
 	"github.com/google/uuid"
 	"github.com/spf13/cast"
 )
@@ -35,7 +35,7 @@ type contextConfig struct {
 
 func configureContext(cfg contextConfig) (*meta.OperationMeta, error) {
 	operationID := uuid.NewString()
-	log := logger.FromContext(cfg.ctx, "OperationID", operationID)
+	log := log.FromContext(cfg.ctx, "OperationID", operationID)
 
 	opts := []session.Option{
 		session.WithSigner(cfg.edgegridConfig),
@@ -96,7 +96,7 @@ func overrideRetryPolicy(basePolicy retryablehttp.CheckRetry) retryablehttp.Chec
 // This may cause the wait time to be inflated by at most one second, like for the
 // actual server response time around 2024-07-01T14:32:14.999Z. This is acceptable behavior
 // as retry does not occur earlier than expected.
-func getXRateLimitBackoff(resp *http.Response, logger log.Interface) (time.Duration, bool) {
+func getXRateLimitBackoff(resp *http.Response, logger akalog.Interface) (time.Duration, bool) {
 	nextHeader := resp.Header.Get("X-RateLimit-Next")
 	if nextHeader == "" {
 		return 0, false
@@ -104,7 +104,8 @@ func getXRateLimitBackoff(resp *http.Response, logger log.Interface) (time.Durat
 	next, err := time.Parse(time.RFC3339Nano, nextHeader)
 	if err != nil {
 		if logger != nil {
-			logger.WithError(err).Error("Could not parse X-RateLimit-Next header")
+
+			logger.Error("Could not parse X-RateLimit-Next header", "error", err)
 		}
 		return 0, false
 	}
@@ -119,7 +120,7 @@ func getXRateLimitBackoff(resp *http.Response, logger log.Interface) (time.Durat
 	date, err := time.Parse(time.RFC1123, dateHeader)
 	if err != nil {
 		if logger != nil {
-			logger.WithError(err).Error("Could not parse Date header")
+			logger.Error("Could not parse Date header", "error", err)
 		}
 		return 0, false
 	}
@@ -134,7 +135,7 @@ func getXRateLimitBackoff(resp *http.Response, logger log.Interface) (time.Durat
 	return next.Sub(date), true
 }
 
-func overrideBackoff(baseBackoff retryablehttp.Backoff, logger log.Interface) retryablehttp.Backoff {
+func overrideBackoff(baseBackoff retryablehttp.Backoff, logger akalog.Interface) retryablehttp.Backoff {
 	return func(min, max time.Duration, attemptNum int, resp *http.Response) time.Duration {
 		if resp != nil {
 			if resp.StatusCode == http.StatusTooManyRequests {

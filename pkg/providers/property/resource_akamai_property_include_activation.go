@@ -17,7 +17,7 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/str"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/timeouts"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/logger"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/log"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -133,7 +133,7 @@ func resourcePropertyIncludeActivation() *schema.Resource {
 }
 
 func readTimeoutFromEnvOrDefault(name string, timeout time.Duration) *time.Duration {
-	logger := logger.Get("readTimeoutFromEnvOrDefault")
+	logger := log.Get("readTimeoutFromEnvOrDefault")
 
 	value := os.Getenv(name)
 	if value != "" {
@@ -319,7 +319,7 @@ func resourcePropertyIncludeActivationImport(_ context.Context, d *schema.Resour
 }
 
 func resourcePropertyIncludeActivationUpsert(ctx context.Context, d *schema.ResourceData, client papi.PAPI) diag.Diagnostics {
-	logger := logger.Get("resourcePropertyIncludeActivationUpsert")
+	logger := log.Get("resourcePropertyIncludeActivationUpsert")
 
 	activationResourceData := propertyIncludeActivationData{}
 	if err := activationResourceData.populateFromResource(d); err != nil {
@@ -494,7 +494,7 @@ func isLatestActiveExpectedActivated(ctx context.Context, client papi.PAPI, acti
 }
 
 func createNewActivation(ctx context.Context, client papi.PAPI, activationResourceData propertyIncludeActivationData) diag.Diagnostics {
-	logger := logger.Get("createNewActivation")
+	logger := log.Get("createNewActivation")
 
 	logger.Debug("preparing activation request")
 	activateIncludeRequest := papi.ActivateIncludeRequest{
@@ -559,7 +559,7 @@ func createNewActivation(ctx context.Context, client papi.PAPI, activationResour
 }
 
 func createNewDeactivation(ctx context.Context, client papi.PAPI, activationResourceData propertyIncludeActivationData) diag.Diagnostics {
-	logger := logger.Get("createNewDeactivation")
+	logger := log.Get("createNewDeactivation")
 
 	deactivateIncludeRequest := papi.DeactivateIncludeRequest{
 		IncludeID:              activationResourceData.includeID,

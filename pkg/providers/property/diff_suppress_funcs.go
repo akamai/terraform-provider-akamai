@@ -7,14 +7,14 @@ import (
 	"sort"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/logger"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/log"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func diffSuppressPropertyRules(_, oldRulesJSON, newRulesJSON string, _ *schema.ResourceData) bool {
 	rulesEqual, err := rulesJSONEqual(oldRulesJSON, newRulesJSON)
 	if err != nil {
-		logger.Get("PAPI", "diffSuppressRules").Error(err.Error())
+		log.Get("PAPI", "diffSuppressRules").Error(err.Error())
 	}
 
 	return rulesEqual

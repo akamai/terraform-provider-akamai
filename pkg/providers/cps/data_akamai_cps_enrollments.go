@@ -306,7 +306,7 @@ func dataCPSEnrollmentsRead(ctx context.Context, d *schema.ResourceData, m inter
 	}
 	enrollments, err := client.ListEnrollments(ctx, req)
 	if err != nil {
-		logger.WithError(err).Error("could not get enrollments")
+		logger.Error("could not get enrollments", "error", err)
 		return diag.FromErr(err)
 	}
 

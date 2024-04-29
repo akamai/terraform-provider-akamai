@@ -135,11 +135,11 @@ func dataPropertyHostnamesRead(ctx context.Context, d *schema.ResourceData, m in
 	log.Debug("fetching property hostnames")
 	hostnamesResponse, err := client.GetPropertyVersionHostnames(ctx, hostNamesReq)
 	if err != nil {
-		log.WithError(err).Error("could not fetch property hostnames")
+		log.Error("could not fetch property hostnames", "error", err)
 		return diag.FromErr(err)
 	}
 
-	log.WithFields(logFields(*hostnamesResponse)).Debug("fetched property hostnames")
+	log.Debug("fetched property hostnames", logFields(*hostnamesResponse))
 
 	// setting concatenated id to uniquely identify data
 	d.SetId(propertyID + strconv.Itoa(version))

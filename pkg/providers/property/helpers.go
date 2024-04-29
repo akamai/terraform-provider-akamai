@@ -9,9 +9,9 @@ import (
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/iam"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/log"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/str"
-	"github.com/apex/log"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -240,7 +240,7 @@ type helper struct {
 // After a successful move, this method polls the API until the new group is returned by a
 // property read endpoint.
 func (h helper) moveProperty(ctx context.Context, key papiKey, assetID, destGroupID string) error {
-	logger := log.FromContext(ctx).WithFields(log.Fields{
+	logger := log.FromContext(ctx).With("", log.Fields{
 		"key":         key,
 		"assetID":     assetID,
 		"destGroupID": destGroupID,
@@ -306,7 +306,7 @@ func (h helper) moveProperty(ctx context.Context, key papiKey, assetID, destGrou
 // is in group key.groupID.
 func (h helper) isPropertyInGroup(ctx context.Context, key papiKey) (bool, error) {
 
-	logger := log.FromContext(ctx).WithFields(log.Fields{
+	logger := log.FromContext(ctx).With("", log.Fields{
 		"key": key,
 	})
 
@@ -316,7 +316,8 @@ func (h helper) isPropertyInGroup(ctx context.Context, key papiKey) (bool, error
 			return false, fmt.Errorf("unexpected http error for %s: %w", key, err)
 		}
 		// No such property in such group
-		logger.WithError(err).Debugf("no such property in group %s: HTTP 403 received", key.groupID)
+		msg := fmt.Sprintf("no such property in group %s: HTTP 403 received", key.groupID)
+		logger.Debug(msg, "error", err)
 		return false, nil
 	}
 
@@ -362,7 +363,7 @@ func (h helper) validatePropertyMove(ctx context.Context, key papiKey) error {
 // This makes changing property's group id "synchronous" so that following TFP actions operate
 // on a known state. The method uses binary exponential backoff with initialWait and maxAttempts.
 func (h helper) waitForPropertyGroupIDChange(ctx context.Context, key papiKey, maxAttempts int, initialWait time.Duration) error {
-	logger := log.FromContext(ctx).WithFields(log.Fields{
+	logger := log.FromContext(ctx).With("", log.Fields{
 		"key":         key,
 		"maxAttempts": maxAttempts})
 

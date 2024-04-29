@@ -9,12 +9,12 @@ import (
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/datastream"
+	akalog "github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/log"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/collections"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/logger"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/log"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
-	"github.com/apex/log"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -1164,7 +1164,7 @@ func resourceDatastreamUpdate(ctx context.Context, d *schema.ResourceData, m int
 	return resourceDatastreamRead(ctx, d, m)
 }
 
-func updateStream(ctx context.Context, client datastream.DS, logger log.Interface, streamID int64, d *schema.ResourceData, isStreamActive bool) error {
+func updateStream(ctx context.Context, client datastream.DS, logger akalog.Interface, streamID int64, d *schema.ResourceData, isStreamActive bool) error {
 	// if some configuration details changed
 	if d.HasChangeExcept("active") {
 
@@ -1252,7 +1252,7 @@ func updateStream(ctx context.Context, client datastream.DS, logger log.Interfac
 	return nil
 }
 
-func deactivateStream(ctx context.Context, client datastream.DS, logger log.Interface, streamID int64) error {
+func deactivateStream(ctx context.Context, client datastream.DS, logger akalog.Interface, streamID int64) error {
 	logger.Debug("deactivating stream")
 	_, err := client.DeactivateStream(ctx, datastream.DeactivateStreamRequest{
 		StreamID: streamID,
@@ -1266,7 +1266,7 @@ func deactivateStream(ctx context.Context, client datastream.DS, logger log.Inte
 	return err
 }
 
-func activateStream(ctx context.Context, client datastream.DS, logger log.Interface, streamID int64) error {
+func activateStream(ctx context.Context, client datastream.DS, logger akalog.Interface, streamID int64) error {
 	logger.Info("activating stream")
 	_, err := client.ActivateStream(ctx, datastream.ActivateStreamRequest{
 		StreamID: streamID,
@@ -1393,7 +1393,7 @@ func waitForStreamStatusChange(ctx context.Context, client datastream.DS, stream
 func isOrderDifferent(_, oldIDValue, newIDValue string, d *schema.ResourceData) bool {
 	key := "dataset_fields"
 
-	logger := logger.Get("DataStream", "isOrderDifferent")
+	logger := log.Get("DataStream", "isOrderDifferent")
 
 	defaultDiff := func() bool {
 		return oldIDValue == newIDValue

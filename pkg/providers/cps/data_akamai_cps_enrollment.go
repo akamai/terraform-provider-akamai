@@ -346,7 +346,7 @@ func dataCPSEnrollmentRead(ctx context.Context, d *schema.ResourceData, m interf
 	req := cps.GetEnrollmentRequest{EnrollmentID: enrollmentID}
 	enrollment, err := client.GetEnrollment(ctx, req)
 	if err != nil {
-		logger.WithError(err).Error("could not get an enrollment")
+		logger.Error("could not get an enrollment", "error", err)
 		return diag.FromErr(err)
 	}
 

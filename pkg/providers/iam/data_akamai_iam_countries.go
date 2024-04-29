@@ -34,7 +34,7 @@ func dataIAMCountriesRead(ctx context.Context, d *schema.ResourceData, m interfa
 
 	res, err := client.SupportedCountries(ctx)
 	if err != nil {
-		logger.WithError(err).Error("Could not get supported countries")
+		logger.Error("Could not get supported countries", "error", err)
 		return diag.FromErr(err)
 	}
 
@@ -44,7 +44,7 @@ func dataIAMCountriesRead(ctx context.Context, d *schema.ResourceData, m interfa
 	}
 
 	if err := d.Set("countries", countries); err != nil {
-		logger.WithError(err).Error("Could not set countries in state")
+		logger.Error("Could not set countries in state", "error", err)
 		return diag.FromErr(err)
 	}
 
