@@ -43,8 +43,12 @@
 
 #### FEATURES/ENHANCEMENTS:
 
-* APPSEC
-  * Suppress rate policy diff when `counterType` field absence is the only change for `akamai_appsec_rate_policy` resource
+* Appsec
+  * Suppressed rate policy diff when `counterType` field absence is the only change for `akamai_appsec_rate_policy` resource
+  * Suppressed activations diff when `notification_emails` field is the only change for `akamai_appsec_activations` resource
+
+* Network Lists
+  * Suppressed activations diff when `notification_emails` field is the only change for `akamai_networklist_activations` resource
 
 
 

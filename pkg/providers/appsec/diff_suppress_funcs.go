@@ -455,3 +455,10 @@ func suppressDiffUkraineGeoControlAction(_, _, _ string, d *schema.ResourceData)
 	}
 	return oldUkraineGeoControlAction == newUkraineGeoControlAction
 }
+
+func suppressFieldsForAppSecActivation(_, oldValue, newValue string, d *schema.ResourceData) bool {
+	if oldValue != newValue && d.HasChanges("config_id", "version", "network") {
+		return false
+	}
+	return true
+}

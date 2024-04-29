@@ -52,13 +52,14 @@ func resourceActivations() *schema.Resource {
 				Type:             schema.TypeString,
 				Optional:         true,
 				Description:      "Note describing the activation. Will use timestamp if omitted.",
-				DiffSuppressFunc: suppressNoteFieldForAppSecActivation,
+				DiffSuppressFunc: suppressFieldsForAppSecActivation,
 			},
 			"notification_emails": {
-				Type:        schema.TypeSet,
-				Required:    true,
-				Elem:        &schema.Schema{Type: schema.TypeString},
-				Description: "List of email addresses to be notified with the results of the activation",
+				Type:             schema.TypeSet,
+				Required:         true,
+				Elem:             &schema.Schema{Type: schema.TypeString},
+				Description:      "List of email addresses to be notified with the results of the activation",
+				DiffSuppressFunc: suppressFieldsForAppSecActivation,
 			},
 			"status": {
 				Type:        schema.TypeString,
@@ -443,13 +444,6 @@ func defaultActivationNote(deactivating bool) (string, error) {
 		return fmt.Sprintf("Deactivation request %s", formattedTime), nil
 	}
 	return fmt.Sprintf("Activation request %s", formattedTime), nil
-}
-
-func suppressNoteFieldForAppSecActivation(_, oldValue, newValue string, d *schema.ResourceData) bool {
-	if oldValue != newValue && d.HasChanges("config_id", "version", "network") {
-		return false
-	}
-	return true
 }
 
 func createActivation(ctx context.Context, client appsec.APPSEC, request appsec.CreateActivationsRequest) (*appsec.CreateActivationsResponse, error) {
