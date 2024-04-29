@@ -3,6 +3,7 @@ package akamai
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/url"
 	"os"
@@ -72,6 +73,11 @@ func sessionWithRetry(cfg contextConfig, opts []session.Option) (session.Session
 		cfg.retryWaitMax = time.Duration(30) * time.Second
 	}
 
+	err := validateRetryConfiguration(cfg)
+	if err != nil {
+		return nil, err
+	}
+
 	retryClient := retryablehttp.NewClient()
 	retryClient.RetryMax = cfg.retryMax
 	retryClient.RetryWaitMin = cfg.retryWaitMin
@@ -107,4 +113,27 @@ func sessionWithRetry(cfg contextConfig, opts []session.Option) (session.Session
 	}
 
 	return sess, nil
+}
+
+func validateRetryConfiguration(cfg contextConfig) error {
+	maxRetries := 50
+	maxWaitTime := time.Hour * 24
+
+	if cfg.retryMax < 0 || cfg.retryWaitMin < 0 || cfg.retryWaitMax < 0 {
+		return fmt.Errorf("wrong retry values: maximum number of retries (%d), minimum retry wait time (%v), maximum retry wait time (%v) cannot be negative", cfg.retryMax, cfg.retryWaitMin, cfg.retryWaitMax)
+	}
+
+	if cfg.retryWaitMax < cfg.retryWaitMin {
+		return fmt.Errorf("wrong retry values: maximum retry wait time (%v) cannot be lower than minimum retry wait time (%v)", cfg.retryWaitMax, cfg.retryWaitMin)
+	}
+
+	if cfg.retryMax > maxRetries {
+		return fmt.Errorf("wrong retry values: too many retries, maximum number of retries (%d) cannot be higher than %d", cfg.retryMax, maxRetries)
+	}
+
+	if cfg.retryWaitMin > maxWaitTime || cfg.retryWaitMax > maxWaitTime {
+		return fmt.Errorf("wrong retry values: retry wait time too long, minimum retry wait time (%v) cannot be higher than %v or maximum retry wait time (%v) cannot be higher than %v", cfg.retryWaitMin, maxWaitTime, cfg.retryWaitMax, maxWaitTime)
+
+	}
+	return nil
 }
