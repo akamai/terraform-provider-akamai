@@ -122,6 +122,7 @@
 
 
 
+  * Fixed an issue where `resource_akamai_appsec_activations` continues in a loop after API throws an error. ([#I528](https://github.com/akamai/terraform-provider-akamai/issues/528))
 
 
 * DNS

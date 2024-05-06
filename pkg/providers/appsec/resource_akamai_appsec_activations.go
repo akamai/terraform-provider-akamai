@@ -522,8 +522,7 @@ func isCreateActivationErrorRetryable(err error) bool {
 		return false
 	}
 	if responseErr.StatusCode < 500 &&
-		responseErr.StatusCode != 422 &&
-		responseErr.StatusCode != 409 {
+		responseErr.StatusCode != 422 {
 		return false
 	}
 	return true

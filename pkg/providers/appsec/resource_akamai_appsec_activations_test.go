@@ -2,6 +2,7 @@ package appsec
 
 import (
 	"encoding/json"
+	"regexp"
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/appsec"
@@ -761,6 +762,63 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 		})
 
 		client.AssertExpectations(t)
+	})
+
+	t.Run("Do not retry on 409x error", func(t *testing.T) {
+
+		err409 := &appsec.Error{StatusCode: 409}
+
+		client := &appsec.Mock{}
+
+		removeActivationsResponse := appsec.RemoveActivationsResponse{}
+		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResActivations/ActivationsDelete.json"), &removeActivationsResponse)
+		require.NoError(t, err)
+
+		getActivationsResponse := appsec.GetActivationsResponse{}
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResActivations/Activations.json"), &getActivationsResponse)
+		require.NoError(t, err)
+
+		getActivationsDeleteResponse := appsec.GetActivationsResponse{}
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResActivations/ActivationsDelete.json"), &getActivationsDeleteResponse)
+		require.NoError(t, err)
+
+		createActivationsResponse := appsec.CreateActivationsResponse{}
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResActivations/Activations.json"), &createActivationsResponse)
+		require.NoError(t, err)
+
+		client.On("CreateActivations",
+			mock.Anything,
+			appsec.CreateActivationsRequest{
+				Action:             "ACTIVATE",
+				Network:            "STAGING",
+				Note:               "Test Notes",
+				NotificationEmails: []string{"user@example.com"},
+				ActivationConfigs: []struct {
+					ConfigID      int `json:"configId"`
+					ConfigVersion int `json:"configVersion"`
+				}{{ConfigID: 43253, ConfigVersion: 7}}},
+		).Return(nil, err409).Once()
+
+		useClient(client, func() {
+			resource.Test(t, resource.TestCase{
+				IsUnitTest:               true,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResActivations/match_by_id.tf"),
+						Check: resource.ComposeAggregateTestCheckFunc(
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "config_id", "43253"),
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "network", "STAGING"),
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "note", "Test Notes"),
+						),
+						ExpectError: regexp.MustCompile("Error: create activation failed"),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+
 	})
 
 }
