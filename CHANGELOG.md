@@ -74,6 +74,14 @@
 
 
 
+* Cloudlets
+  * Added import for `akamai_cloudlets_application_load_balancer_activation` resource
+
+
+
+
+
+
 
 
 

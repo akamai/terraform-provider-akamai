@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -25,7 +26,10 @@ func resourceCloudletsApplicationLoadBalancerActivation() *schema.Resource {
 		ReadContext:   resourceApplicationLoadBalancerActivationRead,
 		UpdateContext: resourceApplicationLoadBalancerActivationUpdate,
 		DeleteContext: resourceApplicationLoadBalancerActivationDelete,
-		Schema:        resourceCloudletsApplicationLoadBalancerActivationSchema(),
+		Importer: &schema.ResourceImporter{
+			StateContext: resourceApplicationLoadBalancerActivationImport,
+		},
+		Schema: resourceCloudletsApplicationLoadBalancerActivationSchema(),
 		Timeouts: &schema.ResourceTimeout{
 			Default: &ApplicationLoadBalancerActivationResourceTimeout,
 		},
@@ -142,6 +146,53 @@ func resourceApplicationLoadBalancerActivationCreate(ctx context.Context, rd *sc
 	}
 	rd.SetId(fmt.Sprintf("%s:%s", activation.OriginID, activation.Network))
 	return resourceApplicationLoadBalancerActivationRead(ctx, rd, m)
+}
+
+func resourceApplicationLoadBalancerActivationImport(ctx context.Context, rd *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	meta := meta.Must(m)
+	logger := meta.Log("Cloudlets", "resourceApplicationLoadBalancerActivationImport")
+	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
+	logger.Debug("Importing application load balancer activation")
+	client := Client(meta)
+
+	parts := strings.Split(rd.Id(), ",")
+	if len(parts) != 3 {
+		return nil, fmt.Errorf("import id has to be a comma separated list of origin id, network and version")
+	}
+
+	originID := parts[0]
+	network := parts[1]
+	version := parts[2]
+	if originID == "" || network == "" || version == "" {
+		return nil, fmt.Errorf("originID, network and version must have non empty values")
+	}
+
+	activationNetwork, err := getALBActivationNetwork(network)
+	if err != nil {
+		return nil, err
+	}
+	activationVersion, err := strconv.ParseInt(version, 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	activation, err := getApplicationLoadBalancerActivation(ctx, client, originID, activationVersion, activationNetwork)
+	if activation == nil || err != nil {
+		return nil, err
+	}
+
+	if err := rd.Set("origin_id", activation.OriginID); err != nil {
+		return nil, err
+	}
+	if err := rd.Set("network", activation.Network); err != nil {
+		return nil, err
+	}
+	if err := rd.Set("version", activation.Version); err != nil {
+		return nil, err
+	}
+	rd.SetId(fmt.Sprintf("%s:%s", activation.OriginID, activation.Network))
+
+	return []*schema.ResourceData{rd}, nil
 }
 
 func resourceApplicationLoadBalancerActivationChange(ctx context.Context, rd *schema.ResourceData, logger log.Interface, client cloudlets.Cloudlets) (*cloudlets.LoadBalancerActivation, error) {
