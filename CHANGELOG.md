@@ -99,13 +99,15 @@
 
 #### BUG FIXES:
 
-* Fixed issue with order of `liveness_test` in `akamai_gtm_property` ([PR#404](https://github.com/akamai/terraform-provider-akamai/pull/404))
+* GTM
+  * Fixed issue with order of `liveness_test` in `akamai_gtm_property` ([PR#404](https://github.com/akamai/terraform-provider-akamai/pull/404))
 
 
 
 
 
-
+* DNS
+  * Fixed issue in `akamai_dns_record` that modifying `priority` and/or `priority_increment` for `MX` record type was causing an error
 
 
 

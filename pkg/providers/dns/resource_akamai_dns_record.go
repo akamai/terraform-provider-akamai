@@ -1589,7 +1589,7 @@ func newRecordCreate(ctx context.Context, meta meta.Meta, d *schema.ResourceData
 			}
 		}
 		logger.Debugf("Created rdataTarget %v", rdataTarget)
-		if d.HasChange("target") {
+		if d.HasChanges("target", "priority", "priority_increment") {
 			// see if any entry was deleted. If so, remove from rdata map.
 			oldList, newList := d.GetChange("target")
 			oldTargetList, ok := oldList.([]interface{})
