@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"sort"
 	"strings"
 	"time"
@@ -1027,6 +1028,10 @@ func capDuration(t time.Duration, tMax time.Duration) time.Duration {
 }
 
 func isCreateActivationErrorRetryable(err error) bool {
+	if errors.Is(err, io.EOF) {
+		return true
+	}
+
 	var responseErr = &papi.Error{}
 	if !errors.As(err, &responseErr) {
 		return false

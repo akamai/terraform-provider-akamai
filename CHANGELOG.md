@@ -68,7 +68,8 @@
   * Updated SDKv2 and framework libraries
 
 
-
+* PAPI
+  * Added retry logic for `akamai_property_include_activation`
 
 
 
