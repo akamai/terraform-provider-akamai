@@ -44,11 +44,21 @@
 #### FEATURES/ENHANCEMENTS:
 
 
+
+
+
+
+
+
+
+
 * Global
   * Added validation for retryable logic values.
     * `retry_max` or `AKAMAI_RETRY_MAX` - Cannot be higher than 50
     * `retry_wait_min` or `AKAMAI_RETRY_WAIT_MIN` - Cannot be longer than 24h
     * `retry_wait_max` or `AKAMAI_RETRY_WAIT_MAX` - Cannot be longer than 24h
+  * Migrated Terraform to version 1.7.5
+  * Updated SDKv2 and framework libraries
 
 
 

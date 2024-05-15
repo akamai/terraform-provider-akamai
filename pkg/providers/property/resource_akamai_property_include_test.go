@@ -936,7 +936,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 				},
 				{
 					Config:      testutils.LoadFixtureString(t, "%s/custom_validation_errors.tf", workdir),
-					ExpectError: regexp.MustCompile(`Error: expected type to be one of \[MICROSERVICES COMMON_SETTINGS]`),
+					ExpectError: regexp.MustCompile(`Error: expected type to be one of \["MICROSERVICES" "COMMON_SETTINGS"]`),
 				},
 				{
 					Config:      testutils.LoadFixtureString(t, "%s/custom_validation_errors.tf", workdir),
