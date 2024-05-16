@@ -277,39 +277,6 @@ func resourceSecureEdgeHostNameRead(ctx context.Context, d *schema.ResourceData,
 		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 	}
 
-	hapiClient := HapiClient(meta)
-	edgeHostnameID, err := str.GetIntID(foundEdgeHostname.ID, "ehn_")
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	edgeHostnameResp, err := hapiClient.GetEdgeHostname(ctx, edgeHostnameID)
-	if err != nil {
-		return diag.FromErr(fmt.Errorf("error getting edge hostname with id '%d': %s", edgeHostnameID, err))
-	}
-
-	// get certificate id when network is ENHANCED-TLS
-	if edgeHostnameResp.SecurityType == "ENHANCED-TLS" {
-		certificate, err := hapiClient.GetCertificate(ctx, hapi.GetCertificateRequest{
-			DNSZone:    edgeHostnameResp.DNSZone,
-			RecordName: edgeHostnameResp.RecordName,
-		})
-		var certificateID int64
-		if err != nil {
-			if !errors.Is(err, hapi.ErrNotFound) {
-				return diag.FromErr(err)
-			}
-			certificateID = 0
-		} else {
-			certificateID, err = strconv.ParseInt(certificate.CertificateID, 10, 64)
-			if err != nil {
-				return diag.FromErr(err)
-			}
-		}
-		if err := d.Set("certificate", certificateID); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
-		}
-	}
-
 	return nil
 }
 
@@ -448,6 +415,38 @@ func resourceSecureEdgeHostNameImport(ctx context.Context, d *schema.ResourceDat
 	if err := d.Set("edge_hostname", edgehostnameDetails.EdgeHostname.Domain); err != nil {
 		return nil, fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 	}
+
+	hapiClient := HapiClient(meta)
+	edgeHostnameID, err := str.GetIntID(edgehostID, "ehn_")
+	if err != nil {
+		return nil, err
+	}
+	edgeHostnameResp, err := hapiClient.GetEdgeHostname(ctx, edgeHostnameID)
+	if err != nil {
+		return nil, fmt.Errorf("error getting edge hostname with id '%d': it may not be ready in HAPI yet: %s", edgeHostnameID, err)
+	}
+
+	// get certificate id when network is ENHANCED-TLS
+	if edgeHostnameResp.SecurityType == "ENHANCED-TLS" {
+		certificate, err := hapiClient.GetCertificate(ctx, hapi.GetCertificateRequest{
+			DNSZone:    edgeHostnameResp.DNSZone,
+			RecordName: edgeHostnameResp.RecordName,
+		})
+		if err != nil {
+			if !errors.Is(err, hapi.ErrNotFound) {
+				return nil, err
+			}
+		} else {
+			certificateID, err := strconv.ParseInt(certificate.CertificateID, 10, 64)
+			if err != nil {
+				return nil, err
+			}
+			if err := d.Set("certificate", certificateID); err != nil {
+				return nil, fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
+			}
+		}
+	}
+
 	d.SetId(edgehostID)
 
 	return []*schema.ResourceData{d}, nil

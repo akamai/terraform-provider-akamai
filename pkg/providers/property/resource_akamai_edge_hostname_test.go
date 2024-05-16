@@ -22,36 +22,13 @@ import (
 func TestResourceEdgeHostname(t *testing.T) {
 	testDir := "testdata/TestResourceEdgeHostname"
 
-	expectGetEdgeHostnameHAPI := func(mh *hapi.Mock) *mock.Call {
-		return mh.On("GetEdgeHostname", mock.Anything, 123).Return(&hapi.GetEdgeHostnameResponse{
-			RecordName:             "test",
-			DNSZone:                "akamaized.net",
-			SecurityType:           "STANDARD-TLS",
-			UseDefaultTTL:          true,
-			UseDefaultMap:          true,
-			IPVersionBehavior:      "IPV6_IPV4_DUALSTACK",
-			ProductID:              "DSA",
-			TTL:                    21600,
-			Map:                    "a;dscb.akamai.net",
-			SlotNumber:             3250,
-			Comments:               "",
-			SerialNumber:           1520,
-			CustomTarget:           "",
-			ChinaCdn:               hapi.ChinaCDN{},
-			IsEdgeIPBindingEnabled: false,
-			MapAlias:               "",
-			UseCases:               nil,
-			EdgeHostnameID:         123,
-		}, nil)
-	}
 	tests := map[string]struct {
 		init      func(*papi.Mock, *hapi.Mock)
 		withError *regexp.Regexp
 		steps     []resource.TestStep
 	}{
 		"edge hostname with .edgesuite.net, create edge hostname": {
-			init: func(mp *papi.Mock, mh *hapi.Mock) {
-				expectGetEdgeHostnameHAPI(mh)
+			init: func(mp *papi.Mock, _ *hapi.Mock) {
 				mp.On("GetEdgeHostnames", mock.Anything, papi.GetEdgeHostnamesRequest{
 					ContractID: "ctr_2",
 					GroupID:    "grp_2",
@@ -139,7 +116,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 			},
 		},
 		"edge hostname with .edgekey.net, create edge hostname": {
-			init: func(mp *papi.Mock, mh *hapi.Mock) {
+			init: func(mp *papi.Mock, _ *hapi.Mock) {
 				mp.On("GetEdgeHostnames", mock.Anything, papi.GetEdgeHostnamesRequest{
 					ContractID: "ctr_2",
 					GroupID:    "grp_2",
@@ -213,7 +190,6 @@ func TestResourceEdgeHostname(t *testing.T) {
 						},
 					}},
 				}, nil)
-				expectGetEdgeHostnameHAPI(mh).Times(2)
 			},
 			steps: []resource.TestStep{
 				{
@@ -231,7 +207,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 			},
 		},
 		"edge hostname with .akamaized.net, create edge hostname": {
-			init: func(mp *papi.Mock, mh *hapi.Mock) {
+			init: func(mp *papi.Mock, _ *hapi.Mock) {
 				mp.On("GetEdgeHostnames", mock.Anything, papi.GetEdgeHostnamesRequest{
 					ContractID: "ctr_2",
 					GroupID:    "grp_2",
@@ -303,7 +279,6 @@ func TestResourceEdgeHostname(t *testing.T) {
 						},
 					}},
 				}, nil)
-				expectGetEdgeHostnameHAPI(mh).Times(2)
 			},
 			steps: []resource.TestStep{
 				{
@@ -319,7 +294,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 			},
 		},
 		"different edge hostname, create": {
-			init: func(mp *papi.Mock, mh *hapi.Mock) {
+			init: func(mp *papi.Mock, _ *hapi.Mock) {
 				mp.On("GetEdgeHostnames", mock.Anything, papi.GetEdgeHostnamesRequest{
 					ContractID: "ctr_2",
 					GroupID:    "grp_2",
@@ -405,7 +380,6 @@ func TestResourceEdgeHostname(t *testing.T) {
 						},
 					}},
 				}, nil)
-				expectGetEdgeHostnameHAPI(mh).Times(2)
 			},
 			steps: []resource.TestStep{
 				{
@@ -561,7 +535,6 @@ func TestResourceEdgeHostname(t *testing.T) {
 						},
 					}},
 				}, nil).Twice()
-				expectGetEdgeHostnameHAPI(mh).Times(5)
 			},
 			steps: []resource.TestStep{
 				{
@@ -736,7 +709,6 @@ func TestResourceEdgeHostname(t *testing.T) {
 						},
 					}},
 				}, nil).Twice()
-				expectGetEdgeHostnameHAPI(mh).Times(5)
 			},
 			steps: []resource.TestStep{
 				{
@@ -846,7 +818,6 @@ func TestResourceEdgeHostname(t *testing.T) {
 						},
 					},
 				}).Return(nil, errors.New("invalid IP version behavior: valid values are IPV4 and IPV6_IPV4_DUALSTACK; IPV6 and other values aren't currently supported")).Once()
-				expectGetEdgeHostnameHAPI(mh).Times(3)
 			},
 			steps: []resource.TestStep{
 				{
@@ -1111,7 +1082,6 @@ func TestResourceEdgeHostname(t *testing.T) {
 						},
 					}},
 				}, nil).Twice()
-				expectGetEdgeHostnameHAPI(mh).Times(5)
 			},
 			steps: []resource.TestStep{
 				{
@@ -1157,11 +1127,11 @@ func TestResourceEdgeHostname(t *testing.T) {
 }
 
 func TestResourceEdgeHostnames_WithImport(t *testing.T) {
-	expectGetEdgeHostname := func(m *papi.Mock, edgehostID, ContractID, GroupID string) *mock.Call {
+	expectGetEdgeHostname := func(m *papi.Mock, edgehostID, contractID, groupID string) *mock.Call {
 		return m.On("GetEdgeHostname", mock.Anything, papi.GetEdgeHostnameRequest{
 			EdgeHostnameID: edgehostID,
-			ContractID:     ContractID,
-			GroupID:        GroupID,
+			ContractID:     contractID,
+			GroupID:        groupID,
 		}).Return(&papi.GetEdgeHostnamesResponse{
 			ContractID: "ctr_1",
 			GroupID:    "grp_2",
@@ -1194,11 +1164,48 @@ func TestResourceEdgeHostnames_WithImport(t *testing.T) {
 			}},
 		}, nil)
 	}
+	expectGetEdgeHostnameAkamaized := func(m *papi.Mock, edgehostID, contractID, groupID string) *mock.Call {
+		return m.On("GetEdgeHostname", mock.Anything, papi.GetEdgeHostnameRequest{
+			EdgeHostnameID: edgehostID,
+			ContractID:     contractID,
+			GroupID:        groupID,
+		}).Return(&papi.GetEdgeHostnamesResponse{
+			ContractID: "ctr_1",
+			GroupID:    "grp_2",
+			EdgeHostname: papi.EdgeHostnameGetItem{
+				ID:                "ehn_1",
+				Domain:            "test.akamaized.net",
+				ProductID:         "prd_2",
+				DomainPrefix:      "test",
+				DomainSuffix:      "akamaized.net",
+				IPVersionBehavior: "IPV4",
+				Secure:            true,
+			},
+			EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
+				{
+					ID:                "ehn_1",
+					Domain:            "test2.edgekey.net",
+					ProductID:         "prd_2",
+					DomainPrefix:      "test2",
+					DomainSuffix:      "edgekey.net",
+					IPVersionBehavior: "IPV4",
+				},
+				{
+					ID:                "ehn_2",
+					Domain:            "test3.edgesuite.net",
+					ProductID:         "prd_2",
+					DomainPrefix:      "test3",
+					DomainSuffix:      "edgesuite.net",
+					IPVersionBehavior: "IPV4",
+				},
+			}},
+		}, nil)
+	}
 
-	expectGetEdgeHostnames := func(m *papi.Mock, ContractID, GroupID string) *mock.Call {
+	expectGetEdgeHostnames := func(m *papi.Mock, contractID, groupID string) *mock.Call {
 		return m.On("GetEdgeHostnames", mock.Anything, papi.GetEdgeHostnamesRequest{
-			ContractID: ContractID,
-			GroupID:    GroupID,
+			ContractID: contractID,
+			GroupID:    groupID,
 		}).Return(&papi.GetEdgeHostnamesResponse{
 			ContractID: "ctr_1",
 			GroupID:    "grp_2",
@@ -1208,6 +1215,32 @@ func TestResourceEdgeHostnames_WithImport(t *testing.T) {
 					Domain:            "test1.edgekey.net",
 					DomainPrefix:      "test1",
 					DomainSuffix:      "edgekey.net",
+					IPVersionBehavior: "IPV4",
+					Secure:            true,
+				},
+				{
+					ID:                "eh_2",
+					Domain:            "test3.edgesuite.net",
+					DomainPrefix:      "test3",
+					DomainSuffix:      "edgesuite.net",
+					IPVersionBehavior: "IPV4",
+				},
+			}},
+		}, nil)
+	}
+	expectGetEdgeHostnamesAkamaized := func(m *papi.Mock, contractID, groupID string) *mock.Call {
+		return m.On("GetEdgeHostnames", mock.Anything, papi.GetEdgeHostnamesRequest{
+			ContractID: contractID,
+			GroupID:    groupID,
+		}).Return(&papi.GetEdgeHostnamesResponse{
+			ContractID: "ctr_1",
+			GroupID:    "grp_2",
+			EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
+				{
+					ID:                "ehn_1",
+					Domain:            "test1.akamaized.net",
+					DomainPrefix:      "test1",
+					DomainSuffix:      "akamaized.net",
 					IPVersionBehavior: "IPV4",
 					Secure:            true,
 				},
@@ -1238,11 +1271,26 @@ func TestResourceEdgeHostnames_WithImport(t *testing.T) {
 			EdgeHostnameID: "ehn_1",
 		}, nil)
 	}
+	createEdgeHostnamesAkamaized := func(mp *papi.Mock) *mock.Call {
+		return mp.On("CreateEdgeHostname", mock.Anything, papi.CreateEdgeHostnameRequest{
+			ContractID: "ctr_1",
+			GroupID:    "grp_2",
+			EdgeHostname: papi.EdgeHostnameCreate{
+				ProductID:         "prd_2",
+				DomainPrefix:      "test",
+				DomainSuffix:      "akamaized.net",
+				SecureNetwork:     "SHARED_CERT",
+				IPVersionBehavior: "IPV4",
+			},
+		}).Return(&papi.CreateEdgeHostnameResponse{
+			EdgeHostnameID: "ehn_1",
+		}, nil)
+	}
 
-	expectGetEdgeHostnamesAfterCreate := func(m *papi.Mock, ContractID, GroupID string) *mock.Call {
+	expectGetEdgeHostnamesAfterCreate := func(m *papi.Mock, contractID, groupID string) *mock.Call {
 		return m.On("GetEdgeHostnames", mock.Anything, papi.GetEdgeHostnamesRequest{
-			ContractID: ContractID,
-			GroupID:    GroupID,
+			ContractID: contractID,
+			GroupID:    groupID,
 		}).Return(&papi.GetEdgeHostnamesResponse{
 			ContractID: "ctr_1",
 			GroupID:    "grp_2",
@@ -1265,6 +1313,32 @@ func TestResourceEdgeHostnames_WithImport(t *testing.T) {
 			}},
 		}, nil)
 	}
+	expectGetEdgeHostnamesAkamaizedAfterCreate := func(m *papi.Mock, contractID, groupID string) *mock.Call {
+		return m.On("GetEdgeHostnames", mock.Anything, papi.GetEdgeHostnamesRequest{
+			ContractID: contractID,
+			GroupID:    groupID,
+		}).Return(&papi.GetEdgeHostnamesResponse{
+			ContractID: "ctr_1",
+			GroupID:    "grp_2",
+			EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
+				{
+					ID:                "ehn_1",
+					Domain:            "test.akamaized.net",
+					DomainPrefix:      "test",
+					DomainSuffix:      "akamaized.net",
+					IPVersionBehavior: "IPV4",
+					Secure:            true,
+				},
+				{
+					ID:                "eh_2",
+					Domain:            "test3.edgesuite.net",
+					DomainPrefix:      "test3",
+					DomainSuffix:      "edgesuite.net",
+					IPVersionBehavior: "IPV4",
+				},
+			}},
+		}, nil)
+	}
 
 	expectGetEdgeHostnameHAPIByID := func(m *hapi.Mock, edgeHostnameID int) *mock.Call {
 		return m.On("GetEdgeHostname", mock.Anything, edgeHostnameID).Return(&hapi.GetEdgeHostnameResponse{
@@ -1272,6 +1346,28 @@ func TestResourceEdgeHostnames_WithImport(t *testing.T) {
 			RecordName:             "test",
 			DNSZone:                "edgekey.net",
 			SecurityType:           "ENHANCED-TLS",
+			UseDefaultTTL:          true,
+			UseDefaultMap:          true,
+			IPVersionBehavior:      "IPV4",
+			ProductID:              "DSA",
+			TTL:                    21600,
+			Map:                    "a;dscb.akamai.net",
+			SlotNumber:             3250,
+			Comments:               "Created by Property-Manager/PAPI on Tue Feb 21 14:03:36 UTC 2023",
+			SerialNumber:           1520,
+			CustomTarget:           "",
+			ChinaCdn:               hapi.ChinaCDN{},
+			IsEdgeIPBindingEnabled: false,
+			MapAlias:               "",
+			UseCases:               nil,
+		}, nil)
+	}
+	expectGetEdgeHostnameHAPIByIDAkamaized := func(m *hapi.Mock, edgeHostnameID int) *mock.Call {
+		return m.On("GetEdgeHostname", mock.Anything, edgeHostnameID).Return(&hapi.GetEdgeHostnameResponse{
+			EdgeHostnameID:         edgeHostnameID,
+			RecordName:             "test",
+			DNSZone:                "akamaized.net",
+			SecurityType:           "STANDARD-TLS",
 			UseDefaultTTL:          true,
 			UseDefaultMap:          true,
 			IPVersionBehavior:      "IPV4",
@@ -1328,7 +1424,47 @@ func TestResourceEdgeHostnames_WithImport(t *testing.T) {
 		}, nil)
 	}
 
-	t.Run("import existing edgehostname code", func(t *testing.T) {
+	t.Run("import existing akamaized edgehostname without certificate", func(t *testing.T) {
+		client := &papi.Mock{}
+		clientHapi := &hapi.Mock{}
+		id := "ehn_1,1,2"
+
+		expectGetEdgeHostnamesAkamaized(client, "ctr_1", "grp_2").Once()
+		createEdgeHostnamesAkamaized(client).Once()
+		expectGetEdgeHostnamesAkamaizedAfterCreate(client, "ctr_1", "grp_2")
+		expectGetEdgeHostnameAkamaized(client, "ehn_1", "ctr_1", "grp_2").Once()
+		expectGetEdgeHostnameHAPIByIDAkamaized(clientHapi, 1).Times(1)
+		useClient(client, clientHapi, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						// please note that import does not support product id, that why we only define it in config for creation
+						Config: testutils.LoadFixtureString(t, "testdata/TestResourceEdgeHostname/creation_before_import_edgehostname_akamaized.tf"),
+					},
+					{
+						Config:      testutils.LoadFixtureString(t, "testdata/TestResourceEdgeHostname/import_edgehostname_akamaized.tf"),
+						ImportState: true,
+						ImportStateCheck: func(s []*terraform.InstanceState) error {
+							assert.Len(t, s, 1)
+							rs := s[0]
+							assert.Equal(t, "grp_2", rs.Attributes["group_id"])
+							assert.Equal(t, "ctr_1", rs.Attributes["contract_id"])
+							assert.Equal(t, "ehn_1", rs.Attributes["id"])
+							assert.Equal(t, "", rs.Attributes["certificate"])
+							return nil
+						},
+						ImportStateId:           id,
+						ResourceName:            "akamai_edge_hostname.importedgehostname",
+						ImportStateVerify:       true,
+						ImportStateVerifyIgnore: []string{"product_id"},
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
+	t.Run("import existing edgehostname with certificate", func(t *testing.T) {
 		client := &papi.Mock{}
 		clientHapi := &hapi.Mock{}
 		id := "ehn_1,1,2"
@@ -1357,6 +1493,7 @@ func TestResourceEdgeHostnames_WithImport(t *testing.T) {
 							assert.Equal(t, "grp_2", rs.Attributes["group_id"])
 							assert.Equal(t, "ctr_1", rs.Attributes["contract_id"])
 							assert.Equal(t, "ehn_1", rs.Attributes["id"])
+							assert.Equal(t, "123456", rs.Attributes["certificate"])
 							return nil
 						},
 						ImportStateId:           id,
@@ -1380,7 +1517,6 @@ func TestResourceEdgeHostnames_WithImport(t *testing.T) {
 		expectGetEdgeHostname(client, "ehn_1", "ctr_1", "grp_2").Once()
 		expectGetEdgeHostnameHAPIByID(clientHapi, 1).Times(6)
 		expectGetEdgeHostnameHAPI(clientHapi, 1).Times(10)
-		expectGetCertificate(clientHapi).Times(2)
 
 		resp := hapi.Error{
 			Type:            "CERTIFICATE_NOT_FOUND",
@@ -1407,10 +1543,6 @@ func TestResourceEdgeHostnames_WithImport(t *testing.T) {
 						Config: testutils.LoadFixtureString(t, "testdata/TestResourceEdgeHostname/creation_before_import_edgehostname_missing_certificate.tf"),
 					},
 					{
-						// this step is to "zero" the certificate in the state, we read zero from tf file, and we get zero from "API" so we will store zero to the state. Only get calls are called in this step
-						Config: testutils.LoadFixtureString(t, "testdata/TestResourceEdgeHostname/import_edgehostname_missing_certificate.tf"),
-					},
-					{
 						Config:      testutils.LoadFixtureString(t, "testdata/TestResourceEdgeHostname/import_edgehostname_missing_certificate.tf"),
 						ImportState: true,
 						ImportStateCheck: func(s []*terraform.InstanceState) error {
@@ -1419,12 +1551,14 @@ func TestResourceEdgeHostnames_WithImport(t *testing.T) {
 							assert.Equal(t, "grp_2", rs.Attributes["group_id"])
 							assert.Equal(t, "ctr_1", rs.Attributes["contract_id"])
 							assert.Equal(t, "ehn_1", rs.Attributes["id"])
+							assert.Equal(t, "", rs.Attributes["certificate"])
 							return nil
 						},
 						ImportStateId:           id,
 						ResourceName:            "akamai_edge_hostname.importedgehostname",
 						ImportStateVerify:       true,
-						ImportStateVerifyIgnore: []string{"product_id"},
+						ImportStateVerifyIgnore: []string{"product_id", "certificate"},
+						// TODO Remove "certificate" here after implementing wait for EdgeHostname propagation to HAPI in DXE-3821,
 					},
 				},
 			})
