@@ -1032,6 +1032,13 @@ type (
 	}
 )
 
+func newDefaultDatacenter(b gtm.DatacenterBase) *defaultDatacenter {
+	return &defaultDatacenter{
+		DatacenterID: types.Int64Value(int64(b.DatacenterID)),
+		Nickname:     types.StringValue(b.Nickname),
+	}
+}
+
 // Schema is used to define data source's terraform schema
 func (d *domainDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, response *datasource.SchemaResponse) {
 	response.Schema = schema.Schema{
@@ -1309,11 +1316,7 @@ func getASMaps(maps []*gtm.ASMap) []asMap {
 		}
 
 		if am.DefaultDatacenter != nil {
-			defaultDataCenter := defaultDatacenter{
-				Nickname:     types.StringValue(am.DefaultDatacenter.Nickname),
-				DatacenterID: types.Int64Value(int64(am.DefaultDatacenter.DatacenterID)),
-			}
-			asMapInstance.DefaultDatacenter = defaultDataCenter
+			asMapInstance.DefaultDatacenter = *newDefaultDatacenter(*am.DefaultDatacenter)
 		}
 		if am.Assignments != nil {
 			asMapInstance.Assignments = make([]asMapAssignment, len(am.Assignments))
@@ -1338,11 +1341,7 @@ func getCIDRMaps(ctx context.Context, maps []*gtm.CIDRMap) ([]cidrMap, diag.Diag
 		}
 
 		if cm.DefaultDatacenter != nil {
-			defaultDataCenter := defaultDatacenter{
-				Nickname:     types.StringValue(cm.DefaultDatacenter.Nickname),
-				DatacenterID: types.Int64Value(int64(cm.DefaultDatacenter.DatacenterID)),
-			}
-			cidrMapInstance.DefaultDatacenter = defaultDataCenter
+			cidrMapInstance.DefaultDatacenter = *newDefaultDatacenter(*cm.DefaultDatacenter)
 		}
 
 		if cm.Assignments != nil {
@@ -1372,11 +1371,7 @@ func getGeographicMaps(ctx context.Context, maps []*gtm.GeoMap) ([]geographicMap
 		}
 
 		if gm.DefaultDatacenter != nil {
-			defaultDataCenter := defaultDatacenter{
-				Nickname:     types.StringValue(gm.DefaultDatacenter.Nickname),
-				DatacenterID: types.Int64Value(int64(gm.DefaultDatacenter.DatacenterID)),
-			}
-			geoMapInstance.DefaultDatacenter = defaultDataCenter
+			geoMapInstance.DefaultDatacenter = *newDefaultDatacenter(*gm.DefaultDatacenter)
 		}
 
 		if gm.Assignments != nil {

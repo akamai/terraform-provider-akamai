@@ -219,21 +219,9 @@ func (m *resourceDataSourceModel) setAttributes(resource *gtm.Resource) {
 	m.MaxUMultiplicativeIncrement = types.Float64Value(float64(resource.MaxUMultiplicativeIncrement))
 	m.Type = types.StringValue(resource.Type)
 	m.UpperBound = types.Int64Value(int64(resource.UpperBound))
-	m.setLinks(resource.Links)
+	m.Links = getLinks(resource.Links)
 	m.setResourceInstances(resource.ResourceInstances)
 	m.ID = types.StringValue(resource.Name)
-}
-
-func (m *resourceDataSourceModel) setLinks(links []*gtm.Link) {
-
-	for _, l := range links {
-		linkObject := link{
-			Rel:  types.StringValue(l.Rel),
-			Href: types.StringValue(l.Href),
-		}
-
-		m.Links = append(m.Links, linkObject)
-	}
 }
 
 func (m *resourceDataSourceModel) setResourceInstances(resourceInstances []*gtm.ResourceInstance) {

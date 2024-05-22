@@ -156,8 +156,8 @@ func (d *cidrMapDataSource) Read(ctx context.Context, req datasource.ReadRequest
 
 func (m *cidrMapDataSourceModel) setAttributes(ctx context.Context, cidrMap *gtm.CIDRMap) diag.Diagnostics {
 	m.Name = types.StringValue(cidrMap.Name)
-	m.setDefaultDatacenter(cidrMap.DefaultDatacenter)
-	m.setLinks(cidrMap.Links)
+	m.DefaultDatacenter = newDefaultDatacenter(*cidrMap.DefaultDatacenter)
+	m.Links = getLinks(cidrMap.Links)
 	diags := m.setAssignments(ctx, cidrMap.Assignments)
 	if diags.HasError() {
 		return diags
@@ -165,24 +165,6 @@ func (m *cidrMapDataSourceModel) setAttributes(ctx context.Context, cidrMap *gtm
 	m.ID = types.StringValue("gtm_cidrmap")
 
 	return nil
-}
-
-func (m *cidrMapDataSourceModel) setDefaultDatacenter(b *gtm.DatacenterBase) {
-	m.DefaultDatacenter = &defaultDatacenter{
-		DatacenterID: types.Int64Value(int64(b.DatacenterID)),
-		Nickname:     types.StringValue(b.Nickname),
-	}
-}
-
-func (m *cidrMapDataSourceModel) setLinks(links []*gtm.Link) {
-	for _, l := range links {
-		linkObj := link{
-			Rel:  types.StringValue(l.Rel),
-			Href: types.StringValue(l.Href),
-		}
-
-		m.Links = append(m.Links, linkObj)
-	}
 }
 
 func (m *cidrMapDataSourceModel) setAssignments(ctx context.Context, assignments []*gtm.CIDRAssignment) diag.Diagnostics {

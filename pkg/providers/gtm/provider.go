@@ -45,6 +45,7 @@ func (p *Subprovider) FrameworkDataSources() []func() datasource.DataSource {
 		NewGTMCIDRMapDataSource,
 		NewGTMDomainDataSource,
 		NewGTMDomainsDataSource,
+		NewGTMGeoMapDataSource,
 		NewGTMResourceDataSource,
 		NewGTMResourcesDataSource,
 	}

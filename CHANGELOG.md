@@ -73,7 +73,9 @@
 
 
 
-
+* GTM
+  * Added data sources:
+    * `akamai_gtm_geomap` - reads information for a specific GTM Geographic map
 
 
 
