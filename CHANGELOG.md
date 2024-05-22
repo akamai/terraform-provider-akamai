@@ -44,6 +44,9 @@
 * Appsec
   * Suppressed rate policy diff when `counterType` field absence is the only change for `akamai_appsec_rate_policy` resource
   * Suppressed activations diff when `notification_emails` field is the only change for `akamai_appsec_activations` resource
+* IAM
+ * Fixed issue of generating an incorrect large difference in `granted_roles` update [(#525)(https://github.com/akamai/terraform-provider-akamai/issues/525)]
+
 
 * Network Lists
   * Suppressed activations diff when `notification_emails` field is the only change for `akamai_networklist_activations` resource
@@ -317,7 +320,7 @@
 * IVM
   * Extended `akamai_imaging_policy_image` with new fields:
     * `serve_stale_duration` available under `policy`
-    * `allow_pristine_on_downsize` and `prefer_modern_formats` available under `policy.output`
+    * `allow_pristine_on_downsize` and `prefer_modern_formats` available under `policy.output` 
 
 * PAPI
   * Added new resource:

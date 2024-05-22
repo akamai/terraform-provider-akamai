@@ -157,7 +157,7 @@ func TestResourceIAMRole(t *testing.T) {
 		role := expectCreateRole(t, client, "role name", "role description", []int{12345, 54321, 67890})
 		expectReadRole(t, client, role.RoleID, role.RoleName, role.RoleDescription, role.GrantedRoles, 3)
 
-		updatedRole := expectUpdateRole(t, client, role.RoleID, "role name update", "role description update", []int{12345, 54321, 67890, 1000})
+		updatedRole := expectUpdateRole(t, client, role.RoleID, "role name update", "role description update", []int{12345, 1000, 54321, 67890})
 		expectReadRole(t, client, role.RoleID, updatedRole.RoleName, updatedRole.RoleDescription, updatedRole.GrantedRoles, 2)
 
 		expectDeleteRole(t, client, updatedRole.RoleID)
@@ -228,7 +228,7 @@ func TestResourceIAMRole(t *testing.T) {
 		role := expectCreateRole(t, client, "role name", "role description", []int{12345, 54321, 67890})
 		expectReadRole(t, client, role.RoleID, role.RoleName, role.RoleDescription, role.GrantedRoles, 3)
 
-		expectAPIErrorWithUpdateRole(t, client, role.RoleID, "role name update", "role description update", []int{12345, 54321, 67890, 1000})
+		expectAPIErrorWithUpdateRole(t, client, role.RoleID, "role name update", "role description update", []int{12345, 1000, 54321, 67890})
 		expectReadRole(t, client, role.RoleID, role.RoleName, role.RoleDescription, role.GrantedRoles, 1)
 
 		expectDeleteRole(t, client, role.RoleID)
@@ -261,7 +261,7 @@ func TestResourceIAMRole(t *testing.T) {
 		role := expectCreateRole(t, client, "role name", "role description", []int{12345, 54321, 67890})
 		expectReadRole(t, client, role.RoleID, role.RoleName, role.RoleDescription, role.GrantedRoles, 3)
 
-		expectAPIErrorWithUpdateRole(t, client, role.RoleID, "role name update", "role description update", []int{12345, 54321, 67890, 1000})
+		expectAPIErrorWithUpdateRole(t, client, role.RoleID, "role name update", "role description update", []int{12345, 1000, 54321, 67890})
 		expectReadRoleAPIError(t, client, role.RoleID)
 
 		expectDeleteRole(t, client, role.RoleID)
