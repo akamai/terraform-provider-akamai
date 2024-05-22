@@ -113,7 +113,9 @@
 
 
 
-
+* GTM
+  * Added data sources:
+    * `akamai_gtm_geomaps` - reads information for GTM Geographic maps under a given domain
 
 
 
