@@ -1,0 +1,9 @@
+{
+    "enabled": false,
+    "requestBody": {
+        "type": "NONE"
+    },
+    "responseBody": {
+        "type": "NONE"
+    }
+}

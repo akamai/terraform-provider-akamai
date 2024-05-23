@@ -462,6 +462,95 @@ func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 				},
 			},
 		},
+		"import - success": {
+			init: func(m *cloudlets.Mock) {
+				// create
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusInactive, nil).Once()
+				expectActivateLoadBalancerVersion(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
+				// read
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusPending, nil).Once()
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
+				// import
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Times(2)
+				// read
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Times(2)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_version1.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckOutput("status", string(cloudlets.LoadBalancerActivationStatusActive)),
+						resource.TestCheckResourceAttr("akamai_cloudlets_application_load_balancer_activation.test", "version", "1"),
+						resource.TestCheckResourceAttr("akamai_cloudlets_application_load_balancer_activation.test", "network", "STAGING"),
+					),
+				},
+				{
+					ImportState:       true,
+					ImportStateId:     "org_1,STAGING,1",
+					ResourceName:      "akamai_cloudlets_application_load_balancer_activation.test",
+					ImportStateVerify: true,
+				},
+			},
+		},
+		"import - wrong key - expect an error": {
+			init: func(m *cloudlets.Mock) {
+				// create
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusInactive, nil).Once()
+				expectActivateLoadBalancerVersion(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
+				// read
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusPending, nil).Once()
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
+				// import
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Times(2)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_version1.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckOutput("status", string(cloudlets.LoadBalancerActivationStatusActive)),
+						resource.TestCheckResourceAttr("akamai_cloudlets_application_load_balancer_activation.test", "version", "1"),
+						resource.TestCheckResourceAttr("akamai_cloudlets_application_load_balancer_activation.test", "network", "STAGING"),
+					),
+				},
+				{
+					ImportState:       true,
+					ImportStateId:     "wrong_import_id",
+					ResourceName:      "akamai_cloudlets_application_load_balancer_activation.test",
+					ImportStateVerify: true,
+					ExpectError:       regexp.MustCompile(`import id has to be a comma separated list of origin id, network and version`),
+				},
+			},
+		},
+		"import - empty activation - expect an error": {
+			init: func(m *cloudlets.Mock) {
+				// create
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusInactive, nil).Once()
+				expectActivateLoadBalancerVersion(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
+				// read
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusPending, nil).Once()
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
+				// import
+				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Times(2)
+				expectListLoadBalancerActivationsEmpty(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Times(1)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_version1.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckOutput("status", string(cloudlets.LoadBalancerActivationStatusActive)),
+						resource.TestCheckResourceAttr("akamai_cloudlets_application_load_balancer_activation.test", "version", "1"),
+						resource.TestCheckResourceAttr("akamai_cloudlets_application_load_balancer_activation.test", "network", "STAGING"),
+					),
+				},
+				{
+					ImportState:       true,
+					ImportStateId:     "org_1,STAGING,1",
+					ResourceName:      "akamai_cloudlets_application_load_balancer_activation.test",
+					ImportStateVerify: true,
+					ExpectError:       regexp.MustCompile(`application load balancer activation: application load balancer activation version not found`),
+				},
+			},
+		},
 	}
 
 	// redefining times to run the tests faster
@@ -506,6 +595,22 @@ var (
 					Version:  version,
 				},
 			}, nil)
+	}
+
+	expectListLoadBalancerActivationsEmpty = func(m *cloudlets.Mock, originID string, version int64, network cloudlets.LoadBalancerActivationNetwork, status cloudlets.LoadBalancerActivationStatus, err error) *mock.Call {
+		if err != nil {
+			return m.On(
+				"ListLoadBalancerActivations",
+				mock.Anything,
+				cloudlets.ListLoadBalancerActivationsRequest{OriginID: originID},
+			).Return(nil, err)
+		}
+		return m.On(
+			"ListLoadBalancerActivations",
+			mock.Anything,
+			cloudlets.ListLoadBalancerActivationsRequest{OriginID: originID},
+		).Return(
+			[]cloudlets.LoadBalancerActivation{}, nil)
 	}
 
 	expectListLoadBalancerActivationsMany = func(m *cloudlets.Mock, originID string, activations []cloudlets.LoadBalancerActivation, err error) *mock.Call {

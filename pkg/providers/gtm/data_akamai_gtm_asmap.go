@@ -159,18 +159,10 @@ func (d *asMapDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 
 func (m *asMapDataSourceModel) setAttributes(asMap *gtm.ASMap) {
 	m.Name = types.StringValue(asMap.Name)
-	m.setDefaultDatacenter(asMap.DefaultDatacenter)
+	m.DefaultDatacenter = newDefaultDatacenter(*asMap.DefaultDatacenter)
 	m.setAssignments(asMap.Assignments)
-	m.setLinks(asMap.Links)
+	m.Links = getLinks(asMap.Links)
 	m.ID = types.StringValue("gtm_asmap")
-
-}
-
-func (m *asMapDataSourceModel) setDefaultDatacenter(d *gtm.DatacenterBase) {
-	m.DefaultDatacenter = &defaultDatacenter{
-		DatacenterID: types.Int64Value(int64(d.DatacenterID)),
-		Nickname:     types.StringValue(d.Nickname),
-	}
 }
 
 func (m *asMapDataSourceModel) setAssignments(assignments []*gtm.ASAssignment) {
@@ -189,16 +181,5 @@ func (m *asMapDataSourceModel) setAssignments(assignments []*gtm.ASAssignment) {
 			ASNumbers:    toBaseTypesInt64Slice(a.ASNumbers),
 		}
 		m.Assignments = append(m.Assignments, assignmentObject)
-	}
-}
-
-func (m *asMapDataSourceModel) setLinks(links []*gtm.Link) {
-	for _, l := range links {
-		linkObject := link{
-			Rel:  types.StringValue(l.Rel),
-			Href: types.StringValue(l.Href),
-		}
-
-		m.Links = append(m.Links, linkObject)
 	}
 }

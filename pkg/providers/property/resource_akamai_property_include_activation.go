@@ -18,6 +18,7 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/timeouts"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/logger"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
+	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -162,7 +163,7 @@ func resourcePropertyIncludeActivationCreate(ctx context.Context, d *schema.Reso
 
 	err := resourcePropertyIncludeActivationUpsert(ctx, d, client)
 	if err != nil {
-		return diag.FromErr(err)
+		return err
 	}
 
 	return resourcePropertyIncludeActivationRead(ctx, d, m)
@@ -240,7 +241,7 @@ func resourcePropertyIncludeActivationUpdate(ctx context.Context, d *schema.Reso
 
 	err := resourcePropertyIncludeActivationUpsert(ctx, d, client)
 	if err != nil {
-		return diag.FromErr(err)
+		return err
 	}
 	return resourcePropertyIncludeActivationRead(ctx, d, m)
 }
@@ -258,8 +259,8 @@ func resourcePropertyIncludeActivationDelete(ctx context.Context, d *schema.Reso
 	}
 
 	logger.Debug("waiting for pending (de)activations")
-	if err := waitUntilNoPendingActivationInNetwork(ctx, client, activationResourceData); err != nil {
-		return diag.FromErr(err)
+	if diagErr := waitUntilNoPendingActivationInNetwork(ctx, client, activationResourceData); diagErr != nil {
+		return diagErr
 	}
 
 	expectedIsActive, err := isLatestActiveExpectedDeactivated(ctx, client, activationResourceData)
@@ -273,17 +274,13 @@ func resourcePropertyIncludeActivationDelete(ctx context.Context, d *schema.Reso
 	}
 
 	logger.Debug("creating new deactivation")
-	err = createNewDeactivation(ctx, client, activationResourceData)
-	if err != nil {
-		return diag.FromErr(err)
+	diagErr := createNewDeactivation(ctx, client, activationResourceData)
+	if diagErr != nil {
+		return diagErr
 	}
 
 	logger.Debug("waiting for pending deactivation")
-	if err := waitUntilNoPendingActivationInNetwork(ctx, client, activationResourceData); err != nil {
-		return diag.FromErr(err)
-	}
-
-	return nil
+	return waitUntilNoPendingActivationInNetwork(ctx, client, activationResourceData)
 }
 
 func resourcePropertyIncludeActivationImport(_ context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
@@ -312,23 +309,23 @@ func resourcePropertyIncludeActivationImport(_ context.Context, d *schema.Resour
 	return []*schema.ResourceData{d}, nil
 }
 
-func resourcePropertyIncludeActivationUpsert(ctx context.Context, d *schema.ResourceData, client papi.PAPI) error {
+func resourcePropertyIncludeActivationUpsert(ctx context.Context, d *schema.ResourceData, client papi.PAPI) diag.Diagnostics {
 	logger := logger.Get("resourcePropertyIncludeActivationUpsert")
 
 	activationResourceData := propertyIncludeActivationData{}
 	if err := activationResourceData.populateFromResource(d); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	logger.Debug("waiting for pending activations")
-	if err := waitUntilNoPendingActivationInNetwork(ctx, client, activationResourceData); err != nil {
-		return err
+	if diagErr := waitUntilNoPendingActivationInNetwork(ctx, client, activationResourceData); diagErr != nil {
+		return diagErr
 	}
 
 	logger.Debug("checking if include version is already active")
 	expectedIsActive, err := isLatestActiveExpectedActivated(ctx, client, activationResourceData)
 	if err != nil && !errors.Is(err, ErrNoLatestIncludeActivation) {
-		return err
+		return diag.FromErr(err)
 	}
 	if expectedIsActive {
 		// we are done here
@@ -338,14 +335,14 @@ func resourcePropertyIncludeActivationUpsert(ctx context.Context, d *schema.Reso
 	}
 
 	logger.Debug("creating new activation")
-	err = createNewActivation(ctx, client, activationResourceData)
-	if err != nil {
-		return err
+	diagErr := createNewActivation(ctx, client, activationResourceData)
+	if diagErr != nil {
+		return diagErr
 	}
 
 	logger.Debug("waiting for pending activations")
-	if err := waitUntilNoPendingActivationInNetwork(ctx, client, activationResourceData); err != nil {
-		return err
+	if diagErr := waitUntilNoPendingActivationInNetwork(ctx, client, activationResourceData); err != nil {
+		return diagErr
 	}
 
 	d.SetId(fmt.Sprintf("%s:%s:%s:%s", activationResourceData.contractID, activationResourceData.groupID, activationResourceData.includeID, activationResourceData.network))
@@ -430,7 +427,7 @@ func parsePropertyIncludeActivationResourceID(activationResourceID string) (*pro
 	}, nil
 }
 
-func waitUntilNoPendingActivationInNetwork(ctx context.Context, client papi.PAPI, activationResourceData propertyIncludeActivationData) error {
+func waitUntilNoPendingActivationInNetwork(ctx context.Context, client papi.PAPI, activationResourceData propertyIncludeActivationData) diag.Diagnostics {
 	act, err := findLatestActivationInNetwork(ctx, client, &propertyIncludeActivationID{
 		contractID: activationResourceData.contractID,
 		groupID:    activationResourceData.groupID,
@@ -441,21 +438,19 @@ func waitUntilNoPendingActivationInNetwork(ctx context.Context, client papi.PAPI
 		return nil
 	}
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
-	_, err = waitForActivationCondition(ctx, client, activationResourceData.includeID, act.ActivationID,
+	_, diagErr := waitForActivationCondition(ctx, client, activationResourceData.includeID, act.ActivationID,
 		func(status papi.ActivationStatus) bool {
 			return status == papi.ActivationStatusActive ||
 				status == papi.ActivationStatusFailed ||
 				status == papi.ActivationStatusAborted ||
 				status == papi.ActivationStatusDeactivated
 		})
-	if err != nil {
-		return err
-	}
 
-	return nil
+	return diagErr
+
 }
 
 func isLatestActiveExpectedWithActivationType(ctx context.Context, client papi.PAPI, activationResourceData propertyIncludeActivationData, expectedActivationType papi.ActivationType) (bool, error) {
@@ -489,7 +484,7 @@ func isLatestActiveExpectedActivated(ctx context.Context, client papi.PAPI, acti
 	return isLatestActiveExpectedWithActivationType(ctx, client, activationResourceData, papi.ActivationTypeActivate)
 }
 
-func createNewActivation(ctx context.Context, client papi.PAPI, activationResourceData propertyIncludeActivationData) error {
+func createNewActivation(ctx context.Context, client papi.PAPI, activationResourceData propertyIncludeActivationData) diag.Diagnostics {
 	logger := logger.Get("createNewActivation")
 
 	logger.Debug("preparing activation request")
@@ -503,22 +498,58 @@ func createNewActivation(ctx context.Context, client papi.PAPI, activationResour
 	}
 
 	activateIncludeRequest = papi.ActivateIncludeRequest(addComplianceRecord(activationResourceData.complianceRecord, papi.ActivateOrDeactivateIncludeRequest(activateIncludeRequest)))
+	createActivationRetry := CreateActivationRetry
 
-	logger.Debug("sending include activation request")
-	activationResponse, err := client.ActivateInclude(ctx, activateIncludeRequest)
-	if err != nil {
-		return err
+	var actID string
+	var ok bool
+	for {
+
+		logger.Debug("sending include activation request")
+		activationResponse, err := client.ActivateInclude(ctx, activateIncludeRequest)
+		if err == nil {
+			actID = activationResponse.ActivationID
+			break
+		}
+		if !isCreateActivationErrorRetryable(err) {
+			return diag.Errorf("%s: %s", "create activation failed", err)
+		}
+
+		expected := expectedIncludeActivation{
+			IncludeID:  activationResourceData.includeID,
+			ContractID: activationResourceData.contractID,
+			GroupID:    activationResourceData.groupID,
+			Version:    activationResourceData.version,
+			Network:    activationResourceData.network,
+			Type:       papi.ActivationTypeActivate,
+		}
+		if actID, ok = isIncludeActivationPendingOrActive(ctx, client, expected); ok {
+			break
+		}
+
+		select {
+		case <-time.After(createActivationRetry):
+			createActivationRetry = capDuration(createActivationRetry*2, 5*time.Minute)
+			continue
+
+		case <-ctx.Done():
+			if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+				return diag.Diagnostics{DiagWarnActivationTimeout}
+			} else if errors.Is(ctx.Err(), context.Canceled) {
+				return diag.Diagnostics{DiagWarnActivationCanceled}
+			}
+			return diag.FromErr(fmt.Errorf("activation context terminated: %w", ctx.Err()))
+		}
 	}
 
 	logger.Debug("waiting for activation creation")
 	// here is used temporary activationID
-	if _, err := waitForActivationCreation(ctx, client, activationResourceData.includeID, activationResponse.ActivationID); err != nil {
-		return err
+	if _, err := waitForActivationCreation(ctx, client, activationResourceData.includeID, actID); err != nil {
+		return diag.FromErr(err)
 	}
 	return nil
 }
 
-func createNewDeactivation(ctx context.Context, client papi.PAPI, activationResourceData propertyIncludeActivationData) error {
+func createNewDeactivation(ctx context.Context, client papi.PAPI, activationResourceData propertyIncludeActivationData) diag.Diagnostics {
 	logger := logger.Get("createNewDeactivation")
 
 	deactivateIncludeRequest := papi.DeactivateIncludeRequest{
@@ -532,14 +563,50 @@ func createNewDeactivation(ctx context.Context, client papi.PAPI, activationReso
 
 	deactivateIncludeRequest = papi.DeactivateIncludeRequest(addComplianceRecord(activationResourceData.complianceRecord, papi.ActivateOrDeactivateIncludeRequest(deactivateIncludeRequest)))
 
-	deactivation, err := client.DeactivateInclude(ctx, deactivateIncludeRequest)
-	if err != nil {
-		return err
+	createActivationRetry := CreateActivationRetry
+
+	var actID string
+	var ok bool
+	for {
+
+		deactivation, err := client.DeactivateInclude(ctx, deactivateIncludeRequest)
+		if err == nil {
+			actID = deactivation.ActivationID
+			break
+		}
+		if !isCreateActivationErrorRetryable(err) {
+			return diag.Errorf("%s: %s", "create activation failed", err)
+		}
+		expected := expectedIncludeActivation{
+			IncludeID:  activationResourceData.includeID,
+			ContractID: activationResourceData.contractID,
+			GroupID:    activationResourceData.groupID,
+			Version:    activationResourceData.version,
+			Network:    activationResourceData.network,
+			Type:       papi.ActivationTypeDeactivate,
+		}
+		if actID, ok = isIncludeActivationPendingOrActive(ctx, client, expected); ok {
+			break
+		}
+
+		select {
+		case <-time.After(createActivationRetry):
+			createActivationRetry = capDuration(createActivationRetry*2, 5*time.Minute)
+			continue
+
+		case <-ctx.Done():
+			if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+				return diag.Diagnostics{DiagWarnActivationTimeout}
+			} else if errors.Is(ctx.Err(), context.Canceled) {
+				return diag.Diagnostics{DiagWarnActivationCanceled}
+			}
+			return diag.FromErr(fmt.Errorf("activation context terminated: %w", ctx.Err()))
+		}
 	}
 
 	logger.Info("waiting for creation of include deactivation")
-	if _, err := waitForActivationCreation(ctx, client, activationResourceData.includeID, deactivation.ActivationID); err != nil {
-		return err
+	if _, err := waitForActivationCreation(ctx, client, activationResourceData.includeID, actID); err != nil {
+		return diag.FromErr(err)
 	}
 
 	return nil
@@ -638,15 +705,30 @@ func waitForActivationCondition(ctx context.Context,
 	client papi.PAPI,
 	includeID, activationID string,
 	cond func(papi.ActivationStatus) bool,
-) (*papi.GetIncludeActivationResponse, error) {
+) (*papi.GetIncludeActivationResponse, diag.Diagnostics) {
+	retriesMax := 5
+	retries5xx := 0
 	for {
 		activation, err := client.GetIncludeActivation(ctx, papi.GetIncludeActivationRequest{
 			IncludeID:    includeID,
 			ActivationID: activationID,
 		})
 		if err != nil {
-			return nil, err
+			var target = &papi.Error{}
+			if !errors.As(err, &target) {
+				return nil, diag.Errorf("error has unexpected type: %T", err)
+			}
+			if target.StatusCode >= 500 {
+				retries5xx = retries5xx + 1
+				if retries5xx > retriesMax {
+					return nil, diag.Errorf("reached max number of 5xx retries: %d", retries5xx)
+				}
+				continue
+			}
+
+			return nil, diag.FromErr(err)
 		}
+		retries5xx = 0
 
 		actStatus := activation.Activation.Status
 		if cond(actStatus) {
@@ -654,10 +736,10 @@ func waitForActivationCondition(ctx context.Context,
 		}
 
 		select {
-		case <-time.After(activationPollInterval):
+		case <-time.After(capDuration(activationPollInterval, ActivationPollMinimum)):
 			continue
 		case <-ctx.Done():
-			return nil, terminateProcess(ctx, string(actStatus))
+			return nil, diag.FromErr(terminateProcess(ctx, string(actStatus)))
 		}
 	}
 }
@@ -729,4 +811,55 @@ func suppressNoteFieldForIncludeActivation(_, oldValue, newValue string, d *sche
 		return false
 	}
 	return true
+}
+
+type expectedIncludeActivation struct {
+	IncludeID  string
+	ContractID string
+	GroupID    string
+	Version    int
+	Network    string
+	Type       papi.ActivationType
+}
+
+// isActivationPendingOrActive check if latest activation is of specified version and has status Pending or Active
+func isIncludeActivationPendingOrActive(ctx context.Context, client papi.PAPI, expected expectedIncludeActivation) (string, bool) {
+	log := hclog.FromContext(ctx)
+
+	log.Debug("getting activation")
+	acts, err := client.ListIncludeActivations(ctx, papi.ListIncludeActivationsRequest{
+		IncludeID:  expected.IncludeID,
+		ContractID: expected.ContractID,
+		GroupID:    expected.GroupID,
+	})
+	if err != nil {
+		return "", false
+	}
+	activations := acts.Activations.Items
+
+	sort.Slice(activations, func(i, j int) bool {
+		return activations[i].UpdateDate > activations[j].UpdateDate
+	})
+
+	activations = filterIncludeActivationsByNetwork(activations, expected.Network)
+
+	if len(activations) == 0 { // job might be scheduled but no activation created yet (unlikely)
+		log.Debug("no activation items; retrying")
+		return "", false
+	}
+	latestActivationItem := activations[0] // grab the latest one returned by api
+
+	if latestActivationItem.IncludeVersion != expected.Version {
+		log.Debug("latest version mismatch; retrying")
+		return "", false
+	}
+	if latestActivationItem.ActivationType != expected.Type {
+		log.Debug("activation type mismatch; retrying")
+		return "", false
+	}
+	if latestActivationItem.Status == papi.ActivationStatusPending ||
+		latestActivationItem.Status == papi.ActivationStatusActive {
+		return latestActivationItem.ActivationID, true
+	}
+	return "", false
 }

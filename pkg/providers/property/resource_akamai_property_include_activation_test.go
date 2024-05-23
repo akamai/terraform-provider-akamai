@@ -2,7 +2,9 @@ package property
 
 import (
 	"fmt"
+	"io"
 	"math/rand"
+	"net/url"
 	"regexp"
 	"strconv"
 	"testing"
@@ -103,7 +105,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 			expectListIncludeActivations(client, state.activations)
 
 			if len(state.activations) == 0 {
-				// if there are no activations, wait logic wont do any other calls
+				// if there are no activations, wait logic won't do any other calls
 				// so there is nothing more to mock -> return
 				return state
 			}
@@ -181,9 +183,14 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 			return state
 		}
 
-		expectActivateIncludeWithFail = func(client *papi.Mock, state State, req papi.ActivateIncludeRequest) {
+		expectActivateIncludeWithNonrecoverableFail = func(client *papi.Mock, state State, req papi.ActivateIncludeRequest) {
 			client.On("ActivateInclude", mock.Anything, req).
-				Return(nil, fmt.Errorf("oops")).Once()
+				Return(nil, &papi.Error{StatusCode: 404}).Once()
+		}
+
+		expectActivateIncludeWithRecoverableFail = func(client *papi.Mock, state State, req papi.ActivateIncludeRequest) {
+			client.On("ActivateInclude", mock.Anything, req).
+				Return(nil, &papi.Error{StatusCode: 500}).Once()
 		}
 
 		expectAssertState = func(client *papi.Mock, state State) {
@@ -193,15 +200,15 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 		expectCreate = func(client *papi.Mock, state State, req papi.ActivateIncludeRequest) State {
 			state = expectWaitPending(client, state, req.Network, 2)
 			expectAssertState(client, state)
-			state = expectActivateInclude(client, state, req, 2)
+			state = expectActivateInclude(client, state, req, 3)
 			state = expectWaitPending(client, state, req.Network, 2)
 			return state
 		}
 
-		expectCreateWithFail = func(client *papi.Mock, state State, req papi.ActivateIncludeRequest) State {
+		expectCreateWithNonrecoverableFail = func(client *papi.Mock, state State, req papi.ActivateIncludeRequest) State {
 			state = expectWaitPending(client, state, req.Network, 2)
 			expectAssertState(client, state)
-			expectActivateIncludeWithFail(client, state, req)
+			expectActivateIncludeWithNonrecoverableFail(client, state, req)
 			return state
 		}
 
@@ -458,6 +465,173 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 
+	t.Run("include activation lifecycle, every activation/deactivation has recoverable error with activation processing in background", func(t *testing.T) {
+		client := new(papi.Mock)
+		state := State{}
+
+		actReq := activateIncludeReq("STAGING", false)
+		// create -> fail
+		state = expectWaitPending(client, state, actReq.Network, 2)
+		expectAssertState(client, state)
+		expectActivateIncludeWithRecoverableFail(client, state, actReq)
+
+		newIncludeActivation := getExpectedActivationBasedOnRequest(actReq)
+		state.activations = append([]papi.IncludeActivation{newIncludeActivation}, state.activations...)
+		expectListIncludeActivations(client, state.activations)
+		state = expectWaitPending(client, state, actReq.Network, 2)
+
+		// read
+		expectRead(client, state, papi.ActivationNetworkStaging)
+
+		// read
+		expectRead(client, state, papi.ActivationNetworkStaging)
+
+		// delete
+		deactReq := deactivateIncludeReq("STAGING", false)
+		state = expectWaitPending(client, state, deactReq.Network, 2)
+		expectAssertState(client, state)
+		client.On("DeactivateInclude", mock.Anything, deactReq).
+			Return(nil, &papi.Error{StatusCode: 500}).Once()
+
+		newIncludeDeactivation := getActivationBasedOnDeactivationRequest(deactReq)
+		state.activations = append([]papi.IncludeActivation{newIncludeDeactivation}, state.activations...)
+		expectListIncludeActivations(client, state.activations)
+		state = expectWaitPending(client, state, deactReq.Network, 2)
+
+		useClient(client, nil, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/property_include_activation.tf", testDir)),
+						Check: checkAttributes(attrs{
+							includeID:    includeID,
+							contractID:   contractID,
+							groupID:      groupID,
+							version:      version,
+							network:      "STAGING",
+							note:         note,
+							notifyEmails: []string{email},
+						}),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+	t.Run("include activation lifecycle, every activation/deactivation requires retry due to recoverable error without activation processing in background", func(t *testing.T) {
+		client := new(papi.Mock)
+		state := State{}
+
+		actReq := activateIncludeReq("STAGING", false)
+		// create -> fail
+		state = expectWaitPending(client, state, actReq.Network, 2)
+		expectAssertState(client, state)
+		state = expectWaitPending(client, state, actReq.Network, 0)
+		expectActivateIncludeWithRecoverableFail(client, state, actReq)
+		state = expectActivateInclude(client, state, actReq, 2)
+		state = expectWaitPending(client, state, actReq.Network, 2)
+
+		// read
+		expectRead(client, state, papi.ActivationNetworkStaging)
+
+		// read
+		expectRead(client, state, papi.ActivationNetworkStaging)
+
+		// delete
+		deactReq := deactivateIncludeReq("STAGING", false)
+		state = expectWaitPending(client, state, deactReq.Network, 2)
+		expectAssertState(client, state)
+		client.On("DeactivateInclude", mock.Anything, deactReq).
+			Return(nil, &papi.Error{StatusCode: 500}).Once()
+		expectListIncludeActivations(client, state.activations)
+		state = expectDectivateInclude(client, state, deactReq, 2)
+		state = expectWaitPending(client, state, deactReq.Network, 2)
+
+		useClient(client, nil, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/property_include_activation.tf", testDir)),
+						Check: checkAttributes(attrs{
+							includeID:    includeID,
+							contractID:   contractID,
+							groupID:      groupID,
+							version:      version,
+							network:      "STAGING",
+							note:         note,
+							notifyEmails: []string{email},
+						}),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+	t.Run("include activation lifecycle, every activation/deactivation requires retry due to recoverable EOF error without activation processing in background", func(t *testing.T) {
+		client := new(papi.Mock)
+		state := State{}
+
+		actReq := activateIncludeReq("STAGING", false)
+		// create -> fail
+		state = expectWaitPending(client, state, actReq.Network, 2)
+		expectAssertState(client, state)
+		state = expectWaitPending(client, state, actReq.Network, 0)
+		client.On("ActivateInclude", mock.Anything, actReq).
+			Return(nil, &url.Error{
+				Op:  "Post",
+				URL: "https://akab-xxxxxxxxxxxxxxxx-xxxxxxxxxxxxxxxx.luna.akamaiapis.net/papi/v1/includes/inc_12345/activations",
+				Err: io.EOF,
+			}).Once()
+		state = expectActivateInclude(client, state, actReq, 2)
+		state = expectWaitPending(client, state, actReq.Network, 2)
+
+		// read
+		expectRead(client, state, papi.ActivationNetworkStaging)
+
+		// read
+		expectRead(client, state, papi.ActivationNetworkStaging)
+
+		// delete
+		deactReq := deactivateIncludeReq("STAGING", false)
+		state = expectWaitPending(client, state, deactReq.Network, 2)
+		expectAssertState(client, state)
+		client.On("DeactivateInclude", mock.Anything, deactReq).
+			Return(nil, &url.Error{
+				Op:  "Post",
+				URL: "https://akab-xxxxxxxxxxxxxxxx-xxxxxxxxxxxxxxxx.luna.akamaiapis.net/papi/v1/includes/inc_12345/activations",
+				Err: io.EOF,
+			}).Once()
+		expectListIncludeActivations(client, state.activations)
+		state = expectDectivateInclude(client, state, deactReq, 2)
+		state = expectWaitPending(client, state, deactReq.Network, 2)
+
+		useClient(client, nil, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/property_include_activation.tf", testDir)),
+						Check: checkAttributes(attrs{
+							includeID:    includeID,
+							contractID:   contractID,
+							groupID:      groupID,
+							version:      version,
+							network:      "STAGING",
+							note:         note,
+							notifyEmails: []string{email},
+						}),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
 	t.Run("wait for ongoing expected activation to finish", func(t *testing.T) {
 		client := new(papi.Mock)
 		state := State{}
@@ -616,7 +790,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 		// --- 1st step ---
 
 		// create -> fail
-		state = expectCreateWithFail(client, state, actReq)
+		state = expectCreateWithNonrecoverableFail(client, state, actReq)
 
 		// --- 2nd step ---
 
@@ -648,7 +822,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 							note:         note,
 							notifyEmails: []string{email},
 						}),
-						ExpectError: regexp.MustCompile("oops"),
+						ExpectError: regexp.MustCompile("404"),
 					},
 					{
 						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/property_include_activation.tf", testDir)),

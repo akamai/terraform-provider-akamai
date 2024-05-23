@@ -5,7 +5,6 @@ package property
 import (
 	"context"
 	"fmt"
-	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/str"
@@ -91,21 +90,6 @@ func getProduct(ctx context.Context, client papi.PAPI, productID, contractID str
 
 	log.Debugf("Product found: %s", product.ProductID)
 	return &product, nil
-}
-
-func convertString(v string) interface{} {
-	if f1, err := strconv.ParseFloat(v, 64); err == nil {
-		return f1
-	}
-	// FIXME: execution will never reach this as every int representation will be captured by ParseFloat() above
-	// this should either be moved above ParseFloat block or removed
-	if f2, err := strconv.ParseInt(v, 10, 64); err == nil {
-		return f2
-	}
-	if f3, err := strconv.ParseBool(v); err == nil {
-		return f3
-	}
-	return v
 }
 
 func findProperty(ctx context.Context, name string, meta meta.Meta) (*papi.Property, error) {

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-VERSION="${TERRAFORM_VERSION:-1.4.6}"
+VERSION="${TERRAFORM_VERSION:-1.7.5}"
 VERSION="${VERSION#v}"
 
 if [[ -n $(which terraform) && "$(terraform --version | sed 1q | cut -f2 -d" " | cut -c2-)" == "$VERSION" ]]; then

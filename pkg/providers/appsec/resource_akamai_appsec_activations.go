@@ -52,13 +52,14 @@ func resourceActivations() *schema.Resource {
 				Type:             schema.TypeString,
 				Optional:         true,
 				Description:      "Note describing the activation. Will use timestamp if omitted.",
-				DiffSuppressFunc: suppressNoteFieldForAppSecActivation,
+				DiffSuppressFunc: suppressFieldsForAppSecActivation,
 			},
 			"notification_emails": {
-				Type:        schema.TypeSet,
-				Required:    true,
-				Elem:        &schema.Schema{Type: schema.TypeString},
-				Description: "List of email addresses to be notified with the results of the activation",
+				Type:             schema.TypeSet,
+				Required:         true,
+				Elem:             &schema.Schema{Type: schema.TypeString},
+				Description:      "List of email addresses to be notified with the results of the activation",
+				DiffSuppressFunc: suppressFieldsForAppSecActivation,
 			},
 			"status": {
 				Type:        schema.TypeString,
@@ -445,13 +446,6 @@ func defaultActivationNote(deactivating bool) (string, error) {
 	return fmt.Sprintf("Activation request %s", formattedTime), nil
 }
 
-func suppressNoteFieldForAppSecActivation(_, oldValue, newValue string, d *schema.ResourceData) bool {
-	if oldValue != newValue && d.HasChanges("config_id", "version", "network") {
-		return false
-	}
-	return true
-}
-
 func createActivation(ctx context.Context, client appsec.APPSEC, request appsec.CreateActivationsRequest) (*appsec.CreateActivationsResponse, error) {
 	log := hclog.FromContext(ctx)
 
@@ -528,8 +522,7 @@ func isCreateActivationErrorRetryable(err error) bool {
 		return false
 	}
 	if responseErr.StatusCode < 500 &&
-		responseErr.StatusCode != 422 &&
-		responseErr.StatusCode != 409 {
+		responseErr.StatusCode != 422 {
 		return false
 	}
 	return true

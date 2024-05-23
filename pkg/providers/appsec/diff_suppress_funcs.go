@@ -27,6 +27,49 @@ func suppressEquivalentJSONDiffsGeneric(_, oldString, newString string, _ *schem
 	return jsonBytesEqual(ob.Bytes(), nb.Bytes())
 }
 
+func suppressRatePolicyDiffs(_, oldString, newString string, _ *schema.ResourceData) bool {
+	var oldResp, newResp appsec.CreateRatePolicyResponse
+
+	if err := json.Unmarshal([]byte(oldString), &oldResp); err != nil {
+		log.Printf("unable to unmarshal old rate policy: %s", err)
+		return false
+	}
+	if err := json.Unmarshal([]byte(newString), &newResp); err != nil {
+		log.Printf("unable to unmarshal new rate policy: %s", err)
+		return false
+	}
+
+	// Set default value if not set, then check if there is a diff
+	if oldResp.CounterType != newResp.CounterType && len(newResp.CounterType) == 0 {
+		newResp.CounterType = "per_edge"
+	}
+
+	n, err := json.Marshal(newResp)
+	if err != nil {
+		log.Printf("unable to marshal new rate policy: %s", err)
+		return false
+	}
+
+	o, err := json.Marshal(oldResp)
+	if err != nil {
+		log.Printf("unable to marshal old rate policy: %s", err)
+		return false
+	}
+
+	var nb bytes.Buffer
+	if err := json.Compact(&nb, n); err != nil {
+		log.Printf("unable to compact new rate policy: %s", err)
+		return false
+	}
+	var ob bytes.Buffer
+	if err := json.Compact(&ob, o); err != nil {
+		log.Printf("unable to compact old rate policy: %s", err)
+		return false
+	}
+
+	return jsonBytesEqual(ob.Bytes(), nb.Bytes())
+}
+
 func jsonBytesEqual(b1, b2 []byte) bool {
 	var o1 interface{}
 	if err := json.Unmarshal(b1, &o1); err != nil {
@@ -184,7 +227,7 @@ func compareLoggingSettings(oldResponse, newResponse *appsec.UpdateAdvancedSetti
 	return reflect.DeepEqual(oldResponse, newResponse)
 }
 
-func suppressEquivalentAttackPayloadLoggingSettingsDiffs(_, oldValue, newValue string, _ *schema.ResourceData) bool {
+func suppressEquivalentAttackPayloadLoggingSettingsDiffs(_, oldValue, newValue string, d *schema.ResourceData) bool {
 	var oldJSON, newJSON appsec.UpdateAdvancedSettingsAttackPayloadLoggingResponse
 	if oldValue == newValue {
 		return true
@@ -195,14 +238,19 @@ func suppressEquivalentAttackPayloadLoggingSettingsDiffs(_, oldValue, newValue s
 	if err := json.Unmarshal([]byte(newValue), &newJSON); err != nil {
 		return false
 	}
-	diff := compareAttackPayloadLoggingSettings(&oldJSON, &newJSON)
+	diff := compareAttackPayloadLoggingSettings(&oldJSON, &newJSON, d)
 	return diff
 }
 
-func compareAttackPayloadLoggingSettings(oldValue, newValue *appsec.UpdateAdvancedSettingsAttackPayloadLoggingResponse) bool {
-	if oldValue.Override != newValue.Override ||
-		oldValue.Enabled != newValue.Enabled ||
-		oldValue.RequestBody.Type != newValue.RequestBody.Type ||
+func compareAttackPayloadLoggingSettings(oldValue, newValue *appsec.UpdateAdvancedSettingsAttackPayloadLoggingResponse, d *schema.ResourceData) bool {
+	if !oldValue.Enabled && !newValue.Enabled {
+		return true
+	}
+	policyID := d.Get("security_policy_id")
+	if policyID != nil && policyID != "" && (!oldValue.Override && !newValue.Override) {
+		return true
+	}
+	if oldValue.RequestBody.Type != newValue.RequestBody.Type ||
 		oldValue.ResponseBody.Type != newValue.ResponseBody.Type {
 		return false
 	}
@@ -406,4 +454,11 @@ func suppressDiffUkraineGeoControlAction(_, _, _ string, d *schema.ResourceData)
 		return true
 	}
 	return oldUkraineGeoControlAction == newUkraineGeoControlAction
+}
+
+func suppressFieldsForAppSecActivation(_, oldValue, newValue string, d *schema.ResourceData) bool {
+	if oldValue != newValue && d.HasChanges("config_id", "version", "network") {
+		return false
+	}
+	return true
 }

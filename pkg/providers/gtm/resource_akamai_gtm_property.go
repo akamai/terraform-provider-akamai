@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"reflect"
 	"sort"
 	"strings"
 
@@ -224,9 +225,10 @@ func resourceGTMv1Property() *schema.Resource {
 				},
 			},
 			"liveness_test": {
-				Type:     schema.TypeList,
-				Optional: true,
-				MinItems: 1,
+				Type:             schema.TypeList,
+				Optional:         true,
+				MinItems:         1,
+				DiffSuppressFunc: livenessTestsDiffSuppress,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": {
@@ -1485,6 +1487,73 @@ func trafficTargetDiffSuppress(_, _, _ string, d *schema.ResourceData) bool {
 	return true
 }
 
+func livenessTestsDiffSuppress(_, _, _ string, d *schema.ResourceData) bool {
+	oldLTests, newLTests := d.GetChange("liveness_test")
+	oldLivenessTest := oldLTests.([]any)
+	newLivenessTest := newLTests.([]any)
+
+	if len(oldLivenessTest) != len(newLivenessTest) {
+		return false
+	}
+
+	sort.Slice(oldLivenessTest, func(i, j int) bool {
+		oldLivenessTestNamesA := oldLivenessTest[i].(map[string]any)["name"].(string)
+		oldLivenessTestNamesB := oldLivenessTest[j].(map[string]any)["name"].(string)
+		return oldLivenessTestNamesA < oldLivenessTestNamesB
+	})
+	sort.Slice(newLivenessTest, func(i, j int) bool {
+		newLivenessTestNamesA := newLivenessTest[i].(map[string]any)["name"].(string)
+		newLivenessTestNamesB := newLivenessTest[j].(map[string]any)["name"].(string)
+		return newLivenessTestNamesA < newLivenessTestNamesB
+	})
+
+	length := len(oldLivenessTest)
+	for i := 0; i < length; i++ {
+		for k, v := range oldLivenessTest[i].(map[string]any) {
+			if k == "http_header" {
+				if !httpHeadersEqual(v, newLivenessTest[i]) {
+					return false
+				}
+			} else if k == "alternate_ca_certificates" {
+				if !certificatesEqual(v, newLivenessTest[i]) {
+					return false
+				}
+			} else {
+				if !reflect.DeepEqual(newLivenessTest[i].(map[string]any)[k], v) {
+					return false
+				}
+			}
+		}
+	}
+
+	return true
+}
+
+func certificatesEqual(oldCertificates any, newLivenessTest any) bool {
+	newCertificates := newLivenessTest.(map[string]any)["alternate_ca_certificates"]
+	oldCertList := oldCertificates.([]interface{})
+	newCertList := newCertificates.([]interface{})
+
+	if len(oldCertList) != len(newCertList) {
+		return false
+	}
+	var oldCertStrings []string
+	var newCertStrings []string
+	for _, oldCert := range oldCertList {
+		oldCertString := oldCert.(string)
+		oldCertStrings = append(oldCertStrings, oldCertString)
+	}
+	for _, newCert := range newCertList {
+		newCertString := newCert.(string)
+		newCertStrings = append(newCertStrings, newCertString)
+	}
+
+	sort.Strings(oldCertStrings)
+	sort.Strings(newCertStrings)
+
+	return slices.Equal(oldCertStrings, newCertStrings)
+}
+
 // serversEqual checks whether provided sets of ip addresses contain the same entries
 func serversEqual(old, new interface{}) bool {
 	logger := logger.Get("Akamai GTM", "serversEqual")
@@ -1514,6 +1583,27 @@ func serversEqual(old, new interface{}) bool {
 		_, ok := addresses[server.(string)]
 		if !ok {
 			return false
+		}
+	}
+
+	return true
+}
+
+func httpHeadersEqual(old, newLivenessTest interface{}) bool {
+	newHTTPHeaders := newLivenessTest.(map[string]any)["http_header"]
+	oldHeaders := old.([]any)
+	newHeaders := newHTTPHeaders.([]any)
+
+	if len(oldHeaders) != len(newHeaders) {
+		return false
+	}
+
+	length := len(oldHeaders)
+	for i := 0; i < length; i++ {
+		for k, v := range oldHeaders[i].(map[string]any) {
+			if v2, ok := newHeaders[i].(map[string]any)[k]; !ok || v2 != v {
+				return false
+			}
 		}
 	}
 

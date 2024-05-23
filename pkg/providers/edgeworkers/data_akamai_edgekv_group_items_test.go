@@ -115,7 +115,7 @@ func TestEdgeKVGroupItems(t *testing.T) {
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, "testdata/TestDataEdgeKVGroupItems/incorrect_network.tf"),
-						ExpectError: regexp.MustCompile(`expected network to be one of \[staging production], got incorrect_network`),
+						ExpectError: regexp.MustCompile(`expected network to be one of \["staging" "production"], got incorrect_network`),
 					},
 				},
 			})

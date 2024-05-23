@@ -71,7 +71,8 @@ resource "akamai_appsec_rate_policy" "test" {
             "positiveMatch": true,
             "valueInRange": false
         }
-    ]
+    ],
+    "counterType": "region_aggregated"
 }
 EOF
 }
