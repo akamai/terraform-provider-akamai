@@ -39,11 +39,14 @@
 
 
 
+
 #### FEATURES/ENHANCEMENTS:
 
 * Appsec
   * Suppressed rate policy diff when `counterType` field absence is the only change for `akamai_appsec_rate_policy` resource
   * Suppressed activations diff when `notification_emails` field is the only change for `akamai_appsec_activations` resource
+  
+
 * IAM
  * Fixed issue of generating an incorrect large difference in `granted_roles` update [(#525)(https://github.com/akamai/terraform-provider-akamai/issues/525)]
 
@@ -138,6 +141,8 @@
 * DNS
   * Fixed issue in `akamai_dns_record` that modifying `priority` and/or `priority_increment` for `MX` record type was causing an error
 
+* CPS
+  * Fixed issue where modifications to SAN list in `akamai_cps_third_party_enrollment` of the `akamai_cps_upload_certificate` resource results in to inconsistency terraform plan error.
 
 
 
@@ -163,8 +168,10 @@
 
 
 
+#### DEPRECATIONS
 
-
+* CPS
+  * Deprecated field `unacknowledged_warnings` of  `akamai_cps_upload_certificate` resource.
 
 
 
