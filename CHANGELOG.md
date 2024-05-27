@@ -120,7 +120,9 @@
 
 
 
-
+* Cloud Access
+  * Added datasources:
+    * `akamai_cloudaccess_key` - read details for key by name
 
 
 
