@@ -15,7 +15,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-var someStatusPostReviewWarning = "live-check-action"
+var someCheckingInProgressStatus = "live-check-action"
 
 func TestResourceCPSUploadCertificate(t *testing.T) {
 	tests := map[string]struct {
@@ -31,11 +31,12 @@ func TestResourceCPSUploadCertificate(t *testing.T) {
 	}{
 		"create with ch-mgmt false, update to true": {
 			init: func(t *testing.T, m *cps.Mock, enrollment *cps.GetEnrollmentResponse, enrollmentID, changeID int) {
-				mockCheckUnacknowledgedWarnings(m, enrollmentID, changeID, 3, enrollment, waitUploadThirdParty)
 				mockCreateWithACKPostWarnings(m, enrollmentID, changeID, enrollment)
-				mockReadAndCheckUnacknowledgedWarningsForUpdate(m, enrollmentID, changeID, enrollment, certRSAForTests, trustChainRSAForTests, RSA, waitAckChangeManagement)
+				mockReadForUpdate(m, enrollmentID, changeID, enrollment, certRSAForTests, trustChainRSAForTests, RSA, waitAckChangeManagement)
 				mockUpdate(m, enrollmentID, changeID, enrollment)
-				mockReadAndCheckUnacknowledgedWarnings(m, enrollmentID, changeID, enrollment, certRSAForTests, trustChainRSAForTests, RSA, complete)
+
+				enrollmentAfterCreate := copyEnrollmentWithEmptyPendingChanges(*enrollment)
+				mockReadForComplete(m, enrollmentID, enrollmentAfterCreate, certRSAForTests, trustChainRSAForTests, RSA)
 			},
 			enrollment:          createEnrollment(2, 22, true, true),
 			enrollmentID:        2,
@@ -48,12 +49,18 @@ func TestResourceCPSUploadCertificate(t *testing.T) {
 		},
 		"create with ch-mgmt true, update to false": {
 			init: func(t *testing.T, m *cps.Mock, enrollment *cps.GetEnrollmentResponse, enrollmentID, changeID int) {
-				mockCheckUnacknowledgedWarnings(m, enrollmentID, changeID, 3, enrollment, waitUploadThirdParty)
 				mockCreateWithACKPostWarnings(m, enrollmentID, changeID, enrollment)
-				mockReadAndCheckUnacknowledgedWarningsForUpdate(m, enrollmentID, changeID, enrollment, certRSAForTests, trustChainRSAForTests, RSA, waitAckChangeManagement)
-				mockUpdate(m, enrollmentID, changeID, enrollment)
-				mockReadGetChangeHistory(m, enrollment, certRSAForTests, trustChainRSAForTests, RSA, enrollmentID, 1)
-				mockCheckUnacknowledgedWarnings(m, enrollmentID, changeID, 3, enrollment, complete)
+				mockGetChangeStatus(m, enrollmentID, changeID, 1, waitAckChangeManagement)
+				mockAcknowledgeChangeManagement(m, enrollmentID, changeID)
+
+				//Read
+				mockReadForUpdate(m, enrollmentID, changeID, enrollment, certRSAForTests, trustChainRSAForTests, RSA, complete)
+
+				//Update
+				enrollmentAfterCreate := copyEnrollmentWithEmptyPendingChanges(*enrollment)
+				mockGetEnrollment(m, enrollmentID, 1, enrollmentAfterCreate)
+
+				mockReadGetChangeHistoryForComplete(m, enrollmentAfterCreate, certRSAForTests, trustChainRSAForTests, RSA, enrollmentID, 1)
 			},
 			enrollment:          createEnrollment(2, 22, true, true),
 			enrollmentID:        2,
@@ -141,14 +148,13 @@ func TestResourceCPSUploadCertificateWithThirdPartyEnrollmentDependency(t *testi
 				client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: enrollmentID}).
 					Return(enrollment, nil).Times(1)
 				// CPS upload certificate
-				mockCheckUnacknowledgedWarnings(client, enrollmentID, changeID, 1, enrollment, waitUploadThirdParty)
 				mockCreateWithACKPostWarnings(client, enrollmentID, changeID, enrollment)
-				mockReadGetChangeHistory(client, enrollment, certRSAForTests, trustChainRSAForTests, RSA, enrollmentID, 1)
-				mockCheckUnacknowledgedWarnings(client, enrollmentID, changeID, 1, enrollment, waitAckChangeManagement)
+
+				enrollmentAfterCreate := copyEnrollmentWithEmptyPendingChanges(*enrollment)
+				mockReadGetChangeHistoryForComplete(client, enrollmentAfterCreate, certRSAForTests, trustChainRSAForTests, RSA, enrollmentID, 1)
 				// Read third party enrollment
-				mockGetEnrollment(client, enrollmentID, 1, enrollment)
-				mockReadGetChangeHistory(client, enrollment, certRSAForTests, trustChainRSAForTests, RSA, enrollmentID, 1)
-				mockCheckUnacknowledgedWarnings(client, enrollmentID, changeID, 2, enrollment, waitAckChangeManagement)
+				mockGetEnrollment(client, enrollmentID, 1, enrollmentAfterCreate)
+				mockReadGetChangeHistoryForComplete(client, enrollmentAfterCreate, certRSAForTests, trustChainRSAForTests, RSA, enrollmentID, 1)
 				// Delete third party enrollment
 				client.On("RemoveEnrollment", mock.Anything, cps.RemoveEnrollmentRequest{
 					EnrollmentID:              enrollmentID,
@@ -210,20 +216,13 @@ func TestResourceCPSUploadCertificateLifecycle(t *testing.T) {
 	}{
 		"create -> failed update after cert renewal due to missing post-ver-warnings -> update with accept all": {
 			init: func(t *testing.T, m *cps.Mock, enrollment *cps.GetEnrollmentResponse, enrollmentUpdated *cps.GetEnrollmentResponse, enrollmentID, changeID, changeIDUpdated int) {
-				// checkUnacknowledgedWarnings
-				mockCheckUnacknowledgedWarnings(m, enrollmentID, changeID, 3, enrollment, waitUploadThirdParty)
 				// create
 				mockCreateWithACKPostWarnings(m, enrollmentID, changeID, enrollment)
 				mockGetChangeStatus(m, enrollmentID, changeID, 1, waitAckChangeManagement)
 				mockAcknowledgeChangeManagement(m, enrollmentID, changeID)
-				// read after create
-				mockReadGetChangeHistory(m, enrollment, certRSAForTests, trustChainRSAForTests, RSA, enrollmentID, 2)
-				// checkUnacknowledgedWarnings
-				mockCheckUnacknowledgedWarnings(m, enrollmentID, changeID, 3, enrollment, complete)
-				// read before update
-				mockReadGetChangeHistory(m, enrollment, certRSAForTests, trustChainRSAForTests, RSA, enrollmentID, 1)
-				// checkUnacknowledgedWarnings
-				mockCheckUnacknowledgedWarnings(m, enrollmentID, changeID, 3, enrollment, complete)
+				// read after create and before update
+				enrollmentAfterCreate := copyEnrollmentWithEmptyPendingChanges(*enrollment)
+				mockReadCompleteForUpdate(m, enrollmentID, enrollmentAfterCreate, certRSAForTests, trustChainRSAForTests, RSA, complete)
 				// update
 				mockGetEnrollment(m, enrollmentID, 1, enrollmentUpdated)
 				mockGetChangeStatus(m, enrollmentID, changeIDUpdated, 1, waitUploadThirdParty)
@@ -235,9 +234,8 @@ func TestResourceCPSUploadCertificateLifecycle(t *testing.T) {
 				// expected error
 				// read before update
 				mockGetEnrollment(m, enrollmentID, 1, enrollmentUpdated)
+				mockGetChangeStatus(m, enrollmentID, changeIDUpdated, 1, waitReviewThirdPartyCert)
 				mockGetChangeHistoryBothCerts(m, enrollmentID, 1, enrollmentUpdated, ECDSA, certECDSAUpdatedForTests, trustChainECDSAUpdatedForTests, RSA, certRSAUpdatedForTests, trustChainRSAUpdatedForTests)
-				// checkUnacknowledgedWarnings
-				mockCheckUnacknowledgedWarnings(m, enrollmentID, changeID, 3, enrollment, waitReviewThirdPartyCert)
 				// update with wait-review status (after uploading cert)
 				mockGetEnrollment(m, enrollmentID, 1, enrollmentUpdated)
 				mockGetChangeStatus(m, enrollmentID, changeIDUpdated, 1, waitReviewThirdPartyCert)
@@ -247,16 +245,13 @@ func TestResourceCPSUploadCertificateLifecycle(t *testing.T) {
 				mockGetChangeStatus(m, enrollmentID, changeIDUpdated, 1, waitReviewThirdPartyCert)
 				mockGetPostVerificationWarnings(m, fourWarnings, enrollmentID, changeIDUpdated)
 				mockAcknowledgePostVerificationWarnings(m, enrollmentID, changeIDUpdated)
-				mockGetChangeStatus(m, enrollmentID, changeIDUpdated, 1, someStatusPostReviewWarning)
+				mockGetChangeStatus(m, enrollmentID, changeIDUpdated, 1, someCheckingInProgressStatus)
 				// read
-				mockGetEnrollment(m, enrollmentID, 1, enrollmentUpdated)
-				mockGetChangeHistoryBothCerts(m, enrollmentID, 1, enrollmentUpdated, ECDSA, certECDSAUpdatedForTests, trustChainECDSAUpdatedForTests, RSA, certRSAUpdatedForTests, trustChainRSAUpdatedForTests)
-				// checkUnacknowledgedWarnings
-				mockCheckUnacknowledgedWarnings(m, enrollmentID, changeID, 1, enrollment, waitAckChangeManagement)
-				mockGetEnrollment(m, enrollmentID, 1, enrollmentUpdated)
-				mockGetChangeHistoryBothCerts(m, enrollmentID, 1, enrollmentUpdated, ECDSA, certECDSAUpdatedForTests, trustChainECDSAUpdatedForTests, RSA, certRSAUpdatedForTests, trustChainRSAUpdatedForTests)
-				// checkUnacknowledgedWarnings
-				mockCheckUnacknowledgedWarnings(m, enrollmentID, changeID, 2, enrollment, waitAckChangeManagement)
+				enrollmentAfterUpdate := copyEnrollmentWithEmptyPendingChanges(*enrollmentUpdated)
+				mockGetEnrollment(m, enrollmentID, 1, enrollmentAfterUpdate)
+				mockGetChangeHistoryBothCerts(m, enrollmentID, 1, enrollmentAfterUpdate, ECDSA, certECDSAUpdatedForTests, trustChainECDSAUpdatedForTests, RSA, certRSAUpdatedForTests, trustChainRSAUpdatedForTests)
+				mockGetEnrollment(m, enrollmentID, 1, enrollmentAfterUpdate)
+				mockGetChangeHistoryBothCerts(m, enrollmentID, 1, enrollmentAfterUpdate, ECDSA, certECDSAUpdatedForTests, trustChainECDSAUpdatedForTests, RSA, certRSAUpdatedForTests, trustChainRSAUpdatedForTests)
 			},
 			enrollment:                createEnrollment(2, 22, true, true),
 			enrollmentUpdated:         createEnrollment(2, 222, false, true),
@@ -319,9 +314,8 @@ func TestCreateCPSUploadCertificate(t *testing.T) {
 	}{
 		"successful create - RSA cert": {
 			init: func(t *testing.T, m *cps.Mock, enrollment *cps.GetEnrollmentResponse, enrollmentID, changeID int) {
-				mockCheckUnacknowledgedWarnings(m, enrollmentID, changeID, 3, enrollment, waitUploadThirdParty)
 				mockCreateWithACKPostWarnings(m, enrollmentID, changeID, enrollment)
-				mockReadAndCheckUnacknowledgedWarnings(m, enrollmentID, changeID, enrollment, certRSAForTests, trustChainRSAForTests, RSA, waitAckChangeManagement)
+				mockRead(m, enrollmentID, changeID, enrollment, certRSAForTests, trustChainRSAForTests, RSA, waitAckChangeManagement)
 			},
 			enrollment:   createEnrollment(2, 22, true, true),
 			enrollmentID: 2,
@@ -332,14 +326,13 @@ func TestCreateCPSUploadCertificate(t *testing.T) {
 		},
 		"successful create - ECDSA cert, without trust chain": {
 			init: func(t *testing.T, m *cps.Mock, enrollment *cps.GetEnrollmentResponse, enrollmentID, changeID int) {
-				mockCheckUnacknowledgedWarnings(m, enrollmentID, changeID, 3, enrollment, waitUploadThirdParty)
 				mockGetEnrollment(m, enrollmentID, 1, enrollment)
 				mockUploadThirdPartyCertificateAndTrustChain(m, ECDSA, certECDSAForTests, "", enrollmentID, changeID)
 				mockGetChangeStatus(m, enrollmentID, changeID, 1, waitReviewThirdPartyCert)
 				mockGetPostVerificationWarnings(m, threeWarnings, enrollmentID, changeID)
 				mockAcknowledgePostVerificationWarnings(m, enrollmentID, changeID)
-				mockGetChangeStatus(m, enrollmentID, changeID, 1, someStatusPostReviewWarning)
-				mockReadAndCheckUnacknowledgedWarnings(m, enrollmentID, changeID, enrollment, certECDSAForTests, "", ECDSA, waitAckChangeManagement)
+				mockGetChangeStatus(m, enrollmentID, changeID, 1, someCheckingInProgressStatus)
+				mockRead(m, enrollmentID, changeID, enrollment, certECDSAForTests, "", ECDSA, waitAckChangeManagement)
 			},
 			enrollment:   createEnrollment(2, 22, true, true),
 			enrollmentID: 2,
@@ -350,7 +343,6 @@ func TestCreateCPSUploadCertificate(t *testing.T) {
 		},
 		"successful create - both cert and trust chains": {
 			init: func(t *testing.T, m *cps.Mock, enrollment *cps.GetEnrollmentResponse, enrollmentID, changeID int) {
-				mockCheckUnacknowledgedWarnings(m, enrollmentID, changeID, 3, enrollment, waitUploadThirdParty)
 				mockGetEnrollment(m, enrollmentID, 1, enrollment)
 				mockUploadBothThirdPartyCertificateAndTrustChain(m,
 					ECDSA,
@@ -364,15 +356,18 @@ func TestCreateCPSUploadCertificate(t *testing.T) {
 				mockGetChangeStatus(m, enrollmentID, changeID, 1, waitReviewThirdPartyCert)
 				mockGetPostVerificationWarnings(m, threeWarnings, enrollmentID, changeID)
 				mockAcknowledgePostVerificationWarnings(m, enrollmentID, changeID)
-				mockGetChangeStatus(m, enrollmentID, changeID, 1, someStatusPostReviewWarning)
+				mockGetChangeStatus(m, enrollmentID, changeID, 1, someCheckingInProgressStatus)
 				mockGetChangeStatus(m, enrollmentID, changeID, 1, waitAckChangeManagement)
 				mockAcknowledgeChangeManagement(m, enrollmentID, changeID)
-				mockGetEnrollment(m, enrollmentID, 1, enrollment)
-				mockGetChangeHistoryBothCerts(m, enrollmentID, 1, enrollment, ECDSA, certECDSAForTests, trustChainECDSAForTests, RSA, certRSAForTests, trustChainRSAForTests)
-				mockCheckUnacknowledgedWarnings(m, enrollmentID, changeID, 1, enrollment, complete)
-				mockGetEnrollment(m, enrollmentID, 1, enrollment)
-				mockGetChangeHistoryBothCerts(m, enrollmentID, 1, enrollment, ECDSA, certECDSAForTests, trustChainECDSAForTests, RSA, certRSAForTests, trustChainRSAForTests)
-				mockCheckUnacknowledgedWarnings(m, enrollmentID, changeID, 2, enrollment, complete)
+
+				//Read after create
+				enrollmentAfterCreate := copyEnrollmentWithEmptyPendingChanges(*enrollment)
+				mockGetEnrollment(m, enrollmentID, 1, enrollmentAfterCreate)
+				mockGetChangeHistoryBothCerts(m, enrollmentID, 1, enrollmentAfterCreate, ECDSA, certECDSAForTests, trustChainECDSAForTests, RSA, certRSAForTests, trustChainRSAForTests)
+
+				//Refresh
+				mockGetEnrollment(m, enrollmentID, 1, enrollmentAfterCreate)
+				mockGetChangeHistoryBothCerts(m, enrollmentID, 1, enrollmentAfterCreate, ECDSA, certECDSAForTests, trustChainECDSAForTests, RSA, certRSAForTests, trustChainRSAForTests)
 			},
 			enrollment:   createEnrollment(2, 22, true, true),
 			enrollmentID: 2,
@@ -383,9 +378,8 @@ func TestCreateCPSUploadCertificate(t *testing.T) {
 		},
 		"successful create - with timeout": {
 			init: func(t *testing.T, m *cps.Mock, enrollment *cps.GetEnrollmentResponse, enrollmentID, changeID int) {
-				mockCheckUnacknowledgedWarnings(m, enrollmentID, changeID, 3, enrollment, waitUploadThirdParty)
 				mockCreateWithACKPostWarnings(m, enrollmentID, changeID, enrollment)
-				mockReadAndCheckUnacknowledgedWarnings(m, enrollmentID, changeID, enrollment, certRSAForTests, trustChainRSAForTests, RSA, waitAckChangeManagement)
+				mockRead(m, enrollmentID, changeID, enrollment, certRSAForTests, trustChainRSAForTests, RSA, waitAckChangeManagement)
 			},
 			enrollment:   createEnrollment(2, 22, true, true),
 			enrollmentID: 2,
@@ -396,9 +390,8 @@ func TestCreateCPSUploadCertificate(t *testing.T) {
 		},
 		"create: auto_approve_warnings match": {
 			init: func(t *testing.T, m *cps.Mock, enrollment *cps.GetEnrollmentResponse, enrollmentID, changeID int) {
-				mockCheckUnacknowledgedWarnings(m, enrollmentID, changeID, 3, enrollment, waitUploadThirdParty)
 				mockCreateWithACKPostWarnings(m, enrollmentID, changeID, enrollment)
-				mockReadAndCheckUnacknowledgedWarnings(m, enrollmentID, changeID, enrollment, certRSAForTests, trustChainRSAForTests, RSA, waitAckChangeManagement)
+				mockRead(m, enrollmentID, changeID, enrollment, certRSAForTests, trustChainRSAForTests, RSA, waitAckChangeManagement)
 			},
 			enrollment:   createEnrollment(2, 22, true, true),
 			enrollmentID: 2,
@@ -409,7 +402,6 @@ func TestCreateCPSUploadCertificate(t *testing.T) {
 		},
 		"create: auto_approve_warnings missing warnings error": {
 			init: func(t *testing.T, m *cps.Mock, enrollment *cps.GetEnrollmentResponse, enrollmentID, changeID int) {
-				mockCheckUnacknowledgedWarnings(m, enrollmentID, changeID, 3, enrollment, waitUploadThirdParty)
 				mockGetEnrollment(m, enrollmentID, 1, enrollment)
 				mockUploadThirdPartyCertificateAndTrustChain(m, RSA, certRSAForTests, trustChainRSAForTests, enrollmentID, changeID)
 				mockGetChangeStatus(m, enrollmentID, changeID, 1, waitReviewThirdPartyCert)
@@ -423,9 +415,10 @@ func TestCreateCPSUploadCertificate(t *testing.T) {
 		},
 		"create: auto_approve_warnings not provided and empty warning list": {
 			init: func(t *testing.T, m *cps.Mock, enrollment *cps.GetEnrollmentResponse, enrollmentID, changeID int) {
-				mockCheckUnacknowledgedWarnings(m, enrollmentID, changeID, 3, enrollment, waitUploadThirdParty)
 				mockCreateWithEmptyWarningList(m, enrollmentID, changeID, enrollment)
-				mockReadAndCheckUnacknowledgedWarnings(m, enrollmentID, changeID, enrollment, certRSAForTests, trustChainRSAForTests, RSA, complete)
+
+				enrollmentAfterCreate := copyEnrollmentWithEmptyPendingChanges(*enrollment)
+				mockReadForComplete(m, enrollmentID, enrollmentAfterCreate, certRSAForTests, trustChainRSAForTests, RSA)
 			},
 			enrollment:   createEnrollment(2, 22, true, true),
 			enrollmentID: 2,
@@ -443,7 +436,6 @@ func TestCreateCPSUploadCertificate(t *testing.T) {
 		},
 		"create: auto_approve_warnings not provided and not empty warning list": {
 			init: func(t *testing.T, m *cps.Mock, enrollment *cps.GetEnrollmentResponse, enrollmentID, changeID int) {
-				mockCheckUnacknowledgedWarnings(m, enrollmentID, changeID, 3, enrollment, waitUploadThirdParty)
 				mockGetEnrollment(m, enrollmentID, 1, enrollment)
 				mockUploadThirdPartyCertificateAndTrustChain(m, RSA, certRSAForTests, trustChainRSAForTests, enrollmentID, changeID)
 				mockGetChangeStatus(m, enrollmentID, changeID, 1, waitReviewThirdPartyCert)
@@ -458,9 +450,10 @@ func TestCreateCPSUploadCertificate(t *testing.T) {
 		},
 		"create: auto_approve_warnings empty list and warnings": {
 			init: func(t *testing.T, m *cps.Mock, enrollment *cps.GetEnrollmentResponse, enrollmentID, changeID int) {
-				mockCheckUnacknowledgedWarnings(m, enrollmentID, changeID, 3, enrollment, waitUploadThirdParty)
 				mockCreateWithEmptyWarningList(m, enrollmentID, changeID, enrollment)
-				mockReadAndCheckUnacknowledgedWarnings(m, enrollmentID, changeID, enrollment, certRSAForTests, trustChainRSAForTests, RSA, complete)
+
+				enrollmentAfterCreate := copyEnrollmentWithEmptyPendingChanges(*enrollment)
+				mockReadForComplete(m, enrollmentID, enrollmentAfterCreate, certRSAForTests, trustChainRSAForTests, RSA)
 			},
 			enrollment:   createEnrollment(2, 22, true, true),
 			enrollmentID: 2,
@@ -471,14 +464,15 @@ func TestCreateCPSUploadCertificate(t *testing.T) {
 		},
 		"create: change management wrong type": {
 			init: func(t *testing.T, m *cps.Mock, enrollment *cps.GetEnrollmentResponse, enrollmentID, changeID int) {
-				mockCheckUnacknowledgedWarnings(m, enrollmentID, changeID, 3, enrollment, waitUploadThirdParty)
 				mockGetEnrollment(m, enrollmentID, 1, enrollment)
 				mockUploadThirdPartyCertificateAndTrustChain(m, RSA, certRSAForTests, trustChainRSAForTests, enrollmentID, changeID)
 				mockGetChangeStatus(m, enrollmentID, changeID, 1, waitReviewThirdPartyCert)
 				mockEmptyGetPostVerificationWarnings(m, enrollmentID, changeID)
 				mockGetChangeStatus(m, enrollmentID, changeID, 1, waitAckChangeManagement)
 				mockAcknowledgeChangeManagement(m, enrollmentID, changeID)
-				mockReadAndCheckUnacknowledgedWarnings(m, enrollmentID, changeID, enrollment, certRSAForTests, trustChainRSAForTests, RSA, complete)
+
+				enrollmentAfterCreate := copyEnrollmentWithEmptyPendingChanges(*enrollment)
+				mockReadForComplete(m, enrollmentID, enrollmentAfterCreate, certRSAForTests, trustChainRSAForTests, RSA)
 			},
 			enrollment:   createEnrollment(2, 22, true, true),
 			enrollmentID: 2,
@@ -489,12 +483,11 @@ func TestCreateCPSUploadCertificate(t *testing.T) {
 		},
 		"create: change management set to false or not specified": {
 			init: func(t *testing.T, m *cps.Mock, enrollment *cps.GetEnrollmentResponse, enrollmentID, changeID int) {
-				mockCheckUnacknowledgedWarnings(m, enrollmentID, changeID, 3, enrollment, waitUploadThirdParty)
 				mockGetEnrollment(m, enrollmentID, 1, enrollment)
 				mockUploadThirdPartyCertificateAndTrustChain(m, RSA, certRSAForTests, trustChainRSAForTests, enrollmentID, changeID)
 				mockGetChangeStatus(m, enrollmentID, changeID, 1, waitReviewThirdPartyCert)
 				mockEmptyGetPostVerificationWarnings(m, enrollmentID, changeID)
-				mockReadAndCheckUnacknowledgedWarnings(m, enrollmentID, changeID, enrollment, certRSAForTests, trustChainRSAForTests, RSA, waitAckChangeManagement)
+				mockRead(m, enrollmentID, changeID, enrollment, certRSAForTests, trustChainRSAForTests, RSA, waitAckChangeManagement)
 			},
 			enrollment:   createEnrollment(2, 22, true, true),
 			enrollmentID: 2,
@@ -505,25 +498,21 @@ func TestCreateCPSUploadCertificate(t *testing.T) {
 		},
 		"create: it takes some time to acknowledge warnings": {
 			init: func(t *testing.T, m *cps.Mock, enrollment *cps.GetEnrollmentResponse, enrollmentID, changeID int) {
-				mockCheckUnacknowledgedWarnings(m, enrollmentID, changeID, 3, enrollment, waitUploadThirdParty)
 				mockGetEnrollment(m, enrollmentID, 1, enrollment)
 				mockUploadThirdPartyCertificateAndTrustChain(m, RSA, certRSAForTests, "", enrollmentID, changeID)
 				mockGetChangeStatus(m, enrollmentID, changeID, 1, waitReviewThirdPartyCert)
 				mockGetPostVerificationWarnings(m, threeWarnings, enrollmentID, changeID)
 				mockAcknowledgePostVerificationWarnings(m, enrollmentID, changeID)
 				mockGetChangeStatus(m, enrollmentID, changeID, 1, waitReviewThirdPartyCert)
-				mockGetChangeStatus(m, enrollmentID, changeID, 1, someStatusPostReviewWarning)
+				mockGetChangeStatus(m, enrollmentID, changeID, 1, someCheckingInProgressStatus)
 				//read's call from upsert
 				mockGetEnrollment(m, enrollmentID, 1, enrollment)
-				mockGetChangeStatus(m, enrollmentID, changeID, 1, someStatusPostReviewWarning)
+				mockGetChangeStatus(m, enrollmentID, changeID, 1, someCheckingInProgressStatus)
 				mockGetChangeStatus(m, enrollmentID, changeID, 1, complete)
 				mockGetChangeHistory(m, enrollmentID, 1, enrollment, RSA, certRSAForTests, "")
 				//rest of the flow
-				mockCheckUnacknowledgedWarnings(m, enrollmentID, changeID, 1, enrollment, complete)
-				mockGetEnrollment(m, enrollmentID, 1, enrollment)
-				mockGetChangeStatus(m, enrollmentID, changeID, 2, complete)
-				mockGetChangeHistory(m, enrollmentID, 1, enrollment, RSA, certRSAForTests, "")
-				mockCheckUnacknowledgedWarnings(m, enrollmentID, changeID, 2, enrollment, complete)
+				enrollmentAfterCreate := copyEnrollmentWithEmptyPendingChanges(*enrollment)
+				mockReadGetChangeHistoryForComplete(m, enrollmentAfterCreate, certRSAForTests, "", RSA, enrollmentID, 1)
 
 			},
 			enrollment:   createEnrollment(2, 22, false, true),
@@ -535,7 +524,6 @@ func TestCreateCPSUploadCertificate(t *testing.T) {
 		},
 		"create: trust chain without certificate": {
 			init: func(_ *testing.T, m *cps.Mock, enrollment *cps.GetEnrollmentResponse, enrollmentID, changeID int) {
-				mockCheckUnacknowledgedWarnings(m, enrollmentID, changeID, 3, enrollment, complete)
 			},
 			enrollment:   createEnrollment(2, 22, true, true),
 			enrollmentID: 2,
@@ -546,7 +534,6 @@ func TestCreateCPSUploadCertificate(t *testing.T) {
 		},
 		"create: get enrollment error": {
 			init: func(t *testing.T, m *cps.Mock, enrollment *cps.GetEnrollmentResponse, enrollmentID, changeID int) {
-				mockCheckUnacknowledgedWarnings(m, enrollmentID, changeID, 3, enrollment, waitUploadThirdParty)
 				m.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{
 					EnrollmentID: enrollmentID,
 				}).Return(nil, fmt.Errorf("could not get an erollments")).Once()
@@ -560,7 +547,6 @@ func TestCreateCPSUploadCertificate(t *testing.T) {
 		},
 		"create: upload third party cert error": {
 			init: func(t *testing.T, m *cps.Mock, enrollment *cps.GetEnrollmentResponse, enrollmentID, changeID int) {
-				mockCheckUnacknowledgedWarnings(m, enrollmentID, changeID, 3, enrollment, waitUploadThirdParty)
 				mockGetEnrollment(m, enrollmentID, 1, enrollment)
 				m.On("UploadThirdPartyCertAndTrustChain", mock.Anything, cps.UploadThirdPartyCertAndTrustChainRequest{
 					EnrollmentID: enrollmentID,
@@ -585,7 +571,6 @@ func TestCreateCPSUploadCertificate(t *testing.T) {
 		},
 		"create: get change post verification warnings error": {
 			init: func(t *testing.T, m *cps.Mock, enrollment *cps.GetEnrollmentResponse, enrollmentID, changeID int) {
-				mockCheckUnacknowledgedWarnings(m, enrollmentID, changeID, 3, enrollment, waitUploadThirdParty)
 				mockGetEnrollment(m, enrollmentID, 1, enrollment)
 				mockUploadThirdPartyCertificateAndTrustChain(m, RSA, certRSAForTests, trustChainRSAForTests, enrollmentID, changeID)
 				mockGetChangeStatus(m, enrollmentID, changeID, 1, waitReviewThirdPartyCert)
@@ -603,7 +588,6 @@ func TestCreateCPSUploadCertificate(t *testing.T) {
 		},
 		"create: acknowledge post verification warnings error": {
 			init: func(t *testing.T, m *cps.Mock, enrollment *cps.GetEnrollmentResponse, enrollmentID, changeID int) {
-				mockCheckUnacknowledgedWarnings(m, enrollmentID, changeID, 3, enrollment, waitUploadThirdParty)
 				mockGetEnrollment(m, enrollmentID, 1, enrollment)
 				mockUploadThirdPartyCertificateAndTrustChain(m, RSA, certRSAForTests, trustChainRSAForTests, enrollmentID, changeID)
 				mockGetChangeStatus(m, enrollmentID, changeID, 1, waitReviewThirdPartyCert)
@@ -623,7 +607,6 @@ func TestCreateCPSUploadCertificate(t *testing.T) {
 		},
 		"create: get change status error": {
 			init: func(t *testing.T, m *cps.Mock, enrollment *cps.GetEnrollmentResponse, enrollmentID, changeID int) {
-				mockCheckUnacknowledgedWarnings(m, enrollmentID, changeID, 3, enrollment, waitUploadThirdParty)
 				mockCreateWithACKPostWarnings(m, enrollmentID, changeID, enrollment)
 				m.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
 					EnrollmentID: enrollmentID,
@@ -639,7 +622,6 @@ func TestCreateCPSUploadCertificate(t *testing.T) {
 		},
 		"create: acknowledge change management error": {
 			init: func(t *testing.T, m *cps.Mock, enrollment *cps.GetEnrollmentResponse, enrollmentID, changeID int) {
-				mockCheckUnacknowledgedWarnings(m, enrollmentID, changeID, 3, enrollment, waitUploadThirdParty)
 				mockCreateWithACKPostWarnings(m, enrollmentID, changeID, enrollment)
 				mockGetChangeStatus(m, enrollmentID, changeID, 1, waitAckChangeManagement)
 				m.On("AcknowledgeChangeManagement", mock.Anything, cps.AcknowledgementRequest{
@@ -657,7 +639,7 @@ func TestCreateCPSUploadCertificate(t *testing.T) {
 		},
 		"create: no pending changes error": {
 			init: func(t *testing.T, m *cps.Mock, enrollment *cps.GetEnrollmentResponse, enrollmentID, changeID int) {
-				mockGetEnrollment(m, enrollmentID, 4, enrollment)
+				mockGetEnrollment(m, enrollmentID, 1, enrollment)
 			},
 			enrollment:   createEnrollment(2, 22, true, false),
 			enrollmentID: 2,
@@ -700,41 +682,19 @@ func TestReadCPSUploadCertificate(t *testing.T) {
 		checkFunc    resource.TestCheckFunc
 		error        *regexp.Regexp
 	}{
-		"read: get change history": {
+		"read: it takes time to get change history reach complete status but should wait": {
 			init: func(t *testing.T, m *cps.Mock, enrollment *cps.GetEnrollmentResponse, enrollmentID, changeID int) {
-				mockCheckUnacknowledgedWarnings(m, enrollmentID, changeID, 3, enrollment, waitUploadThirdParty)
 				mockCreateWithACKPostWarnings(m, enrollmentID, changeID, enrollment)
 				mockGetChangeStatus(m, enrollmentID, changeID, 1, waitAckChangeManagement)
 				mockAcknowledgeChangeManagement(m, enrollmentID, changeID)
+
 				mockGetEnrollment(m, enrollmentID, 1, enrollment)
-				mockCheckUnacknowledgedWarnings(m, enrollmentID, changeID, 1, enrollment, complete)
-				mockGetEnrollment(m, enrollmentID, 1, enrollment)
-				mockCheckUnacknowledgedWarnings(m, enrollmentID, changeID, 2, enrollment, complete)
-				mockGetChangeStatus(m, enrollmentID, changeID, 2, complete)
-				mockGetChangeStatus(m, enrollmentID, changeID, 2, complete)
-				mockGetChangeHistory(m, enrollmentID, 2, enrollment, RSA, certRSAForTests, trustChainRSAForTests)
-			},
-			enrollment:   createEnrollment(2, 22, true, true),
-			enrollmentID: 2,
-			changeID:     22,
-			configPath:   "testdata/TestResCPSUploadCertificate/wait_for_deployment/wait_for_deployment_true.tf",
-			checkFunc:    checkAttrs(createMockData("", "", certRSAForTests, trustChainRSAForTests, true, true, false, true, nil)),
-			error:        nil,
-		},
-		"read: get change history with wait-upload-third-party-status": {
-			init: func(t *testing.T, m *cps.Mock, enrollment *cps.GetEnrollmentResponse, enrollmentID, changeID int) {
-				mockCheckUnacknowledgedWarnings(m, enrollmentID, changeID, 3, enrollment, waitUploadThirdParty)
-				mockCreateWithACKPostWarnings(m, enrollmentID, changeID, enrollment)
-				mockGetChangeStatus(m, enrollmentID, changeID, 1, waitAckChangeManagement)
-				mockAcknowledgeChangeManagement(m, enrollmentID, changeID)
-				mockGetEnrollment(m, enrollmentID, 1, enrollment)
-				mockGetChangeStatus(m, enrollmentID, changeID, 1, waitUploadThirdParty)
+				mockGetChangeStatus(m, enrollmentID, changeID, 1, someCheckingInProgressStatus)
+				mockGetChangeStatus(m, enrollmentID, changeID, 1, complete)
 				mockGetChangeHistory(m, enrollmentID, 1, enrollment, RSA, certRSAForTests, trustChainRSAForTests)
-				mockCheckUnacknowledgedWarnings(m, enrollmentID, changeID, 1, enrollment, waitAckChangeManagement)
-				mockGetEnrollment(m, enrollmentID, 1, enrollment)
-				mockGetChangeStatus(m, enrollmentID, changeID, 1, waitUploadThirdParty)
-				mockGetChangeHistory(m, enrollmentID, 1, enrollment, RSA, certRSAForTests, trustChainRSAForTests)
-				mockCheckUnacknowledgedWarnings(m, enrollmentID, changeID, 2, enrollment, waitAckChangeManagement)
+
+				enrollmentAfterCreate := copyEnrollmentWithEmptyPendingChanges(*enrollment)
+				mockReadGetChangeHistoryForComplete(m, enrollmentAfterCreate, certRSAForTests, trustChainRSAForTests, RSA, enrollmentID, 1)
 			},
 			enrollment:   createEnrollment(2, 22, true, true),
 			enrollmentID: 2,
@@ -745,16 +705,15 @@ func TestReadCPSUploadCertificate(t *testing.T) {
 		},
 		"read: get change history with correct change": {
 			init: func(t *testing.T, m *cps.Mock, enrollment *cps.GetEnrollmentResponse, enrollmentID, changeID int) {
-				mockCheckUnacknowledgedWarnings(m, enrollmentID, changeID, 3, enrollment, waitUploadThirdParty)
 				mockCreateWithACKPostWarnings(m, enrollmentID, changeID, enrollment)
 				mockGetChangeStatus(m, enrollmentID, changeID, 1, waitAckChangeManagement)
 				mockAcknowledgeChangeManagement(m, enrollmentID, changeID)
-				mockGetEnrollment(m, enrollmentID, 1, enrollment)
+
+				enrollmentAfterCreate := copyEnrollmentWithEmptyPendingChanges(*enrollment)
+				mockGetEnrollment(m, enrollmentID, 1, enrollmentAfterCreate)
 				mockGetChangeHistoryWithDifferentChanges(m, enrollmentID, 1, certRSAForTests, trustChainRSAForTests, RSA)
-				mockCheckUnacknowledgedWarnings(m, enrollmentID, changeID, 1, enrollment, complete)
-				mockGetEnrollment(m, enrollmentID, 1, enrollment)
+				mockGetEnrollment(m, enrollmentID, 1, enrollmentAfterCreate)
 				mockGetChangeHistoryWithDifferentChanges(m, enrollmentID, 1, certRSAForTests, trustChainRSAForTests, RSA)
-				mockCheckUnacknowledgedWarnings(m, enrollmentID, changeID, 2, enrollment, complete)
 			},
 			enrollment:   createEnrollment(2, 22, true, true),
 			enrollmentID: 2,
@@ -764,12 +723,12 @@ func TestReadCPSUploadCertificate(t *testing.T) {
 		},
 		"read: get change history error": {
 			init: func(t *testing.T, m *cps.Mock, enrollment *cps.GetEnrollmentResponse, enrollmentID, changeID int) {
-				mockCheckUnacknowledgedWarnings(m, enrollmentID, changeID, 3, enrollment, waitUploadThirdParty)
 				mockCreateWithACKPostWarnings(m, enrollmentID, changeID, enrollment)
 				mockGetChangeStatus(m, enrollmentID, changeID, 1, waitAckChangeManagement)
 				mockAcknowledgeChangeManagement(m, enrollmentID, changeID)
-				enrollment.ChangeManagement = true
-				mockGetEnrollment(m, enrollmentID, 1, enrollment)
+
+				enrollmentAfterCreate := copyEnrollmentWithEmptyPendingChanges(*enrollment)
+				mockGetEnrollment(m, enrollmentID, 1, enrollmentAfterCreate)
 				m.On("GetChangeHistory", mock.Anything, cps.GetChangeHistoryRequest{
 					EnrollmentID: enrollmentID,
 				}).Return(nil, fmt.Errorf("could not get certificate history")).Once()
@@ -822,17 +781,16 @@ func TestUpdateCPSUploadCertificate(t *testing.T) {
 	}{
 		"update: ignore change to acknowledge post verification warnings flag": {
 			init: func(t *testing.T, m *cps.Mock, enrollment *cps.GetEnrollmentResponse, enrollmentUpdated *cps.GetEnrollmentResponse, enrollmentID, changeID, changeIDUpdated int) {
-				mockCheckUnacknowledgedWarnings(m, enrollmentID, changeID, 3, enrollment, waitUploadThirdParty)
 				mockGetEnrollment(m, enrollmentID, 1, enrollment)
 				mockUploadThirdPartyCertificateAndTrustChain(m, RSA, certRSAForTests, trustChainRSAForTests, enrollmentID, changeID)
 				mockGetChangeStatus(m, enrollmentID, changeID, 1, waitReviewThirdPartyCert)
 				mockGetPostVerificationWarnings(m, threeWarnings, enrollmentID, changeID)
 				mockAcknowledgePostVerificationWarnings(m, enrollmentID, changeID)
-				mockGetChangeStatus(m, enrollmentID, changeID, 1, someStatusPostReviewWarning)
-				mockReadAndCheckUnacknowledgedWarningsForUpdate(m, enrollmentID, changeID, enrollment, certRSAForTests, trustChainRSAForTests, RSA, waitAckChangeManagement)
+				mockGetChangeStatus(m, enrollmentID, changeID, 1, someCheckingInProgressStatus)
+				mockReadForUpdate(m, enrollmentID, changeID, enrollment, certRSAForTests, trustChainRSAForTests, RSA, waitAckChangeManagement)
 				mockGetEnrollment(m, enrollmentID, 1, enrollment)
 				mockGetChangeStatus(m, enrollmentID, changeID, 1, waitAckChangeManagement)
-				mockReadAndCheckUnacknowledgedWarnings(m, enrollmentID, changeID, enrollment, certRSAForTests, trustChainRSAForTests, RSA, waitAckChangeManagement)
+				mockRead(m, enrollmentID, changeID, enrollment, certRSAForTests, trustChainRSAForTests, RSA, waitAckChangeManagement)
 			},
 			enrollment:          createEnrollment(2, 22, true, true),
 			enrollmentID:        2,
@@ -846,17 +804,16 @@ func TestUpdateCPSUploadCertificate(t *testing.T) {
 		},
 		"update: ignore change to auto_approve_warnings list": {
 			init: func(t *testing.T, m *cps.Mock, enrollment *cps.GetEnrollmentResponse, enrollmentUpdated *cps.GetEnrollmentResponse, enrollmentID, changeID, changeIDUpdated int) {
-				mockCheckUnacknowledgedWarnings(m, enrollmentID, changeID, 3, enrollment, waitUploadThirdParty)
 				mockGetEnrollment(m, enrollmentID, 1, enrollment)
 				mockUploadThirdPartyCertificateAndTrustChain(m, RSA, certRSAForTests, trustChainRSAForTests, enrollmentID, changeID)
 				mockGetChangeStatus(m, enrollmentID, changeID, 1, waitReviewThirdPartyCert)
 				mockGetPostVerificationWarnings(m, threeWarnings, enrollmentID, changeID)
 				mockAcknowledgePostVerificationWarnings(m, enrollmentID, changeID)
-				mockGetChangeStatus(m, enrollmentID, changeID, 1, someStatusPostReviewWarning)
-				mockReadAndCheckUnacknowledgedWarningsForUpdate(m, enrollmentID, changeID, enrollment, certRSAForTests, trustChainRSAForTests, RSA, waitAckChangeManagement)
+				mockGetChangeStatus(m, enrollmentID, changeID, 1, someCheckingInProgressStatus)
+				mockReadForUpdate(m, enrollmentID, changeID, enrollment, certRSAForTests, trustChainRSAForTests, RSA, waitAckChangeManagement)
 				mockGetEnrollment(m, enrollmentID, 1, enrollment)
 				mockGetChangeStatus(m, enrollmentID, changeID, 1, waitAckChangeManagement)
-				mockReadAndCheckUnacknowledgedWarnings(m, enrollmentID, changeID, enrollment, certRSAForTests, trustChainRSAForTests, RSA, waitAckChangeManagement)
+				mockRead(m, enrollmentID, changeID, enrollment, certRSAForTests, trustChainRSAForTests, RSA, waitAckChangeManagement)
 			},
 			enrollment:          createEnrollment(2, 22, true, true),
 			enrollmentID:        2,
@@ -870,15 +827,14 @@ func TestUpdateCPSUploadCertificate(t *testing.T) {
 		},
 		"update: ignore ack change management set to false - warn": {
 			init: func(t *testing.T, m *cps.Mock, enrollment *cps.GetEnrollmentResponse, enrollmentUpdated *cps.GetEnrollmentResponse, enrollmentID, changeID, changeIDUpdated int) {
-				mockCheckUnacknowledgedWarnings(m, enrollmentID, changeID, 3, enrollment, waitUploadThirdParty)
 				mockCreateWithACKPostWarnings(m, enrollmentID, changeID, enrollment)
 				mockGetChangeStatus(m, enrollmentID, changeID, 1, waitAckChangeManagement)
 				mockAcknowledgeChangeManagement(m, enrollmentID, changeID)
-				mockReadAndCheckUnacknowledgedWarningsForUpdate(m, enrollmentID, changeID, enrollment, certRSAForTests, trustChainRSAForTests, RSA, complete)
-				mockGetEnrollment(m, enrollmentID, 1, enrollment)
-				mockGetChangeStatus(m, enrollmentID, changeID, 1, complete)
-				mockReadGetChangeHistory(m, enrollment, certRSAForTests, trustChainRSAForTests, RSA, enrollmentID, 1)
-				mockCheckUnacknowledgedWarnings(m, enrollmentID, changeID, 3, enrollment, complete)
+
+				enrollmentAfterCreate := copyEnrollmentWithEmptyPendingChanges(*enrollment)
+				mockReadCompleteForUpdate(m, enrollmentID, enrollmentAfterCreate, certRSAForTests, trustChainRSAForTests, RSA, complete)
+				mockGetEnrollment(m, enrollmentID, 1, enrollmentAfterCreate)
+				mockReadGetChangeHistoryForComplete(m, enrollmentAfterCreate, certRSAForTests, trustChainRSAForTests, RSA, enrollmentID, 1)
 			},
 			enrollment:          createEnrollment(2, 22, true, true),
 			enrollmentID:        2,
@@ -892,20 +848,24 @@ func TestUpdateCPSUploadCertificate(t *testing.T) {
 		},
 		"update: change in cert - upsert without trust chain": {
 			init: func(t *testing.T, m *cps.Mock, enrollment *cps.GetEnrollmentResponse, enrollmentUpdated *cps.GetEnrollmentResponse, enrollmentID, changeID, changeIDUpdated int) {
-				mockCheckUnacknowledgedWarnings(m, enrollmentID, changeID, 3, enrollment, waitUploadThirdParty)
 				mockCreateWithACKPostWarnings(m, enrollmentID, changeID, enrollment)
 				mockGetChangeStatus(m, enrollmentID, changeID, 1, waitAckChangeManagement)
 				mockAcknowledgeChangeManagement(m, enrollmentID, changeID)
-				mockReadAndCheckUnacknowledgedWarningsForUpdate(m, enrollmentID, changeID, enrollment, certRSAForTests, trustChainRSAForTests, RSA, complete)
+
+				enrollmentAfterCreate := copyEnrollmentWithEmptyPendingChanges(*enrollment)
+				mockReadCompleteForUpdate(m, enrollmentID, enrollmentAfterCreate, certRSAForTests, trustChainRSAForTests, RSA, complete)
+
 				mockGetEnrollment(m, enrollmentID, 1, enrollmentUpdated)
 				mockGetChangeStatus(m, enrollmentID, changeIDUpdated, 1, waitUploadThirdParty)
 				mockGetEnrollment(m, enrollmentID, 1, enrollmentUpdated)
 				mockUploadThirdPartyCertificateAndTrustChain(m, RSA, certRSAUpdatedForTests, "", enrollmentID, changeIDUpdated)
 				mockGetChangeStatus(m, enrollmentID, changeIDUpdated, 1, waitReviewThirdPartyCert)
-				mockGetPostVerificationWarnings(m, threeWarnings, enrollmentID, 222)
+				mockGetPostVerificationWarnings(m, threeWarnings, enrollmentID, changeIDUpdated)
 				mockAcknowledgePostVerificationWarnings(m, enrollmentID, changeIDUpdated)
-				mockGetChangeStatus(m, enrollmentID, changeIDUpdated, 1, someStatusPostReviewWarning)
-				mockReadAndCheckUnacknowledgedWarnings(m, enrollmentID, changeIDUpdated, enrollmentUpdated, certRSAUpdatedForTests, "", RSA, waitAckChangeManagement)
+				mockGetChangeStatus(m, enrollmentID, changeIDUpdated, 1, someCheckingInProgressStatus)
+
+				enrollmentAfterUpdate := copyEnrollmentWithEmptyPendingChanges(*enrollmentUpdated)
+				mockReadForComplete(m, enrollmentID, enrollmentAfterUpdate, certRSAUpdatedForTests, "", RSA)
 			},
 			enrollment:          createEnrollment(2, 22, true, true),
 			enrollmentUpdated:   createEnrollment(2, 222, false, true),
@@ -921,25 +881,27 @@ func TestUpdateCPSUploadCertificate(t *testing.T) {
 		},
 		"update: change in cert - upsert with both certs and trust chains": {
 			init: func(t *testing.T, m *cps.Mock, enrollment *cps.GetEnrollmentResponse, enrollmentUpdated *cps.GetEnrollmentResponse, enrollmentID, changeID, changeIDUpdated int) {
-				mockCheckUnacknowledgedWarnings(m, enrollmentID, changeID, 3, enrollment, waitUploadThirdParty)
 				mockCreateWithACKPostWarnings(m, enrollmentID, changeID, enrollment)
 				mockGetChangeStatus(m, enrollmentID, changeID, 1, waitAckChangeManagement)
 				mockAcknowledgeChangeManagement(m, enrollmentID, changeID)
-				mockReadAndCheckUnacknowledgedWarningsForUpdate(m, enrollmentID, changeID, enrollment, certRSAForTests, trustChainRSAForTests, RSA, complete)
+
+				enrollmentAfterCreate := copyEnrollmentWithEmptyPendingChanges(*enrollment)
+				mockReadCompleteForUpdate(m, enrollmentID, enrollmentAfterCreate, certRSAForTests, trustChainRSAForTests, RSA, complete)
+
 				mockGetEnrollment(m, enrollmentID, 1, enrollmentUpdated)
 				mockGetChangeStatus(m, enrollmentID, changeIDUpdated, 1, waitUploadThirdParty)
 				mockGetEnrollment(m, enrollmentID, 1, enrollmentUpdated)
 				mockUploadBothThirdPartyCertificateAndTrustChain(m, ECDSA, certECDSAUpdatedForTests, trustChainECDSAUpdatedForTests, RSA, certRSAUpdatedForTests, trustChainRSAUpdatedForTests, enrollmentID, changeIDUpdated)
 				mockGetChangeStatus(m, enrollmentID, changeIDUpdated, 1, waitReviewThirdPartyCert)
-				mockGetPostVerificationWarnings(m, threeWarnings, enrollmentID, 222)
+				mockGetPostVerificationWarnings(m, threeWarnings, enrollmentID, changeIDUpdated)
 				mockAcknowledgePostVerificationWarnings(m, enrollmentID, changeIDUpdated)
-				mockGetChangeStatus(m, enrollmentID, changeIDUpdated, 1, someStatusPostReviewWarning)
-				mockGetEnrollment(m, enrollmentID, 1, enrollmentUpdated)
-				mockGetChangeHistoryBothCerts(m, enrollmentID, 1, enrollmentUpdated, ECDSA, certECDSAUpdatedForTests, trustChainECDSAUpdatedForTests, RSA, certRSAUpdatedForTests, trustChainRSAUpdatedForTests)
-				mockCheckUnacknowledgedWarnings(m, enrollmentID, changeIDUpdated, 1, enrollmentUpdated, complete)
-				mockGetEnrollment(m, enrollmentID, 1, enrollmentUpdated)
-				mockGetChangeHistoryBothCerts(m, enrollmentID, 1, enrollmentUpdated, ECDSA, certECDSAUpdatedForTests, trustChainECDSAUpdatedForTests, RSA, certRSAUpdatedForTests, trustChainRSAUpdatedForTests)
-				mockCheckUnacknowledgedWarnings(m, enrollmentID, changeIDUpdated, 2, enrollmentUpdated, complete)
+				mockGetChangeStatus(m, enrollmentID, changeIDUpdated, 1, someCheckingInProgressStatus)
+
+				enrollmentAfterUpdate := copyEnrollmentWithEmptyPendingChanges(*enrollmentUpdated)
+				mockGetEnrollment(m, enrollmentID, 1, enrollmentAfterUpdate)
+				mockGetChangeHistoryBothCerts(m, enrollmentID, 1, enrollmentAfterUpdate, ECDSA, certECDSAUpdatedForTests, trustChainECDSAUpdatedForTests, RSA, certRSAUpdatedForTests, trustChainRSAUpdatedForTests)
+				mockGetEnrollment(m, enrollmentID, 1, enrollmentAfterUpdate)
+				mockGetChangeHistoryBothCerts(m, enrollmentID, 1, enrollmentAfterUpdate, ECDSA, certECDSAUpdatedForTests, trustChainECDSAUpdatedForTests, RSA, certRSAUpdatedForTests, trustChainRSAUpdatedForTests)
 			},
 			enrollment:          createEnrollment(2, 22, true, true),
 			enrollmentUpdated:   createEnrollment(2, 222, false, true),
@@ -953,33 +915,53 @@ func TestUpdateCPSUploadCertificate(t *testing.T) {
 			errorForCreate:      nil,
 			errorForUpdate:      nil,
 		},
-		"update: renewal with old certificate - api error": {
+		"update: change in cert - enrollment was already updated": {
 			init: func(t *testing.T, m *cps.Mock, enrollment *cps.GetEnrollmentResponse, enrollmentUpdated *cps.GetEnrollmentResponse, enrollmentID, changeID, changeIDUpdated int) {
-				mockCheckUnacknowledgedWarnings(m, enrollmentID, changeID, 3, enrollment, waitUploadThirdParty)
 				mockCreateWithACKPostWarnings(m, enrollmentID, changeID, enrollment)
 				mockGetChangeStatus(m, enrollmentID, changeID, 1, waitAckChangeManagement)
 				mockAcknowledgeChangeManagement(m, enrollmentID, changeID)
-				mockReadAndCheckUnacknowledgedWarnings(m, enrollmentID, changeID, enrollment, certRSAForTests, trustChainRSAForTests, RSA, complete)
-				// STEP 2
-				mockReadGetChangeHistory(m, enrollment, certRSAForTests, trustChainRSAForTests, RSA, enrollmentID, 1)
-				mockCheckUnacknowledgedWarnings(m, enrollmentID, changeID, 3, enrollment, waitUploadThirdParty)
-				// UPDATE
+
+				enrollmentAfterCreate := copyEnrollmentWithEmptyPendingChanges(*enrollment)
+				//Read after create
+				mockReadGetChangeHistoryForComplete(m, enrollmentAfterCreate, certRSAForTests, trustChainRSAForTests, RSA, enrollmentID, 1)
+				//Refresh + read before update (enrollment was just updated)
+				mockReadGetChangeHistory(m, enrollmentUpdated, certRSAForTests, trustChainRSAForTests, RSA, waitUploadThirdParty, enrollmentID, changeIDUpdated, 1)
+				mockReadGetChangeHistory(m, enrollmentUpdated, certRSAForTests, trustChainRSAForTests, RSA, waitUploadThirdParty, enrollmentID, changeIDUpdated, 1)
+
 				mockGetEnrollment(m, enrollmentID, 1, enrollmentUpdated)
 				mockGetChangeStatus(m, enrollmentID, changeIDUpdated, 1, waitUploadThirdParty)
 				mockGetEnrollment(m, enrollmentID, 1, enrollmentUpdated)
-				m.On("UploadThirdPartyCertAndTrustChain", mock.Anything, cps.UploadThirdPartyCertAndTrustChainRequest{
-					EnrollmentID: enrollmentID,
-					ChangeID:     changeIDUpdated,
-					Certificates: cps.ThirdPartyCertificates{
-						CertificatesAndTrustChains: []cps.CertificateAndTrustChain{
-							{
-								Certificate:  certRSAForTests,
-								TrustChain:   trustChainRSAForTests,
-								KeyAlgorithm: RSA,
-							},
-						},
-					},
-				}).Return(fmt.Errorf("provided certificate is wrong")).Once()
+				mockUploadThirdPartyCertificateAndTrustChain(m, RSA, certRSAUpdatedForTests, "", enrollmentID, changeIDUpdated)
+				mockGetChangeStatus(m, enrollmentID, changeIDUpdated, 1, waitReviewThirdPartyCert)
+				mockGetPostVerificationWarnings(m, threeWarnings, enrollmentID, changeIDUpdated)
+				mockAcknowledgePostVerificationWarnings(m, enrollmentID, changeIDUpdated)
+				mockGetChangeStatus(m, enrollmentID, changeIDUpdated, 1, someCheckingInProgressStatus)
+
+				enrollmentAfterUpdate := copyEnrollmentWithEmptyPendingChanges(*enrollmentUpdated)
+				mockReadForComplete(m, enrollmentID, enrollmentAfterUpdate, certRSAUpdatedForTests, "", RSA)
+			},
+			enrollment:          createEnrollment(2, 22, true, true),
+			enrollmentUpdated:   createEnrollment(2, 222, false, true),
+			enrollmentID:        2,
+			changeID:            22,
+			changeIDUpdated:     222,
+			configPathForCreate: "testdata/TestResCPSUploadCertificate/change_management/change_management_true.tf",
+			configPathForUpdate: "testdata/TestResCPSUploadCertificate/certificates/changed_certificate.tf",
+			checkFuncForCreate:  checkAttrs(createMockData("", "", certRSAForTests, trustChainRSAForTests, true, true, false, false, nil)),
+			checkFuncForUpdate:  checkAttrs(createMockData("", "", certRSAUpdatedForTests, "", true, true, false, false, nil)),
+			errorForCreate:      nil,
+			errorForUpdate:      nil,
+		},
+		"update: renewal with old certificate - no diff": {
+			init: func(t *testing.T, m *cps.Mock, enrollment *cps.GetEnrollmentResponse, enrollmentUpdated *cps.GetEnrollmentResponse, enrollmentID, changeID, changeIDUpdated int) {
+				mockCreateWithACKPostWarnings(m, enrollmentID, changeID, enrollment)
+				mockGetChangeStatus(m, enrollmentID, changeID, 1, waitAckChangeManagement)
+				mockAcknowledgeChangeManagement(m, enrollmentID, changeID)
+				mockRead(m, enrollmentID, changeID, enrollment, certRSAForTests, trustChainRSAForTests, RSA, complete)
+				//read
+				enrollmentAfterCreate := copyEnrollmentWithEmptyPendingChanges(*enrollment)
+				mockReadGetChangeHistoryForComplete(m, enrollmentAfterCreate, certRSAForTests, trustChainRSAForTests, RSA, enrollmentID, 1)
+				mockReadGetChangeHistoryForComplete(m, enrollmentAfterCreate, certRSAForTests, trustChainRSAForTests, RSA, enrollmentID, 1)
 			},
 			enrollment:          createEnrollment(2, 22, true, true),
 			enrollmentUpdated:   createEnrollment(2, 222, true, true),
@@ -991,15 +973,40 @@ func TestUpdateCPSUploadCertificate(t *testing.T) {
 			checkFuncForCreate:  checkAttrs(createMockData("", "", certRSAForTests, trustChainRSAForTests, true, true, false, false, nil)),
 			checkFuncForUpdate:  nil,
 			errorForCreate:      nil,
-			errorForUpdate:      regexp.MustCompile("provided certificate is wrong"),
+			errorForUpdate:      nil,
 		},
-		"update: change in already deployed certificate; no pending changes - error": {
+		"update: renewal with old certificate - enrollment was already updated, no diff, but warn": {
 			init: func(t *testing.T, m *cps.Mock, enrollment *cps.GetEnrollmentResponse, enrollmentUpdated *cps.GetEnrollmentResponse, enrollmentID, changeID, changeIDUpdated int) {
-				mockCheckUnacknowledgedWarnings(m, enrollmentID, changeID, 3, enrollment, waitUploadThirdParty)
 				mockCreateWithACKPostWarnings(m, enrollmentID, changeID, enrollment)
 				mockGetChangeStatus(m, enrollmentID, changeID, 1, waitAckChangeManagement)
 				mockAcknowledgeChangeManagement(m, enrollmentID, changeID)
-				mockReadAndCheckUnacknowledgedWarningsForUpdate(m, enrollmentID, changeID, enrollment, certRSAForTests, trustChainRSAForTests, RSA, complete)
+				mockRead(m, enrollmentID, changeID, enrollment, certRSAForTests, trustChainRSAForTests, RSA, complete)
+				//read
+				enrollmentAfterCreate := copyEnrollmentWithEmptyPendingChanges(*enrollment)
+				mockReadGetChangeHistoryForComplete(m, enrollmentAfterCreate, certRSAForTests, trustChainRSAForTests, RSA, enrollmentID, 1)
+				//refresh
+				mockReadGetChangeHistory(m, enrollmentUpdated, certRSAForTests, trustChainRSAForTests, RSA, waitUploadThirdParty, enrollmentID, changeIDUpdated, 1)
+			},
+			enrollment:          createEnrollment(2, 22, true, true),
+			enrollmentUpdated:   createEnrollment(2, 222, true, true),
+			enrollmentID:        2,
+			changeID:            22,
+			changeIDUpdated:     222,
+			configPathForCreate: "testdata/TestResCPSUploadCertificate/change_management/change_management_true.tf",
+			configPathForUpdate: "testdata/TestResCPSUploadCertificate/change_management/change_management_true.tf",
+			checkFuncForCreate:  checkAttrs(createMockData("", "", certRSAForTests, trustChainRSAForTests, true, true, false, false, nil)),
+			checkFuncForUpdate:  nil,
+			errorForCreate:      nil,
+			errorForUpdate:      nil, //ToDo: add warn checking once it's possible (e.g. https://github.com/hashicorp/terraform-plugin-testing/pull/17)
+		},
+		"update: change in already deployed certificate; no pending changes - error": {
+			init: func(t *testing.T, m *cps.Mock, enrollment *cps.GetEnrollmentResponse, enrollmentUpdated *cps.GetEnrollmentResponse, enrollmentID, changeID, changeIDUpdated int) {
+				mockCreateWithACKPostWarnings(m, enrollmentID, changeID, enrollment)
+				mockGetChangeStatus(m, enrollmentID, changeID, 1, waitAckChangeManagement)
+				mockAcknowledgeChangeManagement(m, enrollmentID, changeID)
+
+				enrollmentAfterCreate := copyEnrollmentWithEmptyPendingChanges(*enrollment)
+				mockReadCompleteForUpdate(m, enrollmentID, enrollmentAfterCreate, certRSAForTests, trustChainRSAForTests, RSA, complete)
 				mockGetEnrollment(m, enrollmentID, 1, enrollmentUpdated)
 			},
 			enrollment:          createEnrollment(2, 22, true, true),
@@ -1014,11 +1021,13 @@ func TestUpdateCPSUploadCertificate(t *testing.T) {
 		},
 		"update: change in certificate with pending changes and wrong status - error": {
 			init: func(t *testing.T, m *cps.Mock, enrollment *cps.GetEnrollmentResponse, enrollmentUpdated *cps.GetEnrollmentResponse, enrollmentID, changeID, changeIDUpdated int) {
-				mockCheckUnacknowledgedWarnings(m, enrollmentID, changeID, 3, enrollment, waitUploadThirdParty)
 				mockCreateWithACKPostWarnings(m, enrollmentID, changeID, enrollment)
 				mockGetChangeStatus(m, enrollmentID, changeID, 1, waitAckChangeManagement)
 				mockAcknowledgeChangeManagement(m, enrollmentID, changeID)
-				mockReadAndCheckUnacknowledgedWarningsForUpdate(m, enrollmentID, changeID, enrollment, certRSAForTests, trustChainRSAForTests, RSA, complete)
+
+				enrollmentAfterCreate := copyEnrollmentWithEmptyPendingChanges(*enrollment)
+				mockReadCompleteForUpdate(m, enrollmentID, enrollmentAfterCreate, certRSAForTests, trustChainRSAForTests, RSA, complete)
+
 				mockGetEnrollment(m, enrollmentID, 1, enrollment)
 				mockGetChangeStatus(m, enrollmentID, changeID, 1, waitAckChangeManagement)
 			},
@@ -1033,11 +1042,13 @@ func TestUpdateCPSUploadCertificate(t *testing.T) {
 		},
 		"update: get enrollment error": {
 			init: func(t *testing.T, m *cps.Mock, enrollment *cps.GetEnrollmentResponse, enrollmentUpdated *cps.GetEnrollmentResponse, enrollmentID, changeID, changeIDUpdated int) {
-				mockCheckUnacknowledgedWarnings(m, enrollmentID, changeID, 3, enrollment, waitUploadThirdParty)
 				mockCreateWithACKPostWarnings(m, enrollmentID, changeID, enrollment)
 				mockGetChangeStatus(m, enrollmentID, changeID, 1, waitAckChangeManagement)
 				mockAcknowledgeChangeManagement(m, enrollmentID, changeID)
-				mockReadAndCheckUnacknowledgedWarningsForUpdate(m, enrollmentID, changeID, enrollment, certRSAForTests, trustChainRSAForTests, RSA, complete)
+
+				enrollmentAfterCreate := copyEnrollmentWithEmptyPendingChanges(*enrollment)
+				mockReadCompleteForUpdate(m, enrollmentID, enrollmentAfterCreate, certRSAForTests, trustChainRSAForTests, RSA, complete)
+
 				m.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{
 					EnrollmentID: enrollmentID,
 				}).Return(nil, fmt.Errorf("could not get an enrollment")).Times(1)
@@ -1053,9 +1064,9 @@ func TestUpdateCPSUploadCertificate(t *testing.T) {
 		},
 		"update: get change status error": {
 			init: func(t *testing.T, m *cps.Mock, enrollment *cps.GetEnrollmentResponse, enrollmentUpdated *cps.GetEnrollmentResponse, enrollmentID, changeID, changeIDUpdated int) {
-				mockCheckUnacknowledgedWarnings(m, enrollmentID, changeID, 3, enrollment, waitUploadThirdParty)
 				mockCreateWithACKPostWarnings(m, enrollmentID, changeID, enrollment)
-				mockReadAndCheckUnacknowledgedWarningsForUpdate(m, enrollmentID, changeID, enrollment, certRSAForTests, trustChainRSAForTests, RSA, complete)
+
+				mockReadForUpdate(m, enrollmentID, changeID, enrollment, certRSAForTests, trustChainRSAForTests, RSA, waitAckChangeManagement)
 				mockGetEnrollment(m, enrollmentID, 1, enrollment)
 				m.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
 					EnrollmentID: enrollmentID,
@@ -1073,9 +1084,9 @@ func TestUpdateCPSUploadCertificate(t *testing.T) {
 		},
 		"update: acknowledge change management error": {
 			init: func(t *testing.T, m *cps.Mock, enrollment *cps.GetEnrollmentResponse, enrollmentUpdated *cps.GetEnrollmentResponse, enrollmentID, changeID, changeIDUpdated int) {
-				mockCheckUnacknowledgedWarnings(m, enrollmentID, changeID, 3, enrollment, waitUploadThirdParty)
 				mockCreateWithACKPostWarnings(m, enrollmentID, changeID, enrollment)
-				mockReadAndCheckUnacknowledgedWarningsForUpdate(m, enrollmentID, changeID, enrollment, certRSAForTests, trustChainRSAForTests, RSA, waitAckChangeManagement)
+
+				mockReadForUpdate(m, enrollmentID, changeID, enrollment, certRSAForTests, trustChainRSAForTests, RSA, waitAckChangeManagement)
 				mockGetEnrollment(m, enrollmentID, 1, enrollment)
 				mockGetChangeStatus(m, enrollmentID, changeID, 1, waitAckChangeManagement)
 				mockGetChangeStatus(m, enrollmentID, changeID, 1, waitAckChangeManagement)
@@ -1202,6 +1213,12 @@ func assertAttributeFor(state *terraform.InstanceState, t *testing.T, key, value
 	valueInState, exist := state.Attributes[key]
 	assert.True(t, exist, fmt.Sprintf("attribute '%s' was not present", key))
 	assert.Equal(t, value, valueInState, fmt.Sprintf("attribute '%s' has incorrect value %s", key, valueInState))
+}
+
+// copyEnrollmentWithEmptyPendingChanges returns enrollment after enrollment reaches "complete" state - it's pending changes disappear
+func copyEnrollmentWithEmptyPendingChanges(enrollment cps.GetEnrollmentResponse) *cps.GetEnrollmentResponse {
+	enrollment.PendingChanges = []cps.PendingChange{}
+	return &enrollment
 }
 
 var (
@@ -1363,29 +1380,44 @@ var (
 		mockGetChangeStatus(client, enrollmentID, changeID, 1, waitReviewThirdPartyCert)
 		mockGetPostVerificationWarnings(client, "Certificate Added to the new Trust Chain: TEST\nThere is a problem deploying the 'RSA' certificate.  Please contact your Akamai support team to resolve the issue.\nCertificate data is blank or missing.", enrollmentID, changeID)
 		mockAcknowledgePostVerificationWarnings(client, enrollmentID, changeID)
-		mockGetChangeStatus(client, enrollmentID, changeID, 1, someStatusPostReviewWarning)
+		mockGetChangeStatus(client, enrollmentID, changeID, 1, someCheckingInProgressStatus)
 	}
 
-	// mockReadAndCheckUnacknowledgedWarnings mocks Read and CustomDiff functions
-	mockReadAndCheckUnacknowledgedWarnings = func(client *cps.Mock, enrollmentID, changeID int, enrollment *cps.GetEnrollmentResponse, certificate, trustChain, keyAlgorithm, status string) {
-		mockReadGetChangeHistory(client, enrollment, certificate, trustChain, keyAlgorithm, enrollmentID, 1)
-		mockCheckUnacknowledgedWarnings(client, enrollmentID, changeID, 1, enrollment, status)
-		mockReadGetChangeHistory(client, enrollment, certificate, trustChain, keyAlgorithm, enrollmentID, 1)
-		mockCheckUnacknowledgedWarnings(client, enrollmentID, changeID, 2, enrollment, status)
+	// mockReadForComplete mocks Read functions when cert has been already deployed to production (status = complete)
+	mockReadForComplete = func(client *cps.Mock, enrollmentID int, enrollment *cps.GetEnrollmentResponse, certificate, trustChain, keyAlgorithm string) {
+		mockReadGetChangeHistoryForComplete(client, enrollment, certificate, trustChain, keyAlgorithm, enrollmentID, 1)
+		mockReadGetChangeHistoryForComplete(client, enrollment, certificate, trustChain, keyAlgorithm, enrollmentID, 1)
 	}
 
-	// mockReadAndCheckUnacknowledgedWarningsForUpdate mocks Read and CustomDiff functions during Update
-	mockReadAndCheckUnacknowledgedWarningsForUpdate = func(client *cps.Mock, enrollmentID, changeID int, enrollment *cps.GetEnrollmentResponse, certificate, trustChain, keyAlgorithm, status string) {
-		mockReadGetChangeHistory(client, enrollment, certificate, trustChain, keyAlgorithm, enrollmentID, 1)
-		mockCheckUnacknowledgedWarnings(client, enrollmentID, changeID, 1, enrollment, status)
-		mockReadGetChangeHistory(client, enrollment, certificate, trustChain, keyAlgorithm, enrollmentID, 1)
-		mockCheckUnacknowledgedWarnings(client, enrollmentID, changeID, 2, enrollment, status)
-		mockReadGetChangeHistory(client, enrollment, certificate, trustChain, keyAlgorithm, enrollmentID, 1)
-		mockCheckUnacknowledgedWarnings(client, enrollmentID, changeID, 3, enrollment, status)
+	// mockRead mocks Read functions
+	mockRead = func(client *cps.Mock, enrollmentID, changeID int, enrollment *cps.GetEnrollmentResponse, certificate, trustChain, keyAlgorithm, status string) {
+		mockReadGetChangeHistory(client, enrollment, certificate, trustChain, keyAlgorithm, status, enrollmentID, changeID, 1)
+		mockReadGetChangeHistory(client, enrollment, certificate, trustChain, keyAlgorithm, status, enrollmentID, changeID, 1)
 	}
 
-	// mockReadGetChangeHistory mocks GetChangeHistory call with provided values
-	mockReadGetChangeHistory = func(client *cps.Mock, enrollment *cps.GetEnrollmentResponse, certificate, trustChain, keyAlgorithm string, enrollmentID, timesToRun int) {
+	// mockReadForUpdate mocks Read functions during Update
+	mockReadForUpdate = func(client *cps.Mock, enrollmentID, changeID int, enrollment *cps.GetEnrollmentResponse, certificate, trustChain, keyAlgorithm, status string) {
+		mockReadGetChangeHistory(client, enrollment, certificate, trustChain, keyAlgorithm, status, enrollmentID, changeID, 1)
+		mockReadGetChangeHistory(client, enrollment, certificate, trustChain, keyAlgorithm, status, enrollmentID, changeID, 1)
+		mockReadGetChangeHistory(client, enrollment, certificate, trustChain, keyAlgorithm, status, enrollmentID, changeID, 1)
+	}
+
+	// mockReadCompleteForUpdate mocks Read functions during Update when cert has been already deployed to production (status = complete) and it does not change during all reads
+	mockReadCompleteForUpdate = func(client *cps.Mock, enrollmentID int, enrollment *cps.GetEnrollmentResponse, certificate, trustChain, keyAlgorithm, status string) {
+		mockReadGetChangeHistoryForComplete(client, enrollment, certificate, trustChain, keyAlgorithm, enrollmentID, 1)
+		mockReadGetChangeHistoryForComplete(client, enrollment, certificate, trustChain, keyAlgorithm, enrollmentID, 1)
+		mockReadGetChangeHistoryForComplete(client, enrollment, certificate, trustChain, keyAlgorithm, enrollmentID, 1)
+	}
+
+	// mockReadGetChangeHistory mocks Read functions across execution
+	mockReadGetChangeHistory = func(client *cps.Mock, enrollment *cps.GetEnrollmentResponse, certificate, trustChain, keyAlgorithm, status string, enrollmentID, changeID, timesToRun int) {
+		mockGetEnrollment(client, enrollmentID, timesToRun, enrollment)
+		mockGetChangeStatus(client, enrollmentID, changeID, 1, status)
+		mockGetChangeHistory(client, enrollmentID, timesToRun, enrollment, keyAlgorithm, certificate, trustChain)
+	}
+
+	// mockReadGetChangeHistoryForComplete mocks Read functions across execution when cert has been already deployed to production (status = complete)
+	mockReadGetChangeHistoryForComplete = func(client *cps.Mock, enrollment *cps.GetEnrollmentResponse, certificate, trustChain, keyAlgorithm string, enrollmentID, timesToRun int) {
 		mockGetEnrollment(client, enrollmentID, timesToRun, enrollment)
 		mockGetChangeHistory(client, enrollmentID, timesToRun, enrollment, keyAlgorithm, certificate, trustChain)
 	}
@@ -1650,12 +1682,6 @@ var (
 			EnrollmentID:    enrollmentID,
 			ChangeID:        changeID,
 		}).Return(nil).Once()
-	}
-
-	// mockCheckUnacknowledgedWarnings mocks CheckUnacknowledgedWarnings function with provided values
-	mockCheckUnacknowledgedWarnings = func(client *cps.Mock, enrollmentID, changeID, timesToRun int, enrollment *cps.GetEnrollmentResponse, status string) {
-		mockGetEnrollment(client, enrollmentID, timesToRun, enrollment)
-		mockGetChangeStatus(client, enrollmentID, changeID, timesToRun, status)
 	}
 
 	// checkAttrs creates check functions for a resource based on received data

@@ -48,13 +48,14 @@ func resourceActivations() *schema.Resource {
 				Optional:         true,
 				Default:          "Activation Comments",
 				Description:      "Descriptive text to accompany the activation",
-				DiffSuppressFunc: suppressNoteFieldForNetworkListActivation,
+				DiffSuppressFunc: suppressFieldsForNetworkListActivation,
 			},
 			"notification_emails": {
-				Type:        schema.TypeSet,
-				Required:    true,
-				Elem:        &schema.Schema{Type: schema.TypeString},
-				Description: "List of email addresses of Control Center users who receive an email when activation of this list is complete",
+				Type:             schema.TypeSet,
+				Required:         true,
+				Elem:             &schema.Schema{Type: schema.TypeString},
+				Description:      "List of email addresses of Control Center users who receive an email when activation of this list is complete",
+				DiffSuppressFunc: suppressFieldsForNetworkListActivation,
 			},
 			"sync_point": {
 				Type:        schema.TypeInt,
@@ -280,7 +281,7 @@ func lookupActivation(ctx context.Context, client networklists.NTWRKLISTS, query
 	return activation, nil
 }
 
-func suppressNoteFieldForNetworkListActivation(_, oldValue, newValue string, d *schema.ResourceData) bool {
+func suppressFieldsForNetworkListActivation(_, oldValue, newValue string, d *schema.ResourceData) bool {
 	if oldValue != newValue && d.HasChanges("network_list_id", "network") {
 		return false
 	}

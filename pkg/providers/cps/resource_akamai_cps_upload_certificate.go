@@ -29,7 +29,6 @@ func resourceCPSUploadCertificate() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceCPSUploadCertificateImport,
 		},
-		CustomizeDiff: checkUnacknowledgedWarnings,
 		Timeouts: &schema.ResourceTimeout{
 			Default: &defaultTimeout,
 		},
@@ -113,7 +112,7 @@ func resourceCPSUploadCertificate() *schema.Resource {
 				ExactlyOneOf:          nil,
 				AtLeastOneOf:          nil,
 				RequiredWith:          nil,
-				Deprecated:            "",
+				Deprecated:            "Field 'unacknowledged_warnings' has been deprecated",
 				ValidateFunc:          nil,
 				ValidateDiagFunc:      nil,
 				Sensitive:             false,
@@ -162,9 +161,6 @@ func resourceCPSUploadCertificateCreate(ctx context.Context, d *schema.ResourceD
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
 	client := inst.Client(meta)
 	logger.Debug("Creating upload certificate")
-	if err := d.Set("unacknowledged_warnings", false); err != nil {
-		return diag.Errorf("could not set `unacknowledged_warnings`: %s", err)
-	}
 	return upsertUploadCertificate(ctx, d, m, client, logger)
 }
 
@@ -194,27 +190,36 @@ func resourceCPSUploadCertificateRead(ctx context.Context, d *schema.ResourceDat
 		return diag.Errorf("could not get changeID of an enrollment: %s", err)
 	}
 
-	var attrs map[string]interface{}
-	if waitForDeployment && len(enrollment.PendingChanges) != 0 {
-		ackChangeManagement, err := tf.GetBoolValue("acknowledge_change_management", d)
-		if err != nil {
-			return diag.Errorf("could not get `acknowledge change management` attribute: %s", err)
-		}
+	diags := diag.Diagnostics{}
 
+	if len(enrollment.PendingChanges) != 0 {
 		changeStatus, err := sendGetChangeStatusReq(ctx, client, enrollmentID, changeID)
 		if err != nil {
 			return diag.FromErr(err)
 		}
 
-		if changeStatus.StatusInfo.Status != waitUploadThirdParty && changeStatus.StatusInfo.Status != waitReviewThirdPartyCert {
-			statusToWaitFor := complete
-			if !ackChangeManagement && enrollment.ChangeManagement {
-				statusToWaitFor = waitAckChangeManagement
-			}
-			if err = waitForChangeStatus(ctx, client, enrollmentID, changeID, statusToWaitFor); err != nil {
-				return diag.FromErr(err)
+		if waitForDeployment {
+			ackChangeManagement, err := tf.GetBoolValue("acknowledge_change_management", d)
+			if err != nil {
+				return diag.Errorf("could not get `acknowledge change management` attribute: %s", err)
 			}
 
+			if changeStatus.StatusInfo.Status != waitUploadThirdParty && changeStatus.StatusInfo.Status != waitReviewThirdPartyCert {
+				statusToWaitFor := complete
+				if !ackChangeManagement && enrollment.ChangeManagement {
+					statusToWaitFor = waitAckChangeManagement
+				}
+				if err = waitForChangeStatus(ctx, client, enrollmentID, changeID, statusToWaitFor); err != nil {
+					return diag.FromErr(err)
+				}
+			}
+		}
+
+		if changeStatus.StatusInfo.Status == waitReviewThirdPartyCert || changeStatus.StatusInfo.Status == waitUploadThirdParty {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Warning,
+				Summary:  "The certificate for the latest version of enrollment has not been deployed yet.",
+			})
 		}
 	}
 
@@ -222,15 +227,18 @@ func resourceCPSUploadCertificateRead(ctx context.Context, d *schema.ResourceDat
 		EnrollmentID: enrollmentID,
 	})
 	if err != nil {
-		return diag.Errorf("could not get change history: %s", err)
+		diags = append(diags, diag.Errorf("could not get change history: %s", err)...)
+		return diags
 	}
-	attrs = createAttrsFromChangeHistory(changeHistory)
+
+	attrs := createAttrsFromChangeHistory(changeHistory)
 
 	if err = tf.SetAttrs(d, attrs); err != nil {
-		return diag.Errorf("could not set attributes: %s", err)
+		diags = append(diags, diag.Errorf("could not set attributes: %s", err)...)
+		return diags
 	}
 
-	return nil
+	return diags
 }
 
 func resourceCPSUploadCertificateUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -239,9 +247,6 @@ func resourceCPSUploadCertificateUpdate(ctx context.Context, d *schema.ResourceD
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
 	client := inst.Client(meta)
 	logger.Debug("Updating upload certificate")
-	if err := d.Set("unacknowledged_warnings", false); err != nil {
-		return diag.Errorf("could not set `unacknowledged_warnings`: %s", err)
-	}
 	enrollmentID, err := tf.GetIntValue("enrollment_id", d)
 	if err != nil {
 		return diag.Errorf("could not get `enrollment_id` attribute: %s", err)
@@ -387,52 +392,6 @@ func upsertUploadCertificate(ctx context.Context, d *schema.ResourceData, m inte
 	d.SetId(strconv.Itoa(attrs.enrollmentID))
 
 	return resourceCPSUploadCertificateRead(ctx, d, m)
-}
-
-// checkUnacknowledgedWarnings checks if there are unacknowledged warnings for a certificate
-func checkUnacknowledgedWarnings(ctx context.Context, diff *schema.ResourceDiff, m interface{}) error {
-	meta := meta.Must(m)
-	logger := meta.Log("CPS", "checkUnacknowledgedWarnings")
-	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	client := inst.Client(meta)
-	logger.Debug("Checking for unacknowledged warnings")
-
-	id := diff.Get("enrollment_id")
-	enrollmentID, ok := id.(int)
-	if !ok {
-		logger.Warnf("expected enrollmentID of type int, got: %T", enrollmentID)
-		return nil
-	}
-
-	// in case of the variable dependency, enrollmentID might be of '0' value when this function is first invoked, hence it should proceed
-	// further and load the variable correctly (after dependent resource is created) in the Create operation
-	if enrollmentID == 0 {
-		return nil
-	}
-
-	enrollment, err := client.GetEnrollment(ctx, cps.GetEnrollmentRequest{EnrollmentID: enrollmentID})
-	if err != nil {
-		return fmt.Errorf("could not get an enrollment: %s", err)
-	}
-
-	changeID, err := toolsCPS.GetChangeIDFromPendingChanges(enrollment.PendingChanges)
-	if err != nil && !errors.Is(err, toolsCPS.ErrNoPendingChanges) {
-		return fmt.Errorf("could not get changeID of an enrollment: %s", err)
-	} else if err != nil && errors.Is(err, toolsCPS.ErrNoPendingChanges) {
-		return nil
-	}
-
-	changeStatus, err := sendGetChangeStatusReq(ctx, client, enrollmentID, changeID)
-	if err != nil {
-		return err
-	}
-	if changeStatus.StatusInfo.Status == waitReviewThirdPartyCert || changeStatus.StatusInfo.Status == waitUploadThirdParty {
-		if err := diff.SetNew("unacknowledged_warnings", true); err != nil {
-			return fmt.Errorf("could not set 'unacknowledged_warnings' attribute: %s", err)
-		}
-	}
-
-	return nil
 }
 
 // checkForTrustChainWithoutCert validates if user provided trustChain without certificate and fails processing if so

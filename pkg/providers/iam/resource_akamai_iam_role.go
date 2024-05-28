@@ -2,7 +2,6 @@ package iam
 
 import (
 	"context"
-	"sort"
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/iam"
@@ -34,11 +33,12 @@ func resourceIAMRole() *schema.Resource {
 				Description: "The description for a role",
 			},
 			"granted_roles": {
-				Type:             schema.TypeList,
-				Elem:             &schema.Schema{Type: schema.TypeInt},
-				Required:         true,
-				DiffSuppressFunc: suppressDiffInGrantedRoles,
-				Description:      "The list of existing unique identifiers for the granted roles",
+				Type: schema.TypeSet,
+				Elem: &schema.Schema{
+					Type: schema.TypeInt,
+				},
+				Required:    true,
+				Description: "The list of existing unique identifiers for the granted roles",
 			},
 			"type": {
 				Type:        schema.TypeString,
@@ -68,7 +68,7 @@ func resourceIAMRoleCreate(ctx context.Context, d *schema.ResourceData, m interf
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	grantedRoles, err := tf.GetListValue("granted_roles", d)
+	grantedRoles, err := tf.GetSetValue("granted_roles", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -149,7 +149,7 @@ func resourceIAMRoleUpdate(ctx context.Context, d *schema.ResourceData, m interf
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	grantedRoles, err := tf.GetListValue("granted_roles", d)
+	grantedRoles, err := tf.GetSetValue("granted_roles", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -197,41 +197,10 @@ func resourceIAMRoleDelete(ctx context.Context, d *schema.ResourceData, m interf
 	return nil
 }
 
-func getGrantedRolesIDs(grantedRoles []interface{}) []iam.GrantedRoleID {
-	grantedRolesIDs := make([]iam.GrantedRoleID, 0, len(grantedRoles))
-	for _, role := range grantedRoles {
+func getGrantedRolesIDs(grantedRoles *schema.Set) []iam.GrantedRoleID {
+	grantedRolesIDs := make([]iam.GrantedRoleID, 0, grantedRoles.Len())
+	for _, role := range grantedRoles.List() {
 		grantedRolesIDs = append(grantedRolesIDs, iam.GrantedRoleID{ID: int64(role.(int))})
 	}
 	return grantedRolesIDs
-}
-
-func suppressDiffInGrantedRoles(_, o, n string, d *schema.ResourceData) bool {
-	key := "granted_roles"
-
-	oldValue, newValue := d.GetChange(key)
-	oldGrantedRoles := oldValue.([]interface{})
-	newGrantedRoles := newValue.([]interface{})
-	if len(oldGrantedRoles) != len(newGrantedRoles) {
-		return o == n
-	}
-
-	oldGrantedRolesIDs := make([]int, 0, len(oldGrantedRoles))
-	for _, v := range oldGrantedRoles {
-		oldGrantedRolesIDs = append(oldGrantedRolesIDs, v.(int))
-	}
-
-	newGrantedRolesIDs := make([]int, 0, len(newGrantedRoles))
-	for _, v := range newGrantedRoles {
-		newGrantedRolesIDs = append(newGrantedRolesIDs, v.(int))
-	}
-
-	sort.Ints(oldGrantedRolesIDs)
-	sort.Ints(newGrantedRolesIDs)
-
-	for i := range oldGrantedRoles {
-		if oldGrantedRolesIDs[i] != newGrantedRolesIDs[i] {
-			return false
-		}
-	}
-	return true
 }

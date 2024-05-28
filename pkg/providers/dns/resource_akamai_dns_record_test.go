@@ -421,6 +421,353 @@ func TestResDnsRecord(t *testing.T) {
 	})
 }
 
+func TestMXRecord(t *testing.T) {
+	notFound := &dns.Error{
+		StatusCode: http.StatusNotFound,
+	}
+	dnsClient := dns.Client(session.Must(session.New()))
+	name, zone, mx := "exampleterraform.io", "exampleterraform.io", "MX"
+
+	mockCreate := func(d *dns.Mock, realClient dns.DNS, createdRecord *dns.RecordBody) {
+		d.On("GetRecord", mock.Anything, zone, name, mx).
+			Return(nil, notFound).Twice()
+		d.On("CreateRecord", mock.Anything,
+			createdRecord, zone, []bool{false}).
+			Return(nil).Once()
+	}
+	mockRead := func(d *dns.Mock, realClient dns.DNS, createdRecord *dns.RecordBody) {
+		d.On("GetRecord", mock.Anything, zone, name, mx).
+			Return(createdRecord, nil).Once()
+		d.On("ProcessRdata", mock.Anything, createdRecord.Target, mx).
+			Return(realClient.ProcessRdata(context.Background(), createdRecord.Target, mx)).Once()
+		d.On("GetRecord", mock.Anything, zone, name, mx).
+			Return(createdRecord, nil).Once()
+		d.On("ParseRData", mock.Anything, mx, createdRecord.Target).
+			Return(realClient.ParseRData(context.Background(), mx, createdRecord.Target)).Once()
+		d.On("ProcessRdata", mock.Anything, createdRecord.Target, mx).
+			Return(realClient.ProcessRdata(context.Background(), createdRecord.Target, mx)).Once()
+	}
+	mockUpdate := func(d *dns.Mock, realClient dns.DNS, previousRecord *dns.RecordBody, updatedRecord *dns.RecordBody) {
+		d.On("GetRecord", mock.Anything, zone, name, mx).
+			Return(previousRecord, nil).Once()
+		d.On("ProcessRdata", mock.Anything, previousRecord.Target, mx).
+			Return(realClient.ProcessRdata(context.Background(), previousRecord.Target, mx)).Once()
+		d.On("GetRecord", mock.Anything, zone, name, mx).
+			Return(previousRecord, nil).Once()
+		d.On("ProcessRdata", mock.Anything, previousRecord.Target, mx).
+			Return(realClient.ProcessRdata(context.Background(), previousRecord.Target, mx)).Once()
+		d.On("UpdateRecord", mock.Anything,
+			updatedRecord, zone, []bool{false}).
+			Return(nil)
+	}
+	mockDelete := func(d *dns.Mock, createdRecord *dns.RecordBody) {
+		d.On("DeleteRecord", mock.Anything,
+			createdRecord, zone, []bool{false}).
+			Return(nil)
+	}
+
+	defaultInit := func(d *dns.Mock, createTargets, updateTargets, deleteTargets []string) {
+		createdRecord := &dns.RecordBody{
+			Name:       name,
+			RecordType: mx,
+			TTL:        300,
+			Target:     createTargets,
+		}
+		mockCreate(d, dnsClient, createdRecord)
+		//Read after create
+		mockRead(d, dnsClient, createdRecord)
+		//Second read
+		mockRead(d, dnsClient, createdRecord)
+		//Read before update
+		mockRead(d, dnsClient, createdRecord)
+
+		updatedRecord := &dns.RecordBody{
+			Name:       name,
+			RecordType: mx,
+			TTL:        300,
+			Target:     updateTargets,
+		}
+		mockUpdate(d, dnsClient, createdRecord, updatedRecord)
+		//Read after update
+		mockRead(d, dnsClient, updatedRecord)
+		//Second read
+		mockRead(d, dnsClient, updatedRecord)
+
+		deleteRecord := &dns.RecordBody{
+			Name:       name,
+			RecordType: mx,
+			TTL:        300,
+			Target:     deleteTargets,
+		}
+		mockDelete(d, deleteRecord)
+	}
+	tests := map[string]struct {
+		createTargets []string
+		updateTargets []string
+		deleteTargets []string
+		steps         []resource.TestStep
+	}{
+		"priorities in targets": {
+			createTargets: []string{
+				"5 mx1.test.com.",
+				"10 mx2.test.com.",
+				"15 mx3.test.com.",
+			},
+			updateTargets: []string{
+				"5 mx1.test.com.",
+				"10 mx2.test.com.",
+				"15 mx3.test.com.",
+				"20 mx4.test.com.",
+			},
+			deleteTargets: []string{
+				"5 mx1.test.com.",
+				"10 mx2.test.com.",
+				"15 mx3.test.com.",
+				"20 mx4.test.com.",
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResDnsRecordMX/create_target.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "name", "exampleterraform.io"),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "zone", "exampleterraform.io"),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "recordtype", "MX"),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "ttl", "300"),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "target.#", "3"),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "target.0", "5 mx1.test.com."),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "target.1", "10 mx2.test.com."),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "target.2", "15 mx3.test.com."),
+					),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResDnsRecordMX/update_target.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "name", "exampleterraform.io"),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "zone", "exampleterraform.io"),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "recordtype", "MX"),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "ttl", "300"),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "target.#", "4"),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "target.0", "5 mx1.test.com."),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "target.1", "10 mx2.test.com."),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "target.2", "15 mx3.test.com."),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "target.3", "20 mx4.test.com."),
+					),
+				},
+			},
+		},
+		"priorities in priority": {
+			createTargets: []string{
+				"3 mx1.test.com.",
+				"5 mx2.test.com.",
+				"7 mx3.test.com.",
+			},
+			updateTargets: []string{
+				"4 mx1.test.com.",
+				"6 mx2.test.com.",
+				"8 mx3.test.com.",
+			},
+			deleteTargets: []string{
+				"mx1.test.com.",
+				"mx2.test.com.",
+				"mx3.test.com.",
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResDnsRecordMX/create_priority.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "name", "exampleterraform.io"),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "zone", "exampleterraform.io"),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "recordtype", "MX"),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "ttl", "300"),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "target.#", "3"),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "target.0", "mx1.test.com."),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "target.1", "mx2.test.com."),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "target.2", "mx3.test.com."),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "priority", "3"),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "priority_increment", "2"),
+					),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResDnsRecordMX/update_priority.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "name", "exampleterraform.io"),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "zone", "exampleterraform.io"),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "recordtype", "MX"),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "ttl", "300"),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "target.#", "3"),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "target.0", "mx1.test.com."),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "target.1", "mx2.test.com."),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "target.2", "mx3.test.com."),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "priority", "4"),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "priority_increment", "2"),
+					),
+				},
+			},
+		},
+		"priorities in priority - update increment": {
+			createTargets: []string{
+				"3 mx1.test.com.",
+				"5 mx2.test.com.",
+				"7 mx3.test.com.",
+			},
+			updateTargets: []string{
+				"3 mx1.test.com.",
+				"6 mx2.test.com.",
+				"9 mx3.test.com.",
+			},
+			deleteTargets: []string{
+				"mx1.test.com.",
+				"mx2.test.com.",
+				"mx3.test.com.",
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResDnsRecordMX/create_priority.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "name", "exampleterraform.io"),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "zone", "exampleterraform.io"),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "recordtype", "MX"),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "ttl", "300"),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "target.#", "3"),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "target.0", "mx1.test.com."),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "target.1", "mx2.test.com."),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "target.2", "mx3.test.com."),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "priority", "3"),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "priority_increment", "2"),
+					),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResDnsRecordMX/update_increment.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "name", "exampleterraform.io"),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "zone", "exampleterraform.io"),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "recordtype", "MX"),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "ttl", "300"),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "target.#", "3"),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "target.0", "mx1.test.com."),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "target.1", "mx2.test.com."),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "target.2", "mx3.test.com."),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "priority", "3"),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "priority_increment", "3"),
+					),
+				},
+			},
+		},
+		"change from targets to priority": {
+			createTargets: []string{
+				"5 mx1.test.com.",
+				"10 mx2.test.com.",
+				"15 mx3.test.com.",
+			},
+			updateTargets: []string{
+				"4 mx1.test.com.",
+				"6 mx2.test.com.",
+				"8 mx3.test.com.",
+			},
+			deleteTargets: []string{
+				"mx1.test.com.",
+				"mx2.test.com.",
+				"mx3.test.com.",
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResDnsRecordMX/create_target.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "name", "exampleterraform.io"),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "zone", "exampleterraform.io"),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "recordtype", "MX"),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "ttl", "300"),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "target.#", "3"),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "target.0", "5 mx1.test.com."),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "target.1", "10 mx2.test.com."),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "target.2", "15 mx3.test.com."),
+					),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResDnsRecordMX/update_priority.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "name", "exampleterraform.io"),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "zone", "exampleterraform.io"),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "recordtype", "MX"),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "ttl", "300"),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "target.#", "3"),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "target.0", "mx1.test.com."),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "target.1", "mx2.test.com."),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "target.2", "mx3.test.com."),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "priority", "4"),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "priority_increment", "2"),
+					),
+				},
+			},
+		},
+		"change from priority to target": {
+			createTargets: []string{
+				"3 mx1.test.com.",
+				"5 mx2.test.com.",
+				"7 mx3.test.com.",
+			},
+			updateTargets: []string{
+				"5 mx1.test.com.",
+				"10 mx2.test.com.",
+				"15 mx3.test.com.",
+				"20 mx4.test.com.",
+			},
+			deleteTargets: []string{
+				"5 mx1.test.com.",
+				"10 mx2.test.com.",
+				"15 mx3.test.com.",
+				"20 mx4.test.com.",
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResDnsRecordMX/create_priority.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "name", "exampleterraform.io"),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "zone", "exampleterraform.io"),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "recordtype", "MX"),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "ttl", "300"),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "target.#", "3"),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "target.0", "mx1.test.com."),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "target.1", "mx2.test.com."),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "target.2", "mx3.test.com."),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "priority", "3"),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "priority_increment", "2"),
+					),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResDnsRecordMX/update_target.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "name", "exampleterraform.io"),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "zone", "exampleterraform.io"),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "recordtype", "MX"),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "ttl", "300"),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "target.#", "4"),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "target.0", "5 mx1.test.com."),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "target.1", "10 mx2.test.com."),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "target.2", "15 mx3.test.com."),
+						resource.TestCheckResourceAttr("akamai_dns_record.record", "target.3", "20 mx4.test.com."),
+					),
+				},
+			},
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			client := new(dns.Mock)
+			defaultInit(client, test.createTargets, test.updateTargets, test.deleteTargets)
+			useClient(client, func() {
+				resource.UnitTest(t, resource.TestCase{
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+					IsUnitTest:               true,
+					Steps:                    test.steps,
+				})
+			})
+			client.AssertExpectations(t)
+		})
+	}
+}
+
 func TestTargetDiffSuppress(t *testing.T) {
 	t.Run("target is computed and recordType is AAAA", func(t *testing.T) {
 		config := schema.TestResourceDataRaw(t, getResourceDNSRecordSchema(), map[string]interface{}{"recordtype": "AAAA"})

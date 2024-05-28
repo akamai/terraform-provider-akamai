@@ -1,5 +1,63 @@
 # RELEASE NOTES
 
+## 6.2.0 (May 28, 2024)
+
+#### FEATURES/ENHANCEMENTS:
+
+* Global
+  * Added validation for retryable logic values.
+    * `retry_max` or `AKAMAI_RETRY_MAX` - Cannot be higher than 50
+    * `retry_wait_min` or `AKAMAI_RETRY_WAIT_MIN` - Cannot be longer than 24h
+    * `retry_wait_max` or `AKAMAI_RETRY_WAIT_MAX` - Cannot be longer than 24h
+  * Migrated Terraform to version 1.7.5
+  * Updated SDKv2 and framework libraries
+
+* Appsec
+  * Suppressed rate policy diff when `counterType` field absence is the only change for `akamai_appsec_rate_policy` resource
+  * Suppressed activations diff when `notification_emails` field is the only change for `akamai_appsec_activations` resource
+
+* BOTMAN
+  * Added resource:
+    * `akamai_botman_custom_bot_category_item_sequence` - read and update
+
+* Cloudlets
+  * Added import for `akamai_cloudlets_application_load_balancer_activation` resource
+
+* GTM
+  * Added data sources:
+    * `akamai_gtm_geomap` - reads information for a specific GTM Geographic map
+    * `akamai_gtm_geomaps` - reads information for GTM Geographic maps under a given domain
+
+* IAM
+ * Fixed issue of generating an incorrect large difference in `granted_roles` update ([I#525](https://github.com/akamai/terraform-provider-akamai/issues/525))
+
+* Network Lists
+  * Suppressed activations diff when `notification_emails` field is the only change for `akamai_networklist_activations` resource
+
+* PAPI
+  * Added retry logic for `akamai_property_include_activation`
+  * Added import of the `certificate` for `akamai_edge_hostname` resource ([I#338](https://github.com/akamai/terraform-provider-akamai/issues/338))
+  * NOTE: Certificate modification is not allowed.
+
+#### BUG FIXES:
+
+* Appsec
+  * Resolved a drift issue with the `akamai_appsec_advanced_settings_attack_payload_logging` resource
+  * Fixed an issue where resource `akamai_appsec_activations` continues in a loop after API throws an error. ([#I528](https://github.com/akamai/terraform-provider-akamai/issues/528))
+
+* CPS
+  * Fixed issue where modifications to SAN list in `akamai_cps_third_party_enrollment` of the `akamai_cps_upload_certificate` resource results in to inconsistency terraform plan error.
+
+* DNS
+  * Fixed issue in `akamai_dns_record` that modifying `priority` and/or `priority_increment` for `MX` record type was causing an error
+* GTM
+  * Fixed issue with order of `liveness_test` in `akamai_gtm_property` ([PR#404](https://github.com/akamai/terraform-provider-akamai/pull/404))
+
+#### DEPRECATIONS:
+
+* CPS
+  * Deprecated field `unacknowledged_warnings` of `akamai_cps_upload_certificate` resource.
+
 ## 6.1.0 (Apr 23, 2024)
 
 #### FEATURES/ENHANCEMENTS:

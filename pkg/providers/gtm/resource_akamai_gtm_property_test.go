@@ -558,6 +558,120 @@ func getRankedFailoverPropertyNoPrecedence() *gtm.Property {
 	}
 }
 
+func TestResourceGTMLivenessTestOrder(t *testing.T) {
+	// To see actual plan when diff is expected, change 'nonEmptyPlan' to false in test case
+	tests := map[string]struct {
+		client        *gtm.Mock
+		pathForCreate string
+		pathForUpdate string
+		nonEmptyPlan  bool
+		planOnly      bool
+	}{
+		"second apply - no diff": {
+			client:        getMocks(),
+			pathForCreate: "testdata/TestResGtmProperty/liveness_test/multiple_liveness_tests.tf",
+			pathForUpdate: "testdata/TestResGtmProperty/liveness_test/multiple_liveness_tests.tf",
+			nonEmptyPlan:  false,
+			planOnly:      true,
+		},
+		"re-ordered liveness test - no diff": {
+			client:        getMocks(),
+			pathForCreate: "testdata/TestResGtmProperty/liveness_test/multiple_liveness_tests.tf",
+			pathForUpdate: "testdata/TestResGtmProperty/liveness_test/diff_liveness_tests_order.tf",
+			nonEmptyPlan:  false,
+			planOnly:      true,
+		},
+		"remove liveness test - diff": {
+			client:        getMocks(),
+			pathForCreate: "testdata/TestResGtmProperty/liveness_test/multiple_liveness_tests.tf",
+			pathForUpdate: "testdata/TestResGtmProperty/liveness_test/remove_liveness_test.tf",
+			nonEmptyPlan:  true,
+			planOnly:      true,
+		},
+		"add liveness test - diff": {
+			client:        getMocks(),
+			pathForCreate: "testdata/TestResGtmProperty/liveness_test/multiple_liveness_tests.tf",
+			pathForUpdate: "testdata/TestResGtmProperty/liveness_test/add_liveness_tests.tf",
+			nonEmptyPlan:  true,
+			planOnly:      true,
+		},
+		"re-ordered liveness test and re-ordered http headers - no diff": {
+			client:        getMocks(),
+			pathForCreate: "testdata/TestResGtmProperty/liveness_test/multiple_liveness_tests.tf",
+			pathForUpdate: "testdata/TestResGtmProperty/liveness_test/diff_lt_and_header_order.tf",
+			nonEmptyPlan:  false,
+			planOnly:      true,
+		},
+		"change of 'timeout' field - diff": {
+			client:        getMocks(),
+			pathForCreate: "testdata/TestResGtmProperty/liveness_test/multiple_liveness_tests.tf",
+			pathForUpdate: "testdata/TestResGtmProperty/liveness_test/change_timeout.tf",
+			nonEmptyPlan:  true,
+			planOnly:      true,
+		},
+		"change of 'timeout' field and reorder of liveness tests - diff_(messy)": {
+			client:        getMocks(),
+			pathForCreate: "testdata/TestResGtmProperty/liveness_test/multiple_liveness_tests.tf",
+			pathForUpdate: "testdata/TestResGtmProperty/liveness_test/change_timeout_reorder_lt.tf",
+			nonEmptyPlan:  true,
+			planOnly:      true,
+		},
+		"re-ordered liveness test and change http headers - diff_(messy)": {
+			client:        getMocks(),
+			pathForCreate: "testdata/TestResGtmProperty/liveness_test/multiple_liveness_tests.tf",
+			pathForUpdate: "testdata/TestResGtmProperty/liveness_test/diff_lt_order_and_header_change.tf",
+			nonEmptyPlan:  true,
+			planOnly:      true,
+		},
+		"change http headers - diff": {
+			client:        getMocks(),
+			pathForCreate: "testdata/TestResGtmProperty/liveness_test/multiple_liveness_tests.tf",
+			pathForUpdate: "testdata/TestResGtmProperty/liveness_test/change_header.tf",
+			nonEmptyPlan:  true,
+			planOnly:      true,
+		},
+		"value added to http header - diff": {
+			client:        getMocks(),
+			pathForCreate: "testdata/TestResGtmProperty/liveness_test/http_header_without_value.tf",
+			pathForUpdate: "testdata/TestResGtmProperty/liveness_test/multiple_liveness_tests.tf",
+			nonEmptyPlan:  true,
+			planOnly:      true,
+		},
+		"re-ordered liveness test and alternate ca certificates - no diff": {
+			client:        getMocks(),
+			pathForCreate: "testdata/TestResGtmProperty/liveness_test/multiple_liveness_tests_with_ca_cert.tf",
+			pathForUpdate: "testdata/TestResGtmProperty/liveness_test/diff_lt_and_ca_certificate_order.tf",
+			nonEmptyPlan:  false,
+			planOnly:      true,
+		},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			useClient(test.client, func() {
+				resource.UnitTest(t, resource.TestCase{
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+					IsUnitTest:               true,
+					Steps: []resource.TestStep{
+						{
+							Config: testutils.LoadFixtureString(t, test.pathForCreate),
+							Check: resource.ComposeTestCheckFunc(
+								resource.TestCheckResourceAttr(propertyResourceName, "name", "tfexample_prop_1"),
+								resource.TestCheckResourceAttr(propertyResourceName, "type", "weighted-round-robin"),
+							),
+						},
+						{
+							Config:             testutils.LoadFixtureString(t, test.pathForUpdate),
+							PlanOnly:           test.planOnly,
+							ExpectNonEmptyPlan: test.nonEmptyPlan,
+						},
+					},
+				})
+			})
+			test.client.AssertExpectations(t)
+		})
+	}
+}
+
 // getUpdatedProperty gets the property with updated values taken from `update_basic.tf`
 func getUpdatedProperty() *gtm.Property {
 	return &gtm.Property{
