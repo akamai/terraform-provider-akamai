@@ -22,7 +22,7 @@ var (
 
 type (
 	keyDataSource struct {
-		client cloudaccess.CloudAccess
+		meta meta.Meta
 	}
 
 	keyDataSourceModel struct {
@@ -54,10 +54,6 @@ func NewKeyDataSource() datasource.DataSource {
 	return &keyDataSource{}
 }
 
-func (d *keyDataSource) setClient(client cloudaccess.CloudAccess) {
-	d.client = client
-}
-
 // Metadata configures data source's meta information
 func (d *keyDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = "akamai_cloudaccess_key"
@@ -66,22 +62,17 @@ func (d *keyDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest
 // Configure configures data source at the beginning of the lifecycle
 func (d *keyDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
 	if req.ProviderData == nil {
-		// ProviderData is nil when Configure is run first time as part of ValidateDataSourceConfig in framework provider
 		return
 	}
-
-	if d.client != nil {
-		return
-	}
-
-	m, ok := req.ProviderData.(meta.Meta)
-	if !ok {
-		resp.Diagnostics.AddError(
-			"Unexpected Data Source Configure Type",
-			fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.", req.ProviderData),
-		)
-	}
-	d.client = cloudaccess.Client(m.Session())
+	defer func() {
+		if r := recover(); r != nil {
+			resp.Diagnostics.AddError(
+				"Unexpected Data Source Configure Type",
+				fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.",
+					req.ProviderData))
+		}
+	}()
+	d.meta = meta.Must(req.ProviderData)
 }
 
 // Schema is used to define data source's terraform schema
@@ -166,7 +157,8 @@ func (d *keyDataSource) Read(ctx context.Context, req datasource.ReadRequest, re
 		return
 	}
 
-	keys, err := d.client.ListAccessKeys(ctx, cloudaccess.ListAccessKeysRequest{})
+	client = Client(d.meta)
+	keys, err := client.ListAccessKeys(ctx, cloudaccess.ListAccessKeysRequest{})
 	if err != nil {
 		resp.Diagnostics.AddError(fmt.Sprintf("reading %s", ErrCloudAccessKey), err.Error())
 		return

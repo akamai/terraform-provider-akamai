@@ -2,6 +2,8 @@
 package cloudaccess
 
 import (
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/cloudaccess"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/subprovider"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -14,12 +16,21 @@ type (
 )
 
 var (
-	_ subprovider.Subprovider = &Subprovider{}
+	_      subprovider.Subprovider = &Subprovider{}
+	client cloudaccess.CloudAccess
 )
 
 // NewSubprovider returns a new cloudaccess subprovider
 func NewSubprovider() *Subprovider {
 	return &Subprovider{}
+}
+
+// Client returns the gtm interface
+func Client(meta meta.Meta) cloudaccess.CloudAccess {
+	if client != nil {
+		return client
+	}
+	return cloudaccess.Client(meta.Session())
 }
 
 // SDKResources returns the cloudaccess resources implemented using terraform-plugin-sdk
@@ -41,5 +52,6 @@ func (p *Subprovider) FrameworkResources() []func() resource.Resource {
 func (p *Subprovider) FrameworkDataSources() []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		NewKeyDataSource,
+		NewKeyPropertiesDataSource,
 	}
 }

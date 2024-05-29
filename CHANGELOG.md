@@ -150,6 +150,23 @@
 
 
 
+
+
+* Cloud Access
+  * Added datasource:
+    * `akamai_cloudaccess_key_properties` - read
+
+
+
+
+
+
+
+
+
+
+
+
 #### BUG FIXES:
 
 * Property

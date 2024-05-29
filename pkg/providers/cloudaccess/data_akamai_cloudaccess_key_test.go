@@ -107,18 +107,19 @@ func TestDataKey(t *testing.T) {
 				test.init(t, client, test.mockData)
 			}
 
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: newProviderFactory(withMockClient(client)),
-				IsUnitTest:               true,
-				Steps: []resource.TestStep{
-					{
-						Config:      testutils.LoadFixtureString(t, test.configPath),
-						Check:       checkCloudaccessKeyAttrs(),
-						ExpectError: test.error,
+			useClient(client, func() {
+				resource.UnitTest(t, resource.TestCase{
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+					IsUnitTest:               true,
+					Steps: []resource.TestStep{
+						{
+							Config:      testutils.LoadFixtureString(t, test.configPath),
+							Check:       checkCloudaccessKeyAttrs(),
+							ExpectError: test.error,
+						},
 					},
-				},
+				})
 			})
-
 			client.AssertExpectations(t)
 		})
 	}
