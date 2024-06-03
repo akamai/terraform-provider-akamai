@@ -253,7 +253,6 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 			})
 		})
 	})
-
 	t.Run("template file is empty", func(t *testing.T) {
 		client := papi.Mock{}
 		useClient(&client, nil, func() {
@@ -263,6 +262,20 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 					{
 						Config:      testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_file_is_empty.tf"),
 						ExpectError: regexp.MustCompile(`Error: snippets file should be with .json extension and cannot be empty. Invalid file: testdata/TestDSRulesTemplate/property-snippets/empty_json.json`),
+					},
+				},
+			})
+		})
+	})
+	t.Run("error fetching json file from .terraform - expected error", func(t *testing.T) {
+		client := papi.Mock{}
+		useClient(&client, nil, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config:      testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_json_file_in_terraform_config_dir.tf"),
+						ExpectError: regexp.MustCompile(`template ".terraform/rules1.json" not defined`),
 					},
 				},
 			})

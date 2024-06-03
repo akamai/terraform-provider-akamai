@@ -130,6 +130,13 @@
 
 
 
+* Property
+  * Fixed issue in data_akamai_property_rules_template that having root template in the same directory as .terraform dir would cause error. 
+    Now, datasource will not search for templates inside .terraform directory.
+  
+
+
+
 
 
 

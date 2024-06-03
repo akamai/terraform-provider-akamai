@@ -1,5 +1,7 @@
 # testing and custom build code
-.terraform/
+.terraform/*
+!pkg/providers/property/testdata/TestDSRulesTemplate/.terraform/*
+
 .build/
 terraform-provider-akamai
 terraform.tfstate
