@@ -758,77 +758,77 @@ func TestResourceGTMLivenessTestOrder(t *testing.T) {
 		planOnly      bool
 	}{
 		"second apply - no diff": {
-			client:        getMocks(),
+			client:        getMocksForLivenessTest(),
 			pathForCreate: "testdata/TestResGtmProperty/liveness_test/multiple_liveness_tests.tf",
 			pathForUpdate: "testdata/TestResGtmProperty/liveness_test/multiple_liveness_tests.tf",
 			nonEmptyPlan:  false,
 			planOnly:      true,
 		},
 		"re-ordered liveness test - no diff": {
-			client:        getMocks(),
+			client:        getMocksForLivenessTest(),
 			pathForCreate: "testdata/TestResGtmProperty/liveness_test/multiple_liveness_tests.tf",
 			pathForUpdate: "testdata/TestResGtmProperty/liveness_test/diff_liveness_tests_order.tf",
 			nonEmptyPlan:  false,
 			planOnly:      true,
 		},
 		"remove liveness test - diff": {
-			client:        getMocks(),
+			client:        getMocksForLivenessTest(),
 			pathForCreate: "testdata/TestResGtmProperty/liveness_test/multiple_liveness_tests.tf",
 			pathForUpdate: "testdata/TestResGtmProperty/liveness_test/remove_liveness_test.tf",
 			nonEmptyPlan:  true,
 			planOnly:      true,
 		},
 		"add liveness test - diff": {
-			client:        getMocks(),
+			client:        getMocksForLivenessTest(),
 			pathForCreate: "testdata/TestResGtmProperty/liveness_test/multiple_liveness_tests.tf",
 			pathForUpdate: "testdata/TestResGtmProperty/liveness_test/add_liveness_tests.tf",
 			nonEmptyPlan:  true,
 			planOnly:      true,
 		},
 		"re-ordered liveness test and re-ordered http headers - no diff": {
-			client:        getMocks(),
+			client:        getMocksForLivenessTest(),
 			pathForCreate: "testdata/TestResGtmProperty/liveness_test/multiple_liveness_tests.tf",
 			pathForUpdate: "testdata/TestResGtmProperty/liveness_test/diff_lt_and_header_order.tf",
 			nonEmptyPlan:  false,
 			planOnly:      true,
 		},
 		"change of 'timeout' field - diff": {
-			client:        getMocks(),
+			client:        getMocksForLivenessTest(),
 			pathForCreate: "testdata/TestResGtmProperty/liveness_test/multiple_liveness_tests.tf",
 			pathForUpdate: "testdata/TestResGtmProperty/liveness_test/change_timeout.tf",
 			nonEmptyPlan:  true,
 			planOnly:      true,
 		},
 		"change of 'timeout' field and reorder of liveness tests - diff_(messy)": {
-			client:        getMocks(),
+			client:        getMocksForLivenessTest(),
 			pathForCreate: "testdata/TestResGtmProperty/liveness_test/multiple_liveness_tests.tf",
 			pathForUpdate: "testdata/TestResGtmProperty/liveness_test/change_timeout_reorder_lt.tf",
 			nonEmptyPlan:  true,
 			planOnly:      true,
 		},
 		"re-ordered liveness test and change http headers - diff_(messy)": {
-			client:        getMocks(),
+			client:        getMocksForLivenessTest(),
 			pathForCreate: "testdata/TestResGtmProperty/liveness_test/multiple_liveness_tests.tf",
 			pathForUpdate: "testdata/TestResGtmProperty/liveness_test/diff_lt_order_and_header_change.tf",
 			nonEmptyPlan:  true,
 			planOnly:      true,
 		},
 		"change http headers - diff": {
-			client:        getMocks(),
+			client:        getMocksForLivenessTest(),
 			pathForCreate: "testdata/TestResGtmProperty/liveness_test/multiple_liveness_tests.tf",
 			pathForUpdate: "testdata/TestResGtmProperty/liveness_test/change_header.tf",
 			nonEmptyPlan:  true,
 			planOnly:      true,
 		},
 		"value added to http header - diff": {
-			client:        getMocks(),
+			client:        getMocksForLivenessTest(),
 			pathForCreate: "testdata/TestResGtmProperty/liveness_test/http_header_without_value.tf",
 			pathForUpdate: "testdata/TestResGtmProperty/liveness_test/multiple_liveness_tests.tf",
 			nonEmptyPlan:  true,
 			planOnly:      true,
 		},
 		"re-ordered liveness test and alternate ca certificates - no diff": {
-			client:        getMocks(),
+			client:        getMocksForLivenessTest(),
 			pathForCreate: "testdata/TestResGtmProperty/liveness_test/multiple_liveness_tests_with_ca_cert.tf",
 			pathForUpdate: "testdata/TestResGtmProperty/liveness_test/diff_lt_and_ca_certificate_order.tf",
 			nonEmptyPlan:  false,
@@ -1576,6 +1576,28 @@ func getBasicPropertyResponseWithLivenessTests() *gtm.GetPropertyResponse {
 	}
 }
 
+// getMocksForLivenessTest is used for diff tests, where the contents of property not matter as much, as those tests aim to check the diffs
+func getMocksForLivenessTest() *gtm.Mock {
+	client := new(gtm.Mock)
+
+	// read
+	getPropertyCall := client.On("GetProperty", mock.Anything, mock.AnythingOfType("gtm.GetPropertyRequest")).
+		Return(nil, &gtm.Error{StatusCode: http.StatusNotFound})
+	// create
+	// mock.AnythingOfType *gtm.Property is used is those mock calls as there are too many different test cases to mock
+	// each one and for those test it's not important, since we are only checking the diff
+	mockCreateProperty(client, getBasicProperty()).
+		Run(func(args mock.Arguments) {
+			arg := (*gtm.GetPropertyResponse)(args.Get(1).(gtm.CreatePropertyRequest).Property)
+			getPropertyCall.ReturnArguments = mock.Arguments{arg, nil}
+		})
+
+	// delete
+	mockDeleteProperty(client)
+
+	return client
+}
+
 // getMocks is used for diff tests, where the contents of property not matter as much, as those tests aim to check the diffs
 func getMocks() *gtm.Mock {
 	client := new(gtm.Mock)
@@ -1587,10 +1609,7 @@ func getMocks() *gtm.Mock {
 	// mock.AnythingOfType *gtm.Property is used is those mock calls as there are too many different test cases to mock
 	// each one and for those test it's not important, since we are only checking the diff
 	resp := getBasicPropertyResponseDiff()
-	client.On("CreateProperty", mock.Anything, mock.AnythingOfType("gtm.CreatePropertyRequest")).Return(&gtm.CreatePropertyResponse{
-		Resource: getBasicPropertyDiff(),
-		Status:   &pendingResponseStatus,
-	}, nil).Run(func(args mock.Arguments) {
+	mockCreateProperty(client, getBasicPropertyDiff()).Run(func(args mock.Arguments) {
 		getCall.ReturnArguments = mock.Arguments{&resp, nil}
 	})
 
@@ -1618,10 +1637,7 @@ func getMocksWithoutDatacenterID() *gtm.Mock {
 	// mock.AnythingOfType *gtm.Property is used is those mock calls as there are too many different test cases to mock
 	// each one and for those test it's not important, since we are only checking the diff
 	resp := getBasicPropertyResponseWithoutDatacenterID()
-	client.On("CreateProperty", mock.Anything, mock.AnythingOfType("gtm.CreatePropertyRequest")).Return(&gtm.CreatePropertyResponse{
-		Resource: getBasicPropertyWithoutDatacenterID(),
-		Status:   &pendingResponseStatus,
-	}, nil).Run(func(args mock.Arguments) {
+	mockCreateProperty(client, getBasicPropertyWithoutDatacenterID()).Run(func(args mock.Arguments) {
 		getCall.ReturnArguments = mock.Arguments{&resp, nil}
 	})
 
@@ -1649,10 +1665,7 @@ func getMocksSecondApply() *gtm.Mock {
 	// mock.AnythingOfType *gtm.Property is used is those mock calls as there are too many different test cases to mock
 	// each one and for those test it's not important, since we are only checking the diff
 	resp := getBasicPropertyResponseSecondApply()
-	client.On("CreateProperty", mock.Anything, mock.AnythingOfType("gtm.CreatePropertyRequest")).Return(&gtm.CreatePropertyResponse{
-		Resource: getBasicPropertySecondApply(),
-		Status:   &pendingResponseStatus,
-	}, nil).Run(func(args mock.Arguments) {
+	mockCreateProperty(client, getBasicPropertySecondApply()).Run(func(args mock.Arguments) {
 		getCall.ReturnArguments = mock.Arguments{&resp, nil}
 	})
 
@@ -1669,11 +1682,11 @@ func getMocksSecondApply() *gtm.Mock {
 	return client
 }
 
-func mockCreateProperty(client *gtm.Mock, property *gtm.Property) {
+func mockCreateProperty(client *gtm.Mock, property *gtm.Property) *mock.Call {
 	resp := gtm.CreatePropertyResponse{}
 	resp.Resource = property
 	resp.Status = &pendingResponseStatus
-	client.On("CreateProperty",
+	return client.On("CreateProperty",
 		mock.Anything,
 		mock.AnythingOfType("gtm.CreatePropertyRequest"),
 	).Return(&resp, nil).Once()

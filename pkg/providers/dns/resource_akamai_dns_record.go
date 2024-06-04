@@ -644,6 +644,7 @@ func execFunc(ctx context.Context, meta meta.Meta, fn string, rec *dns.RecordBod
 	case "Delete":
 		e = inst.Client(meta).DeleteRecord(ctx, dns.DeleteRecordRequest{
 			Zone:       zone,
+			Name:       rec.Name,
 			RecordType: rec.RecordType,
 			RecLock:    rlock,
 		})

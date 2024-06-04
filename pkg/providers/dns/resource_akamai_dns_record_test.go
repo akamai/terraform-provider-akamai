@@ -673,42 +673,55 @@ func TestMXRecord(t *testing.T) {
 	}
 	dnsClient := dns.Client(session.Must(session.New()))
 	name, zone, mx := "exampleterraform.io", "exampleterraform.io", "MX"
+	getRecordRequest := dns.GetRecordRequest{
+		Zone:       zone,
+		Name:       name,
+		RecordType: mx}
 
 	mockCreate := func(d *dns.Mock, realClient dns.DNS, createdRecord *dns.RecordBody) {
-		d.On("GetRecord", mock.Anything, zone, name, mx).
+		d.On("GetRecord", mock.Anything, getRecordRequest).
 			Return(nil, notFound).Twice()
-		d.On("CreateRecord", mock.Anything,
-			createdRecord, zone, []bool{false}).
+		d.On("CreateRecord", mock.Anything, dns.CreateRecordRequest{
+			Record:  createdRecord,
+			Zone:    zone,
+			RecLock: []bool{false}}).
 			Return(nil).Once()
 	}
 	mockRead := func(d *dns.Mock, realClient dns.DNS, createdRecord *dns.RecordBody) {
-		d.On("GetRecord", mock.Anything, zone, name, mx).
-			Return(createdRecord, nil).Once()
+		response := (*dns.GetRecordResponse)(createdRecord)
+		d.On("GetRecord", mock.Anything, getRecordRequest).
+			Return(response, nil).Once()
 		d.On("ProcessRdata", mock.Anything, createdRecord.Target, mx).
 			Return(realClient.ProcessRdata(context.Background(), createdRecord.Target, mx)).Once()
-		d.On("GetRecord", mock.Anything, zone, name, mx).
-			Return(createdRecord, nil).Once()
+		d.On("GetRecord", mock.Anything, getRecordRequest).
+			Return(response, nil).Once()
 		d.On("ParseRData", mock.Anything, mx, createdRecord.Target).
 			Return(realClient.ParseRData(context.Background(), mx, createdRecord.Target)).Once()
 		d.On("ProcessRdata", mock.Anything, createdRecord.Target, mx).
 			Return(realClient.ProcessRdata(context.Background(), createdRecord.Target, mx)).Once()
 	}
 	mockUpdate := func(d *dns.Mock, realClient dns.DNS, previousRecord *dns.RecordBody, updatedRecord *dns.RecordBody) {
-		d.On("GetRecord", mock.Anything, zone, name, mx).
-			Return(previousRecord, nil).Once()
+		response := (*dns.GetRecordResponse)(previousRecord)
+		d.On("GetRecord", mock.Anything, getRecordRequest).
+			Return(response, nil).Once()
 		d.On("ProcessRdata", mock.Anything, previousRecord.Target, mx).
 			Return(realClient.ProcessRdata(context.Background(), previousRecord.Target, mx)).Once()
-		d.On("GetRecord", mock.Anything, zone, name, mx).
-			Return(previousRecord, nil).Once()
+		d.On("GetRecord", mock.Anything, getRecordRequest).
+			Return(response, nil).Once()
 		d.On("ProcessRdata", mock.Anything, previousRecord.Target, mx).
 			Return(realClient.ProcessRdata(context.Background(), previousRecord.Target, mx)).Once()
-		d.On("UpdateRecord", mock.Anything,
-			updatedRecord, zone, []bool{false}).
+		d.On("UpdateRecord", mock.Anything, dns.UpdateRecordRequest{
+			Record:  updatedRecord,
+			Zone:    zone,
+			RecLock: []bool{false}}).
 			Return(nil)
 	}
 	mockDelete := func(d *dns.Mock, createdRecord *dns.RecordBody) {
-		d.On("DeleteRecord", mock.Anything,
-			createdRecord, zone, []bool{false}).
+		d.On("DeleteRecord", mock.Anything, dns.DeleteRecordRequest{
+			Zone:       zone,
+			Name:       createdRecord.Name,
+			RecordType: createdRecord.RecordType,
+			RecLock:    []bool{false}}).
 			Return(nil)
 	}
 
