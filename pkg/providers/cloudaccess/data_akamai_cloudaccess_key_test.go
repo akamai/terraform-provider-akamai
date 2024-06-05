@@ -4,14 +4,13 @@ import (
 	"fmt"
 	"regexp"
 	"testing"
-	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/cloudaccess"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/date"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 )
 
 func TestDataKey(t *testing.T) {
@@ -26,13 +25,21 @@ func TestDataKey(t *testing.T) {
 		client.On("ListAccessKeys", mock.Anything, mock.Anything).Return(nil, fmt.Errorf("list keys failed")).Times(timesToRun)
 	}
 
+	stringDate1, err := date.Parse("2021-02-24T09:09:52.782555Z")
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+	stringDate2, err := date.Parse("2021-02-26T09:09:15.428314Z")
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
 	testData := []cloudaccess.AccessKeyResponse{
 		{
 			AccessKeyName:        "Sales-s3",
 			AccessKeyUID:         56514,
 			AuthenticationMethod: "AWS4_HMAC_SHA256",
 			CreatedBy:            "mrossi",
-			CreatedTime:          *newTimeFromString(t, "2021-02-24T09:09:52.782555Z"),
+			CreatedTime:          stringDate1,
 			Groups: []cloudaccess.Group{
 				{
 					ContractIDs: []string{"K-0N7RAK71"},
@@ -51,7 +58,7 @@ func TestDataKey(t *testing.T) {
 			AccessKeyUID:         56512,
 			AuthenticationMethod: "AWS4_HMAC_SHA256",
 			CreatedBy:            "tyamada",
-			CreatedTime:          *newTimeFromString(t, "2021-02-26T09:09:15.428314Z"),
+			CreatedTime:          stringDate2,
 			Groups: []cloudaccess.Group{
 				{
 					ContractIDs: []string{"C-0N7RAC7"},
@@ -131,12 +138,7 @@ func checkCloudaccessKeyAttrs() resource.TestCheckFunc {
 	checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("data.akamai_cloudaccess_key.test", "access_key_name", "Home automation | s3"))
 	checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("data.akamai_cloudaccess_key.test", "groups.0.contracts_ids.0", "C-0N7RAC7"))
 	checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("data.akamai_cloudaccess_key.test", "network_configuration.security_network", "ENHANCED_TLS"))
+	checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("data.akamai_cloudaccess_key.test", "created_time", "2021-02-26T09:09:15.428314Z"))
 
 	return resource.ComposeAggregateTestCheckFunc(checkFuncs...)
-}
-
-func newTimeFromString(t *testing.T, s string) *time.Time {
-	parsedTime, err := time.Parse(time.RFC3339Nano, s)
-	require.NoError(t, err)
-	return &parsedTime
 }

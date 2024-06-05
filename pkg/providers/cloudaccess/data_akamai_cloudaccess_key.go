@@ -3,10 +3,9 @@ package cloudaccess
 import (
 	"context"
 	"fmt"
-	"strconv"
-	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/cloudaccess"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/date"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -26,7 +25,6 @@ type (
 	}
 
 	keyDataSourceModel struct {
-		ID                   types.String               `tfsdk:"id"`
 		AccessKeyUID         types.Int64                `tfsdk:"access_key_uid"`
 		AccessKeyName        types.String               `tfsdk:"access_key_name"`
 		Groups               []groupModel               `tfsdk:"groups"`
@@ -80,11 +78,6 @@ func (d *keyDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, re
 	resp.Schema = schema.Schema{
 		Description: "Cloud Access key",
 		Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{
-				Computed:           true,
-				DeprecationMessage: "Required by the terraform plugin testing framework, always set to `akamai_cloudaccess_key`",
-				Description:        "ID of the data source.",
-			},
 			"access_key_uid": schema.Int64Attribute{
 				Computed:    true,
 				Description: "Identifier of the retrieved access key.",
@@ -170,7 +163,12 @@ func (d *keyDataSource) Read(ctx context.Context, req datasource.ReadRequest, re
 			data.AccessKeyUID = types.Int64Value(key.AccessKeyUID)
 			data.AuthenticationMethod = types.StringValue(key.AuthenticationMethod)
 			data.CreatedBy = types.StringValue(key.CreatedBy)
-			data.CreatedTime = types.StringValue(key.CreatedTime.Format(time.RFC3339))
+			dateString, err := date.ToString(key.CreatedTime)
+			if err != nil {
+				resp.Diagnostics.AddError("error parsing date:", err.Error())
+				return
+			}
+			data.CreatedTime = types.StringValue(dateString)
 			for _, group := range key.Groups {
 				contractIDs := make([]types.String, 0)
 				for _, id := range group.ContractIDs {
@@ -189,7 +187,6 @@ func (d *keyDataSource) Read(ctx context.Context, req datasource.ReadRequest, re
 				AdditionalCDN:   types.StringValue(string(key.NetworkConfiguration.AdditionalCDN)),
 				SecurityNetwork: types.StringPointerValue(ptr.To(string(key.NetworkConfiguration.SecurityNetwork))),
 			}
-			data.ID = types.StringValue(strconv.FormatInt(key.AccessKeyUID, 10))
 			resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 			return
 

@@ -163,7 +163,9 @@
 
 
 
-
+* Cloud Access
+  * Added datasources:
+    * `akamai_cloudaccess_keys` - read
 
 
 

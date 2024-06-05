@@ -24,7 +24,6 @@ type (
 	}
 
 	keyPropertiesDataSourceModel struct {
-		ID            types.String    `tfsdk:"id"`
 		AccessKeyName types.String    `tfsdk:"access_key_name"`
 		Properties    []propertyModel `tfsdk:"properties"`
 		AccessKeyUID  types.Int64     `tfsdk:"access_key_uid"`
@@ -70,11 +69,6 @@ func (d *keyPropertiesDataSource) Schema(_ context.Context, _ datasource.SchemaR
 	resp.Schema = schema.Schema{
 		Description: "Cloud Access key properties",
 		Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{
-				Computed:           true,
-				DeprecationMessage: "Required by the terraform plugin testing framework, always set to `akamai_cloudaccess_key_properties`",
-				Description:        "ID of the data source.",
-			},
 			"access_key_name": schema.StringAttribute{
 				Description: "Name of the access key.",
 				Required:    true,
@@ -193,7 +187,6 @@ func (data *keyPropertiesDataSourceModel) read(ctx context.Context, versions *cl
 		}
 	}
 	data.Properties = propertiesModel
-	data.ID = types.StringValue("akamai_cloudaccess_key_properties")
 
 	return nil
 }

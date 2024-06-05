@@ -211,7 +211,6 @@ func checkKeyPropertiesAttrs(data testDataForKeyProperties) resource.TestCheckFu
 
 	checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("data.akamai_cloudaccess_key_properties.test", "properties.#", strconv.Itoa(propertyCount)))
 	checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("data.akamai_cloudaccess_key_properties.test", "access_key_uid", strconv.FormatInt(data.accessKeyUID, 10)))
-	checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("data.akamai_cloudaccess_key_properties.test", "id", "akamai_cloudaccess_key_properties"))
 
 	return resource.ComposeAggregateTestCheckFunc(checkFuncs...)
 }
