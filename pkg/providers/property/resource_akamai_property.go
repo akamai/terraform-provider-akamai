@@ -120,7 +120,7 @@ func resourceProperty() *schema.Resource {
 				Optional:         true,
 				Computed:         true,
 				Description:      "Property version notes",
-				DiffSuppressFunc: propertyVersionNotesDiffSupress,
+				DiffSuppressFunc: propertyVersionNotesDiffSuppress,
 			},
 			"hostnames": {
 				Type:     schema.TypeSet,
@@ -405,25 +405,22 @@ func canTriggerNewPropertyVersion(rc tf.ResourceChangeFetcher, rd tf.ResourceDat
 
 // setPropertyVersionsComputed implements a schema.CustomizeDiffFunc for akamai_property resource.
 //
-// It sets certain attributes as computed if a new version of the property is expected to be
-// created. For latest_version staging_version and production_version attributes it's crucial
-// for avoiding inconsistent plan errors if any of them are used in akamai_property_activation resource.
+// It sets latest_version attribute as computed if a new version of the property is expected to be created.
+// It's crucial for avoiding inconsistent plan errors if it's used in akamai_property_activation resource.
 func setPropertyVersionsComputed(_ context.Context, rd *schema.ResourceDiff, _ interface{}) error {
 	rawData := tf.NewRawConfig(rd)
 	if ok, err := canTriggerNewPropertyVersion(rd, rawData); err != nil || !ok {
 		return nil
 	}
 
-	for _, key := range []string{"latest_version", "staging_version", "production_version"} {
-		if err := rd.SetNewComputed(key); err != nil {
-			return fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
-		}
+	if err := rd.SetNewComputed("latest_version"); err != nil {
+		return fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 	}
 
 	return nil
 }
 
-func propertyVersionNotesDiffSupress(_, _, _ string, rd *schema.ResourceData) bool {
+func propertyVersionNotesDiffSuppress(_, _, _ string, rd *schema.ResourceData) bool {
 	rawData := tf.NewRawConfig(rd)
 	if ok, err := canTriggerNewPropertyVersion(rd, rawData); ok || err != nil {
 		return false

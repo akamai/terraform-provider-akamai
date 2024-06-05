@@ -152,7 +152,9 @@
 
 
 
-
+* Property
+  * Fixed issue that having `akamai_property` and `akamai_property_activation` (or `akamai_property_include` and `akamai_property_include_activation`) resources linked using `staging_version` or `production_version`
+    and modifying rules and note could sometimes result in `Provider produced inconsistent final plan` error ([I#549](https://github.com/akamai/terraform-provider-akamai/issues/549)).
 
 
 

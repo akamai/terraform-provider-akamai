@@ -16,6 +16,7 @@ import (
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -525,6 +526,36 @@ func TestResProperty(t *testing.T) {
 		},
 	}
 
+	// Standard test behavior for cases where the property's latest version is not active
+	stagingAndProductionVersionKnownAtPlan := LifecycleTestCase{
+		Name: "Latest version not active",
+		ClientSetup: composeBehaviors(
+			propertyLifecycle("test_property", "prp_0", "grp_0",
+				papi.RulesUpdate{Rules: papi.Rules{Name: "default"}}),
+			getPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive),
+			setHostnames("prp_0", 1, "to.test.domain"),
+			setHostnames("prp_0", 1, "to2.test.domain"),
+		),
+		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
+			return []resource.TestStep{
+				{
+					PreConfig: func() {
+						State.VersionItems = papi.PropertyVersionItems{Items: []papi.PropertyVersionGetItem{{PropertyVersion: 1, ProductionStatus: papi.VersionStatusInactive}}}
+					},
+					Config: testutils.LoadFixtureString(t, "%s/step0.tf", FixturePath),
+					Check: checkAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
+						"{\"rules\":{\"name\":\"default\",\"options\":{}}}"),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "%s/step1.tf", FixturePath),
+					Check: checkAttrs("prp_0", "to2.test.domain", "1", "0", "0", "ehn_123",
+						"{\"rules\":{\"name\":\"default\",\"options\":{}}}"),
+					ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{testutils.FieldsKnownAtPlan{FieldsKnown: []string{"staging_version", "production_version"}, FieldsUnknown: []string{"latest_version"}}}},
+				},
+			}
+		},
+	}
+
 	// This scenario simulates a new version being created outside of terraform and returned on read after the first step (update should be triggered)
 	changesMadeOutsideOfTerraform := LifecycleTestCase{
 		Name: "Latest version not active",
@@ -939,6 +970,7 @@ func TestResProperty(t *testing.T) {
 		t.Run("Lifecycle: no diff for hostnames (hostnames)", assertLifecycle(t, t.Name(), "hostnames", noDiffForHostnames))
 		t.Run("Lifecycle: new version changed on server", assertLifecycle(t, t.Name(), "new version changed on server", changesMadeOutsideOfTerraform))
 		t.Run("Lifecycle: rules with variables", assertLifecycle(t, t.Name(), "rules with variables", variablesInRuleTree))
+		t.Run("Lifecycle: Verify staging_version and production_version known at plan", assertLifecycle(t, t.Name(), "normal", stagingAndProductionVersionKnownAtPlan))
 
 		// Test Import
 
