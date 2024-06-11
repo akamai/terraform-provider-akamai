@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"net/netip"
 	"regexp"
 	"sort"
 	"strconv"
@@ -2124,11 +2125,13 @@ func validateRecord(d *schema.ResourceData) error {
 	}
 
 	switch recordType {
-	case RRTypeA, RRTypeAaaa, RRTypeAkamaiCdn, RRTypeCname, RRTypeLoc, RRTypeNs, RRTypePtr, RRTypeSpf, RRTypeTxt:
+	case RRTypeA, RRTypeAkamaiCdn, RRTypeCname, RRTypeLoc, RRTypeNs, RRTypePtr, RRTypeSpf, RRTypeTxt:
 		if err := checkBasicRecordTypes(d); err != nil {
 			return err
 		}
 		return checkTargets(d)
+	case RRTypeAaaa:
+		return checkAAAARecord(d)
 	case RRTypeAfsdb:
 		return checkAsdfRecord(d)
 	case RRTypeDnskey:
@@ -2245,6 +2248,30 @@ func isSRVTargetOldFormat(d *schema.ResourceData) (bool, error) {
 		return true, nil
 	}
 	return false, nil
+}
+
+func checkAAAARecord(d *schema.ResourceData) error {
+	if err := checkBasicRecordTypes(d); err != nil {
+		return err
+	}
+	if err := checkTargets(d); err != nil {
+		return err
+	}
+	target, _ := tf.GetListValue("target", d)
+	for _, recContent := range target {
+		recContentStr, ok := recContent.(string)
+		if !ok {
+			return fmt.Errorf("target is of invalid type; should be 'string'")
+		}
+		addr, err := netip.ParseAddr(recContentStr)
+		if err != nil {
+			return fmt.Errorf("target '%s' is not a valid address: %w", recContentStr, err)
+		}
+		if !addr.Is6() {
+			return fmt.Errorf("target '%s' is not a valid IPv6 or IPv4-mapped IPv6 address", recContentStr)
+		}
+	}
+	return nil
 }
 
 func checkAsdfRecord(d *schema.ResourceData) error {

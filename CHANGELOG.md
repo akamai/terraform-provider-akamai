@@ -162,6 +162,8 @@
 
 
 
+* DNS
+  * Improved validation of IPv6 addresses in `akamai_dns_record` resource for records of type `AAAA` ([I#550](https://github.com/akamai/terraform-provider-akamai/issues/550))
 
 
 

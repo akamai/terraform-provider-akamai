@@ -206,7 +206,7 @@ func TestResDnsRecord(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 
-	t.Run("SRV record test with default values", func(t *testing.T) {
+	t.Run("SRV record with default values", func(t *testing.T) {
 		client := &dns.Mock{}
 
 		targetBig := "10 60 5060 big.example.com."
@@ -289,7 +289,7 @@ func TestResDnsRecord(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResDnsRecord/create_basic_srv_default.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResDnsRecord/srv/create_basic_srv_default.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr(resourceName, "recordtype", "SRV"),
 							resource.TestCheckResourceAttr(resourceName, "target.#", "3"),
@@ -304,7 +304,7 @@ func TestResDnsRecord(t *testing.T) {
 
 		client.AssertExpectations(t)
 	})
-	t.Run("SRV record test without default values", func(t *testing.T) {
+	t.Run("SRV record without default values", func(t *testing.T) {
 		client := &dns.Mock{}
 
 		targetBig := "10 60 5060 big.example.com."
@@ -387,7 +387,7 @@ func TestResDnsRecord(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResDnsRecord/create_basic_srv_no_default.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResDnsRecord/srv/create_basic_srv_no_default.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr(resourceName, "recordtype", "SRV"),
 							resource.TestCheckResourceAttr(resourceName, "target.#", "3"),
@@ -402,7 +402,7 @@ func TestResDnsRecord(t *testing.T) {
 
 		client.AssertExpectations(t)
 	})
-	t.Run("SRV record test with invalid mixed values", func(t *testing.T) {
+	t.Run("SRV record with invalid mixed values", func(t *testing.T) {
 		client := &dns.Mock{}
 
 		useClient(client, func() {
@@ -410,7 +410,7 @@ func TestResDnsRecord(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config:      testutils.LoadFixtureString(t, "testdata/TestResDnsRecord/create_basic_srv_mix_invalid.tf"),
+						Config:      testutils.LoadFixtureString(t, "testdata/TestResDnsRecord/srv/create_basic_srv_mix_invalid.tf"),
 						ExpectError: regexp.MustCompile("target should consist of only simple or complete items"),
 					},
 				},
@@ -419,6 +419,136 @@ func TestResDnsRecord(t *testing.T) {
 
 		client.AssertExpectations(t)
 	})
+
+	t.Run("AAAA record with valid IPv6 addresses", func(t *testing.T) {
+		client := &dns.Mock{}
+
+		target := []string{"2001:db8::68", "::ffff:192.0.2.1"}
+		targetSent := []string{"0000:0000:0000:0000:0000:ffff:c000:0201", "2001:0db8:0000:0000:0000:0000:0000:0068"}
+		targetReceived := []string{"2001:db8:0:0:0:0:0:68", "::ffff:192.0.2.1"}
+		client.On("GetRecord",
+			mock.Anything,
+			"exampleterraform.io",
+			"exampleterraform.io",
+			"AAAA",
+		).Return(nil, notFound).Once()
+
+		client.On("CreateRecord",
+			mock.Anything,
+			&dns.RecordBody{
+				Name:       "exampleterraform.io",
+				RecordType: "AAAA",
+				TTL:        300,
+				Active:     false,
+				Target:     targetSent,
+			},
+			"exampleterraform.io",
+			[]bool{false},
+		).Return(nil)
+
+		client.On("GetRecord",
+			mock.Anything,
+			"exampleterraform.io",
+			"exampleterraform.io",
+			"AAAA",
+		).Return(&dns.RecordBody{
+			Name:       "exampleterraform.io",
+			RecordType: "AAAA",
+			TTL:        300,
+			Active:     false,
+			Target:     targetReceived,
+		}, nil).Once()
+
+		client.On("ParseRData",
+			mock.Anything,
+			"AAAA",
+			targetReceived,
+		).Return(map[string]interface{}{
+			"target": target,
+		}).Times(2)
+
+		client.On("ProcessRdata",
+			mock.Anything,
+			targetReceived,
+			"AAAA",
+		).Return(target).Times(2)
+
+		client.On("GetRecord",
+			mock.Anything,
+			"exampleterraform.io",
+			"exampleterraform.io",
+			"AAAA",
+		).Return(&dns.RecordBody{
+			Name:       "exampleterraform.io",
+			RecordType: "AAAA",
+			TTL:        300,
+			Active:     false,
+			Target:     targetReceived,
+		}, nil).Once()
+
+		client.On("DeleteRecord",
+			mock.Anything,
+			mock.AnythingOfType("*dns.RecordBody"),
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("[]bool"),
+		).Return(nil)
+
+		resourceName := "akamai_dns_record.aaaa_record"
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResDnsRecord/aaaa/create_valid_aaaa.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr(resourceName, "recordtype", "AAAA"),
+							resource.TestCheckResourceAttr(resourceName, "target.#", "2"),
+							resource.TestCheckResourceAttr(resourceName, "target.0", "2001:db8:0:0:0:0:0:68"),
+							resource.TestCheckResourceAttr(resourceName, "target.1", "::ffff:192.0.2.1"),
+						),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+	t.Run("AAAA record with invalid IPv6 address", func(t *testing.T) {
+		client := &dns.Mock{}
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config:      testutils.LoadFixtureString(t, "testdata/TestResDnsRecord/aaaa/create_invalid_aaaa.tf"),
+						ExpectError: regexp.MustCompile("target '1111:2222:3333:4444:55555:6666:7777:8888' is not a valid address"),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+	t.Run("AAAA record with IP4 address - invalid", func(t *testing.T) {
+		client := &dns.Mock{}
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config:      testutils.LoadFixtureString(t, "testdata/TestResDnsRecord/aaaa/create_invalid_ipv4.tf"),
+						ExpectError: regexp.MustCompile("target '18.244.102.124' is not a valid IPv6 or IPv4-mapped IPv6 address"),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
 }
 
 func TestMXRecord(t *testing.T) {
