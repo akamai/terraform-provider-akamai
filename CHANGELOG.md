@@ -106,7 +106,9 @@
 
 
 
-
+* Cloud Access
+  * Added datasources:
+    * `akamai_cloudaccess_key_versions` - read details for key versions by key name
 
 
 
