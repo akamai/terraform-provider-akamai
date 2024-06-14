@@ -57,7 +57,8 @@
 
 #### FEATURES/ENHANCEMENTS:
 
-
+* Appsec
+  * Added field `host_names` to the `akamai_appsec_configuration` data source
 
 
 

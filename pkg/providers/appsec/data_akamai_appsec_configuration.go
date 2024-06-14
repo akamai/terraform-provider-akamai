@@ -41,6 +41,12 @@ func dataSourceConfiguration() *schema.Resource {
 				Computed:    true,
 				Description: "Version of the security configuration currently deployed in production",
 			},
+			"host_names": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "Hostnames to be protected by the new configuration",
+			},
 			"output_text": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -81,6 +87,26 @@ func dataSourceConfigurationRead(ctx context.Context, d *schema.ResourceData, m 
 					return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 				}
 				if err := d.Set("production_version", configval.ProductionVersion); err != nil {
+					return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
+				}
+				getSelectedHostnamesRequest := appsec.GetSelectedHostnamesRequest{
+					ConfigID: configval.ID,
+					Version:  configval.LatestVersion,
+				}
+
+				// Fetch selected hostnames for the config version
+				selectedHostnames, err := client.GetSelectedHostnames(ctx, getSelectedHostnamesRequest)
+				if err != nil {
+					logger.Errorf("calling 'GetSelectedHostnames': %s", err.Error())
+					return diag.FromErr(err)
+				}
+				selectedHostnameList := make([]string, 0, len(selectedHostnames.HostnameList))
+				for _, hostname := range selectedHostnames.HostnameList {
+					selectedHostnameList = append(selectedHostnameList, hostname.Hostname)
+				}
+
+				// Set host_names for the config version
+				if err = d.Set("host_names", selectedHostnameList); err != nil {
 					return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 				}
 				d.SetId(strconv.Itoa(configval.ID))
