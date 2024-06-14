@@ -88,7 +88,8 @@
 
 
 
-
+* GTM
+  * Added more details for `gtm_property` resource in case of error being returned from the API
 
 
 
