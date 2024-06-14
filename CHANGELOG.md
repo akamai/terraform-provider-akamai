@@ -146,6 +146,8 @@
 * Property
   * Fixed issue in `akamai_edge_hostname` resource when update is performed straight after create
 
+* Appsec
+  * A new config version will be created if the latest config version is active in either Staging or Production, and protected and/or evaluated hostnames are updated using `akamai_appsec_wap_selected_hostnames` ([#I540](https://github.com/akamai/terraform-provider-akamai/issues/540))
 
 
 

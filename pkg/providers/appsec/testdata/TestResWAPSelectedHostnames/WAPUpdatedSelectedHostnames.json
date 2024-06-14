@@ -1,0 +1,8 @@
+{
+    "protectedHostnames": [
+        "test.sandbox.akamaideveloper.com"
+    ],
+    "evalHostnames": [
+        "test.evaluated.sandbox.akamaideveloper.com"
+    ]
+}
