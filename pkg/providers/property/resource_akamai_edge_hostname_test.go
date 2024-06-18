@@ -22,6 +22,8 @@ import (
 func TestResourceEdgeHostname(t *testing.T) {
 	testDir := "testdata/TestResourceEdgeHostname"
 
+	EgdeHostnameCreatePollInterval = time.Microsecond
+
 	tests := map[string]struct {
 		init      func(*papi.Mock, *hapi.Mock)
 		withError *regexp.Regexp
@@ -489,6 +491,9 @@ func TestResourceEdgeHostname(t *testing.T) {
 
 				// 2nd step
 				// update
+				mh.On("GetEdgeHostname", mock.Anything, 123).Return(&hapi.GetEdgeHostnameResponse{
+					EdgeHostnameID: 123,
+				}, nil).Once()
 				mh.On("UpdateEdgeHostname", mock.Anything, hapi.UpdateEdgeHostnameRequest{
 					DNSZone:           "akamaized.net",
 					RecordName:        "test",
@@ -660,6 +665,9 @@ func TestResourceEdgeHostname(t *testing.T) {
 
 				// 2nd step
 				// update
+				mh.On("GetEdgeHostname", mock.Anything, 123).Return(&hapi.GetEdgeHostnameResponse{
+					EdgeHostnameID: 123,
+				}, nil).Once()
 				mh.On("UpdateEdgeHostname", mock.Anything, hapi.UpdateEdgeHostnameRequest{
 					DNSZone:           "akamaized.net",
 					RecordName:        "test",
@@ -805,6 +813,10 @@ func TestResourceEdgeHostname(t *testing.T) {
 				}, nil).Times(3)
 
 				// 2nd step - update
+				mh.On("GetEdgeHostname", mock.Anything, 123).Return(&hapi.GetEdgeHostnameResponse{
+					EdgeHostnameID:    123,
+					IPVersionBehavior: "IPV4",
+				}, nil).Once()
 				mh.On("UpdateEdgeHostname", mock.Anything, hapi.UpdateEdgeHostnameRequest{
 					DNSZone:           "akamaized.net",
 					RecordName:        "test",
@@ -833,6 +845,282 @@ func TestResourceEdgeHostname(t *testing.T) {
 				{
 					Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/%s", testDir, "new_akamaized_error_update_ipv6_performance.tf")),
 					ExpectError: regexp.MustCompile("invalid IP version behavior: valid values are IPV4 and IPV6_IPV4_DUALSTACK; IPV6 and other values aren't currently supported"),
+				},
+			},
+		},
+		"edge hostname - update right after create - should wait for HAPI propagation": {
+			init: func(mp *papi.Mock, mh *hapi.Mock) {
+				// 1st step
+				// 1. call from create method
+				// 2. and 3. call from read method
+				mp.On("GetEdgeHostnames", mock.Anything, papi.GetEdgeHostnamesRequest{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+				}).Return(&papi.GetEdgeHostnamesResponse{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+					EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
+						{
+							ID:                "ehn_123",
+							Domain:            "test1.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test1",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV4",
+						},
+						{
+							ID:                "eh_2",
+							Domain:            "test2.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test2",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV6_COMPLIANCE",
+						},
+					}},
+				}, nil).Once()
+
+				mp.On("CreateEdgeHostname", mock.Anything, papi.CreateEdgeHostnameRequest{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+					EdgeHostname: papi.EdgeHostnameCreate{
+
+						ProductID:         "prd_2",
+						DomainPrefix:      "test",
+						DomainSuffix:      "akamaized.net",
+						SecureNetwork:     "SHARED_CERT",
+						IPVersionBehavior: "IPV4",
+					},
+				}).Return(&papi.CreateEdgeHostnameResponse{
+					EdgeHostnameID: "ehn_123",
+				}, nil)
+
+				mp.On("GetEdgeHostnames", mock.Anything, papi.GetEdgeHostnamesRequest{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+				}).Return(&papi.GetEdgeHostnamesResponse{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+					EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
+						{
+							ID:                "ehn_123",
+							Domain:            "test.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV4",
+						},
+						{
+							ID:                "eh_2",
+							Domain:            "test.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV6_COMPLIANCE",
+						},
+					}},
+				}, nil).Twice()
+
+				// refresh
+				mp.On("GetEdgeHostnames", mock.Anything, papi.GetEdgeHostnamesRequest{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+				}).Return(&papi.GetEdgeHostnamesResponse{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+					EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
+						{
+							ID:                "ehn_123",
+							Domain:            "test.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV6_COMPLIANCE", // drift happens here
+						},
+						{
+							ID:                "eh_2",
+							Domain:            "test1.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test1",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV6_COMPLIANCE",
+						},
+					}},
+				}, nil).Once()
+
+				// 2nd step
+				// update
+				mh.On("GetEdgeHostname", mock.Anything, 123).Return(nil, &hapi.Error{
+					Status: 404,
+					Title:  "Invalid Record Name/DNS Zone",
+				}).Times(15)
+				mh.On("GetEdgeHostname", mock.Anything, 123).Return(&hapi.GetEdgeHostnameResponse{
+					EdgeHostnameID: 123,
+				}, nil).Once()
+				mh.On("UpdateEdgeHostname", mock.Anything, hapi.UpdateEdgeHostnameRequest{
+					DNSZone:           "akamaized.net",
+					RecordName:        "test",
+					Comments:          "change /ipVersionBehavior to IPV4",
+					StatusUpdateEmail: []string{"hello@akamai.com"},
+					Body: []hapi.UpdateEdgeHostnameRequestBody{
+						{
+							Op:    "replace",
+							Path:  "/ipVersionBehavior",
+							Value: "IPV4",
+						},
+					},
+				}).Return(&hapi.UpdateEdgeHostnameResponse{
+					ChangeID: 123,
+				}, nil).Once()
+
+				mh.On("GetChangeRequest", mock.Anything, hapi.GetChangeRequest{ChangeID: 123}).Return(&hapi.ChangeRequest{
+					Status: "SUCCEEDED",
+				}, nil).Once()
+
+				// read
+				mp.On("GetEdgeHostnames", mock.Anything, papi.GetEdgeHostnamesRequest{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+				}).Return(&papi.GetEdgeHostnamesResponse{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+					EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
+						{
+							ID:                "ehn_123",
+							Domain:            "test.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV4",
+						},
+						{
+							ID:                "eh_2",
+							Domain:            "test.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV6_COMPLIANCE",
+						},
+					}},
+				}, nil).Twice()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/%s", testDir, "new_akamaized_ipv4.tf")),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "id", "ehn_123"),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "contract_id", "ctr_2"),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "group_id", "grp_2"),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "edge_hostname", "test.akamaized.net"),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "ip_behavior", "IPV4"),
+					),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/%s", testDir, "new_akamaized_ipv4_with_email.tf")),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "id", "ehn_123"),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "contract_id", "ctr_2"),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "group_id", "grp_2"),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "edge_hostname", "test.akamaized.net"),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "ip_behavior", "IPV4"),
+					),
+				},
+			},
+		},
+		"error - update retry reached retriesMax": {
+			init: func(mp *papi.Mock, mh *hapi.Mock) {
+				// 1. call from create method and refresh 2. update ip_behvior to improper value
+				// 1st step - create
+				mp.On("GetEdgeHostnames", mock.Anything, papi.GetEdgeHostnamesRequest{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+				}).Return(&papi.GetEdgeHostnamesResponse{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+					EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
+						{
+							ID:                "ehn_123",
+							Domain:            "test1.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test1",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV4",
+						},
+						{
+							ID:                "eh_2",
+							Domain:            "test2.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test2",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV4",
+						},
+					}},
+				}, nil).Once()
+
+				mp.On("CreateEdgeHostname", mock.Anything, papi.CreateEdgeHostnameRequest{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+					EdgeHostname: papi.EdgeHostnameCreate{
+						ProductID:         "prd_2",
+						DomainPrefix:      "test",
+						DomainSuffix:      "akamaized.net",
+						SecureNetwork:     "SHARED_CERT",
+						IPVersionBehavior: "IPV4",
+					},
+				}).Return(&papi.CreateEdgeHostnameResponse{
+					EdgeHostnameID: "ehn_123",
+				}, nil)
+
+				// refresh
+				mp.On("GetEdgeHostnames", mock.Anything, papi.GetEdgeHostnamesRequest{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+				}).Return(&papi.GetEdgeHostnamesResponse{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+					EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
+						{
+							ID:                "ehn_123",
+							Domain:            "test.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV4",
+						},
+						{
+							ID:                "eh_2",
+							Domain:            "test.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV4",
+						},
+					}},
+				}, nil).Times(3)
+
+				// 2nd step - update
+				mh.On("GetEdgeHostname", mock.Anything, 123).Return(nil, &hapi.Error{
+					Status: 404,
+					Title:  "Invalid Record Name/DNS Zone",
+				}).Times(15)
+				mh.On("GetEdgeHostname", mock.Anything, 123).Return(nil, &hapi.Error{
+					Status: 404,
+					Title:  "reached max number of retries: 15",
+				}).Once()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/%s", testDir, "new_akamaized_ipv4.tf")),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "id", "ehn_123"),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "contract_id", "ctr_2"),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "group_id", "grp_2"),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "edge_hostname", "test.akamaized.net"),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "ip_behavior", "IPV4"),
+					),
+				},
+				{
+					Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/%s", testDir, "new_akamaized_error_update_ipv6_performance.tf")),
+					ExpectError: regexp.MustCompile("reached max number of retries: 15"),
 				},
 			},
 		},
@@ -1037,6 +1325,9 @@ func TestResourceEdgeHostname(t *testing.T) {
 
 				// 2nd step
 				// update
+				mh.On("GetEdgeHostname", mock.Anything, 123).Return(&hapi.GetEdgeHostnameResponse{
+					EdgeHostnameID: 123,
+				}, nil).Once()
 				mh.On("UpdateEdgeHostname", mock.Anything, hapi.UpdateEdgeHostnameRequest{
 					DNSZone:    "akamaized.net",
 					RecordName: "test",

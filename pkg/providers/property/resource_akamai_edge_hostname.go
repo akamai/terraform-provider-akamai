@@ -22,6 +22,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
+const retriesMax = 15
+
+var (
+	// EgdeHostnameCreatePollInterval is the interval for polling an edgehostname creation
+	EgdeHostnameCreatePollInterval = time.Minute
+)
+
 func resourceSecureEdgeHostName() *schema.Resource {
 	return &schema.Resource{
 		CustomizeDiff: customdiff.All(
@@ -330,11 +337,20 @@ func resourceSecureEdgeHostNameUpdate(ctx context.Context, d *schema.ResourceDat
 			req.StatusUpdateEmail = statusUpdateEmails
 		}
 
+		edgeHostnameIDString := d.Id()
+		edgeHostnameID, err := strconv.Atoi(strings.TrimPrefix(edgeHostnameIDString, "ehn_"))
+		if err != nil {
+			return diag.FromErr(err)
+		}
 		hapiClient := HapiClient(meta)
+		err = waitForHAPIPropagation(ctx, hapiClient, edgeHostnameID)
+		if err != nil {
+			return diag.FromErr(err)
+		}
 		resp, err := hapiClient.UpdateEdgeHostname(ctx, req)
 		if err != nil {
 			if err2 := tf.RestoreOldValues(d, []string{"ip_behavior"}); err2 != nil {
-				return diag.Errorf(`%s failed. No changes were written to server:
+				return diag.Errorf(`%s failed. No changes were written to server: 
 %s
 
 Failed to restore previous local schema values. The schema will remain in tainted state:
@@ -349,6 +365,34 @@ Failed to restore previous local schema values. The schema will remain in tainte
 	}
 
 	return resourceSecureEdgeHostNameRead(ctx, d, m)
+}
+
+func waitForHAPIPropagation(ctx context.Context, hapiClient hapi.HAPI, edgeHostnameID int) error {
+	retries := 0
+	for {
+		select {
+		case <-time.After(EgdeHostnameCreatePollInterval):
+			resp, err := hapiClient.GetEdgeHostname(ctx, edgeHostnameID)
+			if resp == nil && err != nil {
+				var target = &hapi.Error{}
+				if !errors.As(err, &target) {
+					return fmt.Errorf("error has unexpected type: %T", err)
+				}
+				if target.Status != 200 {
+					retries++
+					if retries > retriesMax {
+						return fmt.Errorf("reached max number of retries: %d", retries-1)
+					}
+					continue
+				}
+			}
+
+			return nil
+
+		case <-ctx.Done():
+			return fmt.Errorf("update edge hostname context terminated: %s", ctx.Err())
+		}
+	}
 }
 
 func waitForChange(ctx context.Context, client hapi.HAPI, changeID int) error {

@@ -86,8 +86,6 @@
 
 
 
-
-
 * GTM
   * Added more details for `gtm_property` resource in case of error being returned from the API
 
@@ -123,6 +121,10 @@
 
 
 #### BUG FIXES:
+
+* Property
+  * Fixed issue in `akamai_edge_hostname` resource when update is performed straight after create
+
 
 
 
