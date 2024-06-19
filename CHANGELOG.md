@@ -86,6 +86,12 @@
 
 
 
+
+
+
+* DNS
+  * Added data source:
+    * `akamai_zone_dnssec_status` - reads the DNSSEC status of a single zone in Edge DNS ([I#509](https://github.com/akamai/terraform-provider-akamai/issues/509))
 * GTM
   * Added more details for `gtm_property` resource in case of error being returned from the API
 

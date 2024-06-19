@@ -11,6 +11,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/hapi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v6/internal/test"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
@@ -1707,7 +1708,7 @@ func TestResourceEdgeHostnames_WithImport(t *testing.T) {
 			CertificateID:    "123456",
 			CertificateType:  "THIRD_PARTY",
 			CommonName:       "DevExpAutomatedTest.2dUlc9.com",
-			ExpirationDate:   *newTimeFromString(t, "2026-06-26T15:34:04.000+00:00"),
+			ExpirationDate:   test.NewTimeFromString(t, "2026-06-26T15:34:04.000+00:00"),
 			SerialNumber:     "fa:ke:5a:e5:a8:c9:8f:0c:28:48:af:db:fa:78:cc:db",
 			SlotNumber:       3250,
 			Status:           "DEPLOYED",
@@ -2113,10 +2114,4 @@ func TestConvertingUseCases2JSON(t *testing.T) {
 			}
 		})
 	}
-}
-
-func newTimeFromString(t *testing.T, s string) *time.Time {
-	parsedTime, err := time.Parse(time.RFC3339Nano, s)
-	require.NoError(t, err)
-	return &parsedTime
 }
