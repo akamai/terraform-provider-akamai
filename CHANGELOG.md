@@ -129,6 +129,9 @@
 #### BUG FIXES:
 
 * Property
+  * Removed caching from `akamai_contracts` data source
+
+* Property
   * Fixed issue in `akamai_edge_hostname` resource when update is performed straight after create
 
 
