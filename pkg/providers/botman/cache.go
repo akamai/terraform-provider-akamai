@@ -13,13 +13,15 @@ import (
 )
 
 var (
-	botDetectionActionMutex      sync.Mutex
-	customBotCategoryActionMutex sync.Mutex
-	akamaiBotCategoryActionMutex sync.Mutex
-	transactionalEndpointMutex   sync.Mutex
-	akamaiBotCategoryMutex       sync.Mutex
-	akamaiDefinedBotMutex        sync.Mutex
-	botDetectionMutex            sync.Mutex
+	botDetectionActionMutex                       sync.Mutex
+	customBotCategoryActionMutex                  sync.Mutex
+	akamaiBotCategoryActionMutex                  sync.Mutex
+	transactionalEndpointMutex                    sync.Mutex
+	akamaiBotCategoryMutex                        sync.Mutex
+	akamaiDefinedBotMutex                         sync.Mutex
+	botDetectionMutex                             sync.Mutex
+	contentProtectionRuleMutex                    sync.Mutex
+	contentProtectionJavaScriptInjectionRuleMutex sync.Mutex
 )
 
 // getBotDetectionAction reads from the cache if present, or makes a getAll call to fetch all Bot Detection Actions for a security policy, stores in the cache and filters the required Bot Detection Action using ID.
@@ -453,4 +455,128 @@ func filterBotDetectionList(botDetectionList *botman.GetBotDetectionListResponse
 		}
 	}
 	return &filteredResult
+}
+
+// getContentProtectionRule reads from the cache if present, or makes a getAll call to fetch all Content Protection Rules for a security policy, stores in the cache and filters the required Content Protection Rule using ID.
+func getContentProtectionRule(ctx context.Context, request botman.GetContentProtectionRuleRequest, m interface{}) (map[string]interface{}, error) {
+	meta := akameta.Must(m)
+	client := inst.Client(meta)
+	logger := meta.Log("BotMan", "getContentProtectionRule")
+
+	cacheKey := fmt.Sprintf("%s:%d:%d:%s", "getContentProtectionRule", request.ConfigID, request.Version, request.SecurityPolicyID)
+	contentProtectionRules := &botman.GetContentProtectionRuleListResponse{}
+	err := cache.Get(cache.BucketName(SubproviderName), cacheKey, contentProtectionRules)
+	// if cache is disabled use GetTransactionalEndpoint to fetch one action at a time
+	if errors.Is(err, cache.ErrDisabled) {
+		return client.GetContentProtectionRule(ctx, request)
+	}
+	if err == nil {
+		return filterContentProtectionRule(contentProtectionRules, request, logger)
+	}
+
+	contentProtectionRuleMutex.Lock()
+	defer func() {
+		logger.Debugf("Unlocking mutex")
+		contentProtectionRuleMutex.Unlock()
+	}()
+
+	err = cache.Get(cache.BucketName(SubproviderName), cacheKey, contentProtectionRules)
+	if err == nil {
+		return filterContentProtectionRule(contentProtectionRules, request, logger)
+	}
+
+	if !errors.Is(err, cache.ErrEntryNotFound) && !errors.Is(err, cache.ErrDisabled) {
+		logger.Errorf("error reading from cache: %s", err.Error())
+		return nil, err
+	}
+
+	contentProtectionRules, err = client.GetContentProtectionRuleList(ctx, botman.GetContentProtectionRuleListRequest{
+		ConfigID:         request.ConfigID,
+		Version:          request.Version,
+		SecurityPolicyID: request.SecurityPolicyID,
+	})
+	if err != nil {
+		logger.Errorf("calling 'GetContentProtectionRuleListRequest': %s", err.Error())
+		return nil, err
+	}
+
+	err = cache.Set(cache.BucketName(SubproviderName), cacheKey, contentProtectionRules)
+	if err != nil && !errors.Is(err, cache.ErrDisabled) {
+		logger.Errorf("error caching transactionalEndpoints into cache: %s", err.Error())
+		return nil, err
+	}
+
+	return filterContentProtectionRule(contentProtectionRules, request, logger)
+}
+
+func filterContentProtectionRule(contentProtectionRules *botman.GetContentProtectionRuleListResponse, request botman.GetContentProtectionRuleRequest, logger log.Interface) (map[string]interface{}, error) {
+	for _, rule := range contentProtectionRules.ContentProtectionRules {
+		if rule["contentProtectionRuleId"].(string) == request.ContentProtectionRuleID {
+			logger.Debugf("Found content protection rule for config %d version %d security policy %s contentProtectionRuleId %s", request.ConfigID, request.Version, request.SecurityPolicyID, request.ContentProtectionRuleID)
+			return rule, nil
+		}
+	}
+	return nil, fmt.Errorf("ContentProtectionRule with id: %s does not exist", request.ContentProtectionRuleID)
+}
+
+// getContentProtectionRule reads from the cache if present, or makes a getAll call to fetch all Content Protection Rules for a security policy, stores in the cache and filters the required Content Protection Rule using ID.
+func getContentProtectionJavaScriptInjectionRule(ctx context.Context, request botman.GetContentProtectionJavaScriptInjectionRuleRequest, m interface{}) (map[string]interface{}, error) {
+	meta := akameta.Must(m)
+	client := inst.Client(meta)
+	logger := meta.Log("BotMan", "getContentProtectionJavaScriptInjectionRule")
+
+	cacheKey := fmt.Sprintf("%s:%d:%d:%s", "getContentProtectionJavaScriptInjectionRule", request.ConfigID, request.Version, request.SecurityPolicyID)
+	contentProtectionJavaScriptInjectionRules := &botman.GetContentProtectionJavaScriptInjectionRuleListResponse{}
+	err := cache.Get(cache.BucketName(SubproviderName), cacheKey, contentProtectionJavaScriptInjectionRules)
+	// if cache is disabled use GetTransactionalEndpoint to fetch one action at a time
+	if errors.Is(err, cache.ErrDisabled) {
+		return client.GetContentProtectionJavaScriptInjectionRule(ctx, request)
+	}
+	if err == nil {
+		return filterContentProtectionJavaScriptInjectionRule(contentProtectionJavaScriptInjectionRules, request, logger)
+	}
+
+	contentProtectionJavaScriptInjectionRuleMutex.Lock()
+	defer func() {
+		logger.Debugf("Unlocking mutex")
+		contentProtectionJavaScriptInjectionRuleMutex.Unlock()
+	}()
+
+	err = cache.Get(cache.BucketName(SubproviderName), cacheKey, contentProtectionJavaScriptInjectionRules)
+	if err == nil {
+		return filterContentProtectionJavaScriptInjectionRule(contentProtectionJavaScriptInjectionRules, request, logger)
+	}
+
+	if !errors.Is(err, cache.ErrEntryNotFound) && !errors.Is(err, cache.ErrDisabled) {
+		logger.Errorf("error reading from cache: %s", err.Error())
+		return nil, err
+	}
+
+	contentProtectionJavaScriptInjectionRules, err = client.GetContentProtectionJavaScriptInjectionRuleList(ctx, botman.GetContentProtectionJavaScriptInjectionRuleListRequest{
+		ConfigID:         request.ConfigID,
+		Version:          request.Version,
+		SecurityPolicyID: request.SecurityPolicyID,
+	})
+	if err != nil {
+		logger.Errorf("calling 'GetContentProtectionJavaScriptInjectionRuleListRequest': %s", err.Error())
+		return nil, err
+	}
+
+	err = cache.Set(cache.BucketName(SubproviderName), cacheKey, contentProtectionJavaScriptInjectionRules)
+	if err != nil && !errors.Is(err, cache.ErrDisabled) {
+		logger.Errorf("error caching transactionalEndpoints into cache: %s", err.Error())
+		return nil, err
+	}
+
+	return filterContentProtectionJavaScriptInjectionRule(contentProtectionJavaScriptInjectionRules, request, logger)
+}
+
+func filterContentProtectionJavaScriptInjectionRule(contentProtectionJavaScriptInjectionRules *botman.GetContentProtectionJavaScriptInjectionRuleListResponse, request botman.GetContentProtectionJavaScriptInjectionRuleRequest, logger log.Interface) (map[string]interface{}, error) {
+	for _, rule := range contentProtectionJavaScriptInjectionRules.ContentProtectionJavaScriptInjectionRules {
+		if rule["contentProtectionJavaScriptInjectionRuleId"].(string) == request.ContentProtectionJavaScriptInjectionRuleID {
+			logger.Debugf("Found content protection javascript injection rule for config %d version %d security policy %s contentProtectionJavaScriptInjectionRuleId %s", request.ConfigID, request.Version, request.SecurityPolicyID, request.ContentProtectionJavaScriptInjectionRuleID)
+			return rule, nil
+		}
+	}
+	return nil, fmt.Errorf("ContentProtectionJavaScriptInjectionRule with id: %s does not exist", request.ContentProtectionJavaScriptInjectionRuleID)
 }

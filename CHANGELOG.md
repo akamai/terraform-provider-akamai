@@ -60,6 +60,17 @@
 * Appsec
   * Added field `host_names` to the `akamai_appsec_configuration` data source
 
+* BOTMAN
+  * Added new resource:
+    * `akamai_botman_content_protection_javascript_injection_rule` - read and update
+    * `akamai_botman_content_protection_rule` - read and update
+    * `akamai_botman_content_protection_rule_sequence` - read and update
+  * Added new data source:
+    * `akamai_botman_content_protection_javascript_injection_rule` - read
+    * `akamai_botman_content_protection_rule` - read
+    * `akamai_botman_content_protection_rule_sequence` - read
+
+
 
 
 
