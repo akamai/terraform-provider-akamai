@@ -162,6 +162,9 @@
   * A new config version will be created if the latest config version is active in either Staging or Production, and protected and/or evaluated hostnames are updated using `akamai_appsec_wap_selected_hostnames` ([#I540](https://github.com/akamai/terraform-provider-akamai/issues/540))
 
 
+* Appsec
+  * Fixed issue where terraform provider plugin crashes due to empty string input for list `geo_network_lists`, `ip_network_lists`, `exception_ip_network_lists` and `asn_network_lists` in `akamai_appsec_ip_geo` resource
+
 
 
 

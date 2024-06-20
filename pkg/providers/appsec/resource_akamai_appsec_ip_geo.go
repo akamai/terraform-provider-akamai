@@ -51,27 +51,39 @@ func resourceIPGeo() *schema.Resource {
 				Description: "Protection mode (block or allow)",
 			},
 			"geo_network_lists": {
-				Type:        schema.TypeList,
-				Optional:    true,
-				Elem:        &schema.Schema{Type: schema.TypeString},
+				Type:     schema.TypeList,
+				Optional: true,
+				Elem: &schema.Schema{
+					Type:             schema.TypeString,
+					ValidateDiagFunc: validateEmptyElementsInList,
+				},
 				Description: "List of IDs of geographic network list to be blocked",
 			},
 			"ip_network_lists": {
-				Type:        schema.TypeList,
-				Optional:    true,
-				Elem:        &schema.Schema{Type: schema.TypeString},
+				Type:     schema.TypeList,
+				Optional: true,
+				Elem: &schema.Schema{
+					Type:             schema.TypeString,
+					ValidateDiagFunc: validateEmptyElementsInList,
+				},
 				Description: "List of IDs of IP network list to be blocked",
 			},
 			"asn_network_lists": {
-				Type:        schema.TypeList,
-				Optional:    true,
-				Elem:        &schema.Schema{Type: schema.TypeString},
+				Type:     schema.TypeList,
+				Optional: true,
+				Elem: &schema.Schema{
+					Type:             schema.TypeString,
+					ValidateDiagFunc: validateEmptyElementsInList,
+				},
 				Description: "List of IDs of ASN network list to be blocked",
 			},
 			"exception_ip_network_lists": {
-				Type:        schema.TypeList,
-				Optional:    true,
-				Elem:        &schema.Schema{Type: schema.TypeString},
+				Type:     schema.TypeList,
+				Optional: true,
+				Elem: &schema.Schema{
+					Type:             schema.TypeString,
+					ValidateDiagFunc: validateEmptyElementsInList,
+				},
 				Description: "List of IDs of network list that are always allowed",
 			},
 			"ukraine_geo_control_action": {

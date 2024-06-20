@@ -2,6 +2,7 @@ package appsec
 
 import (
 	"encoding/json"
+	"regexp"
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/appsec"
@@ -433,6 +434,47 @@ func TestAkamaiIPGeo_res_block(t *testing.T) {
 			})
 		})
 
+		client.AssertExpectations(t)
+	})
+
+	t.Run("empty string in Geo network lists input", func(t *testing.T) {
+		client := &appsec.Mock{}
+		useClient(client, func() {
+			resource.Test(t, resource.TestCase{
+				IsUnitTest:               true,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResIPGeo/mode_allow_with_empty_geo_network_lists.tf"),
+						Check: resource.ComposeAggregateTestCheckFunc(
+							resource.TestCheckResourceAttr("akamai_appsec_ip_geo.test", "id", "43253:AAAA_81230"),
+						),
+						ExpectError: regexp.MustCompile("Error: empty or invalid string value for config parameter geo_network_lists"),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
+	t.Run("empty string input in all lists", func(t *testing.T) {
+		client := &appsec.Mock{}
+		useClient(client, func() {
+			resource.Test(t, resource.TestCase{
+				IsUnitTest:               true,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResIPGeo/all_lists_with_empty_string_input.tf"),
+						Check: resource.ComposeAggregateTestCheckFunc(
+							resource.TestCheckResourceAttr("akamai_appsec_ip_geo.test", "id", "43253:AAAA_81230"),
+						),
+						ExpectError: regexp.MustCompile(`(?s)Error: empty or invalid string value for config parameter geo_network_lists.*Error: empty or invalid string value for config parameter ip_network_lists.*Error: empty or invalid string value for config parameter exception_ip_network_lists.*Error: empty or invalid string value for config parameter asn_network_lists.*`),
+					},
+				},
+			})
+		})
 		client.AssertExpectations(t)
 	})
 }

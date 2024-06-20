@@ -103,3 +103,14 @@ func splitID(id string, expectedNum int, example string) ([]string, error) {
 	}
 	return parts, nil
 }
+
+func validateEmptyElementsInList(v interface{}, path cty.Path) diag.Diagnostics {
+	attrStep, ok := path[0].(cty.GetAttrStep)
+	if !ok {
+		return diag.Errorf("value must be of the specified type")
+	}
+	if v.(string) == "" {
+		return diag.Errorf("empty or invalid string value for config parameter %s", attrStep.Name)
+	}
+	return nil
+}
