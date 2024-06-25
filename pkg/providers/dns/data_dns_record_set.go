@@ -81,7 +81,9 @@ func dataSourceDNSRecordSetRead(ctx context.Context, d *schema.ResourceData, m i
 		})
 	}
 	logger.WithField("rdata", rdata).Debug("Recordset found.")
-	sort.Strings(rdata)
+	if recordType != RRTypeTxt {
+		sort.Strings(rdata)
+	}
 
 	if err := d.Set("rdata", rdata); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))

@@ -5,5 +5,5 @@ provider "akamai" {
 data "akamai_dns_record_set" "test" {
   zone        = "exampleterraform.io"
   host        = "exampleterraform.io"
-  record_type = "A"
+  record_type = "TXT"
 }

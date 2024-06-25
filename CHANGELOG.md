@@ -180,7 +180,9 @@
 
 
 
-
+* DNS
+  * Fixed issue in `akamai_dns_record` resource that could cause incorrect targets planned to be modified or reordering targets send to server for `TXT` record type ([I#499](https://github.com/akamai/terraform-provider-akamai/issues/499), [I#541](https://github.com/akamai/terraform-provider-akamai/issues/541), [I#559](https://github.com/akamai/terraform-provider-akamai/issues/559))
+  * Fixed issue in `akamai_dns_recordset` datasource that for `TXT` record type, returned targets were needlessly reordered ([I#559](https://github.com/akamai/terraform-provider-akamai/issues/559))
 
 
 

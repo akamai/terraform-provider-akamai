@@ -730,7 +730,7 @@ func resourceDNSRecordCreate(ctx context.Context, d *schema.ResourceData, m inte
 	getRecordLock(recordType).Lock()
 	defer getRecordLock(recordType).Unlock()
 
-	if recordType == "SOA" {
+	if recordType == RRTypeSoa {
 		logger.Debug("Attempting to create a SOA record")
 		// A default SOA is created automagically when the primary zone is created ...
 		if _, err := inst.Client(meta).GetRecord(ctx, zone, host, recordType); err == nil {
@@ -901,7 +901,7 @@ func resourceDNSRecordUpdate(ctx context.Context, d *schema.ResourceData, m inte
 	getRecordLock(recordType).Lock()
 	defer getRecordLock(recordType).Unlock()
 
-	if recordType == "SOA" {
+	if recordType == RRTypeSoa {
 		// need to get current serial and increment as part of update
 		record, e := inst.Client(meta).GetRecord(ctx, zone, host, recordType)
 		if e != nil {
@@ -1171,7 +1171,7 @@ func resourceDNSRecordRead(ctx context.Context, d *schema.ResourceData, m interf
 	}
 
 	sort.Strings(targets)
-	if recordType == "SOA" {
+	if recordType == RRTypeSoa {
 		logger.Debug("READ SOA RECORD")
 		rdataSerial, ok := rdataFieldMap["serial"].(int)
 		if !ok {
@@ -1190,7 +1190,7 @@ func resourceDNSRecordRead(ctx context.Context, d *schema.ResourceData, m interf
 			}
 		}
 	}
-	if recordType == "AKAMAITLC" {
+	if recordType == RRTypeAkamaiTlc {
 		extractTlcString := strings.Join(targets, " ")
 		sha1hash = hash.GetSHAString(extractTlcString)
 	}
@@ -1282,7 +1282,7 @@ func resourceDNSRecordImport(d *schema.ResourceData, m interface{}) ([]*schema.R
 		return nil, fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 	}
 	targets := inst.Client(meta).ProcessRdata(ctx, recordset.Target, recordType)
-	if recordset.RecordType == "MX" {
+	if recordset.RecordType == RRTypeMx {
 		// can't guarantee order of MX records. Forced to set pri, incr to 0 and targets as is
 		if err := d.Set("target", targets); err != nil {
 			return nil, fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
@@ -1438,9 +1438,11 @@ func bindRecord(ctx context.Context, meta meta.Meta, d *schema.ResourceData, log
 		return dns.RecordBody{}, nil
 	}
 
-	simpleRecord := map[string]struct{}{"A": {}, "AAAA": {}, "AKAMAICDN": {}, "CNAME": {}, "LOC": {}, "NS": {}, "PTR": {}, "SPF": {}, "TXT": {}, "CAA": {}}
+	simpleRecord := map[string]struct{}{RRTypeA: {}, RRTypeAaaa: {}, RRTypeAkamaiCdn: {}, RRTypeCname: {}, RRTypeLoc: {}, RRTypeNs: {}, RRTypePtr: {}, RRTypeSpf: {}, RRTypeTxt: {}, RRTypeCaa: {}}
 	if _, ok := simpleRecord[recordType]; ok {
-		sort.Strings(records)
+		if recordType != RRTypeTxt {
+			sort.Strings(records)
+		}
 		return dns.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}, nil
 	}
 
@@ -2946,36 +2948,34 @@ func checkServiceRecord(d *schema.ResourceData, rtype string) error {
 }
 
 func resolveTxtRecordTargets(denormalized, normalized []string) ([]string, error) {
-	return resolveTargets(denormalized, normalized, func(dt, nt string) (bool, error) {
-		normalizedTarget, err := txtrecord.NormalizeTarget(dt)
-		if err != nil {
-			return false, err
-		}
-		return normalizedTarget == nt, nil
-	})
+	return resolveTargets(denormalized, normalized, txtrecord.NormalizeTarget)
 }
 
 // resolveTargets replaces normalized targets with a corresponding denormalized target
 // if they are found to be equal using the compare func.
 // The comparison is performed only if there is an element with a corresponding index in denormalized.
 // The output is always the same length as normalized.
-func resolveTargets(denormalized, normalized []string, compare func(string, string) (bool, error)) ([]string, error) {
-	n := len(normalized)
-	res := make([]string, n)
-	copy(res, normalized)
+func resolveTargets(denormalized, normalized []string, normalizeFunc func(string) (string, error)) ([]string, error) {
+	normalizedToDenormalized := map[string]string{}
 
-	for i := 0; i < n; i++ {
-		if i >= len(denormalized) {
-			continue
-		}
-
-		equal, err := compare(denormalized[i], normalized[i])
+	for _, target := range denormalized {
+		calculatedNormalized, err := normalizeFunc(target)
 		if err != nil {
 			return nil, err
 		}
+		for _, receivedNormalized := range normalized {
+			if calculatedNormalized == receivedNormalized {
+				normalizedToDenormalized[receivedNormalized] = target
+			}
+		}
+	}
 
-		if equal {
-			res[i] = denormalized[i]
+	res := make([]string, 0, len(normalized))
+	for _, target := range normalized {
+		if denormalizedTarget, ok := normalizedToDenormalized[target]; ok {
+			res = append(res, denormalizedTarget)
+		} else {
+			res = append(res, target)
 		}
 	}
 

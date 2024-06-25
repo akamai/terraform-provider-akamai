@@ -206,6 +206,108 @@ func TestResDnsRecord(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 
+	t.Run("TXT record test - keep order of elements in 255 characters long targets", func(t *testing.T) {
+
+		target1 := strings.Repeat("Z", 255)
+		target2 := strings.Repeat("A", 255)
+		target3 := strings.Repeat("K", 255)
+
+		normalizedTarget1 := fmt.Sprintf("%q", target1)
+		normalizedTarget2 := fmt.Sprintf("%q", target2)
+		normalizedTarget3 := fmt.Sprintf("%q", target3)
+
+		client := &dns.Mock{}
+
+		client.On("GetRecord",
+			mock.Anything,
+			"exampleterraform.io",
+			"exampleterraform.io",
+			"TXT",
+		).Return(nil, notFound).Once()
+
+		client.On("CreateRecord",
+			mock.Anything,
+			&dns.RecordBody{
+				Name:       "exampleterraform.io",
+				RecordType: "TXT",
+				TTL:        300,
+				Active:     false,
+				Target:     []string{normalizedTarget1, normalizedTarget2, normalizedTarget3},
+			},
+			"exampleterraform.io",
+			[]bool{false},
+		).Return(nil)
+
+		client.On("GetRecord",
+			mock.Anything,
+			"exampleterraform.io",
+			"exampleterraform.io",
+			"TXT",
+		).Return(&dns.RecordBody{
+			Name:       "exampleterraform.io",
+			RecordType: "TXT",
+			TTL:        300,
+			Active:     false,
+			Target:     []string{normalizedTarget1, normalizedTarget2, normalizedTarget3},
+		}, nil).Once()
+
+		client.On("ParseRData",
+			mock.Anything,
+			"TXT",
+			[]string{normalizedTarget1, normalizedTarget2, normalizedTarget3},
+		).Return(map[string]interface{}{
+			"target": []string{normalizedTarget1, normalizedTarget2, normalizedTarget3},
+		}).Times(2)
+
+		client.On("ProcessRdata",
+			mock.Anything,
+			[]string{normalizedTarget1, normalizedTarget2, normalizedTarget3},
+			"TXT",
+		).Return([]string{normalizedTarget1, normalizedTarget2, normalizedTarget3}).Times(2)
+
+		client.On("GetRecord",
+			mock.Anything,
+			"exampleterraform.io",
+			"exampleterraform.io",
+			"TXT",
+		).Return(&dns.RecordBody{
+			Name:       "exampleterraform.io",
+			RecordType: "TXT",
+			TTL:        300,
+			Active:     false,
+			Target:     []string{normalizedTarget1, normalizedTarget2, normalizedTarget3},
+		}, nil).Once()
+
+		client.On("DeleteRecord",
+			mock.Anything,
+			mock.AnythingOfType("*dns.RecordBody"),
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("[]bool"),
+		).Return(nil)
+
+		resourceName := "akamai_dns_record.txt_record"
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResDnsRecord/create_long_txt.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr(resourceName, "recordtype", "TXT"),
+							resource.TestCheckResourceAttr(resourceName, "target.#", "3"),
+							resource.TestCheckResourceAttr(resourceName, "target.0", target1),
+							resource.TestCheckResourceAttr(resourceName, "target.1", target2),
+							resource.TestCheckResourceAttr(resourceName, "target.2", target3),
+						),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
 	t.Run("SRV record with default values", func(t *testing.T) {
 		client := &dns.Mock{}
 
@@ -917,11 +1019,11 @@ func TestResolveTxtRecordTargets(t *testing.T) {
 }
 
 func TestResolveTargets(t *testing.T) {
-	compare := func(dt, nt string) (bool, error) {
-		if dt == "error" {
-			return false, fmt.Errorf("oops")
+	normalize := func(value string) (string, error) {
+		if value == "error" {
+			return "", fmt.Errorf("oops")
 		}
-		return nt == strings.ToLower(dt), nil
+		return strings.ToLower(value), nil
 	}
 
 	tests := map[string]struct {
@@ -945,15 +1047,15 @@ func TestResolveTargets(t *testing.T) {
 			normalized:   []string{"a", "b"},
 			expected:     []string{"a", "b"},
 		},
-		"preserves normalized targets when elements shift": {
+		"preserves denormalized targets when elements shift with normalized drift": {
 			denormalized: []string{"a", "B", "C"},
 			normalized:   []string{"a", "b", "bb", "c"},
-			expected:     []string{"a", "B", "bb", "c"},
+			expected:     []string{"a", "B", "bb", "C"},
 		},
-		"preserves normalized targets when order changes": {
+		"preserves denormalized targets when order changes": {
 			denormalized: []string{"a", "B", "C", "d"},
 			normalized:   []string{"d", "c", "b", "a"},
-			expected:     []string{"d", "c", "b", "a"},
+			expected:     []string{"d", "C", "B", "a"},
 		},
 		"returns error when normalization failed": {
 			denormalized: []string{"error"},
@@ -964,7 +1066,7 @@ func TestResolveTargets(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			res, err := resolveTargets(tc.denormalized, tc.normalized, compare)
+			res, err := resolveTargets(tc.denormalized, tc.normalized, normalize)
 			if tc.withError {
 				assert.Error(t, err)
 				return

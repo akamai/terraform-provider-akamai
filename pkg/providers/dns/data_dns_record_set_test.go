@@ -3,7 +3,6 @@ package dns
 import (
 	"errors"
 	"regexp"
-	"strings"
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/dns"
@@ -18,7 +17,6 @@ func TestDataSourceDNSRecordSet_basic(t *testing.T) {
 		client := &dns.Mock{}
 
 		dataSourceName := "data.akamai_dns_record_set.test"
-		outputName := "test_addrs"
 
 		rdata := []string{"10.1.0.1", "10.2.0.1"}
 
@@ -38,10 +36,43 @@ func TestDataSourceDNSRecordSet_basic(t *testing.T) {
 						Check: resource.ComposeTestCheckFunc(
 							// check the values set in dataSourceDNSRecordSetRead
 							// rdata is an array that becomes rdata.0 and rdata.1 in tf state
-							resource.TestCheckResourceAttrSet(dataSourceName, "rdata.0"),
-							resource.TestCheckResourceAttrSet(dataSourceName, "rdata.1"),
-							resource.TestCheckResourceAttrSet(dataSourceName, "id"),
-							resource.TestCheckOutput(outputName, strings.Join(rdata, ",")),
+							resource.TestCheckResourceAttr(dataSourceName, "rdata.0", "10.1.0.1"),
+							resource.TestCheckResourceAttr(dataSourceName, "rdata.1", "10.2.0.1"),
+							resource.TestCheckResourceAttr(dataSourceName, "id", "exampleterraform.io"),
+						),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
+	t.Run("basic txt", func(t *testing.T) {
+		client := &dns.Mock{}
+
+		dataSourceName := "data.akamai_dns_record_set.test"
+
+		rdata := []string{"abc", "zxy", "hji"}
+
+		client.On("GetRdata",
+			mock.Anything, // ctx is irrelevant for this test
+			"exampleterraform.io",
+			"exampleterraform.io",
+			"TXT",
+		).Return(rdata, nil)
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestDataDnsRecordSet/txt.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr(dataSourceName, "rdata.0", "abc"),
+							resource.TestCheckResourceAttr(dataSourceName, "rdata.1", "zxy"),
+							resource.TestCheckResourceAttr(dataSourceName, "rdata.2", "hji"),
+							resource.TestCheckResourceAttr(dataSourceName, "id", "exampleterraform.io"),
 						),
 					},
 				},
