@@ -57,7 +57,7 @@ func resourceClientListActivation() *schema.Resource {
 				Type:             schema.TypeString,
 				Optional:         true,
 				Description:      "A brief description for the activation.",
-				DiffSuppressFunc: suppressCommentsDiff,
+				DiffSuppressFunc: suppressFieldDiff,
 			},
 			"notification_recipients": {
 				Type:        schema.TypeSet,
@@ -66,11 +66,13 @@ func resourceClientListActivation() *schema.Resource {
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
+				DiffSuppressFunc: suppressFieldDiff,
 			},
 			"siebel_ticket_id": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "Identifies the Siebel ticket, if the activation is linked to one.",
+				Type:             schema.TypeString,
+				Optional:         true,
+				Description:      "Identifies the Siebel ticket, if the activation is linked to one.",
+				DiffSuppressFunc: suppressFieldDiff,
 			},
 			"status": {
 				Type:        schema.TypeString,
@@ -203,9 +205,6 @@ func resourceActivationUpdate(ctx context.Context, d *schema.ResourceData, m int
 		if err != nil {
 			return diag.FromErr(err)
 		}
-	} else if d.HasChanges("notification_recipients", "siebel_ticket_id") {
-		return diag.Errorf("The following attributes 'notification_recipients', 'siebel_ticket_id' " +
-			"cannot be modified after activation.")
 	}
 
 	return resourceActivationRead(ctx, d, m)
@@ -291,9 +290,8 @@ func waitForActivationCompletion(ctx context.Context, client clientlists.ClientL
 	}
 }
 
-// Suppress comments diff when activation is not required,
-// and activation resource cannot be updated.
-func suppressCommentsDiff(_, oldValue, newValue string, d *schema.ResourceData) bool {
+// Suppress diff on callers field when activation is not required
+func suppressFieldDiff(_, oldValue, newValue string, d *schema.ResourceData) bool {
 	if oldValue != newValue && d.HasChanges("list_id", "version", "network") {
 		return false
 	}

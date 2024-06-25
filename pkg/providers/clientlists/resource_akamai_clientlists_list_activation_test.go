@@ -327,7 +327,7 @@ func TestClientListActivationResource(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 
-	t.Run("update activation - siebelTicketId only update ", func(t *testing.T) {
+	t.Run("update activation - notification_recipients, siebel_ticket_id and comments updates suppressed", func(t *testing.T) {
 		client := new(clientlists.Mock)
 
 		activationRes := expectCreateActivation(t, client, clientlists.CreateActivationRequest{
@@ -344,56 +344,6 @@ func TestClientListActivationResource(t *testing.T) {
 		expectReadActivation(t, client,
 			clientlists.GetActivationRequest{ActivationID: activationRes.ActivationID},
 			getActivationAttrs(activationRes, clientlists.PendingActivation), 2)
-
-		expectReadActivation(t, client,
-			clientlists.GetActivationRequest{ActivationID: activationRes.ActivationID},
-			getActivationAttrs(activationRes, clientlists.Active), 4)
-
-		expectGetClientlist(t, client, "12_AB", 2, 3)
-
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: loadFixtureString(fmt.Sprintf("%s/activation_create.tf", testDir)),
-						Check: checkAttributes(ActivationAttrs{
-							ListID:                 activationRes.ListID,
-							Network:                string(activationRes.Network),
-							NotificationRecipients: activationRes.NotificationRecipients,
-							SiebelTicketID:         activationRes.SiebelTicketID,
-							Comments:               activationRes.Comments,
-							Version:                int(activationRes.Version),
-						}),
-					},
-					{
-						Config: loadFixtureString(fmt.Sprintf("%s/activation_update_siebelTicketId.tf", testDir)),
-						ExpectError: regexp.MustCompile("Error: The following attributes 'notification_recipients', 'siebel_ticket_id' " +
-							"cannot be modified after activation."),
-					},
-				},
-			})
-		})
-		client.AssertExpectations(t)
-	})
-
-	t.Run("update activation - comments only update suppressed", func(t *testing.T) {
-		client := new(clientlists.Mock)
-
-		activationRes := expectCreateActivation(t, client, clientlists.CreateActivationRequest{
-			ListID: "12_AB",
-			ActivationParams: clientlists.ActivationParams{
-				Action:                 clientlists.Activate,
-				Network:                clientlists.Staging,
-				SiebelTicketID:         "ABC-12345",
-				NotificationRecipients: []string{"user@example.com"},
-				Comments:               "Activation Comments",
-			},
-		}, 2, 33)
-
-		expectReadActivation(t, client,
-			clientlists.GetActivationRequest{ActivationID: activationRes.ActivationID},
-			getActivationAttrs(activationRes, clientlists.PendingActivation), 1)
 
 		expectReadActivation(t, client,
 			clientlists.GetActivationRequest{ActivationID: activationRes.ActivationID},
@@ -417,13 +367,13 @@ func TestClientListActivationResource(t *testing.T) {
 						}),
 					},
 					{
-						Config: loadFixtureString(fmt.Sprintf("%s/activation_update_comments_suppressed.tf", testDir)),
+						Config: loadFixtureString(fmt.Sprintf("%s/activation_update_suppressed.tf", testDir)),
 						Check: checkAttributes(ActivationAttrs{
 							ListID:                 activationRes.ListID,
 							Network:                string(activationRes.Network),
 							NotificationRecipients: activationRes.NotificationRecipients,
 							SiebelTicketID:         activationRes.SiebelTicketID,
-							Comments:               "Activation Comments",
+							Comments:               activationRes.Comments,
 							Version:                int(activationRes.Version),
 						}),
 					},
