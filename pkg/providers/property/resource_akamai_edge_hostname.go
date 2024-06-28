@@ -73,6 +73,11 @@ var akamaiSecureEdgeHostNameSchema = map[string]*schema.Schema{
 		ValidateDiagFunc: tf.IsNotBlank,
 		StateFunc:        appendDefaultSuffixToEdgeHostname,
 	},
+	"ttl": {
+		Type:        schema.TypeInt,
+		Optional:    true,
+		Description: "The time to live, or number of seconds to keep an edge hostname assigned to a map or target. If not provided default value for product is used.",
+	},
 	"ip_behavior": {
 		Type:     schema.TypeString,
 		Required: true,
@@ -163,13 +168,11 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 	}
 	newHostname := papi.EdgeHostnameCreate{}
 	newHostname.ProductID = productID
-
 	newHostname.DomainSuffix, newHostname.SecureNetwork = parseEdgeHostname(edgeHostname)
-
 	newHostname.DomainPrefix = strings.TrimSuffix(edgeHostname, "."+newHostname.DomainSuffix)
-
 	// ip_behavior is required value in schema.
 	newHostname.IPVersionBehavior = strings.ToUpper(d.Get("ip_behavior").(string))
+
 	for _, h := range edgeHostnames.EdgeHostnames.Items {
 		if h.DomainPrefix == newHostname.DomainPrefix && h.DomainSuffix == newHostname.DomainSuffix {
 			return diag.Errorf("edgehostname '%s' already exists", edgeHostname)
@@ -208,6 +211,32 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 	if err != nil {
 		return diag.FromErr(err)
 	}
+	if d.HasChange("ttl") {
+		edgeHostnameID, err := strconv.Atoi(strings.TrimPrefix(hostname.EdgeHostnameID, "ehn_"))
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		hapiClient := HapiClient(meta)
+		err = waitForHAPIPropagation(ctx, hapiClient, edgeHostnameID)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		ttl, err := tf.GetIntValueAsInt64("ttl", d)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		patches := []patch{{
+			value: strconv.FormatInt(ttl, 10),
+			field: "ttl",
+			path:  "/ttl",
+		}}
+		diagnostics := patchEdgeHostname(ctx, d, meta, edgeHostnameID, patches)
+		if diagnostics != nil {
+			return diagnostics
+		}
+	}
+
 	d.SetId(hostname.EdgeHostnameID)
 	return resourceSecureEdgeHostNameRead(ctx, d, meta)
 }
@@ -284,6 +313,34 @@ func resourceSecureEdgeHostNameRead(ctx context.Context, d *schema.ResourceData,
 		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 	}
 
+	_, err = tf.GetIntValueAsInt64("ttl", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	if err == nil {
+		edgeHostnameID, err := strconv.Atoi(strings.TrimPrefix(foundEdgeHostname.ID, "ehn_"))
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		hapiClient := HapiClient(meta)
+		// in theory this call is redundant, added here as safeguard
+		err = waitForHAPIPropagation(ctx, hapiClient, edgeHostnameID)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		hostname, err := hapiClient.GetEdgeHostname(ctx, edgeHostnameID)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		ttl := hostname.TTL
+		if hostname.UseDefaultTTL {
+			ttl = 0
+		}
+		if err := d.Set("ttl", ttl); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
+		}
+	}
 	return nil
 }
 
@@ -296,75 +353,121 @@ func resourceSecureEdgeHostNameUpdate(ctx context.Context, d *schema.ResourceDat
 		return nil
 	}
 
+	patches := make([]patch, 0, 2)
 	if d.HasChange("ip_behavior") {
-		edgeHostname, err := tf.GetStringValue("edge_hostname", d)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		dnsZone, _ := parseEdgeHostname(edgeHostname)
 		ipBehavior, err := tf.GetStringValue("ip_behavior", d)
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		emails, err := tf.GetListValue("status_update_email", d)
-		if err != nil && !errors.Is(err, tf.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-
-		logger.Debugf("Proceeding to update /ipVersionBehavior for %s", edgeHostname)
 		// IPV6_COMPLIANCE type has to mapped to IPV6_IPV4_DUALSTACK which is only accepted value by HAPI client
 		if ipBehavior == papi.EHIPVersionV6Compliance {
 			ipBehavior = "IPV6_IPV4_DUALSTACK"
 		}
+		patches = append(patches, patch{
+			value: ipBehavior,
+			field: "ip_behavior",
+			path:  "/ipVersionBehavior",
+		})
+	}
 
-		req := hapi.UpdateEdgeHostnameRequest{
-			DNSZone:    dnsZone,
-			RecordName: strings.ReplaceAll(edgeHostname, "."+dnsZone, ""),
-			Comments:   fmt.Sprintf("change /ipVersionBehavior to %s", ipBehavior),
-			Body: []hapi.UpdateEdgeHostnameRequestBody{
-				{
-					Op:    "replace",
-					Path:  "/ipVersionBehavior",
-					Value: ipBehavior,
-				},
-			},
+	if d.HasChange("ttl") {
+		ttl, err := tf.GetIntValueAsInt64("ttl", d)
+		if err != nil {
+			return diag.FromErr(err)
 		}
-		if len(emails) != 0 {
-			statusUpdateEmails := make([]string, len(emails))
-			for i, email := range emails {
-				statusUpdateEmails[i] = email.(string)
-			}
-			req.StatusUpdateEmail = statusUpdateEmails
-		}
+		patches = append(patches, patch{
+			value: strconv.FormatInt(ttl, 10),
+			field: "ttl",
+			path:  "/ttl",
+		})
+	}
 
+	if len(patches) > 0 {
 		edgeHostnameIDString := d.Id()
 		edgeHostnameID, err := strconv.Atoi(strings.TrimPrefix(edgeHostnameIDString, "ehn_"))
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		hapiClient := HapiClient(meta)
-		err = waitForHAPIPropagation(ctx, hapiClient, edgeHostnameID)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		resp, err := hapiClient.UpdateEdgeHostname(ctx, req)
-		if err != nil {
-			if err2 := tf.RestoreOldValues(d, []string{"ip_behavior"}); err2 != nil {
-				return diag.Errorf(`%s failed. No changes were written to server: 
-%s
 
-Failed to restore previous local schema values. The schema will remain in tainted state:
-%s`, hapi.ErrUpdateEdgeHostname, err.Error(), err2.Error())
-			}
-			return diag.FromErr(err)
-		}
-
-		if err = waitForChange(ctx, hapiClient, resp.ChangeID); err != nil {
-			return diag.FromErr(err)
+		diagnostics := patchEdgeHostname(ctx, d, meta, edgeHostnameID, patches)
+		if diagnostics != nil {
+			return diagnostics
 		}
 	}
 
 	return resourceSecureEdgeHostNameRead(ctx, d, m)
+}
+
+type patch struct {
+	value string
+	field string
+	path  string
+}
+
+func patchEdgeHostname(ctx context.Context, d *schema.ResourceData, meta meta.Meta, edgeHostnameID int, patches []patch) diag.Diagnostics {
+	logger := meta.Log("PAPI", "patchEdgeHostname")
+
+	edgeHostname, err := tf.GetStringValue("edge_hostname", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	dnsZone, _ := parseEdgeHostname(edgeHostname)
+	emails, err := tf.GetListValue("status_update_email", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+
+	l := len(patches)
+	body := make([]hapi.UpdateEdgeHostnameRequestBody, 0, l)
+	fields := make([]string, 0, l)
+	comments := make([]string, 0, l)
+	for _, p := range patches {
+		logger.Debugf("Proceeding to update %s for %s", p.field, edgeHostname)
+		body = append(body, hapi.UpdateEdgeHostnameRequestBody{
+
+			Op:    "replace",
+			Path:  p.path,
+			Value: p.value,
+		})
+		comments = append(comments, fmt.Sprintf("change %s to %s", p.path, p.value))
+		fields = append(fields, p.field)
+	}
+	req := hapi.UpdateEdgeHostnameRequest{
+		DNSZone:    dnsZone,
+		RecordName: strings.ReplaceAll(edgeHostname, "."+dnsZone, ""),
+		Comments:   strings.Join(comments, "; "),
+		Body:       body,
+	}
+
+	if len(emails) != 0 {
+		statusUpdateEmails := make([]string, len(emails))
+		for i, email := range emails {
+			statusUpdateEmails[i] = email.(string)
+		}
+		req.StatusUpdateEmail = statusUpdateEmails
+	}
+
+	hapiClient := HapiClient(meta)
+	err = waitForHAPIPropagation(ctx, hapiClient, edgeHostnameID)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	resp, err := hapiClient.UpdateEdgeHostname(ctx, req)
+	if err != nil {
+		if err2 := tf.RestoreOldValues(d, fields); err2 != nil {
+			return diag.Errorf(`%s failed. No changes were written to server: 
+%s
+
+Failed to restore previous local schema values. The schema will remain in tainted state:
+%s`, hapi.ErrUpdateEdgeHostname, err.Error(), err2.Error())
+		}
+		return diag.FromErr(err)
+	}
+
+	if err = waitForChange(ctx, hapiClient, resp.ChangeID); err != nil {
+		return diag.FromErr(err)
+	}
+	return nil
 }
 
 func waitForHAPIPropagation(ctx context.Context, hapiClient hapi.HAPI, edgeHostnameID int) error {
@@ -488,6 +591,13 @@ func resourceSecureEdgeHostNameImport(ctx context.Context, d *schema.ResourceDat
 			if err := d.Set("certificate", certificateID); err != nil {
 				return nil, fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 			}
+		}
+	}
+
+	if !edgeHostnameResp.UseDefaultTTL {
+		err := d.Set("ttl", edgeHostnameResp.TTL)
+		if err != nil {
+			return nil, fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 		}
 	}
 

@@ -47,7 +47,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 							DomainSuffix: "edgesuite.net",
 						},
 						{
-							ID:           "eh_2",
+							ID:           "ehn_2",
 							Domain:       "test3.edgesuite.net",
 							ProductID:    "prd_2",
 							DomainPrefix: "test3",
@@ -68,7 +68,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 						SlotNumber:        123,
 					},
 				}).Return(&papi.CreateEdgeHostnameResponse{
-					EdgeHostnameID: "ehn_123",
+					EdgeHostnameID: "ehn_456",
 				}, nil)
 				mp.On("GetEdgeHostnames", mock.Anything, papi.GetEdgeHostnamesRequest{
 					ContractID: "ctr_2",
@@ -78,7 +78,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 					GroupID:    "grp_2",
 					EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
 						{
-							ID:                "ehn_123",
+							ID:                "ehn_456",
 							Domain:            "test2.edgesuite.net",
 							ProductID:         "prd_2",
 							DomainPrefix:      "test2",
@@ -86,7 +86,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 							IPVersionBehavior: "IPV6_COMPLIANCE",
 						},
 						{
-							ID:           "eh_2",
+							ID:           "ehn_2",
 							Domain:       "test.edgesuite.net",
 							ProductID:    "prd_2",
 							DomainPrefix: "test3",
@@ -106,7 +106,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 				{
 					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/%s", testDir, "new_edgesuite_net.tf")),
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "id", "ehn_123"),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "id", "ehn_456"),
 						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "ip_behavior", "IPV6_COMPLIANCE"),
 						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "contract_id", "ctr_2"),
 						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "group_id", "grp_2"),
@@ -136,7 +136,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 							IPVersionBehavior: "IPV6_PERFORMANCE",
 						},
 						{
-							ID:                "eh_2",
+							ID:                "ehn_2",
 							Domain:            "test.edgesuite.net",
 							ProductID:         "prd_2",
 							DomainPrefix:      "test3",
@@ -158,7 +158,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 						SlotNumber:        123,
 					},
 				}).Return(&papi.CreateEdgeHostnameResponse{
-					EdgeHostnameID: "ehn_123",
+					EdgeHostnameID: "ehn_456",
 				}, nil)
 				mp.On("GetEdgeHostnames", mock.Anything, papi.GetEdgeHostnamesRequest{
 					ContractID: "ctr_2",
@@ -176,7 +176,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 							IPVersionBehavior: "IPV4",
 						},
 						{
-							ID:                "eh_2",
+							ID:                "ehn_2",
 							Domain:            "test3.edgesuite.net",
 							ProductID:         "prd_2",
 							DomainPrefix:      "test3",
@@ -184,7 +184,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 							IPVersionBehavior: "IPV4",
 						},
 						{
-							ID:                "ehn_123",
+							ID:                "ehn_456",
 							Domain:            "test.edgekey.net",
 							ProductID:         "prd_2",
 							DomainPrefix:      "test",
@@ -198,7 +198,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 				{
 					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/%s", testDir, "new_edgekey_net.tf")),
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "id", "ehn_123"),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "id", "ehn_456"),
 						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "ip_behavior", "IPV6_PERFORMANCE"),
 						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "contract_id", "ctr_2"),
 						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "group_id", "grp_2"),
@@ -227,7 +227,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 							IPVersionBehavior: "IPV4",
 						},
 						{
-							ID:                "eh_2",
+							ID:                "ehn_2",
 							Domain:            "test.akamaized.net",
 							ProductID:         "prd_2",
 							DomainPrefix:      "test3",
@@ -247,7 +247,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 						IPVersionBehavior: "IPV6_COMPLIANCE",
 					},
 				}).Return(&papi.CreateEdgeHostnameResponse{
-					EdgeHostnameID: "ehn_123",
+					EdgeHostnameID: "ehn_456",
 				}, nil)
 				mp.On("GetEdgeHostnames", mock.Anything, papi.GetEdgeHostnamesRequest{
 					ContractID: "ctr_2",
@@ -265,7 +265,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 							IPVersionBehavior: "IPV4",
 						},
 						{
-							ID:                "eh_2",
+							ID:                "ehn_2",
 							Domain:            "test.akamaized.net",
 							ProductID:         "prd_2",
 							DomainPrefix:      "test3",
@@ -273,7 +273,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 							IPVersionBehavior: "IPV4",
 						},
 						{
-							ID:                "ehn_123",
+							ID:                "ehn_456",
 							Domain:            "test.akamaized.net",
 							ProductID:         "prd_2",
 							DomainPrefix:      "test",
@@ -287,11 +287,128 @@ func TestResourceEdgeHostname(t *testing.T) {
 				{
 					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/%s", testDir, "new_akamaized_net.tf")),
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "id", "ehn_123"),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "id", "ehn_456"),
 						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "ip_behavior", "IPV6_COMPLIANCE"),
 						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "contract_id", "ctr_2"),
 						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "group_id", "grp_2"),
 						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "edge_hostname", "test.akamaized.net"),
+					),
+				},
+			},
+		},
+		"edge hostname with .akamaized.net, create edge hostname with ttl": {
+			init: func(mp *papi.Mock, mh *hapi.Mock) {
+				mp.On("GetEdgeHostnames", mock.Anything, papi.GetEdgeHostnamesRequest{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+				}).Return(&papi.GetEdgeHostnamesResponse{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+					EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
+						{
+							ID:                "ehn_123",
+							Domain:            "test.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test2",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV4",
+						},
+						{
+							ID:                "ehn_2",
+							Domain:            "test.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test3",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV4",
+						},
+					}},
+				}, nil).Once()
+				mp.On("CreateEdgeHostname", mock.Anything, papi.CreateEdgeHostnameRequest{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+					EdgeHostname: papi.EdgeHostnameCreate{
+						ProductID:         "prd_2",
+						DomainPrefix:      "test",
+						DomainSuffix:      "akamaized.net",
+						SecureNetwork:     "SHARED_CERT",
+						IPVersionBehavior: "IPV6_COMPLIANCE",
+					},
+				}).Return(&papi.CreateEdgeHostnameResponse{
+					EdgeHostnameID: "ehn_456",
+				}, nil)
+				mp.On("GetEdgeHostnames", mock.Anything, papi.GetEdgeHostnamesRequest{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+				}).Return(&papi.GetEdgeHostnamesResponse{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+					EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
+						{
+							ID:                "ehn_123",
+							Domain:            "test.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test2",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV4",
+						},
+						{
+							ID:                "ehn_2",
+							Domain:            "test.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test3",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV4",
+						},
+						{
+							ID:                "ehn_456",
+							Domain:            "test.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV6_COMPLIANCE",
+						},
+					}},
+				}, nil)
+				mh.On("GetEdgeHostname", mock.Anything, 456).Return(&hapi.GetEdgeHostnameResponse{
+					EdgeHostnameID: 123,
+					UseDefaultTTL:  true,
+					TTL:            300,
+				}, nil).Times(3)
+				mh.On("GetEdgeHostname", mock.Anything, 456).Return(&hapi.GetEdgeHostnameResponse{
+					EdgeHostnameID: 123,
+					UseDefaultTTL:  false,
+					TTL:            600,
+				}, nil).Times(3)
+				mh.On("UpdateEdgeHostname", mock.Anything, hapi.UpdateEdgeHostnameRequest{
+					DNSZone:    "akamaized.net",
+					RecordName: "test",
+					Comments:   "change /ttl to 600",
+					Body: []hapi.UpdateEdgeHostnameRequestBody{
+						{
+							Op:    "replace",
+							Path:  "/ttl",
+							Value: "600",
+						},
+					},
+				}).Return(&hapi.UpdateEdgeHostnameResponse{
+					ChangeID: 123,
+				}, nil).Once()
+
+				mh.On("GetChangeRequest", mock.Anything, hapi.GetChangeRequest{ChangeID: 123}).Return(&hapi.ChangeRequest{
+					Status: "SUCCEEDED",
+				}, nil)
+
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/%s", testDir, "new_akamaized_net_with_ttl.tf")),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "id", "ehn_456"),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "ip_behavior", "IPV6_COMPLIANCE"),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "contract_id", "ctr_2"),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "group_id", "grp_2"),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "edge_hostname", "test.akamaized.net"),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "ttl", "600"),
 					),
 				},
 			},
@@ -314,7 +431,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 							IPVersionBehavior: "IPV4",
 						},
 						{
-							ID:                "eh_2",
+							ID:                "ehn_2",
 							Domain:            "test.edgesuite.net",
 							ProductID:         "prd_2",
 							DomainPrefix:      "test3",
@@ -341,7 +458,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 						},
 					},
 				}).Return(&papi.CreateEdgeHostnameResponse{
-					EdgeHostnameID: "ehn_123",
+					EdgeHostnameID: "ehn_456",
 				}, nil)
 				mp.On("GetEdgeHostnames", mock.Anything, papi.GetEdgeHostnamesRequest{
 					ContractID: "ctr_2",
@@ -359,7 +476,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 							IPVersionBehavior: "IPV4",
 						},
 						{
-							ID:                "eh_2",
+							ID:                "ehn_2",
 							Domain:            "test3.edgesuite.net",
 							ProductID:         "prd_2",
 							DomainPrefix:      "test3",
@@ -367,7 +484,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 							IPVersionBehavior: "IPV4",
 						},
 						{
-							ID:                "ehn_123",
+							ID:                "ehn_456",
 							Domain:            "test.aka.edgesuite.net",
 							ProductID:         "prd_2",
 							DomainPrefix:      "test.aka",
@@ -388,7 +505,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 				{
 					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/%s", testDir, "new.tf")),
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "id", "ehn_123"),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "id", "ehn_456"),
 						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "ip_behavior", "IPV4"),
 						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "contract_id", "ctr_2"),
 						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "group_id", "grp_2"),
@@ -417,7 +534,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 							IPVersionBehavior: "IPV6_COMPLIANCE",
 						},
 						{
-							ID:                "eh_2",
+							ID:                "ehn_2",
 							Domain:            "test.akamaized.net",
 							ProductID:         "prd_2",
 							DomainPrefix:      "test",
@@ -434,7 +551,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 				},
 			},
 		},
-		"edge hostname exists - update ip_behavior": {
+		"edge hostname - update ip_behavior": {
 			init: func(mp *papi.Mock, mh *hapi.Mock) {
 				// 1st step
 				// 1. call from create method
@@ -446,6 +563,309 @@ func TestResourceEdgeHostname(t *testing.T) {
 					ContractID:    "ctr_2",
 					GroupID:       "grp_2",
 					EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{}},
+				}, nil).Once()
+
+				mp.On("CreateEdgeHostname", mock.Anything, papi.CreateEdgeHostnameRequest{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+					EdgeHostname: papi.EdgeHostnameCreate{
+
+						ProductID:         "prd_2",
+						DomainPrefix:      "test",
+						DomainSuffix:      "akamaized.net",
+						SecureNetwork:     "SHARED_CERT",
+						IPVersionBehavior: "IPV4",
+					},
+				}).Return(&papi.CreateEdgeHostnameResponse{
+					EdgeHostnameID: "ehn_456",
+				}, nil)
+
+				// refresh
+				mp.On("GetEdgeHostnames", mock.Anything, papi.GetEdgeHostnamesRequest{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+				}).Return(&papi.GetEdgeHostnamesResponse{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+					EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
+						{
+							ID:                "ehn_456",
+							Domain:            "test.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV4",
+						},
+						{
+							ID:                "ehn_2",
+							Domain:            "test.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV4",
+						},
+					}},
+				}, nil).Times(3)
+
+				// 2nd step
+				// update
+				mh.On("GetEdgeHostname", mock.Anything, 456).Return(&hapi.GetEdgeHostnameResponse{
+					EdgeHostnameID: 456,
+				}, nil).Once()
+				mh.On("UpdateEdgeHostname", mock.Anything, hapi.UpdateEdgeHostnameRequest{
+					DNSZone:           "akamaized.net",
+					RecordName:        "test",
+					Comments:          "change /ipVersionBehavior to IPV6_IPV4_DUALSTACK",
+					StatusUpdateEmail: []string{"hello@akamai.com"},
+					Body: []hapi.UpdateEdgeHostnameRequestBody{
+						{
+							Op:    "replace",
+							Path:  "/ipVersionBehavior",
+							Value: "IPV6_IPV4_DUALSTACK",
+						},
+					},
+				}).Return(&hapi.UpdateEdgeHostnameResponse{
+					ChangeID: 123,
+				}, nil).Once()
+
+				mh.On("GetChangeRequest", mock.Anything, hapi.GetChangeRequest{ChangeID: 123}).Return(&hapi.ChangeRequest{
+					Status: "SUCCEEDED",
+				}, nil)
+
+				// read
+				mp.On("GetEdgeHostnames", mock.Anything, papi.GetEdgeHostnamesRequest{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+				}).Return(&papi.GetEdgeHostnamesResponse{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+					EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
+						{
+							ID:                "ehn_456",
+							Domain:            "test.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV6_COMPLIANCE",
+						},
+						{
+							ID:                "ehn_2",
+							Domain:            "test.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV4",
+						},
+					}},
+				}, nil).Twice()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/%s", testDir, "new_akamaized_ipv4.tf")),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "id", "ehn_456"),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "contract_id", "ctr_2"),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "group_id", "grp_2"),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "edge_hostname", "test.akamaized.net"),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "ip_behavior", "IPV4"),
+					),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/%s", testDir, "new_akamaized_update_ip_behavior.tf")),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "id", "ehn_456"),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "contract_id", "ctr_2"),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "group_id", "grp_2"),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "edge_hostname", "test.akamaized.net"),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "ip_behavior", "IPV6_COMPLIANCE"),
+					),
+				},
+			},
+		},
+		"edge hostname - update ttl": {
+			init: func(mp *papi.Mock, mh *hapi.Mock) {
+				// 1st step
+				// 1. call from create method
+				// 2. and 3. call from read method
+				mp.On("GetEdgeHostnames", mock.Anything, papi.GetEdgeHostnamesRequest{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+				}).Return(&papi.GetEdgeHostnamesResponse{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+					EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
+						{
+							ID:                "ehn_123",
+							Domain:            "test.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test2",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV4",
+						},
+						{
+							ID:                "ehn_2",
+							Domain:            "test.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test3",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV4",
+						},
+					}},
+				}, nil).Once()
+				mp.On("CreateEdgeHostname", mock.Anything, papi.CreateEdgeHostnameRequest{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+					EdgeHostname: papi.EdgeHostnameCreate{
+						ProductID:         "prd_2",
+						DomainPrefix:      "test",
+						DomainSuffix:      "akamaized.net",
+						SecureNetwork:     "SHARED_CERT",
+						IPVersionBehavior: "IPV6_COMPLIANCE",
+					},
+				}).Return(&papi.CreateEdgeHostnameResponse{
+					EdgeHostnameID: "ehn_456",
+				}, nil)
+				mp.On("GetEdgeHostnames", mock.Anything, papi.GetEdgeHostnamesRequest{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+				}).Return(&papi.GetEdgeHostnamesResponse{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+					EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
+						{
+							ID:                "ehn_123",
+							Domain:            "test.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test2",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV4",
+						},
+						{
+							ID:                "ehn_2",
+							Domain:            "test.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test3",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV4",
+						},
+						{
+							ID:                "ehn_456",
+							Domain:            "test.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV6_COMPLIANCE",
+						},
+					}},
+				}, nil)
+				mh.On("GetEdgeHostname", mock.Anything, 456).Return(&hapi.GetEdgeHostnameResponse{
+					EdgeHostnameID: 456,
+					UseDefaultTTL:  true,
+					TTL:            300,
+				}, nil).Times(3)
+				mh.On("GetEdgeHostname", mock.Anything, 456).Return(&hapi.GetEdgeHostnameResponse{
+					EdgeHostnameID: 456,
+					UseDefaultTTL:  false,
+					TTL:            600,
+				}, nil).Times(3)
+				mh.On("UpdateEdgeHostname", mock.Anything, hapi.UpdateEdgeHostnameRequest{
+					DNSZone:    "akamaized.net",
+					RecordName: "test",
+					Comments:   "change /ttl to 600",
+					Body: []hapi.UpdateEdgeHostnameRequestBody{
+						{
+							Op:    "replace",
+							Path:  "/ttl",
+							Value: "600",
+						},
+					},
+				}).Return(&hapi.UpdateEdgeHostnameResponse{
+					ChangeID: 123,
+				}, nil).Once()
+
+				mh.On("GetChangeRequest", mock.Anything, hapi.GetChangeRequest{ChangeID: 123}).Return(&hapi.ChangeRequest{
+					Status: "SUCCEEDED",
+				}, nil)
+
+				// 2nd step
+				// update
+				mh.On("GetEdgeHostname", mock.Anything, 456).Return(&hapi.GetEdgeHostnameResponse{
+					EdgeHostnameID: 456,
+					UseDefaultTTL:  false,
+					TTL:            600,
+				}, nil).Times(3)
+				mh.On("UpdateEdgeHostname", mock.Anything, hapi.UpdateEdgeHostnameRequest{
+					DNSZone:           "akamaized.net",
+					RecordName:        "test",
+					Comments:          "change /ttl to 800",
+					StatusUpdateEmail: []string{"hello@akamai.com"},
+					Body: []hapi.UpdateEdgeHostnameRequestBody{
+						{
+							Op:    "replace",
+							Path:  "/ttl",
+							Value: "800",
+						},
+					},
+				}).Return(&hapi.UpdateEdgeHostnameResponse{
+					ChangeID: 123,
+				}, nil).Once()
+
+				mh.On("GetChangeRequest", mock.Anything, hapi.GetChangeRequest{ChangeID: 123}).Return(&hapi.ChangeRequest{
+					Status: "SUCCEEDED",
+				}, nil)
+
+				mh.On("GetEdgeHostname", mock.Anything, 456).Return(&hapi.GetEdgeHostnameResponse{
+					EdgeHostnameID: 456,
+					UseDefaultTTL:  false,
+					TTL:            800,
+				}, nil).Times(4)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/%s", testDir, "new_akamaized_net_with_ttl.tf")),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "id", "ehn_456"),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "ip_behavior", "IPV6_COMPLIANCE"),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "contract_id", "ctr_2"),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "group_id", "grp_2"),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "edge_hostname", "test.akamaized.net"),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "ttl", "600"),
+					),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/%s", testDir, "new_akamaized_update_ttl.tf")),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "id", "ehn_456"),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "contract_id", "ctr_2"),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "group_id", "grp_2"),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "edge_hostname", "test.akamaized.net"),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "ip_behavior", "IPV6_COMPLIANCE"),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "ttl", "800"),
+					),
+				},
+			},
+		},
+		"edge hostname - update ip_behavior and ttl": {
+			init: func(mp *papi.Mock, mh *hapi.Mock) {
+				// 1st step
+				// 1. call from create method
+				// 2. and 3. call from read method
+				mp.On("GetEdgeHostnames", mock.Anything, papi.GetEdgeHostnamesRequest{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+				}).Return(&papi.GetEdgeHostnamesResponse{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+					EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
+						{
+							ID:                "ehn_2",
+							Domain:            "test2.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test2",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV4",
+						},
+					}},
 				}, nil).Once()
 
 				mp.On("CreateEdgeHostname", mock.Anything, papi.CreateEdgeHostnameRequest{
@@ -480,10 +900,10 @@ func TestResourceEdgeHostname(t *testing.T) {
 							IPVersionBehavior: "IPV4",
 						},
 						{
-							ID:                "eh_2",
-							Domain:            "test.akamaized.net",
+							ID:                "ehn_2",
+							Domain:            "test2.akamaized.net",
 							ProductID:         "prd_2",
-							DomainPrefix:      "test",
+							DomainPrefix:      "test2",
 							DomainSuffix:      "akamaized.net",
 							IPVersionBehavior: "IPV4",
 						},
@@ -494,17 +914,24 @@ func TestResourceEdgeHostname(t *testing.T) {
 				// update
 				mh.On("GetEdgeHostname", mock.Anything, 123).Return(&hapi.GetEdgeHostnameResponse{
 					EdgeHostnameID: 123,
-				}, nil).Once()
+					UseDefaultTTL:  true,
+					TTL:            300,
+				}, nil).Twice()
 				mh.On("UpdateEdgeHostname", mock.Anything, hapi.UpdateEdgeHostnameRequest{
 					DNSZone:           "akamaized.net",
 					RecordName:        "test",
-					Comments:          "change /ipVersionBehavior to IPV6_IPV4_DUALSTACK",
+					Comments:          "change /ipVersionBehavior to IPV6_IPV4_DUALSTACK; change /ttl to 600",
 					StatusUpdateEmail: []string{"hello@akamai.com"},
 					Body: []hapi.UpdateEdgeHostnameRequestBody{
 						{
 							Op:    "replace",
 							Path:  "/ipVersionBehavior",
 							Value: "IPV6_IPV4_DUALSTACK",
+						},
+						{
+							Op:    "replace",
+							Path:  "/ttl",
+							Value: "600",
 						},
 					},
 				}).Return(&hapi.UpdateEdgeHostnameResponse{
@@ -532,15 +959,22 @@ func TestResourceEdgeHostname(t *testing.T) {
 							IPVersionBehavior: "IPV6_COMPLIANCE",
 						},
 						{
-							ID:                "eh_2",
-							Domain:            "test.akamaized.net",
+							ID:                "ehn_2",
+							Domain:            "test2.akamaized.net",
 							ProductID:         "prd_2",
-							DomainPrefix:      "test",
+							DomainPrefix:      "test2",
 							DomainSuffix:      "akamaized.net",
 							IPVersionBehavior: "IPV4",
 						},
 					}},
 				}, nil).Twice()
+
+				mh.On("GetEdgeHostname", mock.Anything, 123).Return(&hapi.GetEdgeHostnameResponse{
+					EdgeHostnameID: 123,
+					UseDefaultTTL:  false,
+					TTL:            600,
+				}, nil).Times(3)
+
 			},
 			steps: []resource.TestStep{
 				{
@@ -551,16 +985,18 @@ func TestResourceEdgeHostname(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "group_id", "grp_2"),
 						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "edge_hostname", "test.akamaized.net"),
 						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "ip_behavior", "IPV4"),
+						resource.TestCheckNoResourceAttr("akamai_edge_hostname.edgehostname", "ttl"),
 					),
 				},
 				{
-					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/%s", testDir, "new_akamaized_update_ip_behavior.tf")),
+					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/%s", testDir, "new_akamaized_update_ip_behavior_and_ttl.tf")),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "id", "ehn_123"),
 						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "contract_id", "ctr_2"),
 						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "group_id", "grp_2"),
 						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "edge_hostname", "test.akamaized.net"),
 						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "ip_behavior", "IPV6_COMPLIANCE"),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "ttl", "600"),
 					),
 				},
 			},
@@ -586,7 +1022,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 							IPVersionBehavior: "IPV4",
 						},
 						{
-							ID:                "eh_2",
+							ID:                "ehn_2",
 							Domain:            "test2.akamaized.net",
 							ProductID:         "prd_2",
 							DomainPrefix:      "test2",
@@ -627,7 +1063,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 							IPVersionBehavior: "IPV4",
 						},
 						{
-							ID:                "eh_2",
+							ID:                "ehn_2",
 							Domain:            "test.akamaized.net",
 							ProductID:         "prd_2",
 							DomainPrefix:      "test",
@@ -654,7 +1090,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 							IPVersionBehavior: "IPV6_COMPLIANCE", // drift happens here
 						},
 						{
-							ID:                "eh_2",
+							ID:                "ehn_2",
 							Domain:            "test1.akamaized.net",
 							ProductID:         "prd_2",
 							DomainPrefix:      "test1",
@@ -709,7 +1145,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 							IPVersionBehavior: "IPV4",
 						},
 						{
-							ID:                "eh_2",
+							ID:                "ehn_2",
 							Domain:            "test.akamaized.net",
 							ProductID:         "prd_2",
 							DomainPrefix:      "test",
@@ -762,7 +1198,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 							IPVersionBehavior: "IPV4",
 						},
 						{
-							ID:                "eh_2",
+							ID:                "ehn_2",
 							Domain:            "test2.akamaized.net",
 							ProductID:         "prd_2",
 							DomainPrefix:      "test2",
@@ -803,7 +1239,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 							IPVersionBehavior: "IPV4",
 						},
 						{
-							ID:                "eh_2",
+							ID:                "ehn_2",
 							Domain:            "test.akamaized.net",
 							ProductID:         "prd_2",
 							DomainPrefix:      "test",
@@ -870,7 +1306,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 							IPVersionBehavior: "IPV4",
 						},
 						{
-							ID:                "eh_2",
+							ID:                "ehn_2",
 							Domain:            "test2.akamaized.net",
 							ProductID:         "prd_2",
 							DomainPrefix:      "test2",
@@ -911,7 +1347,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 							IPVersionBehavior: "IPV4",
 						},
 						{
-							ID:                "eh_2",
+							ID:                "ehn_2",
 							Domain:            "test.akamaized.net",
 							ProductID:         "prd_2",
 							DomainPrefix:      "test",
@@ -938,7 +1374,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 							IPVersionBehavior: "IPV6_COMPLIANCE", // drift happens here
 						},
 						{
-							ID:                "eh_2",
+							ID:                "ehn_2",
 							Domain:            "test1.akamaized.net",
 							ProductID:         "prd_2",
 							DomainPrefix:      "test1",
@@ -994,7 +1430,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 							IPVersionBehavior: "IPV4",
 						},
 						{
-							ID:                "eh_2",
+							ID:                "ehn_2",
 							Domain:            "test.akamaized.net",
 							ProductID:         "prd_2",
 							DomainPrefix:      "test",
@@ -1047,7 +1483,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 							IPVersionBehavior: "IPV4",
 						},
 						{
-							ID:                "eh_2",
+							ID:                "ehn_2",
 							Domain:            "test2.akamaized.net",
 							ProductID:         "prd_2",
 							DomainPrefix:      "test2",
@@ -1088,7 +1524,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 							IPVersionBehavior: "IPV4",
 						},
 						{
-							ID:                "eh_2",
+							ID:                "ehn_2",
 							Domain:            "test.akamaized.net",
 							ProductID:         "prd_2",
 							DomainPrefix:      "test",
@@ -1170,7 +1606,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 							DomainSuffix: "edgesuite.net",
 						},
 						{
-							ID:           "eh_2",
+							ID:           "ehn_2",
 							Domain:       "test3.edgesuite.net",
 							ProductID:    "prd_2",
 							DomainPrefix: "test3",
@@ -1214,7 +1650,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 							DomainSuffix: "edgesuite.net",
 						},
 						{
-							ID:           "eh_2",
+							ID:           "ehn_2",
 							Domain:       "test3.edgesuite.net",
 							ProductID:    "prd_2",
 							DomainPrefix: "test3",
@@ -1273,7 +1709,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 							IPVersionBehavior: "IPV4",
 						},
 						{
-							ID:                "eh_2",
+							ID:                "ehn_2",
 							Domain:            "test2.akamaized.net",
 							ProductID:         "prd_2",
 							DomainPrefix:      "test2",
@@ -1314,7 +1750,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 							IPVersionBehavior: "IPV4",
 						},
 						{
-							ID:                "eh_2",
+							ID:                "ehn_2",
 							Domain:            "test2.akamaized.net",
 							ProductID:         "prd_2",
 							DomainPrefix:      "test2",
@@ -1365,7 +1801,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 							IPVersionBehavior: "IPV6_COMPLIANCE",
 						},
 						{
-							ID:                "eh_2",
+							ID:                "ehn_2",
 							Domain:            "test.akamaized.net",
 							ProductID:         "prd_2",
 							DomainPrefix:      "test",
@@ -1511,7 +1947,7 @@ func TestResourceEdgeHostnames_WithImport(t *testing.T) {
 					Secure:            true,
 				},
 				{
-					ID:                "eh_2",
+					ID:                "ehn_2",
 					Domain:            "test3.edgesuite.net",
 					DomainPrefix:      "test3",
 					DomainSuffix:      "edgesuite.net",
@@ -1537,7 +1973,7 @@ func TestResourceEdgeHostnames_WithImport(t *testing.T) {
 					Secure:            true,
 				},
 				{
-					ID:                "eh_2",
+					ID:                "ehn_2",
 					Domain:            "test3.edgesuite.net",
 					DomainPrefix:      "test3",
 					DomainSuffix:      "edgesuite.net",
@@ -1596,7 +2032,7 @@ func TestResourceEdgeHostnames_WithImport(t *testing.T) {
 					Secure:            true,
 				},
 				{
-					ID:                "eh_2",
+					ID:                "ehn_2",
 					Domain:            "test3.edgesuite.net",
 					DomainPrefix:      "test3",
 					DomainSuffix:      "edgesuite.net",
@@ -1622,7 +2058,7 @@ func TestResourceEdgeHostnames_WithImport(t *testing.T) {
 					Secure:            true,
 				},
 				{
-					ID:                "eh_2",
+					ID:                "ehn_2",
 					Domain:            "test3.edgesuite.net",
 					DomainPrefix:      "test3",
 					DomainSuffix:      "edgesuite.net",
@@ -1643,6 +2079,28 @@ func TestResourceEdgeHostnames_WithImport(t *testing.T) {
 			IPVersionBehavior:      "IPV4",
 			ProductID:              "DSA",
 			TTL:                    21600,
+			Map:                    "a;dscb.akamai.net",
+			SlotNumber:             3250,
+			Comments:               "Created by Property-Manager/PAPI on Tue Feb 21 14:03:36 UTC 2023",
+			SerialNumber:           1520,
+			CustomTarget:           "",
+			ChinaCdn:               hapi.ChinaCDN{},
+			IsEdgeIPBindingEnabled: false,
+			MapAlias:               "",
+			UseCases:               nil,
+		}, nil)
+	}
+	expectGetEdgeHostnameHAPIByIDWithCustomTTL := func(m *hapi.Mock, edgeHostnameID int) *mock.Call {
+		return m.On("GetEdgeHostname", mock.Anything, edgeHostnameID).Return(&hapi.GetEdgeHostnameResponse{
+			EdgeHostnameID:         edgeHostnameID,
+			RecordName:             "test",
+			DNSZone:                "edgekey.net",
+			SecurityType:           "ENHANCED-TLS",
+			UseDefaultTTL:          false,
+			UseDefaultMap:          true,
+			IPVersionBehavior:      "IPV4",
+			ProductID:              "DSA",
+			TTL:                    56789,
 			Map:                    "a;dscb.akamai.net",
 			SlotNumber:             3250,
 			Comments:               "Created by Property-Manager/PAPI on Tue Feb 21 14:03:36 UTC 2023",
@@ -1687,6 +2145,28 @@ func TestResourceEdgeHostnames_WithImport(t *testing.T) {
 			IPVersionBehavior:      "IPV4",
 			ProductID:              "DSA",
 			TTL:                    21600,
+			Map:                    "a;dscb.akamai.net",
+			SlotNumber:             3250,
+			Comments:               "Created by Property-Manager/PAPI on Tue Feb 21 14:03:36 UTC 2023",
+			SerialNumber:           1520,
+			CustomTarget:           "",
+			ChinaCdn:               hapi.ChinaCDN{},
+			IsEdgeIPBindingEnabled: false,
+			MapAlias:               "",
+			UseCases:               nil,
+		}, nil)
+	}
+	expectGetEdgeHostnameHAPIWithTTL := func(m *hapi.Mock, edgeHostnameID int) *mock.Call {
+		return m.On("GetEdgeHostname", mock.Anything, hapi.GetCertificateRequest{DNSZone: "edgekey.net", RecordName: "test"}).Return(&hapi.GetEdgeHostnameResponse{
+			EdgeHostnameID:         edgeHostnameID,
+			RecordName:             "test",
+			DNSZone:                "edgekey.net",
+			SecurityType:           "ENHANCED-TLS",
+			UseDefaultTTL:          false,
+			UseDefaultMap:          true,
+			IPVersionBehavior:      "IPV4",
+			ProductID:              "DSA",
+			TTL:                    56789,
 			Map:                    "a;dscb.akamai.net",
 			SlotNumber:             3250,
 			Comments:               "Created by Property-Manager/PAPI on Tue Feb 21 14:03:36 UTC 2023",
@@ -1857,6 +2337,80 @@ func TestResourceEdgeHostnames_WithImport(t *testing.T) {
 		})
 		client.AssertExpectations(t)
 	})
+	t.Run("import existing edgehostname with custom ttl", func(t *testing.T) {
+		client := &papi.Mock{}
+		clientHapi := &hapi.Mock{}
+		id := "ehn_1,1,2"
+		EgdeHostnameCreatePollInterval = time.Microsecond
+
+		expectGetEdgeHostnames(client, "ctr_1", "grp_2").Once()
+		createEdgeHostnames(client).Once()
+		expectGetEdgeHostnamesAfterCreate(client, "ctr_1", "grp_2")
+
+		clientHapi.On("GetEdgeHostname", mock.Anything, 1).Return(&hapi.GetEdgeHostnameResponse{
+			EdgeHostnameID: 1,
+			UseDefaultTTL:  true,
+			TTL:            300,
+		}, nil).Times(3)
+		clientHapi.On("GetEdgeHostname", mock.Anything, 1).Return(&hapi.GetEdgeHostnameResponse{
+			EdgeHostnameID: 1,
+			UseDefaultTTL:  false,
+			TTL:            56789,
+		}, nil).Times(3)
+		clientHapi.On("UpdateEdgeHostname", mock.Anything, hapi.UpdateEdgeHostnameRequest{
+			DNSZone:    "edgekey.net",
+			RecordName: "test",
+			Comments:   "change /ttl to 56789",
+			Body: []hapi.UpdateEdgeHostnameRequestBody{
+				{
+					Op:    "replace",
+					Path:  "/ttl",
+					Value: "56789",
+				},
+			},
+		}).Return(&hapi.UpdateEdgeHostnameResponse{
+			ChangeID: 123,
+		}, nil).Once()
+
+		clientHapi.On("GetChangeRequest", mock.Anything, hapi.GetChangeRequest{ChangeID: 123}).Return(&hapi.ChangeRequest{
+			Status: "SUCCEEDED",
+		}, nil)
+
+		expectGetEdgeHostname(client, "ehn_1", "ctr_1", "grp_2").Once()
+		expectGetEdgeHostnameHAPIByIDWithCustomTTL(clientHapi, 1).Times(3)
+		expectGetEdgeHostnameHAPIWithTTL(clientHapi, 1).Times(10)
+		expectGetCertificate(clientHapi).Times(5)
+		useClient(client, clientHapi, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						// please note that import does not support product id, that why we only define it in config for creation
+						Config: testutils.LoadFixtureString(t, "testdata/TestResourceEdgeHostname/creation_before_import_edgehostname_with_ttl.tf"),
+					},
+					{
+						Config:      testutils.LoadFixtureString(t, "testdata/TestResourceEdgeHostname/import_edgehostname_with_ttl.tf"),
+						ImportState: true,
+						ImportStateCheck: func(s []*terraform.InstanceState) error {
+							assert.Len(t, s, 1)
+							rs := s[0]
+							assert.Equal(t, "grp_2", rs.Attributes["group_id"])
+							assert.Equal(t, "ctr_1", rs.Attributes["contract_id"])
+							assert.Equal(t, "ehn_1", rs.Attributes["id"])
+							assert.Equal(t, "123456", rs.Attributes["certificate"])
+							assert.Equal(t, "56789", rs.Attributes["ttl"])
+							return nil
+						},
+						ImportStateId:           id,
+						ResourceName:            "akamai_edge_hostname.importedgehostname",
+						ImportStateVerify:       true,
+						ImportStateVerifyIgnore: []string{"product_id"},
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
 }
 
 func TestFindEdgeHostname(t *testing.T) {
@@ -1875,7 +2429,7 @@ func TestFindEdgeHostname(t *testing.T) {
 					DomainSuffix: "edgesuite.net",
 				},
 				{
-					ID:           "eh_2",
+					ID:           "ehn_2",
 					Domain:       "test.domain.edgesuite.net",
 					DomainPrefix: "test.domain",
 					DomainSuffix: "edgesuite.net",
@@ -1898,7 +2452,7 @@ func TestFindEdgeHostname(t *testing.T) {
 					DomainSuffix: "edgesuite.net",
 				},
 				{
-					ID:           "eh_2",
+					ID:           "ehn_2",
 					Domain:       "test.domain.edgesuite.net",
 					DomainPrefix: "test.domain",
 					DomainSuffix: "edgesuite.net",
@@ -1921,7 +2475,7 @@ func TestFindEdgeHostname(t *testing.T) {
 					DomainSuffix: "edgekey.net",
 				},
 				{
-					ID:           "eh_2",
+					ID:           "ehn_2",
 					Domain:       "test.domain.edgesuite.net",
 					DomainPrefix: "test.domain",
 					DomainSuffix: "edgesuite.net",
@@ -1944,7 +2498,7 @@ func TestFindEdgeHostname(t *testing.T) {
 					DomainSuffix: "akamaized.net",
 				},
 				{
-					ID:           "eh_2",
+					ID:           "ehn_2",
 					Domain:       "test.domain.edgesuite.net",
 					DomainPrefix: "test.domain",
 					DomainSuffix: "edgesuite.net",
@@ -1967,7 +2521,7 @@ func TestFindEdgeHostname(t *testing.T) {
 					DomainSuffix: "akamaized.net",
 				},
 				{
-					ID:           "eh_2",
+					ID:           "ehn_2",
 					Domain:       "test.domain.edgesuite.net",
 					DomainPrefix: "test.domain",
 					DomainSuffix: "edgesuite.net",

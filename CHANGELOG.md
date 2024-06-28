@@ -122,6 +122,9 @@
 
 
 
+* Property
+  * Added new optional field `ttl` to `akamai_edge_hostname` resource. 
+    When it is used, creation or update takes longer as resource has to synchronize its state with HAPI.
 
 
 
