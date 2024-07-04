@@ -182,11 +182,17 @@ func (d *keyDataSource) Read(ctx context.Context, req datasource.ReadRequest, re
 				data.Groups = append(data.Groups, g)
 			}
 			data.LatestVersion = types.Int64Value(key.LatestVersion)
-
-			data.NetworkConfiguration = &networkConfigurationModel{
-				AdditionalCDN:   types.StringValue(string(key.NetworkConfiguration.AdditionalCDN)),
-				SecurityNetwork: types.StringPointerValue(ptr.To(string(key.NetworkConfiguration.SecurityNetwork))),
+			if key.NetworkConfiguration.AdditionalCDN != nil {
+				data.NetworkConfiguration = &networkConfigurationModel{
+					AdditionalCDN:   types.StringValue(string(*key.NetworkConfiguration.AdditionalCDN)),
+					SecurityNetwork: types.StringPointerValue(ptr.To(string(key.NetworkConfiguration.SecurityNetwork))),
+				}
+			} else {
+				data.NetworkConfiguration = &networkConfigurationModel{
+					SecurityNetwork: types.StringPointerValue(ptr.To(string(key.NetworkConfiguration.SecurityNetwork))),
+				}
 			}
+
 			resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 			return
 

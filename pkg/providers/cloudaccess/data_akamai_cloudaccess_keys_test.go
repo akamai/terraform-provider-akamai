@@ -64,7 +64,7 @@ func TestDataKeys(t *testing.T) {
 						createdBy:            "user1",
 						latestVersion:        1,
 						networkConfiguration: &cloudaccess.SecureNetwork{
-							AdditionalCDN:   "CDN1",
+							AdditionalCDN:   ptr.To(cloudaccess.CDNType("CDN1")),
 							SecurityNetwork: "Net1",
 						},
 					},
@@ -179,7 +179,7 @@ func checkKeysAttrs(data testDataForKeys) resource.TestCheckFunc {
 		}
 		if key.networkConfiguration != nil {
 			checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("data.akamai_cloudaccess_keys.test", fmt.Sprintf("access_keys.%d.network_configuration.security_network", i), string(key.networkConfiguration.SecurityNetwork)))
-			checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("data.akamai_cloudaccess_keys.test", fmt.Sprintf("access_keys.%d.network_configuration.additional_cdn", i), string(key.networkConfiguration.AdditionalCDN)))
+			checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("data.akamai_cloudaccess_keys.test", fmt.Sprintf("access_keys.%d.network_configuration.additional_cdn", i), string(*key.networkConfiguration.AdditionalCDN)))
 		}
 	}
 

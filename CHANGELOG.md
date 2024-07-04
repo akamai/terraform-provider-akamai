@@ -106,9 +106,7 @@
 
 
 
-* Cloud Access
-  * Added datasources:
-    * `akamai_cloudaccess_key_versions` - read details for key versions by key name
+ 
 
 
 
@@ -122,9 +120,7 @@
 
 
 
-* Cloud Access
-  * Added datasources:
-    * `akamai_cloudaccess_key` - read details for key by name
+ 
 
 
 
@@ -156,18 +152,12 @@
 
 * Cloud Access
   * Added datasource:
-    * `akamai_cloudaccess_key_properties` - read
-
-
-
-
-
-
-
-
-* Cloud Access
-  * Added datasources:
+    * `akamai_cloudaccess_key` - read details for key by name
     * `akamai_cloudaccess_keys` - read
+    * `akamai_cloudaccess_key_versions` - read details for key versions by key name
+    * `akamai_cloudaccess_key_properties` - read
+  * Added resource:
+    * `akamai_cloudaccess_key` - create, read, update, delete
 
 
 

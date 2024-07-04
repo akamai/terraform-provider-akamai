@@ -49,7 +49,7 @@ func TestDataKey(t *testing.T) {
 			},
 			LatestVersion: 1,
 			NetworkConfiguration: &cloudaccess.SecureNetwork{
-				AdditionalCDN:   "RUSSIA_CDN",
+				AdditionalCDN:   ptr.To(cloudaccess.CDNType("RUSSIA_CDN")),
 				SecurityNetwork: "ENHANCED_TLS",
 			},
 		},

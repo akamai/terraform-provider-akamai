@@ -25,7 +25,7 @@ func NewSubprovider() *Subprovider {
 	return &Subprovider{}
 }
 
-// Client returns the gtm interface
+// Client returns the cloudaccess interface
 func Client(meta meta.Meta) cloudaccess.CloudAccess {
 	if client != nil {
 		return client
@@ -45,7 +45,9 @@ func (p *Subprovider) SDKDataSources() map[string]*schema.Resource {
 
 // FrameworkResources returns the cloudaccess resources implemented using terraform-plugin-framework
 func (p *Subprovider) FrameworkResources() []func() resource.Resource {
-	return []func() resource.Resource{}
+	return []func() resource.Resource{
+		NewKeyResource,
+	}
 }
 
 // FrameworkDataSources returns the cloudaccess data sources implemented using terraform-plugin-framework

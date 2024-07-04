@@ -188,7 +188,7 @@ func (d *keysDataSourceModel) read(keys *cloudaccess.ListAccessKeysResponse) dia
 		var netConf *networkConfigurationModel
 		if key.NetworkConfiguration != nil {
 			netConf = &networkConfigurationModel{
-				AdditionalCDN:   types.StringValue(string(key.NetworkConfiguration.AdditionalCDN)),
+				AdditionalCDN:   types.StringValue(string(*key.NetworkConfiguration.AdditionalCDN)),
 				SecurityNetwork: types.StringPointerValue(ptr.To(string(key.NetworkConfiguration.SecurityNetwork))),
 			}
 		}
