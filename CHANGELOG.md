@@ -132,9 +132,6 @@
 
 
 
-
-
-
 * Property
   * Added new optional field `ttl` to `akamai_edge_hostname` resource. 
     When it is used, creation or update takes longer as resource has to synchronize its state with HAPI.
@@ -178,6 +175,11 @@
   
 
 
+
+
+* PAPI
+  * Fixed an issue that caused the `compliance_record` in imported `akamai_property_activation` and `akamai_property_include_activation` to be empty and could not be updated.
+    * Added the ability to update `compliance_record` in `akamai_property_activation` and `akamai_property_include_activation` via terraform apply (the update will not trigger new activation if version/network/property was not changed)
 
 
 
