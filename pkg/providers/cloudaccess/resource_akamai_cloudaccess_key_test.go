@@ -451,7 +451,7 @@ func TestAccessKeyResource(t *testing.T) {
 							Version:      thirdAccessKeyVersion,
 						},
 						ProcessingStatus: cloudaccess.ProcessingDone,
-						RequestDate:      time.Date(2024, 1, 10, 11, 9, 10, 67708, time.UTC).String(),
+						RequestDate:      time.Date(2024, 1, 10, 11, 9, 10, 67708, time.UTC),
 						RequestedBy:      "dev-user",
 					}, nil).Once()
 				mockGetAccessKeyVersion(m, resourceData.accessKeyData[0], cloudaccess.Active, thirdAccessKeyVersion).Once()
@@ -618,7 +618,7 @@ func TestAccessKeyResource(t *testing.T) {
 							Version:      thirdAccessKeyVersion,
 						},
 						ProcessingStatus: cloudaccess.ProcessingDone,
-						RequestDate:      time.Date(2024, 1, 10, 11, 9, 10, 67708, time.UTC).String(),
+						RequestDate:      time.Date(2024, 1, 10, 11, 9, 10, 67708, time.UTC),
 						RequestedBy:      "dev-user",
 					}, nil).Once()
 				mockGetAccessKeyVersion(m, resourceData.accessKeyData[0], cloudaccess.Active, thirdAccessKeyVersion).Once()
@@ -1663,7 +1663,7 @@ func mockGetAccessKeyVersionStatus(client *cloudaccess.Mock, testData commonData
 				Version:      version,
 			},
 			ProcessingStatus: cloudaccess.ProcessingDone,
-			RequestDate:      time.Date(2024, 1, 10, 11, 9, 10, 67708, time.UTC).String(),
+			RequestDate:      time.Date(2024, 1, 10, 11, 9, 10, 67708, time.UTC),
 			RequestedBy:      "dev-user",
 		}, nil)
 }
