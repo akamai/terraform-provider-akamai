@@ -1,8 +1,10 @@
 package cloudaccess
 
 import (
+	"errors"
 	"fmt"
 	"regexp"
+	"strings"
 	"testing"
 	"time"
 
@@ -10,6 +12,7 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -1087,6 +1090,66 @@ func TestAccessKeyResource(t *testing.T) {
 				},
 			},
 		},
+		"change secret block after import": {
+			init: func(t *testing.T, m *cloudaccess.Mock, resourceData commonDataForResource) {
+
+				mockGetAccessKeyVersion(m, resourceData.accessKeyData[0], cloudaccess.Active, firstAccessKeyVersion).Once()
+
+				mockGetAccessKeyVersion(m, resourceData.accessKeyData[0], cloudaccess.Active, secondAccessKeyVersion).Once()
+
+				mockReadAccessKey(m, resourceData, twoElementsVersionList)
+
+				mockReadAccessKey(m, resourceData, twoElementsVersionList)
+				mockReadAccessKey(m, resourceData, twoElementsVersionList)
+
+				mockReadAccessKey(m, resourceData, twoElementsVersionList)
+
+				mockListAccessKeyVersions(m, resourceData.accessKeyData[0], twoElementsVersionList).Once()
+				mockLookupsPropertiesNoProperties(m, resourceData.propertyData, firstAccessKeyVersion).Once()
+				mockLookupsPropertiesNoProperties(m, resourceData.propertyData, secondAccessKeyVersion).Once()
+				mockDeleteAccessKeyVersion(m, resourceData.accessKeyData[0], firstAccessKeyVersion).Once()
+				mockDeleteAccessKeyVersion(m, resourceData.accessKeyData[0], secondAccessKeyVersion).Once()
+				mockDeleteAccessKey(m, resourceData.accessKeyData[0]).Once()
+				var listOfKeysAfterDeletion []commonDataForAccessKey
+				mockListAccessKeys(m, append(listOfKeysAfterDeletion, resourceData.accessKeyData[1])).Once()
+			},
+			mockData: resourceMock,
+			steps: []resource.TestStep{
+
+				{
+					Config:                               testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create_2_versions.tf"),
+					ImportState:                          true,
+					ImportStateId:                        "12345",
+					ResourceName:                         "akamai_cloudaccess_key.test",
+					ImportStateCheck:                     checkImport(),
+					ImportStateVerifyIdentifierAttribute: "access_key_uid",
+					ImportStatePersist:                   true,
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/changed_secret.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
+						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_name", "test_key_name"),
+						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "authentication_method", "AWS4_HMAC_SHA256"),
+						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "contract_id", "1-CTRACT"),
+						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "group_id", "12345"),
+						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "primary_guid", "asde-efdr-reded"),
+						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_access_key_id", "test_key_id"),
+						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_secret_access_key", "changed_secret"),
+						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.primary_key", "true"),
+						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version", "1"),
+						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version_guid", "asde-efdr-reded"),
+						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.cloud_access_key_id", "test_key_id_2"),
+						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.cloud_secret_access_key", "test_secret_2"),
+						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.primary_key", "false"),
+						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version", "2"),
+						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version_guid", "asdd-ads-dasdas"),
+						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.additional_cdn", "CHINA_CDN"),
+						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.security_network", "ENHANCED_TLS"),
+					),
+				},
+			},
+		},
 		"missing contract id": {
 			steps: []resource.TestStep{{
 				Config:      testutils.LoadFixtureString(t, "testdata/TestResAccessKey/missing_contract.tf"),
@@ -1766,4 +1829,291 @@ func mockLookupsPropertiesNoProperties(client *cloudaccess.Mock, testData *commo
 		AccessKeyUID: testData.accessKeyUID,
 		Version:      version,
 	}).Return(&lookupPropertiesRes, nil)
+}
+
+func TestAccessKeyResource_ImportState(t *testing.T) {
+	t.Parallel()
+	pollingInterval = 1 * time.Millisecond
+	deleteTimeout = 40 * time.Minute
+	updateTimeout = 20 * time.Minute
+	activationTimeout = 20 * time.Millisecond
+	tests := map[string]struct {
+		init     func(*testing.T, *cloudaccess.Mock, commonDataForResource)
+		steps    []resource.TestStep
+		mockData commonDataForResource
+	}{
+		"Happy path - 2 credentials": {
+			init: func(t *testing.T, m *cloudaccess.Mock, resourceData commonDataForResource) {
+				// step 1 - create
+				mockCreationAccessKeyWith2Versions(m, resourceData)
+				mockReadAccessKey(m, resourceData, twoElementsVersionList)
+
+				// step 2 - import
+				mockReadAccessKey(m, resourceData, twoElementsVersionList)
+				mockReadAccessKey(m, resourceData, twoElementsVersionList)
+
+				mockDeletionAccessKeyWith2Versions(m, resourceData)
+
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create_2_versions.tf"),
+
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
+					),
+				},
+				{
+					ImportState:                          true,
+					ImportStateVerify:                    true,
+					ImportStateId:                        "12345",
+					ImportStateVerifyIgnore:              []string{"credentials_a", "credentials_b", "primary_guid"},
+					ResourceName:                         "akamai_cloudaccess_key.test",
+					ImportStateCheck:                     checkImport(),
+					ImportStateVerifyIdentifierAttribute: "access_key_uid",
+				},
+			},
+			mockData: resourceMock,
+		},
+		"Happy path - 1 credential": {
+			init: func(t *testing.T, m *cloudaccess.Mock, resourceData commonDataForResource) {
+				// step 1 - create
+
+				mockCreationAccessKeyWith1Version(m, resourceData)
+				mockReadAccessKeyWith1Version(m, resourceData)
+
+				// step 2 import
+				mockReadAccessKeyWith1Version(m, resourceData)
+				mockReadAccessKeyWith1Version(m, resourceData)
+
+				mockDeletionAccessKeyWith1Version(m, resourceData)
+
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create.tf"),
+
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
+					),
+				},
+				{
+					ImportState:                          true,
+					ImportStateVerify:                    true,
+					ImportStateId:                        "12345",
+					ImportStateVerifyIgnore:              []string{"credentials_a", "credentials_b", "primary_guid"},
+					ResourceName:                         "akamai_cloudaccess_key.test",
+					ImportStateCheck:                     checkImportSingleCredential(),
+					ImportStateVerifyIdentifierAttribute: "access_key_uid",
+				},
+			},
+			mockData: resourceMock,
+		},
+		"error - cannot find access key": {
+			init: func(t *testing.T, m *cloudaccess.Mock, resourceData commonDataForResource) {
+				// step 1 - create
+				mockCreationAccessKeyWith1Version(m, resourceData)
+				mockReadAccessKeyWith1Version(m, resourceData)
+
+				// step 2 import
+				m.On("GetAccessKey", mock.Anything, cloudaccess.AccessKeyRequest{AccessKeyUID: 000000}).Return(nil, errors.New("oops")).Times(1)
+
+				mockDeletionAccessKeyWith1Version(m, resourceData)
+
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create.tf"),
+
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
+					),
+				},
+				{
+					ImportState:             true,
+					ImportStateVerify:       true,
+					ImportStateId:           "00000",
+					ImportStateVerifyIgnore: []string{"credentials_a", "credentials_b", "primary_guid"},
+					ResourceName:            "akamai_cloudaccess_key.test",
+					ImportStateCheck:        checkImportSingleCredential(),
+					ExpectError:             regexp.MustCompile("Cannot Find Access key"),
+				},
+			},
+			mockData: resourceMock,
+		},
+		"error - incorrect access key": {
+			init: func(t *testing.T, m *cloudaccess.Mock, resourceData commonDataForResource) {
+				// step 1 - create
+				mockCreationAccessKeyWith1Version(m, resourceData)
+				mockReadAccessKeyWith1Version(m, resourceData)
+
+				// step 2 import
+
+				mockDeletionAccessKeyWith1Version(m, resourceData)
+
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create.tf"),
+
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
+					),
+				},
+				{
+					ImportState:             true,
+					ImportStateVerify:       true,
+					ImportStateId:           "NaN",
+					ImportStateVerifyIgnore: []string{"credentials_a", "credentials_b", "primary_guid"},
+					ResourceName:            "akamai_cloudaccess_key.test",
+					ImportStateCheck:        checkImportSingleCredential(),
+					ExpectError:             regexp.MustCompile("Incorrect ID"),
+				},
+			},
+			mockData: resourceMock,
+		},
+		"error - reading access key list failed": {
+			init: func(t *testing.T, m *cloudaccess.Mock, resourceData commonDataForResource) {
+				// step 1 - create
+
+				mockCreationAccessKeyWith1Version(m, resourceData)
+				mockReadAccessKeyWith1Version(m, resourceData)
+
+				// step 2 import
+				mockGetAccessKey(m, resourceData.accessKeyData[0]).Once()
+				m.On("ListAccessKeyVersions", mock.Anything, cloudaccess.ListAccessKeyVersionsRequest{AccessKeyUID: resourceData.propertyData.accessKeyUID}).Return(nil, errors.New("oops")).Times(1)
+
+				mockDeletionAccessKeyWith1Version(m, resourceData)
+
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create.tf"),
+
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
+					),
+				},
+				{
+					ImportState:             true,
+					ImportStateVerify:       true,
+					ImportStateId:           "12345",
+					ImportStateVerifyIgnore: []string{"credentials_a", "credentials_b", "primary_guid"},
+					ResourceName:            "akamai_cloudaccess_key.test",
+					ImportStateCheck:        checkImportSingleCredential(),
+					ExpectError:             regexp.MustCompile("Reading Access Key list Failed"),
+				},
+			},
+			mockData: resourceMock,
+		},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			client := &cloudaccess.Mock{}
+			if test.init != nil {
+				test.init(t, client, test.mockData)
+			}
+			useClient(client, func() {
+				resource.UnitTest(t, resource.TestCase{
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+					IsUnitTest:               true,
+					Steps:                    test.steps,
+				})
+			})
+			client.AssertExpectations(t)
+		})
+	}
+}
+
+func checkImport() resource.ImportStateCheckFunc {
+	return func(s []*terraform.InstanceState) error {
+		if len(s) == 0 {
+			return errors.New("No Instance found")
+		}
+		if len(s) != 1 {
+			return fmt.Errorf("Expected one Instance: %d", len(s))
+		}
+
+		state := s[0].Attributes
+		attributes := map[string]string{
+			"access_key_name":                        "test_key_name",
+			"access_key_uid":                         "12345",
+			"authentication_method":                  "AWS4_HMAC_SHA256",
+			"contract_id":                            "1-CTRACT",
+			"group_id":                               "12345",
+			"network_configuration.additional_cdn":   "CHINA_CDN",
+			"network_configuration.security_network": "ENHANCED_TLS",
+			"primary_guid":                           "", // will always be empty
+			"credentials_a.cloud_access_key_id":      "test_key_id",
+			"credentials_a.cloud_secret_access_key":  "",      // will always be empty
+			"credentials_a.primary_key":              "false", // will always be false
+			"credentials_a.version":                  "1",
+			"credentials_a.version_guid":             "asde-efdr-reded",
+			"credentials_b.cloud_access_key_id":      "test_key_id_2",
+			"credentials_b.cloud_secret_access_key":  "",      // will always be empty
+			"credentials_b.primary_key":              "false", // will always be false
+			"credentials_b.version":                  "2",
+			"credentials_b.version_guid":             "asdd-ads-dasdas",
+		}
+
+		invalidValues := []string{}
+		for field, expectedVal := range attributes {
+			if state[field] != expectedVal {
+				invalidValues = append(invalidValues, fmt.Sprintf("field: %s, got: %s, expected: %s ", field, state[field], expectedVal))
+			}
+		}
+
+		if len(invalidValues) != 0 {
+
+			return fmt.Errorf(strings.Join(invalidValues, "\n"))
+		}
+
+		return nil
+	}
+}
+
+func checkImportSingleCredential() resource.ImportStateCheckFunc {
+	return func(s []*terraform.InstanceState) error {
+		if len(s) == 0 {
+			return errors.New("No Instance found")
+		}
+		if len(s) != 1 {
+			return fmt.Errorf("Expected one Instance: %d", len(s))
+		}
+
+		state := s[0].Attributes
+		if _, ok := state["credentials_b.cloud_access_key_id"]; ok {
+			return errors.New("Got unexpected second credential")
+		}
+
+		attributes := map[string]string{
+			"access_key_name":                        "test_key_name",
+			"access_key_uid":                         "12345",
+			"authentication_method":                  "AWS4_HMAC_SHA256",
+			"contract_id":                            "1-CTRACT",
+			"group_id":                               "12345",
+			"network_configuration.additional_cdn":   "CHINA_CDN",
+			"network_configuration.security_network": "ENHANCED_TLS",
+			"primary_guid":                           "", // will always be empty
+			"credentials_a.cloud_access_key_id":      "test_key_id",
+			"credentials_a.cloud_secret_access_key":  "",      // will always be empty
+			"credentials_a.primary_key":              "false", // will always be false
+			"credentials_a.version":                  "1",
+			"credentials_a.version_guid":             "asde-efdr-reded",
+		}
+
+		invalidValues := []string{}
+		for field, expectedVal := range attributes {
+			if state[field] != expectedVal {
+				invalidValues = append(invalidValues, fmt.Sprintf("field: %s, got: %s, expected: %s ", field, state[field], expectedVal))
+			}
+		}
+
+		if len(invalidValues) != 0 {
+
+			return fmt.Errorf(strings.Join(invalidValues, "\n"))
+		}
+
+		return nil
+	}
 }

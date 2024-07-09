@@ -157,7 +157,7 @@
     * `akamai_cloudaccess_key_versions` - read details for key versions by key name
     * `akamai_cloudaccess_key_properties` - read
   * Added resource:
-    * `akamai_cloudaccess_key` - create, read, update, delete
+    * `akamai_cloudaccess_key` - create, read, update, delete, import
 
 
 

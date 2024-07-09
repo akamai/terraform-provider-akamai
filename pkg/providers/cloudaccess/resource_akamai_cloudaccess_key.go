@@ -1,10 +1,12 @@
 package cloudaccess
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
 	"slices"
+	"strconv"
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/cloudaccess"
@@ -13,6 +15,7 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -23,10 +26,10 @@ import (
 )
 
 var (
-	_ resource.Resource               = &KeyResource{}
-	_ resource.ResourceWithConfigure  = &KeyResource{}
-	_ resource.ResourceWithModifyPlan = &KeyResource{}
-	//_ resource.ResourceWithImportState = &KeyResource{}
+	_ resource.Resource                = &KeyResource{}
+	_ resource.ResourceWithConfigure   = &KeyResource{}
+	_ resource.ResourceWithModifyPlan  = &KeyResource{}
+	_ resource.ResourceWithImportState = &KeyResource{}
 
 	activationTimeout = 60 * time.Minute
 	updateTimeout     = 60 * time.Minute
@@ -800,20 +803,85 @@ func (r *KeyResource) waitForVersionDelete(ctx context.Context, ID int64, versio
 	}
 }
 
-func (m *KeyResourceModel) populateModelFromAccessKey(response *cloudaccess.GetAccessKeyResponse) diag.Diagnostics {
-	var diags diag.Diagnostics
+func (m *KeyResourceModel) populateModelFromAccessKey(response *cloudaccess.GetAccessKeyResponse) {
 	m.AccessKeyName = types.StringValue(response.AccessKeyName)
 	m.AccessKeyUID = types.Int64Value(response.AccessKeyUID)
-	return diags
+}
+
+func (m *KeyResourceModel) importModelFromAccessKey(response *cloudaccess.GetAccessKeyResponse) {
+	m.AccessKeyName = types.StringValue(response.AccessKeyName)
+	m.AccessKeyUID = types.Int64Value(response.AccessKeyUID)
+	m.AuthenticationMethod = types.StringValue(response.AuthenticationMethod)
+
+	groups := response.Groups
+	slices.SortFunc(groups, func(a, b cloudaccess.Group) int {
+		return cmp.Compare(a.GroupID, b.GroupID)
+	})
+	contractIDs := groups[0].ContractIDs
+	slices.Sort(contractIDs)
+
+	m.GroupID = types.Int64Value(groups[0].GroupID)
+	m.ContractID = types.StringValue(contractIDs[0])
+
+	m.NetworkConfig = NetworkConfig{
+		SecurityNetwork: types.StringValue(string(response.NetworkConfiguration.SecurityNetwork)),
+	}
+	if response.NetworkConfiguration.AdditionalCDN != nil {
+		m.NetworkConfig.AdditionalCDN = types.StringValue(string(*response.NetworkConfiguration.AdditionalCDN))
+	}
+	m.PrimaryGUID = types.StringValue("")
+}
+
+// ImportState implements resource.ResourceWithImportState.
+func (r *KeyResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	tflog.Debug(ctx, "Importing Access key Resource")
+
+	accessKeyID, err := strconv.ParseInt(req.ID, 10, 64)
+	if err != nil {
+		resp.Diagnostics.AddError("Incorrect ID", fmt.Sprintf("Couldn't parse provided ID, \"%s\" is invalid", req.ID))
+		return
+	}
+
+	var data = &KeyResourceModel{}
+	client := Client(r.meta)
+	r.meta.OperationID()
+	result, err := client.GetAccessKey(ctx, cloudaccess.AccessKeyRequest{
+		AccessKeyUID: accessKeyID,
+	})
+	if err != nil {
+		resp.Diagnostics.AddError("Cannot Find Access key", err.Error())
+		return
+	}
+
+	data.importModelFromAccessKey(result)
+
+	data.Timeouts = timeouts.Value{
+		Object: types.ObjectNull(map[string]attr.Type{
+			"delete": types.StringType,
+			"create": types.StringType,
+			"update": types.StringType,
+		}),
+	}
+
+	versions, err := client.ListAccessKeyVersions(ctx, cloudaccess.ListAccessKeyVersionsRequest{AccessKeyUID: data.AccessKeyUID.ValueInt64()})
+	if err != nil {
+		resp.Diagnostics.AddError("Reading Access Key list Failed", err.Error())
+		return
+	}
+
+	data.populateModelFromVersionsList(versions)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
 func (m *KeyResourceModel) populateModelFromVersionsList(versions *cloudaccess.ListAccessKeyVersionsResponse) diag.Diagnostics {
 	var diags diag.Diagnostics
 	credAFromState := false
 	credBFromState := false
-	// change order of version from descending to ascending order
+	// sort in ascending order
 	// it will allow firstly to check older versions from state and than process later versions which are related to drift
-	slices.Reverse(versions.AccessKeyVersions)
+	slices.SortFunc(versions.AccessKeyVersions, func(a, b cloudaccess.AccessKeyVersion) int {
+		return cmp.Compare(a.Version, b.Version)
+	})
 	for _, version := range versions.AccessKeyVersions {
 		if m.CredentialsA != nil && version.Version == m.CredentialsA.Version.ValueInt64() {
 			m.CredentialsA.CloudAccessKeyID = types.StringValue(*version.CloudAccessKeyID)
@@ -828,21 +896,25 @@ func (m *KeyResourceModel) populateModelFromVersionsList(versions *cloudaccess.L
 		//This part of loop is reached when on server exist version which is not present in state, so we encounter drift
 		//It should be assigned to first empty Credential pair in incremental order
 		if !credAFromState {
+			m.CredentialsA = &Credentials{}
 			m.CredentialsA.CloudAccessKeyID = types.StringValue(*version.CloudAccessKeyID)
 			// Cannot retrieve secret form server
 			m.CredentialsA.CloudSecretAccessKey = types.StringValue("")
 			m.CredentialsA.Version = types.Int64Value(version.Version)
 			m.CredentialsA.VersionGUID = types.StringValue(version.VersionGUID)
 			m.CredentialsA.PrimaryKey = types.BoolValue(false)
+			credAFromState = true
 			continue
 		}
 		if !credBFromState {
+			m.CredentialsB = &Credentials{}
 			m.CredentialsB.CloudAccessKeyID = types.StringValue(*version.CloudAccessKeyID)
 			// Cannot retrieve secret form server
 			m.CredentialsB.CloudSecretAccessKey = types.StringValue("")
 			m.CredentialsB.Version = types.Int64Value(version.Version)
 			m.CredentialsB.VersionGUID = types.StringValue(version.VersionGUID)
 			m.CredentialsB.PrimaryKey = types.BoolValue(false)
+			credBFromState = true
 			continue
 		}
 	}
