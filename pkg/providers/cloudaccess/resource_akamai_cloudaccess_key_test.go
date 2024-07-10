@@ -1067,26 +1067,6 @@ func TestAccessKeyResource(t *testing.T) {
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResAccessKey/changed_secret.tf"),
 					ExpectError: regexp.MustCompile("\\s*cannot update cloud access secret without update of cloud access key id,\\s*expect in-place update of secret after import"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_name", "test_key_name"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "authentication_method", "AWS4_HMAC_SHA256"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "contract_id", "1-CTRACT"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "group_id", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "primary_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_access_key_id", "test_key_id"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_secret_access_key", "changed_secret"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.primary_key", "true"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version", "1"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.cloud_access_key_id", "test_key_id_2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.cloud_secret_access_key", "test_secret_2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.primary_key", "false"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version", "2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version_guid", "asdd-ads-dasdas"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.additional_cdn", "CHINA_CDN"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.security_network", "ENHANCED_TLS"),
-					),
 				},
 			},
 		},
@@ -1168,7 +1148,7 @@ func TestAccessKeyResource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResAccessKey/missing_security_network.tf"),
-					ExpectError: regexp.MustCompile(`Incorrect attribute value type`),
+					ExpectError: regexp.MustCompile("\\s*Inappropriate value for attribute \"network_configuration\": attribute\\s*\"security_network\" is required."),
 				},
 			},
 		},
@@ -1176,7 +1156,7 @@ func TestAccessKeyResource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResAccessKey/missing_primary_key.tf"),
-					ExpectError: regexp.MustCompile(`Incorrect attribute value type`),
+					ExpectError: regexp.MustCompile("\\s*Inappropriate value for attribute \"credentials_a\": attribute \"primary_key\" is\\s*required."),
 				},
 			},
 		},
@@ -1184,7 +1164,7 @@ func TestAccessKeyResource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResAccessKey/missing_cloud_access_key.tf"),
-					ExpectError: regexp.MustCompile(`Incorrect attribute value type`),
+					ExpectError: regexp.MustCompile("\\s*Inappropriate value for attribute \"credentials_a\": attribute\\s*\"cloud_access_key_id\" is required."),
 				},
 			},
 		},
@@ -1192,7 +1172,7 @@ func TestAccessKeyResource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResAccessKey/missing_cloud_access_secret.tf"),
-					ExpectError: regexp.MustCompile(`Incorrect attribute value type`),
+					ExpectError: regexp.MustCompile("\\s*Inappropriate value for attribute \"credentials_a\": attribute\\s*\"cloud_secret_access_key\" is required."),
 				},
 			},
 		},
@@ -1201,6 +1181,57 @@ func TestAccessKeyResource(t *testing.T) {
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResAccessKey/creation_no_credentials.tf"),
 					ExpectError: regexp.MustCompile(`at least one credentials are required for creation`),
+				},
+			},
+		},
+		"non-unique cloud access key id": {
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResAccessKey/creation_non_unique_cloud_key_id.tf"),
+					ExpectError: regexp.MustCompile("'cloud_access_key_id' should be unique for each pair of credentials"),
+				},
+			},
+		},
+		"non-unique cloud access key id in import": {
+			init: func(t *testing.T, m *cloudaccess.Mock, resourceData commonDataForResource) {
+				mockGetAccessKey(m, resourceData.accessKeyData[0]).Once()
+
+				m.On("ListAccessKeyVersions", mock.Anything, cloudaccess.ListAccessKeyVersionsRequest{
+					AccessKeyUID: resourceData.accessKeyData[0].accessKeyUID,
+				}).Return(&cloudaccess.ListAccessKeyVersionsResponse{AccessKeyVersions: []cloudaccess.AccessKeyVersion{
+					{
+						AccessKeyUID:     resourceData.accessKeyData[0].accessKeyUID,
+						CloudAccessKeyID: ptr.To("test_key_id"),
+						CreatedBy:        "dev-user",
+						CreatedTime:      time.Date(2024, 1, 10, 11, 9, 10, 67708, time.UTC),
+						DeploymentStatus: cloudaccess.Active,
+						Version:          firstAccessKeyVersion,
+						VersionGUID:      "asde-efdr-reded",
+					},
+					{
+						AccessKeyUID:     resourceData.accessKeyData[0].accessKeyUID,
+						CloudAccessKeyID: ptr.To("test_key_id"),
+						CreatedBy:        "dev-user",
+						CreatedTime:      time.Date(2024, 1, 10, 11, 9, 10, 67708, time.UTC),
+						DeploymentStatus: cloudaccess.Active,
+						Version:          secondAccessKeyVersion,
+						VersionGUID:      "asdd-ads-dasdas",
+					},
+				},
+				}, nil)
+
+			},
+			mockData: resourceMock,
+			steps: []resource.TestStep{
+				{
+					Config:                               testutils.LoadFixtureString(t, "testdata/TestResAccessKey/creation_non_unique_cloud_key_id.tf"),
+					ImportState:                          true,
+					ImportStateId:                        "12345",
+					ResourceName:                         "akamai_cloudaccess_key.test",
+					ImportStateCheck:                     checkImport(),
+					ImportStateVerifyIdentifierAttribute: "access_key_uid",
+					ImportStatePersist:                   true,
+					ExpectError:                          regexp.MustCompile("'cloud_access_key_id' should be unique for each pair of credentials"),
 				},
 			},
 		},
@@ -1475,6 +1506,7 @@ func mockReadAccessKey(m *cloudaccess.Mock, resourceData commonDataForResource, 
 	mockGetAccessKey(m, resourceData.accessKeyData[0]).Once()
 	mockListAccessKeyVersions(m, resourceData.accessKeyData[0], size).Once()
 }
+
 func mockReadAccessKeyWith1Version(m *cloudaccess.Mock, resourceData commonDataForResource) {
 	mockGetAccessKey(m, resourceData.accessKeyData[0]).Once()
 	mockListAccessKeyVersionsOnly1Version(m, resourceData.accessKeyData[0]).Once()
@@ -1485,6 +1517,7 @@ func mockCreationAccessKeyWith1Version(m *cloudaccess.Mock, resourceData commonD
 	mockGetAccessKeyStatus(m, 12345, resourceData.accessKeyData[0]).Once()
 	mockGetAccessKeyVersion(m, resourceData.accessKeyData[0], cloudaccess.Active, firstAccessKeyVersion).Once()
 }
+
 func mockCreationAccessKeyUsingCredB(m *cloudaccess.Mock, resourceData commonDataForResource) {
 	mockCreateAccessKeyUsingCredB(m, resourceData.accessKeyData[2]).Once()
 	mockGetAccessKeyStatus(m, 12345, resourceData.accessKeyData[2]).Once()
@@ -1566,6 +1599,7 @@ func mockCreateAccessKey(client *cloudaccess.Mock, testData commonDataForAccessK
 		},
 	}).Return(&cloudaccess.CreateAccessKeyResponse{RequestID: 12345, RetryAfter: 1000}, nil)
 }
+
 func mockCreateAccessKeyUsingCredB(client *cloudaccess.Mock, testData commonDataForAccessKey) *mock.Call {
 	return client.On("CreateAccessKey", mock.Anything, cloudaccess.CreateAccessKeyRequest{
 		AccessKeyName:        testData.accessKeyName,
@@ -1592,6 +1626,7 @@ func mockUpdateAccessKey(client *cloudaccess.Mock, testData commonDataForAccessK
 		AccessKeyName: updatedName,
 	}, nil)
 }
+
 func mockDeleteAccessKey(client *cloudaccess.Mock, testData commonDataForAccessKey) *mock.Call {
 	return client.On("DeleteAccessKey", mock.Anything, cloudaccess.AccessKeyRequest{
 		AccessKeyUID: testData.accessKeyUID,
@@ -1696,6 +1731,7 @@ func mockGetAccessKeyVersion(client *cloudaccess.Mock, testData commonDataForAcc
 			VersionGUID:      versionGUID,
 		}, nil)
 }
+
 func mockDeleteAccessKeyVersion(client *cloudaccess.Mock, testData commonDataForAccessKey, version int64) *mock.Call {
 	var cloudAccessKeyID, versionGUID string
 	if version == firstAccessKeyVersion {
@@ -1785,6 +1821,7 @@ func mockListAccessKeyVersions(client *cloudaccess.Mock, testData commonDataForA
 		AccessKeyUID: testData.accessKeyUID,
 	}).Return(&listAccessKeyVersionResp, nil)
 }
+
 func mockListAccessKeyVersionsOnly1Version(client *cloudaccess.Mock, testData commonDataForAccessKey) *mock.Call {
 	var listAccessKeyVersionResp = cloudaccess.ListAccessKeyVersionsResponse{AccessKeyVersions: []cloudaccess.AccessKeyVersion{
 		{

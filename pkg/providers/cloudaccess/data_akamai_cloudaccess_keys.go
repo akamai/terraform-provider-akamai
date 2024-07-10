@@ -6,7 +6,6 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/cloudaccess"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/date"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -188,8 +187,10 @@ func (d *keysDataSourceModel) read(keys *cloudaccess.ListAccessKeysResponse) dia
 		var netConf *networkConfigurationModel
 		if key.NetworkConfiguration != nil {
 			netConf = &networkConfigurationModel{
-				AdditionalCDN:   types.StringValue(string(*key.NetworkConfiguration.AdditionalCDN)),
-				SecurityNetwork: types.StringPointerValue(ptr.To(string(key.NetworkConfiguration.SecurityNetwork))),
+				SecurityNetwork: types.StringValue(string(key.NetworkConfiguration.SecurityNetwork)),
+			}
+			if key.NetworkConfiguration.AdditionalCDN != nil {
+				netConf.AdditionalCDN = types.StringValue(string(*key.NetworkConfiguration.AdditionalCDN))
 			}
 		}
 

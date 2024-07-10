@@ -153,9 +153,9 @@
 * Cloud Access
   * Added datasource:
     * `akamai_cloudaccess_key` - read details for key by name
-    * `akamai_cloudaccess_keys` - read
+    * `akamai_cloudaccess_keys` - read list of access key for current user account
     * `akamai_cloudaccess_key_versions` - read details for key versions by key name
-    * `akamai_cloudaccess_key_properties` - read
+    * `akamai_cloudaccess_key_properties` - read list of active properties for given access key
   * Added resource:
     * `akamai_cloudaccess_key` - create, read, update, delete, import
 

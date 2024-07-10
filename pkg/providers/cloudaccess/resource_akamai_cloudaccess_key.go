@@ -35,17 +35,19 @@ var (
 	updateTimeout     = 60 * time.Minute
 	deleteTimeout     = 60 * time.Minute
 	pollingInterval   = 1 * time.Minute
-
-	assignedToPropertyError = "cannot delete version: %d of access key %d assigned to property"
 )
 
-const readError = "could not read access key from API"
+const (
+	readError = "could not read access key from API"
+
+	assignedToPropertyError = "cannot delete version: %d of access key %d assigned to property"
+
+	diagErrAccessKeyNotFound = "Cannot Find Access key: %d"
+)
 
 // KeyResource represents akamai_cloudaccess_key resource
 type KeyResource struct {
-	meta          meta.Meta
-	deleteTimeout time.Duration
-	pollInterval  time.Duration
+	meta meta.Meta
 }
 
 // KeyResourceModel represents model of akamai_cloudaccess_key resource
@@ -77,10 +79,6 @@ type NetworkConfig struct {
 	SecurityNetwork types.String `tfsdk:"security_network"`
 }
 
-func (r *KeyResource) setPollInterval(interval time.Duration) {
-	r.pollInterval = interval
-}
-
 // NewKeyResource returns new cloudaccess key resource
 func NewKeyResource() resource.Resource {
 	return &KeyResource{}
@@ -99,11 +97,23 @@ func (r *KeyResource) ModifyPlan(ctx context.Context, request resource.ModifyPla
 		return
 	}
 
+	if state == nil && plan.CredentialsA == nil && plan.CredentialsB == nil {
+		response.Diagnostics.AddError("at least one credentials are required for creation", "`credentials_a` or `credentials_b` must be specified")
+		return
+	}
+
 	if plan != nil && plan.CredentialsA != nil && plan.CredentialsB != nil &&
 		plan.CredentialsA.PrimaryKey.ValueBool() && plan.CredentialsB.PrimaryKey.ValueBool() {
 		response.Diagnostics.AddError("primary version of access key error", "only one pair of access key version can have 'primary_key' set as 'true'")
 		return
 	}
+
+	if plan != nil && plan.CredentialsA != nil && plan.CredentialsB != nil &&
+		plan.CredentialsA.CloudAccessKeyID == plan.CredentialsB.CloudAccessKeyID {
+		response.Diagnostics.AddError("cloud access key id of access key error", "'cloud_access_key_id' should be unique for each pair of credentials")
+		return
+	}
+
 	if state != nil && plan != nil && changedOrderOfCredentials(state, plan) {
 		response.Diagnostics.AddError("access key credentials error", "cannot change order of `credentials_a` and `credentials_b`")
 		return
@@ -291,21 +301,15 @@ func onlyTimeoutChanged(state, plan *KeyResourceModel) bool {
 func (r *KeyResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	tflog.Debug(ctx, "Creating Access Key Resource")
 	var diags diag.Diagnostics
-	var data *KeyResourceModel
-	r.setPollInterval(pollingInterval)
+	var plan *KeyResourceModel
 
 	// Read Terraform plan data into the model
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
 		resp.Diagnostics.Append(diags...)
 		return
 	}
-	if data.CredentialsA == nil && data.CredentialsB == nil {
-		diags.AddError("at least one credentials are required for creation", "`credentials_a` or `credentials_b` must be specified")
-		resp.Diagnostics.Append(diags...)
-		return
-	}
-	createTimeout, diags := data.Timeouts.Create(ctx, activationTimeout)
+	createTimeout, diags := plan.Timeouts.Create(ctx, activationTimeout)
 	if diags.HasError() {
 		resp.Diagnostics.Append(diags...)
 		return
@@ -313,24 +317,24 @@ func (r *KeyResource) Create(ctx context.Context, req resource.CreateRequest, re
 	ctx, cancel := context.WithTimeout(ctx, createTimeout)
 	defer cancel()
 
-	data, diagnostics := r.create(ctx, data)
+	plan, diagnostics := r.create(ctx, plan)
 	resp.Diagnostics.Append(diagnostics...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 	// save partial data to state - it will allow taint flow after further failure
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
-	if data.CredentialsA != nil && data.CredentialsB != nil {
-		data, diags = r.createVersion(ctx, data, false)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
+	if plan.CredentialsA != nil && plan.CredentialsB != nil {
+		plan, diags = r.createVersion(ctx, plan, false)
 		resp.Diagnostics.Append(diags...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
 	}
 
-	data = r.setupPrimaryGUID(data)
+	plan = r.setupPrimaryGUID(plan)
 	// Save data into Terraform state
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
 // setupPrimaryGUID calculates `primary_guid`based on `primary_key` and 'version_guid` parameters
@@ -348,48 +352,47 @@ func (r *KeyResource) setupPrimaryGUID(state *KeyResourceModel) *KeyResourceMode
 	return state
 }
 
-func (r *KeyResource) create(ctx context.Context, data *KeyResourceModel) (*KeyResourceModel, diag.Diagnostics) {
+func (r *KeyResource) create(ctx context.Context, plan *KeyResourceModel) (*KeyResourceModel, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	client := Client(r.meta)
-	creationKeyWithCredA := data.CredentialsA != nil
-	resp, err := client.CreateAccessKey(ctx, data.buildCreateKeyRequest(creationKeyWithCredA))
+	creationKeyWithCredA := plan.CredentialsA != nil
+	resp, err := client.CreateAccessKey(ctx, plan.buildCreateKeyRequest(creationKeyWithCredA))
 	if err != nil {
 		diags.AddError("create access key failed", err.Error())
 		return nil, diags
 	}
 
-	return r.waitUntilActivationCompleted(ctx, resp.RequestID, resp.RetryAfter, data, creationKeyWithCredA)
+	return r.waitUntilActivationCompleted(ctx, resp.RequestID, resp.RetryAfter, plan, creationKeyWithCredA)
 }
 
-func (r *KeyResource) createVersion(ctx context.Context, data *KeyResourceModel, useCredentialA bool) (*KeyResourceModel, diag.Diagnostics) {
+func (r *KeyResource) createVersion(ctx context.Context, plan *KeyResourceModel, useCredentialA bool) (*KeyResourceModel, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	client := Client(r.meta)
 
-	resp, err := client.CreateAccessKeyVersion(ctx, data.buildCreateKeyVersionRequest(useCredentialA))
+	resp, err := client.CreateAccessKeyVersion(ctx, plan.buildCreateKeyVersionRequest(useCredentialA))
 	if err != nil {
 		// If version creation fails whole resource should be tainted
 		diags.AddError("create access key version failed", err.Error())
 		return nil, diags
 	}
 
-	return r.waitUntilVersionCreatedCompleted(ctx, resp.RequestID, resp.RetryAfter, data, useCredentialA)
+	return r.waitUntilVersionCreatedCompleted(ctx, resp.RequestID, resp.RetryAfter, plan, useCredentialA)
 }
-
-var diagErrAccessKeyNotFound = diag.NewErrorDiagnostic("Cannot Find Access key", "")
 
 // Read implements resource.Resource.
 func (r *KeyResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	tflog.Debug(ctx, "Reading Access Key Resource")
-	var data *KeyResourceModel
+	var oldState *KeyResourceModel
 	var diags diag.Diagnostics
-	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	resp.Diagnostics.Append(req.State.Get(ctx, &oldState)...)
 	if resp.Diagnostics.HasError() {
 		resp.Diagnostics.Append(diags...)
 		return
 	}
 
-	diags = r.read(ctx, data)
-	if diags.Contains(diagErrAccessKeyNotFound) {
+	diags = r.read(ctx, oldState)
+	keyNotFoundDiags := diag.NewErrorDiagnostic("get access key error", fmt.Sprintf(diagErrAccessKeyNotFound, oldState.AccessKeyUID))
+	if diags.Contains(keyNotFoundDiags) {
 		resp.State.RemoveResource(ctx)
 		return
 	}
@@ -398,9 +401,9 @@ func (r *KeyResource) Read(ctx context.Context, req resource.ReadRequest, resp *
 		return
 	}
 
-	data = r.setupPrimaryGUID(data)
+	oldState = r.setupPrimaryGUID(oldState)
 
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &oldState)...)
 }
 
 func (r *KeyResource) read(ctx context.Context, data *KeyResourceModel) diag.Diagnostics {
@@ -412,7 +415,7 @@ func (r *KeyResource) read(ctx context.Context, data *KeyResourceModel) diag.Dia
 		AccessKeyUID: data.AccessKeyUID.ValueInt64(),
 	})
 	if errors.Is(err, cloudaccess.ErrGetAccessKey) {
-		diags.Append(diagErrAccessKeyNotFound)
+		diags.AddError("get access key error", fmt.Sprintf(diagErrAccessKeyNotFound, data.AccessKeyUID))
 		return diags
 	}
 	if err != nil {
@@ -433,15 +436,14 @@ func (r *KeyResource) read(ctx context.Context, data *KeyResourceModel) diag.Dia
 func (r *KeyResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	tflog.Debug(ctx, "Updating Access Key Resource")
 	var diags diag.Diagnostics
-	var data *KeyResourceModel
+	var plan *KeyResourceModel
 	client := Client(r.meta)
-	r.setPollInterval(pollingInterval)
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	timeout, diags := data.Timeouts.Update(ctx, updateTimeout)
+	timeout, diags := plan.Timeouts.Update(ctx, updateTimeout)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -454,33 +456,33 @@ func (r *KeyResource) Update(ctx context.Context, req resource.UpdateRequest, re
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	initializeCredentialVersions(oldState, data)
+	initializeCredentialVersions(oldState, plan)
 
-	if onlyTimeoutChanged(oldState, data) {
-		oldState.Timeouts = data.Timeouts
+	if onlyTimeoutChanged(oldState, plan) {
+		oldState.Timeouts = plan.Timeouts
 		resp.Diagnostics.Append(resp.State.Set(ctx, &oldState)...)
 		return
 	}
-	data.AccessKeyUID = oldState.AccessKeyUID
-	if oldState.AccessKeyName != data.AccessKeyName {
-		resp.Diagnostics.Append(r.updateAccessKey(ctx, data)...)
+	plan.AccessKeyUID = oldState.AccessKeyUID
+	if oldState.AccessKeyName != plan.AccessKeyName {
+		resp.Diagnostics.Append(r.updateAccessKey(ctx, plan)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
 	}
 
-	updateInStateCredentialA, updateInStateCredentialB := keyVersionRequireUpdateInState(oldState, data)
+	updateInStateCredentialA, updateInStateCredentialB := keyVersionRequireUpdateInState(oldState, plan)
 	if updateInStateCredentialA {
-		oldState.CredentialsA.CloudSecretAccessKey = data.CredentialsA.CloudSecretAccessKey
+		oldState.CredentialsA.CloudSecretAccessKey = plan.CredentialsA.CloudSecretAccessKey
 	}
 	if updateInStateCredentialB {
-		oldState.CredentialsB.CloudSecretAccessKey = data.CredentialsB.CloudSecretAccessKey
+		oldState.CredentialsB.CloudSecretAccessKey = plan.CredentialsB.CloudSecretAccessKey
 	}
 	if updateInStateCredentialA || updateInStateCredentialB {
 		resp.Diagnostics.Append(resp.State.Set(ctx, &oldState)...)
 	}
 
-	deleteCredentialsA, deleteCredentialsB := keyVersionRequiresDeletion(oldState, data)
+	deleteCredentialsA, deleteCredentialsB := keyVersionRequiresDeletion(oldState, plan)
 	if deleteCredentialsA || deleteCredentialsB {
 		diags = r.deleteVersion(ctx, oldState, client, resp, diags, deleteCredentialsA, deleteCredentialsB)
 		resp.Diagnostics.Append(diags...)
@@ -495,25 +497,25 @@ func (r *KeyResource) Update(ctx context.Context, req resource.UpdateRequest, re
 		}
 	}
 
-	createCredentialsA, createCredentialsB := keyVersionRequiresCreation(oldState, data)
+	createCredentialsA, createCredentialsB := keyVersionRequiresCreation(oldState, plan)
 	if createCredentialsA {
-		data, diags = r.createVersion(ctx, data, true)
+		plan, diags = r.createVersion(ctx, plan, true)
 		resp.Diagnostics.Append(diags...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
 	}
 	if createCredentialsB {
-		data, diags = r.createVersion(ctx, data, false)
+		plan, diags = r.createVersion(ctx, plan, false)
 		resp.Diagnostics.Append(diags...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
 	}
 
-	data = r.setupPrimaryGUID(data)
+	plan = r.setupPrimaryGUID(plan)
 
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
 func (r *KeyResource) deleteVersion(ctx context.Context, oldState *KeyResourceModel, client cloudaccess.CloudAccess, resp *resource.UpdateResponse, diags diag.Diagnostics, deleteCredentialsA, deleteCredentialsB bool) diag.Diagnostics {
@@ -544,8 +546,6 @@ func (r *KeyResource) deleteVersion(ctx context.Context, oldState *KeyResourceMo
 		}
 		versionsToDelete = append(versionsToDelete, versionToDelete)
 	}
-	// if statements are double in order to check both credential pairs assignment to property at beginning
-	// it is crucial in case of deletion both versions at once
 	for _, version := range versionsToDelete {
 		diags := r.deleteKeyVersion(ctx, oldState, version, diags)
 		if diags != nil {
@@ -556,22 +556,22 @@ func (r *KeyResource) deleteVersion(ctx context.Context, oldState *KeyResourceMo
 	return diags
 }
 
-func changedOrderOfCredentials(oldState, data *KeyResourceModel) bool {
-	if oldState.CredentialsA != nil && data.CredentialsA != nil && oldState.CredentialsB != nil && data.CredentialsB != nil && (oldState.CredentialsA.CloudAccessKeyID == data.CredentialsB.CloudAccessKeyID && oldState.CredentialsB.CloudAccessKeyID == data.CredentialsA.CloudAccessKeyID) {
+func changedOrderOfCredentials(oldState, plan *KeyResourceModel) bool {
+	if oldState.CredentialsA != nil && plan.CredentialsA != nil && oldState.CredentialsB != nil && plan.CredentialsB != nil && (oldState.CredentialsA.CloudAccessKeyID == plan.CredentialsB.CloudAccessKeyID && oldState.CredentialsB.CloudAccessKeyID == plan.CredentialsA.CloudAccessKeyID) {
 		return true
 	}
 	return false
 }
 
-func checkIfSecretChangedAndWasNotEmpty(oldState, data *KeyResourceModel) bool {
-	if oldState.CredentialsA != nil && data.CredentialsA != nil &&
-		oldState.CredentialsA.CloudAccessKeyID.ValueString() == data.CredentialsA.CloudAccessKeyID.ValueString() &&
-		oldState.CredentialsA.CloudSecretAccessKey.ValueString() != "" && oldState.CredentialsA.CloudSecretAccessKey.ValueString() != data.CredentialsA.CloudSecretAccessKey.ValueString() {
+func checkIfSecretChangedAndWasNotEmpty(oldState, plan *KeyResourceModel) bool {
+	if oldState.CredentialsA != nil && plan.CredentialsA != nil &&
+		oldState.CredentialsA.CloudAccessKeyID.ValueString() == plan.CredentialsA.CloudAccessKeyID.ValueString() &&
+		oldState.CredentialsA.CloudSecretAccessKey.ValueString() != "" && oldState.CredentialsA.CloudSecretAccessKey.ValueString() != plan.CredentialsA.CloudSecretAccessKey.ValueString() {
 		return true
 	}
-	if oldState.CredentialsB != nil && data.CredentialsB != nil &&
-		oldState.CredentialsB.CloudAccessKeyID.ValueString() == data.CredentialsB.CloudAccessKeyID.ValueString() &&
-		oldState.CredentialsB.CloudSecretAccessKey.ValueString() != "" && oldState.CredentialsB.CloudSecretAccessKey.ValueString() != data.CredentialsB.CloudSecretAccessKey.ValueString() {
+	if oldState.CredentialsB != nil && plan.CredentialsB != nil &&
+		oldState.CredentialsB.CloudAccessKeyID.ValueString() == plan.CredentialsB.CloudAccessKeyID.ValueString() &&
+		oldState.CredentialsB.CloudSecretAccessKey.ValueString() != "" && oldState.CredentialsB.CloudSecretAccessKey.ValueString() != plan.CredentialsB.CloudSecretAccessKey.ValueString() {
 		return true
 	}
 	return false
@@ -612,25 +612,25 @@ func keyVersionRequiresCreation(oldState *KeyResourceModel, data *KeyResourceMod
 
 func keyVersionRequiresDeletion(oldState *KeyResourceModel, data *KeyResourceModel) (bool, bool) {
 	var deleteCredA, deleteCredB bool
-	if oldState.CredentialsA != nil && (data.CredentialsA == nil || (oldState.CredentialsA.CloudAccessKeyID != data.CredentialsA.CloudAccessKeyID && oldState.CredentialsA.CloudAccessKeyID != data.CredentialsB.CloudAccessKeyID)) {
+	if oldState.CredentialsA != nil && (data.CredentialsA == nil || (oldState.CredentialsA.CloudAccessKeyID != data.CredentialsA.CloudAccessKeyID)) {
 		deleteCredA = true
 	}
-	if oldState.CredentialsB != nil && (data.CredentialsB == nil || (oldState.CredentialsB.CloudAccessKeyID != data.CredentialsB.CloudAccessKeyID && oldState.CredentialsB.CloudAccessKeyID != data.CredentialsA.CloudAccessKeyID)) {
+	if oldState.CredentialsB != nil && (data.CredentialsB == nil || (oldState.CredentialsB.CloudAccessKeyID != data.CredentialsB.CloudAccessKeyID)) {
 		deleteCredB = true
 	}
 	return deleteCredA, deleteCredB
 }
-func (r *KeyResource) updateAccessKey(ctx context.Context, data *KeyResourceModel) diag.Diagnostics {
+func (r *KeyResource) updateAccessKey(ctx context.Context, plan *KeyResourceModel) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	client := Client(r.meta)
-	resp, err := client.UpdateAccessKey(ctx, data.buildUpdateRequest(), data.buildFetchRequest())
+	resp, err := client.UpdateAccessKey(ctx, plan.buildUpdateRequest(), plan.buildFetchRequest())
 	if err != nil {
 		diags.AddError("update access key failed", err.Error())
 		return diags
 	}
-	data.AccessKeyName = types.StringValue(resp.AccessKeyName)
-	data.AccessKeyUID = types.Int64Value(resp.AccessKeyUID)
+	plan.AccessKeyName = types.StringValue(resp.AccessKeyName)
+	plan.AccessKeyUID = types.Int64Value(resp.AccessKeyUID)
 
 	return diags
 }
@@ -655,15 +655,14 @@ func isVersionAssignedToProperty(ctx context.Context, client cloudaccess.CloudAc
 // Delete implements resource.Resource.
 func (r *KeyResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	tflog.Debug(ctx, "Deleting Access Key Resource")
-	var data *KeyResourceModel
+	var oldState *KeyResourceModel
 	client := Client(r.meta)
 
-	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	resp.Diagnostics.Append(req.State.Get(ctx, &oldState)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	r.setPollInterval(pollingInterval)
-	deleteTimeout, diags := data.Timeouts.Delete(ctx, deleteTimeout)
+	deleteTimeout, diags := oldState.Timeouts.Delete(ctx, deleteTimeout)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -671,25 +670,25 @@ func (r *KeyResource) Delete(ctx context.Context, req resource.DeleteRequest, re
 
 	ctx, cancel := context.WithTimeout(ctx, deleteTimeout)
 	defer cancel()
-	versions, err := client.ListAccessKeyVersions(ctx, data.buildListKeyVersionsRequest())
+	versions, err := client.ListAccessKeyVersions(ctx, oldState.buildListKeyVersionsRequest())
 	if err != nil {
 		resp.Diagnostics.AddError("list access key versions failed", err.Error())
 		return
 	}
 	for _, version := range versions.AccessKeyVersions {
-		hasProperty, diags := isVersionAssignedToProperty(ctx, client, data.AccessKeyUID.ValueInt64(), version.Version)
+		hasProperty, diags := isVersionAssignedToProperty(ctx, client, oldState.AccessKeyUID.ValueInt64(), version.Version)
 		if diags.HasError() {
 			resp.Diagnostics.Append(diags...)
 			return
 		}
 		if hasProperty {
-			resp.Diagnostics.AddError("version assigned to property error", fmt.Sprintf(assignedToPropertyError, version.Version, data.AccessKeyUID.ValueInt64()))
+			resp.Diagnostics.AddError("version assigned to property error", fmt.Sprintf(assignedToPropertyError, version.Version, oldState.AccessKeyUID.ValueInt64()))
 			return
 		}
 	}
 	for _, version := range versions.AccessKeyVersions {
 		versionToDelete := version.Version
-		diags := r.deleteKeyVersion(ctx, data, versionToDelete, diags)
+		diags := r.deleteKeyVersion(ctx, oldState, versionToDelete, diags)
 		if diags != nil {
 			resp.Diagnostics.Append(diags...)
 			return
@@ -697,28 +696,28 @@ func (r *KeyResource) Delete(ctx context.Context, req resource.DeleteRequest, re
 	}
 
 	if err = client.DeleteAccessKey(ctx, cloudaccess.AccessKeyRequest{
-		AccessKeyUID: data.AccessKeyUID.ValueInt64(),
+		AccessKeyUID: oldState.AccessKeyUID.ValueInt64(),
 	}); err != nil {
 		resp.Diagnostics.AddError("delete access key failed", err.Error())
 		return
 	}
 
-	resp.Diagnostics.Append(r.waitForDelete(ctx, data.AccessKeyUID.ValueInt64())...)
+	resp.Diagnostics.Append(r.waitForDelete(ctx, oldState.AccessKeyUID.ValueInt64())...)
 }
 
-func (r *KeyResource) deleteKeyVersion(ctx context.Context, data *KeyResourceModel, versionToDelete int64, diags diag.Diagnostics) diag.Diagnostics {
+func (r *KeyResource) deleteKeyVersion(ctx context.Context, oldState *KeyResourceModel, versionToDelete int64, diags diag.Diagnostics) diag.Diagnostics {
 	client := Client(r.meta)
-	_, err := client.DeleteAccessKeyVersion(ctx, data.buildDeleteKeyVersionRequest(versionToDelete))
+	_, err := client.DeleteAccessKeyVersion(ctx, oldState.buildDeleteKeyVersionRequest(versionToDelete))
 	if err != nil {
 		diags.AddError(fmt.Sprintf("delete access key version %d failed", versionToDelete), err.Error())
 		return diags
 	}
-	isPending, diags := r.isPendingDelete(ctx, data.AccessKeyUID.ValueInt64(), versionToDelete)
+	isPending, diags := r.isPendingDelete(ctx, oldState.AccessKeyUID.ValueInt64(), versionToDelete)
 	if diags.HasError() {
 		return diags
 	}
 	if isPending {
-		successfulDelete, diags := r.waitForVersionDelete(ctx, data.AccessKeyUID.ValueInt64(), versionToDelete)
+		successfulDelete, diags := r.waitForVersionDelete(ctx, oldState.AccessKeyUID.ValueInt64(), versionToDelete)
 		if !successfulDelete {
 			return diags
 		}
@@ -727,12 +726,12 @@ func (r *KeyResource) deleteKeyVersion(ctx context.Context, data *KeyResourceMod
 	return diags
 }
 
-func (r *KeyResource) isPendingDelete(ctx context.Context, ID int64, version int64) (bool, diag.Diagnostics) {
+func (r *KeyResource) isPendingDelete(ctx context.Context, accessKeyUID int64, version int64) (bool, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	client := Client(r.meta)
 
 	resp, err := client.GetAccessKeyVersion(ctx, cloudaccess.GetAccessKeyVersionRequest{
-		AccessKeyUID: ID,
+		AccessKeyUID: accessKeyUID,
 		Version:      version,
 	})
 	if err != nil {
@@ -743,7 +742,7 @@ func (r *KeyResource) isPendingDelete(ctx context.Context, ID int64, version int
 	return resp.DeploymentStatus == cloudaccess.PendingDeletion, diags
 }
 
-func (r *KeyResource) waitForDelete(ctx context.Context, ID int64) diag.Diagnostics {
+func (r *KeyResource) waitForDelete(ctx context.Context, accessKeyUID int64) diag.Diagnostics {
 	var diags diag.Diagnostics
 	client := Client(r.meta)
 	for {
@@ -752,16 +751,19 @@ func (r *KeyResource) waitForDelete(ctx context.Context, ID int64) diag.Diagnost
 			diags.AddError("list access keys failed", err.Error())
 			return diags
 		}
-		var listOfAccessKeysUID []int64
+		keyDeleted := true
 		for _, key := range keys.AccessKeys {
-			listOfAccessKeysUID = append(listOfAccessKeysUID, key.AccessKeyUID)
+			if accessKeyUID == key.AccessKeyUID {
+				keyDeleted = false
+				break
+			}
 		}
-		if !slices.Contains(listOfAccessKeysUID, ID) {
+		if keyDeleted {
 			return diags
 		}
 
 		select {
-		case <-time.Tick(r.pollInterval):
+		case <-time.Tick(pollingInterval):
 			continue
 		case <-ctx.Done():
 			diags.AddError("deletion terminated",
@@ -771,29 +773,33 @@ func (r *KeyResource) waitForDelete(ctx context.Context, ID int64) diag.Diagnost
 	}
 }
 
-func (r *KeyResource) waitForVersionDelete(ctx context.Context, ID int64, version int64) (bool, diag.Diagnostics) {
+func (r *KeyResource) waitForVersionDelete(ctx context.Context, accessKeyUID int64, version int64) (bool, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	client := Client(r.meta)
 
 	for {
 		versions, err := client.ListAccessKeyVersions(ctx, cloudaccess.ListAccessKeyVersionsRequest{
-			AccessKeyUID: ID,
+			AccessKeyUID: accessKeyUID,
 		})
 		if err != nil {
 			diags.AddError("list access key versions failed", err.Error())
 			return false, diags
 		}
 
-		versionsList := make([]int64, 0, len(versions.AccessKeyVersions))
+		keyVersionDeleted := true
 		for _, keyVersion := range versions.AccessKeyVersions {
-			versionsList = append(versionsList, keyVersion.Version)
+			if version == keyVersion.Version {
+				keyVersionDeleted = false
+				break
+			}
 		}
-		if !slices.Contains(versionsList, version) {
+
+		if keyVersionDeleted {
 			return true, diags
 		}
 
 		select {
-		case <-time.Tick(r.pollInterval):
+		case <-time.Tick(pollingInterval):
 			continue
 		case <-ctx.Done():
 			diags.AddError("deletion terminated",
@@ -817,10 +823,9 @@ func (m *KeyResourceModel) importModelFromAccessKey(response *cloudaccess.GetAcc
 	slices.SortFunc(groups, func(a, b cloudaccess.Group) int {
 		return cmp.Compare(a.GroupID, b.GroupID)
 	})
-	contractIDs := groups[0].ContractIDs
-	slices.Sort(contractIDs)
+	contractIDs := groups[len(groups)-1].ContractIDs
 
-	m.GroupID = types.Int64Value(groups[0].GroupID)
+	m.GroupID = types.Int64Value(groups[len(groups)-1].GroupID)
 	m.ContractID = types.StringValue(contractIDs[0])
 
 	m.NetworkConfig = NetworkConfig{
@@ -867,6 +872,12 @@ func (r *KeyResource) ImportState(ctx context.Context, req resource.ImportStateR
 	if err != nil {
 		resp.Diagnostics.AddError("Reading Access Key list Failed", err.Error())
 		return
+	}
+	if len(versions.AccessKeyVersions) > 1 {
+		if *versions.AccessKeyVersions[0].CloudAccessKeyID == *versions.AccessKeyVersions[1].CloudAccessKeyID {
+			resp.Diagnostics.AddError("cloud access key id of access key error", "'cloud_access_key_id' should be unique for each pair of credentials")
+			return
+		}
 	}
 
 	data.populateModelFromVersionsList(versions)
@@ -995,7 +1006,7 @@ func (m *KeyResourceModel) buildFetchRequest() cloudaccess.AccessKeyRequest {
 	}
 }
 
-func (r *KeyResource) waitUntilActivationCompleted(ctx context.Context, requestID int64, statusTimeout int64, data *KeyResourceModel, credA bool) (*KeyResourceModel, diag.Diagnostics) {
+func (r *KeyResource) waitUntilActivationCompleted(ctx context.Context, requestID int64, statusTimeout int64, plan *KeyResourceModel, credA bool) (*KeyResourceModel, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	client := Client(r.meta)
 	time.Sleep(time.Duration(statusTimeout) * time.Millisecond)
@@ -1006,7 +1017,7 @@ func (r *KeyResource) waitUntilActivationCompleted(ctx context.Context, requestI
 			return nil, diags
 		}
 		if statusResp.ProcessingStatus == cloudaccess.ProcessingDone {
-			data.AccessKeyUID = types.Int64Value(statusResp.AccessKey.AccessKeyUID)
+			plan.AccessKeyUID = types.Int64Value(statusResp.AccessKey.AccessKeyUID)
 			versionResp, err := client.GetAccessKeyVersion(ctx, cloudaccess.GetAccessKeyVersionRequest{
 				AccessKeyUID: statusResp.AccessKey.AccessKeyUID,
 				Version:      statusResp.AccessKeyVersion.Version,
@@ -1017,17 +1028,17 @@ func (r *KeyResource) waitUntilActivationCompleted(ctx context.Context, requestI
 			}
 			if versionResp.DeploymentStatus == cloudaccess.Active {
 				if credA {
-					data.CredentialsA.Version = types.Int64Value(statusResp.AccessKeyVersion.Version)
-					data.CredentialsA.VersionGUID = types.StringValue(versionResp.VersionGUID)
+					plan.CredentialsA.Version = types.Int64Value(statusResp.AccessKeyVersion.Version)
+					plan.CredentialsA.VersionGUID = types.StringValue(versionResp.VersionGUID)
 				} else {
-					data.CredentialsB.Version = types.Int64Value(statusResp.AccessKeyVersion.Version)
-					data.CredentialsB.VersionGUID = types.StringValue(versionResp.VersionGUID)
+					plan.CredentialsB.Version = types.Int64Value(statusResp.AccessKeyVersion.Version)
+					plan.CredentialsB.VersionGUID = types.StringValue(versionResp.VersionGUID)
 				}
-				return data, diags
+				return plan, diags
 			}
 		}
 		select {
-		case <-time.After(r.pollInterval):
+		case <-time.After(pollingInterval):
 			continue
 		case <-ctx.Done():
 			diags.AddError("reached activation timeout", ctx.Err().Error())
@@ -1036,7 +1047,7 @@ func (r *KeyResource) waitUntilActivationCompleted(ctx context.Context, requestI
 	}
 }
 
-func (r *KeyResource) waitUntilVersionCreatedCompleted(ctx context.Context, requestID int64, statusTimeout int64, data *KeyResourceModel, credentialA bool) (*KeyResourceModel, diag.Diagnostics) {
+func (r *KeyResource) waitUntilVersionCreatedCompleted(ctx context.Context, requestID int64, statusTimeout int64, plan *KeyResourceModel, credentialA bool) (*KeyResourceModel, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	client := Client(r.meta)
 	time.Sleep(time.Duration(statusTimeout) * time.Millisecond)
@@ -1058,18 +1069,18 @@ func (r *KeyResource) waitUntilVersionCreatedCompleted(ctx context.Context, requ
 			}
 			if versionResp.DeploymentStatus == cloudaccess.Active {
 				if credentialA {
-					data.CredentialsA.Version = types.Int64Value(statusResp.AccessKeyVersion.Version)
-					data.CredentialsA.VersionGUID = types.StringValue(versionResp.VersionGUID)
+					plan.CredentialsA.Version = types.Int64Value(statusResp.AccessKeyVersion.Version)
+					plan.CredentialsA.VersionGUID = types.StringValue(versionResp.VersionGUID)
 				} else {
-					data.CredentialsB.Version = types.Int64Value(statusResp.AccessKeyVersion.Version)
-					data.CredentialsB.VersionGUID = types.StringValue(versionResp.VersionGUID)
+					plan.CredentialsB.Version = types.Int64Value(statusResp.AccessKeyVersion.Version)
+					plan.CredentialsB.VersionGUID = types.StringValue(versionResp.VersionGUID)
 				}
-				return data, diags
+				return plan, diags
 			}
 		}
 
 		select {
-		case <-time.After(r.pollInterval):
+		case <-time.After(pollingInterval):
 			continue
 		case <-ctx.Done():
 			diags.AddError("reached activation timeout", ctx.Err().Error())
