@@ -57,6 +57,7 @@
 
 #### FEATURES/ENHANCEMENTS:
 
+* Migrated Go version to `1.21.12` for builds.
 * Appsec
   * Added field `host_names` to the `akamai_appsec_configuration` data source
 
