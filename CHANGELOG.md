@@ -1,59 +1,6 @@
 # RELEASE NOTES
 
-## X.X.X (X X, X)
-
-#### BREAKING CHANGES:
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+## 6.3.0 (July 16, 2024)
 
 #### FEATURES/ENHANCEMENTS:
 
@@ -74,83 +21,6 @@
 * Client Lists
   * Extended list of fields for which `akamai_clientlist_activation` diff is suppressed with `notification_recipients` and `siebel_ticket_id`. Diff suppressed when activation is not required.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-* PAPI
-  * Added support for new rule format `v2024-05-31`
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
- 
-
-
-
-
-* DNS
-  * Added data source:
-    * `akamai_zone_dnssec_status` - reads the DNSSEC status of a single zone in Edge DNS ([I#509](https://github.com/akamai/terraform-provider-akamai/issues/509))
-* GTM
-  * Added more details for `gtm_property` resource in case of error being returned from the API
-
-
-
-
- 
-
-
-
-
-
-
-
-
-
-
-
-* Property
-  * Added new optional field `ttl` to `akamai_edge_hostname` resource. 
-    When it is used, creation or update takes longer as resource has to synchronize its state with HAPI.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 * Cloud Access
   * Added datasource:
     * `akamai_cloudaccess_key` - read details for key by name
@@ -160,77 +30,38 @@
   * Added resource:
     * `akamai_cloudaccess_key` - create, read, update, delete, import
 
+* DNS
+  * Added data source:
+    * `akamai_zone_dnssec_status` - reads the DNSSEC status of a single zone in Edge DNS ([I#509](https://github.com/akamai/terraform-provider-akamai/issues/509))
 
+* GTM
+  * Added more details for `gtm_property` resource in case of error being returned from the API
+
+* PAPI
+  * Added support for new rule format `v2024-05-31`
+  * Added new optional field `ttl` to `akamai_edge_hostname` resource. 
+    When it is used, creation or update takes longer as resource has to synchronize its state with HAPI.
 
 #### BUG FIXES:
 
-* Property
-  * Removed caching from `akamai_contracts` data source
-
-* Property
-  * Fixed issue in `akamai_edge_hostname` resource when update is performed straight after create
-
 * Appsec
   * A new config version will be created if the latest config version is active in either Staging or Production, and protected and/or evaluated hostnames are updated using `akamai_appsec_wap_selected_hostnames` ([#I540](https://github.com/akamai/terraform-provider-akamai/issues/540))
-
-
-* Appsec
   * Fixed issue where terraform provider plugin crashes due to empty string input for list `geo_network_lists`, `ip_network_lists`, `exception_ip_network_lists` and `asn_network_lists` in `akamai_appsec_ip_geo` resource
-
-
-
-
-
-
-
-* Property
-  * Fixed issue in data_akamai_property_rules_template that having root template in the same directory as .terraform dir would cause error. 
-    Now, datasource will not search for templates inside .terraform directory.
-  
-
-
-
-
-* PAPI
-  * Fixed an issue that caused the `compliance_record` in imported `akamai_property_activation` and `akamai_property_include_activation` to be empty and could not be updated.
-    * Added the ability to update `compliance_record` in `akamai_property_activation` and `akamai_property_include_activation` via terraform apply (the update will not trigger new activation if version/network/property was not changed)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-* Property
-  * Fixed issue that having `akamai_property` and `akamai_property_activation` (or `akamai_property_include` and `akamai_property_include_activation`) resources linked using `staging_version` or `production_version`
-    and modifying rules and note could sometimes result in `Provider produced inconsistent final plan` error ([I#549](https://github.com/akamai/terraform-provider-akamai/issues/549)).
-
-
-
-
-
-
 
 * DNS
   * Improved validation of IPv6 addresses in `akamai_dns_record` resource for records of type `AAAA` ([I#550](https://github.com/akamai/terraform-provider-akamai/issues/550))
-
-
-
-
-* DNS
   * Fixed issue in `akamai_dns_record` resource that could cause incorrect targets planned to be modified or reordering targets send to server for `TXT` record type ([I#499](https://github.com/akamai/terraform-provider-akamai/issues/499), [I#541](https://github.com/akamai/terraform-provider-akamai/issues/541), [I#559](https://github.com/akamai/terraform-provider-akamai/issues/559))
   * Fixed issue in `akamai_dns_recordset` datasource that for `TXT` record type, returned targets were needlessly reordered ([I#559](https://github.com/akamai/terraform-provider-akamai/issues/559))
 
-
+* PAPI
+  * Removed caching from `akamai_contracts` data source
+  * Fixed issue in `akamai_edge_hostname` resource when update is performed straight after create
+  * Fixed issue in data_akamai_property_rules_template that having root template in the same directory as .terraform dir would cause error.
+    Now, datasource will not search for templates inside .terraform directory ([I#557](https://github.com/akamai/terraform-provider-akamai/issues/557))
+  * Fixed an issue that caused the `compliance_record` in imported `akamai_property_activation` and `akamai_property_include_activation` to be empty and could not be updated.
+    * Added the ability to update `compliance_record` in `akamai_property_activation` and `akamai_property_include_activation` via terraform apply (the update will not trigger new activation if version/network/property was not changed)
+  * Fixed issue that having `akamai_property` and `akamai_property_activation` (or `akamai_property_include` and `akamai_property_include_activation`) resources linked using `staging_version` or `production_version`
+    and modifying rules and note could sometimes result in `Provider produced inconsistent final plan` error ([I#549](https://github.com/akamai/terraform-provider-akamai/issues/549)).
 
 ## 6.2.0 (May 28, 2024)
 
