@@ -26,6 +26,15 @@ func TestAkamaiConfiguration_data_basic(t *testing.T) {
 			appsec.GetConfigurationsRequest{},
 		).Return(&getConfigurationsResponse, nil)
 
+		getSelectedHostnamesResponse := appsec.GetSelectedHostnamesResponse{}
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestDSSelectedHostnames/SelectedHostnames.json"), &getSelectedHostnamesResponse)
+		require.NoError(t, err)
+
+		client.On("GetSelectedHostnames",
+			mock.Anything,
+			appsec.GetSelectedHostnamesRequest{ConfigID: 43253, Version: 15},
+		).Return(&getSelectedHostnamesResponse, nil)
+
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
 				IsUnitTest:               true,
@@ -43,7 +52,47 @@ func TestAkamaiConfiguration_data_basic(t *testing.T) {
 
 		client.AssertExpectations(t)
 	})
+}
 
+func TestAkamaiConfiguration_data_hostnames(t *testing.T) {
+	t.Run("match by selected hostnames", func(t *testing.T) {
+		client := &appsec.Mock{}
+
+		getConfigurationsResponse := appsec.GetConfigurationsResponse{}
+		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestDSConfiguration/Configuration.json"), &getConfigurationsResponse)
+		require.NoError(t, err)
+
+		client.On("GetConfigurations",
+			mock.Anything,
+			appsec.GetConfigurationsRequest{},
+		).Return(&getConfigurationsResponse, nil)
+
+		getSelectedHostnamesResponse := appsec.GetSelectedHostnamesResponse{}
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestDSSelectedHostnames/SelectedHostnames.json"), &getSelectedHostnamesResponse)
+		require.NoError(t, err)
+
+		client.On("GetSelectedHostnames",
+			mock.Anything,
+			appsec.GetSelectedHostnamesRequest{ConfigID: 43253, Version: 15},
+		).Return(&getSelectedHostnamesResponse, nil)
+
+		useClient(client, func() {
+			resource.Test(t, resource.TestCase{
+				IsUnitTest:               true,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestDSConfiguration/match_by_id.tf"),
+						Check: resource.ComposeAggregateTestCheckFunc(
+							resource.TestCheckResourceAttr("data.akamai_appsec_configuration.test", "host_names.#", "2"),
+						),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
 }
 
 func TestAkamaiConfiguration_data_nonexistentConfig(t *testing.T) {

@@ -541,8 +541,8 @@ func resourceGTMv1PropertyCreate(ctx context.Context, d *schema.ResourceData, m 
 	logger.Debugf("Proposed New Property: [%v]", newProp)
 	cStatus, err := Client(meta).CreateProperty(ctx, newProp, domain)
 	if err != nil {
-		logger.Errorf("Property Create failed: %s", err.Error())
-		return diag.Errorf("property Create failed: %s", err.Error())
+		logger.Errorf("Property Create failed: CreateProperty error: %s", err.Error())
+		return diag.Errorf("property Create failed: CreateProperty error: %s", err.Error())
 	}
 	logger.Debugf("Property Create status: %v", cStatus.Status)
 
@@ -601,8 +601,8 @@ func resourceGTMv1PropertyRead(ctx context.Context, d *schema.ResourceData, m in
 		return nil
 	}
 	if err != nil {
-		logger.Errorf("Property Read failed: %s", err.Error())
-		return diag.Errorf("property Read failed: %s", err.Error())
+		logger.Errorf("Property Read failed: GetProperty error: %s", err.Error())
+		return diag.Errorf("property Read failed: GetProperty error: %s", err.Error())
 	}
 	populateTerraformPropertyState(d, prop, m)
 	logger.Debugf("READ %v", prop)
@@ -628,8 +628,8 @@ func resourceGTMv1PropertyUpdate(ctx context.Context, d *schema.ResourceData, m 
 	// Get existing property
 	existProp, err := Client(meta).GetProperty(ctx, property, domain)
 	if err != nil {
-		logger.Errorf("Property Update failed: %s", err.Error())
-		return diag.FromErr(err)
+		logger.Errorf("Property Update failed: GetProperty error: %s", err.Error())
+		return diag.Errorf("property Update failed: GetProperty error: %s", err.Error())
 	}
 	logger.Debugf("Updating Property BEFORE: %v", existProp)
 	err = populatePropertyObject(d, existProp, m)
@@ -639,8 +639,8 @@ func resourceGTMv1PropertyUpdate(ctx context.Context, d *schema.ResourceData, m 
 	logger.Debugf("Updating Property PROPOSED: %v", existProp)
 	uStat, err := Client(meta).UpdateProperty(ctx, existProp, domain)
 	if err != nil {
-		logger.Errorf("Property Update failed: %s", err.Error())
-		return diag.Errorf("property Update failed: %s", err.Error())
+		logger.Errorf("Property Update failed: UpdateProperty error: %s", err.Error())
+		return diag.Errorf("property Update failed: UpdateProperty error: %s", err.Error())
 	}
 	logger.Debugf("Property Update  status: %v", uStat)
 	if uStat.PropagationStatus == "DENIED" {
@@ -688,7 +688,7 @@ func resourceGTMv1PropertyImport(d *schema.ResourceData, m interface{}) ([]*sche
 	}
 	prop, err := Client(meta).GetProperty(ctx, property, domain)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("property Import failed: GetProperty error: %s", err.Error())
 	}
 	if err := d.Set("domain", domain); err != nil {
 		return nil, err
@@ -721,14 +721,14 @@ func resourceGTMv1PropertyDelete(ctx context.Context, d *schema.ResourceData, m 
 	}
 	existProp, err := Client(meta).GetProperty(ctx, property, domain)
 	if err != nil {
-		logger.Errorf("Property Delete failed: %s", err.Error())
-		return diag.Errorf("property Delete failed: %s", err.Error())
+		logger.Errorf("Property Delete failed: GetProperty error: %s", err.Error())
+		return diag.Errorf("property Delete failed: GetProperty error: %s", err.Error())
 	}
 	logger.Debugf("Deleting Property: %v", existProp)
 	uStat, err := Client(meta).DeleteProperty(ctx, existProp, domain)
 	if err != nil {
-		logger.Errorf("Property Delete failed: %s", err.Error())
-		return diag.Errorf("property Delete failed: %s", err.Error())
+		logger.Errorf("Property Delete failed: DeleteProperty error: %s", err.Error())
+		return diag.Errorf("property Delete failed: DeleteProperty error: %s", err.Error())
 	}
 	logger.Debugf("Property Delete status: %v", uStat)
 	if uStat.PropagationStatus == "DENIED" {

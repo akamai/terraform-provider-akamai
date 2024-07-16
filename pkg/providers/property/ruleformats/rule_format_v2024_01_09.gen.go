@@ -194,7 +194,7 @@ func getBehaviorsSchemaV20240109() map[string]*schema.Schema {
 		"adaptive_image_compression": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "The Adaptive Image Compression feature compresses JPEG images depending on the requesting network's performance, thus improving response time. The behavior specifies three performance tiers based on round-trip tests: 1 for excellent, 2 for good, and 3 for poor. It assigns separate performance criteria for mobile (cellular) and non-mobile networks, which the `compressMobile` and `compressStandard` options enable independently. This behavior can be used in includes.",
+			Description: "> **Note**: Starting from May 31, 2024, Adaptive Image Compression is no longer supported and the image compression configured through this functionality won't take place. As an alternative, we offer `Image & Video Manager`. It intelligently and automatically optimizes images and videos on the fly for every user. Reach out to your Akamai representatives for more information on this product. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -8744,7 +8744,7 @@ func getBehaviorsSchemaV20240109() map[string]*schema.Schema {
 					},
 					"origin_sni": {
 						Optional:    true,
-						Description: "For non-NetStorage origins, enabling this adds a Server Name Indication (SNI) header in the SSL request sent to the origin, with the origin hostname as the value. See the `verification settings in the Origin Server behavior` or contact your Akamai representative for more information.",
+						Description: "For non-NetStorage origins, enabling this adds a Server Name Indication (SNI) header in the SSL request sent to the origin, with the origin hostname as the value. See the `verification settings in the Origin Server behavior` or contact your Akamai representative for more information. If you want to use TLS version 1.3 in your existing properties, enable this option. New properties have this enabled by default.",
 						Type:        schema.TypeBool,
 					},
 					"custom_valid_cn_values": {
@@ -9089,7 +9089,7 @@ func getBehaviorsSchemaV20240109() map[string]*schema.Schema {
 					},
 					"tls13_support": {
 						Optional:    true,
-						Description: "Enables transport layer security (TLS) version 1.3 for connections to your origin server.",
+						Description: "",
 						Type:        schema.TypeBool,
 					},
 					"min_tls_version": {
@@ -10312,7 +10312,7 @@ func getBehaviorsSchemaV20240109() map[string]*schema.Schema {
 		"real_time_reporting": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "This enables `Real-Time Reporting` for Akamai Cloud Embed customers. The behavior can only be configured on your behalf by Akamai Professional Services. This behavior is for internal usage only. This behavior can be used in includes.",
+			Description: "This enables Real-Time Reporting for Akamai `Cloud Embed` customers. The behavior can only be configured on your behalf by Akamai Professional Services. You can access real-time reports data for that base configuration with `Media Delivery Reports API`. This behavior is for internal usage only. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{

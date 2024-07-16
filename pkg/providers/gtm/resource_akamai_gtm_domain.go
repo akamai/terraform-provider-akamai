@@ -818,7 +818,7 @@ func waitForCompletion(ctx context.Context, domain string, m interface{}) (bool,
 	for {
 		propStat, err := Client(meta).GetDomainStatus(ctx, domain)
 		if err != nil {
-			return false, err
+			return false, fmt.Errorf("GetDomainStatus error: %s", err.Error())
 		}
 		logger.Debugf("WAIT: propStat.PropagationStatus [%v]", propStat.PropagationStatus)
 		switch propStat.PropagationStatus {

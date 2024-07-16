@@ -564,8 +564,8 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 		session.WithContextLog(logger),
 	)
 
-	if !d.HasChangeExcept("timeouts") {
-		logger.Debug("Only timeouts were updated, skipping")
+	if !d.HasChangesExcept("timeouts", "compliance_record") {
+		logger.Debug("Only timeouts and/or compliance_record were updated, update in-place")
 		return nil
 	}
 
@@ -676,15 +676,6 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 
 		if err = setErrorsAndWarnings(d, flattenErrorArray(act.Errors), flattenErrorArray(act.Warnings)); err != nil {
 			return diag.FromErr(err)
-		}
-	} else {
-		changedAttr := "compliance_record"
-		if d.HasChange(changedAttr) {
-			oldValue, _ := d.GetChange(changedAttr)
-			if err = d.Set(changedAttr, oldValue); err != nil {
-				return diag.FromErr(err)
-			}
-			return diag.Errorf("cannot update activation attribute %s after creation", changedAttr)
 		}
 	}
 

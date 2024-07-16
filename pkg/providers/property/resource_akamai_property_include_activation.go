@@ -228,15 +228,14 @@ func resourcePropertyIncludeActivationUpdate(ctx context.Context, d *schema.Reso
 	client := Client(meta)
 	logger.Debug("Updating property include activation")
 
-	mutableAttrsHaveChanges := d.HasChanges("notify_emails", "auto_acknowledge_rule_warnings", "compliance_record")
-	if mutableAttrsHaveChanges && !d.HasChanges("version") {
-		return diag.FromErr(fmt.Errorf("attributes such as 'notify_emails', 'auto_acknowledge_rule_warnings', " +
-			"'compliance_record' cannot be updated after resource creation without 'version' attribute modification"))
+	if !d.HasChangesExcept("timeouts", "compliance_record") {
+		logger.Debug("Only timeouts and/or compliance_record were updated, update in-place")
+		return nil
 	}
 
-	if !d.HasChangeExcept("timeouts") {
-		logger.Debug("Only timeouts were updated, skipping")
-		return nil
+	mutableAttrsHaveChanges := d.HasChanges("notify_emails", "auto_acknowledge_rule_warnings")
+	if mutableAttrsHaveChanges && !d.HasChanges("version") {
+		return diag.FromErr(fmt.Errorf("attributes such as 'notify_emails', 'auto_acknowledge_rule_warnings', cannot be updated after resource creation without 'version' attribute modification"))
 	}
 
 	err := resourcePropertyIncludeActivationUpsert(ctx, d, client)

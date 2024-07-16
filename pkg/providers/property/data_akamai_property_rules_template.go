@@ -16,13 +16,12 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/apex/log"
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 )
 
 func dataSourcePropertyRulesTemplate() *schema.Resource {
@@ -220,7 +219,8 @@ func dataPropertyRulesTemplateRead(_ context.Context, d *schema.ResourceData, m 
 				return err
 			}
 
-			if !info.IsDir() && path != file {
+			pathDiff := strings.TrimPrefix(path, dir)
+			if !info.IsDir() && path != file && !strings.Contains(pathDiff, ".terraform") {
 				pathData, err := ioutil.ReadFile(path)
 				if err != nil {
 					return fmt.Errorf("%w: %s", ErrReadFile, err)

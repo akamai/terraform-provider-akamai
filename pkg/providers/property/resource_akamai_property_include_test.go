@@ -14,6 +14,7 @@ import (
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -827,6 +828,47 @@ func TestResourcePropertyInclude(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_property_include.test", "rules", testutils.LoadFixtureString(t, "%s/expected/simple_rules.json", workdir)),
 						resource.TestCheckResourceAttrPair("akamai_property_include.test", "latest_version", "data.akamai_property_include_rules.rules", "version"),
 					),
+				},
+			},
+		},
+		"update include - verify staging_version and production_version are known at plan": {
+			testData: testData{
+				groupID:          "grp_123",
+				productID:        "prd_test",
+				includeID:        includeID,
+				ruleFormat:       "v2022-06-28",
+				contractID:       "ctr_123",
+				includeName:      "test_include",
+				includeType:      papi.IncludeTypeMicroServices,
+				stagingStatus:    papi.VersionStatusInactive,
+				productionStatus: papi.VersionStatusInactive,
+				rules:            simpleRules,
+			},
+			init: func(m *papi.Mock, testData *testData) {
+				expectCreate(m, testData).Once()
+				expectRead(m, testData).Times(2)
+
+				expectRead(m, testData).Once()
+
+				testData.rulesPath = "simple_rules.json"
+				expectUpdate(m, testData).Once()
+				expectRead(m, testData).Times(2)
+
+				expectDelete(m, testData).Once()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "%s/property_include_no_rules.tf", workdir),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_property_include.test", "name", "test_include"),
+					),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "%s/property_include.tf", workdir),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_format", "v2022-06-28"),
+					),
+					ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{testutils.FieldsKnownAtPlan{FieldsKnown: []string{"staging_version", "production_version"}, FieldsUnknown: []string{"latest_version"}}}},
 				},
 			},
 		},

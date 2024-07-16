@@ -213,7 +213,7 @@ func resourceWAPSelectedHostnamesUpdate(ctx context.Context, d *schema.ResourceD
 		evalHostnames = make([]string, 0)
 	}
 
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getModifiableConfigVersion(ctx, configID, "wapSelectedHostnames", m)
 	if err != nil {
 		return diag.FromErr(err)
 	}

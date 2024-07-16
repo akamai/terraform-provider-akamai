@@ -1,0 +1,6 @@
+{
+  "rules": {
+    "name": "main-rule",
+    "children": "#include:.terraform/rules1.json"
+  }
+}

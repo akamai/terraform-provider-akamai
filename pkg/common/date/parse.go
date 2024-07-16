@@ -10,6 +10,9 @@ import (
 // ErrDateFormat is returned when there is an error parsing a string date.
 var ErrDateFormat = errors.New("unable to parse date")
 
+// ErrMarshal is returned when there is an error marshaling a time.Time date.
+var ErrMarshal = errors.New("unable to marshal date")
+
 // DefaultFormat is the datetime format used across the provider.
 const DefaultFormat = "2006-01-02T15:04:05Z"
 
@@ -25,4 +28,21 @@ func ParseFormat(format, value string) (time.Time, error) {
 		return time.Time{}, fmt.Errorf("%w: %s", ErrDateFormat, err.Error())
 	}
 	return date, nil
+}
+
+// FormatRFC3339 returns a textual representation of time formatted according to the RFC3339 standard.
+// RFC3339 is a subset of ISO 8601 producing the format "2006-01-02T15:04:05Z" (for a UTC time)
+// which is commonly used in the Edge API.
+func FormatRFC3339(t time.Time) string {
+	return t.Format(time.RFC3339)
+}
+
+// ToString returns given date in the string format
+func ToString(value time.Time) (string, error) {
+	bytes, err := value.MarshalText()
+	if err != nil {
+		return "", fmt.Errorf("%w: %s", ErrMarshal, err)
+	}
+
+	return string(bytes), nil
 }

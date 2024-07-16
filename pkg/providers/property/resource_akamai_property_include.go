@@ -549,8 +549,7 @@ func suppressDefaultRules(_, oldValue, newValue string, _ *schema.ResourceData) 
 }
 
 // setIncludeVersionsComputedOnRulesChange is a schema.CustomizeDiffFunc for akamai_property_include resource,
-// which sets latest_version, staging_version and production_version fields as computed
-// if a new version of the include is expected to be created.
+// which sets latest_version fields as computed if a new version of the include is expected to be created.
 func setIncludeVersionsComputedOnRulesChange(_ context.Context, rd *schema.ResourceDiff, _ interface{}) error {
 	ruleFormatChanged := rd.HasChange("rule_format")
 
@@ -564,10 +563,8 @@ func setIncludeVersionsComputedOnRulesChange(_ context.Context, rd *schema.Resou
 		return nil
 	}
 
-	for _, key := range []string{"latest_version", "staging_version", "production_version"} {
-		if err := rd.SetNewComputed(key); err != nil {
-			return fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
-		}
+	if err := rd.SetNewComputed("latest_version"); err != nil {
+		return fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 	}
 
 	return nil

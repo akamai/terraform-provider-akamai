@@ -6,6 +6,7 @@ import (
 	_ "github.com/akamai/terraform-provider-akamai/v6/pkg/providers/appsec"
 	_ "github.com/akamai/terraform-provider-akamai/v6/pkg/providers/botman"
 	_ "github.com/akamai/terraform-provider-akamai/v6/pkg/providers/clientlists"
+	_ "github.com/akamai/terraform-provider-akamai/v6/pkg/providers/cloudaccess"
 	_ "github.com/akamai/terraform-provider-akamai/v6/pkg/providers/cloudlets"
 	_ "github.com/akamai/terraform-provider-akamai/v6/pkg/providers/cloudwrapper"
 	_ "github.com/akamai/terraform-provider-akamai/v6/pkg/providers/cps"

@@ -25,6 +25,14 @@ func TestAkamaiWAPSelectedHostnames_res_basic(t *testing.T) {
 		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResWAPSelectedHostnames/WAPSelectedHostnames.json"), &getWAPSelectedHostnamesResponse)
 		require.NoError(t, err)
 
+		updatedSelectedHostnamesForUpdateResponse := appsec.UpdateWAPSelectedHostnamesResponse{}
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResWAPSelectedHostnames/WAPUpdatedSelectedHostnames.json"), &updatedSelectedHostnamesForUpdateResponse)
+		require.NoError(t, err)
+
+		updatedSelectedHostnamesForGetResponse := appsec.GetWAPSelectedHostnamesResponse{}
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResWAPSelectedHostnames/WAPUpdatedSelectedHostnames.json"), &updatedSelectedHostnamesForGetResponse)
+		require.NoError(t, err)
+
 		config := appsec.GetConfigurationResponse{}
 		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 		require.NoError(t, err)
@@ -37,7 +45,12 @@ func TestAkamaiWAPSelectedHostnames_res_basic(t *testing.T) {
 		client.On("GetWAPSelectedHostnames",
 			mock.Anything,
 			appsec.GetWAPSelectedHostnamesRequest{ConfigID: 43253, Version: 7, SecurityPolicyID: "AAAA_81230"},
-		).Return(&getWAPSelectedHostnamesResponse, nil)
+		).Return(&getWAPSelectedHostnamesResponse, nil).Times(3)
+
+		client.On("GetWAPSelectedHostnames",
+			mock.Anything,
+			appsec.GetWAPSelectedHostnamesRequest{ConfigID: 43253, Version: 7, SecurityPolicyID: "AAAA_81230"},
+		).Return(&updatedSelectedHostnamesForGetResponse, nil)
 
 		client.On("UpdateWAPSelectedHostnames",
 			mock.Anything,
@@ -49,7 +62,19 @@ func TestAkamaiWAPSelectedHostnames_res_basic(t *testing.T) {
 					"sujala.sandbox.akamaideveloper.com",
 				},
 			},
-		).Return(&updateWAPSelectedHostnamesResponse, nil)
+		).Return(&updateWAPSelectedHostnamesResponse, nil).Once()
+
+		client.On("UpdateWAPSelectedHostnames",
+			mock.Anything,
+			appsec.UpdateWAPSelectedHostnamesRequest{ConfigID: 43253, Version: 7, SecurityPolicyID: "AAAA_81230",
+				ProtectedHosts: []string{
+					"test.sandbox.akamaideveloper.com",
+				},
+				EvaluatedHosts: []string{
+					"test.evaluated.sandbox.akamaideveloper.com",
+				},
+			},
+		).Return(&updatedSelectedHostnamesForUpdateResponse, nil).Once()
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
@@ -60,6 +85,16 @@ func TestAkamaiWAPSelectedHostnames_res_basic(t *testing.T) {
 						Config: testutils.LoadFixtureString(t, "testdata/TestResWAPSelectedHostnames/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_wap_selected_hostnames.test", "id", "43253:AAAA_81230"),
+							resource.TestCheckResourceAttr("akamai_appsec_wap_selected_hostnames.test", "protected_hosts.0", "rinaldi.sandbox.akamaideveloper.com"),
+							resource.TestCheckResourceAttr("akamai_appsec_wap_selected_hostnames.test", "evaluated_hosts.0", "sujala.sandbox.akamaideveloper.com"),
+						),
+					},
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResWAPSelectedHostnames/update_by_id.tf"),
+						Check: resource.ComposeAggregateTestCheckFunc(
+							resource.TestCheckResourceAttr("akamai_appsec_wap_selected_hostnames.test", "id", "43253:AAAA_81230"),
+							resource.TestCheckResourceAttr("akamai_appsec_wap_selected_hostnames.test", "protected_hosts.0", "test.sandbox.akamaideveloper.com"),
+							resource.TestCheckResourceAttr("akamai_appsec_wap_selected_hostnames.test", "evaluated_hosts.0", "test.evaluated.sandbox.akamaideveloper.com"),
 						),
 					},
 				},
@@ -68,7 +103,6 @@ func TestAkamaiWAPSelectedHostnames_res_basic(t *testing.T) {
 
 		client.AssertExpectations(t)
 	})
-
 }
 
 func TestAkamaiWAPSelectedHostnames_res_error_retrieving_hostnames(t *testing.T) {
@@ -127,5 +161,4 @@ func TestAkamaiWAPSelectedHostnames_res_error_retrieving_hostnames(t *testing.T)
 
 		client.AssertExpectations(t)
 	})
-
 }

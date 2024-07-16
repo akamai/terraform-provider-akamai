@@ -2,12 +2,10 @@ package property
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/papi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/cache"
 	akameta "github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -70,20 +68,9 @@ func dataContractsRead(ctx context.Context, d *schema.ResourceData, m interface{
 
 // Reusable function to fetch all the contracts accessible through a API token
 func getContracts(ctx context.Context, meta akameta.Meta) (*papi.GetContractsResponse, error) {
-	contracts := &papi.GetContractsResponse{}
-	if err := cache.Get(cache.BucketName(SubproviderName), "contracts", contracts); err != nil {
-		if !errors.Is(err, cache.ErrEntryNotFound) && !errors.Is(err, cache.ErrDisabled) {
-			return nil, err
-		}
-		contracts, err = Client(meta).GetContracts(ctx)
-		if err != nil {
-			return nil, err
-		}
-		if err := cache.Set(cache.BucketName(SubproviderName), "contracts", contracts); err != nil {
-			if !errors.Is(err, cache.ErrDisabled) {
-				return nil, err
-			}
-		}
+	contracts, err := Client(meta).GetContracts(ctx)
+	if err != nil {
+		return nil, err
 	}
 	return contracts, nil
 }

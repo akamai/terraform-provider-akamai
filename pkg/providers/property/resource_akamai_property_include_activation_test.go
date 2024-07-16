@@ -40,6 +40,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 		notifyEmails                                  []string
 		autoAcknowledgeRuleWarnings                   bool
 		timeout                                       string
+		complianceRecord                              map[string]string
 	}
 
 	type State struct {
@@ -286,6 +287,10 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 			} else {
 				checks = append(checks, resource.TestCheckResourceAttr("akamai_property_include_activation.activation", "timeouts.#", "0"))
 			}
+			for key, value := range attrs.complianceRecord {
+				checks = append(checks, resource.TestCheckResourceAttr("akamai_property_include_activation.activation", key, value))
+
+			}
 
 			return resource.ComposeAggregateTestCheckFunc(checks...)
 		}
@@ -456,6 +461,81 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 							note:                        note,
 							notifyEmails:                []string{email},
 							autoAcknowledgeRuleWarnings: true,
+						}),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
+	t.Run("update include activation compliance record", func(t *testing.T) {
+		client := new(papi.Mock)
+		state := State{}
+
+		// 1. first step
+
+		// create
+		actReq := activateIncludeReq("PRODUCTION", true)
+		state = expectCreate(client, state, actReq)
+
+		// read
+		expectRead(client, state, papi.ActivationNetworkProduction)
+
+		// read
+		expectRead(client, state, papi.ActivationNetworkProduction)
+
+		// 2. second step
+
+		// read
+		expectRead(client, state, papi.ActivationNetworkProduction)
+
+		// read
+		expectRead(client, state, papi.ActivationNetworkProduction)
+
+		// delete
+		deactReq := deactivateIncludeReq("PRODUCTION", true)
+		deactReq.ComplianceRecord = &papi.ComplianceRecordOther{
+			OtherNoncomplianceReason: "NO_PRODUCTION_TRAFFIC",
+			TicketID:                 "",
+		}
+		_ = expectDelete(client, state, deactReq)
+
+		useClient(client, nil, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						// Akamai accounts cannot activate the property include in the production network without compliance_record,
+						// this test case is simplified only to test compliance_record update.
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/property_include_activation_update.tf", testDir)),
+						Check: checkAttributes(attrs{
+							includeID:                   includeID,
+							contractID:                  contractID,
+							groupID:                     groupID,
+							version:                     version,
+							network:                     "PRODUCTION",
+							note:                        note,
+							notifyEmails:                []string{email},
+							autoAcknowledgeRuleWarnings: true,
+						}),
+					},
+					{
+						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/property_include_activation_update_compliance_record.tf", testDir)),
+						Check: checkAttributes(attrs{
+							includeID:                   includeID,
+							contractID:                  contractID,
+							groupID:                     groupID,
+							network:                     "PRODUCTION",
+							note:                        note,
+							version:                     version,
+							notifyEmails:                []string{email},
+							autoAcknowledgeRuleWarnings: true,
+							timeout:                     "",
+							complianceRecord: map[string]string{
+								"compliance_record.0.noncompliance_reason_other.0.other_noncompliance_reason": "NO_PRODUCTION_TRAFFIC",
+							},
 						}),
 					},
 				},

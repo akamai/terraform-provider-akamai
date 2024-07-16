@@ -6,8 +6,8 @@ github.com/ProtonMail/go-crypto v1.1.0-alpha.0 h1:nHGfwXmFvJrSR9xu8qL7BkO4DqTHXE
 github.com/ProtonMail/go-crypto v1.1.0-alpha.0/go.mod h1:rA3QumHc/FZ8pAHreoekgiAbzpNsfQAosU5td4SnOrE=
 github.com/agext/levenshtein v1.2.3 h1:YB2fHEn0UJagG8T1rrWknE3ZQzWM06O8AMAatNn7lmo=
 github.com/agext/levenshtein v1.2.3/go.mod h1:JEDfjyjHDjOF/1e4FlBE/PkbqA9OfWu2ki2W0IB5558=
-github.com/akamai/AkamaiOPEN-edgegrid-golang/v8 v8.2.0 h1:aN4wkKx/Wu2zk6iM1yYXSI5Pu/6dzvUvleUUZojsp5E=
-github.com/akamai/AkamaiOPEN-edgegrid-golang/v8 v8.2.0/go.mod h1:2xRRnHx8dnw0i8IZPYOI0I7xbr1gnAN1uIYo7acMIbg=
+github.com/akamai/AkamaiOPEN-edgegrid-golang/v8 v8.3.0 h1:hB9ddRrmjfrxchN4NWABj3eT5PtkBAFRkxe5eqwBB7k=
+github.com/akamai/AkamaiOPEN-edgegrid-golang/v8 v8.3.0/go.mod h1:8hi/1Ctc9KGtPSZhpMRDRGULSvXpnce4htof1pH2wvI=
 github.com/allegro/bigcache/v2 v2.2.5 h1:mRc8r6GQjuJsmSKQNPsR5jQVXc8IJ1xsW5YXUYMLfqI=
 github.com/allegro/bigcache/v2 v2.2.5/go.mod h1:FppZsIO+IZk7gCuj5FiIDHGygD9xvWQcqg1uIPMb6tY=
 github.com/andres-erbsen/clock v0.0.0-20160526145045-9e14626cd129 h1:MzBOUgng9orim59UnfUTLRjMpd09C5uEVQ6RPGeCaVI=
