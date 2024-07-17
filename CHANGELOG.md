@@ -210,6 +210,21 @@
   * Added new optional field `ttl` to `akamai_edge_hostname` resource. 
     When it is used, creation or update takes longer as resource has to synchronize its state with HAPI.
 
+
+
+
+
+
+* PAPI
+  * Added support for status code `429 Too Many Requests` containing `X-RateLimit-Next` header.
+    When `X-RateLimit-Next` is present, the wait time before retry is calculated as the time
+    difference between this header and the `Date` header.
+
+
+
+
+
+
 #### BUG FIXES:
 
 * Appsec
