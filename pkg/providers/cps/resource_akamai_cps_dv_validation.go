@@ -2,7 +2,6 @@ package cps
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
@@ -47,6 +46,12 @@ func resourceCPSDVValidation() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Status of validation",
+			},
+			"acknowledge_post_verification_warnings": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "Whether to acknowledge all post-verification warnings",
 			},
 			"timeouts": {
 				Type:        schema.TypeList,
@@ -100,39 +105,46 @@ func resourceCPSDVValidationCreate(ctx context.Context, d *schema.ResourceData, 
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	changeStatusReq := cps.GetChangeStatusRequest{
-		EnrollmentID: enrollmentID,
-		ChangeID:     changeID,
-	}
-	status, err := client.GetChangeStatus(ctx, changeStatusReq)
+
+	// if status is `coordinate-domain-validation` or `wait-review-cert-warning` proceed further
+	status, err := waitForChangeStatus(ctx, client, enrollmentID, changeID, coodinateDomainValidation, coordinateDomainValidation, waitReviewCertWarning)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	for status.StatusInfo.Status != statusCoordinateDomainValidation {
-		select {
-		case <-time.After(PollForChangeStatusInterval):
-			status, err = client.GetChangeStatus(ctx, changeStatusReq)
-			if err != nil {
-				return diag.FromErr(err)
-			}
-			changeStatusJSON, err := json.MarshalIndent(status, "", "\t")
-			if err != nil {
-				return diag.FromErr(err)
-			}
-			logger.Debugf("Change status: %s", changeStatusJSON)
-			if status.StatusInfo != nil && status.StatusInfo.Error != nil && status.StatusInfo.Error.Description != "" {
-				return diag.Errorf(status.StatusInfo.Error.Description)
-			}
-		case <-ctx.Done():
-			return diag.Errorf("change status context terminated: %s", ctx.Err())
-		}
+
+	ackPostVerification, err := tf.GetBoolValue("acknowledge_post_verification_warnings", d)
+	if err != nil {
+		return diag.FromErr(err)
 	}
+
+	// if the status is `wait-review-cert-warning`, handle post warnings
+	if status.StatusInfo != nil && status.StatusInfo.Status == waitReviewCertWarning && ackPostVerification {
+		if err = sendPostVerificationAcknowledgement(ctx, client, enrollmentID, changeID); err != nil {
+			return diag.FromErr(err)
+		}
+		d.SetId(strconv.Itoa(enrollmentID))
+		return resourceCPSDVValidationRead(ctx, d, m)
+	}
+
+	// if the status is `coordinate-domain-validation`, send ack for DV challenges
 	err = client.AcknowledgeDVChallenges(ctx, cps.AcknowledgementRequest{
 		Acknowledgement: cps.Acknowledgement{Acknowledgement: cps.AcknowledgementAcknowledge},
 		EnrollmentID:    enrollmentID,
 		ChangeID:        changeID,
 	})
 	if err == nil {
+		status, err = waitForChangeStatus(ctx, client, enrollmentID, changeID, waitReviewCertWarning, complete, coordinateDomainValidation, coodinateDomainValidation)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		if status.StatusInfo != nil && status.StatusInfo.Status == waitReviewCertWarning && ackPostVerification {
+			if err = sendPostVerificationAcknowledgement(ctx, client, enrollmentID, changeID); err != nil {
+				return diag.FromErr(err)
+			}
+		}
+
+		// for other statuses: `coordinate-domain-validation` and `complete`, go to read
 		d.SetId(strconv.Itoa(enrollmentID))
 		return resourceCPSDVValidationRead(ctx, d, m)
 	}
@@ -148,6 +160,18 @@ func resourceCPSDVValidationCreate(ctx context.Context, d *schema.ResourceData, 
 				ChangeID:        changeID,
 			})
 			if err == nil {
+				status, err = waitForChangeStatus(ctx, client, enrollmentID, changeID, waitReviewCertWarning, complete, coordinateDomainValidation, coodinateDomainValidation)
+				if err != nil {
+					return diag.FromErr(err)
+				}
+
+				if status.StatusInfo != nil && status.StatusInfo.Status == waitReviewCertWarning && ackPostVerification {
+					if err = sendPostVerificationAcknowledgement(ctx, client, enrollmentID, changeID); err != nil {
+						return diag.FromErr(err)
+					}
+				}
+
+				// for other statuses: `coordinate-domain-validation` and `complete`, go to read
 				d.SetId(strconv.Itoa(enrollmentID))
 				return resourceCPSDVValidationRead(ctx, d, m)
 			}
@@ -215,5 +239,17 @@ func resourceCPSDVValidationUpdate(_ context.Context, d *schema.ResourceData, m 
 
 func resourceCPSDVValidationDelete(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
 	d.SetId("")
+	return nil
+}
+
+func sendPostVerificationAcknowledgement(ctx context.Context, client cps.CPS, enrollmentID, changeID int) error {
+	if err := client.AcknowledgePostVerificationWarnings(ctx, cps.AcknowledgementRequest{
+		Acknowledgement: cps.Acknowledgement{Acknowledgement: cps.AcknowledgementAcknowledge},
+		EnrollmentID:    enrollmentID,
+		ChangeID:        changeID,
+	}); err != nil {
+		return fmt.Errorf("could not acknowledge post-verification warnings: %s", err)
+	}
+
 	return nil
 }

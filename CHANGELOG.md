@@ -33,8 +33,8 @@
 
 
 
-
-
+* CPS
+    * Added `acknowledge_post_verification_warnings` to the `akamai_cps_dv_validation` resource to allow for acknowledgement of post-verification warnings
 
 
 

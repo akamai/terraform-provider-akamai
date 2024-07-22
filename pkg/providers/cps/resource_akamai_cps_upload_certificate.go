@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -209,7 +210,7 @@ func resourceCPSUploadCertificateRead(ctx context.Context, d *schema.ResourceDat
 				if !ackChangeManagement && enrollment.ChangeManagement {
 					statusToWaitFor = waitAckChangeManagement
 				}
-				if err = waitForChangeStatus(ctx, client, enrollmentID, changeID, statusToWaitFor); err != nil {
+				if _, err = waitForChangeStatus(ctx, client, enrollmentID, changeID, statusToWaitFor); err != nil {
 					return diag.FromErr(err)
 				}
 			}
@@ -296,9 +297,10 @@ func resourceCPSUploadCertificateUpdate(ctx context.Context, d *schema.ResourceD
 				return nil
 			}
 
-			if err = waitForChangeStatus(ctx, client, enrollmentID, changeID, waitAckChangeManagement); err != nil {
+			if _, err = waitForChangeStatus(ctx, client, enrollmentID, changeID, waitAckChangeManagement); err != nil {
 				return diag.FromErr(err)
 			}
+
 			if err = sendACKChangeManagement(ctx, client, enrollmentID, changeID); err != nil {
 				return diag.Errorf("could not acknowledge change management: %s", err)
 			}
@@ -379,7 +381,7 @@ func upsertUploadCertificate(ctx context.Context, d *schema.ResourceData, m inte
 	}
 
 	if enrollment.ChangeManagement && (attrs.ackChangeManagement || attrs.waitForDeployment) {
-		if err = waitForChangeStatus(ctx, client, attrs.enrollmentID, changeID, waitAckChangeManagement); err != nil {
+		if _, err = waitForChangeStatus(ctx, client, attrs.enrollmentID, changeID, waitAckChangeManagement); err != nil {
 			return diag.FromErr(err)
 		}
 
@@ -407,28 +409,28 @@ func checkForTrustChainWithoutCert(attrs *attributes) error {
 }
 
 // waitForChangeStatus waits for provided status
-func waitForChangeStatus(ctx context.Context, client cps.CPS, enrollmentID, changeID int, status string) error {
+func waitForChangeStatus(ctx context.Context, client cps.CPS, enrollmentID, changeID int, statuses ...string) (*cps.Change, error) {
 	change, err := sendGetChangeStatusReq(ctx, client, enrollmentID, changeID)
 	if err != nil {
-		return fmt.Errorf("could not get change status: %s", err)
+		return nil, fmt.Errorf("could not get change status: %s", err)
 	}
 
-	for change.StatusInfo.Status != status {
+	for !slices.Contains(statuses, change.StatusInfo.Status) {
 		select {
 		case <-time.After(PollForChangeStatusInterval):
 			change, err = sendGetChangeStatusReq(ctx, client, enrollmentID, changeID)
 			if err != nil {
-				return fmt.Errorf("could not get change status: %s", err)
+				return nil, fmt.Errorf("could not get change status: %s", err)
 			}
-			if change.StatusInfo.Status == status {
+			if slices.Contains(statuses, change.StatusInfo.Status) {
 				continue
 			}
 		case <-ctx.Done():
-			return fmt.Errorf("retry timeout reached: incorrect status of a change: %s, %s", change.StatusInfo.Status, ctx.Err())
+			return nil, fmt.Errorf("retry timeout reached: incorrect status of a change: %s, %s", change.StatusInfo.Status, ctx.Err())
 		}
 	}
 
-	return nil
+	return change, nil
 }
 
 // waitUntilStatusPasses waits until the status provided as parameter passes and returns a new one

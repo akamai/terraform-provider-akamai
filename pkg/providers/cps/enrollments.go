@@ -27,14 +27,19 @@ type (
 )
 
 const (
-	statusCoordinateDomainValidation    = "coodinate-domain-validation"
-	waitUploadThirdParty                = "wait-upload-third-party"
-	statusVerificationWarnings          = "wait-review-pre-verification-safety-checks"
-	inputTypePreVerificationWarningsAck = "pre-verification-warnings-acknowledgement"
-	waitReviewThirdPartyCert            = "wait-review-third-party-cert"
-	waitAckChangeManagement             = "wait-ack-change-management"
-	complete                            = "complete"
-	verifyThirdPartyCert                = "verify-third-party-cert"
+	// note: `coodinateDomainValidation` is misspelled, once CPS API will use correct version, we should also use the correct status,
+	// hence for now we support both versions (CPSREQUEST-815 for further tracking).
+	coodinateDomainValidation             = "coodinate-domain-validation"
+	coordinateDomainValidation            = "coordinate-domain-validation"
+	waitUploadThirdParty                  = "wait-upload-third-party"
+	waitReviewPreVerificationSafetyChecks = "wait-review-pre-verification-safety-checks"
+	inputTypePreVerificationWarningsAck   = "pre-verification-warnings-acknowledgement"
+	waitReviewThirdPartyCert              = "wait-review-third-party-cert"
+	waitAckChangeManagement               = "wait-ack-change-management"
+	complete                              = "complete"
+	verifyThirdPartyCert                  = "verify-third-party-cert"
+	waitReviewCertWarning                 = "wait-review-cert-warning"
+	liveCheckAction                       = "live-check-action"
 )
 
 var (
@@ -432,15 +437,15 @@ func waitForVerification(ctx context.Context, logger log.Interface, client cps.C
 	if err != nil {
 		return err
 	}
-	for ((status.StatusInfo.Status != statusCoordinateDomainValidation && status.StatusInfo.Status != waitUploadThirdParty) || len(status.AllowedInput) == 0) &&
-		status.StatusInfo.Status != "complete" {
+	for ((status.StatusInfo.Status != coodinateDomainValidation && status.StatusInfo.Status != coordinateDomainValidation && status.StatusInfo.Status != waitUploadThirdParty) || len(status.AllowedInput) == 0) &&
+		status.StatusInfo.Status != complete && status.StatusInfo.Status != waitReviewCertWarning {
 		select {
 		case <-time.After(PollForChangeStatusInterval):
 			status, err = client.GetChangeStatus(ctx, changeStatusReq)
 			if err != nil {
 				return err
 			}
-			if status.StatusInfo != nil && status.StatusInfo.Status == statusVerificationWarnings &&
+			if status.StatusInfo != nil && status.StatusInfo.Status == waitReviewPreVerificationSafetyChecks &&
 				len(status.AllowedInput) > 0 && status.AllowedInput[0].Type == inputTypePreVerificationWarningsAck {
 
 				warnings, err := client.GetChangePreVerificationWarnings(ctx, cps.GetChangeRequest{

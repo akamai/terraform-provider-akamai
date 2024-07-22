@@ -324,7 +324,7 @@ func resourceCPSDVEnrollmentCreate(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	// save ClientMutualAuthentication and unset it in enrollment request struct
-	// create request must not have it set; in case its not nil, we will run update later to add it
+	// create request must not have it set; in case it's not nil, we will run update later to add it
 	clientMutualAuthentication := enrollmentReqBody.NetworkConfiguration.ClientMutualAuthentication
 	enrollmentReqBody.NetworkConfiguration.ClientMutualAuthentication = nil
 
