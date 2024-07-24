@@ -32,7 +32,6 @@
 
 
 
-
 * CPS
     * Added `acknowledge_post_verification_warnings` to the `akamai_cps_dv_validation` resource to allow for acknowledgement of post-verification warnings
 
@@ -68,6 +67,8 @@
 
 
 
+* Cloudlets
+  * Corrected format of the retry time when logging in `akamai_cloudlets_application_load_balancer_activation` and `akamai_cloudlets_policy_activation` resources
 
 
 
