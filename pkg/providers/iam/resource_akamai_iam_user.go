@@ -229,7 +229,7 @@ func resourceIAMUserCreate(ctx context.Context, d *schema.ResourceData, m interf
 		UserBasicInfo: basicUser,
 		AuthGrants:    authGrants,
 		SendEmail:     true,
-		Notifications: iam.UserNotifications{
+		Notifications: &iam.UserNotifications{
 			Options: iam.UserNotificationOptions{
 				Proactive: []string{},
 				Upgrade:   []string{},

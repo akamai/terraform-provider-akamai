@@ -190,19 +190,19 @@ func TestResourceUser(t *testing.T) {
 	userCreateRequest := iam.CreateUserRequest{
 		UserBasicInfo: basicUserInfo,
 		AuthGrants:    authGrantsCreateRequest,
-		Notifications: notifications,
+		Notifications: &notifications,
 	}
 
 	userCreateExtPhoneRequest := iam.CreateUserRequest{
 		UserBasicInfo: basicUserInfoExtPhone,
 		AuthGrants:    authGrantsCreateRequest,
-		Notifications: notifications,
+		Notifications: &notifications,
 	}
 
 	userSubgroupCreateRequest := iam.CreateUserRequest{
 		UserBasicInfo: basicUserInfo,
 		AuthGrants:    authGrantsSubgroupCreateRequest,
-		Notifications: notifications,
+		Notifications: &notifications,
 	}
 
 	userCreateLocked := iam.User{
@@ -220,7 +220,7 @@ func TestResourceUser(t *testing.T) {
 	userCreateLockedRequest := iam.CreateUserRequest{
 		UserBasicInfo: basicUserInfo,
 		AuthGrants:    authGrantsCreateRequest,
-		Notifications: notifications,
+		Notifications: &notifications,
 	}
 
 	userUpdateInfo := iam.User{
@@ -252,7 +252,7 @@ func TestResourceUser(t *testing.T) {
 	userUpdateGrantsRequest := iam.CreateUserRequest{
 		UserBasicInfo: basicUserInfo,
 		AuthGrants:    authGrantsUpdateRequest,
-		Notifications: notifications,
+		Notifications: &notifications,
 	}
 	authGrantsCreateWithIgnoredFields := []iam.AuthGrantRequest{
 		{
