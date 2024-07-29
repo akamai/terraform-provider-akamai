@@ -386,13 +386,16 @@ func canTriggerNewPropertyVersion(rc tf.ResourceChangeFetcher, rd tf.ResourceDat
 
 	o, n := rc.GetChange("rules")
 	var oldRules papi.RulesUpdate
-	if err := json.Unmarshal([]byte(o.(string)), &oldRules); err != nil {
-		return false, fmt.Errorf("'old' = %s, unmarshal: %w", o.(string), err)
+	if o.(string) != "" {
+		if err := json.Unmarshal([]byte(o.(string)), &oldRules); err != nil {
+			return false, fmt.Errorf("'old' = %s, unmarshal: %w", o.(string), err)
+		}
 	}
-
 	var newRules papi.RulesUpdate
-	if err := json.Unmarshal([]byte(n.(string)), &newRules); err != nil {
-		return false, fmt.Errorf("'new' = %s, unmarshal: %w", n.(string), err)
+	if n.(string) != "" {
+		if err := json.Unmarshal([]byte(n.(string)), &newRules); err != nil {
+			return false, fmt.Errorf("'new' = %s, unmarshal: %w", n.(string), err)
+		}
 	}
 
 	versionNotes, _ := rd.GetOk("version_notes")
@@ -409,7 +412,11 @@ func canTriggerNewPropertyVersion(rc tf.ResourceChangeFetcher, rd tf.ResourceDat
 // It's crucial for avoiding inconsistent plan errors if it's used in akamai_property_activation resource.
 func setPropertyVersionsComputed(_ context.Context, rd *schema.ResourceDiff, _ interface{}) error {
 	rawData := tf.NewRawConfig(rd)
-	if ok, err := canTriggerNewPropertyVersion(rd, rawData); err != nil || !ok {
+	ok, err := canTriggerNewPropertyVersion(rd, rawData)
+	if err != nil {
+		return err
+	}
+	if !ok {
 		return nil
 	}
 

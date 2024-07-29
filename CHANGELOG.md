@@ -74,8 +74,9 @@
 
 
 
-
-
+* PAPI
+  * Fixed issue with provider producing an inconsistent final plan with Cloudlet policy ([I#567](https://github.com/akamai/terraform-provider-akamai/issues/567)).
+    It happened in cases when content of the rule depends on some other resource
 
 
 
