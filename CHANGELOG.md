@@ -65,7 +65,8 @@
 
 
 
-
+* Appsec
+  * Fixed issue where activation was not triggered after network list change in `resource_akamai_networklist_activations` resource [I#518](https://github.com/akamai/terraform-provider-akamai/issues/518)
 
 
 
