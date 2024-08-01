@@ -30,7 +30,7 @@ func resourceMatchTarget() *schema.Resource {
 			VerifyIDUnchanged,
 		),
 		Importer: &schema.ResourceImporter{
-			StateContext: schema.ImportStatePassthroughContext,
+			StateContext: resourceMatchTargetImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"config_id": {
@@ -151,6 +151,60 @@ func resourceMatchTargetRead(ctx context.Context, d *schema.ResourceData, m inte
 	}
 
 	return nil
+}
+
+func resourceMatchTargetImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	meta := meta.Must(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "resourceMatchTargetImport")
+	logger.Debugf("in resourceMatchTargetImport")
+
+	iDParts, err := splitID(d.Id(), 2, "configID:matchTargetID")
+	if err != nil {
+		return nil, err
+	}
+
+	configID, err := strconv.Atoi(iDParts[0])
+	if err != nil {
+		return nil, err
+	}
+	version, err := getLatestConfigVersion(ctx, configID, m)
+	if err != nil {
+		return nil, err
+	}
+	targetID, err := strconv.Atoi(iDParts[1])
+	if err != nil {
+		return nil, err
+	}
+
+	getMatchTarget := appsec.GetMatchTargetRequest{
+		ConfigID:      configID,
+		ConfigVersion: version,
+		TargetID:      targetID,
+	}
+
+	matchtarget, err := client.GetMatchTarget(ctx, getMatchTarget)
+	if err != nil {
+		logger.Errorf("calling 'getMatchTarget': %s", err.Error())
+		return nil, err
+	}
+
+	jsonBody, err := json.Marshal(matchtarget)
+	if err != nil {
+		return nil, err
+	}
+	if err := d.Set("config_id", configID); err != nil {
+		return nil, err
+	}
+	if err := d.Set("match_target", string(jsonBody)); err != nil {
+		return nil, err
+	}
+	if err := d.Set("match_target_id", matchtarget.TargetID); err != nil {
+		return nil, err
+	}
+
+	return []*schema.ResourceData{d}, nil
+
 }
 
 func resourceMatchTargetUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {

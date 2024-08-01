@@ -63,6 +63,8 @@
 
 #### BUG FIXES:
 
+* Appsec
+  * Fixed import of `akamai_appsec_match_target` for newly created security configuration or any security configuration not synced in the terraform state [I#546](https://github.com/akamai/terraform-provider-akamai/issues/546))
 
 
 * Appsec

@@ -228,6 +228,66 @@ func TestAkamaiMatchTarget_res_basic(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 
+	t.Run("Import match target resource", func(t *testing.T) {
+		client := &appsec.Mock{}
+		getMatchTargetResponse := appsec.GetMatchTargetResponse{}
+		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResMatchTarget/MatchTargetSequenceChanged.json"), &getMatchTargetResponse)
+		require.NoError(t, err)
+
+		createMatchTargetResponse := appsec.CreateMatchTargetResponse{}
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResMatchTarget/MatchTargetCreated.json"), &createMatchTargetResponse)
+		require.NoError(t, err)
+
+		removeMatchTargetResponse := appsec.RemoveMatchTargetResponse{}
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResMatchTarget/MatchTargetCreated.json"), &removeMatchTargetResponse)
+		require.NoError(t, err)
+
+		config := appsec.GetConfigurationResponse{}
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		require.NoError(t, err)
+
+		client.On("GetConfiguration",
+			mock.Anything,
+			appsec.GetConfigurationRequest{ConfigID: 43253},
+		).Return(&config, nil)
+
+		client.On("GetMatchTarget",
+			mock.Anything,
+			appsec.GetMatchTargetRequest{ConfigID: 43253, ConfigVersion: 7, TargetID: 3008967},
+		).Return(&getMatchTargetResponse, nil)
+
+		createMatchTargetJSON := testutils.LoadFixtureBytes(t, "testdata/TestResMatchTarget/CreateMatchTarget.json")
+		client.On("CreateMatchTarget",
+			mock.Anything,
+			appsec.CreateMatchTargetRequest{ConfigID: 43253, ConfigVersion: 7, JsonPayloadRaw: createMatchTargetJSON},
+		).Return(&createMatchTargetResponse, nil)
+
+		client.On("RemoveMatchTarget",
+			mock.Anything,
+			appsec.RemoveMatchTargetRequest{ConfigID: 43253, ConfigVersion: 7, TargetID: 3008967},
+		).Return(&removeMatchTargetResponse, nil)
+
+		useClient(client, func() {
+			resource.Test(t, resource.TestCase{
+				IsUnitTest:               true,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResMatchTarget/match_by_id.tf"),
+					},
+					{
+						ImportState:       true,
+						ImportStateVerify: true,
+						ImportStateId:     "43253:3008967",
+						ResourceName:      "akamai_appsec_match_target.test",
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
 }
 
 func compactJSON(message string) string {
