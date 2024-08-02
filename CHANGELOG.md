@@ -30,7 +30,9 @@
 
 
 
-
+* IAM
+  * Added new resource:
+    * `akamai_iam_ip_allowlist` - enable or disable your account's allowlist
 
 
 
