@@ -888,7 +888,7 @@ func resourceDatastreamCreate(ctx context.Context, d *schema.ResourceData, m int
 			return diag.FromErr(err)
 		}
 	}
-	emailIDs := InterfaceSliceToStringSlice(emailIDsList)
+	emailIDs := tf.InterfaceSliceToStringSlice(emailIDsList)
 
 	if len(emailIDs) == 0 {
 		emailIDs = nil
@@ -1185,7 +1185,7 @@ func updateStream(ctx context.Context, client datastream.DS, logger log.Interfac
 				return err
 			}
 		}
-		emailIDs := InterfaceSliceToStringSlice(emailIDsList)
+		emailIDs := tf.InterfaceSliceToStringSlice(emailIDsList)
 
 		propertyIDsList, err := tf.GetListValue("properties", d)
 

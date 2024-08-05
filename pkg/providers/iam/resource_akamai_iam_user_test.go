@@ -19,31 +19,43 @@ import (
 
 func TestResourceUser(t *testing.T) {
 	basicUserInfo := iam.UserBasicInfo{
-		FirstName:  "John",
-		LastName:   "Smith",
-		Email:      "jsmith@example.com",
-		Phone:      "(111) 111-1111",
-		TFAEnabled: false,
-		Country:    "country",
+		FirstName:                "John",
+		LastName:                 "Smith",
+		Email:                    "jsmith@example.com",
+		Phone:                    "(111) 111-1111",
+		TFAEnabled:               false,
+		Country:                  "country",
+		AdditionalAuthentication: "NONE",
+	}
+
+	basicUserInfoWithMFA := iam.UserBasicInfo{
+		FirstName:                "John",
+		LastName:                 "Smith",
+		Email:                    "jsmith@example.com",
+		Phone:                    "(111) 111-1111",
+		TFAEnabled:               false,
+		Country:                  "country",
+		AdditionalAuthentication: "MFA",
 	}
 	extendedUserInfo := iam.UserBasicInfo{
-		FirstName:         "John",
-		LastName:          "Smith",
-		Email:             "jsmith@example.com",
-		Phone:             "(111) 111-1111",
-		TimeZone:          "timezone",
-		JobTitle:          "job title",
-		TFAEnabled:        false,
-		SecondaryEmail:    "secondary.email@example.com",
-		MobilePhone:       "(222) 222-2222",
-		Address:           "123 B Street",
-		City:              "B-Town",
-		State:             "state",
-		ZipCode:           "zip",
-		Country:           "country",
-		ContactType:       "contact type",
-		PreferredLanguage: "language",
-		SessionTimeOut:    ptr.To(2),
+		FirstName:                "John",
+		LastName:                 "Smith",
+		Email:                    "jsmith@example.com",
+		Phone:                    "(111) 111-1111",
+		TimeZone:                 "timezone",
+		JobTitle:                 "job title",
+		TFAEnabled:               false,
+		SecondaryEmail:           "secondary.email@example.com",
+		MobilePhone:              "(222) 222-2222",
+		Address:                  "123 B Street",
+		City:                     "B-Town",
+		State:                    "state",
+		ZipCode:                  "zip",
+		Country:                  "country",
+		ContactType:              "contact type",
+		PreferredLanguage:        "language",
+		SessionTimeOut:           ptr.To(2),
+		AdditionalAuthentication: "NONE",
 	}
 
 	authGrantsCreate := []iam.AuthGrant{
@@ -101,14 +113,30 @@ func TestResourceUser(t *testing.T) {
 	}
 
 	notifications := iam.UserNotifications{
+		EnableEmail: true,
 		Options: iam.UserNotificationOptions{
-			Proactive: []string{},
-			Upgrade:   []string{},
+			NewUser:                   true,
+			PasswordExpiry:            true,
+			Proactive:                 []string{},
+			Upgrade:                   []string{},
+			APIClientCredentialExpiry: false,
 		},
 	}
+
+	customNotifications := iam.UserNotifications{
+		EnableEmail: true,
+		Options: iam.UserNotificationOptions{
+			NewUser:                   true,
+			PasswordExpiry:            true,
+			Proactive:                 []string{"EdgeScape"},
+			Upgrade:                   []string{"NetStorage"},
+			APIClientCredentialExpiry: true,
+		},
+	}
+
 	id := "test_identity_id"
 
-	checkUserAttributes := func(user iam.User) resource.TestCheckFunc {
+	checkUserAttributes := func(user iam.User, checkPassword bool) resource.TestCheckFunc {
 		if user.SessionTimeOut == nil {
 			user.SessionTimeOut = ptr.To(0)
 		}
@@ -131,7 +159,7 @@ func TestResourceUser(t *testing.T) {
 			authGrantsJSON = string(marshalledAuthGrants)
 		}
 
-		return resource.ComposeAggregateTestCheckFunc(
+		checks := []resource.TestCheckFunc{
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "id", "test_identity_id"),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "first_name", user.FirstName),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "last_name", user.LastName),
@@ -139,6 +167,7 @@ func TestResourceUser(t *testing.T) {
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "country", user.Country),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "phone", user.Phone),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "enable_tfa", fmt.Sprintf("%t", user.TFAEnabled)),
+			resource.TestCheckResourceAttr("akamai_iam_user.test", "enable_mfa", fmt.Sprintf("%t", user.AdditionalAuthentication == "MFA")),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "contact_type", user.ContactType),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_name", user.UserName),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "job_title", user.JobTitle),
@@ -157,7 +186,35 @@ func TestResourceUser(t *testing.T) {
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "session_timeout", fmt.Sprintf("%d", *user.SessionTimeOut)),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "auth_grants_json", authGrantsJSON),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "lock", fmt.Sprintf("%t", user.IsLocked)),
-		)
+		}
+		if checkPassword {
+			checks = append(checks, resource.TestCheckResourceAttrSet("akamai_iam_user.test", "password"))
+		} else {
+			checks = append(checks, resource.TestCheckNoResourceAttr("akamai_iam_user.test", "password"))
+		}
+		return resource.ComposeAggregateTestCheckFunc(checks...)
+	}
+	checkDefaultUserNotificationsAttributes := func(user iam.User) resource.TestCheckFunc {
+		return resource.ComposeAggregateTestCheckFunc(
+			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_notifications.#", "1"),
+			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_notifications.0.options.0.new_user_notification", "true"),
+			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_notifications.0.options.0.password_expiry", "true"),
+			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_notifications.0.options.0.proactive.#", "0"),
+			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_notifications.0.options.0.upgrade.#", "0"),
+			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_notifications.0.options.0.api_client_credential_expiry_notification", "false"),
+			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_notifications.0.enable_email_notifications", "true"))
+	}
+
+	checkUserNotificationsAttributes := func(user iam.User) resource.TestCheckFunc {
+		return resource.ComposeAggregateTestCheckFunc(
+			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_notifications.#", "1"),
+			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_notifications.0.enable_email_notifications", "true"),
+			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_notifications.0.options.0.new_user_notification", "true"),
+			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_notifications.0.options.0.password_expiry", "true"),
+			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_notifications.0.options.0.proactive.#", "1"),
+			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_notifications.0.options.0.upgrade.#", "1"),
+			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_notifications.0.options.0.api_client_credential_expiry_notification", "true"),
+			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_notifications.0.enable_email_notifications", "true"))
 	}
 
 	userCreate := iam.User{
@@ -170,6 +227,18 @@ func TestResourceUser(t *testing.T) {
 		EmailUpdatePending: true,
 		AuthGrants:         authGrantsCreate,
 		Notifications:      notifications,
+	}
+
+	userCreateWithNotification := iam.User{
+		UserBasicInfo:      basicUserInfoWithMFA,
+		IdentityID:         id,
+		IsLocked:           false,
+		LastLoginDate:      test.NewTimeFromString(t, "2020-01-01T00:00:00.000Z"),
+		PasswordExpiryDate: test.NewTimeFromString(t, "2020-01-01T00:00:00.000Z"),
+		TFAConfigured:      true,
+		EmailUpdatePending: true,
+		AuthGrants:         authGrantsCreate,
+		Notifications:      customNotifications,
 	}
 	basicUserInfoExtPhone := basicUserInfo
 	basicUserInfoExtPhone.Phone = "(617) 444-3000 x2664"
@@ -193,6 +262,12 @@ func TestResourceUser(t *testing.T) {
 		UserBasicInfo: basicUserInfo,
 		AuthGrants:    authGrantsCreateRequest,
 		Notifications: &notifications,
+	}
+
+	userCreateRequestWithNotifications := iam.CreateUserRequest{
+		UserBasicInfo: basicUserInfoWithMFA,
+		AuthGrants:    authGrantsCreateRequest,
+		Notifications: &customNotifications,
 	}
 
 	userCreateExtPhoneRequest := iam.CreateUserRequest{
@@ -284,10 +359,10 @@ func TestResourceUser(t *testing.T) {
 		init  func(*iam.Mock)
 		steps []resource.TestStep
 	}{
-		"basic": {
+		"basic - default notification": {
 			init: func(m *iam.Mock) {
 				// create
-				expectResourceIAMUserCreatePhase(m, userCreateRequest, userCreate, false, nil, nil)
+				expectResourceIAMUserCreatePhase(m, userCreateRequest, userCreate, false, false, nil, nil, nil)
 				expectResourceIAMUserReadPhase(m, userCreate, nil).Times(2)
 
 				// delete
@@ -296,14 +371,92 @@ func TestResourceUser(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic.tf"),
-					Check:  checkUserAttributes(userCreate),
+					Check:  resource.ComposeTestCheckFunc(checkUserAttributes(userCreate, false), checkDefaultUserNotificationsAttributes(userCreate)),
+				},
+			},
+		},
+		"basic - custom notification": {
+			init: func(m *iam.Mock) {
+				// create
+				expectResourceIAMUserCreatePhase(m, userCreateRequestWithNotifications, userCreateWithNotification, false, false, nil, nil, nil)
+				expectResourceIAMUserReadPhase(m, userCreateWithNotification, nil).Times(2)
+
+				// delete
+				expectResourceIAMUserDeletePhase(m, userCreateWithNotification, nil).Once()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic_notification_and_mfa.tf"),
+					Check:  resource.ComposeTestCheckFunc(checkUserAttributes(userCreateWithNotification, false), checkUserNotificationsAttributes(userCreateWithNotification)),
+				},
+			},
+		},
+		"basic - custom notification - password_expiry field missing": {
+			init: func(m *iam.Mock) {
+
+			},
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic_notification_password_expiry_field_missing.tf"),
+					ExpectError: regexp.MustCompile("The argument \"password_expiry\" is required, but no definition was found."),
+				},
+			},
+		},
+		"basic - custom notification - options block missing": {
+			init: func(m *iam.Mock) {
+
+			},
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic_notification_options_block_missing.tf"),
+					ExpectError: regexp.MustCompile("At least 1 \"options\" blocks are required."),
+				},
+			},
+		},
+		"basic - custom notification - multiple options block": {
+			init: func(m *iam.Mock) {
+
+			},
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic_notification_multiple_options_block.tf"),
+					ExpectError: regexp.MustCompile("No more than 1 \"options\" blocks are allowed"),
+				},
+			},
+		},
+		"basic - custom notification - enable_email_notifications missing": {
+			init: func(m *iam.Mock) {
+
+			},
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic_notification_enable_email_notifications_field_missing.tf"),
+					ExpectError: regexp.MustCompile("The argument \"enable_email_notifications\" is required, but no definition was\nfound."),
+				},
+			},
+		},
+		"basic - authentication method - NONE": {
+			init: func(m *iam.Mock) {
+				// create
+				expectResourceIAMUserCreatePhase(m, userCreateRequest, userCreate, false, false, nil, nil, nil)
+				expectResourceIAMUserReadPhase(m, userCreate, nil).Times(2)
+
+				// delete
+				expectResourceIAMUserDeletePhase(m, userCreate, nil).Once()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic_authentication_none.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_iam_user.test", "enable_tfa", fmt.Sprintf("%t", false)),
+						resource.TestCheckResourceAttr("akamai_iam_user.test", "enable_mfa", fmt.Sprintf("%t", false))),
 				},
 			},
 		},
 		"basic with extension phone number": {
 			init: func(m *iam.Mock) {
 				// create
-				expectResourceIAMUserCreatePhase(m, userCreateExtPhoneRequest, userCreateExtPhone, false, nil, nil)
+				expectResourceIAMUserCreatePhase(m, userCreateExtPhoneRequest, userCreateExtPhone, false, false, nil, nil, nil)
 				expectResourceIAMUserReadPhase(m, userCreateExtPhone, nil).Times(2)
 
 				// delete
@@ -312,14 +465,14 @@ func TestResourceUser(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic_ext_phone.tf"),
-					Check:  checkUserAttributes(userCreateExtPhone),
+					Check:  resource.ComposeTestCheckFunc(checkUserAttributes(userCreateExtPhone, false), checkDefaultUserNotificationsAttributes(userCreateExtPhone)),
 				},
 			},
 		},
 		"basic lock": {
 			init: func(m *iam.Mock) {
 				// create
-				expectResourceIAMUserCreatePhase(m, userCreateLockedRequest, userCreateLocked, true, nil, nil)
+				expectResourceIAMUserCreatePhase(m, userCreateLockedRequest, userCreateLocked, true, false, nil, nil, nil)
 				expectResourceIAMUserReadPhase(m, userCreateLocked, nil).Times(2)
 
 				// delete
@@ -328,7 +481,7 @@ func TestResourceUser(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic_lock.tf"),
-					Check:  checkUserAttributes(userCreateLocked),
+					Check:  resource.ComposeTestCheckFunc(checkUserAttributes(userCreateLocked, false), checkDefaultUserNotificationsAttributes(userCreateLocked)),
 				},
 			},
 		},
@@ -344,7 +497,7 @@ func TestResourceUser(t *testing.T) {
 		"basic error create": {
 			init: func(m *iam.Mock) {
 				// create
-				expectResourceIAMUserCreatePhase(m, userCreateRequest, userCreate, false, fmt.Errorf("error create"), nil)
+				expectResourceIAMUserCreatePhase(m, userCreateRequest, userCreate, false, false, fmt.Errorf("error create"), nil, nil)
 			},
 			steps: []resource.TestStep{
 				{
@@ -353,10 +506,32 @@ func TestResourceUser(t *testing.T) {
 				},
 			},
 		},
+		"enable_tfa and enable_mfa set to true - error": {
+			init: func(m *iam.Mock) {
+			},
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_with_invalid_auth_method.tf"),
+					ExpectError: regexp.MustCompile("only one of 'enable_tfa' or 'enable_mfa' can be set"),
+				},
+			},
+		},
+		"setting password- error": {
+			init: func(m *iam.Mock) {
+				// create
+				expectResourceIAMUserCreatePhase(m, userCreateRequest, userCreate, false, true, nil, nil, fmt.Errorf("error setting user password"))
+			},
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic_with_password.tf"),
+					ExpectError: regexp.MustCompile("error setting user password"),
+				},
+			},
+		},
 		"basic no diff no update": {
 			init: func(m *iam.Mock) {
 				// create
-				expectResourceIAMUserCreatePhase(m, userCreateRequest, userCreate, false, nil, nil)
+				expectResourceIAMUserCreatePhase(m, userCreateRequest, userCreate, false, false, nil, nil, nil)
 				expectResourceIAMUserReadPhase(m, userCreate, nil).Times(2)
 
 				// plan
@@ -368,18 +543,18 @@ func TestResourceUser(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic.tf"),
-					Check:  checkUserAttributes(userCreate),
+					Check:  checkUserAttributes(userCreate, false),
 				},
 				{
 					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic.tf"),
-					Check:  checkUserAttributes(userCreate),
+					Check:  checkUserAttributes(userCreate, false),
 				},
 			},
 		},
 		"update user info": {
 			init: func(m *iam.Mock) {
 				// create
-				expectResourceIAMUserCreatePhase(m, userCreateRequest, userCreate, false, nil, nil)
+				expectResourceIAMUserCreatePhase(m, userCreateRequest, userCreate, false, false, nil, nil, nil)
 				expectResourceIAMUserReadPhase(m, userCreate, nil).Times(2)
 
 				// plan
@@ -394,18 +569,18 @@ func TestResourceUser(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic.tf"),
-					Check:  checkUserAttributes(userCreate),
+					Check:  resource.ComposeTestCheckFunc(checkUserAttributes(userCreate, false), checkDefaultUserNotificationsAttributes(userCreate)),
 				},
 				{
 					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/update_user_info.tf"),
-					Check:  checkUserAttributes(userUpdateInfo),
+					Check:  resource.ComposeTestCheckFunc(checkUserAttributes(userUpdateInfo, false), checkDefaultUserNotificationsAttributes(userUpdateInfo)),
 				},
 			},
 		},
 		"update user info - lock - unlock": {
 			init: func(m *iam.Mock) {
 				// create
-				expectResourceIAMUserCreatePhase(m, userCreateRequest, userCreate, false, nil, nil)
+				expectResourceIAMUserCreatePhase(m, userCreateRequest, userCreate, false, false, nil, nil, nil)
 				expectResourceIAMUserReadPhase(m, userCreate, nil).Once()
 
 				// plan
@@ -424,22 +599,22 @@ func TestResourceUser(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic.tf"),
-					Check:  checkUserAttributes(userCreate),
+					Check:  resource.ComposeTestCheckFunc(checkUserAttributes(userCreate, false), checkDefaultUserNotificationsAttributes(userCreate)),
 				},
 				{
 					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic_lock.tf"),
-					Check:  checkUserAttributes(userCreateLocked),
+					Check:  resource.ComposeTestCheckFunc(checkUserAttributes(userCreateLocked, false), checkDefaultUserNotificationsAttributes(userCreateLocked)),
 				},
 				{
 					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic.tf"),
-					Check:  checkUserAttributes(userCreate),
+					Check:  resource.ComposeTestCheckFunc(checkUserAttributes(userCreate, false), checkDefaultUserNotificationsAttributes(userCreate)),
 				},
 			},
 		},
 		"update user info - error": {
 			init: func(m *iam.Mock) {
 				// create
-				expectResourceIAMUserCreatePhase(m, userCreateRequest, userCreate, false, nil, nil)
+				expectResourceIAMUserCreatePhase(m, userCreateRequest, userCreate, false, false, nil, nil, nil)
 				expectResourceIAMUserReadPhase(m, userCreate, nil).Times(2)
 
 				// plan
@@ -453,7 +628,7 @@ func TestResourceUser(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic.tf"),
-					Check:  checkUserAttributes(userCreate),
+					Check:  resource.ComposeTestCheckFunc(checkUserAttributes(userCreate, false), checkDefaultUserNotificationsAttributes(userCreate)),
 				},
 				{
 					Config:      testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/update_user_info.tf"),
@@ -464,7 +639,7 @@ func TestResourceUser(t *testing.T) {
 		"update user auth grants": {
 			init: func(m *iam.Mock) {
 				// create
-				expectResourceIAMUserCreatePhase(m, userCreateRequest, userCreate, false, nil, nil)
+				expectResourceIAMUserCreatePhase(m, userCreateRequest, userCreate, false, false, nil, nil, nil)
 				expectResourceIAMUserReadPhase(m, userCreate, nil).Times(2)
 
 				// plan
@@ -479,18 +654,18 @@ func TestResourceUser(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic.tf"),
-					Check:  checkUserAttributes(userCreate),
+					Check:  resource.ComposeTestCheckFunc(checkUserAttributes(userCreate, false), checkDefaultUserNotificationsAttributes(userCreate)),
 				},
 				{
 					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/update_auth_grants.tf"),
-					Check:  checkUserAttributes(userUpdateGrants),
+					Check:  resource.ComposeTestCheckFunc(checkUserAttributes(userUpdateGrants, false), checkDefaultUserNotificationsAttributes(userUpdateGrants)),
 				},
 			},
 		},
 		"update swap user auth grants subgroups": {
 			init: func(m *iam.Mock) {
 				// create
-				expectResourceIAMUserCreatePhase(m, userSubgroupCreateRequest, userSubgroupCreate, false, nil, nil)
+				expectResourceIAMUserCreatePhase(m, userSubgroupCreateRequest, userSubgroupCreate, false, false, nil, nil, nil)
 				expectResourceIAMUserReadPhase(m, userSubgroupCreate, nil).Times(2)
 
 				// plan
@@ -502,18 +677,18 @@ func TestResourceUser(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic_grants.tf"),
-					Check:  checkUserAttributes(userSubgroupCreate),
+					Check:  resource.ComposeTestCheckFunc(checkUserAttributes(userSubgroupCreate, false), checkDefaultUserNotificationsAttributes(userSubgroupCreate)),
 				},
 				{
 					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic_grants_swap.tf"),
-					Check:  checkUserAttributes(userSubgroupCreate),
+					Check:  resource.ComposeTestCheckFunc(checkUserAttributes(userSubgroupCreate, false), checkDefaultUserNotificationsAttributes(userSubgroupCreate)),
 				},
 			},
 		},
 		"update user auth grants with redundant fields": {
 			init: func(m *iam.Mock) {
 				// create
-				expectResourceIAMUserCreatePhase(m, userCreateWithIgnoredFieldsRequest, userCreateWithIgnoredFields, false, nil, nil)
+				expectResourceIAMUserCreatePhase(m, userCreateWithIgnoredFieldsRequest, userCreateWithIgnoredFields, false, false, nil, nil, nil)
 				expectResourceIAMUserReadPhase(m, userCreateWithIgnoredFieldsResponse, nil).Once()
 				expectResourceIAMUserReadPhase(m, userCreateWithIgnoredFieldsResponse, nil).Once()
 
@@ -527,18 +702,18 @@ func TestResourceUser(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_auth_grants.tf"),
-					Check:  checkUserAttributes(userCreateWithIgnoredFieldsResponse),
+					Check:  resource.ComposeTestCheckFunc(checkUserAttributes(userCreateWithIgnoredFieldsResponse, false), checkDefaultUserNotificationsAttributes(userCreateWithIgnoredFieldsResponse)),
 				},
 				{
 					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_auth_grants.tf"),
-					Check:  checkUserAttributes(userCreateWithIgnoredFieldsResponse),
+					Check:  resource.ComposeTestCheckFunc(checkUserAttributes(userCreateWithIgnoredFieldsResponse, false), checkDefaultUserNotificationsAttributes(userCreateWithIgnoredFieldsResponse)),
 				},
 			},
 		},
 		"update user auth grants - an error": {
 			init: func(m *iam.Mock) {
 				// create
-				expectResourceIAMUserCreatePhase(m, userCreateRequest, userCreate, false, nil, nil)
+				expectResourceIAMUserCreatePhase(m, userCreateRequest, userCreate, false, false, nil, nil, nil)
 				expectResourceIAMUserReadPhase(m, userCreate, nil).Times(2)
 
 				// plan
@@ -552,7 +727,7 @@ func TestResourceUser(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic.tf"),
-					Check:  checkUserAttributes(userCreate),
+					Check:  resource.ComposeTestCheckFunc(checkUserAttributes(userCreate, false), checkDefaultUserNotificationsAttributes(userCreate)),
 				},
 				{
 					Config:      testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/update_auth_grants.tf"),
@@ -563,7 +738,7 @@ func TestResourceUser(t *testing.T) {
 		"basic import": {
 			init: func(m *iam.Mock) {
 				// create
-				expectResourceIAMUserCreatePhase(m, userCreateRequest, userCreate, false, nil, nil)
+				expectResourceIAMUserCreatePhase(m, userCreateRequest, userCreate, false, false, nil, nil, nil)
 				expectResourceIAMUserReadPhase(m, userCreate, nil).Times(2)
 
 				// import
@@ -574,8 +749,8 @@ func TestResourceUser(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic.tf"),
-					Check:  checkUserAttributes(userCreate),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/basic_import.tf"),
+					Check:  resource.ComposeTestCheckFunc(checkUserAttributes(userCreate, false), checkDefaultUserNotificationsAttributes(userCreate)),
 				},
 				{
 					ImportState:       true,
@@ -599,7 +774,7 @@ func TestResourceUser(t *testing.T) {
 		"error updating email": {
 			init: func(m *iam.Mock) {
 				// create
-				expectResourceIAMUserCreatePhase(m, userCreateRequest, userCreate, false, nil, nil)
+				expectResourceIAMUserCreatePhase(m, userCreateRequest, userCreate, false, false, nil, nil, nil)
 				expectResourceIAMUserReadPhase(m, userCreate, nil).Times(2)
 
 				// plan
@@ -611,7 +786,7 @@ func TestResourceUser(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic.tf"),
-					Check:  checkUserAttributes(userCreate),
+					Check:  checkUserAttributes(userCreate, false),
 				},
 				{
 					Config:      testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/update_email.tf"),
@@ -625,6 +800,104 @@ func TestResourceUser(t *testing.T) {
 				{
 					Config:      testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/invalid_auth_grants.tf"),
 					ExpectError: regexp.MustCompile("auth_grants_json is not valid"),
+				},
+			},
+		},
+		"create user with password and update user info and set new password": {
+			init: func(m *iam.Mock) {
+				// create
+				expectResourceIAMUserCreatePhase(m, userCreateRequest, userCreate, false, true, nil, nil, nil)
+				expectResourceIAMUserReadPhase(m, userCreate, nil).Times(2)
+
+				// plan
+				expectResourceIAMUserReadPhase(m, userCreate, nil).Once()
+				// update basic info
+				expectResourceIAMUserUpdateInfoAndPasswordPhase(m, userUpdateInfo.IdentityID, userUpdateInfo.UserBasicInfo, "NewPassword@123", nil).Once()
+				expectResourceIAMUserReadPhase(m, userUpdateInfo, nil).Times(2)
+
+				// delete
+				expectResourceIAMUserDeletePhase(m, userUpdateInfo, nil).Once()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic_with_password.tf"),
+					Check:  resource.ComposeTestCheckFunc(checkUserAttributes(userCreate, true), checkDefaultUserNotificationsAttributes(userCreate)),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/update_password.tf"),
+					Check:  resource.ComposeTestCheckFunc(checkUserAttributes(userUpdateInfo, true), checkDefaultUserNotificationsAttributes(userUpdateInfo)),
+				},
+			},
+		},
+		"create user with password and update user info and remove the password field": {
+			init: func(m *iam.Mock) {
+				// create
+				expectResourceIAMUserCreatePhase(m, userCreateRequest, userCreate, false, true, nil, nil, nil)
+				expectResourceIAMUserReadPhase(m, userCreate, nil).Times(2)
+
+				// plan
+				expectResourceIAMUserReadPhase(m, userCreate, nil).Once()
+
+				// delete
+				expectResourceIAMUserDeletePhase(m, userUpdateInfo, nil).Once()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic_with_password.tf"),
+					Check:  resource.ComposeTestCheckFunc(checkUserAttributes(userCreate, true), checkDefaultUserNotificationsAttributes(userCreate)),
+				},
+				{
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/update_password_without_password.tf"),
+					ExpectError: regexp.MustCompile("deleting the password field or setting the password to an empty string is not allowed"),
+				},
+			},
+		},
+		"create user with password and update user info with the empty password field": {
+			init: func(m *iam.Mock) {
+				// create
+				expectResourceIAMUserCreatePhase(m, userCreateRequest, userCreate, false, true, nil, nil, nil)
+				expectResourceIAMUserReadPhase(m, userCreate, nil).Times(2)
+
+				// plan
+				expectResourceIAMUserReadPhase(m, userCreate, nil).Once()
+
+				// delete
+				expectResourceIAMUserDeletePhase(m, userUpdateInfo, nil).Once()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic_with_password.tf"),
+					Check:  resource.ComposeTestCheckFunc(checkUserAttributes(userCreate, true), checkDefaultUserNotificationsAttributes(userCreate)),
+				},
+				{
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/update_password_with_password_empty_string.tf"),
+					ExpectError: regexp.MustCompile("deleting the password field or setting the password to an empty string is not allowed"),
+				},
+			},
+		},
+		"create without a password, later update user info and set a password": {
+			init: func(m *iam.Mock) {
+				// create
+				expectResourceIAMUserCreatePhase(m, userCreateRequest, userCreate, false, false, nil, nil, nil)
+				expectResourceIAMUserReadPhase(m, userCreate, nil).Times(2)
+
+				// plan
+				expectResourceIAMUserReadPhase(m, userCreate, nil).Once()
+				// update basic info
+				expectResourceIAMUserUpdateInfoAndPasswordPhase(m, userUpdateInfo.IdentityID, userUpdateInfo.UserBasicInfo, "NewPassword@123", nil).Once()
+				expectResourceIAMUserReadPhase(m, userUpdateInfo, nil).Times(2)
+
+				// delete
+				expectResourceIAMUserDeletePhase(m, userUpdateInfo, nil).Once()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic.tf"),
+					Check:  resource.ComposeTestCheckFunc(checkUserAttributes(userCreate, false), checkDefaultUserNotificationsAttributes(userCreate)),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/update_password.tf"),
+					Check:  resource.ComposeTestCheckFunc(checkUserAttributes(userUpdateInfo, true), checkDefaultUserNotificationsAttributes(userUpdateInfo)),
 				},
 			},
 		},
@@ -646,7 +919,7 @@ func TestResourceUser(t *testing.T) {
 }
 
 // create
-func expectResourceIAMUserCreatePhase(m *iam.Mock, request iam.CreateUserRequest, response iam.User, lock bool, creationError, lockError error) {
+func expectResourceIAMUserCreatePhase(m *iam.Mock, request iam.CreateUserRequest, response iam.User, lock bool, setPassword bool, creationError, lockError error, setPasswordError error) {
 	onCreation := m.On("CreateUser", mock.Anything, iam.CreateUserRequest{
 		UserBasicInfo: request.UserBasicInfo,
 		AuthGrants:    request.AuthGrants,
@@ -665,6 +938,13 @@ func expectResourceIAMUserCreatePhase(m *iam.Mock, request iam.CreateUserRequest
 			return
 		}
 	}
+	password := "Password@123"
+	if setPassword {
+		expectPassword(m, response.IdentityID, password, setPasswordError).Once()
+		if setPasswordError != nil {
+			return
+		}
+	}
 }
 
 func expectToggleLock(m *iam.Mock, identityID string, lock bool, err error) *mock.Call {
@@ -674,11 +954,16 @@ func expectToggleLock(m *iam.Mock, identityID string, lock bool, err error) *moc
 	return m.On("UnlockUser", mock.Anything, iam.UnlockUserRequest{IdentityID: identityID}).Return(err)
 }
 
+func expectPassword(m *iam.Mock, identityID string, password string, err error) *mock.Call {
+	return m.On("SetUserPassword", mock.Anything, iam.SetUserPasswordRequest{IdentityID: identityID, NewPassword: password}).Return(err)
+}
+
 // read
 func expectResourceIAMUserReadPhase(m *iam.Mock, user iam.User, anError error) *mock.Call {
 	on := m.On("GetUser", mock.Anything, iam.GetUserRequest{
-		IdentityID: user.IdentityID,
-		AuthGrants: true,
+		IdentityID:    user.IdentityID,
+		AuthGrants:    true,
+		Notifications: true,
 	})
 	if anError != nil {
 		return on.Return(nil, anError).Once()
@@ -692,6 +977,20 @@ func expectResourceIAMUserInfoUpdatePhase(m *iam.Mock, id string, basicUserInfo 
 		IdentityID: id,
 		User:       basicUserInfo,
 	})
+	if anError != nil {
+		return on.Return(nil, anError).Once()
+	}
+	return on.Return(&basicUserInfo, nil)
+}
+
+func expectResourceIAMUserUpdateInfoAndPasswordPhase(m *iam.Mock, id string, basicUserInfo iam.UserBasicInfo, password string, anError error) *mock.Call {
+	on := m.On("UpdateUserInfo", mock.Anything, iam.UpdateUserInfoRequest{
+		IdentityID: id,
+		User:       basicUserInfo,
+	})
+
+	expectPassword(m, id, password, nil).Once()
+
 	if anError != nil {
 		return on.Return(nil, anError).Once()
 	}

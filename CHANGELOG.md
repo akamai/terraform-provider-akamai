@@ -25,10 +25,17 @@
 
 
 * IAM
+  * Added below attributes to the `resource_akamai_iam_user` resource.
+     * Added `user_notifications` attribute to support user notifications.
+     * Added `enable_mfa` attribute to support authentication of type "MFA".
+     * Updated `enable_tfa` to an optional field.
+     * Added `password` attribute to allow users to set password during the creation and update of an user.
+
+* IAM
   * Added new data source:
     * `akamai_iam_allowed_apis` - read the list of APIs available to the user
 
-
+  
 * IAM
   * Added new data source:
     * `akamai_iam_cidr_block` - read the CIDR block details
@@ -37,7 +44,6 @@
 
 * IAM
   * Improved date handling to use `time.Time` instead of `string`
-
 
 
 

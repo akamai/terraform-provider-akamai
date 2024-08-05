@@ -31,3 +31,12 @@ func MaxDuration(x, y time.Duration) time.Duration {
 	}
 	return x
 }
+
+// InterfaceSliceToStringSlice converts schema.Set to slice of string
+func InterfaceSliceToStringSlice(list []interface{}) []string {
+	stringList := make([]string, len(list))
+	for i, v := range list {
+		stringList[i] = v.(string)
+	}
+	return stringList
+}

@@ -105,15 +105,6 @@ func DatasetFieldListToDatasetFields(list []interface{}) []datastream.DatasetFie
 	return datasetFields
 }
 
-// InterfaceSliceToStringSlice converts schema.Set to slice of string
-func InterfaceSliceToStringSlice(list []interface{}) []string {
-	stringList := make([]string, len(list))
-	for i, v := range list {
-		stringList[i] = v.(string)
-	}
-	return stringList
-}
-
 // DataSetFieldsToList converts slice of dataSetFields to slice of ints
 func DataSetFieldsToList(dataSetFields []datastream.DataSetField) []int {
 
