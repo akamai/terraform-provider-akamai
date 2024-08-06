@@ -3,6 +3,7 @@ package iam
 import (
 	"context"
 	"strconv"
+	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/iam"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/session"
@@ -115,8 +116,8 @@ func groupToState(g iam.Group) map[string]interface{} {
 	m["name"] = g.GroupName
 	m["group_id"] = strconv.FormatInt(g.GroupID, 10)
 	m["parent_group_id"] = strconv.FormatInt(g.ParentGroupID, 10)
-	m["time_created"] = g.CreatedDate
-	m["time_modified"] = g.ModifiedDate
+	m["time_created"] = g.CreatedDate.Format(time.RFC3339Nano)
+	m["time_modified"] = g.ModifiedDate.Format(time.RFC3339Nano)
 	m["modified_by"] = g.ModifiedBy
 	m["created_by"] = g.CreatedBy
 

@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/iam"
+	"github.com/akamai/terraform-provider-akamai/v6/internal/test"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -26,11 +27,11 @@ func TestDataGroups(t *testing.T) {
 		{
 			req := iam.ListGroupsRequest{}
 
-			group1 := makeGroup("test group 1", 101, 100, nil, nil)
-			group4 := makeGroup("test group 4", 104, 103, nil, nil)
-			group5 := makeGroup("test group 5", 105, 102, nil, nil)
-			group3 := makeGroup("test group 3", 103, 102, []iam.Group{group4}, nil)
-			group2 := makeGroup("test group 2", 102, 100, []iam.Group{group3, group5}, nil)
+			group1 := makeGroup(t, "test group 1", 101, 100, nil, nil)
+			group4 := makeGroup(t, "test group 4", 104, 103, nil, nil)
+			group5 := makeGroup(t, "test group 5", 105, 102, nil, nil)
+			group3 := makeGroup(t, "test group 3", 103, 102, []iam.Group{group4}, nil)
+			group2 := makeGroup(t, "test group 2", 102, 100, []iam.Group{group3, group5}, nil)
 			res := []iam.Group{group1, group2, group3}
 
 			client.On("ListGroups", mock.Anything, req).Return(res, nil)
@@ -117,16 +118,16 @@ func groupsNestingDepth(res *schema.Resource) int {
 }
 
 // Convenience method to make a group
-func makeGroup(Name string, GroupID, PGroupID int64, SubGroups []iam.Group, Actions *iam.GroupActions) iam.Group {
+func makeGroup(t *testing.T, Name string, GroupID, PGroupID int64, SubGroups []iam.Group, Actions *iam.GroupActions) iam.Group {
 	return iam.Group{
 		Actions:       Actions,
 		GroupName:     Name,
 		GroupID:       GroupID,
 		ParentGroupID: PGroupID,
 		CreatedBy:     "creator@akamai.net",
-		CreatedDate:   "2020-01-01T00:00:00Z",
+		CreatedDate:   test.NewTimeFromString(t, "2020-01-01T00:00:00Z"),
 		ModifiedBy:    "modifier@akamai.net",
-		ModifiedDate:  "2020-01-01T00:00:00Z",
+		ModifiedDate:  test.NewTimeFromString(t, "2020-01-01T00:00:00Z"),
 		SubGroups:     SubGroups,
 	}
 }

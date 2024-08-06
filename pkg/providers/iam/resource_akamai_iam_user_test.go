@@ -6,8 +6,10 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/iam"
+	"github.com/akamai/terraform-provider-akamai/v6/internal/test"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -148,8 +150,8 @@ func TestResourceUser(t *testing.T) {
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "state", user.State),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "zip_code", user.ZipCode),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "preferred_language", user.PreferredLanguage),
-			resource.TestCheckResourceAttr("akamai_iam_user.test", "last_login", user.LastLoginDate),
-			resource.TestCheckResourceAttr("akamai_iam_user.test", "password_expired_after", user.PasswordExpiryDate),
+			resource.TestCheckResourceAttr("akamai_iam_user.test", "last_login", user.LastLoginDate.Format(time.RFC3339Nano)),
+			resource.TestCheckResourceAttr("akamai_iam_user.test", "password_expired_after", user.PasswordExpiryDate.Format(time.RFC3339Nano)),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "tfa_configured", fmt.Sprintf("%t", user.TFAConfigured)),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "email_update_pending", fmt.Sprintf("%t", user.EmailUpdatePending)),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "session_timeout", fmt.Sprintf("%d", *user.SessionTimeOut)),
@@ -162,8 +164,8 @@ func TestResourceUser(t *testing.T) {
 		UserBasicInfo:      basicUserInfo,
 		IdentityID:         id,
 		IsLocked:           false,
-		LastLoginDate:      "last login",
-		PasswordExpiryDate: "password expired after",
+		LastLoginDate:      test.NewTimeFromString(t, "2020-01-01T00:00:00Z"),
+		PasswordExpiryDate: test.NewTimeFromString(t, "2020-01-01T00:00:00Z"),
 		TFAConfigured:      true,
 		EmailUpdatePending: true,
 		AuthGrants:         authGrantsCreate,
@@ -179,8 +181,8 @@ func TestResourceUser(t *testing.T) {
 		UserBasicInfo:      basicUserInfo,
 		IdentityID:         id,
 		IsLocked:           false,
-		LastLoginDate:      "last login",
-		PasswordExpiryDate: "password expired after",
+		LastLoginDate:      test.NewTimeFromString(t, "2020-01-01T00:00:00.000Z"),
+		PasswordExpiryDate: test.NewTimeFromString(t, "2020-01-01T00:00:00.000Z"),
 		TFAConfigured:      true,
 		EmailUpdatePending: true,
 		AuthGrants:         authGrantsSubgroupCreate,
@@ -209,8 +211,8 @@ func TestResourceUser(t *testing.T) {
 		UserBasicInfo:      basicUserInfo,
 		IdentityID:         id,
 		IsLocked:           true,
-		LastLoginDate:      "last login",
-		PasswordExpiryDate: "password expired after",
+		LastLoginDate:      test.NewTimeFromString(t, "2020-01-01T00:00:00.000Z"),
+		PasswordExpiryDate: test.NewTimeFromString(t, "2020-01-01T00:00:00.000Z"),
 		TFAConfigured:      true,
 		EmailUpdatePending: true,
 		AuthGrants:         authGrantsCreate,
@@ -227,8 +229,8 @@ func TestResourceUser(t *testing.T) {
 		UserBasicInfo:      extendedUserInfo,
 		IdentityID:         id,
 		IsLocked:           false,
-		LastLoginDate:      "last login",
-		PasswordExpiryDate: "password expired after",
+		LastLoginDate:      test.NewTimeFromString(t, "2020-01-01T00:00:00.000Z"),
+		PasswordExpiryDate: test.NewTimeFromString(t, "2020-01-01T00:00:00.000Z"),
 		TFAConfigured:      true,
 		EmailUpdatePending: true,
 		AuthGrants:         authGrantsCreate,
@@ -241,8 +243,8 @@ func TestResourceUser(t *testing.T) {
 		UserBasicInfo:      basicUserInfo,
 		IdentityID:         id,
 		IsLocked:           false,
-		LastLoginDate:      "last login",
-		PasswordExpiryDate: "password expired after",
+		LastLoginDate:      test.NewTimeFromString(t, "2020-01-01T00:00:00.000Z"),
+		PasswordExpiryDate: test.NewTimeFromString(t, "2020-01-01T00:00:00.000Z"),
 		TFAConfigured:      true,
 		EmailUpdatePending: true,
 		AuthGrants:         authGrantsUpdate,

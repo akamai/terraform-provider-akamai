@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/iam"
+	"github.com/akamai/terraform-provider-akamai/v6/internal/test"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
@@ -21,9 +22,9 @@ func TestDataRoles(t *testing.T) {
 			RoleDescription: "role description",
 			RoleType:        iam.RoleTypeStandard,
 			CreatedBy:       "creator@akamai.net",
-			CreatedDate:     "2020-01-01T00:00:00Z",
+			CreatedDate:     test.NewTimeFromString(t, "2020-01-01T00:00:00Z"),
 			ModifiedBy:      "modifier@akamai.net",
-			ModifiedDate:    "2020-01-01T00:00:00Z",
+			ModifiedDate:    test.NewTimeFromString(t, "2020-01-01T00:00:00Z"),
 		}}
 
 		req := iam.ListRolesRequest{}
