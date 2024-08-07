@@ -20,7 +20,9 @@
 #### FEATURES/ENHANCEMENTS:
 
 
-
+* IAM
+  * Added new data source:
+    * `akamai_iam_allowed_apis` - read the list of APIs available to the user
 
 
 

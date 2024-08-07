@@ -86,5 +86,7 @@ func (p *Subprovider) FrameworkResources() []func() resource.Resource {
 
 // FrameworkDataSources returns the IAM data sources implemented using terraform-plugin-framework
 func (p *Subprovider) FrameworkDataSources() []func() datasource.DataSource {
-	return []func() datasource.DataSource{}
+	return []func() datasource.DataSource{
+		NewAllowedAPIsDataSource,
+	}
 }
