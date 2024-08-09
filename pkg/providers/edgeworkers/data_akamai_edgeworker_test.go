@@ -251,7 +251,7 @@ func TestDataEdgeWorkersEdgeWorker(t *testing.T) {
 	}{
 		"happy path with one version": {
 			init: func(t *testing.T, m *edgeworkers.Mock, testData testDataForEdgeWorker) {
-				expectReadEdgeWorkersEdgeWorker(t, m, testData, 5)
+				expectReadEdgeWorkersEdgeWorker(t, m, testData, 3)
 			},
 			mockData:   oneVersionData,
 			configPath: "testdata/TestDataEdgeWorkersEdgeWorker/edgeworker_one_version.tf",
@@ -259,7 +259,7 @@ func TestDataEdgeWorkersEdgeWorker(t *testing.T) {
 		},
 		"happy path with 2 versions": {
 			init: func(t *testing.T, m *edgeworkers.Mock, testData testDataForEdgeWorker) {
-				expectReadEdgeWorkersEdgeWorker(t, m, testData, 5)
+				expectReadEdgeWorkersEdgeWorker(t, m, testData, 3)
 			},
 			mockData:   twoVersionsData,
 			configPath: "testdata/TestDataEdgeWorkersEdgeWorker/edgeworker_two_versions.tf",
@@ -267,7 +267,7 @@ func TestDataEdgeWorkersEdgeWorker(t *testing.T) {
 		},
 		"happy path with one warning": {
 			init: func(t *testing.T, m *edgeworkers.Mock, testData testDataForEdgeWorker) {
-				expectReadEdgeWorkersEdgeWorker(t, m, testData, 5)
+				expectReadEdgeWorkersEdgeWorker(t, m, testData, 3)
 			},
 			mockData:   oneWarningData,
 			configPath: "testdata/TestDataEdgeWorkersEdgeWorker/edgeworker_one_warning.tf",
@@ -275,7 +275,7 @@ func TestDataEdgeWorkersEdgeWorker(t *testing.T) {
 		},
 		"happy path with three warnings": {
 			init: func(t *testing.T, m *edgeworkers.Mock, testData testDataForEdgeWorker) {
-				expectReadEdgeWorkersEdgeWorker(t, m, testData, 5)
+				expectReadEdgeWorkersEdgeWorker(t, m, testData, 3)
 			},
 			mockData:   threeWarningsData,
 			configPath: "testdata/TestDataEdgeWorkersEdgeWorker/edgeworker_three_warnings.tf",
@@ -283,22 +283,22 @@ func TestDataEdgeWorkersEdgeWorker(t *testing.T) {
 		},
 		"happy path without local bundle path specified": {
 			init: func(t *testing.T, m *edgeworkers.Mock, testData testDataForEdgeWorker) {
-				expectReadEdgeWorkersEdgeWorker(t, m, testData, 5)
+				expectReadEdgeWorkersEdgeWorker(t, m, testData, 3)
 			},
 			mockData:   defaultBundlePathData,
 			configPath: "testdata/TestDataEdgeWorkersEdgeWorker/edgeworker_no_local_bundle.tf",
 			error:      nil,
 		},
 		"no versions": {
-			init: func(t *testing.T, m *edgeworkers.Mock, testData testDataForEdgeWorker) {
-				expectReadEdgeWorkerNoVersions(m, noVersionsData, 5)
+			init: func(_ *testing.T, m *edgeworkers.Mock, testData testDataForEdgeWorker) {
+				expectReadEdgeWorkerNoVersions(m, noVersionsData, 3)
 			},
 			mockData:   noVersionsData,
 			configPath: "testdata/TestDataEdgeWorkersEdgeWorker/edgeworker_no_versions.tf",
 			error:      nil,
 		},
 		"could not get an edgeworker_id": {
-			init: func(t *testing.T, m *edgeworkers.Mock, testData testDataForEdgeWorker) {
+			init: func(_ *testing.T, m *edgeworkers.Mock, testData testDataForEdgeWorker) {
 				expectGetEdgeWorkerError(m, "could not get an edgeworker")
 			},
 			mockData:   oneVersionData,
@@ -306,7 +306,7 @@ func TestDataEdgeWorkersEdgeWorker(t *testing.T) {
 			error:      regexp.MustCompile("could not get an edgeworker"),
 		},
 		"could not list versions": {
-			init: func(t *testing.T, m *edgeworkers.Mock, testData testDataForEdgeWorker) {
+			init: func(_ *testing.T, m *edgeworkers.Mock, testData testDataForEdgeWorker) {
 				expectListEdgeWorkerVersionsError(m, "could not list edgeworker versions")
 			},
 			mockData:   oneVersionData,
@@ -314,7 +314,7 @@ func TestDataEdgeWorkersEdgeWorker(t *testing.T) {
 			error:      regexp.MustCompile("could not list edgeworker versions"),
 		},
 		"edgeworker_id not provided": {
-			init:       func(t *testing.T, m *edgeworkers.Mock, worker testDataForEdgeWorker) {},
+			init:       func(_ *testing.T, m *edgeworkers.Mock, worker testDataForEdgeWorker) {},
 			mockData:   testDataForEdgeWorker{},
 			configPath: "testdata/TestDataEdgeWorkersEdgeWorker/edgeworker_no_edgeworker_id.tf",
 			error:      regexp.MustCompile("Missing required argument"),

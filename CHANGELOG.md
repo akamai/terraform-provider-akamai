@@ -19,8 +19,8 @@
 #### FEATURES/ENHANCEMENTS:
 
 
-
-
+* Global
+  * Updated SDKv2 and framework libraries as result of updating `terraform-plugin-testing`
 
 
 

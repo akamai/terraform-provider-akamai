@@ -1844,7 +1844,7 @@ func TestPropertyResource_versionNotesLifecycle(t *testing.T) {
 	mockRead(versionNotes1, rules1And2.Rules).Times(2)
 
 	// step 2 - refresh + plan
-	mockRead(versionNotes2, rules1And2.Rules).Times(2)
+	mockRead(versionNotes2, rules1And2.Rules).Times(1)
 
 	// step 3 - refresh + update + read + plan
 	mockRead(versionNotes2, rules1And2.Rules).Times(1)
@@ -1871,7 +1871,7 @@ func TestPropertyResource_versionNotesLifecycle(t *testing.T) {
 	mockRead(rules4And5.Comments, rules4And5.Rules).Times(2)
 
 	// step 5 - refresh + plan
-	mockRead(rules4And5.Comments, rules4And5.Rules).Times(2)
+	mockRead(rules4And5.Comments, rules4And5.Rules).Times(1)
 
 	// cleanup
 	client.On("RemoveProperty", mock.Anything, papi.RemovePropertyRequest{

@@ -34,7 +34,7 @@ func TestDataSourcePAPIPropertyActivation(t *testing.T) {
 						NotifyEmails:    []string{"some@example.com"},
 					}}},
 				}
-				expectGetActivations(m, "prp_test", activationsResponseDeactivated, nil).Times(5)
+				expectGetActivations(m, "prp_test", activationsResponseDeactivated, nil).Times(3)
 			},
 			steps: []resource.TestStep{
 				{
@@ -56,7 +56,7 @@ func TestDataSourcePAPIPropertyActivation(t *testing.T) {
 		},
 		"check schema property activation - OK": {
 			init: func(m *papi.Mock) {
-				expectGetActivations(m, "prp_test", generateActivationResponseMock("atv_activation1", "", 1, papi.ActivationTypeActivate, "2020-10-28T14:04:05Z", nil), nil).Times(5)
+				expectGetActivations(m, "prp_test", generateActivationResponseMock("atv_activation1", "", 1, papi.ActivationTypeActivate, "2020-10-28T14:04:05Z", nil), nil).Times(3)
 			},
 			steps: []resource.TestStep{
 				{
@@ -82,8 +82,8 @@ func TestDataSourcePAPIPropertyActivation(t *testing.T) {
 					Version: papi.PropertyVersionGetItem{
 						PropertyVersion: 1,
 					},
-				}, nil).Times(5)
-				expectGetActivations(m, "prp_test", generateActivationResponseMock("atv_activation1", "", 1, papi.ActivationTypeActivate, "2020-10-28T14:04:05Z", nil), nil).Times(5)
+				}, nil).Times(3)
+				expectGetActivations(m, "prp_test", generateActivationResponseMock("atv_activation1", "", 1, papi.ActivationTypeActivate, "2020-10-28T14:04:05Z", nil), nil).Times(3)
 			},
 			steps: []resource.TestStep{
 				{

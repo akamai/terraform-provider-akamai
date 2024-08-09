@@ -99,21 +99,21 @@ func TestDataPropertyIncludeRules(t *testing.T) {
 	}{
 		"happy path include rules with rule errors": {
 			init: func(t *testing.T, m *papi.Mock, testData testDataPropertyIncludeRules) {
-				expectReadPropertyRulesInclude(t, m, testData, 5, true, false, "rules_with_errors.json")
+				expectReadPropertyRulesInclude(t, m, testData, 3, true, false, "rules_with_errors.json")
 			},
 			mockData:   propertyIncludeRulesWithRuleErrors(testDataIncludeRules(t), testutils.LoadFixtureString(t, "%s/property-snippets/rule_errors.json", workdir)),
 			configPath: "./testdata/TestDSPropertyIncludeRules/property_include_rules.tf",
 		},
 		"happy path include rules with rules warnings": {
 			init: func(t *testing.T, m *papi.Mock, testData testDataPropertyIncludeRules) {
-				expectReadPropertyRulesInclude(t, m, testData, 5, false, true, "rules_with_warnings.json")
+				expectReadPropertyRulesInclude(t, m, testData, 3, false, true, "rules_with_warnings.json")
 			},
 			mockData:   propertyIncludeRulesWithRuleWarnings(testDataIncludeRules(t), testutils.LoadFixtureString(t, "%s/property-snippets/rule_warnings.json", workdir)),
 			configPath: "./testdata/TestDSPropertyIncludeRules/property_include_rules.tf",
 		},
 		"happy path include rules with rules warnings and errors": {
 			init: func(t *testing.T, m *papi.Mock, testData testDataPropertyIncludeRules) {
-				expectReadPropertyRulesInclude(t, m, testData, 5, true, true, "rules_with_errors_and_warnings.json")
+				expectReadPropertyRulesInclude(t, m, testData, 3, true, true, "rules_with_errors_and_warnings.json")
 			},
 			mockData: propertyIncludeRulesWithRuleWarningsAndErrors(testDataIncludeRules(t), testutils.LoadFixtureString(t, "%s/property-snippets/rule_warnings.json", workdir),
 				testutils.LoadFixtureString(t, "%s/property-snippets/rule_errors.json", workdir)),
@@ -121,13 +121,13 @@ func TestDataPropertyIncludeRules(t *testing.T) {
 		},
 		"happy path include rules": {
 			init: func(t *testing.T, m *papi.Mock, testData testDataPropertyIncludeRules) {
-				expectReadPropertyRulesInclude(t, m, testData, 5, false, false, "rules_without_errors.json")
+				expectReadPropertyRulesInclude(t, m, testData, 3, false, false, "rules_without_errors.json")
 			},
 			mockData:   testDataIncludeRules(t),
 			configPath: "./testdata/TestDSPropertyIncludeRules/property_include_rules.tf",
 		},
 		"groupID not provided": {
-			init:       func(t *testing.T, m *papi.Mock, testData testDataPropertyIncludeRules) {},
+			init:       func(_ *testing.T, m *papi.Mock, testData testDataPropertyIncludeRules) {},
 			configPath: "./testdata/TestDSPropertyIncludeRules/property_include_rules_no_group_id.tf",
 			error:      regexp.MustCompile("Missing required argument"),
 		},

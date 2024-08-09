@@ -38,10 +38,10 @@ func TestDataEnrollments(t *testing.T) {
 	}{
 		"happy path": {
 			enrollments: *enrollmentsList,
-			init: func(t *testing.T, m *cps.Mock) {
+			init: func(_ *testing.T, m *cps.Mock) {
 				m.On("ListEnrollments", mock.Anything, cps.ListEnrollmentsRequest{
 					ContractID: contractID,
-				}).Return(enrollmentsList, nil).Times(5)
+				}).Return(enrollmentsList, nil).Times(3)
 			},
 			steps: []resource.TestStep{
 				{
@@ -52,7 +52,7 @@ func TestDataEnrollments(t *testing.T) {
 		},
 		"could not fetch list of enrollments": {
 			enrollments: *enrollmentsList,
-			init: func(t *testing.T, m *cps.Mock) {
+			init: func(_ *testing.T, m *cps.Mock) {
 				m.On("ListEnrollments", mock.Anything, cps.ListEnrollmentsRequest{
 					ContractID: contractID,
 				}).Return(nil, fmt.Errorf("could not get list of enrollments")).Once()
@@ -66,10 +66,10 @@ func TestDataEnrollments(t *testing.T) {
 		},
 		"different change type enrollments": {
 			enrollments: *enrollmentsThirdPartyList,
-			init: func(t *testing.T, m *cps.Mock) {
+			init: func(_ *testing.T, m *cps.Mock) {
 				m.On("ListEnrollments", mock.Anything, cps.ListEnrollmentsRequest{
 					ContractID: contractID,
-				}).Return(enrollmentsThirdPartyList, nil).Times(5)
+				}).Return(enrollmentsThirdPartyList, nil).Times(3)
 
 			},
 			steps: []resource.TestStep{
@@ -81,10 +81,10 @@ func TestDataEnrollments(t *testing.T) {
 		},
 		"no enrollments for given contract": {
 			enrollments: cps.ListEnrollmentsResponse{},
-			init: func(t *testing.T, m *cps.Mock) {
+			init: func(_ *testing.T, m *cps.Mock) {
 				m.On("ListEnrollments", mock.Anything, cps.ListEnrollmentsRequest{
 					ContractID: contractID,
-				}).Return(emptyEnrollmentList, nil).Times(10)
+				}).Return(emptyEnrollmentList, nil).Times(6)
 			},
 			steps: []resource.TestStep{
 				{

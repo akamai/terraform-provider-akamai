@@ -1644,13 +1644,6 @@ func TestResourceThirdPartyEnrollmentImport(t *testing.T) {
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/import/import_enrollment.tf"),
-						ImportStateCheck: func(s []*terraform.InstanceState) error {
-							assert.Len(t, s, 1)
-							rs := s[0]
-							assert.Equal(t, "ctr_1", rs.Attributes["contract_id"])
-							assert.Equal(t, "1", rs.Attributes["id"])
-							return nil
-						},
 					},
 					{
 						Config:            testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/import/import_enrollment.tf"),
@@ -1658,6 +1651,15 @@ func TestResourceThirdPartyEnrollmentImport(t *testing.T) {
 						ImportStateId:     id,
 						ResourceName:      "akamai_cps_third_party_enrollment.third_party",
 						ImportStateVerify: true,
+						ImportStateCheck: func(s []*terraform.InstanceState) error {
+							assert.Len(t, s, 1)
+							rs := s[0]
+							assert.Equal(t, "ctr_1", rs.Attributes["contract_id"])
+							assert.Equal(t, "1", rs.Attributes["id"])
+							return nil
+						},
+						// It looks that there bug in SDK that values for bool optional fields are not persisted on create
+						ImportStateVerifyIgnore: []string{"network_configuration.0.clone_dns_names", "network_configuration.0.quic_enabled"},
 					},
 				},
 			})

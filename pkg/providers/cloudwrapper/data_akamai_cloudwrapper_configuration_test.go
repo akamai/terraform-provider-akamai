@@ -134,15 +134,15 @@ func TestConfigurationDataSource(t *testing.T) {
 	}{
 		"happy path - minimal data returned": {
 			configPath: "testdata/TestDataConfiguration/default.tf",
-			init: func(t *testing.T, m *cloudwrapper.Mock, testData testDataForCWConfiguration) {
-				expectGetConfiguration(m, testData, 5)
+			init: func(_ *testing.T, m *cloudwrapper.Mock, testData testDataForCWConfiguration) {
+				expectGetConfiguration(m, testData, 3)
 			},
 			mockData: minimalConfiguration,
 		},
 		"happy path - all fields": {
 			configPath: "testdata/TestDataConfiguration/default.tf",
-			init: func(t *testing.T, m *cloudwrapper.Mock, testData testDataForCWConfiguration) {
-				expectGetConfiguration(m, testData, 5)
+			init: func(_ *testing.T, m *cloudwrapper.Mock, testData testDataForCWConfiguration) {
+				expectGetConfiguration(m, testData, 3)
 			},
 			mockData: configuration,
 		},

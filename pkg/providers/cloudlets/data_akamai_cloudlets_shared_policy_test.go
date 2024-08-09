@@ -87,8 +87,8 @@ func TestSharedPolicyDataSource(t *testing.T) {
 				},
 			},
 			init: func(m *v3.Mock, data testDataForSharedPolicy) {
-				mockGetPolicy(m, data, 5)
-				mockGetPolicyVersion(m, data, 5)
+				mockGetPolicy(m, data, 3)
+				mockGetPolicyVersion(m, data, 3)
 			},
 		},
 		"success with no version attribute - no activations and no match rules and warnings": {
@@ -103,9 +103,9 @@ func TestSharedPolicyDataSource(t *testing.T) {
 				description:  "Description",
 			},
 			init: func(m *v3.Mock, data testDataForSharedPolicy) {
-				mockGetPolicy(m, data, 5)
-				mockListPolicyVersions(m, data, 2, 5)
-				mockGetPolicyVersion(m, data, 5)
+				mockGetPolicy(m, data, 3)
+				mockListPolicyVersions(m, data, 2, 3)
+				mockGetPolicyVersion(m, data, 3)
 			},
 		},
 		"success with no version attribute - no shared policy versions": {
@@ -120,8 +120,8 @@ func TestSharedPolicyDataSource(t *testing.T) {
 				description:  "Description",
 			},
 			init: func(m *v3.Mock, data testDataForSharedPolicy) {
-				mockGetPolicy(m, data, 5)
-				mockListPolicyVersions(m, data, 2, 5)
+				mockGetPolicy(m, data, 3)
+				mockListPolicyVersions(m, data, 2, 3)
 			},
 		},
 		"success with version attribute - all activations": {
@@ -211,8 +211,8 @@ func TestSharedPolicyDataSource(t *testing.T) {
 				},
 			},
 			init: func(m *v3.Mock, data testDataForSharedPolicy) {
-				mockGetPolicy(m, data, 5)
-				mockGetPolicyVersion(m, data, 5)
+				mockGetPolicy(m, data, 3)
+				mockGetPolicyVersion(m, data, 3)
 			},
 		},
 		"expect error on ListPolicyVersions": {

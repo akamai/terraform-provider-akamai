@@ -95,8 +95,8 @@ func TestNonSharedPolicyActivationDataSource(t *testing.T) {
 						PolicyID: data.policyID, Version: data.version, Status: cloudlets.PolicyActivationStatusInactive,
 					}, PropertyInfo: cloudlets.PropertyInfo{Name: p}})
 				}
-				mockGetPolicyV2(m2, data, nil, 5)
-				expectListPolicyActivations(m2, data.policyID, data.version, data.network, data.properties, cloudlets.PolicyActivationStatusActive, "", 1, nil).Times(5)
+				mockGetPolicyV2(m2, data, nil, 3)
+				expectListPolicyActivations(m2, data.policyID, data.version, data.network, data.properties, cloudlets.PolicyActivationStatusActive, "", 1, nil).Times(3)
 			},
 			check: resource.ComposeAggregateTestCheckFunc(
 				resource.TestCheckResourceAttr("data.akamai_cloudlets_policy_activation.test", "policy_id", "1"),
@@ -301,8 +301,8 @@ func TestSharedPolicyActivationDataSource(t *testing.T) {
 				resource.TestCheckResourceAttr("data.akamai_cloudlets_policy_activation.test", "status", "SUCCESS"),
 			),
 			init: func(m2 *cloudlets.Mock, m3 *v3.Mock, data testDataForSharedPolicyActivation) {
-				mockGetPolicyV2WithError(m2, data.policyID, &cloudlets.Error{StatusCode: http.StatusNotFound}, 5)
-				mockGetPolicyV3(m3, data, 10)
+				mockGetPolicyV2WithError(m2, data.policyID, &cloudlets.Error{StatusCode: http.StatusNotFound}, 3)
+				mockGetPolicyV3(m3, data, 6)
 			},
 		},
 		"api error": {

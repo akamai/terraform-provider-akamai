@@ -22,8 +22,8 @@ func TestDataConfigurations(t *testing.T) {
 	}{
 		"happy path- minimal data returned": {
 			configPath: "testdata/TestDataConfigurations/default.tf",
-			init: func(t *testing.T, m *cloudwrapper.Mock, testData []testDataForCWConfiguration) {
-				expectGetConfigurations(m, testData, 5)
+			init: func(_ *testing.T, m *cloudwrapper.Mock, testData []testDataForCWConfiguration) {
+				expectGetConfigurations(m, testData, 3)
 			},
 			mockData: []testDataForCWConfiguration{
 				minimalConfiguration,
@@ -31,8 +31,8 @@ func TestDataConfigurations(t *testing.T) {
 		},
 		"happy path - all fields": {
 			configPath: "testdata/TestDataConfigurations/default.tf",
-			init: func(t *testing.T, m *cloudwrapper.Mock, testData []testDataForCWConfiguration) {
-				expectGetConfigurations(m, testData, 5)
+			init: func(_ *testing.T, m *cloudwrapper.Mock, testData []testDataForCWConfiguration) {
+				expectGetConfigurations(m, testData, 3)
 			},
 			mockData: []testDataForCWConfiguration{
 				configuration,
@@ -40,8 +40,8 @@ func TestDataConfigurations(t *testing.T) {
 		},
 		"happy path - a few configurations": {
 			configPath: "testdata/TestDataConfigurations/default.tf",
-			init: func(t *testing.T, m *cloudwrapper.Mock, testData []testDataForCWConfiguration) {
-				expectGetConfigurations(m, testData, 5)
+			init: func(_ *testing.T, m *cloudwrapper.Mock, testData []testDataForCWConfiguration) {
+				expectGetConfigurations(m, testData, 3)
 			},
 			mockData: []testDataForCWConfiguration{
 				minimalConfiguration,
@@ -50,7 +50,7 @@ func TestDataConfigurations(t *testing.T) {
 		},
 		"error getting configuration": {
 			configPath: "testdata/TestDataConfigurations/default.tf",
-			init: func(t *testing.T, m *cloudwrapper.Mock, testData []testDataForCWConfiguration) {
+			init: func(_ *testing.T, m *cloudwrapper.Mock, _ []testDataForCWConfiguration) {
 				m.On("ListConfigurations", mock.Anything, mock.Anything).Return(nil, fmt.Errorf("get configuration failed")).Times(1)
 			},
 			mockData: []testDataForCWConfiguration{

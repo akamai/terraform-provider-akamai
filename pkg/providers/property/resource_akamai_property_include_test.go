@@ -789,7 +789,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 				expectRead(m, testData).Once()
 
 				// Data source refresh call
-				expectGetIncludeRuleTree(m, testData).Times(2)
+				expectGetIncludeRuleTree(m, testData).Times(1)
 
 				// Resource update calls
 				testData.rulesPath = "simple_rules.json"
@@ -804,7 +804,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 				expectRead(m, testData).Once()
 
 				// Data source post-update call
-				expectGetIncludeRuleTree(m, testData).Times(2)
+				expectGetIncludeRuleTree(m, testData).Times(1)
 
 				expectDelete(m, testData).Once()
 			},

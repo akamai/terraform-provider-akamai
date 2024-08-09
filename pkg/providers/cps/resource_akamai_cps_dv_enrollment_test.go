@@ -549,22 +549,6 @@ func TestResourceDVEnrollment(t *testing.T) {
 				Domain:           "test.akamai.com",
 				ValidationStatus: "IN_PROGRESS",
 			},
-			{
-				Challenges: []cps.Challenge{
-					{FullPath: "_acme-challenge.san.test.akamai.com", ResponseBody: "abc123", Type: "http-01", Status: "pending"},
-					{FullPath: "_acme-challenge.san.test.akamai.com", ResponseBody: "abc123", Type: "dns-01", Status: "pending"},
-				},
-				Domain:           "san.test.akamai.com",
-				ValidationStatus: "IN_PROGRESS",
-			},
-			{
-				Challenges: []cps.Challenge{
-					{FullPath: "_acme-challenge.san2.test.akamai.com", ResponseBody: "abc123", Type: "http-01", Status: "pending"},
-					{FullPath: "_acme-challenge.san2.test.akamai.com", ResponseBody: "abc123", Type: "dns-01", Status: "pending"},
-				},
-				Domain:           "san2.test.akamai.com",
-				ValidationStatus: "IN_PROGRESS",
-			},
 		}}, nil).Twice()
 
 		client.On("RemoveEnrollment", mock.Anything, cps.RemoveEnrollmentRequest{
@@ -2314,13 +2298,6 @@ func TestResourceDVEnrollmentImport(t *testing.T) {
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/import/import_enrollment.tf"),
-						ImportStateCheck: func(s []*terraform.InstanceState) error {
-							assert.Len(t, s, 1)
-							rs := s[0]
-							assert.Equal(t, "ctr_1", rs.Attributes["contract_id"])
-							assert.Equal(t, "1", rs.Attributes["id"])
-							return nil
-						},
 					},
 					{
 						Config:            testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/import/import_enrollment.tf"),
@@ -2328,6 +2305,15 @@ func TestResourceDVEnrollmentImport(t *testing.T) {
 						ImportStateId:     id,
 						ResourceName:      "akamai_cps_dv_enrollment.dv",
 						ImportStateVerify: true,
+						ImportStateCheck: func(s []*terraform.InstanceState) error {
+							assert.Len(t, s, 1)
+							rs := s[0]
+							assert.Equal(t, "ctr_1", rs.Attributes["contract_id"])
+							assert.Equal(t, "1", rs.Attributes["id"])
+							return nil
+						},
+						// It looks that there bug in SDK that values for bool optional fields are not persisted on create
+						ImportStateVerifyIgnore: []string{"network_configuration.0.clone_dns_names", "network_configuration.0.quic_enabled"},
 					},
 				},
 			})

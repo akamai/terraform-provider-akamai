@@ -27,7 +27,7 @@ func TestEdgeKVGroupItems(t *testing.T) {
 				NamespaceID: "test_namespace",
 				GroupID:     "TestGroup",
 			},
-		}).Return(&edgeworkers.ListItemsResponse{"TestItem1", "TestItem2", "TestItem3"}, nil).Times(5)
+		}).Return(&edgeworkers.ListItemsResponse{"TestItem1", "TestItem2", "TestItem3"}, nil).Times(3)
 
 		for k, v := range items {
 			mockGetItemReq(client, k, edgeworkers.Item(v))
@@ -134,5 +134,5 @@ func mockGetItemReq(client *edgeworkers.Mock, itemID string, itemValue edgeworke
 			NamespaceID: "test_namespace",
 			GroupID:     "TestGroup",
 		},
-	}).Return(&itemValue, nil).Times(5)
+	}).Return(&itemValue, nil).Times(3)
 }
