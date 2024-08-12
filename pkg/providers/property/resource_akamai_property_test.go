@@ -10,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/iam"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
@@ -949,6 +950,7 @@ func TestResProperty(t *testing.T) {
 
 		// Test Lifecycle
 
+		// In the tests below update for hostnames is triggered
 		t.Run("Lifecycle: create with propertyID", assertLifecycle(t, t.Name(), "with-propertyID", withPropertyID))
 		t.Run("Lifecycle: latest version is not active (normal)", assertLifecycle(t, t.Name(), "normal", latestVersionNotActive))
 		t.Run("Lifecycle: latest version is active in staging (normal)", assertLifecycle(t, t.Name(), "normal", latestVersionActiveInStaging))
@@ -964,12 +966,22 @@ func TestResProperty(t *testing.T) {
 		t.Run("Lifecycle: latest version is not active (product_id without prefix)", assertLifecycle(t, t.Name(), "product_id without prefix", latestVersionNotActive))
 		t.Run("Lifecycle: latest version is active in staging (product_id without prefix)", assertLifecycle(t, t.Name(), "product_id without prefix", latestVersionActiveInStaging))
 		t.Run("Lifecycle: latest version is active in production (product_id without prefix)", assertLifecycle(t, t.Name(), "product_id without prefix", latestVersionActiveInProd))
+
 		t.Run("Lifecycle: no diff", assertLifecycle(t, t.Name(), "no diff", noDiff))
 		t.Run("Lifecycle: diff cpCode", assertLifecycle(t, t.Name(), "rules diff cpcode", diffCPCode))
+
+		// Update for rules
 		t.Run("Lifecycle: rules custom diff", assertLifecycle(t, t.Name(), "rules custom diff", rulesCustomDiff))
+
 		t.Run("Lifecycle: no diff for hostnames (hostnames)", assertLifecycle(t, t.Name(), "hostnames", noDiffForHostnames))
+
+		// Update for hostnames
 		t.Run("Lifecycle: new version changed on server", assertLifecycle(t, t.Name(), "new version changed on server", changesMadeOutsideOfTerraform))
+
+		// Update for rules
 		t.Run("Lifecycle: rules with variables", assertLifecycle(t, t.Name(), "rules with variables", variablesInRuleTree))
+
+		// Update for hostnames
 		t.Run("Lifecycle: Verify staging_version and production_version known at plan", assertLifecycle(t, t.Name(), "normal", stagingAndProductionVersionKnownAtPlan))
 
 		// Test Import
@@ -1571,6 +1583,7 @@ func TestResProperty(t *testing.T) {
 			}, nil).Once()
 		}
 
+		// Update for hostnames and rules
 		t.Run("400 from UpdatePropertyVersionHostnames - incorrect/invalid edge hostname", func(t *testing.T) {
 			client := &papi.Mock{}
 			client.Test(T{t})
@@ -1714,6 +1727,166 @@ func TestResProperty(t *testing.T) {
 			client.AssertExpectations(t)
 		})
 	})
+}
+
+func TestGroupIDUpdate(t *testing.T) {
+	baseData := mockPropertyData{
+		propertyName:  "dummy_name",
+		groupID:       "grp_1",
+		contractID:    "ctr_2",
+		productID:     "prd_3",
+		propertyID:    "prp_12345",
+		latestVersion: 1,
+		assetID:       "aid_55555",
+		cnameFrom:     "from.test.domain",
+		cnameTo:       "to.test.domain",
+	}
+
+	baseCheckName := resource.TestCheckResourceAttr("akamai_property.test", "name", "dummy_name")
+	baseCheckGroupID := resource.TestCheckResourceAttr("akamai_property.test", "group_id", "grp_1")
+	baseCheckCnameFrom := resource.TestCheckResourceAttr("akamai_property.test", "hostnames.0.cname_from", "from.test.domain")
+
+	commonBaseChecks := resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr("akamai_property.test", "contract_id", "ctr_2"),
+		resource.TestCheckResourceAttr("akamai_property.test", "product_id", "prd_3"),
+		resource.TestCheckResourceAttr("akamai_property.test", "hostnames.0.cname_to", "to.test.domain"),
+		resource.TestCheckResourceAttr("akamai_property.test", "hostnames.0.cert_provisioning_type", "DEFAULT"))
+
+	tests := map[string]struct {
+		init                func(*testing.T, *mockProperty, *iam.Mock)
+		configPathForUpdate string
+		updateChecks        resource.TestCheckFunc
+	}{
+		"update group id - in place": {
+			init: func(t *testing.T, p *mockProperty, iamMock *iam.Mock) {
+				mockResourcePropertyCreate(p)
+				// refresh
+				mockResourcePropertyRead(p)
+				// second refresh
+				mockResourcePropertyRead(p)
+
+				// moving the property
+				// readout for obtaining assetID
+				p.mockGetProperty().Once()
+				mockMoveProperty(iamMock, 55555, 1, 111)
+				p.groupID = "grp_111"
+				// waiting for new groupID
+				p.mockGetProperty().Once()
+				// final read from the update function
+				mockResourcePropertyRead(p)
+
+				// refresh
+				mockResourcePropertyRead(p)
+				p.mockRemoveProperty().Once()
+			},
+
+			configPathForUpdate: "testdata/TestGroupIDUpdate/update_group_id.tf",
+
+			updateChecks: resource.ComposeTestCheckFunc(
+				baseCheckName,
+				resource.TestCheckResourceAttr("akamai_property.test", "group_id", "grp_111"),
+				baseCheckCnameFrom,
+				commonBaseChecks),
+		},
+		"update group id and hostnames - in place": {
+			init: func(t *testing.T, p *mockProperty, iamMock *iam.Mock) {
+				mockResourcePropertyCreate(p)
+				// refresh
+				mockResourcePropertyRead(p)
+				// second refresh
+				mockResourcePropertyRead(p)
+
+				// moving the property
+				// readout for obtaining assetID
+				p.mockGetProperty().Once()
+				mockMoveProperty(iamMock, 55555, 1, 111)
+				p.groupID = "grp_111"
+				// waiting for new groupID
+				p.mockGetProperty().Once()
+				// readout for general version calculations
+				p.mockGetPropertyVersion().Once()
+				// change in hostnames detected
+				p.cnameFrom = "from2.test.domain"
+				p.mockUpdatePropertyVersionHostnames().Once()
+				// final read from the update function
+				mockResourcePropertyRead(p)
+
+				// refresh
+				mockResourcePropertyRead(p)
+				p.mockRemoveProperty().Once()
+			},
+
+			configPathForUpdate: "testdata/TestGroupIDUpdate/update_group_id_and_hostnames.tf",
+
+			updateChecks: resource.ComposeTestCheckFunc(
+				baseCheckName,
+				resource.TestCheckResourceAttr("akamai_property.test", "group_id", "grp_111"),
+				resource.TestCheckResourceAttr("akamai_property.test", "hostnames.0.cname_from", "from2.test.domain"),
+				commonBaseChecks),
+		},
+		"update group id and name - recreate": {
+			init: func(t *testing.T, p *mockProperty, iamMock *iam.Mock) {
+				mockResourcePropertyCreate(p)
+				// refresh
+				mockResourcePropertyRead(p)
+				// second refresh
+				mockResourcePropertyRead(p)
+				p.mockRemoveProperty().Once()
+
+				// recreate the resource
+				p.propertyName = "dummy_name2"
+				p.groupID = "grp_111"
+				mockResourcePropertyCreate(p)
+				// refresh
+				mockResourcePropertyRead(p)
+				p.mockRemoveProperty().Once()
+			},
+
+			configPathForUpdate: "testdata/TestGroupIDUpdate/update_group_id_and_name.tf",
+
+			updateChecks: resource.ComposeTestCheckFunc(
+				resource.TestCheckResourceAttr("akamai_property.test", "name", "dummy_name2"),
+				resource.TestCheckResourceAttr("akamai_property.test", "group_id", "grp_111"),
+				baseCheckCnameFrom,
+				commonBaseChecks),
+		},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			papiMock := &papi.Mock{}
+			iamMock := &iam.Mock{}
+			mp := mockProperty{
+				papiMock:         papiMock,
+				mockPropertyData: baseData,
+			}
+			test.init(t, &mp, iamMock)
+
+			useClient(papiMock, nil, func() {
+				useIam(iamMock, func() {
+					resource.UnitTest(t, resource.TestCase{
+						ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+						Steps: []resource.TestStep{
+							{
+								Config: testutils.LoadFixtureString(t, "testdata/TestGroupIDUpdate/base.tf"),
+								Check: resource.ComposeTestCheckFunc(
+									baseCheckName,
+									baseCheckGroupID,
+									baseCheckCnameFrom,
+									commonBaseChecks),
+							},
+							{
+								Config: testutils.LoadFixtureString(t, test.configPathForUpdate),
+								Check:  test.updateChecks,
+							},
+						},
+					})
+				})
+			})
+
+			papiMock.AssertExpectations(t)
+			iamMock.AssertExpectations(t)
+		})
+	}
 }
 
 func TestPropertyResource_versionNotesLifecycle(t *testing.T) {

@@ -1,11 +1,17 @@
 package property
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"strings"
+	"time"
 
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/iam"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/str"
+	"github.com/apex/log"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -198,4 +204,126 @@ func NetworkAlias(network string) (string, error) {
 		return "", errors.New("network not recognized")
 	}
 	return string(networkValue), nil
+}
+
+func areGroupIDsDifferent(firstGroupID, secondGroupID string) (bool, error) {
+	gid1, err := str.GetIntID(firstGroupID, "grp_")
+	if err != nil {
+		return false, err
+	}
+
+	gid2, err := str.GetIntID(secondGroupID, "grp_")
+	if err != nil {
+		return false, err
+	}
+
+	return gid1 != gid2, nil
+}
+
+type papiKey struct {
+	propertyID string
+	groupID    string
+	contractID string
+}
+
+func updateGroupID(ctx context.Context, client papi.PAPI, iamClient iam.IAM, key papiKey,
+	destGroupID string) error {
+
+	logger := log.FromContext(ctx).WithFields(log.Fields{
+		"key":         key,
+		"destGroupID": destGroupID,
+	})
+	logger.Debug("updateGroupID")
+
+	from, err := str.GetIntID(key.groupID, "grp_")
+	if err != nil {
+		return err
+	}
+
+	to, err := str.GetIntID(destGroupID, "grp_")
+	if err != nil {
+		return err
+	}
+
+	// assetID is the ID of the property in the Identity and Access Management API
+	// See: https://techdocs.akamai.com/iam-api/reference/manage-access-to-properties-and-includes
+	// We never store assetID in the state, so we need to fetch it here
+	prp, err := fetchLatestProperty(ctx, client, key.propertyID, key.groupID, key.contractID)
+	if err != nil {
+		return err
+	}
+
+	iamID, err := str.GetIntID(prp.AssetID, "aid_")
+	if err != nil {
+		return err
+	}
+
+	logger.Debugf("Changing group id from %d to %d for IAM id %d", from, to, iamID)
+
+	err = iamClient.MoveProperty(ctx, iam.MovePropertyRequest{
+		PropertyID: int64(iamID),
+		BodyParams: iam.MovePropertyReqBody{
+			DestinationGroupID: int64(to),
+			SourceGroupID:      int64(from),
+		},
+	})
+	if err != nil {
+		return err
+	}
+
+	err = waitForGroupIDChange(ctx, client, papiKey{
+		propertyID: key.propertyID,
+		groupID:    destGroupID,
+		contractID: key.contractID,
+	}, 5)
+	return err
+}
+
+func waitForGroupIDChange(ctx context.Context, client papi.PAPI, key papiKey, maxAttempts int) error {
+	logger := log.FromContext(ctx).WithFields(log.Fields{"key": key})
+	logger.Debug("waitForGroupIDChange")
+
+	req := papi.GetPropertyRequest{
+		PropertyID: key.propertyID,
+		ContractID: key.contractID,
+		GroupID:    key.groupID,
+	}
+
+	attemptsLeft := maxAttempts
+	wait := time.Second
+	for {
+		_, err := client.GetProperty(ctx, req)
+		if err == nil {
+			logger.Debug("waitForGroupIDChange: success")
+			return nil
+		}
+		if !isHTTP403(err) {
+			// Unexpected error
+			return err
+		}
+
+		attemptsLeft--
+		if attemptsLeft <= 0 {
+			return fmt.Errorf("waiting for groupID change to: %s for propertyID: %s, "+
+				"contractID: %s in %d attempts failed",
+				key.groupID, key.propertyID, key.contractID, maxAttempts)
+		}
+		logger.Debugf("waitForGroupIDChange: new group id still not visible, %d attempts left, "+
+			"waiting %s... (original error: %s)", attemptsLeft, wait, err)
+
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(wait):
+			wait = wait * 2
+		}
+	}
+}
+
+func isHTTP403(err error) bool {
+	var papiErr *papi.Error
+	if errors.As(err, &papiErr) {
+		return papiErr.StatusCode == http.StatusForbidden
+	}
+	return false
 }

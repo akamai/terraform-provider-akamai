@@ -31,7 +31,8 @@
 
 
 
-
+* PAPI
+  * Added support for moving PAPI resources between groups (`akamai_property` and `akamai_property_bootstrap`) by updating the `group_id` field.
 
 
 * CPS

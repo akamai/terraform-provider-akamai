@@ -69,7 +69,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			},
 		}, nil).Once()
 
-		// final verification loop, everything in place
+		// final verification loop
 		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
@@ -361,7 +361,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			},
 		}, nil).Once()
 
-		// final verification loop, everything in place
+		// final verification loop
 		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
@@ -491,7 +491,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			},
 		}, nil).Once()
 
-		// final verification loop, everything in place
+		// final verification loop
 		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
@@ -607,7 +607,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			},
 		}, nil).Once()
 
-		// final verification loop, everything in place
+		// final verification loop
 		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     3,
@@ -699,7 +699,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			},
 		}, nil).Once()
 
-		// final verification loop, everything in place
+		// final verification loop
 		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
@@ -799,7 +799,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			},
 		}, nil).Once()
 
-		// final verification loop, everything in place
+		// final verification loop
 		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
@@ -1156,7 +1156,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			},
 		}, nil).Once()
 
-		// final verification loop, everything in place
+		// final verification loop
 		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,

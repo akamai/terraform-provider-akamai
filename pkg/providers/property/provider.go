@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/hapi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/iam"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/str"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
@@ -28,6 +29,7 @@ var (
 var (
 	client     papi.PAPI
 	hapiClient hapi.HAPI
+	iamClient  iam.IAM
 )
 
 // NewSubprovider returns a new property subprovider
@@ -49,6 +51,14 @@ func HapiClient(meta meta.Meta) hapi.HAPI {
 		return hapiClient
 	}
 	return hapi.Client(meta.Session())
+}
+
+// IAMClient returns the IAM interface
+func IAMClient(meta meta.Meta) iam.IAM {
+	if iamClient != nil {
+		return iamClient
+	}
+	return iam.Client(meta.Session())
 }
 
 // SDKResources returns the property resources implemented using terraform-plugin-sdk

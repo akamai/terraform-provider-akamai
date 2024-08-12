@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/hapi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/iam"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/go-hclog"
@@ -31,6 +32,17 @@ func useClient(papiCli papi.PAPI, hapiCli hapi.HAPI, f func()) {
 		client = orig
 		hapiClient = origHapi
 		clientLock.Unlock()
+	}()
+
+	f()
+}
+
+func useIam(iamCli iam.IAM, f func()) {
+	origIam := iamClient
+	iamClient = iamCli
+
+	defer func() {
+		iamClient = origIam
 	}()
 
 	f()
