@@ -17,6 +17,8 @@
 
 
 #### FEATURES/ENHANCEMENTS:
+* Appsec
+  * Added `request_body_inspection_limit_override` field to `akamai_appsec_advanced_settings_request_body` resource
 
 
 * Global

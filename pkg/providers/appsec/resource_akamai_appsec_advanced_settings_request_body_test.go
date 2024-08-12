@@ -26,9 +26,9 @@ func TestAkamaiAdvancedSettingsRequestBodyResConfig(t *testing.T) {
 			return configResponse
 		}
 
-		requestBodyRead = func(t *testing.T, configId int, version int, policyId string, client *appsec.Mock, numberOfTimes int) {
+		requestBodyRead = func(t *testing.T, configId int, version int, policyId string, client *appsec.Mock, numberOfTimes int, filePath string) {
 			requestBodyResponse := appsec.GetAdvancedSettingsRequestBodyResponse{}
-			err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResAdvancedSettingsRequestBody/AdvancedSettingsRequestBody.json"), &requestBodyResponse)
+			err := json.Unmarshal(testutils.LoadFixtureBytes(t, filePath), &requestBodyResponse)
 			require.NoError(t, err)
 
 			client.On("GetAdvancedSettingsRequestBody",
@@ -38,9 +38,9 @@ func TestAkamaiAdvancedSettingsRequestBodyResConfig(t *testing.T) {
 
 		}
 
-		updateRequestBody = func(t *testing.T, updateRequestBody appsec.UpdateAdvancedSettingsRequestBodyRequest, client *appsec.Mock, numberOfTimes int) {
+		updateRequestBody = func(t *testing.T, updateRequestBody appsec.UpdateAdvancedSettingsRequestBodyRequest, client *appsec.Mock, numberOfTimes int, filePath string) {
 			updateRequestBodyResponse := appsec.UpdateAdvancedSettingsRequestBodyResponse{}
-			err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResAdvancedSettingsRequestBody/AdvancedSettingsRequestBody.json"), &updateRequestBodyResponse)
+			err := json.Unmarshal(testutils.LoadFixtureBytes(t, filePath), &updateRequestBodyResponse)
 			require.NoError(t, err)
 
 			client.On("UpdateAdvancedSettingsRequestBody",
@@ -49,9 +49,9 @@ func TestAkamaiAdvancedSettingsRequestBodyResConfig(t *testing.T) {
 
 		}
 
-		removeRequestBody = func(t *testing.T, updateRequestBody appsec.RemoveAdvancedSettingsRequestBodyRequest, client *appsec.Mock, numberOfTimes int) {
+		removeRequestBody = func(t *testing.T, updateRequestBody appsec.RemoveAdvancedSettingsRequestBodyRequest, client *appsec.Mock, numberOfTimes int, filePath string) {
 			removeRequestBodyResponse := appsec.RemoveAdvancedSettingsRequestBodyResponse{}
-			err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResAdvancedSettingsRequestBody/AdvancedSettingsRequestBody.json"), &removeRequestBodyResponse)
+			err := json.Unmarshal(testutils.LoadFixtureBytes(t, filePath), &removeRequestBodyResponse)
 			require.NoError(t, err)
 
 			client.On("RemoveAdvancedSettingsRequestBody",
@@ -65,14 +65,14 @@ func TestAkamaiAdvancedSettingsRequestBodyResConfig(t *testing.T) {
 		client := &appsec.Mock{}
 		configResponse := configVersion(t, 43253, client)
 
-		requestBodyRead(t, 43253, 7, "", client, 2)
+		requestBodyRead(t, 43253, 7, "", client, 2, "testdata/TestResAdvancedSettingsRequestBody/AdvancedSettingsRequestBody.json")
+
 		updateRequestBodyRequest := appsec.UpdateAdvancedSettingsRequestBodyRequest{ConfigID: configResponse.ID, Version: 7, PolicyID: "", RequestBodyInspectionLimitInKB: appsec.Limit16KB}
 
-		updateRequestBody(t, updateRequestBodyRequest, client, 1)
-
+		updateRequestBody(t, updateRequestBodyRequest, client, 1, "testdata/TestResAdvancedSettingsRequestBody/AdvancedSettingsRequestBody.json")
 		removeRequestBodyRequest := appsec.RemoveAdvancedSettingsRequestBodyRequest{ConfigID: configResponse.ID, Version: 7, PolicyID: "", RequestBodyInspectionLimitInKB: appsec.Default}
 
-		removeRequestBody(t, removeRequestBodyRequest, client, 1)
+		removeRequestBody(t, removeRequestBodyRequest, client, 1, "testdata/TestResAdvancedSettingsRequestBody/AdvancedSettingsRequestBody.json")
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
 				IsUnitTest:               true,
@@ -96,14 +96,15 @@ func TestAkamaiAdvancedSettingsRequestBodyResConfig(t *testing.T) {
 
 		configResponse := configVersion(t, 43253, client)
 
-		requestBodyRead(t, configResponse.ID, configResponse.LatestVersion, "", client, 4)
+		requestBodyRead(t, configResponse.ID, configResponse.LatestVersion, "", client, 4, "testdata/TestResAdvancedSettingsRequestBody/AdvancedSettingsRequestBody.json")
+
 		updateRequestBodyRequest := appsec.UpdateAdvancedSettingsRequestBodyRequest{ConfigID: configResponse.ID, Version: configResponse.LatestVersion, PolicyID: "", RequestBodyInspectionLimitInKB: appsec.Limit16KB}
 
-		updateRequestBody(t, updateRequestBodyRequest, client, 1)
+		updateRequestBody(t, updateRequestBodyRequest, client, 1, "testdata/TestResAdvancedSettingsRequestBody/AdvancedSettingsRequestBody.json")
 
 		removeRequestBodyRequest := appsec.RemoveAdvancedSettingsRequestBodyRequest{ConfigID: configResponse.ID, Version: configResponse.LatestVersion, PolicyID: "", RequestBodyInspectionLimitInKB: appsec.Default}
 
-		removeRequestBody(t, removeRequestBodyRequest, client, 1)
+		removeRequestBody(t, removeRequestBodyRequest, client, 1, "testdata/TestResAdvancedSettingsRequestBody/AdvancedSettingsRequestBody.json")
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -113,10 +114,11 @@ func TestAkamaiAdvancedSettingsRequestBodyResConfig(t *testing.T) {
 						Config: testutils.LoadFixtureString(t, "testdata/TestResAdvancedSettingsRequestBody/match_by_id.tf"),
 					},
 					{
-						ImportState:       true,
-						ImportStateVerify: true,
-						ImportStateId:     "43253",
-						ResourceName:      "akamai_appsec_advanced_settings_request_body.test",
+						ImportState:             true,
+						ImportStateVerify:       true,
+						ImportStateVerifyIgnore: []string{"request_body_inspection_limit_override"},
+						ImportStateId:           "43253",
+						ResourceName:            "akamai_appsec_advanced_settings_request_body.test",
 					},
 				},
 			})
@@ -128,15 +130,15 @@ func TestAkamaiAdvancedSettingsRequestBodyResConfig(t *testing.T) {
 
 		configResponse := configVersion(t, 43253, client)
 
-		requestBodyRead(t, configResponse.ID, configResponse.LatestVersion, "test_policy", client, 4)
+		requestBodyRead(t, configResponse.ID, configResponse.LatestVersion, "test_policy", client, 4, "testdata/TestResAdvancedSettingsRequestBody/AdvancedSettingsRequestBodyPolicy.json")
 
-		updateRequestBodyRequest := appsec.UpdateAdvancedSettingsRequestBodyRequest{ConfigID: configResponse.ID, Version: configResponse.LatestVersion, PolicyID: "test_policy", RequestBodyInspectionLimitInKB: appsec.Limit16KB}
+		updateRequestBodyRequest := appsec.UpdateAdvancedSettingsRequestBodyRequest{ConfigID: configResponse.ID, Version: configResponse.LatestVersion, PolicyID: "test_policy", RequestBodyInspectionLimitInKB: appsec.Limit16KB, RequestBodyInspectionLimitOverride: true}
 
-		updateRequestBody(t, updateRequestBodyRequest, client, 1)
+		updateRequestBody(t, updateRequestBodyRequest, client, 1, "testdata/TestResAdvancedSettingsRequestBody/AdvancedSettingsRequestBody.json")
 
-		removeRequestBodyRequest := appsec.RemoveAdvancedSettingsRequestBodyRequest{ConfigID: configResponse.ID, Version: configResponse.LatestVersion, PolicyID: "test_policy", RequestBodyInspectionLimitInKB: appsec.Default}
+		removeRequestBodyRequest := appsec.RemoveAdvancedSettingsRequestBodyRequest{ConfigID: configResponse.ID, Version: configResponse.LatestVersion, PolicyID: "test_policy", RequestBodyInspectionLimitInKB: appsec.Default, RequestBodyInspectionLimitOverride: false}
 
-		removeRequestBody(t, removeRequestBodyRequest, client, 1)
+		removeRequestBody(t, removeRequestBodyRequest, client, 1, "testdata/TestResAdvancedSettingsRequestBody/AdvancedSettingsRequestBodyDisabled.json")
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -161,15 +163,19 @@ func TestAkamaiAdvancedSettingsRequestBodyResConfig(t *testing.T) {
 
 		configResponse := configVersion(t, 43253, client)
 
-		requestBodyRead(t, configResponse.ID, configResponse.LatestVersion, "test_policy", client, 2)
+		requestBodyRead(t, configResponse.ID, configResponse.LatestVersion, "test_policy", client, 5, "testdata/TestResAdvancedSettingsRequestBody/AdvancedSettingsRequestBodyPolicy.json")
 
-		updateRequestBodyRequest := appsec.UpdateAdvancedSettingsRequestBodyRequest{ConfigID: configResponse.ID, Version: configResponse.LatestVersion, PolicyID: "test_policy", RequestBodyInspectionLimitInKB: appsec.Limit16KB}
+		updateRequestBodyRequest := appsec.UpdateAdvancedSettingsRequestBodyRequest{ConfigID: configResponse.ID, Version: configResponse.LatestVersion, PolicyID: "test_policy", RequestBodyInspectionLimitInKB: appsec.Limit16KB, RequestBodyInspectionLimitOverride: true}
 
-		updateRequestBody(t, updateRequestBodyRequest, client, 1)
+		updateRequestBody(t, updateRequestBodyRequest, client, 1, "testdata/TestResAdvancedSettingsRequestBody/AdvancedSettingsRequestBody.json")
 
-		removeRequestBodyRequest := appsec.RemoveAdvancedSettingsRequestBodyRequest{ConfigID: configResponse.ID, Version: configResponse.LatestVersion, PolicyID: "test_policy", RequestBodyInspectionLimitInKB: appsec.Default}
+		updateRequestBodyRequestWithVal := appsec.UpdateAdvancedSettingsRequestBodyRequest{ConfigID: configResponse.ID, Version: configResponse.LatestVersion, PolicyID: "test_policy", RequestBodyInspectionLimitInKB: appsec.Limit32KB, RequestBodyInspectionLimitOverride: true}
 
-		removeRequestBody(t, removeRequestBodyRequest, client, 1)
+		updateRequestBody(t, updateRequestBodyRequestWithVal, client, 1, "testdata/TestResAdvancedSettingsRequestBody/AdvancedSettingsRequestBody32.json")
+
+		removeRequestBodyRequest := appsec.RemoveAdvancedSettingsRequestBodyRequest{ConfigID: configResponse.ID, Version: configResponse.LatestVersion, PolicyID: "test_policy", RequestBodyInspectionLimitInKB: appsec.Default, RequestBodyInspectionLimitOverride: false}
+
+		removeRequestBody(t, removeRequestBodyRequest, client, 1, "testdata/TestResAdvancedSettingsRequestBody/AdvancedSettingsRequestBodyDisabled.json")
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
@@ -182,10 +188,61 @@ func TestAkamaiAdvancedSettingsRequestBodyResConfig(t *testing.T) {
 							resource.TestCheckResourceAttr("akamai_appsec_advanced_settings_request_body.policy", "id", "43253:test_policy"),
 						),
 					},
+					{
+						Config:             testutils.LoadFixtureString(t, "testdata/TestResAdvancedSettingsRequestBody/update_by_policy_32.tf"),
+						ExpectNonEmptyPlan: true,
+						Check: resource.ComposeAggregateTestCheckFunc(
+							resource.TestCheckResourceAttr("akamai_appsec_advanced_settings_request_body.policy", "id", "43253:test_policy"),
+						),
+					},
 				},
 			})
 		})
 
 		client.AssertExpectations(t)
 	})
+	t.Run("match by AdvancedSettingsRequestBodyPolicyIDDisable", func(t *testing.T) {
+		client := &appsec.Mock{}
+
+		configResponse := configVersion(t, 43253, client)
+
+		requestBodyRead(t, configResponse.ID, configResponse.LatestVersion, "test_policy", client, 5, "testdata/TestResAdvancedSettingsRequestBody/AdvancedSettingsRequestBodyPolicy.json")
+
+		// create
+		updateRequestBodyRequest := appsec.UpdateAdvancedSettingsRequestBodyRequest{ConfigID: configResponse.ID, Version: configResponse.LatestVersion, PolicyID: "test_policy", RequestBodyInspectionLimitInKB: appsec.Limit16KB, RequestBodyInspectionLimitOverride: true}
+
+		updateRequestBody(t, updateRequestBodyRequest, client, 1, "testdata/TestResAdvancedSettingsRequestBody/AdvancedSettingsRequestBodyPolicy.json")
+
+		//update
+		updateRequestBodyRequestDisable := appsec.UpdateAdvancedSettingsRequestBodyRequest{ConfigID: configResponse.ID, Version: configResponse.LatestVersion, PolicyID: "test_policy", RequestBodyInspectionLimitInKB: appsec.Limit32KB, RequestBodyInspectionLimitOverride: false}
+
+		updateRequestBody(t, updateRequestBodyRequestDisable, client, 1, "testdata/TestResAdvancedSettingsRequestBody/AdvancedSettingsRequestBodyDisabled.json")
+
+		//delete
+		removeRequestBodyRequest := appsec.RemoveAdvancedSettingsRequestBodyRequest{ConfigID: configResponse.ID, Version: configResponse.LatestVersion, PolicyID: "test_policy", RequestBodyInspectionLimitInKB: appsec.Default, RequestBodyInspectionLimitOverride: false}
+
+		removeRequestBody(t, removeRequestBodyRequest, client, 1, "testdata/TestResAdvancedSettingsRequestBody/AdvancedSettingsRequestBodyDisabled.json")
+
+		useClient(client, func() {
+			resource.Test(t, resource.TestCase{
+				IsUnitTest:               true,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResAdvancedSettingsRequestBody/update_by_policy_id.tf"),
+					},
+					{
+						Config:             testutils.LoadFixtureString(t, "testdata/TestResAdvancedSettingsRequestBody/update_by_policy_id_disable.tf"),
+						ExpectNonEmptyPlan: true,
+						Check: resource.ComposeAggregateTestCheckFunc(
+							resource.TestCheckResourceAttr("akamai_appsec_advanced_settings_request_body.policy", "id", "43253:test_policy"),
+						),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
 }

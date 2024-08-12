@@ -43,6 +43,12 @@ func resourceAdvancedSettingsRequestBody() *schema.Resource {
 				Required:    true,
 				Description: "Request body inspection size limit in KB allowed values are 'default', 8, 16, 32",
 			},
+			"request_body_inspection_limit_override": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     true,
+				Description: "Indicates if the Request body inspection size should be overridden at policy",
+			},
 		},
 	}
 }
@@ -103,6 +109,11 @@ func resourceAdvancedSettingsRequestBodyImport(ctx context.Context, d *schema.Re
 	if err := d.Set("request_body_inspection_limit", advancedSettingsRequestBody.RequestBodyInspectionLimitInKB); err != nil {
 		return nil, err
 	}
+	if getAdvancedSettingsRequestBody.PolicyID != "" {
+		if err := d.Set("request_body_inspection_limit_override", advancedSettingsRequestBody.RequestBodyInspectionLimitOverride); err != nil {
+			return nil, err
+		}
+	}
 	return []*schema.ResourceData{d}, nil
 
 }
@@ -136,12 +147,20 @@ func upsertAdvancedSettingsRequestBody(ctx context.Context, d *schema.ResourceDa
 		return diag.FromErr(err)
 	}
 
-	_, err = client.UpdateAdvancedSettingsRequestBody(ctx, appsec.UpdateAdvancedSettingsRequestBodyRequest{
+	req := appsec.UpdateAdvancedSettingsRequestBodyRequest{
 		ConfigID:                       configID,
 		Version:                        version,
 		PolicyID:                       policyID,
 		RequestBodyInspectionLimitInKB: appsec.RequestBodySizeLimit(requestBodyInspectionLimitInKB),
-	})
+	}
+	if policyID != "" {
+		override, err := tf.GetBoolValue("request_body_inspection_limit_override", d)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		req.RequestBodyInspectionLimitOverride = override
+	}
+	_, err = client.UpdateAdvancedSettingsRequestBody(ctx, req)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -189,6 +208,11 @@ func resourceAdvancedSettingsRequestBodyRead(ctx context.Context, d *schema.Reso
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
+	if policyID != "" {
+		if err := d.Set("request_body_inspection_limit_override", advancedSettingsRequestBody.RequestBodyInspectionLimitOverride); err != nil {
+			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
+		}
+	}
 	return nil
 }
 
@@ -219,16 +243,21 @@ func resourceAdvancedSettingsRequestBodyDelete(ctx context.Context, d *schema.Re
 		return diag.FromErr(err)
 	}
 
-	removeAdvancedSettingsRequestBody := appsec.RemoveAdvancedSettingsRequestBodyRequest{
+	req := appsec.RemoveAdvancedSettingsRequestBodyRequest{
 		ConfigID:                       configID,
 		Version:                        version,
 		PolicyID:                       policyID,
 		RequestBodyInspectionLimitInKB: appsec.Default,
 	}
 
-	_, err = client.RemoveAdvancedSettingsRequestBody(ctx, removeAdvancedSettingsRequestBody)
+	if policyID != "" {
+		req.RequestBodyInspectionLimitOverride = false
+	}
+
+	_, err = client.RemoveAdvancedSettingsRequestBody(ctx, req)
 	if err != nil {
 		return diag.FromErr(err)
 	}
+	d.SetId("")
 	return nil
 }

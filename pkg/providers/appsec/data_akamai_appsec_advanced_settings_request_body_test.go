@@ -67,7 +67,7 @@ func TestAkamaiAdvancedSettingsRequestBodyDataBasicPolicyID(t *testing.T) {
 		).Return(&config, nil)
 
 		getRequestBodyResponse := appsec.GetAdvancedSettingsRequestBodyResponse{}
-		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestDSAdvancedSettingsRequestBody/AdvancedSettingsRequestBody.json"), &getRequestBodyResponse)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestDSAdvancedSettingsRequestBody/AdvancedSettingsRequestBodyPolicy.json"), &getRequestBodyResponse)
 		require.NoError(t, err)
 
 		client.On("GetAdvancedSettingsRequestBody",
