@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/iam"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/subprovider"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -15,7 +16,8 @@ import (
 type (
 	// Subprovider gathers IAM resources and data sources
 	Subprovider struct {
-		client iam.IAM
+		client     iam.IAM
+		papiClient papi.PAPI
 	}
 
 	option func(p *Subprovider)
@@ -50,6 +52,14 @@ func (p *Subprovider) Client(meta meta.Meta) iam.IAM {
 		return p.client
 	}
 	return iam.Client(meta.Session())
+}
+
+// PapiClient returns the PAPI interface
+func (p *Subprovider) PapiClient(meta meta.Meta) papi.PAPI {
+	if p.client != nil {
+		return p.papiClient
+	}
+	return papi.Client(meta.Session())
 }
 
 // SDKResources returns the IAM resources implemented using terraform-plugin-sdk
@@ -88,5 +98,6 @@ func (p *Subprovider) FrameworkResources() []func() resource.Resource {
 func (p *Subprovider) FrameworkDataSources() []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		NewAllowedAPIsDataSource,
+		NewBlockedPropertiesDataSource,
 	}
 }

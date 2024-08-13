@@ -19,6 +19,10 @@
 
 #### FEATURES/ENHANCEMENTS:
 
+* IAM
+  * Added data sources:
+    * `akamai_iam_blocked_properties` - reads blocked properties for a certain user in a group
+
 
 * IAM
   * Added new data source:
