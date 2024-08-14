@@ -29,10 +29,15 @@
     * `akamai_iam_allowed_apis` - read the list of APIs available to the user
 
 
+* IAM
+  * Added new data source:
+    * `akamai_iam_cidr_block` - read the CIDR block details
+
 
 
 * IAM
   * Improved date handling to use `time.Time` instead of `string`
+
 
 
 

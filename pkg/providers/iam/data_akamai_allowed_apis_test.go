@@ -135,7 +135,7 @@ func TestDataAllowedAPIs(t *testing.T) {
 					Steps: []resource.TestStep{
 						{
 							Config:      testutils.LoadFixtureString(t, test.configPath),
-							Check:       checkKeysAttrs(test.mockData),
+							Check:       checkAllowedAPIsAttrs(test.mockData),
 							ExpectError: test.error,
 						},
 					},
@@ -177,7 +177,7 @@ func expectFullListAllowedAPIs(_ *testing.T, client *iam.Mock, data testDataForA
 
 }
 
-func checkKeysAttrs(data testDataForAllowedAPIs) resource.TestCheckFunc {
+func checkAllowedAPIsAttrs(data testDataForAllowedAPIs) resource.TestCheckFunc {
 	name := "data.akamai_iam_allowed_apis.test"
 	checksFuncs := []resource.TestCheckFunc{
 		resource.TestCheckResourceAttr(name, "username", data.username),

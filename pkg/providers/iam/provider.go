@@ -99,5 +99,6 @@ func (p *Subprovider) FrameworkDataSources() []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		NewAllowedAPIsDataSource,
 		NewBlockedPropertiesDataSource,
+		NewCIDRBlockDataSource,
 	}
 }
