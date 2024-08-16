@@ -101,5 +101,6 @@ func (p *Subprovider) FrameworkDataSources() []func() datasource.DataSource {
 		NewBlockedPropertiesDataSource,
 		NewCIDRBlockDataSource,
 		NewPasswordPolicyDataSource,
+		NewAuthorizedUsersDataSource,
 	}
 }

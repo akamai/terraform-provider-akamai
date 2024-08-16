@@ -20,6 +20,10 @@
 #### FEATURES/ENHANCEMENTS:
 
 * IAM
+  * Added data source:
+    * `akamai_iam_authorized_users` - read the list of authorized API client users
+
+* IAM
   * Added data sources:
     * `akamai_iam_blocked_properties` - reads blocked properties for a certain user in a group
 
