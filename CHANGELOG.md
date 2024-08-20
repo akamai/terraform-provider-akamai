@@ -103,6 +103,9 @@
 
 
 
+* IAM
+  * Added new data source:
+    * `akamai_iam_password_policy` - read the password policy parameters
 
 
 
