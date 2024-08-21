@@ -23,7 +23,7 @@ type (
 	}
 
 	apiData struct {
-		accessLevels      []string
+		accessLevels      []iam.AccessLevel
 		apiID             int64
 		apiName           string
 		description       string
@@ -40,8 +40,8 @@ var (
 		clientType:         ptr.To("CLIENT"),
 		allowAccountSwitch: ptr.To(true),
 		allowedAPIs: []apiData{{
-			accessLevels: []string{
-				"READ-WRITE"},
+			accessLevels: []iam.AccessLevel{
+				iam.ReadWriteLevel},
 			apiID:             146,
 			apiName:           "Property Manager (PAPI)",
 			description:       "Property Manager (PAPI). PAPI requires access to Edge Hostnames. Please edit your authorizations to add HAPI to your API Client.",
@@ -50,9 +50,9 @@ var (
 			hasAccess:         true,
 			serviceProviderID: 1,
 		}, {
-			accessLevels: []string{
-				"READ-ONLY",
-				"READ-WRITE"},
+			accessLevels: []iam.AccessLevel{
+				iam.ReadOnlyLevel,
+				iam.ReadWriteLevel},
 			apiID:             11,
 			apiName:           "Event Center",
 			description:       "Event Center",
@@ -65,8 +65,8 @@ var (
 	basicTestDataForAllowedAPIsNoOptional = testDataForAllowedAPIs{
 		username: "test",
 		allowedAPIs: []apiData{{
-			accessLevels: []string{
-				"READ-WRITE"},
+			accessLevels: []iam.AccessLevel{
+				iam.ReadWriteLevel},
 			apiID:             146,
 			apiName:           "Property Manager (PAPI)",
 			description:       "Property Manager (PAPI). PAPI requires access to Edge Hostnames. Please edit your authorizations to add HAPI to your API Client.",
@@ -75,9 +75,9 @@ var (
 			hasAccess:         true,
 			serviceProviderID: 1,
 		}, {
-			accessLevels: []string{
-				"READ-ONLY",
-				"READ-WRITE"},
+			accessLevels: []iam.AccessLevel{
+				iam.ReadOnlyLevel,
+				iam.ReadWriteLevel},
 			apiID:             11,
 			apiName:           "Event Center",
 			description:       "Event Center",
@@ -197,7 +197,7 @@ func checkAllowedAPIsAttrs(data testDataForAllowedAPIs) resource.TestCheckFunc {
 
 	for i, api := range data.allowedAPIs {
 		for j, accessLevel := range api.accessLevels {
-			checksFuncs = append(checksFuncs, resource.TestCheckResourceAttr(name, fmt.Sprintf("allowed_apis.%d.access_levels.%d", i, j), accessLevel))
+			checksFuncs = append(checksFuncs, resource.TestCheckResourceAttr(name, fmt.Sprintf("allowed_apis.%d.access_levels.%d", i, j), string(accessLevel)))
 		}
 		checksFuncs = append(checksFuncs, resource.TestCheckResourceAttr(name, fmt.Sprintf("allowed_apis.%d.api_id", i), strconv.FormatInt(api.apiID, 10)))
 		checksFuncs = append(checksFuncs, resource.TestCheckResourceAttr(name, fmt.Sprintf("allowed_apis.%d.api_name", i), api.apiName))

@@ -164,7 +164,7 @@ func (d *allowedAPIsSourceModel) read(allowedAPIs iam.ListAllowedAPIsResponse) d
 	for _, api := range allowedAPIs {
 		accessLevels := make([]types.String, 0, len(api.AccessLevels))
 		for _, accessLevel := range api.AccessLevels {
-			accessLevels = append(accessLevels, types.StringValue(accessLevel))
+			accessLevels = append(accessLevels, types.StringValue(string(accessLevel)))
 		}
 
 		a := apiModel{
