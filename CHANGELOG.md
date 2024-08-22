@@ -100,6 +100,9 @@
 
 
 
+* IAM
+  * Added new data source:
+    * `akamai_iam_account_switch_keys` - read the account switch keys
 
 
 
