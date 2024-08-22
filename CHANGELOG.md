@@ -66,11 +66,9 @@
 #### BUG FIXES:
 
 * Appsec
-  * Fixed import of `akamai_appsec_match_target` for newly created security configuration or any security configuration not synced in the terraform state [I#546](https://github.com/akamai/terraform-provider-akamai/issues/546))
-
-
-* Appsec
-  * Fixed issue where activation was not triggered after network list change in `resource_akamai_networklist_activations` resource [I#518](https://github.com/akamai/terraform-provider-akamai/issues/518)
+  * Fixed import of `akamai_appsec_match_target` for newly created security configuration or any security configuration not synced in the terraform state ([I#546](https://github.com/akamai/terraform-provider-akamai/issues/546))
+  * Fixed issue where activation was not triggered after network list change in `resource_akamai_networklist_activations` resource ([I#518](https://github.com/akamai/terraform-provider-akamai/issues/518))
+  * Fixed `akamai_appsec_configuration` data source to return a single security configuration in the output_text instead of the entire list of security configurations
 
 
 
