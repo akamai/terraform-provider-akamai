@@ -1,67 +1,24 @@
 # RELEASE NOTES
 
-## X.X.X (X X, X)
-
-#### BREAKING CHANGES:
-
-
-
-
-
-
-
-
-
-
-
-
+## 6.4.0 (Aug 29, 2024)
 
 #### FEATURES/ENHANCEMENTS:
-* Appsec
-  * Added `request_body_inspection_limit_override` field to `akamai_appsec_advanced_settings_request_body` resource
-
 
 * Global
   * Updated SDKv2 and framework libraries as result of updating `terraform-plugin-testing`
 
+* Appsec
+  * Added `request_body_inspection_limit_override` field to `akamai_appsec_advanced_settings_request_body` resource
 
-
+* CPS
+  * Added `acknowledge_post_verification_warnings` to the `akamai_cps_dv_validation` resource to allow for acknowledgement of post-verification warnings
 
 * PAPI
   * Added support for new rule format `v2024-08-13`
-
-
-
-
-* PAPI
-  * Added support for moving PAPI resources between groups (`akamai_property` and `akamai_property_bootstrap`) by updating the `group_id` field.
-
-
-* CPS
-    * Added `acknowledge_post_verification_warnings` to the `akamai_cps_dv_validation` resource to allow for acknowledgement of post-verification warnings
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  * Added support for moving PAPI property between groups (`akamai_property` and `akamai_property_bootstrap`) by updating the `group_id` field.
+  * Added support for status code `429 Too Many Requests` containing `X-RateLimit-Next` header.
+    When `X-RateLimit-Next` is present, the wait time before retry is calculated as the time
+    difference between this header and the `Date` header.
 
 #### BUG FIXES:
 
@@ -70,31 +27,12 @@
   * Fixed issue where activation was not triggered after network list change in `resource_akamai_networklist_activations` resource ([I#518](https://github.com/akamai/terraform-provider-akamai/issues/518))
   * Fixed `akamai_appsec_configuration` data source to return a single security configuration in the output_text instead of the entire list of security configurations
 
-
-
-
 * Cloudlets
   * Corrected format of the retry time when logging in `akamai_cloudlets_application_load_balancer_activation` and `akamai_cloudlets_policy_activation` resources
-
-
-
-
 
 * PAPI
   * Fixed issue with provider producing an inconsistent final plan with Cloudlet policy ([I#567](https://github.com/akamai/terraform-provider-akamai/issues/567)).
     It happened in cases when content of the rule depends on some other resource
-
-
-
-
-
-
-
-
-
-
-
-
 
 ## 6.3.0 (July 16, 2024)
 
@@ -137,21 +75,6 @@
   * Added support for new rule format `v2024-05-31`
   * Added new optional field `ttl` to `akamai_edge_hostname` resource. 
     When it is used, creation or update takes longer as resource has to synchronize its state with HAPI.
-
-
-
-
-
-
-* PAPI
-  * Added support for status code `429 Too Many Requests` containing `X-RateLimit-Next` header.
-    When `X-RateLimit-Next` is present, the wait time before retry is calculated as the time
-    difference between this header and the `Date` header.
-
-
-
-
-
 
 #### BUG FIXES:
 
