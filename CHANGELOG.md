@@ -21,6 +21,10 @@
 
 * IAM
   * Added data source:
+    * `akamai_iam_role` - read the details for a role
+
+* IAM
+  * Added data source:
     * `akamai_iam_authorized_users` - read the list of authorized API client users
 
 * IAM
