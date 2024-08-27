@@ -28,6 +28,7 @@ type includeDataSource struct {
 
 // includeDataSourceModel describes the data source data model for PropertyIncludeDataSource.
 type includeDataSourceModel struct {
+	AssetID           types.String `tfsdk:"asset_id"`
 	ContractID        types.String `tfsdk:"contract_id"`
 	GroupID           types.String `tfsdk:"group_id"`
 	IncludeID         types.String `tfsdk:"include_id"`
@@ -85,6 +86,10 @@ func (d *includeDataSource) Schema(_ context.Context, _ datasource.SchemaRequest
 				MarkdownDescription: "Identifier of the data source",
 				Computed:            true,
 			},
+			"asset_id": schema.StringAttribute{
+				Computed:            true,
+				MarkdownDescription: "ID of the include in the Identity and Access Management API.",
+			},
 		},
 	}
 }
@@ -130,6 +135,7 @@ func (d *includeDataSource) Read(ctx context.Context, req datasource.ReadRequest
 
 	include := getIncludeResp.Include
 
+	data.AssetID = types.StringValue(include.AssetID)
 	data.Name = types.StringValue(include.IncludeName)
 	data.Type = types.StringValue(string(include.IncludeType))
 	data.LatestVersion = types.Int64Value(int64(include.LatestVersion))

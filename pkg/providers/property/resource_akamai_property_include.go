@@ -110,6 +110,11 @@ func resourcePropertyInclude() *schema.Resource {
 				Computed:    true,
 				Description: "The most recent version to be activated to the production network",
 			},
+			"asset_id": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "ID of the include in the Identity and Access Management API.",
+			},
 		},
 	}
 }
@@ -289,6 +294,7 @@ func resourcePropertyIncludeRead(ctx context.Context, rd *schema.ResourceData, m
 	}
 
 	attrs := map[string]interface{}{
+		"asset_id":           include.AssetID,
 		"rules":              string(rulesJSON),
 		"name":               include.IncludeName,
 		"type":               include.IncludeType,

@@ -78,6 +78,11 @@ func dataSourceProperty() *schema.Resource {
 				Computed:    true,
 				Description: "Property's version currently activated in staging (zero when not active in staging).",
 			},
+			"asset_id": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "ID of the property in the Identity and Access Management API.",
+			},
 		},
 	}
 }
@@ -164,6 +169,7 @@ func getRulesForProperty(ctx context.Context, property *papi.Property, meta meta
 func getPropertyAttributes(propertyResponse *papi.Property, propertyVersionResponse *papi.GetPropertyVersionsResponse) map[string]interface{} {
 	propertyVersion := propertyVersionResponse.Version
 	property := map[string]interface{}{
+		"asset_id":           propertyResponse.AssetID,
 		"contract_id":        propertyResponse.ContractID,
 		"group_id":           propertyResponse.GroupID,
 		"latest_version":     propertyResponse.LatestVersion,

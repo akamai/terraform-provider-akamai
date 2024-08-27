@@ -21,6 +21,7 @@ import (
 
 func TestResourcePropertyInclude(t *testing.T) {
 	type testData struct {
+		assetID           string
 		groupID           string
 		rulesPath         string
 		includeID         string
@@ -50,6 +51,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 	newGetIncludeResp := func(testData *testData) *papi.GetIncludeResponse {
 		return &papi.GetIncludeResponse{
 			Include: papi.Include{
+				AssetID:           testData.assetID,
 				GroupID:           testData.groupID,
 				IncludeID:         testData.includeID,
 				ContractID:        testData.contractID,
@@ -294,6 +296,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 	}{
 		"create include - no rules and no warnings": {
 			testData: testData{
+				assetID:     "aid_555",
 				groupID:     "grp_123",
 				productID:   "prd_test",
 				includeID:   includeID,
@@ -311,6 +314,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 				{
 					Config: testutils.LoadFixtureString(t, "%s/property_include_no_rules.tf", workdir),
 					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_property_include.test", "asset_id", "aid_555"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "group_id", "grp_123"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "contract_id", "ctr_123"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "product_id", "prd_test"),
@@ -329,6 +333,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 		},
 		"create include - with rules": {
 			testData: testData{
+				assetID:     "aid_555",
 				groupID:     "grp_123",
 				rulesPath:   "simple_rules.json",
 				productID:   "prd_test",
@@ -348,6 +353,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 				{
 					Config: testutils.LoadFixtureString(t, "%s/property_include.tf", workdir),
 					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_property_include.test", "asset_id", "aid_555"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "group_id", "grp_123"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "contract_id", "ctr_123"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "product_id", "prd_test"),
@@ -366,6 +372,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 		},
 		"create include - with rules with comment": {
 			testData: testData{
+				assetID:     "aid_555",
 				groupID:     "grp_123",
 				rulesPath:   "simple_rules_with_comment.json",
 				productID:   "prd_test",
@@ -385,6 +392,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 				{
 					Config: testutils.LoadFixtureString(t, "%s/property_include_with_comment.tf", workdir),
 					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_property_include.test", "asset_id", "aid_555"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "group_id", "grp_123"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "contract_id", "ctr_123"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "product_id", "prd_test"),
@@ -403,6 +411,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 		},
 		"create include - rules with validation errors": {
 			testData: testData{
+				assetID:     "aid_555",
 				groupID:     "grp_123",
 				rulesPath:   "simple_rules.json",
 				productID:   "prd_test",
@@ -423,6 +432,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 				{
 					Config: testutils.LoadFixtureString(t, "%s/property_include.tf", workdir),
 					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_property_include.test", "asset_id", "aid_555"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "group_id", "grp_123"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "contract_id", "ctr_123"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "product_id", "prd_test"),
@@ -440,6 +450,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 		},
 		"create include - rules with validation warnings": {
 			testData: testData{
+				assetID:     "aid_555",
 				groupID:     "grp_123",
 				rulesPath:   "simple_rules.json",
 				productID:   "prd_test",
@@ -460,6 +471,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 				{
 					Config: testutils.LoadFixtureString(t, "%s/property_include.tf", workdir),
 					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_property_include.test", "asset_id", "aid_555"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "group_id", "grp_123"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "contract_id", "ctr_123"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "product_id", "prd_test"),
@@ -478,6 +490,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 		},
 		"create include - rules with validation errors and warnings": {
 			testData: testData{
+				assetID:     "aid_555",
 				groupID:     "grp_123",
 				rulesPath:   "simple_rules.json",
 				productID:   "prd_test",
@@ -498,6 +511,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 				{
 					Config: testutils.LoadFixtureString(t, "%s/property_include.tf", workdir),
 					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_property_include.test", "asset_id", "aid_555"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "group_id", "grp_123"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "contract_id", "ctr_123"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "product_id", "prd_test"),
@@ -516,6 +530,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 		},
 		"create include - server returns no warnings on second apply": {
 			testData: testData{
+				assetID:     "aid_555",
 				groupID:     "grp_123",
 				rulesPath:   "simple_rules.json",
 				productID:   "prd_test",
@@ -541,6 +556,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 				{
 					Config: testutils.LoadFixtureString(t, "%s/property_include.tf", workdir),
 					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_property_include.test", "asset_id", "aid_555"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "group_id", "grp_123"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "contract_id", "ctr_123"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "product_id", "prd_test"),
@@ -558,6 +574,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 				{
 					Config: testutils.LoadFixtureString(t, "%s/property_include.tf", workdir),
 					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_property_include.test", "asset_id", "aid_555"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "group_id", "grp_123"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "contract_id", "ctr_123"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "product_id", "prd_test"),
@@ -576,6 +593,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 		},
 		"create include - server returns no errors on second apply": {
 			testData: testData{
+				assetID:     "aid_555",
 				groupID:     "grp_123",
 				rulesPath:   "simple_rules.json",
 				productID:   "prd_test",
@@ -601,6 +619,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 				{
 					Config: testutils.LoadFixtureString(t, "%s/property_include.tf", workdir),
 					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_property_include.test", "asset_id", "aid_555"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "group_id", "grp_123"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "contract_id", "ctr_123"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "product_id", "prd_test"),
@@ -618,6 +637,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 				{
 					Config: testutils.LoadFixtureString(t, "%s/property_include.tf", workdir),
 					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_property_include.test", "asset_id", "aid_555"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "group_id", "grp_123"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "contract_id", "ctr_123"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "product_id", "prd_test"),
@@ -636,6 +656,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 		},
 		"update include - editable version": {
 			testData: testData{
+				assetID:          "aid_555",
 				groupID:          "grp_123",
 				productID:        "prd_test",
 				includeID:        includeID,
@@ -663,6 +684,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 				{
 					Config: testutils.LoadFixtureString(t, "%s/property_include_no_rules.tf", workdir),
 					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_property_include.test", "asset_id", "aid_555"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "group_id", "grp_123"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "contract_id", "ctr_123"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "product_id", "prd_test"),
@@ -680,6 +702,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 				{
 					Config: testutils.LoadFixtureString(t, "%s/property_include.tf", workdir),
 					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_property_include.test", "asset_id", "aid_555"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "group_id", "grp_123"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "contract_id", "ctr_123"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "product_id", "prd_test"),
@@ -698,6 +721,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 		},
 		"update include - create new version": {
 			testData: testData{
+				assetID:          "aid_555",
 				groupID:          "grp_123",
 				productID:        "prd_test",
 				includeID:        includeID,
@@ -730,6 +754,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 				{
 					Config: testutils.LoadFixtureString(t, "%s/property_include_no_rules.tf", workdir),
 					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_property_include.test", "asset_id", "aid_555"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "group_id", "grp_123"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "contract_id", "ctr_123"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "product_id", "prd_test"),
@@ -747,6 +772,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 				{
 					Config: testutils.LoadFixtureString(t, "%s/property_include.tf", workdir),
 					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_property_include.test", "asset_id", "aid_555"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "group_id", "grp_123"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "contract_id", "ctr_123"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "product_id", "prd_test"),

@@ -99,9 +99,10 @@ func (p *Subprovider) FrameworkDataSources() []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		NewAccountSwitchKeysDataSource,
 		NewAllowedAPIsDataSource,
+		NewAuthorizedUsersDataSource,
 		NewBlockedPropertiesDataSource,
 		NewCIDRBlockDataSource,
 		NewPasswordPolicyDataSource,
-		NewAuthorizedUsersDataSource,
+		NewPropertyUsersDataSource,
 	}
 }

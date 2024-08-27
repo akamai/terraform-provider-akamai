@@ -207,6 +207,11 @@ func resourceProperty() *schema.Resource {
 				Elem:        papiError(),
 				Description: "Rule validation warnings",
 			},
+			"asset_id": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "ID of the property in the Identity and Access Management API.",
+			},
 		},
 	}
 }
@@ -634,6 +639,7 @@ func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interfa
 	}
 
 	attrs := map[string]interface{}{
+		"asset_id":           property.AssetID,
 		"name":               property.PropertyName,
 		"group_id":           property.GroupID,
 		"contract_id":        property.ContractID,

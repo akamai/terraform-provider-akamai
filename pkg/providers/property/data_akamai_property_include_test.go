@@ -31,6 +31,7 @@ func TestDataPropertyInclude(t *testing.T) {
 					Includes: papi.IncludeItems{
 						Items: []papi.Include{
 							{
+								AssetID:           "aid_555",
 								IncludeName:       "inc_name",
 								IncludeType:       "MICROSERVICES",
 								LatestVersion:     4,
@@ -40,6 +41,7 @@ func TestDataPropertyInclude(t *testing.T) {
 						},
 					},
 					Include: papi.Include{
+						AssetID:           "aid_555",
 						IncludeName:       "inc_name",
 						IncludeType:       "MICROSERVICES",
 						LatestVersion:     4,
@@ -49,6 +51,7 @@ func TestDataPropertyInclude(t *testing.T) {
 				}, nil)
 			},
 			expectedAttributes: map[string]string{
+				"asset_id":           "aid_555",
 				"name":               "inc_name",
 				"type":               "MICROSERVICES",
 				"latest_version":     "4",
@@ -68,6 +71,7 @@ func TestDataPropertyInclude(t *testing.T) {
 					Includes: papi.IncludeItems{
 						Items: []papi.Include{
 							{
+								AssetID:           "aid_555",
 								IncludeName:       "inc_name",
 								IncludeType:       "MICROSERVICES",
 								LatestVersion:     4,
@@ -77,6 +81,7 @@ func TestDataPropertyInclude(t *testing.T) {
 						},
 					},
 					Include: papi.Include{
+						AssetID:           "aid_555",
 						IncludeName:       "inc_name",
 						IncludeType:       "MICROSERVICES",
 						LatestVersion:     4,

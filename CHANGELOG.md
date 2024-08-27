@@ -115,8 +115,12 @@
     * `akamai_iam_password_policy` - read the password policy parameters
 
 
-
-
+* IAM
+  * Added data sources:
+    * `akamai_iam_property_users` - lists users for property or include
+  * Added schema field `asset_id` (IAM identifier of a property or include) to:
+    * `akamai_property` resource and data source,
+    * `akamai_property_include` resource and data source.
 
 
 
