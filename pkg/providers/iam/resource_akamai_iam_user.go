@@ -326,6 +326,12 @@ func resourceIAMUserCreate(ctx context.Context, d *schema.ResourceData, m interf
 		return diag.Errorf("failed to create user: %s\n%s", err, resourceIAMUserErrorAdvice(err))
 	}
 
+	err = manageUserPassword(ctx, d, client, user.IdentityID)
+	if err != nil {
+		logger.WithError(err).Errorf("failed to set user password")
+		return diag.Errorf("failed to set user password: %s", err)
+	}
+
 	// lock the user's account
 	lock, err := tf.GetBoolValue("lock", d)
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
@@ -336,12 +342,6 @@ func resourceIAMUserCreate(ctx context.Context, d *schema.ResourceData, m interf
 		if err = client.LockUser(ctx, iam.LockUserRequest{IdentityID: user.IdentityID}); err != nil {
 			return diag.FromErr(err)
 		}
-	}
-
-	err = manageUserPassword(ctx, d, client, user.IdentityID)
-	if err != nil {
-		logger.WithError(err).Errorf("failed to set user password")
-		return diag.Errorf("failed to set user password: %s", err)
 	}
 
 	d.SetId(user.IdentityID)
@@ -622,23 +622,6 @@ func resourceIAMUserUpdate(ctx context.Context, d *schema.ResourceData, m interf
 		needRead = true
 	}
 
-	// lock the user
-	if d.HasChange("lock") {
-		lock, err := tf.GetBoolValue("lock", d)
-		if err != nil && !errors.Is(err, tf.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-
-		if lock {
-			err = client.LockUser(ctx, iam.LockUserRequest{IdentityID: d.Id()})
-		} else {
-			err = client.UnlockUser(ctx, iam.UnlockUserRequest{IdentityID: d.Id()})
-		}
-		if err != nil {
-			return diag.FromErr(err)
-		}
-	}
-
 	// user notifications
 	if d.HasChange("user_notifications") {
 		notificationsData, err := tf.GetListValue("user_notifications", d)
@@ -672,6 +655,23 @@ func resourceIAMUserUpdate(ctx context.Context, d *schema.ResourceData, m interf
 			return diag.Errorf("failed to set user password: %s", err)
 		}
 		needRead = true
+	}
+
+	// lock the user
+	if d.HasChange("lock") {
+		lock, err := tf.GetBoolValue("lock", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+
+		if lock {
+			err = client.LockUser(ctx, iam.LockUserRequest{IdentityID: d.Id()})
+		} else {
+			err = client.UnlockUser(ctx, iam.UnlockUserRequest{IdentityID: d.Id()})
+		}
+		if err != nil {
+			return diag.FromErr(err)
+		}
 	}
 
 	if needRead {

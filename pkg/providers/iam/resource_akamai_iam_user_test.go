@@ -829,6 +829,32 @@ func TestResourceUser(t *testing.T) {
 				},
 			},
 		},
+		"create user with password, set lock field as true and set new password": {
+			init: func(m *iam.Mock) {
+				// create
+				expectResourceIAMUserCreatePhase(m, userCreateLockedRequest, userCreateLocked, true, true, nil, nil, nil)
+				expectResourceIAMUserReadPhase(m, userCreateLocked, nil).Times(2)
+
+				// plan
+				expectResourceIAMUserReadPhase(m, userCreateLocked, nil).Once()
+				// update only the user password
+				expectPassword(m, userCreateLocked.IdentityID, "NewPassword@123", nil).Once()
+				expectResourceIAMUserReadPhase(m, userCreateLocked, nil).Times(2)
+
+				// delete
+				expectResourceIAMUserDeletePhase(m, userCreateLocked, nil).Once()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic_with_password_and_user_profile_locked.tf"),
+					Check:  resource.ComposeTestCheckFunc(checkUserAttributes(userCreateLocked, true), checkDefaultUserNotificationsAttributes(userCreateLocked)),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/update_password_for_user_profile_locked.tf"),
+					Check:  resource.ComposeTestCheckFunc(checkUserAttributes(userCreateLocked, true), checkDefaultUserNotificationsAttributes(userCreateLocked)),
+				},
+			},
+		},
 		"create user with password and update user info and remove the password field": {
 			init: func(m *iam.Mock) {
 				// create
