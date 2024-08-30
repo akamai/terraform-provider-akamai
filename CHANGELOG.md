@@ -21,6 +21,10 @@
 
 * IAM
   * Added data source:
+    * `akamai_iam_group` - read the details for a group
+
+* IAM
+  * Added data source:
     * `akamai_iam_role` - read the details for a role
 
 * IAM
