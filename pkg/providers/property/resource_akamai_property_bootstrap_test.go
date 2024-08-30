@@ -180,6 +180,7 @@ func TestBootstrapResourceUpdate(t *testing.T) {
 			configPathForCreate: "testdata/TestResPropertyBootstrap/create.tf",
 			configPathForUpdate: "testdata/TestResPropertyBootstrap/update_group.tf",
 			init: func(t *testing.T, papiMock *papi.Mock, iamMock *iam.Mock, data testDataForPropertyBootstrap) {
+				t.Skip("skipping before moving property is enabled again, see DXE-4176")
 				ExpectCreateProperty(papiMock, data.name, data.groupID, data.contractID, data.productID,
 					data.propertyID).Once()
 				prp := &papi.Property{
@@ -257,6 +258,7 @@ func TestBootstrapResourceUpdate(t *testing.T) {
 			configPathForCreate: "testdata/TestResPropertyBootstrap/create.tf",
 			configPathForUpdate: "testdata/TestResPropertyBootstrap/update_name_and_group.tf",
 			init: func(t *testing.T, papiMock *papi.Mock, iamMock *iam.Mock, data testDataForPropertyBootstrap) {
+				t.Skip("skipping before moving property is enabled again, see DXE-4176")
 				ExpectCreateProperty(papiMock, data.name, data.groupID, data.contractID, data.productID,
 					data.propertyID).Once()
 				prp := &papi.Property{
@@ -341,6 +343,31 @@ func TestBootstrapResourceUpdate(t *testing.T) {
 				productID:  "prd_3",
 			},
 			errorForUpdate: regexp.MustCompile("updating field `product_id` is not possible"),
+		},
+		"create and update group - error": {
+			// TODO: remove this test after moving property is enabled again, see DXE-4176
+			configPathForCreate: "testdata/TestResPropertyBootstrap/create.tf",
+			configPathForUpdate: "testdata/TestResPropertyBootstrap/update_group.tf",
+			init: func(t *testing.T, papiMock *papi.Mock, iamMock *iam.Mock, data testDataForPropertyBootstrap) {
+				ExpectCreateProperty(papiMock, data.name, data.groupID, data.contractID, data.productID, data.propertyID)
+				prp := &papi.Property{
+					ContractID:   "ctr_2",
+					GroupID:      "grp_1",
+					ProductID:    "prd_3",
+					PropertyID:   "prp_123",
+					PropertyName: "property_name",
+				}
+				ExpectGetProperty(papiMock, data.propertyID, data.groupID, data.contractID, prp)
+				ExpectRemoveProperty(papiMock, data.propertyID, data.contractID, data.groupID)
+			},
+			mockData: testDataForPropertyBootstrap{
+				propertyID: "prp_123",
+				name:       "property_name",
+				groupID:    "grp_1",
+				contractID: "ctr_2",
+				productID:  "prd_3",
+			},
+			errorForUpdate: regexp.MustCompile("updating field `group_id` is not possible"),
 		},
 	}
 

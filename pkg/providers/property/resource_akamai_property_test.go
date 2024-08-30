@@ -1730,6 +1730,7 @@ func TestResProperty(t *testing.T) {
 }
 
 func TestGroupIDUpdate(t *testing.T) {
+	t.Skip("skipping before moving property is enabled again, see DXE-4176")
 	baseData := mockPropertyData{
 		propertyName:  "dummy_name",
 		groupID:       "grp_1",
@@ -1887,6 +1888,56 @@ func TestGroupIDUpdate(t *testing.T) {
 			iamMock.AssertExpectations(t)
 		})
 	}
+}
+
+// TODO: remove this test after moving property is enabled again, see DXE-4176
+func TestGroupIDUpdateError(t *testing.T) {
+	baseData := mockPropertyData{
+		propertyName:  "dummy_name",
+		groupID:       "grp_1",
+		contractID:    "ctr_2",
+		productID:     "prd_3",
+		propertyID:    "prp_12345",
+		latestVersion: 1,
+		assetID:       "aid_55555",
+		cnameFrom:     "from.test.domain",
+		cnameTo:       "to.test.domain",
+	}
+
+	papiMock := &papi.Mock{}
+	mp := mockProperty{
+		papiMock:         papiMock,
+		mockPropertyData: baseData,
+	}
+	mockResourcePropertyCreate(&mp)
+	// refresh
+	mockResourcePropertyRead(&mp)
+	// second refresh
+	mockResourcePropertyRead(&mp)
+	mp.mockRemoveProperty().Once()
+
+	useClient(papiMock, nil, func() {
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestGroupIDUpdate/base.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_property.test", "name", "dummy_name"),
+						resource.TestCheckResourceAttr("akamai_property.test", "group_id", "grp_1"),
+						resource.TestCheckResourceAttr("akamai_property.test", "hostnames.0.cname_from", "from.test.domain"),
+						resource.TestCheckResourceAttr("akamai_property.test", "contract_id", "ctr_2"),
+						resource.TestCheckResourceAttr("akamai_property.test", "product_id", "prd_3"),
+						resource.TestCheckResourceAttr("akamai_property.test", "hostnames.0.cname_to", "to.test.domain"),
+						resource.TestCheckResourceAttr("akamai_property.test", "hostnames.0.cert_provisioning_type", "DEFAULT")),
+				},
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestGroupIDUpdate/update_group_id.tf"),
+					ExpectError: regexp.MustCompile(`property attribute "group_id" cannot be changed after creation \(immutable\)`),
+				},
+			},
+		})
+	})
 }
 
 func TestPropertyResource_versionNotesLifecycle(t *testing.T) {

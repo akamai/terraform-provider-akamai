@@ -72,6 +72,7 @@ func (r *BootstrapResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 				Description: "Group ID to be assigned to the Property",
 				PlanModifiers: []planmodifier.String{
 					modifiers.StringUseStateIf(modifiers.EqualUpToPrefixFunc("grp_")),
+					modifiers.PreventStringUpdate(),
 				},
 			},
 			"contract_id": schema.StringAttribute{
@@ -201,9 +202,8 @@ func (r *BootstrapResource) Read(ctx context.Context, req resource.ReadRequest, 
 }
 
 // Update supports change for the following attributes:
-// - `group_id` using a dedicated endpoint from the IAM API,
 // - `name`, which results in resource replacement.
-// Trying to update `contract_id` or `product_id` will result in an error.
+// Trying to update `group_id`, `contract_id` or `product_id` will result in an error.
 func (r *BootstrapResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state BootstrapResourceModel
 

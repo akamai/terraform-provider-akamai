@@ -666,6 +666,7 @@ func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 	diags := diag.Diagnostics{}
 
 	immutable := []string{
+		"group_id",
 		"contract_id",
 		"product_id",
 		"property_id",
@@ -683,9 +684,9 @@ func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 	}
 
 	// We only update if these attributes change.
-	if !d.HasChanges("group_id", "hostnames", "rules", "rule_format") {
+	if !d.HasChanges("hostnames", "rules", "rule_format") {
 		logger.Debug(
-			"No changes to group_id, hostnames, rules, or rule_format (no update required)")
+			"No changes to hostnames, rules, or rule_format (no update required)")
 		return nil
 	}
 
