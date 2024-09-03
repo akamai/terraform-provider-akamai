@@ -15,9 +15,6 @@
 
 * PAPI
   * Added support for new rule format `v2024-08-13`
-  * Added support for status code `429 Too Many Requests` containing `X-RateLimit-Next` header.
-    When `X-RateLimit-Next` is present, the wait time before retry is calculated as the time
-    difference between this header and the `Date` header.
 
 #### BUG FIXES:
 
