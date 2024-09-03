@@ -19,7 +19,7 @@ var (
 	_ datasource.DataSourceWithConfigure = &groupDataSource{}
 )
 
-const schemaMaxGroupDepth = 50
+const maxSupportedGroupNesting = 50
 
 // NewGroupDataSource returns all the details for a group
 func NewGroupDataSource() datasource.DataSource {
@@ -97,7 +97,7 @@ func (d *groupDataSource) groupSchemaAttributes(remainingNesting int) map[string
 	if remainingNesting > 0 {
 		groupAttributes["sub_groups"] = schema.ListNestedAttribute{
 			Computed:    true,
-			Description: fmt.Sprintf("Children of the parent group. Maximal depth of subgroups is %d.", schemaMaxGroupDepth),
+			Description: fmt.Sprintf("Children of the parent group. Maximal depth of subgroups is %d.", maxSupportedGroupNesting),
 			NestedObject: schema.NestedAttributeObject{
 				Attributes: d.groupSchemaAttributes(remainingNesting - 1),
 			},
@@ -111,7 +111,7 @@ func (d *groupDataSource) groupSchemaAttributes(remainingNesting int) map[string
 func (d *groupDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "IAM Group data source",
-		Attributes:          d.groupSchemaAttributes(schemaMaxGroupDepth + 1),
+		Attributes:          d.groupSchemaAttributes(maxSupportedGroupNesting + 1),
 	}
 }
 
@@ -159,7 +159,7 @@ func (d *groupDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 		return
 	}
 
-	groupData, diags := d.convertGroupData(getGroupResp, data, schemaMaxGroupDepth)
+	groupData, diags := d.convertGroupData(getGroupResp, data, maxSupportedGroupNesting)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -198,7 +198,7 @@ func (d *groupDataSource) convertGroupData(group *iam.Group, data groupDataSourc
 	} else if remainingNesting <= 1 && len(group.SubGroups) > 0 {
 		return groupDataSourceModel{}, diag.Diagnostics{diag.NewErrorDiagnostic(
 			"unsupported subgroup depth",
-			fmt.Sprintf("Subgroup %d contains more subgroups and exceeds the total supported limit of nesting %d.", group.GroupID, schemaMaxGroupDepth),
+			fmt.Sprintf("Subgroup %d contains more subgroups and exceeds the total supported limit of nesting %d.", group.GroupID, maxSupportedGroupNesting),
 		)}
 	}
 

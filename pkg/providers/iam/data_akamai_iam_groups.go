@@ -18,7 +18,7 @@ func dataSourceIAMGroups() *schema.Resource {
 		Description: `List all groups in which you have a scope of "admin" for the current account and contract`,
 		ReadContext: dataIAMGroupsRead,
 		Schema: map[string]*schema.Schema{
-			"groups": nestedGroupsSchema(50), // Can handle groups with nesting up to 50 levels deep
+			"groups": nestedGroupsSchema(maxSupportedGroupNesting), // Can handle groups with nesting up to 50 levels deep
 		},
 	}
 }

@@ -112,6 +112,27 @@
   * Added new data source:
     * `akamai_iam_account_switch_keys` - read the account switch keys
 
+* IAM:
+  * Added new datasource:
+    * `akamai_iam_accessible_groups` - read the groups and subgroups accessible for provided user
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
