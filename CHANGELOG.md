@@ -1,6 +1,6 @@
 # RELEASE NOTES
 
-## 6.4.0 (Aug 29, 2024)
+## 6.4.0 (Sep 04, 2024)
 
 #### FEATURES/ENHANCEMENTS:
 
