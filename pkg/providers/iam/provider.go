@@ -107,5 +107,6 @@ func (p *Subprovider) FrameworkDataSources() []func() datasource.DataSource {
 		NewPasswordPolicyDataSource,
 		NewPropertyUsersDataSource,
 		NewRoleDataSource,
+		NewUsersAffectedByMovingGroupDataSource,
 	}
 }

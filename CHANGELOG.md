@@ -153,7 +153,9 @@
 
 
 
-
+* IAM
+  * Added new data source:
+    * `akamai_iam_users_affected_by_moving_group` - list the users affected by moving a group
 
 
 
