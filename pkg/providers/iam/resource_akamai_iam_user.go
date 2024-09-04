@@ -200,47 +200,37 @@ func resourceIAMUser() *schema.Resource {
 				MaxItems:    1, // Ensure only one notification configuration can be set
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"options": {
+						"api_client_credential_expiry_notification": {
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Default:     false,
+							Description: "Enables notifications for expiring API client credentials",
+						},
+						"new_user_notification": {
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Default:     true,
+							Description: "Enables notifications for group administrators when the user creates other new users",
+						},
+						"password_expiry": {
+							Type:        schema.TypeBool,
+							Required:    true,
+							Description: "Enables notifications for expiring passwords",
+						},
+						"proactive": {
 							Type:        schema.TypeList,
 							Required:    true,
-							Description: "Specifies email notifications settings.",
-							MaxItems:    1, // Ensure only one options configuration can be set
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"api_client_credential_expiry_notification": {
-										Type:        schema.TypeBool,
-										Optional:    true,
-										Default:     false,
-										Description: "Enables notifications for expiring API client credentials",
-									},
-									"new_user_notification": {
-										Type:        schema.TypeBool,
-										Optional:    true,
-										Default:     true,
-										Description: "Enables notifications for group administrators when the user creates other new users",
-									},
-									"password_expiry": {
-										Type:        schema.TypeBool,
-										Required:    true,
-										Description: "Enables notifications for expiring passwords",
-									},
-									"proactive": {
-										Type:        schema.TypeList,
-										Required:    true,
-										Description: "Products for which the user gets notifications for service issues",
-										Elem: &schema.Schema{
-											Type: schema.TypeString,
-										},
-									},
-									"upgrade": {
-										Type:        schema.TypeList,
-										Required:    true,
-										Description: "Products for which the user receives notifications for upgrades",
-										Elem: &schema.Schema{
-											Type: schema.TypeString,
-										},
-									},
-								},
+							Description: "Products for which the user gets notifications for service issues",
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+						"upgrade": {
+							Type:        schema.TypeList,
+							Required:    true,
+							Description: "Products for which the user receives notifications for upgrades",
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
 							},
 						},
 						"enable_email_notifications": {
@@ -373,32 +363,19 @@ func extractUserNotificationsData(notificationsData interface{}) (*iam.UserNotif
 		return nil, errors.New("user notifications data is not a valid list")
 	}
 
-	item, ok := notificationsList[0].(map[string]interface{})
+	itemMap, ok := notificationsList[0].(map[string]interface{})
 	if !ok {
 		return nil, errors.New("user notifications data item is not a valid map")
 	}
 
-	options, ok := item["options"].([]interface{})
-	if !ok {
-		return nil, errors.New("options field in user notifications data is not a valid list")
-	}
-
-	var optionsMap map[string]interface{}
-	if len(options) > 0 {
-		optionsMap, ok = options[0].(map[string]interface{})
-		if !ok {
-			return nil, errors.New("options field item is not a valid map")
-		}
-	}
-
 	return &iam.UserNotifications{
-		EnableEmail: item["enable_email_notifications"].(bool),
+		EnableEmail: itemMap["enable_email_notifications"].(bool),
 		Options: iam.UserNotificationOptions{
-			APIClientCredentialExpiry: optionsMap["api_client_credential_expiry_notification"].(bool),
-			NewUser:                   optionsMap["new_user_notification"].(bool),
-			PasswordExpiry:            optionsMap["password_expiry"].(bool),
-			Proactive:                 tf.InterfaceSliceToStringSlice(optionsMap["proactive"].([]interface{})),
-			Upgrade:                   tf.InterfaceSliceToStringSlice(optionsMap["upgrade"].([]interface{})),
+			APIClientCredentialExpiry: itemMap["api_client_credential_expiry_notification"].(bool),
+			NewUser:                   itemMap["new_user_notification"].(bool),
+			PasswordExpiry:            itemMap["password_expiry"].(bool),
+			Proactive:                 tf.InterfaceSliceToStringSlice(itemMap["proactive"].([]interface{})),
+			Upgrade:                   tf.InterfaceSliceToStringSlice(itemMap["upgrade"].([]interface{})),
 		},
 	}, nil
 }
@@ -462,16 +439,12 @@ func resourceIAMUserRead(ctx context.Context, d *schema.ResourceData, m interfac
 	}
 
 	userNotifications := []interface{}{map[string]interface{}{
-		"enable_email_notifications": user.Notifications.EnableEmail,
-		"options": []interface{}{
-			map[string]interface{}{
-				"api_client_credential_expiry_notification": user.Notifications.Options.APIClientCredentialExpiry,
-				"new_user_notification":                     user.Notifications.Options.NewUser,
-				"password_expiry":                           user.Notifications.Options.PasswordExpiry,
-				"proactive":                                 user.Notifications.Options.Proactive,
-				"upgrade":                                   user.Notifications.Options.Upgrade,
-			},
-		},
+		"enable_email_notifications":                user.Notifications.EnableEmail,
+		"api_client_credential_expiry_notification": user.Notifications.Options.APIClientCredentialExpiry,
+		"new_user_notification":                     user.Notifications.Options.NewUser,
+		"password_expiry":                           user.Notifications.Options.PasswordExpiry,
+		"proactive":                                 user.Notifications.Options.Proactive,
+		"upgrade":                                   user.Notifications.Options.Upgrade,
 	},
 	}
 
@@ -871,16 +844,12 @@ func customizeNotificationDiff(_ context.Context, d *schema.ResourceDiff, _ inte
 		// Field is omitted, so apply the default configuration
 		defaultConfig := []interface{}{
 			map[string]interface{}{
-				"enable_email_notifications": true,
-				"options": []interface{}{
-					map[string]interface{}{
-						"api_client_credential_expiry_notification": false,
-						"new_user_notification":                     true,
-						"password_expiry":                           true,
-						"proactive":                                 []interface{}{},
-						"upgrade":                                   []interface{}{},
-					},
-				},
+				"enable_email_notifications":                true,
+				"api_client_credential_expiry_notification": false,
+				"new_user_notification":                     true,
+				"password_expiry":                           true,
+				"proactive":                                 []interface{}{},
+				"upgrade":                                   []interface{}{},
 			},
 		}
 		if err := d.SetNew("user_notifications", defaultConfig); err != nil {

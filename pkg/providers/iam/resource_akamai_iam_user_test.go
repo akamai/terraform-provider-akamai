@@ -197,11 +197,11 @@ func TestResourceUser(t *testing.T) {
 	checkDefaultUserNotificationsAttributes := func(user iam.User) resource.TestCheckFunc {
 		return resource.ComposeAggregateTestCheckFunc(
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_notifications.#", "1"),
-			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_notifications.0.options.0.new_user_notification", "true"),
-			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_notifications.0.options.0.password_expiry", "true"),
-			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_notifications.0.options.0.proactive.#", "0"),
-			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_notifications.0.options.0.upgrade.#", "0"),
-			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_notifications.0.options.0.api_client_credential_expiry_notification", "false"),
+			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_notifications.0.new_user_notification", "true"),
+			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_notifications.0.password_expiry", "true"),
+			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_notifications.0.proactive.#", "0"),
+			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_notifications.0.upgrade.#", "0"),
+			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_notifications.0.api_client_credential_expiry_notification", "false"),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_notifications.0.enable_email_notifications", "true"))
 	}
 
@@ -209,11 +209,11 @@ func TestResourceUser(t *testing.T) {
 		return resource.ComposeAggregateTestCheckFunc(
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_notifications.#", "1"),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_notifications.0.enable_email_notifications", "true"),
-			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_notifications.0.options.0.new_user_notification", "true"),
-			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_notifications.0.options.0.password_expiry", "true"),
-			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_notifications.0.options.0.proactive.#", "1"),
-			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_notifications.0.options.0.upgrade.#", "1"),
-			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_notifications.0.options.0.api_client_credential_expiry_notification", "true"),
+			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_notifications.0.new_user_notification", "true"),
+			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_notifications.0.password_expiry", "true"),
+			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_notifications.0.proactive.#", "1"),
+			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_notifications.0.upgrade.#", "1"),
+			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_notifications.0.api_client_credential_expiry_notification", "true"),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_notifications.0.enable_email_notifications", "true"))
 	}
 
@@ -392,9 +392,7 @@ func TestResourceUser(t *testing.T) {
 			},
 		},
 		"basic - custom notification - password_expiry field missing": {
-			init: func(m *iam.Mock) {
-
-			},
+			init: func(m *iam.Mock) {},
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic_notification_password_expiry_field_missing.tf"),
@@ -402,32 +400,17 @@ func TestResourceUser(t *testing.T) {
 				},
 			},
 		},
-		"basic - custom notification - options block missing": {
-			init: func(m *iam.Mock) {
-
-			},
+		"basic - custom notification - multiple user_notification blocks": {
+			init: func(m *iam.Mock) {},
 			steps: []resource.TestStep{
 				{
-					Config:      testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic_notification_options_block_missing.tf"),
-					ExpectError: regexp.MustCompile("At least 1 \"options\" blocks are required."),
-				},
-			},
-		},
-		"basic - custom notification - multiple options block": {
-			init: func(m *iam.Mock) {
-
-			},
-			steps: []resource.TestStep{
-				{
-					Config:      testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic_notification_multiple_options_block.tf"),
-					ExpectError: regexp.MustCompile("No more than 1 \"options\" blocks are allowed"),
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic_notification_multiple_notification_blocks.tf"),
+					ExpectError: regexp.MustCompile("No more than 1 \"user_notifications\" blocks are allowed"),
 				},
 			},
 		},
 		"basic - custom notification - enable_email_notifications missing": {
-			init: func(m *iam.Mock) {
-
-			},
+			init: func(m *iam.Mock) {},
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic_notification_enable_email_notifications_field_missing.tf"),
@@ -507,8 +490,7 @@ func TestResourceUser(t *testing.T) {
 			},
 		},
 		"enable_tfa and enable_mfa set to true - error": {
-			init: func(m *iam.Mock) {
-			},
+			init: func(m *iam.Mock) {},
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_with_invalid_auth_method.tf"),
@@ -761,8 +743,7 @@ func TestResourceUser(t *testing.T) {
 			},
 		},
 		"auth_grants_json should not panic when supplied interpolated string with unknown value": {
-			init: func(m *iam.Mock) {
-			},
+			init: func(m *iam.Mock) {},
 			steps: []resource.TestStep{
 				{
 					Config:             testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/auth_grants_interpolated.tf"),
