@@ -348,10 +348,10 @@ func TestDataEnrollment(t *testing.T) {
 		"happy path without challenges": {
 			enrollment:   enrollmentDV1,
 			enrollmentID: enrollment1ID,
-			init: func(t *testing.T, m *cps.Mock) {
+			init: func(_ *testing.T, m *cps.Mock) {
 				m.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{
 					EnrollmentID: enrollment1ID,
-				}).Return(enrollmentDV1, nil).Times(5)
+				}).Return(enrollmentDV1, nil).Times(3)
 			},
 			steps: []resource.TestStep{
 				{
@@ -363,10 +363,10 @@ func TestDataEnrollment(t *testing.T) {
 		"happy path with challenges": {
 			enrollment:   enrollmentDV2,
 			enrollmentID: enrollment2ID,
-			init: func(t *testing.T, m *cps.Mock) {
+			init: func(_ *testing.T, m *cps.Mock) {
 				m.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{
 					EnrollmentID: enrollment2ID,
-				}).Return(enrollmentDV2, nil).Times(5)
+				}).Return(enrollmentDV2, nil).Times(3)
 
 				dvArray := mockDVArray()
 				change := mockLetsEncryptChallenges()
@@ -374,12 +374,12 @@ func TestDataEnrollment(t *testing.T) {
 				m.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
 					ChangeID:     changeID,
 					EnrollmentID: enrollment2ID,
-				}).Return(change, nil).Times(5)
+				}).Return(change, nil).Times(3)
 
 				m.On("GetChangeLetsEncryptChallenges", mock.Anything, cps.GetChangeRequest{
 					ChangeID:     changeID,
 					EnrollmentID: enrollment2ID,
-				}).Return(dvArray, nil).Times(5)
+				}).Return(dvArray, nil).Times(3)
 			},
 			steps: []resource.TestStep{
 				{
@@ -391,7 +391,7 @@ func TestDataEnrollment(t *testing.T) {
 		"could not fetch an enrollment": {
 			enrollment:   enrollmentDV1,
 			enrollmentID: enrollment1ID,
-			init: func(t *testing.T, m *cps.Mock) {
+			init: func(_ *testing.T, m *cps.Mock) {
 				m.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{
 					EnrollmentID: enrollment1ID,
 				}).Return(nil, fmt.Errorf("could not get an enrollment")).Once()
@@ -406,7 +406,7 @@ func TestDataEnrollment(t *testing.T) {
 		"could not fetch a change status": {
 			enrollment:   enrollmentDV2,
 			enrollmentID: enrollment2ID,
-			init: func(t *testing.T, m *cps.Mock) {
+			init: func(_ *testing.T, m *cps.Mock) {
 				m.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{
 					EnrollmentID: enrollment2ID,
 				}).Return(enrollmentDV2, nil).Once()
@@ -426,7 +426,7 @@ func TestDataEnrollment(t *testing.T) {
 		"no changes on lets encrypt challenges": {
 			enrollment:   enrollmentDV2,
 			enrollmentID: enrollment2ID,
-			init: func(t *testing.T, m *cps.Mock) {
+			init: func(_ *testing.T, m *cps.Mock) {
 				m.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{
 					EnrollmentID: enrollment2ID,
 				}).Return(enrollmentDV2, nil).Once()
@@ -453,17 +453,17 @@ func TestDataEnrollment(t *testing.T) {
 		"third party change type": {
 			enrollment:   enrollmentThirdParty,
 			enrollmentID: enrollment3ID,
-			init: func(t *testing.T, m *cps.Mock) {
+			init: func(_ *testing.T, m *cps.Mock) {
 				m.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{
 					EnrollmentID: enrollment3ID,
-				}).Return(enrollmentThirdParty, nil).Times(5)
+				}).Return(enrollmentThirdParty, nil).Times(3)
 
 				change := mockThirdPartyCSRChallenges()
 
 				m.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
 					ChangeID:     changeID,
 					EnrollmentID: enrollment3ID,
-				}).Return(change, nil).Times(5)
+				}).Return(change, nil).Times(3)
 
 			},
 			steps: []resource.TestStep{
@@ -476,17 +476,17 @@ func TestDataEnrollment(t *testing.T) {
 		"ev change type": {
 			enrollment:   enrollmentEV,
 			enrollmentID: enrollment4ID,
-			init: func(t *testing.T, m *cps.Mock) {
+			init: func(_ *testing.T, m *cps.Mock) {
 				m.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{
 					EnrollmentID: enrollment4ID,
-				}).Return(enrollmentEV, nil).Times(5)
+				}).Return(enrollmentEV, nil).Times(3)
 
 				change := mockEVChallenges()
 
 				m.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
 					ChangeID:     changeID,
 					EnrollmentID: enrollment4ID,
-				}).Return(change, nil).Times(5)
+				}).Return(change, nil).Times(3)
 
 			},
 			steps: []resource.TestStep{

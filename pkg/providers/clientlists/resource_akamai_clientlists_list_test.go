@@ -81,7 +81,7 @@ func TestResourceClientList(t *testing.T) {
 			return &updateResponse
 		}
 
-		expectUpdateListItems = func(t *testing.T, client *clientlists.Mock, req clientlists.UpdateClientListItemsRequest) *clientlists.UpdateClientListItemsResponse {
+		expectUpdateListItems = func(_ *testing.T, client *clientlists.Mock, req clientlists.UpdateClientListItemsRequest) *clientlists.UpdateClientListItemsResponse {
 			appended := make([]clientlists.ListItemContent, 0, len(req.Append))
 			for _, v := range req.Append {
 				appended = append(appended, clientlists.ListItemContent{
@@ -120,7 +120,7 @@ func TestResourceClientList(t *testing.T) {
 			return &updateResponse
 		}
 
-		expectReadList = func(t *testing.T, client *clientlists.Mock, list clientlists.ListContent, items []clientlists.ListItemContent, callTimes int) {
+		expectReadList = func(_ *testing.T, client *clientlists.Mock, list clientlists.ListContent, items []clientlists.ListItemContent, callTimes int) {
 			clientListGetReq := clientlists.GetClientListRequest{
 				ListID:       list.ListID,
 				IncludeItems: true,
@@ -135,19 +135,19 @@ func TestResourceClientList(t *testing.T) {
 			client.On("GetClientList", mock.Anything, clientListGetReq).Return(&clientList, nil).Times(callTimes)
 		}
 
-		expectDeleteList = func(t *testing.T, client *clientlists.Mock, list clientlists.ListContent) {
+		expectDeleteList = func(_ *testing.T, client *clientlists.Mock, list clientlists.ListContent) {
 			clientListDeleteReq := clientlists.DeleteClientListRequest{
 				ListID: list.ListID,
 			}
 			client.On("DeleteClientList", mock.Anything, clientListDeleteReq).Return(nil).Once()
 		}
 
-		expectAPIErrorWithUpdateList = func(t *testing.T, client *clientlists.Mock, req clientlists.UpdateClientListRequest) {
+		expectAPIErrorWithUpdateList = func(_ *testing.T, client *clientlists.Mock, req clientlists.UpdateClientListRequest) {
 			err := fmt.Errorf(updateAPIError)
 			client.On("UpdateClientList", mock.Anything, req).Return(nil, err).Once()
 		}
 
-		expectAPIErrorWithGetList = func(t *testing.T, client *clientlists.Mock, req clientlists.GetClientListRequest) {
+		expectAPIErrorWithGetList = func(_ *testing.T, client *clientlists.Mock, req clientlists.GetClientListRequest) {
 			err := fmt.Errorf(getAPIError)
 			client.On("GetClientList", mock.Anything, req).Return(nil, err).Once()
 		}
@@ -786,10 +786,7 @@ func TestResourceClientList(t *testing.T) {
 				Delete: []clientlists.ListItemPayload{},
 			},
 		})
-		// Fake version update
-		updatedClientList := clientList.ListContent
-		updatedClientList.Version = 2
-		expectReadList(t, client, updatedClientList, mapItemsPayloadToContent(updatedItems), 2)
+		expectReadList(t, client, clientList.ListContent, mapItemsPayloadToContent(updatedItems), 2)
 		expectDeleteList(t, client, clientList.ListContent)
 
 		useClient(client, func() {

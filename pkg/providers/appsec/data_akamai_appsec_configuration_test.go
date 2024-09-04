@@ -71,6 +71,7 @@ func TestAkamaiConfiguration_data_hostnames(t *testing.T) {
 		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestDSSelectedHostnames/SelectedHostnames.json"), &getSelectedHostnamesResponse)
 		require.NoError(t, err)
 
+		expectedOutputText := "\n+------------------------------------------------------------------------------------------------------+\n| Configurations                                                                                       |\n+-----------+--------------+----------------+---------------------------+------------------------------+\n| CONFIG_ID | NAME         | LATEST_VERSION | VERSION_ACTIVE_IN_STAGING | VERSION_ACTIVE_IN_PRODUCTION |\n+-----------+--------------+----------------+---------------------------+------------------------------+\n| 43253     | Akamai Tools | 15             | 0                         | 0                            |\n+-----------+--------------+----------------+---------------------------+------------------------------+\n"
 		client.On("GetSelectedHostnames",
 			mock.Anything,
 			appsec.GetSelectedHostnamesRequest{ConfigID: 43253, Version: 15},
@@ -85,6 +86,7 @@ func TestAkamaiConfiguration_data_hostnames(t *testing.T) {
 						Config: testutils.LoadFixtureString(t, "testdata/TestDSConfiguration/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("data.akamai_appsec_configuration.test", "host_names.#", "2"),
+							resource.TestCheckResourceAttr("data.akamai_appsec_configuration.test", "output_text", expectedOutputText),
 						),
 					},
 				},

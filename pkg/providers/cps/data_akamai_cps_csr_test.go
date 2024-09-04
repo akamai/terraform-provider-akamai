@@ -347,7 +347,7 @@ func TestDataCPSCSR(t *testing.T) {
 	}{
 		"happy path with both algorithms with get change": {
 			init: func(t *testing.T, m *cps.Mock, testData testDataForCPSCSR) {
-				expectReadCPSCSR(t, m, testData, 5)
+				expectReadCPSCSR(t, m, testData, 3)
 			},
 			mockData:   bothAlgorithmsDataFromCSR,
 			configPath: "testdata/TestDataCPSCSR/default.tf",
@@ -355,7 +355,7 @@ func TestDataCPSCSR(t *testing.T) {
 		},
 		"happy path with both algorithms with get change history": {
 			init: func(t *testing.T, m *cps.Mock, testData testDataForCPSCSR) {
-				expectReadCPSCSRWithHistory(t, m, testData, 5)
+				expectReadCPSCSRWithHistory(t, m, testData, 3)
 			},
 			mockData:   bothAlgorithmsDataWithGetChangeHistory,
 			configPath: "testdata/TestDataCPSCSR/default.tf",
@@ -363,7 +363,7 @@ func TestDataCPSCSR(t *testing.T) {
 		},
 		"happy path with both algorithms with get longer change history": {
 			init: func(t *testing.T, m *cps.Mock, testData testDataForCPSCSR) {
-				expectReadCPSCSRWithHistory(t, m, testData, 5)
+				expectReadCPSCSRWithHistory(t, m, testData, 3)
 			},
 			mockData:   bothAlgorithmsDataWithGetLongerChangeHistory,
 			configPath: "testdata/TestDataCPSCSR/default.tf",
@@ -371,7 +371,7 @@ func TestDataCPSCSR(t *testing.T) {
 		},
 		"happy path with RSA algorithm": {
 			init: func(t *testing.T, m *cps.Mock, testData testDataForCPSCSR) {
-				expectReadCPSCSR(t, m, testData, 5)
+				expectReadCPSCSR(t, m, testData, 3)
 			},
 			mockData:   RSAData,
 			configPath: "testdata/TestDataCPSCSR/default.tf",
@@ -379,7 +379,7 @@ func TestDataCPSCSR(t *testing.T) {
 		},
 		"happy path with ECDSA algorithm": {
 			init: func(t *testing.T, m *cps.Mock, testData testDataForCPSCSR) {
-				expectReadCPSCSR(t, m, testData, 5)
+				expectReadCPSCSR(t, m, testData, 3)
 			},
 			mockData:   ECDSAData,
 			configPath: "testdata/TestDataCPSCSR/default.tf",
@@ -387,7 +387,7 @@ func TestDataCPSCSR(t *testing.T) {
 		},
 		"no algorithms": {
 			init: func(t *testing.T, m *cps.Mock, testData testDataForCPSCSR) {
-				expectReadCPSCSR(t, m, testData, 5)
+				expectReadCPSCSR(t, m, testData, 3)
 			},
 			mockData:   noAlgorithmsData,
 			configPath: "testdata/TestDataCPSCSR/no_algorithms.tf",
@@ -395,14 +395,14 @@ func TestDataCPSCSR(t *testing.T) {
 		},
 		"no pending changes": {
 			init: func(t *testing.T, m *cps.Mock, testData testDataForCPSCSR) {
-				expectReadCPSCSRNoPendingChanges(t, m, testData, 5)
+				expectReadCPSCSRNoPendingChanges(t, m, testData, 3)
 			},
 			mockData:   noPendingChanges,
 			configPath: "testdata/TestDataCPSCSR/no_algorithms.tf",
 			error:      nil,
 		},
 		"enrollment_id not provided": {
-			init:       func(t *testing.T, m *cps.Mock, testData testDataForCPSCSR) {},
+			init:       func(_ *testing.T, _ *cps.Mock, _ testDataForCPSCSR) {},
 			mockData:   testDataForCPSCSR{},
 			configPath: "testdata/TestDataCPSCSR/no_enrollment_id.tf",
 			error:      regexp.MustCompile("Missing required argument"),

@@ -251,7 +251,7 @@ func resourceApplicationLoadBalancerActivationChange(ctx context.Context, rd *sc
 
 		select {
 		case <-time.After(pollingActivationTries):
-			logger.Debugf("retrying ALB activation after %d minutes", pollingActivationTries.Minutes())
+			logger.Debugf("retrying ALB activation after %s", pollingActivationTries)
 			pollingActivationTries = 2 * pollingActivationTries
 			if pollingActivationTries > ApplicationLoadBalancerActivationRetryTimeout ||
 				!strings.Contains(strings.ToLower(err.Error()), ErrApplicationLoadBalancerActivationOriginNotDefined.Error()) {

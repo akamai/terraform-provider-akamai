@@ -386,13 +386,16 @@ func canTriggerNewPropertyVersion(rc tf.ResourceChangeFetcher, rd tf.ResourceDat
 
 	o, n := rc.GetChange("rules")
 	var oldRules papi.RulesUpdate
-	if err := json.Unmarshal([]byte(o.(string)), &oldRules); err != nil {
-		return false, fmt.Errorf("'old' = %s, unmarshal: %w", o.(string), err)
+	if o.(string) != "" {
+		if err := json.Unmarshal([]byte(o.(string)), &oldRules); err != nil {
+			return false, fmt.Errorf("'old' = %s, unmarshal: %w", o.(string), err)
+		}
 	}
-
 	var newRules papi.RulesUpdate
-	if err := json.Unmarshal([]byte(n.(string)), &newRules); err != nil {
-		return false, fmt.Errorf("'new' = %s, unmarshal: %w", n.(string), err)
+	if n.(string) != "" {
+		if err := json.Unmarshal([]byte(n.(string)), &newRules); err != nil {
+			return false, fmt.Errorf("'new' = %s, unmarshal: %w", n.(string), err)
+		}
 	}
 
 	versionNotes, _ := rd.GetOk("version_notes")
@@ -409,7 +412,11 @@ func canTriggerNewPropertyVersion(rc tf.ResourceChangeFetcher, rd tf.ResourceDat
 // It's crucial for avoiding inconsistent plan errors if it's used in akamai_property_activation resource.
 func setPropertyVersionsComputed(_ context.Context, rd *schema.ResourceDiff, _ interface{}) error {
 	rawData := tf.NewRawConfig(rd)
-	if ok, err := canTriggerNewPropertyVersion(rd, rawData); err != nil || !ok {
+	ok, err := canTriggerNewPropertyVersion(rd, rawData)
+	if err != nil {
+		return err
+	}
+	if !ok {
 		return nil
 	}
 
@@ -678,7 +685,8 @@ func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 
 	// We only update if these attributes change.
 	if !d.HasChanges("hostnames", "rules", "rule_format") {
-		logger.Debug("No changes to hostnames, rules, or rule_format (no update required)")
+		logger.Debug(
+			"No changes to hostnames, rules, or rule_format (no update required)")
 		return nil
 	}
 
@@ -706,7 +714,39 @@ func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 
 	propertyID := d.Id()
 	contractID := d.Get("contract_id").(string)
-	groupID := d.Get("group_id").(string)
+	oldGID, _ := d.GetChange("group_id")
+	oldGroupID := oldGID.(string)
+
+	// We want to change group id first: if the user loses access to the property as a result of
+	// group change, we want it to be visible immediately as an error during the same update.
+	//
+	// This way we will avoid the following scenario:
+	// 1. User changes the group and something else, e.g. hostnames and gets a success,
+	//    although they don't belong to the new group,
+	// 2. User changes hostnames again (not the group) and only then gets a (hard to understand)
+	//    error.
+	groupsDiffer, err := areGroupIDsDifferent(oldGroupID, property.GroupID)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if groupsDiffer {
+		key := papiKey{
+			propertyID: property.PropertyID,
+			groupID:    oldGroupID,
+			contractID: property.ContractID,
+		}
+
+		err := updateGroupID(ctx, client, IAMClient(meta.Must(m)), key, property.GroupID)
+
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		if !d.HasChanges("hostnames", "rules", "rule_format") {
+			logger.Debug("Only group_id changed, exiting early")
+			return resourcePropertyRead(ctx, d, m)
+		}
+	}
 
 	var propertyVersion int
 	if v, ok := d.GetOk("read_version"); ok && v.(int) != 0 {
@@ -715,7 +755,7 @@ func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 		propertyVersion = property.LatestVersion
 	}
 
-	resp, err := fetchPropertyVersion(ctx, client, propertyID, groupID, contractID, propertyVersion)
+	resp, err := fetchPropertyVersion(ctx, client, propertyID, property.GroupID, contractID, propertyVersion)
 	if err != nil {
 		d.Partial(true)
 		return diag.FromErr(err)
@@ -750,37 +790,44 @@ func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 		}
 	}
 
-	if !shouldUpdateRuleTree(d) {
-		return resourcePropertyRead(ctx, d, m)
+	if shouldUpdateRuleTree(d) {
+		if err := updateRuleTree(ctx, client, property, d); err != nil {
+			return diag.FromErr(err)
+		}
 	}
 
+	return resourcePropertyRead(ctx, d, m)
+}
+
+func updateRuleTree(ctx context.Context, client papi.PAPI, property papi.Property,
+	d *schema.ResourceData) error {
 	ruleFormat, err := tf.GetStringValue("rule_format", d)
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
-		return diag.FromErr(err)
+		return err
 	}
 
 	rulesJSON, err := tf.GetStringValue("rules", d)
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
-		return diag.FromErr(err)
+		return err
 	}
 
 	versionNotes, err := tf.GetStringValue("version_notes", tf.NewRawConfig(d))
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
-		return diag.FromErr(err)
+		return err
 	}
 
 	rulesUpdate, err := newRulesUpdate(rulesJSON, versionNotes)
 	if err != nil {
 		d.Partial(true)
-		return diag.FromErr(err)
+		return err
 	}
 
 	if err := updatePropertyRules(ctx, client, property, rulesUpdate, ruleFormat); err != nil {
 		d.Partial(true)
-		return diag.FromErr(err)
+		return err
 	}
 
-	return resourcePropertyRead(ctx, d, m)
+	return nil
 }
 
 func resourcePropertyDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -798,7 +845,13 @@ func resourcePropertyDelete(ctx context.Context, d *schema.ResourceData, m inter
 	}
 	propertyID = d.Id()
 	contractID := str.AddPrefix(d.Get("contract_id").(string), "ctr_")
-	groupID := str.AddPrefix(d.Get("group_id").(string), "grp_")
+
+	// If delete is a result of a name update, group id could have also been changed.
+	// To be safe, we need to take the "old" value.
+	oldGroupID, newGroupID := d.GetChange("group_id")
+	logger.Debugf("resourcePropertyDelete: old group id: %s, new group id: %s",
+		oldGroupID.(string), newGroupID.(string))
+	groupID := str.AddPrefix(oldGroupID.(string), "grp_")
 
 	if err := removeProperty(ctx, client, propertyID, groupID, contractID); err != nil {
 		return diag.FromErr(err)

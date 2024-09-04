@@ -565,7 +565,7 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 	)
 
 	if !d.HasChangesExcept("timeouts", "compliance_record") {
-		logger.Debug("Only timeouts and/or compliance_record were updated, update in-place")
+		logger.Debug("Only timeouts and/or compliance_record were updated, update with no API calls")
 		return nil
 	}
 

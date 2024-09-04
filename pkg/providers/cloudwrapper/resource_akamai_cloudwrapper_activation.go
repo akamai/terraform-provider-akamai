@@ -28,7 +28,7 @@ var (
 
 var (
 	activationTimeout     = 4 * time.Hour
-	onlyTimeoutChangeWarn = diag.NewWarningDiagnostic("Update in Place", "requested only timeout change; API won't be called")
+	onlyTimeoutChangeWarn = diag.NewWarningDiagnostic("Update with no API calls", "requested only timeout change; API won't be called")
 )
 
 const readError = "could not read Config from API"

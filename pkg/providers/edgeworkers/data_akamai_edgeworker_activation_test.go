@@ -136,7 +136,7 @@ func TestDataEdgeWorkersActivation(t *testing.T) {
 	}{
 		"happy path with one activation": {
 			init: func(t *testing.T, m *edgeworkers.Mock, testData testDataForEdgeWorkersActivation) {
-				expectReadEdgeWorkersActivation(t, m, testData, 5)
+				expectReadEdgeWorkersActivation(t, m, testData, 3)
 			},
 			mockData:   oneActivationData,
 			configPath: "testdata/TestDataEdgeWorkersActivation/one_activation.tf",
@@ -144,7 +144,7 @@ func TestDataEdgeWorkersActivation(t *testing.T) {
 		},
 		"happy path with three activations": {
 			init: func(t *testing.T, m *edgeworkers.Mock, testData testDataForEdgeWorkersActivation) {
-				expectReadEdgeWorkersActivation(t, m, testData, 5)
+				expectReadEdgeWorkersActivation(t, m, testData, 3)
 			},
 			mockData:   threeActivationsData,
 			configPath: "testdata/TestDataEdgeWorkersActivation/three_activations.tf",
@@ -152,7 +152,7 @@ func TestDataEdgeWorkersActivation(t *testing.T) {
 		},
 		"happy path with no activations": {
 			init: func(t *testing.T, m *edgeworkers.Mock, testData testDataForEdgeWorkersActivation) {
-				expectReadEmptyEdgeWorkersActivation(t, m, testData, 5)
+				expectReadEmptyEdgeWorkersActivation(t, m, testData, 3)
 			},
 			mockData:   noActivationsData,
 			configPath: "testdata/TestDataEdgeWorkersActivation/no_activations.tf",
@@ -160,14 +160,14 @@ func TestDataEdgeWorkersActivation(t *testing.T) {
 		},
 		"activation status not complete": {
 			init: func(t *testing.T, m *edgeworkers.Mock, testData testDataForEdgeWorkersActivation) {
-				expectReadEmptyEdgeWorkersActivation(t, m, testData, 5)
+				expectReadEmptyEdgeWorkersActivation(t, m, testData, 3)
 			},
 			mockData:   wrongStatusData,
 			configPath: "testdata/TestDataEdgeWorkersActivation/wrong_status.tf",
 			error:      nil,
 		},
 		"could not list activations": {
-			init: func(t *testing.T, m *edgeworkers.Mock, testData testDataForEdgeWorkersActivation) {
+			init: func(t *testing.T, m *edgeworkers.Mock, _ testDataForEdgeWorkersActivation) {
 				expectListActivationsError(t, m, "could not fetch activations")
 			},
 			mockData:   testDataForEdgeWorkersActivation{},

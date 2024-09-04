@@ -843,7 +843,6 @@ func TestResourcePolicyImage(t *testing.T) {
 		}).Return(nil, fmt.Errorf("%s: %w", imaging.ErrGetPolicy, &imaging.Error{Status: http.StatusNotFound})).Once()
 		expectReadPolicy(client, "test_policy", "test_policy_set", "test_contract", imaging.PolicyNetworkStaging, &policyOutput, 1)
 		expectReadPolicy(client, "test_policy", "test_policy_set", "test_contract", imaging.PolicyNetworkStaging, &policyOutput, 1)
-		expectReadPolicy(client, "test_policy", "test_policy_set", "test_contract", imaging.PolicyNetworkStaging, &policyOutput, 1)
 
 		expectDeletePolicy(client, "test_policy", "test_policy_set", "test_contract", imaging.PolicyNetworkStaging)
 		expectDeletePolicy(client, "test_policy", "test_policy_set", "test_contract", imaging.PolicyNetworkProduction)

@@ -66,7 +66,8 @@ func dataSourceConfigurationRead(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 
-	configuration, err := client.GetConfigurations(ctx, appsec.GetConfigurationsRequest{})
+	configurations, err := client.GetConfigurations(ctx, appsec.GetConfigurationsRequest{})
+	outputConfigurations := appsec.GetConfigurationsResponse{}
 	if err != nil {
 		logger.Errorf("calling 'getConfiguration': %s", err.Error())
 		return diag.FromErr(err)
@@ -74,24 +75,25 @@ func dataSourceConfigurationRead(ctx context.Context, d *schema.ResourceData, m 
 
 	if configName != "" {
 		found := false
-		for _, configval := range configuration.Configurations {
-			if configval.Name == configName {
+		for _, config := range configurations.Configurations {
+			if config.Name == configName {
 				found = true
-				if err := d.Set("config_id", configval.ID); err != nil {
+				outputConfigurations.Configurations = append(outputConfigurations.Configurations, config)
+				if err := d.Set("config_id", config.ID); err != nil {
 					return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 				}
-				if err := d.Set("latest_version", configval.LatestVersion); err != nil {
+				if err := d.Set("latest_version", config.LatestVersion); err != nil {
 					return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 				}
-				if err := d.Set("staging_version", configval.StagingVersion); err != nil {
+				if err := d.Set("staging_version", config.StagingVersion); err != nil {
 					return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 				}
-				if err := d.Set("production_version", configval.ProductionVersion); err != nil {
+				if err := d.Set("production_version", config.ProductionVersion); err != nil {
 					return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 				}
 				getSelectedHostnamesRequest := appsec.GetSelectedHostnamesRequest{
-					ConfigID: configval.ID,
-					Version:  configval.LatestVersion,
+					ConfigID: config.ID,
+					Version:  config.LatestVersion,
 				}
 
 				// Fetch selected hostnames for the config version
@@ -109,7 +111,7 @@ func dataSourceConfigurationRead(ctx context.Context, d *schema.ResourceData, m 
 				if err = d.Set("host_names", selectedHostnameList); err != nil {
 					return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 				}
-				d.SetId(strconv.Itoa(configval.ID))
+				d.SetId(strconv.Itoa(config.ID))
 				break
 			}
 		}
@@ -117,8 +119,9 @@ func dataSourceConfigurationRead(ctx context.Context, d *schema.ResourceData, m 
 			return diag.Errorf("configuration '%s' not found", configName)
 		}
 	} else {
-		if len(configuration.Configurations) > 0 {
-			d.SetId(strconv.Itoa(configuration.Configurations[0].ID))
+		if len(configurations.Configurations) > 0 {
+			outputConfigurations = *configurations
+			d.SetId(strconv.Itoa(configurations.Configurations[0].ID))
 		} else {
 			d.SetId(strconv.Itoa(0))
 		}
@@ -126,7 +129,7 @@ func dataSourceConfigurationRead(ctx context.Context, d *schema.ResourceData, m 
 
 	ots := OutputTemplates{}
 	InitTemplates(ots)
-	outputtext, err := RenderTemplates(ots, "configuration", configuration)
+	outputtext, err := RenderTemplates(ots, "configuration", outputConfigurations)
 	if err != nil {
 		return diag.FromErr(err)
 	}

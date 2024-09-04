@@ -37,10 +37,10 @@ func TestDataKeyProperties(t *testing.T) {
 	}{
 		"happy path - multiple versions with multiple properties": {
 			configPath: "testdata/TestDataKeyProperties/default.tf",
-			init: func(t *testing.T, m *cloudaccess.Mock, testData testDataForKeyProperties) {
-				expectListAccessKeys(m, 5)
-				expectListAccessKeyVersions(m, testData, 5)
-				expectLookupProperties(m, testData, 5)
+			init: func(_ *testing.T, m *cloudaccess.Mock, testData testDataForKeyProperties) {
+				expectListAccessKeys(m, 3)
+				expectListAccessKeyVersions(m, testData, 3)
+				expectLookupProperties(m, testData, 3)
 			},
 			mockData: testDataForKeyProperties{
 				accessKeyUID: 1,
@@ -72,10 +72,10 @@ func TestDataKeyProperties(t *testing.T) {
 		},
 		"happy path - version with no active properties - nothing in state": {
 			configPath: "testdata/TestDataKeyProperties/default.tf",
-			init: func(t *testing.T, m *cloudaccess.Mock, testData testDataForKeyProperties) {
-				expectListAccessKeys(m, 5)
-				expectListAccessKeyVersions(m, testData, 5)
-				expectLookupProperties(m, testData, 5)
+			init: func(_ *testing.T, m *cloudaccess.Mock, testData testDataForKeyProperties) {
+				expectListAccessKeys(m, 3)
+				expectListAccessKeyVersions(m, testData, 3)
+				expectLookupProperties(m, testData, 3)
 			},
 			mockData: testDataForKeyProperties{
 				accessKeyUID: 1,

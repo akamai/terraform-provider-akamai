@@ -120,7 +120,7 @@ func (r *KeyResource) ModifyPlan(ctx context.Context, request resource.ModifyPla
 	}
 
 	if state != nil && plan != nil && checkIfSecretChangedAndWasNotEmpty(state, plan) {
-		response.Diagnostics.AddError("access key credentials error", "cannot update cloud access secret without update of cloud access key id, expect in-place update of secret after import")
+		response.Diagnostics.AddError("access key credentials error", "cannot update cloud access secret without update of cloud access key id, expect update of secret after import with no API calls")
 		return
 	}
 

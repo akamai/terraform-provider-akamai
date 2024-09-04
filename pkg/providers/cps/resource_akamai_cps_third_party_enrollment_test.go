@@ -65,11 +65,11 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			AllowedInput: []cps.AllowedInput{},
 			StatusInfo: &cps.StatusInfo{
 				State:  "awaiting-input",
-				Status: statusCoordinateDomainValidation,
+				Status: coodinateDomainValidation,
 			},
 		}, nil).Once()
 
-		// final verification loop, everything in place
+		// final verification loop
 		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
@@ -163,6 +163,153 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 
 		client.AssertExpectations(t)
 	})
+
+	t.Run("lifecycle test, remove san, returns 'wait-review-cert-warning' status", func(t *testing.T) {
+		PollForChangeStatusInterval = 1 * time.Millisecond
+		client := &cps.Mock{}
+		enrollment := newEnrollment()
+		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
+
+		client.On("CreateEnrollment",
+			mock.Anything,
+			cps.CreateEnrollmentRequest{
+				EnrollmentRequestBody: enrollmentReqBody,
+				ContractID:            "1",
+			},
+		).Return(&cps.CreateEnrollmentResponse{
+			ID:         1,
+			Enrollment: "/cps/v2/enrollments/1",
+			Changes:    []string{"/cps/v2/enrollments/1/changes/2"},
+		}, nil).Once()
+
+		enrollment.Location = "/cps/v2/enrollments/1"
+		enrollment.PendingChanges = []cps.PendingChange{
+			{
+				Location:   "/cps/v2/enrollments/1/changes/2",
+				ChangeType: "new-certificate",
+			},
+		}
+		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+			Return(&enrollment, nil).Once()
+
+		// first verification loop, invalid status
+		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+			EnrollmentID: 1,
+			ChangeID:     2,
+		}).Return(&cps.Change{
+			AllowedInput: []cps.AllowedInput{},
+			StatusInfo: &cps.StatusInfo{
+				State:  "awaiting-input",
+				Status: "pre-verification-safety-checks",
+			},
+		}, nil).Once()
+
+		// second verification loop, valid status, empty allowed input array
+		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+			EnrollmentID: 1,
+			ChangeID:     2,
+		}).Return(&cps.Change{
+			AllowedInput: []cps.AllowedInput{},
+			StatusInfo: &cps.StatusInfo{
+				State:  "awaiting-input",
+				Status: coodinateDomainValidation,
+			},
+		}, nil).Once()
+
+		// final verification loop, everything in place
+		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+			EnrollmentID: 1,
+			ChangeID:     2,
+		}).Return(&cps.Change{
+			AllowedInput: []cps.AllowedInput{{Type: "third-party-certificate"}},
+			StatusInfo: &cps.StatusInfo{
+				State:  "awaiting-input",
+				Status: waitUploadThirdParty,
+			},
+		}, nil).Once()
+
+		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+			Return(&enrollment, nil).Times(3)
+
+		enrollmentUpdate := newEnrollment(
+			WithBase(&enrollment),
+			WithUpdateFunc(func(e *cps.GetEnrollmentResponse) {
+				e.AdminContact.FirstName = "R1"
+				e.AdminContact.LastName = "D1"
+				e.CSR.SANS = nil
+				e.NetworkConfiguration.DNSNameSettings.DNSNames = nil
+				e.Location = ""
+				e.PendingChanges = nil
+				e.SignatureAlgorithm = "SHA-256"
+			}),
+		)
+
+		enrollmentUpdateReqBody := createEnrollmentReqBodyFromEnrollment(enrollmentUpdate)
+		allowCancel := true
+		client.On("UpdateEnrollment",
+			mock.Anything,
+			cps.UpdateEnrollmentRequest{
+				EnrollmentRequestBody:     enrollmentUpdateReqBody,
+				EnrollmentID:              1,
+				AllowCancelPendingChanges: &allowCancel,
+			},
+		).Return(&cps.UpdateEnrollmentResponse{
+			ID:         1,
+			Enrollment: "/cps/v2/enrollments/1",
+			Changes:    []string{"/cps/v2/enrollments/1/changes/2"},
+		}, nil).Once()
+
+		enrollmentGet := newEnrollment(
+			WithBase(&enrollmentUpdate),
+			WithPendingChangeID(2),
+		)
+		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+			Return(&enrollmentGet, nil).Times(3)
+
+		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+			EnrollmentID: 1,
+			ChangeID:     2,
+		}).Return(&cps.Change{
+			AllowedInput: []cps.AllowedInput{{Type: "third-party-certificate"}},
+			StatusInfo: &cps.StatusInfo{
+				State:  "awaiting-input",
+				Status: waitReviewCertWarning,
+			},
+		}, nil).Once()
+
+		client.On("RemoveEnrollment", mock.Anything, cps.RemoveEnrollmentRequest{
+			EnrollmentID:              1,
+			AllowCancelPendingChanges: &allowCancel,
+		}).Return(&cps.RemoveEnrollmentResponse{
+			Enrollment: "1",
+		}, nil).Once()
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/lifecycle/create_enrollment.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr("akamai_cps_third_party_enrollment.third_party", "contract_id", "ctr_1"),
+							resource.TestCheckResourceAttr("akamai_cps_third_party_enrollment.third_party", "timeouts.#", "1"),
+							resource.TestCheckResourceAttr("akamai_cps_third_party_enrollment.third_party", "timeouts.0.default", "2h"),
+						),
+					},
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/empty_sans/create_enrollment.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr("akamai_cps_third_party_enrollment.third_party", "contract_id", "ctr_1"),
+							resource.TestCheckResourceAttr("akamai_cps_third_party_enrollment.third_party", "timeouts.#", "0"),
+						),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
 	t.Run("lifecycle test update sans add cn", func(t *testing.T) {
 		PollForChangeStatusInterval = 1 * time.Millisecond
 		client := &cps.Mock{}
@@ -210,11 +357,11 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			AllowedInput: []cps.AllowedInput{},
 			StatusInfo: &cps.StatusInfo{
 				State:  "awaiting-input",
-				Status: statusCoordinateDomainValidation,
+				Status: coodinateDomainValidation,
 			},
 		}, nil).Once()
 
-		// final verification loop, everything in place
+		// final verification loop
 		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
@@ -340,11 +487,11 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			AllowedInput: []cps.AllowedInput{},
 			StatusInfo: &cps.StatusInfo{
 				State:  "awaiting-input",
-				Status: statusCoordinateDomainValidation,
+				Status: coodinateDomainValidation,
 			},
 		}, nil).Once()
 
-		// final verification loop, everything in place
+		// final verification loop
 		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
@@ -456,11 +603,11 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			AllowedInput: []cps.AllowedInput{},
 			StatusInfo: &cps.StatusInfo{
 				State:  "awaiting-input",
-				Status: statusCoordinateDomainValidation,
+				Status: coodinateDomainValidation,
 			},
 		}, nil).Once()
 
-		// final verification loop, everything in place
+		// final verification loop
 		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     3,
@@ -548,11 +695,11 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			AllowedInput: []cps.AllowedInput{},
 			StatusInfo: &cps.StatusInfo{
 				State:  "awaiting-input",
-				Status: statusCoordinateDomainValidation,
+				Status: coodinateDomainValidation,
 			},
 		}, nil).Once()
 
-		// final verification loop, everything in place
+		// final verification loop
 		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
@@ -648,11 +795,11 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			AllowedInput: []cps.AllowedInput{},
 			StatusInfo: &cps.StatusInfo{
 				State:  "awaiting-input",
-				Status: statusCoordinateDomainValidation,
+				Status: coodinateDomainValidation,
 			},
 		}, nil).Once()
 
-		// final verification loop, everything in place
+		// final verification loop
 		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
@@ -898,7 +1045,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			AllowedInput: []cps.AllowedInput{{Type: "pre-verification-warnings-acknowledgement"}},
 			StatusInfo: &cps.StatusInfo{
 				State:  "awaiting-input",
-				Status: statusVerificationWarnings,
+				Status: waitReviewPreVerificationSafetyChecks,
 			},
 		}, nil).Twice()
 
@@ -1005,11 +1152,11 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			AllowedInput: []cps.AllowedInput{},
 			StatusInfo: &cps.StatusInfo{
 				State:  "awaiting-input",
-				Status: statusCoordinateDomainValidation,
+				Status: coodinateDomainValidation,
 			},
 		}, nil).Once()
 
-		// final verification loop, everything in place
+		// final verification loop
 		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
@@ -1092,7 +1239,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			AllowedInput: []cps.AllowedInput{{Type: inputTypePreVerificationWarningsAck}},
 			StatusInfo: &cps.StatusInfo{
 				State:  "awaiting-input",
-				Status: statusVerificationWarnings,
+				Status: waitReviewPreVerificationSafetyChecks,
 			},
 		}, nil).Twice()
 
@@ -1206,7 +1353,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			AllowedInput: []cps.AllowedInput{{Type: "pre-verification-warnings-acknowledgement"}},
 			StatusInfo: &cps.StatusInfo{
 				State:  "awaiting-input",
-				Status: statusVerificationWarnings,
+				Status: waitReviewPreVerificationSafetyChecks,
 			},
 		}, nil).Twice()
 
@@ -1311,7 +1458,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			AllowedInput: []cps.AllowedInput{{Type: "pre-verification-warnings-acknowledgement"}},
 			StatusInfo: &cps.StatusInfo{
 				State:  "awaiting-input",
-				Status: statusVerificationWarnings,
+				Status: waitReviewPreVerificationSafetyChecks,
 			},
 		}, nil).Twice()
 
@@ -1390,7 +1537,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			AllowedInput: []cps.AllowedInput{{Type: "pre-verification-warnings-acknowledgement"}},
 			StatusInfo: &cps.StatusInfo{
 				State:  "awaiting-input",
-				Status: statusVerificationWarnings,
+				Status: waitReviewPreVerificationSafetyChecks,
 			},
 		}, nil).Twice()
 
@@ -1497,13 +1644,6 @@ func TestResourceThirdPartyEnrollmentImport(t *testing.T) {
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/import/import_enrollment.tf"),
-						ImportStateCheck: func(s []*terraform.InstanceState) error {
-							assert.Len(t, s, 1)
-							rs := s[0]
-							assert.Equal(t, "ctr_1", rs.Attributes["contract_id"])
-							assert.Equal(t, "1", rs.Attributes["id"])
-							return nil
-						},
 					},
 					{
 						Config:            testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/import/import_enrollment.tf"),
@@ -1511,6 +1651,15 @@ func TestResourceThirdPartyEnrollmentImport(t *testing.T) {
 						ImportStateId:     id,
 						ResourceName:      "akamai_cps_third_party_enrollment.third_party",
 						ImportStateVerify: true,
+						ImportStateCheck: func(s []*terraform.InstanceState) error {
+							assert.Len(t, s, 1)
+							rs := s[0]
+							assert.Equal(t, "ctr_1", rs.Attributes["contract_id"])
+							assert.Equal(t, "1", rs.Attributes["id"])
+							return nil
+						},
+						// It looks that there bug in SDK that values for bool optional fields are not persisted on create
+						ImportStateVerifyIgnore: []string{"network_configuration.0.clone_dns_names", "network_configuration.0.quic_enabled"},
 					},
 				},
 			})

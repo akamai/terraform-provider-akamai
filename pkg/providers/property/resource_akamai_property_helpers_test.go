@@ -3,6 +3,7 @@ package property
 import (
 	"context"
 
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/iam"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
 	"github.com/stretchr/testify/mock"
@@ -392,4 +393,92 @@ func updateRuleTreeWithVariablesStep0() *papi.RulesUpdate {
 			Sensitive:   false,
 		},
 	})
+}
+
+type mockPropertyData struct {
+	propertyName  string
+	groupID       string
+	contractID    string
+	productID     string
+	propertyID    string
+	latestVersion int
+	assetID       string
+	cnameFrom     string
+	cnameTo       string
+}
+
+type mockProperty struct {
+	mockPropertyData
+	papiMock *papi.Mock
+}
+
+func (p *mockProperty) mockCreateProperty() *mock.Call {
+	return ExpectCreateProperty(p.papiMock, p.propertyName, p.groupID, p.contractID, p.productID, p.propertyID)
+}
+
+func (p *mockProperty) mockUpdatePropertyVersionHostnames() *mock.Call {
+	return ExpectUpdatePropertyVersionHostnames(p.papiMock, p.propertyID, p.groupID, p.contractID, p.latestVersion,
+		[]papi.Hostname{{
+			CnameType:            "EDGE_HOSTNAME",
+			CnameFrom:            p.cnameFrom,
+			CnameTo:              p.cnameTo,
+			CertProvisioningType: "DEFAULT",
+		}}, nil)
+}
+
+func (p *mockProperty) mockGetProperty() *mock.Call {
+	return ExpectGetProperty(p.papiMock, p.propertyID, p.groupID, p.contractID, &papi.Property{
+		PropertyName:  p.propertyName,
+		GroupID:       p.groupID,
+		ContractID:    p.contractID,
+		ProductID:     p.productID,
+		PropertyID:    p.propertyID,
+		LatestVersion: p.latestVersion,
+		AssetID:       p.assetID,
+	})
+}
+
+func (p *mockProperty) mockGetPropertyVersionHostnames() *mock.Call {
+	return ExpectGetPropertyVersionHostnames(p.papiMock, p.propertyID, p.groupID, p.contractID, p.latestVersion, &[]papi.Hostname{{
+		CnameType:            "EDGE_HOSTNAME",
+		CnameFrom:            p.cnameFrom,
+		CnameTo:              p.cnameTo,
+		CertProvisioningType: "DEFAULT",
+	}})
+}
+
+func (p *mockProperty) mockGetRuleTree() *mock.Call {
+	ruleFormat := ""
+	return ExpectGetRuleTree(p.papiMock, p.propertyID, p.groupID, p.contractID, p.latestVersion, nil, &ruleFormat, nil, nil)
+}
+
+func (p *mockProperty) mockGetPropertyVersion() *mock.Call {
+	return ExpectGetPropertyVersion(p.papiMock, p.propertyID, p.groupID, p.contractID, p.latestVersion, papi.VersionStatusInactive,
+		papi.VersionStatusInactive)
+}
+
+func (p *mockProperty) mockRemoveProperty() *mock.Call {
+	return ExpectRemoveProperty(p.papiMock, p.propertyID, p.contractID, p.groupID)
+}
+
+func mockResourcePropertyCreate(p *mockProperty) {
+	p.mockCreateProperty().Once()
+	p.mockUpdatePropertyVersionHostnames().Once()
+	mockResourcePropertyRead(p)
+}
+
+func mockResourcePropertyRead(p *mockProperty) {
+	p.mockGetProperty().Once()
+	p.mockGetPropertyVersionHostnames().Once()
+	p.mockGetRuleTree().Once()
+	p.mockGetPropertyVersion().Once()
+}
+
+func mockMoveProperty(iamMock *iam.Mock, propertyID, srcGroupID, destGroupID int64) {
+	iamMock.On("MoveProperty", AnyCTX, iam.MovePropertyRequest{
+		PropertyID: propertyID,
+		BodyParams: iam.MovePropertyReqBody{
+			DestinationGroupID: destGroupID,
+			SourceGroupID:      srcGroupID,
+		}}).Return(nil)
 }

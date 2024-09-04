@@ -21,8 +21,8 @@ func TestDataProperty(t *testing.T) {
 	}{
 		"happy path - one property, unused-true": {
 			configPath: "testdata/TestDataProperties/default_unused_true.tf",
-			init: func(t *testing.T, m *cloudwrapper.Mock, testData testDataForCWProperties) {
-				expectListProperties(m, testData, 5)
+			init: func(_ *testing.T, m *cloudwrapper.Mock, testData testDataForCWProperties) {
+				expectListProperties(m, testData, 3)
 			},
 			mockData: testDataForCWProperties{
 				unused: true,
@@ -40,7 +40,7 @@ func TestDataProperty(t *testing.T) {
 		"happy path - two properties, unused-false, contract_ids supplied": {
 			configPath: "testdata/TestDataProperties/default_unused_false.tf",
 			init: func(t *testing.T, m *cloudwrapper.Mock, testData testDataForCWProperties) {
-				expectListProperties(m, testData, 5)
+				expectListProperties(m, testData, 3)
 			},
 			mockData: testDataForCWProperties{
 				contractIDs: []string{"ctr_1", "ctr_2"},
@@ -64,8 +64,8 @@ func TestDataProperty(t *testing.T) {
 		},
 		"happy path - no optional attributes": {
 			configPath: "testdata/TestDataProperties/no_attributes.tf",
-			init: func(t *testing.T, m *cloudwrapper.Mock, testData testDataForCWProperties) {
-				expectListProperties(m, testData, 5)
+			init: func(_ *testing.T, m *cloudwrapper.Mock, testData testDataForCWProperties) {
+				expectListProperties(m, testData, 3)
 			},
 			mockData: testDataForCWProperties{
 				properties: []cloudwrapper.Property{
@@ -81,8 +81,8 @@ func TestDataProperty(t *testing.T) {
 		},
 		"happy path - empty properties list": {
 			configPath: "testdata/TestDataProperties/default_unused_false.tf",
-			init: func(t *testing.T, m *cloudwrapper.Mock, testData testDataForCWProperties) {
-				expectListProperties(m, testData, 5)
+			init: func(_ *testing.T, m *cloudwrapper.Mock, testData testDataForCWProperties) {
+				expectListProperties(m, testData, 3)
 			},
 			mockData: testDataForCWProperties{
 				contractIDs: []string{"ctr_1", "ctr_2"},

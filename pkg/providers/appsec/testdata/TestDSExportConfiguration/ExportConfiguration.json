@@ -4850,6 +4850,10 @@
                     "period": 60,
                     "rate": 10
                 }
+            },
+            "RequestBody": {
+                "override" : true,
+                "requestBodyInspectionLimitInKB" : "8"
             }
         }
     ],

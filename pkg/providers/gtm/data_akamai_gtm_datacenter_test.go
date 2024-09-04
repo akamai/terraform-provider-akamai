@@ -21,27 +21,27 @@ func TestDataGTMDatacenter(t *testing.T) {
 	}{
 		"happy path - all fields populated": {
 			init: func(t *testing.T, m *gtm.Mock, data testDataForGTMDatacenter) {
-				mockGetDatacenter(t, m, data, 5)
+				mockGetDatacenter(t, m, data, 3)
 			},
 			mockData:   testGTMDatacenter,
 			configPath: "testdata/TestDataGTMDatacenter/default.tf",
 		},
 		"happy path - minimal fields": {
 			init: func(t *testing.T, m *gtm.Mock, data testDataForGTMDatacenter) {
-				mockGetDatacenter(t, m, data, 5)
+				mockGetDatacenter(t, m, data, 3)
 			},
 			mockData:   testGTMDatacenterMinimal,
 			configPath: "testdata/TestDataGTMDatacenter/default.tf",
 		},
 		"happy path - no load_servers in default_load_object": {
 			init: func(t *testing.T, m *gtm.Mock, data testDataForGTMDatacenter) {
-				mockGetDatacenter(t, m, data, 5)
+				mockGetDatacenter(t, m, data, 3)
 			},
 			mockData:   testGTMDatacenterNoLoadServers,
 			configPath: "testdata/TestDataGTMDatacenter/default.tf",
 		},
 		"error - GetDatacenter fail": {
-			init: func(t *testing.T, m *gtm.Mock, data testDataForGTMDatacenter) {
+			init: func(_ *testing.T, m *gtm.Mock, data testDataForGTMDatacenter) {
 				m.On("GetDatacenter", mock.Anything, data.datacenterID, data.domain).Return(
 					nil, fmt.Errorf("GetDatacenter error")).Once()
 			},
@@ -50,12 +50,12 @@ func TestDataGTMDatacenter(t *testing.T) {
 			error:      regexp.MustCompile("GetDatacenter error"),
 		},
 		"error - no domain attribute": {
-			init:       func(t *testing.T, _ *gtm.Mock, _ testDataForGTMDatacenter) {},
+			init:       func(_ *testing.T, _ *gtm.Mock, _ testDataForGTMDatacenter) {},
 			configPath: "testdata/TestDataGTMDatacenter/no_domain.tf",
 			error:      regexp.MustCompile(`The argument "domain" is required, but no definition was found.`),
 		},
 		"error - no datacenter_id attribute": {
-			init:       func(t *testing.T, _ *gtm.Mock, _ testDataForGTMDatacenter) {},
+			init:       func(_ *testing.T, _ *gtm.Mock, _ testDataForGTMDatacenter) {},
 			configPath: "testdata/TestDataGTMDatacenter/no_datacenter_id.tf",
 			error:      regexp.MustCompile(`The argument "datacenter_id" is required, but no definition was found.`),
 		},

@@ -7,6 +7,6 @@ resource "akamai_networklist_activations" "test" {
   network             = "PRODUCTION"
   notes               = "Test Notes Updated"
   notification_emails = ["user@example.com"]
-  sync_point          = 0
+  sync_point          = 1
 }
 

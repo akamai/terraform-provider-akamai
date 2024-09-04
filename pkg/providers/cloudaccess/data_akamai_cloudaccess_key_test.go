@@ -82,7 +82,7 @@ func TestDataKey(t *testing.T) {
 		"happy path": {
 			configPath: "testdata/TestDataKey/default.tf",
 			init: func(_ *testing.T, m *cloudaccess.Mock, testData []cloudaccess.AccessKeyResponse) {
-				expectListAccessKeys(m, testData, 5)
+				expectListAccessKeys(m, testData, 3)
 			},
 			mockData: testData,
 		},

@@ -201,8 +201,50 @@ func (r *BootstrapResource) Read(ctx context.Context, req resource.ReadRequest, 
 	}
 }
 
-// Update of group, contract, product is noop, it will return an error before invoking Update. Updating name will result in resource replacement
-func (r *BootstrapResource) Update(_ context.Context, _ resource.UpdateRequest, _ *resource.UpdateResponse) {
+// Update supports change for the following attributes:
+// - `name`, which results in resource replacement.
+// Trying to update `group_id`, `contract_id` or `product_id` will result in an error.
+func (r *BootstrapResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var plan, state BootstrapResourceModel
+
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	groupsDiffer, err := areGroupIDsDifferent(state.GroupID.ValueString(), plan.GroupID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Unable to Update Resource",
+			fmt.Sprintf("An error occurred while parsing the group ids: %s, %s. Error: %s",
+				state.GroupID.ValueString(), plan.GroupID.ValueString(), err.Error()))
+		return
+	}
+
+	if groupsDiffer {
+		key := papiKey{
+			propertyID: state.ID.ValueString(),
+			groupID:    str.AddPrefix(state.GroupID.ValueString(), "grp_"),
+			contractID: str.AddPrefix(state.ContractID.ValueString(), "ctr_"),
+		}
+		dest := str.AddPrefix(plan.GroupID.ValueString(), "grp_")
+
+		err := updateGroupID(ctx, Client(r.meta), IAMClient(r.meta), key, dest)
+
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Unable to Update Resource",
+				"An error occurred while moving the property. Error: "+err.Error())
+			return
+		}
+	}
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
 // Delete implements resource's Delete method

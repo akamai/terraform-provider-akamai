@@ -49,7 +49,7 @@ func TestDataPropertyIncludeParents(t *testing.T) {
 							},
 						},
 					},
-				}, nil).Times(5)
+				}, nil).Times(3)
 				// run ListReferencedIncludes for each IncludeParent with different and not empty StagingVersion and ProductionVersion
 				m.On("ListReferencedIncludes", mock.Anything, papi.ListReferencedIncludesRequest{
 					ContractID:      "ctr_1",
@@ -73,7 +73,7 @@ func TestDataPropertyIncludeParents(t *testing.T) {
 							},
 						},
 					},
-				}, nil).Times(5)
+				}, nil).Times(3)
 				m.On("ListReferencedIncludes", mock.Anything, papi.ListReferencedIncludesRequest{
 					ContractID:      "ctr_1",
 					GroupID:         "grp_1",
@@ -96,7 +96,7 @@ func TestDataPropertyIncludeParents(t *testing.T) {
 							},
 						},
 					},
-				}, nil).Times(5)
+				}, nil).Times(3)
 			},
 			expectedAttributes: map[string]string{
 				"parents.#": "3",

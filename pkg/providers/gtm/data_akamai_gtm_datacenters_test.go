@@ -21,21 +21,21 @@ func TestDataGTMDatacenters(t *testing.T) {
 	}{
 		"happy path - three datacenters": {
 			init: func(t *testing.T, m *gtm.Mock, data testDataForGTMDatacenters) {
-				mockListDatacenters(t, m, data, 5)
+				mockListDatacenters(t, m, data, 3)
 			},
 			mockData:   testGTMDatacenters,
 			configPath: "testdata/TestDataGTMDatacenters/default.tf",
 		},
 		"happy path - one datacenter": {
 			init: func(t *testing.T, m *gtm.Mock, data testDataForGTMDatacenters) {
-				mockListDatacenters(t, m, data, 5)
+				mockListDatacenters(t, m, data, 3)
 			},
 			mockData:   testGTMSingleDatacenter,
 			configPath: "testdata/TestDataGTMDatacenters/default.tf",
 		},
 		"happy path - no datacenters": {
 			init: func(t *testing.T, m *gtm.Mock, data testDataForGTMDatacenters) {
-				mockListDatacenters(t, m, data, 5)
+				mockListDatacenters(t, m, data, 3)
 			},
 			mockData:   testGTMEmptyDatacenters,
 			configPath: "testdata/TestDataGTMDatacenters/default.tf",
@@ -50,7 +50,7 @@ func TestDataGTMDatacenters(t *testing.T) {
 			error:      regexp.MustCompile("ListDatacenters error"),
 		},
 		"error - no domain attribute": {
-			init:       func(t *testing.T, _ *gtm.Mock, _ testDataForGTMDatacenters) {},
+			init:       func(_ *testing.T, _ *gtm.Mock, _ testDataForGTMDatacenters) {},
 			configPath: "testdata/TestDataGTMDatacenters/no_domain.tf",
 			error:      regexp.MustCompile(`The argument "domain" is required, but no definition was found.`),
 		},

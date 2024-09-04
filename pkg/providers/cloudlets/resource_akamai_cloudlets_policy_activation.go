@@ -276,7 +276,7 @@ func resourcePolicyActivationCreate(ctx context.Context, rd *schema.ResourceData
 
 		select {
 		case <-time.After(pollingActivationTries):
-			logger.Debugf("retrying policy activation after %d minutes", pollingActivationTries.Minutes())
+			logger.Debugf("retrying policy activation after %s", pollingActivationTries)
 			if pollingActivationTries > PolicyActivationRetryTimeout || !strategy.shouldRetryActivation(err) {
 				return diag.Errorf("%v create: %s", ErrPolicyActivation, err.Error())
 			}

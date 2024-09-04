@@ -69,24 +69,24 @@ func TestCapacitiesDataSource(t *testing.T) {
 					},
 				},
 			},
-			init: func(t *testing.T, m *cloudwrapper.Mock, capacities []cloudwrapper.LocationCapacity) {
+			init: func(_ *testing.T, m *cloudwrapper.Mock, capacities []cloudwrapper.LocationCapacity) {
 				resp := cloudwrapper.ListCapacitiesResponse{
 					Capacities: capacities,
 				}
-				m.On("ListCapacities", mock.Anything, request).Return(&resp, nil).Times(5)
+				m.On("ListCapacities", mock.Anything, request).Return(&resp, nil).Times(3)
 			},
 		},
 		"no capacities found": {
 			respData: []cloudwrapper.LocationCapacity{},
-			init: func(t *testing.T, m *cloudwrapper.Mock, capacities []cloudwrapper.LocationCapacity) {
+			init: func(_ *testing.T, m *cloudwrapper.Mock, capacities []cloudwrapper.LocationCapacity) {
 				resp := cloudwrapper.ListCapacitiesResponse{
 					Capacities: capacities,
 				}
-				m.On("ListCapacities", mock.Anything, request).Return(&resp, nil).Times(5)
+				m.On("ListCapacities", mock.Anything, request).Return(&resp, nil).Times(3)
 			},
 		},
 		"listing capacities failed": {
-			init: func(t *testing.T, m *cloudwrapper.Mock, _ []cloudwrapper.LocationCapacity) {
+			init: func(_ *testing.T, m *cloudwrapper.Mock, _ []cloudwrapper.LocationCapacity) {
 				err := fmt.Errorf("listing capacities failed")
 				m.On("ListCapacities", mock.Anything, request).Return(nil, err).Once()
 			},

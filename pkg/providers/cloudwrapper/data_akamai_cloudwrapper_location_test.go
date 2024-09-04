@@ -70,7 +70,7 @@ func TestDataLocation(t *testing.T) {
 		"happy path": {
 			configPath: "testdata/TestDataLocation/location.tf",
 			init: func(t *testing.T, m *cloudwrapper.Mock, testData testDataForCWLocation) {
-				expectListLocations(m, testData, 5)
+				expectListLocations(m, testData, 3)
 			},
 			mockData: location,
 		},

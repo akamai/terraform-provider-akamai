@@ -1,0 +1,110 @@
+{
+  "_ruleFormat_": "rules_v2024_08_13",
+  "rules": {
+    "behaviors": [
+      {
+        "name": "caching",
+        "options": {
+          "behavior": "MAX_AGE",
+          "mustRevalidate": false,
+          "ttl": "1d"
+        }
+      },
+      {
+        "name": "prefetch",
+        "options": {
+          "enabled": false
+        }
+      },
+      {
+        "name": "prefetchable",
+        "options": {
+          "enabled": true
+        }
+      }
+    ],
+    "criteria": [
+      {
+        "name": "fileExtension",
+        "options": {
+          "matchCaseSensitive": false,
+          "matchOperator": "IS_ONE_OF",
+          "values": [
+            "aif",
+            "aiff",
+            "au",
+            "avi",
+            "bin",
+            "bmp",
+            "cab",
+            "carb",
+            "cct",
+            "cdf",
+            "class",
+            "css",
+            "doc",
+            "dcr",
+            "dtd",
+            "exe",
+            "flv",
+            "gcf",
+            "gff",
+            "gif",
+            "grv",
+            "hdml",
+            "hqx",
+            "ico",
+            "ini",
+            "jpeg",
+            "jpg",
+            "js",
+            "mov",
+            "mp3",
+            "nc",
+            "pct",
+            "pdf",
+            "png",
+            "ppc",
+            "pws",
+            "swa",
+            "swf",
+            "txt",
+            "vbs",
+            "w32",
+            "wav",
+            "wbmp",
+            "wml",
+            "wmlc",
+            "wmls",
+            "wmlsc",
+            "xsd",
+            "zip",
+            "webp",
+            "jxr",
+            "hdp",
+            "wdp",
+            "pict",
+            "tif",
+            "tiff",
+            "mid",
+            "midi",
+            "ttf",
+            "eot",
+            "woff",
+            "woff2",
+            "otf",
+            "svg",
+            "svgz",
+            "webp",
+            "jxr",
+            "jar",
+            "jp2"
+          ]
+        }
+      }
+    ],
+    "name": "Static Content",
+    "options": {},
+    "criteriaMustSatisfy": "all"
+  }
+}

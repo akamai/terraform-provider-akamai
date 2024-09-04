@@ -1066,7 +1066,7 @@ func TestAccessKeyResource(t *testing.T) {
 				},
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResAccessKey/changed_secret.tf"),
-					ExpectError: regexp.MustCompile("\\s*cannot update cloud access secret without update of cloud access key id,\\s*expect in-place update of secret after import"),
+					ExpectError: regexp.MustCompile("\\s*cannot update cloud access secret without update of cloud access key id,\\s*expect update of secret after import with no API calls"),
 				},
 			},
 		},

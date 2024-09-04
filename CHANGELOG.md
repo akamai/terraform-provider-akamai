@@ -1,5 +1,35 @@
 # RELEASE NOTES
 
+## 6.4.0 (Sep 04, 2024)
+
+#### FEATURES/ENHANCEMENTS:
+
+* Global
+  * Updated SDKv2 and framework libraries as result of updating `terraform-plugin-testing`
+
+* Appsec
+  * Added `request_body_inspection_limit_override` field to `akamai_appsec_advanced_settings_request_body` resource
+
+* CPS
+  * Added `acknowledge_post_verification_warnings` to the `akamai_cps_dv_validation` resource to allow for acknowledgement of post-verification warnings
+
+* PAPI
+  * Added support for new rule format `v2024-08-13`
+
+#### BUG FIXES:
+
+* Appsec
+  * Fixed import of `akamai_appsec_match_target` for newly created security configuration or any security configuration not synced in the terraform state ([I#546](https://github.com/akamai/terraform-provider-akamai/issues/546))
+  * Fixed issue where activation was not triggered after network list change in `resource_akamai_networklist_activations` resource ([I#518](https://github.com/akamai/terraform-provider-akamai/issues/518))
+  * Fixed `akamai_appsec_configuration` data source to return a single security configuration in the output_text instead of the entire list of security configurations
+
+* Cloudlets
+  * Corrected format of the retry time when logging in `akamai_cloudlets_application_load_balancer_activation` and `akamai_cloudlets_policy_activation` resources
+
+* PAPI
+  * Fixed issue with provider producing an inconsistent final plan with Cloudlet policy ([I#567](https://github.com/akamai/terraform-provider-akamai/issues/567)).
+    It happened in cases when content of the rule depends on some other resource
+
 ## 6.3.0 (July 16, 2024)
 
 #### FEATURES/ENHANCEMENTS:

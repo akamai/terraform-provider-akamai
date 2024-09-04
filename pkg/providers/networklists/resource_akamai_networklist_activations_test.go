@@ -32,7 +32,7 @@ func TestAccAkamaiActivations_res_basic(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("CreateActivations",
-			mock.Anything, // ctx is irrelevant for this test
+			mock.Anything,
 			networklists.CreateActivationsRequest{UniqueID: "86093_AGEOLIST", Action: "ACTIVATE", Network: "STAGING", Comments: "Test Notes", NotificationRecipients: []string{"user@example.com"}},
 		).Return(&cr, nil)
 
@@ -40,11 +40,6 @@ func TestAccAkamaiActivations_res_basic(t *testing.T) {
 			mock.Anything,
 			networklists.GetActivationRequest{ActivationID: 547694},
 		).Return(&ar, nil)
-
-		client.On("GetNetworkList",
-			mock.Anything,
-			networklists.GetNetworkListRequest{UniqueID: "86093_AGEOLIST"},
-		).Return(&networklists.GetNetworkListResponse{SyncPoint: 0}, nil)
 
 		client.On("CreateActivations",
 			mock.Anything, // ctx is irrelevant for this test
@@ -63,6 +58,7 @@ func TestAccAkamaiActivations_res_basic(t *testing.T) {
 							resource.TestCheckResourceAttr("akamai_networklist_activations.test", "network", "STAGING"),
 							resource.TestCheckResourceAttr("akamai_networklist_activations.test", "notes", "Test Notes"),
 							resource.TestCheckResourceAttr("akamai_networklist_activations.test", "notification_emails.0", "user@example.com"),
+							resource.TestCheckResourceAttr("akamai_networklist_activations.test", "sync_point", "0"),
 						),
 					},
 					{
@@ -72,6 +68,7 @@ func TestAccAkamaiActivations_res_basic(t *testing.T) {
 							resource.TestCheckResourceAttr("akamai_networklist_activations.test", "network", "PRODUCTION"),
 							resource.TestCheckResourceAttr("akamai_networklist_activations.test", "notes", "Test Notes Updated"),
 							resource.TestCheckResourceAttr("akamai_networklist_activations.test", "notification_emails.0", "user@example.com"),
+							resource.TestCheckResourceAttr("akamai_networklist_activations.test", "sync_point", "1"),
 						),
 					},
 				},
@@ -110,11 +107,6 @@ func TestAccAkamaiActivations_res_basic(t *testing.T) {
 			networklists.GetActivationRequest{ActivationID: 547694},
 		).Return(&ar, nil)
 
-		client.On("GetNetworkList",
-			mock.Anything,
-			networklists.GetNetworkListRequest{UniqueID: "86093_AGEOLIST"},
-		).Return(&networklists.GetNetworkListResponse{SyncPoint: 0}, nil)
-
 		// update only note field change suppressed
 
 		useClient(client, func() {
@@ -129,6 +121,7 @@ func TestAccAkamaiActivations_res_basic(t *testing.T) {
 							resource.TestCheckResourceAttr("akamai_networklist_activations.test", "network", "STAGING"),
 							resource.TestCheckResourceAttr("akamai_networklist_activations.test", "notes", "Test Notes"),
 							resource.TestCheckResourceAttr("akamai_networklist_activations.test", "notification_emails.0", "user@example.com"),
+							resource.TestCheckResourceAttr("akamai_networklist_activations.test", "sync_point", "0"),
 						),
 					},
 					{
@@ -138,6 +131,7 @@ func TestAccAkamaiActivations_res_basic(t *testing.T) {
 							resource.TestCheckResourceAttr("akamai_networklist_activations.test", "network", "STAGING"),
 							resource.TestCheckResourceAttr("akamai_networklist_activations.test", "notes", "Test Notes"),
 							resource.TestCheckResourceAttr("akamai_networklist_activations.test", "notification_emails.0", "user@example.com"),
+							resource.TestCheckResourceAttr("akamai_networklist_activations.test", "sync_point", "0"),
 						),
 					},
 				},
@@ -177,13 +171,7 @@ func TestAccAkamaiActivations_res_basic(t *testing.T) {
 			networklists.GetActivationRequest{ActivationID: 547694},
 		).Return(&ar, nil)
 
-		client.On("GetNetworkList",
-			mock.Anything,
-			networklists.GetNetworkListRequest{UniqueID: "86093_AGEOLIST"},
-		).Return(&networklists.GetNetworkListResponse{SyncPoint: 0}, nil)
-
 		// Verify notification_emails field change is suppressed when nothing else changes
-
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
 				IsUnitTest:               true,
@@ -196,6 +184,7 @@ func TestAccAkamaiActivations_res_basic(t *testing.T) {
 							resource.TestCheckResourceAttr("akamai_networklist_activations.test", "network", "STAGING"),
 							resource.TestCheckResourceAttr("akamai_networklist_activations.test", "notes", "Test Notes"),
 							resource.TestCheckResourceAttr("akamai_networklist_activations.test", "notification_emails.0", "user@example.com"),
+							resource.TestCheckResourceAttr("akamai_networklist_activations.test", "sync_point", "0"),
 						),
 					},
 					{
@@ -206,6 +195,7 @@ func TestAccAkamaiActivations_res_basic(t *testing.T) {
 							resource.TestCheckResourceAttr("akamai_networklist_activations.test", "notes", "Test Notes"),
 							// Even when notification_emails changes, there is nothing to update
 							resource.TestCheckResourceAttr("akamai_networklist_activations.test", "notification_emails.0", "user@example.com"),
+							resource.TestCheckResourceAttr("akamai_networklist_activations.test", "sync_point", "0"),
 						),
 					},
 				},
@@ -245,11 +235,6 @@ func TestAccAkamaiActivations_res_basic(t *testing.T) {
 			networklists.GetActivationRequest{ActivationID: 547694},
 		).Return(&ar, nil)
 
-		client.On("GetNetworkList",
-			mock.Anything,
-			networklists.GetNetworkListRequest{UniqueID: "86093_AGEOLIST"},
-		).Return(&networklists.GetNetworkListResponse{SyncPoint: 0}, nil)
-
 		client.On("CreateActivations",
 			mock.Anything, // ctx is irrelevant for this test
 			networklists.CreateActivationsRequest{UniqueID: "86093_AGEOLIST", Action: "ACTIVATE", Network: "PRODUCTION", Comments: "Test Notes", NotificationRecipients: []string{"user1@example.com"}},
@@ -269,6 +254,7 @@ func TestAccAkamaiActivations_res_basic(t *testing.T) {
 							resource.TestCheckResourceAttr("akamai_networklist_activations.test", "network", "STAGING"),
 							resource.TestCheckResourceAttr("akamai_networklist_activations.test", "notes", "Test Notes"),
 							resource.TestCheckResourceAttr("akamai_networklist_activations.test", "notification_emails.0", "user@example.com"),
+							resource.TestCheckResourceAttr("akamai_networklist_activations.test", "sync_point", "0"),
 						),
 					},
 					{
@@ -279,6 +265,7 @@ func TestAccAkamaiActivations_res_basic(t *testing.T) {
 							resource.TestCheckResourceAttr("akamai_networklist_activations.test", "notes", "Test Notes"),
 							// Since network and notification_emails changes, there is an update to the notification_emails
 							resource.TestCheckResourceAttr("akamai_networklist_activations.test", "notification_emails.0", "user1@example.com"),
+							resource.TestCheckResourceAttr("akamai_networklist_activations.test", "sync_point", "0"),
 						),
 					},
 				},
@@ -322,11 +309,6 @@ func TestAccAkamaiActivations_res_basic(t *testing.T) {
 			networklists.GetActivationRequest{ActivationID: 547694},
 		).Return(&ar, nil)
 
-		client.On("GetNetworkList",
-			mock.Anything,
-			networklists.GetNetworkListRequest{UniqueID: "86093_AGEOLIST"},
-		).Return(&networklists.GetNetworkListResponse{SyncPoint: 0}, nil)
-
 		client.On("CreateActivations",
 			mock.Anything,
 			networklists.CreateActivationsRequest{UniqueID: "86093_AGEOLIST", Action: "ACTIVATE", Network: "PRODUCTION", Comments: "Test Notes Updated", NotificationRecipients: []string{"user@example.com"}},
@@ -344,6 +326,7 @@ func TestAccAkamaiActivations_res_basic(t *testing.T) {
 							resource.TestCheckResourceAttr("akamai_networklist_activations.test", "network", "STAGING"),
 							resource.TestCheckResourceAttr("akamai_networklist_activations.test", "notes", "Test Notes"),
 							resource.TestCheckResourceAttr("akamai_networklist_activations.test", "notification_emails.0", "user@example.com"),
+							resource.TestCheckResourceAttr("akamai_networklist_activations.test", "sync_point", "0"),
 						),
 					},
 					{
@@ -353,6 +336,7 @@ func TestAccAkamaiActivations_res_basic(t *testing.T) {
 							resource.TestCheckResourceAttr("akamai_networklist_activations.test", "network", "PRODUCTION"),
 							resource.TestCheckResourceAttr("akamai_networklist_activations.test", "notes", "Test Notes Updated"),
 							resource.TestCheckResourceAttr("akamai_networklist_activations.test", "notification_emails.0", "user@example.com"),
+							resource.TestCheckResourceAttr("akamai_networklist_activations.test", "sync_point", "1"),
 						),
 					},
 				},

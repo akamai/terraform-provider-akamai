@@ -69,14 +69,14 @@ func TestDataLocations(t *testing.T) {
 	}{
 		"happy path": {
 			configPath: "testdata/TestDataLocations/location.tf",
-			init: func(t *testing.T, m *cloudwrapper.Mock, testData testDataForCWLocations) {
-				expectListLocations(m, testData, 5)
+			init: func(_ *testing.T, m *cloudwrapper.Mock, testData testDataForCWLocations) {
+				expectListLocations(m, testData, 3)
 			},
 			mockData: location,
 		},
 		"error listing locations": {
 			configPath: "testdata/TestDataLocations/location.tf",
-			init: func(t *testing.T, m *cloudwrapper.Mock, testData testDataForCWLocations) {
+			init: func(_ *testing.T, m *cloudwrapper.Mock, _ testDataForCWLocations) {
 				expectListLocationsWithError(m, 1)
 			},
 			error: regexp.MustCompile("list locations failed"),

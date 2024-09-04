@@ -41,7 +41,7 @@ func TestDataKeys(t *testing.T) {
 		"happy path - multiple keys with various contents": {
 			configPath: "testdata/TestDataKeys/default.tf",
 			init: func(t *testing.T, m *cloudaccess.Mock, testData testDataForKeys) {
-				expectFullListAccessKeys(t, m, testData, 5)
+				expectFullListAccessKeys(t, m, testData, 3)
 			},
 			mockData: testDataForKeys{
 				keys: []keyData{
@@ -89,12 +89,12 @@ func TestDataKeys(t *testing.T) {
 		"happy path - no keys": {
 			configPath: "testdata/TestDataKeys/default.tf",
 			init: func(t *testing.T, m *cloudaccess.Mock, testData testDataForKeys) {
-				expectFullListAccessKeys(t, m, testData, 5)
+				expectFullListAccessKeys(t, m, testData, 3)
 			},
 		},
 		"expect error on list access keys": {
 			configPath: "testdata/TestDataKeys/default.tf",
-			init: func(t *testing.T, m *cloudaccess.Mock, _ testDataForKeys) {
+			init: func(_ *testing.T, m *cloudaccess.Mock, _ testDataForKeys) {
 				m.On("ListAccessKeys", mock.Anything, cloudaccess.ListAccessKeysRequest{}).
 					Return(nil, fmt.Errorf("API error")).Once()
 			},

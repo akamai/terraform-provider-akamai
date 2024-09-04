@@ -143,7 +143,7 @@ func readTimeoutFromEnvOrDefault(name string, timeout time.Duration) *time.Durat
 			timeout = time.Minute * time.Duration(n)
 		}
 	}
-	logger.Infof("using activation timeout value of %d minutes", timeout/time.Minute)
+	logger.Debugf("using activation timeout value of %s", timeout)
 	return &timeout
 }
 
@@ -229,7 +229,7 @@ func resourcePropertyIncludeActivationUpdate(ctx context.Context, d *schema.Reso
 	logger.Debug("Updating property include activation")
 
 	if !d.HasChangesExcept("timeouts", "compliance_record") {
-		logger.Debug("Only timeouts and/or compliance_record were updated, update in-place")
+		logger.Debug("Only timeouts and/or compliance_record were updated, update with no API calls")
 		return nil
 	}
 

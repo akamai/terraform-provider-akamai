@@ -28,8 +28,8 @@ func TestDataPropertyIncludeActivation(t *testing.T) {
 				network:             stagingNetwork,
 				activationsResponse: *createIncludeActivationsResponse(accountForTests, contractForTests, groupForTests, includeActivationsForTests),
 			},
-			init: func(t *testing.T, m *papi.Mock, attrs includeActivationTestAttributes) {
-				mockListIncludeActivation(m, attrs, 5)
+			init: func(_ *testing.T, m *papi.Mock, attrs includeActivationTestAttributes) {
+				mockListIncludeActivation(m, attrs, 3)
 			},
 			configPath: "testdata/TestDataPropertyIncludeActivation/valid_staging.tf",
 		},
@@ -42,7 +42,7 @@ func TestDataPropertyIncludeActivation(t *testing.T) {
 				activationsResponse: *createIncludeActivationsResponse(accountForTests, contractForTests, groupForTests, includeActivationsForTests),
 			},
 			init: func(t *testing.T, m *papi.Mock, attrs includeActivationTestAttributes) {
-				mockListIncludeActivation(m, attrs, 5)
+				mockListIncludeActivation(m, attrs, 3)
 			},
 			configPath: "testdata/TestDataPropertyIncludeActivation/valid_production.tf",
 		},
@@ -55,7 +55,7 @@ func TestDataPropertyIncludeActivation(t *testing.T) {
 				activationsResponse: *createIncludeActivationsResponse(accountForTests, contractForTests, groupForTests, includeActivationsForTests[:2]),
 			},
 			init: func(t *testing.T, m *papi.Mock, attrs includeActivationTestAttributes) {
-				mockListIncludeActivation(m, attrs, 5)
+				mockListIncludeActivation(m, attrs, 3)
 			},
 			configPath: "testdata/TestDataPropertyIncludeActivation/no_activation_for_given_network.tf",
 		},
@@ -68,7 +68,7 @@ func TestDataPropertyIncludeActivation(t *testing.T) {
 				activationsResponse: *createIncludeActivationsResponse(accountForTests, contractForTests, groupForTests, includeActivationsWithLatestDeactivate),
 			},
 			init: func(t *testing.T, m *papi.Mock, attrs includeActivationTestAttributes) {
-				mockListIncludeActivation(m, attrs, 5)
+				mockListIncludeActivation(m, attrs, 3)
 			},
 			configPath: "testdata/TestDataPropertyIncludeActivation/valid_staging.tf",
 		},
@@ -81,7 +81,7 @@ func TestDataPropertyIncludeActivation(t *testing.T) {
 				activationsResponse: *createIncludeActivationsResponse(accountForTests, contractForTests, groupForTests, includeActivationsForTests[:2]),
 			},
 			init: func(t *testing.T, m *papi.Mock, attrs includeActivationTestAttributes) {
-				mockListIncludeActivation(m, attrs, 5)
+				mockListIncludeActivation(m, attrs, 3)
 			},
 			configPath: "testdata/TestDataPropertyIncludeActivation/valid_production.tf",
 		},
@@ -108,8 +108,8 @@ func TestDataPropertyIncludeActivation(t *testing.T) {
 					}),
 				}),
 			},
-			init: func(t *testing.T, m *papi.Mock, attrs includeActivationTestAttributes) {
-				mockListIncludeActivation(m, attrs, 5)
+			init: func(_ *testing.T, m *papi.Mock, attrs includeActivationTestAttributes) {
+				mockListIncludeActivation(m, attrs, 3)
 			},
 			configPath: "testdata/TestDataPropertyIncludeActivation/valid_staging.tf",
 		},
