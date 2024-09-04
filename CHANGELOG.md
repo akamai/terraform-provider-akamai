@@ -136,6 +136,9 @@
 
 
 
+* IAM
+  * Added new data source:
+    * `akamai_iam_cidr_blocks` - read the CIDR blocks details
 
 
 
