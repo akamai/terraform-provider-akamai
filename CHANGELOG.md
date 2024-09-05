@@ -41,6 +41,15 @@
 
 
 
+* Global
+  * Migrated Terraform to version 1.9.5
+  * Updated SDKv2 and framework libraries
+
+
+
+
+
+
 
 
 
