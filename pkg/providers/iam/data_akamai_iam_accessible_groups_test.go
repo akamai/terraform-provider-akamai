@@ -15,8 +15,8 @@ import (
 )
 
 func TestAccessibleGroups(t *testing.T) {
-	mockPositiveCase := func(client *iam.Mock, returnedGroups iam.ListAccessibleGroupsResponse) *mock.Call {
-		return client.On("ListAccessibleGroups", mock.Anything, iam.ListAccessibleGroupsRequest{UserName: "user1"}).Return(returnedGroups, nil).Times(5)
+	mockPositiveCase := func(client *iam.Mock, returnedGroups iam.ListAccessibleGroupsResponse, times int) *mock.Call {
+		return client.On("ListAccessibleGroups", mock.Anything, iam.ListAccessibleGroupsRequest{UserName: "user1"}).Return(returnedGroups, nil).Times(times)
 	}
 
 	generateCheckForGroup := func(path, groupID, groupName, isBlocked, roleDescription, roleID, roleName, subGroupsNumber string) resource.TestCheckFunc {
@@ -113,7 +113,7 @@ func TestAccessibleGroups(t *testing.T) {
 						},
 					},
 				}
-				mockPositiveCase(client, returnedGroups)
+				mockPositiveCase(client, returnedGroups, 3)
 			},
 			config: "testdata/TestDataAccessibleGroups/basic.tf",
 			expectedChecks: resource.ComposeAggregateTestCheckFunc(
@@ -138,7 +138,7 @@ func TestAccessibleGroups(t *testing.T) {
 						SubGroups:       generateSubGroups(50, 123),
 					},
 				}
-				mockPositiveCase(client, returnedGroups)
+				mockPositiveCase(client, returnedGroups, 3)
 			},
 			config: "testdata/TestDataAccessibleGroups/basic.tf",
 			expectedChecks: resource.ComposeAggregateTestCheckFunc(
@@ -151,7 +151,7 @@ func TestAccessibleGroups(t *testing.T) {
 		},
 		"normal case - empty response": {
 			init: func(client *iam.Mock) {
-				mockPositiveCase(client, []iam.AccessibleGroup{})
+				mockPositiveCase(client, []iam.AccessibleGroup{}, 3)
 			},
 			config: "testdata/TestDataAccessibleGroups/basic.tf",
 			expectedChecks: resource.ComposeAggregateTestCheckFunc(
@@ -172,14 +172,14 @@ func TestAccessibleGroups(t *testing.T) {
 						SubGroups:       generateSubGroups(51, 123),
 					},
 				}
-				mockPositiveCase(client, returnedGroups)
+				mockPositiveCase(client, returnedGroups, 1)
 			},
 			config:        "testdata/TestDataAccessibleGroups/basic.tf",
 			expectedError: regexp.MustCompile("unsupported subgroup depth"),
 		},
 		"error - api failed": {
 			init: func(client *iam.Mock) {
-				client.On("ListAccessibleGroups", mock.Anything, iam.ListAccessibleGroupsRequest{UserName: "user1"}).Return(nil, errors.New("api failed")).Times(5)
+				client.On("ListAccessibleGroups", mock.Anything, iam.ListAccessibleGroupsRequest{UserName: "user1"}).Return(nil, errors.New("api failed")).Times(1)
 			},
 			config:        "testdata/TestDataAccessibleGroups/basic.tf",
 			expectedError: regexp.MustCompile("api failed"),
@@ -209,6 +209,7 @@ func TestAccessibleGroups(t *testing.T) {
 					},
 				})
 			})
+			client.AssertExpectations(t)
 		})
 	}
 }

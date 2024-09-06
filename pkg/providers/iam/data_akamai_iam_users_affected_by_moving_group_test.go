@@ -18,7 +18,7 @@ func TestUsersAffectedByMovingGroup(t *testing.T) {
 
 	mockListAffectedUsers := func(client *iam.Mock, userType string, users []iam.GroupUser) *mock.Call {
 		return client.On("ListAffectedUsers", mock.Anything, iam.ListAffectedUsersRequest{SourceGroupID: 123, DestinationGroupID: 321, UserType: userType}).
-			Return(users, nil)
+			Return(users, nil).Times(3)
 	}
 
 	generateExpectedGroup := func(path, accountID, email, firstName, lastName, userName, identityID string, lastLoginDate *string) resource.TestCheckFunc {
@@ -132,7 +132,7 @@ func TestUsersAffectedByMovingGroup(t *testing.T) {
 		"api failed": {
 			init: func(client *iam.Mock) {
 				client.On("ListAffectedUsers", mock.Anything, iam.ListAffectedUsersRequest{SourceGroupID: 123, DestinationGroupID: 321, UserType: ""}).
-					Return(nil, errors.New("api failed"))
+					Return(nil, errors.New("api failed")).Once()
 			},
 			config:        "testdata/TestDataUsersAffected/basic.tf",
 			expectedError: regexp.MustCompile("api failed"),
@@ -157,6 +157,7 @@ func TestUsersAffectedByMovingGroup(t *testing.T) {
 					},
 				})
 			})
+			client.AssertExpectations(t)
 		})
 	}
 }

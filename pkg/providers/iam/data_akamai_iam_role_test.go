@@ -44,7 +44,7 @@ func TestRoleDataSource(t *testing.T) {
 						Delete: true,
 						Edit:   true,
 					},
-				}, nil)
+				}, nil).Times(3)
 			},
 			expectedAttributes: map[string]string{
 				"role_id":          "12345",
@@ -68,7 +68,7 @@ func TestRoleDataSource(t *testing.T) {
 					Actions:      true,
 					GrantedRoles: true,
 					Users:        true,
-				}).Return(nil, fmt.Errorf("API error"))
+				}).Return(nil, fmt.Errorf("API error")).Once()
 			},
 			expectError: regexp.MustCompile("API error"),
 		},

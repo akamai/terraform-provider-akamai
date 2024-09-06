@@ -39,7 +39,7 @@ func TestDataPropertyUsers(t *testing.T) {
 	mockListUsersForProperty := func(iamMock *iam.Mock, req iam.ListUsersForPropertyRequest,
 		users ...iam.UsersForProperty) {
 		iamMock.On("ListUsersForProperty", mock.Anything, req).
-			Return((*iam.ListUsersForPropertyResponse)(&users), nil)
+			Return((*iam.ListUsersForPropertyResponse)(&users), nil).Times(3)
 	}
 
 	tests := map[string]struct {

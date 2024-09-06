@@ -52,7 +52,7 @@ func TestDataCIDRBlocks(t *testing.T) {
 						ModifiedDate: time.Date(2017, 7, 27, 18, 11, 25, 0, time.UTC),
 					},
 				}
-				m.On("ListCIDRBlocks", mock.Anything, listCIDRBlocksReq).Return(&listCIDRBlocksResp, nil).Times(5)
+				m.On("ListCIDRBlocks", mock.Anything, listCIDRBlocksReq).Return(&listCIDRBlocksResp, nil).Times(3)
 			},
 		},
 		"error - ListCIDRBlocks call failed ": {

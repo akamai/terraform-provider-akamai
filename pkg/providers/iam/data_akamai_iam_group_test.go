@@ -14,11 +14,11 @@ import (
 )
 
 func TestGroupDataSource(t *testing.T) {
-	mockGetGroup := func(client *iam.Mock, group *iam.Group) *mock.Call {
+	mockGetGroup := func(client *iam.Mock, group *iam.Group, times int) *mock.Call {
 		return client.On("GetGroup", mock.Anything, iam.GetGroupRequest{
 			GroupID: 123,
 			Actions: true,
-		}).Return(group, nil)
+		}).Return(group, nil).Times(times)
 	}
 
 	tests := map[string]struct {
@@ -43,7 +43,7 @@ func TestGroupDataSource(t *testing.T) {
 					},
 					SubGroups: []iam.Group{},
 				}
-				mockGetGroup(client, group)
+				mockGetGroup(client, group, 3)
 			},
 			expectedChecks: resource.ComposeAggregateTestCheckFunc(
 				resource.TestCheckResourceAttr("data.akamai_iam_group.test", "group_id", "123"),
@@ -76,7 +76,7 @@ func TestGroupDataSource(t *testing.T) {
 						},
 					},
 				}
-				mockGetGroup(client, group)
+				mockGetGroup(client, group, 3)
 			},
 			expectedChecks: resource.ComposeAggregateTestCheckFunc(
 				resource.TestCheckResourceAttr("data.akamai_iam_group.test", "group_id", "123"),
@@ -99,7 +99,7 @@ func TestGroupDataSource(t *testing.T) {
 					ParentGroupID: 0,
 					SubGroups:     generateDeepSubGroups(51),
 				}
-				mockGetGroup(client, group)
+				mockGetGroup(client, group, 1)
 			},
 			expectedError: regexp.MustCompile("unsupported subgroup depth"),
 			givenTF:       "valid.tf",
@@ -109,7 +109,7 @@ func TestGroupDataSource(t *testing.T) {
 				client.On("GetGroup", mock.Anything, iam.GetGroupRequest{
 					GroupID: 123,
 					Actions: true,
-				}).Return(nil, errors.New("api failed"))
+				}).Return(nil, errors.New("api failed")).Once()
 			},
 			expectedError: regexp.MustCompile("api failed"),
 			givenTF:       "valid.tf",
@@ -139,6 +139,7 @@ func TestGroupDataSource(t *testing.T) {
 					},
 				})
 			})
+			client.AssertExpectations(t)
 		})
 	}
 

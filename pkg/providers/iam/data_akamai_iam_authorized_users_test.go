@@ -58,7 +58,7 @@ func TestAuthorizedUsers(t *testing.T) {
 		"success path": {
 			configPath: "testdata/TestAuthorizedUsers/default.tf",
 			init: func(t *testing.T, m *iam.Mock, testData testDataForAuthorizedUsers) {
-				expectFullListAuthorizedUsers(t, m, testData, 5)
+				expectFullListAuthorizedUsers(t, m, testData, 3)
 			},
 			mockData: basicTestDataForAuthorizedUsers,
 		},

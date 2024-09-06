@@ -58,7 +58,7 @@ func TestDataCIDRBlock(t *testing.T) {
 		"happy path": {
 			configPath: "testdata/TestDataCIDRBlock/default.tf",
 			init: func(t *testing.T, m *iam.Mock, mockData testDataForCIDRBlock) {
-				expectGetCIDRBlock(t, m, mockData, 5)
+				expectGetCIDRBlock(t, m, mockData, 3)
 			},
 			mockData: basicTestDataForCIDRBlock,
 		},

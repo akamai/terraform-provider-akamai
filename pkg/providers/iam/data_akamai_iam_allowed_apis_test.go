@@ -99,14 +99,14 @@ func TestDataAllowedAPIs(t *testing.T) {
 		"happy path": {
 			configPath: "testdata/TestDataAllowedAPIs/default.tf",
 			init: func(t *testing.T, m *iam.Mock, testData testDataForAllowedAPIs) {
-				expectFullListAllowedAPIs(t, m, testData, 5)
+				expectFullListAllowedAPIs(t, m, testData, 3)
 			},
 			mockData: basicTestDataForAllowedAPIs,
 		},
 		"happy path no optional values": {
 			configPath: "testdata/TestDataAllowedAPIs/default_no_optional.tf",
 			init: func(t *testing.T, m *iam.Mock, testData testDataForAllowedAPIs) {
-				expectFullListAllowedAPIs(t, m, testData, 5)
+				expectFullListAllowedAPIs(t, m, testData, 3)
 			},
 			mockData: basicTestDataForAllowedAPIsNoOptional,
 		},

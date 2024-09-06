@@ -37,7 +37,7 @@ func TestPasswordPolicy(t *testing.T) {
 	}{
 		"happy path": {
 			init: func(m *iam.Mock) {
-				expectGetPasswordPolicy(m, 5)
+				expectGetPasswordPolicy(m, 3)
 			},
 		},
 		"error listing password policy": {

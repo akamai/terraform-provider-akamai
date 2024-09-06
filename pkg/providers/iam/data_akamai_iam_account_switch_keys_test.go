@@ -48,13 +48,13 @@ func TestAccountSwitchKeys(t *testing.T) {
 		"happy path": {
 			givenTF: "default.tf",
 			init: func(m *iam.Mock) {
-				expectListAccountSwitchKeys(m, "", "", 5)
+				expectListAccountSwitchKeys(m, "", "", 3)
 			},
 		},
 		"happy path with correct filter": {
 			givenTF: "default_correct_filter.tf",
 			init: func(m *iam.Mock) {
-				expectListAccountSwitchKeys(m, "XYZ", "ABC", 5)
+				expectListAccountSwitchKeys(m, "XYZ", "ABC", 3)
 			},
 		},
 		"incorrect filter": {
