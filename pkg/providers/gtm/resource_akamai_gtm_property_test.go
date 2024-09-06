@@ -1615,7 +1615,7 @@ func getMocks() *gtm.Mock {
 
 	// read
 	client.On("GetProperty", mock.Anything, mock.AnythingOfType("gtm.GetPropertyRequest")).
-		Return(&resp, nil).Times(4)
+		Return(&resp, nil).Times(3)
 
 	// delete
 	client.On("DeleteProperty",
@@ -1643,7 +1643,7 @@ func getMocksWithoutDatacenterID() *gtm.Mock {
 
 	// read
 	client.On("GetProperty", mock.Anything, mock.AnythingOfType("gtm.GetPropertyRequest")).
-		Return(&resp, nil).Times(4)
+		Return(&resp, nil).Times(3)
 
 	// delete
 	client.On("DeleteProperty",
@@ -1671,7 +1671,7 @@ func getMocksSecondApply() *gtm.Mock {
 
 	// read
 	client.On("GetProperty", mock.Anything, mock.AnythingOfType("gtm.GetPropertyRequest")).
-		Return(&resp, nil).Times(4)
+		Return(&resp, nil).Times(3)
 
 	// delete
 	client.On("DeleteProperty",

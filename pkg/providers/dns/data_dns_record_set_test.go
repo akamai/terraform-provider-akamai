@@ -55,9 +55,7 @@ func TestDataSourceDNSRecordSet_basic(t *testing.T) {
 
 		client.On("GetRdata",
 			mock.Anything, // ctx is irrelevant for this test
-			"exampleterraform.io",
-			"exampleterraform.io",
-			"TXT",
+			dns.GetRdataRequest{Zone: "exampleterraform.io", Name: "exampleterraform.io", RecordType: "TXT"},
 		).Return(rdata, nil)
 
 		useClient(client, func() {

@@ -234,30 +234,28 @@ func TestResDnsRecord(t *testing.T) {
 
 		client.On("GetRecord",
 			mock.Anything,
-			"exampleterraform.io",
-			"exampleterraform.io",
-			"TXT",
+			dns.GetRecordRequest{Zone: "exampleterraform.io", Name: "exampleterraform.io", RecordType: "TXT"},
 		).Return(nil, notFound).Once()
 
 		client.On("CreateRecord",
 			mock.Anything,
-			&dns.RecordBody{
-				Name:       "exampleterraform.io",
-				RecordType: "TXT",
-				TTL:        300,
-				Active:     false,
-				Target:     []string{normalizedTarget1, normalizedTarget2, normalizedTarget3},
+			dns.CreateRecordRequest{
+				Record: &dns.RecordBody{
+					Name:       "exampleterraform.io",
+					RecordType: "TXT",
+					TTL:        300,
+					Active:     false,
+					Target:     []string{normalizedTarget1, normalizedTarget2, normalizedTarget3},
+				},
+				Zone:    "exampleterraform.io",
+				RecLock: []bool{false},
 			},
-			"exampleterraform.io",
-			[]bool{false},
 		).Return(nil)
 
 		client.On("GetRecord",
 			mock.Anything,
-			"exampleterraform.io",
-			"exampleterraform.io",
-			"TXT",
-		).Return(&dns.RecordBody{
+			dns.GetRecordRequest{Zone: "exampleterraform.io", Name: "exampleterraform.io", RecordType: "TXT"},
+		).Return(&dns.GetRecordResponse{
 			Name:       "exampleterraform.io",
 			RecordType: "TXT",
 			TTL:        300,
@@ -281,10 +279,8 @@ func TestResDnsRecord(t *testing.T) {
 
 		client.On("GetRecord",
 			mock.Anything,
-			"exampleterraform.io",
-			"exampleterraform.io",
-			"TXT",
-		).Return(&dns.RecordBody{
+			dns.GetRecordRequest{Zone: "exampleterraform.io", Name: "exampleterraform.io", RecordType: "TXT"},
+		).Return(&dns.GetRecordResponse{
 			Name:       "exampleterraform.io",
 			RecordType: "TXT",
 			TTL:        300,
@@ -294,9 +290,7 @@ func TestResDnsRecord(t *testing.T) {
 
 		client.On("DeleteRecord",
 			mock.Anything,
-			mock.AnythingOfType("*dns.RecordBody"),
-			mock.AnythingOfType("string"),
-			mock.AnythingOfType("[]bool"),
+			dns.DeleteRecordRequest{Zone: "exampleterraform.io", Name: "exampleterraform.io", RecordType: "TXT", RecLock: []bool{false}},
 		).Return(nil)
 
 		resourceName := "akamai_dns_record.txt_record"
@@ -544,30 +538,28 @@ func TestResDnsRecord(t *testing.T) {
 		targetReceived := []string{"2001:db8:0:0:0:0:0:68", "::ffff:192.0.2.1"}
 		client.On("GetRecord",
 			mock.Anything,
-			"exampleterraform.io",
-			"exampleterraform.io",
-			"AAAA",
+			dns.GetRecordRequest{Zone: "exampleterraform.io", Name: "exampleterraform.io", RecordType: "AAAA"},
 		).Return(nil, notFound).Once()
 
 		client.On("CreateRecord",
 			mock.Anything,
-			&dns.RecordBody{
-				Name:       "exampleterraform.io",
-				RecordType: "AAAA",
-				TTL:        300,
-				Active:     false,
-				Target:     targetSent,
+			dns.CreateRecordRequest{
+				Record: &dns.RecordBody{
+					Name:       "exampleterraform.io",
+					RecordType: "AAAA",
+					TTL:        300,
+					Active:     false,
+					Target:     targetSent,
+				},
+				Zone:    "exampleterraform.io",
+				RecLock: []bool{false},
 			},
-			"exampleterraform.io",
-			[]bool{false},
 		).Return(nil)
 
 		client.On("GetRecord",
 			mock.Anything,
-			"exampleterraform.io",
-			"exampleterraform.io",
-			"AAAA",
-		).Return(&dns.RecordBody{
+			dns.GetRecordRequest{Zone: "exampleterraform.io", Name: "exampleterraform.io", RecordType: "AAAA"},
+		).Return(&dns.GetRecordResponse{
 			Name:       "exampleterraform.io",
 			RecordType: "AAAA",
 			TTL:        300,
@@ -591,10 +583,8 @@ func TestResDnsRecord(t *testing.T) {
 
 		client.On("GetRecord",
 			mock.Anything,
-			"exampleterraform.io",
-			"exampleterraform.io",
-			"AAAA",
-		).Return(&dns.RecordBody{
+			dns.GetRecordRequest{Zone: "exampleterraform.io", Name: "exampleterraform.io", RecordType: "AAAA"},
+		).Return(&dns.GetRecordResponse{
 			Name:       "exampleterraform.io",
 			RecordType: "AAAA",
 			TTL:        300,
@@ -604,9 +594,7 @@ func TestResDnsRecord(t *testing.T) {
 
 		client.On("DeleteRecord",
 			mock.Anything,
-			mock.AnythingOfType("*dns.RecordBody"),
-			mock.AnythingOfType("string"),
-			mock.AnythingOfType("[]bool"),
+			dns.DeleteRecordRequest{Zone: "exampleterraform.io", Name: "exampleterraform.io", RecordType: "AAAA", RecLock: []bool{false}},
 		).Return(nil)
 
 		resourceName := "akamai_dns_record.aaaa_record"
