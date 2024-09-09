@@ -963,21 +963,21 @@ func (m *KeyResourceModel) setCredentialsForAccessKeyCreation(useCredA bool) clo
 }
 
 func (m *KeyResourceModel) buildCreateKeyVersionRequest(useCredA bool) cloudaccess.CreateAccessKeyVersionRequest {
-	var bodyParams cloudaccess.CreateAccessKeyVersionBodyParams
+	var bodyParams cloudaccess.CreateAccessKeyVersionRequestBody
 	if useCredA {
-		bodyParams = cloudaccess.CreateAccessKeyVersionBodyParams{
+		bodyParams = cloudaccess.CreateAccessKeyVersionRequestBody{
 			CloudAccessKeyID:     m.CredentialsA.CloudAccessKeyID.ValueString(),
 			CloudSecretAccessKey: m.CredentialsA.CloudSecretAccessKey.ValueString(),
 		}
 	} else {
-		bodyParams = cloudaccess.CreateAccessKeyVersionBodyParams{
+		bodyParams = cloudaccess.CreateAccessKeyVersionRequestBody{
 			CloudAccessKeyID:     m.CredentialsB.CloudAccessKeyID.ValueString(),
 			CloudSecretAccessKey: m.CredentialsB.CloudSecretAccessKey.ValueString(),
 		}
 	}
 	return cloudaccess.CreateAccessKeyVersionRequest{
 		AccessKeyUID: m.AccessKeyUID.ValueInt64(),
-		BodyParams:   bodyParams,
+		Body:         bodyParams,
 	}
 }
 

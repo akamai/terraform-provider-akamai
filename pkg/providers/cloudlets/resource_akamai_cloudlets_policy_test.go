@@ -1551,7 +1551,7 @@ func TestResourcePolicyV3(t *testing.T) {
 			require.NoError(t, err)
 			policyUpdate.GroupID = updatedGroup
 			client.On("UpdatePolicy", mock.Anything, v3.UpdatePolicyRequest{
-				BodyParams: v3.UpdatePolicyBodyParams{
+				Body: v3.UpdatePolicyRequestBody{
 					GroupID: updatedGroup,
 				},
 				PolicyID: policyUpdate.ID,
@@ -2706,7 +2706,7 @@ func TestResourcePolicyV3(t *testing.T) {
 		policy, version := expectCreatePolicy(t, client, 2, 123, matchRules, "test policy description")
 		expectReadPolicy(t, client, policy, version, 3)
 		client.On("UpdatePolicy", mock.Anything, v3.UpdatePolicyRequest{
-			BodyParams: v3.UpdatePolicyBodyParams{
+			Body: v3.UpdatePolicyRequestBody{
 				GroupID: 321,
 			},
 			PolicyID: policy.ID,

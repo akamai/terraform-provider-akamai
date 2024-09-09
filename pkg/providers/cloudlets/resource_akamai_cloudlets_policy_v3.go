@@ -77,7 +77,7 @@ func (strategy v3PolicyStrategy) updatePolicyVersion(ctx context.Context, d *sch
 func (strategy v3PolicyStrategy) updatePolicy(ctx context.Context, policyID, groupID int64, _ string) error {
 	updatePolicyReq := v3.UpdatePolicyRequest{
 		PolicyID: policyID,
-		BodyParams: v3.UpdatePolicyBodyParams{
+		Body: v3.UpdatePolicyRequestBody{
 			GroupID: groupID,
 		},
 	}

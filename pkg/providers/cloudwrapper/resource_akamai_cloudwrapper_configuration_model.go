@@ -67,7 +67,7 @@ func (m *ConfigurationResourceModel) hasUnknown() bool {
 
 func (m *ConfigurationResourceModel) buildCreateRequest(ctx context.Context) cloudwrapper.CreateConfigurationRequest {
 	return cloudwrapper.CreateConfigurationRequest{
-		Body: cloudwrapper.CreateConfigurationBody{
+		Body: cloudwrapper.CreateConfigurationRequestBody{
 			CapacityAlertsThreshold: m.getCapacityAlertsThreshold(),
 			Comments:                m.Comments.ValueString(),
 			ContractID:              m.ContractID.ValueString(),
@@ -84,7 +84,7 @@ func (m *ConfigurationResourceModel) buildCreateRequest(ctx context.Context) clo
 func (m *ConfigurationResourceModel) buildUpdateRequest(ctx context.Context) cloudwrapper.UpdateConfigurationRequest {
 	return cloudwrapper.UpdateConfigurationRequest{
 		ConfigID: m.ID.ValueInt64(),
-		Body: cloudwrapper.UpdateConfigurationBody{
+		Body: cloudwrapper.UpdateConfigurationRequestBody{
 			CapacityAlertsThreshold: m.getCapacityAlertsThreshold(),
 			Comments:                m.Comments.ValueString(),
 			Locations:               m.getLocationsReq(),

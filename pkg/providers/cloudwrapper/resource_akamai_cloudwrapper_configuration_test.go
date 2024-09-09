@@ -19,7 +19,7 @@ func TestConfigurationResource(t *testing.T) {
 		client := &cloudwrapper.Mock{}
 
 		configuration := cloudwrapper.CreateConfigurationRequest{
-			Body: cloudwrapper.CreateConfigurationBody{
+			Body: cloudwrapper.CreateConfigurationRequestBody{
 				Comments:   "test",
 				ContractID: "ctr_123",
 				Locations: []cloudwrapper.ConfigLocationReq{
@@ -78,7 +78,7 @@ func TestConfigurationResource(t *testing.T) {
 		client := &cloudwrapper.Mock{}
 
 		configuration := cloudwrapper.CreateConfigurationRequest{
-			Body: cloudwrapper.CreateConfigurationBody{
+			Body: cloudwrapper.CreateConfigurationRequestBody{
 				Comments:   "test",
 				ContractID: "ctr_123",
 				Locations: []cloudwrapper.ConfigLocationReq{
@@ -127,7 +127,7 @@ func TestConfigurationResource(t *testing.T) {
 		client := &cloudwrapper.Mock{}
 
 		configuration := cloudwrapper.CreateConfigurationRequest{
-			Body: cloudwrapper.CreateConfigurationBody{
+			Body: cloudwrapper.CreateConfigurationRequestBody{
 				Comments:   "test",
 				ContractID: "ctr_123",
 				Locations: []cloudwrapper.ConfigLocationReq{
@@ -176,7 +176,7 @@ func TestConfigurationResource(t *testing.T) {
 		client := &cloudwrapper.Mock{}
 
 		configuration := cloudwrapper.CreateConfigurationRequest{
-			Body: cloudwrapper.CreateConfigurationBody{
+			Body: cloudwrapper.CreateConfigurationRequestBody{
 				Comments:   "test",
 				ContractID: "ctr_123",
 				Locations: []cloudwrapper.ConfigLocationReq{
@@ -204,7 +204,7 @@ func TestConfigurationResource(t *testing.T) {
 		expecter.ExpectDelete()
 
 		configUpdate := cloudwrapper.CreateConfigurationRequest{
-			Body: cloudwrapper.CreateConfigurationBody{
+			Body: cloudwrapper.CreateConfigurationRequestBody{
 				Comments:   "test",
 				ContractID: "ctr_123",
 				Locations: []cloudwrapper.ConfigLocationReq{
@@ -259,7 +259,7 @@ func TestConfigurationResource(t *testing.T) {
 		client := &cloudwrapper.Mock{}
 
 		configuration := cloudwrapper.CreateConfigurationRequest{
-			Body: cloudwrapper.CreateConfigurationBody{
+			Body: cloudwrapper.CreateConfigurationRequestBody{
 				Comments:   "test",
 				ContractID: "ctr_123",
 				Locations: []cloudwrapper.ConfigLocationReq{
@@ -289,7 +289,7 @@ func TestConfigurationResource(t *testing.T) {
 		expecter.ExpectDelete()
 
 		configUpdate := cloudwrapper.CreateConfigurationRequest{
-			Body: cloudwrapper.CreateConfigurationBody{
+			Body: cloudwrapper.CreateConfigurationRequestBody{
 				Comments:   "test",
 				ContractID: "ctr_234",
 				Locations: []cloudwrapper.ConfigLocationReq{
@@ -346,7 +346,7 @@ func TestConfigurationResource(t *testing.T) {
 		client := &cloudwrapper.Mock{}
 
 		configuration := cloudwrapper.CreateConfigurationRequest{
-			Body: cloudwrapper.CreateConfigurationBody{
+			Body: cloudwrapper.CreateConfigurationRequestBody{
 				Comments:   "test",
 				ContractID: "ctr_123",
 				Locations: []cloudwrapper.ConfigLocationReq{
@@ -376,7 +376,7 @@ func TestConfigurationResource(t *testing.T) {
 		expecter.ExpectDelete()
 
 		configUpdate := cloudwrapper.CreateConfigurationRequest{
-			Body: cloudwrapper.CreateConfigurationBody{
+			Body: cloudwrapper.CreateConfigurationRequestBody{
 				Comments:   "test",
 				ContractID: "ctr_234",
 				Locations: []cloudwrapper.ConfigLocationReq{
@@ -433,7 +433,7 @@ func TestConfigurationResource(t *testing.T) {
 		client := &cloudwrapper.Mock{}
 
 		configuration := cloudwrapper.CreateConfigurationRequest{
-			Body: cloudwrapper.CreateConfigurationBody{
+			Body: cloudwrapper.CreateConfigurationRequestBody{
 				Comments:   "test",
 				ContractID: "ctr_123",
 				Locations: []cloudwrapper.ConfigLocationReq{
@@ -491,7 +491,7 @@ func TestConfigurationResource(t *testing.T) {
 		client := &cloudwrapper.Mock{}
 
 		configuration := cloudwrapper.CreateConfigurationRequest{
-			Body: cloudwrapper.CreateConfigurationBody{
+			Body: cloudwrapper.CreateConfigurationRequestBody{
 				Comments:   "test",
 				ContractID: "ctr_123",
 				Locations: []cloudwrapper.ConfigLocationReq{
@@ -521,7 +521,7 @@ func TestConfigurationResource(t *testing.T) {
 
 		configUpdate := cloudwrapper.UpdateConfigurationRequest{
 			ConfigID: expecter.config.ConfigID,
-			Body: cloudwrapper.UpdateConfigurationBody{
+			Body: cloudwrapper.UpdateConfigurationRequestBody{
 				CapacityAlertsThreshold: &capacityAlertsThreshold,
 				Comments:                "test",
 				Locations: []cloudwrapper.ConfigLocationReq{
@@ -547,7 +547,7 @@ func TestConfigurationResource(t *testing.T) {
 
 		configUpdate2 := cloudwrapper.UpdateConfigurationRequest{
 			ConfigID: expecter.config.ConfigID,
-			Body: cloudwrapper.UpdateConfigurationBody{
+			Body: cloudwrapper.UpdateConfigurationRequestBody{
 				Comments: "test",
 				Locations: []cloudwrapper.ConfigLocationReq{
 					{
@@ -610,7 +610,7 @@ func TestConfigurationResource(t *testing.T) {
 		client := &cloudwrapper.Mock{}
 
 		configuration := cloudwrapper.CreateConfigurationRequest{
-			Body: cloudwrapper.CreateConfigurationBody{
+			Body: cloudwrapper.CreateConfigurationRequestBody{
 				Comments:   "test",
 				ContractID: "ctr_123",
 				Locations: []cloudwrapper.ConfigLocationReq{
@@ -674,7 +674,7 @@ func TestConfigurationResource(t *testing.T) {
 		client := &cloudwrapper.Mock{}
 
 		configuration := cloudwrapper.CreateConfigurationRequest{
-			Body: cloudwrapper.CreateConfigurationBody{
+			Body: cloudwrapper.CreateConfigurationRequestBody{
 				Comments:   "test",
 				ContractID: "ctr_123",
 				Locations: []cloudwrapper.ConfigLocationReq{
@@ -734,7 +734,7 @@ func TestConfigurationResource(t *testing.T) {
 		client := &cloudwrapper.Mock{}
 
 		configuration := cloudwrapper.CreateConfigurationRequest{
-			Body: cloudwrapper.CreateConfigurationBody{
+			Body: cloudwrapper.CreateConfigurationRequestBody{
 				Comments:   "test",
 				ContractID: "ctr_123",
 				Locations: []cloudwrapper.ConfigLocationReq{
@@ -782,7 +782,7 @@ func TestConfigurationResource(t *testing.T) {
 		expecter.ExpectUpdate(cloudwrapper.UpdateConfigurationRequest{
 			ConfigID: 123,
 			Activate: false,
-			Body: cloudwrapper.UpdateConfigurationBody{
+			Body: cloudwrapper.UpdateConfigurationRequestBody{
 				Comments: "test",
 				Locations: []cloudwrapper.ConfigLocationReq{
 					{
@@ -833,7 +833,7 @@ func TestConfigurationResource(t *testing.T) {
 		client := &cloudwrapper.Mock{}
 
 		configuration := cloudwrapper.CreateConfigurationRequest{
-			Body: cloudwrapper.CreateConfigurationBody{
+			Body: cloudwrapper.CreateConfigurationRequestBody{
 				Comments:   "test",
 				ContractID: "ctr_123",
 				Locations: []cloudwrapper.ConfigLocationReq{
@@ -912,7 +912,7 @@ func TestConfigurationResource(t *testing.T) {
 		client := &cloudwrapper.Mock{}
 
 		configuration := cloudwrapper.CreateConfigurationRequest{
-			Body: cloudwrapper.CreateConfigurationBody{
+			Body: cloudwrapper.CreateConfigurationRequestBody{
 				Comments:   "test",
 				ContractID: "ctr_123",
 				Locations: []cloudwrapper.ConfigLocationReq{

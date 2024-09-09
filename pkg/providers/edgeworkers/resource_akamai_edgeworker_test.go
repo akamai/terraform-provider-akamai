@@ -172,7 +172,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 				EdgeWorkerID:   edgeWorkerID,
 			}
 			updateEdgeWorkerID := edgeworkers.UpdateEdgeWorkerIDRequest{
-				EdgeWorkerIDBodyRequest: edgeworkers.EdgeWorkerIDBodyRequest{
+				Body: edgeworkers.EdgeWorkerIDRequestBody{
 					Name:           name,
 					GroupID:        groupID,
 					ResourceTierID: resourceTierID,
@@ -209,7 +209,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 				EdgeWorkerID:   edgeWorkerID,
 			}
 			updateEdgeWorkerID := edgeworkers.UpdateEdgeWorkerIDRequest{
-				EdgeWorkerIDBodyRequest: edgeworkers.EdgeWorkerIDBodyRequest{
+				Body: edgeworkers.EdgeWorkerIDRequestBody{
 					Name:           name,
 					GroupID:        groupID,
 					ResourceTierID: resourceTierID,
