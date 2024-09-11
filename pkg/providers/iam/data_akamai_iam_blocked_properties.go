@@ -29,10 +29,15 @@ type blockedPropertiesDataSource struct {
 
 // blockedPropertiesDataSource describes the data source data model for BlockedPropertiesDataSource
 type blockedPropertiesDataSourceModel struct {
-	GroupID           types.Int64  `tfsdk:"group_id"`
-	ContractID        types.String `tfsdk:"contract_id"`
-	UIIdentityID      types.String `tfsdk:"ui_identity_id"`
-	BlockedProperties types.List   `tfsdk:"blocked_properties"`
+	GroupID           types.Int64               `tfsdk:"group_id"`
+	ContractID        types.String              `tfsdk:"contract_id"`
+	UIIdentityID      types.String              `tfsdk:"ui_identity_id"`
+	BlockedProperties []blockedPropertyIDsModel `tfsdk:"blocked_properties"`
+}
+
+type blockedPropertyIDsModel struct {
+	PropertyID types.String `tfsdk:"property_id"`
+	AssetID    types.Int64  `tfsdk:"asset_id"`
 }
 
 // Metadata configures data source's meta information
@@ -57,10 +62,21 @@ func (d *blockedPropertiesDataSource) Schema(_ context.Context, _ datasource.Sch
 				Required:    true,
 				Description: "Unique identifier for each user.",
 			},
-			"blocked_properties": schema.ListAttribute{
+			"blocked_properties": schema.ListNestedAttribute{
 				Computed:    true,
-				ElementType: types.StringType,
 				Description: "The list of blocked properties.",
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"property_id": schema.StringAttribute{
+							Computed:    true,
+							Description: "PAPI's blocked property ID",
+						},
+						"asset_id": schema.Int64Attribute{
+							Computed:    true,
+							Description: "IAM's blocked property ID",
+						},
+					},
+				},
 			},
 		},
 	}
@@ -106,7 +122,7 @@ func (d *blockedPropertiesDataSource) Read(ctx context.Context, req datasource.R
 		return
 	}
 
-	var blockedPropertiesPAPI []string
+	var blockedProperties []blockedPropertyIDsModel
 	groupID := str.AddPrefix(data.GroupID.String(), "grp_")
 
 	for _, prop := range listBlockedPropertiesResp {
@@ -129,16 +145,10 @@ func (d *blockedPropertiesDataSource) Read(ctx context.Context, req datasource.R
 			return
 		}
 
-		blockedPropertiesPAPI = append(blockedPropertiesPAPI, *papiPropertyID)
+		blockedProperties = append(blockedProperties, blockedPropertyIDsModel{PropertyID: types.StringValue(*papiPropertyID), AssetID: types.Int64Value(prop)})
 	}
 
-	blockedPropertyIDsPAPI, diags := types.ListValueFrom(ctx, types.StringType, blockedPropertiesPAPI)
-	if diags.HasError() {
-		resp.Diagnostics.Append(diags...)
-		return
-	}
-
-	data.BlockedProperties = blockedPropertyIDsPAPI
+	data.BlockedProperties = blockedProperties
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

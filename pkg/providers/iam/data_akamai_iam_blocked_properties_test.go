@@ -17,12 +17,12 @@ func TestBlockedPropertiesDataSource(t *testing.T) {
 	propertyName2 := "example2.com"
 	propertyID1 := "prp_123456"
 	propertyID2 := "prp_456789"
+
 	tests := map[string]struct {
-		givenTF                   string
-		init                      func(*iam.Mock, *papi.Mock)
-		expectedAttributes        map[string]string
-		expectedMissingAttributes []string
-		expectError               *regexp.Regexp
+		givenTF       string
+		init          func(*iam.Mock, *papi.Mock)
+		expectedCheck resource.TestCheckFunc
+		expectError   *regexp.Regexp
 	}{
 		"happy path - blocked properties are returned": {
 			givenTF: "valid.tf",
@@ -51,11 +51,26 @@ func TestBlockedPropertiesDataSource(t *testing.T) {
 				}).Return(&propertyID2, nil)
 
 			},
-			expectedAttributes: map[string]string{
-				"blocked_properties.#": "2",
-				"blocked_properties.0": "prp_123456",
-				"blocked_properties.1": "prp_456789",
+			expectedCheck: resource.ComposeAggregateTestCheckFunc(
+				resource.TestCheckResourceAttr("data.akamai_iam_blocked_properties.test", "blocked_properties.#", "2"),
+				resource.TestCheckResourceAttr("data.akamai_iam_blocked_properties.test", "blocked_properties.0.property_id", "prp_123456"),
+				resource.TestCheckResourceAttr("data.akamai_iam_blocked_properties.test", "blocked_properties.0.asset_id", "123"),
+				resource.TestCheckResourceAttr("data.akamai_iam_blocked_properties.test", "blocked_properties.1.property_id", "prp_456789"),
+				resource.TestCheckResourceAttr("data.akamai_iam_blocked_properties.test", "blocked_properties.1.asset_id", "456"),
+			),
+			expectError: nil,
+		},
+		"happy path - no blocked properties are returned": {
+			givenTF: "valid.tf",
+			init: func(im *iam.Mock, pm *papi.Mock) {
+				im.On("ListBlockedProperties", mock.Anything, iam.ListBlockedPropertiesRequest{
+					IdentityID: "user123",
+					GroupID:    1,
+				}).Return([]int64{}, nil)
 			},
+			expectedCheck: resource.ComposeAggregateTestCheckFunc(
+				resource.TestCheckResourceAttr("data.akamai_iam_blocked_properties.test", "blocked_properties.#", "0"),
+			),
 			expectError: nil,
 		},
 		"error response from api": {
@@ -89,20 +104,13 @@ func TestBlockedPropertiesDataSource(t *testing.T) {
 			if test.init != nil {
 				test.init(client, papiClient)
 			}
-			var checkFuncs []resource.TestCheckFunc
-			for k, v := range test.expectedAttributes {
-				checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("data.akamai_iam_blocked_properties.test", k, v))
-			}
-			for _, v := range test.expectedMissingAttributes {
-				checkFuncs = append(checkFuncs, resource.TestCheckNoResourceAttr("data.akamai_iam_blocked_properties.test", v))
-			}
 			useIAMandPAPIClient(client, papiClient, func() {
 				resource.Test(t, resource.TestCase{
 					IsUnitTest:               true,
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{{
 						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("testdata/TestDataBlockedProperties/%s", test.givenTF)),
-						Check:       resource.ComposeAggregateTestCheckFunc(checkFuncs...),
+						Check:       test.expectedCheck,
 						ExpectError: test.expectError,
 					}},
 				})
