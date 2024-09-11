@@ -88,6 +88,9 @@
 
 
 
+* IAM
+  * Added new data source
+    * `akamai_iam_user` - read details about a specific user account
 
 
 
