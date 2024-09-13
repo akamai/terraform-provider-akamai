@@ -652,7 +652,7 @@ func (c *Client) Do(req *Request) (*http.Response, error) {
 		}
 
 		// First attempt was already signed
-		if attempt > 1 {
+		if attempt > 1 && c.PrepareRetry != nil {
 			if err := c.PrepareRetry(req.Request); err != nil {
 				prepareErr = err
 				break

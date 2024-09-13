@@ -21,7 +21,7 @@ func NewTimeFromString(t *testing.T, s string) time.Time {
 }
 
 // XRateLimitHTTPHandler first returns status 429 with the X-RateLimit-Next header set to
-// time.Now() plus a random value between 1 and 5 seconds. It keeps sending 429 until the
+// time.Now() plus a random value between 1 and 5 milliseconds. It keeps sending 429 until the
 // X-RateLimit-Next point in time. Then it starts to return SuccessCode and SuccessBody
 // indefinitely.
 type XRateLimitHTTPHandler struct {
@@ -39,7 +39,7 @@ func (h *XRateLimitHTTPHandler) ServeHTTP(w http.ResponseWriter, _ *http.Request
 	av := h.AvailableAt()
 
 	if av.IsZero() {
-		busyInterval := time.Duration(1+rand.Intn(4)) * time.Second
+		busyInterval := time.Duration(1+rand.Intn(4)) * time.Millisecond
 		h.setAvailableAt(time.Now().Add(busyInterval))
 		h.setTooManyRequests(w)
 		return
