@@ -60,6 +60,41 @@ func TestRoleDataSource(t *testing.T) {
 			},
 			expectError: nil,
 		},
+		"happy path - role is returned, without dates": {
+			givenTF: "valid.tf",
+			init: func(m *iam.Mock) {
+				m.On("GetRole", mock.Anything, iam.GetRoleRequest{
+					ID:           12345,
+					Actions:      true,
+					GrantedRoles: true,
+					Users:        true,
+				}).Return(&iam.Role{
+					RoleID:          int64(12345),
+					RoleName:        "example-role",
+					RoleDescription: "This is an example role.",
+					CreatedBy:       "user@example.com",
+					ModifiedBy:      "admin@example.com",
+					RoleType:        "custom",
+					Actions: &iam.RoleAction{
+						Delete: true,
+						Edit:   true,
+					},
+				}, nil).Times(3)
+			},
+			expectedAttributes: map[string]string{
+				"role_id":          "12345",
+				"role_name":        "example-role",
+				"role_description": "This is an example role.",
+				"created_by":       "user@example.com",
+				"created_date":     "",
+				"modified_by":      "admin@example.com",
+				"modified_date":    "",
+				"type":             "custom",
+				"actions.delete":   "true",
+				"actions.edit":     "true",
+			},
+			expectError: nil,
+		},
 		"error response from API": {
 			givenTF: "valid.tf",
 			init: func(m *iam.Mock) {

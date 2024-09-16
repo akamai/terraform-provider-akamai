@@ -3,9 +3,9 @@ package iam
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/iam"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/date"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -226,9 +226,9 @@ func (d *roleDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 func (m *roleDataSourceModel) setAttributes(role *iam.Role) {
 
 	m.CreatedBy = types.StringValue(role.CreatedBy)
-	m.CreatedDate = types.StringValue(role.CreatedDate.Format(time.RFC3339Nano))
+	m.CreatedDate = types.StringValue(date.FormatRFC3339Nano(role.CreatedDate))
 	m.ModifiedBy = types.StringValue(role.ModifiedBy)
-	m.ModifiedDate = types.StringValue(role.ModifiedDate.Format(time.RFC3339Nano))
+	m.ModifiedDate = types.StringValue(date.FormatRFC3339Nano(role.ModifiedDate))
 	m.RoleName = types.StringValue(role.RoleName)
 	m.RoleDescription = types.StringValue(role.RoleDescription)
 	m.Type = types.StringValue(string(role.RoleType))

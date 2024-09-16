@@ -34,7 +34,7 @@ func TestUsersAffectedByMovingGroup(t *testing.T) {
 		if lastLoginDate != nil {
 			checks = append(checks, resource.TestCheckResourceAttr("data.akamai_iam_users_affected_by_moving_group.test", fmt.Sprintf("%s.last_login_date", path), *lastLoginDate))
 		} else {
-			checks = append(checks, resource.TestCheckNoResourceAttr("data.akamai_iam_users_affected_by_moving_group.test", fmt.Sprintf("%s.last_login_date", path)))
+			checks = append(checks, resource.TestCheckResourceAttr("data.akamai_iam_users_affected_by_moving_group.test", fmt.Sprintf("%s.last_login_date", path), ""))
 		}
 
 		return resource.ComposeAggregateTestCheckFunc(checks...)

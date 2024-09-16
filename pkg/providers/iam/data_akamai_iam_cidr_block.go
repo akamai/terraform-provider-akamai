@@ -3,9 +3,9 @@ package iam
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/iam"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/date"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -155,10 +155,10 @@ func (d *cidrBlockSourceModel) read(cidrBlock *iam.GetCIDRBlockResponse) diag.Di
 	d.CIDRBlock = types.StringValue(cidrBlock.CIDRBlock)
 	d.Comments = types.StringValue(cidrBlock.Comments)
 	d.CreatedBy = types.StringValue(cidrBlock.CreatedBy)
-	d.CreatedDate = types.StringValue(cidrBlock.CreatedDate.Format(time.RFC3339Nano))
+	d.CreatedDate = types.StringValue(date.FormatRFC3339Nano(cidrBlock.CreatedDate))
 	d.Enabled = types.BoolValue(cidrBlock.Enabled)
 	d.ModifiedBy = types.StringValue(cidrBlock.ModifiedBy)
-	d.ModifiedDate = types.StringValue(cidrBlock.ModifiedDate.Format(time.RFC3339Nano))
+	d.ModifiedDate = types.StringValue(date.FormatRFC3339Nano(cidrBlock.ModifiedDate))
 
 	if cidrBlock.Actions != nil {
 		d.Actions = &actions{

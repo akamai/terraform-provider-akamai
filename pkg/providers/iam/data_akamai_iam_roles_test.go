@@ -58,6 +58,49 @@ func TestDataRoles(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 
+	t.Run("happy path/no dates", func(t *testing.T) {
+		client := &iam.Mock{}
+
+		roles := []iam.Role{{
+			RoleName:        "test role name",
+			RoleID:          100,
+			RoleDescription: "role description",
+			RoleType:        iam.RoleTypeStandard,
+			CreatedBy:       "creator@akamai.net",
+			ModifiedBy:      "modifier@akamai.net",
+		}}
+
+		req := iam.ListRolesRequest{}
+
+		client.Test(testutils.TattleT{T: t})
+		client.On("ListRoles", mock.Anything, req).Return(roles, nil)
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				IsUnitTest:               true,
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestDataRoles/happy_path/no_args.tf"),
+						Check: resource.ComposeAggregateTestCheckFunc(
+							resource.TestCheckResourceAttrSet("data.akamai_iam_roles.test", "id"),
+							resource.TestCheckResourceAttr("data.akamai_iam_roles.test", "roles.0.name", "test role name"),
+							resource.TestCheckResourceAttr("data.akamai_iam_roles.test", "roles.0.role_id", "100"),
+							resource.TestCheckResourceAttr("data.akamai_iam_roles.test", "roles.0.description", "role description"),
+							resource.TestCheckResourceAttr("data.akamai_iam_roles.test", "roles.0.type", string(iam.RoleTypeStandard)),
+							resource.TestCheckResourceAttr("data.akamai_iam_roles.test", "roles.0.time_created", ""),
+							resource.TestCheckResourceAttr("data.akamai_iam_roles.test", "roles.0.time_modified", ""),
+							resource.TestCheckResourceAttr("data.akamai_iam_roles.test", "roles.0.created_by", "creator@akamai.net"),
+							resource.TestCheckResourceAttr("data.akamai_iam_roles.test", "roles.0.modified_by", "modifier@akamai.net"),
+						),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
 	t.Run("fail path", func(t *testing.T) {
 		req := iam.ListRolesRequest{}
 

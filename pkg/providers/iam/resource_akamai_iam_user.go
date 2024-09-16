@@ -8,10 +8,10 @@ import (
 	"regexp"
 	"sort"
 	"strings"
-	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/iam"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/date"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/google/go-cmp/cmp"
@@ -469,8 +469,8 @@ func resourceIAMUserRead(ctx context.Context, d *schema.ResourceData, m interfac
 		"country":                user.Country,
 		"contact_type":           user.ContactType,
 		"preferred_language":     user.PreferredLanguage,
-		"last_login":             user.LastLoginDate.Format(time.RFC3339Nano),
-		"password_expired_after": user.PasswordExpiryDate.Format(time.RFC3339Nano),
+		"last_login":             date.FormatRFC3339Nano(user.LastLoginDate),
+		"password_expired_after": date.FormatRFC3339Nano(user.PasswordExpiryDate),
 		"tfa_configured":         user.TFAConfigured,
 		"email_update_pending":   user.EmailUpdatePending,
 		"session_timeout":        *user.SessionTimeOut,

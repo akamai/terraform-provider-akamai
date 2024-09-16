@@ -179,13 +179,17 @@ func TestResourceUser(t *testing.T) {
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "state", user.State),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "zip_code", user.ZipCode),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "preferred_language", user.PreferredLanguage),
-			resource.TestCheckResourceAttr("akamai_iam_user.test", "last_login", user.LastLoginDate.Format(time.RFC3339Nano)),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "password_expired_after", user.PasswordExpiryDate.Format(time.RFC3339Nano)),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "tfa_configured", fmt.Sprintf("%t", user.TFAConfigured)),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "email_update_pending", fmt.Sprintf("%t", user.EmailUpdatePending)),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "session_timeout", fmt.Sprintf("%d", *user.SessionTimeOut)),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "auth_grants_json", authGrantsJSON),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "lock", fmt.Sprintf("%t", user.IsLocked)),
+		}
+		if user.LastLoginDate.IsZero() {
+			checks = append(checks, resource.TestCheckResourceAttr("akamai_iam_user.test", "last_login", ""))
+		} else {
+			checks = append(checks, resource.TestCheckResourceAttr("akamai_iam_user.test", "last_login", user.LastLoginDate.Format(time.RFC3339Nano)))
 		}
 		if checkPassword {
 			checks = append(checks, resource.TestCheckResourceAttrSet("akamai_iam_user.test", "password"))
@@ -222,6 +226,17 @@ func TestResourceUser(t *testing.T) {
 		IdentityID:         id,
 		IsLocked:           false,
 		LastLoginDate:      test.NewTimeFromString(t, "2020-01-01T00:00:00Z"),
+		PasswordExpiryDate: test.NewTimeFromString(t, "2020-01-01T00:00:00Z"),
+		TFAConfigured:      true,
+		EmailUpdatePending: true,
+		AuthGrants:         authGrantsCreate,
+		Notifications:      notifications,
+	}
+
+	userCreateNoLastLoginDate := iam.User{
+		UserBasicInfo:      basicUserInfo,
+		IdentityID:         id,
+		IsLocked:           false,
 		PasswordExpiryDate: test.NewTimeFromString(t, "2020-01-01T00:00:00Z"),
 		TFAConfigured:      true,
 		EmailUpdatePending: true,
@@ -372,6 +387,22 @@ func TestResourceUser(t *testing.T) {
 				{
 					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic.tf"),
 					Check:  resource.ComposeTestCheckFunc(checkUserAttributes(userCreate, false), checkDefaultUserNotificationsAttributes(userCreate)),
+				},
+			},
+		},
+		"basic - default notification, no last login date": {
+			init: func(m *iam.Mock) {
+				// create
+				expectResourceIAMUserCreatePhase(m, userCreateRequest, userCreateNoLastLoginDate, false, false, nil, nil, nil)
+				expectResourceIAMUserReadPhase(m, userCreateNoLastLoginDate, nil).Times(2)
+
+				// delete
+				expectResourceIAMUserDeletePhase(m, userCreateNoLastLoginDate, nil).Once()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic.tf"),
+					Check:  resource.ComposeTestCheckFunc(checkUserAttributes(userCreateNoLastLoginDate, false), checkDefaultUserNotificationsAttributes(userCreateNoLastLoginDate)),
 				},
 			},
 		},

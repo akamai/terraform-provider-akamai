@@ -3,10 +3,10 @@ package iam
 import (
 	"context"
 	"strconv"
-	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/iam"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/date"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -110,8 +110,8 @@ func roleToState(r iam.Role) map[string]interface{} {
 	m["name"] = r.RoleName
 	m["description"] = r.RoleDescription
 	m["type"] = string(r.RoleType)
-	m["time_created"] = r.CreatedDate.Format(time.RFC3339Nano)
-	m["time_modified"] = r.ModifiedDate.Format(time.RFC3339Nano)
+	m["time_created"] = date.FormatRFC3339Nano(r.CreatedDate)
+	m["time_modified"] = date.FormatRFC3339Nano(r.ModifiedDate)
 	m["modified_by"] = r.ModifiedBy
 	m["created_by"] = r.CreatedBy
 

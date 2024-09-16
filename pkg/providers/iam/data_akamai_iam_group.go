@@ -3,9 +3,9 @@ package iam
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/iam"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/date"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -172,9 +172,9 @@ func (d *groupDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 func (d *groupDataSource) convertGroupData(group *iam.Group, data groupDataSourceModel, remainingNesting int) (groupDataSourceModel, diag.Diagnostics) {
 	data.GroupName = types.StringValue(group.GroupName)
 	data.CreatedBy = types.StringValue(group.CreatedBy)
-	data.CreatedDate = types.StringValue(group.CreatedDate.Format(time.RFC3339Nano))
+	data.CreatedDate = types.StringValue(date.FormatRFC3339Nano(group.CreatedDate))
 	data.ModifiedBy = types.StringValue(group.ModifiedBy)
-	data.ModifiedDate = types.StringValue(group.ModifiedDate.Format(time.RFC3339Nano))
+	data.ModifiedDate = types.StringValue(date.FormatRFC3339Nano(group.ModifiedDate))
 	data.ParentGroupID = types.Int64Value(group.ParentGroupID)
 	data.GroupID = types.Int64Value(group.GroupID)
 

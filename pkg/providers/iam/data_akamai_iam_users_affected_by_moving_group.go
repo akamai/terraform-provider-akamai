@@ -3,9 +3,9 @@ package iam
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/iam"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/date"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -154,15 +154,13 @@ func convertUsersAffectedByMove(users []iam.GroupUser) []userAffectedByMovingGro
 	convertedUsers := []userAffectedByMovingGroupModel{}
 	for _, user := range users {
 		convertedUser := userAffectedByMovingGroupModel{
-			AccountID:    types.StringValue(user.AccountID),
-			Email:        types.StringValue(user.Email),
-			FirstName:    types.StringValue(user.FirstName),
-			LastName:     types.StringValue(user.LastName),
-			UIIdentityID: types.StringValue(user.IdentityID),
-			UIUsername:   types.StringValue(user.UserName),
-		}
-		if !user.LastLoginDate.IsZero() {
-			convertedUser.LastLoginDate = types.StringValue(user.LastLoginDate.Format(time.RFC3339Nano))
+			AccountID:     types.StringValue(user.AccountID),
+			Email:         types.StringValue(user.Email),
+			FirstName:     types.StringValue(user.FirstName),
+			LastName:      types.StringValue(user.LastName),
+			UIIdentityID:  types.StringValue(user.IdentityID),
+			UIUsername:    types.StringValue(user.UserName),
+			LastLoginDate: types.StringValue(date.FormatRFC3339Nano(user.LastLoginDate)),
 		}
 		convertedUsers = append(convertedUsers, convertedUser)
 	}

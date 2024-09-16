@@ -3,9 +3,9 @@ package iam
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/iam"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/date"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -415,14 +415,10 @@ func (d *userDataSourceModel) setAttributes(user *iam.User) diag.Diagnostics {
 	d.FirstName = types.StringValue(user.FirstName)
 	d.IsLocked = types.BoolValue(user.IsLocked)
 	d.JobTitle = types.StringValue(user.JobTitle)
-	if !user.LastLoginDate.IsZero() {
-		d.LastLoginDate = types.StringValue(user.LastLoginDate.Format(time.RFC3339Nano))
-	}
+	d.LastLoginDate = types.StringValue(date.FormatRFC3339Nano(user.LastLoginDate))
 	d.LastName = types.StringValue(user.LastName)
 	d.MobilePhone = types.StringValue(user.MobilePhone)
-	if !user.PasswordExpiryDate.IsZero() {
-		d.PasswordExpiryDate = types.StringValue(user.PasswordExpiryDate.Format(time.RFC3339Nano))
-	}
+	d.PasswordExpiryDate = types.StringValue(date.FormatRFC3339Nano(user.PasswordExpiryDate))
 	d.Phone = types.StringValue(user.Phone)
 	d.PreferredLanguage = types.StringValue(user.PreferredLanguage)
 	d.SecondaryEmail = types.StringValue(user.SecondaryEmail)

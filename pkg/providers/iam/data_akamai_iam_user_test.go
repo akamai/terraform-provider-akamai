@@ -425,18 +425,10 @@ func checkUserAttrs(data testDataForUser) resource.TestCheckFunc {
 	checksFuncs = append(checksFuncs, resource.TestCheckResourceAttr(name, "first_name", data.firstName))
 	checksFuncs = append(checksFuncs, resource.TestCheckResourceAttr(name, "is_locked", strconv.FormatBool(data.isLocked)))
 	checksFuncs = append(checksFuncs, resource.TestCheckResourceAttr(name, "job_title", data.jobTitle))
-	lastLoginDateString, err := date.ToString(data.lastLoginDate)
-	if err != nil {
-		panic(err)
-	}
-	checksFuncs = append(checksFuncs, resource.TestCheckResourceAttr(name, "last_login_date", lastLoginDateString))
+	checksFuncs = append(checksFuncs, resource.TestCheckResourceAttr(name, "last_login_date", date.FormatRFC3339Nano(data.lastLoginDate)))
 	checksFuncs = append(checksFuncs, resource.TestCheckResourceAttr(name, "last_name", data.lastName))
 	checksFuncs = append(checksFuncs, resource.TestCheckResourceAttr(name, "mobile_phone", data.mobilePhone))
-	passwordExpiryDateString, err := date.ToString(data.passwordExpiryDate)
-	if err != nil {
-		panic(err)
-	}
-	checksFuncs = append(checksFuncs, resource.TestCheckResourceAttr(name, "password_expiry_date", passwordExpiryDateString))
+	checksFuncs = append(checksFuncs, resource.TestCheckResourceAttr(name, "password_expiry_date", date.FormatRFC3339Nano(data.passwordExpiryDate)))
 	checksFuncs = append(checksFuncs, resource.TestCheckResourceAttr(name, "phone", data.phone))
 	checksFuncs = append(checksFuncs, resource.TestCheckResourceAttr(name, "preferred_language", data.preferredLanguage))
 	checksFuncs = append(checksFuncs, resource.TestCheckResourceAttr(name, "secondary_email", data.secondaryEmail))
