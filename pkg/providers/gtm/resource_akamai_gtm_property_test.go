@@ -1,6 +1,7 @@
 package gtm
 
 import (
+	"context"
 	"net/http"
 	"regexp"
 	"testing"
@@ -114,6 +115,93 @@ func TestResGTMProperty(t *testing.T) {
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/create_basic.tf"),
 					ExpectError: regexp.MustCompile("property Create failed"),
+				},
+			},
+		},
+		"create property with retry on Property Validation Failure - no datacenter is assigned to map target": {
+			init: func(t *testing.T, m *gtm.Mock) {
+				// Simulate a retry scenario
+				m.On("CreateProperty",
+					mock.Anything,
+					getBasicProperty(),
+					gtmTestDomain,
+				).Return(nil, &gtm.Error{
+					Type:       "https://problems.luna.akamaiapis.net/config-gtm/v1/propertyValidationError",
+					StatusCode: http.StatusBadRequest,
+					Title:      "Property Validation Failure",
+					Detail:     "Invalid configuration for property \"tfexample_prop_1\": no datacenter is assigned to map target (all others)",
+				}).Once()
+
+				// Simulate successful property creation on the second attempt
+				mockCreateProperty(m, getBasicProperty(), gtmTestDomain)
+				mockGetProperty(m, getBasicProperty(), propertyName, gtmTestDomain, 3)
+				mockDeleteProperty(m, getBasicProperty(), gtmTestDomain)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/create_basic.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr(propertyResourceName, "name", "tfexample_prop_1"),
+						resource.TestCheckResourceAttr(propertyResourceName, "type", "weighted-round-robin"),
+						resource.TestCheckResourceAttr(propertyResourceName, "weighted_hash_bits_for_ipv4", "0"),
+						resource.TestCheckResourceAttr(propertyResourceName, "weighted_hash_bits_for_ipv6", "0"),
+						resource.TestCheckResourceAttr(propertyResourceName, "liveness_test.0.http_method", ""),
+						resource.TestCheckResourceAttr(propertyResourceName, "liveness_test.0.http_request_body", ""),
+						resource.TestCheckResourceAttr(propertyResourceName, "liveness_test.0.alternate_ca_certificates.#", "0"),
+						resource.TestCheckResourceAttr(propertyResourceName, "liveness_test.0.pre_2023_security_posture", "false"),
+						resource.TestCheckResourceAttr(propertyResourceName, "traffic_target.0.precedence", "0"),
+						resource.TestCheckResourceAttr(propertyResourceName, "id", "gtm_terra_testdomain.akadns.net:tfexample_prop_1"),
+					),
+				},
+			},
+		},
+		"create property with retry on Property Validation Failure - other errors": {
+			init: func(t *testing.T, m *gtm.Mock) {
+				// Simulate a retry scenario
+				m.On("CreateProperty",
+					mock.Anything,
+					getBasicProperty(),
+					gtmTestDomain,
+				).Return(nil, &gtm.Error{
+					Type:       "https://problems.luna.akamaiapis.net/config-gtm/v1/propertyValidationError",
+					StatusCode: http.StatusBadRequest,
+					Title:      "Property Validation Failure",
+					Detail:     "Invalid configuration for property \"tfexample_prop_1\": no targets found",
+				}).Once()
+
+			},
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/create_basic.tf"),
+					ExpectError: regexp.MustCompile("CreateProperty error: property Create failed: error: API error"),
+				},
+			},
+		},
+		"create property with retry - context canceled": {
+			init: func(t *testing.T, m *gtm.Mock) {
+				// Simulate a retry scenario
+				m.On("CreateProperty",
+					mock.Anything,
+					getBasicProperty(),
+					gtmTestDomain,
+				).Return(nil, &gtm.Error{
+					Type:       "https://problems.luna.akamaiapis.net/config-gtm/v1/propertyValidationError",
+					StatusCode: http.StatusBadRequest,
+					Title:      "Property Validation Failure",
+					Detail:     "Invalid configuration for property \"tfexample_prop_1\": no datacenter is assigned to map target (all others)",
+				}).Once()
+
+				// Simulate context cancellation on the second attempt
+				m.On("CreateProperty",
+					mock.Anything,
+					getBasicProperty(),
+					gtmTestDomain,
+				).Return(nil, context.Canceled).Once()
+			},
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/create_basic.tf"),
+					ExpectError: regexp.MustCompile("CreateProperty error: property Create failed: error: context canceled"),
 				},
 			},
 		},

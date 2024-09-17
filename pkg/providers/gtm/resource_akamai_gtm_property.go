@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/gtm"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/session"
@@ -14,6 +15,7 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/logger"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
+	"github.com/apex/log"
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -539,7 +541,7 @@ func resourceGTMv1PropertyCreate(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 	logger.Debugf("Proposed New Property: [%v]", newProp)
-	cStatus, err := Client(meta).CreateProperty(ctx, newProp, domain)
+	cStatus, err := createPropertyWithRetry(ctx, meta, logger, newProp, domain)
 	if err != nil {
 		logger.Errorf("Property Create failed: CreateProperty error: %s", err.Error())
 		return diag.Errorf("property Create failed: CreateProperty error: %s", err.Error())
@@ -576,6 +578,47 @@ func resourceGTMv1PropertyCreate(ctx context.Context, d *schema.ResourceData, m 
 	d.SetId(propertyResourceID)
 	return resourceGTMv1PropertyRead(ctx, d, m)
 
+}
+
+func createPropertyWithRetry(ctx context.Context, meta meta.Meta, logger log.Interface, newProp *gtm.Property, domain string) (*gtm.PropertyResponse, error) {
+	// Initial backoff interval
+	retryInterval := time.Second * 10
+	// Maximum retry interval
+	maxRetryTimeout := time.Minute * 10
+
+	for {
+		// Attempt to create the property
+		cStatus, err := Client(meta).CreateProperty(ctx, newProp, domain)
+		if err == nil {
+			// Success, return the created property
+			return cStatus, nil
+		}
+
+		logger.Errorf("Property Create failed: CreateProperty error: %s", err.Error())
+
+		// If the error is not "no datacenter is assigned to map target (all others)", return immediately
+		if !errors.Is(err, gtm.ErrNoDatacenterAssignedToMap) {
+			return nil, fmt.Errorf("property Create failed: error: %s", err)
+		}
+
+		select {
+		case <-time.After(retryInterval):
+			// exponential backoff
+			retryInterval = 2 * retryInterval
+			if retryInterval > maxRetryTimeout {
+				retryInterval = maxRetryTimeout
+			}
+			logger.Debugf("Retrying property creation after %s", retryInterval)
+		case <-ctx.Done():
+			// Handle context timeout or cancellation
+			if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+				return nil, fmt.Errorf("timeout waiting for property creation: last error: %s", err)
+			}
+			if errors.Is(ctx.Err(), context.Canceled) {
+				return nil, fmt.Errorf("operation canceled while creating property, last error: %s", err)
+			}
+		}
+	}
 }
 
 // Only ever save data from the tf config in the tf state file, to help with

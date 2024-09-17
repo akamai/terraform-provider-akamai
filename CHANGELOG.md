@@ -46,6 +46,16 @@
   * Updated SDKv2 and framework libraries
 
 
+* GTM
+  * Added retry logic to `akamai_gtm_property` resource to handle errors caused by prolonged creation time, leading to Property Validation Failure with "no datacenter is assigned to map target (all others)" error from the API.
+
+
+
+
+
+
+
+
 
 
 
