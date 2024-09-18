@@ -1688,6 +1688,176 @@ func TestResourceEdgeHostname(t *testing.T) {
 				},
 			},
 		},
+		"error on updating product id": {
+			init: func(mp *papi.Mock, _ *hapi.Mock) {
+				mp.On("GetEdgeHostnames", mock.Anything, papi.GetEdgeHostnamesRequest{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+				}).Return(&papi.GetEdgeHostnamesResponse{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+					EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
+						{
+							ID:                "ehn_123",
+							Domain:            "test.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test2",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV4",
+						},
+						{
+							ID:                "ehn_2",
+							Domain:            "test.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test3",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV4",
+						},
+					}},
+				}, nil).Once()
+				mp.On("CreateEdgeHostname", mock.Anything, papi.CreateEdgeHostnameRequest{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+					EdgeHostname: papi.EdgeHostnameCreate{
+						ProductID:         "prd_2",
+						DomainPrefix:      "test",
+						DomainSuffix:      "akamaized.net",
+						SecureNetwork:     "SHARED_CERT",
+						IPVersionBehavior: "IPV6_COMPLIANCE",
+					},
+				}).Return(&papi.CreateEdgeHostnameResponse{
+					EdgeHostnameID: "ehn_456",
+				}, nil)
+				mp.On("GetEdgeHostnames", mock.Anything, papi.GetEdgeHostnamesRequest{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+				}).Return(&papi.GetEdgeHostnamesResponse{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+					EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
+						{
+							ID:                "ehn_123",
+							Domain:            "test.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test2",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV4",
+						},
+						{
+							ID:                "ehn_2",
+							Domain:            "test.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test3",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV4",
+						},
+						{
+							ID:                "ehn_456",
+							Domain:            "test.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV6_COMPLIANCE",
+						},
+					}},
+				}, nil)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/%s", testDir, "new_akamaized_net.tf")),
+				},
+				{
+					Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/%s", testDir, "new_akamaized_net_different_product_id.tf")),
+					ExpectError: regexp.MustCompile(`Changes to non-updatable fields 'product_id' and 'certificate' are not permitted`),
+				},
+			},
+		},
+		"error on updating certificate": {
+			init: func(mp *papi.Mock, _ *hapi.Mock) {
+				mp.On("GetEdgeHostnames", mock.Anything, papi.GetEdgeHostnamesRequest{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+				}).Return(&papi.GetEdgeHostnamesResponse{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+					EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
+						{
+							ID:                "ehn_123",
+							Domain:            "test.edgesuite.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test2",
+							DomainSuffix:      "edgesuite.net",
+							IPVersionBehavior: "IPV6_PERFORMANCE",
+						},
+						{
+							ID:                "ehn_2",
+							Domain:            "test.edgesuite.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test3",
+							DomainSuffix:      "edgesuite.net",
+							IPVersionBehavior: "IPV6_PERFORMANCE",
+						},
+					}},
+				}, nil).Once()
+				mp.On("CreateEdgeHostname", mock.Anything, papi.CreateEdgeHostnameRequest{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+					EdgeHostname: papi.EdgeHostnameCreate{
+						ProductID:         "prd_2",
+						DomainPrefix:      "test",
+						DomainSuffix:      "edgekey.net",
+						SecureNetwork:     "ENHANCED_TLS",
+						IPVersionBehavior: "IPV6_PERFORMANCE",
+						CertEnrollmentID:  123,
+						SlotNumber:        123,
+					},
+				}).Return(&papi.CreateEdgeHostnameResponse{
+					EdgeHostnameID: "ehn_456",
+				}, nil)
+				mp.On("GetEdgeHostnames", mock.Anything, papi.GetEdgeHostnamesRequest{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+				}).Return(&papi.GetEdgeHostnamesResponse{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+					EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
+						{
+							ID:                "ehn_123",
+							Domain:            "test.edgesuite.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test2",
+							DomainSuffix:      "edgesuite.net",
+							IPVersionBehavior: "IPV4",
+						},
+						{
+							ID:                "ehn_2",
+							Domain:            "test3.edgesuite.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test3",
+							DomainSuffix:      "edgesuite.net",
+							IPVersionBehavior: "IPV4",
+						},
+						{
+							ID:                "ehn_456",
+							Domain:            "test.edgekey.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test",
+							DomainSuffix:      "edgekey.net",
+							IPVersionBehavior: "IPV6_PERFORMANCE",
+						},
+					}},
+				}, nil)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/%s", testDir, "new_edgekey_net.tf")),
+				},
+				{
+					Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/%s", testDir, "new_edgekey_net_different_certificate.tf")),
+					ExpectError: regexp.MustCompile(`Changes to non-updatable fields 'product_id' and 'certificate' are not permitted`),
+				},
+			},
+		},
 		"update edge hostname without status email": {
 			init: func(mp *papi.Mock, mh *hapi.Mock) {
 				// 1st step
@@ -2134,51 +2304,6 @@ func TestResourceEdgeHostnames_WithImport(t *testing.T) {
 			UseCases:               nil,
 		}, nil)
 	}
-	expectGetEdgeHostnameHAPI := func(m *hapi.Mock, edgeHostnameID int) *mock.Call {
-		return m.On("GetEdgeHostname", mock.Anything, hapi.GetCertificateRequest{DNSZone: "edgekey.net", RecordName: "test"}).Return(&hapi.GetEdgeHostnameResponse{
-			EdgeHostnameID:         edgeHostnameID,
-			RecordName:             "test",
-			DNSZone:                "edgekey.net",
-			SecurityType:           "ENHANCED-TLS",
-			UseDefaultTTL:          true,
-			UseDefaultMap:          true,
-			IPVersionBehavior:      "IPV4",
-			ProductID:              "DSA",
-			TTL:                    21600,
-			Map:                    "a;dscb.akamai.net",
-			SlotNumber:             3250,
-			Comments:               "Created by Property-Manager/PAPI on Tue Feb 21 14:03:36 UTC 2023",
-			SerialNumber:           1520,
-			CustomTarget:           "",
-			ChinaCdn:               hapi.ChinaCDN{},
-			IsEdgeIPBindingEnabled: false,
-			MapAlias:               "",
-			UseCases:               nil,
-		}, nil)
-	}
-	expectGetEdgeHostnameHAPIWithTTL := func(m *hapi.Mock, edgeHostnameID int) *mock.Call {
-		return m.On("GetEdgeHostname", mock.Anything, hapi.GetCertificateRequest{DNSZone: "edgekey.net", RecordName: "test"}).Return(&hapi.GetEdgeHostnameResponse{
-			EdgeHostnameID:         edgeHostnameID,
-			RecordName:             "test",
-			DNSZone:                "edgekey.net",
-			SecurityType:           "ENHANCED-TLS",
-			UseDefaultTTL:          false,
-			UseDefaultMap:          true,
-			IPVersionBehavior:      "IPV4",
-			ProductID:              "DSA",
-			TTL:                    56789,
-			Map:                    "a;dscb.akamai.net",
-			SlotNumber:             3250,
-			Comments:               "Created by Property-Manager/PAPI on Tue Feb 21 14:03:36 UTC 2023",
-			SerialNumber:           1520,
-			CustomTarget:           "",
-			ChinaCdn:               hapi.ChinaCDN{},
-			IsEdgeIPBindingEnabled: false,
-			MapAlias:               "",
-			UseCases:               nil,
-		}, nil)
-	}
-
 	expectGetCertificate := func(m *hapi.Mock) *mock.Call {
 		return m.On("GetCertificate", mock.Anything, hapi.GetCertificateRequest{
 			RecordName: "test",
@@ -2196,7 +2321,7 @@ func TestResourceEdgeHostnames_WithImport(t *testing.T) {
 		}, nil)
 	}
 
-	t.Run("import existing akamaized edgehostname without certificate", func(t *testing.T) {
+	t.Run("import existing akamaized edgehostname without certificate - no product id", func(t *testing.T) {
 		client := &papi.Mock{}
 		clientHapi := &hapi.Mock{}
 		id := "ehn_1,1,2"
@@ -2205,13 +2330,12 @@ func TestResourceEdgeHostnames_WithImport(t *testing.T) {
 		createEdgeHostnamesAkamaized(client).Once()
 		expectGetEdgeHostnamesAkamaizedAfterCreate(client, "ctr_1", "grp_2")
 		expectGetEdgeHostnameAkamaized(client, "ehn_1", "ctr_1", "grp_2").Once()
-		expectGetEdgeHostnameHAPIByIDAkamaized(clientHapi, 1).Times(1)
+		expectGetEdgeHostnameHAPIByIDAkamaized(clientHapi, 1).Once()
 		useClient(client, clientHapi, func() {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						// please note that import does not support product id, that why we only define it in config for creation
 						Config: testutils.LoadFixtureString(t, "testdata/TestResourceEdgeHostname/creation_before_import_edgehostname_akamaized.tf"),
 					},
 					{
@@ -2223,6 +2347,7 @@ func TestResourceEdgeHostnames_WithImport(t *testing.T) {
 							assert.Equal(t, "grp_2", rs.Attributes["group_id"])
 							assert.Equal(t, "ctr_1", rs.Attributes["contract_id"])
 							assert.Equal(t, "ehn_1", rs.Attributes["id"])
+							assert.Equal(t, "", rs.Attributes["product_id"])
 							assert.Equal(t, "", rs.Attributes["certificate"])
 							return nil
 						},
@@ -2235,8 +2360,9 @@ func TestResourceEdgeHostnames_WithImport(t *testing.T) {
 			})
 		})
 		client.AssertExpectations(t)
+		clientHapi.AssertExpectations(t)
 	})
-	t.Run("import existing edgehostname with certificate", func(t *testing.T) {
+	t.Run("import existing edgehostname with certificate - no product id", func(t *testing.T) {
 		client := &papi.Mock{}
 		clientHapi := &hapi.Mock{}
 		id := "ehn_1,1,2"
@@ -2245,15 +2371,13 @@ func TestResourceEdgeHostnames_WithImport(t *testing.T) {
 		createEdgeHostnames(client).Once()
 		expectGetEdgeHostnamesAfterCreate(client, "ctr_1", "grp_2")
 		expectGetEdgeHostname(client, "ehn_1", "ctr_1", "grp_2").Once()
-		expectGetEdgeHostnameHAPIByID(clientHapi, 1).Times(3)
-		expectGetEdgeHostnameHAPI(clientHapi, 1).Times(10)
-		expectGetCertificate(clientHapi).Times(5)
+		expectGetEdgeHostnameHAPIByID(clientHapi, 1).Once()
+		expectGetCertificate(clientHapi).Once()
 		useClient(client, clientHapi, func() {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						// please note that import does not support product id, that why we only define it in config for creation
 						Config: testutils.LoadFixtureString(t, "testdata/TestResourceEdgeHostname/creation_before_import_edgehostname.tf"),
 					},
 					{
@@ -2265,6 +2389,7 @@ func TestResourceEdgeHostnames_WithImport(t *testing.T) {
 							assert.Equal(t, "grp_2", rs.Attributes["group_id"])
 							assert.Equal(t, "ctr_1", rs.Attributes["contract_id"])
 							assert.Equal(t, "ehn_1", rs.Attributes["id"])
+							assert.Equal(t, "", rs.Attributes["product_id"])
 							assert.Equal(t, "123456", rs.Attributes["certificate"])
 							return nil
 						},
@@ -2277,8 +2402,9 @@ func TestResourceEdgeHostnames_WithImport(t *testing.T) {
 			})
 		})
 		client.AssertExpectations(t)
+		clientHapi.AssertExpectations(t)
 	})
-	t.Run("import existing edgehostname with missing certificate", func(t *testing.T) {
+	t.Run("import existing edgehostname with missing certificate - no product id", func(t *testing.T) {
 		client := &papi.Mock{}
 		clientHapi := &hapi.Mock{}
 		id := "ehn_1,1,2"
@@ -2287,8 +2413,7 @@ func TestResourceEdgeHostnames_WithImport(t *testing.T) {
 		createEdgeHostnames(client).Once()
 		expectGetEdgeHostnamesAfterCreate(client, "ctr_1", "grp_2")
 		expectGetEdgeHostname(client, "ehn_1", "ctr_1", "grp_2").Once()
-		expectGetEdgeHostnameHAPIByID(clientHapi, 1).Times(6)
-		expectGetEdgeHostnameHAPI(clientHapi, 1).Times(10)
+		expectGetEdgeHostnameHAPIByID(clientHapi, 1).Once()
 
 		resp := hapi.Error{
 			Type:            "CERTIFICATE_NOT_FOUND",
@@ -2311,7 +2436,6 @@ func TestResourceEdgeHostnames_WithImport(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						// please note that import does not support product id, that why we only define it in config for creation
 						Config: testutils.LoadFixtureString(t, "testdata/TestResourceEdgeHostname/creation_before_import_edgehostname_missing_certificate.tf"),
 					},
 					{
@@ -2323,6 +2447,7 @@ func TestResourceEdgeHostnames_WithImport(t *testing.T) {
 							assert.Equal(t, "grp_2", rs.Attributes["group_id"])
 							assert.Equal(t, "ctr_1", rs.Attributes["contract_id"])
 							assert.Equal(t, "ehn_1", rs.Attributes["id"])
+							assert.Equal(t, "", rs.Attributes["product_id"])
 							assert.Equal(t, "", rs.Attributes["certificate"])
 							return nil
 						},
@@ -2336,8 +2461,9 @@ func TestResourceEdgeHostnames_WithImport(t *testing.T) {
 			})
 		})
 		client.AssertExpectations(t)
+		clientHapi.AssertExpectations(t)
 	})
-	t.Run("import existing edgehostname with custom ttl", func(t *testing.T) {
+	t.Run("import existing edgehostname with custom ttl - no product id", func(t *testing.T) {
 		client := &papi.Mock{}
 		clientHapi := &hapi.Mock{}
 		id := "ehn_1,1,2"
@@ -2378,14 +2504,12 @@ func TestResourceEdgeHostnames_WithImport(t *testing.T) {
 
 		expectGetEdgeHostname(client, "ehn_1", "ctr_1", "grp_2").Once()
 		expectGetEdgeHostnameHAPIByIDWithCustomTTL(clientHapi, 1).Times(3)
-		expectGetEdgeHostnameHAPIWithTTL(clientHapi, 1).Times(10)
-		expectGetCertificate(clientHapi).Times(5)
+		expectGetCertificate(clientHapi).Once()
 		useClient(client, clientHapi, func() {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						// please note that import does not support product id, that why we only define it in config for creation
 						Config: testutils.LoadFixtureString(t, "testdata/TestResourceEdgeHostname/creation_before_import_edgehostname_with_ttl.tf"),
 					},
 					{
@@ -2410,6 +2534,203 @@ func TestResourceEdgeHostnames_WithImport(t *testing.T) {
 			})
 		})
 		client.AssertExpectations(t)
+		clientHapi.AssertExpectations(t)
+	})
+	t.Run("import existing akamaized edgehostname without certificate - product_id supplied", func(t *testing.T) {
+		client := &papi.Mock{}
+		clientHapi := &hapi.Mock{}
+
+		// create
+		expectGetEdgeHostnamesAkamaized(client, "ctr_1", "grp_2").Once() // check if exists: not found
+		createEdgeHostnamesAkamaized(client).Once()
+		expectGetEdgeHostnamesAkamaizedAfterCreate(client, "ctr_1", "grp_2").Twice()
+
+		// import
+		expectGetEdgeHostnameAkamaized(client, "ehn_1", "ctr_1", "grp_2").Once()
+		expectGetEdgeHostnameHAPIByIDAkamaized(clientHapi, 1).Once()
+		expectGetEdgeHostnamesAkamaizedAfterCreate(client, "ctr_1", "grp_2").Once()
+
+		useClient(client, clientHapi, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResourceEdgeHostname/import_edgehostname_akamaized_product_id.tf"),
+					},
+					{
+						ImportState:       true,
+						ImportStateId:     "ehn_1,1,2,prd_2",
+						ResourceName:      "akamai_edge_hostname.importedgehostname",
+						ImportStateVerify: true,
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+		clientHapi.AssertExpectations(t)
+	})
+	t.Run("import existing akamaized edgehostname - product_id without prefix supplied ", func(t *testing.T) {
+		client := &papi.Mock{}
+		clientHapi := &hapi.Mock{}
+
+		// create
+		expectGetEdgeHostnamesAkamaized(client, "ctr_1", "grp_2").Once() // check if exists: not found
+		createEdgeHostnamesAkamaized(client).Once()
+		expectGetEdgeHostnamesAkamaizedAfterCreate(client, "ctr_1", "grp_2").Twice()
+
+		// import
+		expectGetEdgeHostnameAkamaized(client, "ehn_1", "ctr_1", "grp_2").Once()
+		expectGetEdgeHostnameHAPIByIDAkamaized(clientHapi, 1).Once()
+		expectGetEdgeHostnamesAkamaizedAfterCreate(client, "ctr_1", "grp_2").Once()
+
+		useClient(client, clientHapi, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResourceEdgeHostname/import_edgehostname_akamaized_product_id.tf"),
+					},
+					{
+						ImportState:       true,
+						ImportStateId:     "ehn_1,1,2,2",
+						ResourceName:      "akamai_edge_hostname.importedgehostname",
+						ImportStateVerify: true,
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+		clientHapi.AssertExpectations(t)
+	})
+	t.Run("import existing edgehostname with certificate", func(t *testing.T) {
+		client := &papi.Mock{}
+		clientHapi := &hapi.Mock{}
+
+		// create
+		expectGetEdgeHostnames(client, "ctr_1", "grp_2").Once() // check if exists: not found
+		createEdgeHostnames(client).Once()
+		expectGetEdgeHostnamesAfterCreate(client, "ctr_1", "grp_2").Twice()
+
+		// import
+		expectGetEdgeHostname(client, "ehn_1", "ctr_1", "grp_2").Once()
+		expectGetEdgeHostnameHAPIByID(clientHapi, 1).Once()
+		expectGetCertificate(clientHapi).Once()
+		expectGetEdgeHostnamesAfterCreate(client, "ctr_1", "grp_2").Once()
+
+		useClient(client, clientHapi, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResourceEdgeHostname/import_edgehostname_product_id.tf"),
+					},
+					{
+						ImportState:       true,
+						ImportStateId:     "ehn_1,1,2,prd_2",
+						ResourceName:      "akamai_edge_hostname.importedgehostname",
+						ImportStateVerify: true,
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+		clientHapi.AssertExpectations(t)
+	})
+	t.Run("import existing edgehostname with missing certificate", func(t *testing.T) {
+		client := &papi.Mock{}
+		clientHapi := &hapi.Mock{}
+
+		// create
+		expectGetEdgeHostnames(client, "ctr_1", "grp_2").Once() // check if exists: not found
+		createEdgeHostnames(client).Once()
+		expectGetEdgeHostnamesAfterCreate(client, "ctr_1", "grp_2").Twice()
+
+		// import
+		expectGetEdgeHostname(client, "ehn_1", "ctr_1", "grp_2").Once()
+		expectGetEdgeHostnameHAPIByID(clientHapi, 1).Once()
+
+		resp := hapi.Error{
+			Type:            "CERTIFICATE_NOT_FOUND",
+			Title:           "Certificate Not Found",
+			Status:          404,
+			Detail:          "Details are not available for this certificate; the certificate is missing or access is denied",
+			Instance:        "/hapi/error-instances/a30f67cc-df20-4e02-bbc3-cf7c204a4aab",
+			RequestInstance: "http://origin.pulsar.akamai.com/hapi/open/v1/dns-zones/edgekey.net/edge-hostnames/example.com/certificate?depth=ALL&accountSwitchKey=F-AC-1937217#d7aa7348",
+			Method:          "GET",
+			RequestTime:     "2022-11-30T18:51:43.482982Z",
+		}
+		err := fmt.Errorf("%s: %s: %w", hapi.ErrGetCertificate, hapi.ErrNotFound, &resp)
+		clientHapi.On("GetCertificate", mock.Anything, hapi.GetCertificateRequest{
+			RecordName: "test",
+			DNSZone:    "edgekey.net",
+		}).Return(nil, err)
+
+		expectGetEdgeHostnamesAfterCreate(client, "ctr_1", "grp_2").Once()
+
+		useClient(client, clientHapi, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResourceEdgeHostname/import_edgehostname_product_id.tf"),
+					},
+					{
+						ImportState:             true,
+						ImportStateId:           "ehn_1,1,2,prd_2",
+						ResourceName:            "akamai_edge_hostname.importedgehostname",
+						ImportStateVerify:       true,
+						ImportStateVerifyIgnore: []string{"certificate"},
+						// TODO Remove "certificate" here after implementing wait for EdgeHostname propagation to HAPI in DXE-3821,
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+		clientHapi.AssertExpectations(t)
+	})
+	t.Run("import error - too few parts of id", func(t *testing.T) {
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config:        testutils.LoadFixtureString(t, "testdata/TestResourceEdgeHostname/import_edgehostname_akamaized_product_id.tf"),
+					ImportState:   true,
+					ImportStateId: "ehn_1,1",
+					ResourceName:  "akamai_edge_hostname.importedgehostname",
+					ExpectError: regexp.MustCompile("expected import identifier with format: " +
+						`"EdgehostNameID,contractID,groupID\[,productID]". Got: "ehn_1,1"`),
+				},
+			},
+		})
+	})
+	t.Run("import error - too many parts of id", func(t *testing.T) {
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config:        testutils.LoadFixtureString(t, "testdata/TestResourceEdgeHostname/import_edgehostname_akamaized_product_id.tf"),
+					ImportState:   true,
+					ImportStateId: "ehn_1,1,2,prd_2,foo",
+					ResourceName:  "akamai_edge_hostname.importedgehostname",
+					ExpectError: regexp.MustCompile("expected import identifier with format: " +
+						`"EdgehostNameID,contractID,groupID\[,productID]". Got: "ehn_1,1,2,prd_2,foo"`),
+				},
+			},
+		})
+	})
+	t.Run("import error - empty product id", func(t *testing.T) {
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config:        testutils.LoadFixtureString(t, "testdata/TestResourceEdgeHostname/import_edgehostname_akamaized_product_id.tf"),
+					ImportState:   true,
+					ImportStateId: "ehn_1,1,2,",
+					ResourceName:  "akamai_edge_hostname.importedgehostname",
+					ExpectError:   regexp.MustCompile(`productID is empty for the import ID="ehn_1,1,2,"`),
+				},
+			},
+		})
 	})
 }
 

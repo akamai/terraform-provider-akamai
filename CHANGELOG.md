@@ -34,9 +34,9 @@
 
 
 
-
-
-
+* PAPI
+  * Added a new optional param to the import id of the `akamai_edge_hostname` resource.
+    It allows to specify the product ID of the imported hostname and save it in the state.
 
 
 
