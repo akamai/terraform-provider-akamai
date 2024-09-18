@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/iam"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
@@ -30,7 +31,7 @@ func TestDataCIDRBlocks(t *testing.T) {
 						},
 						CIDRBlock:    "128.5.6.6/24",
 						CIDRBlockID:  2567,
-						Comments:     "APAC Region",
+						Comments:     ptr.To("APAC Region"),
 						CreatedBy:    "user1",
 						CreatedDate:  time.Date(2017, 7, 27, 18, 11, 25, 0, time.UTC),
 						Enabled:      true,
@@ -44,7 +45,7 @@ func TestDataCIDRBlocks(t *testing.T) {
 						},
 						CIDRBlock:    "128.5.6.6/24",
 						CIDRBlockID:  6042,
-						Comments:     "East Coast Office",
+						Comments:     ptr.To("East Coast Office"),
 						CreatedBy:    "user2",
 						CreatedDate:  time.Date(2017, 7, 27, 18, 11, 25, 0, time.UTC),
 						Enabled:      true,
@@ -52,7 +53,7 @@ func TestDataCIDRBlocks(t *testing.T) {
 						ModifiedDate: time.Date(2017, 7, 27, 18, 11, 25, 0, time.UTC),
 					},
 				}
-				m.On("ListCIDRBlocks", mock.Anything, listCIDRBlocksReq).Return(&listCIDRBlocksResp, nil).Times(3)
+				m.On("ListCIDRBlocks", mock.Anything, listCIDRBlocksReq).Return(listCIDRBlocksResp, nil).Times(3)
 			},
 		},
 		"error - ListCIDRBlocks call failed ": {

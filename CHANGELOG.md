@@ -60,6 +60,24 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+* IAM
+  * Added new resource:
+    * `akamai_iam_cidr_blocks` - manage CIDR blocks assigned to the allowlist
+
+
+
+
+
 * IAM
   * Added new resource:
     * `akamai_iam_ip_allowlist` - enable or disable your account's allowlist

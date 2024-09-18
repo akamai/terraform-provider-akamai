@@ -130,7 +130,7 @@ func expectGetCIDRBlock(t *testing.T, client *iam.Mock, data testDataForCIDRBloc
 	getCIDRBlockResp := iam.GetCIDRBlockResponse{
 		CIDRBlock:    data.cidrBlock,
 		CIDRBlockID:  data.cidrBlockID,
-		Comments:     data.comments,
+		Comments:     &data.comments,
 		CreatedBy:    data.createdBy,
 		CreatedDate:  createdDate,
 		Enabled:      data.enabled,

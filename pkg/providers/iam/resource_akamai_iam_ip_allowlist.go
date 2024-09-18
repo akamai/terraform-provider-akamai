@@ -176,7 +176,23 @@ func (r IPAllowlistResource) Update(ctx context.Context, req resource.UpdateRequ
 }
 
 // Delete implements resource.Resource.
-func (r IPAllowlistResource) Delete(ctx context.Context, _ resource.DeleteRequest, resp *resource.DeleteResponse) {
+func (r IPAllowlistResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var plan *IPAllowlistResourceModel
+
+	// Read Terraform state data into the model
+	resp.Diagnostics.Append(req.State.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if plan.Enable.ValueBool() {
+		resp.Diagnostics.Append(r.disableIPAllowlist(ctx)...)
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	// It can be only removed from state
 	resp.State.RemoveResource(ctx)
 }

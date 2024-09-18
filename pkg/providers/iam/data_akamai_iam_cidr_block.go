@@ -153,7 +153,6 @@ func (d *cidrBlockDataSource) Read(ctx context.Context, req datasource.ReadReque
 
 func (d *cidrBlockSourceModel) read(cidrBlock *iam.GetCIDRBlockResponse) diag.Diagnostics {
 	d.CIDRBlock = types.StringValue(cidrBlock.CIDRBlock)
-	d.Comments = types.StringValue(cidrBlock.Comments)
 	d.CreatedBy = types.StringValue(cidrBlock.CreatedBy)
 	d.CreatedDate = types.StringValue(date.FormatRFC3339Nano(cidrBlock.CreatedDate))
 	d.Enabled = types.BoolValue(cidrBlock.Enabled)
@@ -165,6 +164,13 @@ func (d *cidrBlockSourceModel) read(cidrBlock *iam.GetCIDRBlockResponse) diag.Di
 			Delete: types.BoolValue(cidrBlock.Actions.Delete),
 			Edit:   types.BoolValue(cidrBlock.Actions.Edit),
 		}
+	}
+
+	if cidrBlock.Comments != nil {
+		d.Comments = types.StringValue(*cidrBlock.Comments)
+	} else {
+		d.Comments = types.StringNull()
+
 	}
 
 	return nil

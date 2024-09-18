@@ -28,7 +28,8 @@ func TestResourceIAMIPAllowlistResource(t *testing.T) {
 				mockEnableIPAllowlist(m)
 				// step 2 read
 				mockReadIPAllowlistStatus(m, true)
-				// step 3 delete - remove resource form state(no mock)
+				// step 3 delete - remove resource form state and disable ip allowlist
+				mockReadIPAllowlistStatus(m, false)
 			},
 			steps: []resource.TestStep{
 				{
@@ -61,7 +62,8 @@ func TestResourceIAMIPAllowlistResource(t *testing.T) {
 				mockReadIPAllowlistStatus(m, true)
 				// step 2 read
 				mockReadIPAllowlistStatus(m, true)
-				// step 3 delete - remove resource form state(no mock)
+				// step 3 delete - remove resource form state and disable ip allowlist
+				mockReadIPAllowlistStatus(m, false)
 			},
 			steps: []resource.TestStep{
 				{
@@ -100,7 +102,8 @@ func TestResourceIAMIPAllowlistResource(t *testing.T) {
 				mockEnableIPAllowlist(m)
 				// step 4 refresh
 				mockReadIPAllowlistStatus(m, true)
-				// step 5 delete - remove resource form state(no mock)
+				// step 5 delete - remove resource form state and disable ip allowlist
+				mockReadIPAllowlistStatus(m, false)
 			},
 			steps: []resource.TestStep{
 				{
@@ -169,33 +172,6 @@ func TestResourceIAMIPAllowlistResource(t *testing.T) {
 				},
 			},
 		},
-		"import": {
-			init: func(t *testing.T, m *iam.Mock) {
-				// step 1 create
-				mockReadIPAllowlistStatus(m, false)
-				mockEnableIPAllowlist(m)
-				// step 2 refresh
-				mockReadIPAllowlistStatus(m, true)
-
-				// step 3 import
-				mockReadIPAllowlistStatus(m, true)
-				// step 4 refresh
-				mockReadIPAllowlistStatus(m, true)
-			},
-			steps: []resource.TestStep{
-				{
-					Config: testutils.LoadFixtureString(t, "./testdata/TestResIPAllowlist/enable.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_iam_ip_allowlist.test", "enable", "true")),
-				},
-				{
-					ImportState:       true,
-					ImportStateVerify: false,
-					ResourceName:      "akamai_iam_ip_allowlist.test",
-					ImportStateCheck:  checkImportEnabledIPAllowlistForSpecificUser(),
-				},
-			},
-		},
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
@@ -212,6 +188,50 @@ func TestResourceIAMIPAllowlistResource(t *testing.T) {
 			})
 			client.AssertExpectations(t)
 		})
+	}
+}
+
+func TestImportIAMIPAllowlistResource(t *testing.T) {
+	{
+		tests := map[string]struct {
+			importID   string
+			configPath string
+			init       func(*testing.T, *iam.Mock)
+			mockData   []commonDataForResource
+			stateCheck func(s []*terraform.InstanceState) error
+		}{
+			"import": {
+				importID: " ",
+				init: func(t *testing.T, m *iam.Mock) {
+					// Import
+					mockReadIPAllowlistStatus(m, true).Twice()
+				},
+				stateCheck: checkImportEnabledIPAllowlistForSpecificUser(),
+			},
+		}
+		for name, test := range tests {
+			t.Run(name, func(t *testing.T) {
+				client := &iam.Mock{}
+				test.init(t, client)
+				useClient(client, func() {
+					resource.UnitTest(t, resource.TestCase{
+						ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+						Steps: []resource.TestStep{
+							{
+								ImportStateCheck: test.stateCheck,
+								ImportStateId:    test.importID,
+								ImportState:      true,
+								ResourceName:     "akamai_iam_ip_allowlist.test",
+								Config:           testutils.LoadFixtureString(t, "./testdata/TestResIPAllowlist/enable.tf"),
+								Check: resource.ComposeAggregateTestCheckFunc(
+									resource.TestCheckResourceAttr("akamai_iam_ip_allowlist.test", "enable", "true")),
+							},
+						},
+					})
+				})
+				client.AssertExpectations(t)
+			})
+		}
 	}
 }
 

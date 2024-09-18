@@ -145,12 +145,11 @@ func (d *cidrBlocksDataSource) Read(ctx context.Context, req datasource.ReadRequ
 
 }
 
-func (d *cidrBlocksSourceModel) read(cidrBlocks *iam.ListCIDRBlocksResponse) diag.Diagnostics {
-	for _, cidrBlock := range *cidrBlocks {
+func (d *cidrBlocksSourceModel) read(cidrBlocks iam.ListCIDRBlocksResponse) diag.Diagnostics {
+	for _, cidrBlock := range cidrBlocks {
 		block := cidrBlockSourceModel{
 			CIDRBlock:    types.StringValue(cidrBlock.CIDRBlock),
 			Enabled:      types.BoolValue(cidrBlock.Enabled),
-			Comments:     types.StringValue(cidrBlock.Comments),
 			CIDRBlockID:  types.Int64Value(cidrBlock.CIDRBlockID),
 			CreatedBy:    types.StringValue(cidrBlock.CreatedBy),
 			CreatedDate:  types.StringValue(date.FormatRFC3339Nano(cidrBlock.CreatedDate)),
@@ -162,6 +161,13 @@ func (d *cidrBlocksSourceModel) read(cidrBlocks *iam.ListCIDRBlocksResponse) dia
 				Delete: types.BoolValue(cidrBlock.Actions.Delete),
 				Edit:   types.BoolValue(cidrBlock.Actions.Edit),
 			}
+		}
+
+		if cidrBlock.Comments != nil {
+			block.Comments = types.StringValue(*cidrBlock.Comments)
+		} else {
+			block.Comments = types.StringNull()
+
 		}
 
 		d.CIDRBlocks = append(d.CIDRBlocks, block)
