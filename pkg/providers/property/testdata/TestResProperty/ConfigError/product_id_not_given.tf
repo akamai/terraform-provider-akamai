@@ -4,6 +4,6 @@ provider "akamai" {
 
 resource "akamai_property" "test" {
   name        = "test_property"
-  contract_id = "ctr_0"
-  group_id    = "grp_0"
+  contract_id = "ctr_1"
+  group_id    = "grp_2"
 }

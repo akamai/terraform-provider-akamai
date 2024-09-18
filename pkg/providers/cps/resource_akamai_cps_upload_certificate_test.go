@@ -8,10 +8,10 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/cps"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/test"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -1135,6 +1135,14 @@ func TestUpdateCPSUploadCertificate(t *testing.T) {
 func TestResourceUploadCertificateImport(t *testing.T) {
 	id := 1
 
+	checker := test.NewImportChecker().
+		CheckEqual("certificate_ecdsa_pem", certECDSAForTests).
+		CheckEqual("trust_chain_ecdsa_pem", trustChainECDSAForTests).
+		CheckEqual("acknowledge_post_verification_warnings", "false").
+		CheckEqual("wait_for_deployment", "false").
+		CheckEqual("acknowledge_change_management", "false").
+		CheckEqual("auto_approve_warnings.#", "0")
+
 	tests := map[string]struct {
 		init          func(*cps.Mock)
 		expectedError *regexp.Regexp
@@ -1145,20 +1153,10 @@ func TestResourceUploadCertificateImport(t *testing.T) {
 				enrollment := cps.GetEnrollmentResponse{
 					ValidationType: "third-party",
 				}
-
 				mockGetEnrollment(client, id, 2, &enrollment)
 				mockGetChangeHistory(client, id, 2, &enrollment, ECDSA, certECDSAForTests, trustChainECDSAForTests)
 			},
-			stateCheck: func(s []*terraform.InstanceState) error {
-				state := s[0]
-				assertAttributeFor(state, t, "certificate_ecdsa_pem", certECDSAForTests)
-				assertAttributeFor(state, t, "trust_chain_ecdsa_pem", trustChainECDSAForTests)
-				assertAttributeFor(state, t, "acknowledge_post_verification_warnings", "false")
-				assertAttributeFor(state, t, "wait_for_deployment", "false")
-				assertAttributeFor(state, t, "acknowledge_change_management", "false")
-				assertAttributeFor(state, t, "auto_approve_warnings.#", "0")
-				return nil
-			},
+			stateCheck: checker.Build(),
 		},
 		"import error when validation type is not third_party": {
 			init: func(client *cps.Mock) {
@@ -1205,12 +1203,6 @@ func TestResourceUploadCertificateImport(t *testing.T) {
 			})
 		})
 	}
-}
-
-func assertAttributeFor(state *terraform.InstanceState, t *testing.T, key, value string) {
-	valueInState, exist := state.Attributes[key]
-	assert.True(t, exist, fmt.Sprintf("attribute '%s' was not present", key))
-	assert.Equal(t, value, valueInState, fmt.Sprintf("attribute '%s' has incorrect value %s", key, valueInState))
 }
 
 // copyEnrollmentWithEmptyPendingChanges returns enrollment after enrollment reaches "complete" state - it's pending changes disappear

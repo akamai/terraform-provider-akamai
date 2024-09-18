@@ -4,13 +4,13 @@ provider "akamai" {
 
 resource "akamai_property" "test" {
   name        = "test_property"
-  contract_id = "ctr_0"
-  group_id    = "grp_0"
-  product     = "0"
+  contract_id = "ctr_1"
+  group_id    = "grp_222"
+  product_id  = "prd_3"
 
   hostnames {
-    cname_to               = "to2.test.domain"
-    cname_from             = "from.test.domain"
+    cname_to               = "to.test.domain"
+    cname_from             = "from2.test.domain"
     cert_provisioning_type = "DEFAULT"
   }
 }

@@ -34,7 +34,7 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 				// update
 				expectGetRuleTree(m, "prp_test", 2, ruleTreeResponseValid, nil).Once()
 				expectGetActivations(m, "prp_test", generateActivationResponseMock("atv_activation1", "property activation note for creating", 1, papi.ActivationTypeActivate, "2020-10-28T15:04:05Z", []string{"user@example.com"}), nil).Once()
-				ExpectGetPropertyVersion(m, "prp_test", "", "", 2, papi.VersionStatusInactive, "").Once()
+				expectGetPropertyVersion(m, "prp_test", "", "", 2, papi.VersionStatusInactive, "").Once()
 				expectCreateActivation(m, "prp_test", papi.ActivationTypeActivate, 2, "STAGING",
 					[]string{"user@example.com"}, "property activation note for updating", "atv_update", true, nil).Once()
 				expectGetActivation(m, "prp_test", "atv_update", 2, "STAGING", papi.ActivationStatusActive, papi.ActivationTypeActivate, "property activation note for updating", []string{"user@example.com"}, nil).Once()
@@ -587,7 +587,7 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 				// update - note field not suppressed update of contact field and version
 				expectGetRuleTree(m, "prp_test", 2, ruleTreeResponseValid, nil).Once()
 				expectGetActivations(m, "prp_test", generateActivationResponseMock("atv_activation1", "property activation note for creating", 1, papi.ActivationTypeActivate, "2020-10-28T15:04:05Z", []string{"user@example.com"}), nil).Once()
-				ExpectGetPropertyVersion(m, "prp_test", "", "", 2, papi.VersionStatusInactive, "").Once()
+				expectGetPropertyVersion(m, "prp_test", "", "", 2, papi.VersionStatusInactive, "").Once()
 				expectCreateActivation(m, "prp_test", papi.ActivationTypeActivate, 2, "STAGING",
 					[]string{"user@example.com", "user2@example.com"}, "property activation note for updating", "atv_update", true, nil).Once()
 				expectGetActivation(m, "prp_test", "atv_update", 2, "STAGING", papi.ActivationStatusActive, papi.ActivationTypeActivate, "property activation note for updating", []string{"user@example.com", "user2@example.com"}, nil).Once()
@@ -653,7 +653,7 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 				// update
 				expectGetRuleTree(m, "prp_test", 2, ruleTreeResponseValid, nil).Once()
 				expectGetActivations(m, "prp_test", generateActivationResponseMock("atv_activation1", "", 1, papi.ActivationTypeActivate, "2020-10-28T15:04:05Z", []string{"user@example.com"}), nil).Once()
-				ExpectGetPropertyVersion(m, "prp_test", "", "", 2, papi.VersionStatusInactive, "").Once()
+				expectGetPropertyVersion(m, "prp_test", "", "", 2, papi.VersionStatusInactive, "").Once()
 				// error on update
 				m.On("CreateActivation", AnyCTX, papi.CreateActivationRequest{
 					PropertyID: "prp_test",
@@ -946,5 +946,26 @@ var (
 				NotifyEmails:    contact,
 			},
 		}, nil)
+	}
+
+	// Sets up an expected call to papi.GetPropertyVersion()
+	expectGetPropertyVersion = func(client *papi.Mock, PropertyID, GroupID, ContractID string, Version int, StagStatus, ProdStatus papi.VersionStatus) *mock.Call {
+		req := papi.GetPropertyVersionRequest{
+			PropertyID:      PropertyID,
+			GroupID:         GroupID,
+			ContractID:      ContractID,
+			PropertyVersion: Version,
+		}
+
+		res := papi.GetPropertyVersionsResponse{
+			PropertyID: PropertyID,
+			GroupID:    GroupID,
+			ContractID: ContractID,
+			Version: papi.PropertyVersionGetItem{
+				StagingStatus:    StagStatus,
+				ProductionStatus: ProdStatus,
+			},
+		}
+		return client.On("GetPropertyVersion", AnyCTX, req).Return(&res, nil)
 	}
 )

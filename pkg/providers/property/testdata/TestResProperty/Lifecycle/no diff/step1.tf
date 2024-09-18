@@ -4,9 +4,9 @@ provider "akamai" {
 
 resource "akamai_property" "test" {
   name        = "test_property"
-  contract_id = "ctr_0"
-  group_id    = "grp_0"
-  product_id  = "prd_0"
+  contract_id = "ctr_1"
+  group_id    = "grp_2"
+  product_id  = "prd_3"
 
   rules = data.akamai_property_rules_template.akarules.json
 
