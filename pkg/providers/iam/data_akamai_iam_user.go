@@ -32,7 +32,7 @@ type (
 		AdditionalAuthentication           types.String        `tfsdk:"additional_authentication"`
 		AdditionalAuthenticationConfigured types.Bool          `tfsdk:"additional_authentication_configured"`
 		Address                            types.String        `tfsdk:"address"`
-		AuthGrants                         []*authGrantsModel  `tfsdk:"auth_grants"`
+		AuthGrants                         []authGrantsModel   `tfsdk:"auth_grants"`
 		City                               types.String        `tfsdk:"city"`
 		ContactType                        types.String        `tfsdk:"contact_type"`
 		Country                            types.String        `tfsdk:"country"`
@@ -67,13 +67,13 @@ type (
 		ThirdPartyAccess types.Bool `tfsdk:"third_party_access"`
 	}
 	authGrantsModel struct {
-		GroupID         types.Int64        `tfsdk:"group_id"`
-		GroupName       types.String       `tfsdk:"group_name"`
-		IsBlocked       types.Bool         `tfsdk:"is_blocked"`
-		RoleDescription types.String       `tfsdk:"role_description"`
-		RoleID          types.Int64        `tfsdk:"role_id"`
-		RoleName        types.String       `tfsdk:"role_name"`
-		SubGroups       []*authGrantsModel `tfsdk:"sub_groups"`
+		GroupID         types.Int64       `tfsdk:"group_id"`
+		GroupName       types.String      `tfsdk:"group_name"`
+		IsBlocked       types.Bool        `tfsdk:"is_blocked"`
+		RoleDescription types.String      `tfsdk:"role_description"`
+		RoleID          types.Int64       `tfsdk:"role_id"`
+		RoleName        types.String      `tfsdk:"role_name"`
+		SubGroups       []authGrantsModel `tfsdk:"sub_groups"`
 	}
 	notificationsModel struct {
 		Options                  optionsModel `tfsdk:"options"`
@@ -89,7 +89,7 @@ type (
 	}
 )
 
-// NewUserDataSource returns a new iam allowed APIs data source
+// NewUserDataSource returns a new iam user data source
 func NewUserDataSource() datasource.DataSource {
 	return &userDataSource{}
 }
@@ -373,7 +373,7 @@ func nestedAuthGrant(depth int) *schema.ListNestedAttribute {
 
 // Read is called when the provider must read data source values in order to update state
 func (d *userDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	tflog.Debug(ctx, "IAM Allowed APIs DataSource Read")
+	tflog.Debug(ctx, "IAM User DataSource Read")
 
 	var data userDataSourceModel
 	if resp.Diagnostics.Append(req.Config.Get(ctx, &data)...); resp.Diagnostics.HasError() {
@@ -464,8 +464,8 @@ func (d *userDataSourceModel) setAttributes(user *iam.User) diag.Diagnostics {
 	return nil
 }
 
-func readAuthGrantSubGroups(authGrants []iam.AuthGrant, depth int) ([]*authGrantsModel, diag.Diagnostics) {
-	authGrantModelList := make([]*authGrantsModel, 0, len(authGrants))
+func readAuthGrantSubGroups(authGrants []iam.AuthGrant, depth int) ([]authGrantsModel, diag.Diagnostics) {
+	authGrantModelList := make([]authGrantsModel, 0, len(authGrants))
 	for _, authGrant := range authGrants {
 		grantModel := authGrantsModel{
 			GroupID:         types.Int64Value(authGrant.GroupID),
@@ -483,11 +483,11 @@ func readAuthGrantSubGroups(authGrants []iam.AuthGrant, depth int) ([]*authGrant
 				return nil, diags
 			}
 			grantModel.SubGroups = grants
-		} else if depth == 1 && authGrant.Subgroups != nil && len(authGrant.Subgroups) > 0 {
+		} else if depth == 1 && len(authGrant.Subgroups) > 0 {
 			return nil, diag.Diagnostics{diag.NewErrorDiagnostic("unsupported subgroup depth",
 				fmt.Sprintf("AuthGrant %d contains more subgroups and exceed total supported limit of nesting %d.", authGrant.GroupID, maxSupportedGroupNesting))}
 		}
-		authGrantModelList = append(authGrantModelList, &grantModel)
+		authGrantModelList = append(authGrantModelList, grantModel)
 	}
 	return authGrantModelList, nil
 }

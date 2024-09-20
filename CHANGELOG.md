@@ -84,6 +84,9 @@
 
 
 
+* IAM
+  * Added new data source
+    * `akamai_iam_users` - read list of users with access to the account
 
 * PAPI
   * Added a new optional param to the import id of the `akamai_edge_hostname` resource.

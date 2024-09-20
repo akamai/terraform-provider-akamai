@@ -111,5 +111,6 @@ func (p *Subprovider) FrameworkDataSources() []func() datasource.DataSource {
 		NewRoleDataSource,
 		NewUserDataSource,
 		NewUsersAffectedByMovingGroupDataSource,
+		NewUsersDataSource,
 	}
 }
