@@ -72,7 +72,7 @@
 
 * IAM
   * Added new resource:
-    * `akamai_iam_cidr_blocks` - manage CIDR blocks assigned to the allowlist
+    * `akamai_iam_cidr_block` - manage CIDR block assigned to the allowlist
 
 
 
