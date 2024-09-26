@@ -19,6 +19,21 @@
 
 #### FEATURES/ENHANCEMENTS:
 
+* Appsec
+  * Added `expections` block to `akamai_appsec_siem_settings` resource with following nested fields
+    * `api_request_constraints`
+    * `apr_protection`
+    * `bot_management`
+    * `client_rep`
+    * `custom_rules`
+    * `ip_geo`
+    * `malware_protection`
+    * `rate`
+    * `url_protection`
+    * `slow_post`
+    * `waf`
+
+    
 * IAM
   * Added data source:
     * `akamai_iam_group` - read the details for a group
