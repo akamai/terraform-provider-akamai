@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -53,7 +54,7 @@ func resourceSiemSettings() *schema.Resource {
 			},
 			"enable_botman_siem": {
 				Type:        schema.TypeBool,
-				Required:    true,
+				Optional:    true,
 				Description: "Whether Bot Manager events should be included in SIEM events",
 			},
 			"siem_id": {
@@ -186,11 +187,6 @@ func resourceSiemSettingsCreate(ctx context.Context, d *schema.ResourceData, m i
 	spIDs := make([]string, 0, len(securityPolicyIDs.List()))
 	for _, h := range securityPolicyIDs.List() {
 		spIDs = append(spIDs, h.(string))
-
-	}
-	enableBotmanSiem, err := tf.GetBoolValue("enable_botman_siem", d)
-	if err != nil {
-		return diag.FromErr(err)
 	}
 	siemID, err := tf.GetIntValue("siem_id", d)
 	if err != nil {
@@ -203,14 +199,21 @@ func resourceSiemSettingsCreate(ctx context.Context, d *schema.ResourceData, m i
 	}
 
 	createSiemSettings := appsec.UpdateSiemSettingsRequest{
-		ConfigID:                configID,
-		Version:                 version,
-		EnableSiem:              enableSiem,
-		EnableForAllPolicies:    enableForAllPolicies,
-		FirewallPolicyIds:       spIDs,
-		EnabledBotmanSiemEvents: enableBotmanSiem,
-		SiemDefinitionID:        siemID,
-		Exceptions:              exceptions,
+		ConfigID:             configID,
+		Version:              version,
+		EnableSiem:           enableSiem,
+		EnableForAllPolicies: enableForAllPolicies,
+		FirewallPolicyIds:    spIDs,
+		SiemDefinitionID:     siemID,
+		Exceptions:           exceptions,
+	}
+
+	enableBotmanSiem, err := tf.GetBoolValue("enable_botman_siem", tf.NewRawConfig(d))
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	if !errors.Is(err, tf.ErrNotFound) {
+		createSiemSettings.EnabledBotmanSiemEvents = ptr.To(enableBotmanSiem)
 	}
 
 	_, err = client.UpdateSiemSettings(ctx, createSiemSettings)
@@ -307,10 +310,6 @@ func resourceSiemSettingsUpdate(ctx context.Context, d *schema.ResourceData, m i
 		spIDs = append(spIDs, h.(string))
 
 	}
-	enableBotmanSiem, err := tf.GetBoolValue("enable_botman_siem", d)
-	if err != nil && !errors.Is(err, tf.ErrNotFound) {
-		return diag.FromErr(err)
-	}
 	siemID, err := tf.GetIntValue("siem_id", d)
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
@@ -322,14 +321,21 @@ func resourceSiemSettingsUpdate(ctx context.Context, d *schema.ResourceData, m i
 	}
 
 	updateSiemSettings := appsec.UpdateSiemSettingsRequest{
-		ConfigID:                configID,
-		Version:                 version,
-		EnableSiem:              enableSiem,
-		EnableForAllPolicies:    enableForAllPolicies,
-		FirewallPolicyIds:       spIDs,
-		EnabledBotmanSiemEvents: enableBotmanSiem,
-		SiemDefinitionID:        siemID,
-		Exceptions:              exceptions,
+		ConfigID:             configID,
+		Version:              version,
+		EnableSiem:           enableSiem,
+		EnableForAllPolicies: enableForAllPolicies,
+		FirewallPolicyIds:    spIDs,
+		SiemDefinitionID:     siemID,
+		Exceptions:           exceptions,
+	}
+
+	enableBotmanSiem, err := tf.GetBoolValue("enable_botman_siem", tf.NewRawConfig(d))
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	if !errors.Is(err, tf.ErrNotFound) {
+		updateSiemSettings.EnabledBotmanSiemEvents = ptr.To(enableBotmanSiem)
 	}
 
 	_, err = client.UpdateSiemSettings(ctx, updateSiemSettings)
