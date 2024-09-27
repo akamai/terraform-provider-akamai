@@ -39,7 +39,7 @@ func TestDataPropertyUsers(t *testing.T) {
 	mockListUsersForProperty := func(iamMock *iam.Mock, req iam.ListUsersForPropertyRequest,
 		users ...iam.UsersForProperty) {
 		iamMock.On("ListUsersForProperty", mock.Anything, req).
-			Return((*iam.ListUsersForPropertyResponse)(&users), nil).Times(3)
+			Return((iam.ListUsersForPropertyResponse)(users), nil).Times(3)
 	}
 
 	tests := map[string]struct {
@@ -178,11 +178,12 @@ func TestDataPropertyUsers(t *testing.T) {
 			error: regexp.MustCompile("list users failed"),
 		},
 	}
-	for name, test := range tests {
+
+	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			iamMock := iam.Mock{}
-			if test.init != nil {
-				test.init(t, &iamMock)
+			if tc.init != nil {
+				tc.init(t, &iamMock)
 			}
 
 			useClient(&iamMock, func() {
@@ -190,9 +191,9 @@ func TestDataPropertyUsers(t *testing.T) {
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{
 						{
-							Config:      testutils.LoadFixtureString(t, test.configPath),
-							Check:       test.check,
-							ExpectError: test.error,
+							Config:      testutils.LoadFixtureString(t, tc.configPath),
+							Check:       tc.check,
+							ExpectError: tc.error,
 						},
 					},
 				})

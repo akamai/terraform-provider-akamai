@@ -24,7 +24,7 @@ type (
 		meta meta.Meta
 	}
 
-	accountSwitchKeysDataSourceModel struct {
+	accountSwitchKeysModel struct {
 		ClientID          types.String       `tfsdk:"client_id"`
 		Filter            types.String       `tfsdk:"filter"`
 		AccountSwitchKeys []accountSwitchKey `tfsdk:"account_switch_keys"`
@@ -36,17 +36,15 @@ type (
 	}
 )
 
-// NewAccountSwitchKeysDataSource returns a new account switch keys data source
+// NewAccountSwitchKeysDataSource returns a new account switch keys data source.
 func NewAccountSwitchKeysDataSource() datasource.DataSource {
 	return &accountSwitchKeysDataSource{}
 }
 
-// Metadata configures data source's meta information
 func (d *accountSwitchKeysDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = "akamai_iam_account_switch_keys"
 }
 
-// Configure configures data source at the beginning of the lifecycle
 func (d *accountSwitchKeysDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
@@ -62,7 +60,6 @@ func (d *accountSwitchKeysDataSource) Configure(_ context.Context, req datasourc
 	d.meta = meta.Must(req.ProviderData)
 }
 
-// Schema is used to define data source's terraform schema
 func (d *accountSwitchKeysDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Description: "Identity and Access Management account switch keys",
@@ -96,11 +93,10 @@ func (d *accountSwitchKeysDataSource) Schema(_ context.Context, _ datasource.Sch
 	}
 }
 
-// Read is called when the provider must read data source values in order to update state
 func (d *accountSwitchKeysDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	tflog.Debug(ctx, "IAM Account Switch Keys DataSource Read")
 
-	var data accountSwitchKeysDataSourceModel
+	var data accountSwitchKeysModel
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return

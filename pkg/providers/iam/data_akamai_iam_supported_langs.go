@@ -11,13 +11,13 @@ import (
 
 func dataSourceIAMLanguages() *schema.Resource {
 	return &schema.Resource{
-		Description: "List all the possible languages Akamai supports",
+		Description: "List all the possible languages Akamai supports.",
 		ReadContext: dataIAMLanguagesRead,
 		Schema: map[string]*schema.Schema{
 			"languages": {
 				Type:        schema.TypeSet,
 				Computed:    true,
-				Description: "Languages supported by Akamai",
+				Description: "Languages supported by Akamai.",
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 		},

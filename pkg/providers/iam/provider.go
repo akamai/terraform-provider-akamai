@@ -40,12 +40,6 @@ func NewSubprovider() *Subprovider {
 	return inst
 }
 
-func withClient(c iam.IAM) option {
-	return func(p *Subprovider) {
-		p.client = c
-	}
-}
-
 // Client returns the IAM interface
 func (p *Subprovider) Client(meta meta.Meta) iam.IAM {
 	if p.client != nil {

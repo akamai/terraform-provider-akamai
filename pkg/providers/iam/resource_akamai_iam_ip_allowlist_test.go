@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestResourceIAMIPAllowlistResource(t *testing.T) {
+func TestIPAllowlistResource(t *testing.T) {
 	t.Parallel()
 	tests := map[string]struct {
 		configPath string
@@ -173,17 +173,17 @@ func TestResourceIAMIPAllowlistResource(t *testing.T) {
 			},
 		},
 	}
-	for name, test := range tests {
+	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			client := &iam.Mock{}
-			if test.init != nil {
-				test.init(t, client)
+			if tc.init != nil {
+				tc.init(t, client)
 			}
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					IsUnitTest:               true,
-					Steps:                    test.steps,
+					Steps:                    tc.steps,
 				})
 			})
 			client.AssertExpectations(t)
@@ -191,47 +191,45 @@ func TestResourceIAMIPAllowlistResource(t *testing.T) {
 	}
 }
 
-func TestImportIAMIPAllowlistResource(t *testing.T) {
-	{
-		tests := map[string]struct {
-			importID   string
-			configPath string
-			init       func(*testing.T, *iam.Mock)
-			mockData   []commonDataForResource
-			stateCheck func(s []*terraform.InstanceState) error
-		}{
-			"import": {
-				importID: " ",
-				init: func(t *testing.T, m *iam.Mock) {
-					// Import
-					mockReadIPAllowlistStatus(m, true).Twice()
-				},
-				stateCheck: checkImportEnabledIPAllowlistForSpecificUser(),
+func TestImportIPAllowlistResource(t *testing.T) {
+	tests := map[string]struct {
+		importID   string
+		configPath string
+		init       func(*testing.T, *iam.Mock)
+		mockData   []commonDataForResource
+		stateCheck func(s []*terraform.InstanceState) error
+	}{
+		"import": {
+			importID: " ",
+			init: func(t *testing.T, m *iam.Mock) {
+				// Import
+				mockReadIPAllowlistStatus(m, true).Twice()
 			},
-		}
-		for name, test := range tests {
-			t.Run(name, func(t *testing.T) {
-				client := &iam.Mock{}
-				test.init(t, client)
-				useClient(client, func() {
-					resource.UnitTest(t, resource.TestCase{
-						ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-						Steps: []resource.TestStep{
-							{
-								ImportStateCheck: test.stateCheck,
-								ImportStateId:    test.importID,
-								ImportState:      true,
-								ResourceName:     "akamai_iam_ip_allowlist.test",
-								Config:           testutils.LoadFixtureString(t, "./testdata/TestResIPAllowlist/enable.tf"),
-								Check: resource.ComposeAggregateTestCheckFunc(
-									resource.TestCheckResourceAttr("akamai_iam_ip_allowlist.test", "enable", "true")),
-							},
+			stateCheck: checkImportEnabledIPAllowlistForSpecificUser(),
+		},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			client := &iam.Mock{}
+			test.init(t, client)
+			useClient(client, func() {
+				resource.UnitTest(t, resource.TestCase{
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+					Steps: []resource.TestStep{
+						{
+							ImportStateCheck: test.stateCheck,
+							ImportStateId:    test.importID,
+							ImportState:      true,
+							ResourceName:     "akamai_iam_ip_allowlist.test",
+							Config:           testutils.LoadFixtureString(t, "./testdata/TestResIPAllowlist/enable.tf"),
+							Check: resource.ComposeAggregateTestCheckFunc(
+								resource.TestCheckResourceAttr("akamai_iam_ip_allowlist.test", "enable", "true")),
 						},
-					})
+					},
 				})
-				client.AssertExpectations(t)
 			})
-		}
+			client.AssertExpectations(t)
+		})
 	}
 }
 

@@ -139,10 +139,10 @@ func TestUsersAffectedByMovingGroup(t *testing.T) {
 		},
 	}
 
-	for name, test := range tests {
+	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			client := &iam.Mock{}
-			test.init(client)
+			tc.init(client)
 
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
@@ -150,9 +150,9 @@ func TestUsersAffectedByMovingGroup(t *testing.T) {
 					IsUnitTest:               true,
 					Steps: []resource.TestStep{
 						{
-							Config:      testutils.LoadFixtureString(t, test.config),
-							Check:       test.expectedChecks,
-							ExpectError: test.expectedError,
+							Config:      testutils.LoadFixtureString(t, tc.config),
+							Check:       tc.expectedChecks,
+							ExpectError: tc.expectedError,
 						},
 					},
 				})

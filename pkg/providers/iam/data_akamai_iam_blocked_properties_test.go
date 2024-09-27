@@ -96,22 +96,23 @@ func TestBlockedPropertiesDataSource(t *testing.T) {
 			expectError: regexp.MustCompile(`The argument "ui_identity_id" is required, but no definition was found`),
 		},
 	}
-	for name, test := range tests {
+
+	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			client := &iam.Mock{}
 			papiClient := &papi.Mock{}
 
-			if test.init != nil {
-				test.init(client, papiClient)
+			if tc.init != nil {
+				tc.init(client, papiClient)
 			}
 			useIAMandPAPIClient(client, papiClient, func() {
 				resource.Test(t, resource.TestCase{
 					IsUnitTest:               true,
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{{
-						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("testdata/TestDataBlockedProperties/%s", test.givenTF)),
-						Check:       test.expectedCheck,
-						ExpectError: test.expectError,
+						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("testdata/TestDataBlockedProperties/%s", tc.givenTF)),
+						Check:       tc.expectedCheck,
+						ExpectError: tc.expectError,
 					}},
 				})
 			})

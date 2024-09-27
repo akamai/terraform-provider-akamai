@@ -2,13 +2,13 @@ package iam
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/iam"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
@@ -16,6 +16,9 @@ import (
 var (
 	_ datasource.DataSource              = &allowedAPIsDataSource{}
 	_ datasource.DataSourceWithConfigure = &allowedAPIsDataSource{}
+
+	// ErrIAMListAllowedAPIs is returned when ListAllowedAPIs fails.
+	ErrIAMListAllowedAPIs = errors.New("IAM list allowed APIs failed")
 )
 
 type (
@@ -23,7 +26,7 @@ type (
 		meta meta.Meta
 	}
 
-	allowedAPIsSourceModel struct {
+	allowedAPIsModel struct {
 		Username           types.String `tfsdk:"username"`
 		ClientType         types.String `tfsdk:"client_type"`
 		AllowAccountSwitch types.Bool   `tfsdk:"allow_account_switch"`
@@ -47,12 +50,10 @@ func NewAllowedAPIsDataSource() datasource.DataSource {
 	return &allowedAPIsDataSource{}
 }
 
-// Metadata configures data source's meta information
 func (d *allowedAPIsDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = "akamai_iam_allowed_apis"
 }
 
-// Configure configures data source at the beginning of the lifecycle
 func (d *allowedAPIsDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
@@ -68,7 +69,6 @@ func (d *allowedAPIsDataSource) Configure(_ context.Context, req datasource.Conf
 	d.meta = meta.Must(req.ProviderData)
 }
 
-// Schema is used to define data source's terraform schema
 func (d *allowedAPIsDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Description: "Identity and Access Management allowed APIs",
@@ -79,14 +79,14 @@ func (d *allowedAPIsDataSource) Schema(_ context.Context, _ datasource.SchemaReq
 			},
 			"client_type": schema.StringAttribute{
 				Optional:    true,
-				Description: "Filters data by client type, either USER_CLIENT, SERVICE_ACCOUNT, or default CLIENT",
+				Description: "Filters data by client type, either USER_CLIENT, SERVICE_ACCOUNT, or default CLIENT.",
 			},
 			"allow_account_switch": schema.BoolAttribute{
 				Optional:    true,
 				Description: "Includes account a user can switch to, false by default.",
 			},
 			"allowed_apis": schema.ListNestedAttribute{
-				Description: "List of available APIs for the user",
+				Description: "List of available APIs for the user.",
 				Computed:    true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
@@ -128,14 +128,12 @@ func (d *allowedAPIsDataSource) Schema(_ context.Context, _ datasource.SchemaReq
 			},
 		},
 	}
-
 }
 
-// Read is called when the provider must read data source values in order to update state
 func (d *allowedAPIsDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	tflog.Debug(ctx, "IAM Allowed APIs DataSource Read")
 
-	var data allowedAPIsSourceModel
+	var data allowedAPIsModel
 	if resp.Diagnostics.Append(req.Config.Get(ctx, &data)...); resp.Diagnostics.HasError() {
 		return
 	}
@@ -151,15 +149,12 @@ func (d *allowedAPIsDataSource) Read(ctx context.Context, req datasource.ReadReq
 		return
 	}
 
-	if resp.Diagnostics.Append(data.read(apis)...); resp.Diagnostics.HasError() {
-		return
-	}
+	data.read(apis)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
-
 }
 
-func (d *allowedAPIsSourceModel) read(allowedAPIs iam.ListAllowedAPIsResponse) diag.Diagnostics {
+func (d *allowedAPIsModel) read(allowedAPIs iam.ListAllowedAPIsResponse) {
 	var apis []apiModel
 	for _, api := range allowedAPIs {
 		accessLevels := make([]types.String, 0, len(api.AccessLevels))
@@ -181,6 +176,4 @@ func (d *allowedAPIsSourceModel) read(allowedAPIs iam.ListAllowedAPIsResponse) d
 	}
 
 	d.AllowedAPIs = apis
-	return nil
-
 }

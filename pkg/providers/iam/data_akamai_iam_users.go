@@ -60,17 +60,15 @@ type (
 	}
 )
 
-// NewUsersDataSource returns a new iam users data source
+// NewUsersDataSource returns a new iam users data source.
 func NewUsersDataSource() datasource.DataSource {
 	return &usersDataSource{}
 }
 
-// Metadata configures data source's meta information
 func (d *usersDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = "akamai_iam_users"
 }
 
-// Configure configures data source at the beginning of the lifecycle
 func (d *usersDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
@@ -86,17 +84,16 @@ func (d *usersDataSource) Configure(_ context.Context, req datasource.ConfigureR
 	d.meta = meta.Must(req.ProviderData)
 }
 
-// Schema is used to define data source's terraform schema
 func (d *usersDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "Identity and Access Management users",
+		Description: "Identity and Access Management users.",
 		Attributes: map[string]schema.Attribute{
 			"group_id": schema.Int64Attribute{
 				Optional:    true,
 				Description: "Filters users for a specific group.",
 			},
 			"users": schema.ListNestedAttribute{
-				Description: "List of users in the account",
+				Description: "List of users in the account.",
 				Computed:    true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
@@ -231,7 +228,6 @@ func (d *usersDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, 
 			}}}
 }
 
-// Read is called when the provider must read data source values in order to update state
 func (d *usersDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	tflog.Debug(ctx, "IAM Users DataSource Read")
 
@@ -249,7 +245,7 @@ func (d *usersDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 		Actions:    true,
 	})
 	if err != nil {
-		resp.Diagnostics.AddError(fmt.Sprintf("%s:", ErrIAMListUsers), err.Error())
+		resp.Diagnostics.AddError("list users failed: ", err.Error())
 		return
 	}
 
@@ -258,46 +254,45 @@ func (d *usersDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
-
 }
 
 func (d *usersModel) read(users []iam.UserListItem) diag.Diagnostics {
-	for _, user := range users {
-		authGrants, diags := readAuthGrantSubGroups(user.AuthGrants, maxSupportedGroupNesting)
+	for _, usr := range users {
+		authGrants, diags := readAuthGrantSubGroups(usr.AuthGrants, maxSupportedGroupNesting)
 		if diags.HasError() {
 			return diags
 		}
-		userItem := userItem{
-			AccountID:                          types.StringValue(user.AccountID),
-			AdditionalAuthentication:           types.StringValue(string(user.AdditionalAuthentication)),
-			AdditionalAuthenticationConfigured: types.BoolValue(user.AdditionalAuthenticationConfigured),
+		usrItem := userItem{
+			AccountID:                          types.StringValue(usr.AccountID),
+			AdditionalAuthentication:           types.StringValue(string(usr.AdditionalAuthentication)),
+			AdditionalAuthenticationConfigured: types.BoolValue(usr.AdditionalAuthenticationConfigured),
 			AuthGrants:                         authGrants,
-			Email:                              types.StringValue(user.Email),
-			FirstName:                          types.StringValue(user.FirstName),
-			IsLocked:                           types.BoolValue(user.IsLocked),
-			LastName:                           types.StringValue(user.LastName),
-			LastLoginDate:                      types.StringValue(date.FormatRFC3339Nano(user.LastLoginDate)),
-			TFAConfigured:                      types.BoolValue(user.TFAConfigured),
-			TFAEnabled:                         types.BoolValue(user.TFAEnabled),
-			UIIdentityID:                       types.StringValue(user.IdentityID),
-			UIUserName:                         types.StringValue(user.UserName),
+			Email:                              types.StringValue(usr.Email),
+			FirstName:                          types.StringValue(usr.FirstName),
+			IsLocked:                           types.BoolValue(usr.IsLocked),
+			LastName:                           types.StringValue(usr.LastName),
+			LastLoginDate:                      types.StringValue(date.FormatRFC3339Nano(usr.LastLoginDate)),
+			TFAConfigured:                      types.BoolValue(usr.TFAConfigured),
+			TFAEnabled:                         types.BoolValue(usr.TFAEnabled),
+			UIIdentityID:                       types.StringValue(usr.IdentityID),
+			UIUserName:                         types.StringValue(usr.UserName),
 		}
 
-		if user.Actions != nil {
-			userItem.Actions = &userActions{
-				Delete:           types.BoolValue(user.Actions.Delete),
-				APIClient:        types.BoolValue(user.Actions.APIClient),
-				CanEditMFA:       types.BoolValue(user.Actions.CanEditMFA),
-				CanEditNone:      types.BoolValue(user.Actions.CanEditNone),
-				CanEditTFA:       types.BoolValue(user.Actions.CanEditTFA),
-				Edit:             types.BoolValue(user.Actions.Edit),
-				EditProfile:      types.BoolValue(user.Actions.EditProfile),
-				IsCloneable:      types.BoolValue(user.Actions.IsCloneable),
-				ResetPassword:    types.BoolValue(user.Actions.ResetPassword),
-				ThirdPartyAccess: types.BoolValue(user.Actions.ThirdPartyAccess),
+		if usr.Actions != nil {
+			usrItem.Actions = &userActions{
+				Delete:           types.BoolValue(usr.Actions.Delete),
+				APIClient:        types.BoolValue(usr.Actions.APIClient),
+				CanEditMFA:       types.BoolValue(usr.Actions.CanEditMFA),
+				CanEditNone:      types.BoolValue(usr.Actions.CanEditNone),
+				CanEditTFA:       types.BoolValue(usr.Actions.CanEditTFA),
+				Edit:             types.BoolValue(usr.Actions.Edit),
+				EditProfile:      types.BoolValue(usr.Actions.EditProfile),
+				IsCloneable:      types.BoolValue(usr.Actions.IsCloneable),
+				ResetPassword:    types.BoolValue(usr.Actions.ResetPassword),
+				ThirdPartyAccess: types.BoolValue(usr.Actions.ThirdPartyAccess),
 			}
 		}
-		d.Users = append(d.Users, userItem)
+		d.Users = append(d.Users, usrItem)
 	}
 	return nil
 }

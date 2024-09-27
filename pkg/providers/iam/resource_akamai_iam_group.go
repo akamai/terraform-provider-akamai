@@ -14,7 +14,7 @@ import (
 
 func resourceIAMGroup() *schema.Resource {
 	return &schema.Resource{
-		Description:   "Manage a group in your account",
+		Description:   "Manage a group in your account.",
 		CreateContext: resourceIAMGroupCreate,
 		ReadContext:   resourceIAMGroupRead,
 		UpdateContext: resourceIAMGroupUpdate,
@@ -26,18 +26,18 @@ func resourceIAMGroup() *schema.Resource {
 			"parent_group_id": {
 				Type:        schema.TypeInt,
 				Required:    true,
-				Description: "Unique identifier for the parent group",
+				Description: "Unique identifier for the parent group.",
 			},
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Human readable name for a group",
+				Description: "Human readable name for a group.",
 			},
 			"sub_groups": {
 				Type:        schema.TypeSet,
 				Elem:        &schema.Schema{Type: schema.TypeInt},
 				Computed:    true,
-				Description: "Subgroups IDs",
+				Description: "Subgroups IDs.",
 			},
 		},
 	}

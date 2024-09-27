@@ -14,41 +14,41 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
-var _ datasource.DataSource = &blockedPropertiesDataSource{}
-var _ datasource.DataSourceWithConfigure = &blockedPropertiesDataSource{}
+var (
+	_ datasource.DataSource              = &blockedPropertiesDataSource{}
+	_ datasource.DataSourceWithConfigure = &blockedPropertiesDataSource{}
+)
 
-// NewBlockedPropertiesDataSource returns all the properties that are blocked for a certain user in a group
+// NewBlockedPropertiesDataSource returns all the properties that are blocked for a certain user in a group.
 func NewBlockedPropertiesDataSource() datasource.DataSource {
 	return &blockedPropertiesDataSource{}
 }
 
-// blockedPropertiesDataSource defines the data source implementation for fetching Blocked Properties information
-type blockedPropertiesDataSource struct {
-	meta meta.Meta
-}
+type (
+	blockedPropertiesDataSource struct {
+		meta meta.Meta
+	}
 
-// blockedPropertiesDataSource describes the data source data model for BlockedPropertiesDataSource
-type blockedPropertiesDataSourceModel struct {
-	GroupID           types.Int64               `tfsdk:"group_id"`
-	ContractID        types.String              `tfsdk:"contract_id"`
-	UIIdentityID      types.String              `tfsdk:"ui_identity_id"`
-	BlockedProperties []blockedPropertyIDsModel `tfsdk:"blocked_properties"`
-}
+	blockedPropertiesModel struct {
+		GroupID           types.Int64               `tfsdk:"group_id"`
+		ContractID        types.String              `tfsdk:"contract_id"`
+		UIIdentityID      types.String              `tfsdk:"ui_identity_id"`
+		BlockedProperties []blockedPropertyIDsModel `tfsdk:"blocked_properties"`
+	}
 
-type blockedPropertyIDsModel struct {
-	PropertyID types.String `tfsdk:"property_id"`
-	AssetID    types.Int64  `tfsdk:"asset_id"`
-}
+	blockedPropertyIDsModel struct {
+		PropertyID types.String `tfsdk:"property_id"`
+		AssetID    types.Int64  `tfsdk:"asset_id"`
+	}
+)
 
-// Metadata configures data source's meta information
 func (d *blockedPropertiesDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = "akamai_iam_blocked_properties"
 }
 
-// Schema is used to define data source's terraform schema
 func (d *blockedPropertiesDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Blocked Properties data source",
+		MarkdownDescription: "Blocked Properties data source.",
 		Attributes: map[string]schema.Attribute{
 			"group_id": schema.Int64Attribute{
 				Required:    true,
@@ -69,11 +69,11 @@ func (d *blockedPropertiesDataSource) Schema(_ context.Context, _ datasource.Sch
 					Attributes: map[string]schema.Attribute{
 						"property_id": schema.StringAttribute{
 							Computed:    true,
-							Description: "PAPI's blocked property ID",
+							Description: "PAPI's blocked property ID.",
 						},
 						"asset_id": schema.Int64Attribute{
 							Computed:    true,
-							Description: "IAM's blocked property ID",
+							Description: "IAM's blocked property ID.",
 						},
 					},
 				},
@@ -82,7 +82,6 @@ func (d *blockedPropertiesDataSource) Schema(_ context.Context, _ datasource.Sch
 	}
 }
 
-// Configure  configures data source at the beginning of the lifecycle
 func (d *blockedPropertiesDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		// ProviderData is nil when Configure is run first time as part of ValidateDataSourceConfig in framework provider
@@ -101,11 +100,10 @@ func (d *blockedPropertiesDataSource) Configure(_ context.Context, req datasourc
 	d.meta = meta.Must(req.ProviderData)
 }
 
-// Read is called when the provider must read data source values in order to update state
 func (d *blockedPropertiesDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	tflog.Debug(ctx, "BlockedPropertiesDataSource Read")
+	tflog.Debug(ctx, "Blocked Properties DataSource Read")
 
-	var data blockedPropertiesDataSourceModel
+	var data blockedPropertiesModel
 	if resp.Diagnostics.Append(req.Config.Get(ctx, &data)...); resp.Diagnostics.HasError() {
 		return
 	}

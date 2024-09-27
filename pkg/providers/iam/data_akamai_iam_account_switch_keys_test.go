@@ -70,11 +70,11 @@ func TestAccountSwitchKeys(t *testing.T) {
 		},
 	}
 
-	for name, test := range tests {
+	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			client := &iam.Mock{}
-			if test.init != nil {
-				test.init(client)
+			if tc.init != nil {
+				tc.init(client)
 			}
 
 			useClient(client, func() {
@@ -83,9 +83,9 @@ func TestAccountSwitchKeys(t *testing.T) {
 					IsUnitTest:               true,
 					Steps: []resource.TestStep{
 						{
-							Config:      testutils.LoadFixtureString(t, fmt.Sprintf("testdata/TestDataAccountSwitchKeys/%s", test.givenTF)),
+							Config:      testutils.LoadFixtureString(t, fmt.Sprintf("testdata/TestDataAccountSwitchKeys/%s", tc.givenTF)),
 							Check:       checkAccountSwitchKeysAttrs(),
-							ExpectError: test.error,
+							ExpectError: tc.error,
 						},
 					},
 				})

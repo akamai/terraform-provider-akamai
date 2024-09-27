@@ -121,11 +121,11 @@ func TestDataAllowedAPIs(t *testing.T) {
 			mockData: basicTestDataForAllowedAPIsNoOptional,
 		},
 	}
-	for name, test := range tests {
+	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			client := &iam.Mock{}
-			if test.init != nil {
-				test.init(t, client, test.mockData)
+			if tc.init != nil {
+				tc.init(t, client, tc.mockData)
 			}
 
 			useClient(client, func() {
@@ -134,9 +134,9 @@ func TestDataAllowedAPIs(t *testing.T) {
 					IsUnitTest:               true,
 					Steps: []resource.TestStep{
 						{
-							Config:      testutils.LoadFixtureString(t, test.configPath),
-							Check:       checkAllowedAPIsAttrs(test.mockData),
-							ExpectError: test.error,
+							Config:      testutils.LoadFixtureString(t, tc.configPath),
+							Check:       checkAllowedAPIsAttrs(tc.mockData),
+							ExpectError: tc.error,
 						},
 					},
 				})
@@ -174,7 +174,6 @@ func expectFullListAllowedAPIs(_ *testing.T, client *iam.Mock, data testDataForA
 	}
 
 	client.On("ListAllowedAPIs", mock.Anything, listAllowedAPIsReq).Return(listAllowedAPIsRes, nil).Times(timesToRun)
-
 }
 
 func checkAllowedAPIsAttrs(data testDataForAllowedAPIs) resource.TestCheckFunc {
@@ -208,6 +207,6 @@ func checkAllowedAPIsAttrs(data testDataForAllowedAPIs) resource.TestCheckFunc {
 		checksFuncs = append(checksFuncs, resource.TestCheckResourceAttr(name, fmt.Sprintf("allowed_apis.%d.service_provider_id", i), strconv.FormatInt(api.serviceProviderID, 10)))
 
 	}
-	return resource.ComposeAggregateTestCheckFunc(checksFuncs...)
 
+	return resource.ComposeAggregateTestCheckFunc(checksFuncs...)
 }

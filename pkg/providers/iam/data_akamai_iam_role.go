@@ -15,8 +15,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
-var _ datasource.DataSource = &roleDataSource{}
-var _ datasource.DataSourceWithConfigure = &roleDataSource{}
+var (
+	_ datasource.DataSource              = &roleDataSource{}
+	_ datasource.DataSourceWithConfigure = &roleDataSource{}
+)
 
 // NewRoleDataSource returns all the details for a role.
 func NewRoleDataSource() datasource.DataSource {
@@ -24,14 +26,11 @@ func NewRoleDataSource() datasource.DataSource {
 }
 
 type (
-
-	// roleDataSource defines the data source implementation for fetching details for a role.
 	roleDataSource struct {
 		meta meta.Meta
 	}
 
-	// roleDataSourceModel describes the data source data model for roleDataSource.
-	roleDataSourceModel struct {
+	roleModel struct {
 		RoleID          types.Int64   `tfsdk:"role_id"`
 		Actions         *actions      `tfsdk:"actions"`
 		CreatedBy       types.String  `tfsdk:"created_by"`
@@ -41,19 +40,17 @@ type (
 		RoleDescription types.String  `tfsdk:"role_description"`
 		RoleName        types.String  `tfsdk:"role_name"`
 		Type            types.String  `tfsdk:"type"`
-		GrantedRoles    []GrantedRole `tfsdk:"granted_roles"`
-		Users           []User        `tfsdk:"users"`
+		GrantedRoles    []grantedRole `tfsdk:"granted_roles"`
+		Users           []user        `tfsdk:"users"`
 	}
 
-	// GrantedRole contains details about Granted roles for the account.
-	GrantedRole struct {
+	grantedRole struct {
 		GrantedRoleID          types.Int64  `tfsdk:"granted_role_id"`
 		GrantedRoleName        types.String `tfsdk:"granted_role_name"`
 		GrantedRoleDescription types.String `tfsdk:"granted_role_description"`
 	}
 
-	// User is one of the Users on the account who share the same role.
-	User struct {
+	user struct {
 		AccountID     types.String `tfsdk:"account_id"`
 		Email         types.String `tfsdk:"email"`
 		FirstName     types.String `tfsdk:"first_name"`
@@ -63,10 +60,9 @@ type (
 	}
 )
 
-// Schema is used to define data source's terraform schema
 func (d *roleDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Role data source",
+		MarkdownDescription: "Role data source.",
 		Attributes: map[string]schema.Attribute{
 			"role_id": schema.Int64Attribute{
 				Required:    true,
@@ -173,12 +169,10 @@ func (d *roleDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, r
 	}
 }
 
-// Metadata configures data source's meta information
 func (d *roleDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = "akamai_iam_role"
 }
 
-// Configure  configures data source at the beginning of the lifecycle
 func (d *roleDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		// ProviderData is nil when Configure is run first time as part of ValidateDataSourceConfig in framework provider
@@ -197,11 +191,10 @@ func (d *roleDataSource) Configure(_ context.Context, req datasource.ConfigureRe
 	d.meta = meta.Must(req.ProviderData)
 }
 
-// Read is called when the provider must read data source values in order to update state
 func (d *roleDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	tflog.Debug(ctx, "IAM Role DataSource Read")
 
-	var data roleDataSourceModel
+	var data roleModel
 	if resp.Diagnostics.Append(req.Config.Get(ctx, &data)...); resp.Diagnostics.HasError() {
 		return
 	}
@@ -223,7 +216,7 @@ func (d *roleDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (m *roleDataSourceModel) setAttributes(role *iam.Role) {
+func (m *roleModel) setAttributes(role *iam.Role) {
 
 	m.CreatedBy = types.StringValue(role.CreatedBy)
 	m.CreatedDate = types.StringValue(date.FormatRFC3339Nano(role.CreatedDate))
@@ -240,22 +233,22 @@ func (m *roleDataSourceModel) setAttributes(role *iam.Role) {
 		}
 	}
 
-	for _, grantedRole := range role.GrantedRoles {
-		grantedRoleObject := GrantedRole{
-			GrantedRoleID:          types.Int64Value(grantedRole.RoleID),
-			GrantedRoleName:        types.StringValue(grantedRole.RoleName),
-			GrantedRoleDescription: types.StringValue(grantedRole.Description),
+	for _, r := range role.GrantedRoles {
+		grantedRoleObject := grantedRole{
+			GrantedRoleID:          types.Int64Value(r.RoleID),
+			GrantedRoleName:        types.StringValue(r.RoleName),
+			GrantedRoleDescription: types.StringValue(r.Description),
 		}
 		m.GrantedRoles = append(m.GrantedRoles, grantedRoleObject)
 	}
-	for _, user := range role.Users {
-		userObject := User{
-			AccountID:     types.StringValue(user.AccountID),
-			Email:         types.StringValue(user.Email),
-			FirstName:     types.StringValue(user.FirstName),
-			LastName:      types.StringValue(user.LastName),
-			LastLoginDate: types.StringValue(user.LastLoginDate.String()),
-			UIIdentityID:  types.StringValue(user.UIIdentityID),
+	for _, u := range role.Users {
+		userObject := user{
+			AccountID:     types.StringValue(u.AccountID),
+			Email:         types.StringValue(u.Email),
+			FirstName:     types.StringValue(u.FirstName),
+			LastName:      types.StringValue(u.LastName),
+			LastLoginDate: types.StringValue(u.LastLoginDate.String()),
+			UIIdentityID:  types.StringValue(u.UIIdentityID),
 		}
 
 		m.Users = append(m.Users, userObject)

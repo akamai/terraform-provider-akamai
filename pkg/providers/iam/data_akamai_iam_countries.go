@@ -11,13 +11,13 @@ import (
 
 func dataSourceIAMCountries() *schema.Resource {
 	return &schema.Resource{
-		Description: "List all the possible countries that Akamai supports",
+		Description: "List all the possible countries that Akamai supports.",
 		ReadContext: dataIAMCountriesRead,
 		Schema: map[string]*schema.Schema{
 			"countries": {
 				Type:        schema.TypeSet,
 				Computed:    true,
-				Description: "Supported countries",
+				Description: "Supported countries.",
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 		},

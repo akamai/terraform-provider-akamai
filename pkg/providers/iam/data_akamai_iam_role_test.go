@@ -112,18 +112,19 @@ func TestRoleDataSource(t *testing.T) {
 			expectError: regexp.MustCompile(`The argument "role_id" is required, but no definition was found`),
 		},
 	}
-	for name, test := range tests {
+
+	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			client := &iam.Mock{}
 
-			if test.init != nil {
-				test.init(client)
+			if tc.init != nil {
+				tc.init(client)
 			}
 			var checkFuncs []resource.TestCheckFunc
-			for k, v := range test.expectedAttributes {
+			for k, v := range tc.expectedAttributes {
 				checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("data.akamai_iam_role.test", k, v))
 			}
-			for _, v := range test.expectedMissingAttributes {
+			for _, v := range tc.expectedMissingAttributes {
 				checkFuncs = append(checkFuncs, resource.TestCheckNoResourceAttr("data.akamai_iam_role.test", v))
 			}
 			useClient(client, func() {
@@ -131,9 +132,9 @@ func TestRoleDataSource(t *testing.T) {
 					IsUnitTest:               true,
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{{
-						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("testdata/TestDataRole/%s", test.givenTF)),
+						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("testdata/TestDataRole/%s", tc.givenTF)),
 						Check:       resource.ComposeAggregateTestCheckFunc(checkFuncs...),
-						ExpectError: test.expectError,
+						ExpectError: tc.expectError,
 					}},
 				})
 			})

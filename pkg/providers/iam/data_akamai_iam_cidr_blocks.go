@@ -2,6 +2,7 @@ package iam
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/iam"
@@ -9,7 +10,6 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
@@ -17,6 +17,9 @@ import (
 var (
 	_ datasource.DataSource              = &cidrBlocksDataSource{}
 	_ datasource.DataSourceWithConfigure = &cidrBlocksDataSource{}
+
+	// ErrIAMListCIDRBlocks is returned when ListCIDRBlocks fails.
+	ErrIAMListCIDRBlocks = errors.New("IAM list CIDR blocks failed")
 )
 
 type (
@@ -25,21 +28,19 @@ type (
 	}
 
 	cidrBlocksSourceModel struct {
-		CIDRBlocks []cidrBlockSourceModel `tfsdk:"cidr_blocks"`
+		CIDRBlocks []cidrBlockModel `tfsdk:"cidr_blocks"`
 	}
 )
 
-// NewCIDRBlocksDataSource returns a new iam CIDR block data source
+// NewCIDRBlocksDataSource returns a new iam CIDR blocks data source.
 func NewCIDRBlocksDataSource() datasource.DataSource {
 	return &cidrBlocksDataSource{}
 }
 
-// Metadata configures data source's meta information
 func (d *cidrBlocksDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = "akamai_iam_cidr_blocks"
 }
 
-// Configure configures data source at the beginning of the lifecycle
 func (d *cidrBlocksDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
@@ -55,13 +56,12 @@ func (d *cidrBlocksDataSource) Configure(_ context.Context, req datasource.Confi
 	d.meta = meta.Must(req.ProviderData)
 }
 
-// Schema is used to define data source's terraform schema
 func (d *cidrBlocksDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "Identity and Access Management CIDR block",
+		Description: "Identity and Access Management CIDR blocks.",
 		Attributes: map[string]schema.Attribute{
 			"cidr_blocks": schema.ListNestedAttribute{
-				Description: "List of CIDR blocks on account's allowlist",
+				Description: "List of CIDR blocks on account's allowlist.",
 				Computed:    true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
@@ -118,7 +118,6 @@ func (d *cidrBlocksDataSource) Schema(_ context.Context, _ datasource.SchemaRequ
 	}
 }
 
-// Read is called when the provider must read data source values in order to update state
 func (d *cidrBlocksDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	tflog.Debug(ctx, "IAM CIDR Blocks DataSource Read")
 
@@ -137,17 +136,14 @@ func (d *cidrBlocksDataSource) Read(ctx context.Context, req datasource.ReadRequ
 		return
 	}
 
-	if resp.Diagnostics.Append(data.read(cidrBlocks)...); resp.Diagnostics.HasError() {
-		return
-	}
+	data.read(cidrBlocks)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
-
 }
 
-func (d *cidrBlocksSourceModel) read(cidrBlocks iam.ListCIDRBlocksResponse) diag.Diagnostics {
+func (d *cidrBlocksSourceModel) read(cidrBlocks iam.ListCIDRBlocksResponse) {
 	for _, cidrBlock := range cidrBlocks {
-		block := cidrBlockSourceModel{
+		block := cidrBlockModel{
 			CIDRBlock:    types.StringValue(cidrBlock.CIDRBlock),
 			Enabled:      types.BoolValue(cidrBlock.Enabled),
 			CIDRBlockID:  types.Int64Value(cidrBlock.CIDRBlockID),
@@ -167,11 +163,8 @@ func (d *cidrBlocksSourceModel) read(cidrBlocks iam.ListCIDRBlocksResponse) diag
 			block.Comments = types.StringValue(*cidrBlock.Comments)
 		} else {
 			block.Comments = types.StringNull()
-
 		}
 
 		d.CIDRBlocks = append(d.CIDRBlocks, block)
 	}
-
-	return nil
 }

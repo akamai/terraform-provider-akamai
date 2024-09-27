@@ -134,11 +134,12 @@ func TestDataUsers(t *testing.T) {
 			mockData:      basicTestDataForUsers,
 		},
 	}
-	for name, test := range tests {
+
+	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			client := &iam.Mock{}
-			if test.init != nil {
-				test.init(t, client, test.mockData, test.groupID)
+			if tc.init != nil {
+				tc.init(t, client, tc.mockData, tc.groupID)
 			}
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
@@ -146,9 +147,9 @@ func TestDataUsers(t *testing.T) {
 					IsUnitTest:               true,
 					Steps: []resource.TestStep{
 						{
-							Config:      testutils.LoadFixtureString(t, test.configPath),
-							Check:       checkUsersAttrs(test.groupID, len(test.mockData) == 0),
-							ExpectError: test.expectedError,
+							Config:      testutils.LoadFixtureString(t, tc.configPath),
+							Check:       checkUsersAttrs(tc.groupID, len(tc.mockData) == 0),
+							ExpectError: tc.expectedError,
 						},
 					},
 				})

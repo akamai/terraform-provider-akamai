@@ -48,11 +48,11 @@ func TestPasswordPolicy(t *testing.T) {
 		},
 	}
 
-	for name, test := range tests {
+	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			client := &iam.Mock{}
-			if test.init != nil {
-				test.init(client)
+			if tc.init != nil {
+				tc.init(client)
 			}
 
 			useClient(client, func() {
@@ -63,7 +63,7 @@ func TestPasswordPolicy(t *testing.T) {
 						{
 							Config:      testutils.LoadFixtureString(t, "testdata/TestDataPasswordPolicy/default.tf"),
 							Check:       checkPasswordPolicyAttrs(),
-							ExpectError: test.error,
+							ExpectError: tc.error,
 						},
 					},
 				})

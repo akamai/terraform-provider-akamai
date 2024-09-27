@@ -77,11 +77,12 @@ func TestDataCIDRBlock(t *testing.T) {
 			error:    regexp.MustCompile("test error"),
 		},
 	}
-	for name, test := range tests {
+
+	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			client := &iam.Mock{}
-			if test.init != nil {
-				test.init(t, client, test.mockData)
+			if tc.init != nil {
+				tc.init(t, client, tc.mockData)
 			}
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
@@ -89,9 +90,9 @@ func TestDataCIDRBlock(t *testing.T) {
 					IsUnitTest:               true,
 					Steps: []resource.TestStep{
 						{
-							Config:      testutils.LoadFixtureString(t, test.configPath),
+							Config:      testutils.LoadFixtureString(t, tc.configPath),
 							Check:       checkCIDRBlockAttrs(),
-							ExpectError: test.error,
+							ExpectError: tc.error,
 						},
 					},
 				})
@@ -143,6 +144,6 @@ func expectGetCIDRBlock(t *testing.T, client *iam.Mock, data testDataForCIDRBloc
 			Edit:   data.actions.edit,
 		}
 	}
-	client.On("GetCIDRBlock", mock.Anything, getCIDRBlockReq).Return(&getCIDRBlockResp, nil).Times(timesToRun)
 
+	client.On("GetCIDRBlock", mock.Anything, getCIDRBlockReq).Return(&getCIDRBlockResp, nil).Times(timesToRun)
 }

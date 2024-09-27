@@ -21,7 +21,7 @@ type (
 		meta meta.Meta
 	}
 
-	passwordPolicyDataSourceModel struct {
+	passwordPolicyModel struct {
 		PwClass         types.String `tfsdk:"pw_class"`
 		CaseDif         types.Int64  `tfsdk:"case_dif"`
 		MaxRepeating    types.Int64  `tfsdk:"max_repeating"`
@@ -34,17 +34,15 @@ type (
 	}
 )
 
-// NewPasswordPolicyDataSource returns a new password policy data source
+// NewPasswordPolicyDataSource returns a new password policy data source.
 func NewPasswordPolicyDataSource() datasource.DataSource {
 	return &passwordPolicyDataSource{}
 }
 
-// Metadata configures data source's meta information
 func (d *passwordPolicyDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = "akamai_iam_password_policy"
 }
 
-// Configure configures data source at the beginning of the lifecycle
 func (d *passwordPolicyDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
@@ -60,10 +58,9 @@ func (d *passwordPolicyDataSource) Configure(_ context.Context, req datasource.C
 	d.meta = meta.Must(req.ProviderData)
 }
 
-// Schema is used to define data source's terraform schema
 func (d *passwordPolicyDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "Identity and Access Management password policy",
+		Description: "Identity and Access Management password policy.",
 		Attributes: map[string]schema.Attribute{
 			"pw_class": schema.StringAttribute{
 				Computed:    true,
@@ -105,11 +102,10 @@ func (d *passwordPolicyDataSource) Schema(_ context.Context, _ datasource.Schema
 	}
 }
 
-// Read is called when the provider must read data source values in order to update state
 func (d *passwordPolicyDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	tflog.Debug(ctx, "IAM Password Policy DataSource Read")
 
-	var data passwordPolicyDataSourceModel
+	var data passwordPolicyModel
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return

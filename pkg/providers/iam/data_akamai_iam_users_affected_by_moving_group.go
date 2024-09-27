@@ -16,12 +16,12 @@ import (
 )
 
 var (
-	_ datasource.DataSource              = &usersAffectedByMovingGroup{}
-	_ datasource.DataSourceWithConfigure = &usersAffectedByMovingGroup{}
+	_ datasource.DataSource              = &usersAffectedByMovingGroupDataSource{}
+	_ datasource.DataSourceWithConfigure = &usersAffectedByMovingGroupDataSource{}
 )
 
 type (
-	usersAffectedByMovingGroup struct {
+	usersAffectedByMovingGroupDataSource struct {
 		meta meta.Meta
 	}
 
@@ -43,16 +43,16 @@ type (
 	}
 )
 
-// NewUsersAffectedByMovingGroupDataSource returns new users affected by moving group data source
+// NewUsersAffectedByMovingGroupDataSource returns new users affected by moving group data source.
 func NewUsersAffectedByMovingGroupDataSource() datasource.DataSource {
-	return &usersAffectedByMovingGroup{}
+	return &usersAffectedByMovingGroupDataSource{}
 }
 
-func (a *usersAffectedByMovingGroup) Metadata(_ context.Context, _ datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+func (a *usersAffectedByMovingGroupDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = "akamai_iam_users_affected_by_moving_group"
 }
 
-func (a *usersAffectedByMovingGroup) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+func (a *usersAffectedByMovingGroupDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -67,7 +67,7 @@ func (a *usersAffectedByMovingGroup) Configure(_ context.Context, req datasource
 	a.meta = meta.Must(req.ProviderData)
 }
 
-func (a *usersAffectedByMovingGroup) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+func (a *usersAffectedByMovingGroupDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"source_group_id": schema.Int64Attribute{
@@ -87,7 +87,7 @@ func (a *usersAffectedByMovingGroup) Schema(_ context.Context, _ datasource.Sche
 			},
 			"users": schema.ListNestedAttribute{
 				Computed:    true,
-				Description: "The list of affected users",
+				Description: "The list of affected users.",
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"account_id": schema.StringAttribute{
@@ -96,7 +96,7 @@ func (a *usersAffectedByMovingGroup) Schema(_ context.Context, _ datasource.Sche
 						},
 						"email": schema.StringAttribute{
 							Computed:    true,
-							Description: "The user's email address",
+							Description: "The user's email address.",
 						},
 						"first_name": schema.StringAttribute{
 							Computed:    true,
@@ -125,7 +125,7 @@ func (a *usersAffectedByMovingGroup) Schema(_ context.Context, _ datasource.Sche
 	}
 }
 
-func (a *usersAffectedByMovingGroup) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+func (a *usersAffectedByMovingGroupDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	tflog.Debug(ctx, "IAM Users affected by moving group Datasource Read")
 
 	var data usersAffectedByMovingGroupModel
@@ -151,16 +151,16 @@ func (a *usersAffectedByMovingGroup) Read(ctx context.Context, req datasource.Re
 }
 
 func convertUsersAffectedByMove(users []iam.GroupUser) []userAffectedByMovingGroupModel {
-	convertedUsers := []userAffectedByMovingGroupModel{}
-	for _, user := range users {
+	var convertedUsers []userAffectedByMovingGroupModel
+	for _, u := range users {
 		convertedUser := userAffectedByMovingGroupModel{
-			AccountID:     types.StringValue(user.AccountID),
-			Email:         types.StringValue(user.Email),
-			FirstName:     types.StringValue(user.FirstName),
-			LastName:      types.StringValue(user.LastName),
-			UIIdentityID:  types.StringValue(user.IdentityID),
-			UIUsername:    types.StringValue(user.UserName),
-			LastLoginDate: types.StringValue(date.FormatRFC3339Nano(user.LastLoginDate)),
+			AccountID:     types.StringValue(u.AccountID),
+			Email:         types.StringValue(u.Email),
+			FirstName:     types.StringValue(u.FirstName),
+			LastName:      types.StringValue(u.LastName),
+			UIIdentityID:  types.StringValue(u.IdentityID),
+			UIUsername:    types.StringValue(u.UserName),
+			LastLoginDate: types.StringValue(date.FormatRFC3339Nano(u.LastLoginDate)),
 		}
 		convertedUsers = append(convertedUsers, convertedUser)
 	}

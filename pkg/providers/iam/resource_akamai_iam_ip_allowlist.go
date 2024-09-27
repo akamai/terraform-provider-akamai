@@ -13,30 +13,25 @@ import (
 )
 
 var (
-	_ resource.Resource = &IPAllowlistResource{}
-
-	_ resource.ResourceWithConfigure = &IPAllowlistResource{}
-
-	_ resource.ResourceWithImportState = &IPAllowlistResource{}
+	_ resource.Resource                = &ipAllowlistResource{}
+	_ resource.ResourceWithConfigure   = &ipAllowlistResource{}
+	_ resource.ResourceWithImportState = &ipAllowlistResource{}
 )
 
-// IPAllowlistResource represents akamai_iam_ip_allowlist resource
-type IPAllowlistResource struct {
+type ipAllowlistResource struct {
 	meta meta.Meta
 }
 
-// NewIPAllowlistResource returns new akamai_iam_ip_allowlist resource
+// NewIPAllowlistResource returns new akamai_iam_ip_allowlist resource.
 func NewIPAllowlistResource() resource.Resource {
-	return &IPAllowlistResource{}
+	return &ipAllowlistResource{}
 }
 
-// IPAllowlistResourceModel represents model of akamai_iam_ip_allowlist resource
-type IPAllowlistResourceModel struct {
+type ipAllowlistModel struct {
 	Enable types.Bool `tfsdk:"enable"`
 }
 
-// Configure implements resource.ResourceWithConfigure.
-func (r *IPAllowlistResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (r *ipAllowlistResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	// Prevent panic if the provider has not been configured.
 	if req.ProviderData == nil {
 		return
@@ -54,13 +49,11 @@ func (r *IPAllowlistResource) Configure(_ context.Context, req resource.Configur
 	r.meta = meta.Must(req.ProviderData)
 }
 
-// Metadata implements resource.Resource.
-func (r IPAllowlistResource) Metadata(_ context.Context, _ resource.MetadataRequest, resp *resource.MetadataResponse) {
+func (r *ipAllowlistResource) Metadata(_ context.Context, _ resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = "akamai_iam_ip_allowlist"
 }
 
-// Schema implements resource.Resource.
-func (r IPAllowlistResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *ipAllowlistResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"enable": schema.BoolAttribute{
@@ -71,10 +64,9 @@ func (r IPAllowlistResource) Schema(_ context.Context, _ resource.SchemaRequest,
 	}
 }
 
-// Create implements resource.Resource.
-func (r IPAllowlistResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+func (r *ipAllowlistResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	tflog.Debug(ctx, "Creating IP Allowlist resource")
-	var plan *IPAllowlistResourceModel
+	var plan *ipAllowlistModel
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
@@ -94,7 +86,7 @@ func (r IPAllowlistResource) Create(ctx context.Context, req resource.CreateRequ
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
-func (r IPAllowlistResource) enableIPAllowlist(ctx context.Context) diag.Diagnostics {
+func (r *ipAllowlistResource) enableIPAllowlist(ctx context.Context) diag.Diagnostics {
 	var diags diag.Diagnostics
 	client := inst.Client(r.meta)
 	status, err := client.GetIPAllowlistStatus(ctx)
@@ -112,7 +104,7 @@ func (r IPAllowlistResource) enableIPAllowlist(ctx context.Context) diag.Diagnos
 	return nil
 }
 
-func (r IPAllowlistResource) disableIPAllowlist(ctx context.Context) diag.Diagnostics {
+func (r *ipAllowlistResource) disableIPAllowlist(ctx context.Context) diag.Diagnostics {
 	var diags diag.Diagnostics
 	client := inst.Client(r.meta)
 	status, err := client.GetIPAllowlistStatus(ctx)
@@ -130,10 +122,9 @@ func (r IPAllowlistResource) disableIPAllowlist(ctx context.Context) diag.Diagno
 	return nil
 }
 
-// Read implements resource.Resource.
-func (r IPAllowlistResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+func (r *ipAllowlistResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	tflog.Debug(ctx, "Reading IP Allowlist Resource")
-	var oldState *IPAllowlistResourceModel
+	var oldState *ipAllowlistModel
 	client := inst.Client(r.meta)
 	resp.Diagnostics.Append(req.State.Get(ctx, &oldState)...)
 	if resp.Diagnostics.HasError() {
@@ -149,11 +140,10 @@ func (r IPAllowlistResource) Read(ctx context.Context, req resource.ReadRequest,
 	resp.Diagnostics.Append(resp.State.Set(ctx, &oldState)...)
 }
 
-// Update implements resource.Resource.
-func (r IPAllowlistResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+func (r *ipAllowlistResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	tflog.Debug(ctx, "Updating IP Allowlist Resource")
 	var diags diag.Diagnostics
-	var plan *IPAllowlistResourceModel
+	var plan *ipAllowlistModel
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
@@ -175,9 +165,8 @@ func (r IPAllowlistResource) Update(ctx context.Context, req resource.UpdateRequ
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
-// Delete implements resource.Resource.
-func (r IPAllowlistResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var plan *IPAllowlistResourceModel
+func (r *ipAllowlistResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var plan *ipAllowlistModel
 
 	// Read Terraform state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &plan)...)
@@ -197,8 +186,7 @@ func (r IPAllowlistResource) Delete(ctx context.Context, req resource.DeleteRequ
 	resp.State.RemoveResource(ctx)
 }
 
-// ImportState implements resource.ResourceWithImportState.
-func (r IPAllowlistResource) ImportState(ctx context.Context, _ resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+func (r *ipAllowlistResource) ImportState(ctx context.Context, _ resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	tflog.Debug(ctx, "Importing IP Allowlist Resource")
 	client := inst.Client(r.meta)
 	status, err := client.GetIPAllowlistStatus(ctx)
@@ -206,7 +194,7 @@ func (r IPAllowlistResource) ImportState(ctx context.Context, _ resource.ImportS
 		resp.Diagnostics.AddError("cannot fetch IP Allowlist status", err.Error())
 		return
 	}
-	var state = &IPAllowlistResourceModel{}
+	var state = &ipAllowlistModel{}
 	state.Enable = types.BoolValue(status.Enabled)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }

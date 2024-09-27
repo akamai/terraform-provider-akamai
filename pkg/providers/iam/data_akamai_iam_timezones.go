@@ -13,7 +13,7 @@ import (
 
 func dataSourceIAMTimezones() *schema.Resource {
 	return &schema.Resource{
-		Description: "List all the possible time zones Akamai supports",
+		Description: "List all the possible time zones Akamai supports.",
 		ReadContext: dataIAMTimezonesRead,
 		Schema: map[string]*schema.Schema{
 			"timezones": {
@@ -23,22 +23,22 @@ func dataSourceIAMTimezones() *schema.Resource {
 					Schema: map[string]*schema.Schema{
 						"timezone": {
 							Type:        schema.TypeString,
-							Description: "The time zone ID",
+							Description: "The time zone ID.",
 							Computed:    true,
 						},
 						"description": {
 							Type:        schema.TypeString,
-							Description: "The description of a time zone, including the GMT +/-",
+							Description: "The description of a time zone, including the GMT +/-.",
 							Computed:    true,
 						},
 						"offset": {
 							Type:        schema.TypeString,
-							Description: "The time zone offset from GMT",
+							Description: "The time zone offset from GMT.",
 							Computed:    true,
 						},
 						"posix": {
 							Type:        schema.TypeString,
-							Description: "The time zone posix",
+							Description: "The time zone posix.",
 							Computed:    true,
 						},
 					},

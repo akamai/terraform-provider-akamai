@@ -12,28 +12,28 @@ import (
 
 func dataSourceIAMGrantableRoles() *schema.Resource {
 	return &schema.Resource{
-		Description: "Get roles for the current account and contract",
+		Description: "Get roles for the current account and contract.",
 		ReadContext: dataIAMGrantableRolesRead,
 		Schema: map[string]*schema.Schema{
 			"grantable_roles": {
 				Type:        schema.TypeList,
 				Computed:    true,
-				Description: "List of grantable roles",
+				Description: "List of grantable roles.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"granted_role_id": {
 							Type:        schema.TypeInt,
-							Description: "Granted role ID",
+							Description: "Granted role ID.",
 							Computed:    true,
 						},
 						"name": {
 							Type:        schema.TypeString,
-							Description: "Granted role name",
+							Description: "Granted role name.",
 							Computed:    true,
 						},
 						"description": {
 							Type:        schema.TypeString,
-							Description: "Granted role description",
+							Description: "Granted role description.",
 							Computed:    true,
 						},
 					},

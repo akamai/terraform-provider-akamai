@@ -2,6 +2,7 @@ package iam
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/iam"
@@ -17,15 +18,17 @@ import (
 var (
 	_ datasource.DataSource              = &userDataSource{}
 	_ datasource.DataSourceWithConfigure = &userDataSource{}
+
+	// ErrIAMGetUser is returned when GetUser fails.
+	ErrIAMGetUser = errors.New("IAM get user failed")
 )
 
 type (
-	//userDataSource defines iam user datasource
 	userDataSource struct {
 		meta meta.Meta
 	}
-	//userDataSourceModel defines structure of datasource attributes
-	userDataSourceModel struct {
+
+	userModel struct {
 		UIIdentityID                       types.String        `tfsdk:"ui_identity_id"`
 		AccountID                          types.String        `tfsdk:"account_id"`
 		Actions                            *actionsModel       `tfsdk:"actions"`
@@ -66,6 +69,7 @@ type (
 		ResetPassword    types.Bool `tfsdk:"reset_password"`
 		ThirdPartyAccess types.Bool `tfsdk:"third_party_access"`
 	}
+
 	authGrantsModel struct {
 		GroupID         types.Int64       `tfsdk:"group_id"`
 		GroupName       types.String      `tfsdk:"group_name"`
@@ -75,6 +79,7 @@ type (
 		RoleName        types.String      `tfsdk:"role_name"`
 		SubGroups       []authGrantsModel `tfsdk:"sub_groups"`
 	}
+
 	notificationsModel struct {
 		Options                  optionsModel `tfsdk:"options"`
 		EnableEmailNotifications types.Bool   `tfsdk:"enable_email_notifications"`
@@ -89,17 +94,15 @@ type (
 	}
 )
 
-// NewUserDataSource returns a new iam user data source
+// NewUserDataSource returns a new iam user data source.
 func NewUserDataSource() datasource.DataSource {
 	return &userDataSource{}
 }
 
-// Metadata configures data source's meta information
 func (d *userDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = "akamai_iam_user"
 }
 
-// Configure configures data source at the beginning of the lifecycle
 func (d *userDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
@@ -115,10 +118,9 @@ func (d *userDataSource) Configure(_ context.Context, req datasource.ConfigureRe
 	d.meta = meta.Must(req.ProviderData)
 }
 
-// Schema is used to define data source's terraform schema
 func (d *userDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "IAM User Data Source",
+		Description: "IAM User Data Source.",
 		Attributes: map[string]schema.Attribute{
 			"ui_identity_id": schema.StringAttribute{
 				Required:    true,
@@ -371,17 +373,16 @@ func nestedAuthGrant(depth int) *schema.ListNestedAttribute {
 	return &authGrant
 }
 
-// Read is called when the provider must read data source values in order to update state
 func (d *userDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	tflog.Debug(ctx, "IAM User DataSource Read")
 
-	var data userDataSourceModel
+	var data userModel
 	if resp.Diagnostics.Append(req.Config.Get(ctx, &data)...); resp.Diagnostics.HasError() {
 		return
 	}
 	client := inst.Client(d.meta)
 
-	user, err := client.GetUser(ctx, iam.GetUserRequest{
+	usr, err := client.GetUser(ctx, iam.GetUserRequest{
 		IdentityID:    data.UIIdentityID.ValueString(),
 		Actions:       true,
 		AuthGrants:    true,
@@ -392,7 +393,7 @@ func (d *userDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 		return
 	}
 
-	if resp.Diagnostics.Append(data.setAttributes(user)...); resp.Diagnostics.HasError() {
+	if resp.Diagnostics.Append(data.setAttributes(usr)...); resp.Diagnostics.HasError() {
 		return
 	}
 
@@ -400,7 +401,7 @@ func (d *userDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 
 }
 
-func (d *userDataSourceModel) setAttributes(user *iam.User) diag.Diagnostics {
+func (d *userModel) setAttributes(user *iam.User) diag.Diagnostics {
 	d.UIIdentityID = types.StringValue(user.IdentityID)
 	d.AccountID = types.StringValue(user.AccountID)
 	d.AdditionalAuthentication = types.StringValue(string(user.AdditionalAuthentication))

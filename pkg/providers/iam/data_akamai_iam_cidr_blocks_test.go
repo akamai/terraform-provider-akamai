@@ -65,11 +65,11 @@ func TestDataCIDRBlocks(t *testing.T) {
 			error: regexp.MustCompile("test error"),
 		},
 	}
-	for name, test := range tests {
+	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			client := &iam.Mock{}
-			if test.init != nil {
-				test.init(client)
+			if tc.init != nil {
+				tc.init(client)
 			}
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
@@ -77,9 +77,9 @@ func TestDataCIDRBlocks(t *testing.T) {
 					IsUnitTest:               true,
 					Steps: []resource.TestStep{
 						{
-							Config:      testutils.LoadFixtureString(t, test.configPath),
+							Config:      testutils.LoadFixtureString(t, tc.configPath),
 							Check:       checkCIDRBlocksAttrs(),
-							ExpectError: test.error,
+							ExpectError: tc.error,
 						},
 					},
 				})

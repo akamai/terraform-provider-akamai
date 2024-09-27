@@ -14,12 +14,12 @@ import (
 )
 
 var (
-	_ datasource.DataSource              = &accessibleGroups{}
-	_ datasource.DataSourceWithConfigure = &accessibleGroups{}
+	_ datasource.DataSource              = &accessibleGroupsDataSource{}
+	_ datasource.DataSourceWithConfigure = &accessibleGroupsDataSource{}
 )
 
 type (
-	accessibleGroups struct {
+	accessibleGroupsDataSource struct {
 		meta meta.Meta
 	}
 
@@ -46,16 +46,16 @@ type (
 	}
 )
 
-// NewAccessibleGroupsDataSource returns new accessible groups data source
+// NewAccessibleGroupsDataSource returns new accessible groups data source.
 func NewAccessibleGroupsDataSource() datasource.DataSource {
-	return &accessibleGroups{}
+	return &accessibleGroupsDataSource{}
 }
 
-func (a *accessibleGroups) Metadata(_ context.Context, _ datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+func (a *accessibleGroupsDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = "akamai_iam_accessible_groups"
 }
 
-func (a *accessibleGroups) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+func (a *accessibleGroupsDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -70,7 +70,7 @@ func (a *accessibleGroups) Configure(_ context.Context, req datasource.Configure
 	a.meta = meta.Must(req.ProviderData)
 }
 
-func (a *accessibleGroups) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+func (a *accessibleGroupsDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"username": schema.StringAttribute{
@@ -108,7 +108,7 @@ func (a *accessibleGroups) Schema(_ context.Context, _ datasource.SchemaRequest,
 						},
 						"sub_groups": schema.ListNestedAttribute{
 							Computed:    true,
-							Description: "Children of the parent group",
+							Description: "Children of the parent group.",
 							// Schema effectively must be +1 size nested, to support correctly marshalling of last level (null of type []accessibleSubgroupModel onto `sub_groups`)
 							NestedObject: a.subgroupsSchema(maxSupportedGroupNesting + 1),
 						},
@@ -119,7 +119,7 @@ func (a *accessibleGroups) Schema(_ context.Context, _ datasource.SchemaRequest,
 	}
 }
 
-func (a *accessibleGroups) subgroupsSchema(remainingNesting int) schema.NestedAttributeObject {
+func (a *accessibleGroupsDataSource) subgroupsSchema(remainingNesting int) schema.NestedAttributeObject {
 	subgroupSchema := schema.NestedAttributeObject{
 		Attributes: map[string]schema.Attribute{
 			"group_id": schema.Int64Attribute{
@@ -150,7 +150,7 @@ func (a *accessibleGroups) subgroupsSchema(remainingNesting int) schema.NestedAt
 	return subgroupSchema
 }
 
-func (a *accessibleGroups) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+func (a *accessibleGroupsDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	tflog.Debug(ctx, "IAM Accessible Groups Datasource Read")
 
 	var data accessibleGroupsModel
@@ -174,7 +174,7 @@ func (a *accessibleGroups) Read(ctx context.Context, req datasource.ReadRequest,
 	resp.Diagnostics.Append(resp.State.Set(ctx, newData)...)
 }
 
-func (a *accessibleGroups) convertAccessibleGroups(groups iam.ListAccessibleGroupsResponse, data accessibleGroupsModel) (*accessibleGroupsModel, diag.Diagnostics) {
+func (a *accessibleGroupsDataSource) convertAccessibleGroups(groups iam.ListAccessibleGroupsResponse, data accessibleGroupsModel) (*accessibleGroupsModel, diag.Diagnostics) {
 	data.AccessibleGroups = []accessibleGroupModel{}
 	for _, group := range groups {
 		newGroup := accessibleGroupModel{
@@ -198,8 +198,8 @@ func (a *accessibleGroups) convertAccessibleGroups(groups iam.ListAccessibleGrou
 	return &data, nil
 }
 
-func (a *accessibleGroups) convertAccessibleSubgroups(subgroups []iam.AccessibleSubGroup, remainingNesting int) ([]accessibleSubgroupModel, diag.Diagnostics) {
-	groups := []accessibleSubgroupModel{}
+func (a *accessibleGroupsDataSource) convertAccessibleSubgroups(subgroups []iam.AccessibleSubGroup, remainingNesting int) ([]accessibleSubgroupModel, diag.Diagnostics) {
+	var groups []accessibleSubgroupModel
 
 	for _, subgroup := range subgroups {
 		newSubgroup := accessibleSubgroupModel{

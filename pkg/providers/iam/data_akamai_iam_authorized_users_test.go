@@ -72,11 +72,11 @@ func TestAuthorizedUsers(t *testing.T) {
 		},
 	}
 
-	for name, test := range tests {
+	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			client := &iam.Mock{}
-			if test.init != nil {
-				test.init(t, client, test.mockData)
+			if tc.init != nil {
+				tc.init(t, client, tc.mockData)
 			}
 
 			useClient(client, func() {
@@ -85,9 +85,9 @@ func TestAuthorizedUsers(t *testing.T) {
 					IsUnitTest:               true,
 					Steps: []resource.TestStep{
 						{
-							Config:      testutils.LoadFixtureString(t, test.configPath),
-							Check:       checkAuthorizedUsersAttrs(test.mockData),
-							ExpectError: test.error,
+							Config:      testutils.LoadFixtureString(t, tc.configPath),
+							Check:       checkAuthorizedUsersAttrs(tc.mockData),
+							ExpectError: tc.error,
 						},
 					},
 				})

@@ -21,20 +21,18 @@ import (
 )
 
 var (
-	_ resource.Resource                = &CIDRBlockResource{}
-	_ resource.ResourceWithImportState = &CIDRBlockResource{}
+	_ resource.Resource                = &cidrBlockResource{}
+	_ resource.ResourceWithImportState = &cidrBlockResource{}
 )
 
-// CIDRBlockResource represents akamai_iam_cidr_block resource
-type CIDRBlockResource struct {
+type cidrBlockResource struct {
 	meta meta.Meta
 }
 
-// NewCIDRBlockResource returns new akamai_iam_cidr_block resource
-func NewCIDRBlockResource() resource.Resource { return &CIDRBlockResource{} }
+// NewCIDRBlockResource returns new akamai_iam_cidr_block resource.
+func NewCIDRBlockResource() resource.Resource { return &cidrBlockResource{} }
 
-// CIDRBlockResourceModel represents model of akamai_iam_cidr_block resource
-type CIDRBlockResourceModel struct {
+type cidrBlockResourceModel struct {
 	CIDR         types.String `tfsdk:"cidr_block"`
 	Enabled      types.Bool   `tfsdk:"enabled"`
 	Comments     types.String `tfsdk:"comments"`
@@ -46,13 +44,11 @@ type CIDRBlockResourceModel struct {
 	ModifiedDate types.String `tfsdk:"modified_date"`
 }
 
-// Metadata implements resource.Resource.
-func (r *CIDRBlockResource) Metadata(_ context.Context, _ resource.MetadataRequest, resp *resource.MetadataResponse) {
+func (r *cidrBlockResource) Metadata(_ context.Context, _ resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = "akamai_iam_cidr_block"
 }
 
-// Schema implements resource.Resource.
-func (r *CIDRBlockResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *cidrBlockResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"cidr_block": schema.StringAttribute{
@@ -123,8 +119,7 @@ func (r *CIDRBlockResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 	}
 }
 
-// Configure implements resource.ResourceWithConfigure.
-func (r *CIDRBlockResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (r *cidrBlockResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		// ProviderData is nil when Configure is run first time as part of ValidateDataSourceConfig in framework provider
 		return
@@ -142,10 +137,9 @@ func (r *CIDRBlockResource) Configure(_ context.Context, req resource.ConfigureR
 	r.meta = meta.Must(req.ProviderData)
 }
 
-// Create implements resource.Resource.
-func (r *CIDRBlockResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+func (r *cidrBlockResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	tflog.Debug(ctx, "Creating CIDR Block resource")
-	var plan CIDRBlockResourceModel
+	var plan cidrBlockResourceModel
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
@@ -161,7 +155,7 @@ func (r *CIDRBlockResource) Create(ctx context.Context, req resource.CreateReque
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
-func (r *CIDRBlockResource) create(ctx context.Context, plan *CIDRBlockResourceModel) error {
+func (r *cidrBlockResource) create(ctx context.Context, plan *cidrBlockResourceModel) error {
 	client := inst.Client(r.meta)
 
 	resp, err := client.CreateCIDRBlock(ctx, iam.CreateCIDRBlockRequest{
@@ -187,10 +181,9 @@ func (r *CIDRBlockResource) create(ctx context.Context, plan *CIDRBlockResourceM
 	return nil
 }
 
-// Read implements resource.Resource.
-func (r *CIDRBlockResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+func (r *cidrBlockResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	tflog.Debug(ctx, "Reading CIDR Block Resource")
-	var state CIDRBlockResourceModel
+	var state cidrBlockResourceModel
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
@@ -205,7 +198,7 @@ func (r *CIDRBlockResource) Read(ctx context.Context, req resource.ReadRequest, 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
-func (r *CIDRBlockResource) read(ctx context.Context, data *CIDRBlockResourceModel) error {
+func (r *cidrBlockResource) read(ctx context.Context, data *cidrBlockResourceModel) error {
 	client := inst.Client(r.meta)
 
 	cidr, err := client.GetCIDRBlock(ctx, iam.GetCIDRBlockRequest{
@@ -221,10 +214,9 @@ func (r *CIDRBlockResource) read(ctx context.Context, data *CIDRBlockResourceMod
 	return nil
 }
 
-// Update implements resource.Resource.
-func (r *CIDRBlockResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+func (r *cidrBlockResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	tflog.Debug(ctx, "Updating CIDR Block Resource")
-	var plan CIDRBlockResourceModel
+	var plan cidrBlockResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
@@ -239,7 +231,7 @@ func (r *CIDRBlockResource) Update(ctx context.Context, req resource.UpdateReque
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
-func (r *CIDRBlockResource) update(ctx context.Context, plan *CIDRBlockResourceModel) error {
+func (r *cidrBlockResource) update(ctx context.Context, plan *cidrBlockResourceModel) error {
 	client := inst.Client(r.meta)
 
 	_, err := client.UpdateCIDRBlock(ctx, iam.UpdateCIDRBlockRequest{
@@ -257,11 +249,10 @@ func (r *CIDRBlockResource) update(ctx context.Context, plan *CIDRBlockResourceM
 	return nil
 }
 
-// Delete implements resource.Resource.
-func (r *CIDRBlockResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+func (r *cidrBlockResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	tflog.Debug(ctx, "Deleting CIDR Block Resource")
 
-	var state *CIDRBlockResourceModel
+	var state *cidrBlockResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -279,8 +270,7 @@ func (r *CIDRBlockResource) Delete(ctx context.Context, req resource.DeleteReque
 	resp.State.RemoveResource(ctx)
 }
 
-// ImportState implements resource.ResourceWithImportState.
-func (r *CIDRBlockResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+func (r *cidrBlockResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	tflog.Debug(ctx, "Importing CIDR Block Resource")
 
 	cidrBlockID, err := strconv.ParseInt(req.ID, 10, 64)
@@ -289,7 +279,7 @@ func (r *CIDRBlockResource) ImportState(ctx context.Context, req resource.Import
 		return
 	}
 
-	data := &CIDRBlockResourceModel{}
+	data := &cidrBlockResourceModel{}
 
 	// in import, we only need to set cidr block ID to allow read function to fill other attributes
 	data.CIDRBlockID = types.Int64Value(cidrBlockID)
@@ -302,7 +292,7 @@ func (r *CIDRBlockResource) ImportState(ctx context.Context, req resource.Import
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (m *CIDRBlockResourceModel) setData(resp *iam.GetCIDRBlockResponse) {
+func (m *cidrBlockResourceModel) setData(resp *iam.GetCIDRBlockResponse) {
 	if resp.Actions != nil {
 		m.Actions = getActionFor(resp.Actions.Edit, resp.Actions.Delete)
 	} else {

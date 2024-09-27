@@ -26,7 +26,7 @@ type (
 		meta meta.Meta
 	}
 
-	propertyUsersDataSourceModel struct {
+	propertyUsersModel struct {
 		AssetID  types.String   `tfsdk:"asset_id"`
 		UserType types.String   `tfsdk:"user_type"`
 		Users    []propertyUser `tfsdk:"users"`
@@ -41,17 +41,15 @@ type (
 	}
 )
 
-// NewPropertyUsersDataSource returns a new iam property users data source
+// NewPropertyUsersDataSource returns a new iam property users data source.
 func NewPropertyUsersDataSource() datasource.DataSource {
 	return &propertyUsersDataSource{}
 }
 
-// Metadata configures data source's meta information
 func (d *propertyUsersDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = "akamai_iam_property_users"
 }
 
-// Configure configures data source at the beginning of the lifecycle
 func (d *propertyUsersDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
@@ -67,7 +65,6 @@ func (d *propertyUsersDataSource) Configure(_ context.Context, req datasource.Co
 	d.meta = meta.Must(req.ProviderData)
 }
 
-// Schema is used to define data source's terraform schema
 func (d *propertyUsersDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Description: "Identity and Access Management property users data source. Lists users for " +
@@ -123,11 +120,10 @@ func (d *propertyUsersDataSource) Schema(_ context.Context, _ datasource.SchemaR
 	}
 }
 
-// Read is called when the provider must read data source values in order to update state
 func (d *propertyUsersDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	tflog.Debug(ctx, "IAM Property Users DataSource Read")
 
-	var data propertyUsersDataSourceModel
+	var data propertyUsersModel
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -158,7 +154,7 @@ func (d *propertyUsersDataSource) Read(ctx context.Context, req datasource.ReadR
 		return
 	}
 
-	for _, user := range *users {
+	for _, user := range users {
 		data.Users = append(data.Users, newPropertyUser(user))
 	}
 

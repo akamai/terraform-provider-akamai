@@ -8,7 +8,6 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
@@ -23,11 +22,11 @@ type (
 		meta meta.Meta
 	}
 
-	authorizedUsersDataSourceModel struct {
-		AuthorizedUsers []userModel `tfsdk:"authorized_users"`
+	authorizedUsersModel struct {
+		AuthorizedUsers []authorizedUserModel `tfsdk:"authorized_users"`
 	}
 
-	userModel struct {
+	authorizedUserModel struct {
 		Email        types.String `tfsdk:"email"`
 		Username     types.String `tfsdk:"username"`
 		FirstName    types.String `tfsdk:"first_name"`
@@ -41,29 +40,27 @@ func NewAuthorizedUsersDataSource() datasource.DataSource {
 	return &authorizedUsersDataSource{}
 }
 
-// Metadata configures data source's meta information
-func (a *authorizedUsersDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, response *datasource.MetadataResponse) {
-	response.TypeName = "akamai_iam_authorized_users"
+func (a *authorizedUsersDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+	resp.TypeName = "akamai_iam_authorized_users"
 }
 
-// Configure configures data source at the beginning of the lifecycle
-func (a *authorizedUsersDataSource) Configure(_ context.Context, request datasource.ConfigureRequest, response *datasource.ConfigureResponse) {
-	if request.ProviderData == nil {
+func (a *authorizedUsersDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+	if req.ProviderData == nil {
 		return
 	}
 	defer func() {
 		if r := recover(); r != nil {
-			response.Diagnostics.AddError(
+			resp.Diagnostics.AddError(
 				"Unexpected Data Source Configure Type",
 				fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.",
-					request.ProviderData))
+					req.ProviderData))
 		}
 	}()
-	a.meta = meta.Must(request.ProviderData)
+	a.meta = meta.Must(req.ProviderData)
 }
 
-func (a *authorizedUsersDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, response *datasource.SchemaResponse) {
-	response.Schema = schema.Schema{
+func (a *authorizedUsersDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+	resp.Schema = schema.Schema{
 		Description: "List of authorized API client users",
 		Attributes: map[string]schema.Attribute{
 			"authorized_users": schema.ListNestedAttribute{
@@ -97,42 +94,39 @@ func (a *authorizedUsersDataSource) Schema(_ context.Context, _ datasource.Schem
 	}
 }
 
-func (a *authorizedUsersDataSource) Read(ctx context.Context, request datasource.ReadRequest, response *datasource.ReadResponse) {
+func (a *authorizedUsersDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	tflog.Debug(ctx, "IAM Authorized Users DataSource Read")
 
-	var data authorizedUsersDataSourceModel
-	if response.Diagnostics.Append(request.Config.Get(ctx, &data)...); response.Diagnostics.HasError() {
+	var data authorizedUsersModel
+	if resp.Diagnostics.Append(req.Config.Get(ctx, &data)...); resp.Diagnostics.HasError() {
 		return
 	}
 	client := inst.Client(a.meta)
 
 	users, err := client.ListAuthorizedUsers(ctx)
 	if err != nil {
-		response.Diagnostics.AddError("Failed to fetch authorized users:", err.Error())
+		resp.Diagnostics.AddError("Failed to fetch authorized users:", err.Error())
 		return
 	}
 
-	if response.Diagnostics.Append(data.read(users)...); response.Diagnostics.HasError() {
-		return
-	}
+	data.read(users)
 
-	response.Diagnostics.Append(response.State.Set(ctx, &data)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (d *authorizedUsersDataSourceModel) read(authorisedUsers iam.ListAuthorizedUsersResponse) diag.Diagnostics {
-	var users []userModel
-	for _, user := range authorisedUsers {
-		authorizedUser := userModel{
-			Email:        types.StringValue(user.Email),
-			Username:     types.StringValue(user.Username),
-			FirstName:    types.StringValue(user.FirstName),
-			LastName:     types.StringValue(user.LastName),
-			UIIdentityID: types.StringValue(user.UIIdentityID),
+func (d *authorizedUsersModel) read(authorisedUsers iam.ListAuthorizedUsersResponse) {
+	var users []authorizedUserModel
+	for _, u := range authorisedUsers {
+		authorizedUser := authorizedUserModel{
+			Email:        types.StringValue(u.Email),
+			Username:     types.StringValue(u.Username),
+			FirstName:    types.StringValue(u.FirstName),
+			LastName:     types.StringValue(u.LastName),
+			UIIdentityID: types.StringValue(u.UIIdentityID),
 		}
 
 		users = append(users, authorizedUser)
 	}
 
 	d.AuthorizedUsers = users
-	return nil
 }

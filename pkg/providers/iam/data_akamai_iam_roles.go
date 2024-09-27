@@ -14,7 +14,7 @@ import (
 
 func dataSourceIAMRoles() *schema.Resource {
 	return &schema.Resource{
-		Description: "Get roles for the current account and contract",
+		Description: "Get roles for the current account and contract.",
 		ReadContext: dataIAMRolesRead,
 		Schema: map[string]*schema.Schema{
 			// outputs
@@ -25,42 +25,42 @@ func dataSourceIAMRoles() *schema.Resource {
 					Schema: map[string]*schema.Schema{
 						"role_id": {
 							Type:        schema.TypeString,
-							Description: "A unique identifier for each role",
+							Description: "A unique identifier for each role.",
 							Computed:    true,
 						},
 						"name": {
 							Type:        schema.TypeString,
-							Description: "The role's name",
+							Description: "The role's name.",
 							Computed:    true,
 						},
 						"description": {
 							Type:        schema.TypeString,
-							Description: "The role's description",
+							Description: "The role's description.",
 							Computed:    true,
 						},
 						"type": {
 							Type:        schema.TypeString,
-							Description: "Whether the role is a standard role or a custom role",
+							Description: "Whether the role is a standard role or a custom role.",
 							Computed:    true,
 						},
 						"time_created": {
 							Type:        schema.TypeString,
-							Description: "ISO 8601 timestamp indicating when the role was originally created",
+							Description: "ISO 8601 timestamp indicating when the role was originally created.",
 							Computed:    true,
 						},
 						"time_modified": {
 							Type:        schema.TypeString,
-							Description: "ISO 8601 timestamp indicating when the role was last updated",
+							Description: "ISO 8601 timestamp indicating when the role was last updated.",
 							Computed:    true,
 						},
 						"modified_by": {
 							Type:        schema.TypeString,
-							Description: "The username or email of the last person to edit the role",
+							Description: "The username or email of the last person to edit the role.",
 							Computed:    true,
 						},
 						"created_by": {
 							Type:        schema.TypeString,
-							Description: "The user name or email of the person who created the role",
+							Description: "The user name or email of the person who created the role.",
 							Computed:    true,
 						},
 					},

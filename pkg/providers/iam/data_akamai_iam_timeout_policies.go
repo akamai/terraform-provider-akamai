@@ -11,13 +11,13 @@ import (
 
 func dataSourceIAMTimeoutPolicies() *schema.Resource {
 	return &schema.Resource{
-		Description: "Lists all session timeout policies Akamai supports",
+		Description: "Lists all session timeout policies Akamai supports.",
 		ReadContext: dataIAMTimeoutPoliciesRead,
 		Schema: map[string]*schema.Schema{
 			"policies": {
 				Type:        schema.TypeMap,
 				Computed:    true,
-				Description: "Session timeout policies",
+				Description: "Session timeout policies.",
 				Elem:        &schema.Schema{Type: schema.TypeInt},
 			},
 		},

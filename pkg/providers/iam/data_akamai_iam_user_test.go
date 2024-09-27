@@ -68,6 +68,7 @@ type (
 		roleName        string
 		subgroup        []*authGrantData
 	}
+
 	notificationData struct {
 		options                  optionsData
 		enableEmailNotifications bool
@@ -178,6 +179,7 @@ var (
 		groupID:         1234,
 		groupName:       "TestName",
 	}
+
 	basicAuthGrantDataMaxSubgroup = authGrantData{
 		roleDescription: "testDesc",
 		roleName:        "admin",
@@ -267,7 +269,7 @@ func expectGetUser(_ *testing.T, client *iam.Mock, data testDataForUser, times i
 		Notifications: true,
 	}
 
-	user := iam.User{
+	usr := iam.User{
 		IdentityID:                         data.uiIdentityID,
 		IsLocked:                           data.isLocked,
 		LastLoginDate:                      data.lastLoginDate,
@@ -328,10 +330,11 @@ func expectGetUser(_ *testing.T, client *iam.Mock, data testDataForUser, times i
 		}
 		userAuthGrantList = append(userAuthGrantList, userAuthGrant)
 	}
-	user.AuthGrants = userAuthGrantList
+	usr.AuthGrants = userAuthGrantList
 
-	client.On("GetUser", mock.Anything, getUserReq).Return(&user, nil).Times(times)
+	client.On("GetUser", mock.Anything, getUserReq).Return(&usr, nil).Times(times)
 }
+
 func expectGetUserMaxAuthGranSubGroups(_ *testing.T, client *iam.Mock, data testDataForUser, times, subGroupsDepth int) {
 	getUserReq := iam.GetUserRequest{
 		IdentityID:    data.uiIdentityID,
@@ -340,7 +343,7 @@ func expectGetUserMaxAuthGranSubGroups(_ *testing.T, client *iam.Mock, data test
 		Notifications: true,
 	}
 
-	user := iam.User{
+	usr := iam.User{
 		IdentityID:                         data.uiIdentityID,
 		IsLocked:                           data.isLocked,
 		LastLoginDate:                      data.lastLoginDate,
@@ -402,9 +405,9 @@ func expectGetUserMaxAuthGranSubGroups(_ *testing.T, client *iam.Mock, data test
 		}
 		userAuthGrantList = append(userAuthGrantList, userAuthGrant)
 	}
-	user.AuthGrants = userAuthGrantList
+	usr.AuthGrants = userAuthGrantList
 
-	client.On("GetUser", mock.Anything, getUserReq).Return(&user, nil).Times(times)
+	client.On("GetUser", mock.Anything, getUserReq).Return(&usr, nil).Times(times)
 }
 
 func checkUserAttrs(data testDataForUser) resource.TestCheckFunc {
