@@ -163,9 +163,9 @@ func TestResGTMProperty(t *testing.T) {
 				}).Once()
 
 				// Simulate successful property creation on the second attempt
-				mockCreateProperty(m, getBasicProperty(), gtmTestDomain)
-				mockGetProperty(m, getBasicProperty(), propertyName, gtmTestDomain, 3)
-				mockDeleteProperty(m, getBasicProperty(), gtmTestDomain)
+				mockCreateProperty(m, getBasicProperty())
+				mockGetProperty(m, getBasicPropertyResponse(), 3)
+				mockDeleteProperty(m)
 			},
 			steps: []resource.TestStep{
 				{

@@ -9,9 +9,9 @@ import (
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/iam"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/log"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/str"
+	"github.com/apex/log"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -228,12 +228,11 @@ type papiKey struct {
 
 func updateGroupID(ctx context.Context, client papi.PAPI, iamClient iam.IAM, key papiKey, destGroupID string) error {
 
-	fieldsToLog := log.Fields{
+	logger := log.FromContext(ctx).WithFields(log.Fields{
 		"key":         key,
 		"destGroupID": destGroupID,
-	}
-	logger := log.FromContext(ctx)
-	logger.Debug("updateGroupID", fieldsToLog)
+	})
+	logger.Debug("updateGroupID")
 
 	from, err := str.GetIntID(key.groupID, "grp_")
 	if err != nil {
@@ -258,11 +257,11 @@ func updateGroupID(ctx context.Context, client papi.PAPI, iamClient iam.IAM, key
 		return err
 	}
 
-	logger.Debugf("Changing group id from %d to %d for IAM id %d", from, to, iamID, fieldsToLog)
+	logger.Debugf("Changing group id from %d to %d for IAM id %d", from, to, iamID)
 
 	err = iamClient.MoveProperty(ctx, iam.MovePropertyRequest{
 		PropertyID: int64(iamID),
-		BodyParams: iam.MovePropertyReqBody{
+		Body: iam.MovePropertyRequestBody{
 			DestinationGroupID: int64(to),
 			SourceGroupID:      int64(from),
 		},
@@ -280,8 +279,8 @@ func updateGroupID(ctx context.Context, client papi.PAPI, iamClient iam.IAM, key
 }
 
 func waitForGroupIDChange(ctx context.Context, client papi.PAPI, key papiKey, maxAttempts int) error {
-	logger := log.FromContext(ctx)
-	logger.Debug("waitForGroupIDChange", "key", key)
+	logger := log.FromContext(ctx).WithFields(log.Fields{"key": key})
+	logger.Debug("waitForGroupIDChange")
 
 	req := papi.GetPropertyRequest{
 		PropertyID: key.propertyID,
@@ -294,7 +293,7 @@ func waitForGroupIDChange(ctx context.Context, client papi.PAPI, key papiKey, ma
 	for {
 		_, err := client.GetProperty(ctx, req)
 		if err == nil {
-			logger.Debug("waitForGroupIDChange: success", "key", key)
+			logger.Debug("waitForGroupIDChange: success")
 			return nil
 		}
 		if !isHTTP403(err) {
@@ -309,7 +308,7 @@ func waitForGroupIDChange(ctx context.Context, client papi.PAPI, key papiKey, ma
 				key.groupID, key.propertyID, key.contractID, maxAttempts)
 		}
 		logger.Debugf("waitForGroupIDChange: new group id still not visible, %d attempts left, "+
-			"waiting %s... (original error: %s)", attemptsLeft, wait, err, "key", key)
+			"waiting %s... (original error: %s)", attemptsLeft, wait, err)
 
 		select {
 		case <-ctx.Done():

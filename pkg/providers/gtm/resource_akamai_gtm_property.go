@@ -583,7 +583,7 @@ func resourceGTMv1PropertyCreate(ctx context.Context, d *schema.ResourceData, m 
 
 }
 
-func createPropertyWithRetry(ctx context.Context, meta meta.Meta, logger log.Interface, newProp *gtm.Property, domain string) (*gtm.PropertyResponse, error) {
+func createPropertyWithRetry(ctx context.Context, meta meta.Meta, logger log.Interface, newProp *gtm.Property, domain string) (*gtm.CreatePropertyResponse, error) {
 	// Initial backoff interval
 	retryInterval := time.Second * 10
 	// Maximum retry interval
