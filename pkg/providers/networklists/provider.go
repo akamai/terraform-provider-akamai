@@ -16,7 +16,7 @@ import (
 type (
 	// Subprovider gathers networklists resources and data sources
 	Subprovider struct {
-		client networklists.NTWRKLISTS
+		client networklists.NetworkList
 	}
 
 	option func(p *Subprovider)
@@ -43,14 +43,14 @@ func NewSubprovider(opts ...option) *Subprovider {
 	return inst
 }
 
-func withClient(c networklists.NTWRKLISTS) option {
+func withClient(c networklists.NetworkList) option {
 	return func(p *Subprovider) {
 		p.client = c
 	}
 }
 
-// Client returns the NTWRKLISTS interface
-func (p *Subprovider) Client(meta meta.Meta) networklists.NTWRKLISTS {
+// Client returns the NetworkList interface
+func (p *Subprovider) Client(meta meta.Meta) networklists.NetworkList {
 	if p.client != nil {
 		return p.client
 	}
