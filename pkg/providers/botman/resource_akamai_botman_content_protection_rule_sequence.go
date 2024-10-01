@@ -132,7 +132,7 @@ func resourceContentProtectionRuleSequenceRead(ctx context.Context, d *schema.Re
 		return diag.FromErr(err)
 	}
 
-	securityPolicyID, err := tf.GetStringValue("security_policy_id", d)
+	securityPolicyID := idParts[1]
 	if err != nil {
 		return diag.FromErr(err)
 	}
