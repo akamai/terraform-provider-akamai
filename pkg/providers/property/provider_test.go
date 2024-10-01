@@ -5,9 +5,9 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/hapi"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/iam"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/hapi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/iam"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/go-hclog"
 )

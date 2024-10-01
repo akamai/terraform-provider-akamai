@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/cloudaccess"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/cloudaccess"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/date"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"

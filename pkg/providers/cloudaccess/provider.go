@@ -2,7 +2,7 @@
 package cloudaccess
 
 import (
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/cloudaccess"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/cloudaccess"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/subprovider"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"

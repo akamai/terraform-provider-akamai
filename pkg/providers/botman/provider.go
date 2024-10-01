@@ -4,7 +4,7 @@ package botman
 import (
 	"sync"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/botman"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/botman"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/providers/appsec"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/subprovider"

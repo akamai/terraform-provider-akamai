@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/datastream"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/datastream"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 

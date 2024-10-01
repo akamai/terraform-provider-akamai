@@ -3,8 +3,8 @@ package iam
 import (
 	"context"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/iam"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/session"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/iam"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"

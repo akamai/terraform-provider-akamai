@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/appsec"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/cache"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
 	akameta "github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
