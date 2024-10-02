@@ -325,30 +325,28 @@ func TestResDnsRecord(t *testing.T) {
 
 		client.On("GetRecord",
 			mock.Anything,
-			"origin.org",
-			"origin.example.org",
-			"SRV",
+			dns.GetRecordRequest{Zone: "origin.org", Name: "origin.example.org", RecordType: "SRV"},
 		).Return(nil, notFound).Once()
 
 		client.On("CreateRecord",
 			mock.Anything,
-			&dns.RecordBody{
-				Name:       "origin.example.org",
-				RecordType: "SRV",
-				TTL:        300,
-				Active:     false,
-				Target:     []string{targetBig, targetSmall, targetTiny},
+			dns.CreateRecordRequest{
+				Record: &dns.RecordBody{
+					Name:       "origin.example.org",
+					RecordType: "SRV",
+					TTL:        300,
+					Active:     false,
+					Target:     []string{targetBig, targetSmall, targetTiny},
+				},
+				Zone:    "origin.org",
+				RecLock: []bool{false},
 			},
-			"origin.org",
-			[]bool{false},
 		).Return(nil)
 
 		client.On("GetRecord",
 			mock.Anything,
-			"origin.org",
-			"origin.example.org",
-			"SRV",
-		).Return(&dns.RecordBody{
+			dns.GetRecordRequest{Zone: "origin.org", Name: "origin.example.org", RecordType: "SRV"},
+		).Return(&dns.GetRecordResponse{
 			Name:       "origin.example.org",
 			RecordType: "SRV",
 			TTL:        300,
@@ -374,10 +372,8 @@ func TestResDnsRecord(t *testing.T) {
 
 		client.On("GetRecord",
 			mock.Anything,
-			"origin.org",
-			"origin.example.org",
-			"SRV",
-		).Return(&dns.RecordBody{
+			dns.GetRecordRequest{Zone: "origin.org", Name: "origin.example.org", RecordType: "SRV"},
+		).Return(&dns.GetRecordResponse{
 			Name:       "origin.example.org",
 			RecordType: "SRV",
 			TTL:        300,
@@ -387,9 +383,7 @@ func TestResDnsRecord(t *testing.T) {
 
 		client.On("DeleteRecord",
 			mock.Anything,
-			mock.AnythingOfType("*dns.RecordBody"),
-			mock.AnythingOfType("string"),
-			mock.AnythingOfType("[]bool"),
+			dns.DeleteRecordRequest{Zone: "origin.org", Name: "origin.example.org", RecordType: "SRV", RecLock: []bool{false}},
 		).Return(nil)
 
 		resourceName := "akamai_dns_record.srv_record"
@@ -423,30 +417,28 @@ func TestResDnsRecord(t *testing.T) {
 
 		client.On("GetRecord",
 			mock.Anything,
-			"origin.org",
-			"origin.example.org",
-			"SRV",
+			dns.GetRecordRequest{Zone: "origin.org", Name: "origin.example.org", RecordType: "SRV"},
 		).Return(nil, notFound).Once()
 
 		client.On("CreateRecord",
 			mock.Anything,
-			&dns.RecordBody{
-				Name:       "origin.example.org",
-				RecordType: "SRV",
-				TTL:        300,
-				Active:     false,
-				Target:     []string{targetBig, targetSmall, targetTiny},
+			dns.CreateRecordRequest{
+				Record: &dns.RecordBody{
+					Name:       "origin.example.org",
+					RecordType: "SRV",
+					TTL:        300,
+					Active:     false,
+					Target:     []string{targetBig, targetSmall, targetTiny},
+				},
+				Zone:    "origin.org",
+				RecLock: []bool{false},
 			},
-			"origin.org",
-			[]bool{false},
 		).Return(nil)
 
 		client.On("GetRecord",
 			mock.Anything,
-			"origin.org",
-			"origin.example.org",
-			"SRV",
-		).Return(&dns.RecordBody{
+			dns.GetRecordRequest{Zone: "origin.org", Name: "origin.example.org", RecordType: "SRV"},
+		).Return(&dns.GetRecordResponse{
 			Name:       "origin.example.org",
 			RecordType: "SRV",
 			TTL:        300,
@@ -472,10 +464,8 @@ func TestResDnsRecord(t *testing.T) {
 
 		client.On("GetRecord",
 			mock.Anything,
-			"origin.org",
-			"origin.example.org",
-			"SRV",
-		).Return(&dns.RecordBody{
+			dns.GetRecordRequest{Zone: "origin.org", Name: "origin.example.org", RecordType: "SRV"},
+		).Return(&dns.GetRecordResponse{
 			Name:       "origin.example.org",
 			RecordType: "SRV",
 			TTL:        300,
@@ -485,9 +475,7 @@ func TestResDnsRecord(t *testing.T) {
 
 		client.On("DeleteRecord",
 			mock.Anything,
-			mock.AnythingOfType("*dns.RecordBody"),
-			mock.AnythingOfType("string"),
-			mock.AnythingOfType("[]bool"),
+			dns.DeleteRecordRequest{Zone: "origin.org", Name: "origin.example.org", RecordType: "SRV", RecLock: []bool{false}},
 		).Return(nil)
 
 		resourceName := "akamai_dns_record.srv_record"
