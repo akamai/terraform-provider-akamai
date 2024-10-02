@@ -156,10 +156,8 @@ func (p *mockProperty) mockGetProperty() *mock.Call {
 			GroupID:       p.groupID,
 			LatestVersion: p.latestVersion,
 			// although optional in PAPI documentation, ProductID is not being set by PAPI in the response
-			ProductID:    p.productID,
 			PropertyID:   p.propertyID,
 			PropertyName: p.propertyName,
-			RuleFormat:   p.ruleTree.ruleFormat,
 		},
 	}
 
@@ -312,7 +310,7 @@ func (p *mockProperty) mockMoveProperty() {
 	}
 	req := iam.MovePropertyRequest{
 		PropertyID: intPropertyID,
-		BodyParams: iam.MovePropertyReqBody{
+		Body: iam.MovePropertyRequestBody{
 			DestinationGroupID: p.moveGroup.destinationGroupID,
 			SourceGroupID:      p.moveGroup.sourceGroupID,
 		},
