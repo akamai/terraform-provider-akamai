@@ -541,7 +541,7 @@ func resourceGTMv1PropertyCreate(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 	logger.Debugf("Proposed New Property: [%v]", newProp)
-	cStatus, err := Client(meta).CreateProperty(ctx, gtm.CreatePropertyRequest{
+	cStatus, err := createPropertyWithRetry(ctx, meta, logger, gtm.CreatePropertyRequest{
 		Property:   newProp,
 		DomainName: domain,
 	})
@@ -583,7 +583,7 @@ func resourceGTMv1PropertyCreate(ctx context.Context, d *schema.ResourceData, m 
 
 }
 
-func createPropertyWithRetry(ctx context.Context, meta meta.Meta, logger log.Interface, newProp *gtm.Property, domain string) (*gtm.CreatePropertyResponse, error) {
+func createPropertyWithRetry(ctx context.Context, meta meta.Meta, logger log.Interface, createPropertyRequest gtm.CreatePropertyRequest) (*gtm.CreatePropertyResponse, error) {
 	// Initial backoff interval
 	retryInterval := time.Second * 10
 	// Maximum retry interval
@@ -591,10 +591,7 @@ func createPropertyWithRetry(ctx context.Context, meta meta.Meta, logger log.Int
 
 	for {
 		// Attempt to create the property
-		cStatus, err := Client(meta).CreateProperty(ctx, gtm.CreatePropertyRequest{
-			Property:   newProp,
-			DomainName: domain,
-		})
+		cStatus, err := Client(meta).CreateProperty(ctx, createPropertyRequest)
 		if err == nil {
 			// Success, return the created property
 			return cStatus, nil

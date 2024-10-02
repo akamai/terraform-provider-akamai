@@ -149,12 +149,12 @@ func TestResGTMProperty(t *testing.T) {
 			},
 		},
 		"create property with retry on Property Validation Failure - no datacenter is assigned to map target": {
+			property: getBasicProperty(),
 			init: func(t *testing.T, m *gtm.Mock) {
 				// Simulate a retry scenario
 				m.On("CreateProperty",
 					mock.Anything,
-					getBasicProperty(),
-					gtmTestDomain,
+					gtm.CreatePropertyRequest{Property: getBasicProperty(), DomainName: gtmTestDomain},
 				).Return(nil, &gtm.Error{
 					Type:       "https://problems.luna.akamaiapis.net/config-gtm/v1/propertyValidationError",
 					StatusCode: http.StatusBadRequest,
@@ -186,12 +186,12 @@ func TestResGTMProperty(t *testing.T) {
 			},
 		},
 		"create property with retry on Property Validation Failure - other errors": {
+			property: getBasicProperty(),
 			init: func(t *testing.T, m *gtm.Mock) {
 				// Simulate a retry scenario
 				m.On("CreateProperty",
 					mock.Anything,
-					getBasicProperty(),
-					gtmTestDomain,
+					gtm.CreatePropertyRequest{Property: getBasicProperty(), DomainName: gtmTestDomain},
 				).Return(nil, &gtm.Error{
 					Type:       "https://problems.luna.akamaiapis.net/config-gtm/v1/propertyValidationError",
 					StatusCode: http.StatusBadRequest,
@@ -208,12 +208,12 @@ func TestResGTMProperty(t *testing.T) {
 			},
 		},
 		"create property with retry - context canceled": {
+			property: getBasicProperty(),
 			init: func(t *testing.T, m *gtm.Mock) {
 				// Simulate a retry scenario
 				m.On("CreateProperty",
 					mock.Anything,
-					getBasicProperty(),
-					gtmTestDomain,
+					gtm.CreatePropertyRequest{Property: getBasicProperty(), DomainName: gtmTestDomain},
 				).Return(nil, &gtm.Error{
 					Type:       "https://problems.luna.akamaiapis.net/config-gtm/v1/propertyValidationError",
 					StatusCode: http.StatusBadRequest,
@@ -224,8 +224,7 @@ func TestResGTMProperty(t *testing.T) {
 				// Simulate context cancellation on the second attempt
 				m.On("CreateProperty",
 					mock.Anything,
-					getBasicProperty(),
-					gtmTestDomain,
+					gtm.CreatePropertyRequest{Property: getBasicProperty(), DomainName: gtmTestDomain},
 				).Return(nil, context.Canceled).Once()
 			},
 			steps: []resource.TestStep{
