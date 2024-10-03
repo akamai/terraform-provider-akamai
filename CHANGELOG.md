@@ -216,8 +216,8 @@
 
 
 
-
-
+* PAPI
+  * Fixed an issue with the `akamai_property_activation` resource where updating it with an active or previously active property version for a configuration without a state file didn’t trigger a new property activation.
 
 
 

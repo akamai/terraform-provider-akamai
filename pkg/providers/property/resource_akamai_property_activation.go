@@ -216,7 +216,6 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 
 	activation, err := lookupActivation(ctx, client, lookupActivationRequest{
 		propertyID: propertyID,
-		version:    version,
 		network:    network,
 		activationType: map[papi.ActivationType]struct{}{
 			papi.ActivationTypeActivate:   {},
@@ -228,7 +227,7 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 	}
 
 	// we create a new property activation in case of no previous activation, or deleted activation
-	if activation == nil || activation.ActivationType == papi.ActivationTypeDeactivate {
+	if activation == nil || activation.ActivationType == papi.ActivationTypeDeactivate || activation.PropertyVersion != version {
 		notifySet, err := tf.GetSetValue("contact", d)
 		if err != nil {
 			return diag.FromErr(err)
@@ -863,7 +862,10 @@ func lookupActivation(ctx context.Context, client papi.PAPI, query lookupActivat
 
 		// There is an activation in progress, if it's for the same version/network/type we can re-use it
 		_, matchingActivationType := query.activationType[a.ActivationType]
-		if a.PropertyVersion == query.version && matchingActivationType && a.Network == query.network {
+		// If query doesn't check version, it should not filter any activation
+		matchingVersion := query.version == 0 || a.PropertyVersion == query.version
+		matchingNetwork := a.Network == query.network
+		if matchingVersion && matchingActivationType && matchingNetwork {
 			// find the most recent activation
 
 			var aSubmitDate, err = date.Parse(a.SubmitDate)
