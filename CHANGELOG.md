@@ -1,26 +1,15 @@
 # RELEASE NOTES
 
-## X.X.X (X X, X)
-
-#### BREAKING CHANGES:
-
-* PAPI
-    * Modified resource `akamai_properties` to properly populate fields `product_id`, `rule_format` and `note`
-
-
-
-
-
-
-
-
-
-
+## 6.5.0 (Oct 10, 2024)
 
 #### FEATURES/ENHANCEMENTS:
 
+* Global
+  * Migrated Terraform to version 1.9.5.
+  * Updated SDK v2 and framework libraries.
+
 * Appsec
-  * Added `expections` block to `akamai_appsec_siem_settings` resource with following nested fields
+  * Added the `exceptions` block to the `akamai_appsec_siem_settings` resource with these nested fields:
     * `api_request_constraints`
     * `apr_protection`
     * `bot_management`
@@ -33,232 +22,60 @@
     * `slow_post`
     * `waf`
 
-    
+* GTM
+  * Added the retry logic to the `akamai_gtm_property` resource to handle errors caused by the prolonged creation time, leading to Property Validation Failure with the "no datacenter is assigned to map target (all others)" error from the API.
+ 
 * IAM
-  * Added data source:
-    * `akamai_iam_group` - read the details for a group
-
-* IAM
-  * Added data source:
-    * `akamai_iam_role` - read the details for a role
-
-* IAM
-  * Added data source:
-    * `akamai_iam_authorized_users` - read the list of authorized API client users
-
-* IAM
-  * Added data sources:
-    * `akamai_iam_blocked_properties` - reads blocked properties for a certain user in a group
-
-
-* IAM
-  * Added below attributes to the `resource_akamai_iam_user` resource.
-     * Added `user_notifications` attribute to support user notifications.
-     * Added `enable_mfa` attribute to support authentication of type "MFA".
-     * Updated `enable_tfa` to an optional field.
-     * Added `password` attribute to allow users to set password during the creation and update of an user.
-
-* IAM
-  * Added new data source:
-    * `akamai_iam_allowed_apis` - read the list of APIs available to the user
-
-  
-* IAM
-  * Added new data source:
-    * `akamai_iam_cidr_block` - read the CIDR block details
-
-
-
-* IAM
-  * Improved date handling to use `time.Time` instead of `string`
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-* IAM
-  * Added new resource:
-    * `akamai_iam_cidr_block` - manage CIDR block assigned to the allowlist
-
-
-
-
-
-* IAM
-  * Added new resource:
-    * `akamai_iam_ip_allowlist` - enable or disable your account's allowlist
-
-
-
-* IAM
-  * Added new data source
-    * `akamai_iam_users` - read list of users with access to the account
+  * Added new data sources:
+    * `akamai_iam_accessible_groups` - reads the groups and subgroups accessible for a given user.
+    * `akamai_iam_account_switch_keys` - reads the account switch keys.
+    * `akamai_iam_allowed_apis` - reads the list of APIs available to a given user.
+    * `akamai_iam_authorized_users` - reads the list of authorized API client users.
+    * `akamai_iam_blocked_properties` - reads blocked properties for a certain user in a group.
+    * `akamai_iam_cidr_block` - reads details of a specified CIDR block.
+    * `akamai_iam_cidr_blocks` - lists all CIDR blocks available to you on your allowlist.
+    * `akamai_iam_group` - reads details about a given group and any of its subgroups.
+    * `akamai_iam_password_policy` - reads the password policy parameters.
+    * `akamai_iam_property_users` - lists users for a given property or include.
+    * `akamai_iam_role` - reads details of a specified role.
+    * `akamai_iam_user` - reads details of a specific user account.
+    * `akamai_iam_users` - lists all users with access to your account.
+    * `akamai_iam_users_affected_by_moving_group` - lists the users affected by moving a group.
+  * Added new resources:
+    * `akamai_iam_cidr_block` - manages CIDR block assigned to the allowlist.
+    * `akamai_iam_ip_allowlist` - enables or disable your account's allowlist.
+  * Added new attributes to the `resource_akamai_iam_user` resource.
+     * `user_notifications` to support user notifications.
+     * `enable_mfa` to support authentication of type "MFA".
+     * `password` to allow users to set a password when creating and updating a user.
+  * Made the `enable_tfa` attribute optional in the `resource_akamai_iam_user` resource. 
+  * Added the `asset_id` schema field (an IAM identifier of a property or include) to:
+    * The `akamai_property` resource and data source,
+    * The `akamai_property_include` resource and data source.
+  * Improved date handling to use `time.Time` instead of `string`.
 
 * PAPI
   * Added a new optional param to the import id of the `akamai_edge_hostname` resource.
     It allows to specify the product ID of the imported hostname and save it in the state.
-
-
-
-
-* Global
-  * Migrated Terraform to version 1.9.5
-  * Updated SDKv2 and framework libraries
-
-
-* GTM
-  * Added retry logic to `akamai_gtm_property` resource to handle errors caused by prolonged creation time, leading to Property Validation Failure with "no datacenter is assigned to map target (all others)" error from the API.
-
-
-
-
-
-
-
-* IAM
-  * Added new data source
-    * `akamai_iam_user` - read details about a specific user account
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-* IAM
-  * Added new data source:
-    * `akamai_iam_account_switch_keys` - read the account switch keys
-
-* IAM:
-  * Added new datasource:
-    * `akamai_iam_accessible_groups` - read the groups and subgroups accessible for provided user
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-* IAM
-  * Added new data source:
-    * `akamai_iam_cidr_blocks` - read the CIDR blocks details
-
-
-
-* IAM
-  * Added new data source:
-    * `akamai_iam_password_policy` - read the password policy parameters
-
-
-* IAM
-  * Added data sources:
-    * `akamai_iam_property_users` - lists users for property or include
-  * Added schema field `asset_id` (IAM identifier of a property or include) to:
-    * `akamai_property` resource and data source,
-    * `akamai_property_include` resource and data source.
-
-
-
-* IAM
-  * Added new data source:
-    * `akamai_iam_users_affected_by_moving_group` - list the users affected by moving a group
-
-
+  * Modified the `akamai_properties` resource to properly populate the `product_id`, `rule_format` and `note` fields.
 
 #### BUG FIXES:
-
-
 
 * PAPI
   * Added support for status code `429 Too Many Requests` containing `X-RateLimit-Next` header.
     When `X-RateLimit-Next` is present, the wait time before retry is calculated as the time
     difference between this header and the `Date` header.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-* PAPI
   * Fixed an issue with the `akamai_property_activation` resource where updating it with an active or previously active property version for a configuration without a state file didn’t trigger a new property activation.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 ## 6.4.0 (Sep 04, 2024)
 
 #### FEATURES/ENHANCEMENTS:
 
 * Global
-  * Updated SDKv2 and framework libraries as result of updating `terraform-plugin-testing`
+  * Updated SDK v2 and framework libraries as a result of updating `terraform-plugin-testing`.
 
 * Appsec
-  * Added `request_body_inspection_limit_override` field to `akamai_appsec_advanced_settings_request_body` resource
+  * Added the `request_body_inspection_limit_override` field to the `akamai_appsec_advanced_settings_request_body` resource.
 
 * CPS
   * Added `acknowledge_post_verification_warnings` to the `akamai_cps_dv_validation` resource to allow for acknowledgement of post-verification warnings
