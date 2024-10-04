@@ -431,8 +431,6 @@ func populateNewGeoMapObject(d *schema.ResourceData, m interface{}) (*gtm.GeoMap
 	geoObj := &gtm.GeoMap{
 		Name:              name,
 		DefaultDatacenter: &gtm.DatacenterBase{},
-		Assignments:       make([]gtm.GeoAssignment, 1),
-		Links:             make([]gtm.Link, 1),
 	}
 	populateGeoMapObject(d, geoObj, m)
 

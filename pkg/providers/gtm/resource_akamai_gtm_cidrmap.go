@@ -402,8 +402,6 @@ func populateNewCIDRMapObject(meta meta.Meta, d *schema.ResourceData, m interfac
 	cidrObj := &gtm.CIDRMap{
 		Name:              cidrMapName,
 		DefaultDatacenter: &gtm.DatacenterBase{},
-		Assignments:       make([]gtm.CIDRAssignment, 0),
-		Links:             make([]gtm.Link, 1),
 	}
 	populateCIDRMapObject(d, cidrObj, m)
 

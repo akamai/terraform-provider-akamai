@@ -456,7 +456,6 @@ func populateNewASMapObject(d *schema.ResourceData, m interface{}) (*gtm.ASMap, 
 		Name:              asMapName,
 		DefaultDatacenter: &gtm.DatacenterBase{},
 		Assignments:       make([]gtm.ASAssignment, 1),
-		Links:             make([]gtm.Link, 1),
 	}
 	populateASMapObject(d, asObj, m)
 
