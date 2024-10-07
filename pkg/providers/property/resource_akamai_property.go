@@ -932,6 +932,7 @@ func resourcePropertyImport(ctx context.Context, d *schema.ResourceData, m inter
 	var property *papi.Property
 	var err error
 	var v int
+	client = Client(meta.Must(m))
 	if !isDefaultVersion(version) {
 		property, v, err = fetchProperty(ctx, client, propertyID, groupID, contractID, version)
 	} else {
