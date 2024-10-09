@@ -57,7 +57,6 @@
 * PAPI
   * Added a new optional param to the import id of the `akamai_edge_hostname` resource.
     It allows to specify the product ID of the imported hostname and save it in the state.
-  * Modified the `akamai_properties` resource to properly populate the `product_id`, `rule_format` and `note` fields.
 
 #### BUG FIXES:
 
@@ -66,6 +65,11 @@
     When `X-RateLimit-Next` is present, the wait time before retry is calculated as the time
     difference between this header and the `Date` header.
   * Fixed an issue with the `akamai_property_activation` resource where updating it with an active or previously active property version for a configuration without a state file didn’t trigger a new property activation.
+
+#### DEPRECATIONS:
+
+* PAPI
+  * Deprecated fields `product_id` and `rule_format` from `akamai_properties` datasource. Please use `akamai_property` to fetch this data. 
 
 ## 6.4.0 (Sep 04, 2024)
 

@@ -14,24 +14,12 @@ func TestDataProperties(t *testing.T) {
 	t.Run("list properties", func(t *testing.T) {
 		client := &papi.Mock{}
 		props := papi.PropertiesItems{Items: buildPapiProperties()}
-		properties := decodePropertyItems(props.Items, "rule_format", "prd_1")
+		properties := decodePropertyItems(props.Items, "", "")
 
 		client.On("GetProperties",
 			mock.Anything,
 			papi.GetPropertiesRequest{GroupID: "grp_test", ContractID: "ctr_test"},
 		).Return(&papi.GetPropertiesResponse{Properties: props}, nil)
-
-		res := &papi.GetPropertyVersionsResponse{
-			Version: papi.PropertyVersionGetItem{
-				ProductID:  "prd_1",
-				RuleFormat: "rule_format",
-			},
-		}
-
-		client.On("GetPropertyVersion",
-			mock.Anything,
-			mock.Anything,
-		).Return(res, nil)
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -49,24 +37,12 @@ func TestDataProperties(t *testing.T) {
 	t.Run("list properties without group prefix", func(t *testing.T) {
 		client := &papi.Mock{}
 		props := papi.PropertiesItems{Items: buildPapiProperties()}
-		properties := decodePropertyItems(props.Items, "rule_format", "prd_1")
+		properties := decodePropertyItems(props.Items, "", "")
 
 		client.On("GetProperties",
 			mock.Anything,
 			papi.GetPropertiesRequest{GroupID: "grp_test", ContractID: "ctr_test"},
 		).Return(&papi.GetPropertiesResponse{Properties: props}, nil)
-
-		res := &papi.GetPropertyVersionsResponse{
-			Version: papi.PropertyVersionGetItem{
-				ProductID:  "prd_1",
-				RuleFormat: "rule_format",
-			},
-		}
-
-		client.On("GetPropertyVersion",
-			mock.Anything,
-			mock.Anything,
-		).Return(res, nil)
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -84,24 +60,12 @@ func TestDataProperties(t *testing.T) {
 	t.Run("list properties without contract prefix", func(t *testing.T) {
 		client := &papi.Mock{}
 		props := papi.PropertiesItems{Items: buildPapiProperties()}
-		properties := decodePropertyItems(props.Items, "rule_format", "prd_1")
+		properties := decodePropertyItems(props.Items, "", "")
 
 		client.On("GetProperties",
 			mock.Anything,
 			papi.GetPropertiesRequest{GroupID: "grp_test", ContractID: "ctr_test"},
 		).Return(&papi.GetPropertiesResponse{Properties: props}, nil)
-
-		res := &papi.GetPropertyVersionsResponse{
-			Version: papi.PropertyVersionGetItem{
-				ProductID:  "prd_1",
-				RuleFormat: "rule_format",
-			},
-		}
-
-		client.On("GetPropertyVersion",
-			mock.Anything,
-			mock.Anything,
-		).Return(res, nil)
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{

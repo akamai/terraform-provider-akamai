@@ -33,16 +33,48 @@ func dataSourceProperties() *schema.Resource {
 				Description: "List of properties",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"contract_id":        {Type: schema.TypeString, Computed: true},
-						"group_id":           {Type: schema.TypeString, Computed: true},
-						"latest_version":     {Type: schema.TypeInt, Computed: true},
-						"note":               {Type: schema.TypeString, Computed: true},
-						"product_id":         {Type: schema.TypeString, Computed: true},
-						"production_version": {Type: schema.TypeInt, Computed: true},
-						"property_id":        {Type: schema.TypeString, Computed: true},
-						"property_name":      {Type: schema.TypeString, Computed: true},
-						"rule_format":        {Type: schema.TypeString, Computed: true},
-						"staging_version":    {Type: schema.TypeInt, Computed: true},
+						"contract_id": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"group_id": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"latest_version": {
+							Type:     schema.TypeInt,
+							Computed: true,
+						},
+						"note": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"product_id": {
+							Type:       schema.TypeString,
+							Computed:   true,
+							Deprecated: "This field is deprecated. Please use `akamai_property` to get this data",
+						},
+						"production_version": {
+							Type:     schema.TypeInt,
+							Computed: true,
+						},
+						"property_id": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"property_name": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"rule_format": {
+							Type:       schema.TypeString,
+							Computed:   true,
+							Deprecated: "This field is deprecated. Please use `akamai_property` to get this data",
+						},
+						"staging_version": {
+							Type:     schema.TypeInt,
+							Computed: true,
+						},
 					},
 				},
 			},
@@ -81,7 +113,7 @@ func dataPropertiesRead(ctx context.Context, d *schema.ResourceData, m interface
 	// setting concatenated id to uniquely identify data
 	d.SetId(groupID + contractID)
 
-	properties, err := sliceResponseProperties(ctx, meta, propertiesResponse)
+	properties, err := sliceResponseProperties(propertiesResponse)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -93,24 +125,20 @@ func dataPropertiesRead(ctx context.Context, d *schema.ResourceData, m interface
 	return nil
 }
 
-func sliceResponseProperties(ctx context.Context, meta meta.Meta, propertiesResponse *papi.GetPropertiesResponse) ([]map[string]interface{}, error) {
+func sliceResponseProperties(propertiesResponse *papi.GetPropertiesResponse) ([]map[string]interface{}, error) {
 	var properties []map[string]interface{}
 	for _, item := range propertiesResponse.Properties.Items {
 
-		propVersion, err := getPropertyVersion(ctx, meta, item)
-		if err != nil {
-			return nil, err
-		}
 		property := map[string]interface{}{
 			"contract_id":        item.ContractID,
 			"group_id":           item.GroupID,
 			"latest_version":     item.LatestVersion,
 			"note":               item.Note,
-			"product_id":         propVersion.Version.ProductID,
+			"product_id":         nil,
 			"production_version": decodeVersion(item.ProductionVersion),
 			"property_id":        item.PropertyID,
 			"property_name":      item.PropertyName,
-			"rule_format":        propVersion.Version.RuleFormat,
+			"rule_format":        nil,
 			"staging_version":    decodeVersion(item.StagingVersion),
 		}
 		properties = append(properties, property)
