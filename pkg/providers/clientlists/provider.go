@@ -4,7 +4,7 @@ package clientlists
 import (
 	"sync"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/clientlists"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/clientlists"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"

@@ -7,661 +7,978 @@ import (
 	"net/http"
 	"path"
 	"regexp"
+	"slices"
 	"strings"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/iam"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/iam"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/test"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
-func TestResProperty(t *testing.T) {
-	// These more or less track the state of a Property in PAPI for the lifecycle tests
-	type TestState struct {
-		Client       *papi.Mock
-		Property     papi.Property
-		Hostnames    []papi.Hostname
-		VersionItems papi.PropertyVersionItems
-		Rules        papi.RulesUpdate
-		RuleFormat   string
+// TestPropertyLifecycle tests various lifecycle workflows that result in a success
+func TestPropertyLifecycle(t *testing.T) {
+
+	// defaultChecker contains basic checks for every test case, that can be built upon
+	defaultChecker := test.NewStateChecker("akamai_property.test").
+		CheckEqual("id", "prp_4").
+		CheckEqual("hostnames.0.edge_hostname_id", "ehn_123").
+		CheckEqual("name", "test_property").
+		CheckEqual("contract_id", "ctr_1").
+		CheckEqual("group_id", "grp_2").
+		CheckEqual("product_id", "prd_3").
+		CheckEqual("rule_warnings.#", "0").
+		CheckEqual("hostnames.0.cname_to", "to.test.domain").
+		CheckEqual("latest_version", "1").
+		CheckEqual("staging_version", "0").
+		CheckEqual("production_version", "0").
+		CheckEqual("rules", `{"rules":{"name":"default","options":{}}}`)
+
+	// basicData holds basic, common data across test cases
+	basicData := mockPropertyData{
+		propertyName:  "test_property",
+		productID:     "prd_3",
+		propertyID:    "prp_4",
+		groupID:       "grp_2",
+		contractID:    "ctr_1",
+		assetID:       "aid_5555",
+		latestVersion: 1,
+		versions: papi.PropertyVersionItems{
+			Items: []papi.PropertyVersionGetItem{
+				{
+					StagingStatus:    papi.VersionStatusInactive,
+					ProductionStatus: papi.VersionStatusInactive,
+					PropertyVersion:  1,
+				},
+			},
+		},
+		hostnames: papi.HostnameResponseItems{
+			Items: []papi.Hostname{
+				{
+					CnameType:            "EDGE_HOSTNAME",
+					EdgeHostnameID:       "ehn_123",
+					CnameFrom:            "from.test.domain",
+					CnameTo:              "to.test.domain",
+					CertProvisioningType: "DEFAULT",
+				},
+			},
+		},
 	}
 
-	// BehaviorFuncs can be composed to define common patterns of mock PAPI behavior (for Lifecycle tests)
-	type BehaviorFunc = func(*TestState)
-
-	// Combines many BehaviorFuncs into one
-	composeBehaviors := func(behaviors ...BehaviorFunc) BehaviorFunc {
-		return func(State *TestState) {
-			for _, behave := range behaviors {
-				behave(State)
-			}
-		}
+	// basicDataWithDefaultRules extends basic data with the default rules
+	basicDataWithDefaultRules := basicData
+	basicDataWithDefaultRules.ruleTree = mockRuleTreeData{
+		rules: papi.Rules{
+			Name: "default",
+		},
 	}
 
-	updateRuleTree := func(propertyID, contractID, groupID string, version int, rulesUpdate *papi.RulesUpdate) BehaviorFunc {
-		return func(state *TestState) {
-			ExpectUpdateRuleTree(
-				state.Client, propertyID, groupID, contractID, version,
-				rulesUpdate, "", []papi.RuleError{},
-			).Once().Run(func(args mock.Arguments) {
-				state.Rules = *rulesUpdate
-			})
-		}
-	}
-
-	setHostnames := func(propertyID string, version int, cnameTo string) BehaviorFunc {
-		return func(state *TestState) {
-			newHostnames := []papi.Hostname{{
+	// updatedHostname contains details about the updated hostname
+	updatedHostname := papi.HostnameResponseItems{
+		Items: []papi.Hostname{
+			{
 				CnameType:            "EDGE_HOSTNAME",
 				CnameFrom:            "from.test.domain",
-				CnameTo:              cnameTo,
+				CnameTo:              "to2.test.domain",
 				CertProvisioningType: "DEFAULT",
-			}}
+				EdgeHostnameID:       "ehn_123",
+			},
+		},
+	}
 
-			ExpectUpdatePropertyVersionHostnames(state.Client, propertyID, "grp_0", "ctr_0", version, newHostnames, nil).Once().Run(func(mock.Arguments) {
-				newResponseHostnames := []papi.Hostname{{
-					CnameType:            "EDGE_HOSTNAME",
-					CnameFrom:            "from.test.domain",
-					CnameTo:              cnameTo,
-					CertProvisioningType: "DEFAULT",
-					EdgeHostnameID:       "ehn_123",
-					CertStatus: papi.CertStatusItem{
-						ValidationCname: papi.ValidationCname{
-							Hostname: "_acme-challenge.www.example.com",
-							Target:   "{token}.www.example.com.akamai-domain.com",
+	// versionStagingActive represents version of property active only on staging network
+	versionStagingActive := papi.PropertyVersionItems{
+		Items: []papi.PropertyVersionGetItem{
+			{
+				StagingStatus:    papi.VersionStatusActive,
+				ProductionStatus: papi.VersionStatusInactive,
+				PropertyVersion:  1,
+			},
+		},
+	}
+
+	// versionProductionActive represents version of property active only on production network
+	versionProductionActive := papi.PropertyVersionItems{
+		Items: []papi.PropertyVersionGetItem{
+			{
+				StagingStatus:    papi.VersionStatusInactive,
+				ProductionStatus: papi.VersionStatusActive,
+				PropertyVersion:  1,
+			},
+		},
+	}
+
+	// mockLatestVersionNotActive represents a workflow where no property version is active on any of the networks
+	mockLatestVersionNotActive := func(p *mockProperty) {
+		// create
+		mockResourcePropertyCreateWithVersionHostnames(p)
+		// read x2
+		mockResourcePropertyRead(p, 2)
+		// read x1 before update
+		mockResourcePropertyRead(p)
+		// update
+		p.mockGetPropertyVersion()
+		p.hostnames = updatedHostname
+		p.mockUpdatePropertyVersionHostnames()
+		// read x2
+		mockResourcePropertyRead(p, 2)
+		// delete
+		p.mockRemoveProperty()
+	}
+
+	// mockLatestVersionActiveOnStaging represents a workflow where the second version of property is created and is active on staging network
+	mockLatestVersionActiveOnStaging := func(p *mockProperty) {
+		// create
+		mockResourcePropertyCreateWithVersionHostnames(p)
+		// read x2
+		mockResourcePropertyRead(p, 2)
+		// mock staging version active
+		p.versions = versionStagingActive
+		// read
+		mockResourcePropertyRead(p)
+		// update creates new version with updated hostname and version info
+		p.mockGetPropertyVersion()
+		p.mockCreatePropertyVersion()
+		p.latestVersion = 2
+		p.hostnames = updatedHostname
+		p.mockUpdatePropertyVersionHostnames()
+		// read x2
+		mockResourcePropertyRead(p, 2)
+		// delete
+		p.mockRemoveProperty()
+	}
+
+	// mockLatestVersionActiveOnProduction represents a workflow where the second version of property is created and is active on production network
+	mockLatestVersionActiveOnProduction := func(p *mockProperty) {
+		// create
+		mockResourcePropertyCreateWithVersionHostnames(p)
+		// read x2
+		mockResourcePropertyRead(p, 2)
+		// mock production version active
+		p.versions = versionProductionActive
+		// read
+		mockResourcePropertyRead(p)
+		// update creates new version with updated hostname and version info
+		p.mockGetPropertyVersion()
+		p.mockCreatePropertyVersion()
+		p.latestVersion = 2
+		p.hostnames = updatedHostname
+		p.mockUpdatePropertyVersionHostnames()
+		// read x2
+		mockResourcePropertyRead(p, 2)
+		// delete
+		p.mockRemoveProperty()
+	}
+
+	// grouped tests that always have 2 steps and the config file names are always "step0.tf" and "step1.tf". For different tests,
+	// add them as separate cases at the end of this function.
+	tests := map[string]struct {
+		init             func(*testing.T, *mockProperty)
+		steps            []resource.TestStep
+		checksForCreate  resource.TestCheckFunc
+		checksForUpdate  resource.TestCheckFunc
+		configPlanChecks resource.ConfigPlanChecks
+		configDir        string
+	}{
+		"Lifecycle: property is destroyed and recreated when name is changed": {
+			init: func(t *testing.T, p *mockProperty) {
+				// set initial data
+				p.mockPropertyData = basicDataWithDefaultRules
+				// create
+				mockResourcePropertyCreateWithVersionHostnames(p)
+				// read x2
+				mockResourcePropertyRead(p, 2)
+				// read x1 before update
+				mockResourcePropertyRead(p)
+				// delete
+				p.mockRemoveProperty()
+				// assign new values for mock data
+				p.propertyID = "prp_5"
+				p.propertyName = "renamed_property"
+				p.hostnames = updatedHostname
+				// create
+				mockResourcePropertyCreateWithVersionHostnames(p)
+				// read x2
+				mockResourcePropertyRead(p, 2)
+				// delete
+				p.mockRemoveProperty()
+			},
+			configDir:       "forceNewOnNameChange",
+			checksForCreate: defaultChecker.Build(),
+			checksForUpdate: defaultChecker.
+				CheckEqual("id", "prp_5").
+				CheckEqual("name", "renamed_property").
+				CheckEqual("hostnames.0.cname_to", "to2.test.domain").Build(),
+		},
+		"Lifecycle: create with propertyID (bootstrap)": {
+			init: func(t *testing.T, p *mockProperty) {
+				// set initial data
+				p.mockPropertyData = basicDataWithDefaultRules
+				// create (without creation of property, as it was created with bootstrap resource)
+				p.mockUpdatePropertyVersionHostnames()
+				// read x2
+				mockResourcePropertyRead(p, 2)
+				// read x1 before update
+				mockResourcePropertyRead(p)
+				// mock updated hostnames
+				p.hostnames = updatedHostname
+				// update
+				p.mockGetPropertyVersion()
+				p.mockUpdatePropertyVersionHostnames()
+				// read x2
+				mockResourcePropertyRead(p, 2)
+				// no delete as the resource is maintained by bootstrap resource
+			},
+			configDir:       "with-propertyID",
+			checksForCreate: defaultChecker.Build(),
+			checksForUpdate: defaultChecker.
+				CheckEqual("hostnames.0.cname_to", "to2.test.domain").
+				Build(),
+		},
+		"Lifecycle: latest version is deactivated in staging (normal)": {
+			init: func(t *testing.T, p *mockProperty) {
+				// set initial data
+				p.mockPropertyData = basicDataWithDefaultRules
+				p.createFromVersion = 1
+				p.newVersionID = 2
+				// create
+				mockResourcePropertyCreateWithVersionHostnames(p)
+				// read x2
+				mockResourcePropertyRead(p, 2)
+				// mock activating staging version
+				p.versions = versionStagingActive
+				// read
+				mockResourcePropertyRead(p)
+				// update creates new version
+				p.mockGetPropertyVersion()
+				p.mockCreatePropertyVersion()
+				// update mock data with new version info and updated hostname
+				p.latestVersion = 2
+				p.hostnames = updatedHostname
+				p.versions = papi.PropertyVersionItems{
+					Items: []papi.PropertyVersionGetItem{
+						{
+							StagingStatus:    papi.VersionStatusActive,
+							ProductionStatus: papi.VersionStatusInactive,
+							PropertyVersion:  1,
 						},
-						Staging: []papi.StatusItem{{Status: "PENDING"}},
-						Production: []papi.StatusItem{{
-							Status: "PENDING",
-						},
+						{
+							StagingStatus:    papi.VersionStatusDeactivated,
+							ProductionStatus: papi.VersionStatusInactive,
+							PropertyVersion:  2,
 						},
 					},
-				}}
-				state.Hostnames = append([]papi.Hostname{}, newResponseHostnames...)
-			})
-		}
-	}
-
-	setTwoHostnames := func(propertyID string, version int, cnameFrom1, cnameTo1, cnameFrom2, cnameTo2 string) BehaviorFunc {
-		return func(state *TestState) {
-			newHostnames := []papi.Hostname{{
-				CnameType:            "EDGE_HOSTNAME",
-				CnameFrom:            cnameFrom1,
-				CnameTo:              cnameTo1,
-				CertProvisioningType: "DEFAULT",
-			}, {
-				CnameType:            "EDGE_HOSTNAME",
-				CnameFrom:            cnameFrom2,
-				CnameTo:              cnameTo2,
-				CertProvisioningType: "DEFAULT",
-			}}
-
-			ExpectUpdatePropertyVersionHostnames(state.Client, propertyID, "grp_0", "ctr_0", version, newHostnames, nil).Once().Run(func(mock.Arguments) {
-				NewResponseHostnames := []papi.Hostname{{
-					CnameType:            "EDGE_HOSTNAME",
-					CnameFrom:            cnameFrom1,
-					CnameTo:              cnameTo1,
-					CertProvisioningType: "DEFAULT",
-					EdgeHostnameID:       "ehn_123",
-					CertStatus: papi.CertStatusItem{
-						ValidationCname: papi.ValidationCname{
-							Hostname: "_acme-challenge.www.example.com",
-							Target:   "{token}.www.example.com.akamai-domain.com",
-						},
-						Staging: []papi.StatusItem{{Status: "PENDING"}},
-						Production: []papi.StatusItem{{
-							Status: "PENDING",
-						},
-						},
-					},
-				}, {
-					CnameType:            "EDGE_HOSTNAME",
-					CnameFrom:            cnameFrom2,
-					CnameTo:              cnameTo2,
-					CertProvisioningType: "DEFAULT",
-					EdgeHostnameID:       "ehn_123",
-					CertStatus: papi.CertStatusItem{
-						ValidationCname: papi.ValidationCname{
-							Hostname: "_acme-challenge.www.example.com",
-							Target:   "{token}.www.example.com.akamai-domain.com",
-						},
-						Staging: []papi.StatusItem{{Status: "PENDING"}},
-						Production: []papi.StatusItem{{
-							Status: "PENDING",
-						},
-						},
-					},
-				}}
-				state.Hostnames = append([]papi.Hostname{}, NewResponseHostnames...)
-			})
-		}
-	}
-
-	getPropertyVersions := func(propertyID, propertyName, contractID, groupID string, items ...papi.PropertyVersionItems) BehaviorFunc {
-		return func(state *TestState) {
-			versionItems := &state.VersionItems
-			if len(items) > 0 {
-				versionItems = &items[0]
-			}
-			ExpectGetPropertyVersions(state.Client, propertyID, propertyName, contractID, groupID, &state.Property, versionItems)
-		}
-	}
-
-	getPropertyVersionResources := func(propertyID, groupID, contractID string, version int, stagStatus, prodStatus papi.VersionStatus) BehaviorFunc {
-		return func(state *TestState) {
-			ExpectGetPropertyVersion(state.Client, propertyID, groupID, contractID, version, stagStatus, prodStatus)
-		}
-	}
-
-	GetVersionResources := func(propertyID, contractID, groupID string, version int) BehaviorFunc {
-		return func(state *TestState) {
-			ExpectGetPropertyVersionHostnames(state.Client, propertyID, groupID, contractID, version, &state.Hostnames)
-			ExpectGetRuleTree(state.Client, propertyID, groupID, contractID, version, &state.Rules, &state.RuleFormat, nil, nil)
-		}
-	}
-
-	GetVersionResourcesDrift := func(propertyID, contractID, groupID string, version int, rules papi.RulesUpdate) BehaviorFunc {
-		return func(state *TestState) {
-			ExpectGetPropertyVersionHostnames(state.Client, propertyID, groupID, contractID, version, &state.Hostnames)
-			ExpectGetRuleTree(state.Client, propertyID, groupID, contractID, version, &rules, &state.RuleFormat, nil, nil)
-		}
-	}
-
-	DeleteProperty := func(propertyID string) BehaviorFunc {
-		return func(state *TestState) {
-			ExpectRemoveProperty(state.Client, propertyID, "ctr_0", "grp_0").Once().Run(func(mock.Arguments) {
-				state.Property = papi.Property{}
-				state.Rules = papi.RulesUpdate{}
-				state.Hostnames = nil
-				state.RuleFormat = ""
-				state.VersionItems = papi.PropertyVersionItems{}
-			})
-		}
-	}
-
-	getProperty := func(propertyID string) BehaviorFunc {
-		return func(state *TestState) {
-			ExpectGetProperty(state.Client, propertyID, "grp_0", "ctr_0", &state.Property)
-		}
-	}
-
-	createProperty := func(propertyName, propertyID string, rules papi.RulesUpdate) BehaviorFunc {
-		return func(state *TestState) {
-			ExpectCreateProperty(state.Client, propertyName, "grp_0", "ctr_0", "prd_0", propertyID).Run(func(mock.Arguments) {
-				state.Property = papi.Property{
-					PropertyName:  propertyName,
-					PropertyID:    propertyID,
-					GroupID:       "grp_0",
-					ContractID:    "ctr_0",
-					ProductID:     "prd_0",
-					LatestVersion: 1,
 				}
-
-				state.Rules = rules
-				state.RuleFormat = "v2020-01-01"
-				getProperty(propertyID)(state)
-				GetVersionResources(propertyID, "ctr_0", "grp_0", 1)(state)
-			}).Once()
-		}
+				p.mockUpdatePropertyVersionHostnames()
+				// read x2
+				mockResourcePropertyRead(p, 2)
+				// delete
+				p.mockRemoveProperty()
+			},
+			configDir:       "normal",
+			checksForCreate: defaultChecker.Build(),
+			checksForUpdate: defaultChecker.
+				CheckEqual("hostnames.0.cname_to", "to2.test.domain").
+				CheckEqual("latest_version", "2").
+				CheckEqual("staging_version", "1").
+				Build(),
+		},
+		"Lifecycle: latest version is deactivated in production (normal)": {
+			init: func(t *testing.T, p *mockProperty) {
+				// set initial data
+				p.mockPropertyData = basicDataWithDefaultRules
+				p.createFromVersion = 1
+				p.newVersionID = 2
+				// create
+				mockResourcePropertyCreateWithVersionHostnames(p)
+				// read x2
+				mockResourcePropertyRead(p, 2)
+				// mock production version active
+				p.versions = versionProductionActive
+				// read
+				mockResourcePropertyRead(p)
+				// update creates new version with updated hostname and version info
+				p.mockGetPropertyVersion()
+				p.mockCreatePropertyVersion()
+				p.latestVersion = 2
+				p.hostnames = updatedHostname
+				p.versions = papi.PropertyVersionItems{
+					Items: []papi.PropertyVersionGetItem{
+						{
+							StagingStatus:    papi.VersionStatusInactive,
+							ProductionStatus: papi.VersionStatusActive,
+							PropertyVersion:  1,
+						},
+						{
+							StagingStatus:    papi.VersionStatusInactive,
+							ProductionStatus: papi.VersionStatusDeactivated,
+							PropertyVersion:  2,
+						},
+					},
+				}
+				p.mockUpdatePropertyVersionHostnames()
+				// read x2
+				mockResourcePropertyRead(p, 2)
+				// delete
+				p.mockRemoveProperty()
+			},
+			configDir:       "normal",
+			checksForCreate: defaultChecker.Build(),
+			checksForUpdate: defaultChecker.
+				CheckEqual("hostnames.0.cname_to", "to2.test.domain").
+				CheckEqual("latest_version", "2").
+				CheckEqual("production_version", "1").
+				Build(),
+		},
+		"Lifecycle: latest version is not active (normal)": {
+			init: func(t *testing.T, p *mockProperty) {
+				// set initial data
+				p.mockPropertyData = basicDataWithDefaultRules
+				mockLatestVersionNotActive(p)
+			},
+			configDir:       "normal",
+			checksForCreate: defaultChecker.Build(),
+			checksForUpdate: defaultChecker.
+				CheckEqual("hostnames.0.cname_to", "to2.test.domain").
+				Build(),
+		},
+		"Lifecycle: latest version is active in staging (normal)": {
+			init: func(t *testing.T, p *mockProperty) {
+				// set initial data
+				p.mockPropertyData = basicDataWithDefaultRules
+				p.createFromVersion = 1
+				p.newVersionID = 2
+				mockLatestVersionActiveOnStaging(p)
+			},
+			configDir: "normal",
+			checksForCreate: defaultChecker.
+				Build(),
+			checksForUpdate: defaultChecker.
+				CheckEqual("hostnames.0.cname_to", "to2.test.domain").
+				CheckEqual("latest_version", "2").
+				CheckEqual("staging_version", "1").
+				Build(),
+		},
+		"Lifecycle: latest version is active in production (normal)": {
+			init: func(t *testing.T, p *mockProperty) {
+				// set initial data
+				p.mockPropertyData = basicDataWithDefaultRules
+				p.createFromVersion = 1
+				p.newVersionID = 2
+				mockLatestVersionActiveOnProduction(p)
+			},
+			configDir:       "normal",
+			checksForCreate: defaultChecker.Build(),
+			checksForUpdate: defaultChecker.
+				CheckEqual("hostnames.0.cname_to", "to2.test.domain").
+				CheckEqual("latest_version", "2").
+				CheckEqual("production_version", "1").
+				Build(),
+		},
+		"Lifecycle: latest version is not active (contract_id without prefix)": {
+			init: func(t *testing.T, p *mockProperty) {
+				// set initial data
+				p.mockPropertyData = basicDataWithDefaultRules
+				mockLatestVersionNotActive(p)
+			},
+			configDir:       "contract_id without prefix",
+			checksForCreate: defaultChecker.Build(),
+			checksForUpdate: defaultChecker.
+				CheckEqual("hostnames.0.cname_to", "to2.test.domain").
+				Build(),
+		},
+		"Lifecycle: latest version active in staging (contract_id without prefix)": {
+			init: func(t *testing.T, p *mockProperty) {
+				// set initial data
+				p.mockPropertyData = basicDataWithDefaultRules
+				p.createFromVersion = 1
+				p.newVersionID = 2
+				mockLatestVersionActiveOnStaging(p)
+			},
+			configDir:       "contract_id without prefix",
+			checksForCreate: defaultChecker.Build(),
+			checksForUpdate: defaultChecker.
+				CheckEqual("hostnames.0.cname_to", "to2.test.domain").
+				CheckEqual("latest_version", "2").
+				CheckEqual("staging_version", "1").
+				Build(),
+		},
+		"Lifecycle: latest version active in production (contract_id without prefix)": {
+			init: func(t *testing.T, p *mockProperty) {
+				// set initial data
+				p.mockPropertyData = basicDataWithDefaultRules
+				p.createFromVersion = 1
+				p.newVersionID = 2
+				mockLatestVersionActiveOnProduction(p)
+			},
+			configDir:       "contract_id without prefix",
+			checksForCreate: defaultChecker.Build(),
+			checksForUpdate: defaultChecker.
+				CheckEqual("hostnames.0.cname_to", "to2.test.domain").
+				CheckEqual("latest_version", "2").
+				CheckEqual("production_version", "1").
+				Build(),
+		},
+		"Lifecycle: latest version is not active (group_id without prefix)": {
+			init: func(t *testing.T, p *mockProperty) {
+				// set initial data
+				p.mockPropertyData = basicDataWithDefaultRules
+				mockLatestVersionNotActive(p)
+			},
+			configDir:       "group_id without prefix",
+			checksForCreate: defaultChecker.Build(),
+			checksForUpdate: defaultChecker.
+				CheckEqual("hostnames.0.cname_to", "to2.test.domain").
+				Build(),
+		},
+		"Lifecycle: latest version is active in staging (group_id without prefix)": {
+			init: func(t *testing.T, p *mockProperty) {
+				// set initial data
+				p.mockPropertyData = basicDataWithDefaultRules
+				p.createFromVersion = 1
+				p.newVersionID = 2
+				mockLatestVersionActiveOnStaging(p)
+			},
+			configDir:       "group_id without prefix",
+			checksForCreate: defaultChecker.Build(),
+			checksForUpdate: defaultChecker.
+				CheckEqual("hostnames.0.cname_to", "to2.test.domain").
+				CheckEqual("latest_version", "2").
+				CheckEqual("staging_version", "1").
+				Build(),
+		},
+		"Lifecycle: latest version is active in production (group_id without prefix)": {
+			init: func(t *testing.T, p *mockProperty) {
+				// set initial data
+				p.mockPropertyData = basicDataWithDefaultRules
+				p.createFromVersion = 1
+				p.newVersionID = 2
+				mockLatestVersionActiveOnProduction(p)
+			},
+			configDir:       "group_id without prefix",
+			checksForCreate: defaultChecker.Build(),
+			checksForUpdate: defaultChecker.
+				CheckEqual("hostnames.0.cname_to", "to2.test.domain").
+				CheckEqual("latest_version", "2").
+				CheckEqual("production_version", "1").
+				Build(),
+		},
+		"Lifecycle: latest version is not active (product_id without prefix)": {
+			init: func(t *testing.T, p *mockProperty) {
+				// set initial data
+				p.mockPropertyData = basicDataWithDefaultRules
+				p.createFromVersion = 1
+				p.newVersionID = 2
+				mockLatestVersionNotActive(p)
+			},
+			configDir:       "product_id without prefix",
+			checksForCreate: defaultChecker.Build(),
+			checksForUpdate: defaultChecker.
+				CheckEqual("hostnames.0.cname_to", "to2.test.domain").
+				Build(),
+		},
+		"Lifecycle: latest version is active in staging (product_id without prefix)": {
+			init: func(t *testing.T, p *mockProperty) {
+				// set initial data
+				p.mockPropertyData = basicDataWithDefaultRules
+				p.createFromVersion = 1
+				p.newVersionID = 2
+				mockLatestVersionActiveOnStaging(p)
+			},
+			configDir:       "product_id without prefix",
+			checksForCreate: defaultChecker.Build(),
+			checksForUpdate: defaultChecker.
+				CheckEqual("hostnames.0.cname_to", "to2.test.domain").
+				CheckEqual("latest_version", "2").
+				CheckEqual("staging_version", "1").
+				Build(),
+		},
+		"Lifecycle: latest version is active in production (product_id without prefix)": {
+			init: func(t *testing.T, p *mockProperty) {
+				// set initial data
+				p.mockPropertyData = basicDataWithDefaultRules
+				p.createFromVersion = 1
+				p.newVersionID = 2
+				mockLatestVersionActiveOnProduction(p)
+			},
+			configDir:       "product_id without prefix",
+			checksForCreate: defaultChecker.Build(),
+			checksForUpdate: defaultChecker.
+				CheckEqual("hostnames.0.cname_to", "to2.test.domain").
+				CheckEqual("latest_version", "2").
+				CheckEqual("production_version", "1").
+				Build(),
+		},
+		"Lifecycle: no diff": {
+			init: func(t *testing.T, p *mockProperty) {
+				// set initial data
+				p.mockPropertyData = basicData
+				p.ruleTree = mockRuleTreeData{
+					rules: papi.Rules{
+						Children: []papi.Rules{
+							{
+								Name:                "Default CORS Policy",
+								CriteriaMustSatisfy: papi.RuleCriteriaMustSatisfyAll,
+							},
+						},
+					},
+				}
+				// create
+				mockResourcePropertyFullCreate(p)
+				// read x2
+				mockResourcePropertyRead(p, 2)
+				// mock update in rules by changing the order
+				p.ruleTree.rules = papi.Rules{Children: []papi.Rules{{CriteriaMustSatisfy: papi.RuleCriteriaMustSatisfyAll, Name: "Default CORS Policy"}}}
+				// read x2
+				mockResourcePropertyRead(p, 2)
+				// delete
+				p.mockRemoveProperty()
+			},
+			configDir: "no diff",
+			checksForCreate: defaultChecker.
+				CheckEqual("rules", `{"rules":{"children":[{"name":"Default CORS Policy","options":{},"criteriaMustSatisfy":"all"}],"name":"","options":{}}}`).
+				Build(),
+			checksForUpdate: defaultChecker.
+				CheckEqual("rules", `{"rules":{"children":[{"name":"Default CORS Policy","options":{},"criteriaMustSatisfy":"all"}],"name":"","options":{}}}`).
+				Build(),
+		},
+		"Lifecycle: rules custom diff": {
+			/*
+				rulesCustomDiff tests rulesCustomDiff function which is in resource_akamai_property.go file.
+				There is an additional field "options":{} in expected attributes, because with UpdateRuleTree(ctx, req) function
+				this field added automatically into response, even if it does not exist in rules.
+			*/
+			init: func(t *testing.T, p *mockProperty) {
+				// set initial data
+				p.mockPropertyData = basicData
+				p.ruleTree = mockRuleTreeData{
+					rules: papi.Rules{Behaviors: []papi.RuleBehavior{
+						{
+							Name: "caching",
+							Options: papi.RuleOptionsMap{
+								"behavior":       "MAX_AGE",
+								"mustRevalidate": false,
+								"ttl":            "12d",
+							},
+						},
+					},
+						Name: "default"},
+				}
+				// create
+				mockResourcePropertyFullCreate(p)
+				// read x2
+				mockResourcePropertyRead(p, 2)
+				// read
+				mockResourcePropertyRead(p)
+				// update ttl in rule tree from 12d to 13d
+				p.ruleTree.rules.Behaviors = []papi.RuleBehavior{
+					{
+						Name: "caching",
+						Options: papi.RuleOptionsMap{
+							"behavior":       "MAX_AGE",
+							"mustRevalidate": false,
+							"ttl":            "13d",
+						},
+					},
+				}
+				// update
+				p.mockGetPropertyVersion()
+				p.mockUpdateRuleTree()
+				// read x2
+				mockResourcePropertyRead(p, 2)
+				// delete
+				p.mockRemoveProperty()
+			},
+			configDir: "rules custom diff",
+			checksForCreate: defaultChecker.
+				CheckEqual("rules", `{"rules":{"behaviors":[{"name":"caching","options":{"behavior":"MAX_AGE","mustRevalidate":false,"ttl":"12d"}}],"name":"default","options":{}}}`).
+				Build(),
+			checksForUpdate: defaultChecker.
+				CheckEqual("rules", `{"rules":{"behaviors":[{"name":"caching","options":{"behavior":"MAX_AGE","mustRevalidate":false,"ttl":"13d"}}],"name":"default","options":{}}}`).
+				Build(),
+		},
+		"Lifecycle: no diff for hostnames (hostnames)": {
+			init: func(t *testing.T, p *mockProperty) {
+				// set initial data
+				p.mockPropertyData = basicData
+				p.ruleTree = mockRuleTreeData{
+					rules: papi.Rules{
+						Children: []papi.Rules{
+							{
+								CriteriaMustSatisfy: papi.RuleCriteriaMustSatisfyAll,
+								Name:                "Default CORS Policy",
+							},
+						},
+					},
+				}
+				p.hostnames = papi.HostnameResponseItems{
+					Items: []papi.Hostname{
+						{
+							CnameType:            "EDGE_HOSTNAME",
+							CnameFrom:            "from1.test.domain",
+							CnameTo:              "to1.test.domain",
+							CertProvisioningType: "DEFAULT",
+							EdgeHostnameID:       "ehn_123",
+						},
+						{
+							CnameType:            "EDGE_HOSTNAME",
+							CnameFrom:            "from2.test.domain",
+							CnameTo:              "to2.test.domain",
+							CertProvisioningType: "DEFAULT",
+							EdgeHostnameID:       "ehn_123",
+						},
+					},
+				}
+				// create
+				mockResourcePropertyFullCreate(p)
+				// read x2
+				mockResourcePropertyRead(p, 2)
+				// read x2 - refresh as nothing other than the order of hostnames changed
+				mockResourcePropertyRead(p, 2)
+				// delete
+				p.mockRemoveProperty()
+			},
+			configDir: "hostnames",
+			checksForCreate: defaultChecker.
+				CheckEqual("hostnames.0.cname_to", "to1.test.domain").
+				CheckEqual("hostnames.1.cname_to", "to2.test.domain").
+				CheckEqual("rules", `{"rules":{"children":[{"name":"Default CORS Policy","options":{},"criteriaMustSatisfy":"all"}],"name":"","options":{}}}`).
+				Build(),
+			checksForUpdate: defaultChecker.
+				CheckEqual("hostnames.0.cname_to", "to1.test.domain").
+				CheckEqual("hostnames.1.cname_to", "to2.test.domain").
+				CheckEqual("rules", `{"rules":{"children":[{"name":"Default CORS Policy","options":{},"criteriaMustSatisfy":"all"}],"name":"","options":{}}}`).
+				Build(),
+		},
+		"Lifecycle: rules with variables": {
+			init: func(t *testing.T, p *mockProperty) {
+				// set initial data
+				p.mockPropertyData = basicData
+				p.ruleTree = mockRuleTreeData{
+					rules: papi.Rules{
+						Name: "default",
+						Children: []papi.Rules{
+							{
+								Name: "change fwd path",
+								Behaviors: []papi.RuleBehavior{
+									{
+										Name: "baseDirectory",
+										Options: papi.RuleOptionsMap{
+											"value": "/smth/",
+										},
+									},
+								},
+								Criteria: []papi.RuleBehavior{
+									{
+										Name:   "requestHeader",
+										Locked: false,
+										Options: papi.RuleOptionsMap{
+											"headerName":              "Accept-Encoding",
+											"matchCaseSensitiveValue": true,
+											"matchOperator":           "IS_ONE_OF",
+											"matchWildcardName":       false,
+											"matchWildcardValue":      false,
+										},
+									},
+								},
+								CriteriaMustSatisfy: papi.RuleCriteriaMustSatisfyAll,
+							},
+							{
+								Name: "caching",
+								Behaviors: []papi.RuleBehavior{
+									{
+										Name: "caching",
+										Options: papi.RuleOptionsMap{
+											"behavior":       "MAX_AGE",
+											"mustRevalidate": false,
+											"ttl":            "1m",
+										},
+									},
+								},
+								CriteriaMustSatisfy: papi.RuleCriteriaMustSatisfyAny,
+							},
+						},
+						Behaviors: []papi.RuleBehavior{
+							{
+								Name: "origin",
+								Options: papi.RuleOptionsMap{
+									"cacheKeyHostname":          "REQUEST_HOST_HEADER",
+									"compress":                  true,
+									"enableTrueClientIp":        true,
+									"forwardHostHeader":         "REQUEST_HOST_HEADER",
+									"hostname":                  "test.domain",
+									"httpPort":                  float64(80),
+									"httpsPort":                 float64(443),
+									"originCertificate":         "",
+									"originSni":                 true,
+									"originType":                "CUSTOMER",
+									"ports":                     "",
+									"trueClientIpClientSetting": false,
+									"trueClientIpHeader":        "True-Client-IP",
+									"verificationMode":          "PLATFORM_SETTINGS",
+								},
+							},
+						},
+						Options: papi.RuleOptions{},
+						Variables: []papi.RuleVariable{
+							{
+								Name:        "TEST_EMPTY_FIELDS",
+								Value:       ptr.To(""),
+								Description: ptr.To(""),
+								Hidden:      true,
+								Sensitive:   false,
+							},
+							{
+								Name:        "TEST_NIL_FIELD",
+								Description: nil,
+								Value:       ptr.To(""),
+								Hidden:      true,
+								Sensitive:   false,
+							},
+						},
+						Comments: "The behaviors in the Default Rule apply to all requests for the property hostname(s) unless another rule overrides the Default Rule settings.",
+					},
+				}
+				// create
+				mockResourcePropertyFullCreate(p)
+				// read x2
+				mockResourcePropertyRead(p, 2)
+				// read x1 before update
+				mockResourcePropertyRead(p)
+				// update with new rules variables (description in TEST_NIL_FIELD is "", was nil)
+				p.mockGetPropertyVersion()
+				p.ruleTree.rules.Variables = []papi.RuleVariable{
+					{
+						Name:        "TEST_EMPTY_FIELDS",
+						Value:       ptr.To(""),
+						Description: ptr.To(""),
+						Hidden:      true,
+						Sensitive:   false,
+					},
+					{
+						Name:        "TEST_NIL_FIELD",
+						Description: ptr.To(""),
+						Value:       ptr.To(""),
+						Hidden:      true,
+						Sensitive:   false,
+					},
+				}
+				p.mockUpdateRuleTree()
+				// read x2
+				mockResourcePropertyRead(p, 2)
+				// delete
+				p.mockRemoveProperty()
+			},
+			configDir: "rules with variables",
+			checksForCreate: defaultChecker.
+				CheckEqual("rules", `{"rules":{"behaviors":[{"name":"origin","options":{"cacheKeyHostname":"REQUEST_HOST_HEADER","compress":true,"enableTrueClientIp":true,"forwardHostHeader":"REQUEST_HOST_HEADER","hostname":"test.domain","httpPort":80,"httpsPort":443,"originCertificate":"","originSni":true,"originType":"CUSTOMER","ports":"","trueClientIpClientSetting":false,"trueClientIpHeader":"True-Client-IP","verificationMode":"PLATFORM_SETTINGS"}}],"children":[{"behaviors":[{"name":"baseDirectory","options":{"value":"/smth/"}}],"criteria":[{"name":"requestHeader","options":{"headerName":"Accept-Encoding","matchCaseSensitiveValue":true,"matchOperator":"IS_ONE_OF","matchWildcardName":false,"matchWildcardValue":false}}],"name":"change fwd path","options":{},"criteriaMustSatisfy":"all"},{"behaviors":[{"name":"caching","options":{"behavior":"MAX_AGE","mustRevalidate":false,"ttl":"1m"}}],"name":"caching","options":{},"criteriaMustSatisfy":"any"}],"comments":"The behaviors in the Default Rule apply to all requests for the property hostname(s) unless another rule overrides the Default Rule settings.","name":"default","options":{},"variables":[{"description":"","hidden":true,"name":"TEST_EMPTY_FIELDS","sensitive":false,"value":""},{"description":null,"hidden":true,"name":"TEST_NIL_FIELD","sensitive":false,"value":""}]}}`).
+				Build(),
+			checksForUpdate: defaultChecker.
+				CheckEqual("rules", `{"rules":{"behaviors":[{"name":"origin","options":{"cacheKeyHostname":"REQUEST_HOST_HEADER","compress":true,"enableTrueClientIp":true,"forwardHostHeader":"REQUEST_HOST_HEADER","hostname":"test.domain","httpPort":80,"httpsPort":443,"originCertificate":"","originSni":true,"originType":"CUSTOMER","ports":"","trueClientIpClientSetting":false,"trueClientIpHeader":"True-Client-IP","verificationMode":"PLATFORM_SETTINGS"}}],"children":[{"behaviors":[{"name":"baseDirectory","options":{"value":"/smth/"}}],"criteria":[{"name":"requestHeader","options":{"headerName":"Accept-Encoding","matchCaseSensitiveValue":true,"matchOperator":"IS_ONE_OF","matchWildcardName":false,"matchWildcardValue":false}}],"name":"change fwd path","options":{},"criteriaMustSatisfy":"all"},{"behaviors":[{"name":"caching","options":{"behavior":"MAX_AGE","mustRevalidate":false,"ttl":"1m"}}],"name":"caching","options":{},"criteriaMustSatisfy":"any"}],"comments":"The behaviors in the Default Rule apply to all requests for the property hostname(s) unless another rule overrides the Default Rule settings.","name":"default","options":{},"variables":[{"description":"","hidden":true,"name":"TEST_EMPTY_FIELDS","sensitive":false,"value":""},{"description":"","hidden":true,"name":"TEST_NIL_FIELD","sensitive":false,"value":""}]}}`).
+				Build(),
+		},
+		"Lifecycle: Verify staging_version and production_version known at plan": {
+			init: func(t *testing.T, p *mockProperty) {
+				// set initial data
+				p.mockPropertyData = basicDataWithDefaultRules
+				// create
+				mockResourcePropertyCreateWithVersionHostnames(p)
+				// read x2
+				mockResourcePropertyRead(p, 2)
+				// read x1 before update
+				mockResourcePropertyRead(p)
+				// update
+				p.mockGetPropertyVersion()
+				p.hostnames = updatedHostname
+				p.mockUpdatePropertyVersionHostnames()
+				// read x2
+				mockResourcePropertyRead(p, 2)
+				// delete
+				p.mockRemoveProperty()
+			},
+			configDir:       "normal",
+			checksForCreate: defaultChecker.Build(),
+			checksForUpdate: defaultChecker.
+				CheckEqual("hostnames.0.cname_to", "to2.test.domain").
+				Build(),
+			configPlanChecks: resource.ConfigPlanChecks{
+				PreApply: []plancheck.PlanCheck{
+					testutils.FieldsKnownAtPlan{
+						FieldsKnown:   []string{"staging_version", "production_version"},
+						FieldsUnknown: []string{"latest_version"},
+					},
+				},
+			},
+		},
+		"Lifecycle: update group id - in place": {
+			init: func(t *testing.T, p *mockProperty) {
+				// set initial data
+				p.mockPropertyData = basicDataWithDefaultRules
+				p.moveGroup = moveGroup{
+					sourceGroupID:      2,
+					destinationGroupID: 222,
+				}
+				// create
+				mockResourcePropertyCreateWithVersionHostnames(p)
+				// read x2
+				mockResourcePropertyRead(p, 2)
+				// read x1 before read
+				mockResourcePropertyRead(p)
+				// update - moving the property
+				p.mockMoveProperty()
+				p.groupID = "grp_222"
+				// read x1
+				mockResourcePropertyRead(p)
+				// delete
+				p.mockRemoveProperty()
+			},
+			configDir:       "groupIDUpdate",
+			checksForCreate: defaultChecker.Build(),
+			checksForUpdate: defaultChecker.
+				CheckEqual("group_id", "grp_222").
+				Build(),
+		},
+		"Lifecycle: update group id and hostnames - in place": {
+			init: func(t *testing.T, p *mockProperty) {
+				// set initial data
+				p.mockPropertyData = basicDataWithDefaultRules
+				p.moveGroup = moveGroup{
+					sourceGroupID:      2,
+					destinationGroupID: 222,
+				}
+				// create
+				mockResourcePropertyCreateWithVersionHostnames(p)
+				// read x2
+				mockResourcePropertyRead(p, 2)
+				// read x1 before update
+				mockResourcePropertyRead(p)
+				// update - moving the property
+				// readout for obtaining assetID
+				p.mockGetProperty()
+				p.mockMoveProperty()
+				p.groupID = "grp_222"
+				// waiting for new groupID
+				p.mockGetProperty()
+				// readout for general version calculations
+				p.mockGetPropertyVersion()
+				// change in hostnames detected
+				p.hostnames = papi.HostnameResponseItems{
+					Items: []papi.Hostname{
+						{
+							CnameFrom:            "from2.test.domain",
+							CnameTo:              "to.test.domain",
+							CertProvisioningType: "DEFAULT",
+							CnameType:            "EDGE_HOSTNAME",
+							EdgeHostnameID:       "ehn_123",
+						},
+					},
+				}
+				p.mockUpdatePropertyVersionHostnames()
+				// read x2
+				mockResourcePropertyRead(p, 2)
+				// delete
+				p.mockRemoveProperty().Once()
+			},
+			configDir:       "groupIDUpdate/withHostnames",
+			checksForCreate: defaultChecker.Build(),
+			checksForUpdate: defaultChecker.
+				CheckEqual("group_id", "grp_222").
+				Build(),
+		},
+		"Lifecycle: update group id and name - recreate": {
+			init: func(t *testing.T, p *mockProperty) {
+				// set initial data
+				p.mockPropertyData = basicDataWithDefaultRules
+				p.moveGroup = moveGroup{
+					sourceGroupID:      2,
+					destinationGroupID: 222,
+				}
+				// create
+				mockResourcePropertyCreateWithVersionHostnames(p)
+				// read x2
+				mockResourcePropertyRead(p, 2)
+				// read x1 before update
+				mockResourcePropertyRead(p)
+				p.mockRemoveProperty().Once()
+				// recreate the resource
+				p.propertyName = "dummy_name2"
+				p.groupID = "grp_222"
+				// recreate new property
+				mockResourcePropertyCreateWithVersionHostnames(p)
+				// read x2
+				mockResourcePropertyRead(p, 2)
+				// delete
+				p.mockRemoveProperty().Once()
+			},
+			configDir:       "groupIDUpdate/withName",
+			checksForCreate: defaultChecker.Build(),
+			checksForUpdate: defaultChecker.
+				CheckEqual("group_id", "grp_222").
+				CheckEqual("name", "dummy_name2").
+				Build(),
+		},
 	}
 
-	propertyLifecycle := func(propertyName, propertyID, groupID string, rules papi.RulesUpdate) BehaviorFunc {
-		return func(state *TestState) {
-			createProperty(propertyName, propertyID, rules)(state)
-			GetVersionResources(propertyID, "ctr_0", "grp_0", 1)(state)
-			DeleteProperty(propertyID)(state)
-		}
-	}
+	for name, test := range tests {
+		// TODO: Once DXE-4176 is done, un-skip those tests
+		testsToSkip := []string{"Lifecycle: update group id - in place", "Lifecycle: update group id and hostnames - in place", "Lifecycle: update group id and name - recreate"}
+		t.Run(name, func(t *testing.T) {
+			if slices.Contains(testsToSkip, name) {
+				t.Skip()
+			} else {
+				papiMock := &papi.Mock{}
+				iamMock := &iam.Mock{}
+				mp := mockProperty{
+					papiMock: papiMock,
+					iamMock:  iamMock,
+				}
+				test.init(t, &mp)
 
-	// propertyLifecycleWithPropertyID covers lifecycle when property_id is set
-	propertyLifecycleWithPropertyID := func(propertyName, propertyID, groupID string, rules papi.RulesUpdate) BehaviorFunc {
-		return func(state *TestState) {
-			state.Property.PropertyID = "prp_0"
-			state.Property.LatestVersion = 1
-			state.Property.ContractID = "ctr_0"
-			state.Property.GroupID = "grp_0"
-			state.Property.PropertyName = "test_property"
-			state.Rules = rules
-			state.RuleFormat = "v2020-01-01"
-			getProperty(propertyID)(state)
-			GetVersionResources(propertyID, "ctr_0", "grp_0", 1)(state)
-			// no deletion since it should be covered by property_bootstrap resource
-		}
-	}
-
-	propertyLifecycleWithDrift := func(propertyName, propertyID, groupID string, rulesToSend, rulesToReceive papi.RulesUpdate) BehaviorFunc {
-		return func(state *TestState) {
-			createProperty(propertyName, propertyID, rulesToSend)(state)
-			GetVersionResourcesDrift(propertyID, "ctr_0", "grp_0", 1, rulesToReceive)(state)
-			DeleteProperty(propertyID)(state)
-		}
-	}
-
-	importProperty := func(propertyID string) BehaviorFunc {
-		return func(state *TestState) {
-			// Depending on how much of the import ID is given, the initial property lookup may not have group and contract
-			ExpectGetProperty(state.Client, "prp_0", "grp_0", "ctr_0", &state.Property).Maybe()
-			ExpectGetProperty(state.Client, "prp_0", "", "", &state.Property).Maybe()
-		}
-	}
-
-	advanceVersion := func(propertyID string, fromVersion, toVersion int) BehaviorFunc {
-		return func(state *TestState) {
-			ExpectCreatePropertyVersion(state.Client, propertyID, "grp_0", "ctr_0", fromVersion, toVersion).Once().Run(func(mock.Arguments) {
-				state.Property.LatestVersion = toVersion
-			}).Run(func(args mock.Arguments) {
-				state.Property.LatestVersion = toVersion
-				state.VersionItems.Items = append(state.VersionItems.Items,
-					papi.PropertyVersionGetItem{
-						ProductionStatus: papi.VersionStatusInactive,
-						PropertyVersion:  toVersion,
-						StagingStatus:    papi.VersionStatusInactive,
+				useClient(papiMock, nil, func() {
+					useIam(iamMock, func() {
+						resource.UnitTest(t, resource.TestCase{
+							ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+							Steps: []resource.TestStep{
+								{
+									Config: testutils.LoadFixtureString(t, "testdata/TestResProperty/Lifecycle/%s/step0.tf", test.configDir),
+									Check:  test.checksForCreate,
+								},
+								{
+									Config:           testutils.LoadFixtureString(t, "testdata/TestResProperty/Lifecycle/%s/step1.tf", test.configDir),
+									Check:            test.checksForUpdate,
+									ConfigPlanChecks: test.configPlanChecks,
+								},
+							},
+						})
 					})
-			})
-			GetVersionResources(propertyID, "ctr_0", "grp_0", toVersion)(state)
+				})
+
+				papiMock.AssertExpectations(t)
+			}
+		})
+	}
+
+	// separate tests as they require different number of steps or filenames
+	t.Run("Lifecycle: diff cpCode", func(t *testing.T) {
+		papiMock := &papi.Mock{}
+		mp := &mockProperty{
+			papiMock:         papiMock,
+			mockPropertyData: basicData,
 		}
-	}
-
-	// TestCheckFunc to verify all standard attributes (for Lifecycle tests)
-	checkAttrs := func(propertyID, cnameTo, latestVersion, stagingVersion, productionVersion, edgeHostnameId, rules string) resource.TestCheckFunc {
-		return resource.ComposeAggregateTestCheckFunc(
-			resource.TestCheckResourceAttr("akamai_property.test", "id", propertyID),
-			resource.TestCheckResourceAttr("akamai_property.test", "hostnames.0.cname_to", cnameTo),
-			resource.TestCheckResourceAttr("akamai_property.test", "hostnames.0.edge_hostname_id", edgeHostnameId),
-			resource.TestCheckResourceAttr("akamai_property.test", "latest_version", latestVersion),
-			resource.TestCheckResourceAttr("akamai_property.test", "staging_version", stagingVersion),
-			resource.TestCheckResourceAttr("akamai_property.test", "production_version", productionVersion),
-			resource.TestCheckResourceAttr("akamai_property.test", "name", "test_property"),
-			resource.TestCheckResourceAttr("akamai_property.test", "contract_id", "ctr_0"),
-			resource.TestCheckResourceAttr("akamai_property.test", "group_id", "grp_0"),
-			resource.TestCheckResourceAttr("akamai_property.test", "product_id", "prd_0"),
-			resource.TestCheckResourceAttr("akamai_property.test", "rule_warnings.#", "0"),
-			resource.TestCheckResourceAttr("akamai_property.test", "rules", rules),
-		)
-	}
-
-	// addPropertyIDAttrCheck adds resource.TestCheckFunc that checks if property_id attribute was set correctly
-	addPropertyIDAttrCheck := func(checks resource.TestCheckFunc, propertyID string) resource.TestCheckFunc {
-		return resource.ComposeAggregateTestCheckFunc(
-			resource.TestCheckResourceAttr("akamai_property.test", "property_id", propertyID),
-			checks,
-		)
-	}
-
-	type StepsFunc = func(State *TestState, FixturePath string) []resource.TestStep
-
-	// Defines standard variations of client behaviors for a Lifecycle test
-	type LifecycleTestCase struct {
-		Name        string
-		ClientSetup BehaviorFunc
-		Steps       StepsFunc
-	}
-
-	// Standard test behavior for cases where the property's latest version is deactivated in staging network
-	latestVersionDeactivatedInStaging := LifecycleTestCase{
-		Name: "Latest version is active in staging",
-		ClientSetup: composeBehaviors(
-			propertyLifecycle("test_property", "prp_0", "grp_0",
-				papi.RulesUpdate{Rules: papi.Rules{Name: "default"}}),
-			getPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusDeactivated, papi.VersionStatusInactive),
-			setHostnames("prp_0", 1, "to.test.domain"),
-			advanceVersion("prp_0", 1, 2),
-			getPropertyVersionResources("prp_0", "grp_0", "ctr_0", 2, papi.VersionStatusDeactivated, papi.VersionStatusInactive),
-			setHostnames("prp_0", 2, "to2.test.domain"),
-		),
-		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
-			return []resource.TestStep{
-				{
-					PreConfig: func() {
-						State.VersionItems = papi.PropertyVersionItems{
-							Items: []papi.PropertyVersionGetItem{{
-								ProductionStatus: papi.VersionStatusInactive,
-								PropertyVersion:  1,
-								StagingStatus:    papi.VersionStatusDeactivated,
-							}},
-						}
-					},
-					Config: testutils.LoadFixtureString(t, "%s/step0.tf", FixturePath),
-					Check: checkAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
-						"{\"rules\":{\"name\":\"default\",\"options\":{}}}"),
-				},
-				{
-					PreConfig: func() {
-						StagingVersion := 1
-						State.Property.StagingVersion = &StagingVersion
-					},
-					Config: testutils.LoadFixtureString(t, "%s/step1.tf", FixturePath),
-					Check: checkAttrs("prp_0", "to2.test.domain", "2", "1", "0", "ehn_123",
-						"{\"rules\":{\"name\":\"default\",\"options\":{}}}"),
-				},
-			}
-		},
-	}
-
-	// Standard test behavior for cases where the property's latest version is deactivated in production network
-	latestVersionDeactivatedInProd := LifecycleTestCase{
-		Name: "Latest version is active in production",
-		ClientSetup: composeBehaviors(
-			propertyLifecycle("test_property", "prp_0", "grp_0",
-				papi.RulesUpdate{Rules: papi.Rules{Name: "default"}}),
-			getPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusDeactivated),
-			setHostnames("prp_0", 1, "to.test.domain"),
-			advanceVersion("prp_0", 1, 2),
-			getPropertyVersionResources("prp_0", "grp_0", "ctr_0", 2, papi.VersionStatusInactive, papi.VersionStatusDeactivated),
-			setHostnames("prp_0", 2, "to2.test.domain"),
-		),
-		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
-			return []resource.TestStep{
-				{
-					PreConfig: func() {
-						State.VersionItems = papi.PropertyVersionItems{
-							Items: []papi.PropertyVersionGetItem{{
-								ProductionStatus: papi.VersionStatusInactive,
-								PropertyVersion:  1,
-								StagingStatus:    papi.VersionStatusActive,
-							}},
-						}
-					},
-					Config: testutils.LoadFixtureString(t, "%s/step0.tf", FixturePath),
-					Check: checkAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
-						"{\"rules\":{\"name\":\"default\",\"options\":{}}}"),
-				},
-				{
-					PreConfig: func() {
-						ProductionVersion := 1
-						State.Property.ProductionVersion = &ProductionVersion
-					},
-					Config: testutils.LoadFixtureString(t, "%s/step1.tf", FixturePath),
-					Check: checkAttrs("prp_0", "to2.test.domain", "2", "0", "1", "ehn_123",
-						"{\"rules\":{\"name\":\"default\",\"options\":{}}}"),
-				},
-			}
-		},
-	}
-
-	// Standard test behavior for cases where the property's latest version is active in staging network
-	latestVersionActiveInStaging := LifecycleTestCase{
-		Name: "Latest version is active in staging",
-		ClientSetup: composeBehaviors(
-			propertyLifecycle("test_property", "prp_0", "grp_0",
-				papi.RulesUpdate{Rules: papi.Rules{Name: "default"}}),
-			getPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusActive, papi.VersionStatusInactive),
-			setHostnames("prp_0", 1, "to.test.domain"),
-			advanceVersion("prp_0", 1, 2),
-			getPropertyVersionResources("prp_0", "grp_0", "ctr_0", 2, papi.VersionStatusInactive, papi.VersionStatusActive),
-			setHostnames("prp_0", 2, "to2.test.domain"),
-		),
-		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
-			return []resource.TestStep{
-				{
-					PreConfig: func() {
-						State.VersionItems = papi.PropertyVersionItems{
-							Items: []papi.PropertyVersionGetItem{{
-								ProductionStatus: papi.VersionStatusInactive,
-								PropertyVersion:  1,
-								StagingStatus:    papi.VersionStatusActive,
-							}},
-						}
-					},
-					Config: testutils.LoadFixtureString(t, "%s/step0.tf", FixturePath),
-					Check: checkAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
-						"{\"rules\":{\"name\":\"default\",\"options\":{}}}"),
-				},
-				{
-					PreConfig: func() {
-						StagingVersion := 1
-						State.Property.StagingVersion = &StagingVersion
-					},
-					Config: testutils.LoadFixtureString(t, "%s/step1.tf", FixturePath),
-					Check: checkAttrs("prp_0", "to2.test.domain", "2", "1", "0", "ehn_123",
-						"{\"rules\":{\"name\":\"default\",\"options\":{}}}"),
-				},
-			}
-		},
-	}
-
-	// Standard test behavior for cases where the property's latest version is active in production network
-	latestVersionActiveInProd := LifecycleTestCase{
-		Name: "Latest version is active in production",
-		ClientSetup: composeBehaviors(
-			propertyLifecycle("test_property", "prp_0", "grp_0",
-				papi.RulesUpdate{Rules: papi.Rules{Name: "default"}}),
-			getPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusActive),
-			setHostnames("prp_0", 1, "to.test.domain"),
-			advanceVersion("prp_0", 1, 2),
-			getPropertyVersionResources("prp_0", "grp_0", "ctr_0", 2, papi.VersionStatusInactive, papi.VersionStatusActive),
-			setHostnames("prp_0", 2, "to2.test.domain"),
-		),
-		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
-			return []resource.TestStep{
-				{
-					PreConfig: func() {
-						State.VersionItems = papi.PropertyVersionItems{
-							Items: []papi.PropertyVersionGetItem{{
-								ProductionStatus: papi.VersionStatusActive,
-								PropertyVersion:  1,
-								StagingStatus:    papi.VersionStatusInactive,
-							}},
-						}
-					},
-					Config: testutils.LoadFixtureString(t, "%s/step0.tf", FixturePath),
-					Check: checkAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
-						"{\"rules\":{\"name\":\"default\",\"options\":{}}}"),
-				},
-				{
-					PreConfig: func() {
-						ProductionVersion := 1
-						State.Property.ProductionVersion = &ProductionVersion
-					},
-					Config: testutils.LoadFixtureString(t, "%s/step1.tf", FixturePath),
-					Check: checkAttrs("prp_0", "to2.test.domain", "2", "0", "1", "ehn_123",
-						"{\"rules\":{\"name\":\"default\",\"options\":{}}}"),
-				},
-			}
-		},
-	}
-
-	// withPropertyID covers case when property was initially created with property_bootstrap resource
-	withPropertyID := LifecycleTestCase{
-		Name: "Create with propertyID",
-		ClientSetup: composeBehaviors(
-			propertyLifecycleWithPropertyID("test_property", "prp_0", "grp_0",
-				papi.RulesUpdate{Rules: papi.Rules{Name: "default"}}),
-			getPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive),
-			setHostnames("prp_0", 1, "to.test.domain"),
-			setHostnames("prp_0", 1, "to2.test.domain"),
-		),
-		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
-			return []resource.TestStep{
-				{
-					PreConfig: func() {
-						State.VersionItems = papi.PropertyVersionItems{Items: []papi.PropertyVersionGetItem{{PropertyVersion: 1, ProductionStatus: papi.VersionStatusInactive}}}
-					},
-					Config: testutils.LoadFixtureString(t, "%s/step0.tf", FixturePath),
-					Check: checkAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
-						"{\"rules\":{\"name\":\"default\",\"options\":{}}}"),
-				},
-				{
-					Config: testutils.LoadFixtureString(t, "%s/step1.tf", FixturePath),
-					Check: addPropertyIDAttrCheck(checkAttrs("prp_0", "to2.test.domain", "1", "0", "0", "ehn_123",
-						"{\"rules\":{\"name\":\"default\",\"options\":{}}}"), "prp_0"),
-				},
-			}
-		},
-	}
-
-	// Standard test behavior for cases where the property's latest version is not active
-	latestVersionNotActive := LifecycleTestCase{
-		Name: "Latest version not active",
-		ClientSetup: composeBehaviors(
-			propertyLifecycle("test_property", "prp_0", "grp_0",
-				papi.RulesUpdate{Rules: papi.Rules{Name: "default"}}),
-			getPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive),
-			setHostnames("prp_0", 1, "to.test.domain"),
-			setHostnames("prp_0", 1, "to2.test.domain"),
-		),
-		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
-			return []resource.TestStep{
-				{
-					PreConfig: func() {
-						State.VersionItems = papi.PropertyVersionItems{Items: []papi.PropertyVersionGetItem{{PropertyVersion: 1, ProductionStatus: papi.VersionStatusInactive}}}
-					},
-					Config: testutils.LoadFixtureString(t, "%s/step0.tf", FixturePath),
-					Check: checkAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
-						"{\"rules\":{\"name\":\"default\",\"options\":{}}}"),
-				},
-				{
-					Config: testutils.LoadFixtureString(t, "%s/step1.tf", FixturePath),
-					Check: checkAttrs("prp_0", "to2.test.domain", "1", "0", "0", "ehn_123",
-						"{\"rules\":{\"name\":\"default\",\"options\":{}}}"),
-				},
-			}
-		},
-	}
-
-	// Standard test behavior for cases where the property's latest version is not active
-	stagingAndProductionVersionKnownAtPlan := LifecycleTestCase{
-		Name: "Latest version not active",
-		ClientSetup: composeBehaviors(
-			propertyLifecycle("test_property", "prp_0", "grp_0",
-				papi.RulesUpdate{Rules: papi.Rules{Name: "default"}}),
-			getPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive),
-			setHostnames("prp_0", 1, "to.test.domain"),
-			setHostnames("prp_0", 1, "to2.test.domain"),
-		),
-		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
-			return []resource.TestStep{
-				{
-					PreConfig: func() {
-						State.VersionItems = papi.PropertyVersionItems{Items: []papi.PropertyVersionGetItem{{PropertyVersion: 1, ProductionStatus: papi.VersionStatusInactive}}}
-					},
-					Config: testutils.LoadFixtureString(t, "%s/step0.tf", FixturePath),
-					Check: checkAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
-						"{\"rules\":{\"name\":\"default\",\"options\":{}}}"),
-				},
-				{
-					Config: testutils.LoadFixtureString(t, "%s/step1.tf", FixturePath),
-					Check: checkAttrs("prp_0", "to2.test.domain", "1", "0", "0", "ehn_123",
-						"{\"rules\":{\"name\":\"default\",\"options\":{}}}"),
-					ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{testutils.FieldsKnownAtPlan{FieldsKnown: []string{"staging_version", "production_version"}, FieldsUnknown: []string{"latest_version"}}}},
-				},
-			}
-		},
-	}
-
-	// This scenario simulates a new version being created outside of terraform and returned on read after the first step (update should be triggered)
-	changesMadeOutsideOfTerraform := LifecycleTestCase{
-		Name: "Latest version not active",
-		ClientSetup: composeBehaviors(
-			propertyLifecycle("test_property", "prp_0", "grp_0",
-				papi.RulesUpdate{Rules: papi.Rules{Name: "default"}}),
-			getPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive),
-			setHostnames("prp_0", 1, "to.test.domain"),
-			getPropertyVersionResources("prp_0", "grp_0", "ctr_0", 2, papi.VersionStatusInactive, papi.VersionStatusInactive),
-			GetVersionResources("prp_0", "ctr_0", "grp_0", 2),
-			setHostnames("prp_0", 2, "to.test.domain"),
-		),
-		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
-			return []resource.TestStep{
-				{
-					PreConfig: func() {
-						State.VersionItems = papi.PropertyVersionItems{Items: []papi.PropertyVersionGetItem{{PropertyVersion: 1, ProductionStatus: papi.VersionStatusInactive}}}
-					},
-					Config: testutils.LoadFixtureString(t, "%s/step0.tf", FixturePath),
-					Check: checkAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
-						"{\"rules\":{\"name\":\"default\",\"options\":{}}}"),
-				},
-				{
-					PreConfig: func() {
-						State.Property.LatestVersion = 2
-						State.Hostnames[0].CnameTo = "changed.test.domain"
-					},
-					Config: testutils.LoadFixtureString(t, "%s/step0.tf", FixturePath),
-					Check: checkAttrs("prp_0", "to.test.domain", "2", "0", "0", "ehn_123",
-						"{\"rules\":{\"name\":\"default\",\"options\":{}}}"),
-				},
-			}
-		},
-	}
-
-	// Standard test behavior for cases where the property's latest version is active in staging network
-	noDiff := LifecycleTestCase{
-		Name: "No diff found in update",
-		ClientSetup: composeBehaviors(
-			propertyLifecycle("test_property", "prp_0", "grp_0",
-				papi.RulesUpdate{Rules: papi.Rules{Children: []papi.Rules{{Name: "Default CORS Policy", CriteriaMustSatisfy: papi.RuleCriteriaMustSatisfyAll}}}}),
-			getPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive),
-			setHostnames("prp_0", 1, "to.test.domain"),
-			updateRuleTree("prp_0", "ctr_0", "grp_0", 1,
-				&papi.RulesUpdate{Rules: papi.Rules{Children: []papi.Rules{{CriteriaMustSatisfy: papi.RuleCriteriaMustSatisfyAll, Name: "Default CORS Policy"}}}}),
-		),
-		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
-			return []resource.TestStep{
-				{
-					PreConfig: func() {
-						State.VersionItems = papi.PropertyVersionItems{Items: []papi.PropertyVersionGetItem{{PropertyVersion: 1, ProductionStatus: papi.VersionStatusInactive}}}
-					},
-					Config: testutils.LoadFixtureString(t, "%s/step0.tf", FixturePath),
-					Check: checkAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
-						`{"rules":{"children":[{"name":"Default CORS Policy","options":{},"criteriaMustSatisfy":"all"}],"name":"","options":{}}}`),
-				},
-				{
-					Config: testutils.LoadFixtureString(t, "%s/step1.tf", FixturePath),
-					Check: checkAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
-						`{"rules":{"children":[{"name":"Default CORS Policy","options":{},"criteriaMustSatisfy":"all"}],"name":"","options":{}}}`),
-				},
-			}
-		},
-	}
-
-	diffCPCode := LifecycleTestCase{
-		Name: "Diff cpCode.cpCodeLimits",
-		ClientSetup: composeBehaviors(
-			propertyLifecycleWithDrift("test_property", "prp_0", "grp_0",
-				papi.RulesUpdate{
-					Rules: papi.Rules{Behaviors: []papi.RuleBehavior{
-						{
-							Name: "cpCode",
-							Options: papi.RuleOptionsMap{
-								"value": map[string]interface{}{
-									"description": "CliTerraformCPCode",
-									"id":          1.050269e+06,
-									"name":        "DevExpCliTerraformPapiAsSchemaTest",
-									"products":    []interface{}{"Web_App_Accel"},
-								},
-							},
-						},
-					},
-						Name: "default"}},
-				papi.RulesUpdate{
-					Rules: papi.Rules{Behaviors: []papi.RuleBehavior{
-						{
-							Name: "cpCode",
-							Options: papi.RuleOptionsMap{
-								"value": map[string]interface{}{
-									"cpCodeLimits": nil,
-									"description":  "CliTerraformCPCode",
-									"id":           1.050269e+06,
-									"name":         "DevExpCliTerraformPapiAsSchemaTest",
-									"products":     []interface{}{"Web_App_Accel"},
-								},
-							},
-						},
-					},
-						Name: "default"}},
-			),
-			setHostnames("prp_0", 1, "to.test.domain"),
-			updateRuleTree("prp_0", "ctr_0", "grp_0", 1,
-				&papi.RulesUpdate{Rules: papi.Rules{Behaviors: []papi.RuleBehavior{
-					{Name: "cpCode",
+		mp.ruleTree = mockRuleTreeData{
+			rules: papi.Rules{
+				Behaviors: []papi.RuleBehavior{
+					{
+						Name: "cpCode",
 						Options: papi.RuleOptionsMap{
 							"value": map[string]interface{}{
 								"description": "CliTerraformCPCode",
@@ -672,129 +989,1016 @@ func TestResProperty(t *testing.T) {
 						},
 					},
 				},
-					Name: "default"}}),
-			getPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive),
-		),
-		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
-			return []resource.TestStep{
-				{
-					Config: testutils.LoadFixtureString(t, "%s/step0.tf", FixturePath),
-					Check: checkAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
-						`{"rules":{"behaviors":[{"name":"cpCode","options":{"value":{"cpCodeLimits":null,"description":"CliTerraformCPCode","id":1050269,"name":"DevExpCliTerraformPapiAsSchemaTest","products":["Web_App_Accel"]}}}],"name":"default","options":{}}}`),
+				Name: "default",
+			},
+		}
+		// create
+		mockResourcePropertyFullCreate(mp)
+		// mock rules in the format that API returns to test custom diff functionality on rules (notice `"cpCodeLimits": nil`, which was not present in the request.
+		mp.ruleTree.rules = papi.Rules{Behaviors: []papi.RuleBehavior{
+			{
+				Name: "cpCode",
+				Options: papi.RuleOptionsMap{
+					"value": map[string]interface{}{
+						"cpCodeLimits": nil,
+						"description":  "CliTerraformCPCode",
+						"id":           1.050269e+06,
+						"name":         "DevExpCliTerraformPapiAsSchemaTest",
+						"products":     []interface{}{"Web_App_Accel"},
+					},
 				},
-			}
+			},
+		},
+			Name: "default"}
+		// read x2
+		mockResourcePropertyRead(mp, 2)
+		// delete
+		mp.mockRemoveProperty()
+
+		useClient(papiMock, nil, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResProperty/Lifecycle/rules diff cpcode/step0.tf"),
+						Check: defaultChecker.
+							CheckEqual("rules", `{"rules":{"behaviors":[{"name":"cpCode","options":{"value":{"cpCodeLimits":null,"description":"CliTerraformCPCode","id":1050269,"name":"DevExpCliTerraformPapiAsSchemaTest","products":["Web_App_Accel"]}}}],"name":"default","options":{}}}`).
+							Build(),
+					},
+				},
+			})
+		})
+	})
+
+	t.Run("Lifecycle: new version changed on server", func(t *testing.T) {
+		papiMock := &papi.Mock{}
+		mp := &mockProperty{
+			papiMock:         papiMock,
+			mockPropertyData: basicDataWithDefaultRules,
+		}
+		// create
+		mockResourcePropertyCreateWithVersionHostnames(mp)
+		// read x2
+		mockResourcePropertyRead(mp, 2)
+		// simulate remote change outside terraform, only for response data - new version with updated CnameTo.
+		mp.latestVersion = 2
+		mp.hostnames = papi.HostnameResponseItems{
+			Items: []papi.Hostname{
+				{
+					CnameType:            "EDGE_HOSTNAME",
+					CnameFrom:            "from.test.domain",
+					CnameTo:              "changed.test.domain",
+					CertProvisioningType: "DEFAULT",
+					EdgeHostnameID:       "ehn_123",
+				},
+			},
+		}
+		mp.versions = papi.PropertyVersionItems{
+			Items: []papi.PropertyVersionGetItem{
+				{
+					StagingStatus:    papi.VersionStatusInactive,
+					ProductionStatus: papi.VersionStatusInactive,
+					PropertyVersion:  2,
+				},
+			},
+		}
+		// read x1 - remote, updated state
+		mockResourcePropertyRead(mp)
+		// update
+		mp.mockGetPropertyVersion()
+		// such drift should invoke update function, which should use value from config which should replace the remote value.
+		// Hence, CnameTo is assigned the value from config for the mock data.
+		mp.hostnames = papi.HostnameResponseItems{
+			Items: []papi.Hostname{
+				{
+					CnameType:            "EDGE_HOSTNAME",
+					CnameFrom:            "from.test.domain",
+					CnameTo:              "to.test.domain",
+					CertProvisioningType: "DEFAULT",
+					EdgeHostnameID:       "ehn_123",
+				},
+			},
+		}
+		mp.mockUpdatePropertyVersionHostnames()
+		// read x2
+		mockResourcePropertyRead(mp, 2)
+		// delete
+		mp.mockRemoveProperty()
+
+		useClient(papiMock, nil, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResProperty/Lifecycle/new version changed on server/step0.tf"),
+						Check:  defaultChecker.Build(),
+					},
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResProperty/Lifecycle/new version changed on server/step0.tf"),
+						Check: defaultChecker.
+							CheckEqual("latest_version", "2").
+							Build(),
+					},
+				},
+			})
+		})
+	})
+}
+
+// TestPropertyImports tests import functionality of property resource
+func TestPropertyImport(t *testing.T) {
+	// Based on importID, different API calls are being made in the Import and Read functions. If the importID allows to
+	// reconcile specific property version, GetProperty calls are being executed in Import and Read operations. If the property version
+	// is unknown, GetPropertyVersions is being used instead of GetProperty.
+
+	// mockPropertyImportKnownVersion gathers API calls that are being executed when property version is known.
+	// Uses GetProperty calls.
+	mockPropertyImportKnownVersion := func(p *mockProperty) {
+		// import
+		p.mockGetProperty()
+		// read
+		mockResourcePropertyRead(p)
+	}
+
+	// mockPropertyImportKnownVersion gathers API calls that are being executed when property version is unknown.
+	// Uses GetPropertyVersions calls.
+	mockPropertyImportUnknownVersion := func(p *mockProperty) {
+		// import
+		p.mockGetPropertyVersions()
+		// read
+		p.mockGetPropertyVersions()
+		p.mockGetPropertyVersionHostnames()
+		p.mockGetRuleTree()
+		p.mockGetPropertyVersion()
+	}
+
+	// mockPropertyImportKnownVersionAfterImport gather API calls that are being executed when property version is provided and known
+	// read function, but not during import: hence there is a single call to GetPropertyVersions in import.
+	mockPropertyImportKnownVersionAfterImport := func(p *mockProperty) {
+		// import
+		p.mockGetPropertyVersions()
+		// read (notice that here one GetPropertyVersions call is omitted)
+		p.mockGetPropertyVersionHostnames()
+		p.mockGetRuleTree()
+		p.mockGetPropertyVersion()
+	}
+
+	// basicData holds basic, common data across test cases
+	basicData := mockPropertyData{
+		propertyID:    "prp_4",
+		groupID:       "grp_2",
+		contractID:    "ctr_1",
+		latestVersion: 1,
+		hostnames: papi.HostnameResponseItems{
+			Items: []papi.Hostname{
+				{
+					CnameTo:        "to.test.domain",
+					EdgeHostnameID: "ehn_123",
+				},
+			},
+		},
+		versions: papi.PropertyVersionItems{
+			Items: []papi.PropertyVersionGetItem{
+				{
+					StagingStatus:    papi.VersionStatusActive,
+					ProductionStatus: papi.VersionStatusInactive,
+					PropertyVersion:  1,
+				},
+			},
 		},
 	}
 
-	/*
-		rulesCustomDiff tests rulesCustomDiff function which is in resource_akamai_property.go file.
-		There is an additional field "options":{} in expected attributes, because with UpdateRuleTree(ctx, req) function
-		this field added automatically into response, even if it does not exist in rules.
-	*/
-	rulesCustomDiff := LifecycleTestCase{
-		Name: "Diff is only in behaviours.options.ttl",
-		ClientSetup: composeBehaviors(
-			propertyLifecycle("test_property", "prp_0", "grp_0",
-				papi.RulesUpdate{Rules: papi.Rules{Behaviors: []papi.RuleBehavior{{Name: "caching",
-					Options: papi.RuleOptionsMap{"behavior": "MAX_AGE", "mustRevalidate": false, "ttl": "12d"}}},
-					Name: "default"}}),
-			getPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive),
-			setHostnames("prp_0", 1, "to.test.domain"),
-			updateRuleTree("prp_0", "ctr_0", "grp_0", 1,
-				&papi.RulesUpdate{Rules: papi.Rules{Behaviors: []papi.RuleBehavior{{Name: "caching",
-					Options: papi.RuleOptionsMap{"behavior": "MAX_AGE", "mustRevalidate": false, "ttl": "12d"}}},
-					Name: "default"}}),
-			updateRuleTree("prp_0", "ctr_0", "grp_0", 1,
-				&papi.RulesUpdate{Rules: papi.Rules{Behaviors: []papi.RuleBehavior{{Name: "caching",
-					Options: papi.RuleOptionsMap{"behavior": "MAX_AGE", "mustRevalidate": false, "ttl": "13d"}}},
-					Name: "default"}}),
-		),
-		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
-			return []resource.TestStep{
-				{
-					PreConfig: func() {
-						State.VersionItems = papi.PropertyVersionItems{Items: []papi.PropertyVersionGetItem{{PropertyVersion: 1, ProductionStatus: papi.VersionStatusInactive}}}
+	// basicDataWithoutGroupAndContract does not contain group and contract parameters for cases where they are not part of importID
+	basicDataWithoutGroupAndContract := basicData
+	basicDataWithoutGroupAndContract.groupID = ""
+	basicDataWithoutGroupAndContract.contractID = ""
+
+	// defaultChecker builds basic, common checks across test cases
+	defaultChecker := test.NewImportChecker().
+		CheckEqual("id", "prp_4").
+		CheckEqual("hostnames.0.cname_to", "to.test.domain").
+		CheckEqual("hostnames.0.edge_hostname_id", "ehn_123").
+		CheckEqual("latest_version", "1").
+		CheckEqual("staging_version", "1").
+		CheckEqual("production_version", "0").
+		CheckEqual("rules", `{"rules":{"name":"","options":{}}}`)
+
+	tests := map[string]struct {
+		importID   string
+		config     string
+		init       func(*testing.T, *mockProperty)
+		stateCheck func(s []*terraform.InstanceState) error
+	}{
+		"Importable: property_id with ds": {
+			importID: "prp_4",
+			config:   "testdata/TestResProperty/Importable/importable_with_property_rules_builder.tf",
+			init: func(t *testing.T, p *mockProperty) {
+				// set initial data
+				p.mockPropertyData = basicDataWithoutGroupAndContract
+				p.ruleTree = mockRuleTreeData{
+					rules: papi.Rules{
+						Name: "default",
+						Behaviors: []papi.RuleBehavior{
+							{Name: "mPulse", Options: papi.RuleOptionsMap{"configOverride": "no new line"}},
+							{Name: "mPulse", Options: papi.RuleOptionsMap{"configOverride": ""}},
+							{Name: "mPulse", Options: papi.RuleOptionsMap{"configOverride": "\n\tline with new line before and after + tab\n"}},
+						},
 					},
-					Config: testutils.LoadFixtureString(t, "%s/step0.tf", FixturePath),
-					Check: checkAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
-						`{"rules":{"behaviors":[{"name":"caching","options":{"behavior":"MAX_AGE","mustRevalidate":false,"ttl":"12d"}}],"name":"default","options":{}}}`),
-				},
-				{
-					Config: testutils.LoadFixtureString(t, "%s/step1.tf", FixturePath),
-					Check: checkAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
-						`{"rules":{"behaviors":[{"name":"caching","options":{"behavior":"MAX_AGE","mustRevalidate":false,"ttl":"13d"}}],"name":"default","options":{}}}`),
-				},
-			}
+				}
+				mockPropertyImportKnownVersion(p)
+			},
+			stateCheck: defaultChecker.CheckEqual("rules", "{\"rules\":{\"behaviors\":[{\"name\":\"mPulse\",\"options\":{\"configOverride\":\"no new line\"}},{\"name\":\"mPulse\",\"options\":{\"configOverride\":\"\"}},{\"name\":\"mPulse\",\"options\":{\"configOverride\":\"\\n\\tline with new line before and after + tab\\n\"}}],\"name\":\"default\",\"options\":{}}}").Build(),
+		},
+		"Importable: property_id with property-bootstrap": {
+			importID: "prp_4,property-bootstrap",
+			config:   "testdata/TestResProperty/Importable/importable-with-bootstrap.tf",
+			init: func(t *testing.T, p *mockProperty) {
+				// set initial data
+				p.mockPropertyData = basicDataWithoutGroupAndContract
+				mockPropertyImportKnownVersion(p)
+			},
+			stateCheck: defaultChecker.Build(),
+		},
+		"Importable: property_id": {
+			importID: "prp_4",
+			init: func(t *testing.T, p *mockProperty) {
+				// set initial data
+				p.mockPropertyData = basicDataWithoutGroupAndContract
+				mockPropertyImportKnownVersion(p)
+			},
+			stateCheck: defaultChecker.Build(),
+		},
+		"Importable: property_id and ver_# version": {
+			importID: "prp_4,ver_1",
+			init: func(t *testing.T, p *mockProperty) {
+				// set initial data
+				p.mockPropertyData = basicDataWithoutGroupAndContract
+				mockPropertyImportUnknownVersion(p)
+			},
+			stateCheck: defaultChecker.Build(),
+		},
+		"Importable: property_id and # version": {
+			importID: "prp_4,1",
+			init: func(t *testing.T, p *mockProperty) {
+				// set initial data
+				p.mockPropertyData = basicDataWithoutGroupAndContract
+				mockPropertyImportUnknownVersion(p)
+			},
+			stateCheck: defaultChecker.Build(),
+		},
+		"Importable: property_id and latest": {
+			importID: "prp_4,latest",
+			init: func(t *testing.T, p *mockProperty) {
+				// set initial data
+				p.mockPropertyData = basicDataWithoutGroupAndContract
+				mockPropertyImportKnownVersion(p)
+			},
+			stateCheck: defaultChecker.Build(),
+		},
+		"Importable: property_id and network": {
+			importID: "prp_4,staging",
+			init: func(t *testing.T, p *mockProperty) {
+				// set initial data
+				p.mockPropertyData = basicDataWithoutGroupAndContract
+				mockPropertyImportUnknownVersion(p)
+			},
+			stateCheck: defaultChecker.Build(),
+		},
+		"Importable: un-prefixed property_id": {
+			importID: "4",
+			init: func(t *testing.T, p *mockProperty) {
+				// set initial data
+				p.mockPropertyData = basicDataWithoutGroupAndContract
+				mockPropertyImportKnownVersion(p)
+			},
+			stateCheck: defaultChecker.Build(),
+		},
+		"Importable: un-prefixed property_id and # version": {
+			importID: "4,1",
+			init: func(t *testing.T, p *mockProperty) {
+				// set initial data
+				p.mockPropertyData = basicDataWithoutGroupAndContract
+				mockPropertyImportUnknownVersion(p)
+			},
+			stateCheck: defaultChecker.Build(),
+		},
+		"Importable: un-prefixed property_id and ver_# version": {
+			importID: "4,ver_1",
+			init: func(t *testing.T, p *mockProperty) {
+				// set initial data
+				p.mockPropertyData = basicDataWithoutGroupAndContract
+				mockPropertyImportUnknownVersion(p)
+			},
+			stateCheck: defaultChecker.Build(),
+		},
+		"Importable: un-prefixed property_id and network": {
+			importID: "4,s",
+			init: func(t *testing.T, p *mockProperty) {
+				// set initial data
+				p.mockPropertyData = basicDataWithoutGroupAndContract
+				mockPropertyImportUnknownVersion(p)
+			},
+			stateCheck: defaultChecker.Build(),
+		},
+		"Importable: property_id and contract_id and group_id": {
+			importID: "prp_4,ctr_1,grp_2",
+			init: func(t *testing.T, p *mockProperty) {
+				// set initial data
+				p.mockPropertyData = basicData
+				// read
+				mockResourcePropertyRead(p)
+			},
+			stateCheck: defaultChecker.Build(),
+		},
+		"Importable: property_id, contract_id, group_id and empty version": {
+			importID: "prp_4,ctr_1,grp_2,",
+			init: func(t *testing.T, p *mockProperty) {
+				// set initial data
+				p.mockPropertyData = basicData
+				mockResourcePropertyRead(p)
+			},
+			stateCheck: defaultChecker.Build(),
+		},
+		"Importable: property_id, contract_id, group_id and latest": {
+			importID: "prp_4,ctr_1,grp_2,latest",
+			init: func(t *testing.T, p *mockProperty) {
+				// set initial data
+				p.mockPropertyData = basicData
+				// read
+				mockResourcePropertyRead(p)
+			},
+			stateCheck: defaultChecker.Build(),
+		},
+		"Importable: property_id, contract_id, group_id and ver_# version": {
+			importID: "prp_4,ctr_1,grp_2,ver_1",
+			init: func(t *testing.T, p *mockProperty) {
+				// set initial data
+				p.mockPropertyData = basicData
+				mockPropertyImportKnownVersionAfterImport(p)
+			},
+			stateCheck: defaultChecker.Build(),
+		},
+		"Importable: property_id, contract_id, group_id and # version": {
+			importID: "prp_4,ctr_1,grp_2,1",
+			init: func(t *testing.T, p *mockProperty) {
+				// set initial data
+				p.mockPropertyData = basicData
+				mockPropertyImportKnownVersionAfterImport(p)
+			},
+			stateCheck: defaultChecker.Build(),
+		},
+		"Importable: property_id, contract_id, group_id and network": {
+			importID: "prp_4,ctr_1,grp_2,staging",
+			init: func(t *testing.T, p *mockProperty) {
+				// set initial data
+				p.mockPropertyData = basicData
+				mockPropertyImportUnknownVersion(p)
+			},
+			stateCheck: defaultChecker.Build(),
+		},
+		"Importable: un-prefixed property_id and contract_id and group_id": {
+			importID: "4,1,2",
+			init: func(t *testing.T, p *mockProperty) {
+				// set initial data
+				p.mockPropertyData = basicData
+				// read
+				mockResourcePropertyRead(p)
+			},
+			stateCheck: defaultChecker.Build(),
+		},
+		"Importable: un-prefixed property_id and contract_id, group_id and # version": {
+			importID: "4,1,2,1",
+			init: func(t *testing.T, p *mockProperty) {
+				// set initial data
+				p.mockPropertyData = basicData
+				mockPropertyImportKnownVersionAfterImport(p)
+			},
+			stateCheck: defaultChecker.Build(),
+		},
+		"Importable: un-prefixed property_id and contract_id, group_id and ver_# version": {
+			importID: "4,1,2,ver_1",
+			init: func(t *testing.T, p *mockProperty) {
+				// set initial data
+				p.mockPropertyData = basicData
+				mockPropertyImportKnownVersionAfterImport(p)
+			},
+			stateCheck: defaultChecker.Build(),
+		},
+		"Importable: un-prefixed property_id and contract_id, group_id and latest": {
+			importID: "4,1,2,latest",
+			init: func(t *testing.T, p *mockProperty) {
+				// set initial data
+				p.mockPropertyData = basicData
+				// read
+				mockResourcePropertyRead(p)
+			},
+			stateCheck: defaultChecker.Build(),
+		},
+		"Importable: un-prefixed property_id and contract_id, group_id and network": {
+			importID: "4,1,2,staging",
+			init: func(t *testing.T, p *mockProperty) {
+				// set initial data
+				p.mockPropertyData = basicData
+				mockPropertyImportUnknownVersion(p)
+			},
+			stateCheck: defaultChecker.Build(),
 		},
 	}
 
-	noDiffForHostnames := LifecycleTestCase{
-		Name: "No diff found in update",
-		ClientSetup: composeBehaviors(
-			propertyLifecycle("test_property", "prp_0", "grp_0",
-				papi.RulesUpdate{Rules: papi.Rules{Children: []papi.Rules{{Name: "Default CORS Policy", CriteriaMustSatisfy: papi.RuleCriteriaMustSatisfyAll}}}}),
-			getPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive),
-			setTwoHostnames("prp_0", 1, "from1.test.domain", "to1.test.domain", "from2.test.domain", "to2.test.domain"),
-			updateRuleTree("prp_0", "ctr_0", "grp_0", 1,
-				&papi.RulesUpdate{Rules: papi.Rules{Children: []papi.Rules{{CriteriaMustSatisfy: papi.RuleCriteriaMustSatisfyAll, Name: "Default CORS Policy"}}}}),
-		),
-		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
-			return []resource.TestStep{
-				{
-					PreConfig: func() {
-						State.VersionItems = papi.PropertyVersionItems{Items: []papi.PropertyVersionGetItem{{PropertyVersion: 1, ProductionStatus: papi.VersionStatusInactive}}}
-					},
-					Config: testutils.LoadFixtureString(t, "%s/step0.tf", FixturePath),
-					Check: checkAttrs("prp_0", "to1.test.domain", "1", "0", "0", "ehn_123",
-						`{"rules":{"children":[{"name":"Default CORS Policy","options":{},"criteriaMustSatisfy":"all"}],"name":"","options":{}}}`),
-				},
-				{
-					Config: testutils.LoadFixtureString(t, "%s/step1.tf", FixturePath),
-					Check: checkAttrs("prp_0", "to1.test.domain", "1", "0", "0", "ehn_123",
-						`{"rules":{"children":[{"name":"Default CORS Policy","options":{},"criteriaMustSatisfy":"all"}],"name":"","options":{}}}`),
-				},
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			papiMock := &papi.Mock{}
+			mp := mockProperty{
+				papiMock: papiMock,
 			}
+			test.init(t, &mp)
+
+			// use default config file if custom is not specified
+			if test.config == "" {
+				test.config = "testdata/TestResProperty/Importable/importable.tf"
+			}
+
+			useClient(papiMock, nil, func() {
+				resource.UnitTest(t, resource.TestCase{
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+					Steps: []resource.TestStep{
+						{
+							ImportStateCheck:        test.stateCheck,
+							ImportStateId:           test.importID,
+							ImportState:             true,
+							ResourceName:            "akamai_property.test",
+							Config:                  testutils.LoadFixtureString(t, test.config),
+							ImportStateVerifyIgnore: []string{"product", "read_version"},
+						},
+					},
+				})
+			})
+
+			papiMock.AssertExpectations(t)
+		})
+	}
+}
+
+// TestPropertyErrors tests various cases where we should expect an error or validation is triggered
+func TestPropertyErrors(t *testing.T) {
+	// basicData holds basic, common data across test cases
+	basicData := mockPropertyData{
+		propertyName:  "test_property",
+		contractID:    "ctr_1",
+		productID:     "prd_3",
+		groupID:       "grp_2",
+		propertyID:    "prp_4",
+		latestVersion: 1,
+	}
+
+	defaultChecker := test.NewStateChecker("akamai_property.test").
+		CheckEqual("id", "prp_4").
+		CheckEqual("hostnames.0.cname_to", "to.test.domain").
+		CheckEqual("hostnames.0.edge_hostname_id", "ehn_123").
+		CheckEqual("latest_version", "1").
+		CheckEqual("staging_version", "0").
+		CheckEqual("production_version", "0").
+		CheckEqual("name", "test_property").
+		CheckEqual("contract_id", "ctr_1").
+		CheckEqual("group_id", "grp_2").
+		CheckEqual("product_id", "prd_3").
+		CheckEqual("rule_warnings.#", "0").
+		CheckEqual("rules", `{"rules":{"name":"default","options":{}}}`)
+
+	inactiveVersions := papi.PropertyVersionItems{
+		Items: []papi.PropertyVersionGetItem{
+			{
+				StagingStatus:    papi.VersionStatusInactive,
+				ProductionStatus: papi.VersionStatusInactive,
+				PropertyVersion:  1,
+			},
 		},
 	}
 
-	variablesInRuleTree := LifecycleTestCase{
-		Name: "Variables in property rule tree",
-		ClientSetup: composeBehaviors(
-			propertyLifecycle("test_property", "prp_0", "grp_0", papi.RulesUpdate{Rules: papi.Rules{Name: "default"}}),
-			getPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive),
-			setHostnames("prp_0", 1, "to.test.domain"),
-			getPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive),
-			GetVersionResources("prp_0", "ctr_0", "grp_0", 1),
-			updateRuleTree("prp_0", "ctr_0", "grp_0", 1, updateRuleTreeWithVariablesStep0()),
-			updateRuleTree("prp_0", "ctr_0", "grp_0", 1, updateRuleTreeWithVariablesStep1()),
-		),
-		Steps: func(State *TestState, FixturePath string) []resource.TestStep {
-			return []resource.TestStep{
-				{
-					PreConfig: func() {
-						State.VersionItems = papi.PropertyVersionItems{Items: []papi.PropertyVersionGetItem{{PropertyVersion: 1, ProductionStatus: papi.VersionStatusInactive}}}
-					},
-					Config: testutils.LoadFixtureString(t, "%s/step0.tf", FixturePath),
-					Check: checkAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
-						"{\"rules\":{\"behaviors\":[{\"name\":\"origin\",\"options\":{\"cacheKeyHostname\":\"REQUEST_HOST_HEADER\",\"compress\":true,\"enableTrueClientIp\":true,\"forwardHostHeader\":\"REQUEST_HOST_HEADER\",\"hostname\":\"test.domain\",\"httpPort\":80,\"httpsPort\":443,\"originCertificate\":\"\",\"originSni\":true,\"originType\":\"CUSTOMER\",\"ports\":\"\",\"trueClientIpClientSetting\":false,\"trueClientIpHeader\":\"True-Client-IP\",\"verificationMode\":\"PLATFORM_SETTINGS\"}}],\"children\":[{\"behaviors\":[{\"name\":\"baseDirectory\",\"options\":{\"value\":\"/smth/\"}}],\"criteria\":[{\"name\":\"requestHeader\",\"options\":{\"headerName\":\"Accept-Encoding\",\"matchCaseSensitiveValue\":true,\"matchOperator\":\"IS_ONE_OF\",\"matchWildcardName\":false,\"matchWildcardValue\":false}}],\"name\":\"change fwd path\",\"options\":{},\"criteriaMustSatisfy\":\"all\"},{\"behaviors\":[{\"name\":\"caching\",\"options\":{\"behavior\":\"MAX_AGE\",\"mustRevalidate\":false,\"ttl\":\"1m\"}}],\"name\":\"caching\",\"options\":{},\"criteriaMustSatisfy\":\"any\"}],\"comments\":\"The behaviors in the Default Rule apply to all requests for the property hostname(s) unless another rule overrides the Default Rule settings.\",\"name\":\"default\",\"options\":{},\"variables\":[{\"description\":\"\",\"hidden\":true,\"name\":\"TEST_EMPTY_FIELDS\",\"sensitive\":false,\"value\":\"\"},{\"description\":null,\"hidden\":true,\"name\":\"TEST_NIL_FIELD\",\"sensitive\":false,\"value\":\"\"}]}}"),
-				},
-				{
-					PreConfig: func() {
-						State.Property.LatestVersion = 1
-					},
-					Config: testutils.LoadFixtureString(t, "%s/step1.tf", FixturePath),
-					Check: checkAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
-						"{\"rules\":{\"behaviors\":[{\"name\":\"origin\",\"options\":{\"cacheKeyHostname\":\"REQUEST_HOST_HEADER\",\"compress\":true,\"enableTrueClientIp\":true,\"forwardHostHeader\":\"REQUEST_HOST_HEADER\",\"hostname\":\"test.domain\",\"httpPort\":80,\"httpsPort\":443,\"originCertificate\":\"\",\"originSni\":true,\"originType\":\"CUSTOMER\",\"ports\":\"\",\"trueClientIpClientSetting\":false,\"trueClientIpHeader\":\"True-Client-IP\",\"verificationMode\":\"PLATFORM_SETTINGS\"}}],\"children\":[{\"behaviors\":[{\"name\":\"baseDirectory\",\"options\":{\"value\":\"/smth/\"}}],\"criteria\":[{\"name\":\"requestHeader\",\"options\":{\"headerName\":\"Accept-Encoding\",\"matchCaseSensitiveValue\":true,\"matchOperator\":\"IS_ONE_OF\",\"matchWildcardName\":false,\"matchWildcardValue\":false}}],\"name\":\"change fwd path\",\"options\":{},\"criteriaMustSatisfy\":\"all\"},{\"behaviors\":[{\"name\":\"caching\",\"options\":{\"behavior\":\"MAX_AGE\",\"mustRevalidate\":false,\"ttl\":\"1m\"}}],\"name\":\"caching\",\"options\":{},\"criteriaMustSatisfy\":\"any\"}],\"comments\":\"The behaviors in the Default Rule apply to all requests for the property hostname(s) unless another rule overrides the Default Rule settings.\",\"name\":\"default\",\"options\":{},\"variables\":[{\"description\":\"\",\"hidden\":true,\"name\":\"TEST_EMPTY_FIELDS\",\"sensitive\":false,\"value\":\"\"},{\"description\":\"\",\"hidden\":true,\"name\":\"TEST_NIL_FIELD\",\"sensitive\":false,\"value\":\"\"}]}}"),
-				},
-			}
+	defaultHostname := papi.HostnameResponseItems{
+		Items: []papi.Hostname{
+			{
+				CnameType:            "EDGE_HOSTNAME",
+				CnameFrom:            "from.test.domain",
+				CnameTo:              "to.test.domain",
+				CertProvisioningType: "DEFAULT",
+				EdgeHostnameID:       "ehn_123",
+			},
 		},
 	}
 
-	// Test Schema Configuration
+	defaultRuleTree := mockRuleTreeData{
+		rules: papi.Rules{
+			Name: "default",
+		},
+	}
 
-	// Run a test case to verify schema validations
+	tests := map[string]struct {
+		init  func(*testing.T, *mockProperty)
+		steps []resource.TestStep
+	}{
+		"error when the given group is not found": {
+			init: func(t *testing.T, p *mockProperty) {
+				// set initial data
+				p.mockPropertyData = basicData
+				err := &papi.Error{
+					StatusCode: 404,
+					Title:      "Not Found",
+					Detail:     "The system was unable to locate the requested resource",
+					Type:       "https://problems.luna.akamaiapis.net/papi/v0/http/not-found",
+					Instance:   "https://akaa-hqgqowhpmkw32kmt-t3owzo37wb5dkern.luna-dev.akamaiapis.net/papi/v1/properties?contractId=ctr_0\\u0026groupId=grp_0#c3fe5f9b0c4a14d1",
+				}
+				p.mockCreateProperty(err)
+				p.mockGetGroups()
+			},
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResProperty/Creation/property.tf"),
+					ExpectError: regexp.MustCompile("group not found: grp_2"),
+				},
+			},
+		},
+		"error when creating property with non-unique name": {
+			init: func(t *testing.T, p *mockProperty) {
+				// set initial data
+				p.mockPropertyData = basicData
+				err := fmt.Errorf("given property name is not unique")
+				p.mockCreateProperty(err)
+			},
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResProperty/error_when_creating_property_with_non-unique_name.tf"),
+					ExpectError: regexp.MustCompile(`property name is not unique`),
+				},
+			},
+		},
+		"error when deleting active property": {
+			init: func(t *testing.T, p *mockProperty) {
+				// set initial data
+				p.mockPropertyData = basicData
+				p.versions = inactiveVersions
+				p.hostnames = defaultHostname
+				p.ruleTree = defaultRuleTree
+				// create
+				mockResourcePropertyCreateWithVersionHostnames(p)
+				// read x2
+				mockResourcePropertyRead(p, 2)
+				// refresh before update
+				mockResourcePropertyRead(p)
+				// First call to remove is not successful because property is active
+				err := fmt.Errorf(`cannot remove active property "prp_4"`)
+				p.mockRemoveProperty(err)
+				// Second call will be successful (TF test case requires last state to be empty or it's a failed test)
+				p.mockRemoveProperty()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResProperty/error_when_deleting_active_property/step0.tf"),
+					Check:  defaultChecker.Build(),
+				},
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResProperty/error_when_deleting_active_property/step1.tf"),
+					ExpectError: regexp.MustCompile(`cannot remove active property`),
+				},
+			},
+		},
+		"error validations when updating property with rules tree": {
+			init: func(t *testing.T, p *mockProperty) {
+				// set initial data
+				p.mockPropertyData = basicData
+				p.ruleTree = mockRuleTreeData{
+					rules: papi.Rules{
+						Name: "update rule tree",
+					},
+				}
+				// create
+				p.mockCreateProperty()
+				err := &papi.Error{
+					StatusCode:   400,
+					Type:         "/papi/v1/errors/validation.required_behavior",
+					Title:        "Missing required behavior in default rule",
+					Detail:       "In order for this property to work correctly behavior Content Provider Code needs to be present in the default section",
+					Instance:     "/papi/v1/properties/prp_173136/versions/3/rules#err_100",
+					BehaviorName: "cpCode",
+				}
+				// expect an error while updating rule tree
+				p.mockUpdateRuleTree(err)
+				// contract and group are not set in the state, so the property deletion is performed without those attributes
+				p.contractID = ""
+				p.groupID = ""
+				// delete
+				p.mockRemoveProperty()
+			},
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResProperty/property_update_with_validation_error_for_rules.tf"),
+					ExpectError: regexp.MustCompile(`validation.required_behavior`),
+				},
+			},
+		},
+		"validation warning when creating property with rules tree": {
+			init: func(t *testing.T, p *mockProperty) {
+				// set initial data
+				p.mockPropertyData = basicData
+				p.versions = inactiveVersions
+				p.ruleTree = mockRuleTreeData{
+					ruleFormat: "",
+					ruleWarnings: []papi.RuleWarnings{
+						{
+							Type:          "https://problems.luna.akamaiapis.net/papi/v0/validation/validation_message.ip_address_origin",
+							ErrorLocation: "#/rules/behaviors/1",
+							Detail:        "Using an IP address for the `Origin Server` is not recommended. IP addresses may be changed or reassigned without notice which can severely impact your property or cause a DoS. Please use a properly formatted hostname instead.",
+						},
+					},
+					rules: papi.Rules{
+						Behaviors: []papi.RuleBehavior{
+							{
+								Name: "origin",
+								Options: papi.RuleOptionsMap{
+									"hostname":  "1.2.3.4",
+									"httpPort":  float64(80),
+									"httpsPort": float64(443),
+								},
+							},
+						},
+					},
+				}
+				p.responseWarnings = []*papi.Error{
+					{
+						Type:          "https://problems.luna.akamaiapis.net/papi/v0/validation/validation_message.ip_address_origin",
+						ErrorLocation: "#/rules/behaviors/1",
+						Detail:        "Using an IP address for the `Origin Server` is not recommended. IP addresses may be changed or reassigned without notice which can severely impact your property or cause a DoS. Please use a properly formatted hostname instead.",
+					},
+				}
+				// create
+				p.mockCreateProperty()
+				p.mockUpdateRuleTree()
+				// read x2
+				mockResourcePropertyRead(p, 2)
+				// delete
+				p.mockRemoveProperty()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResProperty/property_with_validation_warning_for_rules.tf"),
+					Check: defaultChecker.
+						CheckEqual("rule_warnings.#", "1").
+						CheckEqual("rules", `{"rules":{"behaviors":[{"name":"origin","options":{"hostname":"1.2.3.4","httpPort":80,"httpsPort":443}}],"name":"","options":{}}}`).
+						CheckEqual("rule_warnings.0.detail", "Using an IP address for the `Origin Server` is not recommended. IP addresses may be changed or reassigned without notice which can severely impact your property or cause a DoS. Please use a properly formatted hostname instead.").
+						CheckMissing("hostnames.0.cname_to").
+						CheckMissing("hostnames.0.edge_hostname_id").
+						Build(),
+				},
+			},
+		},
+		"validation - when updating a property hostnames to empty it should return error": {
+			init: func(t *testing.T, p *mockProperty) {
+				// set initial data
+				p.mockPropertyData = basicData
+				p.hostnames = papi.HostnameResponseItems{
+					Items: []papi.Hostname{
+						{
+							CnameType:            "EDGE_HOSTNAME",
+							CnameFrom:            "terraform.provider.myu877.test.net",
+							CnameTo:              "terraform.provider.myu877.test.net.edgesuite.net",
+							CertProvisioningType: "DEFAULT",
+							EdgeHostnameID:       "ehn_123",
+						},
+					},
+				}
+				p.ruleTree = mockRuleTreeData{
+					rules:      papi.Rules{},
+					ruleFormat: "",
+				}
+				p.versions = inactiveVersions
+				// create
+				mockResourcePropertyCreateWithVersionHostnames(p)
+				// read x2
+				mockResourcePropertyRead(p, 2)
+				// refresh - read
+				mockResourcePropertyRead(p)
+				// delete
+				p.mockRemoveProperty()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResProperty/CreationUpdateNoHostnames/creation/property_create.tf"),
+					Check: defaultChecker.
+						CheckEqual("rules", `{"rules":{"name":"","options":{}}}`).
+						CheckEqual("hostnames.0.cname_to", "terraform.provider.myu877.test.net.edgesuite.net").
+						CheckEqual("hostnames.#", "1").
+						Build(),
+				},
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResProperty/CreationUpdateNoHostnames/update/property_update.tf"),
+					ExpectError: regexp.MustCompile("hostnames exist on server and cannot be updated to empty for property with id 'prp_4'. Provide at least one hostname to update existing list of hostnames associated to this property"),
+				},
+			},
+		},
+		"validation - when updating a property hostnames with cert_provisioning_type = 'DEFAULT' with secure-by-default enabled but remaining default certs == 0 it should return error": {
+			init: func(t *testing.T, p *mockProperty) {
+				// set initial data
+				p.mockPropertyData = basicData
+				p.hostnames = papi.HostnameResponseItems{
+					Items: []papi.Hostname{
+						{
+							CnameType:            "EDGE_HOSTNAME",
+							CnameFrom:            "terraform.provider.myu877.test.net",
+							CnameTo:              "terraform.provider.myu877.test.net.edgesuite.net",
+							CertProvisioningType: "DEFAULT",
+						},
+					},
+				}
+				// create
+				p.mockCreateProperty()
+				err := &papi.Error{
+					StatusCode: http.StatusTooManyRequests,
+					Remaining:  ptr.To(0),
+					LimitKey:   "DEFAULT_CERTS_PER_CONTRACT",
+				}
+				p.mockUpdatePropertyVersionHostnames(err)
+				// delete
+				p.mockRemoveProperty()
+			},
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResProperty/CreationUpdateNoHostnames/creation/property_create.tf"),
+					ExpectError: regexp.MustCompile("updating hostnames: not possible to use cert_provisioning_type = 'DEFAULT' as the limit for DEFAULT certificates has been reached"),
+				},
+			},
+		},
+		"validation - when updating a property hostnames with cert_provisioning_type = 'DEFAULT' not having enabled secure-by-default it should return error": {
+			init: func(t *testing.T, p *mockProperty) {
+				// set initial data
+				p.mockPropertyData = basicData
+				p.hostnames = papi.HostnameResponseItems{
+					Items: []papi.Hostname{
+						{
+							CnameType:            "EDGE_HOSTNAME",
+							CnameFrom:            "terraform.provider.myu877.test.net",
+							CnameTo:              "terraform.provider.myu877.test.net.edgesuite.net",
+							CertProvisioningType: "DEFAULT",
+						},
+					},
+				}
+				p.versions = inactiveVersions
+				// create
+				p.mockCreateProperty()
+				err := &papi.Error{
+					StatusCode: http.StatusForbidden,
+					Type:       "https://problems.luna.akamaiapis.net/papi/v0/property-version-hostname/default-cert-provisioning-unavailable",
+				}
+				p.mockUpdatePropertyVersionHostnames(err)
+				// delete
+				p.mockRemoveProperty()
+			},
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResProperty/CreationUpdateNoHostnames/creation/property_create.tf"),
+					ExpectError: regexp.MustCompile("updating hostnames: not possible to use cert_provisioning_type = 'DEFAULT' as secure-by-default is not enabled in this account"),
+				},
+			},
+		},
+		"400 from UpdatePropertyVersionHostnames - incorrect/invalid edge hostname": {
+			init: func(t *testing.T, p *mockProperty) {
+				// set initial data
+				p.mockPropertyData = mockPropertyData{
+					propertyName:  "dxe-2406-issue-example",
+					groupID:       "grp_2",
+					contractID:    "ctr_1",
+					productID:     "prd_3",
+					propertyID:    "prp_4",
+					latestVersion: 1,
+					ruleTree: mockRuleTreeData{
+						ruleFormat: "",
+						rules: papi.Rules{
+							Name: "default",
+							Children: []papi.Rules{
+								{
+									Name: "Static Content",
+									Behaviors: []papi.RuleBehavior{
+										{
+											Name:    "prefetch",
+											Options: papi.RuleOptionsMap{"enabled": false},
+										},
+									},
+								},
+							},
+							Behaviors: []papi.RuleBehavior{
+								{
+									Name: "cpCode",
+									Options: papi.RuleOptionsMap{
+										"value": map[string]interface{}{
+											"id":          float64(12345),
+											"description": "WAA Example.com",
+											"products": []interface{}{
+												"Web_App_Accel",
+											},
+											"name": "WAA Example.com",
+										},
+									},
+								},
+							},
+							Options: papi.RuleOptions{IsSecure: true},
+						},
+					},
+					versions: papi.PropertyVersionItems{
+						Items: []papi.PropertyVersionGetItem{
+							{
+								StagingStatus:    papi.VersionStatusInactive,
+								ProductionStatus: papi.VersionStatusInactive,
+								PropertyVersion:  1,
+							},
+						},
+					},
+					hostnames: papi.HostnameResponseItems{
+						Items: []papi.Hostname{
+							{
+								CnameType:            "EDGE_HOSTNAME",
+								CnameFrom:            "dxe-2406-issue-example-second.com",
+								CnameTo:              "dxe-2406-issue-example-second.com.example.net",
+								CertProvisioningType: "CPS_MANAGED",
+								EdgeHostnameID:       "ehn_123",
+							},
+							{
+								CnameType:            "EDGE_HOSTNAME",
+								CnameFrom:            "dxe-2406-issue.com",
+								CnameTo:              "dxe-2406-issue.com.example.net",
+								CertProvisioningType: "CPS_MANAGED",
+							},
+						},
+					},
+					createActivation: papi.Activation{
+						ActivationID:    "act_123",
+						ActivationType:  papi.ActivationTypeActivate,
+						Network:         papi.ActivationNetworkStaging,
+						Status:          papi.ActivationStatusActive,
+						NotifyEmails:    []string{"dummy-user@akamai.com"},
+						PropertyVersion: 1,
+					},
+					groups: papi.GroupItems{
+						Items: []*papi.Group{},
+					},
+					activations: papi.ActivationsItems{
+						Items: []*papi.Activation{},
+					},
+				}
+				// akamai_property - create
+				mockResourcePropertyFullCreate(p)
+				// akamai_property - read x2
+				mockResourcePropertyRead(p, 2)
+				// akamai_property_activation - create activation
+				p.mockGetRuleTreeActivation().Once() // GetRuleTree request in activation resources is different from GetRuleTree in property resource
+				p.mockGetActivations()               // no activation
+				p.mockCreateActivation()
+				// modify mock data to reflect newly created activation
+				p.activations = papi.ActivationsItems{
+					Items: []*papi.Activation{
+						{
+							ActivationID:    p.createActivation.ActivationID,
+							ActivationType:  papi.ActivationTypeActivate,
+							GroupID:         p.groupID,
+							PropertyName:    p.propertyName,
+							PropertyID:      p.propertyID,
+							PropertyVersion: p.createActivation.PropertyVersion,
+							Network:         papi.ActivationNetworkStaging,
+							Status:          papi.ActivationStatusActive,
+							NotifyEmails:    p.createActivation.NotifyEmails,
+						},
+					},
+				}
+				p.mockGetActivation()
+
+				activatedVersion := papi.PropertyVersionItems{
+					Items: []papi.PropertyVersionGetItem{
+						{
+							ProductionStatus: papi.VersionStatusActive,
+							StagingStatus:    papi.VersionStatusActive,
+						},
+					},
+				}
+				p.versions = activatedVersion
+
+				// akamai_property_activation - read x2
+				p.mockGetActivations().Twice()
+
+				// akamai_property - read before update
+				mockResourcePropertyRead(p)
+
+				// second step
+				// property update returns an error on the invalid edgehostname
+				p.mockGetPropertyVersion()
+				p.createFromVersion = 1
+				p.newVersionID = 2
+				p.mockCreatePropertyVersion()
+				// after creating new version, update latest version of the property to reflect that change
+				p.latestVersion = p.newVersionID
+
+				// prepare updated hostnames
+				updatedHostnames := papi.HostnameResponseItems{
+					Items: []papi.Hostname{
+						{
+							CnameType:            "EDGE_HOSTNAME",
+							CnameFrom:            "dxe-2406-issue-example-second.com",
+							CnameTo:              "dxe-2406-issue-example-second.com.example.net",
+							CertProvisioningType: "CPS_MANAGED",
+							EdgeHostnameID:       "ehn_123",
+						},
+						{
+							CnameType:            "EDGE_HOSTNAME",
+							CnameFrom:            "dxe-2406-issue.com",
+							CnameTo:              "dxe-2406-issue.com.example.net",
+							CertProvisioningType: "CPS_MANAGED",
+						},
+						{
+							CnameType:            "EDGE_HOSTNAME",
+							CnameFrom:            "does-not-exist.com",
+							CnameTo:              "does-not-exist.com.example.net",
+							CertProvisioningType: "CPS_MANAGED",
+						},
+					},
+				}
+				p.hostnames = updatedHostnames
+
+				// return an error while updating property version hostnames
+				err := fmt.Errorf("%w: request failed: %s", papi.ErrUpdatePropertyVersionHostnames, errors.New("{\n    \"type\": \"https://problems.luna.akamaiapis.net/papi/v0/property-version-hostname/bad-cnameto\",\n    \"title\": \"Bad `cnameTo`\",\n    \"detail\": \"The System could not find cnameTo value `does-not-exist.com.example.net`.\",\n    \"instance\": \"host/papi/v1/properties/prp_0/versions/2/hostnames?contractId=ctr_0&groupId=grp_0&includeCertStatus=false&validateHostnames=false#efba6490291100b1\",\n    \"status\": 400\n}"))
+				p.mockUpdatePropertyVersionHostnames(err)
+
+				// terraform clean up - terraform test framework attempts to run destroy plan, if an error is returned on second step
+
+				// activation and property deletion
+				// update current activations of given property
+				p.activations = papi.ActivationsItems{
+					Items: []*papi.Activation{
+						{
+							ActivationID:    "act_123",
+							PropertyID:      "prp_4",
+							PropertyVersion: 1,
+							Network:         papi.ActivationNetworkStaging,
+							Status:          papi.ActivationStatusActive,
+							ActivationType:  papi.ActivationTypeActivate,
+							SubmitDate:      "2020-10-28T15:04:05Z",
+							NotifyEmails:    []string{"dummy-user@akamai.com"},
+						},
+					},
+				}
+				p.mockGetActivations()
+				// mock deactivate type activation for delete activation resource
+				p.createActivation = papi.Activation{
+					ActivationID:    "act_123",
+					ActivationType:  papi.ActivationTypeDeactivate,
+					Network:         papi.ActivationNetworkStaging,
+					Status:          papi.ActivationStatusActive,
+					NotifyEmails:    []string{"dummy-user@akamai.com"},
+					PropertyVersion: 1,
+				}
+				// akamai_property_activation - delete
+				p.mockCreateActivation()
+				p.mockGetActivation()
+				// akamai_property - delete
+				p.mockRemoveProperty()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResProperty/CreationUpdateIncorrectEdgeHostname/create/property.tf"),
+					Check: defaultChecker.
+						CheckEqual("rules", `{"rules":{"behaviors":[{"name":"cpCode","options":{"value":{"description":"WAA Example.com","id":12345,"name":"WAA Example.com","products":["Web_App_Accel"]}}}],"children":[{"behaviors":[{"name":"prefetch","options":{"enabled":false}}],"name":"Static Content","options":{}}],"name":"default","options":{"is_secure":true}}}`).
+						CheckEqual("name", "dxe-2406-issue-example").
+						CheckEqual("hostnames.0.cname_to", "dxe-2406-issue-example-second.com.example.net").
+						CheckEqual("hostnames.#", "2").
+						Build(),
+				},
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResProperty/CreationUpdateIncorrectEdgeHostname/update/property.tf"),
+					ExpectError: regexp.MustCompile("Error: updating hostnames: request failed:"),
+				},
+			},
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			papiMock := &papi.Mock{}
+			mp := mockProperty{
+				papiMock: papiMock,
+			}
+			test.init(t, &mp)
+
+			useClient(papiMock, nil, func() {
+				resource.UnitTest(t, resource.TestCase{
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+					Steps:                    test.steps,
+				})
+			})
+
+			papiMock.AssertExpectations(t)
+		})
+	}
+}
+
+// TestSchemaConfiguration tests errors when invalid HCL configuration is provided
+func TestSchemaConfiguration(t *testing.T) {
 	assertConfigError := func(t *testing.T, flaw, rx string) func(t *testing.T) {
-
 		fixtureName := strings.ReplaceAll(flaw, " ", "_")
 
 		return func(t *testing.T) {
@@ -808,1086 +2012,13 @@ func TestResProperty(t *testing.T) {
 		}
 	}
 
-	// Test Lifecycle
-
-	// Run a happy-path test case that goes through a complete create-update-destroy cycle
-	assertLifecycle := func(t *testing.T, name, variant string, tc LifecycleTestCase) func(t *testing.T) {
-
-		fixturePrefix := fmt.Sprintf("testdata/%s/Lifecycle/%s", t.Name(), variant)
-
-		return func(t *testing.T) {
-			client := &papi.Mock{}
-			client.Test(T{t})
-			State := &TestState{Client: client}
-			tc.ClientSetup(State)
-
-			useClient(client, nil, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					IsUnitTest:               true,
-					Steps:                    tc.Steps(State, fixturePrefix),
-				})
-			})
-
-			client.AssertExpectations(t)
-		}
-	}
-
-	// Test Import
-	// Run a test case that verifies the resource can be imported by the given ID
-	assertImportableWithOptions := func(t *testing.T, testName, importID, fileName, rules string, setup []BehaviorFunc) func(t *testing.T) {
-
-		fixturePath := fmt.Sprintf("testdata/%s/Importable/%s", t.Name(), fileName)
-
-		return func(t *testing.T) {
-
-			client := &papi.Mock{}
-			client.Test(T{t})
-
-			parameters := strings.Split(importID, ",")
-			var propertyBootstrap bool
-			if parameters[len(parameters)-1] == "property-bootstrap" {
-				propertyBootstrap = true
-				parameters = parameters[:len(parameters)-1]
-			}
-			numberParameters := len(parameters)
-			lastParameter := parameters[len(parameters)-1]
-			if propertyBootstrap {
-				setup = append(setup, propertyLifecycleWithPropertyID("test_property", "prp_0", "grp_0",
-					papi.RulesUpdate{Rules: papi.Rules{Name: "default"}}))
-			} else {
-				setup = append(setup, propertyLifecycle("test_property", "prp_0", "grp_0",
-					papi.RulesUpdate{Rules: papi.Rules{Name: "default"}}))
-			}
-			setup = append(setup,
-				getPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive),
-				setHostnames("prp_0", 1, "to.test.domain"),
-				importProperty("prp_0"),
-			)
-			if (numberParameters == 2 || numberParameters == 4) && !isDefaultVersion(lastParameter) {
-				var contractID, groupID string
-				if numberParameters == 4 {
-					contractID = "ctr_0"
-					groupID = "grp_0"
-				}
-				if numberParameters == 2 {
-					setup = append(setup, getPropertyVersions("prp_0", "test_property", "ctr_0", "grp_0"))
-				}
-				setup = append(setup, getPropertyVersions("prp_0", "test_property", contractID, groupID))
-			}
-			s := composeBehaviors(setup...)
-			tc := LifecycleTestCase{
-				Name:        "Importable",
-				ClientSetup: s,
-				Steps: func(State *TestState, _ string) []resource.TestStep {
-					return []resource.TestStep{
-						{
-							Config: testutils.LoadFixtureString(t, fixturePath),
-							Check:  checkAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123", rules),
-						},
-						// this step is used to refresh state with updated staging/production statuses
-						{
-							PreConfig: func() {
-								State.VersionItems = papi.PropertyVersionItems{Items: []papi.PropertyVersionGetItem{
-									{
-										PropertyVersion:  1,
-										StagingStatus:    papi.VersionStatusActive,
-										ProductionStatus: papi.VersionStatusActive,
-									},
-								}}
-								stagingVersion := 1
-								State.Property.StagingVersion = &stagingVersion
-
-							},
-							Config: testutils.LoadFixtureString(t, fixturePath),
-							Check:  checkAttrs("prp_0", "to.test.domain", "1", "1", "0", "ehn_123", rules),
-						},
-						{
-							ImportState:             true,
-							ImportStateVerify:       true,
-							ImportStateId:           importID,
-							ResourceName:            "akamai_property.test",
-							Config:                  testutils.LoadFixtureString(t, fixturePath),
-							ImportStateVerifyIgnore: []string{"product", "read_version"},
-							Check:                   addPropertyIDAttrCheck(checkAttrs("prp_0", "to.test.domain", "1", "1", "0", "ehn_123", rules), "prp_0"),
-						},
-					}
-				},
-			}
-			State := &TestState{Client: client}
-			tc.ClientSetup(State)
-			useClient(client, nil, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps:                    tc.Steps(State, ""),
-				})
-			})
-
-			client.AssertExpectations(t)
-		}
-	}
-
-	assertImportable := func(t *testing.T, testName, importID string) func(t *testing.T) {
-		return assertImportableWithOptions(t, testName, importID, "importable.tf", "{\"rules\":{\"name\":\"default\",\"options\":{}}}", []BehaviorFunc{})
-	}
-
-	// assertImportableWithBootstrap covers imports when property-bootstrap flag is provided
-	assertImportableWithBootstrap := func(t *testing.T, testName, importID string) func(t *testing.T) {
-		return assertImportableWithOptions(t, testName, importID, "importable-with-bootstrap.tf", "{\"rules\":{\"name\":\"default\",\"options\":{}}}", []BehaviorFunc{})
-	}
-
-	suppressLogging(t, func() {
-
-		// Test Schema Configuration
-
-		t.Run("Schema Configuration Error: name not given", assertConfigError(t, "name not given", `"name" is required`))
-		t.Run("Schema Configuration Error: contract_id not given", assertConfigError(t, "contract_id not given", `Missing required argument`))
-		t.Run("Schema Configuration Error: group_id not given", assertConfigError(t, "group_id not given", `Missing required argument`))
-		t.Run("Schema Configuration Error: product_id not given", assertConfigError(t, "product_id not given", `Missing required argument`))
-		t.Run("Schema Configuration Error: invalid json rules", assertConfigError(t, "invalid json rules", `rules are not valid JSON`))
-		t.Run("Schema Configuration Error: invalid name given", assertConfigError(t, "invalid name given", `a name must only contain letters, numbers, and these characters: . _ -`))
-		t.Run("Schema Configuration Error: name given too long", assertConfigError(t, "name given too long", `a name must be longer than 0 characters and shorter than 86 characters`))
-
-		// Test Lifecycle
-
-		// In the tests below update for hostnames is triggered
-		t.Run("Lifecycle: create with propertyID", assertLifecycle(t, t.Name(), "with-propertyID", withPropertyID))
-		t.Run("Lifecycle: latest version is not active (normal)", assertLifecycle(t, t.Name(), "normal", latestVersionNotActive))
-		t.Run("Lifecycle: latest version is active in staging (normal)", assertLifecycle(t, t.Name(), "normal", latestVersionActiveInStaging))
-		t.Run("Lifecycle: latest version is active in production (normal)", assertLifecycle(t, t.Name(), "normal", latestVersionActiveInProd))
-		t.Run("Lifecycle: latest version is deactivated in staging (normal)", assertLifecycle(t, t.Name(), "normal", latestVersionDeactivatedInStaging))
-		t.Run("Lifecycle: latest version is deactivated in production (normal)", assertLifecycle(t, t.Name(), "normal", latestVersionDeactivatedInProd))
-		t.Run("Lifecycle: latest version is not active (contract_id without prefix)", assertLifecycle(t, t.Name(), "contract_id without prefix", latestVersionNotActive))
-		t.Run("Lifecycle: latest version active in staging (contract_id without prefix)", assertLifecycle(t, t.Name(), "contract_id without prefix", latestVersionActiveInStaging))
-		t.Run("Lifecycle: latest version active in production (contract_id without prefix)", assertLifecycle(t, t.Name(), "contract_id without prefix", latestVersionActiveInProd))
-		t.Run("Lifecycle: latest version is not active (group_id without prefix)", assertLifecycle(t, t.Name(), "group_id without prefix", latestVersionNotActive))
-		t.Run("Lifecycle: latest version is active in staging (group_id without prefix)", assertLifecycle(t, t.Name(), "group_id without prefix", latestVersionActiveInStaging))
-		t.Run("Lifecycle: latest version is active in production (group_id without prefix)", assertLifecycle(t, t.Name(), "group_id without prefix", latestVersionActiveInProd))
-		t.Run("Lifecycle: latest version is not active (product_id without prefix)", assertLifecycle(t, t.Name(), "product_id without prefix", latestVersionNotActive))
-		t.Run("Lifecycle: latest version is active in staging (product_id without prefix)", assertLifecycle(t, t.Name(), "product_id without prefix", latestVersionActiveInStaging))
-		t.Run("Lifecycle: latest version is active in production (product_id without prefix)", assertLifecycle(t, t.Name(), "product_id without prefix", latestVersionActiveInProd))
-
-		t.Run("Lifecycle: no diff", assertLifecycle(t, t.Name(), "no diff", noDiff))
-		t.Run("Lifecycle: diff cpCode", assertLifecycle(t, t.Name(), "rules diff cpcode", diffCPCode))
-
-		// Update for rules
-		t.Run("Lifecycle: rules custom diff", assertLifecycle(t, t.Name(), "rules custom diff", rulesCustomDiff))
-
-		t.Run("Lifecycle: no diff for hostnames (hostnames)", assertLifecycle(t, t.Name(), "hostnames", noDiffForHostnames))
-
-		// Update for hostnames
-		t.Run("Lifecycle: new version changed on server", assertLifecycle(t, t.Name(), "new version changed on server", changesMadeOutsideOfTerraform))
-
-		// Update for rules
-		t.Run("Lifecycle: rules with variables", assertLifecycle(t, t.Name(), "rules with variables", variablesInRuleTree))
-
-		// Update for hostnames
-		t.Run("Lifecycle: Verify staging_version and production_version known at plan", assertLifecycle(t, t.Name(), "normal", stagingAndProductionVersionKnownAtPlan))
-
-		// Test Import
-
-		t.Run("Importable: property_id with ds", assertImportableWithOptions(t, "property_id", "prp_0", "importable_with_property_rules_builder.tf",
-			"{\"rules\":{\"behaviors\":[{\"name\":\"mPulse\",\"options\":{\"configOverride\":\"no new line\"}},{\"name\":\"mPulse\",\"options\":{\"configOverride\":\"\"}},{\"name\":\"mPulse\",\"options\":{\"configOverride\":\"\\n\\tline with new line before and after + tab\\n\"}}],\"name\":\"default\",\"options\":{}}}",
-			[]BehaviorFunc{
-				updateRuleTree("prp_0", "ctr_0", "grp_0", 1,
-					&papi.RulesUpdate{
-						Rules: papi.Rules{
-							Name: "default",
-							Behaviors: []papi.RuleBehavior{
-								{Name: "mPulse", Options: papi.RuleOptionsMap{"configOverride": "no new line"}},
-								{Name: "mPulse", Options: papi.RuleOptionsMap{"configOverride": ""}},
-								{Name: "mPulse", Options: papi.RuleOptionsMap{"configOverride": "\n\tline with new line before and after + tab\n"}},
-							},
-						}})},
-		))
-		t.Run("Importable: property_id with property-bootstrap", assertImportableWithBootstrap(t, "property_id", "prp_0,property-bootstrap"))
-		t.Run("Importable: property_id", assertImportable(t, "property_id", "prp_0"))
-		t.Run("Importable: property_id and ver_# version", assertImportable(t, "property_id and ver_# version", "prp_0,ver_1"))
-		t.Run("Importable: property_id and # version", assertImportable(t, "property_id and # version", "prp_0,1"))
-		t.Run("Importable: property_id and latest", assertImportable(t, "property_id and latest", "prp_0,latest"))
-		t.Run("Importable: property_id and network", assertImportable(t, "property_id and network", "prp_0,staging"))
-		t.Run("Importable: unprefixed property_id", assertImportable(t, "unprefixed property_id", "0"))
-		t.Run("Importable: unprefixed property_id and # version", assertImportable(t, "unprefixed property_id and # version", "0,1"))
-		t.Run("Importable: unprefixed property_id and ver_# version", assertImportable(t, "unprefixed property_id and ver_# version", "0,ver_1"))
-		t.Run("Importable: unprefixed property_id and network", assertImportable(t, "unprefixed property_id and network", "0,p"))
-		t.Run("Importable: property_id and contract_id and group_id", assertImportable(t, "property_id and contract_id and group_id", "prp_0,ctr_0,grp_0"))
-		t.Run("Importable: property_id, contract_id, group_id and empty version", assertImportable(t, "property_id, contract_id, group_id and empty version", "prp_0,ctr_0,grp_0,"))
-		t.Run("Importable: property_id, contract_id, group_id and latest", assertImportable(t, "property_id, contract_id, group_id and latest", "prp_0,ctr_0,grp_0,latest"))
-		t.Run("Importable: property_id, contract_id, group_id and ver_# version", assertImportable(t, "property_id, contract_id, group_id and ver_# version", "prp_0,ctr_0,grp_0,ver_1"))
-		t.Run("Importable: property_id, contract_id, group_id and # version", assertImportable(t, "property_id, contract_id, group_id and # version", "prp_0,ctr_0,grp_0,1"))
-		t.Run("Importable: property_id, contract_id, group_id and network", assertImportable(t, "property_id, contract_id, group_id and network", "prp_0,ctr_0,grp_0,staging"))
-		t.Run("Importable: unprefixed property_id and contract_id and group_id", assertImportable(t, "unprefixed property_id and contract_id and group_id", "0,0,0"))
-		t.Run("Importable: unprefixed property_id and contract_id, group_id and # version", assertImportable(t, "unprefixed property_id and contract_id, group_id and # version", "0,0,0,1"))
-		t.Run("Importable: unprefixed property_id and contract_id, group_id and ver_# version", assertImportable(t, "unprefixed property_id and contract_id, group_id and ver_# version", "0,0,0,ver_1"))
-		t.Run("Importable: unprefixed property_id and contract_id, group_id and latest", assertImportable(t, "unprefixed property_id and contract_id, group_id and latest", "0,0,0,latest"))
-		t.Run("Importable: unprefixed property_id and contract_id, group_id and network", assertImportable(t, "unprefixed property_id and contract_id, group_id and network", "0,0,0,production"))
-
-		// Test Delete
-
-		t.Run("property is destroyed and recreated when name is changed", func(t *testing.T) {
-			client := &papi.Mock{}
-			client.Test(T{t})
-
-			setup := composeBehaviors(
-				propertyLifecycle("test_property", "prp_0", "grp_0",
-					papi.RulesUpdate{Rules: papi.Rules{Name: "default"}}),
-				getPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive),
-				propertyLifecycle("renamed_property", "prp_1", "grp_0",
-					papi.RulesUpdate{Rules: papi.Rules{Name: "default"}}),
-				getPropertyVersionResources("prp_1", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive),
-				setHostnames("prp_0", 1, "to.test.domain"),
-				setHostnames("prp_1", 1, "to2.test.domain"),
-			)
-			setup(&TestState{Client: client})
-
-			useClient(client, nil, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps: []resource.TestStep{
-						{
-							Config: testutils.LoadFixtureString(t, "testdata/%s-step0.tf", t.Name()),
-							Check: checkAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
-								"{\"rules\":{\"name\":\"default\",\"options\":{}}}"),
-						},
-						{
-							Config: testutils.LoadFixtureString(t, "testdata/%s-step1.tf", t.Name()),
-							Check: resource.ComposeAggregateTestCheckFunc(
-								resource.TestCheckResourceAttr("akamai_property.test", "id", "prp_1"),
-								resource.TestCheckResourceAttr("akamai_property.test", "name", "renamed_property"),
-							),
-						},
-					},
-				})
-			})
-
-			client.AssertExpectations(t)
-		})
-
-		t.Run("error when deleting active property", func(t *testing.T) {
-			client := &papi.Mock{}
-			client.Test(T{t})
-
-			setup := composeBehaviors(
-				createProperty("test_property", "prp_0", papi.RulesUpdate{Rules: papi.Rules{Name: "default"}}),
-				getProperty("prp_0"),
-				GetVersionResources("prp_0", "ctr_0", "grp_0", 1),
-				getPropertyVersionResources("prp_0", "grp_0", "ctr_0", 1, "ctr_0", "grp_0"),
-				setHostnames("prp_0", 1, "to.test.domain"),
-			)
-			setup(&TestState{Client: client})
-
-			// First call to remove is not successful
-			req := papi.RemovePropertyRequest{
-				PropertyID: "prp_0",
-				ContractID: "ctr_0",
-				GroupID:    "grp_0",
-			}
-
-			err := fmt.Errorf(`cannot remove active property "prp_0"`)
-			client.On("RemoveProperty", AnyCTX, req).Return(nil, err).Once()
-
-			// Second call will be successful (TF test case requires last state to be empty or it's a failed test)
-			ExpectRemoveProperty(client, "prp_0", "ctr_0", "grp_0").Once()
-
-			useClient(client, nil, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps: []resource.TestStep{
-						{
-							Config: testutils.LoadFixtureString(t, "testdata/%s/step0.tf", t.Name()),
-							Check: checkAttrs("prp_0", "to.test.domain", "1", "0", "0", "ehn_123",
-								"{\"rules\":{\"name\":\"default\",\"options\":{}}}"),
-						},
-						{
-							Config:      testutils.LoadFixtureString(t, "testdata/%s/step1.tf", t.Name()),
-							ExpectError: regexp.MustCompile(`cannot remove active property`),
-						},
-					},
-				})
-			})
-
-			client.AssertExpectations(t)
-		})
-
-		// Test validation
-
-		t.Run("error validations when updating property with rules tree", func(t *testing.T) {
-			client := &papi.Mock{}
-			client.Test(T{t})
-			ExpectCreateProperty(
-				client, "test_property", "grp_0",
-				"ctr_0", "prd_0", "prp_1",
-			)
-
-			var err error = &papi.Error{
-				StatusCode:   400,
-				Type:         "/papi/v1/errors/validation.required_behavior",
-				Title:        "Missing required behavior in default rule",
-				Detail:       "In order for this property to work correctly behavior Content Provider Code needs to be present in the default section",
-				Instance:     "/papi/v1/properties/prp_173136/versions/3/rules#err_100",
-				BehaviorName: "cpCode",
-			}
-			var req = papi.UpdateRulesRequest{
-				PropertyID:      "prp_1",
-				ContractID:      "ctr_0",
-				GroupID:         "grp_0",
-				PropertyVersion: 1,
-				Rules: papi.RulesUpdate{Rules: papi.Rules{
-					Name: "update rule tree",
-				}},
-				ValidateRules: true,
-			}
-			client.On("UpdateRuleTree", AnyCTX, req).Return(nil, err).Once()
-
-			ExpectRemoveProperty(client, "prp_1", "", "")
-			useClient(client, nil, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps: []resource.TestStep{
-						{
-							Config: testutils.LoadFixtureString(t, "testdata/TestResProperty/property_update_with_validation_error_for_rules.tf"),
-							Check: resource.ComposeAggregateTestCheckFunc(
-								resource.TestCheckNoResourceAttr("akamai_property.test", "rules")),
-							ExpectError: regexp.MustCompile(`validation.required_behavior`),
-						},
-					},
-				})
-			})
-
-			client.AssertExpectations(t)
-		})
-		t.Run("validation warning when creating property with rules tree", func(t *testing.T) {
-			client := &papi.Mock{}
-			client.Test(T{t})
-			ExpectCreateProperty(
-				client, "test_property", "grp_0",
-				"ctr_0", "prd_0", "prp_1",
-			)
-			rules := papi.Rules{
-				Behaviors: []papi.RuleBehavior{
-					{
-						Name: "origin",
-						Options: papi.RuleOptionsMap{
-							"hostname":  "1.2.3.4",
-							"httpPort":  float64(80),
-							"httpsPort": float64(443),
-						},
-					},
-				},
-			}
-			var req = papi.UpdateRulesRequest{
-				PropertyID:      "prp_1",
-				ContractID:      "ctr_0",
-				GroupID:         "grp_0",
-				PropertyVersion: 1,
-				Rules:           papi.RulesUpdate{Rules: rules},
-				ValidateRules:   true,
-			}
-			warning := papi.RuleWarnings{
-				Type:          "https://problems.luna.akamaiapis.net/papi/v0/validation/validation_message.ip_address_origin",
-				ErrorLocation: "#/rules/behaviors/1",
-				Detail:        "Using an IP address for the `Origin Server` is not recommended. IP addresses may be changed or reassigned without notice which can severely impact your property or cause a DoS. Please use a properly formatted hostname instead.",
-			}
-			client.On("UpdateRuleTree", AnyCTX, req).Return(&papi.UpdateRulesResponse{
-				AccountID:       "",
-				ContractID:      "ctr_0",
-				Comments:        "",
-				GroupID:         "grp_0",
-				PropertyID:      "prp_1",
-				PropertyVersion: 1,
-				Etag:            "",
-				RuleFormat:      "",
-				Rules:           rules,
-				Errors:          nil,
-				Warnings:        []papi.RuleWarnings{warning},
-			}, nil).Once()
-			ExpectGetProperty(
-				client, "prp_1", "grp_0", "ctr_0",
-				&papi.Property{
-					PropertyID: "prp_1", GroupID: "grp_0", ContractID: "ctr_0", LatestVersion: 1,
-					PropertyName: "test_property",
-				},
-			)
-
-			ExpectGetPropertyVersionHostnames(
-				client, "prp_1", "grp_0", "ctr_0", 1,
-				&[]papi.Hostname{},
-			).Times(2)
-			ruleFormat := ""
-			ExpectGetRuleTree(
-				client, "prp_1", "grp_0", "ctr_0", 1,
-				&papi.RulesUpdate{
-					Rules: rules,
-				}, &ruleFormat, nil, []*papi.Error{
-					{
-						Type:          "https://problems.luna.akamaiapis.net/papi/v0/validation/validation_message.ip_address_origin",
-						ErrorLocation: "#/rules/behaviors/1",
-						Detail:        "Using an IP address for the `Origin Server` is not recommended. IP addresses may be changed or reassigned without notice which can severely impact your property or cause a DoS. Please use a properly formatted hostname instead.",
-					},
-				})
-			ExpectGetPropertyVersion(client, "prp_1", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive)
-
-			ExpectRemoveProperty(client, "prp_1", "ctr_0", "grp_0")
-			useClient(client, nil, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps: []resource.TestStep{
-						{
-							Config: testutils.LoadFixtureString(t, "testdata/TestResProperty/property_with_validation_warning_for_rules.tf"),
-							Check: resource.ComposeAggregateTestCheckFunc(
-								resource.TestCheckResourceAttr("akamai_property.test", "rule_warnings.0.detail", "Using an IP address for the `Origin Server` is not recommended. IP addresses may be changed or reassigned without notice which can severely impact your property or cause a DoS. Please use a properly formatted hostname instead.")),
-						},
-					},
-				})
-			})
-
-			client.AssertExpectations(t)
-		})
-
-		t.Run("validation - when updating a property hostnames to empty it should return error", func(t *testing.T) {
-			client := &papi.Mock{}
-			client.Test(T{t})
-
-			ExpectCreateProperty(
-				client, "test_property", "grp_0",
-				"ctr_0", "prd_0", "prp_0",
-			)
-
-			ExpectGetPropertyVersions(client, "prp_0", "test_property", "ctr_0", "grp_0", nil, &papi.PropertyVersionItems{Items: []papi.PropertyVersionGetItem{
-				{
-					PropertyVersion:  1,
-					StagingStatus:    papi.VersionStatusInactive,
-					ProductionStatus: papi.VersionStatusInactive,
-				},
-			}})
-
-			ExpectGetPropertyVersion(client, "prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive)
-
-			ExpectUpdatePropertyVersionHostnames(
-				client, "prp_0", "grp_0", "ctr_0", 1,
-				[]papi.Hostname{{
-					CnameType:            "EDGE_HOSTNAME",
-					CnameFrom:            "terraform.provider.myu877.test.net",
-					CnameTo:              "terraform.provider.myu877.test.net.edgesuite.net",
-					CertProvisioningType: "DEFAULT",
-				}}, nil,
-			).Once()
-
-			ExpectGetProperty(
-				client, "prp_0", "grp_0", "ctr_0",
-				&papi.Property{
-					PropertyID: "prp_0", GroupID: "grp_0", ContractID: "ctr_0", LatestVersion: 1,
-					PropertyName: "test_property",
-				},
-			)
-
-			ExpectGetPropertyVersionHostnames(
-				client, "prp_0", "grp_0", "ctr_0", 1,
-				&[]papi.Hostname{{
-					CnameFrom:            "terraform.provider.myu877.test.net",
-					CnameTo:              "terraform.provider.myu877.test.net.edgesuite.net",
-					CertProvisioningType: "DEFAULT",
-				}},
-			).Times(3)
-
-			ruleFormat := ""
-			ExpectGetRuleTree(
-				client, "prp_0", "grp_0", "ctr_0", 1,
-				&papi.RulesUpdate{}, &ruleFormat, nil, nil)
-
-			ExpectRemoveProperty(client, "prp_0", "ctr_0", "grp_0")
-
-			ExpectUpdatePropertyVersionHostnames(
-				client, "prp_0", "grp_0", "ctr_0", 1,
-				[]papi.Hostname{}, nil,
-			).Once()
-
-			ExpectGetPropertyVersionHostnames(
-				client, "prp_0", "grp_0", "ctr_0", 1,
-				&[]papi.Hostname{},
-			).Twice()
-
-			useClient(client, nil, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps: []resource.TestStep{
-						{
-							Config: testutils.LoadFixtureString(t, "testdata/TestResProperty/CreationUpdateNoHostnames/creation/property_create.tf"),
-							Check:  resource.TestCheckResourceAttr("akamai_property.test", "id", "prp_0"),
-						},
-						{
-							Config: testutils.LoadFixtureString(t, "testdata/TestResProperty/CreationUpdateNoHostnames/update/property_update.tf"),
-							Check: resource.ComposeAggregateTestCheckFunc(
-								resource.TestCheckResourceAttr("akamai_property.test", "id", "prp_0"),
-								resource.TestCheckResourceAttr("akamai_property.test", "hostnames.#", "0"),
-							),
-							ExpectError: regexp.MustCompile("hostnames exist on server and cannot be updated to empty for property with id 'prp_0'. Provide at least one hostname to update existing list of hostnames associated to this property"),
-						},
-					},
-				})
-			})
-		})
-
-		t.Run("validation - when updating a property hostnames with cert_provisioning_type = 'DEFAULT' with secure-by-default enabled but remaining default certs == 0 it should return error", func(t *testing.T) {
-			client := &papi.Mock{}
-			client.Test(T{t})
-
-			ExpectCreateProperty(
-				client, "test_property", "grp_0",
-				"ctr_0", "prd_0", "prp_0",
-			)
-
-			ExpectGetPropertyVersions(client, "prp_0", "test_property", "ctr_0", "grp_0", nil, &papi.PropertyVersionItems{Items: []papi.PropertyVersionGetItem{
-				{
-					PropertyVersion:  1,
-					StagingStatus:    papi.VersionStatusInactive,
-					ProductionStatus: papi.VersionStatusInactive,
-				},
-			}})
-
-			ExpectGetPropertyVersion(client, "prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive)
-
-			ExpectUpdatePropertyVersionHostnames(
-				client, "prp_0", "grp_0", "ctr_0", 1,
-				[]papi.Hostname{{
-					CnameType:            "EDGE_HOSTNAME",
-					CnameFrom:            "terraform.provider.myu877.test.net",
-					CnameTo:              "terraform.provider.myu877.test.net.edgesuite.net",
-					CertProvisioningType: "DEFAULT",
-				}}, &papi.Error{
-					StatusCode: http.StatusTooManyRequests,
-					Remaining:  ptr.To(0),
-					LimitKey:   "DEFAULT_CERTS_PER_CONTRACT",
-				},
-			).Once()
-
-			ExpectRemoveProperty(client, "prp_0", "ctr_0", "grp_0")
-
-			useClient(client, nil, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps: []resource.TestStep{
-						{
-							Config:      testutils.LoadFixtureString(t, "testdata/TestResProperty/CreationUpdateNoHostnames/creation/property_create.tf"),
-							Check:       resource.TestCheckResourceAttr("akamai_property.test", "id", "prp_0"),
-							ExpectError: regexp.MustCompile("updating hostnames: not possible to use cert_provisioning_type = 'DEFAULT' as the limit for DEFAULT certificates has been reached"),
-						},
-					},
-				})
-			})
-		})
-
-		t.Run("validation - when updating a property hostnames with cert_provisioning_type = 'DEFAULT' not having enabled secure-by-default it should return error", func(t *testing.T) {
-			client := &papi.Mock{}
-			client.Test(T{t})
-
-			ExpectCreateProperty(
-				client, "test_property", "grp_0",
-				"ctr_0", "prd_0", "prp_0",
-			)
-
-			ExpectGetPropertyVersions(client, "prp_0", "test_property", "ctr_0", "grp_0", nil, &papi.PropertyVersionItems{Items: []papi.PropertyVersionGetItem{
-				{
-					PropertyVersion:  1,
-					StagingStatus:    papi.VersionStatusInactive,
-					ProductionStatus: papi.VersionStatusInactive,
-				},
-			}})
-
-			ExpectGetPropertyVersion(client, "prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusInactive, papi.VersionStatusInactive)
-
-			ExpectUpdatePropertyVersionHostnames(
-				client, "prp_0", "grp_0", "ctr_0", 1,
-				[]papi.Hostname{{
-					CnameType:            "EDGE_HOSTNAME",
-					CnameFrom:            "terraform.provider.myu877.test.net",
-					CnameTo:              "terraform.provider.myu877.test.net.edgesuite.net",
-					CertProvisioningType: "DEFAULT",
-				}}, &papi.Error{
-					StatusCode: http.StatusForbidden,
-					Type:       "https://problems.luna.akamaiapis.net/papi/v0/property-version-hostname/default-cert-provisioning-unavailable",
-				},
-			).Once()
-
-			ExpectRemoveProperty(client, "prp_0", "ctr_0", "grp_0")
-
-			useClient(client, nil, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps: []resource.TestStep{
-						{
-							Config:      testutils.LoadFixtureString(t, "testdata/TestResProperty/CreationUpdateNoHostnames/creation/property_create.tf"),
-							Check:       resource.TestCheckResourceAttr("akamai_property.test", "id", "prp_0"),
-							ExpectError: regexp.MustCompile("updating hostnames: not possible to use cert_provisioning_type = 'DEFAULT' as secure-by-default is not enabled in this account"),
-						},
-					},
-				})
-			})
-		})
-
-		// Other tests
-
-		t.Run("error when the given group is not found", func(t *testing.T) {
-			client := &papi.Mock{}
-			client.Test(T{t})
-
-			req := papi.CreatePropertyRequest{
-				ContractID: "ctr_0",
-				GroupID:    "grp_0",
-				Property: papi.PropertyCreate{
-					ProductID:    "prd_0",
-					PropertyName: "property_name",
-				},
-			}
-
-			var err error = &papi.Error{
-				StatusCode: 404,
-				Title:      "Not Found",
-				Detail:     "The system was unable to locate the requested resource",
-				Type:       "https://problems.luna.akamaiapis.net/papi/v0/http/not-found",
-				Instance:   "https://akaa-hqgqowhpmkw32kmt-t3owzo37wb5dkern.luna-dev.akamaiapis.net/papi/v1/properties?contractId=ctr_0\\u0026groupId=grp_0#c3fe5f9b0c4a14d1",
-			}
-
-			client.On("CreateProperty", AnyCTX, req).Return(nil, err).Once()
-
-			// the papi GetGroups call should not return any matching group
-			var Groups []*papi.Group
-			ExpectGetGroups(client, &Groups).Once()
-
-			useClient(client, nil, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps: []resource.TestStep{{
-						Config:      testutils.LoadFixtureString(t, "testdata/TestResProperty/Creation/property.tf"),
-						ExpectError: regexp.MustCompile("group not found: grp_0"),
-					}},
-				})
-			})
-
-			client.AssertExpectations(t)
-		})
-
-		t.Run("error when creating property with non-unique name", func(t *testing.T) {
-			client := &papi.Mock{}
-			client.Test(T{t})
-
-			req := papi.CreatePropertyRequest{
-				ContractID: "ctr_0",
-				GroupID:    "grp_0",
-				Property: papi.PropertyCreate{
-					PropertyName: "test_property",
-					ProductID:    "prd_0",
-				},
-			}
-
-			client.On("CreateProperty", AnyCTX, req).Return(nil, fmt.Errorf("given property name is not unique"))
-			useClient(client, nil, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps: []resource.TestStep{
-						{
-							Config:      testutils.LoadFixtureString(t, "testdata/%s.tf", t.Name()),
-							Check:       resource.TestCheckNoResourceAttr("akamai_property.test", "id"),
-							ExpectError: regexp.MustCompile(`property name is not unique`),
-						},
-					},
-				})
-			})
-
-			client.AssertExpectations(t)
-		})
-
-		ruleTreeRes := papi.GetRuleTreeResponse{
-			Rules: papi.Rules{
-				Name: "default",
-				Children: []papi.Rules{
-					{
-						Name: "Static Content",
-						Behaviors: []papi.RuleBehavior{
-							{
-								Name:    "prefetch",
-								Options: papi.RuleOptionsMap{"enabled": false},
-							},
-						},
-					},
-				},
-				Behaviors: []papi.RuleBehavior{
-					{
-						Name: "cpCode",
-						Options: papi.RuleOptionsMap{
-							"value": map[string]interface{}{
-								"id":          float64(12345),
-								"description": "WAA Example.com",
-								"products": []interface{}{
-									"Web_App_Accel",
-								},
-								"name": "WAA Example.com",
-							},
-						},
-					},
-				},
-				Options: papi.RuleOptions{IsSecure: true},
-			},
-		}
-
-		propertyReadCtx := func(client *papi.Mock, stagStatus, prodStatus papi.VersionStatus) {
-			ExpectGetProperty(
-				client, "prp_0", "grp_0", "ctr_0",
-				&papi.Property{
-					PropertyID: "prp_0", GroupID: "grp_0", ContractID: "ctr_0", LatestVersion: 1,
-					PropertyName: "dxe-2406-issue-example",
-				},
-			).Once()
-			ExpectGetPropertyVersionHostnames(
-				client, "prp_0", "grp_0", "ctr_0", 1,
-				&[]papi.Hostname{
-					{
-						CnameFrom:            "dxe-2406-issue-example-second.com",
-						CnameTo:              "dxe-2406-issue-example-second.com.example.net",
-						CertProvisioningType: "CPS_MANAGED",
-					},
-					{
-						CnameFrom:            "dxe-2406-issue.com",
-						CnameTo:              "dxe-2406-issue.com.example.net",
-						CertProvisioningType: "CPS_MANAGED",
-					},
-				},
-			).Once()
-			client.On("GetRuleTree", mock.Anything, papi.GetRuleTreeRequest{
-				PropertyID:      "prp_0",
-				GroupID:         "grp_0",
-				ContractID:      "ctr_0",
-				PropertyVersion: 1,
-				ValidateMode:    "full",
-				ValidateRules:   true,
-			}).Return(&ruleTreeRes, nil).Once()
-			ExpectGetPropertyVersion(client, "prp_0", "grp_0", "ctr_0", 1, stagStatus, prodStatus).Once()
-		}
-
-		getActivations := func(client *papi.Mock) {
-			expectGetActivations(client, "prp_0", papi.GetActivationsResponse{
-				Activations: papi.ActivationsItems{
-					Items: []*papi.Activation{
-						{
-							ActivationID:    "act_123",
-							PropertyID:      "prp_0",
-							PropertyVersion: 1,
-							Network:         papi.ActivationNetworkStaging,
-							Status:          papi.ActivationStatusActive,
-							ActivationType:  papi.ActivationTypeActivate,
-							SubmitDate:      "2020-10-28T15:04:05Z",
-							NotifyEmails:    []string{"dummy-user@akamai.com"},
-						},
-					},
-				},
-			}, nil).Once()
-		}
-
-		// Update for hostnames and rules
-		t.Run("400 from UpdatePropertyVersionHostnames - incorrect/invalid edge hostname", func(t *testing.T) {
-			client := &papi.Mock{}
-			client.Test(T{t})
-			ruleFormat := ""
-
-			// first step
-			// create property
-			ExpectCreateProperty(client, "dxe-2406-issue-example", "grp_0", "ctr_0", "prd_0", "prp_0").Once()
-			ExpectUpdatePropertyVersionHostnames(
-				client, "prp_0", "grp_0", "ctr_0", 1,
-				[]papi.Hostname{
-					{
-						CnameType:            "EDGE_HOSTNAME",
-						CnameFrom:            "dxe-2406-issue-example-second.com",
-						CnameTo:              "dxe-2406-issue-example-second.com.example.net",
-						CertProvisioningType: "CPS_MANAGED",
-					},
-					{
-						CnameType:            "EDGE_HOSTNAME",
-						CnameFrom:            "dxe-2406-issue.com",
-						CnameTo:              "dxe-2406-issue.com.example.net",
-						CertProvisioningType: "CPS_MANAGED",
-					}}, nil,
-			).Once()
-			ExpectUpdateRuleTree(client, "prp_0", "grp_0", "ctr_0", 1,
-				&papi.RulesUpdate{
-					Rules: papi.Rules{
-						Name: "default",
-						Children: []papi.Rules{
-							{
-								Name: "Static Content",
-								Behaviors: []papi.RuleBehavior{
-									{
-										Name:    "prefetch",
-										Options: papi.RuleOptionsMap{"enabled": false},
-									},
-								},
-							},
-						},
-						Behaviors: []papi.RuleBehavior{
-							{
-								Name: "cpCode",
-								Options: papi.RuleOptionsMap{
-									"value": map[string]interface{}{
-										"id":          float64(12345),
-										"description": "WAA Example.com",
-										"products": []interface{}{
-											"Web_App_Accel",
-										},
-										"name": "WAA Example.com",
-									},
-								},
-							},
-						},
-						Options: papi.RuleOptions{IsSecure: true},
-					}}, ruleFormat, []papi.RuleError{}).Once()
-
-			// read property
-			propertyReadCtx(client, papi.VersionStatusInactive, papi.VersionStatusInactive)
-
-			// create activation
-			expectGetRuleTree(client, "prp_0", 1, ruleTreeRes, nil).Once()
-			expectGetActivations(client, "prp_0", papi.GetActivationsResponse{}, nil).Once()
-			client.On("CreateActivation", mock.Anything, mock.Anything).Return(&papi.CreateActivationResponse{ActivationID: "act_123"}, nil).Once()
-			expectGetActivation(client, "prp_0", "act_123", 1, papi.ActivationNetworkStaging, papi.ActivationStatusActive, papi.ActivationTypeActivate, "", []string{"dummy-user@akamai.com"}, nil).Once()
-
-			// read property
-			propertyReadCtx(client, papi.VersionStatusActive, papi.VersionStatusActive)
-
-			// activation read
-			getActivations(client)
-
-			// read property
-			propertyReadCtx(client, papi.VersionStatusActive, papi.VersionStatusActive)
-
-			// activation read
-			getActivations(client)
-
-			// second step
-			// property update returns an error on the invalid edgehostname
-			ExpectGetPropertyVersion(client, "prp_0", "grp_0", "ctr_0", 1, papi.VersionStatusActive, papi.VersionStatusActive).Once()
-			ExpectCreatePropertyVersion(client, "prp_0", "grp_0", "ctr_0", 1, 2)
-
-			ExpectUpdatePropertyVersionHostnames(
-				client, "prp_0", "grp_0", "ctr_0", 2,
-				[]papi.Hostname{
-					{
-						CnameType:            "EDGE_HOSTNAME",
-						CnameFrom:            "dxe-2406-issue-example-second.com",
-						CnameTo:              "dxe-2406-issue-example-second.com.example.net",
-						CertProvisioningType: "CPS_MANAGED",
-					},
-					{
-						CnameType:            "EDGE_HOSTNAME",
-						CnameFrom:            "dxe-2406-issue.com",
-						CnameTo:              "dxe-2406-issue.com.example.net",
-						CertProvisioningType: "CPS_MANAGED",
-					},
-					{
-						CnameType:            "EDGE_HOSTNAME",
-						CnameFrom:            "does-not-exist.com",
-						CnameTo:              "does-not-exist.com.example.net",
-						CertProvisioningType: "CPS_MANAGED",
-					}}, fmt.Errorf("%w: request failed: %s", papi.ErrUpdatePropertyVersionHostnames, errors.New("{\n    \"type\": \"https://problems.luna.akamaiapis.net/papi/v0/property-version-hostname/bad-cnameto\",\n    \"title\": \"Bad `cnameTo`\",\n    \"detail\": \"The System could not find cnameTo value `does-not-exist.com.example.net`.\",\n    \"instance\": \"host/papi/v1/properties/prp_0/versions/2/hostnames?contractId=ctr_0&groupId=grp_0&includeCertStatus=false&validateHostnames=false#efba6490291100b1\",\n    \"status\": 400\n}")),
-			).Once()
-
-			// terraform clean up - terraform test framework attempts to run destroy plan, if an error is returned on second step
-			// activation and property deletion
-			getActivations(client)
-			client.On("CreateActivation", mock.Anything, mock.Anything).Return(&papi.CreateActivationResponse{
-				ActivationID: "act_123",
-			}, nil).Once()
-			expectGetActivation(client, "prp_0", "act_123", 1, papi.ActivationNetworkStaging, papi.ActivationStatusActive, papi.ActivationTypeDeactivate, "", []string{"dummy-user@akamai.com"}, nil).Once()
-			client.On("RemoveProperty", mock.Anything, mock.Anything).Return(&papi.RemovePropertyResponse{
-				Message: "removed",
-			}, nil).Once()
-
-			useClient(client, nil, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps: []resource.TestStep{
-						{
-							Config: testutils.LoadFixtureString(t, "testdata/TestResProperty/CreationUpdateIncorrectEdgeHostname/create/property.tf"),
-							Check: resource.ComposeAggregateTestCheckFunc(
-								resource.TestCheckResourceAttr("akamai_property.akaproperty", "id", "prp_0"),
-								resource.TestCheckResourceAttr("akamai_property.akaproperty", "hostnames.#", "2"),
-							),
-						},
-						{
-							Config: testutils.LoadFixtureString(t, "testdata/TestResProperty/CreationUpdateIncorrectEdgeHostname/update/property.tf"),
-							Check: resource.ComposeAggregateTestCheckFunc(
-								resource.TestCheckResourceAttr("akamai_property.akaproperty", "id", "prp_0"),
-								resource.TestCheckResourceAttr("akamai_property.akaproperty", "hostnames.#", "3"),
-							),
-							ExpectError: regexp.MustCompile("Error: updating hostnames: request failed:"),
-						},
-					},
-				})
-			})
-
-			client.AssertExpectations(t)
-		})
-	})
-}
-
-func TestGroupIDUpdate(t *testing.T) {
-	t.Skip("skipping before moving property is enabled again, see DXE-4176")
-	baseData := mockPropertyData{
-		propertyName:  "dummy_name",
-		groupID:       "grp_1",
-		contractID:    "ctr_2",
-		productID:     "prd_3",
-		propertyID:    "prp_12345",
-		latestVersion: 1,
-		assetID:       "aid_55555",
-		cnameFrom:     "from.test.domain",
-		cnameTo:       "to.test.domain",
-	}
-
-	baseCheckName := resource.TestCheckResourceAttr("akamai_property.test", "name", "dummy_name")
-	baseCheckGroupID := resource.TestCheckResourceAttr("akamai_property.test", "group_id", "grp_1")
-	baseCheckCnameFrom := resource.TestCheckResourceAttr("akamai_property.test", "hostnames.0.cname_from", "from.test.domain")
-
-	commonBaseChecks := resource.ComposeTestCheckFunc(
-		resource.TestCheckResourceAttr("akamai_property.test", "contract_id", "ctr_2"),
-		resource.TestCheckResourceAttr("akamai_property.test", "product_id", "prd_3"),
-		resource.TestCheckResourceAttr("akamai_property.test", "hostnames.0.cname_to", "to.test.domain"),
-		resource.TestCheckResourceAttr("akamai_property.test", "hostnames.0.cert_provisioning_type", "DEFAULT"))
-
-	tests := map[string]struct {
-		init                func(*testing.T, *mockProperty, *iam.Mock)
-		configPathForUpdate string
-		updateChecks        resource.TestCheckFunc
-	}{
-		"update group id - in place": {
-			init: func(t *testing.T, p *mockProperty, iamMock *iam.Mock) {
-				mockResourcePropertyCreate(p)
-				// refresh
-				mockResourcePropertyRead(p)
-				// second refresh
-				mockResourcePropertyRead(p)
-
-				// moving the property
-				// readout for obtaining assetID
-				p.mockGetProperty().Once()
-				mockMoveProperty(iamMock, 55555, 1, 111)
-				p.groupID = "grp_111"
-				// waiting for new groupID
-				p.mockGetProperty().Once()
-				// final read from the update function
-				mockResourcePropertyRead(p)
-
-				// refresh
-				mockResourcePropertyRead(p)
-				p.mockRemoveProperty().Once()
-			},
-
-			configPathForUpdate: "testdata/TestGroupIDUpdate/update_group_id.tf",
-
-			updateChecks: resource.ComposeTestCheckFunc(
-				baseCheckName,
-				resource.TestCheckResourceAttr("akamai_property.test", "group_id", "grp_111"),
-				baseCheckCnameFrom,
-				commonBaseChecks),
-		},
-		"update group id and hostnames - in place": {
-			init: func(t *testing.T, p *mockProperty, iamMock *iam.Mock) {
-				mockResourcePropertyCreate(p)
-				// refresh
-				mockResourcePropertyRead(p)
-				// second refresh
-				mockResourcePropertyRead(p)
-
-				// moving the property
-				// readout for obtaining assetID
-				p.mockGetProperty().Once()
-				mockMoveProperty(iamMock, 55555, 1, 111)
-				p.groupID = "grp_111"
-				// waiting for new groupID
-				p.mockGetProperty().Once()
-				// readout for general version calculations
-				p.mockGetPropertyVersion().Once()
-				// change in hostnames detected
-				p.cnameFrom = "from2.test.domain"
-				p.mockUpdatePropertyVersionHostnames().Once()
-				// final read from the update function
-				mockResourcePropertyRead(p)
-
-				// refresh
-				mockResourcePropertyRead(p)
-				p.mockRemoveProperty().Once()
-			},
-
-			configPathForUpdate: "testdata/TestGroupIDUpdate/update_group_id_and_hostnames.tf",
-
-			updateChecks: resource.ComposeTestCheckFunc(
-				baseCheckName,
-				resource.TestCheckResourceAttr("akamai_property.test", "group_id", "grp_111"),
-				resource.TestCheckResourceAttr("akamai_property.test", "hostnames.0.cname_from", "from2.test.domain"),
-				commonBaseChecks),
-		},
-		"update group id and name - recreate": {
-			init: func(t *testing.T, p *mockProperty, iamMock *iam.Mock) {
-				mockResourcePropertyCreate(p)
-				// refresh
-				mockResourcePropertyRead(p)
-				// second refresh
-				mockResourcePropertyRead(p)
-				p.mockRemoveProperty().Once()
-
-				// recreate the resource
-				p.propertyName = "dummy_name2"
-				p.groupID = "grp_111"
-				mockResourcePropertyCreate(p)
-				// refresh
-				mockResourcePropertyRead(p)
-				p.mockRemoveProperty().Once()
-			},
-
-			configPathForUpdate: "testdata/TestGroupIDUpdate/update_group_id_and_name.tf",
-
-			updateChecks: resource.ComposeTestCheckFunc(
-				resource.TestCheckResourceAttr("akamai_property.test", "name", "dummy_name2"),
-				resource.TestCheckResourceAttr("akamai_property.test", "group_id", "grp_111"),
-				baseCheckCnameFrom,
-				commonBaseChecks),
-		},
-	}
-	for name, test := range tests {
-		t.Run(name, func(t *testing.T) {
-			papiMock := &papi.Mock{}
-			iamMock := &iam.Mock{}
-			mp := mockProperty{
-				papiMock:         papiMock,
-				mockPropertyData: baseData,
-			}
-			test.init(t, &mp, iamMock)
-
-			useClient(papiMock, nil, func() {
-				useIam(iamMock, func() {
-					resource.UnitTest(t, resource.TestCase{
-						ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-						Steps: []resource.TestStep{
-							{
-								Config: testutils.LoadFixtureString(t, "testdata/TestGroupIDUpdate/base.tf"),
-								Check: resource.ComposeTestCheckFunc(
-									baseCheckName,
-									baseCheckGroupID,
-									baseCheckCnameFrom,
-									commonBaseChecks),
-							},
-							{
-								Config: testutils.LoadFixtureString(t, test.configPathForUpdate),
-								Check:  test.updateChecks,
-							},
-						},
-					})
-				})
-			})
-
-			papiMock.AssertExpectations(t)
-			iamMock.AssertExpectations(t)
-		})
-	}
+	t.Run("Schema Configuration Error: name not given", assertConfigError(t, "name not given", `"name" is required`))
+	t.Run("Schema Configuration Error: contract_id not given", assertConfigError(t, "contract_id not given", `Missing required argument`))
+	t.Run("Schema Configuration Error: group_id not given", assertConfigError(t, "group_id not given", `Missing required argument`))
+	t.Run("Schema Configuration Error: product_id not given", assertConfigError(t, "product_id not given", `Missing required argument`))
+	t.Run("Schema Configuration Error: invalid json rules", assertConfigError(t, "invalid json rules", `rules are not valid JSON`))
+	t.Run("Schema Configuration Error: invalid name given", assertConfigError(t, "invalid name given", `a name must only contain letters, numbers, and these characters: . _ -`))
+	t.Run("Schema Configuration Error: name given too long", assertConfigError(t, "name given too long", `a name must be longer than 0 characters and shorter than 86 characters`))
 }
 
 // TODO: remove this test after moving property is enabled again, see DXE-4176
@@ -1900,8 +2031,18 @@ func TestGroupIDUpdateError(t *testing.T) {
 		propertyID:    "prp_12345",
 		latestVersion: 1,
 		assetID:       "aid_55555",
-		cnameFrom:     "from.test.domain",
-		cnameTo:       "to.test.domain",
+		hostnames: papi.HostnameResponseItems{
+			Items: []papi.Hostname{
+				{
+					CnameType:            "EDGE_HOSTNAME",
+					EdgeHostnameID:       "",
+					CnameFrom:            "from.test.domain",
+					CnameTo:              "to.test.domain",
+					CertProvisioningType: "DEFAULT",
+					CertStatus:           papi.CertStatusItem{},
+				},
+			},
+		},
 	}
 
 	papiMock := &papi.Mock{}
@@ -1909,11 +2050,12 @@ func TestGroupIDUpdateError(t *testing.T) {
 		papiMock:         papiMock,
 		mockPropertyData: baseData,
 	}
-	mockResourcePropertyCreate(&mp)
-	// refresh
+	mockResourcePropertyCreateWithVersionHostnames(&mp)
+	// read x2
+	mockResourcePropertyRead(&mp, 2)
+	// read x1 before update
 	mockResourcePropertyRead(&mp)
-	// second refresh
-	mockResourcePropertyRead(&mp)
+	// delete
 	mp.mockRemoveProperty().Once()
 
 	useClient(papiMock, nil, func() {
@@ -1922,14 +2064,15 @@ func TestGroupIDUpdateError(t *testing.T) {
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestGroupIDUpdate/base.tf"),
-					Check: resource.ComposeTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_property.test", "name", "dummy_name"),
-						resource.TestCheckResourceAttr("akamai_property.test", "group_id", "grp_1"),
-						resource.TestCheckResourceAttr("akamai_property.test", "hostnames.0.cname_from", "from.test.domain"),
-						resource.TestCheckResourceAttr("akamai_property.test", "contract_id", "ctr_2"),
-						resource.TestCheckResourceAttr("akamai_property.test", "product_id", "prd_3"),
-						resource.TestCheckResourceAttr("akamai_property.test", "hostnames.0.cname_to", "to.test.domain"),
-						resource.TestCheckResourceAttr("akamai_property.test", "hostnames.0.cert_provisioning_type", "DEFAULT")),
+					Check: test.NewStateChecker("akamai_property.test").
+						CheckEqual("name", "dummy_name").
+						CheckEqual("group_id", "grp_1").
+						CheckEqual("hostnames.0.cname_from", "from.test.domain").
+						CheckEqual("contract_id", "ctr_2").
+						CheckEqual("product_id", "prd_3").
+						CheckEqual("hostnames.0.cname_to", "to.test.domain").
+						CheckEqual("hostnames.0.cert_provisioning_type", "DEFAULT").
+						Build(),
 				},
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestGroupIDUpdate/update_group_id.tf"),
@@ -1940,180 +2083,118 @@ func TestGroupIDUpdateError(t *testing.T) {
 	})
 }
 
-func TestPropertyResource_versionNotesLifecycle(t *testing.T) {
+func TestPropertyResource_VersionNotesLifecycle(t *testing.T) {
 	testdataDir := "testdata/TestResProperty/Lifecycle/versionNotes"
-	resourceName := "akamai_property.test"
-
-	name := "test_property"
-	ruleFormat := "v2023-01-05"
-	ctr, grp, prd, id := "ctr_123", "grp_123", "prd_123", "prp_123"
-	propertyVersion := 1
-
 	versionNotes1, versionNotes2, versionNotes3 := "lifecycleTest", "updatedNotes", "updatedNotes2"
-	rulesFile1And2, rulesFile3, rulesFile4And5 := "01_02_rules.json", "03_rules.json", "04_05_rules.json"
-
-	client := &papi.Mock{}
-
-	mockRead := func(notes string, rules papi.Rules) testutils.MockCalls {
-		getPropertyCall := client.On("GetProperty", mock.Anything, papi.GetPropertyRequest{
-			PropertyID: id,
-			ContractID: ctr,
-			GroupID:    grp,
-		}).Return(&papi.GetPropertyResponse{
-			Property: &papi.Property{
-				ContractID:    ctr,
-				GroupID:       grp,
-				PropertyID:    id,
-				PropertyName:  name,
-				LatestVersion: propertyVersion,
-			},
-		}, nil)
-
-		getHostnamesCall := client.On("GetPropertyVersionHostnames", mock.Anything, papi.GetPropertyVersionHostnamesRequest{
-			ContractID:        ctr,
-			GroupID:           grp,
-			PropertyID:        id,
-			PropertyVersion:   propertyVersion,
-			IncludeCertStatus: true,
-		}).Return(&papi.GetPropertyVersionHostnamesResponse{}, nil)
-
-		getRuleTreeCall := client.On("GetRuleTree", mock.Anything, papi.GetRuleTreeRequest{
-			PropertyID:      id,
-			ContractID:      ctr,
-			GroupID:         grp,
-			PropertyVersion: propertyVersion,
-			ValidateRules:   true,
-			ValidateMode:    papi.RuleValidateModeFull,
-		}).Return(&papi.GetRuleTreeResponse{
-			Rules:      rules,
-			Comments:   notes,
-			RuleFormat: ruleFormat,
-		}, nil)
-
-		getPropertyVersionCall := client.On("GetPropertyVersion", mock.Anything, papi.GetPropertyVersionRequest{
-			PropertyID:      id,
-			PropertyVersion: propertyVersion,
-			ContractID:      ctr,
-			GroupID:         grp,
-		}).Return(&papi.GetPropertyVersionsResponse{
-			Version: papi.PropertyVersionGetItem{
-				Note:             notes,
-				ProductID:        prd,
-				ProductionStatus: papi.VersionStatusInactive,
-				StagingStatus:    papi.VersionStatusInactive,
-			},
-		}, nil)
-
-		return testutils.MockCalls{getPropertyCall, getHostnamesCall, getRuleTreeCall, getPropertyVersionCall}
-	}
-
-	mockUpdate := func(currentNotes, newNotes string, rules papi.Rules) {
-		client.On("GetPropertyVersion", mock.Anything, papi.GetPropertyVersionRequest{
-			PropertyID:      id,
-			PropertyVersion: propertyVersion,
-			ContractID:      ctr,
-			GroupID:         grp,
-		}).Return(&papi.GetPropertyVersionsResponse{
-			Version: papi.PropertyVersionGetItem{
-				Note:             currentNotes,
-				ProductID:        prd,
-				ProductionStatus: papi.VersionStatusInactive,
-				StagingStatus:    papi.VersionStatusInactive,
-			},
-		}, nil).Once()
-
-		client.On("UpdateRuleTree", mock.Anything, papi.UpdateRulesRequest{
-			PropertyID:      id,
-			GroupID:         grp,
-			ContractID:      ctr,
-			PropertyVersion: propertyVersion,
-			Rules: papi.RulesUpdate{
-				Rules:    rules,
-				Comments: newNotes,
-			},
-			ValidateRules: true,
-		}).Return(&papi.UpdateRulesResponse{}, nil).Once()
-	}
-
-	// step 1 - create + read + plan
-	client.On("CreateProperty", mock.Anything, papi.CreatePropertyRequest{
-		ContractID: ctr,
-		GroupID:    grp,
-		Property: papi.PropertyCreate{
-			ProductID:    prd,
-			PropertyName: name,
-			RuleFormat:   ruleFormat,
-		},
-	}).Return(&papi.CreatePropertyResponse{
-		PropertyID: id,
-	}, nil).Once()
+	rulesFile1And2, rulesFile4And5, rulesFile3 := "01_02_rules.json", "04_05_rules.json", "03_rules.json"
 
 	rulesJSON := testutils.LoadFixtureBytes(t, path.Join(testdataDir, rulesFile1And2))
 	var rules1And2 papi.RulesUpdate
 	err := json.Unmarshal(rulesJSON, &rules1And2)
 	require.NoError(t, err)
 
-	client.On("UpdateRuleTree", mock.Anything, papi.UpdateRulesRequest{
-		PropertyID:      id,
-		GroupID:         grp,
-		ContractID:      ctr,
-		PropertyVersion: propertyVersion,
-		Rules: papi.RulesUpdate{
-			Rules:    rules1And2.Rules,
-			Comments: versionNotes1,
+	checker := test.NewStateChecker("akamai_property.test").
+		CheckEqual("id", "prp_123").
+		CheckEqual("group_id", "grp_123").
+		CheckEqual("contract_id", "ctr_123").
+		CheckEqual("latest_version", "1")
+
+	papiMock := &papi.Mock{}
+	basicData := mockPropertyData{
+		propertyName:  "test_property",
+		groupID:       "grp_123",
+		contractID:    "ctr_123",
+		productID:     "prd_123",
+		propertyID:    "prp_123",
+		latestVersion: 1,
+		assetID:       "",
+		versions: papi.PropertyVersionItems{
+			Items: []papi.PropertyVersionGetItem{
+				{
+					StagingStatus:    papi.VersionStatusInactive,
+					ProductionStatus: papi.VersionStatusInactive,
+					PropertyVersion:  1,
+					Note:             versionNotes1,
+				},
+			},
 		},
-		ValidateRules: true,
-	}).Return(&papi.UpdateRulesResponse{}, nil).Once()
+		ruleTree: mockRuleTreeData{
+			rules:      rules1And2.Rules,
+			comments:   versionNotes1,
+			ruleFormat: "v2023-01-05",
+		},
+	}
 
-	mockRead(versionNotes1, rules1And2.Rules).Times(2)
+	prp := &mockProperty{
+		mockPropertyData: basicData,
+		papiMock:         papiMock,
+	}
 
-	// step 2 - refresh + plan
-	mockRead(versionNotes2, rules1And2.Rules).Times(1)
+	// --- step 1 ---
+	// create
+	prp.mockCreateProperty()
+	prp.mockUpdateRuleTree()
 
-	// step 3 - refresh + update + read + plan
-	mockRead(versionNotes2, rules1And2.Rules).Times(1)
+	// read x2
+	mockResourcePropertyRead(prp, 2)
 
+	// --- step 2 --- updated only notes - no triggered update
+	prp.versions.Items[0].Note = versionNotes2
+	prp.ruleTree.comments = versionNotes2
+
+	// refresh x2 - no diff
+	mockResourcePropertyRead(prp, 2)
+
+	// --- step 3 ---
 	var rules3 papi.RulesUpdate
 	rulesJSON = testutils.LoadFixtureBytes(t, path.Join(testdataDir, rulesFile3))
 	err = json.Unmarshal(rulesJSON, &rules3)
 	require.NoError(t, err)
+	// update with new notes and rules
+	prp.versions.Items[0].Note = versionNotes3
+	prp.ruleTree.rules = rules3.Rules
+	prp.ruleTree.comments = versionNotes3
+	mockResourcePropertyRead(prp)
 
-	mockUpdate(versionNotes3, "updatedNotes2", rules3.Rules)
+	prp.mockGetPropertyVersion()
+	prp.mockUpdateRuleTree()
 
-	mockRead(versionNotes3, rules3.Rules).Times(2)
+	// read x2
+	mockResourcePropertyRead(prp, 2)
 
-	// step 4 - refresh + update + read + plan
-	mockRead(versionNotes3, rules3.Rules).Times(1)
-
+	// --- step 4 ---
+	// update with new notes and rules
 	var rules4And5 papi.RulesUpdate
 	rulesJSON = testutils.LoadFixtureBytes(t, path.Join(testdataDir, rulesFile4And5))
 	err = json.Unmarshal(rulesJSON, &rules4And5)
 	require.NoError(t, err)
+	prp.ruleTree.comments = rules4And5.Comments
+	prp.ruleTree.rules = rules4And5.Rules
+	prp.versions.Items[0].Note = rules4And5.Comments
+	mockResourcePropertyRead(prp)
+	prp.mockGetPropertyVersion()
+	prp.mockUpdateRuleTree()
 
-	mockUpdate(versionNotes3, rules4And5.Comments, rules4And5.Rules)
+	// read x2
+	mockResourcePropertyRead(prp, 2)
 
-	mockRead(rules4And5.Comments, rules4And5.Rules).Times(2)
+	// --- step 5 --- same config, no diff
+	// read x2
+	mockResourcePropertyRead(prp, 2)
 
-	// step 5 - refresh + plan
-	mockRead(rules4And5.Comments, rules4And5.Rules).Times(1)
+	// delete
+	prp.mockRemoveProperty()
 
-	// cleanup
-	client.On("RemoveProperty", mock.Anything, papi.RemovePropertyRequest{
-		PropertyID: id,
-		ContractID: ctr,
-		GroupID:    grp,
-	}).Return(&papi.RemovePropertyResponse{}, nil)
-
-	useClient(client, nil, func() {
+	useClient(papiMock, nil, func() {
 		resource.UnitTest(t, resource.TestCase{
 			ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, path.Join(testdataDir, "01_with_notes_and_comments.tf")),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						testCheckResourceAttrJSON(resourceName, "rules", testutils.LoadFixtureString(t, path.Join(testdataDir, "01_expected_rules.json"))),
-						resource.TestCheckResourceAttr("akamai_property.test", "version_notes", "lifecycleTest"),
-					),
+					Check: checker.
+						CheckEqual("version_notes", "lifecycleTest").
+						CheckEqual("rules", testutils.LoadFixtureString(t, path.Join(testdataDir, "01_expected_rules.json"))).
+						Build(),
 				},
 				{
 					Config:   testutils.LoadFixtureString(t, path.Join(testdataDir, "02_update_notes_no_diff.tf")),
@@ -2121,17 +2202,17 @@ func TestPropertyResource_versionNotesLifecycle(t *testing.T) {
 				},
 				{
 					Config: testutils.LoadFixtureString(t, path.Join(testdataDir, "03_update_notes_and_rules.tf")),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						testCheckResourceAttrJSON(resourceName, "rules", testutils.LoadFixtureString(t, path.Join(testdataDir, "03_expected_rules.json"))),
-						resource.TestCheckResourceAttr("akamai_property.test", "version_notes", "updatedNotes2"),
-					),
+					Check: checker.
+						CheckEqual("version_notes", "updatedNotes2").
+						CheckEqual("rules", testutils.LoadFixtureString(t, path.Join(testdataDir, "03_expected_rules.json"))).
+						Build(),
 				},
 				{
 					Config: testutils.LoadFixtureString(t, path.Join(testdataDir, "04_05_remove_notes_update_comments.tf")),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						testCheckResourceAttrJSON(resourceName, "rules", testutils.LoadFixtureString(t, path.Join(testdataDir, "04_expected_rules.json"))),
-						resource.TestCheckResourceAttr("akamai_property.test", "version_notes", "Rules_04"),
-					),
+					Check: checker.
+						CheckEqual("version_notes", "Rules_04").
+						CheckEqual("rules", testutils.LoadFixtureString(t, path.Join(testdataDir, "04_expected_rules.json"))).
+						Build(),
 				},
 				{
 					Config:   testutils.LoadFixtureString(t, path.Join(testdataDir, "04_05_remove_notes_update_comments.tf")),
@@ -2140,8 +2221,6 @@ func TestPropertyResource_versionNotesLifecycle(t *testing.T) {
 			},
 		})
 	})
-
-	client.AssertExpectations(t)
 }
 
 func TestValidatePropertyName(t *testing.T) {

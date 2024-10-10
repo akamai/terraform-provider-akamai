@@ -10,13 +10,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/apex/log"
-
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/dns"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/session"
-
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/dns"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
+	"github.com/apex/log"
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -185,7 +183,9 @@ func resourceDNSv2ZoneCreate(ctx context.Context, d *schema.ResourceData, m inte
 	}
 	// First try to get the zone from the API
 	logger.Debugf("Searching for zone [%s]", hostname)
-	zone, e := inst.Client(meta).GetZone(ctx, hostname)
+	zone, e := inst.Client(meta).GetZone(ctx, dns.GetZoneRequest{
+		Zone: hostname,
+	})
 
 	if e == nil {
 		// Not a good idea to overwrite an existing zone. Needs to be imported.
@@ -208,7 +208,11 @@ func resourceDNSv2ZoneCreate(ctx context.Context, d *schema.ResourceData, m inte
 
 	// no existing zone.
 	logger.Debugf("Creating new zone: %v", zoneCreate)
-	e = inst.Client(meta).CreateZone(ctx, zoneCreate, zoneQueryString, true)
+	e = inst.Client(meta).CreateZone(ctx, dns.CreateZoneRequest{
+		CreateZone:      zoneCreate,
+		ZoneQueryString: zoneQueryString,
+		ClearConn:       []bool{true},
+	})
 	if e != nil {
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
@@ -219,7 +223,9 @@ func resourceDNSv2ZoneCreate(ctx context.Context, d *schema.ResourceData, m inte
 	if strings.ToUpper(zoneType) == "PRIMARY" {
 		time.Sleep(2 * time.Second)
 		// Indirectly create NS and SOA records
-		e = inst.Client(meta).SaveChangelist(ctx, zoneCreate)
+		e = inst.Client(meta).SaveChangeList(ctx, dns.SaveChangeListRequest{
+			Zone: zoneCreate.Zone,
+		})
 		if e != nil {
 			return append(diags, diag.Diagnostic{
 				Severity: diag.Error,
@@ -228,7 +234,9 @@ func resourceDNSv2ZoneCreate(ctx context.Context, d *schema.ResourceData, m inte
 			})
 		}
 		time.Sleep(time.Second)
-		e = inst.Client(meta).SubmitChangelist(ctx, zoneCreate)
+		e = inst.Client(meta).SubmitChangeList(ctx, dns.SubmitChangeListRequest{
+			Zone: zoneCreate.Zone,
+		})
 		if e != nil {
 			return append(diags, diag.Diagnostic{
 				Severity: diag.Error,
@@ -237,7 +245,9 @@ func resourceDNSv2ZoneCreate(ctx context.Context, d *schema.ResourceData, m inte
 			})
 		}
 	}
-	zone, e = inst.Client(meta).GetZone(ctx, hostname)
+	zone, e = inst.Client(meta).GetZone(ctx, dns.GetZoneRequest{
+		Zone: hostname,
+	})
 	if e != nil {
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
@@ -283,7 +293,9 @@ func resourceDNSv2ZoneRead(ctx context.Context, d *schema.ResourceData, m interf
 	}
 	// find the zone first
 	logger.Debugf("Searching for zone [%s]", hostname)
-	zone, e := inst.Client(meta).GetZone(ctx, hostname)
+	zone, e := inst.Client(meta).GetZone(ctx, dns.GetZoneRequest{
+		Zone: hostname,
+	})
 	if e != nil {
 		apiError, ok := e.(*dns.Error)
 		if ok && apiError.StatusCode == http.StatusNotFound {
@@ -315,7 +327,9 @@ func resourceDNSv2ZoneRead(ctx context.Context, d *schema.ResourceData, m interf
 			})
 		}
 		// Need updated state
-		zone, err = inst.Client(meta).GetZone(ctx, hostname)
+		zone, err = inst.Client(meta).GetZone(ctx, dns.GetZoneRequest{
+			Zone: hostname,
+		})
 		if err != nil {
 			return append(diags, diag.Diagnostic{
 				Severity: diag.Error,
@@ -358,22 +372,15 @@ func resourceDNSv2ZoneUpdate(ctx context.Context, d *schema.ResourceData, m inte
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	contract, err := tf.GetStringValue("contract", d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	group, err := tf.GetStringValue("group", d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
 	zoneType, err := tf.GetStringValue("type", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	zoneQueryString := dns.ZoneQueryString{Contract: contract, Group: group}
 
 	logger.Debugf("Searching for zone [%s]", hostname)
-	zone, e := inst.Client(meta).GetZone(ctx, hostname)
+	zone, e := inst.Client(meta).GetZone(ctx, dns.GetZoneRequest{
+		Zone: hostname,
+	})
 	if e != nil {
 		apiError, ok := e.(*dns.Error)
 		if !ok && apiError.StatusCode != http.StatusOK {
@@ -396,7 +403,9 @@ func resourceDNSv2ZoneUpdate(ctx context.Context, d *schema.ResourceData, m inte
 	}
 	// Save the zone to the API
 	logger.Debugf("Saving zone %v", zoneCreate)
-	e = inst.Client(meta).UpdateZone(ctx, zoneCreate, zoneQueryString)
+	e = inst.Client(meta).UpdateZone(ctx, dns.UpdateZoneRequest{
+		CreateZone: zoneCreate,
+	})
 	if e != nil {
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
@@ -429,7 +438,9 @@ func resourceDNSv2ZoneImport(d *schema.ResourceData, m interface{}) ([]*schema.R
 
 	// find the zone first
 	logger.Debugf("Searching for zone [%s]", hostname)
-	zone, err := inst.Client(meta).GetZone(ctx, hostname)
+	zone, err := inst.Client(meta).GetZone(ctx, dns.GetZoneRequest{
+		Zone: hostname,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -441,7 +452,9 @@ func resourceDNSv2ZoneImport(d *schema.ResourceData, m interface{}) ([]*schema.R
 			return nil, err
 		}
 		// Need updated state
-		zone, err = inst.Client(meta).GetZone(ctx, hostname)
+		zone, err = inst.Client(meta).GetZone(ctx, dns.GetZoneRequest{
+			Zone: hostname,
+		})
 		if err != nil {
 			return nil, err
 		}
@@ -492,7 +505,7 @@ func validateZoneType(v interface{}, _ cty.Path) diag.Diagnostics {
 }
 
 // populate zone state based on API response.
-func populateDNSv2ZoneState(d *schema.ResourceData, zoneresp *dns.ZoneResponse) error {
+func populateDNSv2ZoneState(d *schema.ResourceData, zoneresp *dns.GetZoneResponse) error {
 
 	if err := d.Set("contract", zoneresp.ContractID); err != nil {
 		return fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
@@ -664,13 +677,16 @@ func checkDNSv2Zone(d tf.ResourceDataFetcher) error {
 }
 
 // Util func to create SOA and NS records
-func checkZoneSOAandNSRecords(ctx context.Context, meta meta.Meta, zone *dns.ZoneResponse, logger log.Interface) error {
+func checkZoneSOAandNSRecords(ctx context.Context, meta meta.Meta, zone *dns.GetZoneResponse, logger log.Interface) error {
 	logger.Debugf("Checking SOA and NS records exist for zone %s", zone.Zone)
-	var resp *dns.RecordSetResponse
+	var resp *dns.GetRecordSetsResponse
 	var err error
 	if zone.ActivationState != "NEW" {
 		// See if SOA and NS recs exist already. Both or none.
-		resp, err = inst.Client(meta).GetRecordSets(ctx, zone.Zone, dns.RecordSetQueryArgs{Types: "SOA,NS"})
+		resp, err = inst.Client(meta).GetRecordSets(ctx, dns.GetRecordSetsRequest{
+			Zone:      zone.Zone,
+			QueryArgs: &dns.RecordSetQueryArgs{Types: "SOA,NS"},
+		})
 		if err != nil {
 			return err
 		}
@@ -680,7 +696,9 @@ func checkZoneSOAandNSRecords(ctx context.Context, meta meta.Meta, zone *dns.Zon
 	}
 
 	logger.Warnf("SOA and NS records don't exist. Creating ...")
-	nameservers, err := inst.Client(meta).GetNameServerRecordList(ctx, zone.ContractID)
+	nameservers, err := inst.Client(meta).GetNameServerRecordList(ctx, dns.GetNameServerRecordListRequest{
+		ContractIDs: zone.ContractID,
+	})
 	if err != nil {
 		return err
 	}
@@ -692,7 +710,11 @@ func checkZoneSOAandNSRecords(ctx context.Context, meta meta.Meta, zone *dns.Zon
 	rs.RecordSets = append(rs.RecordSets, createNSRecord(zone.Zone, nameservers, logger))
 
 	// create recordSets
-	err = inst.Client(meta).CreateRecordSets(ctx, rs, zone.Zone, true)
+	err = inst.Client(meta).CreateRecordSets(ctx, dns.CreateRecordSetsRequest{
+		Zone:       zone.Zone,
+		RecordSets: rs,
+		RecLock:    []bool{true},
+	})
 
 	return err
 }

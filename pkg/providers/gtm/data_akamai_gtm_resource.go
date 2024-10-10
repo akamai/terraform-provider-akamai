@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/gtm"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/gtm"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -195,7 +195,10 @@ func (d *resourceDataSource) Read(ctx context.Context, request datasource.ReadRe
 	}
 
 	client := Client(d.meta)
-	resource, err := client.GetResource(ctx, data.ResourceName.ValueString(), data.Domain.ValueString())
+	resource, err := client.GetResource(ctx, gtm.GetResourceRequest{
+		DomainName:   data.Domain.ValueString(),
+		ResourceName: data.ResourceName.ValueString(),
+	})
 	if err != nil {
 		response.Diagnostics.AddError("fetching GTM resource failed:", err.Error())
 		return
@@ -206,7 +209,7 @@ func (d *resourceDataSource) Read(ctx context.Context, request datasource.ReadRe
 	response.Diagnostics.Append(response.State.Set(ctx, &data)...)
 }
 
-func (m *resourceDataSourceModel) setAttributes(resource *gtm.Resource) {
+func (m *resourceDataSourceModel) setAttributes(resource *gtm.GetResourceResponse) {
 
 	m.AggregationType = types.StringValue(resource.AggregationType)
 	m.ConstrainedProperty = types.StringValue(resource.ConstrainedProperty)
@@ -224,7 +227,7 @@ func (m *resourceDataSourceModel) setAttributes(resource *gtm.Resource) {
 	m.ID = types.StringValue(resource.Name)
 }
 
-func (m *resourceDataSourceModel) setResourceInstances(resourceInstances []*gtm.ResourceInstance) {
+func (m *resourceDataSourceModel) setResourceInstances(resourceInstances []gtm.ResourceInstance) {
 
 	for _, res := range resourceInstances {
 		resourceInstanceObject := resourceInstance{

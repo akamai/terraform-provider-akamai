@@ -14,8 +14,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/edgeworkers"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/session"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/edgeworkers"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/str"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/timeouts"
@@ -318,14 +318,14 @@ func resourceEdgeWorkerUpdate(ctx context.Context, d *schema.ResourceData, m int
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	edgeWorkerIDBodyReq := edgeworkers.EdgeWorkerIDBodyRequest{
+	edgeWorkerIDBodyReq := edgeworkers.EdgeWorkerIDRequestBody{
 		Name:           name,
 		GroupID:        groupIDNum,
 		ResourceTierID: resourceTierID,
 	}
 	_, err = client.UpdateEdgeWorkerID(ctx, edgeworkers.UpdateEdgeWorkerIDRequest{
-		EdgeWorkerIDBodyRequest: edgeWorkerIDBodyReq,
-		EdgeWorkerID:            edgeWorkerIDReq,
+		Body:         edgeWorkerIDBodyReq,
+		EdgeWorkerID: edgeWorkerIDReq,
 	})
 	if err != nil {
 		return diag.FromErr(err)

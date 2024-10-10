@@ -3,10 +3,10 @@ provider "akamai" {
 }
 
 resource "akamai_property" "test" {
-  contract_id = "ctr_0"
-  group_id    = "grp_0"
   name        = "test_property"
-  product_id  = "prd_0"
+  contract_id = "ctr_1"
+  group_id    = "grp_2"
+  product_id  = "prd_3"
   rules = jsonencode(
     {
       "rules" : {

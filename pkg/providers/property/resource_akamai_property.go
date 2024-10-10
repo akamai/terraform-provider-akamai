@@ -10,8 +10,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/papi"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/session"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/str"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
@@ -206,6 +206,11 @@ func resourceProperty() *schema.Resource {
 				Computed:    true,
 				Elem:        papiError(),
 				Description: "Rule validation warnings",
+			},
+			"asset_id": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "ID of the property in the Identity and Access Management API.",
 			},
 		},
 	}
@@ -492,7 +497,6 @@ func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m inter
 		PropertyID:    propertyID,
 		ContractID:    contractID,
 		GroupID:       groupID,
-		ProductID:     productID,
 		LatestVersion: 1,
 	}
 
@@ -572,6 +576,7 @@ func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interfa
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
 	if v == 0 {
 		// use latest version unless "read_version" != 0
 		v = property.LatestVersion
@@ -626,7 +631,6 @@ func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interfa
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	property.ProductID = res.Version.ProductID
 
 	rulesJSON, err := json.Marshal(rules)
 	if err != nil {
@@ -635,6 +639,7 @@ func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interfa
 	}
 
 	attrs := map[string]interface{}{
+		"asset_id":           property.AssetID,
 		"name":               property.PropertyName,
 		"group_id":           property.GroupID,
 		"contract_id":        property.ContractID,
@@ -648,8 +653,8 @@ func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interfa
 		"read_version":       readVersionID,
 		"version_notes":      res.Version.Note,
 	}
-	if property.ProductID != "" {
-		attrs["product_id"] = property.ProductID
+	if res.Version.ProductID != "" {
+		attrs["product_id"] = res.Version.ProductID
 	}
 	if err := tf.SetAttrs(d, attrs); err != nil {
 		return diag.FromErr(err)
@@ -706,7 +711,6 @@ func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 		PropertyName:      d.Get("name").(string),
 		ContractID:        d.Get("contract_id").(string),
 		GroupID:           d.Get("group_id").(string),
-		ProductID:         d.Get("product_id").(string),
 		LatestVersion:     d.Get("latest_version").(int),
 		StagingVersion:    stagingVersion,
 		ProductionVersion: productionVersion,
@@ -925,13 +929,14 @@ func resourcePropertyImport(ctx context.Context, d *schema.ResourceData, m inter
 		return []*schema.ResourceData{d}, nil
 	}
 
-	var err error
 	var property *papi.Property
+	var err error
 	var v int
+	client = Client(meta.Must(m))
 	if !isDefaultVersion(version) {
-		property, v, err = fetchProperty(ctx, Client(meta.Must(m)), propertyID, groupID, contractID, version)
+		property, v, err = fetchProperty(ctx, client, propertyID, groupID, contractID, version)
 	} else {
-		property, err = fetchLatestProperty(ctx, Client(meta.Must(m)), propertyID, groupID, contractID)
+		property, err = fetchLatestProperty(ctx, client, propertyID, groupID, contractID)
 	}
 	if err != nil {
 		return nil, err
@@ -1135,8 +1140,6 @@ func fetchProperty(ctx context.Context, client papi.PAPI, propertyID, groupID, c
 		ProductionVersion: getNetworkActiveVersionNumber(res.Versions.Items, papi.ActivationNetworkProduction),
 		AssetID:           res.AssetID,
 		Note:              versionItem.Note,
-		ProductID:         versionItem.ProductID,
-		RuleFormat:        versionItem.RuleFormat,
 	}
 
 	logger.Debug("property versions fetched")

@@ -3,7 +3,7 @@ package iam
 import (
 	"context"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/session"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -11,13 +11,13 @@ import (
 
 func dataSourceIAMCountries() *schema.Resource {
 	return &schema.Resource{
-		Description: "List all the possible countries that Akamai supports",
+		Description: "List all the possible countries that Akamai supports.",
 		ReadContext: dataIAMCountriesRead,
 		Schema: map[string]*schema.Schema{
 			"countries": {
 				Type:        schema.TypeSet,
 				Computed:    true,
-				Description: "Supported countries",
+				Description: "Supported countries.",
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 		},

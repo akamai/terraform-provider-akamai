@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/dns"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/dns"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
@@ -23,7 +23,7 @@ func TestDataSourceAuthoritiesSet_basic(t *testing.T) {
 
 		client.On("GetNameServerRecordList",
 			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("string"),
+			mock.AnythingOfType("dns.GetNameServerRecordListRequest"),
 		).Return(authorities, nil)
 
 		useClient(client, func() {
@@ -71,7 +71,7 @@ func TestDataSourceAuthoritiesSet_basic(t *testing.T) {
 
 		client.On("GetNameServerRecordList",
 			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("string"),
+			mock.AnythingOfType("dns.GetNameServerRecordListRequest"),
 		).Return(nil, errors.New("invalid contract"))
 
 		useClient(client, func() {

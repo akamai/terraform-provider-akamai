@@ -10,8 +10,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/papi"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/session"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/logger"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
@@ -109,6 +109,11 @@ func resourcePropertyInclude() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The most recent version to be activated to the production network",
+			},
+			"asset_id": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "ID of the include in the Identity and Access Management API.",
 			},
 		},
 	}
@@ -289,6 +294,7 @@ func resourcePropertyIncludeRead(ctx context.Context, rd *schema.ResourceData, m
 	}
 
 	attrs := map[string]interface{}{
+		"asset_id":           include.AssetID,
 		"rules":              string(rulesJSON),
 		"name":               include.IncludeName,
 		"type":               include.IncludeType,

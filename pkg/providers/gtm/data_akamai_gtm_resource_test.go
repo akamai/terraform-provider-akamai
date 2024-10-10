@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/gtm"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/gtm"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
@@ -22,7 +22,10 @@ func TestDataGTMResource(t *testing.T) {
 		"happy path - GTM data resource should be returned": {
 			givenTF: "valid.tf",
 			init: func(m *gtm.Mock) {
-				m.On("GetResource", mock.Anything, "resource1", "test.domain.net").Return(&gtm.Resource{
+				m.On("GetResource", mock.Anything, gtm.GetResourceRequest{
+					ResourceName: "resource1",
+					DomainName:   "test.domain.net",
+				}).Return(&gtm.GetResourceResponse{
 					Type:                        "XML load object via HTTP",
 					LeastSquaresDecay:           0,
 					Description:                 "terraform test resource",
@@ -32,13 +35,13 @@ func TestDataGTMResource(t *testing.T) {
 					Name:                        "property",
 					MaxUMultiplicativeIncrement: 0,
 					DecayRate:                   0,
-					Links: []*gtm.Link{{
+					Links: []gtm.Link{{
 						Rel: "self",
 						Href: "https://akaa-ouijhfns55qwgfuc-knsod5nrjl2w2gmt.luna-dev.akamaiapis.net/config-gtm/v1/domains/" +
 							"test.cli.domain.net/resources/resource1",
 					},
 					},
-					ResourceInstances: []*gtm.ResourceInstance{{
+					ResourceInstances: []gtm.ResourceInstance{{
 						DatacenterID:         3131,
 						UseDefaultLoadObject: false,
 						LoadObject: gtm.LoadObject{
@@ -71,7 +74,10 @@ func TestDataGTMResource(t *testing.T) {
 		"error response from api": {
 			givenTF: "valid.tf",
 			init: func(m *gtm.Mock) {
-				m.On("GetResource", mock.Anything, "resource1", "test.domain.net").Return(
+				m.On("GetResource", mock.Anything, gtm.GetResourceRequest{
+					ResourceName: "resource1",
+					DomainName:   "test.domain.net",
+				}).Return(
 					nil, fmt.Errorf("oops"))
 			},
 			expectError: regexp.MustCompile("oops"),

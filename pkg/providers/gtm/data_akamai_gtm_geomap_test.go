@@ -5,13 +5,18 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/gtm"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/gtm"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
 
 func TestDataGTMGeoMap(t *testing.T) {
+	getGeoMapRequest := gtm.GetGeoMapRequest{
+		MapName:    "mapTest",
+		DomainName: "test.geomap.domain.net"}
+	anyContext := mock.AnythingOfType("*context.valueCtx")
+
 	tests := map[string]struct {
 		givenTF            string
 		init               func(mock *gtm.Mock)
@@ -21,14 +26,14 @@ func TestDataGTMGeoMap(t *testing.T) {
 		"happy path": {
 			givenTF: "valid.tf",
 			init: func(m *gtm.Mock) {
-				m.On("GetGeoMap", mock.AnythingOfType("*context.valueCtx"), "mapTest", "test.geomap.domain.net").Return(
-					&gtm.GeoMap{
+				m.On("GetGeoMap", anyContext, getGeoMapRequest).Return(
+					&gtm.GetGeoMapResponse{
 						Name: "TestName",
 						DefaultDatacenter: &gtm.DatacenterBase{
 							Nickname:     "TestNickname",
 							DatacenterID: 1,
 						},
-						Assignments: []*gtm.GeoAssignment{{
+						Assignments: []gtm.GeoAssignment{{
 							DatacenterBase: gtm.DatacenterBase{
 								Nickname:     "TestNicknameAssignments",
 								DatacenterID: 2,
@@ -38,7 +43,7 @@ func TestDataGTMGeoMap(t *testing.T) {
 								"US",
 							},
 						}},
-						Links: []*gtm.Link{{
+						Links: []gtm.Link{{
 							Rel:  "TestRel",
 							Href: "TestHref",
 						}},
@@ -70,7 +75,7 @@ func TestDataGTMGeoMap(t *testing.T) {
 		"error response from api": {
 			givenTF: "valid.tf",
 			init: func(m *gtm.Mock) {
-				m.On("GetGeoMap", mock.AnythingOfType("*context.valueCtx"), "mapTest", "test.geomap.domain.net").Return(
+				m.On("GetGeoMap", anyContext, getGeoMapRequest).Return(
 					nil, fmt.Errorf("API error"))
 			},
 			expectError: regexp.MustCompile("API error"),
@@ -78,15 +83,15 @@ func TestDataGTMGeoMap(t *testing.T) {
 		"no assignments": {
 			givenTF: "valid.tf",
 			init: func(m *gtm.Mock) {
-				m.On("GetGeoMap", mock.AnythingOfType("*context.valueCtx"), "mapTest", "test.geomap.domain.net").Return(
-					&gtm.GeoMap{
+				m.On("GetGeoMap", anyContext, getGeoMapRequest).Return(
+					&gtm.GetGeoMapResponse{
 						Name: "TestName",
 						DefaultDatacenter: &gtm.DatacenterBase{
 							Nickname:     "TestNickname",
 							DatacenterID: 1,
 						},
-						Assignments: []*gtm.GeoAssignment{},
-						Links: []*gtm.Link{{
+						Assignments: []gtm.GeoAssignment{},
+						Links: []gtm.Link{{
 							Rel:  "TestRel",
 							Href: "TestHref",
 						}},

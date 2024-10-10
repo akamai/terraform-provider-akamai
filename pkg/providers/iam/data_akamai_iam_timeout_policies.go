@@ -3,7 +3,7 @@ package iam
 import (
 	"context"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/session"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -11,13 +11,13 @@ import (
 
 func dataSourceIAMTimeoutPolicies() *schema.Resource {
 	return &schema.Resource{
-		Description: "Lists all session timeout policies Akamai supports",
+		Description: "Lists all session timeout policies Akamai supports.",
 		ReadContext: dataIAMTimeoutPoliciesRead,
 		Schema: map[string]*schema.Schema{
 			"policies": {
 				Type:        schema.TypeMap,
 				Computed:    true,
-				Description: "Session timeout policies",
+				Description: "Session timeout policies.",
 				Elem:        &schema.Schema{Type: schema.TypeInt},
 			},
 		},

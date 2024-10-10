@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/gtm"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -141,7 +142,8 @@ func (d *geoMapsDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	}
 
 	client := Client(d.meta)
-	geoMaps, err := client.ListGeoMaps(ctx, data.Domain.ValueString())
+	geoMaps, err := client.ListGeoMaps(ctx, gtm.ListGeoMapsRequest{
+		DomainName: data.Domain.ValueString()})
 	if err != nil {
 		resp.Diagnostics.AddError("fetching GTM Geographic maps failed: ", err.Error())
 		return

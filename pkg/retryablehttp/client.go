@@ -651,6 +651,14 @@ func (c *Client) Do(req *Request) (*http.Response, error) {
 			}
 		}
 
+		// First attempt was already signed
+		if attempt > 1 && c.PrepareRetry != nil {
+			if err := c.PrepareRetry(req.Request); err != nil {
+				prepareErr = err
+				break
+			}
+		}
+
 		if c.RequestLogHook != nil {
 			switch v := logger.(type) {
 			case LeveledLogger:
@@ -742,10 +750,6 @@ func (c *Client) Do(req *Request) (*http.Response, error) {
 		httpreq := *req.Request
 		req.Request = &httpreq
 
-		if err := c.PrepareRetry(req.Request); err != nil {
-			prepareErr = err
-			break
-		}
 	}
 
 	// this is the closest we have to success criteria

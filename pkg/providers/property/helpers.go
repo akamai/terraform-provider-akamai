@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/iam"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/iam"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/str"
 	"github.com/apex/log"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -226,8 +226,7 @@ type papiKey struct {
 	contractID string
 }
 
-func updateGroupID(ctx context.Context, client papi.PAPI, iamClient iam.IAM, key papiKey,
-	destGroupID string) error {
+func updateGroupID(ctx context.Context, client papi.PAPI, iamClient iam.IAM, key papiKey, destGroupID string) error {
 
 	logger := log.FromContext(ctx).WithFields(log.Fields{
 		"key":         key,
@@ -262,7 +261,7 @@ func updateGroupID(ctx context.Context, client papi.PAPI, iamClient iam.IAM, key
 
 	err = iamClient.MoveProperty(ctx, iam.MovePropertyRequest{
 		PropertyID: int64(iamID),
-		BodyParams: iam.MovePropertyReqBody{
+		Body: iam.MovePropertyRequestBody{
 			DestinationGroupID: int64(to),
 			SourceGroupID:      int64(from),
 		},

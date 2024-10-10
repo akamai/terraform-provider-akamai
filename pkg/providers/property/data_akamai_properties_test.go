@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
@@ -14,7 +14,7 @@ func TestDataProperties(t *testing.T) {
 	t.Run("list properties", func(t *testing.T) {
 		client := &papi.Mock{}
 		props := papi.PropertiesItems{Items: buildPapiProperties()}
-		properties := decodePropertyItems(props.Items)
+		properties := decodePropertyItems(props.Items, "", "")
 
 		client.On("GetProperties",
 			mock.Anything,
@@ -37,7 +37,7 @@ func TestDataProperties(t *testing.T) {
 	t.Run("list properties without group prefix", func(t *testing.T) {
 		client := &papi.Mock{}
 		props := papi.PropertiesItems{Items: buildPapiProperties()}
-		properties := decodePropertyItems(props.Items)
+		properties := decodePropertyItems(props.Items, "", "")
 
 		client.On("GetProperties",
 			mock.Anything,
@@ -60,7 +60,7 @@ func TestDataProperties(t *testing.T) {
 	t.Run("list properties without contract prefix", func(t *testing.T) {
 		client := &papi.Mock{}
 		props := papi.PropertiesItems{Items: buildPapiProperties()}
-		properties := decodePropertyItems(props.Items)
+		properties := decodePropertyItems(props.Items, "", "")
 
 		client.On("GetProperties",
 			mock.Anything,
@@ -91,11 +91,9 @@ func buildPapiProperties() []*papi.Property {
 			GroupID:           "grp_test",
 			LatestVersion:     1,
 			Note:              fmt.Sprintf("note%v", i),
-			ProductID:         "prd1",
 			ProductionVersion: nil,
 			PropertyID:        fmt.Sprintf("prp%v", i),
 			PropertyName:      fmt.Sprintf("prpname%v", i),
-			RuleFormat:        "latest",
 			StagingVersion:    nil,
 		}
 	}
@@ -121,7 +119,7 @@ func buildAggregatedTest(properties []map[string]interface{}, id, groupID, contr
 	return resource.ComposeAggregateTestCheckFunc(testVar...)
 }
 
-func decodePropertyItems(items []*papi.Property) []map[string]interface{} {
+func decodePropertyItems(items []*papi.Property, ruleFormat, productID string) []map[string]interface{} {
 	properties := make([]map[string]interface{}, 0)
 	for _, item := range items {
 		prop := map[string]interface{}{
@@ -129,11 +127,11 @@ func decodePropertyItems(items []*papi.Property) []map[string]interface{} {
 			"group_id":           item.GroupID,
 			"latest_version":     item.LatestVersion,
 			"note":               item.Note,
-			"product_id":         item.ProductID,
+			"product_id":         productID,
 			"production_version": decodeVersion(item.ProductionVersion),
 			"property_id":        item.PropertyID,
 			"property_name":      item.PropertyName,
-			"rule_format":        item.RuleFormat,
+			"rule_format":        ruleFormat,
 			"staging_version":    decodeVersion(item.StagingVersion),
 		}
 		properties = append(properties, prop)

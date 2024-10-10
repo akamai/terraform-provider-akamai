@@ -16,14 +16,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/dns"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/logger"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/providers/dns/internal/txtrecord"
-
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/dns"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/hash"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/logger"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/providers/dns/internal/txtrecord"
 	"github.com/apex/log"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -599,7 +598,11 @@ func getRecordLock(recordType string) *sync.Mutex {
 
 func bumpSoaSerial(ctx context.Context, d *schema.ResourceData, meta meta.Meta, zone, host string, logger log.Interface) (*dns.RecordBody, error) {
 	// Get SOA Record
-	recordset, err := inst.Client(meta).GetRecord(ctx, zone, host, "SOA")
+	recordset, err := inst.Client(meta).GetRecord(ctx, dns.GetRecordRequest{
+		Zone:       zone,
+		Name:       host,
+		RecordType: "SOA",
+	})
 	if err != nil {
 		return nil, fmt.Errorf("error looking up SOA record for %s: %w", host, err)
 	}
@@ -620,18 +623,31 @@ func bumpSoaSerial(ctx context.Context, d *schema.ResourceData, meta meta.Meta, 
 }
 
 // Record op function
-func execFunc(ctx context.Context, meta meta.Meta, fn string, rec *dns.RecordBody, zone string, rlock bool) error {
+func execFunc(ctx context.Context, meta meta.Meta, fn string, rec *dns.RecordBody, zone string, rlock []bool) error {
 
 	var e error
 	switch fn {
 	case "Create":
-		e = inst.Client(meta).CreateRecord(ctx, rec, zone, rlock)
+		e = inst.Client(meta).CreateRecord(ctx, dns.CreateRecordRequest{
+			Zone:    zone,
+			Record:  rec,
+			RecLock: rlock,
+		})
 
 	case "Update":
-		e = inst.Client(meta).UpdateRecord(ctx, rec, zone, rlock)
+		e = inst.Client(meta).UpdateRecord(ctx, dns.UpdateRecordRequest{
+			Zone:    zone,
+			Record:  rec,
+			RecLock: rlock,
+		})
 
 	case "Delete":
-		e = inst.Client(meta).DeleteRecord(ctx, rec, zone, rlock)
+		e = inst.Client(meta).DeleteRecord(ctx, dns.DeleteRecordRequest{
+			Zone:       zone,
+			Name:       rec.Name,
+			RecordType: rec.RecordType,
+			RecLock:    rlock,
+		})
 
 	default:
 		e = fmt.Errorf("Invalid operation [%s]", fn)
@@ -640,7 +656,7 @@ func execFunc(ctx context.Context, meta meta.Meta, fn string, rec *dns.RecordBod
 	return e
 }
 
-func executeRecordFunction(ctx context.Context, meta meta.Meta, name string, d *schema.ResourceData, fn string, rec *dns.RecordBody, zone, host, recordType string, logger log.Interface, rlock bool) error {
+func executeRecordFunction(ctx context.Context, meta meta.Meta, name string, d *schema.ResourceData, fn string, rec *dns.RecordBody, zone, host, recordType string, logger log.Interface, rlock []bool) error {
 
 	logger.Debugf("executeRecordFunction - zone: %s, host: %s, recordtype: %s", zone, host, recordType)
 	// DNS API can have Concurrency issues
@@ -733,7 +749,11 @@ func resourceDNSRecordCreate(ctx context.Context, d *schema.ResourceData, m inte
 	if recordType == RRTypeSoa {
 		logger.Debug("Attempting to create a SOA record")
 		// A default SOA is created automagically when the primary zone is created ...
-		if _, err := inst.Client(meta).GetRecord(ctx, zone, host, recordType); err == nil {
+		if _, err := inst.Client(meta).GetRecord(ctx, dns.GetRecordRequest{
+			Zone:       zone,
+			Name:       host,
+			RecordType: recordType,
+		}); err == nil {
 			// Record exists
 			serial, err := tf.GetIntValue("serial", d)
 			if err != nil && !errors.Is(err, tf.ErrNotFound) {
@@ -771,7 +791,11 @@ func resourceDNSRecordCreate(ctx context.Context, d *schema.ResourceData, m inte
 	// First try to get the zone from the API
 	logger.Debugf("Searching for records [%s]", zone)
 	rdata := make([]string, 0)
-	recordSet, e := inst.Client(meta).GetRecord(ctx, zone, host, recordType)
+	recordSet, e := inst.Client(meta).GetRecord(ctx, dns.GetRecordRequest{
+		Zone:       zone,
+		Name:       host,
+		RecordType: recordType,
+	})
 	if e != nil {
 		apiError, ok := e.(*dns.Error)
 		if !ok || apiError.StatusCode != http.StatusNotFound {
@@ -790,7 +814,7 @@ func resourceDNSRecordCreate(ctx context.Context, d *schema.ResourceData, m inte
 		// record not found/404 we will create a new
 		logger.Debug("Creating new record")
 		// Save the zone to the API
-		e = executeRecordFunction(ctx, meta, "CREATE", d, "Create", &recordCreate, zone, host, recordType, logger, false)
+		e = executeRecordFunction(ctx, meta, "CREATE", d, "Create", &recordCreate, zone, host, recordType, logger, []bool{false})
 		if e != nil {
 			return append(diags, diag.Diagnostic{
 				Severity: diag.Error,
@@ -801,7 +825,7 @@ func resourceDNSRecordCreate(ctx context.Context, d *schema.ResourceData, m inte
 	} else {
 		logger.Debug("Updating record")
 		if len(rdata) > 0 {
-			e = executeRecordFunction(ctx, meta, "CREATE", d, "Update", &recordCreate, zone, host, recordType, logger, false)
+			e = executeRecordFunction(ctx, meta, "CREATE", d, "Update", &recordCreate, zone, host, recordType, logger, []bool{false})
 			if e != nil {
 				return append(diags, diag.Diagnostic{
 					Severity: diag.Error,
@@ -811,7 +835,7 @@ func resourceDNSRecordCreate(ctx context.Context, d *schema.ResourceData, m inte
 			}
 		} else {
 			logger.Debug("Saving record")
-			e = executeRecordFunction(ctx, meta, "CREATE", d, "Create", &recordCreate, zone, host, recordType, logger, false)
+			e = executeRecordFunction(ctx, meta, "CREATE", d, "Create", &recordCreate, zone, host, recordType, logger, []bool{false})
 			if e != nil {
 				return append(diags, diag.Diagnostic{
 					Severity: diag.Error,
@@ -903,7 +927,11 @@ func resourceDNSRecordUpdate(ctx context.Context, d *schema.ResourceData, m inte
 
 	if recordType == RRTypeSoa {
 		// need to get current serial and increment as part of update
-		record, e := inst.Client(meta).GetRecord(ctx, zone, host, recordType)
+		record, e := inst.Client(meta).GetRecord(ctx, dns.GetRecordRequest{
+			Zone:       zone,
+			Name:       host,
+			RecordType: recordType,
+		})
 		if e != nil {
 			apiError, ok := e.(*dns.Error)
 			if !ok || apiError.StatusCode != http.StatusNotFound {
@@ -942,7 +970,11 @@ func resourceDNSRecordUpdate(ctx context.Context, d *schema.ResourceData, m inte
 	// First try to get the zone from the API
 	logger.Debugf("UPDATE Searching for records [%s]", zone)
 	rdata := make([]string, 0, 0)
-	recordset, e := inst.Client(meta).GetRecord(ctx, zone, host, recordType)
+	recordset, e := inst.Client(meta).GetRecord(ctx, dns.GetRecordRequest{
+		Zone:       zone,
+		Name:       host,
+		RecordType: recordType,
+	})
 	if e != nil {
 		apiError, ok := e.(*dns.Error)
 		if !ok || apiError.StatusCode != http.StatusNotFound {
@@ -970,13 +1002,13 @@ func resourceDNSRecordUpdate(ctx context.Context, d *schema.ResourceData, m inte
 		logger.Errorf("UPDATE [ERROR] %s", e.Error())
 		logger.Debugf("UPDATE Creating new record")
 		// Save the zone to the API
-		e = executeRecordFunction(ctx, meta, "UPDATE", d, "Create", &recordCreate, zone, host, recordType, logger, false)
+		e = executeRecordFunction(ctx, meta, "UPDATE", d, "Create", &recordCreate, zone, host, recordType, logger, []bool{false})
 		if e != nil {
 			return diag.FromErr(e)
 		}
 	} else {
 		logger.Debug("UPDATE Updating record")
-		e = executeRecordFunction(ctx, meta, "UPDATE", d, "Update", &recordCreate, zone, host, recordType, logger, false)
+		e = executeRecordFunction(ctx, meta, "UPDATE", d, "Update", &recordCreate, zone, host, recordType, logger, []bool{false})
 		if e != nil {
 			return diag.FromErr(e)
 		}
@@ -1060,7 +1092,11 @@ func resourceDNSRecordRead(ctx context.Context, d *schema.ResourceData, m interf
 		"recordtype": recordType,
 	}).Info("READ Searching for zone records")
 
-	record, e := inst.Client(meta).GetRecord(ctx, zone, host, recordType)
+	record, e := inst.Client(meta).GetRecord(ctx, dns.GetRecordRequest{
+		Zone:       zone,
+		Name:       host,
+		RecordType: recordType,
+	})
 	if e != nil {
 		apiError, ok := e.(*dns.Error)
 		if !ok || apiError.StatusCode != http.StatusNotFound {
@@ -1255,7 +1291,11 @@ func resourceDNSRecordImport(d *schema.ResourceData, m interface{}) ([]*schema.R
 	// Get recordset
 	logger.Debugf("Searching for zone Recordset. %s", idParts)
 
-	recordset, e := inst.Client(meta).GetRecord(ctx, zone, recordName, recordType)
+	recordset, e := inst.Client(meta).GetRecord(ctx, dns.GetRecordRequest{
+		Zone:       zone,
+		Name:       recordName,
+		RecordType: recordType,
+	})
 	if e != nil {
 		apiError, ok := e.(*dns.Error)
 		if !ok || apiError.StatusCode != http.StatusNotFound {
@@ -1367,7 +1407,7 @@ func resourceDNSRecordDelete(ctx context.Context, d *schema.ResourceData, m inte
 
 	// Warning: Delete will expunge the ENTIRE Recordset regardless of whether user thought they were removing an instance
 
-	if err := executeRecordFunction(ctx, meta, "DELETE", d, "Delete", &recordcreate, zone, host, recordType, logger, false); err != nil {
+	if err := executeRecordFunction(ctx, meta, "DELETE", d, "Delete", &recordcreate, zone, host, recordType, logger, []bool{false}); err != nil {
 		return diag.FromErr(err)
 	}
 	d.SetId("")
@@ -1555,7 +1595,11 @@ func newRecordCreate(ctx context.Context, meta meta.Meta, d *schema.ResourceData
 			return dns.RecordBody{}, err
 		}
 		logger.Debugf("MX record targets to process: %v", target)
-		recordset, e := inst.Client(meta).GetRecord(ctx, zone, host, recordType)
+		recordset, e := inst.Client(meta).GetRecord(ctx, dns.GetRecordRequest{
+			Zone:       zone,
+			Name:       host,
+			RecordType: recordType,
+		})
 		rdata := make([]string, 0, 0)
 		if e != nil {
 			logger.Debugf("MX Get Error Type: %T", e)

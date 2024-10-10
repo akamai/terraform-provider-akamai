@@ -6,8 +6,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/papi"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/session"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/str"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
@@ -33,16 +33,48 @@ func dataSourceProperties() *schema.Resource {
 				Description: "List of properties",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"contract_id":        {Type: schema.TypeString, Computed: true},
-						"group_id":           {Type: schema.TypeString, Computed: true},
-						"latest_version":     {Type: schema.TypeInt, Computed: true},
-						"note":               {Type: schema.TypeString, Computed: true},
-						"product_id":         {Type: schema.TypeString, Computed: true},
-						"production_version": {Type: schema.TypeInt, Computed: true},
-						"property_id":        {Type: schema.TypeString, Computed: true},
-						"property_name":      {Type: schema.TypeString, Computed: true},
-						"rule_format":        {Type: schema.TypeString, Computed: true},
-						"staging_version":    {Type: schema.TypeInt, Computed: true},
+						"contract_id": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"group_id": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"latest_version": {
+							Type:     schema.TypeInt,
+							Computed: true,
+						},
+						"note": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"product_id": {
+							Type:       schema.TypeString,
+							Computed:   true,
+							Deprecated: "This field is deprecated. Please use `akamai_property` to get this data",
+						},
+						"production_version": {
+							Type:     schema.TypeInt,
+							Computed: true,
+						},
+						"property_id": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"property_name": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"rule_format": {
+							Type:       schema.TypeString,
+							Computed:   true,
+							Deprecated: "This field is deprecated. Please use `akamai_property` to get this data",
+						},
+						"staging_version": {
+							Type:     schema.TypeInt,
+							Computed: true,
+						},
 					},
 				},
 			},
@@ -81,31 +113,37 @@ func dataPropertiesRead(ctx context.Context, d *schema.ResourceData, m interface
 	// setting concatenated id to uniquely identify data
 	d.SetId(groupID + contractID)
 
-	if err := d.Set("properties", sliceResponseProperties(propertiesResponse)); err != nil {
+	properties, err := sliceResponseProperties(propertiesResponse)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("properties", properties); err != nil {
 		return diag.Errorf("error setting properties: %s", err)
 	}
 
 	return nil
 }
 
-func sliceResponseProperties(propertiesResponse *papi.GetPropertiesResponse) []map[string]interface{} {
+func sliceResponseProperties(propertiesResponse *papi.GetPropertiesResponse) ([]map[string]interface{}, error) {
 	var properties []map[string]interface{}
 	for _, item := range propertiesResponse.Properties.Items {
+
 		property := map[string]interface{}{
 			"contract_id":        item.ContractID,
 			"group_id":           item.GroupID,
 			"latest_version":     item.LatestVersion,
 			"note":               item.Note,
-			"product_id":         item.ProductID,
+			"product_id":         nil,
 			"production_version": decodeVersion(item.ProductionVersion),
 			"property_id":        item.PropertyID,
 			"property_name":      item.PropertyName,
-			"rule_format":        item.RuleFormat,
+			"rule_format":        nil,
 			"staging_version":    decodeVersion(item.StagingVersion),
 		}
 		properties = append(properties, property)
 	}
-	return properties
+	return properties, nil
 }
 
 func decodeVersion(version interface{}) int {

@@ -15,17 +15,17 @@ resource "akamai_property" "test" {
 
 variable "groupid" {
   description = "Name of the group associated with this property"
-  default     = "grp_0"
+  default     = "grp_2"
 }
 
 variable "contractid" {
   description = "Contract ID associated with this property"
-  default     = "ctr_0"
+  default     = "ctr_1"
 }
 
 variable "productid" {
   description = "Name of the product used to configure this property"
-  default     = "prd_0"
+  default     = "prd_3"
 }
 
 variable "propertyname" {

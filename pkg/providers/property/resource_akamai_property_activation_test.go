@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
@@ -34,7 +34,7 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 				// update
 				expectGetRuleTree(m, "prp_test", 2, ruleTreeResponseValid, nil).Once()
 				expectGetActivations(m, "prp_test", generateActivationResponseMock("atv_activation1", "property activation note for creating", 1, papi.ActivationTypeActivate, "2020-10-28T15:04:05Z", []string{"user@example.com"}), nil).Once()
-				ExpectGetPropertyVersion(m, "prp_test", "", "", 2, papi.VersionStatusInactive, "").Once()
+				expectGetPropertyVersion(m, "prp_test", "", "", 2, papi.VersionStatusInactive, "").Once()
 				expectCreateActivation(m, "prp_test", papi.ActivationTypeActivate, 2, "STAGING",
 					[]string{"user@example.com"}, "property activation note for updating", "atv_update", true, nil).Once()
 				expectGetActivation(m, "prp_test", "atv_update", 2, "STAGING", papi.ActivationStatusActive, papi.ActivationTypeActivate, "property activation note for updating", []string{"user@example.com"}, nil).Once()
@@ -315,6 +315,34 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 				},
 			},
 		},
+		"property activation when other version is already active": {
+			init: func(m *papi.Mock) {
+				// first step
+				// create
+				expectGetRuleTree(m, "prp_test", 1, ruleTreeResponseValid, nil).Once()
+
+				firstActivationOnV1 := generateActivationItemMock("atv_activation1", note, 1, papi.ActivationTypeActivate, "2020-09-28T15:04:05Z", []string{"user@example.com"})
+				activationOnV2 := generateActivationItemMock("atv_activation2", note, 2, papi.ActivationTypeActivate, "2020-10-28T15:04:05Z", []string{"user@example.com"})
+				expectGetActivations(m, "prp_test", papi.GetActivationsResponse{Activations: papi.ActivationsItems{Items: []*papi.Activation{activationOnV2, firstActivationOnV1}}}, nil).Once()
+				expectCreateActivation(m, "prp_test", papi.ActivationTypeActivate, 1, "STAGING", []string{"user@example.com"}, "", "atv_activation1", true, nil).Once()
+				expectGetActivation(m, "prp_test", "atv_activation1", 1, "STAGING", papi.ActivationStatusActive, papi.ActivationTypeActivate, "", []string{"user@example.com"}, nil).Once()
+				// read
+				activationOnV1 := generateActivationItemMock("atv_activation1", note, 1, papi.ActivationTypeActivate, "2020-11-28T15:05:05Z", []string{"user@example.com"})
+				allActivations := papi.GetActivationsResponse{Activations: papi.ActivationsItems{Items: []*papi.Activation{activationOnV1, activationOnV2, firstActivationOnV1}}}
+				expectGetActivations(m, "prp_test", allActivations, nil).Once()
+
+				// delete
+				expectGetActivations(m, "prp_test", allActivations, nil).Once()
+				expectCreateActivation(m, "prp_test", papi.ActivationTypeDeactivate, 1, "STAGING", []string{"user@example.com"}, "", "atv_update", true, nil).Once()
+				expectGetActivation(m, "prp_test", "atv_update", 1, "STAGING", papi.ActivationStatusActive, papi.ActivationTypeDeactivate, "", []string{"user@example.com"}, nil).Once()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "./testdata/TestPropertyActivation/deactivated_in_other_source/resource_property_activation.tf"),
+					Check:  resource.TestCheckResourceAttr("akamai_property_activation.test", "version", "1"),
+				},
+			},
+		},
 		"activation with custom timeout - lifecycle": {
 			init: func(m *papi.Mock) {
 				// first step
@@ -587,7 +615,7 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 				// update - note field not suppressed update of contact field and version
 				expectGetRuleTree(m, "prp_test", 2, ruleTreeResponseValid, nil).Once()
 				expectGetActivations(m, "prp_test", generateActivationResponseMock("atv_activation1", "property activation note for creating", 1, papi.ActivationTypeActivate, "2020-10-28T15:04:05Z", []string{"user@example.com"}), nil).Once()
-				ExpectGetPropertyVersion(m, "prp_test", "", "", 2, papi.VersionStatusInactive, "").Once()
+				expectGetPropertyVersion(m, "prp_test", "", "", 2, papi.VersionStatusInactive, "").Once()
 				expectCreateActivation(m, "prp_test", papi.ActivationTypeActivate, 2, "STAGING",
 					[]string{"user@example.com", "user2@example.com"}, "property activation note for updating", "atv_update", true, nil).Once()
 				expectGetActivation(m, "prp_test", "atv_update", 2, "STAGING", papi.ActivationStatusActive, papi.ActivationTypeActivate, "property activation note for updating", []string{"user@example.com", "user2@example.com"}, nil).Once()
@@ -653,7 +681,7 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 				// update
 				expectGetRuleTree(m, "prp_test", 2, ruleTreeResponseValid, nil).Once()
 				expectGetActivations(m, "prp_test", generateActivationResponseMock("atv_activation1", "", 1, papi.ActivationTypeActivate, "2020-10-28T15:04:05Z", []string{"user@example.com"}), nil).Once()
-				ExpectGetPropertyVersion(m, "prp_test", "", "", 2, papi.VersionStatusInactive, "").Once()
+				expectGetPropertyVersion(m, "prp_test", "", "", 2, papi.VersionStatusInactive, "").Once()
 				// error on update
 				m.On("CreateActivation", AnyCTX, papi.CreateActivationRequest{
 					PropertyID: "prp_test",
@@ -946,5 +974,26 @@ var (
 				NotifyEmails:    contact,
 			},
 		}, nil)
+	}
+
+	// Sets up an expected call to papi.GetPropertyVersion()
+	expectGetPropertyVersion = func(client *papi.Mock, PropertyID, GroupID, ContractID string, Version int, StagStatus, ProdStatus papi.VersionStatus) *mock.Call {
+		req := papi.GetPropertyVersionRequest{
+			PropertyID:      PropertyID,
+			GroupID:         GroupID,
+			ContractID:      ContractID,
+			PropertyVersion: Version,
+		}
+
+		res := papi.GetPropertyVersionsResponse{
+			PropertyID: PropertyID,
+			GroupID:    GroupID,
+			ContractID: ContractID,
+			Version: papi.PropertyVersionGetItem{
+				StagingStatus:    StagStatus,
+				ProductionStatus: ProdStatus,
+			},
+		}
+		return client.On("GetPropertyVersion", AnyCTX, req).Return(&res, nil)
 	}
 )

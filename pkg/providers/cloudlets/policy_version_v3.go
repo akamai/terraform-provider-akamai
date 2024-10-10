@@ -3,7 +3,7 @@ package cloudlets
 import (
 	"context"
 
-	cloudlets "github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/cloudlets/v3"
+	cloudlets "github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/cloudlets/v3"
 )
 
 type v3VersionStrategy struct {

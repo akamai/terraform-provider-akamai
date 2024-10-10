@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/gtm"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/session"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/gtm"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -159,7 +159,10 @@ func dataGTMDatacenterRead(ctx context.Context, d *schema.ResourceData, m interf
 		return diag.Errorf("could not get 'datacenter_id' attribute: %s", err)
 	}
 
-	dc, err := client.GetDatacenter(ctx, dcID, domain)
+	dc, err := client.GetDatacenter(ctx, gtm.GetDatacenterRequest{
+		DatacenterID: dcID,
+		DomainName:   domain,
+	})
 	if err != nil {
 		return diag.Errorf("could not get datacenter: %s", err)
 	}

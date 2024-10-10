@@ -4,7 +4,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/networklists"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/networklists"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 )
 
@@ -16,7 +16,7 @@ func TestMain(m *testing.M) {
 var clientLock sync.Mutex
 
 // useClient swaps out the client on the global instance for the duration of the given func
-func useClient(client networklists.NTWRKLISTS, f func()) {
+func useClient(client networklists.NetworkList, f func()) {
 	clientLock.Lock()
 	orig := inst.client
 	inst.client = client

@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/dns"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/dns"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
@@ -14,7 +14,7 @@ import (
 )
 
 func TestResDNSZone(t *testing.T) {
-	zone := &dns.ZoneResponse{
+	zone := &dns.GetZoneResponse{
 		ContractID:      "ctr1",
 		Zone:            "primaryexampleterraform.io",
 		Type:            "primary",
@@ -22,7 +22,9 @@ func TestResDNSZone(t *testing.T) {
 		SignAndServe:    false,
 		ActivationState: "PENDING",
 	}
-	recordSetsResp := &dns.RecordSetResponse{RecordSets: make([]dns.RecordSet, 2, 2)}
+	recordSetsResp := &dns.GetRecordSetsResponse{
+		RecordSets: make([]dns.RecordSet, 2, 2),
+	}
 
 	t.Run("when group is not provided and there is no group for the user ", func(t *testing.T) {
 		client := &dns.Mock{}
@@ -79,34 +81,31 @@ func TestResDNSZone(t *testing.T) {
 
 		getCall := client.On("GetZone",
 			mock.Anything,
-			zone.Zone,
+			mock.AnythingOfType("dns.GetZoneRequest"),
 		).Return(nil, &dns.Error{
 			StatusCode: http.StatusNotFound,
 		})
 
 		client.On("CreateZone",
 			mock.Anything,
-			mock.AnythingOfType("*dns.ZoneCreate"),
-			mock.AnythingOfType("dns.ZoneQueryString"),
-			true,
+			mock.AnythingOfType("dns.CreateZoneRequest"),
 		).Return(nil).Run(func(args mock.Arguments) {
 			getCall.ReturnArguments = mock.Arguments{zone, nil}
 		})
 
-		client.On("SaveChangelist",
+		client.On("SaveChangeList",
 			mock.Anything,
-			mock.AnythingOfType("*dns.ZoneCreate"),
+			mock.AnythingOfType("dns.SaveChangeListRequest"),
 		).Return(nil)
 
-		client.On("SubmitChangelist",
+		client.On("SubmitChangeList",
 			mock.Anything,
-			mock.AnythingOfType("*dns.ZoneCreate"),
+			mock.AnythingOfType("dns.SubmitChangeListRequest"),
 		).Return(nil)
 
 		client.On("GetRecordSets",
 			mock.Anything,
-			zone.Zone,
-			mock.AnythingOfType("[]dns.RecordSetQueryArgs"),
+			mock.AnythingOfType("dns.GetRecordSetsRequest"),
 		).Return(recordSetsResp, nil)
 
 		dataSourceName := "akamai_dns_zone.test_without_group"
@@ -196,42 +195,38 @@ func TestResDNSZone(t *testing.T) {
 
 		getCall := client.On("GetZone",
 			mock.Anything,
-			zone.Zone,
+			mock.AnythingOfType("dns.GetZoneRequest"),
 		).Return(nil, &dns.Error{
 			StatusCode: http.StatusNotFound,
 		})
 
 		client.On("CreateZone",
 			mock.Anything,
-			mock.AnythingOfType("*dns.ZoneCreate"),
-			mock.AnythingOfType("dns.ZoneQueryString"),
-			true,
+			mock.AnythingOfType("dns.CreateZoneRequest"),
 		).Return(nil).Run(func(args mock.Arguments) {
 			getCall.ReturnArguments = mock.Arguments{zone, nil}
 		})
 
 		client.On("UpdateZone",
 			mock.Anything,
-			mock.AnythingOfType("*dns.ZoneCreate"),
-			mock.AnythingOfType("dns.ZoneQueryString"),
+			mock.AnythingOfType("dns.UpdateZoneRequest"),
 		).Return(nil).Run(func(args mock.Arguments) {
 			zone.Comment = "This is an updated test primary zone"
 		})
 
-		client.On("SaveChangelist",
+		client.On("SaveChangeList",
 			mock.Anything,
-			mock.AnythingOfType("*dns.ZoneCreate"),
+			mock.AnythingOfType("dns.SaveChangeListRequest"),
 		).Return(nil)
 
-		client.On("SubmitChangelist",
+		client.On("SubmitChangeList",
 			mock.Anything,
-			mock.AnythingOfType("*dns.ZoneCreate"),
+			mock.AnythingOfType("dns.SubmitChangeListRequest"),
 		).Return(nil)
 
 		client.On("GetRecordSets",
 			mock.Anything,
-			zone.Zone,
-			mock.AnythingOfType("[]dns.RecordSetQueryArgs"),
+			mock.AnythingOfType("dns.GetRecordSetsRequest"),
 		).Return(recordSetsResp, nil)
 
 		dataSourceName := "akamai_dns_zone.primary_test_zone"

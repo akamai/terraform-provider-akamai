@@ -3,7 +3,7 @@ package iam
 import (
 	"context"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/session"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -11,13 +11,13 @@ import (
 
 func dataSourceIAMContactTypes() *schema.Resource {
 	return &schema.Resource{
-		Description: "Retrieve all contact types that Akamai supports",
+		Description: "Retrieve all contact types that Akamai supports.",
 		ReadContext: dataIAMContactTypesRead,
 		Schema: map[string]*schema.Schema{
 			"contact_types": {
 				Type:        schema.TypeSet,
 				Computed:    true,
-				Description: "Supported contact types",
+				Description: "Supported contact types.",
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 		},
@@ -38,7 +38,7 @@ func dataIAMContactTypesRead(ctx context.Context, d *schema.ResourceData, m inte
 		return diag.FromErr(err)
 	}
 
-	types := []interface{}{}
+	var types []interface{}
 	for _, ct := range res {
 		types = append(types, ct)
 	}

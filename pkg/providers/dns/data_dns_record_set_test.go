@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/dns"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/dns"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
@@ -22,9 +22,7 @@ func TestDataSourceDNSRecordSet_basic(t *testing.T) {
 
 		client.On("GetRdata",
 			mock.Anything, // ctx is irrelevant for this test
-			"exampleterraform.io",
-			"exampleterraform.io",
-			"A",
+			mock.AnythingOfType("dns.GetRdataRequest"),
 		).Return(rdata, nil)
 
 		useClient(client, func() {
@@ -57,9 +55,7 @@ func TestDataSourceDNSRecordSet_basic(t *testing.T) {
 
 		client.On("GetRdata",
 			mock.Anything, // ctx is irrelevant for this test
-			"exampleterraform.io",
-			"exampleterraform.io",
-			"TXT",
+			dns.GetRdataRequest{Zone: "exampleterraform.io", Name: "exampleterraform.io", RecordType: "TXT"},
 		).Return(rdata, nil)
 
 		useClient(client, func() {
@@ -87,9 +83,7 @@ func TestDataSourceDNSRecordSet_basic(t *testing.T) {
 
 		client.On("GetRdata",
 			mock.Anything, // ctx is irrelevant for this test
-			"exampleterraform.io",
-			"exampleterraform.io",
-			"A",
+			mock.AnythingOfType("dns.GetRdataRequest"),
 		).Return(nil, errors.New("invalid zone"))
 
 		useClient(client, func() {

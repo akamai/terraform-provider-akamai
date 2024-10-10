@@ -4,7 +4,8 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/iam"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/iam"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 )
 
@@ -22,7 +23,25 @@ func useClient(client iam.IAM, f func()) {
 	inst.client = client
 
 	defer func() {
-		inst.client = orig
+		client = orig
+		clientLock.Unlock()
+	}()
+
+	f()
+}
+
+// useClient swaps out the client on the global instance for the duration of the given func using both IAM and PAPI
+func useIAMandPAPIClient(client iam.IAM, papiClient papi.PAPI, f func()) {
+	clientLock.Lock()
+	orig := inst.client
+	inst.client = client
+
+	origPapi := inst.papiClient
+	inst.papiClient = papiClient
+
+	defer func() {
+		client = orig
+		papiClient = origPapi
 		clientLock.Unlock()
 	}()
 

@@ -5,8 +5,8 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/cloudlets"
-	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/cloudlets/v3"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/cloudlets"
+	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/cloudlets/v3"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -1551,7 +1551,7 @@ func TestResourcePolicyV3(t *testing.T) {
 			require.NoError(t, err)
 			policyUpdate.GroupID = updatedGroup
 			client.On("UpdatePolicy", mock.Anything, v3.UpdatePolicyRequest{
-				BodyParams: v3.UpdatePolicyBodyParams{
+				Body: v3.UpdatePolicyRequestBody{
 					GroupID: updatedGroup,
 				},
 				PolicyID: policyUpdate.ID,
@@ -2706,7 +2706,7 @@ func TestResourcePolicyV3(t *testing.T) {
 		policy, version := expectCreatePolicy(t, client, 2, 123, matchRules, "test policy description")
 		expectReadPolicy(t, client, policy, version, 3)
 		client.On("UpdatePolicy", mock.Anything, v3.UpdatePolicyRequest{
-			BodyParams: v3.UpdatePolicyBodyParams{
+			Body: v3.UpdatePolicyRequestBody{
 				GroupID: 321,
 			},
 			PolicyID: policy.ID,

@@ -5,9 +5,8 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/gtm"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
-
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/gtm"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
@@ -20,39 +19,52 @@ func TestResGTMDomain(t *testing.T) {
 
 		getCall := client.On("GetDomain",
 			mock.Anything, // ctx is irrelevant for this test
-			gtmTestDomain,
+			mock.AnythingOfType("gtm.GetDomainRequest"),
 		).Return(nil, &gtm.Error{
 			StatusCode: http.StatusNotFound,
-		})
+		}).Once()
 
-		dr := gtm.DomainResponse{}
-		dr.Resource = &testDomain
-		dr.Status = &pendingResponseStatus
+		dr := testCreateDomain
 		client.On("CreateDomain",
 			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("*gtm.Domain"),
-			mock.AnythingOfType("map[string]string"),
-		).Return(&dr, nil).Run(func(args mock.Arguments) {
-			getCall.ReturnArguments = mock.Arguments{args.Get(1).(*gtm.Domain), nil}
+			mock.AnythingOfType("gtm.CreateDomainRequest"),
+		).Return(&gtm.CreateDomainResponse{
+			Resource: testDomain,
+			Status:   testCreateDomain.Status,
+		}, nil).Run(func(args mock.Arguments) {
+			getCall.ReturnArguments = mock.Arguments{&dr, nil}
 		})
+
+		client.On("GetDomain",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("gtm.GetDomainRequest"),
+		).Return(&testCreateDomain, nil).Times(3)
 
 		client.On("GetDomainStatus",
 			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("string"),
-		).Return(&completeResponseStatus, nil)
+			mock.AnythingOfType("gtm.GetDomainStatusRequest"),
+		).Return(getDomainStatusResponseStatus, nil)
 
 		client.On("UpdateDomain",
 			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("*gtm.Domain"),
-			mock.AnythingOfType("map[string]string"),
-		).Return(&completeResponseStatus, nil).Run(func(args mock.Arguments) {
-			getCall.ReturnArguments = mock.Arguments{args.Get(1).(*gtm.Domain), nil}
-		})
+			gtm.UpdateDomainRequest{
+				Domain: testUpdateDomain,
+				QueryArgs: &gtm.DomainQueryArgs{
+					ContractID: "1-2ABCDEF",
+					GroupID:    "123ABC",
+				},
+			},
+		).Return(&updateDomainResponseStatus, nil)
+
+		client.On("GetDomain",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("gtm.GetDomainRequest"),
+		).Return(&testUpdateGetDomain, nil).Times(3)
 
 		client.On("DeleteDomain",
 			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("*gtm.Domain"),
-		).Return(&completeResponseStatus, nil)
+			mock.AnythingOfType("gtm.DeleteDomainRequest"),
+		).Return(&deleteDomainResponseStatus, nil)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -90,31 +102,31 @@ func TestResGTMDomain(t *testing.T) {
 
 		getCall := client.On("GetDomain",
 			mock.Anything, // ctx is irrelevant for this test
-			gtmTestDomain,
+			mock.AnythingOfType("gtm.GetDomainRequest"),
 		).Return(nil, &gtm.Error{
 			StatusCode: http.StatusNotFound,
 		})
 
-		dr := gtm.DomainResponse{}
-		dr.Resource = &testDomainWithSignAndServe
-		dr.Status = &pendingResponseStatus
+		dr := testDomainWithSignAndServe
 		client.On("CreateDomain",
 			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("*gtm.Domain"),
-			mock.AnythingOfType("map[string]string"),
-		).Return(&dr, nil).Run(func(args mock.Arguments) {
-			getCall.ReturnArguments = mock.Arguments{args.Get(1).(*gtm.Domain), nil}
+			mock.AnythingOfType("gtm.CreateDomainRequest"),
+		).Return(&gtm.CreateDomainResponse{
+			Resource: testDomain,
+			Status:   testGetDomain.Status,
+		}, nil).Run(func(args mock.Arguments) {
+			getCall.ReturnArguments = mock.Arguments{&dr, nil}
 		})
 
 		client.On("GetDomainStatus",
 			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("string"),
-		).Return(&completeResponseStatus, nil)
+			mock.AnythingOfType("gtm.GetDomainStatusRequest"),
+		).Return(getDomainStatusResponseStatus, nil)
 
 		client.On("DeleteDomain",
 			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("*gtm.Domain"),
-		).Return(&completeResponseStatus, nil)
+			mock.AnythingOfType("gtm.DeleteDomainRequest"),
+		).Return(&deleteDomainResponseStatus, nil)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -142,31 +154,31 @@ func TestResGTMDomain(t *testing.T) {
 
 		getCall := client.On("GetDomain",
 			mock.Anything, // ctx is irrelevant for this test
-			gtmTestDomain,
+			mock.AnythingOfType("gtm.GetDomainRequest"),
 		).Return(nil, &gtm.Error{
 			StatusCode: http.StatusNotFound,
 		})
 
-		dr := gtm.DomainResponse{}
-		dr.Resource = &testDomain
-		dr.Status = &pendingResponseStatus
+		dr := testGetDomain
 		client.On("CreateDomain",
 			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("*gtm.Domain"),
-			mock.AnythingOfType("map[string]string"),
-		).Return(&dr, nil).Run(func(args mock.Arguments) {
-			getCall.ReturnArguments = mock.Arguments{args.Get(1).(*gtm.Domain), nil}
+			mock.AnythingOfType("gtm.CreateDomainRequest"),
+		).Return(&gtm.CreateDomainResponse{
+			Resource: testDomain,
+			Status:   testGetDomain.Status,
+		}, nil).Run(func(args mock.Arguments) {
+			getCall.ReturnArguments = mock.Arguments{&dr, nil}
 		})
 
 		client.On("GetDomainStatus",
 			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("string"),
-		).Return(&completeResponseStatus, nil)
+			mock.AnythingOfType("gtm.GetDomainStatusRequest"),
+		).Return(getDomainStatusResponseStatus, nil)
 
 		client.On("DeleteDomain",
 			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("*gtm.Domain"),
-		).Return(&completeResponseStatus, nil)
+			mock.AnythingOfType("gtm.DeleteDomainRequest"),
+		).Return(&deleteDomainResponseStatus, nil)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -198,8 +210,7 @@ func TestResGTMDomain(t *testing.T) {
 
 		client.On("CreateDomain",
 			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("*gtm.Domain"),
-			mock.AnythingOfType("map[string]string"),
+			mock.AnythingOfType("gtm.CreateDomainRequest"),
 		).Return(nil, &gtm.Error{
 			StatusCode: http.StatusBadRequest,
 		})
@@ -222,13 +233,12 @@ func TestResGTMDomain(t *testing.T) {
 	t.Run("create domain denied", func(t *testing.T) {
 		client := &gtm.Mock{}
 
-		dr := gtm.DomainResponse{}
-		dr.Resource = &testDomain
+		dr := gtm.CreateDomainResponse{}
+		dr.Resource = testDomain
 		dr.Status = &deniedResponseStatus
 		client.On("CreateDomain",
 			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("*gtm.Domain"),
-			mock.AnythingOfType("map[string]string"),
+			mock.AnythingOfType("gtm.CreateDomainRequest"),
 		).Return(&dr, nil)
 
 		useClient(client, func() {
@@ -251,31 +261,31 @@ func TestResGTMDomain(t *testing.T) {
 
 		getCall := client.On("GetDomain",
 			mock.Anything,
-			gtmTestDomain,
+			mock.AnythingOfType("gtm.GetDomainRequest"),
 		).Return(nil, &gtm.Error{
 			StatusCode: http.StatusNotFound,
 		})
 
-		dr := gtm.DomainResponse{}
-		dr.Resource = &testDomain
-		dr.Status = &pendingResponseStatus
+		dr := testGetDomain
 		client.On("CreateDomain",
 			mock.Anything,
-			mock.AnythingOfType("*gtm.Domain"),
-			mock.AnythingOfType("map[string]string"),
-		).Return(&dr, nil).Run(func(args mock.Arguments) {
-			getCall.ReturnArguments = mock.Arguments{args.Get(1).(*gtm.Domain), nil}
+			mock.AnythingOfType("gtm.CreateDomainRequest"),
+		).Return(&gtm.CreateDomainResponse{
+			Resource: testDomain,
+			Status:   testGetDomain.Status,
+		}, nil).Run(func(args mock.Arguments) {
+			getCall.ReturnArguments = mock.Arguments{&dr, nil}
 		})
 
 		client.On("GetDomainStatus",
 			mock.Anything,
-			mock.AnythingOfType("string"),
-		).Return(&completeResponseStatus, nil).Times(2)
+			mock.AnythingOfType("gtm.GetDomainStatusRequest"),
+		).Return(getDomainStatusResponseStatus, nil).Times(2)
 
 		client.On("DeleteDomain",
 			mock.Anything,
-			mock.AnythingOfType("*gtm.Domain"),
-		).Return(&completeResponseStatus, nil)
+			mock.AnythingOfType("gtm.DeleteDomainRequest"),
+		).Return(&deleteDomainResponseStatus, nil)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -360,38 +370,38 @@ func getGTMDomainMocks() *gtm.Mock {
 
 	mockGetDomain := client.On("GetDomain",
 		mock.Anything, // ctx is irrelevant for this test
-		gtmTestDomain,
+		mock.AnythingOfType("gtm.GetDomainRequest"),
 	).Return(nil, &gtm.Error{
 		StatusCode: http.StatusNotFound,
 	})
 
-	dr := gtm.DomainResponse{}
-	dr.Resource = &domainWithOrderedEmails
-	dr.Status = &pendingResponseStatus
+	dr := domainWithOrderedEmails
 	client.On("CreateDomain",
 		mock.Anything, // ctx is irrelevant for this test
-		mock.AnythingOfType("*gtm.Domain"),
-		mock.AnythingOfType("map[string]string"),
-	).Return(&dr, nil).Run(func(args mock.Arguments) {
-		mockGetDomain.ReturnArguments = mock.Arguments{args.Get(1).(*gtm.Domain), nil}
+		mock.AnythingOfType("gtm.CreateDomainRequest"),
+	).Return(&gtm.CreateDomainResponse{
+		Resource: domainWithOrderedEmailsDomain,
+		Status:   domainWithOrderedEmails.Status,
+	}, nil).Run(func(args mock.Arguments) {
+		mockGetDomain.ReturnArguments = mock.Arguments{&dr, nil}
 	})
 
 	client.On("GetDomainStatus",
 		mock.Anything, // ctx is irrelevant for this test
-		mock.AnythingOfType("string"),
-	).Return(&completeResponseStatus, nil)
+		mock.AnythingOfType("gtm.GetDomainStatusRequest"),
+	).Return(getDomainStatusResponseStatus, nil)
 
 	client.On("DeleteDomain",
 		mock.Anything, // ctx is irrelevant for this test
-		mock.AnythingOfType("*gtm.Domain"),
-	).Return(&completeResponseStatus, nil)
+		mock.AnythingOfType("gtm.DeleteDomainRequest"),
+	).Return(&deleteDomainResponseStatus, nil)
 
 	return client
 }
 
 var (
 	// datacenters is gtm.Datacenter structure used in tests
-	datacenters = []*gtm.Datacenter{
+	datacenters = []gtm.Datacenter{
 		{
 			City:                 "Snæfellsjökull",
 			CloudServerTargeting: false,
@@ -404,7 +414,7 @@ var (
 				LoadServers:    make([]string, 0),
 			},
 			Latitude: 64.808,
-			Links: []*gtm.Link{
+			Links: []gtm.Link{
 				{
 					Href: "https://akab-ymtebc45gco3ypzj-apz4yxpek55y7fyv.luna.akamaiapis.net/config-gtm/v1/domains/gtmdomtest.akadns.net/datacenters/3132",
 					Rel:  "self",
@@ -418,7 +428,7 @@ var (
 	}
 
 	// links is gtm.link structure used in tests
-	links = []*gtm.Link{
+	links = []gtm.Link{
 		{
 			Href: "https://akab-ymtebc45gco3ypzj-apz4yxpek55y7fyv.luna.akamaiapis.net/config-gtm/v1/domains/gtmdomtest.akadns.net",
 			Rel:  "self",
@@ -446,7 +456,7 @@ var (
 	}
 
 	// properties is gtm.Property structure used in tests
-	properties = []*gtm.Property{
+	properties = []gtm.Property{
 		{
 			BackupCName:            "",
 			BackupIP:               "",
@@ -462,13 +472,13 @@ var (
 			HealthThreshold:        0,
 			IPv6:                   false,
 			LastModified:           "2019-04-25T14:53:12.000+00:00",
-			Links: []*gtm.Link{
+			Links: []gtm.Link{
 				{
 					Href: "https://akab-ymtebc45gco3ypzj-apz4yxpek55y7fyv.luna.akamaiapis.net/config-gtm/v1/domains/gtmdomtest.akadns.net/properties/test_property",
 					Rel:  "self",
 				},
 			},
-			LivenessTests: []*gtm.LivenessTest{
+			LivenessTests: []gtm.LivenessTest{
 				{
 					DisableNonstandardPortWarning: false,
 					HTTPError3xx:                  true,
@@ -496,7 +506,7 @@ var (
 			StaticTTL:                 600,
 			StickinessBonusConstant:   0,
 			StickinessBonusPercentage: 50,
-			TrafficTargets: []*gtm.TrafficTarget{
+			TrafficTargets: []gtm.TrafficTarget{
 				{
 					DatacenterID: 3131,
 					Enabled:      true,
@@ -518,7 +528,7 @@ var (
 	// testStatus is gtm.ResponseStatus structure used in tests
 	testStatus = &gtm.ResponseStatus{
 		ChangeID: "40e36abd-bfb2-4635-9fca-62175cf17007",
-		Links: &[]gtm.Link{
+		Links: []gtm.Link{
 			{
 				Href: "https://akab-ymtebc45gco3ypzj-apz4yxpek55y7fyv.luna.akamaiapis.net/config-gtm/v1/domains/gtmdomtest.akadns.net/status/current",
 				Rel:  "self",
@@ -530,8 +540,7 @@ var (
 		PropagationStatusDate: "2019-04-25T14:54:00.000+00:00",
 	}
 
-	// domainWithOrderedEmails is a gtm.Domain structure used in testing of email_notification_order list
-	domainWithOrderedEmails = gtm.Domain{
+	domainWithOrderedEmailsDomain = &gtm.Domain{
 		Datacenters:                 datacenters,
 		DefaultErrorPenalty:         75,
 		DefaultSSLClientCertificate: "",
@@ -550,7 +559,27 @@ var (
 		Type:                        "weighted",
 	}
 
-	testDomain = gtm.Domain{
+	// domainWithOrderedEmails is a gtm.Domain structure used in testing of email_notification_order list
+	domainWithOrderedEmails = gtm.GetDomainResponse{
+		Datacenters:                 datacenters,
+		DefaultErrorPenalty:         75,
+		DefaultSSLClientCertificate: "",
+		DefaultSSLClientPrivateKey:  "",
+		DefaultTimeoutPenalty:       25,
+		EmailNotificationList:       []string{"email1@nomail.com", "email2@nomail.com", "email3@nomail.com"},
+		LastModified:                "2019-04-25T14:53:12.000+00:00",
+		LastModifiedBy:              "operator",
+		Links:                       links,
+		LoadFeedback:                false,
+		LoadImbalancePercentage:     10.0,
+		ModificationComments:        "Edit Property test_property",
+		Name:                        gtmTestDomain,
+		Properties:                  properties,
+		Status:                      testStatus,
+		Type:                        "weighted",
+	}
+
+	testDomain = &gtm.Domain{
 		Datacenters:                 datacenters,
 		DefaultErrorPenalty:         75,
 		DefaultSSLClientCertificate: "",
@@ -569,7 +598,83 @@ var (
 		Type:                        "weighted",
 	}
 
-	testDomainWithSignAndServe = gtm.Domain{
+	testUpdateGetDomain = gtm.GetDomainResponse{
+		Datacenters:                 datacenters,
+		DefaultErrorPenalty:         75,
+		DefaultSSLClientCertificate: "",
+		DefaultSSLClientPrivateKey:  "",
+		DefaultTimeoutPenalty:       25,
+		EmailNotificationList:       make([]string, 0),
+		LastModified:                "2019-04-25T14:53:12.000+00:00",
+		LastModifiedBy:              "operator",
+		Links:                       links,
+		LoadFeedback:                false,
+		LoadImbalancePercentage:     20.0,
+		ModificationComments:        "Edit Property test_property",
+		Name:                        gtmTestDomain,
+		Properties:                  properties,
+		Status:                      testStatus,
+		Type:                        "weighted",
+	}
+
+	testUpdateDomain = &gtm.Domain{
+		Datacenters:                 datacenters,
+		DefaultErrorPenalty:         75,
+		DefaultSSLClientCertificate: "",
+		DefaultSSLClientPrivateKey:  "",
+		DefaultTimeoutPenalty:       25,
+		EmailNotificationList:       make([]string, 0),
+		LastModified:                "2019-04-25T14:53:12.000+00:00",
+		LastModifiedBy:              "operator",
+		Links:                       links,
+		LoadFeedback:                false,
+		LoadImbalancePercentage:     20.0,
+		ModificationComments:        "Edit Property test_property",
+		Name:                        gtmTestDomain,
+		Properties:                  properties,
+		Status:                      testStatus,
+		Type:                        "weighted",
+	}
+
+	testGetDomain = gtm.GetDomainResponse{
+		Datacenters:                 datacenters,
+		DefaultErrorPenalty:         75,
+		DefaultSSLClientCertificate: "",
+		DefaultSSLClientPrivateKey:  "",
+		DefaultTimeoutPenalty:       25,
+		EmailNotificationList:       make([]string, 0),
+		LastModified:                "2019-04-25T14:53:12.000+00:00",
+		LastModifiedBy:              "operator",
+		Links:                       links,
+		LoadFeedback:                false,
+		LoadImbalancePercentage:     10.0,
+		ModificationComments:        "Edit Property test_property",
+		Name:                        gtmTestDomain,
+		Properties:                  properties,
+		Status:                      testStatus,
+		Type:                        "weighted",
+	}
+
+	testCreateDomain = gtm.GetDomainResponse{
+		Datacenters:                 datacenters,
+		DefaultErrorPenalty:         75,
+		DefaultSSLClientCertificate: "",
+		DefaultSSLClientPrivateKey:  "",
+		DefaultTimeoutPenalty:       25,
+		EmailNotificationList:       make([]string, 0),
+		LastModified:                "2019-04-25T14:53:12.000+00:00",
+		LastModifiedBy:              "operator",
+		Links:                       links,
+		LoadFeedback:                false,
+		LoadImbalancePercentage:     10.0,
+		ModificationComments:        "Edit Property test_property",
+		Name:                        gtmTestDomain,
+		Properties:                  properties,
+		Status:                      testStatus,
+		Type:                        "weighted",
+	}
+
+	testDomainWithSignAndServe = gtm.GetDomainResponse{
 		Datacenters:                 datacenters,
 		DefaultErrorPenalty:         75,
 		DefaultSSLClientCertificate: "",
@@ -592,7 +697,7 @@ var (
 
 	deniedResponseStatus = gtm.ResponseStatus{
 		ChangeID: "40e36abd-bfb2-4635-9fca-62175cf17007",
-		Links: &[]gtm.Link{
+		Links: []gtm.Link{
 			{
 				Href: "https://akab-ymtebc45gco3ypzj-apz4yxpek55y7fyv.luna.akamaiapis.net/config-gtm/v1/domains/gtmdomtest.akadns.net/status/current",
 				Rel:  "self",
@@ -606,7 +711,7 @@ var (
 
 	pendingResponseStatus = gtm.ResponseStatus{
 		ChangeID: "40e36abd-bfb2-4635-9fca-62175cf17007",
-		Links: &[]gtm.Link{
+		Links: []gtm.Link{
 			{
 				Href: "https://akab-ymtebc45gco3ypzj-apz4yxpek55y7fyv.luna.akamaiapis.net/config-gtm/v1/domains/gtmdomtest.akadns.net/status/current",
 				Rel:  "self",
@@ -618,9 +723,25 @@ var (
 		PropagationStatusDate: "2019-04-25T14:54:00.000+00:00",
 	}
 
-	completeResponseStatus = gtm.ResponseStatus{
+	updateDomainResponseStatus = gtm.UpdateDomainResponse{
+		Status: &gtm.ResponseStatus{
+			ChangeID: "40e36abd-bfb2-4635-9fca-62175cf17007",
+			Links: []gtm.Link{
+				{
+					Href: "https://akab-ymtebc45gco3ypzj-apz4yxpek55y7fyv.luna.akamaiapis.net/config-gtm/v1/domains/gtmdomtest.akadns.net/status/current",
+					Rel:  "self",
+				},
+			},
+			Message:               "Current configuration has been propagated to all GTM nameservers",
+			PassingValidation:     true,
+			PropagationStatus:     "COMPLETE",
+			PropagationStatusDate: "2019-04-25T14:54:00.000+00:00",
+		},
+	}
+
+	deleteDomainResponseStatus = gtm.DeleteDomainResponse{
 		ChangeID: "40e36abd-bfb2-4635-9fca-62175cf17007",
-		Links: &[]gtm.Link{
+		Links: []gtm.Link{
 			{
 				Href: "https://akab-ymtebc45gco3ypzj-apz4yxpek55y7fyv.luna.akamaiapis.net/config-gtm/v1/domains/gtmdomtest.akadns.net/status/current",
 				Rel:  "self",

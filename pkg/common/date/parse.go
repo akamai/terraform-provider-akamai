@@ -37,6 +37,15 @@ func FormatRFC3339(t time.Time) string {
 	return t.Format(time.RFC3339)
 }
 
+// FormatRFC3339Nano returns a textual representation of time formatted according to the RFC3339Nano standard.
+// It returns an empty string if the provided time is equal to zero
+func FormatRFC3339Nano(t time.Time) string {
+	if t.IsZero() {
+		return ""
+	}
+	return t.Format(time.RFC3339Nano)
+}
+
 // ToString returns given date in the string format
 func ToString(value time.Time) (string, error) {
 	bytes, err := value.MarshalText()

@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/iam"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/iam"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
@@ -165,15 +165,15 @@ func TestResourceIAMBlockedUserProperties(t *testing.T) {
 			},
 		},
 	}
-	for name, test := range tests {
+	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			client := &iam.Mock{}
-			test.init(client)
+			tc.init(client)
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					IsUnitTest:               true,
-					Steps:                    test.steps,
+					Steps:                    tc.steps,
 				})
 			})
 			client.AssertExpectations(t)
@@ -181,7 +181,6 @@ func TestResourceIAMBlockedUserProperties(t *testing.T) {
 	}
 }
 
-// read
 func expectListBlockedProperties(m *iam.Mock, request iam.ListBlockedPropertiesRequest, response []int64, err error) *mock.Call {
 	on := m.On("ListBlockedProperties", mock.Anything, request)
 	if err != nil {
@@ -190,7 +189,6 @@ func expectListBlockedProperties(m *iam.Mock, request iam.ListBlockedPropertiesR
 	return on.Return(response, nil)
 }
 
-// create/update
 func expectUpdateBlockedProperties(m *iam.Mock, request iam.UpdateBlockedPropertiesRequest, response []int64, err error) *mock.Call {
 	on := m.On("UpdateBlockedProperties", mock.Anything, request)
 	if err != nil {

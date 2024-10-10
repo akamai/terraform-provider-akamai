@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/cloudlets/v3"
+	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/cloudlets/v3"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
@@ -77,7 +77,7 @@ func (strategy v3PolicyStrategy) updatePolicyVersion(ctx context.Context, d *sch
 func (strategy v3PolicyStrategy) updatePolicy(ctx context.Context, policyID, groupID int64, _ string) error {
 	updatePolicyReq := v3.UpdatePolicyRequest{
 		PolicyID: policyID,
-		BodyParams: v3.UpdatePolicyBodyParams{
+		Body: v3.UpdatePolicyRequestBody{
 			GroupID: groupID,
 		},
 	}

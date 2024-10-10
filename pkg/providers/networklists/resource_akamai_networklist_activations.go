@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/networklists"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/networklists"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/go-hclog"
@@ -134,7 +134,7 @@ func resourceActivationsCreate(ctx context.Context, d *schema.ResourceData, m in
 	return resourceActivationsRead(ctx, d, m)
 }
 
-func createActivation(ctx context.Context, client networklists.NTWRKLISTS, params networklists.CreateActivationsRequest) (*networklists.CreateActivationsResponse, diag.Diagnostics) {
+func createActivation(ctx context.Context, client networklists.NetworkList, params networklists.CreateActivationsRequest) (*networklists.CreateActivationsResponse, diag.Diagnostics) {
 	createNetworkListActivationMutex.Lock()
 	defer func() {
 		createNetworkListActivationMutex.Unlock()
@@ -263,7 +263,7 @@ func resourceActivationsDelete(_ context.Context, _ *schema.ResourceData, m inte
 	}
 }
 
-func lookupActivation(ctx context.Context, client networklists.NTWRKLISTS, query networklists.GetActivationRequest) (*networklists.GetActivationResponse, error) {
+func lookupActivation(ctx context.Context, client networklists.NetworkList, query networklists.GetActivationRequest) (*networklists.GetActivationResponse, error) {
 	activation, err := client.GetActivation(ctx, query)
 	if err != nil {
 		return nil, err
@@ -278,7 +278,7 @@ func suppressFieldsForNetworkListActivation(_, oldValue, newValue string, d *sch
 	return true
 }
 
-func pollActivation(ctx context.Context, client networklists.NTWRKLISTS, activationStatus string, activationID int) error {
+func pollActivation(ctx context.Context, client networklists.NetworkList, activationStatus string, activationID int) error {
 	retriesMax := 5
 	retries5xx := 0
 

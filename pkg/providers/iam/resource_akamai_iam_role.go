@@ -4,8 +4,8 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/iam"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/session"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/iam"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -25,12 +25,12 @@ func resourceIAMRole() *schema.Resource {
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "The name you supply for a role",
+				Description: "The name you supply for a role.",
 			},
 			"description": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "The description for a role",
+				Description: "The description for a role.",
 			},
 			"granted_roles": {
 				Type: schema.TypeSet,
@@ -38,13 +38,13 @@ func resourceIAMRole() *schema.Resource {
 					Type: schema.TypeInt,
 				},
 				Required:    true,
-				Description: "The list of existing unique identifiers for the granted roles",
+				Description: "The list of existing unique identifiers for the granted roles.",
 			},
 			"type": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Optional:    true,
-				Description: "The role type which indicates whether it's a standard role provided by Akamai or a custom role for the account",
+				Description: "The role type which indicates whether it's a standard role provided by Akamai or a custom role for the account.",
 			},
 		},
 	}

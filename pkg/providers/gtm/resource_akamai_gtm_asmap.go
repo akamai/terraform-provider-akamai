@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"sort"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/gtm"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/session"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/gtm"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/logger"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
@@ -102,7 +102,10 @@ func validateDefaultDC(ctx context.Context, meta meta.Meta, ddcField []interface
 	if !ok || dcID == 0 {
 		return fmt.Errorf("default Datacenter ID invalid")
 	}
-	dc, err := Client(meta).GetDatacenter(ctx, dcID, domain)
+	dc, err := Client(meta).GetDatacenter(ctx, gtm.GetDatacenterRequest{
+		DomainName:   domain,
+		DatacenterID: dcID,
+	})
 	if dc == nil {
 		if err != nil {
 			apiError, ok := err.(*gtm.Error)
@@ -170,7 +173,10 @@ func resourceGTMv1ASMapCreate(ctx context.Context, d *schema.ResourceData, m int
 		})
 	}
 	logger.Debugf("Proposed New asMap: [%v]", newAS)
-	cStatus, err := Client(meta).CreateASMap(ctx, newAS, domain)
+	cStatus, err := Client(meta).CreateASMap(ctx, gtm.CreateASMapRequest{
+		ASMap:      newAS,
+		DomainName: domain,
+	})
 	if err != nil {
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
@@ -231,7 +237,10 @@ func resourceGTMv1ASMapRead(ctx context.Context, d *schema.ResourceData, m inter
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	as, err := Client(meta).GetASMap(ctx, asMap, domain)
+	as, err := Client(meta).GetASMap(ctx, gtm.GetASMapRequest{
+		ASMapName:  asMap,
+		DomainName: domain,
+	})
 	if err != nil {
 		logger.Errorf("asMap Read error: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -263,7 +272,10 @@ func resourceGTMv1ASMapUpdate(ctx context.Context, d *schema.ResourceData, m int
 		return diag.FromErr(err)
 	}
 	// Get existingASmap
-	existAs, err := Client(meta).GetASMap(ctx, asMap, domain)
+	existAs, err := Client(meta).GetASMap(ctx, gtm.GetASMapRequest{
+		ASMapName:  asMap,
+		DomainName: domain,
+	})
 	if err != nil {
 		logger.Errorf("asMap Update read error: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -273,9 +285,13 @@ func resourceGTMv1ASMapUpdate(ctx context.Context, d *schema.ResourceData, m int
 		})
 	}
 	logger.Debugf("asMap BEFORE: %v", existAs)
-	populateASMapObject(d, existAs, m)
+	newAs := createASMapStruct(existAs)
+	populateASMapObject(d, newAs, m)
 	logger.Debugf("asMap PROPOSED: %v", existAs)
-	uStat, err := Client(meta).UpdateASMap(ctx, existAs, domain)
+	uStat, err := Client(meta).UpdateASMap(ctx, gtm.UpdateASMapRequest{
+		ASMap:      newAs,
+		DomainName: domain,
+	})
 	if err != nil {
 		logger.Errorf("asMap pdate: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -285,10 +301,10 @@ func resourceGTMv1ASMapUpdate(ctx context.Context, d *schema.ResourceData, m int
 		})
 	}
 	logger.Debugf("asMap Update status: %v", uStat)
-	if uStat.PropagationStatus == "DENIED" {
+	if uStat.Status.PropagationStatus == "DENIED" {
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  uStat.Message,
+			Summary:  uStat.Status.Message,
 		})
 	}
 
@@ -332,7 +348,10 @@ func resourceGTMv1ASMapImport(ctx context.Context, d *schema.ResourceData, m int
 	if err != nil {
 		return []*schema.ResourceData{d}, err
 	}
-	as, err := Client(meta).GetASMap(ctx, asMap, domain)
+	as, err := Client(meta).GetASMap(ctx, gtm.GetASMapRequest{
+		ASMapName:  asMap,
+		DomainName: domain,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -366,7 +385,10 @@ func resourceGTMv1ASMapDelete(ctx context.Context, d *schema.ResourceData, m int
 		logger.Errorf("[ERROR] ASMap Delete: %s", err.Error())
 		return diag.FromErr(err)
 	}
-	existAs, err := Client(meta).GetASMap(ctx, asMap, domain)
+	existAs, err := Client(meta).GetASMap(ctx, gtm.GetASMapRequest{
+		ASMapName:  asMap,
+		DomainName: domain,
+	})
 	if err != nil {
 		logger.Errorf("ASMap Delete: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -375,8 +397,12 @@ func resourceGTMv1ASMapDelete(ctx context.Context, d *schema.ResourceData, m int
 			Detail:   err.Error(),
 		})
 	}
-	logger.Debugf("Deleting ASmap: %v", existAs)
-	uStat, err := Client(meta).DeleteASMap(ctx, existAs, domain)
+	newAs := createASMapStruct(existAs)
+	logger.Debugf("Deleting ASmap: %v", newAs)
+	uStat, err := Client(meta).DeleteASMap(ctx, gtm.DeleteASMapRequest{
+		ASMapName:  asMap,
+		DomainName: domain,
+	})
 	if err != nil {
 		logger.Errorf("ASMap Delete: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -386,10 +412,10 @@ func resourceGTMv1ASMapDelete(ctx context.Context, d *schema.ResourceData, m int
 		})
 	}
 	logger.Debugf("asMap Delete status: %v", uStat)
-	if uStat.PropagationStatus == "DENIED" {
+	if uStat.Status.PropagationStatus == "DENIED" {
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  uStat.Message,
+			Summary:  uStat.Status.Message,
 		})
 	}
 
@@ -429,8 +455,7 @@ func populateNewASMapObject(d *schema.ResourceData, m interface{}) (*gtm.ASMap, 
 	asObj := &gtm.ASMap{
 		Name:              asMapName,
 		DefaultDatacenter: &gtm.DatacenterBase{},
-		Assignments:       make([]*gtm.ASAssignment, 1),
-		Links:             make([]*gtm.Link, 1),
+		Assignments:       make([]gtm.ASAssignment, 1),
 	}
 	populateASMapObject(d, asObj, m)
 
@@ -448,7 +473,7 @@ func populateASMapObject(d *schema.ResourceData, as *gtm.ASMap, m interface{}) {
 }
 
 // Populate Terraform state from provided ASMap object
-func populateTerraformASMapState(d *schema.ResourceData, as *gtm.ASMap, m interface{}) {
+func populateTerraformASMapState(d *schema.ResourceData, as *gtm.GetASMapResponse, m interface{}) {
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "populateTerraformASMapState")
 
@@ -469,7 +494,7 @@ func populateASAssignmentsObject(d *schema.ResourceData, as *gtm.ASMap, m interf
 	if asAssignmentsList, err := tf.GetListValue("assignment", d); err != nil {
 		logger.Errorf("Assignment not set: %s", err.Error())
 	} else {
-		asAssignmentsObjList := make([]*gtm.ASAssignment, len(asAssignmentsList)) // create new object list
+		asAssignmentsObjList := make([]gtm.ASAssignment, len(asAssignmentsList)) // create new object list
 		for i, v := range asAssignmentsList {
 			asMap := v.(map[string]interface{})
 			asAssignment := gtm.ASAssignment{}
@@ -486,14 +511,14 @@ func populateASAssignmentsObject(d *schema.ResourceData, as *gtm.ASMap, m interf
 				}
 				asAssignment.ASNumbers = ls
 			}
-			asAssignmentsObjList[i] = &asAssignment
+			asAssignmentsObjList[i] = asAssignment
 		}
 		as.Assignments = asAssignmentsObjList
 	}
 }
 
 // create and populate Terraform asMap assignments schema
-func populateTerraformASAssignmentsState(d *schema.ResourceData, asm *gtm.ASMap, m interface{}) {
+func populateTerraformASAssignmentsState(d *schema.ResourceData, asm *gtm.GetASMapResponse, m interface{}) {
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "populateTerraformASAssignmentsState")
 
@@ -539,7 +564,7 @@ func populateASDefaultDCObject(d *schema.ResourceData, as *gtm.ASMap, m interfac
 }
 
 // create and populate Terraform asMap default_datacenter schema
-func populateTerraformASDefaultDCState(d *schema.ResourceData, as *gtm.ASMap, m interface{}) {
+func populateTerraformASDefaultDCState(d *schema.ResourceData, as *gtm.GetASMapResponse, m interface{}) {
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "populateTerraformASDefaultDCState")
 
@@ -662,6 +687,19 @@ func asNumbersEqual(old, new interface{}) bool {
 	}
 
 	return true
+}
+
+// createASMapStruct converts response from GetASMapResponse into ASMap
+func createASMapStruct(asmap *gtm.GetASMapResponse) *gtm.ASMap {
+	if asmap != nil {
+		return &gtm.ASMap{
+			DefaultDatacenter: asmap.DefaultDatacenter,
+			Assignments:       asmap.Assignments,
+			Name:              asmap.Name,
+			Links:             asmap.Links,
+		}
+	}
+	return nil
 }
 
 // resolveAttrName resolves specific assignment attribute, based on a resource

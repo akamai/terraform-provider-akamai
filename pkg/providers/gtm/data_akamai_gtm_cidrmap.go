@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/gtm"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/gtm"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -139,7 +139,10 @@ func (d *cidrMapDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	}
 
 	client := Client(d.meta)
-	cidrMap, err := client.GetCIDRMap(ctx, data.Name.ValueString(), data.Domain.ValueString())
+	cidrMap, err := client.GetCIDRMap(ctx, gtm.GetCIDRMapRequest{
+		DomainName: data.Domain.ValueString(),
+		MapName:    data.Name.ValueString(),
+	})
 	if err != nil {
 		resp.Diagnostics.AddError("fetching GTM CIDRmap failed: ", err.Error())
 		return
@@ -154,7 +157,7 @@ func (d *cidrMapDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (m *cidrMapDataSourceModel) setAttributes(ctx context.Context, cidrMap *gtm.CIDRMap) diag.Diagnostics {
+func (m *cidrMapDataSourceModel) setAttributes(ctx context.Context, cidrMap *gtm.GetCIDRMapResponse) diag.Diagnostics {
 	m.Name = types.StringValue(cidrMap.Name)
 	m.DefaultDatacenter = newDefaultDatacenter(*cidrMap.DefaultDatacenter)
 	m.Links = getLinks(cidrMap.Links)
@@ -167,7 +170,7 @@ func (m *cidrMapDataSourceModel) setAttributes(ctx context.Context, cidrMap *gtm
 	return nil
 }
 
-func (m *cidrMapDataSourceModel) setAssignments(ctx context.Context, assignments []*gtm.CIDRAssignment) diag.Diagnostics {
+func (m *cidrMapDataSourceModel) setAssignments(ctx context.Context, assignments []gtm.CIDRAssignment) diag.Diagnostics {
 	for _, a := range assignments {
 		blocks, diags := types.SetValueFrom(ctx, types.StringType, a.Blocks)
 		if diags.HasError() {

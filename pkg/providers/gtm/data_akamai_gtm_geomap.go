@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/gtm"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/gtm"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -138,7 +138,9 @@ func (d *geoMapDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	}
 
 	client := Client(d.meta)
-	geoMap, err := client.GetGeoMap(ctx, data.Name.ValueString(), data.Domain.ValueString())
+	geoMap, err := client.GetGeoMap(ctx, gtm.GetGeoMapRequest{
+		MapName:    data.Name.ValueString(),
+		DomainName: data.Domain.ValueString()})
 	if err != nil {
 		resp.Diagnostics.AddError("fetching GTM Geographic map failed: ", err.Error())
 		return
@@ -153,7 +155,7 @@ func (d *geoMapDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (m *geoMapDataSourceModel) setAttributes(ctx context.Context, geoMap *gtm.GeoMap) diag.Diagnostics {
+func (m *geoMapDataSourceModel) setAttributes(ctx context.Context, geoMap *gtm.GetGeoMapResponse) diag.Diagnostics {
 	m.Name = types.StringValue(geoMap.Name)
 	m.DefaultDatacenter = newDefaultDatacenter(*geoMap.DefaultDatacenter)
 	m.Links = getLinks(geoMap.Links)
@@ -166,7 +168,7 @@ func (m *geoMapDataSourceModel) setAttributes(ctx context.Context, geoMap *gtm.G
 	return nil
 }
 
-func (m *geoMapDataSourceModel) setAssignments(ctx context.Context, assignments []*gtm.GeoAssignment) diag.Diagnostics {
+func (m *geoMapDataSourceModel) setAssignments(ctx context.Context, assignments []gtm.GeoAssignment) diag.Diagnostics {
 	for _, a := range assignments {
 		countries, diags := types.SetValueFrom(ctx, types.StringType, a.Countries)
 		if diags.HasError() {

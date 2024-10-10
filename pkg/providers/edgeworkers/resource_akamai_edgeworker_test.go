@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/edgeworkers"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/edgeworkers"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
@@ -172,7 +172,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 				EdgeWorkerID:   edgeWorkerID,
 			}
 			updateEdgeWorkerID := edgeworkers.UpdateEdgeWorkerIDRequest{
-				EdgeWorkerIDBodyRequest: edgeworkers.EdgeWorkerIDBodyRequest{
+				Body: edgeworkers.EdgeWorkerIDRequestBody{
 					Name:           name,
 					GroupID:        groupID,
 					ResourceTierID: resourceTierID,
@@ -209,7 +209,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 				EdgeWorkerID:   edgeWorkerID,
 			}
 			updateEdgeWorkerID := edgeworkers.UpdateEdgeWorkerIDRequest{
-				EdgeWorkerIDBodyRequest: edgeworkers.EdgeWorkerIDBodyRequest{
+				Body: edgeworkers.EdgeWorkerIDRequestBody{
 					Name:           name,
 					GroupID:        groupID,
 					ResourceTierID: resourceTierID,

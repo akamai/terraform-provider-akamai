@@ -3,7 +3,7 @@ package iam
 import (
 	"context"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/session"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -11,13 +11,13 @@ import (
 
 func dataSourceIAMLanguages() *schema.Resource {
 	return &schema.Resource{
-		Description: "List all the possible languages Akamai supports",
+		Description: "List all the possible languages Akamai supports.",
 		ReadContext: dataIAMLanguagesRead,
 		Schema: map[string]*schema.Schema{
 			"languages": {
 				Type:        schema.TypeSet,
 				Computed:    true,
-				Description: "Languages supported by Akamai",
+				Description: "Languages supported by Akamai.",
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 		},

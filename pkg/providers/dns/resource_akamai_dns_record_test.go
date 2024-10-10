@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/dns"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/session"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/dns"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -21,8 +21,6 @@ import (
 func TestResDnsRecord(t *testing.T) {
 	dnsClient := dns.Client(session.Must(session.New()))
 
-	var rec *dns.RecordBody
-
 	notFound := &dns.Error{
 		StatusCode: http.StatusNotFound,
 	}
@@ -31,60 +29,92 @@ func TestResDnsRecord(t *testing.T) {
 	t.Run("lifecycle test", func(t *testing.T) {
 		client := &dns.Mock{}
 
-		getCall := client.On("GetRecord",
+		// read
+		client.On("GetRecord",
 			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("string"),
-			mock.AnythingOfType("string"),
-			mock.AnythingOfType("string"),
-		).Return(nil, notFound)
+			mock.AnythingOfType("dns.GetRecordRequest"),
+		).Return(nil, notFound).Once()
 
-		parseCall := client.On("ParseRData",
-			mock.Anything,
-			mock.AnythingOfType("string"),
-			mock.AnythingOfType("[]string"),
-		).Return(nil)
-
-		procCall := client.On("ProcessRdata",
-			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("[]string"),
-			mock.AnythingOfType("string"),
-		).Return(nil, nil)
-
-		updateArguments := func(args mock.Arguments) {
-			rec = args.Get(1).(*dns.RecordBody)
-			getCall.ReturnArguments = mock.Arguments{rec, nil}
-			parseCall.ReturnArguments = mock.Arguments{
-				dnsClient.ParseRData(context.Background(), rec.RecordType, rec.Target),
-			}
-			procCall.ReturnArguments = mock.Arguments{rec.Target, nil}
-		}
-
+		// create
 		client.On("CreateRecord",
 			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("*dns.RecordBody"),
-			mock.AnythingOfType("string"),
-			mock.Anything,
-		).Return(nil).Run(func(args mock.Arguments) {
-			updateArguments(args)
-		})
+			mock.AnythingOfType("dns.CreateRecordRequest"),
+		).Return(nil).Once()
 
+		// read
+		client.On("GetRecord",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("dns.GetRecordRequest"),
+		).Return(&dns.GetRecordResponse{
+			Name:       "",
+			RecordType: "",
+			TTL:        0,
+			Active:     false,
+			Target:     nil,
+		}, nil).Once()
+
+		retCreate := dnsClient.ParseRData(context.Background(), "A", []string{"10.0.0.2", "10.0.0.3"})
+
+		client.On("ParseRData",
+			mock.Anything,
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("[]string"),
+		).Return(retCreate).Times(3)
+
+		client.On("ProcessRdata",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("[]string"),
+			mock.AnythingOfType("string"),
+		).Return([]string{"A"}, nil).Times(4)
+
+		client.On("GetRecord",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("dns.GetRecordRequest"),
+		).Return(&dns.GetRecordResponse{
+			Name:       "",
+			RecordType: "",
+			TTL:        0,
+			Active:     false,
+			Target:     nil,
+		}, nil).Times(3)
+
+		// update
 		client.On("UpdateRecord",
 			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("*dns.RecordBody"),
-			mock.AnythingOfType("string"),
-			mock.Anything,
-		).Return(nil).Run(func(args mock.Arguments) {
-			updateArguments(args)
-		})
+			mock.AnythingOfType("dns.UpdateRecordRequest"),
+		).Return(nil).Once()
 
+		// read
+		client.On("GetRecord",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("dns.GetRecordRequest"),
+		).Return(&dns.GetRecordResponse{
+			Name:       "",
+			RecordType: "",
+			TTL:        0,
+			Active:     false,
+			Target:     nil,
+		}, nil).Times(2)
+
+		retUpdate := dnsClient.ParseRData(context.Background(), "A", []string{"10.0.0.4", "10.0.0.5"})
+
+		client.On("ParseRData",
+			mock.Anything,
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("[]string"),
+		).Return(retUpdate).Times(2)
+
+		client.On("ProcessRdata",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("[]string"),
+			mock.AnythingOfType("string"),
+		).Return([]string{"A"}, nil).Times(2)
+
+		// delete
 		client.On("DeleteRecord",
 			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("*dns.RecordBody"),
-			mock.AnythingOfType("string"),
-			mock.AnythingOfType("[]bool"),
-		).Return(nil).Run(func(mock.Arguments) {
-			getCall.ReturnArguments = mock.Arguments{nil, notFound}
-		})
+			mock.AnythingOfType("dns.DeleteRecordRequest"),
+		).Return(nil).Once()
 
 		dataSourceName := "akamai_dns_record.a_record"
 
@@ -119,30 +149,18 @@ func TestResDnsRecord(t *testing.T) {
 
 		client.On("GetRecord",
 			mock.Anything,
-			"exampleterraform.io",
-			"exampleterraform.io",
-			"TXT",
+			mock.AnythingOfType("dns.GetRecordRequest"),
 		).Return(nil, notFound).Once()
 
 		client.On("CreateRecord",
 			mock.Anything,
-			&dns.RecordBody{
-				Name:       "exampleterraform.io",
-				RecordType: "TXT",
-				TTL:        300,
-				Active:     false,
-				Target:     []string{target1, target2},
-			},
-			"exampleterraform.io",
-			[]bool{false},
+			mock.AnythingOfType("dns.CreateRecordRequest"),
 		).Return(nil)
 
 		client.On("GetRecord",
 			mock.Anything,
-			"exampleterraform.io",
-			"exampleterraform.io",
-			"TXT",
-		).Return(&dns.RecordBody{
+			mock.AnythingOfType("dns.GetRecordRequest"),
+		).Return(&dns.GetRecordResponse{
 			Name:       "exampleterraform.io",
 			RecordType: "TXT",
 			TTL:        300,
@@ -166,10 +184,8 @@ func TestResDnsRecord(t *testing.T) {
 
 		client.On("GetRecord",
 			mock.Anything,
-			"exampleterraform.io",
-			"exampleterraform.io",
-			"TXT",
-		).Return(&dns.RecordBody{
+			mock.AnythingOfType("dns.GetRecordRequest"),
+		).Return(&dns.GetRecordResponse{
 			Name:       "exampleterraform.io",
 			RecordType: "TXT",
 			TTL:        300,
@@ -179,9 +195,7 @@ func TestResDnsRecord(t *testing.T) {
 
 		client.On("DeleteRecord",
 			mock.Anything,
-			mock.AnythingOfType("*dns.RecordBody"),
-			mock.AnythingOfType("string"),
-			mock.AnythingOfType("[]bool"),
+			mock.AnythingOfType("dns.DeleteRecordRequest"),
 		).Return(nil)
 
 		resourceName := "akamai_dns_record.txt_record"
@@ -220,30 +234,28 @@ func TestResDnsRecord(t *testing.T) {
 
 		client.On("GetRecord",
 			mock.Anything,
-			"exampleterraform.io",
-			"exampleterraform.io",
-			"TXT",
+			dns.GetRecordRequest{Zone: "exampleterraform.io", Name: "exampleterraform.io", RecordType: "TXT"},
 		).Return(nil, notFound).Once()
 
 		client.On("CreateRecord",
 			mock.Anything,
-			&dns.RecordBody{
-				Name:       "exampleterraform.io",
-				RecordType: "TXT",
-				TTL:        300,
-				Active:     false,
-				Target:     []string{normalizedTarget1, normalizedTarget2, normalizedTarget3},
+			dns.CreateRecordRequest{
+				Record: &dns.RecordBody{
+					Name:       "exampleterraform.io",
+					RecordType: "TXT",
+					TTL:        300,
+					Active:     false,
+					Target:     []string{normalizedTarget1, normalizedTarget2, normalizedTarget3},
+				},
+				Zone:    "exampleterraform.io",
+				RecLock: []bool{false},
 			},
-			"exampleterraform.io",
-			[]bool{false},
 		).Return(nil)
 
 		client.On("GetRecord",
 			mock.Anything,
-			"exampleterraform.io",
-			"exampleterraform.io",
-			"TXT",
-		).Return(&dns.RecordBody{
+			dns.GetRecordRequest{Zone: "exampleterraform.io", Name: "exampleterraform.io", RecordType: "TXT"},
+		).Return(&dns.GetRecordResponse{
 			Name:       "exampleterraform.io",
 			RecordType: "TXT",
 			TTL:        300,
@@ -267,10 +279,8 @@ func TestResDnsRecord(t *testing.T) {
 
 		client.On("GetRecord",
 			mock.Anything,
-			"exampleterraform.io",
-			"exampleterraform.io",
-			"TXT",
-		).Return(&dns.RecordBody{
+			dns.GetRecordRequest{Zone: "exampleterraform.io", Name: "exampleterraform.io", RecordType: "TXT"},
+		).Return(&dns.GetRecordResponse{
 			Name:       "exampleterraform.io",
 			RecordType: "TXT",
 			TTL:        300,
@@ -280,9 +290,7 @@ func TestResDnsRecord(t *testing.T) {
 
 		client.On("DeleteRecord",
 			mock.Anything,
-			mock.AnythingOfType("*dns.RecordBody"),
-			mock.AnythingOfType("string"),
-			mock.AnythingOfType("[]bool"),
+			dns.DeleteRecordRequest{Zone: "exampleterraform.io", Name: "exampleterraform.io", RecordType: "TXT", RecLock: []bool{false}},
 		).Return(nil)
 
 		resourceName := "akamai_dns_record.txt_record"
@@ -317,30 +325,28 @@ func TestResDnsRecord(t *testing.T) {
 
 		client.On("GetRecord",
 			mock.Anything,
-			"origin.org",
-			"origin.example.org",
-			"SRV",
+			dns.GetRecordRequest{Zone: "origin.org", Name: "origin.example.org", RecordType: "SRV"},
 		).Return(nil, notFound).Once()
 
 		client.On("CreateRecord",
 			mock.Anything,
-			&dns.RecordBody{
-				Name:       "origin.example.org",
-				RecordType: "SRV",
-				TTL:        300,
-				Active:     false,
-				Target:     []string{targetBig, targetSmall, targetTiny},
+			dns.CreateRecordRequest{
+				Record: &dns.RecordBody{
+					Name:       "origin.example.org",
+					RecordType: "SRV",
+					TTL:        300,
+					Active:     false,
+					Target:     []string{targetBig, targetSmall, targetTiny},
+				},
+				Zone:    "origin.org",
+				RecLock: []bool{false},
 			},
-			"origin.org",
-			[]bool{false},
 		).Return(nil)
 
 		client.On("GetRecord",
 			mock.Anything,
-			"origin.org",
-			"origin.example.org",
-			"SRV",
-		).Return(&dns.RecordBody{
+			dns.GetRecordRequest{Zone: "origin.org", Name: "origin.example.org", RecordType: "SRV"},
+		).Return(&dns.GetRecordResponse{
 			Name:       "origin.example.org",
 			RecordType: "SRV",
 			TTL:        300,
@@ -366,10 +372,8 @@ func TestResDnsRecord(t *testing.T) {
 
 		client.On("GetRecord",
 			mock.Anything,
-			"origin.org",
-			"origin.example.org",
-			"SRV",
-		).Return(&dns.RecordBody{
+			dns.GetRecordRequest{Zone: "origin.org", Name: "origin.example.org", RecordType: "SRV"},
+		).Return(&dns.GetRecordResponse{
 			Name:       "origin.example.org",
 			RecordType: "SRV",
 			TTL:        300,
@@ -379,9 +383,7 @@ func TestResDnsRecord(t *testing.T) {
 
 		client.On("DeleteRecord",
 			mock.Anything,
-			mock.AnythingOfType("*dns.RecordBody"),
-			mock.AnythingOfType("string"),
-			mock.AnythingOfType("[]bool"),
+			dns.DeleteRecordRequest{Zone: "origin.org", Name: "origin.example.org", RecordType: "SRV", RecLock: []bool{false}},
 		).Return(nil)
 
 		resourceName := "akamai_dns_record.srv_record"
@@ -415,30 +417,28 @@ func TestResDnsRecord(t *testing.T) {
 
 		client.On("GetRecord",
 			mock.Anything,
-			"origin.org",
-			"origin.example.org",
-			"SRV",
+			dns.GetRecordRequest{Zone: "origin.org", Name: "origin.example.org", RecordType: "SRV"},
 		).Return(nil, notFound).Once()
 
 		client.On("CreateRecord",
 			mock.Anything,
-			&dns.RecordBody{
-				Name:       "origin.example.org",
-				RecordType: "SRV",
-				TTL:        300,
-				Active:     false,
-				Target:     []string{targetBig, targetSmall, targetTiny},
+			dns.CreateRecordRequest{
+				Record: &dns.RecordBody{
+					Name:       "origin.example.org",
+					RecordType: "SRV",
+					TTL:        300,
+					Active:     false,
+					Target:     []string{targetBig, targetSmall, targetTiny},
+				},
+				Zone:    "origin.org",
+				RecLock: []bool{false},
 			},
-			"origin.org",
-			[]bool{false},
 		).Return(nil)
 
 		client.On("GetRecord",
 			mock.Anything,
-			"origin.org",
-			"origin.example.org",
-			"SRV",
-		).Return(&dns.RecordBody{
+			dns.GetRecordRequest{Zone: "origin.org", Name: "origin.example.org", RecordType: "SRV"},
+		).Return(&dns.GetRecordResponse{
 			Name:       "origin.example.org",
 			RecordType: "SRV",
 			TTL:        300,
@@ -464,10 +464,8 @@ func TestResDnsRecord(t *testing.T) {
 
 		client.On("GetRecord",
 			mock.Anything,
-			"origin.org",
-			"origin.example.org",
-			"SRV",
-		).Return(&dns.RecordBody{
+			dns.GetRecordRequest{Zone: "origin.org", Name: "origin.example.org", RecordType: "SRV"},
+		).Return(&dns.GetRecordResponse{
 			Name:       "origin.example.org",
 			RecordType: "SRV",
 			TTL:        300,
@@ -477,9 +475,7 @@ func TestResDnsRecord(t *testing.T) {
 
 		client.On("DeleteRecord",
 			mock.Anything,
-			mock.AnythingOfType("*dns.RecordBody"),
-			mock.AnythingOfType("string"),
-			mock.AnythingOfType("[]bool"),
+			dns.DeleteRecordRequest{Zone: "origin.org", Name: "origin.example.org", RecordType: "SRV", RecLock: []bool{false}},
 		).Return(nil)
 
 		resourceName := "akamai_dns_record.srv_record"
@@ -530,30 +526,28 @@ func TestResDnsRecord(t *testing.T) {
 		targetReceived := []string{"2001:db8:0:0:0:0:0:68", "::ffff:192.0.2.1"}
 		client.On("GetRecord",
 			mock.Anything,
-			"exampleterraform.io",
-			"exampleterraform.io",
-			"AAAA",
+			dns.GetRecordRequest{Zone: "exampleterraform.io", Name: "exampleterraform.io", RecordType: "AAAA"},
 		).Return(nil, notFound).Once()
 
 		client.On("CreateRecord",
 			mock.Anything,
-			&dns.RecordBody{
-				Name:       "exampleterraform.io",
-				RecordType: "AAAA",
-				TTL:        300,
-				Active:     false,
-				Target:     targetSent,
+			dns.CreateRecordRequest{
+				Record: &dns.RecordBody{
+					Name:       "exampleterraform.io",
+					RecordType: "AAAA",
+					TTL:        300,
+					Active:     false,
+					Target:     targetSent,
+				},
+				Zone:    "exampleterraform.io",
+				RecLock: []bool{false},
 			},
-			"exampleterraform.io",
-			[]bool{false},
 		).Return(nil)
 
 		client.On("GetRecord",
 			mock.Anything,
-			"exampleterraform.io",
-			"exampleterraform.io",
-			"AAAA",
-		).Return(&dns.RecordBody{
+			dns.GetRecordRequest{Zone: "exampleterraform.io", Name: "exampleterraform.io", RecordType: "AAAA"},
+		).Return(&dns.GetRecordResponse{
 			Name:       "exampleterraform.io",
 			RecordType: "AAAA",
 			TTL:        300,
@@ -577,10 +571,8 @@ func TestResDnsRecord(t *testing.T) {
 
 		client.On("GetRecord",
 			mock.Anything,
-			"exampleterraform.io",
-			"exampleterraform.io",
-			"AAAA",
-		).Return(&dns.RecordBody{
+			dns.GetRecordRequest{Zone: "exampleterraform.io", Name: "exampleterraform.io", RecordType: "AAAA"},
+		).Return(&dns.GetRecordResponse{
 			Name:       "exampleterraform.io",
 			RecordType: "AAAA",
 			TTL:        300,
@@ -590,9 +582,7 @@ func TestResDnsRecord(t *testing.T) {
 
 		client.On("DeleteRecord",
 			mock.Anything,
-			mock.AnythingOfType("*dns.RecordBody"),
-			mock.AnythingOfType("string"),
-			mock.AnythingOfType("[]bool"),
+			dns.DeleteRecordRequest{Zone: "exampleterraform.io", Name: "exampleterraform.io", RecordType: "AAAA", RecLock: []bool{false}},
 		).Return(nil)
 
 		resourceName := "akamai_dns_record.aaaa_record"
@@ -659,42 +649,55 @@ func TestMXRecord(t *testing.T) {
 	}
 	dnsClient := dns.Client(session.Must(session.New()))
 	name, zone, mx := "exampleterraform.io", "exampleterraform.io", "MX"
+	getRecordRequest := dns.GetRecordRequest{
+		Zone:       zone,
+		Name:       name,
+		RecordType: mx}
 
 	mockCreate := func(d *dns.Mock, realClient dns.DNS, createdRecord *dns.RecordBody) {
-		d.On("GetRecord", mock.Anything, zone, name, mx).
+		d.On("GetRecord", mock.Anything, getRecordRequest).
 			Return(nil, notFound).Twice()
-		d.On("CreateRecord", mock.Anything,
-			createdRecord, zone, []bool{false}).
+		d.On("CreateRecord", mock.Anything, dns.CreateRecordRequest{
+			Record:  createdRecord,
+			Zone:    zone,
+			RecLock: []bool{false}}).
 			Return(nil).Once()
 	}
 	mockRead := func(d *dns.Mock, realClient dns.DNS, createdRecord *dns.RecordBody) {
-		d.On("GetRecord", mock.Anything, zone, name, mx).
-			Return(createdRecord, nil).Once()
+		response := (*dns.GetRecordResponse)(createdRecord)
+		d.On("GetRecord", mock.Anything, getRecordRequest).
+			Return(response, nil).Once()
 		d.On("ProcessRdata", mock.Anything, createdRecord.Target, mx).
 			Return(realClient.ProcessRdata(context.Background(), createdRecord.Target, mx)).Once()
-		d.On("GetRecord", mock.Anything, zone, name, mx).
-			Return(createdRecord, nil).Once()
+		d.On("GetRecord", mock.Anything, getRecordRequest).
+			Return(response, nil).Once()
 		d.On("ParseRData", mock.Anything, mx, createdRecord.Target).
 			Return(realClient.ParseRData(context.Background(), mx, createdRecord.Target)).Once()
 		d.On("ProcessRdata", mock.Anything, createdRecord.Target, mx).
 			Return(realClient.ProcessRdata(context.Background(), createdRecord.Target, mx)).Once()
 	}
 	mockUpdate := func(d *dns.Mock, realClient dns.DNS, previousRecord *dns.RecordBody, updatedRecord *dns.RecordBody) {
-		d.On("GetRecord", mock.Anything, zone, name, mx).
-			Return(previousRecord, nil).Once()
+		response := (*dns.GetRecordResponse)(previousRecord)
+		d.On("GetRecord", mock.Anything, getRecordRequest).
+			Return(response, nil).Once()
 		d.On("ProcessRdata", mock.Anything, previousRecord.Target, mx).
 			Return(realClient.ProcessRdata(context.Background(), previousRecord.Target, mx)).Once()
-		d.On("GetRecord", mock.Anything, zone, name, mx).
-			Return(previousRecord, nil).Once()
+		d.On("GetRecord", mock.Anything, getRecordRequest).
+			Return(response, nil).Once()
 		d.On("ProcessRdata", mock.Anything, previousRecord.Target, mx).
 			Return(realClient.ProcessRdata(context.Background(), previousRecord.Target, mx)).Once()
-		d.On("UpdateRecord", mock.Anything,
-			updatedRecord, zone, []bool{false}).
+		d.On("UpdateRecord", mock.Anything, dns.UpdateRecordRequest{
+			Record:  updatedRecord,
+			Zone:    zone,
+			RecLock: []bool{false}}).
 			Return(nil)
 	}
 	mockDelete := func(d *dns.Mock, createdRecord *dns.RecordBody) {
-		d.On("DeleteRecord", mock.Anything,
-			createdRecord, zone, []bool{false}).
+		d.On("DeleteRecord", mock.Anything, dns.DeleteRecordRequest{
+			Zone:       zone,
+			Name:       createdRecord.Name,
+			RecordType: createdRecord.RecordType,
+			RecLock:    []bool{false}}).
 			Return(nil)
 	}
 

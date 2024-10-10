@@ -8,9 +8,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/gtm"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/session"
-
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/gtm"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -188,7 +187,10 @@ func resourceGTMv1DatacenterCreate(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 	logger.Debugf("Proposed New Datacenter: [%v]", newDC)
-	cStatus, err := Client(meta).CreateDatacenter(ctx, newDC, domain)
+	cStatus, err := Client(meta).CreateDatacenter(ctx, gtm.CreateDatacenterRequest{
+		DomainName: domain,
+		Datacenter: newDC,
+	})
 	if err != nil {
 		logger.Errorf("Datacenter Create failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -259,7 +261,10 @@ func resourceGTMv1DatacenterRead(ctx context.Context, d *schema.ResourceData, m 
 			Detail:   err.Error(),
 		})
 	}
-	dc, err := Client(meta).GetDatacenter(ctx, dcID, domain)
+	dc, err := Client(meta).GetDatacenter(ctx, gtm.GetDatacenterRequest{
+		DatacenterID: dcID,
+		DomainName:   domain,
+	})
 	if err != nil {
 		logger.Errorf("Datacenter Read failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -296,7 +301,10 @@ func resourceGTMv1DatacenterUpdate(ctx context.Context, d *schema.ResourceData, 
 		})
 	}
 	// Get existing datacenter
-	existDC, err := Client(meta).GetDatacenter(ctx, dcID, domain)
+	existDC, err := Client(meta).GetDatacenter(ctx, gtm.GetDatacenterRequest{
+		DatacenterID: dcID,
+		DomainName:   domain,
+	})
 	if err != nil {
 		logger.Errorf("Datacenter Update failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -310,7 +318,10 @@ func resourceGTMv1DatacenterUpdate(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 	logger.Debugf("Updating Datacenter PROPOSED: %v", existDC)
-	uStat, err := Client(meta).UpdateDatacenter(ctx, existDC, domain)
+	uStat, err := Client(meta).UpdateDatacenter(ctx, gtm.UpdateDatacenterRequest{
+		Datacenter: existDC,
+		DomainName: domain,
+	})
 	if err != nil {
 		logger.Errorf("Datacenter Update failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -320,8 +331,8 @@ func resourceGTMv1DatacenterUpdate(ctx context.Context, d *schema.ResourceData, 
 		})
 	}
 	logger.Debugf("Datacenter Update status: %v", uStat)
-	if uStat.PropagationStatus == "DENIED" {
-		logger.Errorf(uStat.Message)
+	if uStat.Status.PropagationStatus == "DENIED" {
+		logger.Errorf(uStat.Status.Message)
 
 	}
 
@@ -363,7 +374,10 @@ func resourceGTMv1DatacenterImport(d *schema.ResourceData, m interface{}) ([]*sc
 	if err != nil {
 		return nil, fmt.Errorf("Invalid Datacenter resource ID")
 	}
-	dc, err := Client(meta).GetDatacenter(ctx, dcID, domain)
+	dc, err := Client(meta).GetDatacenter(ctx, gtm.GetDatacenterRequest{
+		DatacenterID: dcID,
+		DomainName:   domain,
+	})
 	if err != nil {
 		logger.Errorf("Datacenter Import error: %s", err.Error())
 		return nil, err
@@ -402,7 +416,10 @@ func resourceGTMv1DatacenterDelete(ctx context.Context, d *schema.ResourceData, 
 		})
 	}
 	// Get existing datacenter
-	existDC, err := Client(meta).GetDatacenter(ctx, dcID, domain)
+	existDC, err := Client(meta).GetDatacenter(ctx, gtm.GetDatacenterRequest{
+		DatacenterID: dcID,
+		DomainName:   domain,
+	})
 	if err != nil {
 		logger.Errorf("DatacenterDelete failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -412,7 +429,10 @@ func resourceGTMv1DatacenterDelete(ctx context.Context, d *schema.ResourceData, 
 		})
 	}
 	logger.Debugf("Deleting Datacenter: %v", existDC)
-	uStat, err := Client(meta).DeleteDatacenter(ctx, existDC, domain)
+	uStat, err := Client(meta).DeleteDatacenter(ctx, gtm.DeleteDatacenterRequest{
+		DatacenterID: dcID,
+		DomainName:   domain,
+	})
 	if err != nil {
 		logger.Errorf("Datacenter Delete failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -422,11 +442,11 @@ func resourceGTMv1DatacenterDelete(ctx context.Context, d *schema.ResourceData, 
 		})
 	}
 	logger.Debugf("Datacenter Delete status: %v", uStat)
-	if uStat.PropagationStatus == "DENIED" {
-		logger.Errorf(uStat.Message)
+	if uStat.Status.PropagationStatus == "DENIED" {
+		logger.Errorf(uStat.Status.Message)
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  uStat.Message,
+			Summary:  uStat.Status.Message,
 		})
 	}
 

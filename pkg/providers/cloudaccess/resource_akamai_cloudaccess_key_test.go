@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/cloudaccess"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/cloudaccess"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -443,7 +443,7 @@ func TestAccessKeyResource(t *testing.T) {
 				//create new version (no.3)
 				m.On("CreateAccessKeyVersion", mock.Anything, cloudaccess.CreateAccessKeyVersionRequest{
 					AccessKeyUID: resourceData.accessKeyData[0].accessKeyUID,
-					BodyParams: cloudaccess.CreateAccessKeyVersionBodyParams{
+					Body: cloudaccess.CreateAccessKeyVersionRequestBody{
 						CloudAccessKeyID:     "test_key_id_3",
 						CloudSecretAccessKey: "test_secret_3",
 					}}).Return(&cloudaccess.CreateAccessKeyVersionResponse{RequestID: 321321, RetryAfter: 1000}, nil).Once()
@@ -610,7 +610,7 @@ func TestAccessKeyResource(t *testing.T) {
 				//create new version (no.3)
 				m.On("CreateAccessKeyVersion", mock.Anything, cloudaccess.CreateAccessKeyVersionRequest{
 					AccessKeyUID: resourceData.accessKeyData[0].accessKeyUID,
-					BodyParams: cloudaccess.CreateAccessKeyVersionBodyParams{
+					Body: cloudaccess.CreateAccessKeyVersionRequestBody{
 						CloudAccessKeyID:     "test_key_id_3",
 						CloudSecretAccessKey: "test_secret_3",
 					}}).Return(&cloudaccess.CreateAccessKeyVersionResponse{RequestID: 321321, RetryAfter: 1000}, nil).Once()
@@ -1377,7 +1377,7 @@ func TestAccessKeyResource(t *testing.T) {
 				// fail and taint resource
 				m.On("CreateAccessKeyVersion", mock.Anything, cloudaccess.CreateAccessKeyVersionRequest{
 					AccessKeyUID: resourceData.accessKeyData[0].accessKeyUID,
-					BodyParams: cloudaccess.CreateAccessKeyVersionBodyParams{
+					Body: cloudaccess.CreateAccessKeyVersionRequestBody{
 						CloudAccessKeyID:     resourceData.accessKeyData[0].credentialsB.cloudAccessKeyID,
 						CloudSecretAccessKey: resourceData.accessKeyData[0].credentialsB.cloudSecretAccessKey,
 					}}).Return(nil, cloudaccess.ErrCreateAccessKeyVersion).Once()
@@ -1770,7 +1770,7 @@ func mockGetAccessKeyVersionStatus(client *cloudaccess.Mock, testData commonData
 func mockCreateAccessKeyVersion(client *cloudaccess.Mock, testData commonDataForAccessKey) *mock.Call {
 	return client.On("CreateAccessKeyVersion", mock.Anything, cloudaccess.CreateAccessKeyVersionRequest{
 		AccessKeyUID: testData.accessKeyUID,
-		BodyParams: cloudaccess.CreateAccessKeyVersionBodyParams{
+		Body: cloudaccess.CreateAccessKeyVersionRequestBody{
 			CloudAccessKeyID:     testData.credentialsB.cloudAccessKeyID,
 			CloudSecretAccessKey: testData.credentialsB.cloudSecretAccessKey,
 		}}).Return(&cloudaccess.CreateAccessKeyVersionResponse{RequestID: 124, RetryAfter: 1000}, nil)

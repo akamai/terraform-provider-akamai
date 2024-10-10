@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/datastream"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/datastream"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -103,15 +103,6 @@ func DatasetFieldListToDatasetFields(list []interface{}) []datastream.DatasetFie
 		datasetFields = append(datasetFields, datastream.DatasetFieldID{DatasetFieldID: v.(int)})
 	}
 	return datasetFields
-}
-
-// InterfaceSliceToStringSlice converts schema.Set to slice of string
-func InterfaceSliceToStringSlice(list []interface{}) []string {
-	stringList := make([]string, len(list))
-	for i, v := range list {
-		stringList[i] = v.(string)
-	}
-	return stringList
 }
 
 // DataSetFieldsToList converts slice of dataSetFields to slice of ints

@@ -9,14 +9,16 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/iam"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/session"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/iam"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/date"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -25,11 +27,12 @@ var international = regexp.MustCompile(`^\+[02-9][\d\s\-]{0,40}$`)
 
 func resourceIAMUser() *schema.Resource {
 	return &schema.Resource{
-		Description:   "Manage a user in your account",
+		Description:   "Manage a user in your account.",
 		CreateContext: resourceIAMUserCreate,
 		ReadContext:   resourceIAMUserRead,
 		UpdateContext: resourceIAMUserUpdate,
 		DeleteContext: resourceIAMUserDelete,
+		CustomizeDiff: customdiff.All(customizePasswordDiff, customizeNotificationDiff),
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
 		},
@@ -38,42 +41,47 @@ func resourceIAMUser() *schema.Resource {
 			"first_name": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "The user's first name",
+				Description: "The user's first name.",
 			},
 			"last_name": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "The user's surname",
+				Description: "The user's surname.",
 			},
 			"email": {
 				Type:             schema.TypeString,
 				Required:         true,
-				Description:      "The user's email address",
+				Description:      "The user's email address.",
 				StateFunc:        stateEmail,
 				DiffSuppressFunc: suppressEmail,
 			},
 			"country": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "As part of the user's location, the value can be any that are available from the view-supported-countries operation",
+				Description: "As part of the user's location, the value can be any that are available from the view-supported-countries operation.",
 			},
 			"phone": {
 				Type:             schema.TypeString,
 				Optional:         true,
-				Description:      "The user's main phone number",
+				Description:      "The user's main phone number.",
 				DiffSuppressFunc: suppressPhone,
 				StateFunc:        statePhone,
 				ValidateFunc:     validatePhone,
 			},
 			"enable_tfa": {
 				Type:        schema.TypeBool,
-				Required:    true,
-				Description: "Indicates whether two-factor authentication is allowed",
+				Optional:    true,
+				Description: "Indicates whether two-factor authentication is allowed.",
+			},
+			"enable_mfa": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Description: "Indicates whether multi-factor authentication is allowed.",
 			},
 			"auth_grants_json": {
 				Type:             schema.TypeString,
 				Required:         true,
-				Description:      "A user's per-group role assignments, in JSON form",
+				Description:      "A user's per-group role assignments, in JSON form.",
 				ValidateDiagFunc: validateAuthGrantsJS,
 				DiffSuppressFunc: suppressAuthGrantsJS,
 				StateFunc:        stateAuthGrantsJS,
@@ -84,30 +92,30 @@ func resourceIAMUser() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,
-				Description: "To help characterize the user, the value can be any that are available from the view-contact-types operation",
+				Description: "To help characterize the user, the value can be any that are available from the view-contact-types operation.",
 			},
 			"job_title": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "The user's position at your company",
+				Description: "The user's position at your company.",
 			},
 			"time_zone": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,
-				Description: "The user's time zone. The value can be any that are available from the view-time-zones operation",
+				Description: "The user's time zone. The value can be any that are available from the view-time-zones operation.",
 			},
 			"secondary_email": {
 				Type:             schema.TypeString,
 				Optional:         true,
-				Description:      "The user's secondary email address",
+				Description:      "The user's secondary email address.",
 				StateFunc:        stateEmail,
 				DiffSuppressFunc: suppressEmail,
 			},
 			"mobile_phone": {
 				Type:             schema.TypeString,
 				Optional:         true,
-				Description:      "The user's mobile phone number",
+				Description:      "The user's mobile phone number.",
 				DiffSuppressFunc: suppressPhone,
 				StateFunc:        statePhone,
 				ValidateFunc:     validatePhone,
@@ -116,67 +124,122 @@ func resourceIAMUser() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,
-				Description: "The user's street address",
+				Description: "The user's street address.",
 			},
 			"city": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "The user's city",
+				Description: "The user's city.",
 			},
 			"state": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "The user's state",
+				Description: "The user's state.",
 			},
 			"zip_code": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "The user's five-digit ZIP code",
+				Description: "The user's five-digit ZIP code.",
 			},
 			"preferred_language": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,
-				Description: "The value can be any that are available from the view-languages operation",
+				Description: "The value can be any that are available from the view-languages operation.",
 			},
 			"session_timeout": {
 				Type:        schema.TypeInt,
 				Optional:    true,
 				Computed:    true,
-				Description: "The number of seconds it takes for the user's Control Center session to time out if there hasn't been any activity",
+				Description: "The number of seconds it takes for the user's Control Center session to time out if there hasn't been any activity.",
 			},
 
 			// Purely computed
 			"user_name": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "A user's `loginId`. Typically, a user's email address",
+				Description: "A user's `loginId`. Typically, a user's email address.",
 			},
 			"last_login": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "ISO 8601 timestamp indicating when the user last logged in",
+				Description: "ISO 8601 timestamp indicating when the user last logged in.",
 			},
 			"password_expired_after": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "The date a user's password expires",
+				Description: "The date a user's password expires.",
 			},
 			"tfa_configured": {
 				Type:        schema.TypeBool,
 				Computed:    true,
-				Description: "Indicates whether two-factor authentication is configured",
+				Description: "Indicates whether two-factor authentication is configured.",
 			},
 			"email_update_pending": {
 				Type:        schema.TypeBool,
 				Computed:    true,
-				Description: "Indicates whether email update is pending",
+				Description: "Indicates whether email update is pending.",
 			},
 			"lock": {
 				Type:        schema.TypeBool,
 				Optional:    true,
-				Description: "Flag to block a user account",
+				Description: "Flag to block a user account.",
 				Default:     false,
+			},
+			"password": {
+				Type:        schema.TypeString,
+				Description: "New password for a user.",
+				Optional:    true,
+				Sensitive:   true,
+			},
+			"user_notifications": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: "Specifies email notifications the user receives for products.",
+				Computed:    true,
+				MaxItems:    1, // Ensure only one notification configuration can be set
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"api_client_credential_expiry_notification": {
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Default:     false,
+							Description: "Enables notifications for expiring API client credentials.",
+						},
+						"new_user_notification": {
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Default:     true,
+							Description: "Enables notifications for group administrators when the user creates other new users.",
+						},
+						"password_expiry": {
+							Type:        schema.TypeBool,
+							Required:    true,
+							Description: "Enables notifications for expiring passwords.",
+						},
+						"proactive": {
+							Type:        schema.TypeList,
+							Required:    true,
+							Description: "Products for which the user gets notifications for service issues.",
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+						"upgrade": {
+							Type:        schema.TypeList,
+							Required:    true,
+							Description: "Products for which the user receives notifications for upgrades.",
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+						"enable_email_notifications": {
+							Type:        schema.TypeBool,
+							Required:    true,
+							Description: "Enables email notifications.",
+						},
+					},
+				},
 			},
 		},
 	}
@@ -200,24 +263,30 @@ func resourceIAMUserCreate(ctx context.Context, d *schema.ResourceData, m interf
 		}
 	}
 
+	authMethod, err := getAuthenticationMethod(d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	basicUser := iam.UserBasicInfo{
-		FirstName:         d.Get("first_name").(string),
-		LastName:          d.Get("last_name").(string),
-		UserName:          d.Get("user_name").(string),
-		Email:             d.Get("email").(string),
-		Phone:             d.Get("phone").(string),
-		TimeZone:          d.Get("time_zone").(string),
-		JobTitle:          d.Get("job_title").(string),
-		TFAEnabled:        d.Get("enable_tfa").(bool),
-		SecondaryEmail:    d.Get("secondary_email").(string),
-		MobilePhone:       d.Get("mobile_phone").(string),
-		Address:           d.Get("address").(string),
-		City:              d.Get("city").(string),
-		State:             d.Get("state").(string),
-		ZipCode:           d.Get("zip_code").(string),
-		Country:           d.Get("country").(string),
-		ContactType:       d.Get("contact_type").(string),
-		PreferredLanguage: d.Get("preferred_language").(string),
+		FirstName:                d.Get("first_name").(string),
+		LastName:                 d.Get("last_name").(string),
+		UserName:                 d.Get("user_name").(string),
+		Email:                    d.Get("email").(string),
+		Phone:                    d.Get("phone").(string),
+		TimeZone:                 d.Get("time_zone").(string),
+		JobTitle:                 d.Get("job_title").(string),
+		TFAEnabled:               d.Get("enable_tfa").(bool),
+		SecondaryEmail:           d.Get("secondary_email").(string),
+		MobilePhone:              d.Get("mobile_phone").(string),
+		Address:                  d.Get("address").(string),
+		City:                     d.Get("city").(string),
+		State:                    d.Get("state").(string),
+		ZipCode:                  d.Get("zip_code").(string),
+		Country:                  d.Get("country").(string),
+		ContactType:              d.Get("contact_type").(string),
+		PreferredLanguage:        d.Get("preferred_language").(string),
+		AdditionalAuthentication: iam.Authentication(authMethod),
 	}
 
 	if st, ok := d.GetOk("session_timeout"); ok {
@@ -225,20 +294,32 @@ func resourceIAMUserCreate(ctx context.Context, d *schema.ResourceData, m interf
 		basicUser.SessionTimeOut = &sessionTimeout
 	}
 
-	user, err := client.CreateUser(ctx, iam.CreateUserRequest{
+	userRequest := iam.CreateUserRequest{
 		UserBasicInfo: basicUser,
 		AuthGrants:    authGrants,
 		SendEmail:     true,
-		Notifications: iam.UserNotifications{
-			Options: iam.UserNotificationOptions{
-				Proactive: []string{},
-				Upgrade:   []string{},
-			},
-		},
-	})
+	}
+
+	// Get user notifications if provided
+	userNotifications, err := getUserNotifications(d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	if userNotifications != nil {
+		userRequest.Notifications = userNotifications
+	}
+
+	user, err := client.CreateUser(ctx, userRequest)
 	if err != nil {
 		logger.WithError(err).Errorf("failed to create user")
 		return diag.Errorf("failed to create user: %s\n%s", err, resourceIAMUserErrorAdvice(err))
+	}
+
+	err = manageUserPassword(ctx, d, client, user.IdentityID)
+	if err != nil {
+		logger.WithError(err).Errorf("failed to set user password")
+		return diag.Errorf("failed to set user password: %s", err)
 	}
 
 	// lock the user's account
@@ -257,6 +338,72 @@ func resourceIAMUserCreate(ctx context.Context, d *schema.ResourceData, m interf
 	return resourceIAMUserRead(ctx, d, m)
 }
 
+func manageUserPassword(ctx context.Context, d *schema.ResourceData, client iam.IAM, ID string) error {
+	password, err := tf.GetStringValue("password", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
+		return err
+	}
+
+	if password != "" {
+		err = client.SetUserPassword(ctx, iam.SetUserPasswordRequest{
+			IdentityID:  ID,
+			NewPassword: password,
+		})
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func extractUserNotificationsData(notificationsData interface{}) (*iam.UserNotifications, error) {
+
+	notificationsList, ok := notificationsData.([]interface{})
+	if !ok {
+		return nil, errors.New("user notifications data is not a valid list")
+	}
+
+	itemMap, ok := notificationsList[0].(map[string]interface{})
+	if !ok {
+		return nil, errors.New("user notifications data item is not a valid map")
+	}
+
+	return &iam.UserNotifications{
+		EnableEmail: itemMap["enable_email_notifications"].(bool),
+		Options: iam.UserNotificationOptions{
+			APIClientCredentialExpiry: itemMap["api_client_credential_expiry_notification"].(bool),
+			NewUser:                   itemMap["new_user_notification"].(bool),
+			PasswordExpiry:            itemMap["password_expiry"].(bool),
+			Proactive:                 tf.InterfaceSliceToStringSlice(itemMap["proactive"].([]interface{})),
+			Upgrade:                   tf.InterfaceSliceToStringSlice(itemMap["upgrade"].([]interface{})),
+		},
+	}, nil
+}
+
+func getUserNotifications(d *schema.ResourceData) (*iam.UserNotifications, error) {
+	notificationsData, err := tf.GetListValue("user_notifications", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
+		return nil, err
+	}
+	return extractUserNotificationsData(notificationsData)
+}
+
+func getAuthenticationMethod(d *schema.ResourceData) (string, error) {
+	enableTFA := d.Get("enable_tfa").(bool)
+	enableMFA := d.Get("enable_mfa").(bool)
+
+	if enableTFA && enableMFA {
+		return "", errors.New("only one of 'enable_tfa' or 'enable_mfa' can be set")
+	}
+
+	if enableTFA {
+		return "TFA", nil
+	} else if enableMFA {
+		return "MFA", nil
+	}
+	return "NONE", nil
+}
+
 func resourceIAMUserRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("IAM", "resourceIAMUserRead")
@@ -266,8 +413,9 @@ func resourceIAMUserRead(ctx context.Context, d *schema.ResourceData, m interfac
 	logger.Debug("Reading User")
 
 	req := iam.GetUserRequest{
-		IdentityID: d.Id(),
-		AuthGrants: true,
+		IdentityID:    d.Id(),
+		AuthGrants:    true,
+		Notifications: true,
 	}
 
 	user, err := client.GetUser(ctx, req)
@@ -290,6 +438,18 @@ func resourceIAMUserRead(ctx context.Context, d *schema.ResourceData, m interfac
 		}
 	}
 
+	userNotifications := []interface{}{map[string]interface{}{
+		"enable_email_notifications":                user.Notifications.EnableEmail,
+		"api_client_credential_expiry_notification": user.Notifications.Options.APIClientCredentialExpiry,
+		"new_user_notification":                     user.Notifications.Options.NewUser,
+		"password_expiry":                           user.Notifications.Options.PasswordExpiry,
+		"proactive":                                 user.Notifications.Options.Proactive,
+		"upgrade":                                   user.Notifications.Options.Upgrade,
+	},
+	}
+
+	enableMFA := user.AdditionalAuthentication == "MFA"
+
 	err = tf.SetAttrs(d, map[string]interface{}{
 		"first_name":             user.FirstName,
 		"last_name":              user.LastName,
@@ -299,6 +459,7 @@ func resourceIAMUserRead(ctx context.Context, d *schema.ResourceData, m interfac
 		"time_zone":              user.TimeZone,
 		"job_title":              user.JobTitle,
 		"enable_tfa":             user.TFAEnabled,
+		"enable_mfa":             enableMFA,
 		"secondary_email":        user.SecondaryEmail,
 		"mobile_phone":           user.MobilePhone,
 		"address":                user.Address,
@@ -308,13 +469,14 @@ func resourceIAMUserRead(ctx context.Context, d *schema.ResourceData, m interfac
 		"country":                user.Country,
 		"contact_type":           user.ContactType,
 		"preferred_language":     user.PreferredLanguage,
-		"last_login":             user.LastLoginDate,
-		"password_expired_after": user.PasswordExpiryDate,
+		"last_login":             date.FormatRFC3339Nano(user.LastLoginDate),
+		"password_expired_after": date.FormatRFC3339Nano(user.PasswordExpiryDate),
 		"tfa_configured":         user.TFAConfigured,
 		"email_update_pending":   user.EmailUpdatePending,
 		"session_timeout":        *user.SessionTimeOut,
 		"auth_grants_json":       stateAuthGrantsJS(string(authGrantsJSON)),
 		"lock":                   user.IsLocked,
+		"user_notifications":     userNotifications,
 	})
 	if err != nil {
 		logger.WithError(err).Error("could not save attributes to state")
@@ -349,6 +511,7 @@ func resourceIAMUserUpdate(ctx context.Context, d *schema.ResourceData, m interf
 		"time_zone",
 		"job_title",
 		"enable_tfa",
+		"enable_mfa",
 		"secondary_email",
 		"mobile_phone",
 		"address",
@@ -360,25 +523,32 @@ func resourceIAMUserUpdate(ctx context.Context, d *schema.ResourceData, m interf
 		"preferred_language",
 		"session_timeout",
 	)
+
+	authMethod, err := getAuthenticationMethod(d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	if updateBasicInfo {
 		basicUser := iam.UserBasicInfo{
-			FirstName:         d.Get("first_name").(string),
-			LastName:          d.Get("last_name").(string),
-			UserName:          d.Get("user_name").(string),
-			Email:             d.Get("email").(string),
-			Phone:             d.Get("phone").(string),
-			TimeZone:          d.Get("time_zone").(string),
-			JobTitle:          d.Get("job_title").(string),
-			TFAEnabled:        d.Get("enable_tfa").(bool),
-			SecondaryEmail:    d.Get("secondary_email").(string),
-			MobilePhone:       d.Get("mobile_phone").(string),
-			Address:           d.Get("address").(string),
-			City:              d.Get("city").(string),
-			State:             d.Get("state").(string),
-			ZipCode:           d.Get("zip_code").(string),
-			Country:           d.Get("country").(string),
-			ContactType:       d.Get("contact_type").(string),
-			PreferredLanguage: d.Get("preferred_language").(string),
+			FirstName:                d.Get("first_name").(string),
+			LastName:                 d.Get("last_name").(string),
+			UserName:                 d.Get("user_name").(string),
+			Email:                    d.Get("email").(string),
+			Phone:                    d.Get("phone").(string),
+			TimeZone:                 d.Get("time_zone").(string),
+			JobTitle:                 d.Get("job_title").(string),
+			TFAEnabled:               d.Get("enable_tfa").(bool),
+			SecondaryEmail:           d.Get("secondary_email").(string),
+			MobilePhone:              d.Get("mobile_phone").(string),
+			Address:                  d.Get("address").(string),
+			City:                     d.Get("city").(string),
+			State:                    d.Get("state").(string),
+			ZipCode:                  d.Get("zip_code").(string),
+			Country:                  d.Get("country").(string),
+			ContactType:              d.Get("contact_type").(string),
+			PreferredLanguage:        d.Get("preferred_language").(string),
+			AdditionalAuthentication: iam.Authentication(authMethod),
 		}
 
 		if st, ok := d.GetOk("session_timeout"); ok {
@@ -422,6 +592,41 @@ func resourceIAMUserUpdate(ctx context.Context, d *schema.ResourceData, m interf
 			return diag.Errorf("failed to update user AuthGrants: %s", err)
 		}
 
+		needRead = true
+	}
+
+	// user notifications
+	if d.HasChange("user_notifications") {
+		notificationsData, err := tf.GetListValue("user_notifications", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+
+		userNotifications, err := extractUserNotificationsData(notificationsData)
+		if err != nil {
+			return diag.Errorf("failed to extract user notifications: %s", err)
+		}
+
+		req := iam.UpdateUserNotificationsRequest{
+			IdentityID:    d.Id(),
+			Notifications: userNotifications,
+		}
+
+		if _, err := client.UpdateUserNotifications(ctx, req); err != nil {
+			d.Partial(true)
+			logger.WithError(err).Errorf("failed to update user notifications")
+			return diag.Errorf("failed to update user notifications: %s", err)
+		}
+		needRead = true
+	}
+
+	// password
+	if d.HasChange("password") {
+		err = manageUserPassword(ctx, d, client, d.Id())
+		if err != nil {
+			logger.WithError(err).Errorf("failed to set user password")
+			return diag.Errorf("failed to set user password: %s", err)
+		}
 		needRead = true
 	}
 
@@ -619,4 +824,38 @@ func validatePhone(i interface{}, k string) (warnings []string, errors []error) 
 	}
 
 	return warnings, errors
+}
+
+func customizePasswordDiff(_ context.Context, d *schema.ResourceDiff, _ interface{}) error {
+	if d.HasChange("password") {
+		oldVal, newVal := d.GetChange("password")
+		oldPassword := oldVal.(string)
+		newPassword := newVal.(string)
+		if oldPassword != "" && newPassword == "" {
+			return fmt.Errorf("deleting the password field or setting the password to an empty string is not allowed")
+		}
+	}
+	return nil
+}
+
+func customizeNotificationDiff(_ context.Context, d *schema.ResourceDiff, _ interface{}) error {
+	newValue := d.GetRawConfig()
+	if newValue.GetAttr("user_notifications").LengthInt() == 0 {
+		// Field is omitted, so apply the default configuration
+		defaultConfig := []interface{}{
+			map[string]interface{}{
+				"enable_email_notifications":                true,
+				"api_client_credential_expiry_notification": false,
+				"new_user_notification":                     true,
+				"password_expiry":                           true,
+				"proactive":                                 []interface{}{},
+				"upgrade":                                   []interface{}{},
+			},
+		}
+		if err := d.SetNew("user_notifications", defaultConfig); err != nil {
+			return fmt.Errorf("failed to set default notification configuration: %s", err)
+		}
+	}
+
+	return nil
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/gtm"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -147,7 +148,9 @@ func (d *resourcesDataSource) Read(ctx context.Context, request datasource.ReadR
 	}
 
 	client := Client(d.meta)
-	resources, err := client.ListResources(ctx, data.Domain.ValueString())
+	resources, err := client.ListResources(ctx, gtm.ListResourcesRequest{
+		DomainName: data.Domain.ValueString(),
+	})
 	if err != nil {
 		response.Diagnostics.AddError("fetching GTM resources failed:", err.Error())
 		return

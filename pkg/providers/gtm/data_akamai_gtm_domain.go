@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/gtm"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/gtm"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -1208,7 +1208,9 @@ func (d *domainDataSource) Read(ctx context.Context, request datasource.ReadRequ
 	}
 
 	client := Client(d.meta)
-	domain, err := client.GetDomain(ctx, data.Name.ValueString())
+	domain, err := client.GetDomain(ctx, gtm.GetDomainRequest{
+		DomainName: data.Name.ValueString(),
+	})
 	if err != nil {
 		response.Diagnostics.AddError("fetching domain failed", err.Error())
 		return
@@ -1222,7 +1224,7 @@ func (d *domainDataSource) Read(ctx context.Context, request datasource.ReadRequ
 	response.Diagnostics.Append(response.State.Set(ctx, &data)...)
 }
 
-func populateDomain(ctx context.Context, domain *gtm.Domain) (*domainDataSourceModel, diag.Diagnostics) {
+func populateDomain(ctx context.Context, domain *gtm.GetDomainResponse) (*domainDataSourceModel, diag.Diagnostics) {
 	emailNotificationList, diags := types.ListValueFrom(ctx, types.StringType, domain.EmailNotificationList)
 	if diags.HasError() {
 		return nil, diags
@@ -1290,7 +1292,7 @@ func populateDomain(ctx context.Context, domain *gtm.Domain) (*domainDataSourceM
 	return domainModel, nil
 }
 
-func getLinks(links []*gtm.Link) []link {
+func getLinks(links []gtm.Link) []link {
 	var result []link
 	if links != nil {
 		result = make([]link, len(links))
@@ -1304,7 +1306,7 @@ func getLinks(links []*gtm.Link) []link {
 	return result
 }
 
-func getASMaps(maps []*gtm.ASMap) []asMap {
+func getASMaps(maps []gtm.ASMap) []asMap {
 	var result []asMap
 	for _, am := range maps {
 		asMapInstance := asMap{
@@ -1321,7 +1323,7 @@ func getASMaps(maps []*gtm.ASMap) []asMap {
 		if am.Assignments != nil {
 			asMapInstance.Assignments = make([]asMapAssignment, len(am.Assignments))
 			for i, asg := range am.Assignments {
-				asMapInstance.Assignments[i] = populateASMapAssignment(asg)
+				asMapInstance.Assignments[i] = populateASMapAssignment(&asg)
 			}
 		}
 		result = append(result, asMapInstance)
@@ -1329,7 +1331,7 @@ func getASMaps(maps []*gtm.ASMap) []asMap {
 	return result
 }
 
-func getCIDRMaps(ctx context.Context, maps []*gtm.CIDRMap) ([]cidrMap, diag.Diagnostics) {
+func getCIDRMaps(ctx context.Context, maps []gtm.CIDRMap) ([]cidrMap, diag.Diagnostics) {
 	var result []cidrMap
 	for _, cm := range maps {
 		cidrMapInstance := cidrMap{
@@ -1347,7 +1349,7 @@ func getCIDRMaps(ctx context.Context, maps []*gtm.CIDRMap) ([]cidrMap, diag.Diag
 		if cm.Assignments != nil {
 			cidrMapInstance.Assignments = make([]cidrMapAssignment, len(cm.Assignments))
 			for i, asg := range cm.Assignments {
-				popCIDRMapAssignment, diags := populateCIDRMapAssignment(ctx, asg)
+				popCIDRMapAssignment, diags := populateCIDRMapAssignment(ctx, &asg)
 				if diags.HasError() {
 					return nil, diags
 				}
@@ -1359,7 +1361,7 @@ func getCIDRMaps(ctx context.Context, maps []*gtm.CIDRMap) ([]cidrMap, diag.Diag
 	return result, nil
 }
 
-func getGeographicMaps(ctx context.Context, maps []*gtm.GeoMap) ([]geographicMap, diag.Diagnostics) {
+func getGeographicMaps(ctx context.Context, maps []gtm.GeoMap) ([]geographicMap, diag.Diagnostics) {
 	var result []geographicMap
 	for _, gm := range maps {
 		geoMapInstance := geographicMap{
@@ -1377,7 +1379,7 @@ func getGeographicMaps(ctx context.Context, maps []*gtm.GeoMap) ([]geographicMap
 		if gm.Assignments != nil {
 			geoMapInstance.Assignments = make([]geographicMapAssignment, len(gm.Assignments))
 			for i, asg := range gm.Assignments {
-				popGeoMap, diags := populateGeographicMapAssignment(ctx, asg)
+				popGeoMap, diags := populateGeographicMapAssignment(ctx, &asg)
 				if diags.HasError() {
 					return nil, diags
 				}
@@ -1389,7 +1391,7 @@ func getGeographicMaps(ctx context.Context, maps []*gtm.GeoMap) ([]geographicMap
 	return result, nil
 }
 
-func getDatacenters(ctx context.Context, datacenters []*gtm.Datacenter) ([]datacenter, diag.Diagnostics) {
+func getDatacenters(ctx context.Context, datacenters []gtm.Datacenter) ([]datacenter, diag.Diagnostics) {
 	var result []datacenter
 	for _, dc := range datacenters {
 		dataCenterInstance := datacenter{
@@ -1426,7 +1428,7 @@ func getDatacenters(ctx context.Context, datacenters []*gtm.Datacenter) ([]datac
 	return result, nil
 }
 
-func getProperties(ctx context.Context, properties []*gtm.Property) ([]property, diag.Diagnostics) {
+func getProperties(ctx context.Context, properties []gtm.Property) ([]property, diag.Diagnostics) {
 	var result []property
 	for _, prop := range properties {
 		propertyInstance := property{
@@ -1516,8 +1518,8 @@ func getStatus(st *gtm.ResponseStatus) *status {
 		PassingValidation:     types.BoolValue(st.PassingValidation),
 	}
 	if st.Links != nil {
-		statusInstance.Links = make([]link, len(*st.Links))
-		for i, l := range *st.Links {
+		statusInstance.Links = make([]link, len(st.Links))
+		for i, l := range st.Links {
 			statusInstance.Links[i] = link{
 				Rel:  types.StringValue(l.Rel),
 				Href: types.StringValue(l.Href),
@@ -1527,7 +1529,7 @@ func getStatus(st *gtm.ResponseStatus) *status {
 	return &statusInstance
 }
 
-func getResources(resources []*gtm.Resource) []domainResource {
+func getResources(resources []gtm.Resource) []domainResource {
 	var result []domainResource
 	for _, res := range resources {
 		resource := domainResource{
@@ -1574,7 +1576,7 @@ func getResources(resources []*gtm.Resource) []domainResource {
 	return result
 }
 
-func populateLivenessTest(lt *gtm.LivenessTest) (livenessTest, diag.Diagnostics) {
+func populateLivenessTest(lt gtm.LivenessTest) (livenessTest, diag.Diagnostics) {
 	altCACerts, diags := types.ListValueFrom(context.TODO(), types.StringType, lt.AlternateCACertificates)
 	if diags.HasError() {
 		return livenessTest{}, diags
@@ -1616,7 +1618,7 @@ func populateLivenessTest(lt *gtm.LivenessTest) (livenessTest, diag.Diagnostics)
 	return ltModel, diags
 }
 
-func populateHTTPHeaders(headers []*gtm.HTTPHeader) []httpHeader {
+func populateHTTPHeaders(headers []gtm.HTTPHeader) []httpHeader {
 	result := make([]httpHeader, len(headers))
 	for i, h := range headers {
 		result[i] = httpHeader{
@@ -1627,7 +1629,7 @@ func populateHTTPHeaders(headers []*gtm.HTTPHeader) []httpHeader {
 	return result
 }
 
-func populateStaticRRSet(ctx context.Context, s *gtm.StaticRRSet) (staticRRSet, diag.Diagnostics) {
+func populateStaticRRSet(ctx context.Context, s gtm.StaticRRSet) (staticRRSet, diag.Diagnostics) {
 	Rdata, diags := types.ListValueFrom(ctx, types.StringType, s.Rdata)
 	if diags.HasError() {
 		return staticRRSet{}, diags
@@ -1639,7 +1641,7 @@ func populateStaticRRSet(ctx context.Context, s *gtm.StaticRRSet) (staticRRSet, 
 	}, diags
 }
 
-func populateLinks(links []*gtm.Link) []link {
+func populateLinks(links []gtm.Link) []link {
 	result := make([]link, len(links))
 	for i, l := range links {
 		result[i] = link{
@@ -1650,7 +1652,7 @@ func populateLinks(links []*gtm.Link) []link {
 	return result
 }
 
-func populateTrafficTarget(ctx context.Context, t *gtm.TrafficTarget) (trafficTarget, diag.Diagnostics) {
+func populateTrafficTarget(ctx context.Context, t gtm.TrafficTarget) (trafficTarget, diag.Diagnostics) {
 	servers, diags := types.ListValueFrom(ctx, types.StringType, t.Servers)
 	if diags.HasError() {
 		return trafficTarget{}, diags

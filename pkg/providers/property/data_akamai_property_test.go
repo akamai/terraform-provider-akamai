@@ -2,15 +2,13 @@ package property
 
 import (
 	"fmt"
-	"log"
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -45,6 +43,7 @@ func TestDataProperty(t *testing.T) {
 				}).Return(&papi.GetPropertyResponse{
 					Properties: papi.PropertiesItems{Items: []*papi.Property{
 						{
+							AssetID:           "aid_555",
 							ContractID:        "ctr_1",
 							GroupID:           "grp_1",
 							LatestVersion:     1,
@@ -90,6 +89,7 @@ func TestDataProperty(t *testing.T) {
 				}, nil)
 			},
 			expectedAttributes: map[string]string{
+				"asset_id":           "aid_555",
 				"name":               "property_name",
 				"rules":              compactJSON(testutils.LoadFixtureBytes(t, "testdata/TestDataProperty/no_version_rules.json")),
 				"contract_id":        "ctr_1",
@@ -127,6 +127,7 @@ func TestDataProperty(t *testing.T) {
 				}).Return(&papi.GetPropertyResponse{
 					Properties: papi.PropertiesItems{Items: []*papi.Property{
 						{
+							AssetID:           "aid_555",
 							ContractID:        "ctr_1",
 							GroupID:           "grp_1",
 							LatestVersion:     1,
@@ -172,6 +173,7 @@ func TestDataProperty(t *testing.T) {
 				}, nil)
 			},
 			expectedAttributes: map[string]string{
+				"asset_id":           "aid_555",
 				"name":               "property_name",
 				"rules":              compactJSON(testutils.LoadFixtureBytes(t, "testdata/TestDataProperty/with_version_rules.json")),
 				"contract_id":        "ctr_1",
@@ -209,6 +211,7 @@ func TestDataProperty(t *testing.T) {
 				}).Return(&papi.GetPropertyResponse{
 					Properties: papi.PropertiesItems{Items: []*papi.Property{
 						{
+							AssetID:       "aid_555",
 							ContractID:    "ctr_1",
 							GroupID:       "grp_1",
 							LatestVersion: 1,
@@ -252,6 +255,7 @@ func TestDataProperty(t *testing.T) {
 				}, nil)
 			},
 			expectedAttributes: map[string]string{
+				"asset_id":           "aid_555",
 				"name":               "property_name",
 				"rules":              compactJSON(testutils.LoadFixtureBytes(t, "testdata/TestDataProperty/no_version_rules.json")),
 				"contract_id":        "ctr_1",
@@ -447,23 +451,4 @@ func TestDataProperty(t *testing.T) {
 			client.AssertExpectations(t)
 		})
 	}
-}
-
-func testAccDataSourcePropertyBasic() string {
-	return `
-	provider "akamai" {
-		papi_section = "papi"
-	  }
-
-data "akamai_property" "test" {
-	name = "terraform-test-datasource"
-	version = 1
-}
-`
-}
-
-func testAccCheckDataSourcePropertyDestroy(_ *terraform.State) error {
-	log.Printf("[DEBUG] [Group] Searching for Property Delete skipped ")
-
-	return nil
 }

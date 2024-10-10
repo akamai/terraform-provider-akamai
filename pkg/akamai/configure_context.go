@@ -10,12 +10,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/edgegrid"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/session"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/edgegrid"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/cache"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/logger"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/retryablehttp"
+	"github.com/apex/log"
 	"github.com/google/uuid"
 	"github.com/spf13/cast"
 )
@@ -62,6 +63,90 @@ func sessionWithoutRetry(opts []session.Option) (session.Session, error) {
 	return session.New(opts...)
 }
 
+func overrideRetryPolicy(basePolicy retryablehttp.CheckRetry) retryablehttp.CheckRetry {
+	return func(ctx context.Context, resp *http.Response, err error) (bool, error) {
+
+		// do not retry on context.Canceled or context.DeadlineExceeded
+		if ctx.Err() != nil {
+			return false, ctx.Err()
+		}
+
+		// Retry all PAPI requests resulting status code 429
+		// The backoff time is calculated in getXRateLimitBackoff
+		is429 := resp != nil && resp.StatusCode == http.StatusTooManyRequests
+		if is429 && strings.HasPrefix(resp.Request.URL.Path, "/papi/") {
+			return true, nil
+		}
+
+		var urlErr *url.Error
+		if (resp != nil && resp.Request.Method == http.MethodGet) ||
+			(resp == nil && errors.As(err, &urlErr) && strings.ToUpper(urlErr.Op) == http.MethodGet) {
+
+			if resp != nil && resp.StatusCode == http.StatusConflict {
+				return true, nil
+			}
+			return basePolicy(ctx, resp, err)
+		}
+		return false, nil
+	}
+}
+
+// Note that Date's resolution is seconds (e.g. Mon, 01 Jul 2024 14:32:14 GMT),
+// while X-RateLimit-Next's resolution is milliseconds (2024-07-01T14:32:28.645Z).
+// This may cause the wait time to be inflated by at most one second, like for the
+// actual server response time around 2024-07-01T14:32:14.999Z. This is acceptable behavior
+// as retry does not occur earlier than expected.
+func getXRateLimitBackoff(resp *http.Response, logger log.Interface) (time.Duration, bool) {
+	nextHeader := resp.Header.Get("X-RateLimit-Next")
+	if nextHeader == "" {
+		return 0, false
+	}
+	next, err := time.Parse(time.RFC3339Nano, nextHeader)
+	if err != nil {
+		if logger != nil {
+			logger.WithError(err).Error("Could not parse X-RateLimit-Next header")
+		}
+		return 0, false
+	}
+
+	dateHeader := resp.Header.Get("Date")
+	if dateHeader == "" {
+		if logger != nil {
+			logger.Warnf("No Date header for X-RateLimit-Next: %s", nextHeader)
+		}
+		return 0, false
+	}
+	date, err := time.Parse(time.RFC1123, dateHeader)
+	if err != nil {
+		if logger != nil {
+			logger.WithError(err).Error("Could not parse Date header")
+		}
+		return 0, false
+	}
+
+	// Next in the past does not make sense
+	if next.Before(date) {
+		if logger != nil {
+			logger.Warnf("X-RateLimit-Next: %s before Date: %s", nextHeader, dateHeader)
+		}
+		return 0, false
+	}
+	return next.Sub(date), true
+}
+
+func overrideBackoff(baseBackoff retryablehttp.Backoff, logger log.Interface) retryablehttp.Backoff {
+	return func(min, max time.Duration, attemptNum int, resp *http.Response) time.Duration {
+		if resp != nil {
+			if resp.StatusCode == http.StatusTooManyRequests {
+				if wait, ok := getXRateLimitBackoff(resp, logger); ok {
+					return wait
+				}
+			}
+		}
+		return baseBackoff(min, max, attemptNum, resp)
+	}
+}
+
 func sessionWithRetry(cfg contextConfig, opts []session.Option) (session.Session, error) {
 	if cfg.retryMax == 0 {
 		cfg.retryMax = 10
@@ -97,20 +182,9 @@ func sessionWithRetry(cfg contextConfig, opts []session.Option) (session.Session
 		return sess.Sign(req)
 	}
 
-	retryClient.CheckRetry = func(ctx context.Context, resp *http.Response, err error) (bool, error) {
-		var urlErr *url.Error
-		if (resp != nil && resp.Request.Method == http.MethodGet) ||
-			(resp == nil && errors.As(err, &urlErr) && strings.ToUpper(urlErr.Op) == http.MethodGet) {
-			if ctx.Err() != nil {
-				return false, ctx.Err()
-			}
-			if resp != nil && resp.StatusCode == http.StatusConflict {
-				return true, nil
-			}
-			return retryablehttp.DefaultRetryPolicy(ctx, resp, err)
-		}
-		return false, nil
-	}
+	retryClient.CheckRetry = overrideRetryPolicy(retryablehttp.DefaultRetryPolicy)
+
+	retryClient.Backoff = overrideBackoff(retryablehttp.DefaultBackoff, sess.Log(cfg.ctx))
 
 	return sess, nil
 }

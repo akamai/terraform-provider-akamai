@@ -6,7 +6,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/session"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/dns"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -49,7 +50,9 @@ func dataSourceAuthoritiesSetRead(ctx context.Context, d *schema.ResourceData, m
 
 	logger.WithField("contractid", contractID).Debug("Start Searching for authority records")
 
-	ns, err := inst.Client(meta).GetNameServerRecordList(ctx, contractID)
+	ns, err := inst.Client(meta).GetNameServerRecordList(ctx, dns.GetNameServerRecordListRequest{
+		ContractIDs: contractID,
+	})
 	if err != nil {
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,

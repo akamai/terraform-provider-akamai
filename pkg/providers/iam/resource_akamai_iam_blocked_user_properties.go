@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/iam"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v8/pkg/session"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/iam"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -16,7 +16,7 @@ import (
 
 func resourceIAMBlockedUserProperties() *schema.Resource {
 	return &schema.Resource{
-		Description:   "Manage a user in your account",
+		Description:   "Manage a user in your account.",
 		CreateContext: resourceIAMBlockedUserPropertiesCreate,
 		ReadContext:   resourceIAMBlockedUserPropertiesRead,
 		UpdateContext: resourceIAMBlockedUserPropertiesUpdate,
@@ -28,20 +28,20 @@ func resourceIAMBlockedUserProperties() *schema.Resource {
 			"identity_id": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "A unique identifier for a user's profile, which corresponds to a user's actual profile or client ID",
+				Description: "A unique identifier for a user's profile, which corresponds to a user's actual profile or client ID.",
 			},
 			"group_id": {
 				Type:        schema.TypeInt,
 				ForceNew:    true,
 				Required:    true,
-				Description: "A unique identifier for a group",
+				Description: "A unique identifier for a group.",
 			},
 			"blocked_properties": {
 				Type:        schema.TypeList,
 				Required:    true,
 				MinItems:    1,
 				Elem:        &schema.Schema{Type: schema.TypeInt},
-				Description: "List of properties to block for a user",
+				Description: "List of properties to block for a user.",
 			},
 		},
 	}
