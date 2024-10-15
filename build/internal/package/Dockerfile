@@ -12,9 +12,9 @@ ARG SSH_KNOWN_HOSTS
 WORKDIR $GOPATH/src/github.com/akamai
 
 RUN apk add --update git bash sudo openssh gcc go musl-dev openssl-dev ca-certificates unzip curl make && \
-    go install github.com/axw/gocov/gocov@latest && \
-    go install github.com/AlekSi/gocov-xml@latest && \
-    go install github.com/jstemmer/go-junit-report@latest && \
+    go install github.com/axw/gocov/gocov@v1.1.0 && \
+    go install github.com/AlekSi/gocov-xml@v1.1.0 && \
+    go install github.com/jstemmer/go-junit-report@v1.0.0 && \
     mkdir -p /root/.ssh
 
 ADD build/internal/package/AkamaiCorpRoot-G1.pem /usr/local/share/ca-certificates/AkamaiCorpRoot-G1.pem
