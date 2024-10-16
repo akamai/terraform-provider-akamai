@@ -8,7 +8,7 @@ resource "akamai_cps_third_party_enrollment" "third_party" {
   secure_network = "enhanced-tls"
   sni_only       = true
   auto_approve_warnings = [
-    "THIRD_PARTY_CERTIFICATE_DATA_BLANK_OR_MISSING",
+    "CSR_EXPIRED",
     "CERTIFICATE_EXPIRATION_DATE_BEYOND_MAX_DAYS",
     "TRUST_CHAIN_EMPTY_AND_CERTIFICATE_SIGNED_BY_NON_STANDARD_ROOT"
   ]

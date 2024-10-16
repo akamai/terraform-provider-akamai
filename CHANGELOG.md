@@ -33,6 +33,31 @@
 
 
 
+* CPS
+  * Refreshed list of warnings returned by `akamai_cps_warnings` datasource
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
