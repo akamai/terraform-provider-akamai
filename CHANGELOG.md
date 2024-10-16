@@ -24,8 +24,8 @@
 
 #### FEATURES/ENHANCEMENTS:
 
-
-
+* CLoudAccess
+  * Added functionality to import access keys in the `akamai_cloudaccess_key` resource, resource with specified group and contract IDs.
 
 
 

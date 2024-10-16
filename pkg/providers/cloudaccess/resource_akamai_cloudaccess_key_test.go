@@ -2043,6 +2043,149 @@ func TestAccessKeyResource_ImportState(t *testing.T) {
 			},
 			mockData: resourceMock,
 		},
+		"error - cannot find access key - Incorrect groupID": {
+			init: func(t *testing.T, m *cloudaccess.Mock, resourceData commonDataForResource) {
+				// step 1 - create
+				mockCreationAccessKeyWith1Version(m, resourceData)
+				mockReadAccessKeyWith1Version(m, resourceData)
+
+				mockDeletionAccessKeyWith1Version(m, resourceData)
+
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create.tf"),
+
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
+					),
+				},
+				{
+					ImportState:             true,
+					ImportStateVerify:       true,
+					ImportStateId:           "00000,G434,23",
+					ImportStateVerifyIgnore: []string{"credentials_a", "credentials_b", "primary_guid"},
+					ResourceName:            "akamai_cloudaccess_key.test",
+					ExpectError:             regexp.MustCompile("Incorrect groupID"),
+				},
+			},
+			mockData: resourceMock,
+		},
+		"error - cannot find access key - Incomplete Access Key Identifier": {
+			init: func(t *testing.T, m *cloudaccess.Mock, resourceData commonDataForResource) {
+				// step 1 - create
+				mockCreationAccessKeyWith1Version(m, resourceData)
+				mockReadAccessKeyWith1Version(m, resourceData)
+
+				mockDeletionAccessKeyWith1Version(m, resourceData)
+
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create.tf"),
+
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
+					),
+				},
+				{
+					ImportState:             true,
+					ImportStateVerify:       true,
+					ImportStateId:           "00000,434",
+					ImportStateVerifyIgnore: []string{"credentials_a", "credentials_b", "primary_guid"},
+					ResourceName:            "akamai_cloudaccess_key.test",
+					ExpectError:             regexp.MustCompile("Incomplete Access Key Identifier"),
+				},
+			},
+			mockData: resourceMock,
+		},
+		"error - cannot find access key given groupID and missing contractID": {
+			init: func(t *testing.T, m *cloudaccess.Mock, resourceData commonDataForResource) {
+				// step 1 - create
+				mockCreationAccessKeyWith1Version(m, resourceData)
+				mockReadAccessKeyWith1Version(m, resourceData)
+
+				mockDeletionAccessKeyWith1Version(m, resourceData)
+
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create.tf"),
+
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
+					),
+				},
+				{
+					ImportState:             true,
+					ImportStateVerify:       true,
+					ImportStateId:           "00000,434,",
+					ImportStateVerifyIgnore: []string{"credentials_a", "credentials_b", "primary_guid"},
+					ResourceName:            "akamai_cloudaccess_key.test",
+					ExpectError:             regexp.MustCompile("Invalid contractID"),
+				},
+			},
+			mockData: resourceMock,
+		},
+		"error - cannot find access key given contractID and missing groupID": {
+			init: func(t *testing.T, m *cloudaccess.Mock, resourceData commonDataForResource) {
+				// step 1 - create
+				mockCreationAccessKeyWith1Version(m, resourceData)
+				mockReadAccessKeyWith1Version(m, resourceData)
+
+				mockDeletionAccessKeyWith1Version(m, resourceData)
+
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create.tf"),
+
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
+					),
+				},
+				{
+					ImportState:             true,
+					ImportStateVerify:       true,
+					ImportStateId:           "00000,,434",
+					ImportStateVerifyIgnore: []string{"credentials_a", "credentials_b", "primary_guid"},
+					ResourceName:            "akamai_cloudaccess_key.test",
+					ExpectError:             regexp.MustCompile("Couldn't parse provided groupID, \"\" is invalid"),
+				},
+			},
+			mockData: resourceMock,
+		},
+		"error - reading access key failed - Invalid groupID and contractID combination": {
+			init: func(t *testing.T, m *cloudaccess.Mock, resourceData commonDataForResource) {
+				// step 1 - create
+
+				mockCreationAccessKeyWith1Version(m, resourceData)
+				mockReadAccessKeyWith1Version(m, resourceData)
+
+				// step 2 import
+				mockGetAccessKey(m, resourceData.accessKeyData[0]).Once()
+				mockDeletionAccessKeyWith1Version(m, resourceData)
+
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create.tf"),
+
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
+					),
+				},
+				{
+					ImportState:             true,
+					ImportStateVerify:       true,
+					ImportStateId:           "12345,556,78",
+					ImportStateVerifyIgnore: []string{"credentials_a", "credentials_b", "primary_guid"},
+					ResourceName:            "akamai_cloudaccess_key.test",
+					ExpectError:             regexp.MustCompile("Cannot Find Access key for a given groupID and contractID"),
+				},
+			},
+			mockData: resourceMock,
+		},
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {

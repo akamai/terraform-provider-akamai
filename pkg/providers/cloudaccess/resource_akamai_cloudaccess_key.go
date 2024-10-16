@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"slices"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/cloudaccess"
@@ -814,19 +815,10 @@ func (m *KeyResourceModel) populateModelFromAccessKey(response *cloudaccess.GetA
 	m.AccessKeyUID = types.Int64Value(response.AccessKeyUID)
 }
 
-func (m *KeyResourceModel) importModelFromAccessKey(response *cloudaccess.GetAccessKeyResponse) {
+func (m *KeyResourceModel) importModelFromAccessKey(response *cloudaccess.GetAccessKeyResponse, inputGroupID int64, inputContractID string) error {
 	m.AccessKeyName = types.StringValue(response.AccessKeyName)
 	m.AccessKeyUID = types.Int64Value(response.AccessKeyUID)
 	m.AuthenticationMethod = types.StringValue(response.AuthenticationMethod)
-
-	groups := response.Groups
-	slices.SortFunc(groups, func(a, b cloudaccess.Group) int {
-		return cmp.Compare(a.GroupID, b.GroupID)
-	})
-	contractIDs := groups[len(groups)-1].ContractIDs
-
-	m.GroupID = types.Int64Value(groups[len(groups)-1].GroupID)
-	m.ContractID = types.StringValue(contractIDs[0])
 
 	m.NetworkConfig = NetworkConfig{
 		SecurityNetwork: types.StringValue(string(response.NetworkConfiguration.SecurityNetwork)),
@@ -835,15 +827,102 @@ func (m *KeyResourceModel) importModelFromAccessKey(response *cloudaccess.GetAcc
 		m.NetworkConfig.AdditionalCDN = types.StringValue(string(*response.NetworkConfiguration.AdditionalCDN))
 	}
 	m.PrimaryGUID = types.StringValue("")
+
+	if inputGroupID != 0 && inputContractID != "" {
+		if err := m.findAndSetGroupAndContract(response.Groups, inputGroupID, inputContractID); err != nil {
+			return err
+		}
+	} else {
+		m.setDefaultGroupAndContract(response.Groups)
+	}
+
+	return nil
+}
+
+func (m *KeyResourceModel) findAndSetGroupAndContract(groups []cloudaccess.Group, inputGroupID int64, inputContractID string) error {
+	for _, group := range groups {
+		if group.GroupID == inputGroupID {
+			for _, contractID := range group.ContractIDs {
+				if contractID == inputContractID {
+					m.GroupID = types.Int64Value(group.GroupID)
+					m.ContractID = types.StringValue(contractID)
+					return nil
+				}
+			}
+			return fmt.Errorf("contractID %s not found in groupID %d", inputContractID, inputGroupID)
+		}
+	}
+	return fmt.Errorf("groupID %d not found", inputGroupID)
+}
+
+func (m *KeyResourceModel) setDefaultGroupAndContract(groups []cloudaccess.Group) {
+	if len(groups) == 0 {
+		return
+	}
+	slices.SortFunc(groups, func(a, b cloudaccess.Group) int {
+		return cmp.Compare(a.GroupID, b.GroupID)
+	})
+	lastGroup := groups[len(groups)-1]
+	m.GroupID = types.Int64Value(lastGroup.GroupID)
+	if len(lastGroup.ContractIDs) > 0 {
+		m.ContractID = types.StringValue(lastGroup.ContractIDs[0])
+	}
 }
 
 // ImportState implements resource.ResourceWithImportState.
 func (r *KeyResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	tflog.Debug(ctx, "Importing Access key Resource")
 
-	accessKeyID, err := strconv.ParseInt(req.ID, 10, 64)
+	// User-supplied import ID is a comma-separated list of accessKeyUID[,groupID[,contractID]]
+	// contractID and groupID are optional as long as the accessKeyUID is sufficient to fetch the access key.
+	var accessKeyUID, contractID string
+	var groupID int64
+	var err error
+	parts := strings.Split(req.ID, ",")
+
+	switch len(parts) {
+	case 3:
+		// All 3 parameters are present and valid
+		accessKeyUID = parts[0]
+
+		// Parse groupID safely
+		groupID, err = strconv.ParseInt(parts[1], 10, 64)
+		if err != nil {
+			resp.Diagnostics.AddError("Incorrect groupID", fmt.Sprintf("Couldn't parse provided groupID, \"%s\" is invalid", parts[1]))
+			return
+		}
+		if groupID <= 0 {
+			// Check if group ID is less than or equal to 0
+			resp.Diagnostics.AddError("Invalid group ID", "group ID must be greater than 0")
+		}
+		// Validate contractID
+		contractID = parts[2]
+		if contractID == "" {
+			resp.Diagnostics.AddError("Invalid contractID", "contractID cannot be empty")
+			return
+		}
+	case 2:
+		// contractID is absent but groupID is given
+		resp.Diagnostics.AddError(
+			"Incomplete Access Key Identifier",
+			fmt.Sprintf("The identifier '%s' for Access Key '%s' is incomplete. Please provide both a valid Group ID and its corresponding Contract ID.", req.ID, accessKeyUID),
+		)
+		return
+	case 1:
+		// 1 parameter is valid
+		accessKeyUID = parts[0]
+	default:
+		// Handle invalid cases with an error
+		resp.Diagnostics.AddError(
+			"Invalid Access Key Identifier",
+			fmt.Sprintf("Unexpected number of parts in Access Key Identifier: %q", req.ID),
+		)
+		return
+	}
+
+	accessKeyID, err := strconv.ParseInt(accessKeyUID, 10, 64)
 	if err != nil {
-		resp.Diagnostics.AddError("Incorrect ID", fmt.Sprintf("Couldn't parse provided ID, \"%s\" is invalid", req.ID))
+		resp.Diagnostics.AddError("Incorrect ID", fmt.Sprintf("Couldn't parse provided ID, \"%s\" is invalid", accessKeyUID))
 		return
 	}
 
@@ -858,7 +937,11 @@ func (r *KeyResource) ImportState(ctx context.Context, req resource.ImportStateR
 		return
 	}
 
-	data.importModelFromAccessKey(result)
+	err = data.importModelFromAccessKey(result, groupID, contractID)
+	if err != nil {
+		resp.Diagnostics.AddError("Cannot Find Access key for a given groupID and contractID", err.Error())
+		return
+	}
 
 	data.Timeouts = timeouts.Value{
 		Object: types.ObjectNull(map[string]attr.Type{
