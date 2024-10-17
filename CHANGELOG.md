@@ -79,6 +79,10 @@
 
 
 
+
+* PAPI
+  * Fixed import of `akamai_property_include` to properly populate the include's `product_id` field.
+
 ## 6.5.0 (Oct 10, 2024)
 
 #### FEATURES/ENHANCEMENTS:

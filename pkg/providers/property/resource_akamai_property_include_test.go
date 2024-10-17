@@ -220,7 +220,17 @@ func TestResourcePropertyInclude(t *testing.T) {
 
 		getIncludeRuleTreeCall := expectGetIncludeRuleTree(m, testData)
 
-		return testutils.MockCalls{getIncludeCall, getIncludeRuleTreeCall}
+		getIncludeVersionCall := m.On("GetIncludeVersion", mock.Anything, papi.GetIncludeVersionRequest{
+			IncludeID:  includeID,
+			Version:    testData.latestVersion,
+			ContractID: testData.contractID,
+			GroupID:    testData.groupID,
+		}).Return(&papi.GetIncludeVersionResponse{
+			IncludeVersion: papi.IncludeVersion{
+				ProductID: testData.productID,
+			}}, nil)
+
+		return testutils.MockCalls{getIncludeCall, getIncludeRuleTreeCall, getIncludeVersionCall}
 	}
 
 	expectUpdate := func(m *papi.Mock, testData *testData) testutils.MockCalls {
@@ -947,11 +957,10 @@ func TestResourcePropertyInclude(t *testing.T) {
 					Config: testutils.LoadFixtureString(t, "%s/property_include_import.tf", workdir),
 				},
 				{
-					ImportState:             true,
-					ImportStateId:           "ctr_123:grp_123:inc_123",
-					ResourceName:            "akamai_property_include.test",
-					ImportStateVerify:       true,
-					ImportStateVerifyIgnore: []string{"product_id"},
+					ImportState:       true,
+					ImportStateId:     "ctr_123:grp_123:inc_123",
+					ResourceName:      "akamai_property_include.test",
+					ImportStateVerify: true,
 				},
 			},
 		},
