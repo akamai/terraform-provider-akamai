@@ -2,6 +2,13 @@
 
 ## X.X.X (X X, X)
 
+#### DEPRECATIONS
+
+* Appsec
+  * Deprecated `akamai_appsec_wap_selected_hostnames` data source and resource. Use the `akamai_appsec_aap_selected_hostnames` instead.
+  
+
+
 #### BREAKING CHANGES:
 
 
@@ -23,8 +30,8 @@
 
 
 #### FEATURES/ENHANCEMENTS:
-* Fixed problem with missing `security_policy_id` during update, if resource was imported previously.
-
+* Appsec
+  * Fixed problem with missing `security_policy_id` during update, if resource was imported previously.
 
 
 * Cloud Access

@@ -17,12 +17,12 @@ import (
 // appsec v1
 //
 // https://techdocs.akamai.com/application-security/reference/api
-func resourceWAPSelectedHostnames() *schema.Resource {
+func resourceAAPSelectedHostnames() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceWAPSelectedHostnamesCreate,
-		ReadContext:   resourceWAPSelectedHostnamesRead,
-		UpdateContext: resourceWAPSelectedHostnamesUpdate,
-		DeleteContext: resourceWAPSelectedHostnamesDelete,
+		CreateContext: resourceAAPSelectedHostnamesCreate,
+		ReadContext:   resourceAAPSelectedHostnamesRead,
+		UpdateContext: resourceAAPSelectedHostnamesUpdate,
+		DeleteContext: resourceAAPSelectedHostnamesDelete,
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
 		},
@@ -54,15 +54,14 @@ func resourceWAPSelectedHostnames() *schema.Resource {
 				Description: "List of hostnames to be evaluated ",
 			},
 		},
-		DeprecationMessage: "This resource is deprecated with a scheduled end-of-life in v7.0.0 of our provider. Use the akamai_appsec_aap_selected_hostnames resource instead.",
 	}
 }
 
-func resourceWAPSelectedHostnamesCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceAAPSelectedHostnamesCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceWAPSelectedHostnamesCreate")
-	logger.Debugf("in resourceWAPSelectedHostnamesCreate")
+	logger := meta.Log("APPSEC", "resourceAAPSelectedHostnamesCreate")
+	logger.Debugf("in resourceAAPSelectedHostnamesCreate")
 
 	configID, err := tf.GetIntValue("config_id", d)
 	if err != nil {
@@ -127,14 +126,14 @@ func resourceWAPSelectedHostnamesCreate(ctx context.Context, d *schema.ResourceD
 
 	d.SetId(fmt.Sprintf("%d:%s", configID, securityPolicyID))
 
-	return resourceWAPSelectedHostnamesRead(ctx, d, m)
+	return resourceAAPSelectedHostnamesRead(ctx, d, m)
 }
 
-func resourceWAPSelectedHostnamesRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceAAPSelectedHostnamesRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceWAPSelectedHostnamesRead")
-	logger.Debugf("in resourceWAPSelectedHostnamesRead")
+	logger := meta.Log("APPSEC", "resourceAAPSelectedHostnamesRead")
+	logger.Debugf("in resourceAAPSelectedHostnamesRead")
 
 	iDParts, err := splitID(d.Id(), 2, "configID:policyID")
 	if err != nil {
@@ -178,11 +177,11 @@ func resourceWAPSelectedHostnamesRead(ctx context.Context, d *schema.ResourceDat
 	return nil
 }
 
-func resourceWAPSelectedHostnamesUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceAAPSelectedHostnamesUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "resourceWAPSelectedHostnamesUpdate")
-	logger.Debugf("in resourceWAPSelectedHostnamesUpdate")
+	logger := meta.Log("APPSEC", "resourceAAPSelectedHostnamesUpdate")
+	logger.Debugf("in resourceAAPSelectedHostnamesUpdate")
 
 	configID, err := tf.GetIntValue("config_id", d)
 	if err != nil {
@@ -245,9 +244,39 @@ func resourceWAPSelectedHostnamesUpdate(ctx context.Context, d *schema.ResourceD
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
-	return resourceWAPSelectedHostnamesRead(ctx, d, m)
+	return resourceAAPSelectedHostnamesRead(ctx, d, m)
 }
 
-func resourceWAPSelectedHostnamesDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceAAPSelectedHostnamesDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	return schema.NoopContext(ctx, d, m)
+}
+
+func verifyHostNotInBothLists(_ context.Context, d *schema.ResourceDiff, _ interface{}) error {
+	protectedHostsSet, err := tf.GetSetValue("protected_hosts", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
+		return err
+	}
+	evaluatedHostsSet, err := tf.GetSetValue("evaluated_hosts", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
+		return err
+	}
+
+	if protectedHostsSet.Len() == 0 && evaluatedHostsSet.Len() == 0 {
+		return fmt.Errorf("protected_hostnames and evaluated_hostnames cannot both be empty")
+	}
+
+	if protectedHostsSet.Len() > 0 && evaluatedHostsSet.Len() > 0 {
+		for _, h := range protectedHostsSet.List() {
+			if evaluatedHostsSet.Contains(h) {
+				return fmt.Errorf("host %s cannot be in both protected_hosts and evaluated_hosts lists", h)
+			}
+		}
+		for _, h := range evaluatedHostsSet.List() {
+			if protectedHostsSet.Contains(h) {
+				return fmt.Errorf("host %s cannot be in both protected_hosts and evaluated_hosts lists", h)
+			}
+		}
+	}
+
+	return nil
 }
