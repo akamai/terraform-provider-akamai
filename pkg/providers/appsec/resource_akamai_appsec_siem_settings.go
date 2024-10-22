@@ -375,9 +375,12 @@ func getAllExceptions(d *schema.ResourceData) ([]appsec.Exception, error) {
 	exceptionsMap := getConfigParamProtectionMapping()
 	exceptionsConfig, err := tf.GetListValue("exceptions", d)
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
-		return nil, fmt.Errorf(err.Error())
+		return nil, err
 	}
-
+	err = validateExceptions(exceptionsConfig)
+	if err != nil {
+		return nil, err
+	}
 	for _, exception := range exceptionsConfig {
 		exceptionMap := exception.(map[string]interface{})
 		for key := range exceptionMap {
@@ -397,6 +400,16 @@ func getAllExceptions(d *schema.ResourceData) ([]appsec.Exception, error) {
 		}
 	}
 	return exceptions, nil
+}
+
+func validateExceptions(exceptionsConfig []interface{}) error {
+	if len(exceptionsConfig) > 0 {
+		_, ok := exceptionsConfig[0].(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("Invalid exceptions configuration")
+		}
+	}
+	return nil
 }
 
 func setActionsFromExceptions(d *schema.ResourceData, exceptions []appsec.Exception) error {

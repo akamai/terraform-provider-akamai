@@ -246,4 +246,33 @@ func TestAkamaiSiemSettings_res_basic(t *testing.T) {
 
 		client.AssertExpectations(t)
 	})
+
+	t.Run("match by SiemSettings ID when exceptions block is empty", func(t *testing.T) {
+		client := &appsec.Mock{}
+
+		config := appsec.GetConfigurationResponse{}
+		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/LatestConfiguration.json"), &config)
+		require.NoError(t, err)
+
+		client.On("GetConfiguration",
+			mock.Anything,
+			appsec.GetConfigurationRequest{ConfigID: 43253},
+		).Return(&config, nil)
+
+		useClient(client, func() {
+			resource.Test(t, resource.TestCase{
+				IsUnitTest:               true,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config:      testutils.LoadFixtureString(t, "testdata/TestResSiemSettings/match_by_id_empty_exceptions_block.tf"),
+						ExpectError: regexp.MustCompile(`Error: Invalid exceptions configuration`),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
 }
