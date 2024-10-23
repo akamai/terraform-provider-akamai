@@ -101,9 +101,9 @@ var (
 	// ErrPropertyInclude is returned when operation on property include fails
 	ErrPropertyInclude = errors.New("property include")
 
-	// DiagWarnActivationTimeout returned on activation poll timeout
-	DiagWarnActivationTimeout = diag.Diagnostic{
-		Severity: diag.Warning,
+	// DiagErrActivationTimeout returned on activation poll timeout
+	DiagErrActivationTimeout = diag.Diagnostic{
+		Severity: diag.Error,
 		Summary:  "Timeout waiting for activation status",
 		Detail: `
 The activation creation request has been started successfully, however the operation timeout was 
@@ -115,9 +115,9 @@ See: https://www.terraform.io/docs/configuration/resources.html#operation-timeou
 `,
 	}
 
-	// DiagWarnActivationCanceled is returned on activation poll cancel
-	DiagWarnActivationCanceled = diag.Diagnostic{
-		Severity: diag.Warning,
+	// DiagErrActivationCanceled is returned on activation poll cancel
+	DiagErrActivationCanceled = diag.Diagnostic{
+		Severity: diag.Error,
 		Summary:  "Operation canceled while waiting for activation status",
 		Detail: `
 The activation creation request has been started successfully, however the a cancellation was received

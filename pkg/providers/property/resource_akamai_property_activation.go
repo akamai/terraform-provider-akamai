@@ -946,9 +946,9 @@ func pollActivation(ctx context.Context, client papi.PAPI, activation *papi.Acti
 
 		case <-ctx.Done():
 			if errors.Is(ctx.Err(), context.DeadlineExceeded) {
-				return nil, diag.Diagnostics{DiagWarnActivationTimeout}
+				return nil, diag.Diagnostics{DiagErrActivationTimeout}
 			} else if errors.Is(ctx.Err(), context.Canceled) {
-				return nil, diag.Diagnostics{DiagWarnActivationCanceled}
+				return nil, diag.Diagnostics{DiagErrActivationCanceled}
 			}
 			return nil, diag.FromErr(fmt.Errorf("activation context terminated: %w", ctx.Err()))
 		}
@@ -1004,9 +1004,9 @@ func createActivation(ctx context.Context, client papi.PAPI, request papi.Create
 
 		case <-ctx.Done():
 			if errors.Is(ctx.Err(), context.DeadlineExceeded) {
-				return "", diag.Diagnostics{DiagWarnActivationTimeout}
+				return "", diag.Diagnostics{DiagErrActivationTimeout}
 			} else if errors.Is(ctx.Err(), context.Canceled) {
-				return "", diag.Diagnostics{DiagWarnActivationCanceled}
+				return "", diag.Diagnostics{DiagErrActivationCanceled}
 			}
 			return "", diag.FromErr(fmt.Errorf("activation context terminated: %w", ctx.Err()))
 		}

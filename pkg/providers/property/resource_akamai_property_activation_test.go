@@ -446,6 +446,21 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 				},
 			},
 		},
+		"timeout exceeded": {
+			init: func(m *papi.Mock) {
+				expectGetRuleTree(m, "prp_test", 1, ruleTreeResponseValid, nil).Once()
+				expectGetActivations(m, "prp_test", papi.GetActivationsResponse{}, nil).Once()
+				expectCreateActivation(m, "prp_test", papi.ActivationTypeActivate, 1, "STAGING",
+					[]string{"user@example.com"}, "property activation note for creating", "atv_activation1", true, nil).Once()
+				expectGetActivation(m, "prp_test", "atv_activation1", 1, "STAGING", papi.ActivationStatusPending, papi.ActivationTypeActivate, "property activation note for creating", []string{"user@example.com"}, nil)
+			},
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestPropertyActivation/timeouts/resource_property_activation_with_small_timeout.tf"),
+					ExpectError: regexp.MustCompile("Timeout waiting for activation status"),
+				},
+			},
+		},
 		"check schema property activation with rule errors": {
 			init: func(m *papi.Mock) {
 				expectGetRuleTree(m, "prp_test", 1, ruleTreeResponseInvalid, nil).Once()

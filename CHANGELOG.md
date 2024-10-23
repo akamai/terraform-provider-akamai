@@ -87,8 +87,9 @@
 
 
 
-
-
+* PAPI
+  * Fixed issue that timeout in `akamai_property_activation` resource would terminate with `Provider produced inconsistent result after apply` error
+    * Changed timeout message from warning to error in `akamai_property_activation` and `akamai_property_include_activation` resources
 
 
 
