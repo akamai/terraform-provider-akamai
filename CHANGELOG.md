@@ -24,9 +24,9 @@
 
 #### FEATURES/ENHANCEMENTS:
 
-* CLoudAccess
+* Cloud Access
   * Added functionality to import access keys in the `akamai_cloudaccess_key` resource, resource with specified group and contract IDs.
-
+  * Marked `cloud_secret_access_key` as sensitive value in `akamai_cloudaccess_key` resource ([I#580](https://github.com/akamai/terraform-provider-akamai/issues/580))
 
 
 

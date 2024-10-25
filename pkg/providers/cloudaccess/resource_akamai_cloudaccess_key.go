@@ -190,6 +190,7 @@ func (r *KeyResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp
 					"cloud_secret_access_key": schema.StringAttribute{
 						Description: "Cloud Access secret from cloud provider which is used to sign API requests",
 						Required:    true,
+						Sensitive:   true,
 					},
 					"primary_key": schema.BoolAttribute{
 						Description: "Boolean value which helps to define if credentials should be assigned to property",
@@ -216,6 +217,7 @@ func (r *KeyResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp
 					"cloud_secret_access_key": schema.StringAttribute{
 						Description: "Cloud Access secret from cloud provider which is used to sign API requests",
 						Required:    true,
+						Sensitive:   true,
 					},
 					"primary_key": schema.BoolAttribute{
 						Description: "Boolean value which helps to define if credentials should be assigned to property",

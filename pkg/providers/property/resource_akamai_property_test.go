@@ -19,8 +19,10 @@ import (
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -812,10 +814,9 @@ func TestPropertyLifecycle(t *testing.T) {
 				Build(),
 			configPlanChecks: resource.ConfigPlanChecks{
 				PreApply: []plancheck.PlanCheck{
-					testutils.FieldsKnownAtPlan{
-						FieldsKnown:   []string{"staging_version", "production_version"},
-						FieldsUnknown: []string{"latest_version"},
-					},
+					plancheck.ExpectKnownValue("akamai_property.test", tfjsonpath.New("staging_version"), knownvalue.Int64Exact(0)),
+					plancheck.ExpectKnownValue("akamai_property.test", tfjsonpath.New("production_version"), knownvalue.Int64Exact(0)),
+					plancheck.ExpectUnknownValue("akamai_property.test", tfjsonpath.New("latest_version")),
 				},
 			},
 		},

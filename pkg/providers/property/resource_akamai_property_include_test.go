@@ -14,7 +14,9 @@ import (
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
+	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -904,7 +906,12 @@ func TestResourcePropertyInclude(t *testing.T) {
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_format", "v2022-06-28"),
 					),
-					ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{testutils.FieldsKnownAtPlan{FieldsKnown: []string{"staging_version", "production_version"}, FieldsUnknown: []string{"latest_version"}}}},
+					ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectKnownValue("akamai_property_include.test", tfjsonpath.New("staging_version"), knownvalue.StringExact("")),
+						plancheck.ExpectKnownValue("akamai_property_include.test", tfjsonpath.New("production_version"), knownvalue.StringExact("")),
+						plancheck.ExpectUnknownValue("akamai_property_include.test", tfjsonpath.New("latest_version")),
+					},
+					},
 				},
 			},
 		},
