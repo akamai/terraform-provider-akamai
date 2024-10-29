@@ -74,7 +74,8 @@
 
 #### BUG FIXES:
 
-
+* Cloud Access
+  * Resolved issues with drift detection after deletion of key version in `akamai_cloudaccess_key` resource. ([I#579](https://github.com/akamai/terraform-provider-akamai/issues/579))
 
 
 

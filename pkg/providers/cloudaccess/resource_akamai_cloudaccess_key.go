@@ -417,7 +417,7 @@ func (r *KeyResource) read(ctx context.Context, data *KeyResourceModel) diag.Dia
 	result, err := client.GetAccessKey(ctx, cloudaccess.AccessKeyRequest{
 		AccessKeyUID: data.AccessKeyUID.ValueInt64(),
 	})
-	if errors.Is(err, cloudaccess.ErrGetAccessKey) {
+	if errors.Is(err, cloudaccess.ErrAccessKeyNotFound) {
 		diags.AddError("get access key error", fmt.Sprintf(diagErrAccessKeyNotFound, data.AccessKeyUID))
 		return diags
 	}
@@ -1013,6 +1013,12 @@ func (m *KeyResourceModel) populateModelFromVersionsList(versions *cloudaccess.L
 			credBFromState = true
 			continue
 		}
+	}
+	if !credAFromState {
+		m.CredentialsA = nil
+	}
+	if !credBFromState {
+		m.CredentialsB = nil
 	}
 	return diags
 }
