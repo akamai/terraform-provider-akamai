@@ -193,7 +193,7 @@ func dataSourceAAPSelectedHostnamesRead(ctx context.Context, d *schema.ResourceD
 			entry := aapSelectedHostnamesOutputText{PolicyID: securityPolicyID, Hostname: h, Status: "evaluated"}
 			textOutputEntries = append(textOutputEntries, entry)
 		}
-		outputtext, err := RenderTemplates(ots, "WAPSelectedHostsDS", textOutputEntries)
+		outputtext, err := RenderTemplates(ots, "AAPSelectedHostsDS", textOutputEntries)
 		if err != nil {
 			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 		}

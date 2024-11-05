@@ -32,7 +32,7 @@
 #### FEATURES/ENHANCEMENTS:
 * Appsec
   * Fixed problem with missing `security_policy_id` during update, if resource was imported previously.
-
+  * Added `akamai_appsec_aap_selected_hostnames` resource and datasource.
 
 * Cloud Access
   * Added functionality to import access keys in the `akamai_cloudaccess_key` resource, resource with specified group and contract IDs.

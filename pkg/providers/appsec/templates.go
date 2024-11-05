@@ -178,6 +178,39 @@ var (
 
 			return hostnameListsByPolicy
 		},
+		"collectAAPHostnameInfo": func(exportconfiguration *appsec.GetExportConfigurationResponse) []wapHostnames {
+			hostnameListsByPolicy := make([]wapHostnames, 0)
+			matchTargets := exportconfiguration.MatchTargets
+			websiteTargets := matchTargets.WebsiteTargets
+			protectedHostLists := make(map[string][]string)
+			for _, target := range websiteTargets {
+				policyID := target.SecurityPolicy.PolicyID
+				protectedHostLists[policyID] = target.Hostnames
+			}
+			evaluating := exportconfiguration.Evaluating
+			evalHostLists := make(map[string][]string)
+			for _, policy := range evaluating.SecurityPolicies {
+				policyID := policy.SecurityPolicyID
+				evalHostLists[policyID] = policy.Hostnames
+			}
+
+			for policyID, hostlist := range protectedHostLists {
+				element := wapHostnames{ID: policyID, ProtectedHosts: hostlist}
+				evalHostList, ok := evalHostLists[policyID]
+				if ok {
+					element.EvalHosts = evalHostList
+					delete(evalHostLists, policyID)
+				}
+				hostnameListsByPolicy = append(hostnameListsByPolicy, element)
+			}
+			// add elements for any policies with just evalHostnames lists
+			for policyID, hostlist := range evalHostLists {
+				element := wapHostnames{ID: policyID, EvalHosts: hostlist}
+				hostnameListsByPolicy = append(hostnameListsByPolicy, element)
+			}
+
+			return hostnameListsByPolicy
+		},
 	}
 )
 
@@ -279,6 +312,7 @@ func InitTemplates(otm map[string]*OutputTemplate) {
 	otm["apiHostnameCoverageoverLappingDS"] = &OutputTemplate{TemplateName: "apiHostnameCoverageoverLappingDS", TableTitle: "ID|Name|Version|Contract ID|Contract Name", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .OverLappingList}}{{if $index}},{{end}}{{.ConfigID}}|{{.ConfigName}}|{{.ConfigVersion}}|{{.ContractID}}|{{.ContractName}}{{end}}"}
 
 	// Extensions
+	otm["AAPSelectedHostsDS"] = &OutputTemplate{TemplateName: "AAPSelectedHostsDS", TableTitle: "SecurityPolicyID|Hostname|Status", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .}}{{if $index}},{{end}}{{.PolicyID}}|{{.Hostname}}|{{.Status}}{{end}}"}
 	otm["apiEndpointsDS"] = &OutputTemplate{TemplateName: "apiEndpointsDS", TableTitle: "ID|Endpoint Name", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .APIEndpoints}}{{if $index}},{{end}}{{.ID}}|{{.Name}}{{end}}"}
 	otm["policyApiEndpointsDS"] = &OutputTemplate{TemplateName: "policyApiEndpointsDS", TableTitle: "ID|Endpoint Name", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .APIEndpoints}}{{if $index}},{{end}}{{.ID}}|{{.Name}}{{end}}"}
 	otm["apiHostnameCoverageDS"] = &OutputTemplate{TemplateName: "apiHostnameCoverageDS", TableTitle: "Config ID|Config Name|Version|Status|Has Match Target|Hostname", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .HostnameCoverage}}{{if $index}},{{end}}{{.Configuration.ID}}|{{.Configuration.Name}}|{{.Configuration.Version}}|{{.Status}}|{{.HasMatchTarget}}|{{.Hostname}}{{end}}"}
@@ -339,6 +373,7 @@ func InitTemplates(otm map[string]*OutputTemplate) {
 	otm["selectedHosts"] = &OutputTemplate{TemplateName: "selectedHosts", TableTitle: "Hostnames", TemplateType: "TABULAR", TemplateString: "{{range $index, $element := .SelectedHosts}}{{if $index}},{{end}}{{.}}{{end}}"}
 
 	// TF templates for generating import-friendly output from data_akamai_appsec_export_configuration
+	otm["AAPSelectedHostnames.tf"] = &OutputTemplate{TemplateName: "AAPSelectedHostnames.tf", TableTitle: "AAPSelectedHostnames", TemplateType: "TERRAFORM", TemplateString: "{{ $config := .ConfigID }}{{ $elements := collectAAPHostnameInfo .}}{{ range $elements }}{{$secpolicy := .ID}}\n// terraform import akamai_appsec_aap_selected_hostnames.aap_selected_hostnames_{{$secpolicy}} {{$config}}:{{$secpolicy}}\nresource \"akamai_appsec_aap_selected_hostnames\" \"aap_selected_hostnames_{{$secpolicy}}\" {\n  config_id = {{$config}}\n  security_policy_id = \"{{$secpolicy}}\"\n  protected_hosts = [{{ range $i, $el := .ProtectedHosts }}{{if $i}},{{end}}{{quote .}}{{end}}]\n  evaluated_hosts = [{{ range $i, $el := .EvalHosts }}{{if $i}},{{end}}{{quote .}}{{end}}]\n}\n\n{{end}}"}
 	otm["AdvancedSettingsAttackPayloadLogging.tf"] = &OutputTemplate{TemplateName: "AdvancedSettingsAttackPayloadLogging.tf", TableTitle: "AdvancedSettingsAttackPayloadLogging", TemplateType: "TERRAFORM", TemplateString: "\n// terraform import akamai_appsec_advanced_settings_attack_payload_logging.akamai_appsec_advanced_settings_attack_payload_logging {{.ConfigID}} \nresource \"akamai_appsec_advanced_settings_attack_payload_logging\" \"akamai_appsec_advanced_settings_attack_payload_logging\" { \n config_id = {{.ConfigID}}\n attack_payload_logging  = <<-EOF\n  {{marshal .AdvancedOptions.AttackPayloadLogging}} \n EOF \n } \n {{ $config := .ConfigID }}{{ $version := .Version }}{{ $prev_secpolicy := \"\" }}{{range $index1, $element := .SecurityPolicies}}{{$prev_secpolicy := .ID}}{{if  .AttackPayloadLoggingOverrides}}\n// terraform import akamai_appsec_advanced_settings_attack_payload_logging.akamai_appsec_advanced_settings_attack_payload_logging{{if $index1}}_{{$index1}}{{end}} {{$config}}:{{$prev_secpolicy}} \nresource \"akamai_appsec_advanced_settings_attack_payload_logging\" \"akamai_appsec_advanced_settings_attack_payload_logging_override{{if $index1}}_{{$index1}}{{end}}\" { \n  config_id = {{$config}}\n  security_policy_id = \"{{$prev_secpolicy}}\" \n  attack_payload_logging = <<-EOF\n {{marshal .AttackPayloadLoggingOverrides}}  \n \n EOF \n \n }\n{{end}} {{end}}"}
 	otm["AdvancedSettingsLogging.tf"] = &OutputTemplate{TemplateName: "AdvancedSettingsLogging.tf", TableTitle: "AdvancedSettingsLogging", TemplateType: "TERRAFORM", TemplateString: "\n// terraform import akamai_appsec_advanced_settings_logging.akamai_appsec_advanced_settings_logging {{.ConfigID}} \nresource \"akamai_appsec_advanced_settings_logging\" \"akamai_appsec_advanced_settings_logging\" { \n config_id = {{.ConfigID}}\n logging  = <<-EOF\n  {{marshal .AdvancedOptions.Logging}} \n EOF \n } \n {{ $config := .ConfigID }}{{ $version := .Version }}{{ $prev_secpolicy := \"\" }}{{range $index1, $element := .SecurityPolicies}}{{$prev_secpolicy := .ID}}{{if  .LoggingOverrides}}\n// terraform import akamai_appsec_advanced_settings_logging.akamai_appsec_advanced_settings_logging_override{{if $index1}}_{{$index1}}{{end}} {{$config}}:{{$prev_secpolicy}} \nresource \"akamai_appsec_advanced_settings_logging\" \"akamai_appsec_advanced_settings_logging_override{{if $index1}}_{{$index1}}{{end}}\" { \n  config_id = {{$config}}\n  security_policy_id = \"{{$prev_secpolicy}}\" \n  logging = <<-EOF\n {{marshal .LoggingOverrides}}  \n \n EOF \n \n }\n{{end}} {{end}}"}
 	otm["AdvancedSettingsEvasivePathMatch.tf"] = &OutputTemplate{TemplateName: "AdvancedSettingsEvasivePathMatch.tf", TableTitle: "AdvancedSettingsEvasivePathMatch", TemplateType: "TERRAFORM", TemplateString: "\n {{ $config := .ConfigID }}{{ $version := .Version }}{{ $prev_secpolicy := \"\" }}{{range $index1, $element := .SecurityPolicies}}{{$prev_secpolicy := .ID}}{{if  .EvasivePathMatch}}\n// terraform import akamai_appsec_advanced_settings_evasive_path_match.akamai_appsec_advanced_settings_evasive_path_match_policy{{if $index1}}_{{$index1}}{{end}} {{$config}}:{{$prev_secpolicy}} \nresource \"akamai_appsec_advanced_settings_evasive_path_match\" \"akamai_appsec_advanced_settings_evasive_path_match_policy{{if $index1}}_{{$index1}}{{end}}\" { \n  config_id = {{$config}}\n  security_policy_id = \"{{$prev_secpolicy}}\" \n  enable_path_match = {{.EvasivePathMatch.EnablePathMatch}} \n }\n{{end}}{{end}}"}
