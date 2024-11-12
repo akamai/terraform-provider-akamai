@@ -20,7 +20,6 @@ import (
 
 var (
 	maxUpsertAttempts = 3
-	maxInitDuration   = time.Duration(10) * time.Minute
 	upsertWindow      = time.Duration(10) * time.Second
 	initWindow        = time.Duration(10) * time.Second
 )
@@ -106,6 +105,25 @@ func resourceEdgeKV() *schema.Resource {
 	}
 }
 
+func waitForEdgeKVInitialization(ctx context.Context, client edgeworkers.Edgeworkers) error {
+	status := &edgeworkers.EdgeKVInitializationStatus{}
+	var err error
+
+	for status.AccountStatus != "INITIALIZED" {
+		select {
+		case <-time.After(initWindow):
+			status, err = client.GetEdgeKVInitializationStatus(ctx)
+			if err != nil {
+				return fmt.Errorf("could not get EdgeKV initialization status: %s", err)
+			}
+		case <-ctx.Done():
+			return fmt.Errorf("retry timeout reached: incorrect status of edgeKV: %s, %s", status.AccountStatus, ctx.Err())
+		}
+	}
+
+	return nil
+}
+
 func resourceEdgeKVCreate(ctx context.Context, rd *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("EdgeKV", "resourceEdgeKVCreate")
@@ -138,27 +156,27 @@ func resourceEdgeKVCreate(ctx context.Context, rd *schema.ResourceData, m interf
 		return diag.FromErr(err)
 	}
 
-	// initialize edgekv
-	logger.Debugf("Initializing EdgeKV...")
-	initStart := time.Now()
-	initStatus, err := client.InitializeEdgeKV(ctx)
+	status, err := client.GetEdgeKVInitializationStatus(ctx)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	// wait for initialization
-	for err == nil && initStatus.AccountStatus != "INITIALIZED" &&
-		initStatus.ProductionStatus != "INITIALIZED" && initStatus.StagingStatus != "INITIALIZED" &&
-		time.Since(initStart) < maxInitDuration {
-		logger.Debugf("Still initializing EdgeKV...")
-		time.Sleep(initWindow)
-		initStatus, err = client.GetEdgeKVInitializationStatus(ctx)
-	}
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	if time.Since(initStart) >= maxInitDuration {
-		return diag.Errorf("there was a timeout initializing the EdgeKV database: %s", time.Since(initStart).String())
+	// If the status is "UNINITIALIZED", we have to send initialization request and wait for "INITIALIZED" status. If the
+	// status is "PENDING" we have to wait. If the status is "INITIALIZED" we can proceed.
+	if status.AccountStatus == "UNINITIALIZED" {
+		// initialize edgekv
+		logger.Debugf("Initializing EdgeKV...")
+		_, err = client.InitializeEdgeKV(ctx)
+		if err != nil {
+			return diag.Errorf("could not initialize edgeKV: %s", err)
+		}
+		if err = waitForEdgeKVInitialization(ctx, client); err != nil {
+			return diag.FromErr(err)
+		}
+	} else if status.AccountStatus == "PENDING" {
+		if err = waitForEdgeKVInitialization(ctx, client); err != nil {
+			return diag.FromErr(err)
+		}
 	}
 
 	// create namespace
@@ -260,8 +278,7 @@ func resourceEdgeKVUpdate(ctx context.Context, rd *schema.ResourceData, m interf
 		return diag.FromErr(err)
 	}
 	retention := int(retention64)
-	// ignore group_id changes
-	// changes on this field are not supported by current EdgeKV API version
+	// ignore group_id changes, as changes on this field are not supported by current EdgeKV API version
 	if diagnostics := diag.FromErr(tf.RestoreOldValues(rd, []string{"group_id"})); diagnostics != nil {
 		return diagnostics
 	}

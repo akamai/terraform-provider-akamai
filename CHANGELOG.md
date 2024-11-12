@@ -61,7 +61,8 @@
 
 
 
-
+* Edgeworkers
+  * Stopped sending EdgeKV initialization request in `akamai_edgekv` resource when EdgeKV is already initialized. ([I#589](https://github.com/akamai/terraform-provider-akamai/issues/589))
 
 
 
