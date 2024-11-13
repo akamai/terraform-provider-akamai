@@ -7,16 +7,16 @@ import (
 
 func init() {
 	schemasRegistry.register(RuleFormat{
-		version:          "rules_v2024_05_31",
-		behaviorsSchemas: getBehaviorsSchemaV20240531(),
-		criteriaSchemas:  getCriteriaSchemaV20240531(),
+		version:          "rules_v2024_10_21",
+		behaviorsSchemas: getBehaviorsSchemaV20241021(),
+		criteriaSchemas:  getCriteriaSchemaV20241021(),
 		typeMappings:     map[string]interface{}{"adScalerCircuitBreaker.returnErrorResponseCodeBased.408": 408, "adScalerCircuitBreaker.returnErrorResponseCodeBased.500": 500, "adScalerCircuitBreaker.returnErrorResponseCodeBased.502": 502, "adScalerCircuitBreaker.returnErrorResponseCodeBased.504": 504},
-		nameMappings:     map[string]string{"allowFcmParentOverride": "allowFCMParentOverride", "allowHttpsCacheKeySharing": "allowHTTPSCacheKeySharing", "allowHttpsDowngrade": "allowHTTPSDowngrade", "allowHttpsUpgrade": "allowHTTPSUpgrade", "c": "C", "canBeCa": "canBeCA", "cn": "CN", "conditionalHttpStatus": "conditionalHTTPStatus", "contentCharacteristicsAmd": "contentCharacteristicsAMD", "contentCharacteristicsDd": "contentCharacteristicsDD", "dcpAuthHmacTransformation": "dcpAuthHMACTransformation", "detectSmartDnsProxy": "detectSmartDNSProxy", "detectSmartDnsProxyAction": "detectSmartDNSProxyAction", "detectSmartDnsProxyRedirecturl": "detectSmartDNSProxyRedirecturl", "enableCmcdSegmentPrefetch": "enableCMCDSegmentPrefetch", "enableEs256": "enableES256", "enableIpAvoidance": "enableIPAvoidance", "enableIpProtection": "enableIPProtection", "enableIpRedirectOnDeny": "enableIPRedirectOnDeny", "enableRs256": "enableRS256", "enableTokenInUri": "enableTokenInURI", "g2OToken": "g2oToken", "g2Oheader": "g2oheader", "i18NCharset": "i18nCharset", "i18NStatus": "i18nStatus", "isCertificateSniOnly": "isCertificateSNIOnly", "issuerRdns": "issuerRDNs", "logEdgeIp": "logEdgeIP", "o": "O", "originSettings": "origin_settings", "ou": "OU", "overrideIpAddresses": "overrideIPAddresses", "segmentDurationDash": "segmentDurationDASH", "segmentDurationDashCustom": "segmentDurationDASHCustom", "segmentDurationHds": "segmentDurationHDS", "segmentDurationHdsCustom": "segmentDurationHDSCustom", "segmentDurationHls": "segmentDurationHLS", "segmentDurationHlsCustom": "segmentDurationHLSCustom", "segmentSizeDash": "segmentSizeDASH", "segmentSizeHds": "segmentSizeHDS", "segmentSizeHls": "segmentSizeHLS", "sf3COriginHost": "sf3cOriginHost", "sf3COriginHostHeader": "sf3cOriginHostHeader", "smartDnsProxy": "smartDNSProxy", "standardTlsMigration": "standardTLSMigration", "standardTlsMigrationOverride": "standardTLSMigrationOverride", "subjectCn": "subjectCN", "subjectRdns": "subjectRDNs", "titleAicMobile": "title_aic_mobile", "titleAicNonmobile": "title_aic_nonmobile", "tokenAuthHlsTitle": "tokenAuthHLSTitle"},
+		nameMappings:     map[string]string{"allowFcmParentOverride": "allowFCMParentOverride", "allowHttpsCacheKeySharing": "allowHTTPSCacheKeySharing", "allowHttpsDowngrade": "allowHTTPSDowngrade", "allowHttpsUpgrade": "allowHTTPSUpgrade", "c": "C", "canBeCa": "canBeCA", "cn": "CN", "conditionalHttpStatus": "conditionalHTTPStatus", "contentCharacteristicsAmd": "contentCharacteristicsAMD", "contentCharacteristicsDd": "contentCharacteristicsDD", "dcpAuthHmacTransformation": "dcpAuthHMACTransformation", "detectSmartDnsProxy": "detectSmartDNSProxy", "detectSmartDnsProxyAction": "detectSmartDNSProxyAction", "detectSmartDnsProxyRedirecturl": "detectSmartDNSProxyRedirecturl", "enableCmcdSegmentPrefetch": "enableCMCDSegmentPrefetch", "enableEs256": "enableES256", "enableIpAvoidance": "enableIPAvoidance", "enableIpProtection": "enableIPProtection", "enableIpRedirectOnDeny": "enableIPRedirectOnDeny", "enableRs256": "enableRS256", "enableTokenInUri": "enableTokenInURI", "g2OToken": "g2oToken", "g2Oheader": "g2oheader", "i18NCharset": "i18nCharset", "i18NStatus": "i18nStatus", "isCertificateSniOnly": "isCertificateSNIOnly", "issuerRdns": "issuerRDNs", "logEdgeIp": "logEdgeIP", "o": "O", "originSettings": "origin_settings", "ou": "OU", "overrideIpAddresses": "overrideIPAddresses", "segmentDurationDash": "segmentDurationDASH", "segmentDurationDashCustom": "segmentDurationDASHCustom", "segmentDurationHds": "segmentDurationHDS", "segmentDurationHdsCustom": "segmentDurationHDSCustom", "segmentDurationHls": "segmentDurationHLS", "segmentDurationHlsCustom": "segmentDurationHLSCustom", "segmentSizeDash": "segmentSizeDASH", "segmentSizeHds": "segmentSizeHDS", "segmentSizeHls": "segmentSizeHLS", "sf3COriginHost": "sf3cOriginHost", "sf3COriginHostHeader": "sf3cOriginHostHeader", "smartDnsProxy": "smartDNSProxy", "standardTlsMigration": "standardTLSMigration", "standardTlsMigrationOverride": "standardTLSMigrationOverride", "subjectCn": "subjectCN", "subjectRdns": "subjectRDNs", "titleAicMobile": "title_aic_mobile", "titleAicNonmobile": "title_aic_nonmobile", "tokenAuthDashTitle": "tokenAuthDASHTitle", "tokenAuthHlsTitle": "tokenAuthHLSTitle"},
 		shouldFlatten:    []string{"apiPrioritization.cloudletPolicy", "apiPrioritization.throttledCpCode", "apiPrioritization.throttledCpCode.cpCodeLimits", "apiPrioritization.netStorage", "applicationLoadBalancer.cloudletPolicy", "applicationLoadBalancer.allDownNetStorage", "audienceSegmentation.cloudletPolicy", "cpCode.value", "cpCode.value.cpCodeLimits", "edgeRedirector.cloudletPolicy", "failAction.netStorageHostname", "failAction.cpCode", "failAction.cpCode.cpCodeLimits", "firstPartyMarketing.cloudletPolicy", "firstPartyMarketingPlus.cloudletPolicy", "forwardRewrite.cloudletPolicy", "imageAndVideoManager.cpCodeOriginal", "imageAndVideoManager.cpCodeOriginal.cpCodeLimits", "imageAndVideoManager.cpCodeTransformed", "imageAndVideoManager.cpCodeTransformed.cpCodeLimits", "imageManager.cpCodeOriginal", "imageManager.cpCodeOriginal.cpCodeLimits", "imageManager.cpCodeTransformed", "imageManager.cpCodeTransformed.cpCodeLimits", "imageManagerVideo.cpCodeOriginal", "imageManagerVideo.cpCodeOriginal.cpCodeLimits", "imageManagerVideo.cpCodeTransformed", "imageManagerVideo.cpCodeTransformed.cpCodeLimits", "origin.netStorage", "origin.customCertificateAuthorities.subjectRDNs", "origin.customCertificateAuthorities.issuerRDNs", "origin.customCertificates.subjectRDNs", "origin.customCertificates.issuerRDNs", "phasedRelease.cloudletPolicy", "requestControl.cloudletPolicy", "requestControl.netStorage", "siteShield.ssmap", "visitorPrioritization.cloudletPolicy", "visitorPrioritization.waitingRoomCpCode", "visitorPrioritization.waitingRoomCpCode.cpCodeLimits", "visitorPrioritization.waitingRoomNetStorage", "webApplicationFirewall.firewallConfiguration", "matchCpCode.value", "matchCpCode.value.cpCodeLimits"},
 	})
 }
 
-func getBehaviorsSchemaV20240531() map[string]*schema.Schema {
+func getBehaviorsSchemaV20241021() map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"ad_scaler_circuit_breaker": {
 			Optional:    true,
@@ -157,6 +157,16 @@ func getBehaviorsSchemaV20240531() map[string]*schema.Schema {
 						Optional:    true,
 						Description: "This specifies the name of the cookie file used for redirecting the requests in the A/B testing environment.",
 						Type:        schema.TypeString,
+					},
+					"intelligent_early_hints_title": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
+					},
+					"intelligent_early_hints": {
+						Optional:    true,
+						Description: "",
+						Type:        schema.TypeBool,
 					},
 					"compression": {
 						Optional:    true,
@@ -4318,6 +4328,37 @@ func getBehaviorsSchemaV20240531() map[string]*schema.Schema {
 				},
 			},
 		},
+		"early_data": {
+			Optional:    true,
+			Type:        schema.TypeList,
+			Description: "Use this behavior to enable sending early data during the TLS 1.3 handshake between requests from your client and Akamai edge servers. This is currently only available for TCP connections. This behavior cannot be used in includes.",
+			MaxItems:    1,
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"locked": {
+						Optional:    true,
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
+						Type:        schema.TypeBool,
+					},
+					"uuid": {
+						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
+						Optional:         true,
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
+						Type:             schema.TypeString,
+					},
+					"template_uuid": {
+						Optional:    true,
+						Description: "This option is for internal usage only.",
+						Type:        schema.TypeString,
+					},
+					"enabled": {
+						Optional:    true,
+						Description: "Enables sending early data, which further reduces latency in TLS 1.3 connections.",
+						Type:        schema.TypeBool,
+					},
+				},
+			},
+		},
 		"early_hints": {
 			Optional:    true,
 			Type:        schema.TypeList,
@@ -5134,6 +5175,53 @@ func getBehaviorsSchemaV20240531() map[string]*schema.Schema {
 						Optional:    true,
 						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
 						Type:        schema.TypeString,
+					},
+				},
+			},
+		},
+		"enhanced_debug": {
+			Optional:    true,
+			Type:        schema.TypeList,
+			Description: "This behavior provides support for enhanced debugging on edge servers. It includes all the functionality provided by the existing `Pragma` header debugging, but is more secure and provides additional information. All requests that use this behavior pass an auth token that you generate using a secret debug key in the `Akamai-Debug` request header. This behavior can be used in includes.",
+			MaxItems:    1,
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"locked": {
+						Optional:    true,
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
+						Type:        schema.TypeBool,
+					},
+					"uuid": {
+						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
+						Optional:         true,
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
+						Type:             schema.TypeString,
+					},
+					"template_uuid": {
+						Optional:    true,
+						Description: "This option is for internal usage only.",
+						Type:        schema.TypeString,
+					},
+					"enable_debug": {
+						Optional:    true,
+						Description: "Enables enhanced debugging using the `Akamai-Debug` request header.",
+						Type:        schema.TypeBool,
+					},
+					"debug_key": {
+						ValidateDiagFunc: validateRegexOrVariable("^[0-9a-fA-F]{64}$"),
+						Optional:         true,
+						Description:      "Specifies the debug key to use for all requests processed by this property. The debug key value needs to be a 64-byte hex string. You can generate the key in one property and then reuse it in other configurations.",
+						Type:             schema.TypeString,
+					},
+					"disable_pragma": {
+						Optional:    true,
+						Description: "Whether you want to disable the standard debugging that uses the `Pragma` request header.",
+						Type:        schema.TypeBool,
+					},
+					"generate_grn": {
+						Optional:    true,
+						Description: "Whether you want to return the Global Request Number (GRN) in the `Akamai-GRN` response header for all requests, even if the `Akamai-Debug` request header is not passed. The `Akamai-GRN` header is useful for log extraction.",
+						Type:        schema.TypeBool,
 					},
 				},
 			},
@@ -6055,6 +6143,37 @@ func getBehaviorsSchemaV20240531() map[string]*schema.Schema {
 						Optional:    true,
 						Description: "This specifies the name of the variable to assign the GRN value to. You need to pre-declare any `variable` you specify within the rule tree.",
 						Type:        schema.TypeString,
+					},
+				},
+			},
+		},
+		"gov_cloud": {
+			Optional:    true,
+			Type:        schema.TypeList,
+			Description: "This behavior can be used in includes.",
+			MaxItems:    1,
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"locked": {
+						Optional:    true,
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
+						Type:        schema.TypeBool,
+					},
+					"uuid": {
+						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
+						Optional:         true,
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
+						Type:             schema.TypeString,
+					},
+					"template_uuid": {
+						Optional:    true,
+						Description: "This option is for internal usage only.",
+						Type:        schema.TypeString,
+					},
+					"enabled": {
+						Optional:    true,
+						Description: "",
+						Type:        schema.TypeBool,
 					},
 				},
 			},
@@ -8592,6 +8711,47 @@ func getBehaviorsSchemaV20240531() map[string]*schema.Schema {
 				},
 			},
 		},
+		"mtls_origin_keystore": {
+			Optional:    true,
+			Type:        schema.TypeList,
+			Description: "Establish a Mutual TLS (mTLS) connection between the edge server and the origin to authenticate requests. This ensures that the requests to your origin server come directly from the Akamai network. In the mTLS protocol, the origin asks the edge server to present its identity certificate. For this negotiation to work, either the origin needs to be configured for mTLS sessions, or the edge server is allowed to proceed without the edge certificate, effectively performing a standard (non-mutual) TLS connection to the origin. This behavior can be used in includes.",
+			MaxItems:    1,
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"locked": {
+						Optional:    true,
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
+						Type:        schema.TypeBool,
+					},
+					"uuid": {
+						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
+						Optional:         true,
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
+						Type:             schema.TypeString,
+					},
+					"template_uuid": {
+						Optional:    true,
+						Description: "This option is for internal usage only.",
+						Type:        schema.TypeString,
+					},
+					"enable": {
+						Optional:    true,
+						Description: "Allows a specific mutual transport layer (mTLS) client certificate in a request from the edge server to the origin.",
+						Type:        schema.TypeBool,
+					},
+					"client_certificate_version_guid": {
+						Optional:    true,
+						Description: "Specifies the client certificate to authenticate your origin with the edge server. You need to create client certificates using the `Mutual TLS Origin Keystore` API or application.",
+						Type:        schema.TypeString,
+					},
+					"auth_client_cert": {
+						Optional:    true,
+						Description: "When enabled, the edge server requires a prompt from the origin for the client certificate's identity. If the edge server gets the request, it proceeds with the mTLS session and connects to the origin. If the edge server doesn’t get the request, the connection to the origin stops and a client error is reported. When disabled, the edge server proceeds without a request for the client certificate, making a standard TLS connection to the origin. Disabled by default.",
+						Type:        schema.TypeBool,
+					},
+				},
+			},
+		},
 		"origin": {
 			Optional:    true,
 			Type:        schema.TypeList,
@@ -9134,6 +9294,16 @@ func getBehaviorsSchemaV20240531() map[string]*schema.Schema {
 						Optional:         true,
 						Description:      "Specifies the maximum TLS version to use for connections to your origin server. As best practice, use `DYNAMIC` to automatically apply the latest supported version.",
 						Type:             schema.TypeString,
+					},
+					"http2_title": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
+					},
+					"http2_enabled": {
+						Optional:    true,
+						Description: "",
+						Type:        schema.TypeBool,
 					},
 				},
 			},
@@ -10335,6 +10505,12 @@ func getBehaviorsSchemaV20240531() map[string]*schema.Schema {
 						ValidateDiagFunc: validateRegexOrVariable("^[0-9]+[DdHhMmSs]$"),
 						Optional:         true,
 						Description:      "The amount of time an edge server should wait for each read statement to return a response from the forward server after a connection has already been established. Larger objects may need many reads, and this timeout applies to each read separately. Any failure to complete a read within this time limit aborts the request and sends a 504 Gateway Timeout error to the client.",
+						Type:             schema.TypeString,
+					},
+					"first_byte_timeout": {
+						ValidateDiagFunc: validateRegexOrVariable("^[0-9]+[DdHhMmSs]$"),
+						Optional:         true,
+						Description:      "The amount of time an edge server should wait for the first byte of the response to be returned from the forward server after a connection has already been established. Instead of continually waiting for the content, edge servers send a 504 Gateway Timeout error to the client. If your origin server is handling high loads and might respond slowly, specify a short timeout. Defaults to 20 seconds. The value for First Byte Timeout can't be 0 and it can't exceed 10 minutes (600 seconds).",
 						Type:             schema.TypeString,
 					},
 				},
@@ -11854,6 +12030,16 @@ func getBehaviorsSchemaV20240531() map[string]*schema.Schema {
 							Type: schema.TypeString,
 						},
 					},
+					"token_auth_dash_title": {
+						Optional:    true,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
+					},
+					"enable_token_in_query_string": {
+						Optional:    true,
+						Description: "When enabled, in the DASH media encryption variant, passes tokens in query strings, as an alternative to cookies.",
+						Type:        schema.TypeBool,
+					},
 					"token_revocation_title": {
 						Optional:    true,
 						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
@@ -13097,6 +13283,16 @@ func getBehaviorsSchemaV20240531() map[string]*schema.Schema {
 						Description: "Enables the ETag validation behavior.",
 						Type:        schema.TypeBool,
 					},
+					"non_strict_enabled": {
+						Optional:    true,
+						Description: "Whether you want to allow strong `ETag` values that are not surrounded by double quotes. Technically these are malformed and non-standard, but are commonly used.",
+						Type:        schema.TypeBool,
+					},
+					"weak_enabled": {
+						Optional:    true,
+						Description: "Whether you want to allow weak `ETag` values that start with `W/`.",
+						Type:        schema.TypeBool,
+					},
 				},
 			},
 		},
@@ -14117,7 +14313,7 @@ func getBehaviorsSchemaV20240531() map[string]*schema.Schema {
 	}
 }
 
-func getCriteriaSchemaV20240531() map[string]*schema.Schema {
+func getCriteriaSchemaV20241021() map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"advanced_im_match": {
 			Optional:    true,
@@ -14498,6 +14694,37 @@ func getCriteriaSchemaV20240531() map[string]*schema.Schema {
 					"match_case_sensitive": {
 						Optional:    true,
 						Description: "Sets a case-sensitive match for all `values`.",
+						Type:        schema.TypeBool,
+					},
+				},
+			},
+		},
+		"debug_mode": {
+			Optional:    true,
+			Type:        schema.TypeList,
+			Description: "The match applies when the request is debugged using the `enhancedDebug` behavior. This criterion is for internal usage only. This criterion can be used in includes.",
+			MaxItems:    1,
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"locked": {
+						Optional:    true,
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
+						Type:        schema.TypeBool,
+					},
+					"uuid": {
+						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
+						Optional:         true,
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
+						Type:             schema.TypeString,
+					},
+					"template_uuid": {
+						Optional:    true,
+						Description: "This option is for internal usage only.",
+						Type:        schema.TypeString,
+					},
+					"debug_mode": {
+						Optional:    true,
+						Description: "Whether the request is being debugged using Enhanced Debug.",
 						Type:        schema.TypeBool,
 					},
 				},

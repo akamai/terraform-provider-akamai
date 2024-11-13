@@ -324,6 +324,45 @@ func TestDataPropertyRulesBuilder(t *testing.T) {
 			})
 		})
 	})
+	t.Run("valid rule with 3 children - v2024-10-21", func(t *testing.T) {
+		useClient(nil, nil, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{{
+					Config: testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/rules_v2024_10_21.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("data.akamai_property_rules_builder.default",
+							"rule_format",
+							"v2024-10-21"),
+						testCheckResourceAttrJSON("data.akamai_property_rules_builder.default",
+							"json",
+							testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/default_v2024_10_21.json")),
+
+						resource.TestCheckResourceAttr("data.akamai_property_rules_builder.content_compression",
+							"rule_format",
+							"v2024-10-21"),
+						testCheckResourceAttrJSON("data.akamai_property_rules_builder.content_compression",
+							"json",
+							testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/content_compression_v2024_10_21.json")),
+
+						resource.TestCheckResourceAttr("data.akamai_property_rules_builder.static_content",
+							"rule_format",
+							"v2024-10-21"),
+						testCheckResourceAttrJSON("data.akamai_property_rules_builder.static_content",
+							"json",
+							testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/static_content_v2024_10_21.json")),
+
+						resource.TestCheckResourceAttr("data.akamai_property_rules_builder.dynamic_content",
+							"rule_format",
+							"v2024-10-21"),
+						testCheckResourceAttrJSON("data.akamai_property_rules_builder.dynamic_content",
+							"json",
+							testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/dynamic_content_v2024_10_21.json")),
+					),
+				}},
+			})
+		})
+	})
 	t.Run("rule empty options - v2024-01-09", func(t *testing.T) {
 		useClient(nil, nil, func() {
 			resource.UnitTest(t, resource.TestCase{

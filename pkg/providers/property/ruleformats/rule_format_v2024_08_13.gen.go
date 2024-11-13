@@ -8595,7 +8595,7 @@ func getBehaviorsSchemaV20240813() map[string]*schema.Schema {
 		"mtls_origin_keystore": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "This behavior can be used in includes.",
+			Description: "Establish a Mutual TLS (mTLS) connection between the edge server and the origin to authenticate requests. This ensures that the requests to your origin server come directly from the Akamai network. In the mTLS protocol, the origin asks the edge server to present its identity certificate. For this negotiation to work, either the origin needs to be configured for mTLS sessions, or the edge server is allowed to proceed without the edge certificate, effectively performing a standard (non-mutual) TLS connection to the origin. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -8617,17 +8617,17 @@ func getBehaviorsSchemaV20240813() map[string]*schema.Schema {
 					},
 					"enable": {
 						Optional:    true,
-						Description: "",
+						Description: "Allows a specific mutual transport layer (mTLS) client certificate in a request from the edge server to the origin.",
 						Type:        schema.TypeBool,
 					},
 					"client_certificate_version_guid": {
 						Optional:    true,
-						Description: "",
+						Description: "Specifies the client certificate to authenticate your origin with the edge server. You need to create client certificates using the `Mutual TLS Origin Keystore` API or application.",
 						Type:        schema.TypeString,
 					},
 					"auth_client_cert": {
 						Optional:    true,
-						Description: "",
+						Description: "When enabled, the edge server requires a prompt from the origin for the client certificate's identity. If the edge server gets the request, it proceeds with the mTLS session and connects to the origin. If the edge server doesn’t get the request, the connection to the origin stops and a client error is reported. When disabled, the edge server proceeds without a request for the client certificate, making a standard TLS connection to the origin. Disabled by default.",
 						Type:        schema.TypeBool,
 					},
 				},
@@ -10352,7 +10352,7 @@ func getBehaviorsSchemaV20240813() map[string]*schema.Schema {
 		"read_timeout": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "This behavior specifies how long the edge server should wait for a response from the requesting forward server after a connection has already been established. Any failure to read aborts the request and sends a `504` Gateway Timeout error to the client. Contact Akamai Professional Services for help configuring this behavior. This behavior can be used in includes.",
+			Description: "This behavior specifies how long the edge server should wait for a response from the requesting forward server after a connection has already been established. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -10375,13 +10375,13 @@ func getBehaviorsSchemaV20240813() map[string]*schema.Schema {
 					"value": {
 						ValidateDiagFunc: validateRegexOrVariable("^[0-9]+[DdHhMmSs]$"),
 						Optional:         true,
-						Description:      "Specifies the read timeout necessary before failing with a `504` error. This value should never be zero.",
+						Description:      "The amount of time an edge server should wait for each read statement to return a response from the forward server after a connection has already been established. Larger objects may need many reads, and this timeout applies to each read separately. Any failure to complete a read within this time limit aborts the request and sends a 504 Gateway Timeout error to the client.",
 						Type:             schema.TypeString,
 					},
 					"first_byte_timeout": {
 						ValidateDiagFunc: validateRegexOrVariable("^[0-9]+[DdHhMmSs]$"),
 						Optional:         true,
-						Description:      "",
+						Description:      "The amount of time an edge server should wait for the first byte of the response to be returned from the forward server after a connection has already been established. Instead of continually waiting for the content, edge servers send a 504 Gateway Timeout error to the client. If your origin server is handling high loads and might respond slowly, specify a short timeout. Defaults to 20 seconds. The value for First Byte Timeout can't be 0 and it can't exceed 10 minutes (600 seconds).",
 						Type:             schema.TypeString,
 					},
 				},
@@ -11908,7 +11908,7 @@ func getBehaviorsSchemaV20240813() map[string]*schema.Schema {
 					},
 					"enable_token_in_query_string": {
 						Optional:    true,
-						Description: "",
+						Description: "When enabled, in the DASH media encryption variant, passes tokens in query strings, as an alternative to cookies.",
 						Type:        schema.TypeBool,
 					},
 					"token_revocation_title": {
