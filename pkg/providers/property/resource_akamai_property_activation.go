@@ -83,7 +83,6 @@ var akamaiPropertyActivationSchema = map[string]*schema.Schema{
 	},
 	"rule_errors": {
 		Type:     schema.TypeList,
-		Optional: true,
 		Computed: true,
 		Elem:     papiError(),
 	},
@@ -497,6 +496,7 @@ func resourcePropertyActivationRead(ctx context.Context, d *schema.ResourceData,
 		"note":          activation.Note,
 		"contact":       activation.NotifyEmails,
 	}
+
 	if err = tf.SetAttrs(d, attrs); err != nil {
 		return diag.FromErr(err)
 	}
@@ -717,6 +717,15 @@ func resourcePropertyActivationImport(_ context.Context, d *schema.ResourceData,
 		return nil, err
 	}
 
+	// Errors are checked during property activation, and a property cannot activate if any errors are present.
+	// As a result, rule_errors will always be empty.
+	// Initialize rule_errors as an empty list if it is not already set in the state.
+	if _, exists := d.GetOk("rule_errors"); !exists {
+		if err := d.Set("rule_errors", []interface{}{}); err != nil {
+			return nil, fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
+		}
+	}
+
 	return []*schema.ResourceData{d}, nil
 }
 
@@ -790,6 +799,8 @@ func resolveVersionStatus(ctx context.Context, client papi.PAPI, propertyID stri
 
 func checkRuleTreeErrorsAndWarnings(rules *papi.GetRuleTreeResponse, d *schema.ResourceData, logger log.Interface) diag.Diagnostics {
 	var diags diag.Diagnostics
+
+	// Set rule_errors only if actual rule errors are present
 	if len(rules.Errors) > 0 {
 		if err := d.Set("rule_errors", papiErrorsToList(rules.Errors)); err != nil {
 			return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
@@ -800,7 +811,13 @@ func checkRuleTreeErrorsAndWarnings(rules *papi.GetRuleTreeResponse, d *schema.R
 		}
 		logger.Errorf("Property has rule errors %s", msg)
 		diags = append(diags, diag.Errorf("activation cannot continue due to rule errors: %s", msg)...)
+	} else {
+		if err := d.Set("rule_errors", []interface{}{}); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
+		}
 	}
+
+	// Handle warnings
 	if len(rules.Warnings) > 0 {
 		msg, err := json.MarshalIndent(papiErrorsToList(rules.Warnings), "", "\t")
 		if err != nil {
