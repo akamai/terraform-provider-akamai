@@ -16,15 +16,14 @@ func TestResGTMASMap(t *testing.T) {
 	t.Run("create asmap", func(t *testing.T) {
 		client := &gtm.Mock{}
 
-		asmap, dc := getASMapTestData()
-
 		getCall := client.On("GetASMap",
 			mock.Anything, // ctx is irrelevant for this test
 			mock.AnythingOfType("gtm.GetASMapRequest"),
 		).Return(nil, &gtm.Error{
 			StatusCode: http.StatusNotFound,
-		}).Once()
+		}).Twice()
 
+		asmap, dc := getASMapTestData()
 		resp := asmap
 
 		client.On("GetDatacenter",
@@ -95,6 +94,13 @@ func TestResGTMASMap(t *testing.T) {
 	t.Run("create asmap failed", func(t *testing.T) {
 		client := &gtm.Mock{}
 
+		client.On("GetASMap",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("gtm.GetASMapRequest"),
+		).Return(nil, &gtm.Error{
+			StatusCode: http.StatusNotFound,
+		}).Once()
+
 		_, dc := getASMapTestData()
 
 		client.On("CreateASMap",
@@ -124,8 +130,39 @@ func TestResGTMASMap(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 
+	t.Run("create asmap failed - asmap already exists", func(t *testing.T) {
+		client := &gtm.Mock{}
+
+		asmap, _ := getASMapTestData()
+		client.On("GetASMap",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("gtm.GetASMapRequest"),
+		).Return(&asmap, nil).Once()
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmAsmap/create_basic.tf"),
+						ExpectError: regexp.MustCompile("asMap already exists error"),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
 	t.Run("create asmap denied", func(t *testing.T) {
 		client := &gtm.Mock{}
+
+		client.On("GetASMap",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("gtm.GetASMapRequest"),
+		).Return(nil, &gtm.Error{
+			StatusCode: http.StatusNotFound,
+		}).Once()
 
 		dr := gtm.CreateASMapResponse{}
 		dr.Resource = asMapCreate.Resource
@@ -157,6 +194,13 @@ func TestResGTMASMap(t *testing.T) {
 
 	t.Run("import asmap", func(t *testing.T) {
 		client := &gtm.Mock{}
+
+		client.On("GetASMap",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("gtm.GetASMapRequest"),
+		).Return(nil, &gtm.Error{
+			StatusCode: http.StatusNotFound,
+		}).Once()
 
 		asmap, dc := getASMapTestData()
 

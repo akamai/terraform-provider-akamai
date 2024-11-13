@@ -25,7 +25,7 @@ func TestResGTMGeoMap(t *testing.T) {
 			mock.AnythingOfType("gtm.GetGeoMapRequest"),
 		).Return(nil, &gtm.Error{
 			StatusCode: http.StatusNotFound,
-		}).Once()
+		}).Twice()
 
 		resp := geomap
 		client.On("CreateGeoMap",
@@ -96,6 +96,13 @@ func TestResGTMGeoMap(t *testing.T) {
 	t.Run("create geomap failed", func(t *testing.T) {
 		client := &gtm.Mock{}
 
+		client.On("GetGeoMap",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("gtm.GetGeoMapRequest"),
+		).Return(nil, &gtm.Error{
+			StatusCode: http.StatusNotFound,
+		}).Once()
+
 		client.On("CreateGeoMap",
 			mock.Anything, // ctx is irrelevant for this test
 			mock.AnythingOfType("gtm.CreateGeoMapRequest"),
@@ -123,8 +130,38 @@ func TestResGTMGeoMap(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 
+	t.Run("create geomap failed - geomap already exists", func(t *testing.T) {
+		client := &gtm.Mock{}
+
+		client.On("GetGeoMap",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("gtm.GetGeoMapRequest"),
+		).Return(&geomap, nil).Once()
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmGeomap/create_basic.tf"),
+						ExpectError: regexp.MustCompile("geoMap already exists error"),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
 	t.Run("create geomap denied", func(t *testing.T) {
 		client := &gtm.Mock{}
+
+		client.On("GetGeoMap",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("gtm.GetGeoMapRequest"),
+		).Return(nil, &gtm.Error{
+			StatusCode: http.StatusNotFound,
+		}).Once()
 
 		dr := gtm.CreateGeoMapResponse{}
 		dr.Resource = geoMapCreate.Resource

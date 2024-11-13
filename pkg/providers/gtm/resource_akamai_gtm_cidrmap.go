@@ -2,6 +2,7 @@ package gtm
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/gtm"
@@ -12,6 +13,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
+
+const cidrMapAlreadyExistsError = "CidrMap with provided `name` for specific `domain` already exists. Please import specific cidrmap using following command: terraform import akamai_gtm_cidrmap.<your_resource_name> \"%s:%s\""
 
 func resourceGTMv1CIDRMap() *schema.Resource {
 	return &schema.Resource{
@@ -87,6 +90,7 @@ func resourceGTMv1CIDRMapCreate(ctx context.Context, d *schema.ResourceData, m i
 		ctx,
 		session.WithContextLog(logger),
 	)
+	var diags diag.Diagnostics
 
 	domain, err := tf.GetStringValue("domain", d)
 	if err != nil {
@@ -98,8 +102,30 @@ func resourceGTMv1CIDRMapCreate(ctx context.Context, d *schema.ResourceData, m i
 		return diag.FromErr(err)
 	}
 
+	cidr, err := Client(meta).GetCIDRMap(ctx, gtm.GetCIDRMapRequest{
+		DomainName: domain,
+		MapName:    name,
+	})
+	if err != nil && !errors.Is(err, gtm.ErrNotFound) {
+		logger.Errorf("cidrMap Read error: %s", err.Error())
+		return append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "cidrMap Read error",
+			Detail:   err.Error(),
+		})
+	}
+
+	if cidr != nil {
+		cidrMapAlreadyExists := fmt.Sprintf(cidrMapAlreadyExistsError, domain, name)
+		logger.Errorf(cidrMapAlreadyExists)
+		return append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "cidrMap already exists error",
+			Detail:   cidrMapAlreadyExists,
+		})
+	}
+
 	logger.Infof("Creating cidrMap [%s] in domain [%s]", name, domain)
-	var diags diag.Diagnostics
 	// Make sure Default Datacenter exists
 	defaultDatacenter, err := tf.GetInterfaceArrayValue("default_datacenter", d)
 	if err != nil {

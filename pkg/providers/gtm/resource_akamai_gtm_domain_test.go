@@ -22,7 +22,7 @@ func TestResGTMDomain(t *testing.T) {
 			mock.AnythingOfType("gtm.GetDomainRequest"),
 		).Return(nil, &gtm.Error{
 			StatusCode: http.StatusNotFound,
-		}).Once()
+		}).Twice()
 
 		dr := testCreateDomain
 		client.On("CreateDomain",
@@ -105,7 +105,7 @@ func TestResGTMDomain(t *testing.T) {
 			mock.AnythingOfType("gtm.GetDomainRequest"),
 		).Return(nil, &gtm.Error{
 			StatusCode: http.StatusNotFound,
-		})
+		}).Times(4)
 
 		dr := testDomainWithSignAndServe
 		client.On("CreateDomain",
@@ -157,7 +157,7 @@ func TestResGTMDomain(t *testing.T) {
 			mock.AnythingOfType("gtm.GetDomainRequest"),
 		).Return(nil, &gtm.Error{
 			StatusCode: http.StatusNotFound,
-		})
+		}).Times(6)
 
 		dr := testGetDomain
 		client.On("CreateDomain",
@@ -208,6 +208,13 @@ func TestResGTMDomain(t *testing.T) {
 	t.Run("create domain failed", func(t *testing.T) {
 		client := &gtm.Mock{}
 
+		client.On("GetDomain",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("gtm.GetDomainRequest"),
+		).Return(nil, &gtm.Error{
+			StatusCode: http.StatusNotFound,
+		}).Once()
+
 		client.On("CreateDomain",
 			mock.Anything, // ctx is irrelevant for this test
 			mock.AnythingOfType("gtm.CreateDomainRequest"),
@@ -230,8 +237,38 @@ func TestResGTMDomain(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 
+	t.Run("create domain failed - domain already exists", func(t *testing.T) {
+		client := &gtm.Mock{}
+
+		client.On("GetDomain",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("gtm.GetDomainRequest"),
+		).Return(&testCreateDomain, nil).Once()
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmDomain/create_basic.tf"),
+						ExpectError: regexp.MustCompile("domain already exists error"),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
 	t.Run("create domain denied", func(t *testing.T) {
 		client := &gtm.Mock{}
+
+		client.On("GetDomain",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("gtm.GetDomainRequest"),
+		).Return(nil, &gtm.Error{
+			StatusCode: http.StatusNotFound,
+		}).Once()
 
 		dr := gtm.CreateDomainResponse{}
 		dr.Resource = testDomain

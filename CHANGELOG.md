@@ -97,6 +97,15 @@
 * Cloud Access
   * Resolved issues with drift detection after deletion of key version in `akamai_cloudaccess_key` resource. ([I#579](https://github.com/akamai/terraform-provider-akamai/issues/579))
 
+* GTM
+  * Added checks to verify the existence of specific objects on the server during the resource creation process for:
+    * `akamai_gtm_asmap` 
+    * `akamai_gtm_cidrmap` 
+    * `akamai_gtm_domain` 
+    * `akamai_gtm_geomap` 
+    * `akamai_gtm_property` 
+    * `akamai_gtm_resource` 
+
 
 * PAPI
   * Fixed idempotency issue in property activation when `rule_errors` is empty.

@@ -21,7 +21,7 @@ func TestResGTMResource(t *testing.T) {
 			mock.AnythingOfType("gtm.GetResourceRequest"),
 		).Return(nil, &gtm.Error{
 			StatusCode: http.StatusNotFound,
-		}).Once()
+		}).Twice()
 
 		resp := rsrc
 		client.On("CreateResource",
@@ -89,6 +89,13 @@ func TestResGTMResource(t *testing.T) {
 	t.Run("create resource failed", func(t *testing.T) {
 		client := &gtm.Mock{}
 
+		client.On("GetResource",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("gtm.GetResourceRequest"),
+		).Return(nil, &gtm.Error{
+			StatusCode: http.StatusNotFound,
+		}).Once()
+
 		client.On("CreateResource",
 			mock.Anything, // ctx is irrelevant for this test
 			mock.AnythingOfType("gtm.CreateResourceRequest"),
@@ -111,8 +118,38 @@ func TestResGTMResource(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 
+	t.Run("create resource failed - resource already exists", func(t *testing.T) {
+		client := &gtm.Mock{}
+
+		client.On("GetResource",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("gtm.GetResourceRequest"),
+		).Return(&rsrc, nil).Once()
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmResource/create_basic.tf"),
+						ExpectError: regexp.MustCompile("resource already exists error"),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
 	t.Run("create resource denied", func(t *testing.T) {
 		client := &gtm.Mock{}
+
+		client.On("GetResource",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("gtm.GetResourceRequest"),
+		).Return(nil, &gtm.Error{
+			StatusCode: http.StatusNotFound,
+		}).Once()
 
 		dr := gtm.CreateResourceResponse{}
 		dr.Resource = rsrcCreate.Resource
