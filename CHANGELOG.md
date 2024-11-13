@@ -120,6 +120,15 @@
 
 
 
+* Cloud Access
+  * Fixed cases where ProcessingType = "FAILED" was received in response from the `akamai_cloudaccess_key` resource. 
+    This was causing unnecessary pooling until the timeout.
+
+
+
+
+
+
 * PAPI
   * Fixed issue that timeout in `akamai_property_activation` resource would terminate with `Provider produced inconsistent result after apply` error
     * Changed timeout message from warning to error in `akamai_property_activation` and `akamai_property_include_activation` resources

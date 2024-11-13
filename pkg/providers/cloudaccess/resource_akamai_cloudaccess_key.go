@@ -39,11 +39,11 @@ var (
 )
 
 const (
-	readError = "could not read access key from API"
-
-	assignedToPropertyError = "cannot delete version: %d of access key %d assigned to property"
-
-	diagErrAccessKeyNotFound = "Cannot Find Access key: %d"
+	readError                = "could not read access key from API"
+	creationKeyFailed        = "access key creation failed"
+	creationKeyVersionFailed = "access key version creation failed"
+	assignedToPropertyError  = "cannot delete version: %d of access key %d assigned to property"
+	diagErrAccessKeyNotFound = "cannot find access key: %d"
 )
 
 // KeyResource represents akamai_cloudaccess_key resource
@@ -1128,6 +1128,10 @@ func (r *KeyResource) waitUntilActivationCompleted(ctx context.Context, requestI
 				return plan, diags
 			}
 		}
+		if statusResp.ProcessingStatus == cloudaccess.ProcessingFailed {
+			diags.AddError(creationKeyFailed, "Processing failed, retry the terraform apply and verify you've properly formatted the resource arguments.")
+			return nil, diags
+		}
 		select {
 		case <-time.After(pollingInterval):
 			continue
@@ -1168,6 +1172,10 @@ func (r *KeyResource) waitUntilVersionCreatedCompleted(ctx context.Context, requ
 				}
 				return plan, diags
 			}
+		}
+		if statusResp.ProcessingStatus == cloudaccess.ProcessingFailed {
+			diags.AddError(creationKeyVersionFailed, "Processing failed, retry the terraform apply and verify you've properly formatted the resource arguments.")
+			return nil, diags
 		}
 
 		select {

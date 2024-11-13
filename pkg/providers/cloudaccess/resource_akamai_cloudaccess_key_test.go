@@ -1649,6 +1649,71 @@ func TestAccessKeyResource(t *testing.T) {
 				},
 			},
 		},
+		"fail on creation key - processing status failed": {
+			init: func(t *testing.T, m *cloudaccess.Mock, resourceData commonDataForResource) {
+				mockCreateAccessKey(m, resourceData.accessKeyData[0]).Once()
+				// access key creation fail
+				m.On("GetAccessKeyStatus", mock.Anything, cloudaccess.GetAccessKeyStatusRequest{RequestID: 12345}).
+					Return(&cloudaccess.GetAccessKeyStatusResponse{
+						AccessKey: &cloudaccess.KeyLink{
+							AccessKeyUID: resourceData.accessKeyData[0].accessKeyUID,
+						},
+						AccessKeyVersion: &cloudaccess.KeyVersion{
+							AccessKeyUID: resourceData.accessKeyData[0].accessKeyUID,
+							Version:      firstAccessKeyVersion,
+						},
+						ProcessingStatus: cloudaccess.ProcessingFailed,
+						Request: &cloudaccess.RequestInformation{
+							AccessKeyName:        resourceData.accessKeyData[0].accessKeyName,
+							AuthenticationMethod: cloudaccess.AuthType(resourceData.accessKeyData[0].authenticationMethod),
+							ContractID:           resourceData.accessKeyData[0].contractID,
+							GroupID:              resourceData.accessKeyData[0].groupID,
+							NetworkConfiguration: &cloudaccess.SecureNetwork{
+								SecurityNetwork: cloudaccess.NetworkType(resourceData.accessKeyData[0].networkConfig.securityNetwork),
+								AdditionalCDN:   ptr.To(cloudaccess.CDNType(resourceData.accessKeyData[0].networkConfig.additionalCDN)),
+							},
+						},
+						RequestDate: time.Date(2024, 1, 10, 11, 9, 10, 67708, time.UTC),
+						RequestID:   12345,
+						RequestedBy: "dev-user",
+					}, nil)
+			},
+			mockData: resourceMock,
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create_2_versions.tf"),
+					ExpectError: regexp.MustCompile("Error: access key creation failed"),
+				},
+			},
+		},
+		"fail on creation key version - processing status failed": {
+			init: func(t *testing.T, m *cloudaccess.Mock, resourceData commonDataForResource) {
+				mockCreateAccessKey(m, resourceData.accessKeyData[0]).Once()
+				mockGetAccessKeyStatus(m, 12345, resourceData.accessKeyData[0]).Once()
+				mockGetAccessKeyVersion(m, resourceData.accessKeyData[0], cloudaccess.Active, firstAccessKeyVersion).Once()
+				mockCreateAccessKeyVersion(m, resourceData.accessKeyData[0]).Once()
+				// access key version creation fail
+				m.On("GetAccessKeyVersionStatus", mock.Anything, cloudaccess.GetAccessKeyVersionStatusRequest{RequestID: 124}).
+					Return(&cloudaccess.GetAccessKeyVersionStatusResponse{
+						AccessKeyVersion: &cloudaccess.KeyVersion{
+							AccessKeyUID: resourceData.accessKeyData[0].accessKeyUID,
+							Version:      secondAccessKeyVersion,
+						},
+						ProcessingStatus: cloudaccess.ProcessingFailed,
+						RequestDate:      time.Date(2024, 1, 10, 11, 9, 10, 67708, time.UTC),
+						RequestedBy:      "dev-user",
+					}, nil)
+				// delete 1 version
+				mockDeletionAccessKeyWith1Version(m, resourceData)
+			},
+			mockData: resourceMock,
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create_2_versions.tf"),
+					ExpectError: regexp.MustCompile("Error: access key version creation failed"),
+				},
+			},
+		},
 		"fail on creation - not proper additional cdn": {
 			steps: []resource.TestStep{
 				{
