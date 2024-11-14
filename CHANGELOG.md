@@ -149,7 +149,7 @@
 
 
 * PAPI
-  * Fixed import of `akamai_property_include` to properly populate the include's `product_id` field.
+  * Fixed import of `akamai_property_include` to properly populate the include's `product_id` field ([I#575](https://github.com/akamai/terraform-provider-akamai/issues/575)).
 
 ## 6.5.0 (Oct 10, 2024)
 
