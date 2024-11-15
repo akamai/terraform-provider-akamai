@@ -67,8 +67,8 @@
 
 
 
-
-
+* DNS
+  * Added new field `outbound_zone_transfer` to `akamai_dns_zone` resource.
 
 
 
