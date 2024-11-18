@@ -1,155 +1,58 @@
 # RELEASE NOTES
 
-## X.X.X (X X, X)
-
-#### DEPRECATIONS
-
-* Appsec
-  * Deprecated `akamai_appsec_wap_selected_hostnames` data source and resource. Use the `akamai_appsec_aap_selected_hostnames` instead.
-  
-
-
-#### BREAKING CHANGES:
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+## 6.6.0 (Nov 21, 2024)
 
 #### FEATURES/ENHANCEMENTS:
-* Appsec
-  * Fixed problem with missing `security_policy_id` during update, if resource was imported previously.
-  * Added `akamai_appsec_aap_selected_hostnames` resource and datasource.
-  * Modified `enable_botman_siem` from `Required` to `Optional` parameter in `akamai_appsec_siem_settings` resource.
 
-    
+* Appsec
+  * Fixed a problem with the missing `security_policy_id` during update if a resource was imported previously. 
+  * Added the `akamai_appsec_aap_selected_hostnames` resource and data source.
+  * Modified the `enable_botman_siem` field from `Required` to the `Optional` parameter in the `akamai_appsec_siem_settings` resource.
 
 * Cloud Access
-  * Added functionality to import access keys in the `akamai_cloudaccess_key` resource, resource with specified group and contract IDs.
-  * Marked `cloud_secret_access_key` as sensitive value in `akamai_cloudaccess_key` resource ([I#580](https://github.com/akamai/terraform-provider-akamai/issues/580))
-
-
-
-
-
+  * Added functionality to import the `akamai_cloudaccess_key` resource for specified group and contract IDs.
+  * Marked the `cloud_secret_access_key` field as a sensitive value in the `akamai_cloudaccess_key` resource ([I#580](https://github.com/akamai/terraform-provider-akamai/issues/580)).
 
 * CPS
-  * Refreshed list of warnings returned by `akamai_cps_warnings` datasource
-
-
-
-
-
-
-
-
-
-
-
-
-
-* Edgeworkers
-  * Stopped sending EdgeKV initialization request in `akamai_edgekv` resource when EdgeKV is already initialized. ([I#589](https://github.com/akamai/terraform-provider-akamai/issues/589))
-
-
-
-
+  * Refreshed a list of warnings returned by the `akamai_cps_warnings` data source.
+  
 * DNS
-  * Added new field `outbound_zone_transfer` to `akamai_dns_zone` resource.
-
-
-
-
+  * Added the new `outbound_zone_transfer` field to the `akamai_dns_zone` resource.
+  
+* Edgeworkers
+  * Stopped sending an EdgeKV initialization request in the `akamai_edgekv` resource when EdgeKV is already initialized. ([I#589](https://github.com/akamai/terraform-provider-akamai/issues/589))
 
 * PAPI
   * Added support for the new rule format `v2024-10-21`.
 
-
-
-
-
-
-
-
-
-
-
 #### BUG FIXES:
+
 * Appsec
-  * Fixed plugin crash if `exceptions` block is passed as empty in `akamai_appsec_siem_settings` resource
-
-
-
-
+  * Fixed a plug-in crash if the `exceptions` block is passed as empty in the `akamai_appsec_siem_settings` resource.
 
 * Cloud Access
-  * Resolved issues with drift detection after deletion of key version in `akamai_cloudaccess_key` resource. ([I#579](https://github.com/akamai/terraform-provider-akamai/issues/579))
-
+  * Resolved issues with drift detection after deleting a key version in the `akamai_cloudaccess_key` resource ([I#579](https://github.com/akamai/terraform-provider-akamai/issues/579)).
+  * Fixed cases where ProcessingType = "FAILED" was received in a response from the `akamai_cloudaccess_key` resource. This was causing unnecessary pooling until the timeout.
+  
 * GTM
-  * Added checks to verify the existence of specific objects on the server during the resource creation process for:
+  * Added checks to verify the existence of specific objects on the server when creating these resources:
     * `akamai_gtm_asmap` 
     * `akamai_gtm_cidrmap` 
     * `akamai_gtm_domain` 
     * `akamai_gtm_geomap` 
     * `akamai_gtm_property` 
-    * `akamai_gtm_resource` 
-
-
-* PAPI
-  * Fixed idempotency issue in property activation when `rule_errors` is empty.
-
-
-
-
-
-
-
-
-
-
-* Cloud Access
-  * Fixed cases where ProcessingType = "FAILED" was received in response from the `akamai_cloudaccess_key` resource. 
-    This was causing unnecessary pooling until the timeout.
-
-
-
-
-
+    * `akamai_gtm_resource`
 
 * PAPI
-  * Fixed issue that timeout in `akamai_property_activation` resource would terminate with `Provider produced inconsistent result after apply` error
-    * Changed timeout message from warning to error in `akamai_property_activation` and `akamai_property_include_activation` resources
+  * Fixed an idempotency issue in property activation when `rule_errors` is empty.
+  * Fixed an issue when timeout in the `akamai_property_activation` resource would terminate with the `Provider produced inconsistent result after apply` error.
+    * Changed a timeout message from a warning to an error in the `akamai_property_activation` and `akamai_property_include_activation` resources.
+  * Fixed an import of the `akamai_property_include` resource to properly populate the include's `product_id` field ([I#575](https://github.com/akamai/terraform-provider-akamai/issues/575)).
 
+#### DEPRECATIONS
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-* PAPI
-  * Fixed import of `akamai_property_include` to properly populate the include's `product_id` field ([I#575](https://github.com/akamai/terraform-provider-akamai/issues/575)).
+* Appsec
+  * Deprecated the `akamai_appsec_wap_selected_hostnames` data source and resource. Use the `akamai_appsec_aap_selected_hostnames` data source and resource instead.
 
 ## 6.5.0 (Oct 10, 2024)
 
