@@ -22,7 +22,7 @@ func TestResGTMCIDRMap(t *testing.T) {
 			mock.AnythingOfType("gtm.GetCIDRMapRequest"),
 		).Return(nil, &gtm.Error{
 			StatusCode: http.StatusNotFound,
-		}).Once()
+		}).Twice()
 
 		resp := cidr
 		client.On("CreateCIDRMap",
@@ -93,6 +93,13 @@ func TestResGTMCIDRMap(t *testing.T) {
 	t.Run("create cidrmap failed", func(t *testing.T) {
 		client := &gtm.Mock{}
 
+		client.On("GetCIDRMap",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("gtm.GetCIDRMapRequest"),
+		).Return(nil, &gtm.Error{
+			StatusCode: http.StatusNotFound,
+		}).Once()
+
 		client.On("CreateCIDRMap",
 			mock.Anything, // ctx is irrelevant for this test
 			mock.AnythingOfType("gtm.CreateCIDRMapRequest"),
@@ -120,8 +127,38 @@ func TestResGTMCIDRMap(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 
+	t.Run("create cidrmap failed - cidrmap already exists", func(t *testing.T) {
+		client := &gtm.Mock{}
+
+		client.On("GetCIDRMap",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("gtm.GetCIDRMapRequest"),
+		).Return(&cidr, nil).Once()
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmCidrmap/create_basic.tf"),
+						ExpectError: regexp.MustCompile("cidrMap already exists error"),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
 	t.Run("create cidrmap denied", func(t *testing.T) {
 		client := &gtm.Mock{}
+
+		client.On("GetCIDRMap",
+			mock.Anything, // ctx is irrelevant for this test
+			mock.AnythingOfType("gtm.GetCIDRMapRequest"),
+		).Return(nil, &gtm.Error{
+			StatusCode: http.StatusNotFound,
+		}).Once()
 
 		dr := gtm.CreateCIDRMapResponse{}
 		dr.Resource = cidrCreate.Resource

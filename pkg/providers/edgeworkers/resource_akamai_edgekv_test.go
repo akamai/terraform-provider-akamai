@@ -147,74 +147,62 @@ func Test_populateEKV(t *testing.T) {
 }
 
 func TestResourceEdgeKV(t *testing.T) {
-	initWindow = time.Millisecond
-	anError := "an error"
-	initialized, inProgress := &edgeworkers.EdgeKVInitializationStatus{
-		AccountStatus:    "INITIALIZED",
-		CPCode:           "1027828",
-		ProductionStatus: "INITIALIZED",
-		StagingStatus:    "INITIALIZED",
-	}, &edgeworkers.EdgeKVInitializationStatus{
-		AccountStatus:    "IN PROGRESS",
-		CPCode:           "123456",
-		ProductionStatus: "IN PROGRESS",
-		StagingStatus:    "IN PROGRESS",
-	}
+	initWindow = time.Duration(1) * time.Millisecond
+
 	ewUpsertBadRequestError := edgeworkers.Error{
 		Status: http.StatusBadRequest,
 		Detail: "The requested namespace does not exist or namespace type is not configured for 1193952 and teststaging.",
 	}
-	initStatusOneAttempt := []*edgeworkers.EdgeKVInitializationStatus{initialized}
-	initNoErrorsOneAttempt := []error{nil}
-	namespaceName, net, retention, retentionUpdated, groupID := "DevExpTest", "staging", ptr.To(86401), ptr.To(88401), ptr.To(1234)
-	var noData []map[string]interface{}
-	id := fmt.Sprintf("%s:%s", namespaceName, net)
+
+	basicData := edgeKVmockData{
+		network:   "staging",
+		name:      "DevExpTest",
+		retention: ptr.To(86401),
+		groupID:   ptr.To(1234),
+	}
+
 	tests := map[string]struct {
 		init  func(*edgeworkers.Mock)
 		steps []resource.TestStep
+		data  edgeKVmockData
 	}{
 		"basic": {
 			init: func(m *edgeworkers.Mock) {
 				// create
-				stubResourceEdgeKVCreatePhase(m, namespaceName, net, retention, groupID, "", "",
-					initStatusOneAttempt, initNoErrorsOneAttempt, noData)
+				mockEdgeKVCreate(m, basicData)
 				// read
-				stubResourceEdgeKVReadPhase(m, namespaceName, net, retention, groupID, "")
-				// read
-				stubResourceEdgeKVReadPhase(m, namespaceName, net, retention, groupID, "")
+				mockEdgeKVRead(m, basicData).Times(2)
 			},
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceEdgeWorkersEdgeKV/basic.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "id", id),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "namespace_name", namespaceName),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "network", net),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "group_id", fmt.Sprintf("%d", *groupID)),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "retention_in_seconds", fmt.Sprintf("%d", *retention)),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "id", "DevExpTest:staging"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "namespace_name", "DevExpTest"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "network", "staging"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "group_id", fmt.Sprintf("%d", 1234)),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "retention_in_seconds", fmt.Sprintf("%d", 86401)),
 					),
 				},
 			},
 		},
 		"basic - retention 0": {
 			init: func(m *edgeworkers.Mock) {
+				data := basicData
+				data.retention = ptr.To(0)
 				// create
-				retention := ptr.To(0)
-				stubResourceEdgeKVCreatePhase(m, namespaceName, net, retention, groupID, "", "",
-					initStatusOneAttempt, initNoErrorsOneAttempt, noData)
+				mockEdgeKVCreate(m, data)
 				// read
-				stubResourceEdgeKVReadPhase(m, namespaceName, net, retention, groupID, "")
-				// read
-				stubResourceEdgeKVReadPhase(m, namespaceName, net, retention, groupID, "")
+				mockEdgeKVRead(m, data).Times(2)
 			},
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceEdgeWorkersEdgeKV/basic_retention_0.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "id", id),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "namespace_name", namespaceName),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "network", net),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "group_id", fmt.Sprintf("%d", *groupID)),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "id", "DevExpTest:staging"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "namespace_name", "DevExpTest"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "network", "staging"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "group_id", fmt.Sprintf("%d", 1234)),
 						resource.TestCheckResourceAttr("akamai_edgekv.test", "retention_in_seconds", fmt.Sprintf("%d", 0)),
 					),
 				},
@@ -222,39 +210,63 @@ func TestResourceEdgeKV(t *testing.T) {
 		},
 		"with some data to upsert": {
 			init: func(m *edgeworkers.Mock) {
+				data := basicData
+				data.items = []mockItem{
+					{
+						key:   "es",
+						value: "hola",
+						group: "greetings",
+					},
+				}
 				// create
-				stubResourceEdgeKVCreatePhase(m, namespaceName, net, retention, groupID, "", "",
-					initStatusOneAttempt, initNoErrorsOneAttempt, []map[string]interface{}{
-						{"key": "es", "value": "hola", "group": "greetings"},
-					})
+				mockEdgeKVCreate(m, data)
 				// read
-				stubResourceEdgeKVReadPhase(m, namespaceName, net, retention, groupID, "")
-				// read
-				stubResourceEdgeKVReadPhase(m, namespaceName, net, retention, groupID, "")
+				mockEdgeKVRead(m, data).Times(2)
 			},
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceEdgeWorkersEdgeKV/ekv_with_data.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "id", id),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "namespace_name", namespaceName),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "network", net),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "group_id", fmt.Sprintf("%d", *groupID)),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "retention_in_seconds", fmt.Sprintf("%d", *retention)),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "id", "DevExpTest:staging"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "namespace_name", "DevExpTest"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "network", "staging"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "group_id", fmt.Sprintf("%d", 1234)),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "retention_in_seconds", fmt.Sprintf("%d", 86401)),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "initial_data.#", fmt.Sprintf("%d", 1)),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "initial_data.0.key", "es"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "initial_data.0.value", "hola"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "initial_data.0.group", "greetings"),
 					),
 				},
 			},
 		},
 		"data upsert error": {
 			init: func(m *edgeworkers.Mock) {
+				data := basicData
+				data.items = []mockItem{
+					{
+						key:   "es",
+						value: "hola",
+						group: "greetings",
+					},
+				}
 				upsertWindow = 1
 				maxUpsertAttempts = 2
 				// create
-				stubResourceEdgeKVCreatePhase(m, namespaceName, net, retention, groupID, "", "",
-					initStatusOneAttempt, initNoErrorsOneAttempt, []map[string]interface{}{
-						{"key": "es", "value": "hola", "group": "greetings", "error": ewUpsertBadRequestError},
-						{"key": "es", "value": "hola", "group": "greetings", "error": ewUpsertBadRequestError},
-					})
+				mockGetEdgeKVInitializationStatus(m, "UNINITIALIZED")
+				mockInitializeEdgeKV(m)
+				mockGetEdgeKVInitializationStatus(m, "INITIALIZED")
+				mockCreateEdgeKVNamespace(m, data)
+				// mock upserting an item twice, so we reach the limit of max attempts = 2 configured for this test and return an error
+				m.On("UpsertItem", mock.Anything, edgeworkers.UpsertItemRequest{
+					ItemID:   data.items[0].key,
+					ItemData: edgeworkers.Item(data.items[0].value),
+					ItemsRequestParams: edgeworkers.ItemsRequestParams{
+						Network:     edgeworkers.ItemNetwork(data.network),
+						NamespaceID: data.name,
+						GroupID:     data.items[0].group,
+					},
+				}).Return(nil, fmt.Errorf("%s: %v", edgeworkers.ErrUpsertItem, ewUpsertBadRequestError)).Twice()
 			},
 			steps: []resource.TestStep{
 				{
@@ -266,85 +278,135 @@ func TestResourceEdgeKV(t *testing.T) {
 		"error in namespace initialization": {
 			init: func(m *edgeworkers.Mock) {
 				// create
-				stubResourceEdgeKVCreatePhase(m, namespaceName, net, retention, groupID, anError, "",
-					[]*edgeworkers.EdgeKVInitializationStatus{}, []error{}, noData)
+				mockGetEdgeKVInitializationStatus(m, "UNINITIALIZED")
+				// expect an error on InitializeEdgeKV
+				m.On("InitializeEdgeKV", mock.Anything).Return(nil, fmt.Errorf("error on initialization edgeKV")).Once()
 			},
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "./testdata/TestResourceEdgeWorkersEdgeKV/basic.tf"),
-					ExpectError: regexp.MustCompile(anError),
+					ExpectError: regexp.MustCompile("error on initialization edgeKV"),
 				},
 			},
 		},
-		"namespace not initialized": {
+		"namespace status PENDING - only waiting for INITIALIZED status": {
 			init: func(m *edgeworkers.Mock) {
-				maxInitDuration = time.Duration(2) * time.Millisecond
 				// create
-				m.On("InitializeEdgeKV", mock.Anything).Return(inProgress, nil).Once()
-				m.On("GetEdgeKVInitializationStatus", mock.Anything).Return(inProgress, nil)
+				// initial check
+				mockGetEdgeKVInitializationStatus(m, "PENDING")
+				// wait function - 1st call
+				mockGetEdgeKVInitializationStatus(m, "PENDING")
+				// namespace initialized, exit waiting function
+				mockGetEdgeKVInitializationStatus(m, "INITIALIZED")
+				// proceed with create flow
+				mockCreateEdgeKVNamespace(m, basicData)
+				// read
+				mockEdgeKVRead(m, basicData).Times(2)
 			},
 			steps: []resource.TestStep{
 				{
-					Config:      testutils.LoadFixtureString(t, "./testdata/TestResourceEdgeWorkersEdgeKV/basic.tf"),
-					ExpectError: regexp.MustCompile("there was a timeout initializing"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceEdgeWorkersEdgeKV/basic.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "id", "DevExpTest:staging"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "namespace_name", "DevExpTest"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "network", "staging"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "group_id", fmt.Sprintf("%d", 1234)),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "retention_in_seconds", fmt.Sprintf("%d", 86401)),
+					),
 				},
 			},
 		},
-		"error create namespace": {
+		"namespace already INITIALIZED": {
 			init: func(m *edgeworkers.Mock) {
 				// create
-				stubResourceEdgeKVCreatePhase(m, namespaceName, net, retention, groupID, "", anError,
-					initStatusOneAttempt, initNoErrorsOneAttempt, noData)
+				// Namespace status is already initialized, we skip waiting and proceed normally
+				mockGetEdgeKVInitializationStatus(m, "INITIALIZED")
+				mockCreateEdgeKVNamespace(m, basicData)
+				// read
+				mockEdgeKVRead(m, basicData).Times(2)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceEdgeWorkersEdgeKV/basic.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "id", "DevExpTest:staging"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "namespace_name", "DevExpTest"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "network", "staging"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "group_id", fmt.Sprintf("%d", 1234)),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "retention_in_seconds", fmt.Sprintf("%d", 86401)),
+					),
+				},
+			},
+		},
+		"error creating namespace": {
+			init: func(m *edgeworkers.Mock) {
+				// create
+				mockGetEdgeKVInitializationStatus(m, "UNINITIALIZED")
+				mockInitializeEdgeKV(m)
+				mockGetEdgeKVInitializationStatus(m, "INITIALIZED")
+				// expect error on creating EdgeKV namespace
+				m.On("CreateEdgeKVNamespace", mock.Anything, edgeworkers.CreateEdgeKVNamespaceRequest{
+					Network: basicData.network,
+					Namespace: edgeworkers.Namespace{
+						Name:        basicData.name,
+						GeoLocation: basicData.geoLocation,
+						Retention:   basicData.retention,
+						GroupID:     basicData.groupID,
+					},
+				}).Return(nil, fmt.Errorf("error creating edgeKV namespace")).Once()
 			},
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "./testdata/TestResourceEdgeWorkersEdgeKV/basic.tf"),
-					ExpectError: regexp.MustCompile(anError),
+					ExpectError: regexp.MustCompile("error creating edgeKV namespace"),
 				},
 			},
 		},
 		"basic error read": {
 			init: func(m *edgeworkers.Mock) {
 				// create
-				stubResourceEdgeKVCreatePhase(m, namespaceName, net, retention, groupID, "", "",
-					initStatusOneAttempt, initNoErrorsOneAttempt, noData)
-				// read
-				m.On("GetEdgeKVNamespace", mock.Anything, edgeworkers.GetEdgeKVNamespaceRequest{Network: edgeworkers.NamespaceNetwork(net), Name: namespaceName}).Return(nil, fmt.Errorf(anError)).Once()
+				mockEdgeKVCreate(m, basicData)
+				// read - expect error on GetEdgeKVNamespace
+				m.On("GetEdgeKVNamespace", mock.Anything, edgeworkers.GetEdgeKVNamespaceRequest{
+					Network: basicData.network,
+					Name:    basicData.name,
+				}).Return(nil, fmt.Errorf("error reading edgekv namespace")).Once()
 			},
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "./testdata/TestResourceEdgeWorkersEdgeKV/basic.tf"),
-					ExpectError: regexp.MustCompile(anError),
+					ExpectError: regexp.MustCompile("error reading edgekv namespace"),
 				},
 			},
 		},
 		"basic no diff no update": {
 			init: func(m *edgeworkers.Mock) {
 				// create
-				stubResourceEdgeKVCreatePhase(m, namespaceName, net, retention, groupID, "", "",
-					initStatusOneAttempt, initNoErrorsOneAttempt, noData)
+				mockEdgeKVCreate(m, basicData)
 				// read
-				stubResourceEdgeKVReadPhase(m, namespaceName, net, retention, groupID, "").Times(4)
+				mockEdgeKVRead(m, basicData).Times(2)
+				// read before update
+				mockEdgeKVRead(m, basicData).Times(2)
 			},
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceEdgeWorkersEdgeKV/basic.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "id", id),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "namespace_name", namespaceName),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "network", net),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "group_id", fmt.Sprintf("%d", *groupID)),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "retention_in_seconds", fmt.Sprintf("%d", *retention)),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "id", "DevExpTest:staging"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "namespace_name", "DevExpTest"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "network", "staging"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "group_id", fmt.Sprintf("%d", 1234)),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "retention_in_seconds", fmt.Sprintf("%d", 86401)),
 					),
 				},
 				{
 					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceEdgeWorkersEdgeKV/basic.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "id", id),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "namespace_name", namespaceName),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "network", net),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "group_id", fmt.Sprintf("%d", *groupID)),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "retention_in_seconds", fmt.Sprintf("%d", *retention)),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "id", "DevExpTest:staging"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "namespace_name", "DevExpTest"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "network", "staging"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "group_id", fmt.Sprintf("%d", 1234)),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "retention_in_seconds", fmt.Sprintf("%d", 86401)),
 					),
 				},
 			},
@@ -352,65 +414,71 @@ func TestResourceEdgeKV(t *testing.T) {
 		"ignore diff on group_id": {
 			init: func(m *edgeworkers.Mock) {
 				// create
-				stubResourceEdgeKVCreatePhase(m, namespaceName, net, retention, groupID, "", "",
-					initStatusOneAttempt, initNoErrorsOneAttempt, noData)
+				mockEdgeKVCreate(m, basicData)
 				// read
-				stubResourceEdgeKVReadPhase(m, namespaceName, net, retention, groupID, "").Times(4)
+				mockEdgeKVRead(m, basicData).Times(2)
+				// read before update
+				mockEdgeKVRead(m, basicData).Times(2)
 			},
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceEdgeWorkersEdgeKV/basic.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "id", id),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "namespace_name", namespaceName),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "network", net),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "group_id", fmt.Sprintf("%d", *groupID)),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "retention_in_seconds", fmt.Sprintf("%d", *retention)),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "id", "DevExpTest:staging"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "namespace_name", "DevExpTest"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "network", "staging"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "group_id", fmt.Sprintf("%d", 1234)),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "retention_in_seconds", fmt.Sprintf("%d", 86401)),
 					),
 				},
 				{
 					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceEdgeWorkersEdgeKV/update_diff_group_id.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "id", id),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "namespace_name", namespaceName),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "network", net),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "group_id", fmt.Sprintf("%d", *groupID)),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "retention_in_seconds", fmt.Sprintf("%d", *retention)),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "id", "DevExpTest:staging"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "namespace_name", "DevExpTest"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "network", "staging"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "group_id", fmt.Sprintf("%d", 1234)),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "retention_in_seconds", fmt.Sprintf("%d", 86401)),
 					),
 				},
 			},
 		},
 		"basic diff retention update": {
 			init: func(m *edgeworkers.Mock) {
+				data := basicData
 				// create
-				stubResourceEdgeKVCreatePhase(m, namespaceName, net, retention, groupID, "", "",
-					initStatusOneAttempt, initNoErrorsOneAttempt, noData)
+				mockEdgeKVCreate(m, data)
 				// read
-				stubResourceEdgeKVReadPhase(m, namespaceName, net, retention, groupID, "").Times(3)
-				// update
-				stubResourceEdgeKVUpdatePhase(m, namespaceName, retentionUpdated, groupID, nil)
+				mockEdgeKVRead(m, data).Times(2)
+				// read before update
+				mockEdgeKVRead(m, data)
+
+				// update retention value
+				data.retention = ptr.To(88401)
+				mockUpdateEdgeKVNamespace(m, data)
+
 				// read
-				stubResourceEdgeKVReadPhase(m, namespaceName, net, retentionUpdated, groupID, "").Times(2)
+				mockEdgeKVRead(m, data).Times(2)
 			},
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceEdgeWorkersEdgeKV/basic.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "id", id),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "namespace_name", namespaceName),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "network", net),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "group_id", fmt.Sprintf("%d", *groupID)),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "retention_in_seconds", fmt.Sprintf("%d", *retention)),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "id", "DevExpTest:staging"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "namespace_name", "DevExpTest"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "network", "staging"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "group_id", fmt.Sprintf("%d", 1234)),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "retention_in_seconds", fmt.Sprintf("%d", 86401)),
 					),
 				},
 				{
 					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceEdgeWorkersEdgeKV/update_retention.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "id", id),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "namespace_name", namespaceName),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "network", net),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "group_id", fmt.Sprintf("%d", *groupID)),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "retention_in_seconds", fmt.Sprintf("%d", *retentionUpdated)),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "id", "DevExpTest:staging"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "namespace_name", "DevExpTest"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "network", "staging"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "group_id", fmt.Sprintf("%d", 1234)),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "retention_in_seconds", fmt.Sprintf("%d", 88401)),
 					),
 				},
 			},
@@ -418,20 +486,21 @@ func TestResourceEdgeKV(t *testing.T) {
 		"basic diff initial_data upsert attempt -> error": {
 			init: func(m *edgeworkers.Mock) {
 				// create
-				stubResourceEdgeKVCreatePhase(m, namespaceName, net, retention, groupID, "", "",
-					initStatusOneAttempt, initNoErrorsOneAttempt, noData)
+				mockEdgeKVCreate(m, basicData)
 				// read
-				stubResourceEdgeKVReadPhase(m, namespaceName, net, retention, groupID, "").Times(3)
+				mockEdgeKVRead(m, basicData).Times(2)
+				// read before update
+				mockEdgeKVRead(m, basicData)
 			},
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceEdgeWorkersEdgeKV/basic.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "id", id),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "namespace_name", namespaceName),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "network", net),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "group_id", fmt.Sprintf("%d", *groupID)),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "retention_in_seconds", fmt.Sprintf("%d", *retention)),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "id", "DevExpTest:staging"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "namespace_name", "DevExpTest"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "network", "staging"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "group_id", fmt.Sprintf("%d", 1234)),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "retention_in_seconds", fmt.Sprintf("%d", 86401)),
 					),
 				},
 				{
@@ -442,15 +511,12 @@ func TestResourceEdgeKV(t *testing.T) {
 		},
 		"test import": {
 			init: func(m *edgeworkers.Mock) {
-				// create
-				stubResourceEdgeKVCreatePhase(m, namespaceName, net, retention, groupID, "", "",
-					initStatusOneAttempt, initNoErrorsOneAttempt, noData)
-				// read
-				stubResourceEdgeKVReadPhase(m, namespaceName, net, retention, groupID, "")
-				// read
-				stubResourceEdgeKVReadPhase(m, namespaceName, net, retention, groupID, "")
-				// 2nd step: import
-				stubResourceEdgeKVReadPhase(m, namespaceName, net, retention, groupID, "")
+				// 1st step: create
+				mockEdgeKVCreate(m, basicData)
+				// 1st step: read
+				mockEdgeKVRead(m, basicData).Times(2)
+				// 2nd step: import (read)
+				mockEdgeKVRead(m, basicData)
 			},
 			steps: []resource.TestStep{
 				{
@@ -458,7 +524,7 @@ func TestResourceEdgeKV(t *testing.T) {
 				},
 				{
 					ImportState:       true,
-					ImportStateId:     id,
+					ImportStateId:     "DevExpTest:staging",
 					ResourceName:      "akamai_edgekv.test",
 					ImportStateVerify: true,
 				},
@@ -467,12 +533,9 @@ func TestResourceEdgeKV(t *testing.T) {
 		"test import - invalid ID": {
 			init: func(m *edgeworkers.Mock) {
 				// create
-				stubResourceEdgeKVCreatePhase(m, namespaceName, net, retention, groupID, "", "",
-					initStatusOneAttempt, initNoErrorsOneAttempt, noData)
+				mockEdgeKVCreate(m, basicData)
 				// read
-				stubResourceEdgeKVReadPhase(m, namespaceName, net, retention, groupID, "")
-				// read
-				stubResourceEdgeKVReadPhase(m, namespaceName, net, retention, groupID, "")
+				mockEdgeKVRead(m, basicData).Times(2)
 			},
 			steps: []resource.TestStep{
 				{
@@ -488,6 +551,7 @@ func TestResourceEdgeKV(t *testing.T) {
 			},
 		},
 	}
+
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			client := &edgeworkers.Mock{}
@@ -500,79 +564,98 @@ func TestResourceEdgeKV(t *testing.T) {
 				})
 			})
 			client.AssertExpectations(t)
-			maxInitDuration = time.Minute
 		})
 	}
 }
 
-func stubResourceEdgeKVUpdatePhase(m *edgeworkers.Mock, namespaceName string, retention, groupID *int, err *edgeworkers.Error) *mock.Call {
-	call := m.On("UpdateEdgeKVNamespace", mock.Anything, mock.AnythingOfType("edgeworkers.UpdateEdgeKVNamespaceRequest"))
-	if err != nil {
-		return call.Return(nil, err).Once()
+type (
+	edgeKVmockData struct {
+		network     edgeworkers.NamespaceNetwork
+		name        string
+		geoLocation string
+		retention   *int
+		groupID     *int
+		items       []mockItem
 	}
-	return call.Return(&edgeworkers.Namespace{
-		Name:      namespaceName,
-		Retention: retention,
-		GroupID:   groupID,
+
+	mockItem struct {
+		key   string
+		value string
+		group string
+	}
+)
+
+func mockEdgeKVCreate(m *edgeworkers.Mock, data edgeKVmockData) {
+	mockGetEdgeKVInitializationStatus(m, "UNINITIALIZED")
+	mockInitializeEdgeKV(m)
+	mockGetEdgeKVInitializationStatus(m, "INITIALIZED")
+	mockCreateEdgeKVNamespace(m, data)
+	mockUpsertItems(m, data)
+}
+
+func mockEdgeKVRead(m *edgeworkers.Mock, data edgeKVmockData) *mock.Call {
+	return m.On("GetEdgeKVNamespace", mock.Anything, edgeworkers.GetEdgeKVNamespaceRequest{
+		Network: data.network,
+		Name:    data.name,
+	}).Return(&edgeworkers.Namespace{
+		Name:      data.name,
+		Retention: data.retention,
+		GroupID:   data.groupID,
 	}, nil).Once()
 }
 
-func stubResourceEdgeKVReadPhase(m *edgeworkers.Mock, namespaceName, net string, retention, groupID *int, anError string) *mock.Call {
-	on := m.On("GetEdgeKVNamespace", mock.Anything, edgeworkers.GetEdgeKVNamespaceRequest{Network: edgeworkers.NamespaceNetwork(net), Name: namespaceName})
-	if anError != "" {
-		return on.Return(nil, fmt.Errorf(anError)).Once()
-	}
-	return on.Return(&edgeworkers.Namespace{
-		Name:      namespaceName,
-		Retention: retention,
-		GroupID:   groupID,
+func mockGetEdgeKVInitializationStatus(m *edgeworkers.Mock, status string) {
+	m.On("GetEdgeKVInitializationStatus", mock.Anything).Return(&edgeworkers.EdgeKVInitializationStatus{
+		AccountStatus:    status,
+		CPCode:           "123456",
+		ProductionStatus: status,
+		StagingStatus:    status,
 	}, nil).Once()
 }
 
-func stubResourceEdgeKVCreatePhase(m *edgeworkers.Mock, namespaceName, net string, retention, groupID *int,
-	errorInit, errorCreate string, initStatus []*edgeworkers.EdgeKVInitializationStatus,
-	errInitStatus []error, data []map[string]interface{}) {
-	onInit := m.On("InitializeEdgeKV", mock.Anything)
-	if errorInit != "" {
-		onInit.Return(nil, fmt.Errorf(errorInit)).Once()
-		return
-	}
-	onInit.Return(&edgeworkers.EdgeKVInitializationStatus{}, nil).Once()
-	if len(errInitStatus) != len(initStatus) {
-		panic(fmt.Sprintf("len(errInitStatus)=%d && len(errInitStatus)=%d", len(errInitStatus), len(initStatus)))
-	}
-	for i, err := range errInitStatus {
-		status := initStatus[i]
-		m.On("GetEdgeKVInitializationStatus", mock.Anything).Return(status, err).Once()
-	}
-	onCreate := m.On("CreateEdgeKVNamespace", mock.Anything, edgeworkers.CreateEdgeKVNamespaceRequest{
-		Network: edgeworkers.NamespaceNetwork(net),
-		Namespace: edgeworkers.Namespace{
-			Name:      namespaceName,
-			Retention: retention,
-			GroupID:   groupID,
-		},
-	})
-	if errorCreate != "" {
-		onCreate.Return(nil, fmt.Errorf(errorCreate))
-		return
-	}
-	onCreate.Return(&edgeworkers.Namespace{Name: namespaceName}, nil).Once()
+func mockInitializeEdgeKV(m *edgeworkers.Mock) {
+	m.On("InitializeEdgeKV", mock.Anything).Return(&edgeworkers.EdgeKVInitializationStatus{}, nil).Once()
+}
 
-	for _, item := range data {
-		onUpsert := m.On("UpsertItem", mock.Anything, edgeworkers.UpsertItemRequest{
-			ItemID:   getStringValue(item, "key"),
-			ItemData: edgeworkers.Item(getStringValue(item, "value")),
+func mockCreateEdgeKVNamespace(m *edgeworkers.Mock, data edgeKVmockData) {
+	namespace := edgeworkers.Namespace{
+		Name:        data.name,
+		GeoLocation: data.geoLocation,
+		Retention:   data.retention,
+		GroupID:     data.groupID,
+	}
+
+	m.On("CreateEdgeKVNamespace", mock.Anything, edgeworkers.CreateEdgeKVNamespaceRequest{
+		Network:   data.network,
+		Namespace: namespace,
+	}).Return(&namespace, nil).Once()
+}
+
+func mockUpsertItems(m *edgeworkers.Mock, data edgeKVmockData) {
+	for _, item := range data.items {
+		m.On("UpsertItem", mock.Anything, edgeworkers.UpsertItemRequest{
+			ItemID:   item.key,
+			ItemData: edgeworkers.Item(item.value),
 			ItemsRequestParams: edgeworkers.ItemsRequestParams{
-				NamespaceID: namespaceName,
-				Network:     edgeworkers.ItemNetwork(net),
-				GroupID:     getStringValue(item, "group"),
+				Network:     edgeworkers.ItemNetwork(data.network),
+				NamespaceID: data.name,
+				GroupID:     item.group,
 			},
-		})
-		if err, ok := item["error"]; ok {
-			onUpsert.Return(nil, fmt.Errorf("%s: %s", edgeworkers.ErrUpsertItem, err)).Once()
-		} else {
-			onUpsert.Return(ptr.To("OK"), nil).Once()
-		}
+		}).Return(ptr.To("OK"), nil).Once()
 	}
+}
+
+func mockUpdateEdgeKVNamespace(m *edgeworkers.Mock, data edgeKVmockData) {
+	m.On("UpdateEdgeKVNamespace", mock.Anything, edgeworkers.UpdateEdgeKVNamespaceRequest{
+		Network: data.network,
+		UpdateNamespace: edgeworkers.UpdateNamespace{
+			Name:      data.name,
+			Retention: data.retention,
+			GroupID:   data.groupID,
+		},
+	}).Return(&edgeworkers.Namespace{
+		Name:      data.name,
+		Retention: data.retention,
+		GroupID:   data.groupID,
+	}, nil).Once()
 }

@@ -24,13 +24,10 @@ $(BIN)/tflint: $(BIN) ; $(info $(M) Installing tflint...)
 $(BIN):
 	@mkdir -p $@
 $(BIN)/%: | $(BIN) ; $(info $(M) Installing $(PACKAGE)...)
-	@tmp=$$(mktemp -d); \
-	   env GO111MODULE=off GOPATH=$$tmp GOBIN=$(BIN) $(GOCMD) get $(PACKAGE) \
-		|| ret=$$?; \
-	   rm -rf $$tmp ; exit $$ret
+	env GOBIN=$(BIN) $(GOCMD) install $(PACKAGE)
 
 GOIMPORTS = $(BIN)/goimports
-$(BIN)/goimports: PACKAGE=golang.org/x/tools/cmd/goimports
+$(BIN)/goimports: PACKAGE=golang.org/x/tools/cmd/goimports@v0.24.0
 
 GOLANGCI_LINT_VERSION = v1.55.2
 GOLANGCILINT = $(BIN)/golangci-lint

@@ -12,6 +12,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/papi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/str"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/logger"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
@@ -275,6 +276,19 @@ func resourcePropertyIncludeRead(ctx context.Context, rd *schema.ResourceData, m
 		return diag.Errorf("%s read: %s", ErrPropertyInclude, err)
 	}
 
+	getIncludeVersionResp, err := client.GetIncludeVersion(ctx, papi.GetIncludeVersionRequest{
+		IncludeID:  includeID,
+		Version:    include.LatestVersion,
+		ContractID: contractID,
+		GroupID:    groupID,
+	})
+	if err != nil {
+		return diag.Errorf("%s read: %s", ErrPropertyInclude, err)
+	}
+	productID := str.AddPrefix(getIncludeVersionResp.IncludeVersion.ProductID, "prd_")
+	logger.Debugf("Fetched product id: %s from version: %d, will be saved in state as: %s",
+		getIncludeVersionResp.IncludeVersion.ProductID, include.LatestVersion, productID)
+
 	rules := papi.RulesUpdate{
 		Comments: getIncludeRuleTreeResp.Comments,
 		Rules:    getIncludeRuleTreeResp.Rules,
@@ -302,6 +316,7 @@ func resourcePropertyIncludeRead(ctx context.Context, rd *schema.ResourceData, m
 		"latest_version":     include.LatestVersion,
 		"staging_version":    stagingVersion,
 		"production_version": productionVersion,
+		"product_id":         productID,
 	}
 
 	var rulesError string

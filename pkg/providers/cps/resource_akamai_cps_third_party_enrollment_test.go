@@ -1360,7 +1360,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		client.On("GetChangePreVerificationWarnings", mock.Anything, cps.GetChangeRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
-		}).Return(&cps.PreVerificationWarnings{Warnings: "Certificate data is blank or missing for 'RSA'.\nThe 'ECDSA' certificate is set to expire in [2] years, [3] months. The certificate has a validity period of greater than 397 days. This certificate will not be accepted by all major browsers for SSL/TLS connections. Please work with your Certificate Authority to reissue the certificate with an acceptable lifetime.\nThe trust chain is empty and the end-entity certificate may have been signed by a non-standard root certificate."}, nil).Once()
+		}).Return(&cps.PreVerificationWarnings{Warnings: "The key for 'RSA' certificate has expired. You need to create and submit a new certificate.\nThe 'ECDSA' certificate is set to expire in [2] years, [3] months. The certificate has a validity period of greater than 397 days. This certificate will not be accepted by all major browsers for SSL/TLS connections. Please work with your Certificate Authority to reissue the certificate with an acceptable lifetime.\nThe trust chain is empty and the end-entity certificate may have been signed by a non-standard root certificate."}, nil).Once()
 
 		client.On("AcknowledgePreVerificationWarnings", mock.Anything, cps.AcknowledgementRequest{
 			EnrollmentID:    1,
@@ -1465,7 +1465,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		client.On("GetChangePreVerificationWarnings", mock.Anything, cps.GetChangeRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
-		}).Return(&cps.PreVerificationWarnings{Warnings: "Certificate data is blank or missing for 'RSA'.\nError parsing expected trust chains.\nThe trust chain is empty and the end-entity certificate may have been signed by a non-standard root certificate."}, nil).Once()
+		}).Return(&cps.PreVerificationWarnings{Warnings: "The key for 'RSA' certificate has expired. You need to create and submit a new certificate.\nError parsing expected trust chains.\nThe trust chain is empty and the end-entity certificate may have been signed by a non-standard root certificate."}, nil).Once()
 
 		allowCancel := true
 		client.On("RemoveEnrollment", mock.Anything, cps.RemoveEnrollmentRequest{
@@ -1544,7 +1544,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		client.On("GetChangePreVerificationWarnings", mock.Anything, cps.GetChangeRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
-		}).Return(&cps.PreVerificationWarnings{Warnings: "Certificate data is blank or missing for 'RSA'.\nThis is unknown warning.\nThe trust chain is empty and the end-entity certificate may have been signed by a non-standard root certificate."}, nil).Once()
+		}).Return(&cps.PreVerificationWarnings{Warnings: "The key for 'RSA' certificate has expired. You need to create and submit a new certificate.\nThis is unknown warning.\nThe trust chain is empty and the end-entity certificate may have been signed by a non-standard root certificate."}, nil).Once()
 
 		allowCancel := true
 		client.On("RemoveEnrollment", mock.Anything, cps.RemoveEnrollmentRequest{

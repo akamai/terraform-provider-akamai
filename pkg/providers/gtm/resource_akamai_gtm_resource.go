@@ -15,6 +15,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
+const resourceMapAlreadyExistsError = "Resource with provided `name` for specific `domain` already exists. Please import specific resource using following command: terraform import akamai_gtm_resource.<your_resource_name> \"%s:%s\""
+
 func resourceGTMv1Resource() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceGTMv1ResourceCreate,
@@ -135,7 +137,30 @@ func resourceGTMv1ResourceCreate(ctx context.Context, d *schema.ResourceData, m 
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
 	var diags diag.Diagnostics
+	rsrc, err := Client(meta).GetResource(ctx, gtm.GetResourceRequest{
+		ResourceName: name,
+		DomainName:   domain,
+	})
+	if err != nil && !errors.Is(err, gtm.ErrNotFound) {
+		logger.Errorf("Resource Read failed: %s", err.Error())
+		return append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "Resource Read error",
+			Detail:   err.Error(),
+		})
+	}
+	if rsrc != nil {
+		resourceMapAlreadyExists := fmt.Sprintf(resourceMapAlreadyExistsError, domain, name)
+		logger.Errorf(resourceMapAlreadyExists)
+		return append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "resource already exists error",
+			Detail:   resourceMapAlreadyExists,
+		})
+	}
+
 	logger.Infof("Creating resource [%s] in domain [%s]", name, domain)
 	newRsrc, err := populateNewResourceObject(d, m)
 	if err != nil {

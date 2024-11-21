@@ -14,6 +14,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
+const geoMapAlreadyExistsError = "GeoMap with provided `name` for specific `domain` already exists. Please import specific geomap using following command: terraform import akamai_gtm_geomap.<your_resource_name> \"%s:%s\""
+
 func resourceGTMv1GeoMap() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceGTMv1GeoMapCreate,
@@ -89,6 +91,7 @@ func resourceGTMv1GeoMapCreate(ctx context.Context, d *schema.ResourceData, m in
 		ctx,
 		session.WithContextLog(logger),
 	)
+	var diags diag.Diagnostics
 
 	domain, err := tf.GetStringValue("domain", d)
 	if err != nil {
@@ -100,6 +103,28 @@ func resourceGTMv1GeoMapCreate(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(err)
 	}
 
+	geo, err := Client(meta).GetGeoMap(ctx, gtm.GetGeoMapRequest{
+		MapName:    name,
+		DomainName: domain,
+	})
+	if err != nil && !errors.Is(err, gtm.ErrNotFound) {
+		logger.Errorf("geoMap Read error: %s", err.Error())
+		return append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "geoMap Read error",
+			Detail:   err.Error(),
+		})
+	}
+	if geo != nil {
+		geoMapAlreadyExists := fmt.Sprintf(geoMapAlreadyExistsError, domain, name)
+		logger.Errorf(geoMapAlreadyExists)
+		return append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "geoMap already exists error",
+			Detail:   geoMapAlreadyExists,
+		})
+	}
+
 	logger.Infof("[Akamai GTM] Creating geoMap [%s] in domain [%s]", name, domain)
 	// Make sure Default Datacenter exists
 	geoDefaultDCList, err := tf.GetInterfaceArrayValue("default_datacenter", d)
@@ -107,7 +132,6 @@ func resourceGTMv1GeoMapCreate(ctx context.Context, d *schema.ResourceData, m in
 		logger.Errorf("Default datacenter not initialized: %s", err.Error())
 		return diag.FromErr(err)
 	}
-	var diags diag.Diagnostics
 	if err := validateDefaultDC(ctx, meta, geoDefaultDCList, domain); err != nil {
 		logger.Errorf("Default datacenter validation error: %s", err.Error())
 		return append(diags, diag.Diagnostic{

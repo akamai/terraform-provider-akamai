@@ -14,7 +14,9 @@ import (
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
+	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -220,7 +222,17 @@ func TestResourcePropertyInclude(t *testing.T) {
 
 		getIncludeRuleTreeCall := expectGetIncludeRuleTree(m, testData)
 
-		return testutils.MockCalls{getIncludeCall, getIncludeRuleTreeCall}
+		getIncludeVersionCall := m.On("GetIncludeVersion", mock.Anything, papi.GetIncludeVersionRequest{
+			IncludeID:  includeID,
+			Version:    testData.latestVersion,
+			ContractID: testData.contractID,
+			GroupID:    testData.groupID,
+		}).Return(&papi.GetIncludeVersionResponse{
+			IncludeVersion: papi.IncludeVersion{
+				ProductID: testData.productID,
+			}}, nil)
+
+		return testutils.MockCalls{getIncludeCall, getIncludeRuleTreeCall, getIncludeVersionCall}
 	}
 
 	expectUpdate := func(m *papi.Mock, testData *testData) testutils.MockCalls {
@@ -894,7 +906,12 @@ func TestResourcePropertyInclude(t *testing.T) {
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_format", "v2022-06-28"),
 					),
-					ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{testutils.FieldsKnownAtPlan{FieldsKnown: []string{"staging_version", "production_version"}, FieldsUnknown: []string{"latest_version"}}}},
+					ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectKnownValue("akamai_property_include.test", tfjsonpath.New("staging_version"), knownvalue.StringExact("")),
+						plancheck.ExpectKnownValue("akamai_property_include.test", tfjsonpath.New("production_version"), knownvalue.StringExact("")),
+						plancheck.ExpectUnknownValue("akamai_property_include.test", tfjsonpath.New("latest_version")),
+					},
+					},
 				},
 			},
 		},
@@ -947,11 +964,10 @@ func TestResourcePropertyInclude(t *testing.T) {
 					Config: testutils.LoadFixtureString(t, "%s/property_include_import.tf", workdir),
 				},
 				{
-					ImportState:             true,
-					ImportStateId:           "ctr_123:grp_123:inc_123",
-					ResourceName:            "akamai_property_include.test",
-					ImportStateVerify:       true,
-					ImportStateVerifyIgnore: []string{"product_id"},
+					ImportState:       true,
+					ImportStateId:     "ctr_123:grp_123:inc_123",
+					ResourceName:      "akamai_property_include.test",
+					ImportStateVerify: true,
 				},
 			},
 		},

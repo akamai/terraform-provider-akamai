@@ -59,6 +59,7 @@ func (p *Subprovider) Client(meta meta.Meta) appsec.APPSEC {
 // SDKResources returns the appsec resources implemented using terraform-plugin-sdk
 func (p *Subprovider) SDKResources() map[string]*schema.Resource {
 	return map[string]*schema.Resource{
+		"akamai_appsec_aap_selected_hostnames":                   resourceAAPSelectedHostnames(),
 		"akamai_appsec_activations":                              resourceActivations(),
 		"akamai_appsec_advanced_settings_attack_payload_logging": resourceAdvancedSettingsAttackPayloadLogging(),
 		"akamai_appsec_advanced_settings_evasive_path_match":     resourceAdvancedSettingsEvasivePathMatch(),
@@ -118,6 +119,7 @@ func (p *Subprovider) SDKResources() map[string]*schema.Resource {
 // SDKDataSources returns the appsec data sources implemented using terraform-plugin-sdk
 func (p *Subprovider) SDKDataSources() map[string]*schema.Resource {
 	return map[string]*schema.Resource{
+		"akamai_appsec_aap_selected_hostnames":                   dataSourceAAPSelectedHostnames(),
 		"akamai_appsec_advanced_settings_attack_payload_logging": dataSourceAdvancedSettingsAttackPayloadLogging(),
 		"akamai_appsec_advanced_settings_evasive_path_match":     dataSourceAdvancedSettingsEvasivePathMatch(),
 		"akamai_appsec_advanced_settings_logging":                dataSourceAdvancedSettingsLogging(),

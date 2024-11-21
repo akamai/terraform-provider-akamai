@@ -22,6 +22,30 @@ func TestResDNSZone(t *testing.T) {
 		SignAndServe:    false,
 		ActivationState: "PENDING",
 	}
+	secondaryZone := &dns.GetZoneResponse{
+		ContractID:      "ctr1",
+		Zone:            "secondaryexampleterraform.io",
+		Type:            "secondary",
+		Comment:         "This is a test secondary zone",
+		SignAndServe:    false,
+		ActivationState: "PENDING",
+		Masters:         []string{"1.1.1.1"},
+		OutboundZoneTransfer: &dns.OutboundZoneTransfer{
+			ACL:           []string{"192.0.2.156/24"},
+			Enabled:       true,
+			NotifyTargets: []string{"192.0.2.192"},
+			TSIGKey: &dns.TSIGKey{
+				Name:      "other.com.akamai.com",
+				Algorithm: "hmac-sha1",
+				Secret:    "fakeSecretajVka5cHPEJQIXfLyx5V3PSkFBROAzOn21JumDq6nIpoj6H8rfj5Uo+Ok55ZWQ0Wgrf302fDscHLw==",
+			},
+		},
+		TSIGKey: &dns.TSIGKey{
+			Name:      "other.com.akamai.com",
+			Algorithm: "hmac-sha512",
+			Secret:    "fakeSecretjVka5cHPEJQIXfLyx5V3PSkFBROAzOn21JumDq6nIpoj6H8rfj5Uo+Ok55ZWQ0Wgrf302fDscHLw==",
+		},
+	}
 	recordSetsResp := &dns.GetRecordSetsResponse{
 		RecordSets: make([]dns.RecordSet, 2, 2),
 	}
@@ -255,6 +279,103 @@ func TestResDNSZone(t *testing.T) {
 						Config: testutils.LoadFixtureString(t, "testdata/TestResDnsZone/update_primary.tf"),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr(dataSourceName, "zone", "primaryexampleterraform.io"),
+						),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+	// This test performs a full life-cycle (CRUD) test
+	t.Run("lifecycle test with group and secondary type", func(t *testing.T) {
+		client := &dns.Mock{}
+
+		getCall := client.On("GetZone",
+			mock.Anything,
+			mock.AnythingOfType("dns.GetZoneRequest"),
+		).Return(nil, &dns.Error{
+			StatusCode: http.StatusNotFound,
+		}).Once()
+
+		client.On("CreateZone",
+			mock.Anything,
+			dns.CreateZoneRequest{
+				CreateZone: &dns.ZoneCreate{
+					Zone:         "secondaryexampleterraform.io",
+					Type:         "secondary",
+					Comment:      "This is a test secondary zone",
+					SignAndServe: false,
+					Masters:      []string{"1.1.1.1"},
+					OutboundZoneTransfer: &dns.OutboundZoneTransfer{
+						ACL:           []string{"192.0.2.156/24"},
+						Enabled:       true,
+						NotifyTargets: []string{"192.0.2.192"},
+						TSIGKey: &dns.TSIGKey{
+							Name:      "other.com.akamai.com",
+							Algorithm: "hmac-sha1",
+							Secret:    "fakeSecretajVka5cHPEJQIXfLyx5V3PSkFBROAzOn21JumDq6nIpoj6H8rfj5Uo+Ok55ZWQ0Wgrf302fDscHLw==",
+						},
+					},
+					TSIGKey: &dns.TSIGKey{
+						Name:      "other.com.akamai.com",
+						Algorithm: "hmac-sha512",
+						Secret:    "fakeSecretjVka5cHPEJQIXfLyx5V3PSkFBROAzOn21JumDq6nIpoj6H8rfj5Uo+Ok55ZWQ0Wgrf302fDscHLw==",
+					},
+				},
+				ZoneQueryString: dns.ZoneQueryString{
+					Contract: "ctr1",
+					Group:    "grp1",
+				},
+				ClearConn: []bool{true},
+			},
+		).Return(nil).Run(func(args mock.Arguments) {
+			getCall.ReturnArguments = mock.Arguments{secondaryZone, nil}
+		})
+
+		client.On("GetZone",
+			mock.Anything,
+			mock.AnythingOfType("dns.GetZoneRequest"),
+		).Return(secondaryZone, nil).Times(4)
+
+		client.On("UpdateZone",
+			mock.Anything,
+			mock.AnythingOfType("dns.UpdateZoneRequest"),
+		).Return(nil).Run(func(args mock.Arguments) {
+			secondaryZone.Comment = "This is an updated test secondary zone"
+		})
+
+		client.On("GetZone",
+			mock.Anything,
+			mock.AnythingOfType("dns.GetZoneRequest"),
+		).Return(secondaryZone, nil).Times(3)
+
+		resourceName := "akamai_dns_zone.secondary_test_zone"
+
+		// work around to skip Delete which fails intentionally
+		err := os.Setenv("DNS_ZONE_SKIP_DELETE", "")
+		require.NoError(t, err)
+		defer func() {
+			err = os.Unsetenv("DNS_ZONE_SKIP_DELETE")
+			require.NoError(t, err)
+		}()
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResDnsZone/create_secondary.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr(resourceName, "zone", "secondaryexampleterraform.io"),
+							resource.TestCheckResourceAttr(resourceName, "contract", "ctr1"),
+							resource.TestCheckResourceAttr(resourceName, "comment", "This is a test secondary zone"),
+							resource.TestCheckResourceAttr(resourceName, "group", "grp1"),
+						),
+					},
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResDnsZone/update_secondary.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr(resourceName, "zone", "secondaryexampleterraform.io"),
 						),
 					},
 				},

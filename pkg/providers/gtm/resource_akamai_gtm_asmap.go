@@ -2,6 +2,7 @@ package gtm
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"sort"
@@ -14,6 +15,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
+
+const asMapAlreadyExistsError = "AsMap with provided `name` for specific `domain` already exists. Please import specific asmap using following command: terraform import akamai_gtm_asmap.<your_resource_name> \"%s:%s\""
 
 func resourceGTMv1ASMap() *schema.Resource {
 	return &schema.Resource{
@@ -134,6 +137,7 @@ func resourceGTMv1ASMapCreate(ctx context.Context, d *schema.ResourceData, m int
 		ctx,
 		session.WithContextLog(logger),
 	)
+	var diags diag.Diagnostics
 
 	domain, err := tf.GetStringValue("domain", d)
 	if err != nil {
@@ -146,6 +150,29 @@ func resourceGTMv1ASMapCreate(ctx context.Context, d *schema.ResourceData, m int
 		logger.Errorf("asMap name not initialized: %s", err.Error())
 		return diag.FromErr(err)
 	}
+
+	as, err := Client(meta).GetASMap(ctx, gtm.GetASMapRequest{
+		ASMapName:  name,
+		DomainName: domain,
+	})
+	if err != nil && !errors.Is(err, gtm.ErrNotFound) {
+		logger.Errorf("asMap Read error: %s", err.Error())
+		return append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "asMap Read error",
+			Detail:   err.Error(),
+		})
+	}
+	if as != nil {
+		asMapAlreadyExists := fmt.Sprintf(asMapAlreadyExistsError, domain, name)
+		logger.Errorf(asMapAlreadyExists)
+		return append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "asMap already exists error",
+			Detail:   asMapAlreadyExists,
+		})
+	}
+
 	logger.Infof("Creating asMap [%s] in domain [%s]", name, domain)
 
 	// Make sure Default Datacenter exists
@@ -154,7 +181,6 @@ func resourceGTMv1ASMapCreate(ctx context.Context, d *schema.ResourceData, m int
 		logger.Errorf("Default datacenter not initialized: %s", err.Error())
 		return diag.FromErr(err)
 	}
-	var diags diag.Diagnostics
 	if err := validateDefaultDC(ctx, meta, interfaceArray, domain); err != nil {
 		logger.Errorf("Default datacenter validation error: %s", err.Error())
 		return append(diags, diag.Diagnostic{

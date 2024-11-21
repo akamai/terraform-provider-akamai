@@ -101,6 +101,66 @@ func resourceDNSv2Zone() *schema.Resource {
 					},
 				},
 			},
+			"outbound_zone_transfer": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: "Outbound zone transfer properties.",
+				MaxItems:    1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"acl": {
+							Type:        schema.TypeSet,
+							Elem:        &schema.Schema{Type: schema.TypeString},
+							Optional:    true,
+							Set:         schema.HashString,
+							Description: "The access control list, defined as IPv4 and IPv6 CIDR blocks.",
+						},
+						"enabled": {
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Description: "Enables outbound zone transfer.",
+						},
+						"notify_targets": {
+							Type:     schema.TypeSet,
+							Elem:     &schema.Schema{Type: schema.TypeString},
+							Optional: true,
+							Set:      schema.HashString,
+							Description: "Customer secondary nameservers to notify, if NOTIFY requests are desired. Up to 64 IPv4 or IPv6 addresses. " +
+								"If no targets are specified, you can manually request zone transfer updates as needed.",
+						},
+						"tsig_key": {
+							Type:        schema.TypeList,
+							Optional:    true,
+							MaxItems:    1,
+							Description: "The TSIG key used for outbound zone transfers.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"name": {
+										Type:             schema.TypeString,
+										Required:         true,
+										ValidateDiagFunc: tf.IsNotBlank,
+										Description:      "The zone name.",
+									},
+									"algorithm": {
+										Type:             schema.TypeString,
+										Required:         true,
+										ValidateDiagFunc: tf.IsNotBlank,
+										Description: "The algorithm used to encode the TSIG key's secret data. " +
+											"Possible values are: hmac-md5, hmac-sha1, hmac-sha224, hmac-sha256, hmac-sha384, hmac-sha512, or HMAC-MD5.SIG-ALG.REG.INT.",
+									},
+									"secret": {
+										Type:             schema.TypeString,
+										Required:         true,
+										ValidateDiagFunc: tf.IsNotBlank,
+										Description: "A Base64-encoded string of data. When decoded, it needs to contain the correct number of bits for the chosen algorithm. " +
+											"If the input isn't correctly padded, the server applies the padding.",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
 			"version_id": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -196,12 +256,13 @@ func resourceDNSv2ZoneCreate(ctx context.Context, d *schema.ResourceData, m inte
 			Detail:   fmt.Sprintf("Zone create failure. Zone %s exists", hostname),
 		})
 	}
-	apiError, ok := e.(*dns.Error)
+	var apiError *dns.Error
+	ok := errors.As(e, &apiError)
 	if !ok || apiError.StatusCode != http.StatusNotFound {
 		logger.Errorf("Create[ERROR] %w", e)
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  "Create API falure",
+			Summary:  "Create API failure",
 			Detail:   e.Error(),
 		})
 	}
@@ -297,7 +358,8 @@ func resourceDNSv2ZoneRead(ctx context.Context, d *schema.ResourceData, m interf
 		Zone: hostname,
 	})
 	if e != nil {
-		apiError, ok := e.(*dns.Error)
+		var apiError *dns.Error
+		ok := errors.As(e, &apiError)
 		if ok && apiError.StatusCode == http.StatusNotFound {
 			d.SetId("")
 			return diag.FromErr(e)
@@ -486,7 +548,7 @@ func resourceDNSv2ZoneDelete(_ context.Context, d *schema.ResourceData, m interf
 	logger.WithField("zone", hostname).Info("Zone Delete")
 	// Ignore for Unit test Lifecycle
 	if _, ok := os.LookupEnv("DNS_ZONE_SKIP_DELETE"); ok {
-		logger.Info("DNS Zone delete: intentially skipping")
+		logger.Info("DNS Zone delete: intentionally skipping")
 		return nil
 	}
 	logger.Warn("DNS Zone deletion not allowed")
@@ -528,6 +590,31 @@ func populateDNSv2ZoneState(d *schema.ResourceData, zoneresp *dns.GetZoneRespons
 	if err := d.Set("end_customer_id", zoneresp.EndCustomerID); err != nil {
 		return fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 	}
+
+	outboundZoneTransferListNew := make([]interface{}, 0)
+	if zoneresp.OutboundZoneTransfer != nil {
+		outboundZoneTransferNew := map[string]interface{}{
+			"acl":            zoneresp.OutboundZoneTransfer.ACL,
+			"enabled":        zoneresp.OutboundZoneTransfer.Enabled,
+			"notify_targets": zoneresp.OutboundZoneTransfer.NotifyTargets,
+		}
+		tsigListNew := make([]interface{}, 0)
+		if zoneresp.OutboundZoneTransfer.TSIGKey != nil {
+			tsigNew := map[string]interface{}{
+				"name":      zoneresp.OutboundZoneTransfer.TSIGKey.Name,
+				"algorithm": zoneresp.OutboundZoneTransfer.TSIGKey.Algorithm,
+				"secret":    zoneresp.OutboundZoneTransfer.TSIGKey.Secret,
+			}
+			tsigListNew = append(tsigListNew, tsigNew)
+			outboundZoneTransferNew["tsig_key"] = tsigListNew
+		}
+		outboundZoneTransferListNew = append(outboundZoneTransferListNew, outboundZoneTransferNew)
+	}
+
+	if err := d.Set("outbound_zone_transfer", outboundZoneTransferListNew); err != nil {
+		return fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
+	}
+
 	tsigListNew := make([]interface{}, 0)
 	if zoneresp.TSIGKey != nil {
 		tsigNew := map[string]interface{}{
@@ -553,6 +640,8 @@ func populateDNSv2ZoneState(d *schema.ResourceData, zoneresp *dns.GetZoneRespons
 }
 
 // populate zone object based on current config.
+//
+//nolint:gocyclo
 func populateDNSv2ZoneObject(d *schema.ResourceData, zone *dns.ZoneCreate, logger log.Interface) error {
 	masterSet, err := tf.GetSetValue("masters", d)
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
@@ -601,6 +690,30 @@ func populateDNSv2ZoneObject(d *schema.ResourceData, zone *dns.ZoneCreate, logge
 	if err == nil || d.HasChange("end_customer_id") {
 		zone.EndCustomerID = endCustomerID
 	}
+	outboundZoneTransfer, err := tf.GetListValue("outbound_zone_transfer", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
+		return err
+	}
+	if (err == nil || d.HasChange("outbound_zone_transfer")) && len(outboundZoneTransfer) > 0 {
+		outboundZoneTransferMap, ok := outboundZoneTransfer[0].(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("'outbound_zone_transfer' entry is of invalid type; should be 'map[string]interface{}'")
+		}
+		zone.OutboundZoneTransfer = &dns.OutboundZoneTransfer{
+			ACL:           tf.SetToStringSlice(outboundZoneTransferMap["acl"].(*schema.Set)),
+			Enabled:       outboundZoneTransferMap["enabled"].(bool),
+			NotifyTargets: tf.SetToStringSlice(outboundZoneTransferMap["notify_targets"].(*schema.Set)),
+		}
+		TSIGKey, ok := outboundZoneTransferMap["tsig_key"].([]interface{})
+		if ok && len(TSIGKey) > 0 {
+			zone.OutboundZoneTransfer.TSIGKey = &dns.TSIGKey{
+				Name:      TSIGKey[0].(map[string]interface{})["name"].(string),
+				Algorithm: TSIGKey[0].(map[string]interface{})["algorithm"].(string),
+				Secret:    TSIGKey[0].(map[string]interface{})["secret"].(string),
+			}
+		}
+	}
+
 	TSIGKey, err := tf.GetListValue("tsig_key", d)
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		if !errors.Is(err, tf.ErrNotFound) {

@@ -532,9 +532,9 @@ func createNewActivation(ctx context.Context, client papi.PAPI, activationResour
 
 		case <-ctx.Done():
 			if errors.Is(ctx.Err(), context.DeadlineExceeded) {
-				return diag.Diagnostics{DiagWarnActivationTimeout}
+				return diag.Diagnostics{DiagErrActivationTimeout}
 			} else if errors.Is(ctx.Err(), context.Canceled) {
-				return diag.Diagnostics{DiagWarnActivationCanceled}
+				return diag.Diagnostics{DiagErrActivationCanceled}
 			}
 			return diag.FromErr(fmt.Errorf("activation context terminated: %w", ctx.Err()))
 		}
@@ -595,9 +595,9 @@ func createNewDeactivation(ctx context.Context, client papi.PAPI, activationReso
 
 		case <-ctx.Done():
 			if errors.Is(ctx.Err(), context.DeadlineExceeded) {
-				return diag.Diagnostics{DiagWarnActivationTimeout}
+				return diag.Diagnostics{DiagErrActivationTimeout}
 			} else if errors.Is(ctx.Err(), context.Canceled) {
-				return diag.Diagnostics{DiagWarnActivationCanceled}
+				return diag.Diagnostics{DiagErrActivationCanceled}
 			}
 			return diag.FromErr(fmt.Errorf("activation context terminated: %w", ctx.Err()))
 		}

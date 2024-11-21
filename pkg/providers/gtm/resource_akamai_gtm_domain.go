@@ -21,6 +21,8 @@ import (
 // HashiAcc is Hack for Hashicorp Acceptance Tests
 var HashiAcc = false
 
+const domainMapAlreadyExistsError = "Domain with provided `name` already exists. Please import specific domain using following command: terraform import akamai_gtm_domain.<your_resource_name> \"%s\""
+
 func resourceGTMv1Domain() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceGTMv1DomainCreate,
@@ -225,18 +227,39 @@ func resourceGTMv1DomainCreate(ctx context.Context, d *schema.ResourceData, m in
 		session.WithContextLog(logger),
 	)
 
+	var diags diag.Diagnostics
 	dname, err := tf.GetStringValue("name", d)
 	if err != nil {
 		logger.Errorf("Domain name not found in ResourceData")
 		return diag.FromErr(err)
 	}
+	dom, err := Client(meta).GetDomain(ctx, gtm.GetDomainRequest{
+		DomainName: dname,
+	})
+	if err != nil && !errors.Is(err, gtm.ErrNotFound) {
+		logger.Errorf("Domain Read error: %s", err.Error())
+		return append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "Domain Read error",
+			Detail:   err.Error(),
+		})
+	}
+	if dom != nil {
+		domainAlreadyExists := fmt.Sprintf(domainMapAlreadyExistsError, dname)
+		logger.Errorf(domainAlreadyExists)
+		return append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "domain already exists error",
+			Detail:   domainAlreadyExists,
+		})
+	}
+
 	logger.Infof("Creating domain [%s]", dname)
 	newDom, err := populateNewDomainObject(d, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	logger.Debugf("Domain: [%v]", newDom)
-	var diags diag.Diagnostics
 	queryArgs, err := GetQueryArgs(d)
 	if err != nil {
 		logger.Errorf("Domain Create failed: %s", err.Error())

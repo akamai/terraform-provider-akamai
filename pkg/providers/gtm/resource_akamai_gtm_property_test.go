@@ -59,14 +59,15 @@ func TestResGTMProperty(t *testing.T) {
 		"create property": {
 			property: getBasicProperty(),
 			init: func(t *testing.T, m *gtm.Mock) {
+				mockGetProperty(m, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
 				mockCreateProperty(m, getBasicProperty())
 				// read
-				mockGetProperty(m, getBasicPropertyResponse(), 4)
+				mockGetProperty(m, getBasicPropertyResponse(), nil, 4)
 				// update
 				mockUpdateProperty(m)
 				// read
 				mockGetDomainStatus(m, 2)
-				mockGetProperty(m, getBasicPropertyResponseUpdate(), 3)
+				mockGetProperty(m, getBasicPropertyResponseUpdate(), nil, 3)
 				// delete
 				mockDeleteProperty(m)
 			},
@@ -106,9 +107,10 @@ func TestResGTMProperty(t *testing.T) {
 		"create property with additional liveness test fields": {
 			property: getBasicPropertyWithLivenessTests(),
 			init: func(t *testing.T, m *gtm.Mock) {
+				mockGetProperty(m, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
 				mockCreateProperty(m, getBasicPropertyWithLivenessTests())
 				// read
-				mockGetProperty(m, getBasicPropertyResponseWithLivenessTests(), 3)
+				mockGetProperty(m, getBasicPropertyResponseWithLivenessTests(), nil, 3)
 				// delete
 				mockDeleteProperty(m)
 			},
@@ -133,6 +135,7 @@ func TestResGTMProperty(t *testing.T) {
 		"create property failed": {
 			property: getBasicProperty(),
 			init: func(t *testing.T, m *gtm.Mock) {
+				mockGetProperty(m, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
 				// bad request status code returned
 				m.On("CreateProperty",
 					mock.Anything,
@@ -148,9 +151,22 @@ func TestResGTMProperty(t *testing.T) {
 				},
 			},
 		},
+		"create property failed - property already exists": {
+			property: getBasicProperty(),
+			init: func(t *testing.T, m *gtm.Mock) {
+				mockGetProperty(m, getBasicPropertyResponse(), nil, 1)
+			},
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/create_basic.tf"),
+					ExpectError: regexp.MustCompile("property already exists:"),
+				},
+			},
+		},
 		"create property with retry on Property Validation Failure - no datacenter is assigned to map target": {
 			property: getBasicProperty(),
 			init: func(t *testing.T, m *gtm.Mock) {
+				mockGetProperty(m, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
 				// Simulate a retry scenario
 				m.On("CreateProperty",
 					mock.Anything,
@@ -164,7 +180,7 @@ func TestResGTMProperty(t *testing.T) {
 
 				// Simulate successful property creation on the second attempt
 				mockCreateProperty(m, getBasicProperty())
-				mockGetProperty(m, getBasicPropertyResponse(), 3)
+				mockGetProperty(m, getBasicPropertyResponse(), nil, 3)
 				mockDeleteProperty(m)
 			},
 			steps: []resource.TestStep{
@@ -188,6 +204,7 @@ func TestResGTMProperty(t *testing.T) {
 		"create property with retry on Property Validation Failure - other errors": {
 			property: getBasicProperty(),
 			init: func(t *testing.T, m *gtm.Mock) {
+				mockGetProperty(m, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
 				// Simulate a retry scenario
 				m.On("CreateProperty",
 					mock.Anything,
@@ -210,6 +227,7 @@ func TestResGTMProperty(t *testing.T) {
 		"create property with retry - context canceled": {
 			property: getBasicProperty(),
 			init: func(t *testing.T, m *gtm.Mock) {
+				mockGetProperty(m, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
 				// Simulate a retry scenario
 				m.On("CreateProperty",
 					mock.Anything,
@@ -237,6 +255,7 @@ func TestResGTMProperty(t *testing.T) {
 		"create property denied": {
 			property: nil,
 			init: func(t *testing.T, m *gtm.Mock) {
+				mockGetProperty(m, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
 				// create
 				// denied response status returned
 				deniedResponse := gtm.CreatePropertyResponse{
@@ -258,19 +277,21 @@ func TestResGTMProperty(t *testing.T) {
 		"create property and update name - force new": {
 			property: getBasicProperty(),
 			init: func(t *testing.T, m *gtm.Mock) {
+				mockGetProperty(m, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
 				// create 1st property
 				mockCreateProperty(m, getBasicProperty())
 				// read
-				mockGetProperty(m, getBasicPropertyResponse(), 4)
+				mockGetProperty(m, getBasicPropertyResponse(), nil, 4)
 				// force new -> delete 1st property and recreate 2nd with updated name
 				mockDeleteProperty(m)
 				propertyWithUpdatedName := getBasicProperty()
 				propertyWithUpdatedName.Name = updatedPropertyName
 				propertyResponseWithUpdatedName := getBasicPropertyResponse()
 				propertyResponseWithUpdatedName.Name = updatedPropertyName
+				mockGetProperty(m, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
 				mockCreateProperty(m, propertyWithUpdatedName)
 				// read
-				mockGetProperty(m, propertyResponseWithUpdatedName, 3)
+				mockGetProperty(m, propertyResponseWithUpdatedName, nil, 3)
 				// delete
 				mockDeleteProperty(m)
 			},
@@ -308,6 +329,7 @@ func TestResGTMProperty(t *testing.T) {
 		"test_object_protocol different than HTTP, HTTPS or FTP": {
 			property: getBasicProperty(),
 			init: func(t *testing.T, m *gtm.Mock) {
+				mockGetProperty(m, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
 				// create property with test_object_protocol in first liveness test different from HTTP, HTTPS, FTP
 				// alter mocked property
 				propertyWithLivenessTest := getBasicProperty()
@@ -318,7 +340,7 @@ func TestResGTMProperty(t *testing.T) {
 				propertyResponseWithLivenessTest.LivenessTests[0].TestObjectProtocol = "SNMP"
 				mockCreateProperty(m, propertyWithLivenessTest)
 				// read
-				mockGetProperty(m, propertyResponseWithLivenessTest, 3)
+				mockGetProperty(m, propertyResponseWithLivenessTest, nil, 3)
 				// delete
 				mockDeleteProperty(m)
 			},
@@ -360,9 +382,10 @@ func TestResGTMProperty(t *testing.T) {
 		"create property with 'ranked-failover' type and allow single empty precedence value": {
 			property: getRankedFailoverPropertyWithPrecedence(),
 			init: func(t *testing.T, m *gtm.Mock) {
+				mockGetProperty(m, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
 				mockCreateProperty(m, getRankedFailoverPropertyWithPrecedence())
 				// read
-				mockGetProperty(m, getRankedFailoverPropertyResponseWithPrecedence(), 3)
+				mockGetProperty(m, getRankedFailoverPropertyResponseWithPrecedence(), nil, 3)
 				// delete
 				mockDeleteProperty(m)
 			},
@@ -387,9 +410,10 @@ func TestResGTMProperty(t *testing.T) {
 		"create property with 'ranked-failover' type and 0 set as precedence value": {
 			property: getRankedFailoverPropertyWithPrecedence(),
 			init: func(t *testing.T, m *gtm.Mock) {
+				mockGetProperty(m, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
 				mockCreateProperty(m, getRankedFailoverPropertyWithPrecedence())
 				// read
-				mockGetProperty(m, getRankedFailoverPropertyResponseWithPrecedence(), 3)
+				mockGetProperty(m, getRankedFailoverPropertyResponseWithPrecedence(), nil, 3)
 				// delete
 				mockDeleteProperty(m)
 			},
@@ -1578,10 +1602,9 @@ func getBasicPropertyResponseWithLivenessTests() *gtm.GetPropertyResponse {
 // getMocksForLivenessTest is used for diff tests, where the contents of property not matter as much, as those tests aim to check the diffs
 func getMocksForLivenessTest() *gtm.Mock {
 	client := new(gtm.Mock)
-
 	// read
 	getPropertyCall := client.On("GetProperty", mock.Anything, mock.AnythingOfType("gtm.GetPropertyRequest")).
-		Return(nil, &gtm.Error{StatusCode: http.StatusNotFound})
+		Return(nil, &gtm.Error{StatusCode: http.StatusNotFound}).Times(5)
 	// create
 	// mock.AnythingOfType *gtm.Property is used is those mock calls as there are too many different test cases to mock
 	// each one and for those test it's not important, since we are only checking the diff
@@ -1603,7 +1626,7 @@ func getMocks() *gtm.Mock {
 
 	// read
 	getCall := client.On("GetProperty", mock.Anything, mock.AnythingOfType("gtm.GetPropertyRequest")).
-		Return(nil, &gtm.Error{StatusCode: http.StatusNotFound}).Once()
+		Return(nil, &gtm.Error{StatusCode: http.StatusNotFound}).Twice()
 	// create
 	// mock.AnythingOfType *gtm.Property is used is those mock calls as there are too many different test cases to mock
 	// each one and for those test it's not important, since we are only checking the diff
@@ -1631,7 +1654,7 @@ func getMocksWithoutDatacenterID() *gtm.Mock {
 
 	// read
 	getCall := client.On("GetProperty", mock.Anything, mock.AnythingOfType("gtm.GetPropertyRequest")).
-		Return(nil, &gtm.Error{StatusCode: http.StatusNotFound}).Once()
+		Return(nil, &gtm.Error{StatusCode: http.StatusNotFound}).Twice()
 	// create
 	// mock.AnythingOfType *gtm.Property is used is those mock calls as there are too many different test cases to mock
 	// each one and for those test it's not important, since we are only checking the diff
@@ -1659,7 +1682,7 @@ func getMocksSecondApply() *gtm.Mock {
 
 	// read
 	getCall := client.On("GetProperty", mock.Anything, mock.AnythingOfType("gtm.GetPropertyRequest")).
-		Return(nil, &gtm.Error{StatusCode: http.StatusNotFound}).Once()
+		Return(nil, &gtm.Error{StatusCode: http.StatusNotFound}).Twice()
 	// create
 	// mock.AnythingOfType *gtm.Property is used is those mock calls as there are too many different test cases to mock
 	// each one and for those test it's not important, since we are only checking the diff
@@ -1691,11 +1714,18 @@ func mockCreateProperty(client *gtm.Mock, property *gtm.Property) *mock.Call {
 	).Return(&resp, nil).Once()
 }
 
-func mockGetProperty(client *gtm.Mock, property *gtm.GetPropertyResponse, times int) {
-	client.On("GetProperty",
-		mock.Anything,
-		mock.AnythingOfType("gtm.GetPropertyRequest"),
-	).Return(property, nil).Times(times)
+func mockGetProperty(client *gtm.Mock, property *gtm.GetPropertyResponse, error *gtm.Error, times int) {
+	if property != nil {
+		client.On("GetProperty",
+			mock.Anything,
+			mock.AnythingOfType("gtm.GetPropertyRequest"),
+		).Return(property, nil).Times(times)
+	} else {
+		client.On("GetProperty",
+			mock.Anything,
+			mock.AnythingOfType("gtm.GetPropertyRequest"),
+		).Return(nil, error).Times(times)
+	}
 }
 
 func mockUpdateProperty(client *gtm.Mock) {

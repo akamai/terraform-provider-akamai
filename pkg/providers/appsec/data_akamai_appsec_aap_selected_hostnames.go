@@ -12,15 +12,15 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-type wapSelectedHostnamesOutputText struct {
+type aapSelectedHostnamesOutputText struct {
 	PolicyID string
 	Hostname string
 	Status   string
 }
 
-func dataSourceWAPSelectedHostnames() *schema.Resource {
+func dataSourceAAPSelectedHostnames() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: dataSourceWAPSelectedHostnamesRead,
+		ReadContext: dataSourceAAPSelectedHostnamesRead,
 		Schema: map[string]*schema.Schema{
 			"config_id": {
 				Type:        schema.TypeInt,
@@ -66,14 +66,13 @@ func dataSourceWAPSelectedHostnames() *schema.Resource {
 				Description: "Text representation",
 			},
 		},
-		DeprecationMessage: "This data source is deprecated with a scheduled end-of-life in v7.0.0 of our provider. Use the akamai_appsec_aap_selected_hostnames data source instead.",
 	}
 }
 
-func dataSourceWAPSelectedHostnamesRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataSourceAAPSelectedHostnamesRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "dataSourceWAPSelectedHostnamesRead")
+	logger := meta.Log("APPSEC", "dataSourceAAPSelectedHostnamesRead")
 
 	configID, err := tf.GetIntValue("config_id", d)
 	if err != nil {
@@ -185,16 +184,16 @@ func dataSourceWAPSelectedHostnamesRead(ctx context.Context, d *schema.ResourceD
 		InitTemplates(ots)
 
 		textOutputCount := len(WAPSelectedHostnames.ProtectedHosts) + len(WAPSelectedHostnames.EvaluatedHosts)
-		textOutputEntries := make([]wapSelectedHostnamesOutputText, 0, textOutputCount)
+		textOutputEntries := make([]aapSelectedHostnamesOutputText, 0, textOutputCount)
 		for _, h := range WAPSelectedHostnames.ProtectedHosts {
-			entry := wapSelectedHostnamesOutputText{PolicyID: securityPolicyID, Hostname: h, Status: "protected"}
+			entry := aapSelectedHostnamesOutputText{PolicyID: securityPolicyID, Hostname: h, Status: "protected"}
 			textOutputEntries = append(textOutputEntries, entry)
 		}
 		for _, h := range WAPSelectedHostnames.EvaluatedHosts {
-			entry := wapSelectedHostnamesOutputText{PolicyID: securityPolicyID, Hostname: h, Status: "evaluated"}
+			entry := aapSelectedHostnamesOutputText{PolicyID: securityPolicyID, Hostname: h, Status: "evaluated"}
 			textOutputEntries = append(textOutputEntries, entry)
 		}
-		outputtext, err := RenderTemplates(ots, "WAPSelectedHostsDS", textOutputEntries)
+		outputtext, err := RenderTemplates(ots, "AAPSelectedHostsDS", textOutputEntries)
 		if err != nil {
 			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 		}

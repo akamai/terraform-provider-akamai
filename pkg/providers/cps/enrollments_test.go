@@ -81,27 +81,27 @@ func TestConvertWarnings(t *testing.T) {
 			expectedWarnings: nil,
 		},
 		"all warnings can be converted": {
-			warnings:         "Certificate data is blank or missing for 'RSA'.\nThe 'ECDSA' certificate is set to expire in [2] years, [3] months. The certificate has a validity period of greater than 397 days. This certificate will not be accepted by all major browsers for SSL/TLS connections. Please work with your Certificate Authority to reissue the certificate with an acceptable lifetime.\nThe trust chain is empty and the end-entity certificate may have been signed by a non-standard root certificate.",
-			expectedWarnings: []string{"THIRD_PARTY_CERTIFICATE_DATA_BLANK_OR_MISSING", "CERTIFICATE_EXPIRATION_DATE_BEYOND_MAX_DAYS", "TRUST_CHAIN_EMPTY_AND_CERTIFICATE_SIGNED_BY_NON_STANDARD_ROOT"},
+			warnings:         "The key for 'RSA' certificate has expired. You need to create and submit a new certificate.\nThe 'ECDSA' certificate is set to expire in [2] years, [3] months. The certificate has a validity period of greater than 397 days. This certificate will not be accepted by all major browsers for SSL/TLS connections. Please work with your Certificate Authority to reissue the certificate with an acceptable lifetime.\nThe trust chain is empty and the end-entity certificate may have been signed by a non-standard root certificate.",
+			expectedWarnings: []string{"CSR_EXPIRED", "CERTIFICATE_EXPIRATION_DATE_BEYOND_MAX_DAYS", "TRUST_CHAIN_EMPTY_AND_CERTIFICATE_SIGNED_BY_NON_STANDARD_ROOT"},
 		},
 		"warnings with new line": {
-			warnings:         "Certificate data is blank or missing for 'RSA'.\nExtra certificates were found in the chain and are being removed.\ntrustChainData",
-			expectedWarnings: []string{"THIRD_PARTY_CERTIFICATE_DATA_BLANK_OR_MISSING", "EXTRA_CERT_IN_TRUST_CHAIN"},
+			warnings:         "The key for 'RSA' certificate has expired. You need to create and submit a new certificate.\nExtra certificates were found in the chain and are being removed.\ntrustChainData",
+			expectedWarnings: []string{"CSR_EXPIRED", "EXTRA_CERT_IN_TRUST_CHAIN"},
 		},
 		"warnings with multiline": {
 			warnings:         "Expected to find trust chain:\n    <expectedName>\n    <expectedDescription>\n  Instead found:\n    <actualName>\n    <actualDescription>\nExtra certificates were found in the chain and are being removed.\ntrustChainData",
 			expectedWarnings: []string{"NAMED_TRUST_CHAIN_MISMATCH", "EXTRA_CERT_IN_TRUST_CHAIN"},
 		},
 		"warning text which is matching to two keys": {
-			warnings:         "Certificate data is blank or missing for 'RSA'.\nThe trust chain terminates with a non-standard root certificate.\ntrustChainData",
-			expectedWarnings: []string{"THIRD_PARTY_CERTIFICATE_DATA_BLANK_OR_MISSING", "TRUST_CHAIN_TERMINATES_WITH_NON_STANDARD_CERTIFICATE_DETAILED"},
+			warnings:         "The key for 'RSA' certificate has expired. You need to create and submit a new certificate.\nThe trust chain terminates with a non-standard root certificate.\ntrustChainData",
+			expectedWarnings: []string{"CSR_EXPIRED", "TRUST_CHAIN_TERMINATES_WITH_NON_STANDARD_CERTIFICATE_DETAILED"},
 		},
 		"warning text which is matching to two keys 2": {
 			warnings:         "Trust chain is empty.\nCertificate has a null issuer",
 			expectedWarnings: []string{"TRUST_CHAIN_NULL_OR_EMPTY", "CERTIFICATE_HAS_NULL_ISSUER"},
 		},
 		"unknown warnings": {
-			warnings: "unknown 1.\nCertificate data is blank or missing for 'RSA'.\nunknown 2.",
+			warnings: "unknown 1.\nThe key for 'RSA' certificate has expired. You need to create and submit a new certificate.\nunknown 2.",
 			err:      `received warning(s) does not match any known warning: 'unknown 1.', 'unknown 2.'`,
 		},
 		"warning with several newlines": {
@@ -130,19 +130,19 @@ func TestCanApproveWarnings(t *testing.T) {
 		err                 string
 	}{
 		"all warnings can be approved": {
-			warnings:            "Certificate data is blank or missing for 'RSA'.\nThe 'ECDSA' certificate is set to expire in [2] years, [3] months. The certificate has a validity period of greater than 397 days. This certificate will not be accepted by all major browsers for SSL/TLS connections. Please work with your Certificate Authority to reissue the certificate with an acceptable lifetime.\nThe trust chain is empty and the end-entity certificate may have been signed by a non-standard root certificate.",
-			autoApproveWarnings: []string{"THIRD_PARTY_CERTIFICATE_DATA_BLANK_OR_MISSING", "CERTIFICATE_EXPIRATION_DATE_BEYOND_MAX_DAYS", "TRUST_CHAIN_EMPTY_AND_CERTIFICATE_SIGNED_BY_NON_STANDARD_ROOT"},
+			warnings:            "The key for 'RSA' certificate has expired. You need to create and submit a new certificate.\nThe 'ECDSA' certificate is set to expire in [2] years, [3] months. The certificate has a validity period of greater than 397 days. This certificate will not be accepted by all major browsers for SSL/TLS connections. Please work with your Certificate Authority to reissue the certificate with an acceptable lifetime.\nThe trust chain is empty and the end-entity certificate may have been signed by a non-standard root certificate.",
+			autoApproveWarnings: []string{"CSR_EXPIRED", "CERTIFICATE_EXPIRATION_DATE_BEYOND_MAX_DAYS", "TRUST_CHAIN_EMPTY_AND_CERTIFICATE_SIGNED_BY_NON_STANDARD_ROOT"},
 			can:                 true,
 		},
 		"no warnings returned": {
 			warnings:            "",
-			autoApproveWarnings: []string{"THIRD_PARTY_CERTIFICATE_DATA_BLANK_OR_MISSING", "CERTIFICATE_EXPIRATION_DATE_BEYOND_MAX_DAYS", "TRUST_CHAIN_EMPTY_AND_CERTIFICATE_SIGNED_BY_NON_STANDARD_ROOT"},
+			autoApproveWarnings: []string{"CSR_EXPIRED", "CERTIFICATE_EXPIRATION_DATE_BEYOND_MAX_DAYS", "TRUST_CHAIN_EMPTY_AND_CERTIFICATE_SIGNED_BY_NON_STANDARD_ROOT"},
 			can:                 true,
 		},
 		"none can be auto-approved": {
-			warnings:            "Certificate data is blank or missing for 'RSA'.\nThe 'ECDSA' certificate is set to expire in [2] years, [3] months. The certificate has a validity period of greater than 397 days. This certificate will not be accepted by all major browsers for SSL/TLS connections. Please work with your Certificate Authority to reissue the certificate with an acceptable lifetime.\nThe trust chain is empty and the end-entity certificate may have been signed by a non-standard root certificate.",
+			warnings:            "The key for 'RSA' certificate has expired. You need to create and submit a new certificate.\nThe 'ECDSA' certificate is set to expire in [2] years, [3] months. The certificate has a validity period of greater than 397 days. This certificate will not be accepted by all major browsers for SSL/TLS connections. Please work with your Certificate Authority to reissue the certificate with an acceptable lifetime.\nThe trust chain is empty and the end-entity certificate may have been signed by a non-standard root certificate.",
 			autoApproveWarnings: []string{},
-			err:                 `warnings cannot be approved: "THIRD_PARTY_CERTIFICATE_DATA_BLANK_OR_MISSING", "CERTIFICATE_EXPIRATION_DATE_BEYOND_MAX_DAYS", "TRUST_CHAIN_EMPTY_AND_CERTIFICATE_SIGNED_BY_NON_STANDARD_ROOT"`,
+			err:                 `warnings cannot be approved: "CSR_EXPIRED", "CERTIFICATE_EXPIRATION_DATE_BEYOND_MAX_DAYS", "TRUST_CHAIN_EMPTY_AND_CERTIFICATE_SIGNED_BY_NON_STANDARD_ROOT"`,
 			can:                 false,
 		},
 		"none warning can be auto-approved and none provided": {
@@ -152,15 +152,20 @@ func TestCanApproveWarnings(t *testing.T) {
 			can:                 true,
 		},
 		"not all warnings can be approved": {
-			warnings:            "Certificate data is blank or missing for 'RSA'.\nThe 'ECDSA' certificate is set to expire in [2] years, [3] months. The certificate has a validity period of greater than 397 days. This certificate will not be accepted by all major browsers for SSL/TLS connections. Please work with your Certificate Authority to reissue the certificate with an acceptable lifetime.\nThe trust chain is empty and the end-entity certificate may have been signed by a non-standard root certificate.",
+			warnings:            "The key for 'RSA' certificate has expired. You need to create and submit a new certificate.\nThe 'ECDSA' certificate is set to expire in [2] years, [3] months. The certificate has a validity period of greater than 397 days. This certificate will not be accepted by all major browsers for SSL/TLS connections. Please work with your Certificate Authority to reissue the certificate with an acceptable lifetime.\nThe trust chain is empty and the end-entity certificate may have been signed by a non-standard root certificate.",
 			autoApproveWarnings: []string{"CERTIFICATE_EXPIRATION_DATE_BEYOND_MAX_DAYS", "TRUST_CHAIN_EMPTY_AND_CERTIFICATE_SIGNED_BY_NON_STANDARD_ROOT"},
-			err:                 `warnings cannot be approved: "THIRD_PARTY_CERTIFICATE_DATA_BLANK_OR_MISSING"`,
+			err:                 `warnings cannot be approved: "CSR_EXPIRED"`,
 			can:                 false,
 		},
 		"unknown warning": {
-			warnings: "unknown 1.\nCertificate data is blank or missing for 'RSA'.\nunknown 2.",
+			warnings: "unknown 1.\nThe key for 'RSA' certificate has expired. You need to create and submit a new certificate.\nunknown 2.",
 			err:      `received warning(s) does not match any known warning: 'unknown 1.', 'unknown 2.'`,
 			can:      false,
+		},
+		"user pre-approved legacy warning": {
+			warnings:            "The key for 'RSA' certificate has expired. You need to create and submit a new certificate.\nThe 'ECDSA' certificate is set to expire in [2] years, [3] months. The certificate has a validity period of greater than 397 days. This certificate will not be accepted by all major browsers for SSL/TLS connections. Please work with your Certificate Authority to reissue the certificate with an acceptable lifetime.\nThe trust chain is empty and the end-entity certificate may have been signed by a non-standard root certificate.",
+			autoApproveWarnings: []string{"THIRD_PARTY_CERTIFICATE_DATA_BLANK_OR_MISSING", "CSR_EXPIRED", "CERTIFICATE_EXPIRATION_DATE_BEYOND_MAX_DAYS", "TRUST_CHAIN_EMPTY_AND_CERTIFICATE_SIGNED_BY_NON_STANDARD_ROOT"},
+			can:                 true,
 		},
 	}
 

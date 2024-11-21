@@ -22,6 +22,8 @@ import (
 	"golang.org/x/exp/slices"
 )
 
+const propertyAlreadyExistsError = "Property with provided `name` for specific `domain` already exists. Please import specific property using following command: terraform import akamai_gtm_property.<your_resource_name> \"%s:%s\""
+
 func resourceGTMv1Property() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceGTMv1PropertyCreate,
@@ -518,6 +520,20 @@ func resourceGTMv1PropertyCreate(ctx context.Context, d *schema.ResourceData, m 
 	propertyName, err := tf.GetStringValue("name", d)
 	if err != nil {
 		return diag.FromErr(err)
+	}
+
+	prop, err := Client(meta).GetProperty(ctx, gtm.GetPropertyRequest{
+		PropertyName: propertyName,
+		DomainName:   domain,
+	})
+	if err != nil && !errors.Is(err, gtm.ErrNotFound) {
+		logger.Errorf("Property Read failed: GetProperty error: %s", err.Error())
+		return diag.Errorf("property Read failed: GetProperty error: %s", err.Error())
+	}
+	if prop != nil {
+		propertyMapAlreadyExists := fmt.Sprintf(propertyAlreadyExistsError, domain, propertyName)
+		logger.Errorf(propertyMapAlreadyExists)
+		return diag.Errorf("property already exists: GetProperty error: %s", propertyMapAlreadyExists)
 	}
 
 	propertyType, err := tf.GetStringValue("type", d)

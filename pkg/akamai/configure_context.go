@@ -183,9 +183,9 @@ func sessionWithRetry(cfg contextConfig, opts []session.Option) (session.Session
 	}
 
 	retryClient.CheckRetry = overrideRetryPolicy(retryablehttp.DefaultRetryPolicy)
-
-	retryClient.Backoff = overrideBackoff(retryablehttp.DefaultBackoff, sess.Log(cfg.ctx))
-
+	l := sess.Log(cfg.ctx)
+	retryClient.Backoff = overrideBackoff(retryablehttp.DefaultBackoff, l)
+	retryClient.Logger = session.GetRetryableLogger(l)
 	return sess, nil
 }
 

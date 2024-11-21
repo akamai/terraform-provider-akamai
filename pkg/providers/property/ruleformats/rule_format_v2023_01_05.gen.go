@@ -10231,7 +10231,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"read_timeout": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "This behavior specifies how long the edge server should wait for a response from the requesting forward server after a connection has already been established. Any failure to read aborts the request and sends a `504` Gateway Timeout error to the client. Contact Akamai Professional Services for help configuring this behavior. This behavior can be used in includes.",
+			Description: "This behavior specifies how long the edge server should wait for a response from the requesting forward server after a connection has already been established. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -10254,7 +10254,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 					"value": {
 						ValidateDiagFunc: validateRegexOrVariable("^[0-9]+[DdHhMmSs]$"),
 						Optional:         true,
-						Description:      "Specifies the read timeout necessary before failing with a `504` error. This value should never be zero.",
+						Description:      "The amount of time an edge server should wait for each read statement to return a response from the forward server after a connection has already been established. Larger objects may need many reads, and this timeout applies to each read separately. Any failure to complete a read within this time limit aborts the request and sends a 504 Gateway Timeout error to the client.",
 						Type:             schema.TypeString,
 					},
 				},
@@ -11571,7 +11571,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"script_management": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Ensures unresponsive linked JavaScript files do not prevent HTML pages from loading. This behavior cannot be used in includes.",
+			Description: "Ensures unresponsive linked JavaScript files do not prevent HTML pages from loading. See `Script Management API` for more information. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
