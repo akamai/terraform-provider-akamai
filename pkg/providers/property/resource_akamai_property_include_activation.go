@@ -13,6 +13,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/papi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/id"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/str"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/timeouts"
@@ -256,6 +257,15 @@ func resourcePropertyIncludeActivationDelete(ctx context.Context, d *schema.Reso
 	if err := activationResourceData.populateFromResource(d); err != nil {
 		return diag.FromErr(err)
 	}
+
+	// Instead of the `include_id` attribute of the `include_activation` resource, the function uses now the `id` attribute
+	// of this resource which is made up of `contractID:groupID:includeID:network`. This eliminates the possibility of
+	// getting an "undefined" value in case of resource replacement.
+	idParts, err := id.Split(d.Id(), 4, "contractID:groupID:includeID:network")
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	activationResourceData.includeID = idParts[2]
 
 	logger.Debug("waiting for pending (de)activations")
 	if diagErr := waitUntilNoPendingActivationInNetwork(ctx, client, activationResourceData); diagErr != nil {

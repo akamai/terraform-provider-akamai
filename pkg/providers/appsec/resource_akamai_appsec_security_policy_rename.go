@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/id"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -93,7 +94,7 @@ func resourceSecurityPolicyRenameRead(ctx context.Context, d *schema.ResourceDat
 	logger := meta.Log("APPSEC", "resourceSecurityPolicyRenameRead")
 	logger.Debugf("in resourceSecurityPolicyRenameRead")
 
-	iDParts, err := splitID(d.Id(), 2, "configID:policyID")
+	iDParts, err := id.Split(d.Id(), 2, "configID:policyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -137,7 +138,7 @@ func resourceSecurityPolicyRenameUpdate(ctx context.Context, d *schema.ResourceD
 	logger := meta.Log("APPSEC", "resourceSecurityPolicyRenameUpdate")
 	logger.Debugf("in resourceSecurityPolicyRenameUpdate")
 
-	iDParts, err := splitID(d.Id(), 2, "configID:policyID")
+	iDParts, err := id.Split(d.Id(), 2, "configID:policyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}

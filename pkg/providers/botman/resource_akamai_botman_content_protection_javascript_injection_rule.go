@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/botman"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/id"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -107,7 +108,7 @@ func ContentProtectionJavaScriptInjectionRuleRead(ctx context.Context, d *schema
 	client := inst.Client(meta)
 	logger := meta.Log("botman", "resourceContentProtectionJavaScriptInjectionRuleRead")
 
-	iDParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:contentProtectionJavaScriptInjectionRuleID")
+	iDParts, err := id.Split(d.Id(), 3, "configID:securityPolicyID:contentProtectionJavaScriptInjectionRuleID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -180,7 +181,7 @@ func resourceContentProtectionJavaScriptInjectionRuleUpdate(ctx context.Context,
 	client := inst.Client(meta)
 	logger := meta.Log("botman", "resourceContentProtectionJavaScriptInjectionRuleUpdateAction")
 
-	iDParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:contentProtectionJavaScriptInjectionRuleID")
+	iDParts, err := id.Split(d.Id(), 3, "configID:securityPolicyID:contentProtectionJavaScriptInjectionRuleID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -225,7 +226,7 @@ func resourceContentProtectionJavaScriptInjectionRuleDelete(ctx context.Context,
 	client := inst.Client(meta)
 	logger := meta.Log("botman", "resourceContentProtectionJavaScriptInjectionRuleDeleteAction")
 
-	iDParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:contentProtectionJavaScriptInjectionRuleID")
+	iDParts, err := id.Split(d.Id(), 3, "configID:securityPolicyID:contentProtectionJavaScriptInjectionRuleID")
 	if err != nil {
 		return diag.FromErr(err)
 	}

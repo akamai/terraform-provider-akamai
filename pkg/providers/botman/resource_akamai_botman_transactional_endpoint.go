@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/botman"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/id"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -111,7 +112,7 @@ func transactionalEndpointRead(ctx context.Context, d *schema.ResourceData, m in
 	logger := meta.Log("botman", "resourceTransactionalEndpointReadAction")
 	logger.Debugf("in resourceTransactionalEndpointReadAction")
 
-	iDParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:operationID")
+	iDParts, err := id.Split(d.Id(), 3, "configID:securityPolicyID:operationID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -186,7 +187,7 @@ func resourceTransactionalEndpointUpdate(ctx context.Context, d *schema.Resource
 	logger := meta.Log("botman", "resourceTransactionalEndpointUpdateAction")
 	logger.Debugf("in resourceTransactionalEndpointUpdateAction")
 
-	iDParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:operationID")
+	iDParts, err := id.Split(d.Id(), 3, "configID:securityPolicyID:operationID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -233,7 +234,7 @@ func resourceTransactionalEndpointDelete(ctx context.Context, d *schema.Resource
 	logger := meta.Log("botman", "resourceTransactionalEndpointDeleteAction")
 	logger.Debugf("in resourceTransactionalEndpointDeleteAction")
 
-	iDParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:operationID")
+	iDParts, err := id.Split(d.Id(), 3, "configID:securityPolicyID:operationID")
 	if err != nil {
 		return diag.FromErr(err)
 	}

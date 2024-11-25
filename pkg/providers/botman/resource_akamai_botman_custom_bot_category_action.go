@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/botman"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/id"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -114,7 +115,7 @@ func customBotCategoryActionRead(ctx context.Context, d *schema.ResourceData, m 
 	logger := meta.Log("botman", "resourceCustomBotCategoryActionRead")
 	logger.Debugf("in resourceCustomBotCategoryActionRead")
 
-	iDParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:categoryID")
+	iDParts, err := id.Split(d.Id(), 3, "configID:securityPolicyID:categoryID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -179,7 +180,7 @@ func resourceCustomBotCategoryActionUpdate(ctx context.Context, d *schema.Resour
 	logger := meta.Log("botman", "resourceCustomBotCategoryActionUpdate")
 	logger.Debugf("in resourceCustomBotCategoryActionUpdate")
 
-	iDParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:categoryID")
+	iDParts, err := id.Split(d.Id(), 3, "configID:securityPolicyID:categoryID")
 	if err != nil {
 		return diag.FromErr(err)
 	}

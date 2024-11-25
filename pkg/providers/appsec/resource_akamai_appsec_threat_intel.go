@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/id"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -101,7 +102,7 @@ func resourceThreatIntelRead(ctx context.Context, d *schema.ResourceData, m inte
 	logger := meta.Log("APPSEC", "resourceThreatIntelRead")
 	logger.Debugf(" in resourceThreatIntelRead")
 
-	iDParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
+	iDParts, err := id.Split(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -146,7 +147,7 @@ func resourceThreatIntelUpdate(ctx context.Context, d *schema.ResourceData, m in
 	logger := meta.Log("APPSEC", "resourceThreatIntelUpdate")
 	logger.Debugf("in resourceThreatIntelUpdate")
 
-	iDParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
+	iDParts, err := id.Split(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}

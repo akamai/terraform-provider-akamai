@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/id"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -94,7 +95,7 @@ func resourceMatchTargetRead(ctx context.Context, d *schema.ResourceData, m inte
 	logger := meta.Log("APPSEC", "resourceMatchTargetRead")
 	logger.Debugf("in resourceMatchTargetRead")
 
-	iDParts, err := splitID(d.Id(), 2, "configID:matchTargetID")
+	iDParts, err := id.Split(d.Id(), 2, "configID:matchTargetID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -159,7 +160,7 @@ func resourceMatchTargetImport(ctx context.Context, d *schema.ResourceData, m in
 	logger := meta.Log("APPSEC", "resourceMatchTargetImport")
 	logger.Debugf("in resourceMatchTargetImport")
 
-	iDParts, err := splitID(d.Id(), 2, "configID:matchTargetID")
+	iDParts, err := id.Split(d.Id(), 2, "configID:matchTargetID")
 	if err != nil {
 		return nil, err
 	}
@@ -213,7 +214,7 @@ func resourceMatchTargetUpdate(ctx context.Context, d *schema.ResourceData, m in
 	logger := meta.Log("APPSEC", "resourceMatchTargetUpdate")
 	logger.Debugf("in resourceMatchTargetUpdate")
 
-	iDParts, err := splitID(d.Id(), 2, "configID:matchTargetID")
+	iDParts, err := id.Split(d.Id(), 2, "configID:matchTargetID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -256,7 +257,7 @@ func resourceMatchTargetDelete(ctx context.Context, d *schema.ResourceData, m in
 	logger := meta.Log("APPSEC", "resourceMatchTargetDelete")
 	logger.Debugf("in resourceMatchTargetDelete")
 
-	iDParts, err := splitID(d.Id(), 2, "configID:matchTargetID")
+	iDParts, err := id.Split(d.Id(), 2, "configID:matchTargetID")
 	if err != nil {
 		return diag.FromErr(err)
 	}

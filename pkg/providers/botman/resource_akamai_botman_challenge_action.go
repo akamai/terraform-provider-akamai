@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/botman"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/id"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/str"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
@@ -92,7 +93,7 @@ func resourceChallengeActionRead(ctx context.Context, d *schema.ResourceData, m 
 	logger := meta.Log("botman", "resourceChallengeActionRead")
 	logger.Debugf("in resourceChallengeActionRead")
 
-	iDParts, err := splitID(d.Id(), 2, "configID:actionID")
+	iDParts, err := id.Split(d.Id(), 2, "configID:actionID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -147,7 +148,7 @@ func resourceChallengeActionUpdate(ctx context.Context, d *schema.ResourceData, 
 	logger := meta.Log("botman", "resourceChallengeActionUpdate")
 	logger.Debugf("in resourceChallengeActionUpdate")
 
-	iDParts, err := splitID(d.Id(), 2, "configID:actionID")
+	iDParts, err := id.Split(d.Id(), 2, "configID:actionID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -191,7 +192,7 @@ func resourceChallengeActionDelete(ctx context.Context, d *schema.ResourceData, 
 	logger := meta.Log("botman", "resourceChallengeActionDelete")
 	logger.Debugf("in resourceChallengeActionDelete")
 
-	iDParts, err := splitID(d.Id(), 2, "configID:actionID")
+	iDParts, err := id.Split(d.Id(), 2, "configID:actionID")
 	if err != nil {
 		return diag.FromErr(err)
 	}

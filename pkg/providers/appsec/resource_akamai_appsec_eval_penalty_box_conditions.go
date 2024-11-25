@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/id"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -102,7 +103,7 @@ func resourceEvalPenaltyBoxConditionsRead(ctx context.Context, d *schema.Resourc
 	logger := must.Log("APPSEC", "resourceEvalPenaltyBoxConditionsRead")
 	logger.Debugf("in resourceEvalPenaltyBoxConditionsRead")
 
-	iDParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
+	iDParts, err := id.Split(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -151,7 +152,7 @@ func resourceEvalPenaltyBoxConditionsUpdate(ctx context.Context, d *schema.Resou
 	logger := must.Log("APPSEC", "resourceEvalPenaltyBoxConditionsUpdate")
 	logger.Debugf("in resourceEvalPenaltyBoxConditionsUpdate")
 
-	iDParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
+	iDParts, err := id.Split(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -194,7 +195,7 @@ func resourceEvalPenaltyBoxConditionsDelete(ctx context.Context, d *schema.Resou
 	logger := meta.Log("APPSEC", "resourceEvalPenaltyBoxConditionsUpdate")
 	logger.Debugf("in resourceEvalPenaltyBoxConditionsDelete")
 
-	iDParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
+	iDParts, err := id.Split(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}

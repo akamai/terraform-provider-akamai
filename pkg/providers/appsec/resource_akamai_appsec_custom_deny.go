@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/id"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -99,7 +100,7 @@ func resourceCustomDenyRead(ctx context.Context, d *schema.ResourceData, m inter
 	logger := meta.Log("APPSEC", "resourceCustomDenyRead")
 	logger.Debugf("in resourceCustomDenyRead")
 
-	iDParts, err := splitID(d.Id(), 2, "configID:customDenyID")
+	iDParts, err := id.Split(d.Id(), 2, "configID:customDenyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -149,7 +150,7 @@ func resourceCustomDenyUpdate(ctx context.Context, d *schema.ResourceData, m int
 	logger := meta.Log("APPSEC", "resourceCustomDenyUpdate")
 	logger.Debugf("in resourceCustomDenyUpdate")
 
-	iDParts, err := splitID(d.Id(), 2, "configID:customDenyID")
+	iDParts, err := id.Split(d.Id(), 2, "configID:customDenyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -190,7 +191,7 @@ func resourceCustomDenyDelete(ctx context.Context, d *schema.ResourceData, m int
 	logger := meta.Log("APPSEC", "resourceCustomDenyDelete")
 	logger.Debugf("in resourceCustomDenyDelete")
 
-	iDParts, err := splitID(d.Id(), 2, "configID:customDenyID")
+	iDParts, err := id.Split(d.Id(), 2, "configID:customDenyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}

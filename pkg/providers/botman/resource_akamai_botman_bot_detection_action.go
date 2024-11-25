@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/botman"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/id"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -112,7 +113,7 @@ func botDetectionActionRead(ctx context.Context, d *schema.ResourceData, m inter
 	logger := meta.Log("botman", "resourceBotDetectionActionRead")
 	logger.Debugf("in resourceBotDetectionActionRead")
 
-	iDParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:botDetectionID")
+	iDParts, err := id.Split(d.Id(), 3, "configID:securityPolicyID:botDetectionID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -177,7 +178,7 @@ func resourceBotDetectionActionUpdate(ctx context.Context, d *schema.ResourceDat
 	logger := meta.Log("botman", "resourceBotDetectionActionUpdate")
 	logger.Debugf("in resourceBotDetectionActionUpdate")
 
-	iDParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:botDetectionID")
+	iDParts, err := id.Split(d.Id(), 3, "configID:securityPolicyID:botDetectionID")
 	if err != nil {
 		return diag.FromErr(err)
 	}

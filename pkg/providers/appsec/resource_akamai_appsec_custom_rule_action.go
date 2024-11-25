@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/id"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -107,7 +108,7 @@ func resourceCustomRuleActionRead(ctx context.Context, d *schema.ResourceData, m
 	logger := meta.Log("APPSEC", "resourceCustomRuleActionRead")
 	logger.Debugf("in resourceCustomRuleActionRead")
 
-	iDParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:customRuleID")
+	iDParts, err := id.Split(d.Id(), 3, "configID:securityPolicyID:customRuleID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -159,7 +160,7 @@ func resourceCustomRuleActionUpdate(ctx context.Context, d *schema.ResourceData,
 	logger := meta.Log("APPSEC", "resourceCustomRuleActionUpdate")
 	logger.Debugf("in resourceCustomRuleActionUpdate")
 
-	iDParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:customRuleID")
+	iDParts, err := id.Split(d.Id(), 3, "configID:securityPolicyID:customRuleID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -204,7 +205,7 @@ func resourceCustomRuleActionDelete(ctx context.Context, d *schema.ResourceData,
 	logger := meta.Log("APPSEC", "resourceCustomRuleActionDelete")
 	logger.Debugf("in resourceCustomRuleActionDelete")
 
-	iDParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:customRuleID")
+	iDParts, err := id.Split(d.Id(), 3, "configID:securityPolicyID:customRuleID")
 	if err != nil {
 		return diag.FromErr(err)
 	}

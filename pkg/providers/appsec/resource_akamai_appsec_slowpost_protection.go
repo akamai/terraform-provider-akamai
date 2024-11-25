@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/id"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -99,7 +100,7 @@ func resourceSlowPostProtectionRead(ctx context.Context, d *schema.ResourceData,
 	logger := meta.Log("APPSEC", "resourceSlowPostProtectionRead")
 	logger.Debugf("in resourceSlowPostProtectionRead")
 
-	iDParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
+	iDParts, err := id.Split(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -154,7 +155,7 @@ func resourceSlowPostProtectionUpdate(ctx context.Context, d *schema.ResourceDat
 	logger := meta.Log("APPSEC", "resourceSlowPostProtectionUpdate")
 	logger.Debugf("in resourceSlowPostProtectionUpdate")
 
-	iDParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
+	iDParts, err := id.Split(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -193,7 +194,7 @@ func resourceSlowPostProtectionDelete(ctx context.Context, d *schema.ResourceDat
 	logger := meta.Log("APPSEC", "resourceSlowPostProtectionDelete")
 	logger.Debugf("in resourceSlowPostProtectionDelete")
 
-	iDParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
+	iDParts, err := id.Split(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}

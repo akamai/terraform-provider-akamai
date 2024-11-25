@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/botman"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/id"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/str"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
@@ -92,7 +93,7 @@ func resourceCustomBotCategoryRead(ctx context.Context, d *schema.ResourceData, 
 	logger := meta.Log("botman", "resourceCustomBotCategoryRead")
 	logger.Debugf("in resourceCustomBotCategoryRead")
 
-	iDParts, err := splitID(d.Id(), 2, "configID:categoryID")
+	iDParts, err := id.Split(d.Id(), 2, "configID:categoryID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -150,7 +151,7 @@ func resourceCustomBotCategoryUpdate(ctx context.Context, d *schema.ResourceData
 	logger := meta.Log("botman", "resourceCustomBotCategoryUpdate")
 	logger.Debugf("in resourceCustomBotCategoryUpdate")
 
-	iDParts, err := splitID(d.Id(), 2, "configID:categoryID")
+	iDParts, err := id.Split(d.Id(), 2, "configID:categoryID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -194,7 +195,7 @@ func resourceCustomBotCategoryDelete(ctx context.Context, d *schema.ResourceData
 	logger := meta.Log("botman", "resourceCustomBotCategoryDelete")
 	logger.Debugf("in resourceCustomBotCategoryDelete")
 
-	iDParts, err := splitID(d.Id(), 2, "configID:categoryID")
+	iDParts, err := id.Split(d.Id(), 2, "configID:categoryID")
 	if err != nil {
 		return diag.FromErr(err)
 	}

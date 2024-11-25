@@ -4,21 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strings"
 
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/str"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
-
-func splitID(id string, expectedNum int, example string) ([]string, error) {
-	parts := strings.Split(id, ":")
-	if len(parts) != expectedNum {
-		return nil, fmt.Errorf("ID '%s' incorrectly formatted: should be of form '%s'", id, example)
-	}
-	return parts, nil
-}
 
 // getJSONPayload adds ID to JSON payload for update operations
 func getJSONPayload(d *schema.ResourceData, key string, idName string, idValue interface{}) (json.RawMessage, error) {

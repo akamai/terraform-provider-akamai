@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/id"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -93,7 +94,7 @@ func resourceRatePolicyRead(ctx context.Context, d *schema.ResourceData, m inter
 	logger := meta.Log("APPSEC", "resourceRatePolicyRead")
 	logger.Debugf("in resourceRatePolicyRead")
 
-	iDParts, err := splitID(d.Id(), 2, "configID:ratePolicyID")
+	iDParts, err := id.Split(d.Id(), 2, "configID:ratePolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -146,7 +147,7 @@ func resourceRatePolicyUpdate(ctx context.Context, d *schema.ResourceData, m int
 	logger := meta.Log("APPSEC", "resourceRatePolicyUpdate")
 	logger.Debugf("in resourceRatePolicy`Update")
 
-	iDParts, err := splitID(d.Id(), 2, "configID:ratePolicyID")
+	iDParts, err := id.Split(d.Id(), 2, "configID:ratePolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -190,7 +191,7 @@ func resourceRatePolicyDelete(ctx context.Context, d *schema.ResourceData, m int
 	logger := meta.Log("APPSEC", "resourceRatePolicyDelete")
 	logger.Debugf("in resourceRatePolicyDelete")
 
-	iDParts, err := splitID(d.Id(), 2, "configID:ratePolicyID")
+	iDParts, err := id.Split(d.Id(), 2, "configID:ratePolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}

@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/botman"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/id"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -90,7 +91,7 @@ func resourceCustomClientRead(ctx context.Context, d *schema.ResourceData, m int
 	logger := meta.Log("botman", "resourceCustomClientReadAction")
 	logger.Debugf("in resourceCustomClientReadAction")
 
-	iDParts, err := splitID(d.Id(), 2, "configID:customClientID")
+	iDParts, err := id.Split(d.Id(), 2, "configID:customClientID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -144,7 +145,7 @@ func resourceCustomClientUpdate(ctx context.Context, d *schema.ResourceData, m i
 	logger := meta.Log("botman", "resourceCustomClientUpdateAction")
 	logger.Debugf("in resourceCustomClientUpdateAction")
 
-	iDParts, err := splitID(d.Id(), 2, "configID:customClientID")
+	iDParts, err := id.Split(d.Id(), 2, "configID:customClientID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -188,7 +189,7 @@ func resourceCustomClientDelete(ctx context.Context, d *schema.ResourceData, m i
 	logger := meta.Log("botman", "resourceCustomClientDeleteAction")
 	logger.Debugf("in resourceCustomClientDeleteAction")
 
-	iDParts, err := splitID(d.Id(), 2, "configID:customClientID")
+	iDParts, err := id.Split(d.Id(), 2, "configID:customClientID")
 	if err != nil {
 		return diag.FromErr(err)
 	}

@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/id"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -99,7 +100,7 @@ func resourceWAFProtectionRead(ctx context.Context, d *schema.ResourceData, m in
 	logger := meta.Log("APPSEC", "resourceWAFProtectionRead")
 	logger.Debugf("in resourceWAFProtectionRead")
 
-	iDParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
+	iDParts, err := id.Split(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -154,7 +155,7 @@ func resourceWAFProtectionUpdate(ctx context.Context, d *schema.ResourceData, m 
 	logger := meta.Log("APPSEC", "resourceWAFProtectionUpdate")
 	logger.Debugf("in resourceWAFProtectionUpdate")
 
-	iDParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
+	iDParts, err := id.Split(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -193,7 +194,7 @@ func resourceWAFProtectionDelete(ctx context.Context, d *schema.ResourceData, m 
 	logger := meta.Log("APPSEC", "resourceWAFProtectionDelete")
 	logger.Debugf("in resourceWAFProtectionDelete")
 
-	iDParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
+	iDParts, err := id.Split(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}

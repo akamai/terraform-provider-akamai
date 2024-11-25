@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/id"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -136,7 +137,7 @@ func resourceWAPSelectedHostnamesRead(ctx context.Context, d *schema.ResourceDat
 	logger := meta.Log("APPSEC", "resourceWAPSelectedHostnamesRead")
 	logger.Debugf("in resourceWAPSelectedHostnamesRead")
 
-	iDParts, err := splitID(d.Id(), 2, "configID:policyID")
+	iDParts, err := id.Split(d.Id(), 2, "configID:policyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}

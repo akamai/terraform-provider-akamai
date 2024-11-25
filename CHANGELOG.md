@@ -61,7 +61,9 @@
 
 
 
-
+* PAPI
+    * Fixed improper resolution of `include_id` attribute in `include_activation` resource in the case of referencing to the
+      `include` resource and replacement of both resources.
 
 
 

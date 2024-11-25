@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 	"strconv"
-	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/iam"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/id"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -108,7 +108,7 @@ func resourceIAMBlockedUserPropertiesRead(ctx context.Context, d *schema.Resourc
 
 	logger.Debug("Reading blocked user properties")
 
-	idParts, err := splitID(d.Id(), 2, "identityID:groupID")
+	idParts, err := id.Split(d.Id(), 2, "identityID:groupID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -203,12 +203,4 @@ func resourceIAMBlockedUserPropertiesImport(ctx context.Context, d *schema.Resou
 	}
 
 	return schema.ImportStatePassthroughContext(ctx, d, m)
-}
-
-func splitID(id string, expectedNum int, example string) ([]string, error) {
-	parts := strings.Split(id, ":")
-	if len(parts) != expectedNum {
-		return nil, fmt.Errorf("id '%s' is incorrectly formatted: should be of form '%s'", id, example)
-	}
-	return parts, nil
 }

@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/botman"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/id"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -117,7 +118,7 @@ func resourceContentProtectionRuleSequenceRead(ctx context.Context, d *schema.Re
 	client := inst.Client(meta)
 	logger := meta.Log("botman", "resourceContentProtectionRuleSequenceRead")
 
-	idParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
+	idParts, err := id.Split(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}

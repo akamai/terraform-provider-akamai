@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/botman"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/id"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/str"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
@@ -92,7 +93,7 @@ func resourceServeAlternateActionRead(ctx context.Context, d *schema.ResourceDat
 	logger := meta.Log("botman", "resourceServeAlternateActionRead")
 	logger.Debugf("in resourceServeAlternateActionRead")
 
-	iDParts, err := splitID(d.Id(), 2, "configID:actionID")
+	iDParts, err := id.Split(d.Id(), 2, "configID:actionID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -147,7 +148,7 @@ func resourceServeAlternateActionUpdate(ctx context.Context, d *schema.ResourceD
 	logger := meta.Log("botman", "resourceServeAlternateActionUpdate")
 	logger.Debugf("in resourceServeAlternateActionUpdate")
 
-	iDParts, err := splitID(d.Id(), 2, "configID:actionID")
+	iDParts, err := id.Split(d.Id(), 2, "configID:actionID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -191,7 +192,7 @@ func resourceServeAlternateActionDelete(ctx context.Context, d *schema.ResourceD
 	logger := meta.Log("botman", "resourceServeAlternateActionDelete")
 	logger.Debugf("in resourceServeAlternateActionDelete")
 
-	iDParts, err := splitID(d.Id(), 2, "configID:actionID")
+	iDParts, err := id.Split(d.Id(), 2, "configID:actionID")
 	if err != nil {
 		return diag.FromErr(err)
 	}

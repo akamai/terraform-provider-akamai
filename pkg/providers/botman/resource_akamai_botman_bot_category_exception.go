@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/botman"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/id"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -98,7 +99,7 @@ func resourceBotCategoryExceptionRead(ctx context.Context, d *schema.ResourceDat
 	logger := meta.Log("botman", "resourceBotCategoryExceptionRead")
 	logger.Debugf("in resourceBotCategoryExceptionRead")
 
-	iDParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
+	iDParts, err := id.Split(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -150,7 +151,7 @@ func resourceBotCategoryExceptionUpdate(ctx context.Context, d *schema.ResourceD
 	logger := meta.Log("botman", "resourceBotCategoryExceptionUpdate")
 	logger.Debugf("in resourceBotCategoryExceptionUpdate")
 
-	iDParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
+	iDParts, err := id.Split(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
