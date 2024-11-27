@@ -43,6 +43,7 @@
 
 
 
+ * Modified build scripts to use Go `1.22.9`. ([I#578](https://github.com/akamai/terraform-provider-akamai/issues/578))
 
 
 
@@ -108,6 +109,7 @@
 
 * PAPI
   * Added support for the new rule format `v2024-10-21`.
+
 
 #### BUG FIXES:
 
