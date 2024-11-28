@@ -12,370 +12,19 @@ import (
 )
 
 func TestDataPropertyRulesBuilder(t *testing.T) {
-	t.Run("valid rule with 3 children - v2023-01-05", func(t *testing.T) {
-		useClient(nil, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{{
-					Config: testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/rules_v2023_01_05.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("data.akamai_property_rules_builder.default",
-							"rule_format",
-							"v2023-01-05"),
-						testCheckResourceAttrJSON("data.akamai_property_rules_builder.default",
-							"json",
-							testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/default.json")),
-
-						resource.TestCheckResourceAttr("data.akamai_property_rules_builder.content_compression",
-							"rule_format",
-							"v2023-01-05"),
-						testCheckResourceAttrJSON("data.akamai_property_rules_builder.content_compression",
-							"json",
-							testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/content_compression.json")),
-
-						resource.TestCheckResourceAttr("data.akamai_property_rules_builder.static_content",
-							"rule_format",
-							"v2023-01-05"),
-						testCheckResourceAttrJSON("data.akamai_property_rules_builder.static_content",
-							"json",
-							testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/static_content.json")),
-
-						resource.TestCheckResourceAttr("data.akamai_property_rules_builder.dynamic_content",
-							"rule_format",
-							"v2023-01-05"),
-						testCheckResourceAttrJSON("data.akamai_property_rules_builder.dynamic_content",
-							"json",
-							testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/dynamic_content.json")),
-					),
-				}},
-			})
-		})
-	})
-	t.Run("valid rule with 3 children - v2023-05-30", func(t *testing.T) {
-		useClient(nil, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{{
-					Config: testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/rules_v2023_05_30.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("data.akamai_property_rules_builder.default",
-							"rule_format",
-							"v2023-05-30"),
-						testCheckResourceAttrJSON("data.akamai_property_rules_builder.default",
-							"json",
-							testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/default_v2023_05_30.json")),
-
-						resource.TestCheckResourceAttr("data.akamai_property_rules_builder.content_compression",
-							"rule_format",
-							"v2023-05-30"),
-						testCheckResourceAttrJSON("data.akamai_property_rules_builder.content_compression",
-							"json",
-							testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/content_compression_v2023_05_30.json")),
-
-						resource.TestCheckResourceAttr("data.akamai_property_rules_builder.static_content",
-							"rule_format",
-							"v2023-05-30"),
-						testCheckResourceAttrJSON("data.akamai_property_rules_builder.static_content",
-							"json",
-							testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/static_content_v2023_05_30.json")),
-
-						resource.TestCheckResourceAttr("data.akamai_property_rules_builder.dynamic_content",
-							"rule_format",
-							"v2023-05-30"),
-						testCheckResourceAttrJSON("data.akamai_property_rules_builder.dynamic_content",
-							"json",
-							testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/dynamic_content_v2023_05_30.json")),
-					),
-				}},
-			})
-		})
-	})
-	t.Run("valid rule with 3 children - v2023-09-20", func(t *testing.T) {
-		useClient(nil, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{{
-					Config: testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/rules_v2023_09_20.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("data.akamai_property_rules_builder.default",
-							"rule_format",
-							"v2023-09-20"),
-						testCheckResourceAttrJSON("data.akamai_property_rules_builder.default",
-							"json",
-							testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/default_v2023_09_20.json")),
-
-						resource.TestCheckResourceAttr("data.akamai_property_rules_builder.content_compression",
-							"rule_format",
-							"v2023-09-20"),
-						testCheckResourceAttrJSON("data.akamai_property_rules_builder.content_compression",
-							"json",
-							testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/content_compression_v2023_09_20.json")),
-
-						resource.TestCheckResourceAttr("data.akamai_property_rules_builder.static_content",
-							"rule_format",
-							"v2023-09-20"),
-						testCheckResourceAttrJSON("data.akamai_property_rules_builder.static_content",
-							"json",
-							testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/static_content_v2023_09_20.json")),
-
-						resource.TestCheckResourceAttr("data.akamai_property_rules_builder.dynamic_content",
-							"rule_format",
-							"v2023-09-20"),
-						testCheckResourceAttrJSON("data.akamai_property_rules_builder.dynamic_content",
-							"json",
-							testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/dynamic_content_v2023_09_20.json")),
-					),
-				}},
-			})
-		})
-	})
-	t.Run("valid rule with 3 children - v2023-10-30", func(t *testing.T) {
-		useClient(nil, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{{
-					Config: testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/rules_v2023_10_30.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("data.akamai_property_rules_builder.default",
-							"rule_format",
-							"v2023-10-30"),
-						testCheckResourceAttrJSON("data.akamai_property_rules_builder.default",
-							"json",
-							testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/default_v2023_10_30.json")),
-
-						resource.TestCheckResourceAttr("data.akamai_property_rules_builder.content_compression",
-							"rule_format",
-							"v2023-10-30"),
-						testCheckResourceAttrJSON("data.akamai_property_rules_builder.content_compression",
-							"json",
-							testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/content_compression_v2023_10_30.json")),
-
-						resource.TestCheckResourceAttr("data.akamai_property_rules_builder.static_content",
-							"rule_format",
-							"v2023-10-30"),
-						testCheckResourceAttrJSON("data.akamai_property_rules_builder.static_content",
-							"json",
-							testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/static_content_v2023_10_30.json")),
-
-						resource.TestCheckResourceAttr("data.akamai_property_rules_builder.dynamic_content",
-							"rule_format",
-							"v2023-10-30"),
-						testCheckResourceAttrJSON("data.akamai_property_rules_builder.dynamic_content",
-							"json",
-							testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/dynamic_content_v2023_10_30.json")),
-					),
-				}},
-			})
-		})
-	})
-	t.Run("valid rule with 3 children - v2024-01-09", func(t *testing.T) {
-		useClient(nil, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{{
-					Config: testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/rules_v2024_01_09.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("data.akamai_property_rules_builder.default",
-							"rule_format",
-							"v2024-01-09"),
-						testCheckResourceAttrJSON("data.akamai_property_rules_builder.default",
-							"json",
-							testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/default_v2024_01_09.json")),
-
-						resource.TestCheckResourceAttr("data.akamai_property_rules_builder.content_compression",
-							"rule_format",
-							"v2024-01-09"),
-						testCheckResourceAttrJSON("data.akamai_property_rules_builder.content_compression",
-							"json",
-							testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/content_compression_v2024_01_09.json")),
-
-						resource.TestCheckResourceAttr("data.akamai_property_rules_builder.static_content",
-							"rule_format",
-							"v2024-01-09"),
-						testCheckResourceAttrJSON("data.akamai_property_rules_builder.static_content",
-							"json",
-							testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/static_content_v2024_01_09.json")),
-
-						resource.TestCheckResourceAttr("data.akamai_property_rules_builder.dynamic_content",
-							"rule_format",
-							"v2024-01-09"),
-						testCheckResourceAttrJSON("data.akamai_property_rules_builder.dynamic_content",
-							"json",
-							testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/dynamic_content_v2024_01_09.json")),
-					),
-				}},
-			})
-		})
-	})
-	t.Run("valid rule with 3 children - v2024-02-12", func(t *testing.T) {
-		useClient(nil, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{{
-					Config: testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/rules_v2024_02_12.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("data.akamai_property_rules_builder.default",
-							"rule_format",
-							"v2024-02-12"),
-						testCheckResourceAttrJSON("data.akamai_property_rules_builder.default",
-							"json",
-							testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/default_v2024_02_12.json")),
-
-						resource.TestCheckResourceAttr("data.akamai_property_rules_builder.content_compression",
-							"rule_format",
-							"v2024-02-12"),
-						testCheckResourceAttrJSON("data.akamai_property_rules_builder.content_compression",
-							"json",
-							testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/content_compression_v2024_02_12.json")),
-
-						resource.TestCheckResourceAttr("data.akamai_property_rules_builder.static_content",
-							"rule_format",
-							"v2024-02-12"),
-						testCheckResourceAttrJSON("data.akamai_property_rules_builder.static_content",
-							"json",
-							testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/static_content_v2024_02_12.json")),
-
-						resource.TestCheckResourceAttr("data.akamai_property_rules_builder.dynamic_content",
-							"rule_format",
-							"v2024-02-12"),
-						testCheckResourceAttrJSON("data.akamai_property_rules_builder.dynamic_content",
-							"json",
-							testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/dynamic_content_v2024_02_12.json")),
-					),
-				}},
-			})
-		})
-	})
-	t.Run("valid rule with 3 children - v2024-05-31", func(t *testing.T) {
-		useClient(nil, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{{
-					Config: testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/rules_v2024_05_31.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("data.akamai_property_rules_builder.default",
-							"rule_format",
-							"v2024-05-31"),
-						testCheckResourceAttrJSON("data.akamai_property_rules_builder.default",
-							"json",
-							testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/default_v2024_05_31.json")),
-
-						resource.TestCheckResourceAttr("data.akamai_property_rules_builder.content_compression",
-							"rule_format",
-							"v2024-05-31"),
-						testCheckResourceAttrJSON("data.akamai_property_rules_builder.content_compression",
-							"json",
-							testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/content_compression_v2024_05_31.json")),
-
-						resource.TestCheckResourceAttr("data.akamai_property_rules_builder.static_content",
-							"rule_format",
-							"v2024-05-31"),
-						testCheckResourceAttrJSON("data.akamai_property_rules_builder.static_content",
-							"json",
-							testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/static_content_v2024_05_31.json")),
-
-						resource.TestCheckResourceAttr("data.akamai_property_rules_builder.dynamic_content",
-							"rule_format",
-							"v2024-05-31"),
-						testCheckResourceAttrJSON("data.akamai_property_rules_builder.dynamic_content",
-							"json",
-							testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/dynamic_content_v2024_05_31.json")),
-					),
-				}},
-			})
-		})
-	})
-	t.Run("valid rule with 3 children - v2024-08-13", func(t *testing.T) {
-		useClient(nil, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{{
-					Config: testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/rules_v2024_08_13.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("data.akamai_property_rules_builder.default",
-							"rule_format",
-							"v2024-08-13"),
-						testCheckResourceAttrJSON("data.akamai_property_rules_builder.default",
-							"json",
-							testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/default_v2024_08_13.json")),
-
-						resource.TestCheckResourceAttr("data.akamai_property_rules_builder.content_compression",
-							"rule_format",
-							"v2024-08-13"),
-						testCheckResourceAttrJSON("data.akamai_property_rules_builder.content_compression",
-							"json",
-							testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/content_compression_v2024_08_13.json")),
-
-						resource.TestCheckResourceAttr("data.akamai_property_rules_builder.static_content",
-							"rule_format",
-							"v2024-08-13"),
-						testCheckResourceAttrJSON("data.akamai_property_rules_builder.static_content",
-							"json",
-							testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/static_content_v2024_08_13.json")),
-
-						resource.TestCheckResourceAttr("data.akamai_property_rules_builder.dynamic_content",
-							"rule_format",
-							"v2024-08-13"),
-						testCheckResourceAttrJSON("data.akamai_property_rules_builder.dynamic_content",
-							"json",
-							testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/dynamic_content_v2024_08_13.json")),
-					),
-				}},
-			})
-		})
-	})
-	t.Run("valid rule with 3 children - v2024-10-21", func(t *testing.T) {
-		useClient(nil, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{{
-					Config: testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/rules_v2024_10_21.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("data.akamai_property_rules_builder.default",
-							"rule_format",
-							"v2024-10-21"),
-						testCheckResourceAttrJSON("data.akamai_property_rules_builder.default",
-							"json",
-							testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/default_v2024_10_21.json")),
-
-						resource.TestCheckResourceAttr("data.akamai_property_rules_builder.content_compression",
-							"rule_format",
-							"v2024-10-21"),
-						testCheckResourceAttrJSON("data.akamai_property_rules_builder.content_compression",
-							"json",
-							testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/content_compression_v2024_10_21.json")),
-
-						resource.TestCheckResourceAttr("data.akamai_property_rules_builder.static_content",
-							"rule_format",
-							"v2024-10-21"),
-						testCheckResourceAttrJSON("data.akamai_property_rules_builder.static_content",
-							"json",
-							testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/static_content_v2024_10_21.json")),
-
-						resource.TestCheckResourceAttr("data.akamai_property_rules_builder.dynamic_content",
-							"rule_format",
-							"v2024-10-21"),
-						testCheckResourceAttrJSON("data.akamai_property_rules_builder.dynamic_content",
-							"json",
-							testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/dynamic_content_v2024_10_21.json")),
-					),
-				}},
-			})
-		})
-	})
 	t.Run("rule empty options - v2024-01-09", func(t *testing.T) {
 		useClient(nil, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{{
-					Config: testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/rules_v2024_01_09_with_empty_options.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/ruleformat/rules_v2024_01_09_with_empty_options.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("data.akamai_property_rules_builder.default",
 							"rule_format",
 							"v2024-01-09"),
 						testCheckResourceAttrJSON("data.akamai_property_rules_builder.default",
 							"json",
-							testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/default_v2024_01_09_with_empty_options.json")),
+							testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/ruleformat/default_v2024_01_09_with_empty_options.json")),
 					),
 				}},
 			})
@@ -386,7 +35,7 @@ func TestDataPropertyRulesBuilder(t *testing.T) {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{{
-					Config:      testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/rules_mixed_versions.tf"),
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/ruleformat/rules_mixed_versions.tf"),
 					ExpectError: regexp.MustCompile(`child rule is using different rule format \(rules_v2023_05_30\) than expected \(rules_v2023_01_05\)`),
 				}},
 			})
@@ -397,7 +46,7 @@ func TestDataPropertyRulesBuilder(t *testing.T) {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{{
-					Config:      testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/rules_error_too_many_elements.tf"),
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/ruleformat/rules_error_too_many_elements.tf"),
 					ExpectError: regexp.MustCompile(`expected 1 element\(s\), got 2`),
 				}},
 			})
@@ -408,7 +57,7 @@ func TestDataPropertyRulesBuilder(t *testing.T) {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{{
-					Config:      testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/rules_with_is_secure_outside_default.tf"),
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/ruleformat/rules_with_is_secure_outside_default.tf"),
 					ExpectError: regexp.MustCompile(`cannot be used outside 'default' rule: is_secure`),
 				}},
 			})
@@ -419,7 +68,7 @@ func TestDataPropertyRulesBuilder(t *testing.T) {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{{
-					Config:      testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/rules_with_variable_outside_default.tf"),
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/ruleformat/rules_with_variable_outside_default.tf"),
 					ExpectError: regexp.MustCompile(`cannot be used outside 'default' rule: variable`),
 				}},
 			})
@@ -430,21 +79,21 @@ func TestDataPropertyRulesBuilder(t *testing.T) {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{{
-					Config: testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/rules_variables.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/ruleformat/rules_variables.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("data.akamai_property_rules_builder.default",
 							"rule_format",
 							"v2023-01-05"),
 						testCheckResourceAttrJSON("data.akamai_property_rules_builder.default",
 							"json",
-							testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/default_variables.json")),
+							testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/ruleformat/default_variables.json")),
 
 						resource.TestCheckResourceAttr("data.akamai_property_rules_builder.content_compression",
 							"rule_format",
 							"v2023-01-05"),
 						testCheckResourceAttrJSON("data.akamai_property_rules_builder.content_compression",
 							"json",
-							testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/content_compression_variables.json")),
+							testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/ruleformat/content_compression_variables.json")),
 					),
 				}},
 			})

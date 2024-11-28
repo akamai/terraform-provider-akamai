@@ -32,6 +32,17 @@
         "options": {
           "cacheKeyHostname": "ORIGIN_HOSTNAME",
           "compress": true,
+          "customCertificates": [
+            {
+              "canBeCA": false,
+              "canBeLeaf": true,
+              "issuerRDNs": {
+                "C": "US",
+                "CN": "DigiCert TLS RSA SHA256 2020 CA1",
+                "O": "DigiCert Inc"
+              }
+            }
+          ],
           "enableTrueClientIp": true,
           "forwardHostHeader": "REQUEST_HOST_HEADER",
           "httpPort": 80,
@@ -145,21 +156,6 @@
           "enabled": true,
           "loaderVersion": "V12",
           "requirePci": false
-        }
-      },
-      {
-        "name": "corsSupport",
-        "options": {
-          "allowCredentials": false,
-          "allowHeaders": "ANY",
-          "allowOrigins": "ANY",
-          "enabled": true,
-          "exposeHeaders": [],
-          "methods": [
-            "GET",
-            "POST"
-          ],
-          "preflightMaxAge": "600s"
         }
       }
     ],
