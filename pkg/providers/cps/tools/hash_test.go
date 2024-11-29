@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/tj/assert"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestHashFromChallengesMap(t *testing.T) {

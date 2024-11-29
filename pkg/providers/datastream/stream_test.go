@@ -3,12 +3,11 @@ package datastream
 import (
 	"testing"
 
-	"github.com/stretchr/testify/require"
-	"github.com/tj/assert"
-
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/datastream"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func newSet(items ...interface{}) *schema.Set {

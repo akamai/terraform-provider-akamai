@@ -26,7 +26,6 @@ require (
 	github.com/jinzhu/copier v0.3.2
 	github.com/spf13/cast v1.5.0
 	github.com/stretchr/testify v1.8.4
-	github.com/tj/assert v0.0.3
 	golang.org/x/exp v0.0.0-20230809150735-7b3493d9a819
 	golang.org/x/sync v0.8.0
 )

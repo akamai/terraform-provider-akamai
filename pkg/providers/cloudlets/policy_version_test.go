@@ -8,9 +8,9 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/cloudlets"
 	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/cloudlets/v3"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"github.com/tj/assert"
 )
 
 func TestFindingLatestPolicyVersion(t *testing.T) {
