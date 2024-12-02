@@ -36,6 +36,7 @@ type BootstrapResource struct {
 type BootstrapResourceModel struct {
 	ID         types.String `tfsdk:"id"`
 	Name       types.String `tfsdk:"name"`
+	AssetID    types.String `tfsdk:"asset_id"`
 	GroupID    types.String `tfsdk:"group_id"`
 	ContractID types.String `tfsdk:"contract_id"`
 	ProductID  types.String `tfsdk:"product_id"`
@@ -72,7 +73,6 @@ func (r *BootstrapResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 				Description: "Group ID to be assigned to the Property",
 				PlanModifiers: []planmodifier.String{
 					modifiers.StringUseStateIf(modifiers.EqualUpToPrefixFunc("grp_")),
-					modifiers.PreventStringUpdate(),
 				},
 			},
 			"contract_id": schema.StringAttribute{
@@ -95,6 +95,14 @@ func (r *BootstrapResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 				Computed:    true,
 				Description: "ID of the Property",
 				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"asset_id": schema.StringAttribute{
+				Computed:    true,
+				Description: "ID of the property in the Identity and Access Management API.",
+				PlanModifiers: []planmodifier.String{
+					modifiers.StringUseStateIf(modifiers.EqualUpToPrefixFunc("aid_")),
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
@@ -147,6 +155,14 @@ func (r *BootstrapResource) Create(ctx context.Context, req resource.CreateReque
 	}
 
 	data.ID = types.StringValue(propertyID)
+
+	prop, err := fetchLatestProperty(ctx, client, propertyID, groupID, contractID)
+	if err != nil {
+		resp.Diagnostics.AddError(err.Error(), "")
+		return
+	}
+
+	data.AssetID = types.StringValue(prop.AssetID)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -190,7 +206,7 @@ func (r *BootstrapResource) Read(ctx context.Context, req resource.ReadRequest, 
 	groupID := str.AddPrefix(data.GroupID.ValueString(), "grp_")
 
 	client := Client(r.meta)
-	_, err := fetchLatestProperty(ctx, client, propertyID, groupID, contractID)
+	prop, err := fetchLatestProperty(ctx, client, propertyID, groupID, contractID)
 	if errors.Is(err, papi.ErrNotFound) {
 		tflog.Warn(ctx, fmt.Sprintf("property %q removed on server. Removing from local state", propertyID))
 		resp.State.RemoveResource(ctx)
@@ -199,11 +215,18 @@ func (r *BootstrapResource) Read(ctx context.Context, req resource.ReadRequest, 
 	if err != nil {
 		resp.Diagnostics.AddError(err.Error(), "")
 	}
+
+	data.AssetID = types.StringValue(prop.AssetID)
+	// Protection against drift: if group id was changed from outside terraform,
+	// store its current value
+	data.GroupID = types.StringValue(prop.GroupID)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
 // Update supports change for the following attributes:
+// - `group_id` using a dedicated endpoint from the IAM API,
 // - `name`, which results in resource replacement.
-// Trying to update `group_id`, `contract_id` or `product_id` will result in an error.
+// Trying to update `contract_id` or `product_id` will result in an error.
 func (r *BootstrapResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state BootstrapResourceModel
 
@@ -227,14 +250,13 @@ func (r *BootstrapResource) Update(ctx context.Context, req resource.UpdateReque
 	}
 
 	if groupsDiffer {
+		hlp := helper{Client(r.meta), IAMClient(r.meta)}
 		key := papiKey{
 			propertyID: state.ID.ValueString(),
-			groupID:    str.AddPrefix(state.GroupID.ValueString(), "grp_"),
-			contractID: str.AddPrefix(state.ContractID.ValueString(), "ctr_"),
+			groupID:    state.GroupID.ValueString(),
+			contractID: state.ContractID.ValueString(),
 		}
-		dest := str.AddPrefix(plan.GroupID.ValueString(), "grp_")
-
-		err := updateGroupID(ctx, Client(r.meta), IAMClient(r.meta), key, dest)
+		err := hlp.moveProperty(ctx, key, state.AssetID.ValueString(), plan.GroupID.ValueString())
 
 		if err != nil {
 			resp.Diagnostics.AddError(

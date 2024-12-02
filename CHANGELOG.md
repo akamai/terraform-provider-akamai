@@ -53,7 +53,10 @@
 
 
 
-
+* PAPI
+  * Added support for moving PAPI property between groups (`akamai_property` and `akamai_property_bootstrap`)
+    by updating the `group_id` field. Currently, properties that have never been activated are not supported.
+  * Added `asset_id` schema field to `akamai_property_bootstrap`.
 
 
 #### BUG FIXES:
@@ -92,7 +95,7 @@
 * Appsec
   * Fixed a problem with the missing `security_policy_id` during update if a resource was imported previously. 
   * Added the `akamai_appsec_aap_selected_hostnames` resource and data source.
-  * Modified the `enable_botman_siem` field from `Required` to the `Optional` parameter in the `akamai_appsec_siem_settings` resource.
+  * Modified the `enable_botman_siem` field from `Required` to the `Optional` parameter in the`akamai_appsec_siem_settings` resource.
 
 * Cloud Access
   * Added functionality to import the `akamai_cloudaccess_key` resource for specified group and contract IDs.

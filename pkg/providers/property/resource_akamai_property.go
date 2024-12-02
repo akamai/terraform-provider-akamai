@@ -671,7 +671,6 @@ func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 	diags := diag.Diagnostics{}
 
 	immutable := []string{
-		"group_id",
 		"contract_id",
 		"product_id",
 		"property_id",
@@ -689,9 +688,9 @@ func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 	}
 
 	// We only update if these attributes change.
-	if !d.HasChanges("hostnames", "rules", "rule_format") {
+	if !d.HasChanges("group_id", "hostnames", "rules", "rule_format") {
 		logger.Debug(
-			"No changes to hostnames, rules, or rule_format (no update required)")
+			"No changes to group_id, hostnames, rules, or rule_format (no update required)")
 		return nil
 	}
 
@@ -714,6 +713,7 @@ func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 		LatestVersion:     d.Get("latest_version").(int),
 		StagingVersion:    stagingVersion,
 		ProductionVersion: productionVersion,
+		AssetID:           d.Get("asset_id").(string),
 	}
 
 	propertyID := d.Id()
@@ -721,29 +721,23 @@ func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 	oldGID, _ := d.GetChange("group_id")
 	oldGroupID := oldGID.(string)
 
-	// We want to change group id first: if the user loses access to the property as a result of
-	// group change, we want it to be visible immediately as an error during the same update.
-	//
-	// This way we will avoid the following scenario:
-	// 1. User changes the group and something else, e.g. hostnames and gets a success,
-	//    although they don't belong to the new group,
-	// 2. User changes hostnames again (not the group) and only then gets a (hard to understand)
-	//    error.
 	groupsDiffer, err := areGroupIDsDifferent(oldGroupID, property.GroupID)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	if groupsDiffer {
+		hlp := helper{client, IAMClient(meta.Must(m))}
 		key := papiKey{
 			propertyID: property.PropertyID,
 			groupID:    oldGroupID,
 			contractID: property.ContractID,
 		}
-
-		err := updateGroupID(ctx, client, IAMClient(meta.Must(m)), key, property.GroupID)
-
+		err := hlp.moveProperty(ctx, key, property.AssetID, property.GroupID)
 		if err != nil {
-			return diag.FromErr(err)
+			// We need to set it, otherwise the config will be set into state
+			// (including the newly proposed group ID).
+			d.Partial(true)
+			return diag.FromErr(fmt.Errorf("error moving property: %w", err))
 		}
 
 		if !d.HasChanges("hostnames", "rules", "rule_format") {

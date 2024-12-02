@@ -226,40 +226,61 @@ type papiKey struct {
 	contractID string
 }
 
-func updateGroupID(ctx context.Context, client papi.PAPI, iamClient iam.IAM, key papiKey, destGroupID string) error {
+type helper struct {
+	client    papi.PAPI
+	iamClient iam.IAM
+}
 
+// moveProperty changes the group of the property specified by key and assetID to the group
+// with destGroupID.
+//
+// If the property is already in the desired group (e.g. it was changed earlier in the same
+// configuration from property bootstrap), nothing happens and no error is reported.
+// If the property has never been activated, an error is returned (see validatePropertyMove).
+// After a successful move, this method polls the API until the new group is returned by a
+// property read endpoint.
+func (h helper) moveProperty(ctx context.Context, key papiKey, assetID, destGroupID string) error {
 	logger := log.FromContext(ctx).WithFields(log.Fields{
 		"key":         key,
+		"assetID":     assetID,
 		"destGroupID": destGroupID,
 	})
-	logger.Debug("updateGroupID")
+	logger.Debug("moveProperty")
+	ctx = log.NewContext(ctx, logger)
 
 	from, err := str.GetIntID(key.groupID, "grp_")
 	if err != nil {
-		return err
+		return fmt.Errorf("error parsing src group id: %w", err)
 	}
-
 	to, err := str.GetIntID(destGroupID, "grp_")
 	if err != nil {
-		return err
+		return fmt.Errorf("error parsing dst group id: %w", err)
+	}
+	iamID, err := str.GetIntID(assetID, "aid_")
+	if err != nil {
+		return fmt.Errorf("error parsing asset id: %w", err)
 	}
 
-	// assetID is the ID of the property in the Identity and Access Management API
-	// See: https://techdocs.akamai.com/iam-api/reference/manage-access-to-properties-and-includes
-	// We never store assetID in the state, so we need to fetch it here
-	prp, err := fetchLatestProperty(ctx, client, key.propertyID, key.groupID, key.contractID)
+	done, err := h.isPropertyInGroup(ctx, papiKey{
+		propertyID: key.propertyID,
+		groupID:    destGroupID,
+		contractID: key.contractID,
+	})
 	if err != nil {
-		return err
+		return fmt.Errorf("error checking if property in group: %w", err)
+	}
+	if done {
+		logger.Debugf("Changing group id from %s to %s: skipping, group already changed",
+			key.groupID, destGroupID)
+		return nil
 	}
 
-	iamID, err := str.GetIntID(prp.AssetID, "aid_")
-	if err != nil {
+	if err := h.validatePropertyMove(ctx, key); err != nil {
 		return err
 	}
 
 	logger.Debugf("Changing group id from %d to %d for IAM id %d", from, to, iamID)
-
-	err = iamClient.MoveProperty(ctx, iam.MovePropertyRequest{
+	err = h.iamClient.MoveProperty(ctx, iam.MovePropertyRequest{
 		PropertyID: int64(iamID),
 		Body: iam.MovePropertyRequestBody{
 			DestinationGroupID: int64(to),
@@ -267,38 +288,96 @@ func updateGroupID(ctx context.Context, client papi.PAPI, iamClient iam.IAM, key
 		},
 	})
 	if err != nil {
-		return err
+		return fmt.Errorf("error calling move property API: %w", err)
 	}
 
-	err = waitForGroupIDChange(ctx, client, papiKey{
+	err = h.waitForPropertyGroupIDChange(ctx, papiKey{
 		propertyID: key.propertyID,
 		groupID:    destGroupID,
 		contractID: key.contractID,
-	}, 5)
-	return err
+	}, 5, time.Second)
+	if err != nil {
+		return fmt.Errorf("error waiting for group id change: %w", err)
+	}
+	return nil
 }
 
-func waitForGroupIDChange(ctx context.Context, client papi.PAPI, key papiKey, maxAttempts int) error {
-	logger := log.FromContext(ctx).WithFields(log.Fields{"key": key})
-	logger.Debug("waitForGroupIDChange")
+// isPropertyInGroup checks whether the property specified with key.propertyID and key.contractID
+// is in group key.groupID.
+func (h helper) isPropertyInGroup(ctx context.Context, key papiKey) (bool, error) {
 
-	req := papi.GetPropertyRequest{
+	logger := log.FromContext(ctx).WithFields(log.Fields{
+		"key": key,
+	})
+
+	prp, err := fetchLatestProperty(ctx, h.client, key.propertyID, key.groupID, key.contractID)
+	if err != nil {
+		if !isHTTP403(err) {
+			return false, fmt.Errorf("unexpected http error for %s: %w", key, err)
+		}
+		// No such property in such group
+		logger.WithError(err).Debugf("no such property in group %s: HTTP 403 received", key.groupID)
+		return false, nil
+	}
+
+	// It is possible that the property was in key.groupID in the past and Open API still returns
+	// a valid response for it. To be sure, we need to check prp.GroupID which is the actual group id.
+	diff, err := areGroupIDsDifferent(key.groupID, prp.GroupID)
+	if err != nil {
+		return false, err
+	}
+	if diff {
+		logger.Debugf("fetched property has group id %s different than expected %s",
+			prp.GroupID, key.groupID)
+		return false, nil
+	}
+	return true, nil
+}
+
+// validatePropertyMove returns error when the property specified by key is in a state where it
+// cannot be safely moved.
+//
+// A property that has never been activated reports rule errors for its CP codes
+// after moving to a sibling group, so we forbid moving it.
+func (h helper) validatePropertyMove(ctx context.Context, key papiKey) error {
+	res, err := h.client.GetActivations(ctx, papi.GetActivationsRequest{
 		PropertyID: key.propertyID,
 		ContractID: key.contractID,
 		GroupID:    key.groupID,
+	})
+	if err != nil {
+		return fmt.Errorf("error getting activations list for %s: %w", key, err)
 	}
+	if len(res.Activations.Items) == 0 {
+		return fmt.Errorf("moving properties that have never been activated is not supported "+
+			"(property id: %s, contract id: %s, group id %s)",
+			key.propertyID, key.contractID, key.groupID)
+	}
+	return nil
+}
+
+// waitForPropertyGroupIDChange polls the get property endpoint until the returned property is
+// in the group specified in key.
+//
+// This makes changing property's group id "synchronous" so that following TFP actions operate
+// on a known state. The method uses binary exponential backoff with initialWait and maxAttempts.
+func (h helper) waitForPropertyGroupIDChange(ctx context.Context, key papiKey, maxAttempts int, initialWait time.Duration) error {
+	logger := log.FromContext(ctx).WithFields(log.Fields{
+		"key":         key,
+		"maxAttempts": maxAttempts})
+
+	logger.Debug("waitForPropertyGroupIDChange")
 
 	attemptsLeft := maxAttempts
-	wait := time.Second
+	wait := initialWait
 	for {
-		_, err := client.GetProperty(ctx, req)
-		if err == nil {
-			logger.Debug("waitForGroupIDChange: success")
-			return nil
-		}
-		if !isHTTP403(err) {
-			// Unexpected error
+		done, err := h.isPropertyInGroup(ctx, key)
+		if err != nil {
 			return err
+		}
+		if done {
+			logger.Debug("waitForPropertyGroupIDChange: success")
+			return nil
 		}
 
 		attemptsLeft--
@@ -307,8 +386,8 @@ func waitForGroupIDChange(ctx context.Context, client papi.PAPI, key papiKey, ma
 				"contractID: %s in %d attempts failed",
 				key.groupID, key.propertyID, key.contractID, maxAttempts)
 		}
-		logger.Debugf("waitForGroupIDChange: new group id still not visible, %d attempts left, "+
-			"waiting %s... (original error: %s)", attemptsLeft, wait, err)
+		logger.Debugf("waitForPropertyGroupIDChange: new group id still not visible, %d attempts left, "+
+			"waiting %s...", attemptsLeft, wait)
 
 		select {
 		case <-ctx.Done():

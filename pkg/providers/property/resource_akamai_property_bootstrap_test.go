@@ -34,7 +34,8 @@ func TestBootstrapResourceCreate(t *testing.T) {
 		CheckEqual("group_id", "grp_1").
 		CheckEqual("contract_id", "ctr_2").
 		CheckEqual("product_id", "prd_3").
-		CheckEqual("name", "property_name")
+		CheckEqual("name", "property_name").
+		CheckEqual("asset_id", "aid_55555")
 
 	tests := map[string]struct {
 		init  func(*testing.T, *mockProperty)
@@ -44,7 +45,7 @@ func TestBootstrapResourceCreate(t *testing.T) {
 		"create": {
 			init: func(t *testing.T, p *mockProperty) {
 				p.mockCreateProperty()
-				p.mockGetProperty()
+				p.mockGetProperty().Twice()
 				p.mockRemoveProperty()
 			},
 			steps: []resource.TestStep{
@@ -57,7 +58,7 @@ func TestBootstrapResourceCreate(t *testing.T) {
 		"create without prefixes": {
 			init: func(t *testing.T, p *mockProperty) {
 				p.mockCreateProperty()
-				p.mockGetProperty()
+				p.mockGetProperty().Twice()
 				p.mockRemoveProperty()
 			},
 			steps: []resource.TestStep{
@@ -133,7 +134,8 @@ func TestBootstrapResourceUpdate(t *testing.T) {
 		CheckEqual("group_id", "grp_1").
 		CheckEqual("contract_id", "ctr_2").
 		CheckEqual("product_id", "prd_3").
-		CheckEqual("name", "property_name")
+		CheckEqual("name", "property_name").
+		CheckEqual("asset_id", "aid_55555")
 
 	tests := map[string]struct {
 		configPathForCreate string
@@ -148,6 +150,7 @@ func TestBootstrapResourceUpdate(t *testing.T) {
 			configPathForUpdate: "testdata/TestResPropertyBootstrap/create_without_prefixes.tf",
 			init: func(t *testing.T, p *mockProperty) {
 				p.mockCreateProperty()
+				p.mockGetProperty()
 				// read x2
 				p.mockGetProperty().Twice()
 				// read x1 before update
@@ -160,12 +163,11 @@ func TestBootstrapResourceUpdate(t *testing.T) {
 			configPathForCreate: "testdata/TestResPropertyBootstrap/create.tf",
 			configPathForUpdate: "testdata/TestResPropertyBootstrap/update_group.tf",
 			init: func(t *testing.T, p *mockProperty) {
-				t.Skip("skipping before moving property is enabled again, see DXE-4176")
 				p.mockCreateProperty()
+				p.mockGetProperty()
 				// read x2
 				p.mockGetProperty().Twice()
 				// update
-				p.mockGetProperty()
 				p.mockMoveProperty()
 				p.groupID = "grp_111"
 				// read x2
@@ -180,12 +182,13 @@ func TestBootstrapResourceUpdate(t *testing.T) {
 			configPathForCreate: "testdata/TestResPropertyBootstrap/create.tf",
 			init: func(t *testing.T, p *mockProperty) {
 				p.mockCreateProperty()
+				p.mockGetProperty()
 				// read x2
 				p.mockGetProperty().Twice()
 				p.mockRemoveProperty()
 				p.propertyName = "property_name2"
 				p.mockCreateProperty()
-				p.mockGetProperty()
+				p.mockGetProperty().Twice()
 				p.mockRemoveProperty()
 			},
 			configPathForUpdate: "testdata/TestResPropertyBootstrap/update_name.tf",
@@ -197,14 +200,13 @@ func TestBootstrapResourceUpdate(t *testing.T) {
 			configPathForCreate: "testdata/TestResPropertyBootstrap/create.tf",
 			configPathForUpdate: "testdata/TestResPropertyBootstrap/update_name_and_group.tf",
 			init: func(t *testing.T, p *mockProperty) {
-				t.Skip("skipping before moving property is enabled again, see DXE-4176")
 				p.mockCreateProperty()
-				p.mockGetProperty().Twice()
+				p.mockGetProperty().Times(3)
 				p.mockRemoveProperty()
 				p.propertyName = "property_name2"
 				p.groupID = "grp_93"
 				p.mockCreateProperty()
-				p.mockGetProperty()
+				p.mockGetProperty().Twice()
 				p.mockRemoveProperty()
 			},
 			updateChecks: baseChecker.
@@ -217,7 +219,7 @@ func TestBootstrapResourceUpdate(t *testing.T) {
 			configPathForUpdate: "testdata/TestResPropertyBootstrap/update_contract.tf",
 			init: func(t *testing.T, p *mockProperty) {
 				p.mockCreateProperty()
-				p.mockGetProperty().Twice()
+				p.mockGetProperty().Times(3)
 				p.mockRemoveProperty()
 			},
 			errorForUpdate: regexp.MustCompile("updating field `contract_id` is not possible"),
@@ -227,21 +229,10 @@ func TestBootstrapResourceUpdate(t *testing.T) {
 			configPathForUpdate: "testdata/TestResPropertyBootstrap/update_product.tf",
 			init: func(t *testing.T, p *mockProperty) {
 				p.mockCreateProperty()
-				p.mockGetProperty().Twice()
+				p.mockGetProperty().Times(3)
 				p.mockRemoveProperty()
 			},
 			errorForUpdate: regexp.MustCompile("updating field `product_id` is not possible"),
-		},
-		"create and update group - error": {
-			// TODO: remove this test after moving property is enabled again, see DXE-4176
-			configPathForCreate: "testdata/TestResPropertyBootstrap/create.tf",
-			configPathForUpdate: "testdata/TestResPropertyBootstrap/update_group.tf",
-			init: func(t *testing.T, p *mockProperty) {
-				p.mockCreateProperty()
-				p.mockGetProperty().Twice()
-				p.mockRemoveProperty()
-			},
-			errorForUpdate: regexp.MustCompile("updating field `group_id` is not possible"),
 		},
 	}
 
@@ -303,7 +294,8 @@ func TestBootstrapResourceImport(t *testing.T) {
 		CheckEqual("group_id", "grp_1").
 		CheckEqual("contract_id", "ctr_2").
 		CheckEqual("product_id", "prd_3").
-		CheckEqual("name", "property_name")
+		CheckEqual("name", "property_name").
+		CheckEqual("asset_id", "aid_55555")
 
 	tests := map[string]struct {
 		init          func(*testing.T, *mockProperty)
