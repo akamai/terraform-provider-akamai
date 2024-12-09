@@ -1,0 +1,49 @@
+{
+  "policyRules": [
+    {
+      "action": "alert",
+      "conditionException": {},
+      "id": 300050014,
+      "lock": false,
+      "riskScoreGroups": [
+        "LFI"
+      ],
+      "title": "Local File Inclusion (LFI) Attack on Linux files",
+      "version": 2
+    },
+    {
+      "action": "alert",
+      "conditionException": {},
+      "id": 777888999,
+      "lock": false,
+      "riskScoreGroups": [
+        "PLATFORM"
+      ],
+      "title": "Citrix Virtual Apps and Desktops (XEN) Unauthenticated RCE (CVE-2024-8068 and CVE-2024-8069) Attack Detected",
+      "version": 1
+    },
+    {
+      "action": "alert",
+      "conditionException": {
+        "exception": {
+          "specificHeaderCookieParamXmlOrJsonNames": [
+            {
+              "names": [
+                "*"
+              ],
+              "selector": "ARGS_NAMES",
+              "wildcard": true
+            }
+          ]
+        }
+      },
+      "id": 999997,
+      "lock": false,
+      "riskScoreGroups": [
+        "XSS"
+      ],
+      "title": "Cross-site Scripting (XSS) Attack - Dummy test rule",
+      "version": 2
+    }
+  ]
+}

@@ -83,6 +83,15 @@
 #### FEATURES/ENHANCEMENTS:
 
 
+
+* Appsec
+  * Added a new data source:
+    * `data_akamai_appsec_rapid_rules` - reads the rapid rules accessible for a security policy.
+  * Added a new resource:
+    * `resource_akamai_appsec_rapid_rules` - manages rapid rules assigned to a security policy.
+
+
+
 * Migrated to Go `1.22`.
 * Improved code by resolving issues reported by linter.
 * Updated vulnerable dependencies

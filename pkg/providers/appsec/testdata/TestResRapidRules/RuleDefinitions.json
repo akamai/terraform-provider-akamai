@@ -1,0 +1,20 @@
+[
+  {
+    "id": 3000214,
+    "action": "deny_custom_858380",
+    "lock": false,
+    "conditionException": {
+      "exception": {
+        "specificHeaderCookieParamXmlOrJsonNames": [
+          {
+            "names": [
+              "Auth"
+            ],
+            "selector": "REQUEST_HEADERS",
+            "wildcard": false
+          }
+        ]
+      }
+    }
+  }
+]

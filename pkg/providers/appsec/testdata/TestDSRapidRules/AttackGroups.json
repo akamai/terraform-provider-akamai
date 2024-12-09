@@ -1,0 +1,66 @@
+{
+  "attackGroupActions": [
+    {
+      "action": "alert",
+      "conditionException": {},
+      "group": "POLICY"
+    },
+    {
+      "action": "alert",
+      "conditionException": {},
+      "group": "WAT"
+    },
+    {
+      "action": "alert",
+      "conditionException": {},
+      "group": "PROTOCOL"
+    },
+    {
+      "action": "alert",
+      "conditionException": {},
+      "group": "SQL"
+    },
+    {
+      "action": "alert",
+      "conditionException": {},
+      "group": "XSS"
+    },
+    {
+      "action": "alert",
+      "conditionException": {},
+      "group": "CMD"
+    },
+    {
+      "action": "alert",
+      "conditionException": {
+        "exception": {
+          "specificHeaderCookieParamXmlOrJsonNames": [
+            {
+              "names": [
+                "*"
+              ],
+              "selector": "ARGS",
+              "wildcard": true
+            }
+          ]
+        }
+      },
+      "group": "LFI"
+    },
+    {
+      "action": "alert",
+      "conditionException": {},
+      "group": "RFI"
+    },
+    {
+      "action": "alert",
+      "conditionException": {},
+      "group": "PLATFORM"
+    },
+    {
+      "action": "none",
+      "conditionException": {},
+      "group": "OUTBOUND"
+    }
+  ]
+}
