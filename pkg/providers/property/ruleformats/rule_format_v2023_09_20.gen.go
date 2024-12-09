@@ -11750,7 +11750,7 @@ func getBehaviorsSchemaV20230920() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"key": {
-						ValidateDiagFunc: validateRegexOrVariable("^(0x)?[0-9a-fA-F]{32}$"),
+						ValidateDiagFunc: validateRegexOrVariable("^(0x)?[0-9a-fA-F]+$"),
 						Optional:         true,
 						Description:      "Specifies the encryption key to use as a shared secret to validate tokens.",
 						Type:             schema.TypeString,
@@ -11761,7 +11761,7 @@ func getBehaviorsSchemaV20230920() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"transition_key": {
-						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validateRegexOrVariable("^(0x)?[0-9a-fA-F]{32}$")),
+						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validateRegexOrVariable("^(0x)?[0-9a-fA-F]+$")),
 						Optional:         true,
 						Description:      "An alternate encryption key to match along with the `key` field, allowing you to rotate keys with no down time.",
 						Type:             schema.TypeString,
@@ -13283,13 +13283,13 @@ func getBehaviorsSchemaV20230920() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"key": {
-						ValidateDiagFunc: validateRegexOrVariable("^(0x)?[0-9a-fA-F]{64}$"),
+						ValidateDiagFunc: validateRegexOrVariable("^(0x)?[0-9a-fA-F]+$"),
 						Optional:         true,
 						Description:      "The shared secret used to validate tokens, which needs to match the key used in the token generation code.",
 						Type:             schema.TypeString,
 					},
 					"transition_key": {
-						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validateRegexOrVariable("^(0x)?[0-9a-fA-F]{64}$")),
+						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validateRegexOrVariable("^(0x)?[0-9a-fA-F]+$")),
 						Optional:         true,
 						Description:      "Specifies a transition key as a hex value.",
 						Type:             schema.TypeString,

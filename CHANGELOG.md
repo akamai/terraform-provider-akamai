@@ -75,7 +75,8 @@
 
 
 
-
+* PAPI
+  * Relaxed validation rules for fields `transition_key` and `key` for behaviors `segmented_content_protection` and `verify_token_authorization` to accept key of any size.
 
 
 

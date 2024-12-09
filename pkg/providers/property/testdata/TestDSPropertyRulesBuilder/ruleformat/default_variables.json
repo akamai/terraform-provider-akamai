@@ -175,6 +175,47 @@
             "options": {
               "tag": "nonprod-gol-static-{{builtin.AK_FILENAME}}-fixedstring{{user.PMUSER_FOO}}"
             }
+          },
+          {
+            "name": "segmentedContentProtection",
+            "options": {
+              "acl": false,
+              "dashMediaEncryption": false,
+              "dataPayload": false,
+              "enableTokenInURI": false,
+              "enabled": true,
+              "fieldCarryOver": "",
+              "headerForSalt": [
+                "User-Agent",
+                "X-Playback-Session-Id",
+                "Origin"
+              ],
+              "hlsMediaEncryption": false,
+              "ip": false,
+              "key": "1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f",
+              "mediaEncryptionTitle": "",
+              "salt": "",
+              "sessionId": true,
+              "tokenAuthHLSTitle": "",
+              "tokenAuthenticationTitle": "",
+              "transitionKey": "2",
+              "useAdvanced": true
+            }
+          },
+          {
+            "name": "verifyTokenAuthorization",
+            "options": {
+              "algorithm": "SHA256",
+              "escapeHmacInputs": true,
+              "failureResponse": true,
+              "ignoreQueryString": false,
+              "key": "2",
+              "location": "COOKIE",
+              "locationId": "__token__",
+              "salt": "",
+              "transitionKey": "3",
+              "useAdvanced": true
+            }
           }
         ],
         "criteria": [

@@ -192,6 +192,44 @@ data "akamai_property_rules_builder" "content_compression" {
         tag = "nonprod-gol-static-{{builtin.AK_FILENAME}}-fixedstring{{user.PMUSER_FOO}}"
       }
     }
+
+    behavior {
+      segmented_content_protection {
+        enabled                    = true
+        hls_media_encryption       = false
+        dash_media_encryption      = false
+        token_authentication_title = ""
+        media_encryption_title     = ""
+        key                        = "1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f"
+        use_advanced               = true
+        token_auth_hls_title       = ""
+        enable_token_in_uri        = false
+        transition_key             = "2"
+        salt                       = ""
+        header_for_salt            = ["User-Agent", "X-Playback-Session-Id", "Origin"]
+        field_carry_over           = ""
+        session_id                 = true
+        data_payload               = false
+        ip                         = false
+        acl                        = false
+      }
+    }
+
+    behavior {
+      verify_token_authorization {
+        use_advanced        = true
+        location            = "COOKIE"
+        location_id         = "__token__"
+        failure_response    = true
+        key                 = "2"
+        algorithm           = "SHA256"
+        escape_hmac_inputs  = true
+        ignore_query_string = false
+        transition_key      = "3"
+        salt                = ""
+      }
+    }
+
     children = [
     ]
   }
