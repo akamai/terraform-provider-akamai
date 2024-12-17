@@ -3,6 +3,6 @@ provider "akamai" {
 }
 
 resource "akamai_gtm_domain" "test" {
-  name = "test_domain"
+  name = "gtm_terra_testdomain.akadns.net"
   type = "weighted"
 }

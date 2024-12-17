@@ -3,7 +3,7 @@ provider "akamai" {
 }
 
 resource "akamai_gtm_geomap" "test" {
-  domain = "test_domain"
+  domain = "gtm_terra_testdomain.akadns.net"
   name   = "tfexample_geomap_1"
   default_datacenter {
     datacenter_id = 5400

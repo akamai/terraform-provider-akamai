@@ -4,7 +4,7 @@ provider "akamai" {
 
 resource "akamai_gtm_resource" "test" {
   aggregation_type = "latest"
-  domain           = "test_domain"
+  domain           = "gtm_terra_testdomain.akadns.net"
   name             = "tfexample_resource_1"
   type             = "XML load object via HTTP"
 }

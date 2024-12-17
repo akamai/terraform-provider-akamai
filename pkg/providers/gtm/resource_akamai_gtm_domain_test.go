@@ -425,14 +425,14 @@ func TestResGTMDomainImport(t *testing.T) {
 		stateCheck  resource.ImportStateCheckFunc
 	}{
 		"happy path - import": {
-			domainName: "test_domain",
+			domainName: "gtm_terra_testdomain.akadns.net",
 			init: func(m *gtm.Mock) {
 				// Read
 				importedDomain := gtm.GetDomainResponse(*getImportedDomain())
 				mockGetDomain(m, &importedDomain, nil).Once()
 			},
 			stateCheck: test.NewImportChecker().
-				CheckEqual("name", "test_domain").
+				CheckEqual("name", "gtm_terra_testdomain.akadns.net").
 				CheckEqual("type", "weighted").
 				CheckEqual("default_unreachable_threshold", "5").
 				CheckEqual("email_notification_list.0", "email1@nomail.com").
@@ -468,7 +468,7 @@ func TestResGTMDomainImport(t *testing.T) {
 				CheckEqual("end_user_mapping_enabled", "false").Build(),
 		},
 		"expect error - read": {
-			domainName: "test_domain",
+			domainName: "gtm_terra_testdomain.akadns.net",
 			init: func(m *gtm.Mock) {
 				// Read - error
 				mockGetDomain(m, nil, fmt.Errorf("get failed")).Once()
@@ -538,13 +538,13 @@ func getGTMDomainMocks() *gtm.Mock {
 
 func mockGetDomain(m *gtm.Mock, resp *gtm.GetDomainResponse, err error) *mock.Call {
 	return m.On("GetDomain", mock.Anything, gtm.GetDomainRequest{
-		DomainName: "test_domain",
+		DomainName: "gtm_terra_testdomain.akadns.net",
 	}).Return(resp, err)
 }
 
 func getImportedDomain() *gtm.Domain {
 	return &gtm.Domain{
-		Name:                         "test_domain",
+		Name:                         "gtm_terra_testdomain.akadns.net",
 		Type:                         "weighted",
 		DefaultUnreachableThreshold:  5.0,
 		EmailNotificationList:        []string{"email1@nomail.com", "email2@nomail.com"},

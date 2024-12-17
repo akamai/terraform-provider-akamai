@@ -368,7 +368,7 @@ func TestResGTMCIDRMapImport(t *testing.T) {
 		stateCheck  resource.ImportStateCheckFunc
 	}{
 		"happy path - import": {
-			domainName: "test_domain",
+			domainName: "gtm_terra_testdomain.akadns.net",
 			mapName:    "tfexample_cidrmap_1",
 			init: func(m *gtm.Mock) {
 				// Read
@@ -376,7 +376,7 @@ func TestResGTMCIDRMapImport(t *testing.T) {
 				mockGetCIDRMap(m, &importedCidrMap, nil).Times(2)
 			},
 			stateCheck: test.NewImportChecker().
-				CheckEqual("domain", "test_domain").
+				CheckEqual("domain", "gtm_terra_testdomain.akadns.net").
 				CheckEqual("name", "tfexample_cidrmap_1").
 				CheckEqual("default_datacenter.0.datacenter_id", "5400").
 				CheckEqual("default_datacenter.0.nickname", "default datacenter").
@@ -391,12 +391,12 @@ func TestResGTMCIDRMapImport(t *testing.T) {
 			expectError: regexp.MustCompile(`Error: invalid resource ID: :tfexample_cidrmap_1`),
 		},
 		"expect error - no map name, invalid import ID": {
-			domainName:  "test_domain",
+			domainName:  "gtm_terra_testdomain.akadns.net",
 			mapName:     "",
-			expectError: regexp.MustCompile(`Error: invalid resource ID: test_domain:`),
+			expectError: regexp.MustCompile(`Error: invalid resource ID: gtm_terra_testdomain.akadns.net:`),
 		},
 		"expect error - read": {
-			domainName: "test_domain",
+			domainName: "gtm_terra_testdomain.akadns.net",
 			mapName:    "tfexample_cidrmap_1",
 			init: func(m *gtm.Mock) {
 				// Read - error
@@ -475,7 +475,7 @@ func getCIDRMapMocks() *gtm.Mock {
 func mockGetCIDRMap(m *gtm.Mock, resp *gtm.GetCIDRMapResponse, err error) *mock.Call {
 	return m.On("GetCIDRMap", mock.Anything, gtm.GetCIDRMapRequest{
 		MapName:    "tfexample_cidrmap_1",
-		DomainName: "test_domain",
+		DomainName: "gtm_terra_testdomain.akadns.net",
 	}).Return(resp, err)
 }
 

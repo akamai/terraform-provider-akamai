@@ -224,14 +224,14 @@ func TestResGTMDatacenterImport(t *testing.T) {
 		stateCheck   resource.ImportStateCheckFunc
 	}{
 		"happy path - import": {
-			domainName:   "test_domain",
+			domainName:   "gtm_terra_testdomain.akadns.net",
 			datacenterID: "3132",
 			init: func(m *gtm.Mock) {
 				// Read
 				mockGetDatacenterImport(m, getImportedDatacenter(), nil).Times(2)
 			},
 			stateCheck: test.NewImportChecker().
-				CheckEqual("domain", "test_domain").
+				CheckEqual("domain", "gtm_terra_testdomain.akadns.net").
 				CheckEqual("datacenter_id", "3132").
 				CheckEqual("nickname", "testNickname").
 				CheckEqual("city", "city").
@@ -267,7 +267,7 @@ func TestResGTMDatacenterImport(t *testing.T) {
 			expectError:  regexp.MustCompile(`Error: Invalid Datacenter resource ID`),
 		},
 		"expect error - read": {
-			domainName:   "test_domain",
+			domainName:   "gtm_terra_testdomain.akadns.net",
 			datacenterID: "3132",
 			init: func(m *gtm.Mock) {
 				// Read - error
@@ -306,7 +306,7 @@ func TestResGTMDatacenterImport(t *testing.T) {
 func mockGetDatacenterImport(m *gtm.Mock, resp *gtm.Datacenter, err error) *mock.Call {
 	return m.On("GetDatacenter", mock.Anything, gtm.GetDatacenterRequest{
 		DatacenterID: 3132,
-		DomainName:   "test_domain",
+		DomainName:   "gtm_terra_testdomain.akadns.net",
 	}).Return(resp, err)
 }
 

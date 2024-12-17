@@ -3,5 +3,5 @@ provider "akamai" {
 }
 
 resource "akamai_gtm_datacenter" "test" {
-  domain = "test_domain"
+  domain = "gtm_terra_testdomain.akadns.net"
 }
