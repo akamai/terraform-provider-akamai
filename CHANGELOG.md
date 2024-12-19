@@ -1,5 +1,12 @@
 # RELEASE NOTES
 
+## 6.6.1 (Dec 20, 2024)
+
+#### FEATURES/ENHANCEMENTS:
+
+* Global
+  * Updated various dependencies
+
 ## 6.6.0 (Nov 21, 2024)
 
 #### FEATURES/ENHANCEMENTS:
