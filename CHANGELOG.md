@@ -87,6 +87,17 @@
 * Cloud Access
   * Populated `access_key_uid` in the `akamai_cloudaccess_key` resource from state, if value was known on plan level for update.
 
+* GTM
+  * Fixed issue in `akamai_gtm_property` resource that update could send incorrect values to the server
+    * Also fixed incorrect logging in the same case
+
+
+
+
+
+
+
+
 
 
 

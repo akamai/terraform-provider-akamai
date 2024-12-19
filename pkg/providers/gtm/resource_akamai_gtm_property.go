@@ -705,7 +705,7 @@ func resourceGTMv1PropertyUpdate(ctx context.Context, d *schema.ResourceData, m 
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	logger.Debugf("Updating Property PROPOSED: %v", existProp)
+	logger.Debugf("Updating Property PROPOSED: %v", newProp)
 	uStat, err := Client(meta).UpdateProperty(ctx, gtm.UpdatePropertyRequest{
 		Property:   newProp,
 		DomainName: domain,
@@ -1572,42 +1572,8 @@ func trafficTargetDiffSuppress(_, _, _ string, d *schema.ResourceData) bool {
 // createPropertyStruct converts response from GetPropertyResponse into Property
 func createPropertyStruct(prop *gtm.GetPropertyResponse) *gtm.Property {
 	if prop != nil {
-		return &gtm.Property{
-			Name:                      prop.CName,
-			Type:                      prop.Type,
-			IPv6:                      prop.IPv6,
-			ScoreAggregationType:      prop.ScoreAggregationType,
-			StickinessBonusPercentage: prop.StickinessBonusPercentage,
-			StickinessBonusConstant:   prop.StickinessBonusConstant,
-			HealthThreshold:           prop.HealthThreshold,
-			UseComputedTargets:        prop.UseComputedTargets,
-			BackupIP:                  prop.BackupIP,
-			BalanceByDownloadScore:    prop.BalanceByDownloadScore,
-			StaticTTL:                 prop.StaticTTL,
-			StaticRRSets:              prop.StaticRRSets,
-			LastModified:              prop.LastModified,
-			UnreachableThreshold:      prop.UnreachableThreshold,
-			MinLiveFraction:           prop.MinLiveFraction,
-			HealthMultiplier:          prop.HealthMultiplier,
-			DynamicTTL:                prop.DynamicTTL,
-			MaxUnreachablePenalty:     prop.MaxUnreachablePenalty,
-			MapName:                   prop.Name,
-			HandoutLimit:              prop.HandoutLimit,
-			HandoutMode:               prop.HandoutMode,
-			FailoverDelay:             prop.FailoverDelay,
-			BackupCName:               prop.BackupIP,
-			FailbackDelay:             prop.FailbackDelay,
-			LoadImbalancePercentage:   prop.LoadImbalancePercentage,
-			HealthMax:                 prop.HealthMax,
-			GhostDemandReporting:      prop.GhostDemandReporting,
-			Comments:                  prop.Comments,
-			CName:                     prop.CName,
-			WeightedHashBitsForIPv4:   prop.WeightedHashBitsForIPv4,
-			WeightedHashBitsForIPv6:   prop.WeightedHashBitsForIPv6,
-			TrafficTargets:            prop.TrafficTargets,
-			Links:                     prop.Links,
-			LivenessTests:             prop.LivenessTests,
-		}
+		p := gtm.Property(*prop)
+		return &p
 	}
 	return nil
 }
