@@ -28,11 +28,11 @@
 #### FEATURES/ENHANCEMENTS:
 
 
-* Migrated to go 1.22
+* Migrated to go `1.22`.
 
 
 
-
+* Added CPS configuration examples. ([I#467](https://github.com/akamai/terraform-provider-akamai/issues/467))
 
 
  
