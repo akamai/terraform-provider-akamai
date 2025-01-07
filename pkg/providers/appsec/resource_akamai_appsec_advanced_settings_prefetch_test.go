@@ -7,7 +7,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -32,22 +31,22 @@ func TestAkamaiAdvancedSettingsPrefetch_res_basic(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("GetConfiguration",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&config, nil)
 
 		client.On("GetAdvancedSettingsPrefetch",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetAdvancedSettingsPrefetchRequest{ConfigID: 43253, Version: 7},
 		).Return(&getResponse, nil)
 
 		client.On("UpdateAdvancedSettingsPrefetch",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.UpdateAdvancedSettingsPrefetchRequest{ConfigID: 43253, Version: 7, AllExtensions: false, EnableAppLayer: true, EnableRateControls: false, Extensions: []string{"cgi", "asp", "php", "jsp", "EMPTY_STRING", "py", "aspx"}},
 		).Return(&updateResponse, nil)
 
 		client.On("UpdateAdvancedSettingsPrefetch",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.UpdateAdvancedSettingsPrefetchRequest{ConfigID: 43253, Version: 7, AllExtensions: false, EnableAppLayer: false, EnableRateControls: false, Extensions: []string(nil)},
 		).Return(&updateResponse, nil)
 

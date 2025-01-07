@@ -7,7 +7,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -24,12 +23,12 @@ func TestAkamaiRules_data_basic(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("GetRules",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetRulesRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
 		).Return(&getRulesResponse, nil)
 
 		client.On("GetConfiguration",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&configs, nil)
 
@@ -38,7 +37,7 @@ func TestAkamaiRules_data_basic(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("GetWAFMode",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetWAFModeRequest{
 				ConfigID: 43253,
 				Version:  7,

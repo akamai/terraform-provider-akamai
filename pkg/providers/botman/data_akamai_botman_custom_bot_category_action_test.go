@@ -6,7 +6,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/botman"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestDataCustomBotCategoryAction(t *testing.T) {
@@ -33,7 +32,7 @@ func TestDataCustomBotCategoryAction(t *testing.T) {
 	]
 }`
 		mockedBotmanClient.On("GetCustomBotCategoryActionList",
-			mock.Anything,
+			testutils.MockContext,
 			botman.GetCustomBotCategoryActionListRequest{ConfigID: 43253, Version: 15, SecurityPolicyID: "AAAA_81230"},
 		).Return(&response, nil)
 
@@ -69,7 +68,7 @@ func TestDataCustomBotCategoryAction(t *testing.T) {
 	]
 }`
 		mockedBotmanClient.On("GetCustomBotCategoryActionList",
-			mock.Anything,
+			testutils.MockContext,
 			botman.GetCustomBotCategoryActionListRequest{ConfigID: 43253, Version: 15, SecurityPolicyID: "AAAA_81230", CategoryID: "cc9c3f89-e179-4892-89cf-d5e623ba9dc7"},
 		).Return(&response, nil)
 

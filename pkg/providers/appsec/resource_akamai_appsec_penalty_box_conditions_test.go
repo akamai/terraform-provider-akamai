@@ -7,7 +7,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -19,7 +18,7 @@ func TestAkamaiPenaltyBoxConditions_res_basic(t *testing.T) {
 			require.NoError(t, err)
 
 			client.On("GetConfiguration",
-				mock.Anything,
+				testutils.MockContext,
 				appsec.GetConfigurationRequest{ConfigID: configId},
 			).Return(&configResponse, nil)
 
@@ -32,7 +31,7 @@ func TestAkamaiPenaltyBoxConditions_res_basic(t *testing.T) {
 			require.NoError(t, err)
 
 			client.On("GetPenaltyBoxConditions",
-				mock.Anything,
+				testutils.MockContext,
 				appsec.GetPenaltyBoxConditionsRequest{ConfigID: configId, Version: version, PolicyID: policyId},
 			).Return(&penaltyBoxConditionsResponse, nil)
 		}
@@ -44,7 +43,7 @@ func TestAkamaiPenaltyBoxConditions_res_basic(t *testing.T) {
 			require.NoError(t, err)
 
 			client.On("UpdatePenaltyBoxConditions",
-				mock.Anything,
+				testutils.MockContext,
 				penaltyBoxConditionsUpdateReq,
 			).Return(&penaltyBoxConditionsResponse, nil).Once()
 		}
@@ -56,8 +55,8 @@ func TestAkamaiPenaltyBoxConditions_res_basic(t *testing.T) {
 			require.NoError(t, err)
 
 			client.On("UpdatePenaltyBoxConditions",
-				mock.Anything,
-				penaltyBoxConditionsUpdateReq, // ctx is irrelevant for this test
+				testutils.MockContext,
+				penaltyBoxConditionsUpdateReq,
 			).Return(&penaltyBoxConditionsDeleteResponse, nil)
 		}
 	)

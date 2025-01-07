@@ -17,7 +17,7 @@ import (
 func TestUsersAffectedByMovingGroup(t *testing.T) {
 
 	mockListAffectedUsers := func(client *iam.Mock, userType string, users []iam.GroupUser) *mock.Call {
-		return client.On("ListAffectedUsers", mock.Anything, iam.ListAffectedUsersRequest{SourceGroupID: 123, DestinationGroupID: 321, UserType: userType}).
+		return client.On("ListAffectedUsers", testutils.MockContext, iam.ListAffectedUsersRequest{SourceGroupID: 123, DestinationGroupID: 321, UserType: userType}).
 			Return(users, nil).Times(3)
 	}
 
@@ -131,7 +131,7 @@ func TestUsersAffectedByMovingGroup(t *testing.T) {
 		},
 		"api failed": {
 			init: func(client *iam.Mock) {
-				client.On("ListAffectedUsers", mock.Anything, iam.ListAffectedUsersRequest{SourceGroupID: 123, DestinationGroupID: 321, UserType: ""}).
+				client.On("ListAffectedUsers", testutils.MockContext, iam.ListAffectedUsersRequest{SourceGroupID: 123, DestinationGroupID: 321, UserType: ""}).
 					Return(nil, errors.New("api failed")).Once()
 			},
 			config:        "testdata/TestDataUsersAffected/basic.tf",

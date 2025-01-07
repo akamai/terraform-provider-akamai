@@ -11,7 +11,6 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 type (
@@ -115,7 +114,7 @@ func TestDataAllowedAPIs(t *testing.T) {
 			init: func(t *testing.T, m *iam.Mock, testData testDataForAllowedAPIs) {
 				listAllowedAPIsReq := iam.ListAllowedAPIsRequest{UserName: testData.username}
 
-				m.On("ListAllowedAPIs", mock.Anything, listAllowedAPIsReq).Return(nil, errors.New("test error"))
+				m.On("ListAllowedAPIs", testutils.MockContext, listAllowedAPIsReq).Return(nil, errors.New("test error"))
 			},
 			error:    regexp.MustCompile("test error"),
 			mockData: basicTestDataForAllowedAPIsNoOptional,
@@ -173,7 +172,7 @@ func expectFullListAllowedAPIs(_ *testing.T, client *iam.Mock, data testDataForA
 		})
 	}
 
-	client.On("ListAllowedAPIs", mock.Anything, listAllowedAPIsReq).Return(listAllowedAPIsRes, nil).Times(timesToRun)
+	client.On("ListAllowedAPIs", testutils.MockContext, listAllowedAPIsReq).Return(listAllowedAPIsRes, nil).Times(timesToRun)
 }
 
 func checkAllowedAPIsAttrs(data testDataForAllowedAPIs) resource.TestCheckFunc {

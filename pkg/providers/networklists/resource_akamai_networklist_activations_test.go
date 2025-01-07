@@ -7,7 +7,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/networklists"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -32,17 +31,17 @@ func TestAccAkamaiActivations_res_basic(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("CreateActivations",
-			mock.Anything,
+			testutils.MockContext,
 			networklists.CreateActivationsRequest{UniqueID: "86093_AGEOLIST", Action: "ACTIVATE", Network: "STAGING", Comments: "Test Notes", NotificationRecipients: []string{"user@example.com"}},
 		).Return(&cr, nil)
 
 		client.On("GetActivation",
-			mock.Anything,
+			testutils.MockContext,
 			networklists.GetActivationRequest{ActivationID: 547694},
 		).Return(&ar, nil)
 
 		client.On("CreateActivations",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			networklists.CreateActivationsRequest{UniqueID: "86093_AGEOLIST", Action: "ACTIVATE", Network: "PRODUCTION", Comments: "Test Notes Updated", NotificationRecipients: []string{"user@example.com"}},
 		).Return(&cr, nil)
 
@@ -98,12 +97,12 @@ func TestAccAkamaiActivations_res_basic(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("CreateActivations",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			networklists.CreateActivationsRequest{UniqueID: "86093_AGEOLIST", Action: "ACTIVATE", Network: "STAGING", Comments: "Test Notes", NotificationRecipients: []string{"user@example.com"}},
 		).Return(&cr, nil)
 
 		client.On("GetActivation",
-			mock.Anything,
+			testutils.MockContext,
 			networklists.GetActivationRequest{ActivationID: 547694},
 		).Return(&ar, nil)
 
@@ -162,12 +161,12 @@ func TestAccAkamaiActivations_res_basic(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("CreateActivations",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			networklists.CreateActivationsRequest{UniqueID: "86093_AGEOLIST", Action: "ACTIVATE", Network: "STAGING", Comments: "Test Notes", NotificationRecipients: []string{"user@example.com"}},
 		).Return(&cr, nil)
 
 		client.On("GetActivation",
-			mock.Anything,
+			testutils.MockContext,
 			networklists.GetActivationRequest{ActivationID: 547694},
 		).Return(&ar, nil)
 
@@ -226,17 +225,17 @@ func TestAccAkamaiActivations_res_basic(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("CreateActivations",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			networklists.CreateActivationsRequest{UniqueID: "86093_AGEOLIST", Action: "ACTIVATE", Network: "STAGING", Comments: "Test Notes", NotificationRecipients: []string{"user@example.com"}},
 		).Return(&cr, nil)
 
 		client.On("GetActivation",
-			mock.Anything,
+			testutils.MockContext,
 			networklists.GetActivationRequest{ActivationID: 547694},
 		).Return(&ar, nil)
 
 		client.On("CreateActivations",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			networklists.CreateActivationsRequest{UniqueID: "86093_AGEOLIST", Action: "ACTIVATE", Network: "PRODUCTION", Comments: "Test Notes", NotificationRecipients: []string{"user1@example.com"}},
 		).Return(&cr, nil)
 
@@ -295,22 +294,22 @@ func TestAccAkamaiActivations_res_basic(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("CreateActivations",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			networklists.CreateActivationsRequest{UniqueID: "86093_AGEOLIST", Action: "ACTIVATE", Network: "STAGING", Comments: "Test Notes", NotificationRecipients: []string{"user@example.com"}},
 		).Return(nil, &networklists.Error{StatusCode: 500}).Once()
 
 		client.On("CreateActivations",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			networklists.CreateActivationsRequest{UniqueID: "86093_AGEOLIST", Action: "ACTIVATE", Network: "STAGING", Comments: "Test Notes", NotificationRecipients: []string{"user@example.com"}},
 		).Return(&cr, nil)
 
 		client.On("GetActivation",
-			mock.Anything,
+			testutils.MockContext,
 			networklists.GetActivationRequest{ActivationID: 547694},
 		).Return(&ar, nil)
 
 		client.On("CreateActivations",
-			mock.Anything,
+			testutils.MockContext,
 			networklists.CreateActivationsRequest{UniqueID: "86093_AGEOLIST", Action: "ACTIVATE", Network: "PRODUCTION", Comments: "Test Notes Updated", NotificationRecipients: []string{"user@example.com"}},
 		).Return(&cr, nil)
 

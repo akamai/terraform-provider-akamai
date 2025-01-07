@@ -21,13 +21,13 @@ func TestDataApplicationLoadBalancer(t *testing.T) {
 		"validate schema": {
 			configPath: "testdata/TestDataCloudletsApplicationLoadBalancer/application_load_balancer.tf",
 			init: func(m *cloudlets.Mock) {
-				m.On("GetOrigin", mock.Anything, mock.Anything).Return(&cloudlets.Origin{
+				m.On("GetOrigin", testutils.MockContext, mock.Anything).Return(&cloudlets.Origin{
 					OriginID:  "alb_test_krk_dc1",
 					Akamaized: false,
 					Checksum:  "9c0fc1f3e9ea7eb2e090f2bf53709e45",
 					Type:      "APPLICATION_LOAD_BALANCER",
 				}, nil)
-				m.On("GetLoadBalancerVersion", mock.Anything, mock.Anything).Return(&cloudlets.LoadBalancerVersion{
+				m.On("GetLoadBalancerVersion", testutils.MockContext, mock.Anything).Return(&cloudlets.LoadBalancerVersion{
 					BalancingType: "WEIGHTED",
 					CreatedBy:     "jbond",
 					CreatedDate:   "2021-09-27T11:50:07.715Z",
@@ -86,7 +86,7 @@ func TestDataApplicationLoadBalancer(t *testing.T) {
 						},
 					},
 				}, nil)
-				m.On("ListLoadBalancerVersions", mock.Anything, mock.Anything).Return([]cloudlets.LoadBalancerVersion{
+				m.On("ListLoadBalancerVersions", testutils.MockContext, mock.Anything).Return([]cloudlets.LoadBalancerVersion{
 					{
 						Version: 1,
 					},
@@ -142,8 +142,8 @@ func TestDataApplicationLoadBalancer(t *testing.T) {
 		"specify load balancer version in file": {
 			configPath: "testdata/TestDataCloudletsApplicationLoadBalancer/application_load_balancer_version.tf",
 			init: func(m *cloudlets.Mock) {
-				m.On("GetLoadBalancerVersion", mock.Anything, mock.Anything).Return(&cloudlets.LoadBalancerVersion{Version: 10}, nil)
-				m.On("GetOrigin", mock.Anything, mock.Anything).Return(&cloudlets.Origin{}, nil)
+				m.On("GetLoadBalancerVersion", testutils.MockContext, mock.Anything).Return(&cloudlets.LoadBalancerVersion{Version: 10}, nil)
+				m.On("GetOrigin", testutils.MockContext, mock.Anything).Return(&cloudlets.Origin{}, nil)
 			},
 			checkFunctions: []resource.TestCheckFunc{
 				resource.TestCheckResourceAttr("data.akamai_cloudlets_application_load_balancer.test", "version", "10"),
@@ -152,8 +152,8 @@ func TestDataApplicationLoadBalancer(t *testing.T) {
 		"deleted load balancer version": {
 			configPath: "testdata/TestDataCloudletsApplicationLoadBalancer/application_load_balancer_version.tf",
 			init: func(m *cloudlets.Mock) {
-				m.On("GetLoadBalancerVersion", mock.Anything, mock.Anything).Return(&cloudlets.LoadBalancerVersion{Version: 10, Deleted: true}, nil)
-				m.On("GetOrigin", mock.Anything, mock.Anything).Return(&cloudlets.Origin{}, nil)
+				m.On("GetLoadBalancerVersion", testutils.MockContext, mock.Anything).Return(&cloudlets.LoadBalancerVersion{Version: 10, Deleted: true}, nil)
+				m.On("GetOrigin", testutils.MockContext, mock.Anything).Return(&cloudlets.Origin{}, nil)
 			},
 			withError: regexp.MustCompile("specified load balancer version is deleted: 10"),
 		},

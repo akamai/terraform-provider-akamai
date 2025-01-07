@@ -9,7 +9,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -22,7 +21,7 @@ func TestAkamaiConfiguration_data_basic(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("GetConfigurations",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetConfigurationsRequest{},
 		).Return(&getConfigurationsResponse, nil)
 
@@ -31,7 +30,7 @@ func TestAkamaiConfiguration_data_basic(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("GetSelectedHostnames",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetSelectedHostnamesRequest{ConfigID: 43253, Version: 15},
 		).Return(&getSelectedHostnamesResponse, nil)
 
@@ -63,7 +62,7 @@ func TestAkamaiConfiguration_data_hostnames(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("GetConfigurations",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetConfigurationsRequest{},
 		).Return(&getConfigurationsResponse, nil)
 
@@ -73,7 +72,7 @@ func TestAkamaiConfiguration_data_hostnames(t *testing.T) {
 
 		expectedOutputText := "\n+------------------------------------------------------------------------------------------------------+\n| Configurations                                                                                       |\n+-----------+--------------+----------------+---------------------------+------------------------------+\n| CONFIG_ID | NAME         | LATEST_VERSION | VERSION_ACTIVE_IN_STAGING | VERSION_ACTIVE_IN_PRODUCTION |\n+-----------+--------------+----------------+---------------------------+------------------------------+\n| 43253     | Akamai Tools | 15             | 0                         | 0                            |\n+-----------+--------------+----------------+---------------------------+------------------------------+\n"
 		client.On("GetSelectedHostnames",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetSelectedHostnamesRequest{ConfigID: 43253, Version: 15},
 		).Return(&getSelectedHostnamesResponse, nil)
 
@@ -106,7 +105,7 @@ func TestAkamaiConfiguration_data_nonexistentConfig(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("GetConfigurations",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetConfigurationsRequest{},
 		).Return(nil, fmt.Errorf("configuration 'Nonexistent' not found"))
 		useClient(client, func() {

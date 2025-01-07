@@ -42,7 +42,7 @@ func Test_populateEKV(t *testing.T) {
 				},
 			},
 			init: func(m *edgeworkers.Mock) {
-				m.On("UpsertItem", mock.Anything, edgeworkers.UpsertItemRequest{
+				m.On("UpsertItem", testutils.MockContext, edgeworkers.UpsertItemRequest{
 					ItemID:   "FR",
 					ItemData: "bonjour",
 					ItemsRequestParams: edgeworkers.ItemsRequestParams{
@@ -63,7 +63,7 @@ func Test_populateEKV(t *testing.T) {
 				},
 			},
 			init: func(m *edgeworkers.Mock) {
-				m.On("UpsertItem", mock.Anything, edgeworkers.UpsertItemRequest{
+				m.On("UpsertItem", testutils.MockContext, edgeworkers.UpsertItemRequest{
 					ItemID:   "FR",
 					ItemData: "bonjour",
 					ItemsRequestParams: edgeworkers.ItemsRequestParams{
@@ -86,7 +86,7 @@ func Test_populateEKV(t *testing.T) {
 			},
 			init: func(m *edgeworkers.Mock) {
 				maxUpsertAttempts = 2
-				m.On("UpsertItem", mock.Anything, edgeworkers.UpsertItemRequest{
+				m.On("UpsertItem", testutils.MockContext, edgeworkers.UpsertItemRequest{
 					ItemID:   "FR",
 					ItemData: "bonjour",
 					ItemsRequestParams: edgeworkers.ItemsRequestParams{
@@ -95,7 +95,7 @@ func Test_populateEKV(t *testing.T) {
 						GroupID:     ekvGroup,
 					},
 				}).Return(nil, errors.New(nsCreationError)).Once()
-				m.On("UpsertItem", mock.Anything, edgeworkers.UpsertItemRequest{
+				m.On("UpsertItem", testutils.MockContext, edgeworkers.UpsertItemRequest{
 					ItemID:   "FR",
 					ItemData: "bonjour",
 					ItemsRequestParams: edgeworkers.ItemsRequestParams{
@@ -117,7 +117,7 @@ func Test_populateEKV(t *testing.T) {
 			},
 			init: func(m *edgeworkers.Mock) {
 				maxUpsertAttempts = 1
-				m.On("UpsertItem", mock.Anything, edgeworkers.UpsertItemRequest{
+				m.On("UpsertItem", testutils.MockContext, edgeworkers.UpsertItemRequest{
 					ItemID:   "FR",
 					ItemData: "bonjour",
 					ItemsRequestParams: edgeworkers.ItemsRequestParams{
@@ -258,7 +258,7 @@ func TestResourceEdgeKV(t *testing.T) {
 				mockGetEdgeKVInitializationStatus(m, "INITIALIZED")
 				mockCreateEdgeKVNamespace(m, data)
 				// mock upserting an item twice, so we reach the limit of max attempts = 2 configured for this test and return an error
-				m.On("UpsertItem", mock.Anything, edgeworkers.UpsertItemRequest{
+				m.On("UpsertItem", testutils.MockContext, edgeworkers.UpsertItemRequest{
 					ItemID:   data.items[0].key,
 					ItemData: edgeworkers.Item(data.items[0].value),
 					ItemsRequestParams: edgeworkers.ItemsRequestParams{
@@ -280,7 +280,7 @@ func TestResourceEdgeKV(t *testing.T) {
 				// create
 				mockGetEdgeKVInitializationStatus(m, "UNINITIALIZED")
 				// expect an error on InitializeEdgeKV
-				m.On("InitializeEdgeKV", mock.Anything).Return(nil, fmt.Errorf("error on initialization edgeKV")).Once()
+				m.On("InitializeEdgeKV", testutils.MockContext).Return(nil, fmt.Errorf("error on initialization edgeKV")).Once()
 			},
 			steps: []resource.TestStep{
 				{
@@ -345,7 +345,7 @@ func TestResourceEdgeKV(t *testing.T) {
 				mockInitializeEdgeKV(m)
 				mockGetEdgeKVInitializationStatus(m, "INITIALIZED")
 				// expect error on creating EdgeKV namespace
-				m.On("CreateEdgeKVNamespace", mock.Anything, edgeworkers.CreateEdgeKVNamespaceRequest{
+				m.On("CreateEdgeKVNamespace", testutils.MockContext, edgeworkers.CreateEdgeKVNamespaceRequest{
 					Network: basicData.network,
 					Namespace: edgeworkers.Namespace{
 						Name:        basicData.name,
@@ -367,7 +367,7 @@ func TestResourceEdgeKV(t *testing.T) {
 				// create
 				mockEdgeKVCreate(m, basicData)
 				// read - expect error on GetEdgeKVNamespace
-				m.On("GetEdgeKVNamespace", mock.Anything, edgeworkers.GetEdgeKVNamespaceRequest{
+				m.On("GetEdgeKVNamespace", testutils.MockContext, edgeworkers.GetEdgeKVNamespaceRequest{
 					Network: basicData.network,
 					Name:    basicData.name,
 				}).Return(nil, fmt.Errorf("error reading edgekv namespace")).Once()
@@ -594,7 +594,7 @@ func mockEdgeKVCreate(m *edgeworkers.Mock, data edgeKVmockData) {
 }
 
 func mockEdgeKVRead(m *edgeworkers.Mock, data edgeKVmockData) *mock.Call {
-	return m.On("GetEdgeKVNamespace", mock.Anything, edgeworkers.GetEdgeKVNamespaceRequest{
+	return m.On("GetEdgeKVNamespace", testutils.MockContext, edgeworkers.GetEdgeKVNamespaceRequest{
 		Network: data.network,
 		Name:    data.name,
 	}).Return(&edgeworkers.Namespace{
@@ -605,7 +605,7 @@ func mockEdgeKVRead(m *edgeworkers.Mock, data edgeKVmockData) *mock.Call {
 }
 
 func mockGetEdgeKVInitializationStatus(m *edgeworkers.Mock, status string) {
-	m.On("GetEdgeKVInitializationStatus", mock.Anything).Return(&edgeworkers.EdgeKVInitializationStatus{
+	m.On("GetEdgeKVInitializationStatus", testutils.MockContext).Return(&edgeworkers.EdgeKVInitializationStatus{
 		AccountStatus:    status,
 		CPCode:           "123456",
 		ProductionStatus: status,
@@ -614,7 +614,7 @@ func mockGetEdgeKVInitializationStatus(m *edgeworkers.Mock, status string) {
 }
 
 func mockInitializeEdgeKV(m *edgeworkers.Mock) {
-	m.On("InitializeEdgeKV", mock.Anything).Return(&edgeworkers.EdgeKVInitializationStatus{}, nil).Once()
+	m.On("InitializeEdgeKV", testutils.MockContext).Return(&edgeworkers.EdgeKVInitializationStatus{}, nil).Once()
 }
 
 func mockCreateEdgeKVNamespace(m *edgeworkers.Mock, data edgeKVmockData) {
@@ -625,7 +625,7 @@ func mockCreateEdgeKVNamespace(m *edgeworkers.Mock, data edgeKVmockData) {
 		GroupID:     data.groupID,
 	}
 
-	m.On("CreateEdgeKVNamespace", mock.Anything, edgeworkers.CreateEdgeKVNamespaceRequest{
+	m.On("CreateEdgeKVNamespace", testutils.MockContext, edgeworkers.CreateEdgeKVNamespaceRequest{
 		Network:   data.network,
 		Namespace: namespace,
 	}).Return(&namespace, nil).Once()
@@ -633,7 +633,7 @@ func mockCreateEdgeKVNamespace(m *edgeworkers.Mock, data edgeKVmockData) {
 
 func mockUpsertItems(m *edgeworkers.Mock, data edgeKVmockData) {
 	for _, item := range data.items {
-		m.On("UpsertItem", mock.Anything, edgeworkers.UpsertItemRequest{
+		m.On("UpsertItem", testutils.MockContext, edgeworkers.UpsertItemRequest{
 			ItemID:   item.key,
 			ItemData: edgeworkers.Item(item.value),
 			ItemsRequestParams: edgeworkers.ItemsRequestParams{
@@ -646,7 +646,7 @@ func mockUpsertItems(m *edgeworkers.Mock, data edgeKVmockData) {
 }
 
 func mockUpdateEdgeKVNamespace(m *edgeworkers.Mock, data edgeKVmockData) {
-	m.On("UpdateEdgeKVNamespace", mock.Anything, edgeworkers.UpdateEdgeKVNamespaceRequest{
+	m.On("UpdateEdgeKVNamespace", testutils.MockContext, edgeworkers.UpdateEdgeKVNamespaceRequest{
 		Network: data.network,
 		UpdateNamespace: edgeworkers.UpdateNamespace{
 			Name:      data.name,

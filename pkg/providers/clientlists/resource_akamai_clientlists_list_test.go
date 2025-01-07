@@ -9,7 +9,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/clientlists"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestResourceClientList(t *testing.T) {
@@ -59,7 +58,7 @@ func TestResourceClientList(t *testing.T) {
 				Items:      mapItemsPayloadToContent(req.Items),
 			}
 
-			client.On("CreateClientList", mock.Anything, req).Return(&createResponse, nil).Once()
+			client.On("CreateClientList", testutils.MockContext, req).Return(&createResponse, nil).Once()
 			return &createResponse
 		}
 
@@ -77,7 +76,7 @@ func TestResourceClientList(t *testing.T) {
 				},
 			}
 
-			client.On("UpdateClientList", mock.Anything, req).Return(&updateResponse, nil).Once()
+			client.On("UpdateClientList", testutils.MockContext, req).Return(&updateResponse, nil).Once()
 			return &updateResponse
 		}
 
@@ -116,7 +115,7 @@ func TestResourceClientList(t *testing.T) {
 				Deleted:  deleted,
 			}
 
-			client.On("UpdateClientListItems", mock.Anything, req).Return(&updateResponse, nil).Once()
+			client.On("UpdateClientListItems", testutils.MockContext, req).Return(&updateResponse, nil).Once()
 			return &updateResponse
 		}
 
@@ -132,24 +131,24 @@ func TestResourceClientList(t *testing.T) {
 				ContractID:  "12_ABC",
 				GroupID:     12,
 			}
-			client.On("GetClientList", mock.Anything, clientListGetReq).Return(&clientList, nil).Times(callTimes)
+			client.On("GetClientList", testutils.MockContext, clientListGetReq).Return(&clientList, nil).Times(callTimes)
 		}
 
 		expectDeleteList = func(_ *testing.T, client *clientlists.Mock, list clientlists.ListContent) {
 			clientListDeleteReq := clientlists.DeleteClientListRequest{
 				ListID: list.ListID,
 			}
-			client.On("DeleteClientList", mock.Anything, clientListDeleteReq).Return(nil).Once()
+			client.On("DeleteClientList", testutils.MockContext, clientListDeleteReq).Return(nil).Once()
 		}
 
 		expectAPIErrorWithUpdateList = func(_ *testing.T, client *clientlists.Mock, req clientlists.UpdateClientListRequest) {
 			err := fmt.Errorf(updateAPIError)
-			client.On("UpdateClientList", mock.Anything, req).Return(nil, err).Once()
+			client.On("UpdateClientList", testutils.MockContext, req).Return(nil, err).Once()
 		}
 
 		expectAPIErrorWithGetList = func(_ *testing.T, client *clientlists.Mock, req clientlists.GetClientListRequest) {
 			err := fmt.Errorf(getAPIError)
-			client.On("GetClientList", mock.Anything, req).Return(nil, err).Once()
+			client.On("GetClientList", testutils.MockContext, req).Return(nil, err).Once()
 		}
 
 		checkAttributes = func(attrs listAttributes) resource.TestCheckFunc {

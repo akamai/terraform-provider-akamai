@@ -79,7 +79,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 		}
 
 		expectListIncludeActivations = func(client *papi.Mock, activations []papi.IncludeActivation) {
-			client.On("ListIncludeActivations", mock.Anything, mock.Anything).
+			client.On("ListIncludeActivations", testutils.MockContext, mock.Anything).
 				Return(&papi.ListIncludeActivationsResponse{
 					AccountID:  accountID,
 					ContractID: contractID,
@@ -91,7 +91,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 		}
 
 		expectGetIncludeActivation = func(client *papi.Mock, activation papi.IncludeActivation) *mock.Call {
-			return client.On("GetIncludeActivation", mock.Anything, papi.GetIncludeActivationRequest{
+			return client.On("GetIncludeActivation", testutils.MockContext, papi.GetIncludeActivationRequest{
 				IncludeID:    includeID,
 				ActivationID: activation.ActivationID,
 			}).Return(&papi.GetIncludeActivationResponse{
@@ -126,7 +126,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 			}
 
 			// if not found, mock a call that returns an error
-			client.On("GetIncludeActivation", mock.Anything, mock.Anything).
+			client.On("GetIncludeActivation", testutils.MockContext, mock.Anything).
 				Return(nil, fmt.Errorf("%w: %s", papi.ErrNotFound, papi.ErrGetIncludeActivation)).Once()
 
 			return state
@@ -163,14 +163,14 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 
 			newIncludeActivation := getExpectedActivationBasedOnRequest(req)
 
-			client.On("ActivateInclude", mock.Anything, req).
+			client.On("ActivateInclude", testutils.MockContext, req).
 				Return(&papi.ActivationIncludeResponse{
 					ActivationID: newIncludeActivation.ActivationID,
 				}, nil).Once()
 
 			if Nretries > 0 {
 				// here we want to simulate some failing calls that may happen and upsert should just retry
-				client.On("GetIncludeActivation", mock.Anything, papi.GetIncludeActivationRequest{
+				client.On("GetIncludeActivation", testutils.MockContext, papi.GetIncludeActivationRequest{
 					IncludeID:    includeID,
 					ActivationID: newIncludeActivation.ActivationID,
 				}).Return(nil, fmt.Errorf("%w: %s", papi.ErrNotFound, papi.ErrGetIncludeActivation)).Times(Nretries)
@@ -185,12 +185,12 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 		}
 
 		expectActivateIncludeWithNonrecoverableFail = func(client *papi.Mock, state State, req papi.ActivateIncludeRequest) {
-			client.On("ActivateInclude", mock.Anything, req).
+			client.On("ActivateInclude", testutils.MockContext, req).
 				Return(nil, &papi.Error{StatusCode: 404}).Once()
 		}
 
 		expectActivateIncludeWithRecoverableFail = func(client *papi.Mock, state State, req papi.ActivateIncludeRequest) {
-			client.On("ActivateInclude", mock.Anything, req).
+			client.On("ActivateInclude", testutils.MockContext, req).
 				Return(nil, &papi.Error{StatusCode: 500}).Once()
 		}
 
@@ -231,21 +231,21 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 				}
 			}
 			// if not found, mock a call that returns an error
-			client.On("GetIncludeActivation", mock.Anything, mock.Anything).
+			client.On("GetIncludeActivation", testutils.MockContext, mock.Anything).
 				Return(nil, fmt.Errorf("%w: %s", papi.ErrNotFound, papi.ErrGetIncludeActivation)).Once()
 		}
 
 		expectDectivateInclude = func(client *papi.Mock, state State, req papi.DeactivateIncludeRequest, Nretries int) State {
 			newIncludeDeactivation := getActivationBasedOnDeactivationRequest(req)
 
-			client.On("DeactivateInclude", mock.Anything, req).
+			client.On("DeactivateInclude", testutils.MockContext, req).
 				Return(&papi.DeactivationIncludeResponse{
 					ActivationID: newIncludeDeactivation.ActivationID,
 				}, nil).Once()
 
 			if Nretries > 0 {
 				// here we want to simulate some failing calls that may happen and upsert should just retry
-				client.On("GetIncludeActivation", mock.Anything, papi.GetIncludeActivationRequest{
+				client.On("GetIncludeActivation", testutils.MockContext, papi.GetIncludeActivationRequest{
 					IncludeID:    includeID,
 					ActivationID: newIncludeDeactivation.ActivationID,
 				}).Return(nil, fmt.Errorf("%w: %s", papi.ErrNotFound, papi.ErrGetIncludeActivation)).Times(Nretries)
@@ -570,7 +570,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 		deactReq := deactivateIncludeReq("STAGING", false)
 		state = expectWaitPending(client, state, deactReq.Network, 2)
 		expectAssertState(client, state)
-		client.On("DeactivateInclude", mock.Anything, deactReq).
+		client.On("DeactivateInclude", testutils.MockContext, deactReq).
 			Return(nil, &papi.Error{StatusCode: 500}).Once()
 
 		newIncludeDeactivation := getActivationBasedOnDeactivationRequest(deactReq)
@@ -623,7 +623,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 		deactReq := deactivateIncludeReq("STAGING", false)
 		state = expectWaitPending(client, state, deactReq.Network, 2)
 		expectAssertState(client, state)
-		client.On("DeactivateInclude", mock.Anything, deactReq).
+		client.On("DeactivateInclude", testutils.MockContext, deactReq).
 			Return(nil, &papi.Error{StatusCode: 500}).Once()
 		expectListIncludeActivations(client, state.activations)
 		state = expectDectivateInclude(client, state, deactReq, 2)
@@ -660,7 +660,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 		state = expectWaitPending(client, state, actReq.Network, 2)
 		expectAssertState(client, state)
 		state = expectWaitPending(client, state, actReq.Network, 0)
-		client.On("ActivateInclude", mock.Anything, actReq).
+		client.On("ActivateInclude", testutils.MockContext, actReq).
 			Return(nil, &url.Error{
 				Op:  "Post",
 				URL: "https://akab-xxxxxxxxxxxxxxxx-xxxxxxxxxxxxxxxx.luna.akamaiapis.net/papi/v1/includes/inc_12345/activations",
@@ -679,7 +679,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 		deactReq := deactivateIncludeReq("STAGING", false)
 		state = expectWaitPending(client, state, deactReq.Network, 2)
 		expectAssertState(client, state)
-		client.On("DeactivateInclude", mock.Anything, deactReq).
+		client.On("DeactivateInclude", testutils.MockContext, deactReq).
 			Return(nil, &url.Error{
 				Op:  "Post",
 				URL: "https://akab-xxxxxxxxxxxxxxxx-xxxxxxxxxxxxxxxx.luna.akamaiapis.net/papi/v1/includes/inc_12345/activations",
@@ -821,13 +821,13 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 		expectAssertState(client, state)
 		newIncludeActivation := getExpectedActivationBasedOnRequest(req)
 
-		client.On("ActivateInclude", mock.Anything, req).
+		client.On("ActivateInclude", testutils.MockContext, req).
 			Return(&papi.ActivationIncludeResponse{
 				ActivationID: newIncludeActivation.ActivationID,
 			}, nil).Once()
 
 		// GetIncludeActivation returns error about missing_compliance_record. TFP checks for that error and returns it
-		client.On("GetIncludeActivation", mock.Anything, papi.GetIncludeActivationRequest{
+		client.On("GetIncludeActivation", testutils.MockContext, papi.GetIncludeActivationRequest{
 			IncludeID:    includeID,
 			ActivationID: newIncludeActivation.ActivationID,
 		}).Return(nil, papi.ErrMissingComplianceRecord).Once()

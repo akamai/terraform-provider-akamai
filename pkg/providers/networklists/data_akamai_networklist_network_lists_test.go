@@ -7,7 +7,6 @@ import (
 	network "github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/networklists"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -20,7 +19,7 @@ func TestAccAkamaiNetworkList_data_basic(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("GetNetworkLists",
-			mock.Anything,
+			testutils.MockContext,
 			network.GetNetworkListsRequest{Name: "40996_ARTYLABWHITELIST", Type: "IP"},
 		).Return(&networkListsResponse, nil)
 
@@ -52,7 +51,7 @@ func TestAccAkamaiNetworkList_data_by_uniqueID(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("GetNetworkList",
-			mock.Anything,
+			testutils.MockContext,
 			network.GetNetworkListRequest{UniqueID: "86093_AGEOLIST"},
 		).Return(&networkListResponse, nil)
 

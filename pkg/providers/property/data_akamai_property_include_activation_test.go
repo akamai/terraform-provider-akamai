@@ -10,7 +10,6 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestDataPropertyIncludeActivation(t *testing.T) {
@@ -146,7 +145,7 @@ func TestDataPropertyIncludeActivation(t *testing.T) {
 				activationsResponse: *createIncludeActivationsResponse(accountForTests, contractForTests, groupForTests, includeActivationsForTests),
 			},
 			init: func(t *testing.T, m *papi.Mock, attrs includeActivationTestAttributes) {
-				m.On("ListIncludeActivations", mock.Anything, papi.ListIncludeActivationsRequest{
+				m.On("ListIncludeActivations", testutils.MockContext, papi.ListIncludeActivationsRequest{
 					IncludeID:  attrs.includeID,
 					ContractID: attrs.contractID,
 					GroupID:    attrs.groupID,
@@ -399,7 +398,7 @@ var (
 
 	// mockListIncludeActivation mocks ListIncludeActivation call with provided parameters
 	mockListIncludeActivation = func(m *papi.Mock, attrs includeActivationTestAttributes, timesToRun int) {
-		m.On("ListIncludeActivations", mock.Anything, papi.ListIncludeActivationsRequest{
+		m.On("ListIncludeActivations", testutils.MockContext, papi.ListIncludeActivationsRequest{
 			IncludeID:  attrs.includeID,
 			ContractID: attrs.contractID,
 			GroupID:    attrs.groupID,

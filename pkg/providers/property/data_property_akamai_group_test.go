@@ -7,7 +7,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 func Test_DSReadGroup(t *testing.T) {
@@ -178,7 +177,7 @@ type testDataForPAPIGroups struct {
 }
 
 var expectGetGroups = func(client *papi.Mock, data testDataForPAPIGroups, timesToRun int) {
-	client.On("GetGroups", mock.Anything).Return(&papi.GetGroupsResponse{
+	client.On("GetGroups", testutils.MockContext).Return(&papi.GetGroupsResponse{
 		AccountID:   data.accountID,
 		AccountName: data.accountName,
 		Groups:      data.groups,

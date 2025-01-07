@@ -12,7 +12,6 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestResourcePolicyVideo(t *testing.T) {
@@ -90,7 +89,7 @@ func TestResourcePolicyVideo(t *testing.T) {
 				Description:        fmt.Sprintf("Policy %s updated.", policyID),
 				ID:                 policyID,
 			}
-			client.On("UpsertPolicy", mock.Anything, imaging.UpsertPolicyRequest{
+			client.On("UpsertPolicy", testutils.MockContext, imaging.UpsertPolicyRequest{
 				PolicyID:    policyID,
 				Network:     network,
 				ContractID:  contractID,
@@ -100,7 +99,7 @@ func TestResourcePolicyVideo(t *testing.T) {
 		}
 
 		expectUpsertPolicyFailure = func(client *imaging.Mock, policyID, policySetID, contractID string, network imaging.PolicyNetwork, policy imaging.PolicyInput) {
-			client.On("UpsertPolicy", mock.Anything, imaging.UpsertPolicyRequest{
+			client.On("UpsertPolicy", testutils.MockContext, imaging.UpsertPolicyRequest{
 				PolicyID:    policyID,
 				Network:     network,
 				ContractID:  contractID,
@@ -110,7 +109,7 @@ func TestResourcePolicyVideo(t *testing.T) {
 		}
 
 		expectReadPolicy = func(client *imaging.Mock, policyID, contractID, policySetID string, network imaging.PolicyNetwork, policyOutput imaging.PolicyOutput, times int) {
-			client.On("GetPolicy", mock.Anything, imaging.GetPolicyRequest{
+			client.On("GetPolicy", testutils.MockContext, imaging.GetPolicyRequest{
 				PolicyID:    policyID,
 				Network:     network,
 				ContractID:  contractID,
@@ -120,7 +119,7 @@ func TestResourcePolicyVideo(t *testing.T) {
 
 		expectDeletePolicy = func(client *imaging.Mock, policyID, contractID, policySetID string, network imaging.PolicyNetwork) {
 			response := imaging.PolicyResponse{}
-			client.On("DeletePolicy", mock.Anything, imaging.DeletePolicyRequest{
+			client.On("DeletePolicy", testutils.MockContext, imaging.DeletePolicyRequest{
 				PolicyID:    policyID,
 				Network:     network,
 				ContractID:  contractID,
@@ -129,7 +128,7 @@ func TestResourcePolicyVideo(t *testing.T) {
 		}
 
 		expectUpsertPolicyWithError = func(client *imaging.Mock, policyID, contractID, policySetID string, network imaging.PolicyNetwork, policy imaging.PolicyInput, err error) {
-			client.On("UpsertPolicy", mock.Anything, imaging.UpsertPolicyRequest{
+			client.On("UpsertPolicy", testutils.MockContext, imaging.UpsertPolicyRequest{
 				PolicyID:    policyID,
 				Network:     network,
 				ContractID:  contractID,
@@ -602,7 +601,7 @@ func TestResourcePolicyVideo(t *testing.T) {
 		client := new(imaging.Mock)
 		expectUpsertPolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyInput)
 		expectReadPolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyOutput, 3)
-		client.On("GetPolicy", mock.Anything, imaging.GetPolicyRequest{
+		client.On("GetPolicy", testutils.MockContext, imaging.GetPolicyRequest{
 			PolicyID:    "test_policy",
 			Network:     imaging.PolicyNetworkProduction,
 			ContractID:  "test_contract",

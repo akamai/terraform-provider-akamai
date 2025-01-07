@@ -10,6 +10,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -93,7 +94,7 @@ func TestIsPropertyInGroup(t *testing.T) {
 				req := p.getPropertyRequest()
 				res := p.getPropertyResponse()
 				res.Property.GroupID = "grp_555"
-				p.papiMock.On("GetProperty", AnyCTX, req).Return(&res, nil)
+				p.papiMock.On("GetProperty", testutils.MockContext, req).Return(&res, nil)
 			},
 			expected: false,
 		},
@@ -103,7 +104,7 @@ func TestIsPropertyInGroup(t *testing.T) {
 				err := papi.Error{
 					StatusCode: http.StatusForbidden,
 				}
-				p.papiMock.On("GetProperty", AnyCTX, req).Return(nil, &err)
+				p.papiMock.On("GetProperty", testutils.MockContext, req).Return(nil, &err)
 			},
 			expected: false,
 		},
@@ -111,7 +112,7 @@ func TestIsPropertyInGroup(t *testing.T) {
 			init: func(t *testing.T, p *mockProperty) {
 				req := p.getPropertyRequest()
 				err := errors.New("dummy error")
-				p.papiMock.On("GetProperty", AnyCTX, req).Return(nil, err)
+				p.papiMock.On("GetProperty", testutils.MockContext, req).Return(nil, err)
 			},
 			expectedError: "unexpected http error for {prp_1 grp_2 ctr_3}: dummy error",
 		},
@@ -222,7 +223,7 @@ func TestWaitForPropertyGroupIDChange(t *testing.T) {
 				req := p.getPropertyRequest()
 				res := p.getPropertyResponse()
 				res.Property.GroupID = "grp_555"
-				p.papiMock.On("GetProperty", AnyCTX, req).Return(&res, nil).Twice()
+				p.papiMock.On("GetProperty", testutils.MockContext, req).Return(&res, nil).Twice()
 
 				// desired group
 				p.mockGetProperty()
@@ -235,7 +236,7 @@ func TestWaitForPropertyGroupIDChange(t *testing.T) {
 				req := p.getPropertyRequest()
 				res := p.getPropertyResponse()
 				res.Property.GroupID = "grp_555"
-				p.papiMock.On("GetProperty", AnyCTX, req).Return(&res, nil).Times(3)
+				p.papiMock.On("GetProperty", testutils.MockContext, req).Return(&res, nil).Times(3)
 			},
 			expectedError: ptr.To("waiting for groupID change to: grp_2 for propertyID: prp_1, " +
 				"contractID: ctr_3 in 3 attempts failed"),
@@ -244,7 +245,7 @@ func TestWaitForPropertyGroupIDChange(t *testing.T) {
 			init: func(t *testing.T, p *mockProperty) {
 				req := p.getPropertyRequest()
 				err := errors.New("dummy error")
-				p.papiMock.On("GetProperty", AnyCTX, req).Return(nil, err)
+				p.papiMock.On("GetProperty", testutils.MockContext, req).Return(nil, err)
 			},
 			expectedError: ptr.To("unexpected http error for {prp_1 grp_2 ctr_3}: dummy error"),
 		},

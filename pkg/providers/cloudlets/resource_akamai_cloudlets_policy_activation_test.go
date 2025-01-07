@@ -22,7 +22,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 		"try to create activation with a non existing policy version": {
 			init: func(m *cloudlets.Mock) {
 				expectToDiscoverPolicyAsV2(m, 1234)
-				m.On("GetPolicyVersion", mock.Anything, cloudlets.GetPolicyVersionRequest{PolicyID: 1234, Version: 1, OmitRules: true}).Return(nil, fmt.Errorf("an error"))
+				m.On("GetPolicyVersion", testutils.MockContext, cloudlets.GetPolicyVersionRequest{PolicyID: 1234, Version: 1, OmitRules: true}).Return(nil, fmt.Errorf("an error"))
 			},
 			steps: []resource.TestStep{
 				{
@@ -904,7 +904,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 						},
 					},
 				}
-				m.On("ListPolicyActivations", mock.Anything, cloudlets.ListPolicyActivationsRequest{
+				m.On("ListPolicyActivations", testutils.MockContext, cloudlets.ListPolicyActivationsRequest{
 					PolicyID: policyID,
 					Network:  network,
 				}).Return(policyActivations, nil).Times(1)
@@ -1045,8 +1045,8 @@ func TestResourceV3CloudletsPolicyActivation(t *testing.T) {
 		"try to create activation with a non existing policy": {
 			init: func(m2 *cloudlets.Mock, m3 *v3.Mock) {
 				policyID := int64(1234)
-				m2.On("GetPolicy", mock.Anything, cloudlets.GetPolicyRequest{PolicyID: policyID}).Return(nil, &cloudlets.Error{StatusCode: http.StatusNotFound}).Once()
-				m3.On("GetPolicy", mock.Anything, v3.GetPolicyRequest{PolicyID: policyID}).Return(nil, &v3.Error{Status: http.StatusNotFound}).Once()
+				m2.On("GetPolicy", testutils.MockContext, cloudlets.GetPolicyRequest{PolicyID: policyID}).Return(nil, &cloudlets.Error{StatusCode: http.StatusNotFound}).Once()
+				m3.On("GetPolicy", testutils.MockContext, v3.GetPolicyRequest{PolicyID: policyID}).Return(nil, &v3.Error{Status: http.StatusNotFound}).Once()
 			},
 			steps: []resource.TestStep{
 				{
@@ -1083,8 +1083,8 @@ func TestResourceV3CloudletsPolicyActivation(t *testing.T) {
 				policyID, version, network := int64(1234), int64(1), v3.StagingNetwork
 				// create
 				//discover
-				m2.On("GetPolicy", mock.Anything, cloudlets.GetPolicyRequest{PolicyID: policyID}).Return(nil, &cloudlets.Error{StatusCode: http.StatusInternalServerError}).Once()
-				m3.On("GetPolicy", mock.Anything, v3.GetPolicyRequest{PolicyID: policyID}).Return(&v3.Policy{ID: policyID}, nil).Once()
+				m2.On("GetPolicy", testutils.MockContext, cloudlets.GetPolicyRequest{PolicyID: policyID}).Return(nil, &cloudlets.Error{StatusCode: http.StatusInternalServerError}).Once()
+				m3.On("GetPolicy", testutils.MockContext, v3.GetPolicyRequest{PolicyID: policyID}).Return(&v3.Policy{ID: policyID}, nil).Once()
 				//rest of create
 				expectGetV3Policy(m3, policyID, v3.CurrentActivations{Production: v3.ActivationInfo{}, Staging: v3.ActivationInfo{}}, nil).Once()
 				expectActivateV3PolicyVersion(m3, policyID, version, 111, network, nil).Once()
@@ -1787,12 +1787,12 @@ func expectFullActivation(m *cloudlets.Mock, policyID, version int64, properties
 }
 
 func expectToDiscoverPolicyAsV2(m *cloudlets.Mock, policyID int64) {
-	m.On("GetPolicy", mock.Anything, cloudlets.GetPolicyRequest{PolicyID: policyID}).Return(&cloudlets.Policy{PolicyID: policyID}, nil).Once()
+	m.On("GetPolicy", testutils.MockContext, cloudlets.GetPolicyRequest{PolicyID: policyID}).Return(&cloudlets.Policy{PolicyID: policyID}, nil).Once()
 }
 
 func expectToDiscoverPolicyAsV3(m2 *cloudlets.Mock, m3 *v3.Mock, policyID int64) {
-	m2.On("GetPolicy", mock.Anything, cloudlets.GetPolicyRequest{PolicyID: policyID}).Return(nil, &cloudlets.Error{StatusCode: http.StatusNotFound}).Once()
-	m3.On("GetPolicy", mock.Anything, v3.GetPolicyRequest{PolicyID: policyID}).Return(&v3.Policy{ID: policyID}, nil).Once()
+	m2.On("GetPolicy", testutils.MockContext, cloudlets.GetPolicyRequest{PolicyID: policyID}).Return(nil, &cloudlets.Error{StatusCode: http.StatusNotFound}).Once()
+	m3.On("GetPolicy", testutils.MockContext, v3.GetPolicyRequest{PolicyID: policyID}).Return(&v3.Policy{ID: policyID}, nil).Once()
 }
 
 // expect delete step
@@ -1814,7 +1814,7 @@ func expectDeletePhase(m *cloudlets.Mock, policyID int64, deletedProperties, rem
 func expectGetPolicyVersion(m *cloudlets.Mock, policyID, version int64, activations []cloudlets.PolicyActivation, err error) *mock.Call {
 	return m.On(
 		"GetPolicyVersion",
-		mock.Anything,
+		testutils.MockContext,
 		cloudlets.GetPolicyVersionRequest{PolicyID: policyID, Version: version, OmitRules: true},
 	).Return(
 		&cloudlets.PolicyVersion{
@@ -1823,14 +1823,14 @@ func expectGetPolicyVersion(m *cloudlets.Mock, policyID, version int64, activati
 }
 
 func expectDeletePolicyProperty(m *cloudlets.Mock, policyID, propertyID int64, net cloudlets.PolicyActivationNetwork, expectError error) *mock.Call {
-	return m.On("DeletePolicyProperty", mock.Anything, cloudlets.DeletePolicyPropertyRequest{
+	return m.On("DeletePolicyProperty", testutils.MockContext, cloudlets.DeletePolicyPropertyRequest{
 		PolicyID: policyID, PropertyID: propertyID, Network: net,
 	}).Return(expectError)
 }
 
 func expectGetPolicyProperties(m *cloudlets.Mock, policyID int64, properties []string, expectError error) *mock.Call {
 	if expectError != nil {
-		return m.On("GetPolicyProperties", mock.Anything, cloudlets.GetPolicyPropertiesRequest{PolicyID: policyID}).Return(nil, expectError)
+		return m.On("GetPolicyProperties", testutils.MockContext, cloudlets.GetPolicyPropertiesRequest{PolicyID: policyID}).Return(nil, expectError)
 	}
 
 	response := make(map[string]cloudlets.PolicyProperty)
@@ -1838,12 +1838,12 @@ func expectGetPolicyProperties(m *cloudlets.Mock, policyID int64, properties []s
 		response[name] = cloudlets.PolicyProperty{Name: name, ID: int64(10 * i), GroupID: int64(i)}
 	}
 
-	return m.On("GetPolicyProperties", mock.Anything, cloudlets.GetPolicyPropertiesRequest{PolicyID: policyID}).Return(response, nil)
+	return m.On("GetPolicyProperties", testutils.MockContext, cloudlets.GetPolicyPropertiesRequest{PolicyID: policyID}).Return(response, nil)
 }
 
 func expectListPolicyActivations(m *cloudlets.Mock, policyID, version int64, network cloudlets.PolicyActivationNetwork, propertyNames []string, status cloudlets.PolicyActivationStatus, statusDetail string, numberActivations int, expectedErr error) *mock.Call {
 	if expectedErr != nil {
-		return m.On("ListPolicyActivations", mock.Anything, cloudlets.ListPolicyActivationsRequest{
+		return m.On("ListPolicyActivations", testutils.MockContext, cloudlets.ListPolicyActivationsRequest{
 			PolicyID: policyID,
 			Network:  network,
 		}).Return(nil, expectedErr)
@@ -1851,7 +1851,7 @@ func expectListPolicyActivations(m *cloudlets.Mock, policyID, version int64, net
 
 	policyActivations := createPolicyActivations(policyID, version, network, propertyNames, status, statusDetail, numberActivations)
 
-	return m.On("ListPolicyActivations", mock.Anything, cloudlets.ListPolicyActivationsRequest{
+	return m.On("ListPolicyActivations", testutils.MockContext, cloudlets.ListPolicyActivationsRequest{
 		PolicyID: policyID,
 		Network:  network,
 	}).Return(policyActivations, nil)
@@ -1859,7 +1859,7 @@ func expectListPolicyActivations(m *cloudlets.Mock, policyID, version int64, net
 
 func expectActivatePolicyVersion(m *cloudlets.Mock, policyID, version int64, network cloudlets.PolicyActivationNetwork, additionalProps []string, status cloudlets.PolicyActivationStatus, statusDetail string, numberActivations int, err error) *mock.Call {
 	if err != nil {
-		return m.On("ActivatePolicyVersion", mock.Anything, cloudlets.ActivatePolicyVersionRequest{
+		return m.On("ActivatePolicyVersion", testutils.MockContext, cloudlets.ActivatePolicyVersionRequest{
 			PolicyID:                policyID,
 			Async:                   true,
 			Version:                 version,
@@ -1869,7 +1869,7 @@ func expectActivatePolicyVersion(m *cloudlets.Mock, policyID, version int64, net
 
 	policyActivations := createPolicyActivations(policyID, version, network, additionalProps, status, statusDetail, numberActivations)
 
-	return m.On("ActivatePolicyVersion", mock.Anything, cloudlets.ActivatePolicyVersionRequest{
+	return m.On("ActivatePolicyVersion", testutils.MockContext, cloudlets.ActivatePolicyVersionRequest{
 		PolicyID:                policyID,
 		Async:                   true,
 		Version:                 version,
@@ -1940,13 +1940,13 @@ func expectGetV3Policy(m *v3.Mock, policyID int64, activations v3.CurrentActivat
 	if err != nil {
 		return m.On(
 			"GetPolicy",
-			mock.Anything,
+			testutils.MockContext,
 			v3.GetPolicyRequest{PolicyID: policyID},
 		).Return(nil, err)
 	}
 	return m.On(
 		"GetPolicy",
-		mock.Anything,
+		testutils.MockContext,
 		v3.GetPolicyRequest{PolicyID: policyID},
 	).Return(
 		&v3.Policy{
@@ -1957,14 +1957,14 @@ func expectGetV3Policy(m *v3.Mock, policyID int64, activations v3.CurrentActivat
 
 func expectActivateV3PolicyVersion(m *v3.Mock, policyID, version, activationID int64, network v3.Network, err error) *mock.Call {
 	if err != nil {
-		return m.On("ActivatePolicy", mock.Anything, v3.ActivatePolicyRequest{
+		return m.On("ActivatePolicy", testutils.MockContext, v3.ActivatePolicyRequest{
 			PolicyID:      policyID,
 			Network:       network,
 			PolicyVersion: version,
 		}).Return(nil, err)
 	}
 
-	return m.On("ActivatePolicy", mock.Anything, v3.ActivatePolicyRequest{
+	return m.On("ActivatePolicy", testutils.MockContext, v3.ActivatePolicyRequest{
 		PolicyID:      policyID,
 		Network:       network,
 		PolicyVersion: version,
@@ -1979,7 +1979,7 @@ func expectActivateV3PolicyVersion(m *v3.Mock, policyID, version, activationID i
 func expectWaitForV3Activation(m *v3.Mock, policyID, activationID int64, activations []v3.ActivationStatus, error error) {
 	if error != nil {
 		m.On("GetPolicyActivation",
-			mock.Anything,
+			testutils.MockContext,
 			v3.GetPolicyActivationRequest{
 				PolicyID:     policyID,
 				ActivationID: activationID,
@@ -1988,7 +1988,7 @@ func expectWaitForV3Activation(m *v3.Mock, policyID, activationID int64, activat
 	}
 	for idx := range activations {
 		m.On("GetPolicyActivation",
-			mock.Anything,
+			testutils.MockContext,
 			v3.GetPolicyActivationRequest{
 				PolicyID:     policyID,
 				ActivationID: activationID,
@@ -2001,14 +2001,14 @@ func expectWaitForV3Activation(m *v3.Mock, policyID, activationID int64, activat
 
 func expectDeactivateV3PolicyVersion(m *v3.Mock, policyID, version, activationID int64, network v3.Network, err error) *mock.Call {
 	if err != nil {
-		return m.On("DeactivatePolicy", mock.Anything, v3.DeactivatePolicyRequest{
+		return m.On("DeactivatePolicy", testutils.MockContext, v3.DeactivatePolicyRequest{
 			PolicyID:      policyID,
 			Network:       network,
 			PolicyVersion: version,
 		}).Return(nil, err)
 	}
 
-	return m.On("DeactivatePolicy", mock.Anything, v3.DeactivatePolicyRequest{
+	return m.On("DeactivatePolicy", testutils.MockContext, v3.DeactivatePolicyRequest{
 		PolicyID:      policyID,
 		Network:       network,
 		PolicyVersion: version,

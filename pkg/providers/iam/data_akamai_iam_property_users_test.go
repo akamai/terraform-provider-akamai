@@ -8,7 +8,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/iam"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestDataPropertyUsers(t *testing.T) {
@@ -38,7 +37,7 @@ func TestDataPropertyUsers(t *testing.T) {
 
 	mockListUsersForProperty := func(iamMock *iam.Mock, req iam.ListUsersForPropertyRequest,
 		users ...iam.UsersForProperty) {
-		iamMock.On("ListUsersForProperty", mock.Anything, req).
+		iamMock.On("ListUsersForProperty", testutils.MockContext, req).
 			Return((iam.ListUsersForPropertyResponse)(users), nil).Times(3)
 	}
 
@@ -172,7 +171,7 @@ func TestDataPropertyUsers(t *testing.T) {
 				req := iam.ListUsersForPropertyRequest{
 					PropertyID: 12345,
 				}
-				iamMock.On("ListUsersForProperty", mock.Anything, req).
+				iamMock.On("ListUsersForProperty", testutils.MockContext, req).
 					Return(nil, fmt.Errorf("list users failed"))
 			},
 			error: regexp.MustCompile("list users failed"),

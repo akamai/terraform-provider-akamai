@@ -11,7 +11,6 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 type (
@@ -106,7 +105,7 @@ func TestDataKeyProperties(t *testing.T) {
 		"expect error on list access keys": {
 			configPath: "testdata/TestDataKeyProperties/default.tf",
 			init: func(t *testing.T, m *cloudaccess.Mock, testData testDataForKeyProperties) {
-				m.On("ListAccessKeys", mock.Anything, cloudaccess.ListAccessKeysRequest{}).
+				m.On("ListAccessKeys", testutils.MockContext, cloudaccess.ListAccessKeysRequest{}).
 					Return(nil, fmt.Errorf("API error")).Once()
 			},
 			error: regexp.MustCompile(`API error`),
@@ -115,7 +114,7 @@ func TestDataKeyProperties(t *testing.T) {
 			configPath: "testdata/TestDataKeyProperties/default.tf",
 			init: func(t *testing.T, m *cloudaccess.Mock, testData testDataForKeyProperties) {
 				expectListAccessKeys(m, 1)
-				m.On("ListAccessKeyVersions", mock.Anything, cloudaccess.ListAccessKeyVersionsRequest{
+				m.On("ListAccessKeyVersions", testutils.MockContext, cloudaccess.ListAccessKeyVersionsRequest{
 					AccessKeyUID: 1,
 				}).Return(nil, fmt.Errorf("API error")).Once()
 			},
@@ -139,7 +138,7 @@ func TestDataKeyProperties(t *testing.T) {
 			init: func(t *testing.T, m *cloudaccess.Mock, testData testDataForKeyProperties) {
 				expectListAccessKeys(m, 1)
 				expectListAccessKeyVersions(m, testData, 1)
-				m.On("LookupProperties", mock.Anything, cloudaccess.LookupPropertiesRequest{
+				m.On("LookupProperties", testutils.MockContext, cloudaccess.LookupPropertiesRequest{
 					AccessKeyUID: 1,
 					Version:      1,
 				}).Return(nil, fmt.Errorf("API error")).Once()
@@ -231,7 +230,7 @@ func expectListAccessKeys(client *cloudaccess.Mock, timesToRun int) {
 		},
 	}
 
-	client.On("ListAccessKeys", mock.Anything, listAccessKeysReq).Return(&listAccessKeysRes, nil).Times(timesToRun)
+	client.On("ListAccessKeys", testutils.MockContext, listAccessKeysReq).Return(&listAccessKeysRes, nil).Times(timesToRun)
 }
 
 func expectListAccessKeyVersions(client *cloudaccess.Mock, data testDataForKeyProperties, timesToRun int) {
@@ -251,7 +250,7 @@ func expectListAccessKeyVersions(client *cloudaccess.Mock, data testDataForKeyPr
 		return listKeyPropertiesRes.AccessKeyVersions[i].Version < listKeyPropertiesRes.AccessKeyVersions[j].Version
 	})
 
-	client.On("ListAccessKeyVersions", mock.Anything, listKeyPropertiesReq).Return(&listKeyPropertiesRes, nil).Times(timesToRun)
+	client.On("ListAccessKeyVersions", testutils.MockContext, listKeyPropertiesReq).Return(&listKeyPropertiesRes, nil).Times(timesToRun)
 }
 
 func expectLookupProperties(client *cloudaccess.Mock, data testDataForKeyProperties, timesToRun int) {
@@ -280,6 +279,6 @@ func expectLookupProperties(client *cloudaccess.Mock, data testDataForKeyPropert
 				StagingVersion:    prp.stagingVersion,
 			})
 		}
-		client.On("LookupProperties", mock.Anything, lookupPropertiesReq).Return(&lookupPropertiesRes, nil).Times(timesToRun)
+		client.On("LookupProperties", testutils.MockContext, lookupPropertiesReq).Return(&lookupPropertiesRes, nil).Times(timesToRun)
 	}
 }

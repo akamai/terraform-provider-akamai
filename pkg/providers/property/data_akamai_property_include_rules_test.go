@@ -12,7 +12,6 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 )
 
 type testDataPropertyIncludeRules struct {
@@ -74,7 +73,7 @@ var (
 			getIncludeRuleTreeResponse.Warnings = ruleResp.Warnings
 		}
 
-		client.On("GetIncludeRuleTree", mock.Anything, getIncludeRuleTreeRequest).Return(&getIncludeRuleTreeResponse, nil).Times(timesToRun)
+		client.On("GetIncludeRuleTree", testutils.MockContext, getIncludeRuleTreeRequest).Return(&getIncludeRuleTreeResponse, nil).Times(timesToRun)
 	}
 
 	expectGetIncludeRuleTreeError = func(t *testing.T, client *papi.Mock, data testDataPropertyIncludeRules) {
@@ -85,7 +84,7 @@ var (
 			IncludeID:      data.IncludeID,
 			ValidateRules:  true,
 		}
-		client.On("GetIncludeRuleTree", mock.Anything, getIncludeRuleTreeRequest).Return(nil,
+		client.On("GetIncludeRuleTree", testutils.MockContext, getIncludeRuleTreeRequest).Return(nil,
 			errors.New("GetIncludeRuleTree response error"))
 	}
 )

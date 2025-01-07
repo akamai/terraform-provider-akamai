@@ -8,7 +8,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/cloudwrapper"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestDataLocation(t *testing.T) {
@@ -16,11 +15,11 @@ func TestDataLocation(t *testing.T) {
 		listLocationsRes := cloudwrapper.ListLocationResponse{
 			Locations: data.locations,
 		}
-		client.On("ListLocations", mock.Anything).Return(&listLocationsRes, nil).Times(timesToRun)
+		client.On("ListLocations", testutils.MockContext).Return(&listLocationsRes, nil).Times(timesToRun)
 	}
 
 	expectListLocationsWithError := func(client *cloudwrapper.Mock, timesToRun int) {
-		client.On("ListLocations", mock.Anything).Return(nil, fmt.Errorf("list locations failed")).Times(timesToRun)
+		client.On("ListLocations", testutils.MockContext).Return(nil, fmt.Errorf("list locations failed")).Times(timesToRun)
 	}
 
 	location := testDataForCWLocation{

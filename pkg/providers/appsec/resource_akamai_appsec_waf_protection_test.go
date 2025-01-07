@@ -7,7 +7,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -40,29 +39,29 @@ func TestAkamaiWAFProtection_res_basic(t *testing.T) {
 
 		// All calls to GetConfiguration have same parameters and return value
 		client.On("GetConfiguration",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&config, nil)
 
 		// Create, with terminal Read
 		client.On("UpdateWAFProtection",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.UpdateWAFProtectionRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
 		).Return(&updateResponseAllProtectionsFalse, nil).Once()
 		client.On("GetWAFProtection",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetWAFProtectionRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
 		).Return(&getResponseAllProtectionsFalse, nil).Once()
 
 		// Reads performed via "id" and "enabled" checks
 		client.On("GetWAFProtection",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetWAFProtectionRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
 		).Return(&getResponseAllProtectionsFalse, nil).Once()
 
 		// Delete, performed automatically to clean up
 		client.On("UpdateWAFProtection",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.UpdateWAFProtectionRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
 		).Return(&updateResponseAllProtectionsFalse, nil).Once()
 

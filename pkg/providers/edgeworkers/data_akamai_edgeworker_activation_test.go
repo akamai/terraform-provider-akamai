@@ -9,7 +9,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/edgeworkers"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 type testDataForEdgeWorkersActivation struct {
@@ -36,8 +35,8 @@ var (
 		}
 		listDeactivationsRes := edgeworkers.ListDeactivationsResponse{}
 
-		client.On("ListActivations", mock.Anything, listActivationsReq).Return(&listActivationsRes, nil).Times(timesToRun)
-		client.On("ListDeactivations", mock.Anything, listDeactivationsReq).Return(&listDeactivationsRes, nil).Times(timesToRun)
+		client.On("ListActivations", testutils.MockContext, listActivationsReq).Return(&listActivationsRes, nil).Times(timesToRun)
+		client.On("ListDeactivations", testutils.MockContext, listDeactivationsReq).Return(&listDeactivationsRes, nil).Times(timesToRun)
 	}
 
 	expectReadEmptyEdgeWorkersActivation = func(t *testing.T, client *edgeworkers.Mock, data testDataForEdgeWorkersActivation, timesToRun int) {
@@ -47,7 +46,7 @@ var (
 		listActivationsRes := edgeworkers.ListActivationsResponse{
 			Activations: data.Activations,
 		}
-		client.On("ListActivations", mock.Anything, listActivationsReq).Return(&listActivationsRes, nil).Times(timesToRun)
+		client.On("ListActivations", testutils.MockContext, listActivationsReq).Return(&listActivationsRes, nil).Times(timesToRun)
 	}
 
 	expectListActivationsError = func(t *testing.T, client *edgeworkers.Mock, errorMessage string) {
@@ -55,7 +54,7 @@ var (
 			EdgeWorkerID: 1,
 		}
 		listActivationsRes := edgeworkers.ListActivationsResponse{}
-		client.On("ListActivations", mock.Anything, listActivationsReq).Return(&listActivationsRes, fmt.Errorf(errorMessage)).Times(1)
+		client.On("ListActivations", testutils.MockContext, listActivationsReq).Return(&listActivationsRes, fmt.Errorf(errorMessage)).Times(1)
 	}
 
 	oneActivationData = testDataForEdgeWorkersActivation{

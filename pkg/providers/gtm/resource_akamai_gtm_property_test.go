@@ -1055,7 +1055,7 @@ func TestResGTMPropertyImport(t *testing.T) {
 }
 
 func mockGetPropertyImport(m *gtm.Mock, resp *gtm.GetPropertyResponse, err error) *mock.Call {
-	return m.On("GetProperty", mock.Anything, gtm.GetPropertyRequest{
+	return m.On("GetProperty", testutils.MockContext, gtm.GetPropertyRequest{
 		PropertyName: "tfexample_prop_1",
 		DomainName:   "gtm_terra_testdomain.akadns.net",
 	}).Return(resp, err)
@@ -1601,7 +1601,7 @@ func getBasicPropertyForTrafficTargetOrder() gtm.Property {
 
 func mockCreateProperty(client *gtm.Mock, property *gtm.Property, resp *gtm.CreatePropertyResponse, err error) *mock.Call {
 	return client.On("CreateProperty",
-		mock.Anything,
+		testutils.MockContext,
 		gtm.CreatePropertyRequest{
 			Property:   property,
 			DomainName: testDomainName,
@@ -1611,7 +1611,7 @@ func mockCreateProperty(client *gtm.Mock, property *gtm.Property, resp *gtm.Crea
 
 func mockGetProperty(client *gtm.Mock, propertyName string, property *gtm.GetPropertyResponse, error error, times int) {
 	client.On("GetProperty",
-		mock.Anything,
+		testutils.MockContext,
 		gtm.GetPropertyRequest{
 			DomainName:   testDomainName,
 			PropertyName: propertyName,
@@ -1621,7 +1621,7 @@ func mockGetProperty(client *gtm.Mock, propertyName string, property *gtm.GetPro
 
 func mockUpdateProperty(client *gtm.Mock, updatedProperty *gtm.Property) {
 	client.On("UpdateProperty",
-		mock.Anything,
+		testutils.MockContext,
 		gtm.UpdatePropertyRequest{
 			Property:   updatedProperty,
 			DomainName: testDomainName,
@@ -1631,7 +1631,7 @@ func mockUpdateProperty(client *gtm.Mock, updatedProperty *gtm.Property) {
 
 func mockGetDomainStatus(client *gtm.Mock, times int) {
 	client.On("GetDomainStatus",
-		mock.Anything,
+		testutils.MockContext,
 		gtm.GetDomainStatusRequest{
 			DomainName: testDomainName,
 		},
@@ -1640,7 +1640,7 @@ func mockGetDomainStatus(client *gtm.Mock, times int) {
 
 func mockDeleteProperty(client *gtm.Mock, propertyName string) {
 	client.On("DeleteProperty",
-		mock.Anything,
+		testutils.MockContext,
 		gtm.DeletePropertyRequest{
 			DomainName:   testDomainName,
 			PropertyName: propertyName,

@@ -82,10 +82,10 @@ func TestBootstrapResourceCreate(t *testing.T) {
 						PropertyName: p.propertyName,
 					},
 				}
-				p.papiMock.On("CreateProperty", AnyCTX, req).Return(nil, fmt.Errorf(
+				p.papiMock.On("CreateProperty", testutils.MockContext, req).Return(nil, fmt.Errorf(
 					"%s: %w: %s", papi.ErrCreateProperty, papi.ErrNotFound, "not found")).Once()
 				// mock empty groups - no group has been found, hence the expected error
-				p.papiMock.On("GetGroups", AnyCTX).Return(&papi.GetGroupsResponse{
+				p.papiMock.On("GetGroups", testutils.MockContext).Return(&papi.GetGroupsResponse{
 					Groups: papi.GroupItems{
 						Items: []*papi.Group{},
 					},

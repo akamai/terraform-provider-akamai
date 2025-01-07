@@ -189,7 +189,7 @@ func TestResGTMResource(t *testing.T) {
 
 func mockUpdateResource(client *gtm.Mock) *mock.Call {
 	return client.On("UpdateResource",
-		mock.Anything, // ctx is irrelevant for this test
+		testutils.MockContext,
 		gtm.UpdateResourceRequest{
 			Resource:   getUpdatedResource(),
 			DomainName: testDomainName,
@@ -199,7 +199,7 @@ func mockUpdateResource(client *gtm.Mock) *mock.Call {
 
 func mockCreateResource(client *gtm.Mock, resource *gtm.Resource, resp *gtm.CreateResourceResponse, err error) *mock.Call {
 	return client.On("CreateResource",
-		mock.Anything, // ctx is irrelevant for this test
+		testutils.MockContext,
 		gtm.CreateResourceRequest{
 			Resource:   resource,
 			DomainName: testDomainName,
@@ -209,7 +209,7 @@ func mockCreateResource(client *gtm.Mock, resource *gtm.Resource, resp *gtm.Crea
 
 func mockGetResource(client *gtm.Mock, resp *gtm.GetResourceResponse, err error) *mock.Call {
 	return client.On("GetResource",
-		mock.Anything, // ctx is irrelevant for this test
+		testutils.MockContext,
 		gtm.GetResourceRequest{
 			ResourceName: "tfexample_resource_1",
 			DomainName:   testDomainName,
@@ -477,7 +477,7 @@ func getImportedResource() *gtm.Resource {
 
 func mockDeleteResource(client *gtm.Mock) *mock.Call {
 	return client.On("DeleteResource",
-		mock.Anything, // ctx is irrelevant for this test
+		testutils.MockContext,
 		gtm.DeleteResourceRequest{
 			ResourceName: "tfexample_resource_1",
 			DomainName:   testDomainName,

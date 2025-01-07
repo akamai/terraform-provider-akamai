@@ -20,7 +20,7 @@ func TestResGTMDomain(t *testing.T) {
 		client := &gtm.Mock{}
 
 		getCall := client.On("GetDomain",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.GetDomainRequest"),
 		).Return(nil, &gtm.Error{
 			StatusCode: http.StatusNotFound,
@@ -28,7 +28,7 @@ func TestResGTMDomain(t *testing.T) {
 
 		dr := testCreateDomain
 		client.On("CreateDomain",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.CreateDomainRequest"),
 		).Return(&gtm.CreateDomainResponse{
 			Resource: testDomain,
@@ -38,17 +38,17 @@ func TestResGTMDomain(t *testing.T) {
 		})
 
 		client.On("GetDomain",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.GetDomainRequest"),
 		).Return(&testCreateDomain, nil).Times(3)
 
 		client.On("GetDomainStatus",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.GetDomainStatusRequest"),
 		).Return(getDomainStatusResponseStatus, nil)
 
 		client.On("UpdateDomain",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			gtm.UpdateDomainRequest{
 				Domain: testUpdateDomain,
 				QueryArgs: &gtm.DomainQueryArgs{
@@ -59,12 +59,12 @@ func TestResGTMDomain(t *testing.T) {
 		).Return(&updateDomainResponseStatus, nil)
 
 		client.On("GetDomain",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.GetDomainRequest"),
 		).Return(&testUpdateGetDomain, nil).Times(3)
 
 		client.On("DeleteDomain",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.DeleteDomainRequest"),
 		).Return(&deleteDomainResponseStatus, nil)
 
@@ -103,7 +103,7 @@ func TestResGTMDomain(t *testing.T) {
 		client := &gtm.Mock{}
 
 		getCall := client.On("GetDomain",
-			mock.Anything,
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.GetDomainRequest"),
 		).Return(nil, &gtm.Error{
 			StatusCode: http.StatusNotFound,
@@ -111,7 +111,7 @@ func TestResGTMDomain(t *testing.T) {
 
 		dr := testCreateDomain
 		client.On("CreateDomain",
-			mock.Anything,
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.CreateDomainRequest"),
 		).Return(&gtm.CreateDomainResponse{
 			Resource: testDomain,
@@ -121,29 +121,29 @@ func TestResGTMDomain(t *testing.T) {
 		}).Once()
 
 		client.On("GetDomain",
-			mock.Anything,
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.GetDomainRequest"),
 		).Return(&testCreateDomain, nil).Twice()
 
 		client.On("GetDomainStatus",
-			mock.Anything,
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.GetDomainStatusRequest"),
 		).Return(getDomainStatusResponseStatus, nil).Twice()
 
 		// Mock that the domain was deleted outside terraform
 		client.On("GetDomain",
-			mock.Anything,
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.GetDomainRequest"),
 		).Return(nil, gtm.ErrNotFound).Once()
 
 		// For terraform test framework, we need to mock GetDomain as it would actually exist before deletion
 		client.On("GetDomain",
-			mock.Anything,
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.GetDomainRequest"),
 		).Return(&testCreateDomain, nil).Once()
 
 		client.On("DeleteDomain",
-			mock.Anything,
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.DeleteDomainRequest"),
 		).Return(&deleteDomainResponseStatus, nil).Once()
 
@@ -177,7 +177,7 @@ func TestResGTMDomain(t *testing.T) {
 		client := &gtm.Mock{}
 
 		getCall := client.On("GetDomain",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.GetDomainRequest"),
 		).Return(nil, &gtm.Error{
 			StatusCode: http.StatusNotFound,
@@ -185,7 +185,7 @@ func TestResGTMDomain(t *testing.T) {
 
 		dr := testDomainWithSignAndServe
 		client.On("CreateDomain",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.CreateDomainRequest"),
 		).Return(&gtm.CreateDomainResponse{
 			Resource: testDomain,
@@ -195,12 +195,12 @@ func TestResGTMDomain(t *testing.T) {
 		})
 
 		client.On("GetDomainStatus",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.GetDomainStatusRequest"),
 		).Return(getDomainStatusResponseStatus, nil)
 
 		client.On("DeleteDomain",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.DeleteDomainRequest"),
 		).Return(&deleteDomainResponseStatus, nil)
 
@@ -229,7 +229,7 @@ func TestResGTMDomain(t *testing.T) {
 		client := &gtm.Mock{}
 
 		getCall := client.On("GetDomain",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.GetDomainRequest"),
 		).Return(nil, &gtm.Error{
 			StatusCode: http.StatusNotFound,
@@ -237,7 +237,7 @@ func TestResGTMDomain(t *testing.T) {
 
 		dr := testGetDomain
 		client.On("CreateDomain",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.CreateDomainRequest"),
 		).Return(&gtm.CreateDomainResponse{
 			Resource: testDomain,
@@ -247,12 +247,12 @@ func TestResGTMDomain(t *testing.T) {
 		})
 
 		client.On("GetDomainStatus",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.GetDomainStatusRequest"),
 		).Return(getDomainStatusResponseStatus, nil)
 
 		client.On("DeleteDomain",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.DeleteDomainRequest"),
 		).Return(&deleteDomainResponseStatus, nil)
 
@@ -285,14 +285,14 @@ func TestResGTMDomain(t *testing.T) {
 		client := &gtm.Mock{}
 
 		client.On("GetDomain",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.GetDomainRequest"),
 		).Return(nil, &gtm.Error{
 			StatusCode: http.StatusNotFound,
 		}).Once()
 
 		client.On("CreateDomain",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.CreateDomainRequest"),
 		).Return(nil, &gtm.Error{
 			StatusCode: http.StatusBadRequest,
@@ -317,7 +317,7 @@ func TestResGTMDomain(t *testing.T) {
 		client := &gtm.Mock{}
 
 		client.On("GetDomain",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.GetDomainRequest"),
 		).Return(&testCreateDomain, nil).Once()
 
@@ -340,7 +340,7 @@ func TestResGTMDomain(t *testing.T) {
 		client := &gtm.Mock{}
 
 		client.On("GetDomain",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.GetDomainRequest"),
 		).Return(nil, &gtm.Error{
 			StatusCode: http.StatusNotFound,
@@ -350,7 +350,7 @@ func TestResGTMDomain(t *testing.T) {
 		dr.Resource = testDomain
 		dr.Status = &deniedResponseStatus
 		client.On("CreateDomain",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.CreateDomainRequest"),
 		).Return(&dr, nil)
 
@@ -506,7 +506,7 @@ func getGTMDomainMocks() *gtm.Mock {
 	client := &gtm.Mock{}
 
 	mockGetDomain := client.On("GetDomain",
-		mock.Anything, // ctx is irrelevant for this test
+		testutils.MockContext,
 		mock.AnythingOfType("gtm.GetDomainRequest"),
 	).Return(nil, &gtm.Error{
 		StatusCode: http.StatusNotFound,
@@ -514,7 +514,7 @@ func getGTMDomainMocks() *gtm.Mock {
 
 	dr := domainWithOrderedEmails
 	client.On("CreateDomain",
-		mock.Anything, // ctx is irrelevant for this test
+		testutils.MockContext,
 		mock.AnythingOfType("gtm.CreateDomainRequest"),
 	).Return(&gtm.CreateDomainResponse{
 		Resource: domainWithOrderedEmailsDomain,
@@ -524,12 +524,12 @@ func getGTMDomainMocks() *gtm.Mock {
 	})
 
 	client.On("GetDomainStatus",
-		mock.Anything, // ctx is irrelevant for this test
+		testutils.MockContext,
 		mock.AnythingOfType("gtm.GetDomainStatusRequest"),
 	).Return(getDomainStatusResponseStatus, nil)
 
 	client.On("DeleteDomain",
-		mock.Anything, // ctx is irrelevant for this test
+		testutils.MockContext,
 		mock.AnythingOfType("gtm.DeleteDomainRequest"),
 	).Return(&deleteDomainResponseStatus, nil)
 
@@ -537,7 +537,7 @@ func getGTMDomainMocks() *gtm.Mock {
 }
 
 func mockGetDomain(m *gtm.Mock, resp *gtm.GetDomainResponse, err error) *mock.Call {
-	return m.On("GetDomain", mock.Anything, gtm.GetDomainRequest{
+	return m.On("GetDomain", testutils.MockContext, gtm.GetDomainRequest{
 		DomainName: "gtm_terra_testdomain.akadns.net",
 	}).Return(resp, err)
 }

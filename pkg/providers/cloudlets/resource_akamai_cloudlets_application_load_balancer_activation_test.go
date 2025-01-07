@@ -578,13 +578,13 @@ var (
 		if err != nil {
 			return m.On(
 				"ListLoadBalancerActivations",
-				mock.Anything,
+				testutils.MockContext,
 				cloudlets.ListLoadBalancerActivationsRequest{OriginID: originID},
 			).Return(nil, err)
 		}
 		return m.On(
 			"ListLoadBalancerActivations",
-			mock.Anything,
+			testutils.MockContext,
 			cloudlets.ListLoadBalancerActivationsRequest{OriginID: originID},
 		).Return(
 			[]cloudlets.LoadBalancerActivation{
@@ -601,13 +601,13 @@ var (
 		if err != nil {
 			return m.On(
 				"ListLoadBalancerActivations",
-				mock.Anything,
+				testutils.MockContext,
 				cloudlets.ListLoadBalancerActivationsRequest{OriginID: originID},
 			).Return(nil, err)
 		}
 		return m.On(
 			"ListLoadBalancerActivations",
-			mock.Anything,
+			testutils.MockContext,
 			cloudlets.ListLoadBalancerActivationsRequest{OriginID: originID},
 		).Return(
 			[]cloudlets.LoadBalancerActivation{}, nil)
@@ -617,13 +617,13 @@ var (
 		if err != nil {
 			return m.On(
 				"ListLoadBalancerActivations",
-				mock.Anything,
+				testutils.MockContext,
 				cloudlets.ListLoadBalancerActivationsRequest{OriginID: originID},
 			).Return(nil, err)
 		}
 		return m.On(
 			"ListLoadBalancerActivations",
-			mock.Anything,
+			testutils.MockContext,
 			cloudlets.ListLoadBalancerActivationsRequest{OriginID: originID},
 		).Return(activations, nil)
 	}
@@ -632,7 +632,7 @@ var (
 		if err != nil {
 			return m.On(
 				"ActivateLoadBalancerVersion",
-				mock.Anything,
+				testutils.MockContext,
 				cloudlets.ActivateLoadBalancerVersionRequest{
 					OriginID: originID,
 					Async:    true,
@@ -646,7 +646,7 @@ var (
 		}
 		return m.On(
 			"ActivateLoadBalancerVersion",
-			mock.Anything,
+			testutils.MockContext,
 			cloudlets.ActivateLoadBalancerVersionRequest{
 				OriginID: originID,
 				Async:    true,

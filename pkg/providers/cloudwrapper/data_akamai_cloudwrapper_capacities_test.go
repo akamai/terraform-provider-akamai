@@ -9,10 +9,10 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/cloudwrapper"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -73,7 +73,7 @@ func TestCapacitiesDataSource(t *testing.T) {
 				resp := cloudwrapper.ListCapacitiesResponse{
 					Capacities: capacities,
 				}
-				m.On("ListCapacities", mock.Anything, request).Return(&resp, nil).Times(3)
+				m.On("ListCapacities", testutils.MockContext, request).Return(&resp, nil).Times(3)
 			},
 		},
 		"no capacities found": {
@@ -82,13 +82,13 @@ func TestCapacitiesDataSource(t *testing.T) {
 				resp := cloudwrapper.ListCapacitiesResponse{
 					Capacities: capacities,
 				}
-				m.On("ListCapacities", mock.Anything, request).Return(&resp, nil).Times(3)
+				m.On("ListCapacities", testutils.MockContext, request).Return(&resp, nil).Times(3)
 			},
 		},
 		"listing capacities failed": {
 			init: func(_ *testing.T, m *cloudwrapper.Mock, _ []cloudwrapper.LocationCapacity) {
 				err := fmt.Errorf("listing capacities failed")
-				m.On("ListCapacities", mock.Anything, request).Return(nil, err).Once()
+				m.On("ListCapacities", testutils.MockContext, request).Return(nil, err).Once()
 			},
 			expectedError: regexp.MustCompile("listing capacities failed"),
 		},

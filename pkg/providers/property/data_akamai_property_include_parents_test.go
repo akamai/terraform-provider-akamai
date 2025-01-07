@@ -9,7 +9,6 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestDataPropertyIncludeParents(t *testing.T) {
@@ -22,7 +21,7 @@ func TestDataPropertyIncludeParents(t *testing.T) {
 		"happy path": {
 			givenTF: "valid.tf",
 			init: func(m *papi.Mock) {
-				m.On("ListIncludeParents", mock.Anything, papi.ListIncludeParentsRequest{
+				m.On("ListIncludeParents", testutils.MockContext, papi.ListIncludeParentsRequest{
 					ContractID: "ctr_1",
 					GroupID:    "grp_1",
 					IncludeID:  "inc_1",
@@ -51,7 +50,7 @@ func TestDataPropertyIncludeParents(t *testing.T) {
 					},
 				}, nil).Times(3)
 				// run ListReferencedIncludes for each IncludeParent with different and not empty StagingVersion and ProductionVersion
-				m.On("ListReferencedIncludes", mock.Anything, papi.ListReferencedIncludesRequest{
+				m.On("ListReferencedIncludes", testutils.MockContext, papi.ListReferencedIncludesRequest{
 					ContractID:      "ctr_1",
 					GroupID:         "grp_1",
 					PropertyVersion: 3,
@@ -74,7 +73,7 @@ func TestDataPropertyIncludeParents(t *testing.T) {
 						},
 					},
 				}, nil).Times(3)
-				m.On("ListReferencedIncludes", mock.Anything, papi.ListReferencedIncludesRequest{
+				m.On("ListReferencedIncludes", testutils.MockContext, papi.ListReferencedIncludesRequest{
 					ContractID:      "ctr_1",
 					GroupID:         "grp_1",
 					PropertyVersion: 2,
@@ -127,7 +126,7 @@ func TestDataPropertyIncludeParents(t *testing.T) {
 		"error response from api": {
 			givenTF: "valid.tf",
 			init: func(m *papi.Mock) {
-				m.On("ListIncludeParents", mock.Anything, papi.ListIncludeParentsRequest{
+				m.On("ListIncludeParents", testutils.MockContext, papi.ListIncludeParentsRequest{
 					ContractID: "ctr_1",
 					GroupID:    "grp_1",
 					IncludeID:  "inc_1",

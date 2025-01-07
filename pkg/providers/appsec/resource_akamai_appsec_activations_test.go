@@ -8,7 +8,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -33,12 +32,12 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("GetActivations",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetActivationsRequest{ActivationID: 547694},
 		).Return(&getActivationsResponse, nil).Times(3)
 
 		client.On("CreateActivations",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.CreateActivationsRequest{
 				Action:             "ACTIVATE",
 				Network:            "STAGING",
@@ -51,12 +50,12 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 		).Return(&createActivationsResponse, nil)
 
 		client.On("GetActivations",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetActivationsRequest{ActivationID: 547694},
 		).Return(&getActivationsDeleteResponse, nil)
 
 		client.On("RemoveActivations",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.RemoveActivationsRequest{
 				ActivationID:       547694,
 				Action:             "DEACTIVATE",
@@ -70,7 +69,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 		).Return(&removeActivationsResponse, nil)
 
 		client.On("GetActivations",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetActivationsRequest{ActivationID: 547695},
 		).Return(&getActivationsDeleteResponse, nil)
 
@@ -114,12 +113,12 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("GetActivations",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetActivationsRequest{ActivationID: 547694},
 		).Return(&getActivationsResponse, nil).Times(3)
 
 		client.On("CreateActivations",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.CreateActivationsRequest{
 				Action:             "ACTIVATE",
 				Network:            "STAGING",
@@ -132,12 +131,12 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 		).Return(&createActivationsResponse, nil)
 
 		client.On("GetActivations",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetActivationsRequest{ActivationID: 547694},
 		).Return(&getActivationsResponseDelete, nil)
 
 		client.On("RemoveActivations",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.RemoveActivationsRequest{
 				ActivationID:       547694,
 				Action:             "DEACTIVATE",
@@ -151,7 +150,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 		).Return(&removeActivationsResponse, nil)
 
 		client.On("GetActivations",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetActivationsRequest{ActivationID: 547695},
 		).Return(&getActivationsResponseDelete, nil)
 
@@ -222,12 +221,12 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("GetActivations",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetActivationsRequest{ActivationID: 547694},
 		).Return(&getActivationsResponse, nil).Times(3)
 
 		client.On("CreateActivations",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.CreateActivationsRequest{
 				Action:             "ACTIVATE",
 				Network:            "STAGING",
@@ -240,7 +239,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 		).Return(&createActivationsResponse, nil).Once()
 
 		client.On("CreateActivations",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.CreateActivationsRequest{
 				Action:             "ACTIVATE",
 				Network:            "PRODUCTION",
@@ -253,17 +252,17 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 		).Return(&createActivationsUpdatedResponse, nil).Once()
 
 		client.On("GetActivations",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetActivationsRequest{ActivationID: 547694},
 		).Return(&getActivationsUpdatedResponse, nil).Times(3)
 
 		client.On("GetActivations",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetActivationsRequest{ActivationID: 547694},
 		).Return(&getActivationsResponseDeleteUpdated, nil)
 
 		client.On("RemoveActivations",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.RemoveActivationsRequest{
 				ActivationID:       547694,
 				Action:             "DEACTIVATE",
@@ -277,12 +276,12 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 		).Return(&removeActivationsUpdatedResponse, nil)
 
 		client.On("GetActivations",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetActivationsRequest{ActivationID: 547695},
 		).Return(&getActivationsResponseDelete, nil)
 
 		client.On("GetActivations",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetActivationsRequest{ActivationID: 547695},
 		).Return(&removeActivationsUpdatedResponse, nil)
 
@@ -335,12 +334,12 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("GetActivations",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetActivationsRequest{ActivationID: 547694},
 		).Return(&getActivationsResponse, nil).Times(3)
 
 		client.On("CreateActivations",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.CreateActivationsRequest{
 				Action:             "ACTIVATE",
 				Network:            "STAGING",
@@ -353,12 +352,12 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 		).Return(&createActivationsResponse, nil)
 
 		client.On("GetActivations",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetActivationsRequest{ActivationID: 547694},
 		).Return(&getActivationsResponseDelete, nil)
 
 		client.On("RemoveActivations",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.RemoveActivationsRequest{
 				ActivationID:       547694,
 				Action:             "DEACTIVATE",
@@ -372,7 +371,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 		).Return(&removeActivationsResponse, nil)
 
 		client.On("GetActivations",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetActivationsRequest{ActivationID: 547695},
 		).Return(&getActivationsResponseDelete, nil)
 
@@ -446,12 +445,12 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("GetActivations",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetActivationsRequest{ActivationID: 547694},
 		).Return(&getActivationsResponse, nil).Times(3)
 
 		client.On("CreateActivations",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.CreateActivationsRequest{
 				Action:             "ACTIVATE",
 				Network:            "STAGING",
@@ -464,7 +463,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 		).Return(&createActivationsResponse, nil).Once()
 
 		client.On("CreateActivations",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.CreateActivationsRequest{
 				Action:             "ACTIVATE",
 				Network:            "PRODUCTION",
@@ -477,17 +476,17 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 		).Return(&createActivationsUpdatedResponse, nil).Once()
 
 		client.On("GetActivations",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetActivationsRequest{ActivationID: 547694},
 		).Return(&getActivationsUpdatedResponse, nil).Times(3)
 
 		client.On("GetActivations",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetActivationsRequest{ActivationID: 547694},
 		).Return(&getActivationsResponseDeleteUpdated, nil)
 
 		client.On("RemoveActivations",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.RemoveActivationsRequest{
 				ActivationID:       547694,
 				Action:             "DEACTIVATE",
@@ -501,12 +500,12 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 		).Return(&removeActivationsUpdatedResponse, nil)
 
 		client.On("GetActivations",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetActivationsRequest{ActivationID: 547695},
 		).Return(&getActivationsResponseDelete, nil)
 
 		client.On("GetActivations",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetActivationsRequest{ActivationID: 547695},
 		).Return(&removeActivationsUpdatedResponse, nil)
 
@@ -566,12 +565,12 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("GetActivations",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetActivationsRequest{ActivationID: 547694},
 		).Return(&getActivationsResponse, nil).Times(3)
 
 		client.On("CreateActivations",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.CreateActivationsRequest{
 				Action:             "ACTIVATE",
 				Network:            "STAGING",
@@ -584,12 +583,12 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 		).Return(nil, err500x).Once()
 
 		client.On("GetActivations",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetActivationsRequest{ActivationID: 547694},
 		).Return(&getActivationsDeleteResponse, nil)
 
 		client.On("RemoveActivations",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.RemoveActivationsRequest{
 				ActivationID:       547694,
 				Action:             "DEACTIVATE",
@@ -603,12 +602,12 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 		).Return(&removeActivationsResponse, nil)
 
 		client.On("GetActivations",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetActivationsRequest{ActivationID: 547695},
 		).Return(&getActivationsDeleteResponse, nil).Once()
 
 		client.On("CreateActivations",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.CreateActivationsRequest{
 				Action:             "ACTIVATE",
 				Network:            "STAGING",
@@ -675,7 +674,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 		// First step - create and read
 
 		client.On("CreateActivations",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.CreateActivationsRequest{
 				Action:             "ACTIVATE",
 				Network:            "STAGING",
@@ -688,19 +687,19 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 		).Return(&createActivationsResponse, nil).Once()
 
 		client.On("GetActivations",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetActivationsRequest{ActivationID: 547694},
 		).Return(&getActivationsResponse, nil).Times(3)
 
 		// Second Step : Config deactivated from UI
 
 		client.On("GetActivations",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetActivationsRequest{ActivationID: 547694},
 		).Return(&getActivationsResponseDeactivated, nil).Once()
 
 		client.On("CreateActivations",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.CreateActivationsRequest{
 				Action:             "ACTIVATE",
 				Network:            "STAGING",
@@ -713,12 +712,12 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 		).Return(&createActivationsResponse, nil).Once()
 
 		client.On("GetActivations",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetActivationsRequest{ActivationID: 547694},
 		).Return(&getActivationsResponse, nil).Times(3)
 
 		client.On("RemoveActivations",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.RemoveActivationsRequest{
 				ActivationID:       547694,
 				Action:             "DEACTIVATE",
@@ -732,7 +731,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 		).Return(&removeActivationsResponse, nil).Once()
 
 		client.On("GetActivations",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetActivationsRequest{ActivationID: 547695},
 		).Return(&getActivationsResponseDelete, nil).Times(1)
 
@@ -787,7 +786,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("CreateActivations",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.CreateActivationsRequest{
 				Action:             "ACTIVATE",
 				Network:            "STAGING",

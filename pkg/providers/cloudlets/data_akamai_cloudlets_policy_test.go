@@ -277,9 +277,9 @@ func TestDataCloudletsPolicy(t *testing.T) {
 		t.Run(testName, func(t *testing.T) {
 			client := cloudlets.Mock{}
 			useClient(&client, func() {
-				client.On("ListPolicyVersions", mock.Anything, mock.Anything).Return(test.listPolicyVersionsReturn, nil)
-				client.On("GetPolicy", mock.Anything, mock.Anything).Return(&test.getPolicyReturn, nil)
-				client.On("GetPolicyVersion", mock.Anything, mock.Anything).Return(&test.getPolicyVersionReturn, nil)
+				client.On("ListPolicyVersions", testutils.MockContext, mock.Anything).Return(test.listPolicyVersionsReturn, nil)
+				client.On("GetPolicy", testutils.MockContext, mock.Anything).Return(&test.getPolicyReturn, nil)
+				client.On("GetPolicyVersion", testutils.MockContext, mock.Anything).Return(&test.getPolicyVersionReturn, nil)
 				resource.UnitTest(t, resource.TestCase{
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{

@@ -9,7 +9,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -22,7 +21,7 @@ func TestAkamaiWAPSelectedHostnames_data_basic(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("GetConfiguration",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&config, nil)
 
@@ -31,7 +30,7 @@ func TestAkamaiWAPSelectedHostnames_data_basic(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("GetWAPSelectedHostnames",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetWAPSelectedHostnamesRequest{ConfigID: 43253, Version: 7, SecurityPolicyID: "AAAA_81230"},
 		).Return(&getWAPSelectedHostnamesResponse, nil)
 
@@ -64,7 +63,7 @@ func TestAkamaiWAPSelectedHostnames_data_error_retrieving_hostnames(t *testing.T
 		require.NoError(t, err)
 
 		client.On("GetConfiguration",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&config, nil)
 
@@ -73,7 +72,7 @@ func TestAkamaiWAPSelectedHostnames_data_error_retrieving_hostnames(t *testing.T
 		require.NoError(t, err)
 
 		client.On("GetWAPSelectedHostnames",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetWAPSelectedHostnamesRequest{ConfigID: 43253, Version: 7, SecurityPolicyID: "AAAA_81230"},
 		).Return(nil, fmt.Errorf("GetWAPSelectedHostnames failed"))
 
@@ -107,7 +106,7 @@ func TestAkamaiWAPSelectedHostnames_NonWAP_data_basic(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("GetConfiguration",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&config, nil)
 
@@ -120,12 +119,12 @@ func TestAkamaiWAPSelectedHostnames_NonWAP_data_basic(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("GetSelectedHostnames",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetSelectedHostnamesRequest{ConfigID: 43253, Version: 7},
 		).Return(&getSelectedHostnamesResponse, nil)
 
 		client.On("GetMatchTargets",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetMatchTargetsRequest{ConfigID: 43253, ConfigVersion: 7},
 		).Return(&getMatchTargetsResponse, nil)
 

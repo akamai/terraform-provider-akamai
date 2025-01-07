@@ -182,7 +182,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 	expectCreate := func(m *papi.Mock, testData *testData) testutils.MockCalls {
 		testData.latestVersion++
 
-		createIncludeCall := m.On("CreateInclude", mock.Anything, papi.CreateIncludeRequest{
+		createIncludeCall := m.On("CreateInclude", testutils.MockContext, papi.CreateIncludeRequest{
 			GroupID:     testData.groupID,
 			ContractID:  testData.contractID,
 			ProductID:   testData.productID,
@@ -196,14 +196,14 @@ func TestResourcePropertyInclude(t *testing.T) {
 			return testutils.MockCalls{createIncludeCall}
 		}
 
-		updateIncludeRuleTreeCall := m.On("UpdateIncludeRuleTree", mock.Anything,
+		updateIncludeRuleTreeCall := m.On("UpdateIncludeRuleTree", testutils.MockContext,
 			newUpdateIncludeRuleTreeReq(testData)).Return(&papi.UpdateIncludeRuleTreeResponse{}, nil) // Return argument is ignored
 
 		return testutils.MockCalls{createIncludeCall, updateIncludeRuleTreeCall}
 	}
 
 	expectGetIncludeRuleTree := func(m *papi.Mock, testData *testData) *mock.Call {
-		call := m.On("GetIncludeRuleTree", mock.Anything, papi.GetIncludeRuleTreeRequest{
+		call := m.On("GetIncludeRuleTree", testutils.MockContext, papi.GetIncludeRuleTreeRequest{
 			ContractID:     testData.contractID,
 			GroupID:        testData.groupID,
 			IncludeID:      testData.includeID,
@@ -214,7 +214,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 	}
 
 	expectRead := func(m *papi.Mock, testData *testData) testutils.MockCalls {
-		getIncludeCall := m.On("GetInclude", mock.Anything, papi.GetIncludeRequest{
+		getIncludeCall := m.On("GetInclude", testutils.MockContext, papi.GetIncludeRequest{
 			ContractID: testData.contractID,
 			GroupID:    testData.groupID,
 			IncludeID:  includeID,
@@ -222,7 +222,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 
 		getIncludeRuleTreeCall := expectGetIncludeRuleTree(m, testData)
 
-		getIncludeVersionCall := m.On("GetIncludeVersion", mock.Anything, papi.GetIncludeVersionRequest{
+		getIncludeVersionCall := m.On("GetIncludeVersion", testutils.MockContext, papi.GetIncludeVersionRequest{
 			IncludeID:  includeID,
 			Version:    testData.latestVersion,
 			ContractID: testData.contractID,
@@ -236,7 +236,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 	}
 
 	expectUpdate := func(m *papi.Mock, testData *testData) testutils.MockCalls {
-		getIncludeVersionCall := m.On("GetIncludeVersion", mock.Anything, papi.GetIncludeVersionRequest{
+		getIncludeVersionCall := m.On("GetIncludeVersion", testutils.MockContext, papi.GetIncludeVersionRequest{
 			Version:    testData.latestVersion,
 			GroupID:    testData.groupID,
 			IncludeID:  testData.includeID,
@@ -249,7 +249,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 			version := testData.latestVersion
 			testData.latestVersion++
 
-			createIncludeVersionCall := m.On("CreateIncludeVersion", mock.Anything, papi.CreateIncludeVersionRequest{
+			createIncludeVersionCall := m.On("CreateIncludeVersion", testutils.MockContext, papi.CreateIncludeVersionRequest{
 				IncludeID: includeID,
 				IncludeVersionRequest: papi.IncludeVersionRequest{
 					CreateFromVersion: version,
@@ -259,20 +259,20 @@ func TestResourcePropertyInclude(t *testing.T) {
 			calls = append(calls, createIncludeVersionCall)
 		}
 
-		updateIncludeRuleTreeCall := m.On("UpdateIncludeRuleTree", mock.Anything,
+		updateIncludeRuleTreeCall := m.On("UpdateIncludeRuleTree", testutils.MockContext,
 			newUpdateIncludeRuleTreeReq(testData)).Return(&papi.UpdateIncludeRuleTreeResponse{}, nil)
 
 		return append(calls, updateIncludeRuleTreeCall)
 	}
 
 	expectDelete := func(m *papi.Mock, testData *testData) testutils.MockCalls {
-		getIncludeCall := m.On("GetInclude", mock.Anything, papi.GetIncludeRequest{
+		getIncludeCall := m.On("GetInclude", testutils.MockContext, papi.GetIncludeRequest{
 			ContractID: testData.contractID,
 			GroupID:    testData.groupID,
 			IncludeID:  includeID,
 		}).Return(newGetIncludeResp(testData), nil)
 
-		deleteCall := m.On("DeleteInclude", mock.Anything, papi.DeleteIncludeRequest{
+		deleteCall := m.On("DeleteInclude", testutils.MockContext, papi.DeleteIncludeRequest{
 			GroupID:    testData.groupID,
 			IncludeID:  testData.includeID,
 			ContractID: testData.contractID,

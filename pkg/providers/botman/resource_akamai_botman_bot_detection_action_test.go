@@ -7,7 +7,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/botman"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestResourceBotDetectionAction(t *testing.T) {
@@ -17,7 +16,7 @@ func TestResourceBotDetectionAction(t *testing.T) {
 		createResponse := map[string]interface{}{"detectionId": "cc9c3f89-e179-4892-89cf-d5e623ba9dc7", "testKey": "testValue3"}
 		createRequest := `{"detectionId":"cc9c3f89-e179-4892-89cf-d5e623ba9dc7", "testKey":"testValue3"}`
 		mockedBotmanClient.On("UpdateBotDetectionAction",
-			mock.Anything,
+			testutils.MockContext,
 			botman.UpdateBotDetectionActionRequest{
 				ConfigID:         43253,
 				Version:          15,
@@ -28,7 +27,7 @@ func TestResourceBotDetectionAction(t *testing.T) {
 		).Return(createResponse, nil).Once()
 
 		mockedBotmanClient.On("GetBotDetectionAction",
-			mock.Anything,
+			testutils.MockContext,
 			botman.GetBotDetectionActionRequest{
 				ConfigID:         43253,
 				Version:          15,
@@ -41,7 +40,7 @@ func TestResourceBotDetectionAction(t *testing.T) {
 		updateResponse := map[string]interface{}{"detectionId": "cc9c3f89-e179-4892-89cf-d5e623ba9dc7", "testKey": "updated_testValue3"}
 		updateRequest := `{"detectionId":"cc9c3f89-e179-4892-89cf-d5e623ba9dc7", "testKey":"updated_testValue3"}`
 		mockedBotmanClient.On("UpdateBotDetectionAction",
-			mock.Anything,
+			testutils.MockContext,
 			botman.UpdateBotDetectionActionRequest{
 				ConfigID:         43253,
 				Version:          15,
@@ -52,7 +51,7 @@ func TestResourceBotDetectionAction(t *testing.T) {
 		).Return(updateResponse, nil).Once()
 
 		mockedBotmanClient.On("GetBotDetectionAction",
-			mock.Anything,
+			testutils.MockContext,
 			botman.GetBotDetectionActionRequest{
 				ConfigID:         43253,
 				Version:          15,

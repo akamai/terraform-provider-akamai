@@ -58,28 +58,28 @@ var (
 			Warnings: data.Warnings,
 		}
 
-		client.On("GetEdgeWorkerID", mock.Anything, edgeWorkerGetReq).Return(&edgeWorkerGetRes, nil).Times(timesToRun)
-		client.On("ListEdgeWorkerVersions", mock.Anything, edgeWorkerListVersionsReq).Return(&edgeWorkerListVersionsRes, nil).Times(timesToRun)
+		client.On("GetEdgeWorkerID", testutils.MockContext, edgeWorkerGetReq).Return(&edgeWorkerGetRes, nil).Times(timesToRun)
+		client.On("ListEdgeWorkerVersions", testutils.MockContext, edgeWorkerListVersionsReq).Return(&edgeWorkerListVersionsRes, nil).Times(timesToRun)
 		for i := 0; i < timesToRun; i++ {
 			edgeWorkerGerVersionContentRes := edgeworkers.Bundle{Reader: bytes.NewReader(bytesArray)}
-			client.On("GetEdgeWorkerVersionContent", mock.Anything, edgeWorkerGetVersionContentReq).Return(&edgeWorkerGerVersionContentRes, nil).Once()
+			client.On("GetEdgeWorkerVersionContent", testutils.MockContext, edgeWorkerGetVersionContentReq).Return(&edgeWorkerGerVersionContentRes, nil).Once()
 		}
-		client.On("ValidateBundle", mock.Anything, mock.Anything).Return(&edgeWorkerValidateBundleRes, nil).Times(timesToRun)
+		client.On("ValidateBundle", testutils.MockContext, mock.Anything).Return(&edgeWorkerValidateBundleRes, nil).Times(timesToRun)
 	}
 
 	expectGetEdgeWorkerError = func(client *edgeworkers.Mock, errorMessage string) {
 		edgeWorkerGetReq := edgeworkers.GetEdgeWorkerIDRequest{
 			EdgeWorkerID: 1,
 		}
-		client.On("GetEdgeWorkerID", mock.Anything, edgeWorkerGetReq).Return(nil, fmt.Errorf(errorMessage)).Once()
+		client.On("GetEdgeWorkerID", testutils.MockContext, edgeWorkerGetReq).Return(nil, fmt.Errorf(errorMessage)).Once()
 	}
 
 	expectListEdgeWorkerVersionsError = func(client *edgeworkers.Mock, errorMessage string) {
 		edgeWorkerGetReq := edgeworkers.GetEdgeWorkerIDRequest{
 			EdgeWorkerID: 1,
 		}
-		client.On("GetEdgeWorkerID", mock.Anything, edgeWorkerGetReq).Return(nil, nil).Once()
-		client.On("ListEdgeWorkerVersions", mock.Anything, edgeworkers.ListEdgeWorkerVersionsRequest{EdgeWorkerID: 1}).Return(nil, fmt.Errorf(errorMessage)).Once()
+		client.On("GetEdgeWorkerID", testutils.MockContext, edgeWorkerGetReq).Return(nil, nil).Once()
+		client.On("ListEdgeWorkerVersions", testutils.MockContext, edgeworkers.ListEdgeWorkerVersionsRequest{EdgeWorkerID: 1}).Return(nil, fmt.Errorf(errorMessage)).Once()
 	}
 
 	expectReadEdgeWorkerNoVersions = func(client *edgeworkers.Mock, data testDataForEdgeWorker, timesToRun int) {
@@ -100,8 +100,8 @@ var (
 			EdgeWorkerVersions: edgeWorkerVersions,
 		}
 
-		client.On("GetEdgeWorkerID", mock.Anything, edgeWorkerGetReq).Return(&edgeWorkerGetRes, nil).Times(timesToRun)
-		client.On("ListEdgeWorkerVersions", mock.Anything, edgeWorkerListVersionsReq).Return(&edgeWorkerListVersionsRes, nil).Times(timesToRun)
+		client.On("GetEdgeWorkerID", testutils.MockContext, edgeWorkerGetReq).Return(&edgeWorkerGetRes, nil).Times(timesToRun)
+		client.On("ListEdgeWorkerVersions", testutils.MockContext, edgeWorkerListVersionsReq).Return(&edgeWorkerListVersionsRes, nil).Times(timesToRun)
 	}
 
 	oneVersionData = testDataForEdgeWorker{

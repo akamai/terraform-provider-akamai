@@ -1376,10 +1376,10 @@ func expectActivateVersion(m *edgeworkers.Mock, edgeworkerID, activationID int, 
 		},
 	}
 	if e != nil {
-		return m.On("ActivateVersion", mock.Anything, req).Return(nil, e)
+		return m.On("ActivateVersion", testutils.MockContext, req).Return(nil, e)
 	}
 
-	return m.On("ActivateVersion", mock.Anything, req).Return(createStubActivation(edgeworkerID, activationID, net, version, activationStatusPresubmit, "", note), nil)
+	return m.On("ActivateVersion", testutils.MockContext, req).Return(createStubActivation(edgeworkerID, activationID, net, version, activationStatusPresubmit, "", note), nil)
 }
 
 func expectGetActivation(m *edgeworkers.Mock, edgeworkerID, activationID int, net edgeworkers.ActivationNetwork, version, status string, e error) *mock.Call {
@@ -1388,10 +1388,10 @@ func expectGetActivation(m *edgeworkers.Mock, edgeworkerID, activationID int, ne
 		ActivationID: activationID,
 	}
 	if e != nil {
-		return m.On("GetActivation", mock.Anything, req).Return(nil, e)
+		return m.On("GetActivation", testutils.MockContext, req).Return(nil, e)
 	}
 
-	return m.On("GetActivation", mock.Anything, req).Return(createStubActivation(edgeworkerID, activationID, net, version, status, "", ""), nil)
+	return m.On("GetActivation", testutils.MockContext, req).Return(createStubActivation(edgeworkerID, activationID, net, version, status, "", ""), nil)
 }
 
 func expectListActivations(m *edgeworkers.Mock, edgeworkerID int, version string, activations []edgeworkers.Activation, e error) *mock.Call {
@@ -1400,10 +1400,10 @@ func expectListActivations(m *edgeworkers.Mock, edgeworkerID int, version string
 		Version:      version,
 	}
 	if e != nil {
-		return m.On("ListActivations", mock.Anything, req).Return(nil, e)
+		return m.On("ListActivations", testutils.MockContext, req).Return(nil, e)
 	}
 
-	return m.On("ListActivations", mock.Anything, req).Return(&edgeworkers.ListActivationsResponse{
+	return m.On("ListActivations", testutils.MockContext, req).Return(&edgeworkers.ListActivationsResponse{
 		Activations: activations,
 	}, nil)
 }
@@ -1414,10 +1414,10 @@ func expectListDeactivations(m *edgeworkers.Mock, edgeworkerID int, version stri
 		Version:      version,
 	}
 	if e != nil {
-		return m.On("ListDeactivations", mock.Anything, req).Return(nil, e)
+		return m.On("ListDeactivations", testutils.MockContext, req).Return(nil, e)
 	}
 
-	return m.On("ListDeactivations", mock.Anything, req).Return(&edgeworkers.ListDeactivationsResponse{
+	return m.On("ListDeactivations", testutils.MockContext, req).Return(&edgeworkers.ListDeactivationsResponse{
 		Deactivations: deactivations,
 	}, nil)
 }
@@ -1432,10 +1432,10 @@ func expectDeactivateVersion(m *edgeworkers.Mock, edgeworkerID, deactivationID i
 		},
 	}
 	if e != nil {
-		return m.On("DeactivateVersion", mock.Anything, req).Return(nil, e)
+		return m.On("DeactivateVersion", testutils.MockContext, req).Return(nil, e)
 	}
 
-	return m.On("DeactivateVersion", mock.Anything, req).Return(createStubDeactivation(edgeworkerID, deactivationID, net, version, activationStatusPresubmit, ""), nil)
+	return m.On("DeactivateVersion", testutils.MockContext, req).Return(createStubDeactivation(edgeworkerID, deactivationID, net, version, activationStatusPresubmit, ""), nil)
 }
 
 func expectGetDeactivation(m *edgeworkers.Mock, edgeworkerID, deactivationID int, net edgeworkers.ActivationNetwork, version, status string, e error) *mock.Call {
@@ -1444,10 +1444,10 @@ func expectGetDeactivation(m *edgeworkers.Mock, edgeworkerID, deactivationID int
 		DeactivationID: deactivationID,
 	}
 	if e != nil {
-		return m.On("GetDeactivation", mock.Anything, req).Return(nil, e)
+		return m.On("GetDeactivation", testutils.MockContext, req).Return(nil, e)
 	}
 
-	return m.On("GetDeactivation", mock.Anything, req).Return(createStubDeactivation(edgeworkerID, deactivationID, net, version, status, ""), nil)
+	return m.On("GetDeactivation", testutils.MockContext, req).Return(createStubDeactivation(edgeworkerID, deactivationID, net, version, status, ""), nil)
 }
 
 func expectListEdgeWorkerVersions(m *edgeworkers.Mock, edgeworkerID int, versions []edgeworkers.EdgeWorkerVersion, e error) *mock.Call {
@@ -1455,16 +1455,16 @@ func expectListEdgeWorkerVersions(m *edgeworkers.Mock, edgeworkerID int, version
 		EdgeWorkerID: edgeworkerID,
 	}
 	if e != nil {
-		return m.On("ListEdgeWorkerVersions", mock.Anything, req).Return(nil, e)
+		return m.On("ListEdgeWorkerVersions", testutils.MockContext, req).Return(nil, e)
 	}
 
-	return m.On("ListEdgeWorkerVersions", mock.Anything, req).Return(&edgeworkers.ListEdgeWorkerVersionsResponse{
+	return m.On("ListEdgeWorkerVersions", testutils.MockContext, req).Return(&edgeworkers.ListEdgeWorkerVersionsResponse{
 		EdgeWorkerVersions: versions,
 	}, nil)
 }
 
 func expectListEdgeWorkersID(m *edgeworkers.Mock, e error, ewIDs ...int) *mock.Call {
-	call := m.On("ListEdgeWorkersID", mock.Anything, edgeworkers.ListEdgeWorkersIDRequest{})
+	call := m.On("ListEdgeWorkersID", testutils.MockContext, edgeworkers.ListEdgeWorkersIDRequest{})
 	if e != nil {
 		return call.Return(nil, e)
 	}

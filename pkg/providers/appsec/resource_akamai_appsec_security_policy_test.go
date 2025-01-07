@@ -7,7 +7,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -32,22 +31,22 @@ func TestAkamaiSecurityPolicy_res_basic(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("GetConfiguration",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&config, nil)
 
 		client.On("GetSecurityPolicy",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetSecurityPolicyRequest{ConfigID: 43253, Version: 7, PolicyID: "PLE_114049"},
 		).Return(&getSecurityPolicyResponse, nil)
 
 		client.On("CreateSecurityPolicy",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.CreateSecurityPolicyRequest{ConfigID: 43253, Version: 7, PolicyName: "PLE Cloned Test for Launchpad 15", PolicyPrefix: "PLE", DefaultSettings: true},
 		).Return(&createSecurityPolicyResponse, nil)
 
 		client.On("RemoveSecurityPolicy",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.RemoveSecurityPolicyRequest{ConfigID: 43253, Version: 7, PolicyID: "PLE_114049"},
 		).Return(&removeSecurityPolicyResponse, nil)
 

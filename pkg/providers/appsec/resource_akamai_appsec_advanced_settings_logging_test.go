@@ -7,7 +7,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -32,23 +31,23 @@ func TestAkamaiAdvancedSettingsLogging_res_basic(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("GetConfiguration",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&configResponse, nil)
 
 		client.On("GetAdvancedSettingsLogging",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetAdvancedSettingsLoggingRequest{ConfigID: 43253, Version: 7},
 		).Return(&getResponse, nil)
 
 		updateAdvancedSettingsLoggingJSON := testutils.LoadFixtureBytes(t, "testdata/TestResAdvancedSettingsLogging/UpdateAdvancedSettingsLogging.json")
 		client.On("UpdateAdvancedSettingsLogging",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.UpdateAdvancedSettingsLoggingRequest{ConfigID: 43253, Version: 7, PolicyID: "", JsonPayloadRaw: updateAdvancedSettingsLoggingJSON},
 		).Return(&updateResponse, nil)
 
 		client.On("RemoveAdvancedSettingsLogging",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.RemoveAdvancedSettingsLoggingRequest{ConfigID: 43253, Version: 7, PolicyID: ""},
 		).Return(&removeResponse, nil)
 

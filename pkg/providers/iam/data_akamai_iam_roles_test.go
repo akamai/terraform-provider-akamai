@@ -9,7 +9,6 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v6/internal/test"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestDataRoles(t *testing.T) {
@@ -30,7 +29,7 @@ func TestDataRoles(t *testing.T) {
 		req := iam.ListRolesRequest{}
 
 		client.Test(testutils.TattleT{T: t})
-		client.On("ListRoles", mock.Anything, req).Return(roles, nil)
+		client.On("ListRoles", testutils.MockContext, req).Return(roles, nil)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -73,7 +72,7 @@ func TestDataRoles(t *testing.T) {
 		req := iam.ListRolesRequest{}
 
 		client.Test(testutils.TattleT{T: t})
-		client.On("ListRoles", mock.Anything, req).Return(roles, nil)
+		client.On("ListRoles", testutils.MockContext, req).Return(roles, nil)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -106,7 +105,7 @@ func TestDataRoles(t *testing.T) {
 
 		client := &iam.Mock{}
 		client.Test(testutils.TattleT{T: t})
-		client.On("ListRoles", mock.Anything, req).Return(nil, errors.New("failed to get roles"))
+		client.On("ListRoles", testutils.MockContext, req).Return(nil, errors.New("failed to get roles"))
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{

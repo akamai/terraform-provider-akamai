@@ -9,7 +9,6 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/str"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestResourceCustomBotCategoryItemSequenceMissingInput(t *testing.T) {
@@ -40,7 +39,7 @@ func TestResourceCustomBotCategoryItemSequenceError(t *testing.T) {
 		mockedBotmanClient := &botman.Mock{}
 		createCategoryIds := botman.UUIDSequence{Sequence: []string{"fake3f89-e179-4892-89cf-d5e623ba9dc7", "fake85df-e399-43e8-bb0f-c0d980a88e4f", "fake09b8-4fd5-430e-a061-1c61df1d2ac2"}}
 		mockedBotmanClient.On("UpdateCustomBotCategoryItemSequence",
-			mock.Anything,
+			testutils.MockContext,
 			botman.UpdateCustomBotCategoryItemSequenceRequest{
 				ConfigID:   43253,
 				Version:    15,
@@ -86,7 +85,7 @@ func TestResourceCustomBotCategoryItemSequence(t *testing.T) {
 		updateResponse := botman.UpdateCustomBotCategoryItemSequenceResponse{Sequence: updateCategoryIds.Sequence}
 		readResponse2 := botman.GetCustomBotCategoryItemSequenceResponse{Sequence: updateCategoryIds.Sequence}
 		mockedBotmanClient.On("UpdateCustomBotCategoryItemSequence",
-			mock.Anything,
+			testutils.MockContext,
 			botman.UpdateCustomBotCategoryItemSequenceRequest{
 				ConfigID:   43253,
 				Version:    15,
@@ -96,7 +95,7 @@ func TestResourceCustomBotCategoryItemSequence(t *testing.T) {
 		).Return(&createResponse, nil).Once()
 
 		mockedBotmanClient.On("GetCustomBotCategoryItemSequence",
-			mock.Anything,
+			testutils.MockContext,
 			botman.GetCustomBotCategoryItemSequenceRequest{
 				ConfigID:   43253,
 				Version:    15,
@@ -105,7 +104,7 @@ func TestResourceCustomBotCategoryItemSequence(t *testing.T) {
 		).Return(&readResponse, nil).Times(3)
 
 		mockedBotmanClient.On("UpdateCustomBotCategoryItemSequence",
-			mock.Anything,
+			testutils.MockContext,
 			botman.UpdateCustomBotCategoryItemSequenceRequest{
 				ConfigID:   43253,
 				Version:    15,
@@ -115,7 +114,7 @@ func TestResourceCustomBotCategoryItemSequence(t *testing.T) {
 		).Return(&updateResponse, nil).Once()
 
 		mockedBotmanClient.On("GetCustomBotCategoryItemSequence",
-			mock.Anything,
+			testutils.MockContext,
 			botman.GetCustomBotCategoryItemSequenceRequest{
 				ConfigID:   43253,
 				CategoryID: "fakecv20-eddb-4421-93d9-90954e509d5f",

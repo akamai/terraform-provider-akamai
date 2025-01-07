@@ -10,7 +10,6 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 var (
@@ -128,7 +127,7 @@ func TestDataUsers(t *testing.T) {
 			configPath: "testdata/TestDataUsers/default.tf",
 			init: func(t *testing.T, m *iam.Mock, mockData []iam.UserListItem, groupID *int64) {
 				listUsersReq := iam.ListUsersRequest{GroupID: groupID, AuthGrants: true, Actions: true}
-				m.On("ListUsers", mock.Anything, listUsersReq).Return(nil, errors.New("test error"))
+				m.On("ListUsers", testutils.MockContext, listUsersReq).Return(nil, errors.New("test error"))
 			},
 			expectedError: regexp.MustCompile("test error"),
 			mockData:      basicTestDataForUsers,
@@ -261,5 +260,5 @@ func expectListUsers(client *iam.Mock, mockData []iam.UserListItem, groupID *int
 		Actions:    true,
 	}
 
-	client.On("ListUsers", mock.Anything, listUsersReq).Return(mockData, nil).Times(timesToRun)
+	client.On("ListUsers", testutils.MockContext, listUsersReq).Return(mockData, nil).Times(timesToRun)
 }

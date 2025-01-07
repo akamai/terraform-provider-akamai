@@ -12,7 +12,6 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestDataPropertyIncludes(t *testing.T) {
@@ -207,7 +206,7 @@ func TestDataPropertyIncludes(t *testing.T) {
 				includes:       nil,
 			},
 			init: func(t *testing.T, m *papi.Mock, attrs attributes) {
-				m.On("ListIncludes", mock.Anything, papi.ListIncludesRequest{
+				m.On("ListIncludes", testutils.MockContext, papi.ListIncludesRequest{
 					ContractID: attrs.contractID,
 					GroupID:    attrs.groupID,
 				}).Return(nil, fmt.Errorf("fetching includes failed")).Once()
@@ -226,7 +225,7 @@ func TestDataPropertyIncludes(t *testing.T) {
 				},
 			},
 			init: func(t *testing.T, m *papi.Mock, attrs attributes) {
-				m.On("ListAvailableIncludes", mock.Anything, papi.ListAvailableIncludesRequest{
+				m.On("ListAvailableIncludes", testutils.MockContext, papi.ListAvailableIncludesRequest{
 					PropertyID:      attrs.parentProperty.id,
 					PropertyVersion: attrs.parentProperty.version,
 					ContractID:      attrs.contractID,
@@ -250,7 +249,7 @@ func TestDataPropertyIncludes(t *testing.T) {
 			},
 			init: func(t *testing.T, m *papi.Mock, attrs attributes) {
 				mockListAvailableIncludes(m, attrs.contractID, attrs.groupID, attrs.parentProperty.id, attrs.parentProperty.version, attrs.includesNumber, 1)
-				m.On("GetInclude", mock.Anything, papi.GetIncludeRequest{
+				m.On("GetInclude", testutils.MockContext, papi.GetIncludeRequest{
 					ContractID: attrs.contractID,
 					GroupID:    attrs.groupID,
 					IncludeID:  attrs.includes[0].IncludeID,
@@ -408,7 +407,7 @@ var (
 
 	// mockListIncludes mocks ListIncludes call with provided parameters
 	mockListIncludes = func(m *papi.Mock, contractID, groupID string, includes []papi.Include, includesNumber, timesToRun int) {
-		m.On("ListIncludes", mock.Anything, papi.ListIncludesRequest{
+		m.On("ListIncludes", testutils.MockContext, papi.ListIncludesRequest{
 			ContractID: contractID,
 			GroupID:    groupID,
 		}).Return(&papi.ListIncludesResponse{
@@ -420,7 +419,7 @@ var (
 
 	// mockListAvailableIncludes mocks ListAvailableIncludes call with provided parameters
 	mockListAvailableIncludes = func(m *papi.Mock, contractID, groupID, propertyID string, propertyVersion, includesNumber, timesToRun int) {
-		m.On("ListAvailableIncludes", mock.Anything, papi.ListAvailableIncludesRequest{
+		m.On("ListAvailableIncludes", testutils.MockContext, papi.ListAvailableIncludesRequest{
 			ContractID:      contractID,
 			GroupID:         groupID,
 			PropertyID:      propertyID,
@@ -431,7 +430,7 @@ var (
 
 	// mockGetInclude mocks GetInclude call with provided parameters
 	mockGetInclude = func(m *papi.Mock, contractID, groupID, includeID string, timesToRun int, include papi.Include) {
-		m.On("GetInclude", mock.Anything, papi.GetIncludeRequest{
+		m.On("GetInclude", testutils.MockContext, papi.GetIncludeRequest{
 			ContractID: contractID,
 			GroupID:    groupID,
 			IncludeID:  includeID,

@@ -51,7 +51,7 @@ func TestDataConfigurations(t *testing.T) {
 		"error getting configuration": {
 			configPath: "testdata/TestDataConfigurations/default.tf",
 			init: func(_ *testing.T, m *cloudwrapper.Mock, _ []testDataForCWConfiguration) {
-				m.On("ListConfigurations", mock.Anything, mock.Anything).Return(nil, fmt.Errorf("get configuration failed")).Times(1)
+				m.On("ListConfigurations", testutils.MockContext, mock.Anything).Return(nil, fmt.Errorf("get configuration failed")).Times(1)
 			},
 			mockData: []testDataForCWConfiguration{
 				{
@@ -107,7 +107,7 @@ func expectGetConfigurations(client *cloudwrapper.Mock, data []testDataForCWConf
 	res := cloudwrapper.ListConfigurationsResponse{
 		Configurations: configurations,
 	}
-	client.On("ListConfigurations", mock.Anything, mock.Anything).Return(&res, nil).Times(timesToRun)
+	client.On("ListConfigurations", testutils.MockContext, mock.Anything).Return(&res, nil).Times(timesToRun)
 }
 
 func checkCloudWrapperConfiguration(data testDataForCWConfiguration, idx int) resource.TestCheckFunc {

@@ -9,7 +9,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/cloudwrapper"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestDataProperty(t *testing.T) {
@@ -159,7 +158,7 @@ func expectListProperties(client *cloudwrapper.Mock, data testDataForCWPropertie
 	listPropertiesRes := cloudwrapper.ListPropertiesResponse{
 		Properties: data.properties,
 	}
-	client.On("ListProperties", mock.Anything, listPropertiesReq).Return(&listPropertiesRes, nil).Times(timesToRun)
+	client.On("ListProperties", testutils.MockContext, listPropertiesReq).Return(&listPropertiesRes, nil).Times(timesToRun)
 }
 
 func expectListPropertiesWithError(client *cloudwrapper.Mock, data testDataForCWProperties, timesToRun int) {
@@ -167,5 +166,5 @@ func expectListPropertiesWithError(client *cloudwrapper.Mock, data testDataForCW
 		Unused:      data.unused,
 		ContractIDs: data.contractIDs,
 	}
-	client.On("ListProperties", mock.Anything, listPropertiesReq).Return(nil, fmt.Errorf("list properties failed")).Times(timesToRun)
+	client.On("ListProperties", testutils.MockContext, listPropertiesReq).Return(nil, fmt.Errorf("list properties failed")).Times(timesToRun)
 }

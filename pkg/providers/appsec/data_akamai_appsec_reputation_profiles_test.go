@@ -7,7 +7,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -20,7 +19,7 @@ func TestAkamaiReputationProfiles_data_basic(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("GetConfiguration",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&config, nil)
 
@@ -29,7 +28,7 @@ func TestAkamaiReputationProfiles_data_basic(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("GetReputationProfiles",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetReputationProfilesRequest{ConfigID: 43253, ConfigVersion: 7, ReputationProfileId: 12345},
 		).Return(&getReputationProfilesResponse, nil)
 

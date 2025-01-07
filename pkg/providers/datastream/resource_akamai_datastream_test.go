@@ -313,11 +313,11 @@ func TestResourceStream(t *testing.T) {
 			StreamID: streamID,
 		}
 
-		client.On("CreateStream", mock.Anything, createStreamRequest).
+		client.On("CreateStream", testutils.MockContext, createStreamRequest).
 			Return(updateStreamResponse, nil)
 
 		// for waitForStreamStatusChange
-		client.On("GetStream", mock.Anything, getStreamRequest).
+		client.On("GetStream", testutils.MockContext, getStreamRequest).
 			Return(getStreamResponseStreamActivating, nil).
 			Times(3)
 
@@ -325,31 +325,31 @@ func TestResourceStream(t *testing.T) {
 		// second for complete CreateStream
 		// third for reading resource state
 		// fourth for reading stream status in UpdateStream
-		client.On("GetStream", mock.Anything, getStreamRequest).
+		client.On("GetStream", testutils.MockContext, getStreamRequest).
 			Return(getStreamResponseActivated, nil).
 			Times(4)
 
-		client.On("UpdateStream", mock.Anything, updateStreamRequest).
+		client.On("UpdateStream", testutils.MockContext, updateStreamRequest).
 			Return(updateStreamResponse, nil).
 			Once()
 
 		// for waitForStreamStatusChange
-		client.On("GetStream", mock.Anything, getStreamRequest).
+		client.On("GetStream", testutils.MockContext, getStreamRequest).
 			Return(getStreamResponseStreamActivatedAfterUpdate, nil).
 			Times(3)
 
 		// first for finishing waitForStreamStatusChange in UpdateStream
 		// second for reading resource state after UpdateStream
 		// third for reading stream status in DeleteStream
-		client.On("GetStream", mock.Anything, getStreamRequest).
+		client.On("GetStream", testutils.MockContext, getStreamRequest).
 			Return(getStreamResponseStreamActivatedAfterUpdate, nil).
 			Times(3)
 
-		client.On("DeleteStream", mock.Anything, datastream.DeleteStreamRequest{
+		client.On("DeleteStream", testutils.MockContext, datastream.DeleteStreamRequest{
 			StreamID: streamID,
 		}).Return(' ', nil).Once()
 
-		client.On("DeactivateStream", mock.Anything, datastream.DeactivateStreamRequest{
+		client.On("DeactivateStream", testutils.MockContext, datastream.DeactivateStreamRequest{
 			StreamID: 12321,
 		}).Return(&datastream.DetailedStreamVersion{
 			StreamID:      streamID,
@@ -357,12 +357,12 @@ func TestResourceStream(t *testing.T) {
 		}, nil).Once()
 
 		// for waitForStreamStatusChange
-		client.On("GetStream", mock.Anything, getStreamRequest).
+		client.On("GetStream", testutils.MockContext, getStreamRequest).
 			Return(getStreamResponseDeactivating, nil).
 			Times(3)
 
 		// for finishing waitForStreamStatusChange
-		client.On("GetStream", mock.Anything, getStreamRequest).
+		client.On("GetStream", testutils.MockContext, getStreamRequest).
 			Return(getStreamResponseDeactivated, nil).
 			Once()
 
@@ -623,7 +623,7 @@ func TestResourceUpdate(t *testing.T) {
 
 	configureMock := func(m *datastream.Mock, statuses ...mockConfig) {
 		for _, statusConfig := range statuses {
-			m.On("GetStream", mock.Anything, mock.Anything).
+			m.On("GetStream", testutils.MockContext, mock.Anything).
 				Return(responseFactory(statusConfig.status), nil).
 				Times(statusConfig.repeats)
 		}
@@ -632,7 +632,7 @@ func TestResourceUpdate(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			m := &datastream.Mock{}
-			m.On("CreateStream", mock.Anything, createStreamRequestFactory(test.CreateStreamActive)).
+			m.On("CreateStream", testutils.MockContext, createStreamRequestFactory(test.CreateStreamActive)).
 				Return(updateStreamResponse, nil).
 				Once()
 
@@ -662,7 +662,7 @@ func TestResourceUpdate(t *testing.T) {
 						{status: datastream.StreamStatusActivated, repeats: 3},
 					}...)
 				} else {
-					m.On("ActivateStream", mock.Anything, mock.Anything).
+					m.On("ActivateStream", testutils.MockContext, mock.Anything).
 						Return(&datastream.DetailedStreamVersion{
 							StreamVersion: updateStreamResponse.StreamVersion,
 						}, nil).
@@ -686,7 +686,7 @@ func TestResourceUpdate(t *testing.T) {
 			}
 
 			// DeleteStream method will deactivate the stream
-			m.On("DeactivateStream", mock.Anything, mock.Anything).
+			m.On("DeactivateStream", testutils.MockContext, mock.Anything).
 				Return(&datastream.DetailedStreamVersion{
 					StreamVersion: updateStreamResponse.StreamVersion,
 				}, nil).
@@ -698,7 +698,7 @@ func TestResourceUpdate(t *testing.T) {
 				{status: datastream.StreamStatusDeactivated, repeats: 1},
 			}...)
 
-			m.On("DeleteStream", mock.Anything, mock.Anything).
+			m.On("DeleteStream", testutils.MockContext, mock.Anything).
 				Return(' ', nil).
 				Once()
 
@@ -742,7 +742,7 @@ func TestResourceStreamErrors(t *testing.T) {
 		"internal server error": {
 			tfFile: "testdata/TestResourceStream/errors/internal_server_error/internal_server_error.tf",
 			init: func(m *datastream.Mock) {
-				m.On("CreateStream", mock.Anything, mock.Anything).
+				m.On("CreateStream", testutils.MockContext, mock.Anything).
 					Return(nil, fmt.Errorf("%w: request failed: %s", datastream.ErrCreateStream, errors.New("500")))
 			},
 			withError: regexp.MustCompile(datastream.ErrCreateStream.Error()),
@@ -750,7 +750,7 @@ func TestResourceStreamErrors(t *testing.T) {
 		"stream with this name already exists": {
 			tfFile: "testdata/TestResourceStream/errors/stream_name_not_unique/stream_name_not_unique.tf",
 			init: func(m *datastream.Mock) {
-				m.On("CreateStream", mock.Anything, mock.Anything).
+				m.On("CreateStream", testutils.MockContext, mock.Anything).
 					Return(nil, fmt.Errorf("%s: %w", datastream.ErrCreateStream, &datastream.Error{
 						Type:       "bad-request",
 						Title:      "Bad Request",
@@ -986,14 +986,14 @@ func TestEmailIDs(t *testing.T) {
 			client := &datastream.Mock{}
 
 			createStreamRequest := createStreamRequestFactory(test.EmailIDs)
-			client.On("CreateStream", mock.Anything, createStreamRequest).
+			client.On("CreateStream", testutils.MockContext, createStreamRequest).
 				Return(updateStreamResponse, nil)
 
 			getStreamResponse := responseFactory(test.EmailIDs)
-			client.On("GetStream", mock.Anything, getStreamRequest).
+			client.On("GetStream", testutils.MockContext, getStreamRequest).
 				Return(getStreamResponse, nil)
 
-			client.On("DeleteStream", mock.Anything, datastream.DeleteStreamRequest{
+			client.On("DeleteStream", testutils.MockContext, datastream.DeleteStreamRequest{
 				StreamID: streamID,
 			}).Return(' ', nil)
 
@@ -1187,13 +1187,13 @@ func TestDatasetIDsDiff(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			client := &datastream.Mock{}
 
-			client.On("CreateStream", mock.Anything, createStreamRequest).
+			client.On("CreateStream", testutils.MockContext, createStreamRequest).
 				Return(createStreamResponse, nil)
 
-			client.On("GetStream", mock.Anything, getStreamRequest).
+			client.On("GetStream", testutils.MockContext, getStreamRequest).
 				Return(getStreamResponse, nil).Times(3)
 
-			client.On("DeleteStream", mock.Anything, deleteStreamRequest).
+			client.On("DeleteStream", testutils.MockContext, deleteStreamRequest).
 				Return(' ', nil)
 
 			useClient(client, func() {
@@ -1489,14 +1489,14 @@ func TestCustomHeaders(t *testing.T) {
 			client := &datastream.Mock{}
 
 			createStreamRequest := createStreamRequestFactory(test.Connector)
-			client.On("CreateStream", mock.Anything, createStreamRequest).
+			client.On("CreateStream", testutils.MockContext, createStreamRequest).
 				Return(updateStreamResponse, nil)
 
 			getStreamResponse := responseFactory(test.Response)
-			client.On("GetStream", mock.Anything, getStreamRequest).
+			client.On("GetStream", testutils.MockContext, getStreamRequest).
 				Return(getStreamResponse, nil)
 
-			client.On("DeleteStream", mock.Anything, datastream.DeleteStreamRequest{
+			client.On("DeleteStream", testutils.MockContext, datastream.DeleteStreamRequest{
 				StreamID: streamID,
 			}).Return(' ', nil)
 
@@ -1718,14 +1718,14 @@ func TestMTLS(t *testing.T) {
 			client := &datastream.Mock{}
 
 			createStreamRequest := createStreamRequestFactory(test.Connector)
-			client.On("CreateStream", mock.Anything, createStreamRequest).
+			client.On("CreateStream", testutils.MockContext, createStreamRequest).
 				Return(updateStreamResponse, nil)
 
 			getStreamResponse := responseFactory(test.Response)
-			client.On("GetStream", mock.Anything, getStreamRequest).
+			client.On("GetStream", testutils.MockContext, getStreamRequest).
 				Return(getStreamResponse, nil)
 
-			client.On("DeleteStream", mock.Anything, datastream.DeleteStreamRequest{
+			client.On("DeleteStream", testutils.MockContext, datastream.DeleteStreamRequest{
 				StreamID: streamID,
 			}).Return(' ', nil)
 
@@ -1838,14 +1838,14 @@ func TestUrlSuppressor(t *testing.T) {
 	}{
 		"idempotent when endpoint is stripped by api": {
 			Init: func(m *datastream.Mock) {
-				m.On("CreateStream", mock.Anything, createStreamRequestFactory(&datastream.SumoLogicConnector{
+				m.On("CreateStream", testutils.MockContext, createStreamRequestFactory(&datastream.SumoLogicConnector{
 					CollectorCode: "collector_code",
 					CompressLogs:  true,
 					DisplayName:   "display_name",
 					Endpoint:      "endpoint/?/?",
 				})).Return(updateStreamResponse, nil)
 
-				m.On("GetStream", mock.Anything, mock.Anything).
+				m.On("GetStream", testutils.MockContext, mock.Anything).
 					Return(responseFactory(datastream.Destination{
 						DestinationType: datastream.DestinationTypeSumoLogic,
 						CompressLogs:    true,
@@ -1870,14 +1870,14 @@ func TestUrlSuppressor(t *testing.T) {
 		},
 		"update endpoint field": {
 			Init: func(m *datastream.Mock) {
-				m.On("CreateStream", mock.Anything, createStreamRequestFactory(&datastream.SumoLogicConnector{
+				m.On("CreateStream", testutils.MockContext, createStreamRequestFactory(&datastream.SumoLogicConnector{
 					CollectorCode: "collector_code",
 					CompressLogs:  true,
 					DisplayName:   "display_name",
 					Endpoint:      "endpoint",
 				})).Return(updateStreamResponse, nil)
 
-				m.On("GetStream", mock.Anything, mock.Anything).
+				m.On("GetStream", testutils.MockContext, mock.Anything).
 					Return(responseFactory(datastream.Destination{
 						DestinationType: datastream.DestinationTypeSumoLogic,
 						CompressLogs:    true,
@@ -1885,14 +1885,14 @@ func TestUrlSuppressor(t *testing.T) {
 						Endpoint:        "endpoint",
 					}), nil).Times(3)
 
-				m.On("UpdateStream", mock.Anything, updateStreamRequestFactory(&datastream.SumoLogicConnector{
+				m.On("UpdateStream", testutils.MockContext, updateStreamRequestFactory(&datastream.SumoLogicConnector{
 					CollectorCode: "collector_code",
 					CompressLogs:  true,
 					DisplayName:   "display_name",
 					Endpoint:      "endpoint_updated",
 				})).Return(updateStreamResponse, nil)
 
-				m.On("GetStream", mock.Anything, mock.Anything).
+				m.On("GetStream", testutils.MockContext, mock.Anything).
 					Return(responseFactory(datastream.Destination{
 						DestinationType: datastream.DestinationTypeSumoLogic,
 						CompressLogs:    true,
@@ -1921,14 +1921,14 @@ func TestUrlSuppressor(t *testing.T) {
 		},
 		"adding new fields": {
 			Init: func(m *datastream.Mock) {
-				m.On("CreateStream", mock.Anything, createStreamRequestFactory(&datastream.SumoLogicConnector{
+				m.On("CreateStream", testutils.MockContext, createStreamRequestFactory(&datastream.SumoLogicConnector{
 					CollectorCode: "collector_code",
 					CompressLogs:  true,
 					DisplayName:   "display_name",
 					Endpoint:      "endpoint",
 				})).Return(updateStreamResponse, nil)
 
-				m.On("GetStream", mock.Anything, mock.Anything).
+				m.On("GetStream", testutils.MockContext, mock.Anything).
 					Return(responseFactory(datastream.Destination{
 						DestinationType: datastream.DestinationTypeSumoLogic,
 						CompressLogs:    true,
@@ -1936,7 +1936,7 @@ func TestUrlSuppressor(t *testing.T) {
 						Endpoint:        "endpoint",
 					}), nil).Times(3)
 
-				m.On("UpdateStream", mock.Anything, updateStreamRequestFactory(&datastream.SumoLogicConnector{
+				m.On("UpdateStream", testutils.MockContext, updateStreamRequestFactory(&datastream.SumoLogicConnector{
 					CollectorCode:     "collector_code",
 					CompressLogs:      true,
 					DisplayName:       "display_name",
@@ -1945,7 +1945,7 @@ func TestUrlSuppressor(t *testing.T) {
 					CustomHeaderValue: "custom_header_value",
 				})).Return(updateStreamResponse, nil)
 
-				m.On("GetStream", mock.Anything, mock.Anything).
+				m.On("GetStream", testutils.MockContext, mock.Anything).
 					Return(responseFactory(datastream.Destination{
 						DestinationType:   datastream.DestinationTypeSumoLogic,
 						CompressLogs:      true,
@@ -1982,14 +1982,14 @@ func TestUrlSuppressor(t *testing.T) {
 		},
 		"change connector": {
 			Init: func(m *datastream.Mock) {
-				m.On("CreateStream", mock.Anything, createStreamRequestFactory(&datastream.SumoLogicConnector{
+				m.On("CreateStream", testutils.MockContext, createStreamRequestFactory(&datastream.SumoLogicConnector{
 					CollectorCode: "collector_code",
 					CompressLogs:  true,
 					DisplayName:   "display_name",
 					Endpoint:      "endpoint",
 				})).Return(updateStreamResponse, nil)
 
-				m.On("GetStream", mock.Anything, mock.Anything).
+				m.On("GetStream", testutils.MockContext, mock.Anything).
 					Return(responseFactory(datastream.Destination{
 						DestinationType: datastream.DestinationTypeSumoLogic,
 						CompressLogs:    true,
@@ -1997,13 +1997,13 @@ func TestUrlSuppressor(t *testing.T) {
 						Endpoint:        "endpoint",
 					}), nil).Times(3)
 
-				m.On("UpdateStream", mock.Anything, updateStreamRequestFactory(&datastream.DatadogConnector{
+				m.On("UpdateStream", testutils.MockContext, updateStreamRequestFactory(&datastream.DatadogConnector{
 					AuthToken:   "auth_token",
 					DisplayName: "display_name",
 					Endpoint:    "endpoint",
 				})).Return(updateStreamResponse, nil)
 
-				m.On("GetStream", mock.Anything, mock.Anything).
+				m.On("GetStream", testutils.MockContext, mock.Anything).
 					Return(responseFactory(datastream.Destination{
 						DestinationType: datastream.DestinationTypeDataDog,
 						DisplayName:     "display_name",
@@ -2040,7 +2040,7 @@ func TestUrlSuppressor(t *testing.T) {
 			m := &datastream.Mock{}
 			test.Init(m)
 
-			m.On("DeleteStream", mock.Anything, datastream.DeleteStreamRequest{
+			m.On("DeleteStream", testutils.MockContext, datastream.DeleteStreamRequest{
 				StreamID: streamID,
 			}).Return(' ', nil)
 
@@ -2194,13 +2194,13 @@ func TestConnectors(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			client := &datastream.Mock{}
 
-			client.On("CreateStream", mock.Anything, createStreamRequestFactory(test.Connector)).
+			client.On("CreateStream", testutils.MockContext, createStreamRequestFactory(test.Connector)).
 				Return(updateStreamResponse, nil)
 
-			client.On("GetStream", mock.Anything, getStreamRequest).
+			client.On("GetStream", testutils.MockContext, getStreamRequest).
 				Return(responseFactory(test.Response), nil)
 
-			client.On("DeleteStream", mock.Anything, mock.Anything).Return(' ', nil)
+			client.On("DeleteStream", testutils.MockContext, mock.Anything).Return(' ', nil)
 
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{

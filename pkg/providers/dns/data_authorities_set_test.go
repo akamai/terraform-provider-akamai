@@ -22,7 +22,7 @@ func TestDataSourceAuthoritiesSet_basic(t *testing.T) {
 		authorities := []string{"ns1.exampleterraform.io", "ns2.exampleterraform.io"}
 
 		client.On("GetNameServerRecordList",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			mock.AnythingOfType("dns.GetNameServerRecordListRequest"),
 		).Return(authorities, nil)
 
@@ -70,7 +70,7 @@ func TestDataSourceAuthoritiesSet_basic(t *testing.T) {
 		client := &dns.Mock{}
 
 		client.On("GetNameServerRecordList",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			mock.AnythingOfType("dns.GetNameServerRecordListRequest"),
 		).Return(nil, errors.New("invalid contract"))
 

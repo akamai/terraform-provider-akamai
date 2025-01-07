@@ -21,7 +21,7 @@ func TestEdgeKVGroupItems(t *testing.T) {
 	}
 
 	t.Run("happy path", func(t *testing.T) {
-		client.On("ListItems", mock.Anything, edgeworkers.ListItemsRequest{
+		client.On("ListItems", testutils.MockContext, edgeworkers.ListItemsRequest{
 			ItemsRequestParams: edgeworkers.ItemsRequestParams{
 				Network:     "staging",
 				NamespaceID: "test_namespace",
@@ -127,7 +127,7 @@ func TestEdgeKVGroupItems(t *testing.T) {
 
 func mockGetItemReq(client *edgeworkers.Mock, itemID string, itemValue edgeworkers.Item) *mock.Call {
 
-	return client.On("GetItem", mock.Anything, edgeworkers.GetItemRequest{
+	return client.On("GetItem", testutils.MockContext, edgeworkers.GetItemRequest{
 		ItemID: itemID,
 		ItemsRequestParams: edgeworkers.ItemsRequestParams{
 			Network:     "staging",

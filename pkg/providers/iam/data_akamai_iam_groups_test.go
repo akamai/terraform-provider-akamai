@@ -11,7 +11,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestDataGroups(t *testing.T) {
@@ -34,7 +33,7 @@ func TestDataGroups(t *testing.T) {
 			group2 := makeGroup(t, "test group 2", 102, 100, []iam.Group{group3, group5}, nil)
 			res := []iam.Group{group1, group2, group3}
 
-			client.On("ListGroups", mock.Anything, req).Return(res, nil)
+			client.On("ListGroups", testutils.MockContext, req).Return(res, nil)
 		}
 
 		useClient(client, func() {
@@ -85,7 +84,7 @@ func TestDataGroups(t *testing.T) {
 		{
 			req := iam.ListGroupsRequest{}
 
-			client.On("ListGroups", mock.Anything, req).Return(nil, errors.New("failed to list groups"))
+			client.On("ListGroups", testutils.MockContext, req).Return(nil, errors.New("failed to list groups"))
 		}
 
 		useClient(client, func() {

@@ -11,7 +11,6 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 type (
@@ -95,7 +94,7 @@ func TestDataKeys(t *testing.T) {
 		"expect error on list access keys": {
 			configPath: "testdata/TestDataKeys/default.tf",
 			init: func(_ *testing.T, m *cloudaccess.Mock, _ testDataForKeys) {
-				m.On("ListAccessKeys", mock.Anything, cloudaccess.ListAccessKeysRequest{}).
+				m.On("ListAccessKeys", testutils.MockContext, cloudaccess.ListAccessKeysRequest{}).
 					Return(nil, fmt.Errorf("API error")).Once()
 			},
 			error: regexp.MustCompile(`API error`),
@@ -147,7 +146,7 @@ func expectFullListAccessKeys(t *testing.T, client *cloudaccess.Mock, data testD
 		})
 	}
 
-	client.On("ListAccessKeys", mock.Anything, listAccessKeysReq).Return(&listAccessKeysRes, nil).Times(timesToRun)
+	client.On("ListAccessKeys", testutils.MockContext, listAccessKeysReq).Return(&listAccessKeysRes, nil).Times(timesToRun)
 }
 
 func checkKeysAttrs(data testDataForKeys) resource.TestCheckFunc {

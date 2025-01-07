@@ -7,7 +7,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestDataProperties(t *testing.T) {
@@ -17,7 +16,7 @@ func TestDataProperties(t *testing.T) {
 		properties := decodePropertyItems(props.Items, "", "")
 
 		client.On("GetProperties",
-			mock.Anything,
+			testutils.MockContext,
 			papi.GetPropertiesRequest{GroupID: "grp_test", ContractID: "ctr_test"},
 		).Return(&papi.GetPropertiesResponse{Properties: props}, nil)
 
@@ -40,7 +39,7 @@ func TestDataProperties(t *testing.T) {
 		properties := decodePropertyItems(props.Items, "", "")
 
 		client.On("GetProperties",
-			mock.Anything,
+			testutils.MockContext,
 			papi.GetPropertiesRequest{GroupID: "grp_test", ContractID: "ctr_test"},
 		).Return(&papi.GetPropertiesResponse{Properties: props}, nil)
 
@@ -63,7 +62,7 @@ func TestDataProperties(t *testing.T) {
 		properties := decodePropertyItems(props.Items, "", "")
 
 		client.On("GetProperties",
-			mock.Anything,
+			testutils.MockContext,
 			papi.GetPropertiesRequest{GroupID: "grp_test", ContractID: "ctr_test"},
 		).Return(&papi.GetPropertiesResponse{Properties: props}, nil)
 

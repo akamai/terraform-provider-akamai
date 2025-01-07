@@ -9,7 +9,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -22,7 +21,7 @@ func TestAkamaiTuningRecommendationsDataBasic(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("GetConfiguration",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&config, nil)
 
@@ -39,17 +38,17 @@ func TestAkamaiTuningRecommendationsDataBasic(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("GetTuningRecommendations",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetTuningRecommendationsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", RulesetType: "active"},
 		).Return(&getRecs, nil)
 
 		client.On("GetAttackGroupRecommendations",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetAttackGroupRecommendationsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", Group: "XSS", RulesetType: "evaluation"},
 		).Return(&getGroupRecs, nil)
 
 		client.On("GetRuleRecommendations",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetRuleRecommendationsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", RuleID: 958008, RulesetType: "active"},
 		).Return(&getRuleRecs, nil)
 
@@ -82,7 +81,7 @@ func TestAkamaiTuningRecommenadationsDataErrorRetrievingTuningRecommenadations(t
 		require.NoError(t, err)
 
 		client.On("GetConfiguration",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&config, nil)
 
@@ -99,17 +98,17 @@ func TestAkamaiTuningRecommenadationsDataErrorRetrievingTuningRecommenadations(t
 		require.NoError(t, err)
 
 		client.On("GetTuningRecommendations",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetTuningRecommendationsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", RulesetType: "active"},
 		).Return(nil, fmt.Errorf("GetTuningRecommendations failed"))
 
 		client.On("GetAttackGroupRecommendations",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetAttackGroupRecommendationsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", Group: "XSS", RulesetType: "evaluation"},
 		).Return(nil, fmt.Errorf("GetAttackGroupRecommendations failed"))
 
 		client.On("GetRuleRecommendations",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetRuleRecommendationsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", RuleID: 958008, RulesetType: "active"},
 		).Return(nil, fmt.Errorf("GetRuleRecommendations failed"))
 

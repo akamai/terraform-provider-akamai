@@ -9,7 +9,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/gtm"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestDataGTMDatacenters(t *testing.T) {
@@ -42,7 +41,7 @@ func TestDataGTMDatacenters(t *testing.T) {
 		},
 		"error - ListDatacenters fail": {
 			init: func(t *testing.T, m *gtm.Mock, data testDataForGTMDatacenters) {
-				m.On("ListDatacenters", mock.Anything, gtm.ListDatacentersRequest{
+				m.On("ListDatacenters", testutils.MockContext, gtm.ListDatacentersRequest{
 					DomainName: data.domain,
 				}).Return(
 					nil, fmt.Errorf("ListDatacenters error")).Once()
@@ -174,7 +173,7 @@ var (
 			dcs = append(dcs, dc)
 		}
 
-		client.On("ListDatacenters", mock.Anything, gtm.ListDatacentersRequest{
+		client.On("ListDatacenters", testutils.MockContext, gtm.ListDatacentersRequest{
 			DomainName: data.domain,
 		}).Return(dcs, nil).Times(timesToRun)
 	}

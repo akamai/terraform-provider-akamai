@@ -9,7 +9,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/iam"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestResourceIAMRole(t *testing.T) {
@@ -39,7 +38,7 @@ func TestResourceIAMRole(t *testing.T) {
 				RoleDescription: description,
 				GrantedRoles:    grantedRoles,
 			}
-			client.On("CreateRole", mock.Anything, roleCreateReq).Return(&createdRole, nil).Once()
+			client.On("CreateRole", testutils.MockContext, roleCreateReq).Return(&createdRole, nil).Once()
 			return &createdRole
 		}
 
@@ -63,7 +62,7 @@ func TestResourceIAMRole(t *testing.T) {
 				RoleDescription: description,
 				GrantedRoles:    grantedRoles,
 			}
-			client.On("UpdateRole", mock.Anything, roleUpdateReq).Return(&updatedRole, nil).Once()
+			client.On("UpdateRole", testutils.MockContext, roleUpdateReq).Return(&updatedRole, nil).Once()
 			return &updatedRole
 		}
 
@@ -81,7 +80,7 @@ func TestResourceIAMRole(t *testing.T) {
 
 			err := fmt.Errorf(updateAPIError)
 
-			client.On("UpdateRole", mock.Anything, roleUpdateReq).Return(nil, err).Once()
+			client.On("UpdateRole", testutils.MockContext, roleUpdateReq).Return(nil, err).Once()
 		}
 
 		expectReadRole = func(t *testing.T, client *iam.Mock, roleID int64, name, description string, grantedRoles []iam.RoleGrantedRole, numberOfExecutions int) {
@@ -96,7 +95,7 @@ func TestResourceIAMRole(t *testing.T) {
 				RoleDescription: description,
 				GrantedRoles:    grantedRoles,
 			}
-			client.On("GetRole", mock.Anything, roleGetReq).Return(&createdRole, nil).Times(numberOfExecutions)
+			client.On("GetRole", testutils.MockContext, roleGetReq).Return(&createdRole, nil).Times(numberOfExecutions)
 		}
 
 		expectReadRoleAPIError = func(t *testing.T, client *iam.Mock, roleID int64) {
@@ -106,14 +105,14 @@ func TestResourceIAMRole(t *testing.T) {
 			}
 			err := fmt.Errorf(readAPIError)
 
-			client.On("GetRole", mock.Anything, roleGetReq).Return(nil, err).Once()
+			client.On("GetRole", testutils.MockContext, roleGetReq).Return(nil, err).Once()
 		}
 
 		expectDeleteRole = func(t *testing.T, client *iam.Mock, roleID int64) {
 			roleDeleteReq := iam.DeleteRoleRequest{
 				ID: roleID,
 			}
-			client.On("DeleteRole", mock.Anything, roleDeleteReq).Return(nil, nil).Once()
+			client.On("DeleteRole", testutils.MockContext, roleDeleteReq).Return(nil, nil).Once()
 		}
 
 		checkAttributes = func(attrs roleAttributes) resource.TestCheckFunc {

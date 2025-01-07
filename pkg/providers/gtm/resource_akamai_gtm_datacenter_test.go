@@ -43,7 +43,7 @@ func TestResGTMDatacenter(t *testing.T) {
 		client := &gtm.Mock{}
 
 		getCall := client.On("GetDatacenter",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.GetDatacenterRequest"),
 		).Return(nil, &gtm.Error{
 			StatusCode: http.StatusNotFound,
@@ -51,7 +51,7 @@ func TestResGTMDatacenter(t *testing.T) {
 
 		resp := dc
 		client.On("CreateDatacenter",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.CreateDatacenterRequest"),
 		).Return(&gtm.CreateDatacenterResponse{
 			Resource: &dc,
@@ -61,17 +61,17 @@ func TestResGTMDatacenter(t *testing.T) {
 		})
 
 		client.On("GetDomainStatus",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.GetDomainStatusRequest"),
 		).Return(getDomainStatusResponseStatus, nil)
 
 		client.On("UpdateDatacenter",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.UpdateDatacenterRequest"),
 		).Return(updateDatacenterResponseStatus, nil)
 
 		client.On("DeleteDatacenter",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.DeleteDatacenterRequest"),
 		).Return(deleteDatacenterResponseStatus, nil)
 
@@ -107,7 +107,7 @@ func TestResGTMDatacenter(t *testing.T) {
 
 		resp := dc
 		client.On("CreateDatacenter",
-			mock.Anything,
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.CreateDatacenterRequest"),
 		).Return(&gtm.CreateDatacenterResponse{
 			Resource: &dc,
@@ -115,13 +115,13 @@ func TestResGTMDatacenter(t *testing.T) {
 		}, nil).Once()
 
 		client.On("GetDatacenter",
-			mock.Anything,
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.GetDatacenterRequest"),
 		).Return(&resp, nil).Twice()
 
 		// Mock that the datacenter was deleted outside terraform
 		client.On("GetDatacenter",
-			mock.Anything,
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.GetDatacenterRequest"),
 		).Return(nil, &gtm.Error{
 			StatusCode: http.StatusNotFound,
@@ -129,12 +129,12 @@ func TestResGTMDatacenter(t *testing.T) {
 
 		// For terraform test framework, we need to mock GetDatacenter as it would actually exist before deletion
 		client.On("GetDatacenter",
-			mock.Anything,
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.GetDatacenterRequest"),
 		).Return(&resp, nil).Once()
 
 		client.On("DeleteDatacenter",
-			mock.Anything,
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.DeleteDatacenterRequest"),
 		).Return(deleteDatacenterResponseStatus, nil).Once()
 
@@ -167,7 +167,7 @@ func TestResGTMDatacenter(t *testing.T) {
 		client := &gtm.Mock{}
 
 		client.On("CreateDatacenter",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.CreateDatacenterRequest"),
 		).Return(nil, &gtm.Error{
 			StatusCode: http.StatusBadRequest,
@@ -195,7 +195,7 @@ func TestResGTMDatacenter(t *testing.T) {
 		dr.Resource = &dc
 		dr.Status = &deniedResponseStatus
 		client.On("CreateDatacenter",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.CreateDatacenterRequest"),
 		).Return(&dr, nil)
 
@@ -304,7 +304,7 @@ func TestResGTMDatacenterImport(t *testing.T) {
 }
 
 func mockGetDatacenterImport(m *gtm.Mock, resp *gtm.Datacenter, err error) *mock.Call {
-	return m.On("GetDatacenter", mock.Anything, gtm.GetDatacenterRequest{
+	return m.On("GetDatacenter", testutils.MockContext, gtm.GetDatacenterRequest{
 		DatacenterID: 3132,
 		DomainName:   "gtm_terra_testdomain.akadns.net",
 	}).Return(resp, err)

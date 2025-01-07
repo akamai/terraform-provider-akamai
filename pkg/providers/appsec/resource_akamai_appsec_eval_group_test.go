@@ -9,7 +9,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -33,22 +32,22 @@ func TestAkamaiEvalGroup_res_basic(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("GetConfiguration",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&config, nil)
 
 		client.On("GetEvalGroup",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetAttackGroupRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", Group: "SQL"},
 		).Return(&getResponse, nil)
 
 		client.On("UpdateEvalGroup",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.UpdateAttackGroupRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", Group: "SQL", Action: "alert", JsonPayloadRaw: conditionExceptionRawMessage},
 		).Return(&updateResponse, nil)
 
 		client.On("UpdateEvalGroup",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.UpdateAttackGroupRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", Group: "SQL", Action: "none"},
 		).Return(&updateResponse, nil)
 
@@ -92,12 +91,12 @@ func TestAkamaiEvalGroup_res_error_updating_eval_group(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("GetConfiguration",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&config, nil)
 
 		client.On("UpdateEvalGroup",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.UpdateAttackGroupRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", Group: "SQL", Action: "alert", JsonPayloadRaw: conditionExceptionRawMessage},
 		).Return(nil, fmt.Errorf("UpdateEvalGroup failed"))
 

@@ -154,22 +154,22 @@ func TestResourceGroup(t *testing.T) {
 }
 
 func expectResourceIAMGroupUpdate(m *iam.Mock, group iam.Group, sourceGroupID int64, updateNameError, moveGroupError error) {
-	onUpdateGroupName := m.On("UpdateGroupName", mock.Anything, iam.GroupRequest{GroupName: group.GroupName, GroupID: group.GroupID})
+	onUpdateGroupName := m.On("UpdateGroupName", testutils.MockContext, iam.GroupRequest{GroupName: group.GroupName, GroupID: group.GroupID})
 	if updateNameError != nil {
 		onUpdateGroupName.Return(nil, updateNameError)
 		return
 	}
 	onUpdateGroupName.Return(nil, nil)
 
-	m.On("MoveGroup", mock.Anything, iam.MoveGroupRequest{DestinationGroupID: group.ParentGroupID, SourceGroupID: sourceGroupID}).Return(moveGroupError)
+	m.On("MoveGroup", testutils.MockContext, iam.MoveGroupRequest{DestinationGroupID: group.ParentGroupID, SourceGroupID: sourceGroupID}).Return(moveGroupError)
 }
 
 func expectResourceIAMGroupDelete(m *iam.Mock, groupID int, errRemoveGroup error) {
-	m.On("RemoveGroup", mock.Anything, iam.RemoveGroupRequest{GroupID: int64(groupID)}).Return(errRemoveGroup)
+	m.On("RemoveGroup", testutils.MockContext, iam.RemoveGroupRequest{GroupID: int64(groupID)}).Return(errRemoveGroup)
 }
 
 func expectResourceIAMGroupRead(m *iam.Mock, groupID int64, group *iam.Group, errRead error) *mock.Call {
-	onGet := m.On("GetGroup", mock.Anything, iam.GetGroupRequest{GroupID: groupID})
+	onGet := m.On("GetGroup", testutils.MockContext, iam.GetGroupRequest{GroupID: groupID})
 	if errRead != nil {
 		return onGet.Return(nil, errRead)
 	}
@@ -177,7 +177,7 @@ func expectResourceIAMGroupRead(m *iam.Mock, groupID int64, group *iam.Group, er
 }
 
 func expectResourceIAMGroupCreate(m *iam.Mock, parentGroupID int64, createGroupName string, groupCreate *iam.Group, errCreate error) {
-	m.On("CreateGroup", mock.Anything, iam.GroupRequest{
+	m.On("CreateGroup", testutils.MockContext, iam.GroupRequest{
 		GroupID: parentGroupID, GroupName: createGroupName,
 	}).Return(groupCreate, errCreate).Once()
 }

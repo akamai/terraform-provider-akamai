@@ -12,7 +12,6 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 type testDataForSharedPolicy struct {
@@ -228,7 +227,7 @@ func TestSharedPolicyDataSource(t *testing.T) {
 			},
 			init: func(m *v3.Mock, data testDataForSharedPolicy) {
 				mockGetPolicy(m, data, 1)
-				m.On("ListPolicyVersions", mock.Anything, v3.ListPolicyVersionsRequest{
+				m.On("ListPolicyVersions", testutils.MockContext, v3.ListPolicyVersionsRequest{
 					PolicyID: data.policyID,
 				}).Return(nil, fmt.Errorf("API error")).Once()
 			},
@@ -240,7 +239,7 @@ func TestSharedPolicyDataSource(t *testing.T) {
 				policyID: 1,
 			},
 			init: func(m *v3.Mock, data testDataForSharedPolicy) {
-				m.On("GetPolicy", mock.Anything, v3.GetPolicyRequest{
+				m.On("GetPolicy", testutils.MockContext, v3.GetPolicyRequest{
 					PolicyID: data.policyID,
 				}).Return(nil, fmt.Errorf("%s: %w: %s", v3.ErrGetPolicy, v3.ErrPolicyNotFound, "oops")).Once()
 			},
@@ -342,7 +341,7 @@ func checkActivationAttributesForSharedPolicy(actNetwork, actInfo string, actDat
 }
 
 func mockGetPolicy(m *v3.Mock, data testDataForSharedPolicy, times int) {
-	m.On("GetPolicy", mock.Anything, v3.GetPolicyRequest{
+	m.On("GetPolicy", testutils.MockContext, v3.GetPolicyRequest{
 		PolicyID: data.policyID,
 	}).Return(&v3.Policy{
 		CloudletType:       data.cloudletType,
@@ -355,7 +354,7 @@ func mockGetPolicy(m *v3.Mock, data testDataForSharedPolicy, times int) {
 }
 
 func mockGetPolicyVersion(m *v3.Mock, data testDataForSharedPolicy, times int) {
-	m.On("GetPolicyVersion", mock.Anything, v3.GetPolicyVersionRequest{
+	m.On("GetPolicyVersion", testutils.MockContext, v3.GetPolicyVersionRequest{
 		PolicyID:      data.policyID,
 		PolicyVersion: data.version,
 	}).Return(&v3.PolicyVersion{
@@ -387,13 +386,13 @@ func createPolicyVersions(policyID int64, numberOfVersions, pageNumber int) *v3.
 
 func mockListPolicyVersions(m *v3.Mock, data testDataForSharedPolicy, numberOfActivations, times int) {
 	if data.version == 0 {
-		m.On("ListPolicyVersions", mock.Anything, v3.ListPolicyVersionsRequest{
+		m.On("ListPolicyVersions", testutils.MockContext, v3.ListPolicyVersionsRequest{
 			PolicyID: data.policyID,
 		}).Return(&v3.ListPolicyVersions{
 			PolicyVersions: []v3.ListPolicyVersionsItem{},
 		}, nil).Times(times)
 	} else {
-		m.On("ListPolicyVersions", mock.Anything, v3.ListPolicyVersionsRequest{
+		m.On("ListPolicyVersions", testutils.MockContext, v3.ListPolicyVersionsRequest{
 			PolicyID: data.policyID,
 		}).Return(createPolicyVersions(data.policyID, numberOfActivations, 0), nil).Times(times)
 	}

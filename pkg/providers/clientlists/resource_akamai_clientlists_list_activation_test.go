@@ -10,7 +10,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/clientlists"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestClientListActivationResource(t *testing.T) {
@@ -40,7 +39,7 @@ func TestClientListActivationResource(t *testing.T) {
 				Version:                version,
 			}
 
-			client.On("CreateActivation", mock.Anything, req).Return(&res, nil).Once()
+			client.On("CreateActivation", testutils.MockContext, req).Return(&res, nil).Once()
 
 			return &res
 		}
@@ -62,7 +61,7 @@ func TestClientListActivationResource(t *testing.T) {
 				ActivationStatus:  clientlists.ActivationStatus(attrs.Status),
 			}
 
-			client.On("GetActivation", mock.Anything, req).Return(&res, nil).Times(times)
+			client.On("GetActivation", testutils.MockContext, req).Return(&res, nil).Times(times)
 
 			return &res
 		}
@@ -80,7 +79,7 @@ func TestClientListActivationResource(t *testing.T) {
 				Version:                int64(attrs.Version),
 			}
 
-			client.On("GetActivationStatus", mock.Anything, req).Return(&res, nil).Times(times)
+			client.On("GetActivationStatus", testutils.MockContext, req).Return(&res, nil).Times(times)
 
 			return &res
 		}
@@ -92,12 +91,12 @@ func TestClientListActivationResource(t *testing.T) {
 			}
 
 			clientList := clientlists.GetClientListResponse{ListContent: clientlists.ListContent{Version: version}}
-			client.On("GetClientList", mock.Anything, clientListGetReq).Return(&clientList, nil).Times(callTimes)
+			client.On("GetClientList", testutils.MockContext, clientListGetReq).Return(&clientList, nil).Times(callTimes)
 		}
 
 		expectAPIErrorWithCreateActivation = func(t *testing.T, client *clientlists.Mock, req clientlists.CreateActivationRequest) {
 			err := fmt.Errorf(createActivationAPIError)
-			client.On("CreateActivation", mock.Anything, req).Return(nil, err).Once()
+			client.On("CreateActivation", testutils.MockContext, req).Return(nil, err).Once()
 		}
 
 		checkAttributes = func(a ActivationAttrs) resource.TestCheckFunc {

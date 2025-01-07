@@ -2,6 +2,9 @@ package testutils
 
 import "github.com/stretchr/testify/mock"
 
+// MockContext is used to mock any context in requests as they are not needed for testing purposes
+const MockContext = mock.Anything
+
 // MockCalls is a wrapper around []*mock.Call
 type MockCalls []*mock.Call
 

@@ -8,7 +8,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/botman"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestDataContentProtectionRuleSequence(t *testing.T) {
@@ -19,7 +18,7 @@ func TestDataContentProtectionRuleSequence(t *testing.T) {
 			ContentProtectionRuleSequence: []string{"fake3f89-e179-4892-89cf-d5e623ba9dc7", "fake85df-e399-43e8-bb0f-c0d980a88e4f", "fake09b8-4fd5-430e-a061-1c61df1d2ac2"},
 		}
 		mockedBotmanClient.On("GetContentProtectionRuleSequence",
-			mock.Anything,
+			testutils.MockContext,
 			botman.GetContentProtectionRuleSequenceRequest{ConfigID: 43253, Version: 15, SecurityPolicyID: "AAAA_81230"},
 		).Return(&response, nil)
 
@@ -47,7 +46,7 @@ func TestDataContentProtectionRuleSequence(t *testing.T) {
 	t.Run("DataContentProtectionRuleSequenceError", func(t *testing.T) {
 		mockedBotmanClient := &botman.Mock{}
 		mockedBotmanClient.On("GetContentProtectionRuleSequence",
-			mock.Anything,
+			testutils.MockContext,
 			botman.GetContentProtectionRuleSequenceRequest{
 				ConfigID:         43253,
 				Version:          15,

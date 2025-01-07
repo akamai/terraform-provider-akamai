@@ -8,7 +8,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/gtm"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestDataGTMCIDRmap(t *testing.T) {
@@ -21,7 +20,7 @@ func TestDataGTMCIDRmap(t *testing.T) {
 		"happy path": {
 			givenTF: "valid.tf",
 			init: func(m *gtm.Mock) {
-				m.On("GetCIDRMap", mock.Anything, gtm.GetCIDRMapRequest{
+				m.On("GetCIDRMap", testutils.MockContext, gtm.GetCIDRMapRequest{
 					MapName:    "mapTest",
 					DomainName: "test.cidrmap.domain.net",
 				}).Return(&gtm.GetCIDRMapResponse{
@@ -72,7 +71,7 @@ func TestDataGTMCIDRmap(t *testing.T) {
 		"error response from api": {
 			givenTF: "valid.tf",
 			init: func(m *gtm.Mock) {
-				m.On("GetCIDRMap", mock.Anything, gtm.GetCIDRMapRequest{
+				m.On("GetCIDRMap", testutils.MockContext, gtm.GetCIDRMapRequest{
 					MapName:    "mapTest",
 					DomainName: "test.cidrmap.domain.net",
 				}).Return(
@@ -83,7 +82,7 @@ func TestDataGTMCIDRmap(t *testing.T) {
 		"no assignments": {
 			givenTF: "valid.tf",
 			init: func(m *gtm.Mock) {
-				m.On("GetCIDRMap", mock.Anything, gtm.GetCIDRMapRequest{
+				m.On("GetCIDRMap", testutils.MockContext, gtm.GetCIDRMapRequest{
 					MapName:    "mapTest",
 					DomainName: "test.cidrmap.domain.net",
 				}).Return(&gtm.GetCIDRMapResponse{

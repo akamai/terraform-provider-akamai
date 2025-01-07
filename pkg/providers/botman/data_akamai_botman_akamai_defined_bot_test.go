@@ -6,7 +6,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/botman"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestDataAkamaiDefinedBot(t *testing.T) {
@@ -33,7 +32,7 @@ func TestDataAkamaiDefinedBot(t *testing.T) {
 	]
 }`
 		mockedBotmanClient.On("GetAkamaiDefinedBotList",
-			mock.Anything,
+			testutils.MockContext,
 			botman.GetAkamaiDefinedBotListRequest{},
 		).Return(&response, nil)
 		useClient(mockedBotmanClient, func() {
@@ -67,7 +66,7 @@ func TestDataAkamaiDefinedBot(t *testing.T) {
 	]
 }`
 		mockedBotmanClient.On("GetAkamaiDefinedBotList",
-			mock.Anything,
+			testutils.MockContext,
 			botman.GetAkamaiDefinedBotListRequest{BotName: "Test name 3"},
 		).Return(&response, nil)
 		useClient(mockedBotmanClient, func() {

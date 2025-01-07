@@ -8,7 +8,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -41,34 +40,34 @@ func TestAkamaiMatchTarget_res_basic(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("GetConfiguration",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&config, nil)
 
 		client.On("GetMatchTarget",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetMatchTargetRequest{ConfigID: 43253, ConfigVersion: 7, TargetID: 3008967},
 		).Return(&getMatchTargetResponse, nil).Times(3)
 
 		client.On("GetMatchTarget",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetMatchTargetRequest{ConfigID: 43253, ConfigVersion: 7, TargetID: 3008967},
 		).Return(&getMatchTargetResponseAfterUpdate, nil)
 
 		createMatchTargetJSON := testutils.LoadFixtureBytes(t, "testdata/TestResMatchTarget/CreateMatchTarget.json")
 		client.On("CreateMatchTarget",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.CreateMatchTargetRequest{Type: "", ConfigID: 43253, ConfigVersion: 7, JsonPayloadRaw: createMatchTargetJSON},
 		).Return(&createMatchTargetResponse, nil)
 
 		updateMatchTargetJSON := testutils.LoadFixtureBytes(t, "testdata/TestResMatchTarget/UpdateMatchTarget.json")
 		client.On("UpdateMatchTarget",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.UpdateMatchTargetRequest{ConfigID: 43253, ConfigVersion: 7, TargetID: 3008967, JsonPayloadRaw: updateMatchTargetJSON},
 		).Return(&updateMatchTargetResponse, nil)
 
 		client.On("RemoveMatchTarget",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.RemoveMatchTargetRequest{ConfigID: 43253, ConfigVersion: 7, TargetID: 3008967},
 		).Return(&removeMatchTargetResponse, nil)
 
@@ -116,23 +115,23 @@ func TestAkamaiMatchTarget_res_basic(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("GetConfiguration",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&config, nil)
 
 		client.On("GetMatchTarget",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetMatchTargetRequest{ConfigID: 43253, ConfigVersion: 7, TargetID: 3008967},
 		).Return(&getMatchTargetResponse, nil).Times(2)
 
 		createMatchTargetJSON := testutils.LoadFixtureBytes(t, "testdata/TestResMatchTarget/CreateMatchTarget.json")
 		client.On("CreateMatchTarget",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.CreateMatchTargetRequest{ConfigID: 43253, ConfigVersion: 7, JsonPayloadRaw: createMatchTargetJSON},
 		).Return(&createMatchTargetResponse, nil)
 
 		client.On("RemoveMatchTarget",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.RemoveMatchTargetRequest{ConfigID: 43253, ConfigVersion: 7, TargetID: 3008967},
 		).Return(&removeMatchTargetResponse, nil)
 
@@ -181,28 +180,28 @@ func TestAkamaiMatchTarget_res_basic(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("GetConfiguration",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&config, nil)
 
 		client.On("GetMatchTarget",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetMatchTargetRequest{ConfigID: 43253, ConfigVersion: 7, TargetID: 3008967},
 		).Return(&getMatchTargetResponse, nil).Times(1)
 
 		client.On("GetMatchTarget",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetMatchTargetRequest{ConfigID: 43253, ConfigVersion: 7, TargetID: 3008967},
 		).Return(&getMatchTargetResponseChanged, nil).Times(1)
 
 		createMatchTargetJSON := testutils.LoadFixtureBytes(t, "testdata/TestResMatchTarget/CreateMatchTarget.json")
 		client.On("CreateMatchTarget",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.CreateMatchTargetRequest{ConfigID: 43253, ConfigVersion: 7, JsonPayloadRaw: createMatchTargetJSON},
 		).Return(&createMatchTargetResponse, nil)
 
 		client.On("RemoveMatchTarget",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.RemoveMatchTargetRequest{ConfigID: 43253, ConfigVersion: 7, TargetID: 3008967},
 		).Return(&removeMatchTargetResponse, nil)
 
@@ -247,23 +246,23 @@ func TestAkamaiMatchTarget_res_basic(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("GetConfiguration",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&config, nil)
 
 		client.On("GetMatchTarget",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetMatchTargetRequest{ConfigID: 43253, ConfigVersion: 7, TargetID: 3008967},
 		).Return(&getMatchTargetResponse, nil)
 
 		createMatchTargetJSON := testutils.LoadFixtureBytes(t, "testdata/TestResMatchTarget/CreateMatchTarget.json")
 		client.On("CreateMatchTarget",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.CreateMatchTargetRequest{ConfigID: 43253, ConfigVersion: 7, JsonPayloadRaw: createMatchTargetJSON},
 		).Return(&createMatchTargetResponse, nil)
 
 		client.On("RemoveMatchTarget",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.RemoveMatchTargetRequest{ConfigID: 43253, ConfigVersion: 7, TargetID: 3008967},
 		).Return(&removeMatchTargetResponse, nil)
 

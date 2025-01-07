@@ -16,7 +16,7 @@ import (
 
 func TestAccessibleGroups(t *testing.T) {
 	mockPositiveCase := func(client *iam.Mock, returnedGroups iam.ListAccessibleGroupsResponse, times int) *mock.Call {
-		return client.On("ListAccessibleGroups", mock.Anything, iam.ListAccessibleGroupsRequest{UserName: "user1"}).Return(returnedGroups, nil).Times(times)
+		return client.On("ListAccessibleGroups", testutils.MockContext, iam.ListAccessibleGroupsRequest{UserName: "user1"}).Return(returnedGroups, nil).Times(times)
 	}
 
 	generateCheckForGroup := func(path, groupID, groupName, isBlocked, roleDescription, roleID, roleName, subGroupsNumber string) resource.TestCheckFunc {
@@ -179,7 +179,7 @@ func TestAccessibleGroups(t *testing.T) {
 		},
 		"error - api failed": {
 			init: func(client *iam.Mock) {
-				client.On("ListAccessibleGroups", mock.Anything, iam.ListAccessibleGroupsRequest{UserName: "user1"}).Return(nil, errors.New("api failed")).Times(1)
+				client.On("ListAccessibleGroups", testutils.MockContext, iam.ListAccessibleGroupsRequest{UserName: "user1"}).Return(nil, errors.New("api failed")).Times(1)
 			},
 			config:        "testdata/TestDataAccessibleGroups/basic.tf",
 			expectedError: regexp.MustCompile("api failed"),

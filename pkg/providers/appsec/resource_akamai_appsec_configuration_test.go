@@ -9,7 +9,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -38,27 +37,27 @@ func TestAkamaiConfiguration_res_basic(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("GetSelectedHostnames",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetSelectedHostnamesRequest{ConfigID: 43253, Version: 7},
 		).Return(&getSelectedHostnamesResponse, nil)
 
 		client.On("CreateConfiguration",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.CreateConfigurationRequest{Name: "Akamai Tools", Description: "Akamai Tools", ContractID: "C-1FRYVV3", GroupID: 64867, Hostnames: []string{"rinaldi.sandbox.akamaideveloper.com", "sujala.sandbox.akamaideveloper.com"}},
 		).Return(&createConfigResponse, nil)
 
 		client.On("GetConfiguration",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&readConfigResponse, nil)
 
 		client.On("RemoveConfiguration",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.RemoveConfigurationRequest{ConfigID: 43253},
 		).Return(&deleteConfigResponse, nil)
 
 		client.On("GetConfigurationVersions",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetConfigurationVersionsRequest{ConfigID: 43253},
 		).Return(&getConfigurationVersionsResponse, nil)
 
@@ -106,32 +105,32 @@ func TestAkamaiConfiguration_res_error_updating_configuration(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("GetSelectedHostnames",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetSelectedHostnamesRequest{ConfigID: 43253, Version: 7},
 		).Return(&hns, nil)
 
 		client.On("CreateConfiguration",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.CreateConfigurationRequest{Name: "Akamai Tools", Description: "Akamai Tools", ContractID: "C-1FRYVV3", GroupID: 64867, Hostnames: []string{"rinaldi.sandbox.akamaideveloper.com", "sujala.sandbox.akamaideveloper.com"}},
 		).Return(&createConfigResponse, nil)
 
 		client.On("GetConfiguration",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&readConfigResponse, nil)
 
 		client.On("UpdateConfiguration",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.UpdateConfigurationRequest{ConfigID: 43253, Name: "Akamai Tools", Description: "Akamai Tools"},
 		).Return(nil, fmt.Errorf("UpdateConfiguration failed"))
 
 		client.On("RemoveConfiguration",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.RemoveConfigurationRequest{ConfigID: 43253},
 		).Return(&deleteConfigResponse, nil)
 
 		client.On("GetConfigurationVersions",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetConfigurationVersionsRequest{ConfigID: 43253},
 		).Return(&getConfigurationVersionsResponse, nil)
 

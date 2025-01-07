@@ -9,7 +9,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestDataPropertyHostnames(t *testing.T) {
@@ -18,7 +17,7 @@ func TestDataPropertyHostnames(t *testing.T) {
 		hostnames := papi.HostnameResponseItems{Items: buildPropertyHostnames()}
 		hostnameItems := flattenHostnames(hostnames.Items)
 
-		client.On("GetLatestVersion", mock.Anything, papi.GetLatestVersionRequest{
+		client.On("GetLatestVersion", testutils.MockContext, papi.GetLatestVersionRequest{
 			ContractID:  "ctr_test",
 			GroupID:     "grp_test",
 			PropertyID:  "prp_test",
@@ -30,7 +29,7 @@ func TestDataPropertyHostnames(t *testing.T) {
 				PropertyVersion: 1,
 			},
 		}, nil)
-		client.On("GetPropertyVersionHostnames", mock.Anything, papi.GetPropertyVersionHostnamesRequest{
+		client.On("GetPropertyVersionHostnames", testutils.MockContext, papi.GetPropertyVersionHostnamesRequest{
 			PropertyID:        "prp_test",
 			PropertyVersion:   1,
 			ContractID:        "ctr_test",
@@ -65,7 +64,7 @@ func TestDataPropertyHostnames(t *testing.T) {
 		hostnames := papi.HostnameResponseItems{Items: buildPropertyHostnames()}
 		hostnameItems := flattenHostnames(hostnames.Items)
 
-		client.On("GetLatestVersion", mock.Anything, papi.GetLatestVersionRequest{
+		client.On("GetLatestVersion", testutils.MockContext, papi.GetLatestVersionRequest{
 			ContractID:  "ctr_test",
 			GroupID:     "grp_test",
 			PropertyID:  "prp_test",
@@ -77,7 +76,7 @@ func TestDataPropertyHostnames(t *testing.T) {
 				PropertyVersion: 1,
 			},
 		}, nil)
-		client.On("GetPropertyVersionHostnames", mock.Anything, papi.GetPropertyVersionHostnamesRequest{
+		client.On("GetPropertyVersionHostnames", testutils.MockContext, papi.GetPropertyVersionHostnamesRequest{
 			PropertyID:        "prp_test",
 			PropertyVersion:   1,
 			ContractID:        "ctr_test",
@@ -112,7 +111,7 @@ func TestDataPropertyHostnames(t *testing.T) {
 		hostnames := papi.HostnameResponseItems{Items: buildPropertyHostnames()}
 		hostnameItems := flattenHostnames(hostnames.Items)
 
-		client.On("GetLatestVersion", mock.Anything, papi.GetLatestVersionRequest{
+		client.On("GetLatestVersion", testutils.MockContext, papi.GetLatestVersionRequest{
 			ContractID:  "ctr_test",
 			GroupID:     "grp_test",
 			PropertyID:  "prp_test",
@@ -124,7 +123,7 @@ func TestDataPropertyHostnames(t *testing.T) {
 				PropertyVersion: 1,
 			},
 		}, nil)
-		client.On("GetPropertyVersionHostnames", mock.Anything, papi.GetPropertyVersionHostnamesRequest{
+		client.On("GetPropertyVersionHostnames", testutils.MockContext, papi.GetPropertyVersionHostnamesRequest{
 			PropertyID:        "prp_test",
 			PropertyVersion:   1,
 			ContractID:        "ctr_test",
@@ -159,7 +158,7 @@ func TestDataPropertyHostnames(t *testing.T) {
 		hostnames := papi.HostnameResponseItems{Items: buildPropertyHostnames()}
 		hostnameItems := flattenHostnames(hostnames.Items)
 
-		client.On("GetLatestVersion", mock.Anything, papi.GetLatestVersionRequest{
+		client.On("GetLatestVersion", testutils.MockContext, papi.GetLatestVersionRequest{
 			ContractID:  "ctr_test",
 			GroupID:     "grp_test",
 			PropertyID:  "prp_test",
@@ -171,7 +170,7 @@ func TestDataPropertyHostnames(t *testing.T) {
 				PropertyVersion: 1,
 			},
 		}, nil)
-		client.On("GetPropertyVersionHostnames", mock.Anything, papi.GetPropertyVersionHostnamesRequest{
+		client.On("GetPropertyVersionHostnames", testutils.MockContext, papi.GetPropertyVersionHostnamesRequest{
 			PropertyID:        "prp_test",
 			PropertyVersion:   1,
 			ContractID:        "ctr_test",
@@ -206,7 +205,7 @@ func TestDataPropertyHostnames(t *testing.T) {
 		hostnames := papi.HostnameResponseItems{Items: buildPropertyHostnames()}
 		hostnameItems := flattenHostnames(hostnames.Items)
 
-		client.On("GetPropertyVersion", mock.Anything, papi.GetPropertyVersionRequest{
+		client.On("GetPropertyVersion", testutils.MockContext, papi.GetPropertyVersionRequest{
 			ContractID:      "ctr_test",
 			GroupID:         "grp_test",
 			PropertyID:      "prp_test",
@@ -218,7 +217,7 @@ func TestDataPropertyHostnames(t *testing.T) {
 				PropertyVersion: 5,
 			},
 		}, nil)
-		client.On("GetPropertyVersionHostnames", mock.Anything, papi.GetPropertyVersionHostnamesRequest{
+		client.On("GetPropertyVersionHostnames", testutils.MockContext, papi.GetPropertyVersionHostnamesRequest{
 			PropertyID:        "prp_test",
 			PropertyVersion:   5,
 			ContractID:        "ctr_test",
@@ -251,7 +250,7 @@ func TestDataPropertyHostnames(t *testing.T) {
 	t.Run("specify property version to fetch with error", func(t *testing.T) {
 		client := &papi.Mock{}
 
-		client.On("GetPropertyVersion", mock.Anything, papi.GetPropertyVersionRequest{
+		client.On("GetPropertyVersion", testutils.MockContext, papi.GetPropertyVersionRequest{
 			ContractID:      "ctr_test",
 			GroupID:         "grp_test",
 			PropertyID:      "prp_test",

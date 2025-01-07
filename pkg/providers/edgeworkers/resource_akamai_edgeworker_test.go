@@ -17,7 +17,6 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -68,11 +67,11 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 			bytesArray, err := convertLocalBundleFileIntoBytes(localBundlePath)
 			require.NoError(t, err)
 
-			client.On("GetEdgeWorkerID", mock.Anything, edgeWorkerGetReq).Return(&edgeWorkerGetRes, nil).Times(numberOfTimes)
-			client.On("ListEdgeWorkerVersions", mock.Anything, edgeWorkerListVersionsReq).Return(&edgeWorkerVersionResp, nil).Times(numberOfTimes)
+			client.On("GetEdgeWorkerID", testutils.MockContext, edgeWorkerGetReq).Return(&edgeWorkerGetRes, nil).Times(numberOfTimes)
+			client.On("ListEdgeWorkerVersions", testutils.MockContext, edgeWorkerListVersionsReq).Return(&edgeWorkerVersionResp, nil).Times(numberOfTimes)
 			for i := 0; i < numberOfTimes; i++ {
 				edgeWorkerVersionContentGetRes := edgeworkers.Bundle{Reader: bytes.NewBuffer(bytesArray)}
-				client.On("GetEdgeWorkerVersionContent", mock.Anything, edgeWorkerVersionContentGetReq).Return(&edgeWorkerVersionContentGetRes, nil).Once()
+				client.On("GetEdgeWorkerVersionContent", testutils.MockContext, edgeWorkerVersionContentGetReq).Return(&edgeWorkerVersionContentGetRes, nil).Once()
 			}
 		}
 
@@ -113,11 +112,11 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 			bytesArray, err := convertLocalBundleFileIntoBytes(localBundlePath)
 			require.NoError(t, err)
 
-			client.On("GetEdgeWorkerID", mock.Anything, edgeWorkerGetReq).Return(&edgeWorkerGetRes, nil).Times(numberOfTimes)
-			client.On("ListEdgeWorkerVersions", mock.Anything, edgeWorkerListVersionsReq).Return(&edgeWorkerVersionResp, nil).Times(numberOfTimes)
+			client.On("GetEdgeWorkerID", testutils.MockContext, edgeWorkerGetReq).Return(&edgeWorkerGetRes, nil).Times(numberOfTimes)
+			client.On("ListEdgeWorkerVersions", testutils.MockContext, edgeWorkerListVersionsReq).Return(&edgeWorkerVersionResp, nil).Times(numberOfTimes)
 			for i := 0; i < numberOfTimes; i++ {
 				edgeWorkerVersionContentGetRes := edgeworkers.Bundle{Reader: bytes.NewBuffer(bytesArray)}
-				client.On("GetEdgeWorkerVersionContent", mock.Anything, edgeWorkerVersionContentGetReq).Return(&edgeWorkerVersionContentGetRes, nil).Once()
+				client.On("GetEdgeWorkerVersionContent", testutils.MockContext, edgeWorkerVersionContentGetReq).Return(&edgeWorkerVersionContentGetRes, nil).Once()
 			}
 		}
 
@@ -157,9 +156,9 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 				Version:      "1.0",
 				CreatedTime:  timeForCreation,
 			}
-			client.On("CreateEdgeWorkerID", mock.Anything, edgeWorkerReq).Return(&createdEdgeWorker, nil).Once()
-			client.On("ValidateBundle", mock.Anything, validateBundleReq).Return(&validateBundleRes, nil).Once()
-			client.On("CreateEdgeWorkerVersion", mock.Anything, edgeWorkerVersionReq).Return(&createdEdgeWorkerVersion, nil).Once()
+			client.On("CreateEdgeWorkerID", testutils.MockContext, edgeWorkerReq).Return(&createdEdgeWorker, nil).Once()
+			client.On("ValidateBundle", testutils.MockContext, validateBundleReq).Return(&validateBundleRes, nil).Once()
+			client.On("CreateEdgeWorkerVersion", testutils.MockContext, edgeWorkerVersionReq).Return(&createdEdgeWorkerVersion, nil).Once()
 
 			return &createdEdgeWorker, &createdEdgeWorkerVersion
 		}
@@ -184,7 +183,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 				Version:      "1.0",
 				CreatedTime:  timeForUpdate,
 			}
-			client.On("UpdateEdgeWorkerID", mock.Anything, updateEdgeWorkerID).Return(&updatedEdgeWorker, nil).Once()
+			client.On("UpdateEdgeWorkerID", testutils.MockContext, updateEdgeWorkerID).Return(&updatedEdgeWorker, nil).Once()
 			return &updatedEdgeWorker, &edgeWorkerVersion
 		}
 
@@ -227,9 +226,9 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 				Version:      "2.0",
 				CreatedTime:  timeForUpdate,
 			}
-			client.On("ValidateBundle", mock.Anything, validateBundleReq).Return(&validateBundleRes, nil).Once()
-			client.On("CreateEdgeWorkerVersion", mock.Anything, edgeWorkerVersionReq).Return(&edgeWorkerVersion, nil).Once()
-			client.On("UpdateEdgeWorkerID", mock.Anything, updateEdgeWorkerID).Return(&updatedEdgeWorker, nil).Once()
+			client.On("ValidateBundle", testutils.MockContext, validateBundleReq).Return(&validateBundleRes, nil).Once()
+			client.On("CreateEdgeWorkerVersion", testutils.MockContext, edgeWorkerVersionReq).Return(&edgeWorkerVersion, nil).Once()
+			client.On("UpdateEdgeWorkerID", testutils.MockContext, updateEdgeWorkerID).Return(&updatedEdgeWorker, nil).Once()
 			return &updatedEdgeWorker, &edgeWorkerVersion
 		}
 
@@ -260,10 +259,10 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 			edgeWorkerDeleteReq := edgeworkers.DeleteEdgeWorkerIDRequest{
 				EdgeWorkerID: edgeWorkerID,
 			}
-			client.On("ListActivations", mock.Anything, edgeWorkerActivationsReq).Return(&edgeWorkerActivationsResp, nil).Times(2)
-			client.On("ListEdgeWorkerVersions", mock.Anything, edgeWorkerVersionsReq).Return(&edgeWorkerVersionResp, nil).Once()
-			client.On("DeleteEdgeWorkerVersion", mock.Anything, edgeWorkerVersionsDeleteReq).Return(nil).Once()
-			client.On("DeleteEdgeWorkerID", mock.Anything, edgeWorkerDeleteReq).Return(nil).Once()
+			client.On("ListActivations", testutils.MockContext, edgeWorkerActivationsReq).Return(&edgeWorkerActivationsResp, nil).Times(2)
+			client.On("ListEdgeWorkerVersions", testutils.MockContext, edgeWorkerVersionsReq).Return(&edgeWorkerVersionResp, nil).Once()
+			client.On("DeleteEdgeWorkerVersion", testutils.MockContext, edgeWorkerVersionsDeleteReq).Return(nil).Once()
+			client.On("DeleteEdgeWorkerID", testutils.MockContext, edgeWorkerDeleteReq).Return(nil).Once()
 		}
 
 		expectDeleteEdgeWorkerWithTwoVersions = func(_ *testing.T, client *edgeworkers.Mock, resourceTierID, edgeWorkerID int, timeForCreation, timeForUpdate string) {
@@ -303,11 +302,11 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 			edgeWorkerDeleteReq := edgeworkers.DeleteEdgeWorkerIDRequest{
 				EdgeWorkerID: edgeWorkerID,
 			}
-			client.On("ListActivations", mock.Anything, edgeWorkerActivationsReq).Return(&edgeWorkerActivationsResp, nil).Times(2)
-			client.On("ListEdgeWorkerVersions", mock.Anything, edgeWorkerVersionsReq).Return(&edgeWorkerVersionResp, nil).Once()
-			client.On("DeleteEdgeWorkerVersion", mock.Anything, edgeWorkerFirstVersionsDeleteReq).Return(nil).Once()
-			client.On("DeleteEdgeWorkerVersion", mock.Anything, edgeWorkerSecondVersionsDeleteReq).Return(nil).Once()
-			client.On("DeleteEdgeWorkerID", mock.Anything, edgeWorkerDeleteReq).Return(nil).Once()
+			client.On("ListActivations", testutils.MockContext, edgeWorkerActivationsReq).Return(&edgeWorkerActivationsResp, nil).Times(2)
+			client.On("ListEdgeWorkerVersions", testutils.MockContext, edgeWorkerVersionsReq).Return(&edgeWorkerVersionResp, nil).Once()
+			client.On("DeleteEdgeWorkerVersion", testutils.MockContext, edgeWorkerFirstVersionsDeleteReq).Return(nil).Once()
+			client.On("DeleteEdgeWorkerVersion", testutils.MockContext, edgeWorkerSecondVersionsDeleteReq).Return(nil).Once()
+			client.On("DeleteEdgeWorkerID", testutils.MockContext, edgeWorkerDeleteReq).Return(nil).Once()
 		}
 
 		expectImportEdgeWorkerWithOneVersion = func(t *testing.T, client *edgeworkers.Mock, localBundlePath, version string, timeForCreation string, edgeWorkerID int) {
@@ -344,10 +343,10 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 				},
 			}
 
-			client.On("ListEdgeWorkerVersions", mock.Anything, edgeWorkerListVersionsReq).Return(&edgeWorkerVersionResp, nil).Once()
+			client.On("ListEdgeWorkerVersions", testutils.MockContext, edgeWorkerListVersionsReq).Return(&edgeWorkerVersionResp, nil).Once()
 			edgeWorkerVersionContentGetRes := edgeworkers.Bundle{Reader: bytes.NewBuffer(bytesArray)}
-			client.On("GetEdgeWorkerVersionContent", mock.Anything, edgeWorkerVersionContentGetReq).Return(&edgeWorkerVersionContentGetRes, nil).Once()
-			client.On("ValidateBundle", mock.Anything, validateBundleReq).Return(validateBundleRes, nil).Once()
+			client.On("GetEdgeWorkerVersionContent", testutils.MockContext, edgeWorkerVersionContentGetReq).Return(&edgeWorkerVersionContentGetRes, nil).Once()
+			client.On("ValidateBundle", testutils.MockContext, validateBundleReq).Return(validateBundleRes, nil).Once()
 
 		}
 
@@ -782,16 +781,16 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 		edgeWorkerVersionsDeleteReq := expectDeleteEdgeWorkerVersionRequest(edgeWorker.EdgeWorkerID, edgeWorkerVersion.Version)
 		edgeWorkerDeleteReq := expectDeleteEdgeWorkerRequest(edgeWorker.EdgeWorkerID)
 
-		client.On("ListActivations", mock.Anything, edgeWorkerActivationsReq).Return(&edgeWorkerActivationsStagingResp, nil).Once()
-		client.On("ListActivations", mock.Anything, edgeWorkerActivationsReq).Return(&edgeWorkerActivationsProductionResp, nil).Once()
-		client.On("ListDeactivations", mock.Anything, edgeWorkerListDeactivationsReq).Return(&edgeWorkerListDeactivationsResp, nil).Times(2)
-		client.On("DeactivateVersion", mock.Anything, edgeWorkerDeactivateVersionProductionReq).Return(&edgeWorkerDeactivateVersionProductionResp, nil).Once()
-		client.On("DeactivateVersion", mock.Anything, edgeWorkerDeactivateVersionStagingReq).Return(&edgeWorkerDeactivateVersionStagingResp, nil).Once()
-		client.On("GetDeactivation", mock.Anything, edgeWorkerGetDeactivationProductionReq).Return(&edgeWorkerGetDeactivationProductionResp, nil).Once()
-		client.On("GetDeactivation", mock.Anything, edgeWorkerGetDeactivationStagingReq).Return(&edgeWorkerGetDeactivationStagingResp, nil).Once()
-		client.On("ListEdgeWorkerVersions", mock.Anything, edgeWorkerVersionsReq).Return(&edgeWorkerVersionResp, nil).Once()
-		client.On("DeleteEdgeWorkerVersion", mock.Anything, edgeWorkerVersionsDeleteReq).Return(nil).Once()
-		client.On("DeleteEdgeWorkerID", mock.Anything, edgeWorkerDeleteReq).Return(nil).Once()
+		client.On("ListActivations", testutils.MockContext, edgeWorkerActivationsReq).Return(&edgeWorkerActivationsStagingResp, nil).Once()
+		client.On("ListActivations", testutils.MockContext, edgeWorkerActivationsReq).Return(&edgeWorkerActivationsProductionResp, nil).Once()
+		client.On("ListDeactivations", testutils.MockContext, edgeWorkerListDeactivationsReq).Return(&edgeWorkerListDeactivationsResp, nil).Times(2)
+		client.On("DeactivateVersion", testutils.MockContext, edgeWorkerDeactivateVersionProductionReq).Return(&edgeWorkerDeactivateVersionProductionResp, nil).Once()
+		client.On("DeactivateVersion", testutils.MockContext, edgeWorkerDeactivateVersionStagingReq).Return(&edgeWorkerDeactivateVersionStagingResp, nil).Once()
+		client.On("GetDeactivation", testutils.MockContext, edgeWorkerGetDeactivationProductionReq).Return(&edgeWorkerGetDeactivationProductionResp, nil).Once()
+		client.On("GetDeactivation", testutils.MockContext, edgeWorkerGetDeactivationStagingReq).Return(&edgeWorkerGetDeactivationStagingResp, nil).Once()
+		client.On("ListEdgeWorkerVersions", testutils.MockContext, edgeWorkerVersionsReq).Return(&edgeWorkerVersionResp, nil).Once()
+		client.On("DeleteEdgeWorkerVersion", testutils.MockContext, edgeWorkerVersionsDeleteReq).Return(nil).Once()
+		client.On("DeleteEdgeWorkerID", testutils.MockContext, edgeWorkerDeleteReq).Return(nil).Once()
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
@@ -848,14 +847,14 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 		edgeWorkerVersionsDeleteReq := expectDeleteEdgeWorkerVersionRequest(edgeWorker.EdgeWorkerID, edgeWorkerVersion.Version)
 		edgeWorkerDeleteReq := expectDeleteEdgeWorkerRequest(edgeWorker.EdgeWorkerID)
 
-		client.On("ListActivations", mock.Anything, edgeWorkerActivationsReq).Return(&edgeWorkerActivationsStagingResp, nil).Times(1)
-		client.On("ListActivations", mock.Anything, edgeWorkerActivationsReq).Return(&edgeworkers.ListActivationsResponse{}, nil).Times(1)
-		client.On("ListDeactivations", mock.Anything, edgeWorkerListDeactivationsReq).Return(&edgeWorkerListDeactivationsResp, nil).Times(1)
-		client.On("DeactivateVersion", mock.Anything, edgeWorkerDeactivateVersionStagingReq).Return(&edgeWorkerDeactivateVersionStagingResp, nil).Once()
-		client.On("GetDeactivation", mock.Anything, edgeWorkerGetDeactivationStagingReq).Return(&edgeWorkerGetDeactivationStagingResp, nil).Once()
-		client.On("ListEdgeWorkerVersions", mock.Anything, edgeWorkerVersionsReq).Return(&edgeWorkerVersionResp, nil).Once()
-		client.On("DeleteEdgeWorkerVersion", mock.Anything, edgeWorkerVersionsDeleteReq).Return(nil).Once()
-		client.On("DeleteEdgeWorkerID", mock.Anything, edgeWorkerDeleteReq).Return(nil).Once()
+		client.On("ListActivations", testutils.MockContext, edgeWorkerActivationsReq).Return(&edgeWorkerActivationsStagingResp, nil).Times(1)
+		client.On("ListActivations", testutils.MockContext, edgeWorkerActivationsReq).Return(&edgeworkers.ListActivationsResponse{}, nil).Times(1)
+		client.On("ListDeactivations", testutils.MockContext, edgeWorkerListDeactivationsReq).Return(&edgeWorkerListDeactivationsResp, nil).Times(1)
+		client.On("DeactivateVersion", testutils.MockContext, edgeWorkerDeactivateVersionStagingReq).Return(&edgeWorkerDeactivateVersionStagingResp, nil).Once()
+		client.On("GetDeactivation", testutils.MockContext, edgeWorkerGetDeactivationStagingReq).Return(&edgeWorkerGetDeactivationStagingResp, nil).Once()
+		client.On("ListEdgeWorkerVersions", testutils.MockContext, edgeWorkerVersionsReq).Return(&edgeWorkerVersionResp, nil).Once()
+		client.On("DeleteEdgeWorkerVersion", testutils.MockContext, edgeWorkerVersionsDeleteReq).Return(nil).Once()
+		client.On("DeleteEdgeWorkerID", testutils.MockContext, edgeWorkerDeleteReq).Return(nil).Once()
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),

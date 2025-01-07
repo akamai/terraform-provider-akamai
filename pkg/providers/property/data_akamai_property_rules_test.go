@@ -8,14 +8,13 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestDSPropertyRulesRead(t *testing.T) {
 	t.Run("get datasource property rules", func(t *testing.T) {
 		client := &papi.Mock{}
 		mockImpl := func(m *papi.Mock) {
-			m.On("GetLatestVersion", mock.Anything, papi.GetLatestVersionRequest{
+			m.On("GetLatestVersion", testutils.MockContext, papi.GetLatestVersionRequest{
 				ContractID: "ctr_2",
 				GroupID:    "grp_2",
 				PropertyID: "prp_2",
@@ -26,7 +25,7 @@ func TestDSPropertyRulesRead(t *testing.T) {
 					PropertyVersion: 1,
 				},
 			}, nil)
-			m.On("GetRuleTree", mock.Anything, papi.GetRuleTreeRequest{
+			m.On("GetRuleTree", testutils.MockContext, papi.GetRuleTreeRequest{
 				ContractID:      "ctr_2",
 				GroupID:         "grp_2",
 				PropertyID:      "prp_2",
@@ -85,7 +84,7 @@ func TestDSPropertyRulesRead(t *testing.T) {
 		}
 
 		mockImpl := func(m *papi.Mock, ruleFormat string) {
-			m.On("GetRuleFormats", mock.Anything).Return(&papi.GetRuleFormatsResponse{
+			m.On("GetRuleFormats", testutils.MockContext).Return(&papi.GetRuleFormatsResponse{
 				RuleFormats: papi.RuleFormatItems{
 					Items: []string{
 						"latest",
@@ -95,7 +94,7 @@ func TestDSPropertyRulesRead(t *testing.T) {
 					},
 				},
 			}, nil)
-			m.On("GetLatestVersion", mock.Anything, papi.GetLatestVersionRequest{
+			m.On("GetLatestVersion", testutils.MockContext, papi.GetLatestVersionRequest{
 				ContractID: "ctr_2",
 				GroupID:    "grp_2",
 				PropertyID: "prp_2",
@@ -106,7 +105,7 @@ func TestDSPropertyRulesRead(t *testing.T) {
 					PropertyVersion: 1,
 				},
 			}, nil)
-			m.On("GetRuleTree", mock.Anything, papi.GetRuleTreeRequest{
+			m.On("GetRuleTree", testutils.MockContext, papi.GetRuleTreeRequest{
 				ContractID:      "ctr_2",
 				GroupID:         "grp_2",
 				PropertyID:      "prp_2",
@@ -144,7 +143,7 @@ func TestDSPropertyRulesRead(t *testing.T) {
 	t.Run("error getting datasource property rules with invalid rule format", func(t *testing.T) {
 		client := &papi.Mock{}
 		mockImpl := func(m *papi.Mock) {
-			m.On("GetRuleFormats", mock.Anything).Return(&papi.GetRuleFormatsResponse{
+			m.On("GetRuleFormats", testutils.MockContext).Return(&papi.GetRuleFormatsResponse{
 				RuleFormats: papi.RuleFormatItems{
 					Items: []string{
 						"latest",
@@ -170,7 +169,7 @@ func TestDSPropertyRulesRead(t *testing.T) {
 	t.Run("error getting rule formats", func(t *testing.T) {
 		client := &papi.Mock{}
 		mockImpl := func(m *papi.Mock) {
-			m.On("GetRuleFormats", mock.Anything).Return(nil, fmt.Errorf("oops"))
+			m.On("GetRuleFormats", testutils.MockContext).Return(nil, fmt.Errorf("oops"))
 		}
 		mockImpl(client)
 		useClient(client, nil, func() {
@@ -249,7 +248,7 @@ func TestDSPropertyRulesRead(t *testing.T) {
 	t.Run("error fetching latest version", func(t *testing.T) {
 		client := &papi.Mock{}
 		mockImpl := func(m *papi.Mock) {
-			m.On("GetLatestVersion", mock.Anything, papi.GetLatestVersionRequest{
+			m.On("GetLatestVersion", testutils.MockContext, papi.GetLatestVersionRequest{
 				ContractID: "ctr_2",
 				GroupID:    "grp_2",
 				PropertyID: "prp_2",
@@ -272,7 +271,7 @@ func TestDSPropertyRulesRead(t *testing.T) {
 	t.Run("error fetching rules", func(t *testing.T) {
 		client := &papi.Mock{}
 		mockImpl := func(m *papi.Mock) {
-			m.On("GetLatestVersion", mock.Anything, papi.GetLatestVersionRequest{
+			m.On("GetLatestVersion", testutils.MockContext, papi.GetLatestVersionRequest{
 				ContractID: "ctr_2",
 				GroupID:    "grp_2",
 				PropertyID: "prp_2",
@@ -283,7 +282,7 @@ func TestDSPropertyRulesRead(t *testing.T) {
 					PropertyVersion: 1,
 				},
 			}, nil).Once()
-			m.On("GetRuleTree", mock.Anything, papi.GetRuleTreeRequest{
+			m.On("GetRuleTree", testutils.MockContext, papi.GetRuleTreeRequest{
 				ContractID:      "ctr_2",
 				GroupID:         "grp_2",
 				PropertyID:      "prp_2",

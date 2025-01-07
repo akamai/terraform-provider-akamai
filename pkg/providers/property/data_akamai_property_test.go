@@ -9,7 +9,6 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestDataProperty(t *testing.T) {
@@ -22,7 +21,7 @@ func TestDataProperty(t *testing.T) {
 		"valid rules, no version provided": {
 			givenTF: "no_version.tf",
 			init: func(m *papi.Mock) {
-				m.On("SearchProperties", mock.Anything, papi.SearchRequest{
+				m.On("SearchProperties", testutils.MockContext, papi.SearchRequest{
 					Key:   papi.SearchKeyPropertyName,
 					Value: "property_name",
 				}).Return(&papi.SearchResponse{
@@ -36,7 +35,7 @@ func TestDataProperty(t *testing.T) {
 						},
 					},
 				}, nil)
-				m.On("GetProperty", mock.Anything, papi.GetPropertyRequest{
+				m.On("GetProperty", testutils.MockContext, papi.GetPropertyRequest{
 					ContractID: "ctr_1",
 					GroupID:    "grp_1",
 					PropertyID: "prp_123",
@@ -53,7 +52,7 @@ func TestDataProperty(t *testing.T) {
 						},
 					}},
 				}, nil)
-				m.On("GetRuleTree", mock.Anything, papi.GetRuleTreeRequest{
+				m.On("GetRuleTree", testutils.MockContext, papi.GetRuleTreeRequest{
 					PropertyID:      "prp_123",
 					PropertyVersion: 1,
 					ContractID:      "ctr_1",
@@ -75,7 +74,7 @@ func TestDataProperty(t *testing.T) {
 						CriteriaMustSatisfy: "all",
 					},
 				}, nil)
-				m.On("GetPropertyVersion", mock.Anything, papi.GetPropertyVersionRequest{
+				m.On("GetPropertyVersion", testutils.MockContext, papi.GetPropertyVersionRequest{
 					PropertyID:      "prp_123",
 					PropertyVersion: 1,
 					ContractID:      "ctr_1",
@@ -106,7 +105,7 @@ func TestDataProperty(t *testing.T) {
 		"valid rules, with version provided": {
 			givenTF: "with_version.tf",
 			init: func(m *papi.Mock) {
-				m.On("SearchProperties", mock.Anything, papi.SearchRequest{
+				m.On("SearchProperties", testutils.MockContext, papi.SearchRequest{
 					Key:   papi.SearchKeyPropertyName,
 					Value: "property_name",
 				}).Return(&papi.SearchResponse{
@@ -120,7 +119,7 @@ func TestDataProperty(t *testing.T) {
 						},
 					},
 				}, nil)
-				m.On("GetProperty", mock.Anything, papi.GetPropertyRequest{
+				m.On("GetProperty", testutils.MockContext, papi.GetPropertyRequest{
 					ContractID: "ctr_1",
 					GroupID:    "grp_1",
 					PropertyID: "prp_123",
@@ -137,7 +136,7 @@ func TestDataProperty(t *testing.T) {
 						},
 					}},
 				}, nil)
-				m.On("GetRuleTree", mock.Anything, papi.GetRuleTreeRequest{
+				m.On("GetRuleTree", testutils.MockContext, papi.GetRuleTreeRequest{
 					PropertyID:      "prp_123",
 					PropertyVersion: 2,
 					ContractID:      "ctr_1",
@@ -159,7 +158,7 @@ func TestDataProperty(t *testing.T) {
 						CriteriaMustSatisfy: "all",
 					},
 				}, nil)
-				m.On("GetPropertyVersion", mock.Anything, papi.GetPropertyVersionRequest{
+				m.On("GetPropertyVersion", testutils.MockContext, papi.GetPropertyVersionRequest{
 					PropertyID:      "prp_123",
 					PropertyVersion: 2,
 					ContractID:      "ctr_1",
@@ -190,7 +189,7 @@ func TestDataProperty(t *testing.T) {
 		"valid rules, no version provided, no staging & production version returned": {
 			givenTF: "no_version.tf",
 			init: func(m *papi.Mock) {
-				m.On("SearchProperties", mock.Anything, papi.SearchRequest{
+				m.On("SearchProperties", testutils.MockContext, papi.SearchRequest{
 					Key:   papi.SearchKeyPropertyName,
 					Value: "property_name",
 				}).Return(&papi.SearchResponse{
@@ -204,7 +203,7 @@ func TestDataProperty(t *testing.T) {
 						},
 					},
 				}, nil)
-				m.On("GetProperty", mock.Anything, papi.GetPropertyRequest{
+				m.On("GetProperty", testutils.MockContext, papi.GetPropertyRequest{
 					ContractID: "ctr_1",
 					GroupID:    "grp_1",
 					PropertyID: "prp_123",
@@ -219,7 +218,7 @@ func TestDataProperty(t *testing.T) {
 						},
 					}},
 				}, nil)
-				m.On("GetRuleTree", mock.Anything, papi.GetRuleTreeRequest{
+				m.On("GetRuleTree", testutils.MockContext, papi.GetRuleTreeRequest{
 					PropertyID:      "prp_123",
 					PropertyVersion: 1,
 					ContractID:      "ctr_1",
@@ -241,7 +240,7 @@ func TestDataProperty(t *testing.T) {
 						CriteriaMustSatisfy: "all",
 					},
 				}, nil)
-				m.On("GetPropertyVersion", mock.Anything, papi.GetPropertyVersionRequest{
+				m.On("GetPropertyVersion", testutils.MockContext, papi.GetPropertyVersionRequest{
 					PropertyID:      "prp_123",
 					PropertyVersion: 1,
 					ContractID:      "ctr_1",
@@ -272,7 +271,7 @@ func TestDataProperty(t *testing.T) {
 		"error searching for property": {
 			givenTF: "with_version.tf",
 			init: func(m *papi.Mock) {
-				m.On("SearchProperties", mock.Anything, papi.SearchRequest{
+				m.On("SearchProperties", testutils.MockContext, papi.SearchRequest{
 					Key:   papi.SearchKeyPropertyName,
 					Value: "property_name",
 				}).Return(nil, fmt.Errorf("oops"))
@@ -282,7 +281,7 @@ func TestDataProperty(t *testing.T) {
 		"error fetching property": {
 			givenTF: "with_version.tf",
 			init: func(m *papi.Mock) {
-				m.On("SearchProperties", mock.Anything, papi.SearchRequest{
+				m.On("SearchProperties", testutils.MockContext, papi.SearchRequest{
 					Key:   papi.SearchKeyPropertyName,
 					Value: "property_name",
 				}).Return(&papi.SearchResponse{
@@ -296,7 +295,7 @@ func TestDataProperty(t *testing.T) {
 						},
 					},
 				}, nil)
-				m.On("GetProperty", mock.Anything, papi.GetPropertyRequest{
+				m.On("GetProperty", testutils.MockContext, papi.GetPropertyRequest{
 					ContractID: "ctr_1",
 					GroupID:    "grp_1",
 					PropertyID: "prp_123",
@@ -307,7 +306,7 @@ func TestDataProperty(t *testing.T) {
 		"property not found": {
 			givenTF: "with_version.tf",
 			init: func(m *papi.Mock) {
-				m.On("SearchProperties", mock.Anything, papi.SearchRequest{
+				m.On("SearchProperties", testutils.MockContext, papi.SearchRequest{
 					Key:   papi.SearchKeyPropertyName,
 					Value: "property_name",
 				}).Return(&papi.SearchResponse{
@@ -321,7 +320,7 @@ func TestDataProperty(t *testing.T) {
 		"error fetching rules": {
 			givenTF: "with_version.tf",
 			init: func(m *papi.Mock) {
-				m.On("SearchProperties", mock.Anything, papi.SearchRequest{
+				m.On("SearchProperties", testutils.MockContext, papi.SearchRequest{
 					Key:   papi.SearchKeyPropertyName,
 					Value: "property_name",
 				}).Return(&papi.SearchResponse{
@@ -335,7 +334,7 @@ func TestDataProperty(t *testing.T) {
 						},
 					},
 				}, nil)
-				m.On("GetProperty", mock.Anything, papi.GetPropertyRequest{
+				m.On("GetProperty", testutils.MockContext, papi.GetPropertyRequest{
 					ContractID: "ctr_1",
 					GroupID:    "grp_1",
 					PropertyID: "prp_123",
@@ -349,7 +348,7 @@ func TestDataProperty(t *testing.T) {
 						},
 					}},
 				}, nil)
-				m.On("GetRuleTree", mock.Anything, papi.GetRuleTreeRequest{
+				m.On("GetRuleTree", testutils.MockContext, papi.GetRuleTreeRequest{
 					PropertyID:      "prp_123",
 					PropertyVersion: 2,
 					ContractID:      "ctr_1",
@@ -366,7 +365,7 @@ func TestDataProperty(t *testing.T) {
 		"error property version not found": {
 			givenTF: "no_version.tf",
 			init: func(m *papi.Mock) {
-				m.On("SearchProperties", mock.Anything, papi.SearchRequest{
+				m.On("SearchProperties", testutils.MockContext, papi.SearchRequest{
 					Key:   papi.SearchKeyPropertyName,
 					Value: "property_name",
 				}).Return(&papi.SearchResponse{
@@ -380,7 +379,7 @@ func TestDataProperty(t *testing.T) {
 						},
 					},
 				}, nil)
-				m.On("GetProperty", mock.Anything, papi.GetPropertyRequest{
+				m.On("GetProperty", testutils.MockContext, papi.GetPropertyRequest{
 					ContractID: "ctr_1",
 					GroupID:    "grp_1",
 					PropertyID: "prp_123",
@@ -396,7 +395,7 @@ func TestDataProperty(t *testing.T) {
 						},
 					}},
 				}, nil)
-				m.On("GetRuleTree", mock.Anything, papi.GetRuleTreeRequest{
+				m.On("GetRuleTree", testutils.MockContext, papi.GetRuleTreeRequest{
 					PropertyID:      "prp_123",
 					PropertyVersion: 1,
 					ContractID:      "ctr_1",
@@ -418,7 +417,7 @@ func TestDataProperty(t *testing.T) {
 						CriteriaMustSatisfy: "all",
 					},
 				}, nil)
-				m.On("GetPropertyVersion", mock.Anything, papi.GetPropertyVersionRequest{
+				m.On("GetPropertyVersion", testutils.MockContext, papi.GetPropertyVersionRequest{
 					PropertyID:      "prp_123",
 					PropertyVersion: 1,
 					ContractID:      "ctr_1",

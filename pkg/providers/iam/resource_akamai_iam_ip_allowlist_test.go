@@ -259,23 +259,23 @@ func checkImportEnabledIPAllowlistForSpecificUser() resource.ImportStateCheckFun
 }
 
 func mockEnableIPAllowlist(m *iam.Mock) *mock.Call {
-	return m.On("EnableIPAllowlist", mock.Anything).Return(nil).Once()
+	return m.On("EnableIPAllowlist", testutils.MockContext).Return(nil).Once()
 }
 
 func mockEnableIPAllowlistError(m *iam.Mock) *mock.Call {
-	return m.On("EnableIPAllowlist", mock.Anything).Return(iam.ErrEnableIPAllowlist).Once()
+	return m.On("EnableIPAllowlist", testutils.MockContext).Return(iam.ErrEnableIPAllowlist).Once()
 }
 
 func mockDisableIPAllowlist(m *iam.Mock) *mock.Call {
-	return m.On("DisableIPAllowlist", mock.Anything).Return(nil).Once()
+	return m.On("DisableIPAllowlist", testutils.MockContext).Return(nil).Once()
 }
 func mockDisableIPAllowlistError(m *iam.Mock) *mock.Call {
-	return m.On("DisableIPAllowlist", mock.Anything).Return(iam.ErrDisableIPAllowlist).Once()
+	return m.On("DisableIPAllowlist", testutils.MockContext).Return(iam.ErrDisableIPAllowlist).Once()
 }
 
 func mockReadIPAllowlistStatus(m *iam.Mock, enabled bool) *mock.Call {
 	if enabled {
-		return m.On("GetIPAllowlistStatus", mock.Anything).Return(&iam.GetIPAllowlistStatusResponse{Enabled: true}, nil).Once()
+		return m.On("GetIPAllowlistStatus", testutils.MockContext).Return(&iam.GetIPAllowlistStatusResponse{Enabled: true}, nil).Once()
 	}
-	return m.On("GetIPAllowlistStatus", mock.Anything).Return(&iam.GetIPAllowlistStatusResponse{Enabled: false}, nil).Once()
+	return m.On("GetIPAllowlistStatus", testutils.MockContext).Return(&iam.GetIPAllowlistStatusResponse{Enabled: false}, nil).Once()
 }

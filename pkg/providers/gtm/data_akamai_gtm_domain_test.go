@@ -9,7 +9,6 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestDataGtmDomain(t *testing.T) {
@@ -23,7 +22,7 @@ func TestDataGtmDomain(t *testing.T) {
 		"success - response is ok": {
 			givenTF: "valid.tf",
 			init: func(m *gtm.Mock) {
-				m.On("GetDomain", mock.Anything, gtm.GetDomainRequest{
+				m.On("GetDomain", testutils.MockContext, gtm.GetDomainRequest{
 					DomainName: "test.cli.devexp-terraform.akadns.net",
 				}).Return(&gtm.GetDomainResponse{
 					Name:                         "test.cli.devexp-terraform.akadns.net",
@@ -258,7 +257,7 @@ func TestDataGtmDomain(t *testing.T) {
 		"error response from api": {
 			givenTF: "valid.tf",
 			init: func(m *gtm.Mock) {
-				m.On("GetDomain", mock.Anything, gtm.GetDomainRequest{
+				m.On("GetDomain", testutils.MockContext, gtm.GetDomainRequest{
 					DomainName: "test.cli.devexp-terraform.akadns.net",
 				}).Return(nil, fmt.Errorf("oops"))
 			},

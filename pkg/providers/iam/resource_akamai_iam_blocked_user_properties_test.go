@@ -182,7 +182,7 @@ func TestResourceIAMBlockedUserProperties(t *testing.T) {
 }
 
 func expectListBlockedProperties(m *iam.Mock, request iam.ListBlockedPropertiesRequest, response []int64, err error) *mock.Call {
-	on := m.On("ListBlockedProperties", mock.Anything, request)
+	on := m.On("ListBlockedProperties", testutils.MockContext, request)
 	if err != nil {
 		return on.Return(nil, err).Once()
 	}
@@ -190,7 +190,7 @@ func expectListBlockedProperties(m *iam.Mock, request iam.ListBlockedPropertiesR
 }
 
 func expectUpdateBlockedProperties(m *iam.Mock, request iam.UpdateBlockedPropertiesRequest, response []int64, err error) *mock.Call {
-	on := m.On("UpdateBlockedProperties", mock.Anything, request)
+	on := m.On("UpdateBlockedProperties", testutils.MockContext, request)
 	if err != nil {
 		return on.Return(nil, err).Once()
 	}

@@ -11,7 +11,6 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestCreateEdgeKVGroupItems(t *testing.T) {
@@ -810,7 +809,7 @@ func TestUpdateEdgeKVGroupItems(t *testing.T) {
 				mockUpsertItem(m, attrsForUpdate, "key1", "value1", 1)
 				mockDeleteItem(m, attrsForUpdate, "key2", "message2", 1)
 				// return an error on delete call
-				m.On("DeleteItem", mock.Anything, edgeworkers.DeleteItemRequest{
+				m.On("DeleteItem", testutils.MockContext, edgeworkers.DeleteItemRequest{
 					ItemID: "key3",
 					ItemsRequestParams: edgeworkers.ItemsRequestParams{
 						NamespaceID: attrsForUpdate.namespaceID,
@@ -1023,7 +1022,7 @@ type edgeKVConfigurationForTests struct {
 var (
 	// mockUpsertItem mocks 'UpsertItem' call with provided data
 	mockUpsertItem = func(client *edgeworkers.Mock, attrs edgeKVConfigurationForTests, itemID, itemData string, timesToRun int) {
-		client.On("UpsertItem", mock.Anything, edgeworkers.UpsertItemRequest{
+		client.On("UpsertItem", testutils.MockContext, edgeworkers.UpsertItemRequest{
 			ItemsRequestParams: edgeworkers.ItemsRequestParams{
 				NamespaceID: attrs.namespaceID,
 				Network:     attrs.network,
@@ -1036,7 +1035,7 @@ var (
 
 	// mockListItems mocks 'ListItems' call with provided data
 	mockListItems = func(client *edgeworkers.Mock, attrs edgeKVConfigurationForTests, items edgeworkers.ListItemsResponse, timesToRun int) {
-		client.On("ListItems", mock.Anything, edgeworkers.ListItemsRequest{
+		client.On("ListItems", testutils.MockContext, edgeworkers.ListItemsRequest{
 			ItemsRequestParams: edgeworkers.ItemsRequestParams{
 				NamespaceID: attrs.namespaceID,
 				Network:     attrs.network,
@@ -1047,7 +1046,7 @@ var (
 
 	// mockGetItem mocks 'GetItem' call with provided data
 	mockGetItem = func(client *edgeworkers.Mock, attrs edgeKVConfigurationForTests, itemID, itemData string, timesToRun int) {
-		client.On("GetItem", mock.Anything, edgeworkers.GetItemRequest{
+		client.On("GetItem", testutils.MockContext, edgeworkers.GetItemRequest{
 			ItemID: itemID,
 			ItemsRequestParams: edgeworkers.ItemsRequestParams{
 				NamespaceID: attrs.namespaceID,
@@ -1059,7 +1058,7 @@ var (
 
 	// mockDeleteItem mocks 'DeleteItem' call with provided data
 	mockDeleteItem = func(client *edgeworkers.Mock, attrs edgeKVConfigurationForTests, itemID, responseMessage string, timesToRun int) {
-		client.On("DeleteItem", mock.Anything, edgeworkers.DeleteItemRequest{
+		client.On("DeleteItem", testutils.MockContext, edgeworkers.DeleteItemRequest{
 			ItemID: itemID,
 			ItemsRequestParams: edgeworkers.ItemsRequestParams{
 				NamespaceID: attrs.namespaceID,
@@ -1071,7 +1070,7 @@ var (
 
 	// mockListGroupsWithinNamespace mocks 'ListGroupsWithinNamespace' call with provided data
 	mockListGroupsWithinNamespace = func(client *edgeworkers.Mock, attrs edgeKVConfigurationForTests, groups []string, timesToRun int) {
-		client.On("ListGroupsWithinNamespace", mock.Anything, edgeworkers.ListGroupsWithinNamespaceRequest{
+		client.On("ListGroupsWithinNamespace", testutils.MockContext, edgeworkers.ListGroupsWithinNamespaceRequest{
 			Network:     edgeworkers.NamespaceNetwork(attrs.network),
 			NamespaceID: attrs.namespaceID,
 		}).Return(groups, nil).Times(timesToRun)
@@ -1079,7 +1078,7 @@ var (
 
 	// mockErrListGroupsWithinNamespace mocks 'ListGroupsWithinNamespace' call and returns 'ErrGroupNotFound' error
 	mockErrListGroupsWithinNamespace = func(client *edgeworkers.Mock, attrs edgeKVConfigurationForTests, timesToRun int) {
-		client.On("ListGroupsWithinNamespace", mock.Anything, edgeworkers.ListGroupsWithinNamespaceRequest{
+		client.On("ListGroupsWithinNamespace", testutils.MockContext, edgeworkers.ListGroupsWithinNamespaceRequest{
 			Network:     edgeworkers.NamespaceNetwork(attrs.network),
 			NamespaceID: attrs.namespaceID,
 		}).Return(nil, edgeworkers.ErrNotFound).Times(timesToRun)
@@ -1087,7 +1086,7 @@ var (
 
 	// mockErrGetItem mocks 'GetItem' call and returns 'ErrItemNotFound' error
 	mockErrGetItem = func(client *edgeworkers.Mock, attrs edgeKVConfigurationForTests, itemKey string, timesToRun int) {
-		client.On("GetItem", mock.Anything, edgeworkers.GetItemRequest{
+		client.On("GetItem", testutils.MockContext, edgeworkers.GetItemRequest{
 			ItemID: itemKey,
 			ItemsRequestParams: edgeworkers.ItemsRequestParams{
 				NamespaceID: attrs.namespaceID,

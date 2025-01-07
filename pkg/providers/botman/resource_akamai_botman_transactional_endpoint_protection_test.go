@@ -6,7 +6,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/botman"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestResourceTransactionalEndpointProtection(t *testing.T) {
@@ -16,7 +15,7 @@ func TestResourceTransactionalEndpointProtection(t *testing.T) {
 		createResponse := map[string]interface{}{"testKey": "testValue3"}
 		createRequest := testutils.LoadFixtureBytes(t, "testdata/JsonPayload/create.json")
 		mockedBotmanClient.On("UpdateTransactionalEndpointProtection",
-			mock.Anything,
+			testutils.MockContext,
 			botman.UpdateTransactionalEndpointProtectionRequest{
 				ConfigID:    43253,
 				Version:     15,
@@ -25,7 +24,7 @@ func TestResourceTransactionalEndpointProtection(t *testing.T) {
 		).Return(createResponse, nil).Once()
 
 		mockedBotmanClient.On("GetTransactionalEndpointProtection",
-			mock.Anything,
+			testutils.MockContext,
 			botman.GetTransactionalEndpointProtectionRequest{
 				ConfigID: 43253,
 				Version:  15,
@@ -36,7 +35,7 @@ func TestResourceTransactionalEndpointProtection(t *testing.T) {
 		updateResponse := map[string]interface{}{"testKey": "updated_testValue3"}
 		updateRequest := testutils.LoadFixtureBytes(t, "testdata/JsonPayload/update.json")
 		mockedBotmanClient.On("UpdateTransactionalEndpointProtection",
-			mock.Anything,
+			testutils.MockContext,
 			botman.UpdateTransactionalEndpointProtectionRequest{
 				ConfigID:    43253,
 				Version:     15,
@@ -45,7 +44,7 @@ func TestResourceTransactionalEndpointProtection(t *testing.T) {
 		).Return(updateResponse, nil).Once()
 
 		mockedBotmanClient.On("GetTransactionalEndpointProtection",
-			mock.Anything,
+			testutils.MockContext,
 			botman.GetTransactionalEndpointProtectionRequest{
 				ConfigID: 43253,
 				Version:  15,

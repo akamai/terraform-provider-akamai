@@ -31,19 +31,19 @@ func TestResDnsRecord(t *testing.T) {
 
 		// read
 		client.On("GetRecord",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			mock.AnythingOfType("dns.GetRecordRequest"),
 		).Return(nil, notFound).Once()
 
 		// create
 		client.On("CreateRecord",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			mock.AnythingOfType("dns.CreateRecordRequest"),
 		).Return(nil).Once()
 
 		// read
 		client.On("GetRecord",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			mock.AnythingOfType("dns.GetRecordRequest"),
 		).Return(&dns.GetRecordResponse{
 			Name:       "",
@@ -56,19 +56,19 @@ func TestResDnsRecord(t *testing.T) {
 		retCreate := dnsClient.ParseRData(context.Background(), "A", []string{"10.0.0.2", "10.0.0.3"})
 
 		client.On("ParseRData",
-			mock.Anything,
+			testutils.MockContext,
 			mock.AnythingOfType("string"),
 			mock.AnythingOfType("[]string"),
 		).Return(retCreate).Times(3)
 
 		client.On("ProcessRdata",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			mock.AnythingOfType("[]string"),
 			mock.AnythingOfType("string"),
 		).Return([]string{"A"}, nil).Times(4)
 
 		client.On("GetRecord",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			mock.AnythingOfType("dns.GetRecordRequest"),
 		).Return(&dns.GetRecordResponse{
 			Name:       "",
@@ -80,13 +80,13 @@ func TestResDnsRecord(t *testing.T) {
 
 		// update
 		client.On("UpdateRecord",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			mock.AnythingOfType("dns.UpdateRecordRequest"),
 		).Return(nil).Once()
 
 		// read
 		client.On("GetRecord",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			mock.AnythingOfType("dns.GetRecordRequest"),
 		).Return(&dns.GetRecordResponse{
 			Name:       "",
@@ -99,20 +99,20 @@ func TestResDnsRecord(t *testing.T) {
 		retUpdate := dnsClient.ParseRData(context.Background(), "A", []string{"10.0.0.4", "10.0.0.5"})
 
 		client.On("ParseRData",
-			mock.Anything,
+			testutils.MockContext,
 			mock.AnythingOfType("string"),
 			mock.AnythingOfType("[]string"),
 		).Return(retUpdate).Times(2)
 
 		client.On("ProcessRdata",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			mock.AnythingOfType("[]string"),
 			mock.AnythingOfType("string"),
 		).Return([]string{"A"}, nil).Times(2)
 
 		// delete
 		client.On("DeleteRecord",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			mock.AnythingOfType("dns.DeleteRecordRequest"),
 		).Return(nil).Once()
 
@@ -148,17 +148,17 @@ func TestResDnsRecord(t *testing.T) {
 		target2 := "\"extralongtargetwhichis\" \"intwoseparateparts\""
 
 		client.On("GetRecord",
-			mock.Anything,
+			testutils.MockContext,
 			mock.AnythingOfType("dns.GetRecordRequest"),
 		).Return(nil, notFound).Once()
 
 		client.On("CreateRecord",
-			mock.Anything,
+			testutils.MockContext,
 			mock.AnythingOfType("dns.CreateRecordRequest"),
 		).Return(nil)
 
 		client.On("GetRecord",
-			mock.Anything,
+			testutils.MockContext,
 			mock.AnythingOfType("dns.GetRecordRequest"),
 		).Return(&dns.GetRecordResponse{
 			Name:       "exampleterraform.io",
@@ -169,7 +169,7 @@ func TestResDnsRecord(t *testing.T) {
 		}, nil).Once()
 
 		client.On("ParseRData",
-			mock.Anything,
+			testutils.MockContext,
 			"TXT",
 			[]string{target1, target2},
 		).Return(map[string]interface{}{
@@ -177,13 +177,13 @@ func TestResDnsRecord(t *testing.T) {
 		}).Times(2)
 
 		client.On("ProcessRdata",
-			mock.Anything,
+			testutils.MockContext,
 			[]string{target1, target2},
 			"TXT",
 		).Return([]string{target1, target2}).Times(2)
 
 		client.On("GetRecord",
-			mock.Anything,
+			testutils.MockContext,
 			mock.AnythingOfType("dns.GetRecordRequest"),
 		).Return(&dns.GetRecordResponse{
 			Name:       "exampleterraform.io",
@@ -194,7 +194,7 @@ func TestResDnsRecord(t *testing.T) {
 		}, nil).Once()
 
 		client.On("DeleteRecord",
-			mock.Anything,
+			testutils.MockContext,
 			mock.AnythingOfType("dns.DeleteRecordRequest"),
 		).Return(nil)
 
@@ -233,12 +233,12 @@ func TestResDnsRecord(t *testing.T) {
 		client := &dns.Mock{}
 
 		client.On("GetRecord",
-			mock.Anything,
+			testutils.MockContext,
 			dns.GetRecordRequest{Zone: "exampleterraform.io", Name: "exampleterraform.io", RecordType: "TXT"},
 		).Return(nil, notFound).Once()
 
 		client.On("CreateRecord",
-			mock.Anything,
+			testutils.MockContext,
 			dns.CreateRecordRequest{
 				Record: &dns.RecordBody{
 					Name:       "exampleterraform.io",
@@ -253,7 +253,7 @@ func TestResDnsRecord(t *testing.T) {
 		).Return(nil)
 
 		client.On("GetRecord",
-			mock.Anything,
+			testutils.MockContext,
 			dns.GetRecordRequest{Zone: "exampleterraform.io", Name: "exampleterraform.io", RecordType: "TXT"},
 		).Return(&dns.GetRecordResponse{
 			Name:       "exampleterraform.io",
@@ -264,7 +264,7 @@ func TestResDnsRecord(t *testing.T) {
 		}, nil).Once()
 
 		client.On("ParseRData",
-			mock.Anything,
+			testutils.MockContext,
 			"TXT",
 			[]string{normalizedTarget1, normalizedTarget2, normalizedTarget3},
 		).Return(map[string]interface{}{
@@ -272,13 +272,13 @@ func TestResDnsRecord(t *testing.T) {
 		}).Times(2)
 
 		client.On("ProcessRdata",
-			mock.Anything,
+			testutils.MockContext,
 			[]string{normalizedTarget1, normalizedTarget2, normalizedTarget3},
 			"TXT",
 		).Return([]string{normalizedTarget1, normalizedTarget2, normalizedTarget3}).Times(2)
 
 		client.On("GetRecord",
-			mock.Anything,
+			testutils.MockContext,
 			dns.GetRecordRequest{Zone: "exampleterraform.io", Name: "exampleterraform.io", RecordType: "TXT"},
 		).Return(&dns.GetRecordResponse{
 			Name:       "exampleterraform.io",
@@ -289,7 +289,7 @@ func TestResDnsRecord(t *testing.T) {
 		}, nil).Once()
 
 		client.On("DeleteRecord",
-			mock.Anything,
+			testutils.MockContext,
 			dns.DeleteRecordRequest{Zone: "exampleterraform.io", Name: "exampleterraform.io", RecordType: "TXT", RecLock: []bool{false}},
 		).Return(nil)
 
@@ -324,12 +324,12 @@ func TestResDnsRecord(t *testing.T) {
 		targetTiny := "10 60 5060 tiny.example.com."
 
 		client.On("GetRecord",
-			mock.Anything,
+			testutils.MockContext,
 			dns.GetRecordRequest{Zone: "origin.org", Name: "origin.example.org", RecordType: "SRV"},
 		).Return(nil, notFound).Once()
 
 		client.On("CreateRecord",
-			mock.Anything,
+			testutils.MockContext,
 			dns.CreateRecordRequest{
 				Record: &dns.RecordBody{
 					Name:       "origin.example.org",
@@ -344,7 +344,7 @@ func TestResDnsRecord(t *testing.T) {
 		).Return(nil)
 
 		client.On("GetRecord",
-			mock.Anything,
+			testutils.MockContext,
 			dns.GetRecordRequest{Zone: "origin.org", Name: "origin.example.org", RecordType: "SRV"},
 		).Return(&dns.GetRecordResponse{
 			Name:       "origin.example.org",
@@ -357,7 +357,7 @@ func TestResDnsRecord(t *testing.T) {
 		c := dns.Client(session.Must(session.New()))
 
 		client.On("ParseRData",
-			mock.Anything,
+			testutils.MockContext,
 			"SRV",
 			[]string{targetBig, targetSmall, targetTiny},
 		).Return(
@@ -365,13 +365,13 @@ func TestResDnsRecord(t *testing.T) {
 		).Times(2)
 
 		client.On("ProcessRdata",
-			mock.Anything,
+			testutils.MockContext,
 			[]string{targetBig, targetSmall, targetTiny},
 			"SRV",
 		).Return([]string{targetBig, targetSmall, targetTiny}).Times(2)
 
 		client.On("GetRecord",
-			mock.Anything,
+			testutils.MockContext,
 			dns.GetRecordRequest{Zone: "origin.org", Name: "origin.example.org", RecordType: "SRV"},
 		).Return(&dns.GetRecordResponse{
 			Name:       "origin.example.org",
@@ -382,7 +382,7 @@ func TestResDnsRecord(t *testing.T) {
 		}, nil).Once()
 
 		client.On("DeleteRecord",
-			mock.Anything,
+			testutils.MockContext,
 			dns.DeleteRecordRequest{Zone: "origin.org", Name: "origin.example.org", RecordType: "SRV", RecLock: []bool{false}},
 		).Return(nil)
 
@@ -416,12 +416,12 @@ func TestResDnsRecord(t *testing.T) {
 		targetTiny := "20 100 5060 tiny.example.com."
 
 		client.On("GetRecord",
-			mock.Anything,
+			testutils.MockContext,
 			dns.GetRecordRequest{Zone: "origin.org", Name: "origin.example.org", RecordType: "SRV"},
 		).Return(nil, notFound).Once()
 
 		client.On("CreateRecord",
-			mock.Anything,
+			testutils.MockContext,
 			dns.CreateRecordRequest{
 				Record: &dns.RecordBody{
 					Name:       "origin.example.org",
@@ -436,7 +436,7 @@ func TestResDnsRecord(t *testing.T) {
 		).Return(nil)
 
 		client.On("GetRecord",
-			mock.Anything,
+			testutils.MockContext,
 			dns.GetRecordRequest{Zone: "origin.org", Name: "origin.example.org", RecordType: "SRV"},
 		).Return(&dns.GetRecordResponse{
 			Name:       "origin.example.org",
@@ -449,7 +449,7 @@ func TestResDnsRecord(t *testing.T) {
 		c := dns.Client(session.Must(session.New()))
 
 		client.On("ParseRData",
-			mock.Anything,
+			testutils.MockContext,
 			"SRV",
 			[]string{targetBig, targetSmall, targetTiny},
 		).Return(
@@ -457,13 +457,13 @@ func TestResDnsRecord(t *testing.T) {
 		).Times(2)
 
 		client.On("ProcessRdata",
-			mock.Anything,
+			testutils.MockContext,
 			[]string{targetBig, targetSmall, targetTiny},
 			"SRV",
 		).Return([]string{targetBig, targetSmall, targetTiny}).Times(2)
 
 		client.On("GetRecord",
-			mock.Anything,
+			testutils.MockContext,
 			dns.GetRecordRequest{Zone: "origin.org", Name: "origin.example.org", RecordType: "SRV"},
 		).Return(&dns.GetRecordResponse{
 			Name:       "origin.example.org",
@@ -474,7 +474,7 @@ func TestResDnsRecord(t *testing.T) {
 		}, nil).Once()
 
 		client.On("DeleteRecord",
-			mock.Anything,
+			testutils.MockContext,
 			dns.DeleteRecordRequest{Zone: "origin.org", Name: "origin.example.org", RecordType: "SRV", RecLock: []bool{false}},
 		).Return(nil)
 
@@ -525,12 +525,12 @@ func TestResDnsRecord(t *testing.T) {
 		targetSent := []string{"0000:0000:0000:0000:0000:ffff:c000:0201", "2001:0db8:0000:0000:0000:0000:0000:0068"}
 		targetReceived := []string{"2001:db8:0:0:0:0:0:68", "::ffff:192.0.2.1"}
 		client.On("GetRecord",
-			mock.Anything,
+			testutils.MockContext,
 			dns.GetRecordRequest{Zone: "exampleterraform.io", Name: "exampleterraform.io", RecordType: "AAAA"},
 		).Return(nil, notFound).Once()
 
 		client.On("CreateRecord",
-			mock.Anything,
+			testutils.MockContext,
 			dns.CreateRecordRequest{
 				Record: &dns.RecordBody{
 					Name:       "exampleterraform.io",
@@ -545,7 +545,7 @@ func TestResDnsRecord(t *testing.T) {
 		).Return(nil)
 
 		client.On("GetRecord",
-			mock.Anything,
+			testutils.MockContext,
 			dns.GetRecordRequest{Zone: "exampleterraform.io", Name: "exampleterraform.io", RecordType: "AAAA"},
 		).Return(&dns.GetRecordResponse{
 			Name:       "exampleterraform.io",
@@ -556,7 +556,7 @@ func TestResDnsRecord(t *testing.T) {
 		}, nil).Once()
 
 		client.On("ParseRData",
-			mock.Anything,
+			testutils.MockContext,
 			"AAAA",
 			targetReceived,
 		).Return(map[string]interface{}{
@@ -564,13 +564,13 @@ func TestResDnsRecord(t *testing.T) {
 		}).Times(2)
 
 		client.On("ProcessRdata",
-			mock.Anything,
+			testutils.MockContext,
 			targetReceived,
 			"AAAA",
 		).Return(target).Times(2)
 
 		client.On("GetRecord",
-			mock.Anything,
+			testutils.MockContext,
 			dns.GetRecordRequest{Zone: "exampleterraform.io", Name: "exampleterraform.io", RecordType: "AAAA"},
 		).Return(&dns.GetRecordResponse{
 			Name:       "exampleterraform.io",
@@ -581,7 +581,7 @@ func TestResDnsRecord(t *testing.T) {
 		}, nil).Once()
 
 		client.On("DeleteRecord",
-			mock.Anything,
+			testutils.MockContext,
 			dns.DeleteRecordRequest{Zone: "exampleterraform.io", Name: "exampleterraform.io", RecordType: "AAAA", RecLock: []bool{false}},
 		).Return(nil)
 
@@ -655,9 +655,9 @@ func TestMXRecord(t *testing.T) {
 		RecordType: mx}
 
 	mockCreate := func(d *dns.Mock, realClient dns.DNS, createdRecord *dns.RecordBody) {
-		d.On("GetRecord", mock.Anything, getRecordRequest).
+		d.On("GetRecord", testutils.MockContext, getRecordRequest).
 			Return(nil, notFound).Twice()
-		d.On("CreateRecord", mock.Anything, dns.CreateRecordRequest{
+		d.On("CreateRecord", testutils.MockContext, dns.CreateRecordRequest{
 			Record:  createdRecord,
 			Zone:    zone,
 			RecLock: []bool{false}}).
@@ -665,35 +665,35 @@ func TestMXRecord(t *testing.T) {
 	}
 	mockRead := func(d *dns.Mock, realClient dns.DNS, createdRecord *dns.RecordBody) {
 		response := (*dns.GetRecordResponse)(createdRecord)
-		d.On("GetRecord", mock.Anything, getRecordRequest).
+		d.On("GetRecord", testutils.MockContext, getRecordRequest).
 			Return(response, nil).Once()
-		d.On("ProcessRdata", mock.Anything, createdRecord.Target, mx).
+		d.On("ProcessRdata", testutils.MockContext, createdRecord.Target, mx).
 			Return(realClient.ProcessRdata(context.Background(), createdRecord.Target, mx)).Once()
-		d.On("GetRecord", mock.Anything, getRecordRequest).
+		d.On("GetRecord", testutils.MockContext, getRecordRequest).
 			Return(response, nil).Once()
-		d.On("ParseRData", mock.Anything, mx, createdRecord.Target).
+		d.On("ParseRData", testutils.MockContext, mx, createdRecord.Target).
 			Return(realClient.ParseRData(context.Background(), mx, createdRecord.Target)).Once()
-		d.On("ProcessRdata", mock.Anything, createdRecord.Target, mx).
+		d.On("ProcessRdata", testutils.MockContext, createdRecord.Target, mx).
 			Return(realClient.ProcessRdata(context.Background(), createdRecord.Target, mx)).Once()
 	}
 	mockUpdate := func(d *dns.Mock, realClient dns.DNS, previousRecord *dns.RecordBody, updatedRecord *dns.RecordBody) {
 		response := (*dns.GetRecordResponse)(previousRecord)
-		d.On("GetRecord", mock.Anything, getRecordRequest).
+		d.On("GetRecord", testutils.MockContext, getRecordRequest).
 			Return(response, nil).Once()
-		d.On("ProcessRdata", mock.Anything, previousRecord.Target, mx).
+		d.On("ProcessRdata", testutils.MockContext, previousRecord.Target, mx).
 			Return(realClient.ProcessRdata(context.Background(), previousRecord.Target, mx)).Once()
-		d.On("GetRecord", mock.Anything, getRecordRequest).
+		d.On("GetRecord", testutils.MockContext, getRecordRequest).
 			Return(response, nil).Once()
-		d.On("ProcessRdata", mock.Anything, previousRecord.Target, mx).
+		d.On("ProcessRdata", testutils.MockContext, previousRecord.Target, mx).
 			Return(realClient.ProcessRdata(context.Background(), previousRecord.Target, mx)).Once()
-		d.On("UpdateRecord", mock.Anything, dns.UpdateRecordRequest{
+		d.On("UpdateRecord", testutils.MockContext, dns.UpdateRecordRequest{
 			Record:  updatedRecord,
 			Zone:    zone,
 			RecLock: []bool{false}}).
 			Return(nil)
 	}
 	mockDelete := func(d *dns.Mock, createdRecord *dns.RecordBody) {
-		d.On("DeleteRecord", mock.Anything, dns.DeleteRecordRequest{
+		d.On("DeleteRecord", testutils.MockContext, dns.DeleteRecordRequest{
 			Zone:       zone,
 			Name:       createdRecord.Name,
 			RecordType: createdRecord.RecordType,

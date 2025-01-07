@@ -7,7 +7,6 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/str"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestResourceCustomClientSequence(t *testing.T) {
@@ -17,7 +16,7 @@ func TestResourceCustomClientSequence(t *testing.T) {
 		createCustomClientIds := []string{"cc9c3f89-e179-4892-89cf-d5e623ba9dc7", "d79285df-e399-43e8-bb0f-c0d980a88e4f", "afa309b8-4fd5-430e-a061-1c61df1d2ac2"}
 		createResponse := botman.CustomClientSequenceResponse{Sequence: createCustomClientIds}
 		mockedBotmanClient.On("UpdateCustomClientSequence",
-			mock.Anything,
+			testutils.MockContext,
 			botman.UpdateCustomClientSequenceRequest{
 				ConfigID: 43253,
 				Version:  15,
@@ -26,7 +25,7 @@ func TestResourceCustomClientSequence(t *testing.T) {
 		).Return(&createResponse, nil).Once()
 
 		mockedBotmanClient.On("GetCustomClientSequence",
-			mock.Anything,
+			testutils.MockContext,
 			botman.GetCustomClientSequenceRequest{
 				ConfigID: 43253,
 				Version:  15,
@@ -36,7 +35,7 @@ func TestResourceCustomClientSequence(t *testing.T) {
 		updateCustomClientIds := []string{createCustomClientIds[1], createCustomClientIds[2], createCustomClientIds[0]}
 		updateResponse := botman.CustomClientSequenceResponse{Sequence: updateCustomClientIds}
 		mockedBotmanClient.On("UpdateCustomClientSequence",
-			mock.Anything,
+			testutils.MockContext,
 			botman.UpdateCustomClientSequenceRequest{
 				ConfigID: 43253,
 				Version:  15,
@@ -45,7 +44,7 @@ func TestResourceCustomClientSequence(t *testing.T) {
 		).Return(&updateResponse, nil).Once()
 
 		mockedBotmanClient.On("GetCustomClientSequence",
-			mock.Anything,
+			testutils.MockContext,
 			botman.GetCustomClientSequenceRequest{
 				ConfigID: 43253,
 				Version:  15,

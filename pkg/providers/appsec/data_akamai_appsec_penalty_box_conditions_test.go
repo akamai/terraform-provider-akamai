@@ -8,7 +8,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -21,7 +20,7 @@ func TestAkamaiPenaltyBoxConditions_data_basic(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("GetConfiguration",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&config, nil)
 
@@ -35,7 +34,7 @@ func TestAkamaiPenaltyBoxConditions_data_basic(t *testing.T) {
 
 		expectedOutputText := "\n+---------------------------------+\n| penaltyBoxConditionsDS          |\n+--------------------+------------+\n| CONDITIONSOPERATOR | CONDITIONS |\n+--------------------+------------+\n| AND                | True       |\n+--------------------+------------+\n"
 		client.On("GetPenaltyBoxConditions",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetPenaltyBoxConditionsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
 		).Return(&getPenaltyBoxConditionsResponse, nil)
 

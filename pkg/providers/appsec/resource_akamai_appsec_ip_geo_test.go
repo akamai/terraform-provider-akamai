@@ -8,7 +8,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -20,7 +19,7 @@ func TestAkamaiIPGeo_res_block(t *testing.T) {
 			require.NoError(t, err)
 
 			client.On("GetConfiguration",
-				mock.Anything,
+				testutils.MockContext,
 				appsec.GetConfigurationRequest{ConfigID: configId},
 			).Return(&configResponse, nil)
 
@@ -33,7 +32,7 @@ func TestAkamaiIPGeo_res_block(t *testing.T) {
 			require.NoError(t, err)
 
 			client.On("GetIPGeo",
-				mock.Anything,
+				testutils.MockContext,
 				appsec.GetIPGeoRequest{ConfigID: configId, Version: version, PolicyID: policyId},
 			).Return(&getIPGeoResponse, nil)
 
@@ -46,7 +45,7 @@ func TestAkamaiIPGeo_res_block(t *testing.T) {
 			require.NoError(t, err)
 
 			client.On("UpdateIPGeo",
-				mock.Anything,
+				testutils.MockContext,
 				request,
 			).Return(&updateIPGeoResponse, nil)
 			return updateIPGeoResponse
@@ -58,7 +57,7 @@ func TestAkamaiIPGeo_res_block(t *testing.T) {
 			require.NoError(t, err)
 
 			client.On("UpdateIPGeoProtection",
-				mock.Anything,
+				testutils.MockContext,
 				appsec.UpdateIPGeoProtectionRequest{ConfigID: configId, Version: version, PolicyID: policyId},
 			).Return(&updateIPGeoProtectionResponseAllProtectionsFalse, nil).Once()
 			return updateIPGeoProtectionResponseAllProtectionsFalse

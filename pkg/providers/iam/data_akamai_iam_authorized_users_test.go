@@ -10,7 +10,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/iam"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 type (
@@ -65,7 +64,7 @@ func TestAuthorizedUsers(t *testing.T) {
 		"fail path": {
 			configPath: "testdata/TestAuthorizedUsers/default.tf",
 			init: func(t *testing.T, m *iam.Mock, testData testDataForAuthorizedUsers) {
-				m.On("ListAuthorizedUsers", mock.Anything).Return(iam.ListAuthorizedUsersResponse{}, errors.New("could not get authorized users"))
+				m.On("ListAuthorizedUsers", testutils.MockContext).Return(iam.ListAuthorizedUsersResponse{}, errors.New("could not get authorized users"))
 			},
 			error:    regexp.MustCompile(`could not get authorized users`),
 			mockData: basicTestDataForAuthorizedUsers,
@@ -110,7 +109,7 @@ func expectFullListAuthorizedUsers(_ *testing.T, client *iam.Mock, data testData
 		})
 	}
 
-	client.On("ListAuthorizedUsers", mock.Anything).Return(listAuthorizedUsersRes, nil).Times(timesToRun)
+	client.On("ListAuthorizedUsers", testutils.MockContext).Return(listAuthorizedUsersRes, nil).Times(timesToRun)
 }
 
 func checkAuthorizedUsersAttrs(data testDataForAuthorizedUsers) resource.TestCheckFunc {

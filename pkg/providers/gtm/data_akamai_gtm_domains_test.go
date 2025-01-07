@@ -8,7 +8,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/gtm"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestDataGTMDomains(t *testing.T) {
@@ -22,7 +21,7 @@ func TestDataGTMDomains(t *testing.T) {
 		"success - response is ok": {
 			givenTF: "valid.tf",
 			init: func(m *gtm.Mock) {
-				m.On("ListDomains", mock.Anything).Return([]gtm.DomainItem{
+				m.On("ListDomains", testutils.MockContext).Return([]gtm.DomainItem{
 					{
 						Name:                 "test1.terraformtesting.net",
 						LastModified:         "2023-02-01T09:36:28.000+00:00",
@@ -85,13 +84,13 @@ func TestDataGTMDomains(t *testing.T) {
 		"no domains found": {
 			givenTF: "valid.tf",
 			init: func(m *gtm.Mock) {
-				m.On("ListDomains", mock.Anything).Return([]gtm.DomainItem{}, nil)
+				m.On("ListDomains", testutils.MockContext).Return([]gtm.DomainItem{}, nil)
 			},
 		},
 		"error response from api": {
 			givenTF: "valid.tf",
 			init: func(m *gtm.Mock) {
-				m.On("ListDomains", mock.Anything).Return(nil, fmt.Errorf("oops"))
+				m.On("ListDomains", testutils.MockContext).Return(nil, fmt.Errorf("oops"))
 			},
 			expectError: regexp.MustCompile("oops"),
 		},

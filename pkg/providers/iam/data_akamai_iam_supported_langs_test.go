@@ -8,14 +8,13 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/iam"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestDataSupportedLangs(t *testing.T) {
 	t.Run("happy path", func(t *testing.T) {
 		client := &iam.Mock{}
 		client.Test(testutils.TattleT{T: t})
-		client.On("SupportedLanguages", mock.Anything).Return([]string{"first", "second", "third"}, nil)
+		client.On("SupportedLanguages", testutils.MockContext).Return([]string{"first", "second", "third"}, nil)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -41,7 +40,7 @@ func TestDataSupportedLangs(t *testing.T) {
 	t.Run("fail path", func(t *testing.T) {
 		client := &iam.Mock{}
 		client.Test(testutils.TattleT{T: t})
-		client.On("SupportedLanguages", mock.Anything).Return([]string{}, errors.New("Could not set supported languages in state"))
+		client.On("SupportedLanguages", testutils.MockContext).Return([]string{}, errors.New("Could not set supported languages in state"))
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{

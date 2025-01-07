@@ -946,7 +946,7 @@ func TestPropertyLifecycle(t *testing.T) {
 				p.groupID = "grp_222"
 				req := p.getPropertyRequest()
 				err := errors.New("read err")
-				p.papiMock.On("GetProperty", AnyCTX, req).Return(nil, err).Once()
+				p.papiMock.On("GetProperty", testutils.MockContext, req).Return(nil, err).Once()
 
 				p.groupID = "grp_2"
 				p.mockRemoveProperty()
@@ -1006,7 +1006,7 @@ func TestPropertyLifecycle(t *testing.T) {
 				// Checking if the property is already in the dst group
 				p.groupID = "grp_222"
 				getReq := p.getPropertyRequest()
-				p.papiMock.On("GetProperty", AnyCTX, getReq).
+				p.papiMock.On("GetProperty", testutils.MockContext, getReq).
 					Return(nil, &papi.Error{StatusCode: http.StatusForbidden}).
 					Once()
 
@@ -1042,7 +1042,7 @@ func TestPropertyLifecycle(t *testing.T) {
 				// Waiting for group id change
 				p.groupID = "grp_222"
 				getReq := p.getPropertyRequest()
-				p.papiMock.On("GetProperty", AnyCTX, getReq).
+				p.papiMock.On("GetProperty", testutils.MockContext, getReq).
 					Return(nil, errors.New("read err")).
 					Once()
 
@@ -1293,7 +1293,7 @@ func TestPropertyLifecycle(t *testing.T) {
 			Errors:          mp.ruleTree.ruleErrors,
 			Warnings:        mp.ruleTree.ruleWarnings,
 		}
-		mp.papiMock.On("UpdateRuleTree", AnyCTX, req).Return(&resp, nil).Once()
+		mp.papiMock.On("UpdateRuleTree", testutils.MockContext, req).Return(&resp, nil).Once()
 
 		// state update after rule tree update
 		mp.ruleTree.rules = defaultAPIResp

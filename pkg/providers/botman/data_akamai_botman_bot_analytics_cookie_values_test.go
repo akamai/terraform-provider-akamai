@@ -6,7 +6,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/botman"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestDataBotAnalyticsCookieValue(t *testing.T) {
@@ -33,7 +32,7 @@ func TestDataBotAnalyticsCookieValue(t *testing.T) {
 	]
 }`
 		mockedBotmanClient.On("GetBotAnalyticsCookieValues",
-			mock.Anything,
+			testutils.MockContext,
 		).Return(response, nil)
 		useClient(mockedBotmanClient, func() {
 			resource.Test(t, resource.TestCase{

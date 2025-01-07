@@ -12,7 +12,6 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 type testDataForNonSharedPolicyActivation struct {
@@ -425,7 +424,7 @@ func TestSharedPolicyActivationDataSource(t *testing.T) {
 }
 
 func mockGetPolicyV2WithError(m *cloudlets.Mock, policyID int64, err error, times int) {
-	m.On("GetPolicy", mock.Anything, cloudlets.GetPolicyRequest{
+	m.On("GetPolicy", testutils.MockContext, cloudlets.GetPolicyRequest{
 		PolicyID: policyID,
 	}).Return(nil, err).Times(times)
 	return
@@ -433,12 +432,12 @@ func mockGetPolicyV2WithError(m *cloudlets.Mock, policyID int64, err error, time
 
 func mockGetPolicyV2(m *cloudlets.Mock, data testDataForNonSharedPolicyActivation, err error, times int) {
 	if err != nil {
-		m.On("GetPolicy", mock.Anything, cloudlets.GetPolicyRequest{
+		m.On("GetPolicy", testutils.MockContext, cloudlets.GetPolicyRequest{
 			PolicyID: data.policyID,
 		}).Return(nil, err).Times(times)
 		return
 	}
-	m.On("GetPolicy", mock.Anything, cloudlets.GetPolicyRequest{
+	m.On("GetPolicy", testutils.MockContext, cloudlets.GetPolicyRequest{
 		PolicyID: data.policyID,
 	}).Return(&cloudlets.Policy{
 		Description: data.description,
@@ -449,7 +448,7 @@ func mockGetPolicyV2(m *cloudlets.Mock, data testDataForNonSharedPolicyActivatio
 }
 
 func mockGetPolicyV3(m *v3.Mock, data testDataForSharedPolicyActivation, times int) {
-	m.On("GetPolicy", mock.Anything, v3.GetPolicyRequest{
+	m.On("GetPolicy", testutils.MockContext, v3.GetPolicyRequest{
 		PolicyID: data.policyID,
 	}).Return(&v3.Policy{
 		CloudletType:       data.cloudletType,
@@ -462,7 +461,7 @@ func mockGetPolicyV3(m *v3.Mock, data testDataForSharedPolicyActivation, times i
 }
 
 func mockGetPolicyV3WithError(m *v3.Mock, policyID int64, err error, times int) {
-	m.On("GetPolicy", mock.Anything, v3.GetPolicyRequest{
+	m.On("GetPolicy", testutils.MockContext, v3.GetPolicyRequest{
 		PolicyID: policyID,
 	}).Return(nil, err).Times(times)
 }

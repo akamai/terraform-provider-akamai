@@ -9,7 +9,6 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v6/internal/test"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 type (
@@ -71,7 +70,7 @@ func TestDataCIDRBlock(t *testing.T) {
 			configPath: "testdata/TestDataCIDRBlock/default.tf",
 			init: func(t *testing.T, m *iam.Mock, mockData testDataForCIDRBlock) {
 				getCIDRBlockReq := iam.GetCIDRBlockRequest{CIDRBlockID: mockData.cidrBlockID, Actions: true}
-				m.On("GetCIDRBlock", mock.Anything, getCIDRBlockReq).Return(nil, errors.New("test error"))
+				m.On("GetCIDRBlock", testutils.MockContext, getCIDRBlockReq).Return(nil, errors.New("test error"))
 			},
 			mockData: basicTestDataForCIDRBlock,
 			error:    regexp.MustCompile("test error"),
@@ -145,5 +144,5 @@ func expectGetCIDRBlock(t *testing.T, client *iam.Mock, data testDataForCIDRBloc
 		}
 	}
 
-	client.On("GetCIDRBlock", mock.Anything, getCIDRBlockReq).Return(&getCIDRBlockResp, nil).Times(timesToRun)
+	client.On("GetCIDRBlock", testutils.MockContext, getCIDRBlockReq).Return(&getCIDRBlockResp, nil).Times(timesToRun)
 }

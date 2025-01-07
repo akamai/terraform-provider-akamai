@@ -15,7 +15,7 @@ import (
 
 func TestGroupDataSource(t *testing.T) {
 	mockGetGroup := func(client *iam.Mock, group *iam.Group, times int) *mock.Call {
-		return client.On("GetGroup", mock.Anything, iam.GetGroupRequest{
+		return client.On("GetGroup", testutils.MockContext, iam.GetGroupRequest{
 			GroupID: 123,
 			Actions: true,
 		}).Return(group, nil).Times(times)
@@ -106,7 +106,7 @@ func TestGroupDataSource(t *testing.T) {
 		},
 		"api failed": {
 			init: func(client *iam.Mock) {
-				client.On("GetGroup", mock.Anything, iam.GetGroupRequest{
+				client.On("GetGroup", testutils.MockContext, iam.GetGroupRequest{
 					GroupID: 123,
 					Actions: true,
 				}).Return(nil, errors.New("api failed")).Once()

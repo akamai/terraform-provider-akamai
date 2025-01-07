@@ -89,7 +89,7 @@ func TestDataSourceDatasetFieldsRead(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			client := &datastream.Mock{}
-			client.On("GetDatasetFields", mock.Anything, mock.Anything).Return(test.getDatasetFieldsReturn, test.edgegridError)
+			client.On("GetDatasetFields", testutils.MockContext, mock.Anything).Return(test.getDatasetFieldsReturn, test.edgegridError)
 			useClient(client, func() {
 				if test.withError == nil {
 					resource.UnitTest(t, resource.TestCase{

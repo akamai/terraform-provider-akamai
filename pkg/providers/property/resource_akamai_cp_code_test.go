@@ -16,16 +16,13 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-// Alias of mock.Anything to use as a placeholder for any context.Context
-var AnyCTX = mock.Anything
-
 func TestResCPCode(t *testing.T) {
 	// Helper to set up an expected call to mock papi.GetCPCode
 	expectGetCPCode := func(m *papi.Mock, contractID, groupID string, CPCodeID int, CPCodes *[]papi.CPCode, err error) *mock.Call {
 		var call *mock.Call
 		req := papi.GetCPCodeRequest{CPCodeID: strconv.Itoa(CPCodeID), ContractID: contractID, GroupID: groupID}
 
-		call = m.On("GetCPCode", AnyCTX, req).Run(func(args mock.Arguments) {
+		call = m.On("GetCPCode", testutils.MockContext, req).Run(func(args mock.Arguments) {
 			if err != nil {
 				call.Return(nil, err)
 			} else {
@@ -56,7 +53,7 @@ func TestResCPCode(t *testing.T) {
 
 		req := papi.GetCPCodesRequest{ContractID: ContractID, GroupID: GroupID}
 
-		return m.OnGetCPCodes(mockImpl, AnyCTX, req)
+		return m.OnGetCPCodes(mockImpl, testutils.MockContext, req)
 	}
 
 	// Helper to set up an expected call to mock papi.CreateCPCode with mock impl backed by the given slice
@@ -83,7 +80,7 @@ func TestResCPCode(t *testing.T) {
 			},
 		}
 
-		return m.OnCreateCPCode(mockImpl, AnyCTX, req)
+		return m.OnCreateCPCode(mockImpl, testutils.MockContext, req)
 	}
 
 	// Helper to set up an expected call to mock papi.UpdateCPCode with mock impl backed by the given slice
@@ -111,14 +108,14 @@ func TestResCPCode(t *testing.T) {
 			OverrideTimeZone: &papi.CPCodeTimeZone{},
 		}
 
-		return m.OnUpdateCPCode(mockImpl, AnyCTX, req)
+		return m.OnUpdateCPCode(mockImpl, testutils.MockContext, req)
 	}
 
 	// // Helper to set up an expected call to mock papi.GetCPCodeDetail
 	expectGetCPCodeDetail := func(m *papi.Mock, CPCodeID int, CPCodes *[]papi.CPCode, err error) *mock.Call {
 		var call *mock.Call
 
-		call = m.On("GetCPCodeDetail", AnyCTX, CPCodeID).Run(func(args mock.Arguments) {
+		call = m.On("GetCPCodeDetail", testutils.MockContext, CPCodeID).Run(func(args mock.Arguments) {
 			if err != nil {
 				call.Return(nil, err)
 			} else {

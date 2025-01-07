@@ -7,7 +7,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -19,7 +18,7 @@ func TestAkamaiSlowPostProtectionSetting_res_basic(t *testing.T) {
 		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/LatestConfiguration.json"), &getConfigurationResponse)
 		require.NoError(t, err)
 		client.On("GetConfiguration",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&getConfigurationResponse, nil)
 
@@ -27,7 +26,7 @@ func TestAkamaiSlowPostProtectionSetting_res_basic(t *testing.T) {
 		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResSlowPostProtectionSetting/SlowPostProtectionSetting.json"), &updateSlowPostProtectionSettingResponse)
 		require.NoError(t, err)
 		client.On("UpdateSlowPostProtectionSetting",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.UpdateSlowPostProtectionSettingRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", Action: "alert", SlowRateThreshold: struct {
 				Rate   int `json:"rate"`
 				Period int `json:"period"`
@@ -40,7 +39,7 @@ func TestAkamaiSlowPostProtectionSetting_res_basic(t *testing.T) {
 		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResSlowPostProtectionSetting/SlowPostProtectionSetting.json"), &getSlowPostProtectionSettingsResponse)
 		require.NoError(t, err)
 		client.On("GetSlowPostProtectionSettings",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetSlowPostProtectionSettingsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
 		).Return(&getSlowPostProtectionSettingsResponse, nil).Twice()
 
@@ -48,7 +47,7 @@ func TestAkamaiSlowPostProtectionSetting_res_basic(t *testing.T) {
 		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResSlowPostProtectionSetting/SlowPostProtection.json"), &updateSlowPostProtectionResponse)
 		require.NoError(t, err)
 		client.On("UpdateSlowPostProtection",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.UpdateSlowPostProtectionRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
 		).Return(&updateSlowPostProtectionResponse, nil).Once()
 

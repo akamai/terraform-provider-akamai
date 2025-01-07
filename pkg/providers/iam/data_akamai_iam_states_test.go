@@ -8,7 +8,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/iam"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestDataStates(t *testing.T) {
@@ -17,7 +16,7 @@ func TestDataStates(t *testing.T) {
 		client.Test(testutils.TattleT{T: t})
 
 		req := iam.ListStatesRequest{Country: "test country"}
-		client.On("ListStates", mock.Anything, req).Return([]string{"first", "second", "third"}, nil)
+		client.On("ListStates", testutils.MockContext, req).Return([]string{"first", "second", "third"}, nil)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -45,7 +44,7 @@ func TestDataStates(t *testing.T) {
 		client.Test(testutils.TattleT{T: t})
 
 		req := iam.ListStatesRequest{Country: "test country"}
-		client.On("ListStates", mock.Anything, req).Return([]string{}, errors.New("Could not get states"))
+		client.On("ListStates", testutils.MockContext, req).Return([]string{}, errors.New("Could not get states"))
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{

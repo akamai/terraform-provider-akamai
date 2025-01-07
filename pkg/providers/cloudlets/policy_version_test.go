@@ -8,8 +8,8 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/cloudlets"
 	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/cloudlets/v3"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -32,12 +32,12 @@ func TestFindingLatestPolicyVersion(t *testing.T) {
 	}{
 		"last policy version on 1st page found": {
 			init: func(m *cloudlets.Mock) {
-				m.On("ListPolicyVersions", mock.Anything, cloudlets.ListPolicyVersionsRequest{
+				m.On("ListPolicyVersions", testutils.MockContext, cloudlets.ListPolicyVersionsRequest{
 					PolicyID: policyID,
 					PageSize: &pageSize,
 					Offset:   0,
 				}).Return(preparePolicyVersionsPage(1000, 0), nil).Once()
-				m.On("ListPolicyVersions", mock.Anything, cloudlets.ListPolicyVersionsRequest{
+				m.On("ListPolicyVersions", testutils.MockContext, cloudlets.ListPolicyVersionsRequest{
 					PolicyID: policyID,
 					PageSize: &pageSize,
 					Offset:   1000,
@@ -49,7 +49,7 @@ func TestFindingLatestPolicyVersion(t *testing.T) {
 			init: func(m *cloudlets.Mock) {
 				policyVersionsPage := preparePolicyVersionsPage(500, 0)
 				policyVersionsPage[0] = cloudlets.PolicyVersion{Version: 500}
-				m.On("ListPolicyVersions", mock.Anything, cloudlets.ListPolicyVersionsRequest{
+				m.On("ListPolicyVersions", testutils.MockContext, cloudlets.ListPolicyVersionsRequest{
 					PolicyID: policyID,
 					PageSize: &pageSize,
 					Offset:   0,
@@ -59,7 +59,7 @@ func TestFindingLatestPolicyVersion(t *testing.T) {
 		},
 		"no policy versions found": {
 			init: func(m *cloudlets.Mock) {
-				m.On("ListPolicyVersions", mock.Anything, cloudlets.ListPolicyVersionsRequest{
+				m.On("ListPolicyVersions", testutils.MockContext, cloudlets.ListPolicyVersionsRequest{
 					PolicyID: policyID,
 					PageSize: &pageSize,
 					Offset:   0,
@@ -69,7 +69,7 @@ func TestFindingLatestPolicyVersion(t *testing.T) {
 		},
 		"error listing policy versions": {
 			init: func(m *cloudlets.Mock) {
-				m.On("ListPolicyVersions", mock.Anything, cloudlets.ListPolicyVersionsRequest{
+				m.On("ListPolicyVersions", testutils.MockContext, cloudlets.ListPolicyVersionsRequest{
 					PolicyID: policyID,
 					PageSize: &pageSize,
 					Offset:   0,
@@ -121,12 +121,12 @@ func TestFindingLatestPolicyVersionV3(t *testing.T) {
 	}{
 		"last policy version on 1st page found": {
 			init: func(m *v3.Mock) {
-				m.On("ListPolicyVersions", mock.Anything, v3.ListPolicyVersionsRequest{
+				m.On("ListPolicyVersions", testutils.MockContext, v3.ListPolicyVersionsRequest{
 					PolicyID: policyID,
 					Size:     pageSize,
 					Page:     0,
 				}).Return(&v3.ListPolicyVersions{PolicyVersions: preparePolicyVersionsPage(1000, 0)}, nil).Once()
-				m.On("ListPolicyVersions", mock.Anything, v3.ListPolicyVersionsRequest{
+				m.On("ListPolicyVersions", testutils.MockContext, v3.ListPolicyVersionsRequest{
 					PolicyID: policyID,
 					Size:     pageSize,
 					Page:     1,
@@ -138,7 +138,7 @@ func TestFindingLatestPolicyVersionV3(t *testing.T) {
 			init: func(m *v3.Mock) {
 				policyVersionsPage := preparePolicyVersionsPage(500, 0)
 				policyVersionsPage[0] = v3.ListPolicyVersionsItem{PolicyVersion: 500}
-				m.On("ListPolicyVersions", mock.Anything, v3.ListPolicyVersionsRequest{
+				m.On("ListPolicyVersions", testutils.MockContext, v3.ListPolicyVersionsRequest{
 					PolicyID: policyID,
 					Size:     pageSize,
 					Page:     0,
@@ -148,7 +148,7 @@ func TestFindingLatestPolicyVersionV3(t *testing.T) {
 		},
 		"no policy versions found": {
 			init: func(m *v3.Mock) {
-				m.On("ListPolicyVersions", mock.Anything, v3.ListPolicyVersionsRequest{
+				m.On("ListPolicyVersions", testutils.MockContext, v3.ListPolicyVersionsRequest{
 					PolicyID: policyID,
 					Size:     pageSize,
 					Page:     0,
@@ -158,7 +158,7 @@ func TestFindingLatestPolicyVersionV3(t *testing.T) {
 		},
 		"error listing policy versions": {
 			init: func(m *v3.Mock) {
-				m.On("ListPolicyVersions", mock.Anything, v3.ListPolicyVersionsRequest{
+				m.On("ListPolicyVersions", testutils.MockContext, v3.ListPolicyVersionsRequest{
 					PolicyID: policyID,
 					Size:     pageSize,
 					Page:     0,

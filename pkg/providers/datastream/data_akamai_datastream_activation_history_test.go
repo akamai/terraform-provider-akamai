@@ -71,9 +71,9 @@ func TestDataAkamaiDatastreamActivationHistoryRead(t *testing.T) {
 			client := datastream.Mock{}
 			useClient(&client, func() {
 				if test.edgegridError != nil {
-					client.On("GetActivationHistory", mock.Anything, mock.Anything).Return(nil, test.edgegridError).Once()
+					client.On("GetActivationHistory", testutils.MockContext, mock.Anything).Return(nil, test.edgegridError).Once()
 				} else {
-					client.On("GetActivationHistory", mock.Anything, mock.Anything).Return(test.getActivationHistoryReturn, nil)
+					client.On("GetActivationHistory", testutils.MockContext, mock.Anything).Return(test.getActivationHistoryReturn, nil)
 				}
 				resource.UnitTest(t, resource.TestCase{
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),

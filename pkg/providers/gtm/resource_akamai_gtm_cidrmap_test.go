@@ -20,7 +20,7 @@ func TestResGTMCIDRMap(t *testing.T) {
 		client := &gtm.Mock{}
 
 		getCall := client.On("GetCIDRMap",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.GetCIDRMapRequest"),
 		).Return(nil, &gtm.Error{
 			StatusCode: http.StatusNotFound,
@@ -28,7 +28,7 @@ func TestResGTMCIDRMap(t *testing.T) {
 
 		resp := cidr
 		client.On("CreateCIDRMap",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.CreateCIDRMapRequest"),
 		).Return(&gtm.CreateCIDRMapResponse{
 			Resource: cidrCreate.Resource,
@@ -38,32 +38,32 @@ func TestResGTMCIDRMap(t *testing.T) {
 		})
 
 		client.On("GetCIDRMap",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.GetCIDRMapRequest"),
 		).Return(&resp, nil).Times(3)
 
 		client.On("GetDatacenter",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.GetDatacenterRequest"),
 		).Return(&dc, nil)
 
 		client.On("GetDomainStatus",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.GetDomainStatusRequest"),
 		).Return(getDomainStatusResponseStatus, nil)
 
 		client.On("UpdateCIDRMap",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.UpdateCIDRMapRequest"),
 		).Return(updateCIDRMapResponseStatus, nil)
 
 		client.On("GetCIDRMap",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.GetCIDRMapRequest"),
 		).Return(&cidrUpdate, nil).Times(3)
 
 		client.On("DeleteCIDRMap",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.DeleteCIDRMapRequest"),
 		).Return(deleteCIDRMapResponseStatus, nil)
 
@@ -96,7 +96,7 @@ func TestResGTMCIDRMap(t *testing.T) {
 		client := &gtm.Mock{}
 
 		getCall := client.On("GetCIDRMap",
-			mock.Anything,
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.GetCIDRMapRequest"),
 		).Return(nil, &gtm.Error{
 			StatusCode: http.StatusNotFound,
@@ -104,7 +104,7 @@ func TestResGTMCIDRMap(t *testing.T) {
 
 		resp := cidr
 		client.On("CreateCIDRMap",
-			mock.Anything,
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.CreateCIDRMapRequest"),
 		).Return(&gtm.CreateCIDRMapResponse{
 			Resource: cidrCreate.Resource,
@@ -114,29 +114,29 @@ func TestResGTMCIDRMap(t *testing.T) {
 		}).Once()
 
 		client.On("GetCIDRMap",
-			mock.Anything,
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.GetCIDRMapRequest"),
 		).Return(&resp, nil).Twice()
 
 		client.On("GetDatacenter",
-			mock.Anything,
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.GetDatacenterRequest"),
 		).Return(&dc, nil).Once()
 
 		// Mock that the CIDRMap was deleted outside terraform
 		client.On("GetCIDRMap",
-			mock.Anything,
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.GetCIDRMapRequest"),
 		).Return(nil, gtm.ErrNotFound).Once()
 
 		// For terraform test framework, we need to mock GetCIDRMap as it would actually exist before deletion
 		client.On("GetCIDRMap",
-			mock.Anything,
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.GetCIDRMapRequest"),
 		).Return(&resp, nil).Once()
 
 		client.On("DeleteCIDRMap",
-			mock.Anything,
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.DeleteCIDRMapRequest"),
 		).Return(deleteCIDRMapResponseStatus, nil).Once()
 
@@ -168,21 +168,21 @@ func TestResGTMCIDRMap(t *testing.T) {
 		client := &gtm.Mock{}
 
 		client.On("GetCIDRMap",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.GetCIDRMapRequest"),
 		).Return(nil, &gtm.Error{
 			StatusCode: http.StatusNotFound,
 		}).Once()
 
 		client.On("CreateCIDRMap",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.CreateCIDRMapRequest"),
 		).Return(nil, &gtm.Error{
 			StatusCode: http.StatusBadRequest,
 		})
 
 		client.On("GetDatacenter",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.GetDatacenterRequest"),
 		).Return(&dc, nil)
 
@@ -205,7 +205,7 @@ func TestResGTMCIDRMap(t *testing.T) {
 		client := &gtm.Mock{}
 
 		client.On("GetCIDRMap",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.GetCIDRMapRequest"),
 		).Return(&cidr, nil).Once()
 
@@ -228,7 +228,7 @@ func TestResGTMCIDRMap(t *testing.T) {
 		client := &gtm.Mock{}
 
 		client.On("GetCIDRMap",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.GetCIDRMapRequest"),
 		).Return(nil, &gtm.Error{
 			StatusCode: http.StatusNotFound,
@@ -238,12 +238,12 @@ func TestResGTMCIDRMap(t *testing.T) {
 		dr.Resource = cidrCreate.Resource
 		dr.Status = &deniedResponseStatus
 		client.On("CreateCIDRMap",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.CreateCIDRMapRequest"),
 		).Return(&dr, nil)
 
 		client.On("GetDatacenter",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.GetDatacenterRequest"),
 		).Return(&dc, nil)
 
@@ -437,7 +437,7 @@ func getCIDRMapMocks() *gtm.Mock {
 	client := &gtm.Mock{}
 
 	mockGetCIDRMap := client.On("GetCIDRMap",
-		mock.Anything, // ctx is irrelevant for this test
+		testutils.MockContext,
 		mock.AnythingOfType("gtm.GetCIDRMapRequest"),
 	).Return(nil, &gtm.Error{
 		StatusCode: http.StatusNotFound,
@@ -445,7 +445,7 @@ func getCIDRMapMocks() *gtm.Mock {
 
 	resp := cidrMapDiffOrder
 	client.On("CreateCIDRMap",
-		mock.Anything, // ctx is irrelevant for this test
+		testutils.MockContext,
 		mock.AnythingOfType("gtm.CreateCIDRMapRequest"),
 	).Return(&gtm.CreateCIDRMapResponse{
 		Resource: cidrCreate.Resource,
@@ -455,17 +455,17 @@ func getCIDRMapMocks() *gtm.Mock {
 	})
 
 	client.On("GetDatacenter",
-		mock.Anything, // ctx is irrelevant for this test
+		testutils.MockContext,
 		mock.AnythingOfType("gtm.GetDatacenterRequest"),
 	).Return(&dc, nil)
 
 	client.On("GetDomainStatus",
-		mock.Anything, // ctx is irrelevant for this test
+		testutils.MockContext,
 		mock.AnythingOfType("gtm.GetDomainStatusRequest"),
 	).Return(getDomainStatusResponseStatus, nil)
 
 	client.On("DeleteCIDRMap",
-		mock.Anything, // ctx is irrelevant for this test
+		testutils.MockContext,
 		mock.AnythingOfType("gtm.DeleteCIDRMapRequest"),
 	).Return(deleteCIDRMapResponseStatus, nil)
 
@@ -473,7 +473,7 @@ func getCIDRMapMocks() *gtm.Mock {
 }
 
 func mockGetCIDRMap(m *gtm.Mock, resp *gtm.GetCIDRMapResponse, err error) *mock.Call {
-	return m.On("GetCIDRMap", mock.Anything, gtm.GetCIDRMapRequest{
+	return m.On("GetCIDRMap", testutils.MockContext, gtm.GetCIDRMapRequest{
 		MapName:    "tfexample_cidrmap_1",
 		DomainName: "gtm_terra_testdomain.akadns.net",
 	}).Return(resp, err)

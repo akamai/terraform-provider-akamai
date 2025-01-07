@@ -7,7 +7,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -32,22 +31,22 @@ func TestAkamaiReputationProfile_res_basic(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("GetReputationProfile",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetReputationProfileRequest{ConfigID: 43253, ConfigVersion: 7, ReputationProfileId: 12345},
 		).Return(&getReputationProfileResponse, nil)
 
 		client.On("RemoveReputationProfile",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.RemoveReputationProfileRequest{ConfigID: 43253, ConfigVersion: 7, ReputationProfileId: 12345},
 		).Return(&removeReputationProfileResponse, nil)
 
 		client.On("CreateReputationProfile",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.CreateReputationProfileRequest{ConfigID: 43253, ConfigVersion: 7},
 		).Return(&createReputationProfileResponse, nil)
 
 		client.On("UpdateReputationProfile",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.UpdateReputationProfileRequest{ConfigID: 43253, ConfigVersion: 7, ReputationProfileId: 12345},
 		).Return(&updateReputationProfileResponse, nil)
 

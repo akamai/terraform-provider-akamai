@@ -8,7 +8,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestDataSourcePAPIPropertyActivation(t *testing.T) {
@@ -75,7 +74,7 @@ func TestDataSourcePAPIPropertyActivation(t *testing.T) {
 		},
 		"version not provided: default to latest - OK": {
 			init: func(m *papi.Mock) {
-				m.On("GetLatestVersion", mock.Anything, papi.GetLatestVersionRequest{
+				m.On("GetLatestVersion", testutils.MockContext, papi.GetLatestVersionRequest{
 					PropertyID:  "prp_test",
 					ActivatedOn: fmt.Sprintf("%v", papi.ActivationNetworkStaging),
 				}).Return(&papi.GetPropertyVersionsResponse{

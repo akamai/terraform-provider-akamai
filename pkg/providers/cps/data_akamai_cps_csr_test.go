@@ -9,7 +9,6 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/providers/cps/tools"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 type testDataForCPSCSR struct {
@@ -41,9 +40,9 @@ var (
 		}
 		getChangeThirdPartyCSRRes := &data.ThirdPartyCSRResponse
 
-		client.On("GetEnrollment", mock.Anything, getEnrollmentReq).Return(&getEnrollmentRes, nil).Times(timesToRun)
-		client.On("GetChangeStatus", mock.Anything, getChangeStatusReq).Return(getChangeStatusRes, nil).Times(timesToRun)
-		client.On("GetChangeThirdPartyCSR", mock.Anything, getChangeThirdPartyCSRReq).Return(getChangeThirdPartyCSRRes, nil).Times(timesToRun)
+		client.On("GetEnrollment", testutils.MockContext, getEnrollmentReq).Return(&getEnrollmentRes, nil).Times(timesToRun)
+		client.On("GetChangeStatus", testutils.MockContext, getChangeStatusReq).Return(getChangeStatusRes, nil).Times(timesToRun)
+		client.On("GetChangeThirdPartyCSR", testutils.MockContext, getChangeThirdPartyCSRReq).Return(getChangeThirdPartyCSRRes, nil).Times(timesToRun)
 	}
 
 	expectReadCPSCSRWithHistory = func(t *testing.T, client *cps.Mock, data testDataForCPSCSR, timesToRun int) {
@@ -65,23 +64,23 @@ var (
 			Changes: data.GetChangeHistoryResponse.Changes,
 		}
 
-		client.On("GetEnrollment", mock.Anything, getEnrollmentReq).Return(&getEnrollmentRes, nil).Times(timesToRun)
-		client.On("GetChangeStatus", mock.Anything, getChangeStatusReq).Return(getChangeStatusRes, nil).Times(timesToRun)
-		client.On("GetChangeHistory", mock.Anything, getChangeHistoryReq).Return(&getChangeHistoryRes, nil).Times(timesToRun)
+		client.On("GetEnrollment", testutils.MockContext, getEnrollmentReq).Return(&getEnrollmentRes, nil).Times(timesToRun)
+		client.On("GetChangeStatus", testutils.MockContext, getChangeStatusReq).Return(getChangeStatusRes, nil).Times(timesToRun)
+		client.On("GetChangeHistory", testutils.MockContext, getChangeHistoryReq).Return(&getChangeHistoryRes, nil).Times(timesToRun)
 	}
 
 	expectReadCPSCSRGetEnrollmentError = func(t *testing.T, client *cps.Mock, data testDataForCPSCSR, errorMessage string) {
 		getEnrollmentReq := cps.GetEnrollmentRequest{
 			EnrollmentID: data.EnrollmentID,
 		}
-		client.On("GetEnrollment", mock.Anything, getEnrollmentReq).Return(nil, fmt.Errorf(errorMessage)).Once()
+		client.On("GetEnrollment", testutils.MockContext, getEnrollmentReq).Return(nil, fmt.Errorf(errorMessage)).Once()
 	}
 
 	expectReadDVEnrollment = func(t *testing.T, client *cps.Mock, data testDataForCPSCSR) {
 		getEnrollmentReq := cps.GetEnrollmentRequest{
 			EnrollmentID: data.EnrollmentID,
 		}
-		client.On("GetEnrollment", mock.Anything, getEnrollmentReq).Return(enrollmentDV2, nil).Once()
+		client.On("GetEnrollment", testutils.MockContext, getEnrollmentReq).Return(enrollmentDV2, nil).Once()
 	}
 
 	expectReadCPSCSRGetThirdPartyError = func(t *testing.T, client *cps.Mock, data testDataForCPSCSR, errorMessage string) {
@@ -102,9 +101,9 @@ var (
 			ChangeID:     changeID,
 		}
 
-		client.On("GetEnrollment", mock.Anything, getEnrollmentReq).Return(&getEnrollmentRes, nil).Once()
-		client.On("GetChangeStatus", mock.Anything, getChangeStatusReq).Return(getChangeStatusRes, nil).Once()
-		client.On("GetChangeThirdPartyCSR", mock.Anything, getChangeThirdPartyCSRReq).Return(nil, fmt.Errorf(errorMessage)).Once()
+		client.On("GetEnrollment", testutils.MockContext, getEnrollmentReq).Return(&getEnrollmentRes, nil).Once()
+		client.On("GetChangeStatus", testutils.MockContext, getChangeStatusReq).Return(getChangeStatusRes, nil).Once()
+		client.On("GetChangeThirdPartyCSR", testutils.MockContext, getChangeThirdPartyCSRReq).Return(nil, fmt.Errorf(errorMessage)).Once()
 	}
 
 	expectReadCPSCSRNoPendingChanges = func(t *testing.T, client *cps.Mock, data testDataForCPSCSR, timesToRun int) {
@@ -118,8 +117,8 @@ var (
 		getChangeHistoryRes := cps.GetChangeHistoryResponse{
 			Changes: data.GetChangeHistoryResponse.Changes,
 		}
-		client.On("GetEnrollment", mock.Anything, getEnrollmentReq).Return(&getEnrollmentRes, nil).Times(timesToRun)
-		client.On("GetChangeHistory", mock.Anything, getChangeHistoryReq).Return(&getChangeHistoryRes, nil).Times(timesToRun)
+		client.On("GetEnrollment", testutils.MockContext, getEnrollmentReq).Return(&getEnrollmentRes, nil).Times(timesToRun)
+		client.On("GetChangeHistory", testutils.MockContext, getChangeHistoryReq).Return(&getChangeHistoryRes, nil).Times(timesToRun)
 	}
 
 	bothAlgorithmsDataFromCSR = testDataForCPSCSR{

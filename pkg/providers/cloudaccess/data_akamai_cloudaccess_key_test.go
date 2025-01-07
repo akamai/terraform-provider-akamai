@@ -18,11 +18,11 @@ func TestDataKey(t *testing.T) {
 		listLocationsRes := cloudaccess.ListAccessKeysResponse{
 			AccessKeys: data,
 		}
-		client.On("ListAccessKeys", mock.Anything, mock.Anything).Return(&listLocationsRes, nil).Times(timesToRun)
+		client.On("ListAccessKeys", testutils.MockContext, mock.Anything).Return(&listLocationsRes, nil).Times(timesToRun)
 	}
 
 	expectListAccessKeysWithError := func(client *cloudaccess.Mock, timesToRun int) {
-		client.On("ListAccessKeys", mock.Anything, mock.Anything).Return(nil, fmt.Errorf("list keys failed")).Times(timesToRun)
+		client.On("ListAccessKeys", testutils.MockContext, mock.Anything).Return(nil, fmt.Errorf("list keys failed")).Times(timesToRun)
 	}
 
 	stringDate1, err := date.Parse("2021-02-24T09:09:52.782555Z")

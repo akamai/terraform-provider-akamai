@@ -9,7 +9,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -42,36 +41,36 @@ func TestAkamaiCustomRule_res_basic(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("GetCustomRules",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetCustomRulesRequest{ConfigID: 43253, ID: 661699},
 		).Return(&getCustomRulesAfterDelete, nil)
 
 		// mock 3 calls to GetCustomRule: 1) after create; 2) via TestCheckResourceAttr 3) pre-update
 		client.On("GetCustomRule",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetCustomRuleRequest{ConfigID: 43253, ID: 661699},
 		).Return(&getCustomRuleResponse, nil).Times(3)
 
 		// mock the GetCustomRule call that follows UpdateCustomRule
 		client.On("GetCustomRule",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetCustomRuleRequest{ConfigID: 43253, ID: 661699},
 		).Return(&getCustomRuleAfterUpdate, nil)
 
 		updateCustomRuleJSON := testutils.LoadFixtureBytes(t, "testdata/TestResCustomRule/UpdateCustomRule.json")
 		client.On("UpdateCustomRule",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.UpdateCustomRuleRequest{ConfigID: 43253, ID: 661699, Version: 0, JsonPayloadRaw: updateCustomRuleJSON},
 		).Return(&updateCustomRuleResponse, nil)
 
 		createCustomRuleJSON := testutils.LoadFixtureBytes(t, "testdata/TestResCustomRule/CreateCustomRule.json")
 		client.On("CreateCustomRule",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.CreateCustomRuleRequest{ConfigID: 43253, Version: 0, JsonPayloadRaw: createCustomRuleJSON},
 		).Return(&createCustomRuleResponse, nil)
 
 		client.On("RemoveCustomRule",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.RemoveCustomRuleRequest{ConfigID: 43253, ID: 661699},
 		).Return(&removeCustomRuleResponse, nil)
 
@@ -130,36 +129,36 @@ func TestAkamaiCustomRule_res_error_removing_active_rule(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("GetCustomRules",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetCustomRulesRequest{ConfigID: 43253, ID: 661699},
 		).Return(&getCustomRulesAfterDelete, nil)
 
 		// mock 3 calls to GetCustomRule: 1) after create; 2) via TestCheckResourceAttr 3) pre-update
 		client.On("GetCustomRule",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetCustomRuleRequest{ConfigID: 43253, ID: 661699},
 		).Return(&getCustomRuleResponse, nil).Times(3)
 
 		// mock the GetCustomRule call that follows UpdateCustomRule
 		client.On("GetCustomRule",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetCustomRuleRequest{ConfigID: 43253, ID: 661699},
 		).Return(&getCustomRuleResponseAfterUpdate, nil)
 
 		updateCustomRuleJSON := testutils.LoadFixtureBytes(t, "testdata/TestResCustomRule/UpdateCustomRule.json")
 		client.On("UpdateCustomRule",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.UpdateCustomRuleRequest{ConfigID: 43253, ID: 661699, Version: 0, JsonPayloadRaw: updateCustomRuleJSON},
 		).Return(nil, fmt.Errorf("RemoveCustomRule request failed"))
 
 		createCustomRuleJSON := testutils.LoadFixtureBytes(t, "testdata/TestResCustomRule/CreateCustomRule.json")
 		client.On("CreateCustomRule",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.CreateCustomRuleRequest{ConfigID: 43253, Version: 0, JsonPayloadRaw: createCustomRuleJSON},
 		).Return(&createCustomRuleResponse, nil)
 
 		client.On("RemoveCustomRule",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.RemoveCustomRuleRequest{ConfigID: 43253, ID: 661699},
 		).Return(&removeCustomRuleResponse, nil)
 

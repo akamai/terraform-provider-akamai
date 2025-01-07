@@ -10,7 +10,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -39,12 +38,12 @@ func TestAkamaiAdvancedSettingsPIILearning_res_basic(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("GetConfiguration",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&configResponse, nil)
 
 		client.On("UpdateAdvancedSettingsPIILearning",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.UpdateAdvancedSettingsPIILearningRequest{
 				ConfigVersion: appsec.ConfigVersion{
 					ConfigID: 43253,
@@ -54,7 +53,7 @@ func TestAkamaiAdvancedSettingsPIILearning_res_basic(t *testing.T) {
 		).Return(&updateResponse, nil)
 
 		client.On("GetAdvancedSettingsPIILearning",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetAdvancedSettingsPIILearningRequest{
 				ConfigVersion: appsec.ConfigVersion{
 					ConfigID: 43253,
@@ -63,7 +62,7 @@ func TestAkamaiAdvancedSettingsPIILearning_res_basic(t *testing.T) {
 		).Return(&getResponse, nil)
 
 		client.On("UpdateAdvancedSettingsPIILearning",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.UpdateAdvancedSettingsPIILearningRequest{
 				ConfigVersion: appsec.ConfigVersion{
 					ConfigID: 43253,
@@ -118,12 +117,12 @@ func TestAkamaiAdvancedSettingsPIILearning_res_api_call_failure(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("GetConfiguration",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&configResponse, nil)
 
 		client.On("UpdateAdvancedSettingsPIILearning",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.UpdateAdvancedSettingsPIILearningRequest{
 				ConfigVersion: appsec.ConfigVersion{
 					ConfigID: 43253,

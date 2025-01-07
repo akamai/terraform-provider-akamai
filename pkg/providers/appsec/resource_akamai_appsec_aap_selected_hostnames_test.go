@@ -9,7 +9,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -38,22 +37,22 @@ func TestAkamaiAAPSelectedHostnames_res_basic(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("GetConfiguration",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&config, nil)
 
 		client.On("GetWAPSelectedHostnames",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetWAPSelectedHostnamesRequest{ConfigID: 43253, Version: 7, SecurityPolicyID: "AAAA_81230"},
 		).Return(&getWAPSelectedHostnamesResponse, nil).Times(3)
 
 		client.On("GetWAPSelectedHostnames",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetWAPSelectedHostnamesRequest{ConfigID: 43253, Version: 7, SecurityPolicyID: "AAAA_81230"},
 		).Return(&updatedSelectedHostnamesForGetResponse, nil)
 
 		client.On("UpdateWAPSelectedHostnames",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.UpdateWAPSelectedHostnamesRequest{ConfigID: 43253, Version: 7, SecurityPolicyID: "AAAA_81230",
 				ProtectedHosts: []string{
 					"rinaldi.sandbox.akamaideveloper.com",
@@ -65,7 +64,7 @@ func TestAkamaiAAPSelectedHostnames_res_basic(t *testing.T) {
 		).Return(&updateWAPSelectedHostnamesResponse, nil).Once()
 
 		client.On("UpdateWAPSelectedHostnames",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.UpdateWAPSelectedHostnamesRequest{ConfigID: 43253, Version: 7, SecurityPolicyID: "AAAA_81230",
 				ProtectedHosts: []string{
 					"test.sandbox.akamaideveloper.com",
@@ -120,17 +119,17 @@ func TestAkamaiAAPSelectedHostnames_res_basic(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("GetConfiguration",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&config, nil)
 
 		client.On("GetWAPSelectedHostnames",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetWAPSelectedHostnamesRequest{ConfigID: 43253, Version: 7, SecurityPolicyID: "AAAA_81230"},
 		).Return(nil, fmt.Errorf("GetWAPSelectedHostnames failed"))
 
 		client.On("UpdateWAPSelectedHostnames",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.UpdateWAPSelectedHostnamesRequest{ConfigID: 43253, Version: 7, SecurityPolicyID: "AAAA_81230",
 				ProtectedHosts: []string{
 					"rinaldi.sandbox.akamaideveloper.com",

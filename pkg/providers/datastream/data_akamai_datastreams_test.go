@@ -67,7 +67,7 @@ func TestDataDatastreams(t *testing.T) {
 	}{
 		"list streams": {
 			init: func(t *testing.T, m *datastream.Mock) {
-				m.On("ListStreams", mock.Anything, mock.Anything).
+				m.On("ListStreams", testutils.MockContext, mock.Anything).
 					Return(streamList, nil)
 			},
 			steps: []resource.TestStep{
@@ -79,7 +79,7 @@ func TestDataDatastreams(t *testing.T) {
 		},
 		"list streams with specified group id": {
 			init: func(t *testing.T, m *datastream.Mock) {
-				m.On("ListStreams", mock.Anything, datastream.ListStreamsRequest{
+				m.On("ListStreams", testutils.MockContext, datastream.ListStreamsRequest{
 					GroupID: ptr.To(1234),
 				}).Return(streamListForSpecificGroup, nil)
 			},
@@ -92,7 +92,7 @@ func TestDataDatastreams(t *testing.T) {
 		},
 		"list streams with specified group id using grp prefix": {
 			init: func(t *testing.T, m *datastream.Mock) {
-				m.On("ListStreams", mock.Anything, datastream.ListStreamsRequest{
+				m.On("ListStreams", testutils.MockContext, datastream.ListStreamsRequest{
 					GroupID: ptr.To(1234),
 				}).Return(streamListForSpecificGroup, nil)
 			},
@@ -114,7 +114,7 @@ func TestDataDatastreams(t *testing.T) {
 		},
 		"list streams - empty list": {
 			init: func(t *testing.T, m *datastream.Mock) {
-				m.On("ListStreams", mock.Anything, datastream.ListStreamsRequest{}).
+				m.On("ListStreams", testutils.MockContext, datastream.ListStreamsRequest{}).
 					Return([]datastream.StreamDetails{}, nil)
 			},
 			steps: []resource.TestStep{
@@ -126,7 +126,7 @@ func TestDataDatastreams(t *testing.T) {
 		},
 		"could not fetch stream list": {
 			init: func(t *testing.T, m *datastream.Mock) {
-				m.On("ListStreams", mock.Anything, mock.Anything).
+				m.On("ListStreams", testutils.MockContext, mock.Anything).
 					Return(nil, fmt.Errorf("failed to get stream list")).Once()
 			},
 			steps: []resource.TestStep{

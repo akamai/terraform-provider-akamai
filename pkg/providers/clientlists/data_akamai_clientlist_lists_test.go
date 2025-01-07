@@ -10,7 +10,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/clientlists"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -64,7 +63,7 @@ func TestClientList_data_all_lists(t *testing.T) {
 			clientListsResponseJSONString := buf.String()
 
 			client.On("GetClientLists",
-				mock.Anything,
+				testutils.MockContext,
 				test.params,
 			).Return(&clientListsResponse, nil)
 

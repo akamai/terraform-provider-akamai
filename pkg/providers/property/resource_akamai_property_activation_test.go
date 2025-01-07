@@ -93,7 +93,7 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 				// Create with compliance record
 				m.On(
 					"CreateActivation",
-					mock.Anything,
+					testutils.MockContext,
 					papi.CreateActivationRequest{
 						PropertyID: "prp_test",
 						Activation: papi.Activation{
@@ -120,7 +120,7 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 				expectGetActivations(m, "prp_test", generateActivationResponseMock("atv_activation1", "property activation note for creating", 1, papi.ActivationTypeActivate, "2020-10-28T15:04:05Z", []string{"user@example.com"}), nil).Once()
 				m.On(
 					"CreateActivation",
-					mock.Anything,
+					testutils.MockContext,
 					papi.CreateActivationRequest{
 						PropertyID: "prp_test",
 						Activation: papi.Activation{
@@ -554,7 +554,7 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 				expectGetActivations(m, "prp_test", generateActivationResponseMock("atv_activation1", "property activation note for creating", 1, papi.ActivationTypeActivate, "2020-10-28T15:04:05Z", []string{"user@example.com"}), nil).Once()
 				m.On(
 					"CreateActivation",
-					mock.Anything,
+					testutils.MockContext,
 					papi.CreateActivationRequest{
 						PropertyID: "prp_test",
 						Activation: papi.Activation{
@@ -698,7 +698,7 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 				expectGetActivations(m, "prp_test", generateActivationResponseMock("atv_activation1", "", 1, papi.ActivationTypeActivate, "2020-10-28T15:04:05Z", []string{"user@example.com"}), nil).Once()
 				expectGetPropertyVersion(m, "prp_test", "", "", 2, papi.VersionStatusInactive, "").Once()
 				// error on update
-				m.On("CreateActivation", AnyCTX, papi.CreateActivationRequest{
+				m.On("CreateActivation", testutils.MockContext, papi.CreateActivationRequest{
 					PropertyID: "prp_test",
 					Activation: papi.Activation{
 						ActivationType:         papi.ActivationTypeActivate,
@@ -978,13 +978,13 @@ var (
 		if err != nil {
 			return m.On(
 				"GetRuleTree",
-				mock.Anything,
+				testutils.MockContext,
 				papi.GetRuleTreeRequest{PropertyID: propertyID, PropertyVersion: version, ValidateRules: true},
 			).Return(nil, err)
 		}
 		return m.On(
 			"GetRuleTree",
-			mock.Anything,
+			testutils.MockContext,
 			papi.GetRuleTreeRequest{PropertyID: propertyID, PropertyVersion: version, ValidateRules: true},
 		).Return(&response, nil)
 	}
@@ -1002,13 +1002,13 @@ var (
 		if err != nil {
 			return m.On(
 				"GetActivations",
-				mock.Anything,
+				testutils.MockContext,
 				papi.GetActivationsRequest{PropertyID: propertyID},
 			).Return(nil, err)
 		}
 		return m.On(
 			"GetActivations",
-			mock.Anything,
+			testutils.MockContext,
 			papi.GetActivationsRequest{PropertyID: propertyID},
 		).Return(&response, nil)
 	}
@@ -1018,7 +1018,7 @@ var (
 		if err != nil {
 			return m.On(
 				"CreateActivation",
-				mock.Anything,
+				testutils.MockContext,
 				papi.CreateActivationRequest{
 					PropertyID: propertyID,
 					Activation: papi.Activation{
@@ -1034,7 +1034,7 @@ var (
 		}
 		return m.On(
 			"CreateActivation",
-			mock.Anything,
+			testutils.MockContext,
 			papi.CreateActivationRequest{
 				PropertyID: propertyID,
 				Activation: papi.Activation{
@@ -1055,7 +1055,7 @@ var (
 		network papi.ActivationNetwork, notify []string, note string, activationID string, acknowledgeAllWarnings bool, err error) {
 		m.On(
 			"CreateActivation",
-			mock.Anything,
+			testutils.MockContext,
 			papi.CreateActivationRequest{
 				PropertyID: propertyID,
 				Activation: papi.Activation{
@@ -1069,7 +1069,7 @@ var (
 			},
 		).Return(nil, err).Once()
 
-		m.On("GetActivations", mock.Anything, papi.GetActivationsRequest{
+		m.On("GetActivations", testutils.MockContext, papi.GetActivationsRequest{
 			PropertyID: propertyID,
 		}).Return(&papi.GetActivationsResponse{
 			Activations: papi.ActivationsItems{
@@ -1096,7 +1096,7 @@ var (
 		if err != nil {
 			return m.On(
 				"GetActivation",
-				mock.Anything,
+				testutils.MockContext,
 				papi.GetActivationRequest{
 					PropertyID:   propertyID,
 					ActivationID: activationID,
@@ -1105,7 +1105,7 @@ var (
 		}
 		return m.On(
 			"GetActivation",
-			mock.Anything,
+			testutils.MockContext,
 			papi.GetActivationRequest{
 				PropertyID:   propertyID,
 				ActivationID: activationID,
@@ -1143,6 +1143,6 @@ var (
 				ProductionStatus: ProdStatus,
 			},
 		}
-		return client.On("GetPropertyVersion", AnyCTX, req).Return(&res, nil)
+		return client.On("GetPropertyVersion", testutils.MockContext, req).Return(&res, nil)
 	}
 )

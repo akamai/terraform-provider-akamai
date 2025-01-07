@@ -7,7 +7,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/botman"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestResourceCustomDenyAction(t *testing.T) {
@@ -17,7 +16,7 @@ func TestResourceCustomDenyAction(t *testing.T) {
 		createResponse := map[string]interface{}{"actionId": "cc9c3f89-e179-4892-89cf-d5e623ba9dc7", "testKey": "testValue3"}
 		createRequest := testutils.LoadFixtureBytes(t, "testdata/JsonPayload/create.json")
 		mockedBotmanClient.On("CreateCustomDenyAction",
-			mock.Anything,
+			testutils.MockContext,
 			botman.CreateCustomDenyActionRequest{
 				ConfigID:    43253,
 				Version:     15,
@@ -26,7 +25,7 @@ func TestResourceCustomDenyAction(t *testing.T) {
 		).Return(createResponse, nil).Once()
 
 		mockedBotmanClient.On("GetCustomDenyAction",
-			mock.Anything,
+			testutils.MockContext,
 			botman.GetCustomDenyActionRequest{
 				ConfigID: 43253,
 				Version:  15,
@@ -38,7 +37,7 @@ func TestResourceCustomDenyAction(t *testing.T) {
 		updateResponse := map[string]interface{}{"actionId": "cc9c3f89-e179-4892-89cf-d5e623ba9dc7", "testKey": "updated_testValue3"}
 		updateRequest := `{"actionId":"cc9c3f89-e179-4892-89cf-d5e623ba9dc7","testKey":"updated_testValue3"}`
 		mockedBotmanClient.On("UpdateCustomDenyAction",
-			mock.Anything,
+			testutils.MockContext,
 			botman.UpdateCustomDenyActionRequest{
 				ConfigID:    43253,
 				Version:     15,
@@ -48,7 +47,7 @@ func TestResourceCustomDenyAction(t *testing.T) {
 		).Return(updateResponse, nil).Once()
 
 		mockedBotmanClient.On("GetCustomDenyAction",
-			mock.Anything,
+			testutils.MockContext,
 			botman.GetCustomDenyActionRequest{
 				ConfigID: 43253,
 				Version:  15,
@@ -58,7 +57,7 @@ func TestResourceCustomDenyAction(t *testing.T) {
 		expectedUpdateJSON := `{"testKey":"updated_testValue3"}`
 
 		mockedBotmanClient.On("RemoveCustomDenyAction",
-			mock.Anything,
+			testutils.MockContext,
 			botman.RemoveCustomDenyActionRequest{
 				ConfigID: 43253,
 				Version:  15,

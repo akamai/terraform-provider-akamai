@@ -8,7 +8,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/iam"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestAccountSwitchKeys(t *testing.T) {
@@ -27,14 +26,14 @@ func TestAccountSwitchKeys(t *testing.T) {
 				AccountSwitchKey: "1-ABCD:Z-PQR",
 			},
 		}
-		client.On("ListAccountSwitchKeys", mock.Anything, iam.ListAccountSwitchKeysRequest{
+		client.On("ListAccountSwitchKeys", testutils.MockContext, iam.ListAccountSwitchKeysRequest{
 			ClientID: clientID,
 			Search:   filter,
 		}).Return(accountSwitchKeysResponse, nil).Times(timesToRun)
 	}
 
 	expectListAccountSwitchKeysWithError := func(client *iam.Mock, timesToRun int) {
-		client.On("ListAccountSwitchKeys", mock.Anything, iam.ListAccountSwitchKeysRequest{
+		client.On("ListAccountSwitchKeys", testutils.MockContext, iam.ListAccountSwitchKeysRequest{
 			ClientID: "",
 			Search:   "",
 		}).Return(nil, fmt.Errorf("list account switch keys failed")).Times(timesToRun)

@@ -9,7 +9,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/jinzhu/copier"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestConfigurationResource(t *testing.T) {
@@ -1110,17 +1109,17 @@ func (e *expecter) applyCreate(req cloudwrapper.CreateConfigurationRequest) {
 
 func (e *expecter) ExpectCreate(req cloudwrapper.CreateConfigurationRequest) {
 	e.applyCreate(req)
-	e.client.On("CreateConfiguration", mock.Anything, req).Return(e.CloneConfig(), nil).Once()
+	e.client.On("CreateConfiguration", testutils.MockContext, req).Return(e.CloneConfig(), nil).Once()
 }
 
 func (e *expecter) ExpectRefresh() {
-	e.client.On("GetConfiguration", mock.Anything, cloudwrapper.GetConfigurationRequest{
+	e.client.On("GetConfiguration", testutils.MockContext, cloudwrapper.GetConfigurationRequest{
 		ConfigID: 123,
 	}).Return(e.CloneConfig(), nil).Once()
 }
 
 func (e *expecter) ExpectDriftRefresh(config *cloudwrapper.Configuration, err error) {
-	e.client.On("GetConfiguration", mock.Anything, cloudwrapper.GetConfigurationRequest{
+	e.client.On("GetConfiguration", testutils.MockContext, cloudwrapper.GetConfigurationRequest{
 		ConfigID: e.config.ConfigID,
 	}).Return(config, err).Once()
 }
@@ -1161,26 +1160,26 @@ func (e *expecter) applyUpdate(req cloudwrapper.UpdateConfigurationRequest) {
 
 func (e *expecter) ExpectUpdate(req cloudwrapper.UpdateConfigurationRequest) {
 	e.applyUpdate(req)
-	e.client.On("UpdateConfiguration", mock.Anything, req).Return(e.CloneConfig(), nil).Once()
+	e.client.On("UpdateConfiguration", testutils.MockContext, req).Return(e.CloneConfig(), nil).Once()
 }
 
 func (e *expecter) ExpectDelete() {
-	e.client.On("GetConfiguration", mock.Anything, cloudwrapper.GetConfigurationRequest{
+	e.client.On("GetConfiguration", testutils.MockContext, cloudwrapper.GetConfigurationRequest{
 		ConfigID: 123,
 	}).Return(e.CloneConfig(), nil).Once()
 
-	e.client.On("DeleteConfiguration", mock.Anything, cloudwrapper.DeleteConfigurationRequest{
+	e.client.On("DeleteConfiguration", testutils.MockContext, cloudwrapper.DeleteConfigurationRequest{
 		ConfigID: e.config.ConfigID,
 	}).Return(nil).Once()
 
 	conf := e.CloneConfig()
 	conf.Status = "DELETE_IN_PROGRESS"
 
-	e.client.On("GetConfiguration", mock.Anything, cloudwrapper.GetConfigurationRequest{
+	e.client.On("GetConfiguration", testutils.MockContext, cloudwrapper.GetConfigurationRequest{
 		ConfigID: 123,
 	}).Return(conf, nil).Once()
 
-	e.client.On("GetConfiguration", mock.Anything, cloudwrapper.GetConfigurationRequest{
+	e.client.On("GetConfiguration", testutils.MockContext, cloudwrapper.GetConfigurationRequest{
 		ConfigID: 123,
 	}).Return(nil, cloudwrapper.ErrConfigurationNotFound).Once()
 }

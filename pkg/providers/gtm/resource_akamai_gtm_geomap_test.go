@@ -201,7 +201,7 @@ func TestResGTMGeoMap(t *testing.T) {
 
 func mockUpdateGeoMap(client *gtm.Mock, updateGeoMap gtm.GeoMap) *mock.Call {
 	return client.On("UpdateGeoMap",
-		mock.Anything, // ctx is irrelevant for this test
+		testutils.MockContext,
 		gtm.UpdateGeoMapRequest{
 			GeoMap:     &updateGeoMap,
 			DomainName: testDomainName,
@@ -386,25 +386,25 @@ func getGeoMapOrderingTestMock() *gtm.Mock {
 
 func mockGetGeoMap(client *gtm.Mock, ret *gtm.GetGeoMapResponse, err error) *mock.Call {
 	return client.On("GetGeoMap",
-		mock.Anything, // ctx is irrelevant for this test
+		testutils.MockContext,
 		gtm.GetGeoMapRequest{MapName: "tfexample_geomap_1", DomainName: testDomainName},
 	).Return(ret, err)
 }
 
 func mockCreateGeoMap(client *gtm.Mock, request gtm.CreateGeoMapRequest, response *gtm.CreateGeoMapResponse, err error) *mock.Call {
-	return client.On("CreateGeoMap", mock.Anything, request).Return(response, err).Once()
+	return client.On("CreateGeoMap", testutils.MockContext, request).Return(response, err).Once()
 }
 
 func mockGetDatacenterForGeomap(client *gtm.Mock) *mock.Call {
 	return client.On("GetDatacenter",
-		mock.Anything, // ctx is irrelevant for this test
+		testutils.MockContext,
 		gtm.GetDatacenterRequest{DatacenterID: 5400, DomainName: testDomainName},
 	).Return(&dc, nil)
 }
 
 func mockDeleteGeoMap(client *gtm.Mock) *mock.Call {
 	return client.On("DeleteGeoMap",
-		mock.Anything, // ctx is irrelevant for this test
+		testutils.MockContext,
 		gtm.DeleteGeoMapRequest{MapName: "tfexample_geomap_1", DomainName: testDomainName},
 	).Return(&gtm.DeleteGeoMapResponse{
 		Status: getDefaultResponseStatus(),

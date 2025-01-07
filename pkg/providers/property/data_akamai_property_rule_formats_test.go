@@ -6,7 +6,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 func Test_readPropertyRuleFormats(t *testing.T) {
@@ -18,7 +17,7 @@ func Test_readPropertyRuleFormats(t *testing.T) {
 				"v2015-08-08"}}
 
 		client.On("GetRuleFormats",
-			mock.Anything,
+			testutils.MockContext,
 		).Return(&papi.GetRuleFormatsResponse{RuleFormats: ruleFormats}, nil)
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{

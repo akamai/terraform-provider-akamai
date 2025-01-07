@@ -7,7 +7,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -19,7 +18,7 @@ func TestAkamaiAdvancedSettingsRequestBodyResConfig(t *testing.T) {
 			require.NoError(t, err)
 
 			client.On("GetConfiguration",
-				mock.Anything,
+				testutils.MockContext,
 				appsec.GetConfigurationRequest{ConfigID: configId},
 			).Return(&configResponse, nil)
 
@@ -32,7 +31,7 @@ func TestAkamaiAdvancedSettingsRequestBodyResConfig(t *testing.T) {
 			require.NoError(t, err)
 
 			client.On("GetAdvancedSettingsRequestBody",
-				mock.Anything,
+				testutils.MockContext,
 				appsec.GetAdvancedSettingsRequestBodyRequest{ConfigID: configId, Version: version, PolicyID: policyId},
 			).Return(&requestBodyResponse, nil).Times(numberOfTimes)
 
@@ -44,7 +43,7 @@ func TestAkamaiAdvancedSettingsRequestBodyResConfig(t *testing.T) {
 			require.NoError(t, err)
 
 			client.On("UpdateAdvancedSettingsRequestBody",
-				mock.Anything, updateRequestBody,
+				testutils.MockContext, updateRequestBody,
 			).Return(&updateRequestBodyResponse, nil).Times(numberOfTimes)
 
 		}
@@ -55,7 +54,7 @@ func TestAkamaiAdvancedSettingsRequestBodyResConfig(t *testing.T) {
 			require.NoError(t, err)
 
 			client.On("RemoveAdvancedSettingsRequestBody",
-				mock.Anything, updateRequestBody,
+				testutils.MockContext, updateRequestBody,
 			).Return(&removeRequestBodyResponse, nil).Times(numberOfTimes)
 
 		}

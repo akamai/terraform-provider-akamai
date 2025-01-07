@@ -7,7 +7,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestDSCPCode(t *testing.T) {
@@ -21,7 +20,7 @@ func TestDSCPCode(t *testing.T) {
 		}}
 
 		client.On("GetCPCodes",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			papi.GetCPCodesRequest{ContractID: "ctr_test", GroupID: "grp_test"},
 		).Return(&papi.GetCPCodesResponse{CPCodes: cpc}, nil)
 
@@ -53,7 +52,7 @@ func TestDSCPCode(t *testing.T) {
 		}}
 
 		client.On("GetCPCodes",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			papi.GetCPCodesRequest{ContractID: "ctr_test", GroupID: "grp_test"},
 		).Return(&papi.GetCPCodesResponse{CPCodes: cpc}, nil)
 
@@ -87,7 +86,7 @@ func TestDSCPCode(t *testing.T) {
 		}}
 
 		client.On("GetCPCodes",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			papi.GetCPCodesRequest{ContractID: "ctr_test", GroupID: "grp_test"},
 		).Return(&papi.GetCPCodesResponse{CPCodes: cpc}, nil)
 
@@ -119,7 +118,7 @@ func TestDSCPCode(t *testing.T) {
 		}}
 
 		client.On("GetCPCodes",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			papi.GetCPCodesRequest{ContractID: "ctr_test", GroupID: "grp_test"},
 		).Return(&papi.GetCPCodesResponse{CPCodes: cpc}, nil)
 
@@ -148,7 +147,7 @@ func TestDSCPCode(t *testing.T) {
 		}}
 
 		client.On("GetCPCodes",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			papi.GetCPCodesRequest{ContractID: "ctr_test", GroupID: "grp_test"},
 		).Return(&papi.GetCPCodesResponse{CPCodes: cpc}, nil)
 
@@ -168,12 +167,12 @@ func TestDSCPCode(t *testing.T) {
 	t.Run("group not found in state", func(t *testing.T) {
 		client := &papi.Mock{}
 		client.On("GetCPCodes",
-			AnyCTX, mock.Anything,
+			testutils.MockContext, testutils.MockContext,
 		).Return(&papi.GetCPCodesResponse{CPCodes: papi.CPCodeItems{Items: []papi.CPCode{{
 			ID: "cpc_123", Name: "test-ft-cp-code", CreatedDate: "", ProductIDs: []string{"prd_prod1"},
 		}}}}, nil)
-		client.On("CreateCPCode", AnyCTX, mock.Anything).Return(&papi.CreateCPCodeResponse{}, nil)
-		client.On("GetCPCode", AnyCTX, mock.Anything).Return(&papi.GetCPCodesResponse{CPCode: papi.CPCode{
+		client.On("CreateCPCode", testutils.MockContext, testutils.MockContext).Return(&papi.CreateCPCodeResponse{}, nil)
+		client.On("GetCPCode", testutils.MockContext, testutils.MockContext).Return(&papi.GetCPCodesResponse{CPCode: papi.CPCode{
 			ID: "cpc_123", Name: "test-ft-cp-code", CreatedDate: "", ProductIDs: []string{"prd_prod1"},
 		}}, nil).Times(3)
 		useClient(client, nil, func() {

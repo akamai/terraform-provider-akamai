@@ -8,14 +8,13 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/iam"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestGrantableRoles(t *testing.T) {
 	t.Run("happy path", func(t *testing.T) {
 		client := &iam.Mock{}
 		client.Test(testutils.TattleT{T: t})
-		client.On("ListGrantableRoles", mock.Anything).Return([]iam.RoleGrantedRole{
+		client.On("ListGrantableRoles", testutils.MockContext).Return([]iam.RoleGrantedRole{
 			{Description: "A", RoleID: 1, RoleName: "Can print A"},
 			{Description: "B", RoleID: 2, RoleName: "Can print B"},
 		}, nil)
@@ -48,7 +47,7 @@ func TestGrantableRoles(t *testing.T) {
 	t.Run("fail path", func(t *testing.T) {
 		client := &iam.Mock{}
 		client.Test(testutils.TattleT{T: t})
-		client.On("ListGrantableRoles", mock.Anything).Return([]iam.RoleGrantedRole{}, errors.New("could not get grantable roles"))
+		client.On("ListGrantableRoles", testutils.MockContext).Return([]iam.RoleGrantedRole{}, errors.New("could not get grantable roles"))
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{

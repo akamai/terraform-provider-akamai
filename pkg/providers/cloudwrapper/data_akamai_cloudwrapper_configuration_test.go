@@ -10,7 +10,6 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 var (
@@ -327,7 +326,7 @@ func expectGetConfiguration(client *cloudwrapper.Mock, data testDataForCWConfigu
 		ConfigID: data.ID,
 	}
 	getConfigurationRes := getConfiguration(data)
-	client.On("GetConfiguration", mock.Anything, getConfigurationReq).Return(&getConfigurationRes, nil).Times(timesToRun)
+	client.On("GetConfiguration", testutils.MockContext, getConfigurationReq).Return(&getConfigurationRes, nil).Times(timesToRun)
 }
 
 func getConfiguration(data testDataForCWConfiguration) cloudwrapper.Configuration {
@@ -354,5 +353,5 @@ func expectGetConfigurationWithError(client *cloudwrapper.Mock, data testDataFor
 	getConfigurationReq := cloudwrapper.GetConfigurationRequest{
 		ConfigID: data.ID,
 	}
-	client.On("GetConfiguration", mock.Anything, getConfigurationReq).Return(nil, fmt.Errorf("get configuration failed")).Times(timesToRun)
+	client.On("GetConfiguration", testutils.MockContext, getConfigurationReq).Return(nil, fmt.Errorf("get configuration failed")).Times(timesToRun)
 }

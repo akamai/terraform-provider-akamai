@@ -13,7 +13,6 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 type (
@@ -229,7 +228,7 @@ func TestDataUser(t *testing.T) {
 			configPath: "testdata/TestDataUser/default.tf",
 			init: func(t *testing.T, m *iam.Mock, user testDataForUser) {
 				getUserReq := iam.GetUserRequest{IdentityID: user.uiIdentityID, Actions: true, AuthGrants: true, Notifications: true}
-				m.On("GetUser", mock.Anything, getUserReq).Return(nil, errors.New("test error"))
+				m.On("GetUser", testutils.MockContext, getUserReq).Return(nil, errors.New("test error"))
 			},
 			error:    regexp.MustCompile("test error"),
 			mockData: basicUserTestData,
@@ -332,7 +331,7 @@ func expectGetUser(_ *testing.T, client *iam.Mock, data testDataForUser, times i
 	}
 	usr.AuthGrants = userAuthGrantList
 
-	client.On("GetUser", mock.Anything, getUserReq).Return(&usr, nil).Times(times)
+	client.On("GetUser", testutils.MockContext, getUserReq).Return(&usr, nil).Times(times)
 }
 
 func expectGetUserMaxAuthGranSubGroups(_ *testing.T, client *iam.Mock, data testDataForUser, times, subGroupsDepth int) {
@@ -407,7 +406,7 @@ func expectGetUserMaxAuthGranSubGroups(_ *testing.T, client *iam.Mock, data test
 	}
 	usr.AuthGrants = userAuthGrantList
 
-	client.On("GetUser", mock.Anything, getUserReq).Return(&usr, nil).Times(times)
+	client.On("GetUser", testutils.MockContext, getUserReq).Return(&usr, nil).Times(times)
 }
 
 func checkUserAttrs(data testDataForUser) resource.TestCheckFunc {

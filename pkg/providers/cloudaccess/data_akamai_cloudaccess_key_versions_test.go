@@ -79,8 +79,8 @@ func TestDataKeyVersions(t *testing.T) {
 			configPath: "testdata/TestDataKeyVersions/default.tf",
 			init: func(_ *testing.T, m *cloudaccess.Mock) {
 
-				m.On("ListAccessKeys", mock.Anything, mock.Anything).Return(&listAccessKeysMockRes, nil)
-				m.On("ListAccessKeyVersions", mock.Anything, cloudaccess.ListAccessKeyVersionsRequest{
+				m.On("ListAccessKeys", testutils.MockContext, mock.Anything).Return(&listAccessKeysMockRes, nil)
+				m.On("ListAccessKeyVersions", testutils.MockContext, cloudaccess.ListAccessKeyVersionsRequest{
 					AccessKeyUID: accessKeyUID,
 				}).Return(&listAccessKeyVersionsMockRes, nil)
 			},
@@ -91,8 +91,8 @@ func TestDataKeyVersions(t *testing.T) {
 			configPath: "testdata/TestDataKeyVersions/default.tf",
 			init: func(_ *testing.T, m *cloudaccess.Mock) {
 
-				m.On("ListAccessKeys", mock.Anything, mock.Anything).Return(&listAccessKeysMockRes, nil)
-				m.On("ListAccessKeyVersions", mock.Anything, cloudaccess.ListAccessKeyVersionsRequest{
+				m.On("ListAccessKeys", testutils.MockContext, mock.Anything).Return(&listAccessKeysMockRes, nil)
+				m.On("ListAccessKeyVersions", testutils.MockContext, cloudaccess.ListAccessKeyVersionsRequest{
 					AccessKeyUID: accessKeyUID,
 				}).Return(&cloudaccess.ListAccessKeyVersionsResponse{}, nil)
 			},
@@ -103,7 +103,7 @@ func TestDataKeyVersions(t *testing.T) {
 			configPath: "testdata/TestDataKeyVersions/default.tf",
 			init: func(_ *testing.T, m *cloudaccess.Mock) {
 
-				m.On("ListAccessKeys", mock.Anything, mock.Anything).Return(&cloudaccess.ListAccessKeysResponse{}, nil)
+				m.On("ListAccessKeys", testutils.MockContext, mock.Anything).Return(&cloudaccess.ListAccessKeysResponse{}, nil)
 
 			},
 			error: regexp.MustCompile(`no key with given name`),
@@ -112,7 +112,7 @@ func TestDataKeyVersions(t *testing.T) {
 			configPath: "testdata/TestDataKeyVersions/default.tf",
 			init: func(_ *testing.T, m *cloudaccess.Mock) {
 
-				m.On("ListAccessKeys", mock.Anything, mock.Anything).Return(nil, fmt.Errorf("API error"))
+				m.On("ListAccessKeys", testutils.MockContext, mock.Anything).Return(nil, fmt.Errorf("API error"))
 
 			},
 			error: regexp.MustCompile(`API error`),
@@ -121,8 +121,8 @@ func TestDataKeyVersions(t *testing.T) {
 			configPath: "testdata/TestDataKeyVersions/default.tf",
 			init: func(_ *testing.T, m *cloudaccess.Mock) {
 
-				m.On("ListAccessKeys", mock.Anything, mock.Anything).Return(&listAccessKeysMockRes, nil)
-				m.On("ListAccessKeyVersions", mock.Anything, cloudaccess.ListAccessKeyVersionsRequest{
+				m.On("ListAccessKeys", testutils.MockContext, mock.Anything).Return(&listAccessKeysMockRes, nil)
+				m.On("ListAccessKeyVersions", testutils.MockContext, cloudaccess.ListAccessKeyVersionsRequest{
 					AccessKeyUID: accessKeyUID,
 				}).Return(nil, fmt.Errorf("API error"))
 

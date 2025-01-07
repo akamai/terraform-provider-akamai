@@ -9,7 +9,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestBlockedPropertiesDataSource(t *testing.T) {
@@ -27,24 +26,24 @@ func TestBlockedPropertiesDataSource(t *testing.T) {
 		"happy path - blocked properties are returned": {
 			givenTF: "valid.tf",
 			init: func(im *iam.Mock, pm *papi.Mock) {
-				im.On("ListBlockedProperties", mock.Anything, iam.ListBlockedPropertiesRequest{
+				im.On("ListBlockedProperties", testutils.MockContext, iam.ListBlockedPropertiesRequest{
 					IdentityID: "user123",
 					GroupID:    1,
 				}).Return([]int64{123, 456}, nil)
-				im.On("MapPropertyIDToName", mock.Anything, iam.MapPropertyIDToNameRequest{
+				im.On("MapPropertyIDToName", testutils.MockContext, iam.MapPropertyIDToNameRequest{
 					GroupID:    1,
 					PropertyID: 123,
 				}).Return(&propertyName1, nil)
-				pm.On("MapPropertyNameToID", mock.Anything, papi.MapPropertyNameToIDRequest{
+				pm.On("MapPropertyNameToID", testutils.MockContext, papi.MapPropertyNameToIDRequest{
 					GroupID:    "grp_1",
 					ContractID: "ctr_C-123",
 					Name:       propertyName1,
 				}).Return(&propertyID1, nil)
-				im.On("MapPropertyIDToName", mock.Anything, iam.MapPropertyIDToNameRequest{
+				im.On("MapPropertyIDToName", testutils.MockContext, iam.MapPropertyIDToNameRequest{
 					GroupID:    1,
 					PropertyID: 456,
 				}).Return(&propertyName2, nil)
-				pm.On("MapPropertyNameToID", mock.Anything, papi.MapPropertyNameToIDRequest{
+				pm.On("MapPropertyNameToID", testutils.MockContext, papi.MapPropertyNameToIDRequest{
 					GroupID:    "grp_1",
 					ContractID: "ctr_C-123",
 					Name:       propertyName2,
@@ -63,7 +62,7 @@ func TestBlockedPropertiesDataSource(t *testing.T) {
 		"happy path - no blocked properties are returned": {
 			givenTF: "valid.tf",
 			init: func(im *iam.Mock, pm *papi.Mock) {
-				im.On("ListBlockedProperties", mock.Anything, iam.ListBlockedPropertiesRequest{
+				im.On("ListBlockedProperties", testutils.MockContext, iam.ListBlockedPropertiesRequest{
 					IdentityID: "user123",
 					GroupID:    1,
 				}).Return([]int64{}, nil)
@@ -76,7 +75,7 @@ func TestBlockedPropertiesDataSource(t *testing.T) {
 		"error response from api": {
 			givenTF: "valid.tf",
 			init: func(im *iam.Mock, _ *papi.Mock) {
-				im.On("ListBlockedProperties", mock.Anything, iam.ListBlockedPropertiesRequest{
+				im.On("ListBlockedProperties", testutils.MockContext, iam.ListBlockedPropertiesRequest{
 					IdentityID: "user123",
 					GroupID:    1,
 				}).Return(nil, fmt.Errorf("oops"))

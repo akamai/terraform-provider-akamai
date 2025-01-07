@@ -8,7 +8,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/gtm"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestDataGTMResource(t *testing.T) {
@@ -22,7 +21,7 @@ func TestDataGTMResource(t *testing.T) {
 		"happy path - GTM data resource should be returned": {
 			givenTF: "valid.tf",
 			init: func(m *gtm.Mock) {
-				m.On("GetResource", mock.Anything, gtm.GetResourceRequest{
+				m.On("GetResource", testutils.MockContext, gtm.GetResourceRequest{
 					ResourceName: "resource1",
 					DomainName:   "test.domain.net",
 				}).Return(&gtm.GetResourceResponse{
@@ -74,7 +73,7 @@ func TestDataGTMResource(t *testing.T) {
 		"error response from api": {
 			givenTF: "valid.tf",
 			init: func(m *gtm.Mock) {
-				m.On("GetResource", mock.Anything, gtm.GetResourceRequest{
+				m.On("GetResource", testutils.MockContext, gtm.GetResourceRequest{
 					ResourceName: "resource1",
 					DomainName:   "test.domain.net",
 				}).Return(

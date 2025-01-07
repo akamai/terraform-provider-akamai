@@ -6,7 +6,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/botman"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestDataBotEndpointCoverageReport(t *testing.T) {
@@ -33,7 +32,7 @@ func TestDataBotEndpointCoverageReport(t *testing.T) {
 	]
 }`
 		mockedBotmanClient.On("GetBotEndpointCoverageReport",
-			mock.Anything,
+			testutils.MockContext,
 			botman.GetBotEndpointCoverageReportRequest{},
 		).Return(&response, nil)
 
@@ -69,7 +68,7 @@ func TestDataBotEndpointCoverageReport(t *testing.T) {
 	]
 }`
 		mockedBotmanClient.On("GetBotEndpointCoverageReport",
-			mock.Anything,
+			testutils.MockContext,
 			botman.GetBotEndpointCoverageReportRequest{OperationID: "cc9c3f89-e179-4892-89cf-d5e623ba9dc7"},
 		).Return(&response, nil)
 
@@ -113,7 +112,7 @@ func TestDataBotEndpointCoverageReport(t *testing.T) {
 	]
 }`
 		mockedBotmanClient.On("GetBotEndpointCoverageReport",
-			mock.Anything,
+			testutils.MockContext,
 			botman.GetBotEndpointCoverageReportRequest{ConfigID: 43253, Version: 15},
 		).Return(&response, nil)
 
@@ -149,7 +148,7 @@ func TestDataBotEndpointCoverageReport(t *testing.T) {
 	]
 }`
 		mockedBotmanClient.On("GetBotEndpointCoverageReport",
-			mock.Anything,
+			testutils.MockContext,
 			botman.GetBotEndpointCoverageReportRequest{ConfigID: 43253, Version: 15, OperationID: "cc9c3f89-e179-4892-89cf-d5e623ba9dc7"},
 		).Return(&response, nil)
 

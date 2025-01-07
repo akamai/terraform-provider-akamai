@@ -6,7 +6,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/botman"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestDataChallengeInjectionRules(t *testing.T) {
@@ -16,7 +15,7 @@ func TestDataChallengeInjectionRules(t *testing.T) {
 		response := map[string]interface{}{"testKey": "testValue3"}
 		expectedJSON := `{"testKey":"testValue3"}`
 		mockedBotmanClient.On("GetChallengeInjectionRules",
-			mock.Anything,
+			testutils.MockContext,
 			botman.GetChallengeInjectionRulesRequest{ConfigID: 43253, Version: 15},
 		).Return(response, nil)
 

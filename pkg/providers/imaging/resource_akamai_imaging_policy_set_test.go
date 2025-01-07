@@ -10,7 +10,6 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestResourceImagingPolicySet(t *testing.T) {
@@ -18,7 +17,7 @@ func TestResourceImagingPolicySet(t *testing.T) {
 		anError = errors.New("oops")
 
 		expectPolicySetCreation = func(t *testing.T, client *imaging.Mock, contractID, name, region, mediaType string, policySet *imaging.PolicySet, createError error) {
-			client.On("CreatePolicySet", mock.Anything, imaging.CreatePolicySetRequest{
+			client.On("CreatePolicySet", testutils.MockContext, imaging.CreatePolicySetRequest{
 				ContractID: contractID,
 				CreatePolicySet: imaging.CreatePolicySet{
 					Name:   name,
@@ -29,13 +28,13 @@ func TestResourceImagingPolicySet(t *testing.T) {
 		}
 
 		expectPolicySetRead = func(t *testing.T, client *imaging.Mock, contractID, policySetID string, policySet *imaging.PolicySet, getPolicyError error, times int) {
-			client.On("GetPolicySet", mock.Anything, imaging.GetPolicySetRequest{
+			client.On("GetPolicySet", testutils.MockContext, imaging.GetPolicySetRequest{
 				PolicySetID: policySetID, ContractID: contractID,
 			}).Return(policySet, getPolicyError).Times(times)
 		}
 
 		expectPolicySetUpdate = func(t *testing.T, client *imaging.Mock, contractID, policySetID, name, region string, updatePolicySetError error) {
-			client.On("UpdatePolicySet", mock.Anything, imaging.UpdatePolicySetRequest{
+			client.On("UpdatePolicySet", testutils.MockContext, imaging.UpdatePolicySetRequest{
 				PolicySetID: policySetID,
 				ContractID:  contractID,
 				UpdatePolicySet: imaging.UpdatePolicySet{
@@ -45,7 +44,7 @@ func TestResourceImagingPolicySet(t *testing.T) {
 			}).Return(nil, updatePolicySetError).Once()
 		}
 		expectPolicySetDelete = func(t *testing.T, client *imaging.Mock, contractID, policySetID, network string, listPolicyResponse *imaging.ListPoliciesResponse, listPolicyError, deletePolicySetError error) {
-			client.On("ListPolicies", mock.Anything, imaging.ListPoliciesRequest{
+			client.On("ListPolicies", testutils.MockContext, imaging.ListPoliciesRequest{
 				Network:     imaging.PolicyNetworkProduction,
 				ContractID:  contractID,
 				PolicySetID: policySetID,
@@ -55,13 +54,13 @@ func TestResourceImagingPolicySet(t *testing.T) {
 				return
 			}
 
-			client.On("ListPolicies", mock.Anything, imaging.ListPoliciesRequest{
+			client.On("ListPolicies", testutils.MockContext, imaging.ListPoliciesRequest{
 				Network:     imaging.PolicyNetworkStaging,
 				ContractID:  contractID,
 				PolicySetID: policySetID,
 			}).Return(listPolicyResponse, listPolicyError).Once()
 
-			client.On("DeletePolicySet", mock.Anything, imaging.DeletePolicySetRequest{
+			client.On("DeletePolicySet", testutils.MockContext, imaging.DeletePolicySetRequest{
 				PolicySetID: policySetID,
 				ContractID:  contractID,
 			}).Return(deletePolicySetError).Once()

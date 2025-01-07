@@ -9,7 +9,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/iam"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestRoleDataSource(t *testing.T) {
@@ -26,7 +25,7 @@ func TestRoleDataSource(t *testing.T) {
 		"happy path - role is returned": {
 			givenTF: "valid.tf",
 			init: func(m *iam.Mock) {
-				m.On("GetRole", mock.Anything, iam.GetRoleRequest{
+				m.On("GetRole", testutils.MockContext, iam.GetRoleRequest{
 					ID:           12345,
 					Actions:      true,
 					GrantedRoles: true,
@@ -63,7 +62,7 @@ func TestRoleDataSource(t *testing.T) {
 		"happy path - role is returned, without dates": {
 			givenTF: "valid.tf",
 			init: func(m *iam.Mock) {
-				m.On("GetRole", mock.Anything, iam.GetRoleRequest{
+				m.On("GetRole", testutils.MockContext, iam.GetRoleRequest{
 					ID:           12345,
 					Actions:      true,
 					GrantedRoles: true,
@@ -98,7 +97,7 @@ func TestRoleDataSource(t *testing.T) {
 		"error response from API": {
 			givenTF: "valid.tf",
 			init: func(m *iam.Mock) {
-				m.On("GetRole", mock.Anything, iam.GetRoleRequest{
+				m.On("GetRole", testutils.MockContext, iam.GetRoleRequest{
 					ID:           12345,
 					Actions:      true,
 					GrantedRoles: true,

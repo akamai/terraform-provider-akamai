@@ -215,7 +215,7 @@ func TestCIDRBlockResource(t *testing.T) {
 		},
 		"expect error - create": {
 			init: func(t *testing.T, m *iam.Mock, createData, _ commonDataForResource) {
-				m.On("CreateCIDRBlock", mock.Anything, iam.CreateCIDRBlockRequest{
+				m.On("CreateCIDRBlock", testutils.MockContext, iam.CreateCIDRBlockRequest{
 					CIDRBlock: createData.cidrBlock,
 					Comments:  createData.comments,
 					Enabled:   createData.enabled,
@@ -237,7 +237,7 @@ func TestCIDRBlockResource(t *testing.T) {
 				mockGetCIDRBlock(t, m, createData).Twice()
 				mockGetCIDRBlock(t, m, createData)
 				// Delete - error
-				m.On("DeleteCIDRBlock", mock.Anything, iam.DeleteCIDRBlockRequest{
+				m.On("DeleteCIDRBlock", testutils.MockContext, iam.DeleteCIDRBlockRequest{
 					CIDRBlockID: createData.cidrBlockID,
 				}).Return(iam.ErrDeleteCIDRBlock).Once()
 				// Delete - destroy
@@ -319,7 +319,7 @@ func TestImportCIDRBlockResource(t *testing.T) {
 		"expect error - read": {
 			importID: "1111",
 			init: func(t *testing.T, m *iam.Mock, data commonDataForResource) {
-				m.On("GetCIDRBlock", mock.Anything, iam.GetCIDRBlockRequest{
+				m.On("GetCIDRBlock", testutils.MockContext, iam.GetCIDRBlockRequest{
 					CIDRBlockID: data.cidrBlockID,
 					Actions:     true,
 				}).Return(nil, fmt.Errorf("get failed")).Once()
@@ -409,7 +409,7 @@ func mockCreateCIDRBlock(t *testing.T, m *iam.Mock, testData commonDataForResour
 		}
 	}
 
-	return m.On("CreateCIDRBlock", mock.Anything, iam.CreateCIDRBlockRequest{
+	return m.On("CreateCIDRBlock", testutils.MockContext, iam.CreateCIDRBlockRequest{
 		CIDRBlock: testData.cidrBlock,
 		Comments:  testData.comments,
 		Enabled:   testData.enabled,
@@ -436,7 +436,7 @@ func mockGetCIDRBlock(t *testing.T, m *iam.Mock, testData commonDataForResource)
 		}
 	}
 
-	return m.On("GetCIDRBlock", mock.Anything, iam.GetCIDRBlockRequest{
+	return m.On("GetCIDRBlock", testutils.MockContext, iam.GetCIDRBlockRequest{
 		CIDRBlockID: testData.cidrBlockID,
 		Actions:     true,
 	}).Return(&iam.GetCIDRBlockResponse{
@@ -453,7 +453,7 @@ func mockGetCIDRBlock(t *testing.T, m *iam.Mock, testData commonDataForResource)
 }
 
 func mockDeleteCIDRBlock(m *iam.Mock, testData commonDataForResource) *mock.Call {
-	return m.On("DeleteCIDRBlock", mock.Anything, iam.DeleteCIDRBlockRequest{
+	return m.On("DeleteCIDRBlock", testutils.MockContext, iam.DeleteCIDRBlockRequest{
 		CIDRBlockID: testData.cidrBlockID,
 	}).Return(nil).Once()
 }
@@ -468,7 +468,7 @@ func mockUpdateCIDRBlock(t *testing.T, m *iam.Mock, testData commonDataForResour
 		}
 	}
 
-	return m.On("UpdateCIDRBlock", mock.Anything, iam.UpdateCIDRBlockRequest{
+	return m.On("UpdateCIDRBlock", testutils.MockContext, iam.UpdateCIDRBlockRequest{
 		CIDRBlockID: testData.cidrBlockID,
 		Body: iam.UpdateCIDRBlockRequestBody{
 			CIDRBlock: testData.cidrBlock,

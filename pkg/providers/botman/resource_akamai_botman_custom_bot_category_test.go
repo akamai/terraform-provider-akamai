@@ -7,7 +7,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/botman"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestResourceCustomBotCategory(t *testing.T) {
@@ -17,7 +16,7 @@ func TestResourceCustomBotCategory(t *testing.T) {
 		createResponse := map[string]interface{}{"categoryId": "cc9c3f89-e179-4892-89cf-d5e623ba9dc7", "testKey": "testValue3"}
 		createRequest := testutils.LoadFixtureBytes(t, "testdata/JsonPayload/create.json")
 		mockedBotmanClient.On("CreateCustomBotCategory",
-			mock.Anything,
+			testutils.MockContext,
 			botman.CreateCustomBotCategoryRequest{
 				ConfigID:    43253,
 				Version:     15,
@@ -26,7 +25,7 @@ func TestResourceCustomBotCategory(t *testing.T) {
 		).Return(createResponse, nil).Once()
 
 		mockedBotmanClient.On("GetCustomBotCategory",
-			mock.Anything,
+			testutils.MockContext,
 			botman.GetCustomBotCategoryRequest{
 				ConfigID:   43253,
 				Version:    15,
@@ -38,7 +37,7 @@ func TestResourceCustomBotCategory(t *testing.T) {
 		updateResponse := map[string]interface{}{"categoryId": "cc9c3f89-e179-4892-89cf-d5e623ba9dc7", "testKey": "updated_testValue3"}
 		updateRequest := `{"categoryId":"cc9c3f89-e179-4892-89cf-d5e623ba9dc7","testKey":"updated_testValue3"}`
 		mockedBotmanClient.On("UpdateCustomBotCategory",
-			mock.Anything,
+			testutils.MockContext,
 			botman.UpdateCustomBotCategoryRequest{
 				ConfigID:    43253,
 				Version:     15,
@@ -48,7 +47,7 @@ func TestResourceCustomBotCategory(t *testing.T) {
 		).Return(updateResponse, nil).Once()
 
 		mockedBotmanClient.On("GetCustomBotCategory",
-			mock.Anything,
+			testutils.MockContext,
 			botman.GetCustomBotCategoryRequest{
 				ConfigID:   43253,
 				Version:    15,
@@ -58,7 +57,7 @@ func TestResourceCustomBotCategory(t *testing.T) {
 		expectedUpdateJSON := `{"testKey":"updated_testValue3"}`
 
 		mockedBotmanClient.On("RemoveCustomBotCategory",
-			mock.Anything,
+			testutils.MockContext,
 			botman.RemoveCustomBotCategoryRequest{
 				ConfigID:   43253,
 				Version:    15,

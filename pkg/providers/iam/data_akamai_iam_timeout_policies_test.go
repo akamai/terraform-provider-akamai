@@ -8,7 +8,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/iam"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestDataTimeoutPolicies(t *testing.T) {
@@ -21,7 +20,7 @@ func TestDataTimeoutPolicies(t *testing.T) {
 			{Name: "second", Value: 22},
 			{Name: "third", Value: 33},
 		}
-		client.On("ListTimeoutPolicies", mock.Anything).Return(res, nil)
+		client.On("ListTimeoutPolicies", testutils.MockContext).Return(res, nil)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -48,7 +47,7 @@ func TestDataTimeoutPolicies(t *testing.T) {
 	t.Run("fail path", func(t *testing.T) {
 		client := &iam.Mock{}
 		client.Test(testutils.TattleT{T: t})
-		client.On("ListTimeoutPolicies", mock.Anything).Return(nil, errors.New("Could not get supported timeout policies"))
+		client.On("ListTimeoutPolicies", testutils.MockContext).Return(nil, errors.New("Could not get supported timeout policies"))
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{

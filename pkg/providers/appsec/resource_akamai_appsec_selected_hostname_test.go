@@ -7,7 +7,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -32,17 +31,17 @@ func TestAkamaiSelectedHostname_res_basic(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("GetConfiguration",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&config, nil)
 
 		client.On("GetSelectedHostnames",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetSelectedHostnamesRequest{ConfigID: 43253, Version: 7},
 		).Return(&getSelectedHostnamesResponse, nil)
 
 		client.On("UpdateSelectedHostnames",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.UpdateSelectedHostnamesRequest{ConfigID: 43253, Version: 7, HostnameList: []appsec.Hostname{
 				{
 					Hostname: "rinaldi.sandbox.akamaideveloper.com",

@@ -18,7 +18,7 @@ func TestResGTMASMap(t *testing.T) {
 		client := &gtm.Mock{}
 
 		getCall := client.On("GetASMap",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.GetASMapRequest"),
 		).Return(nil, &gtm.Error{
 			StatusCode: http.StatusNotFound,
@@ -28,12 +28,12 @@ func TestResGTMASMap(t *testing.T) {
 		resp := asmap
 
 		client.On("GetDatacenter",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.GetDatacenterRequest"),
 		).Return(&dc, nil)
 
 		client.On("CreateASMap",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.CreateASMapRequest"),
 		).Return(&gtm.CreateASMapResponse{
 			Resource: asMapCreate.Resource,
@@ -43,27 +43,27 @@ func TestResGTMASMap(t *testing.T) {
 		})
 
 		client.On("GetASMap",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.GetASMapRequest"),
 		).Return(&resp, nil).Times(3)
 
 		client.On("GetDomainStatus",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.GetDomainStatusRequest"),
 		).Return(getDomainStatusResponseStatus, nil)
 
 		client.On("UpdateASMap",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.UpdateASMapRequest"),
 		).Return(updateASMapResponseStatus, nil)
 
 		client.On("GetASMap",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.GetASMapRequest"),
 		).Return(&asMapUpdate, nil).Times(3)
 
 		client.On("DeleteASMap",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.DeleteASMapRequest"),
 		).Return(deleteASMapResponseStatus, nil)
 
@@ -96,7 +96,7 @@ func TestResGTMASMap(t *testing.T) {
 		client := &gtm.Mock{}
 
 		getCall := client.On("GetASMap",
-			mock.Anything,
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.GetASMapRequest"),
 		).Return(nil, &gtm.Error{
 			StatusCode: http.StatusNotFound,
@@ -106,12 +106,12 @@ func TestResGTMASMap(t *testing.T) {
 		resp := asmap
 
 		client.On("GetDatacenter",
-			mock.Anything,
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.GetDatacenterRequest"),
 		).Return(&dc, nil).Once()
 
 		client.On("CreateASMap",
-			mock.Anything,
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.CreateASMapRequest"),
 		).Return(&gtm.CreateASMapResponse{
 			Resource: asMapCreate.Resource,
@@ -121,24 +121,24 @@ func TestResGTMASMap(t *testing.T) {
 		}).Once()
 
 		client.On("GetASMap",
-			mock.Anything,
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.GetASMapRequest"),
 		).Return(&resp, nil).Twice()
 
 		// Mock that the ASMap was deleted outside terraform
 		client.On("GetASMap",
-			mock.Anything,
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.GetASMapRequest"),
 		).Return(nil, gtm.ErrNotFound).Once()
 
 		// For terraform test framework, we need to mock GetASMap as it would actually exist before deletion
 		client.On("GetASMap",
-			mock.Anything,
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.GetASMapRequest"),
 		).Return(&resp, nil).Once()
 
 		client.On("DeleteASMap",
-			mock.Anything,
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.DeleteASMapRequest"),
 		).Return(deleteASMapResponseStatus, nil).Once()
 
@@ -170,7 +170,7 @@ func TestResGTMASMap(t *testing.T) {
 		client := &gtm.Mock{}
 
 		client.On("GetASMap",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.GetASMapRequest"),
 		).Return(nil, &gtm.Error{
 			StatusCode: http.StatusNotFound,
@@ -179,14 +179,14 @@ func TestResGTMASMap(t *testing.T) {
 		_, dc := getASMapTestData()
 
 		client.On("CreateASMap",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.CreateASMapRequest"),
 		).Return(nil, &gtm.Error{
 			StatusCode: http.StatusBadRequest,
 		})
 
 		client.On("GetDatacenter",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.GetDatacenterRequest"),
 		).Return(&dc, nil)
 
@@ -210,7 +210,7 @@ func TestResGTMASMap(t *testing.T) {
 
 		asmap, _ := getASMapTestData()
 		client.On("GetASMap",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.GetASMapRequest"),
 		).Return(&asmap, nil).Once()
 
@@ -233,7 +233,7 @@ func TestResGTMASMap(t *testing.T) {
 		client := &gtm.Mock{}
 
 		client.On("GetASMap",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.GetASMapRequest"),
 		).Return(nil, &gtm.Error{
 			StatusCode: http.StatusNotFound,
@@ -243,12 +243,12 @@ func TestResGTMASMap(t *testing.T) {
 		dr.Resource = asMapCreate.Resource
 		dr.Status = &deniedResponseStatus
 		client.On("CreateASMap",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.CreateASMapRequest"),
 		).Return(&dr, nil)
 
 		client.On("GetDatacenter",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			mock.AnythingOfType("gtm.GetDatacenterRequest"),
 		).Return(&dc, nil)
 
@@ -444,19 +444,19 @@ func getASMapMocks() *gtm.Mock {
 	client := &gtm.Mock{}
 
 	mockGetAsMap := client.On("GetASMap",
-		mock.Anything, // ctx is irrelevant for this test
+		testutils.MockContext,
 		mock.AnythingOfType("gtm.GetASMapRequest"),
 	).Return(nil, &gtm.Error{StatusCode: http.StatusNotFound})
 
 	resp := asMapDiffOrder
 
 	client.On("GetDatacenter",
-		mock.Anything, // ctx is irrelevant for this test
+		testutils.MockContext,
 		mock.AnythingOfType("gtm.GetDatacenterRequest"),
 	).Return(&dc, nil)
 
 	client.On("CreateASMap",
-		mock.Anything, // ctx is irrelevant for this test
+		testutils.MockContext,
 		mock.AnythingOfType("gtm.CreateASMapRequest"),
 	).Return(&gtm.CreateASMapResponse{
 		Resource: asMapCreate.Resource,
@@ -466,12 +466,12 @@ func getASMapMocks() *gtm.Mock {
 	})
 
 	client.On("GetDomainStatus",
-		mock.Anything, // ctx is irrelevant for this test
+		testutils.MockContext,
 		mock.AnythingOfType("gtm.GetDomainStatusRequest"),
 	).Return(getDomainStatusResponseStatus, nil)
 
 	client.On("DeleteASMap",
-		mock.Anything, // ctx is irrelevant for this test
+		testutils.MockContext,
 		mock.AnythingOfType("gtm.DeleteASMapRequest"),
 		mock.AnythingOfType("string"),
 	).Return(deleteASMapResponseStatus, nil)
@@ -480,7 +480,7 @@ func getASMapMocks() *gtm.Mock {
 }
 
 func mockGetASMap(m *gtm.Mock, resp *gtm.GetASMapResponse, err error) *mock.Call {
-	return m.On("GetASMap", mock.Anything, gtm.GetASMapRequest{
+	return m.On("GetASMap", testutils.MockContext, gtm.GetASMapRequest{
 		ASMapName:  "tfexample_as_1",
 		DomainName: "gtm_terra_testdomain.akadns.net",
 	}).Return(resp, err)

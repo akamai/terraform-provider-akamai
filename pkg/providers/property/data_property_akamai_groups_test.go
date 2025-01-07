@@ -20,7 +20,7 @@ func TestDataSourceMultipleGroups_basic(t *testing.T) {
 			"parent_group_id": "grp_parent",
 			"contractIds":     contractIDs,
 		}}
-		client.On("GetGroups", AnyCTX).Return(&papi.GetGroupsResponse{
+		client.On("GetGroups", testutils.MockContext).Return(&papi.GetGroupsResponse{
 			AccountID: "act_1-1TJZFB", AccountName: "example.com",
 			Groups: papi.GroupItems{Items: []*papi.Group{{
 				GroupID:       groups[0]["group_id"].(string),
@@ -59,7 +59,7 @@ func TestGroup_ContractNotFoundInState(t *testing.T) {
 			"parent_group_id": "grp_parent",
 			"contractIds":     contractIDs,
 		}}
-		client.On("GetGroups", AnyCTX).Return(&papi.GetGroupsResponse{
+		client.On("GetGroups", testutils.MockContext).Return(&papi.GetGroupsResponse{
 			AccountID: "act_1-1TJZFB", AccountName: "example.com",
 			Groups: papi.GroupItems{Items: []*papi.Group{{
 				GroupID:       groups[0]["group_id"].(string),

@@ -7,7 +7,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -19,7 +18,7 @@ func TestAkamaiCustomDeny_res_basic(t *testing.T) {
 		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/LatestConfiguration.json"), &configResponse)
 		require.NoError(t, err)
 		client.On("GetConfiguration",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&configResponse, nil)
 
@@ -28,7 +27,7 @@ func TestAkamaiCustomDeny_res_basic(t *testing.T) {
 		require.NoError(t, err)
 		createRequestJSON := testutils.LoadFixtureBytes(t, "testdata/TestResCustomDeny/CustomDenyWithPreventBrowserCacheTrue.json")
 		client.On("CreateCustomDeny",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.CreateCustomDenyRequest{ConfigID: 43253, Version: 7, JsonPayloadRaw: createRequestJSON},
 		).Return(&createResponse, nil)
 
@@ -36,7 +35,7 @@ func TestAkamaiCustomDeny_res_basic(t *testing.T) {
 		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResCustomDeny/CustomDenyGetResponse.json"), &getResponse)
 		require.NoError(t, err)
 		client.On("GetCustomDeny",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetCustomDenyRequest{ConfigID: 43253, Version: 7, ID: "deny_custom_622918"},
 		).Return(&getResponse, nil).Times(3)
 
@@ -45,7 +44,7 @@ func TestAkamaiCustomDeny_res_basic(t *testing.T) {
 		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResCustomDeny/CustomDenyUpdateResponse.json"), &updateResponse)
 		require.NoError(t, err)
 		client.On("UpdateCustomDeny",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.UpdateCustomDenyRequest{ConfigID: 43253, Version: 7, ID: "deny_custom_622918", JsonPayloadRaw: updateRequestJSON},
 		).Return(&updateResponse, nil)
 
@@ -53,7 +52,7 @@ func TestAkamaiCustomDeny_res_basic(t *testing.T) {
 		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResCustomDeny/CustomDenyGetResponseAfterUpdate.json"), &getResponseAfterUpdate)
 		require.NoError(t, err)
 		client.On("GetCustomDeny",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetCustomDenyRequest{ConfigID: 43253, Version: 7, ID: "deny_custom_622918"},
 		).Return(&getResponseAfterUpdate, nil).Twice()
 
@@ -61,7 +60,7 @@ func TestAkamaiCustomDeny_res_basic(t *testing.T) {
 		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResCustomDeny/CustomDeny.json"), &removeResponse)
 		require.NoError(t, err)
 		client.On("RemoveCustomDeny",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.RemoveCustomDenyRequest{ConfigID: 43253, Version: 7, ID: "deny_custom_622918"},
 		).Return(&removeResponse, nil)
 
