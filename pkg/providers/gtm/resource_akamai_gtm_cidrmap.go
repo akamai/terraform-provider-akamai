@@ -212,6 +212,10 @@ func resourceGTMv1CIDRMapRead(ctx context.Context, d *schema.ResourceData, m int
 		DomainName: domain,
 		MapName:    cidrMap,
 	})
+	if errors.Is(err, gtm.ErrNotFound) {
+		d.SetId("")
+		return nil
+	}
 	if err != nil {
 		logger.Errorf("cidrMap Read error: %s", err.Error())
 		return append(diags, diag.Diagnostic{

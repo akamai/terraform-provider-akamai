@@ -241,6 +241,10 @@ func resourceGTMv1ResourceRead(ctx context.Context, d *schema.ResourceData, m in
 		ResourceName: resource,
 		DomainName:   domain,
 	})
+	if errors.Is(err, gtm.ErrNotFound) {
+		d.SetId("")
+		return nil
+	}
 	if err != nil {
 		logger.Errorf("Resource Read failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{

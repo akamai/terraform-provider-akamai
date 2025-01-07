@@ -86,6 +86,74 @@ func TestResGTMResource(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 
+	t.Run("create resource, remove outside of terraform, expect non-empty plan", func(t *testing.T) {
+		client := &gtm.Mock{}
+
+		getCall := client.On("GetResource",
+			mock.Anything,
+			mock.AnythingOfType("gtm.GetResourceRequest"),
+		).Return(nil, &gtm.Error{
+			StatusCode: http.StatusNotFound,
+		}).Once()
+
+		resp := rsrc
+		client.On("CreateResource",
+			mock.Anything,
+			mock.AnythingOfType("gtm.CreateResourceRequest"),
+		).Return(&gtm.CreateResourceResponse{
+			Resource: rsrcCreate.Resource,
+			Status:   rsrcCreate.Status,
+		}, nil).Run(func(args mock.Arguments) {
+			getCall.ReturnArguments = mock.Arguments{&resp, nil}
+		}).Once()
+
+		client.On("GetResource",
+			mock.Anything,
+			mock.AnythingOfType("gtm.GetResourceRequest"),
+		).Return(&resp, nil).Twice()
+
+		// Mock that the resource was deleted outside terraform
+		client.On("GetResource",
+			mock.Anything,
+			mock.AnythingOfType("gtm.GetResourceRequest"),
+		).Return(nil, gtm.ErrNotFound).Once()
+
+		// For terraform test framework, we need to mock GetResource as it would actually exist before deletion
+		client.On("GetResource",
+			mock.Anything,
+			mock.AnythingOfType("gtm.GetResourceRequest"),
+		).Return(&resp, nil).Once()
+
+		client.On("DeleteResource",
+			mock.Anything,
+			mock.AnythingOfType("gtm.DeleteResourceRequest"),
+		).Return(deleteResourceResponseStatus, nil).Once()
+
+		dataSourceName := "akamai_gtm_resource.tfexample_resource_1"
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmResource/create_basic.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr(dataSourceName, "name", "tfexample_resource_1"),
+							resource.TestCheckResourceAttr(dataSourceName, "aggregation_type", "latest"),
+						),
+					},
+					{
+						Config:             testutils.LoadFixtureString(t, "testdata/TestResGtmResource/create_basic.tf"),
+						ExpectNonEmptyPlan: true,
+						PlanOnly:           true,
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
 	t.Run("create resource failed", func(t *testing.T) {
 		client := &gtm.Mock{}
 

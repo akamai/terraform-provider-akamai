@@ -90,6 +90,78 @@ func TestResGTMCIDRMap(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 
+	t.Run("create cidrmap, remove outside of terraform, expect non-empty plan", func(t *testing.T) {
+		client := &gtm.Mock{}
+
+		getCall := client.On("GetCIDRMap",
+			mock.Anything,
+			mock.AnythingOfType("gtm.GetCIDRMapRequest"),
+		).Return(nil, &gtm.Error{
+			StatusCode: http.StatusNotFound,
+		}).Once()
+
+		resp := cidr
+		client.On("CreateCIDRMap",
+			mock.Anything,
+			mock.AnythingOfType("gtm.CreateCIDRMapRequest"),
+		).Return(&gtm.CreateCIDRMapResponse{
+			Resource: cidrCreate.Resource,
+			Status:   cidrCreate.Status,
+		}, nil).Run(func(args mock.Arguments) {
+			getCall.ReturnArguments = mock.Arguments{&resp, nil}
+		}).Once()
+
+		client.On("GetCIDRMap",
+			mock.Anything,
+			mock.AnythingOfType("gtm.GetCIDRMapRequest"),
+		).Return(&resp, nil).Twice()
+
+		client.On("GetDatacenter",
+			mock.Anything,
+			mock.AnythingOfType("gtm.GetDatacenterRequest"),
+		).Return(&dc, nil).Once()
+
+		// Mock that the CIDRMap was deleted outside terraform
+		client.On("GetCIDRMap",
+			mock.Anything,
+			mock.AnythingOfType("gtm.GetCIDRMapRequest"),
+		).Return(nil, gtm.ErrNotFound).Once()
+
+		// For terraform test framework, we need to mock GetCIDRMap as it would actually exist before deletion
+		client.On("GetCIDRMap",
+			mock.Anything,
+			mock.AnythingOfType("gtm.GetCIDRMapRequest"),
+		).Return(&resp, nil).Once()
+
+		client.On("DeleteCIDRMap",
+			mock.Anything,
+			mock.AnythingOfType("gtm.DeleteCIDRMapRequest"),
+		).Return(deleteCIDRMapResponseStatus, nil).Once()
+
+		dataSourceName := "akamai_gtm_cidrmap.tfexample_cidrmap_1"
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmCidrmap/create_basic.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr(dataSourceName, "name", "tfexample_cidrmap_1"),
+						),
+					},
+					{
+						Config:             testutils.LoadFixtureString(t, "testdata/TestResGtmCidrmap/create_basic.tf"),
+						ExpectNonEmptyPlan: true,
+						PlanOnly:           true,
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
 	t.Run("create cidrmap failed", func(t *testing.T) {
 		client := &gtm.Mock{}
 

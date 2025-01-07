@@ -91,6 +91,80 @@ func TestResGTMASMap(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 
+	t.Run("create asmap, remove outside of terraform, expect non-empty plan", func(t *testing.T) {
+		client := &gtm.Mock{}
+
+		getCall := client.On("GetASMap",
+			mock.Anything,
+			mock.AnythingOfType("gtm.GetASMapRequest"),
+		).Return(nil, &gtm.Error{
+			StatusCode: http.StatusNotFound,
+		}).Once()
+
+		asmap, dc := getASMapTestData()
+		resp := asmap
+
+		client.On("GetDatacenter",
+			mock.Anything,
+			mock.AnythingOfType("gtm.GetDatacenterRequest"),
+		).Return(&dc, nil).Once()
+
+		client.On("CreateASMap",
+			mock.Anything,
+			mock.AnythingOfType("gtm.CreateASMapRequest"),
+		).Return(&gtm.CreateASMapResponse{
+			Resource: asMapCreate.Resource,
+			Status:   asMapCreate.Status,
+		}, nil).Run(func(args mock.Arguments) {
+			getCall.ReturnArguments = mock.Arguments{&resp, nil}
+		}).Once()
+
+		client.On("GetASMap",
+			mock.Anything,
+			mock.AnythingOfType("gtm.GetASMapRequest"),
+		).Return(&resp, nil).Twice()
+
+		// Mock that the ASMap was deleted outside terraform
+		client.On("GetASMap",
+			mock.Anything,
+			mock.AnythingOfType("gtm.GetASMapRequest"),
+		).Return(nil, gtm.ErrNotFound).Once()
+
+		// For terraform test framework, we need to mock GetASMap as it would actually exist before deletion
+		client.On("GetASMap",
+			mock.Anything,
+			mock.AnythingOfType("gtm.GetASMapRequest"),
+		).Return(&resp, nil).Once()
+
+		client.On("DeleteASMap",
+			mock.Anything,
+			mock.AnythingOfType("gtm.DeleteASMapRequest"),
+		).Return(deleteASMapResponseStatus, nil).Once()
+
+		dataSourceName := "akamai_gtm_asmap.tfexample_as_1"
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmAsmap/create_basic.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr(dataSourceName, "name", "tfexample_as_1"),
+						),
+					},
+					{
+						Config:             testutils.LoadFixtureString(t, "testdata/TestResGtmAsmap/create_basic.tf"),
+						ExpectNonEmptyPlan: true,
+						PlanOnly:           true,
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
 	t.Run("create asmap failed", func(t *testing.T) {
 		client := &gtm.Mock{}
 

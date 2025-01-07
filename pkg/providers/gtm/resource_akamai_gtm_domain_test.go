@@ -97,6 +97,80 @@ func TestResGTMDomain(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 
+	t.Run("create domain, remove outside of terraform, expect non-empty plan", func(t *testing.T) {
+		client := &gtm.Mock{}
+
+		getCall := client.On("GetDomain",
+			mock.Anything,
+			mock.AnythingOfType("gtm.GetDomainRequest"),
+		).Return(nil, &gtm.Error{
+			StatusCode: http.StatusNotFound,
+		}).Once()
+
+		dr := testCreateDomain
+		client.On("CreateDomain",
+			mock.Anything,
+			mock.AnythingOfType("gtm.CreateDomainRequest"),
+		).Return(&gtm.CreateDomainResponse{
+			Resource: testDomain,
+			Status:   testCreateDomain.Status,
+		}, nil).Run(func(args mock.Arguments) {
+			getCall.ReturnArguments = mock.Arguments{&dr, nil}
+		}).Once()
+
+		client.On("GetDomain",
+			mock.Anything,
+			mock.AnythingOfType("gtm.GetDomainRequest"),
+		).Return(&testCreateDomain, nil).Twice()
+
+		client.On("GetDomainStatus",
+			mock.Anything,
+			mock.AnythingOfType("gtm.GetDomainStatusRequest"),
+		).Return(getDomainStatusResponseStatus, nil).Twice()
+
+		// Mock that the domain was deleted outside terraform
+		client.On("GetDomain",
+			mock.Anything,
+			mock.AnythingOfType("gtm.GetDomainRequest"),
+		).Return(nil, gtm.ErrNotFound).Once()
+
+		// For terraform test framework, we need to mock GetDomain as it would actually exist before deletion
+		client.On("GetDomain",
+			mock.Anything,
+			mock.AnythingOfType("gtm.GetDomainRequest"),
+		).Return(&testCreateDomain, nil).Once()
+
+		client.On("DeleteDomain",
+			mock.Anything,
+			mock.AnythingOfType("gtm.DeleteDomainRequest"),
+		).Return(&deleteDomainResponseStatus, nil).Once()
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmDomain/create_basic.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr(resourceName, "name", gtmTestDomain),
+							resource.TestCheckResourceAttr(resourceName, "type", "weighted"),
+							resource.TestCheckResourceAttr(resourceName, "load_imbalance_percentage", "10"),
+							resource.TestCheckResourceAttr(resourceName, "sign_and_serve", "false"),
+							resource.TestCheckNoResourceAttr(resourceName, "sign_and_serve_algorithm"),
+						),
+					},
+					{
+						Config:             testutils.LoadFixtureString(t, "testdata/TestResGtmDomain/create_basic.tf"),
+						ExpectNonEmptyPlan: true,
+						PlanOnly:           true,
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
 	t.Run("create domain with sign and serve", func(t *testing.T) {
 		client := &gtm.Mock{}
 

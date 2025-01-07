@@ -267,6 +267,10 @@ func resourceGTMv1ASMapRead(ctx context.Context, d *schema.ResourceData, m inter
 		ASMapName:  asMap,
 		DomainName: domain,
 	})
+	if errors.Is(err, gtm.ErrNotFound) {
+		d.SetId("")
+		return nil
+	}
 	if err != nil {
 		logger.Errorf("asMap Read error: %s", err.Error())
 		return append(diags, diag.Diagnostic{
@@ -275,6 +279,7 @@ func resourceGTMv1ASMapRead(ctx context.Context, d *schema.ResourceData, m inter
 			Detail:   err.Error(),
 		})
 	}
+
 	populateTerraformASMapState(d, as, m)
 	logger.Debugf("READ %v", as)
 	return nil

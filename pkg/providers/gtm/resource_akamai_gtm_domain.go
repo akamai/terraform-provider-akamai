@@ -359,6 +359,10 @@ func resourceGTMv1DomainRead(ctx context.Context, d *schema.ResourceData, m inte
 	dom, err := Client(meta).GetDomain(ctx, gtm.GetDomainRequest{
 		DomainName: d.Id(),
 	})
+	if errors.Is(err, gtm.ErrNotFound) {
+		d.SetId("")
+		return nil
+	}
 	if err != nil {
 		logger.Errorf("Domain Read error: %s", err.Error())
 		return append(diags, diag.Diagnostic{

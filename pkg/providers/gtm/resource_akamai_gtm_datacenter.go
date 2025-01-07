@@ -265,6 +265,10 @@ func resourceGTMv1DatacenterRead(ctx context.Context, d *schema.ResourceData, m 
 		DatacenterID: dcID,
 		DomainName:   domain,
 	})
+	if errors.Is(err, gtm.ErrNotFound) {
+		d.SetId("")
+		return nil
+	}
 	if err != nil {
 		logger.Errorf("Datacenter Read failed: %s", err.Error())
 		return append(diags, diag.Diagnostic{

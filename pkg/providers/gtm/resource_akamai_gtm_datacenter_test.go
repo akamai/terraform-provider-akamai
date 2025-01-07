@@ -100,6 +100,67 @@ func TestResGTMDatacenter(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 
+	t.Run("create datacenter, remove outside of terraform, expect non-empty plan", func(t *testing.T) {
+		client := &gtm.Mock{}
+
+		resp := dc
+		client.On("CreateDatacenter",
+			mock.Anything,
+			mock.AnythingOfType("gtm.CreateDatacenterRequest"),
+		).Return(&gtm.CreateDatacenterResponse{
+			Resource: &dc,
+			Status:   &pendingResponseStatus,
+		}, nil).Once()
+
+		client.On("GetDatacenter",
+			mock.Anything,
+			mock.AnythingOfType("gtm.GetDatacenterRequest"),
+		).Return(&resp, nil).Twice()
+
+		// Mock that the datacenter was deleted outside terraform
+		client.On("GetDatacenter",
+			mock.Anything,
+			mock.AnythingOfType("gtm.GetDatacenterRequest"),
+		).Return(nil, &gtm.Error{
+			StatusCode: http.StatusNotFound,
+		}).Once()
+
+		// For terraform test framework, we need to mock GetDatacenter as it would actually exist before deletion
+		client.On("GetDatacenter",
+			mock.Anything,
+			mock.AnythingOfType("gtm.GetDatacenterRequest"),
+		).Return(&resp, nil).Once()
+
+		client.On("DeleteDatacenter",
+			mock.Anything,
+			mock.AnythingOfType("gtm.DeleteDatacenterRequest"),
+		).Return(deleteDatacenterResponseStatus, nil).Once()
+
+		dataSourceName := "akamai_gtm_datacenter.tfexample_dc_1"
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmDatacenter/create_basic.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr(dataSourceName, "nickname", "tfexample_dc_1"),
+							resource.TestCheckResourceAttr(dataSourceName, "continent", "EU"),
+						),
+					},
+					{
+						Config:             testutils.LoadFixtureString(t, "testdata/TestResGtmDatacenter/create_basic.tf"),
+						ExpectNonEmptyPlan: true,
+						PlanOnly:           true,
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
 	t.Run("create datacenter failed", func(t *testing.T) {
 		client := &gtm.Mock{}
 

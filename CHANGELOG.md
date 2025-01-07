@@ -83,7 +83,14 @@
 
 
 
-
+* GTM
+  * Added drift handling for resources deleted outside of Terraform: ([I#577](https://github.com/akamai/terraform-provider-akamai/issues/577))
+    * `akamai_gtm_asmap`
+    * `akamai_gtm_cidrmap`
+    * `akamai_gtm_datacenter`
+    * `akamai_gtm_domain`
+    * `akamai_gtm_geomap`
+    * `akamai_gtm_resource`
 
 
 ## 6.6.1 (Dec 20, 2024)

@@ -93,6 +93,80 @@ func TestResGTMGeoMap(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 
+	t.Run("create GEO map, remove outside of terraform, expect non-empty plan", func(t *testing.T) {
+		client := &gtm.Mock{}
+
+		getCall := client.On("GetGeoMap",
+			mock.Anything,
+			mock.AnythingOfType("gtm.GetGeoMapRequest"),
+		).Return(nil, &gtm.Error{
+			StatusCode: http.StatusNotFound,
+		}).Once()
+
+		resp := geomap
+		client.On("CreateGeoMap",
+			mock.Anything,
+			mock.AnythingOfType("gtm.CreateGeoMapRequest"),
+		).Return(&gtm.CreateGeoMapResponse{
+			Resource: geoMapCreate.Resource,
+			Status:   geoMapCreate.Status,
+		}, nil).Run(func(args mock.Arguments) {
+			getCall.ReturnArguments = mock.Arguments{&resp, nil}
+		}).Once()
+
+		client.On("GetGeoMap",
+			mock.Anything,
+			mock.AnythingOfType("gtm.GetGeoMapRequest"),
+		).Return(&resp, nil).Twice()
+
+		client.On("GetDatacenter",
+			mock.Anything,
+			mock.AnythingOfType("gtm.GetDatacenterRequest"),
+		).Return(&dc, nil).Once()
+
+		// Mock that the GEOMap was deleted outside terraform
+		client.On("GetGeoMap",
+			mock.Anything,
+			mock.AnythingOfType("gtm.GetGeoMapRequest"),
+		).Return(nil, &gtm.Error{
+			StatusCode: http.StatusNotFound,
+		}).Once()
+
+		// For terraform test framework, we need to mock GetGEOMap as it would actually exist before deletion
+		client.On("GetGeoMap",
+			mock.Anything,
+			mock.AnythingOfType("gtm.GetGeoMapRequest"),
+		).Return(&geomapUpdate, nil).Once()
+
+		client.On("DeleteGeoMap",
+			mock.Anything,
+			mock.AnythingOfType("gtm.DeleteGeoMapRequest"),
+		).Return(deleteGeoMapResponseStatus, nil).Once()
+
+		dataSourceName := "akamai_gtm_geomap.tfexample_geomap_1"
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmGeomap/create_basic.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr(dataSourceName, "name", "tfexample_geomap_1"),
+						),
+					},
+					{
+						Config:             testutils.LoadFixtureString(t, "testdata/TestResGtmGeomap/create_basic.tf"),
+						ExpectNonEmptyPlan: true,
+						PlanOnly:           true,
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
 	t.Run("create geomap failed", func(t *testing.T) {
 		client := &gtm.Mock{}
 

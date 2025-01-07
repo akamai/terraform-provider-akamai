@@ -104,6 +104,48 @@ func TestResGTMProperty(t *testing.T) {
 				},
 			},
 		},
+		"create property, remove outside of terraform, expect non-empty plan": {
+			property: getBasicProperty(),
+			init: func(t *testing.T, m *gtm.Mock) {
+				mockGetProperty(m, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
+				mockCreateProperty(m, getBasicProperty())
+				// read
+				mockGetProperty(m, getBasicPropertyResponse(), nil, 2)
+
+				// Mock that the property was deleted outside terraform
+				m.On("GetProperty",
+					mock.Anything,
+					mock.AnythingOfType("gtm.GetPropertyRequest"),
+				).Return(nil, gtm.ErrNotFound).Times(1)
+
+				// For terraform test framework, we need to mock GetProperty as it would actually exist before deletion
+				mockGetProperty(m, getBasicPropertyResponse(), nil, 1)
+				// delete
+				mockDeleteProperty(m)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/create_basic.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr(propertyResourceName, "name", "tfexample_prop_1"),
+						resource.TestCheckResourceAttr(propertyResourceName, "type", "weighted-round-robin"),
+						resource.TestCheckResourceAttr(propertyResourceName, "weighted_hash_bits_for_ipv4", "0"),
+						resource.TestCheckResourceAttr(propertyResourceName, "weighted_hash_bits_for_ipv6", "0"),
+						resource.TestCheckResourceAttr(propertyResourceName, "liveness_test.0.http_method", ""),
+						resource.TestCheckResourceAttr(propertyResourceName, "liveness_test.0.http_request_body", ""),
+						resource.TestCheckResourceAttr(propertyResourceName, "liveness_test.0.alternate_ca_certificates.#", "0"),
+						resource.TestCheckResourceAttr(propertyResourceName, "liveness_test.0.pre_2023_security_posture", "false"),
+						resource.TestCheckResourceAttr(propertyResourceName, "traffic_target.0.precedence", "0"),
+						resource.TestCheckResourceAttr(propertyResourceName, "id", "gtm_terra_testdomain.akadns.net:tfexample_prop_1"),
+					),
+				},
+				{
+					Config:             testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/create_basic.tf"),
+					ExpectNonEmptyPlan: true,
+					PlanOnly:           true,
+				},
+			},
+		},
 		"create property with additional liveness test fields": {
 			property: getBasicPropertyWithLivenessTests(),
 			init: func(t *testing.T, m *gtm.Mock) {

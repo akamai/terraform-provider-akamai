@@ -223,6 +223,10 @@ func resourceGTMv1GeoMapRead(ctx context.Context, d *schema.ResourceData, m inte
 		MapName:    geoMap,
 		DomainName: domain,
 	})
+	if errors.Is(err, gtm.ErrNotFound) {
+		d.SetId("")
+		return nil
+	}
 	if err != nil {
 		logger.Errorf("geoMap Read error: %s", err.Error())
 		return append(diags, diag.Diagnostic{
