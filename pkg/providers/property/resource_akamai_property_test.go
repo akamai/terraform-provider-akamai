@@ -1227,6 +1227,96 @@ func TestPropertyLifecycle(t *testing.T) {
 			})
 		})
 	})
+
+	t.Run("Lifecycle: no diff for CriteriaMustSatisfy", func(t *testing.T) {
+		// set initial data
+		papiMock := &papi.Mock{}
+		mp := &mockProperty{
+			papiMock:         papiMock,
+			mockPropertyData: basicData,
+		}
+		mp.ruleTree = mockRuleTreeData{
+			rules: papi.Rules{
+				Children: []papi.Rules{
+					{
+						Name: "Default CORS Policy",
+					},
+				},
+			},
+		}
+		// create
+		mp.mockCreateProperty()
+		mp.mockUpdatePropertyVersionHostnames()
+
+		rulesUpdate := papi.RulesUpdate{
+			Rules:    mp.ruleTree.rules,
+			Comments: mp.ruleTree.comments,
+		}
+		req := papi.UpdateRulesRequest{
+			PropertyID:      mp.propertyID,
+			PropertyVersion: mp.latestVersion,
+			ContractID:      mp.contractID,
+			GroupID:         mp.groupID,
+			Rules:           rulesUpdate,
+			ValidateRules:   true,
+		}
+
+		// default child setting of the CriteriaMustSatisfy field to the value "all" by API if it is not provided
+		defaultAPIResp := papi.Rules{
+			AdvancedOverride: mp.ruleTree.rules.AdvancedOverride,
+			Behaviors:        mp.ruleTree.rules.Behaviors,
+			Children: []papi.Rules{
+				{
+					Name:                mp.ruleTree.rules.Children[0].Name,
+					CriteriaMustSatisfy: papi.RuleCriteriaMustSatisfyAll,
+				},
+			},
+			Comments:            mp.ruleTree.rules.Comments,
+			Criteria:            mp.ruleTree.rules.Criteria,
+			CriteriaLocked:      mp.ruleTree.rules.CriteriaLocked,
+			CustomOverride:      mp.ruleTree.rules.CustomOverride,
+			Name:                mp.ruleTree.rules.Name,
+			Options:             mp.ruleTree.rules.Options,
+			UUID:                mp.ruleTree.rules.UUID,
+			TemplateUuid:        mp.ruleTree.rules.TemplateUuid,
+			TemplateLink:        mp.ruleTree.rules.TemplateLink,
+			Variables:           mp.ruleTree.rules.Variables,
+			CriteriaMustSatisfy: mp.ruleTree.rules.CriteriaMustSatisfy,
+		}
+		resp := papi.UpdateRulesResponse{
+			PropertyID:      mp.propertyID,
+			ContractID:      mp.contractID,
+			GroupID:         mp.groupID,
+			PropertyVersion: mp.latestVersion,
+			RuleFormat:      mp.ruleTree.ruleFormat,
+			Rules:           defaultAPIResp,
+			Errors:          mp.ruleTree.ruleErrors,
+			Warnings:        mp.ruleTree.ruleWarnings,
+		}
+		mp.papiMock.On("UpdateRuleTree", AnyCTX, req).Return(&resp, nil).Once()
+
+		// state update after rule tree update
+		mp.ruleTree.rules = defaultAPIResp
+
+		// read x2
+		mockResourcePropertyRead(mp, 2)
+		// delete
+		mp.mockRemoveProperty()
+
+		useClient(papiMock, nil, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResProperty/Lifecycle/criteriaMustSatisfyNoDiff/step0.tf"),
+						Check: defaultChecker.
+							CheckEqual("rules", `{"rules":{"children":[{"name":"Default CORS Policy","options":{},"criteriaMustSatisfy":"all"}],"name":"","options":{}}}`).
+							Build(),
+					},
+				},
+			})
+		})
+	})
 }
 
 // TestPropertyImports tests import functionality of property resource

@@ -35,6 +35,12 @@
 
 
 
+ 
+
+
+
+
+
 
 
 
@@ -91,6 +97,21 @@
     * `akamai_gtm_domain`
     * `akamai_gtm_geomap`
     * `akamai_gtm_resource`
+
+
+
+
+
+
+
+* PAPI
+  * Fixed improper diff in `akamai_property` resource when no value was given in the child for
+    the field `criteria_must_satisfy`, which the API sets to `all` by default.
+
+
+
+
+
 
 
 ## 6.6.1 (Dec 20, 2024)

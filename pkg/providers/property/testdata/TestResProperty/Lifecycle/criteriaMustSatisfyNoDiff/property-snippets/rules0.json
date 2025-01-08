@@ -1,0 +1,9 @@
+{
+  "rules": {
+    "children": [
+      {
+        "name": "Default CORS Policy"
+      }
+    ]
+  }
+}

@@ -77,6 +77,9 @@ func rulesEqual(oldRules, newRules *papi.Rules) bool {
 	if len(newRules.Criteria) == 0 {
 		newRules.Criteria = nil
 	}
+	if newRules.CriteriaMustSatisfy == "" && oldRules.CriteriaMustSatisfy == "all" {
+		newRules.CriteriaMustSatisfy = "all"
+	}
 
 	oldRules.Variables = orderVariables(oldRules.Variables)
 	newRules.Variables = orderVariables(newRules.Variables)
