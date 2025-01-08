@@ -38,12 +38,12 @@ func TestBootstrapResourceCreate(t *testing.T) {
 		CheckEqual("asset_id", "aid_55555")
 
 	tests := map[string]struct {
-		init  func(*testing.T, *mockProperty)
+		init  func(*mockProperty)
 		steps []resource.TestStep
 		error *regexp.Regexp
 	}{
 		"create": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				p.mockCreateProperty()
 				p.mockGetProperty().Twice()
 				p.mockRemoveProperty()
@@ -56,7 +56,7 @@ func TestBootstrapResourceCreate(t *testing.T) {
 			},
 		},
 		"create without prefixes": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				p.mockCreateProperty()
 				p.mockGetProperty().Twice()
 				p.mockRemoveProperty()
@@ -73,7 +73,7 @@ func TestBootstrapResourceCreate(t *testing.T) {
 			},
 		},
 		"create with interpretCreate error - group not found": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				req := papi.CreatePropertyRequest{
 					GroupID:    p.groupID,
 					ContractID: p.contractID,
@@ -110,7 +110,7 @@ func TestBootstrapResourceCreate(t *testing.T) {
 				papiMock:         m,
 			}
 			if test.init != nil {
-				test.init(t, mp)
+				test.init(mp)
 			}
 
 			useClient(m, nil, func() {
@@ -140,7 +140,7 @@ func TestBootstrapResourceUpdate(t *testing.T) {
 	tests := map[string]struct {
 		configPathForCreate string
 		configPathForUpdate string
-		init                func(*testing.T, *mockProperty)
+		init                func(*mockProperty)
 		errorForCreate      *regexp.Regexp
 		errorForUpdate      *regexp.Regexp
 		updateChecks        resource.TestCheckFunc
@@ -148,7 +148,7 @@ func TestBootstrapResourceUpdate(t *testing.T) {
 		"create and remove prefixes - no diff": {
 			configPathForCreate: "testdata/TestResPropertyBootstrap/create.tf",
 			configPathForUpdate: "testdata/TestResPropertyBootstrap/create_without_prefixes.tf",
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				p.mockCreateProperty()
 				p.mockGetProperty()
 				// read x2
@@ -162,7 +162,7 @@ func TestBootstrapResourceUpdate(t *testing.T) {
 		"create and update group id": {
 			configPathForCreate: "testdata/TestResPropertyBootstrap/create.tf",
 			configPathForUpdate: "testdata/TestResPropertyBootstrap/update_group.tf",
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				p.mockCreateProperty()
 				p.mockGetProperty()
 				// read x2
@@ -180,7 +180,7 @@ func TestBootstrapResourceUpdate(t *testing.T) {
 		},
 		"create and update name - resource replacement": {
 			configPathForCreate: "testdata/TestResPropertyBootstrap/create.tf",
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				p.mockCreateProperty()
 				p.mockGetProperty()
 				// read x2
@@ -199,7 +199,7 @@ func TestBootstrapResourceUpdate(t *testing.T) {
 		"create and update name and group id - resource replacement": {
 			configPathForCreate: "testdata/TestResPropertyBootstrap/create.tf",
 			configPathForUpdate: "testdata/TestResPropertyBootstrap/update_name_and_group.tf",
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				p.mockCreateProperty()
 				p.mockGetProperty().Times(3)
 				p.mockRemoveProperty()
@@ -217,7 +217,7 @@ func TestBootstrapResourceUpdate(t *testing.T) {
 		"create and update contract - error": {
 			configPathForCreate: "testdata/TestResPropertyBootstrap/create.tf",
 			configPathForUpdate: "testdata/TestResPropertyBootstrap/update_contract.tf",
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				p.mockCreateProperty()
 				p.mockGetProperty().Times(3)
 				p.mockRemoveProperty()
@@ -227,7 +227,7 @@ func TestBootstrapResourceUpdate(t *testing.T) {
 		"create and update product - error": {
 			configPathForCreate: "testdata/TestResPropertyBootstrap/create.tf",
 			configPathForUpdate: "testdata/TestResPropertyBootstrap/update_product.tf",
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				p.mockCreateProperty()
 				p.mockGetProperty().Times(3)
 				p.mockRemoveProperty()
@@ -250,7 +250,7 @@ func TestBootstrapResourceUpdate(t *testing.T) {
 			}
 
 			if test.init != nil {
-				test.init(t, mp)
+				test.init(mp)
 			}
 
 			useClient(papiMock, nil, func() {
@@ -298,7 +298,7 @@ func TestBootstrapResourceImport(t *testing.T) {
 		CheckEqual("asset_id", "aid_55555")
 
 	tests := map[string]struct {
-		init          func(*testing.T, *mockProperty)
+		init          func(*mockProperty)
 		mockData      mockPropertyData
 		importStateID string
 		stateCheck    func(s []*terraform.InstanceState) error
@@ -306,7 +306,7 @@ func TestBootstrapResourceImport(t *testing.T) {
 	}{
 		"import with all attributes": {
 			mockData: basicDataBootstrap,
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				p.mockGetProperty()
 				p.mockGetPropertyVersion()
 				// read
@@ -319,7 +319,7 @@ func TestBootstrapResourceImport(t *testing.T) {
 		},
 		"import with only property_id": {
 			mockData: basicDataWithoutContractAndGroup,
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// import
 				p.mockGetProperty()
 				p.mockGetPropertyVersion()
@@ -334,7 +334,7 @@ func TestBootstrapResourceImport(t *testing.T) {
 			importStateID: "123",
 		},
 		"import with only property_id and contract_id - error": {
-			init:          func(t *testing.T, p *mockProperty) {},
+			init:          func(p *mockProperty) {},
 			importStateID: "123,2",
 			error:         regexp.MustCompile("Error: missing group id or contract id"),
 		},
@@ -352,7 +352,7 @@ func TestBootstrapResourceImport(t *testing.T) {
 			}
 
 			if test.init != nil {
-				test.init(t, mp)
+				test.init(mp)
 			}
 
 			useClient(m, nil, func() {

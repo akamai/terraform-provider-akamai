@@ -11,13 +11,13 @@ import (
 
 func Test_DSReadGroup(t *testing.T) {
 	tests := map[string]struct {
-		init       func(*testing.T, *papi.Mock, testDataForPAPIGroups)
+		init       func(*papi.Mock, testDataForPAPIGroups)
 		mockData   testDataForPAPIGroups
 		configPath string
 		error      *regexp.Regexp
 	}{
 		"read group with group_name and contract_id provided": {
-			init: func(t *testing.T, m *papi.Mock, testData testDataForPAPIGroups) {
+			init: func(m *papi.Mock, testData testDataForPAPIGroups) {
 				expectGetGroups(m, testData, 5)
 			},
 			mockData: testDataForPAPIGroups{
@@ -37,7 +37,7 @@ func Test_DSReadGroup(t *testing.T) {
 			configPath: "testdata/TestDSGroup/ds-group-w-group-name-and-contract_id.tf",
 		},
 		"multiple groups distinguished by contract_id": {
-			init: func(t *testing.T, m *papi.Mock, testData testDataForPAPIGroups) {
+			init: func(m *papi.Mock, testData testDataForPAPIGroups) {
 				expectGetGroups(m, testData, 5)
 			},
 			mockData: testDataForPAPIGroups{
@@ -63,7 +63,7 @@ func Test_DSReadGroup(t *testing.T) {
 			configPath: "testdata/TestDSGroup/ds-group-w-group-name-and-contract_id.tf",
 		},
 		"multiple groups with the same group names and multiple distinguishable contracts": {
-			init: func(t *testing.T, m *papi.Mock, testData testDataForPAPIGroups) {
+			init: func(m *papi.Mock, testData testDataForPAPIGroups) {
 				expectGetGroups(m, testData, 5)
 			},
 			mockData: testDataForPAPIGroups{
@@ -89,7 +89,7 @@ func Test_DSReadGroup(t *testing.T) {
 			configPath: "testdata/TestDSGroup/ds-group-w-group-name-and-contract_id.tf",
 		},
 		"multiple groups with the same group_name and contract - expect an error": {
-			init: func(t *testing.T, m *papi.Mock, testData testDataForPAPIGroups) {
+			init: func(m *papi.Mock, testData testDataForPAPIGroups) {
 				expectGetGroups(m, testData, 5)
 			},
 			mockData: testDataForPAPIGroups{
@@ -116,7 +116,7 @@ func Test_DSReadGroup(t *testing.T) {
 			error:      regexp.MustCompile("there is more than 1 group with the same name and contract combination. Based on provided data, it is impossible to determine which one should be returned"),
 		},
 		"multiple groups with the same multiple contracts and the same group names - expect an error": {
-			init: func(t *testing.T, m *papi.Mock, testData testDataForPAPIGroups) {
+			init: func(m *papi.Mock, testData testDataForPAPIGroups) {
 				expectGetGroups(m, testData, 5)
 			},
 			mockData: testDataForPAPIGroups{
@@ -147,7 +147,7 @@ func Test_DSReadGroup(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			client := &papi.Mock{}
-			test.init(t, client, test.mockData)
+			test.init(client, test.mockData)
 			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),

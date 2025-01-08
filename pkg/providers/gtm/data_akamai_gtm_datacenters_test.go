@@ -13,34 +13,34 @@ import (
 
 func TestDataGTMDatacenters(t *testing.T) {
 	tests := map[string]struct {
-		init       func(*testing.T, *gtm.Mock, testDataForGTMDatacenters)
+		init       func(*gtm.Mock, testDataForGTMDatacenters)
 		mockData   testDataForGTMDatacenters
 		configPath string
 		error      *regexp.Regexp
 	}{
 		"happy path - three datacenters": {
-			init: func(t *testing.T, m *gtm.Mock, data testDataForGTMDatacenters) {
-				mockListDatacenters(t, m, data, 3)
+			init: func(m *gtm.Mock, data testDataForGTMDatacenters) {
+				mockListDatacenters(m, data, 3)
 			},
 			mockData:   testGTMDatacenters,
 			configPath: "testdata/TestDataGTMDatacenters/default.tf",
 		},
 		"happy path - one datacenter": {
-			init: func(t *testing.T, m *gtm.Mock, data testDataForGTMDatacenters) {
-				mockListDatacenters(t, m, data, 3)
+			init: func(m *gtm.Mock, data testDataForGTMDatacenters) {
+				mockListDatacenters(m, data, 3)
 			},
 			mockData:   testGTMSingleDatacenter,
 			configPath: "testdata/TestDataGTMDatacenters/default.tf",
 		},
 		"happy path - no datacenters": {
-			init: func(t *testing.T, m *gtm.Mock, data testDataForGTMDatacenters) {
-				mockListDatacenters(t, m, data, 3)
+			init: func(m *gtm.Mock, data testDataForGTMDatacenters) {
+				mockListDatacenters(m, data, 3)
 			},
 			mockData:   testGTMEmptyDatacenters,
 			configPath: "testdata/TestDataGTMDatacenters/default.tf",
 		},
 		"error - ListDatacenters fail": {
-			init: func(t *testing.T, m *gtm.Mock, data testDataForGTMDatacenters) {
+			init: func(m *gtm.Mock, data testDataForGTMDatacenters) {
 				m.On("ListDatacenters", testutils.MockContext, gtm.ListDatacentersRequest{
 					DomainName: data.domain,
 				}).Return(
@@ -51,7 +51,7 @@ func TestDataGTMDatacenters(t *testing.T) {
 			error:      regexp.MustCompile("ListDatacenters error"),
 		},
 		"error - no domain attribute": {
-			init:       func(_ *testing.T, _ *gtm.Mock, _ testDataForGTMDatacenters) {},
+			init:       func(_ *gtm.Mock, _ testDataForGTMDatacenters) {},
 			configPath: "testdata/TestDataGTMDatacenters/no_domain.tf",
 			error:      regexp.MustCompile(`The argument "domain" is required, but no definition was found.`),
 		},
@@ -60,7 +60,7 @@ func TestDataGTMDatacenters(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			client := &gtm.Mock{}
-			test.init(t, client, test.mockData)
+			test.init(client, test.mockData)
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
@@ -148,7 +148,7 @@ var (
 	}
 
 	// mockListDatacenters mocks ListDatacenters call with provided data
-	mockListDatacenters = func(t *testing.T, client *gtm.Mock, data testDataForGTMDatacenters, timesToRun int) {
+	mockListDatacenters = func(client *gtm.Mock, data testDataForGTMDatacenters, timesToRun int) {
 		var dcs []gtm.Datacenter
 
 		for _, data := range data.datacenters {

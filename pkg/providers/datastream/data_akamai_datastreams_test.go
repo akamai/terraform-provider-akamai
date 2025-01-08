@@ -62,11 +62,11 @@ var (
 
 func TestDataDatastreams(t *testing.T) {
 	tests := map[string]struct {
-		init  func(*testing.T, *datastream.Mock)
+		init  func(*datastream.Mock)
 		steps []resource.TestStep
 	}{
 		"list streams": {
-			init: func(t *testing.T, m *datastream.Mock) {
+			init: func(m *datastream.Mock) {
 				m.On("ListStreams", testutils.MockContext, mock.Anything).
 					Return(streamList, nil)
 			},
@@ -78,7 +78,7 @@ func TestDataDatastreams(t *testing.T) {
 			},
 		},
 		"list streams with specified group id": {
-			init: func(t *testing.T, m *datastream.Mock) {
+			init: func(m *datastream.Mock) {
 				m.On("ListStreams", testutils.MockContext, datastream.ListStreamsRequest{
 					GroupID: ptr.To(1234),
 				}).Return(streamListForSpecificGroup, nil)
@@ -91,7 +91,7 @@ func TestDataDatastreams(t *testing.T) {
 			},
 		},
 		"list streams with specified group id using grp prefix": {
-			init: func(t *testing.T, m *datastream.Mock) {
+			init: func(m *datastream.Mock) {
 				m.On("ListStreams", testutils.MockContext, datastream.ListStreamsRequest{
 					GroupID: ptr.To(1234),
 				}).Return(streamListForSpecificGroup, nil)
@@ -104,7 +104,7 @@ func TestDataDatastreams(t *testing.T) {
 			},
 		},
 		"list streams with specified group id using invalid prefix": {
-			init: func(t *testing.T, m *datastream.Mock) {},
+			init: func(m *datastream.Mock) {},
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestDataDatastreams/list_streams_with_groupid_with_invalid_prefix.tf"),
@@ -113,7 +113,7 @@ func TestDataDatastreams(t *testing.T) {
 			},
 		},
 		"list streams - empty list": {
-			init: func(t *testing.T, m *datastream.Mock) {
+			init: func(m *datastream.Mock) {
 				m.On("ListStreams", testutils.MockContext, datastream.ListStreamsRequest{}).
 					Return([]datastream.StreamDetails{}, nil)
 			},
@@ -125,7 +125,7 @@ func TestDataDatastreams(t *testing.T) {
 			},
 		},
 		"could not fetch stream list": {
-			init: func(t *testing.T, m *datastream.Mock) {
+			init: func(m *datastream.Mock) {
 				m.On("ListStreams", testutils.MockContext, mock.Anything).
 					Return(nil, fmt.Errorf("failed to get stream list")).Once()
 			},
@@ -141,7 +141,7 @@ func TestDataDatastreams(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			client := &datastream.Mock{}
-			test.init(t, client)
+			test.init(client)
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),

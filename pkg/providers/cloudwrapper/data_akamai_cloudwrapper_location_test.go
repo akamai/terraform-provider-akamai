@@ -62,20 +62,20 @@ func TestDataLocation(t *testing.T) {
 	}
 	tests := map[string]struct {
 		configPath string
-		init       func(*testing.T, *cloudwrapper.Mock, testDataForCWLocation)
+		init       func(*cloudwrapper.Mock, testDataForCWLocation)
 		mockData   testDataForCWLocation
 		error      *regexp.Regexp
 	}{
 		"happy path": {
 			configPath: "testdata/TestDataLocation/location.tf",
-			init: func(t *testing.T, m *cloudwrapper.Mock, testData testDataForCWLocation) {
+			init: func(m *cloudwrapper.Mock, testData testDataForCWLocation) {
 				expectListLocations(m, testData, 3)
 			},
 			mockData: location,
 		},
 		"no location": {
 			configPath: "testdata/TestDataLocation/no_location.tf",
-			init: func(t *testing.T, m *cloudwrapper.Mock, testData testDataForCWLocation) {
+			init: func(m *cloudwrapper.Mock, testData testDataForCWLocation) {
 				expectListLocations(m, testData, 1)
 			},
 			mockData: location,
@@ -87,7 +87,7 @@ func TestDataLocation(t *testing.T) {
 		},
 		"error listing locations": {
 			configPath: "testdata/TestDataLocation/location.tf",
-			init: func(t *testing.T, m *cloudwrapper.Mock, testData testDataForCWLocation) {
+			init: func(m *cloudwrapper.Mock, testData testDataForCWLocation) {
 				expectListLocationsWithError(m, 1)
 			},
 			error: regexp.MustCompile("list locations failed"),
@@ -97,7 +97,7 @@ func TestDataLocation(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			client := &cloudwrapper.Mock{}
 			if test.init != nil {
-				test.init(t, client, test.mockData)
+				test.init(client, test.mockData)
 			}
 
 			resource.UnitTest(t, resource.TestCase{

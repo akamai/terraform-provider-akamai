@@ -96,21 +96,21 @@ var (
 func TestDataUsers(t *testing.T) {
 	tests := map[string]struct {
 		configPath    string
-		init          func(*testing.T, *iam.Mock, []iam.UserListItem, *int64)
+		init          func(*iam.Mock, []iam.UserListItem, *int64)
 		mockData      []iam.UserListItem
 		groupID       *int64
 		expectedError *regexp.Regexp
 	}{
 		"happy path": {
 			configPath: "testdata/TestDataUsers/default.tf",
-			init: func(t *testing.T, m *iam.Mock, mockData []iam.UserListItem, groupID *int64) {
+			init: func(m *iam.Mock, mockData []iam.UserListItem, groupID *int64) {
 				expectListUsers(m, mockData, groupID, 3)
 			},
 			mockData: basicTestDataForUsers,
 		},
 		"happy path - no users": {
 			configPath: "testdata/TestDataUsers/default.tf",
-			init: func(t *testing.T, m *iam.Mock, mockData []iam.UserListItem, groupID *int64) {
+			init: func(m *iam.Mock, mockData []iam.UserListItem, groupID *int64) {
 				expectListUsers(m, mockData, groupID, 3)
 			},
 			mockData: []iam.UserListItem{},
@@ -118,14 +118,14 @@ func TestDataUsers(t *testing.T) {
 		"happy path - groupID search": {
 			groupID:    ptr.To(int64(12345)),
 			configPath: "testdata/TestDataUsers/groupIDSearch.tf",
-			init: func(t *testing.T, m *iam.Mock, mockData []iam.UserListItem, groupID *int64) {
+			init: func(m *iam.Mock, mockData []iam.UserListItem, groupID *int64) {
 				expectListUsers(m, mockData, groupID, 3)
 			},
 			mockData: basicTestDataForUsers,
 		},
 		"error - list user fails": {
 			configPath: "testdata/TestDataUsers/default.tf",
-			init: func(t *testing.T, m *iam.Mock, mockData []iam.UserListItem, groupID *int64) {
+			init: func(m *iam.Mock, mockData []iam.UserListItem, groupID *int64) {
 				listUsersReq := iam.ListUsersRequest{GroupID: groupID, AuthGrants: true, Actions: true}
 				m.On("ListUsers", testutils.MockContext, listUsersReq).Return(nil, errors.New("test error"))
 			},
@@ -138,7 +138,7 @@ func TestDataUsers(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			client := &iam.Mock{}
 			if tc.init != nil {
-				tc.init(t, client, tc.mockData, tc.groupID)
+				tc.init(client, tc.mockData, tc.groupID)
 			}
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{

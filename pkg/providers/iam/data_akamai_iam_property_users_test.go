@@ -43,13 +43,13 @@ func TestDataPropertyUsers(t *testing.T) {
 
 	tests := map[string]struct {
 		configPath string
-		init       func(*testing.T, *iam.Mock)
+		init       func(*iam.Mock)
 		check      resource.TestCheckFunc
 		error      *regexp.Regexp
 	}{
 		"happy path": {
 			configPath: "testdata/TestDataPropertyUsers/basic.tf",
-			init: func(t *testing.T, iamMock *iam.Mock) {
+			init: func(iamMock *iam.Mock) {
 				req := iam.ListUsersForPropertyRequest{
 					PropertyID: 12345,
 				}
@@ -67,7 +67,7 @@ func TestDataPropertyUsers(t *testing.T) {
 		},
 		"handling aid prefix": {
 			configPath: "testdata/TestDataPropertyUsers/aid_prefix.tf",
-			init: func(t *testing.T, iamMock *iam.Mock) {
+			init: func(iamMock *iam.Mock) {
 				req := iam.ListUsersForPropertyRequest{
 					PropertyID: 12345,
 				}
@@ -80,7 +80,7 @@ func TestDataPropertyUsers(t *testing.T) {
 		},
 		"user filtering - two users assigned": {
 			configPath: "testdata/TestDataPropertyUsers/user_type_assigned.tf",
-			init: func(t *testing.T, iamMock *iam.Mock) {
+			init: func(iamMock *iam.Mock) {
 				req := iam.ListUsersForPropertyRequest{
 					PropertyID: 12345,
 					UserType:   "assigned",
@@ -98,7 +98,7 @@ func TestDataPropertyUsers(t *testing.T) {
 		},
 		"user filtering - one user blocked": {
 			configPath: "testdata/TestDataPropertyUsers/user_type_blocked.tf",
-			init: func(t *testing.T, iamMock *iam.Mock) {
+			init: func(iamMock *iam.Mock) {
 				req := iam.ListUsersForPropertyRequest{
 					PropertyID: 12345,
 					UserType:   "blocked",
@@ -114,7 +114,7 @@ func TestDataPropertyUsers(t *testing.T) {
 		},
 		"user filtering - all users returned for all": {
 			configPath: "testdata/TestDataPropertyUsers/user_type_all.tf",
-			init: func(t *testing.T, iamMock *iam.Mock) {
+			init: func(iamMock *iam.Mock) {
 				req := iam.ListUsersForPropertyRequest{
 					PropertyID: 12345,
 					UserType:   "all",
@@ -130,7 +130,7 @@ func TestDataPropertyUsers(t *testing.T) {
 		},
 		"no users returned": {
 			configPath: "testdata/TestDataPropertyUsers/basic.tf",
-			init: func(t *testing.T, iamMock *iam.Mock) {
+			init: func(iamMock *iam.Mock) {
 				req := iam.ListUsersForPropertyRequest{
 					PropertyID: 12345,
 				}
@@ -167,7 +167,7 @@ func TestDataPropertyUsers(t *testing.T) {
 		},
 		"edgegrid error": {
 			configPath: "testdata/TestDataPropertyUsers/basic.tf",
-			init: func(t *testing.T, iamMock *iam.Mock) {
+			init: func(iamMock *iam.Mock) {
 				req := iam.ListUsersForPropertyRequest{
 					PropertyID: 12345,
 				}
@@ -182,7 +182,7 @@ func TestDataPropertyUsers(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			iamMock := iam.Mock{}
 			if tc.init != nil {
-				tc.init(t, &iamMock)
+				tc.init(&iamMock)
 			}
 
 			useClient(&iamMock, func() {

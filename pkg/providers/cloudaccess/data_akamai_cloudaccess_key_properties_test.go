@@ -30,13 +30,13 @@ type (
 func TestDataKeyProperties(t *testing.T) {
 	tests := map[string]struct {
 		configPath string
-		init       func(*testing.T, *cloudaccess.Mock, testDataForKeyProperties)
+		init       func(*cloudaccess.Mock, testDataForKeyProperties)
 		mockData   testDataForKeyProperties
 		error      *regexp.Regexp
 	}{
 		"happy path - multiple versions with multiple properties": {
 			configPath: "testdata/TestDataKeyProperties/default.tf",
-			init: func(_ *testing.T, m *cloudaccess.Mock, testData testDataForKeyProperties) {
+			init: func(m *cloudaccess.Mock, testData testDataForKeyProperties) {
 				expectListAccessKeys(m, 3)
 				expectListAccessKeyVersions(m, testData, 3)
 				expectLookupProperties(m, testData, 3)
@@ -71,7 +71,7 @@ func TestDataKeyProperties(t *testing.T) {
 		},
 		"happy path - version with no active properties - nothing in state": {
 			configPath: "testdata/TestDataKeyProperties/default.tf",
-			init: func(_ *testing.T, m *cloudaccess.Mock, testData testDataForKeyProperties) {
+			init: func(m *cloudaccess.Mock, testData testDataForKeyProperties) {
 				expectListAccessKeys(m, 3)
 				expectListAccessKeyVersions(m, testData, 3)
 				expectLookupProperties(m, testData, 3)
@@ -92,19 +92,19 @@ func TestDataKeyProperties(t *testing.T) {
 		},
 		"invalid configuration - missing access key name": {
 			configPath: "testdata/TestDataKeyProperties/invalid.tf",
-			init:       func(t *testing.T, _ *cloudaccess.Mock, _ testDataForKeyProperties) {},
+			init:       func(_ *cloudaccess.Mock, _ testDataForKeyProperties) {},
 			error:      regexp.MustCompile(`The argument "access_key_name" is required, but no definition was found.`),
 		},
 		"no match on access key name - expect an error": {
 			configPath: "testdata/TestDataKeyProperties/no-match.tf",
-			init: func(t *testing.T, m *cloudaccess.Mock, testData testDataForKeyProperties) {
+			init: func(m *cloudaccess.Mock, testData testDataForKeyProperties) {
 				expectListAccessKeys(m, 1)
 			},
 			error: regexp.MustCompile(`access key with name: 'no-match' does not exist`),
 		},
 		"expect error on list access keys": {
 			configPath: "testdata/TestDataKeyProperties/default.tf",
-			init: func(t *testing.T, m *cloudaccess.Mock, testData testDataForKeyProperties) {
+			init: func(m *cloudaccess.Mock, testData testDataForKeyProperties) {
 				m.On("ListAccessKeys", testutils.MockContext, cloudaccess.ListAccessKeysRequest{}).
 					Return(nil, fmt.Errorf("API error")).Once()
 			},
@@ -112,7 +112,7 @@ func TestDataKeyProperties(t *testing.T) {
 		},
 		"expect error on list access key versions": {
 			configPath: "testdata/TestDataKeyProperties/default.tf",
-			init: func(t *testing.T, m *cloudaccess.Mock, testData testDataForKeyProperties) {
+			init: func(m *cloudaccess.Mock, testData testDataForKeyProperties) {
 				expectListAccessKeys(m, 1)
 				m.On("ListAccessKeyVersions", testutils.MockContext, cloudaccess.ListAccessKeyVersionsRequest{
 					AccessKeyUID: 1,
@@ -135,7 +135,7 @@ func TestDataKeyProperties(t *testing.T) {
 					},
 				},
 			},
-			init: func(t *testing.T, m *cloudaccess.Mock, testData testDataForKeyProperties) {
+			init: func(m *cloudaccess.Mock, testData testDataForKeyProperties) {
 				expectListAccessKeys(m, 1)
 				expectListAccessKeyVersions(m, testData, 1)
 				m.On("LookupProperties", testutils.MockContext, cloudaccess.LookupPropertiesRequest{
@@ -150,7 +150,7 @@ func TestDataKeyProperties(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			client := &cloudaccess.Mock{}
 			if test.init != nil {
-				test.init(t, client, test.mockData)
+				test.init(client, test.mockData)
 			}
 
 			useClient(client, func() {

@@ -50,20 +50,20 @@ var (
 func TestAuthorizedUsers(t *testing.T) {
 	tests := map[string]struct {
 		configPath string
-		init       func(*testing.T, *iam.Mock, testDataForAuthorizedUsers)
+		init       func(*iam.Mock, testDataForAuthorizedUsers)
 		mockData   testDataForAuthorizedUsers
 		error      *regexp.Regexp
 	}{
 		"success path": {
 			configPath: "testdata/TestAuthorizedUsers/default.tf",
-			init: func(t *testing.T, m *iam.Mock, testData testDataForAuthorizedUsers) {
-				expectFullListAuthorizedUsers(t, m, testData, 3)
+			init: func(m *iam.Mock, testData testDataForAuthorizedUsers) {
+				expectFullListAuthorizedUsers(m, testData, 3)
 			},
 			mockData: basicTestDataForAuthorizedUsers,
 		},
 		"fail path": {
 			configPath: "testdata/TestAuthorizedUsers/default.tf",
-			init: func(t *testing.T, m *iam.Mock, testData testDataForAuthorizedUsers) {
+			init: func(m *iam.Mock, testData testDataForAuthorizedUsers) {
 				m.On("ListAuthorizedUsers", testutils.MockContext).Return(iam.ListAuthorizedUsersResponse{}, errors.New("could not get authorized users"))
 			},
 			error:    regexp.MustCompile(`could not get authorized users`),
@@ -75,7 +75,7 @@ func TestAuthorizedUsers(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			client := &iam.Mock{}
 			if tc.init != nil {
-				tc.init(t, client, tc.mockData)
+				tc.init(client, tc.mockData)
 			}
 
 			useClient(client, func() {
@@ -96,7 +96,7 @@ func TestAuthorizedUsers(t *testing.T) {
 	}
 }
 
-func expectFullListAuthorizedUsers(_ *testing.T, client *iam.Mock, data testDataForAuthorizedUsers, timesToRun int) {
+func expectFullListAuthorizedUsers(client *iam.Mock, data testDataForAuthorizedUsers, timesToRun int) {
 	listAuthorizedUsersRes := iam.ListAuthorizedUsersResponse{}
 
 	for _, user := range data.authorizedUsers {

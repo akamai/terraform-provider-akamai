@@ -13,34 +13,34 @@ import (
 
 func TestDataGTMDatacenter(t *testing.T) {
 	tests := map[string]struct {
-		init       func(*testing.T, *gtm.Mock, testDataForGTMDatacenter)
+		init       func(*gtm.Mock, testDataForGTMDatacenter)
 		mockData   testDataForGTMDatacenter
 		configPath string
 		error      *regexp.Regexp
 	}{
 		"happy path - all fields populated": {
-			init: func(t *testing.T, m *gtm.Mock, data testDataForGTMDatacenter) {
-				mockGetDatacenter(t, m, data, 3)
+			init: func(m *gtm.Mock, data testDataForGTMDatacenter) {
+				mockGetDatacenter(m, data, 3)
 			},
 			mockData:   testGTMDatacenter,
 			configPath: "testdata/TestDataGTMDatacenter/default.tf",
 		},
 		"happy path - minimal fields": {
-			init: func(t *testing.T, m *gtm.Mock, data testDataForGTMDatacenter) {
-				mockGetDatacenter(t, m, data, 3)
+			init: func(m *gtm.Mock, data testDataForGTMDatacenter) {
+				mockGetDatacenter(m, data, 3)
 			},
 			mockData:   testGTMDatacenterMinimal,
 			configPath: "testdata/TestDataGTMDatacenter/default.tf",
 		},
 		"happy path - no load_servers in default_load_object": {
-			init: func(t *testing.T, m *gtm.Mock, data testDataForGTMDatacenter) {
-				mockGetDatacenter(t, m, data, 3)
+			init: func(m *gtm.Mock, data testDataForGTMDatacenter) {
+				mockGetDatacenter(m, data, 3)
 			},
 			mockData:   testGTMDatacenterNoLoadServers,
 			configPath: "testdata/TestDataGTMDatacenter/default.tf",
 		},
 		"error - GetDatacenter fail": {
-			init: func(_ *testing.T, m *gtm.Mock, data testDataForGTMDatacenter) {
+			init: func(m *gtm.Mock, data testDataForGTMDatacenter) {
 				m.On("GetDatacenter", testutils.MockContext, gtm.GetDatacenterRequest{
 					DatacenterID: data.datacenterID,
 					DomainName:   data.domain,
@@ -52,12 +52,12 @@ func TestDataGTMDatacenter(t *testing.T) {
 			error:      regexp.MustCompile("GetDatacenter error"),
 		},
 		"error - no domain attribute": {
-			init:       func(_ *testing.T, _ *gtm.Mock, _ testDataForGTMDatacenter) {},
+			init:       func(_ *gtm.Mock, _ testDataForGTMDatacenter) {},
 			configPath: "testdata/TestDataGTMDatacenter/no_domain.tf",
 			error:      regexp.MustCompile(`The argument "domain" is required, but no definition was found.`),
 		},
 		"error - no datacenter_id attribute": {
-			init:       func(_ *testing.T, _ *gtm.Mock, _ testDataForGTMDatacenter) {},
+			init:       func(_ *gtm.Mock, _ testDataForGTMDatacenter) {},
 			configPath: "testdata/TestDataGTMDatacenter/no_datacenter_id.tf",
 			error:      regexp.MustCompile(`The argument "datacenter_id" is required, but no definition was found.`),
 		},
@@ -66,7 +66,7 @@ func TestDataGTMDatacenter(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			client := &gtm.Mock{}
-			test.init(t, client, test.mockData)
+			test.init(client, test.mockData)
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
@@ -145,7 +145,7 @@ type testDataForGTMDatacenter struct {
 
 var (
 	// mockGetDatacenter mocks GetDatacenter call with provided data
-	mockGetDatacenter = func(t *testing.T, client *gtm.Mock, data testDataForGTMDatacenter, timesToRun int) {
+	mockGetDatacenter = func(client *gtm.Mock, data testDataForGTMDatacenter, timesToRun int) {
 		dc := gtm.Datacenter{
 			City:                          data.city,
 			CloneOf:                       data.cloneOf,

@@ -183,7 +183,7 @@ func TestPropertyLifecycle(t *testing.T) {
 	// grouped tests that always have 2 steps and the config file names are always "step0.tf" and "step1.tf". For different tests,
 	// add them as separate cases at the end of this function.
 	tests := map[string]struct {
-		init             func(*testing.T, *mockProperty)
+		init             func(*mockProperty)
 		checksForCreate  resource.TestCheckFunc
 		checksForUpdate  resource.TestCheckFunc
 		configPlanChecks resource.ConfigPlanChecks
@@ -191,7 +191,7 @@ func TestPropertyLifecycle(t *testing.T) {
 		updateError      *regexp.Regexp
 	}{
 		"Lifecycle: property is destroyed and recreated when name is changed": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicDataWithDefaultRules
 				// create
@@ -221,7 +221,7 @@ func TestPropertyLifecycle(t *testing.T) {
 				CheckEqual("hostnames.0.cname_to", "to2.test.domain").Build(),
 		},
 		"Lifecycle: create with propertyID (bootstrap)": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicDataWithDefaultRules
 				// create (without creation of property, as it was created with bootstrap resource)
@@ -246,7 +246,7 @@ func TestPropertyLifecycle(t *testing.T) {
 				Build(),
 		},
 		"Lifecycle: latest version is deactivated in staging (normal)": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicDataWithDefaultRules
 				p.createFromVersion = 1
@@ -294,7 +294,7 @@ func TestPropertyLifecycle(t *testing.T) {
 				Build(),
 		},
 		"Lifecycle: latest version is deactivated in production (normal)": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicDataWithDefaultRules
 				p.createFromVersion = 1
@@ -341,7 +341,7 @@ func TestPropertyLifecycle(t *testing.T) {
 				Build(),
 		},
 		"Lifecycle: latest version is not active (normal)": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicDataWithDefaultRules
 				mockLatestVersionNotActive(p)
@@ -353,7 +353,7 @@ func TestPropertyLifecycle(t *testing.T) {
 				Build(),
 		},
 		"Lifecycle: latest version is active in staging (normal)": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicDataWithDefaultRules
 				p.createFromVersion = 1
@@ -370,7 +370,7 @@ func TestPropertyLifecycle(t *testing.T) {
 				Build(),
 		},
 		"Lifecycle: latest version is active in production (normal)": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicDataWithDefaultRules
 				p.createFromVersion = 1
@@ -386,7 +386,7 @@ func TestPropertyLifecycle(t *testing.T) {
 				Build(),
 		},
 		"Lifecycle: latest version is not active (contract_id without prefix)": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicDataWithDefaultRules
 				mockLatestVersionNotActive(p)
@@ -398,7 +398,7 @@ func TestPropertyLifecycle(t *testing.T) {
 				Build(),
 		},
 		"Lifecycle: latest version active in staging (contract_id without prefix)": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicDataWithDefaultRules
 				p.createFromVersion = 1
@@ -414,7 +414,7 @@ func TestPropertyLifecycle(t *testing.T) {
 				Build(),
 		},
 		"Lifecycle: latest version active in production (contract_id without prefix)": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicDataWithDefaultRules
 				p.createFromVersion = 1
@@ -430,7 +430,7 @@ func TestPropertyLifecycle(t *testing.T) {
 				Build(),
 		},
 		"Lifecycle: latest version is not active (group_id without prefix)": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicDataWithDefaultRules
 				mockLatestVersionNotActive(p)
@@ -442,7 +442,7 @@ func TestPropertyLifecycle(t *testing.T) {
 				Build(),
 		},
 		"Lifecycle: latest version is active in staging (group_id without prefix)": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicDataWithDefaultRules
 				p.createFromVersion = 1
@@ -458,7 +458,7 @@ func TestPropertyLifecycle(t *testing.T) {
 				Build(),
 		},
 		"Lifecycle: latest version is active in production (group_id without prefix)": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicDataWithDefaultRules
 				p.createFromVersion = 1
@@ -474,7 +474,7 @@ func TestPropertyLifecycle(t *testing.T) {
 				Build(),
 		},
 		"Lifecycle: latest version is not active (product_id without prefix)": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicDataWithDefaultRules
 				p.createFromVersion = 1
@@ -488,7 +488,7 @@ func TestPropertyLifecycle(t *testing.T) {
 				Build(),
 		},
 		"Lifecycle: latest version is active in staging (product_id without prefix)": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicDataWithDefaultRules
 				p.createFromVersion = 1
@@ -504,7 +504,7 @@ func TestPropertyLifecycle(t *testing.T) {
 				Build(),
 		},
 		"Lifecycle: latest version is active in production (product_id without prefix)": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicDataWithDefaultRules
 				p.createFromVersion = 1
@@ -520,7 +520,7 @@ func TestPropertyLifecycle(t *testing.T) {
 				Build(),
 		},
 		"Lifecycle: no diff": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicData
 				p.ruleTree = mockRuleTreeData{
@@ -558,7 +558,7 @@ func TestPropertyLifecycle(t *testing.T) {
 				There is an additional field "options":{} in expected attributes, because with UpdateRuleTree(ctx, req) function
 				this field added automatically into response, even if it does not exist in rules.
 			*/
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicData
 				p.ruleTree = mockRuleTreeData{
@@ -608,7 +608,7 @@ func TestPropertyLifecycle(t *testing.T) {
 				Build(),
 		},
 		"Lifecycle: no diff for hostnames (hostnames)": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicData
 				p.ruleTree = mockRuleTreeData{
@@ -661,7 +661,7 @@ func TestPropertyLifecycle(t *testing.T) {
 				Build(),
 		},
 		"Lifecycle: rules with variables": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicData
 				p.ruleTree = mockRuleTreeData{
@@ -788,7 +788,7 @@ func TestPropertyLifecycle(t *testing.T) {
 				Build(),
 		},
 		"Lifecycle: Verify staging_version and production_version known at plan": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicDataWithDefaultRules
 				// create
@@ -820,7 +820,7 @@ func TestPropertyLifecycle(t *testing.T) {
 			},
 		},
 		"Lifecycle: update group id - in place": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicDataWithDefaultRules
 				p.moveGroup = moveGroup{
@@ -851,7 +851,7 @@ func TestPropertyLifecycle(t *testing.T) {
 				Build(),
 		},
 		"Lifecycle: update group id and hostnames - in place": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicDataWithDefaultRules
 				p.moveGroup = moveGroup{
@@ -896,7 +896,7 @@ func TestPropertyLifecycle(t *testing.T) {
 				Build(),
 		},
 		"Lifecycle: update group id and name - recreate": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicDataWithDefaultRules
 				p.moveGroup = moveGroup{
@@ -928,7 +928,7 @@ func TestPropertyLifecycle(t *testing.T) {
 				Build(),
 		},
 		"Lifecycle: update group id: forwarding property read API error": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicDataWithDefaultRules
 				p.moveGroup = moveGroup{
@@ -957,7 +957,7 @@ func TestPropertyLifecycle(t *testing.T) {
 				"error moving property: error checking if property in group: unexpected http error for {prp_4 grp_222 ctr_1}: read err"),
 		},
 		"Lifecycle: update group id: no API call to move if property already in desired group": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicDataWithDefaultRules
 				p.moveGroup = moveGroup{
@@ -989,7 +989,7 @@ func TestPropertyLifecycle(t *testing.T) {
 				Build(),
 		},
 		"Lifecycle: update group id: moving properties with no past activations is not supported": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicDataWithDefaultRules
 				p.moveGroup = moveGroup{
@@ -1023,7 +1023,7 @@ func TestPropertyLifecycle(t *testing.T) {
 				`\(property id: prp_4, contract id: ctr_1, group id grp_2\)`),
 		},
 		"Lifecycle: update group id: forwards API error from waiting for group id change": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicDataWithDefaultRules
 				p.moveGroup = moveGroup{
@@ -1065,7 +1065,7 @@ func TestPropertyLifecycle(t *testing.T) {
 				papiMock: papiMock,
 				iamMock:  iamMock,
 			}
-			test.init(t, &mp)
+			test.init(&mp)
 
 			useClient(papiMock, nil, func() {
 				useIam(iamMock, func() {
@@ -1400,13 +1400,13 @@ func TestPropertyImport(t *testing.T) {
 	tests := map[string]struct {
 		importID   string
 		config     string
-		init       func(*testing.T, *mockProperty)
+		init       func(*mockProperty)
 		stateCheck func(s []*terraform.InstanceState) error
 	}{
 		"Importable: property_id with ds": {
 			importID: "prp_4",
 			config:   "testdata/TestResProperty/Importable/importable_with_property_rules_builder.tf",
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicDataWithoutGroupAndContract
 				p.ruleTree = mockRuleTreeData{
@@ -1426,7 +1426,7 @@ func TestPropertyImport(t *testing.T) {
 		"Importable: property_id with property-bootstrap": {
 			importID: "prp_4,property-bootstrap",
 			config:   "testdata/TestResProperty/Importable/importable-with-bootstrap.tf",
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicDataWithoutGroupAndContract
 				mockPropertyImportKnownVersion(p)
@@ -1435,7 +1435,7 @@ func TestPropertyImport(t *testing.T) {
 		},
 		"Importable: property_id": {
 			importID: "prp_4",
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicDataWithoutGroupAndContract
 				mockPropertyImportKnownVersion(p)
@@ -1444,7 +1444,7 @@ func TestPropertyImport(t *testing.T) {
 		},
 		"Importable: property_id and ver_# version": {
 			importID: "prp_4,ver_1",
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicDataWithoutGroupAndContract
 				mockPropertyImportUnknownVersion(p)
@@ -1453,7 +1453,7 @@ func TestPropertyImport(t *testing.T) {
 		},
 		"Importable: property_id and # version": {
 			importID: "prp_4,1",
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicDataWithoutGroupAndContract
 				mockPropertyImportUnknownVersion(p)
@@ -1462,7 +1462,7 @@ func TestPropertyImport(t *testing.T) {
 		},
 		"Importable: property_id and latest": {
 			importID: "prp_4,latest",
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicDataWithoutGroupAndContract
 				mockPropertyImportKnownVersion(p)
@@ -1471,7 +1471,7 @@ func TestPropertyImport(t *testing.T) {
 		},
 		"Importable: property_id and network": {
 			importID: "prp_4,staging",
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicDataWithoutGroupAndContract
 				mockPropertyImportUnknownVersion(p)
@@ -1480,7 +1480,7 @@ func TestPropertyImport(t *testing.T) {
 		},
 		"Importable: un-prefixed property_id": {
 			importID: "4",
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicDataWithoutGroupAndContract
 				mockPropertyImportKnownVersion(p)
@@ -1489,7 +1489,7 @@ func TestPropertyImport(t *testing.T) {
 		},
 		"Importable: un-prefixed property_id and # version": {
 			importID: "4,1",
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicDataWithoutGroupAndContract
 				mockPropertyImportUnknownVersion(p)
@@ -1498,7 +1498,7 @@ func TestPropertyImport(t *testing.T) {
 		},
 		"Importable: un-prefixed property_id and ver_# version": {
 			importID: "4,ver_1",
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicDataWithoutGroupAndContract
 				mockPropertyImportUnknownVersion(p)
@@ -1507,7 +1507,7 @@ func TestPropertyImport(t *testing.T) {
 		},
 		"Importable: un-prefixed property_id and network": {
 			importID: "4,s",
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicDataWithoutGroupAndContract
 				mockPropertyImportUnknownVersion(p)
@@ -1516,7 +1516,7 @@ func TestPropertyImport(t *testing.T) {
 		},
 		"Importable: property_id and contract_id and group_id": {
 			importID: "prp_4,ctr_1,grp_2",
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicData
 				// read
@@ -1526,7 +1526,7 @@ func TestPropertyImport(t *testing.T) {
 		},
 		"Importable: property_id, contract_id, group_id and empty version": {
 			importID: "prp_4,ctr_1,grp_2,",
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicData
 				mockResourcePropertyRead(p)
@@ -1535,7 +1535,7 @@ func TestPropertyImport(t *testing.T) {
 		},
 		"Importable: property_id, contract_id, group_id and latest": {
 			importID: "prp_4,ctr_1,grp_2,latest",
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicData
 				// read
@@ -1545,7 +1545,7 @@ func TestPropertyImport(t *testing.T) {
 		},
 		"Importable: property_id, contract_id, group_id and ver_# version": {
 			importID: "prp_4,ctr_1,grp_2,ver_1",
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicData
 				mockPropertyImportKnownVersionAfterImport(p)
@@ -1554,7 +1554,7 @@ func TestPropertyImport(t *testing.T) {
 		},
 		"Importable: property_id, contract_id, group_id and # version": {
 			importID: "prp_4,ctr_1,grp_2,1",
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicData
 				mockPropertyImportKnownVersionAfterImport(p)
@@ -1563,7 +1563,7 @@ func TestPropertyImport(t *testing.T) {
 		},
 		"Importable: property_id, contract_id, group_id and network": {
 			importID: "prp_4,ctr_1,grp_2,staging",
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicData
 				mockPropertyImportUnknownVersion(p)
@@ -1572,7 +1572,7 @@ func TestPropertyImport(t *testing.T) {
 		},
 		"Importable: un-prefixed property_id and contract_id and group_id": {
 			importID: "4,1,2",
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicData
 				// read
@@ -1582,7 +1582,7 @@ func TestPropertyImport(t *testing.T) {
 		},
 		"Importable: un-prefixed property_id and contract_id, group_id and # version": {
 			importID: "4,1,2,1",
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicData
 				mockPropertyImportKnownVersionAfterImport(p)
@@ -1591,7 +1591,7 @@ func TestPropertyImport(t *testing.T) {
 		},
 		"Importable: un-prefixed property_id and contract_id, group_id and ver_# version": {
 			importID: "4,1,2,ver_1",
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicData
 				mockPropertyImportKnownVersionAfterImport(p)
@@ -1600,7 +1600,7 @@ func TestPropertyImport(t *testing.T) {
 		},
 		"Importable: un-prefixed property_id and contract_id, group_id and latest": {
 			importID: "4,1,2,latest",
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicData
 				// read
@@ -1610,7 +1610,7 @@ func TestPropertyImport(t *testing.T) {
 		},
 		"Importable: un-prefixed property_id and contract_id, group_id and network": {
 			importID: "4,1,2,staging",
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicData
 				mockPropertyImportUnknownVersion(p)
@@ -1625,7 +1625,7 @@ func TestPropertyImport(t *testing.T) {
 			mp := mockProperty{
 				papiMock: papiMock,
 			}
-			test.init(t, &mp)
+			test.init(&mp)
 
 			// use default config file if custom is not specified
 			if test.config == "" {
@@ -1708,11 +1708,11 @@ func TestPropertyErrors(t *testing.T) {
 	}
 
 	tests := map[string]struct {
-		init  func(*testing.T, *mockProperty)
+		init  func(*mockProperty)
 		steps []resource.TestStep
 	}{
 		"error when the given group is not found": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicData
 				err := &papi.Error{
@@ -1733,7 +1733,7 @@ func TestPropertyErrors(t *testing.T) {
 			},
 		},
 		"error when creating property with non-unique name": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicData
 				err := fmt.Errorf("given property name is not unique")
@@ -1747,7 +1747,7 @@ func TestPropertyErrors(t *testing.T) {
 			},
 		},
 		"error when deleting active property": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicData
 				p.versions = inactiveVersions
@@ -1777,7 +1777,7 @@ func TestPropertyErrors(t *testing.T) {
 			},
 		},
 		"error validations when updating property with rules tree": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicData
 				p.ruleTree = mockRuleTreeData{
@@ -1811,7 +1811,7 @@ func TestPropertyErrors(t *testing.T) {
 			},
 		},
 		"validation warning when creating property with rules tree": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicData
 				p.versions = inactiveVersions
@@ -1866,7 +1866,7 @@ func TestPropertyErrors(t *testing.T) {
 			},
 		},
 		"validation - when updating a property hostnames to empty it should return error": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicData
 				p.hostnames = papi.HostnameResponseItems{
@@ -1910,7 +1910,7 @@ func TestPropertyErrors(t *testing.T) {
 			},
 		},
 		"validation - when updating a property hostnames with cert_provisioning_type = 'DEFAULT' with secure-by-default enabled but remaining default certs == 0 it should return error": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicData
 				p.hostnames = papi.HostnameResponseItems{
@@ -1942,7 +1942,7 @@ func TestPropertyErrors(t *testing.T) {
 			},
 		},
 		"validation - when updating a property hostnames with cert_provisioning_type = 'DEFAULT' not having enabled secure-by-default it should return error": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicData
 				p.hostnames = papi.HostnameResponseItems{
@@ -1974,7 +1974,7 @@ func TestPropertyErrors(t *testing.T) {
 			},
 		},
 		"400 from UpdatePropertyVersionHostnames - incorrect/invalid edge hostname": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = mockPropertyData{
 					propertyName:  "dxe-2406-issue-example",
@@ -2150,7 +2150,7 @@ func TestPropertyErrors(t *testing.T) {
 			mp := mockProperty{
 				papiMock: papiMock,
 			}
-			test.init(t, &mp)
+			test.init(&mp)
 
 			useClient(papiMock, nil, func() {
 				resource.UnitTest(t, resource.TestCase{

@@ -14,13 +14,13 @@ import (
 func TestDataProperty(t *testing.T) {
 	tests := map[string]struct {
 		configPath string
-		init       func(*testing.T, *cloudwrapper.Mock, testDataForCWProperties)
+		init       func(*cloudwrapper.Mock, testDataForCWProperties)
 		mockData   testDataForCWProperties
 		error      *regexp.Regexp
 	}{
 		"happy path - one property, unused-true": {
 			configPath: "testdata/TestDataProperties/default_unused_true.tf",
-			init: func(_ *testing.T, m *cloudwrapper.Mock, testData testDataForCWProperties) {
+			init: func(m *cloudwrapper.Mock, testData testDataForCWProperties) {
 				expectListProperties(m, testData, 3)
 			},
 			mockData: testDataForCWProperties{
@@ -38,7 +38,7 @@ func TestDataProperty(t *testing.T) {
 		},
 		"happy path - two properties, unused-false, contract_ids supplied": {
 			configPath: "testdata/TestDataProperties/default_unused_false.tf",
-			init: func(t *testing.T, m *cloudwrapper.Mock, testData testDataForCWProperties) {
+			init: func(m *cloudwrapper.Mock, testData testDataForCWProperties) {
 				expectListProperties(m, testData, 3)
 			},
 			mockData: testDataForCWProperties{
@@ -63,7 +63,7 @@ func TestDataProperty(t *testing.T) {
 		},
 		"happy path - no optional attributes": {
 			configPath: "testdata/TestDataProperties/no_attributes.tf",
-			init: func(_ *testing.T, m *cloudwrapper.Mock, testData testDataForCWProperties) {
+			init: func(m *cloudwrapper.Mock, testData testDataForCWProperties) {
 				expectListProperties(m, testData, 3)
 			},
 			mockData: testDataForCWProperties{
@@ -80,7 +80,7 @@ func TestDataProperty(t *testing.T) {
 		},
 		"happy path - empty properties list": {
 			configPath: "testdata/TestDataProperties/default_unused_false.tf",
-			init: func(_ *testing.T, m *cloudwrapper.Mock, testData testDataForCWProperties) {
+			init: func(m *cloudwrapper.Mock, testData testDataForCWProperties) {
 				expectListProperties(m, testData, 3)
 			},
 			mockData: testDataForCWProperties{
@@ -90,7 +90,7 @@ func TestDataProperty(t *testing.T) {
 		},
 		"error listing properties": {
 			configPath: "testdata/TestDataProperties/default_unused_false.tf",
-			init: func(t *testing.T, m *cloudwrapper.Mock, testData testDataForCWProperties) {
+			init: func(m *cloudwrapper.Mock, testData testDataForCWProperties) {
 				expectListPropertiesWithError(m, testData, 1)
 			},
 			mockData: testDataForCWProperties{
@@ -103,7 +103,7 @@ func TestDataProperty(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			client := &cloudwrapper.Mock{}
 			if test.init != nil {
-				test.init(t, client, test.mockData)
+				test.init(client, test.mockData)
 			}
 
 			resource.UnitTest(t, resource.TestCase{

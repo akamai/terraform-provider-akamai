@@ -79,18 +79,18 @@ func TestIsPropertyInGroup(t *testing.T) {
 		contractID: "ctr_3",
 	}
 	tests := map[string]struct {
-		init          func(*testing.T, *mockProperty)
+		init          func(*mockProperty)
 		expected      bool
 		expectedError string
 	}{
 		"returns true if property found and group matches": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				p.mockGetProperty()
 			},
 			expected: true,
 		},
 		"returns false if property found but group differs": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				req := p.getPropertyRequest()
 				res := p.getPropertyResponse()
 				res.Property.GroupID = "grp_555"
@@ -99,7 +99,7 @@ func TestIsPropertyInGroup(t *testing.T) {
 			expected: false,
 		},
 		"returns false if property not found (HTTP 403)": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				req := p.getPropertyRequest()
 				err := papi.Error{
 					StatusCode: http.StatusForbidden,
@@ -109,7 +109,7 @@ func TestIsPropertyInGroup(t *testing.T) {
 			expected: false,
 		},
 		"forwards fetching property error": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				req := p.getPropertyRequest()
 				err := errors.New("dummy error")
 				p.papiMock.On("GetProperty", testutils.MockContext, req).Return(nil, err)
@@ -128,7 +128,7 @@ func TestIsPropertyInGroup(t *testing.T) {
 				},
 				papiMock: mock,
 			}
-			test.init(t, &mp)
+			test.init(&mp)
 			hlp := helper{mock, nil}
 			res, err := hlp.isPropertyInGroup(context.Background(), key)
 			if test.expectedError != "" {
@@ -148,11 +148,11 @@ func TestValidatePropertyMove(t *testing.T) {
 		contractID: "ctr_3",
 	}
 	tests := map[string]struct {
-		init            func(*testing.T, *mockProperty)
+		init            func(*mockProperty)
 		validationError *string
 	}{
 		"no error for past activations": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				p.activations = papi.ActivationsItems{
 					Items: []*papi.Activation{
 						{
@@ -165,14 +165,14 @@ func TestValidatePropertyMove(t *testing.T) {
 			validationError: nil,
 		},
 		"validation error for no activations": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				p.mockGetActivationsCompleteRequest()
 			},
 			validationError: ptr.To("moving properties that have never been activated is not supported " +
 				"(property id: prp_1, contract id: ctr_3, group id grp_2)"),
 		},
 		"forwards fetching activations error": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				p.mockGetActivationsCompleteRequest(errors.New("dummy error"))
 			},
 			validationError: ptr.To("error getting activations list for {prp_1 grp_2 ctr_3}: dummy error"),
@@ -189,7 +189,7 @@ func TestValidatePropertyMove(t *testing.T) {
 				},
 				papiMock: mock,
 			}
-			test.init(t, &mp)
+			test.init(&mp)
 			hlp := helper{mock, nil}
 			err := hlp.validatePropertyMove(context.Background(), key)
 			if test.validationError != nil {
@@ -208,17 +208,17 @@ func TestWaitForPropertyGroupIDChange(t *testing.T) {
 		contractID: "ctr_3",
 	}
 	tests := map[string]struct {
-		init          func(*testing.T, *mockProperty)
+		init          func(*mockProperty)
 		expectedError *string
 	}{
 		"returns immediately if property in group": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				p.mockGetProperty()
 			},
 			expectedError: nil,
 		},
 		"retries twice until property in group": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// 2x different group
 				req := p.getPropertyRequest()
 				res := p.getPropertyResponse()
@@ -231,7 +231,7 @@ func TestWaitForPropertyGroupIDChange(t *testing.T) {
 			expectedError: nil,
 		},
 		"returns error if all three attempts exhausted": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// 3x different group
 				req := p.getPropertyRequest()
 				res := p.getPropertyResponse()
@@ -242,7 +242,7 @@ func TestWaitForPropertyGroupIDChange(t *testing.T) {
 				"contractID: ctr_3 in 3 attempts failed"),
 		},
 		"forwards fetching property error": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				req := p.getPropertyRequest()
 				err := errors.New("dummy error")
 				p.papiMock.On("GetProperty", testutils.MockContext, req).Return(nil, err)
@@ -261,7 +261,7 @@ func TestWaitForPropertyGroupIDChange(t *testing.T) {
 				},
 				papiMock: mock,
 			}
-			test.init(t, &mp)
+			test.init(&mp)
 			hlp := helper{mock, nil}
 			err := hlp.waitForPropertyGroupIDChange(context.Background(), key, 3, time.Second)
 			if test.expectedError != nil {

@@ -58,12 +58,12 @@ var (
 func TestResGTMProperty(t *testing.T) {
 	tests := map[string]struct {
 		property *gtm.Property
-		init     func(*testing.T, *gtm.Mock)
+		init     func(*gtm.Mock)
 		steps    []resource.TestStep
 	}{
 		"create property": {
 			property: getBasicProperty(),
-			init: func(t *testing.T, m *gtm.Mock) {
+			init: func(m *gtm.Mock) {
 				mockGetProperty(m, testPropertyName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
 				mockCreateProperty(m, getBasicProperty(), &gtm.CreatePropertyResponse{
 					Resource: getBasicProperty(),
@@ -118,7 +118,7 @@ func TestResGTMProperty(t *testing.T) {
 		},
 		"create property, remove outside of terraform, expect non-empty plan": {
 			property: getBasicProperty(),
-			init: func(t *testing.T, m *gtm.Mock) {
+			init: func(m *gtm.Mock) {
 				mockGetProperty(m, testPropertyName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
 				mockCreateProperty(m, getBasicProperty(), &gtm.CreatePropertyResponse{
 					Resource: getBasicProperty(),
@@ -160,7 +160,7 @@ func TestResGTMProperty(t *testing.T) {
 		},
 		"create property with additional liveness test fields": {
 			property: getBasicPropertyWithLivenessTests(),
-			init: func(t *testing.T, m *gtm.Mock) {
+			init: func(m *gtm.Mock) {
 				mockGetProperty(m, testPropertyName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
 				mockCreateProperty(m, getBasicPropertyWithLivenessTests(), &gtm.CreatePropertyResponse{
 					Resource: getBasicPropertyWithLivenessTests(),
@@ -191,7 +191,7 @@ func TestResGTMProperty(t *testing.T) {
 		},
 		"create property failed": {
 			property: getBasicProperty(),
-			init: func(t *testing.T, m *gtm.Mock) {
+			init: func(m *gtm.Mock) {
 				mockGetProperty(m, testPropertyName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
 				// bad request status code returned
 				mockCreateProperty(m, getBasicProperty(), nil, &gtm.Error{
@@ -207,7 +207,7 @@ func TestResGTMProperty(t *testing.T) {
 		},
 		"create property failed - property already exists": {
 			property: getBasicProperty(),
-			init: func(t *testing.T, m *gtm.Mock) {
+			init: func(m *gtm.Mock) {
 				mockGetProperty(m, testPropertyName, getBasicPropertyResponse(), nil, 1)
 			},
 			steps: []resource.TestStep{
@@ -219,7 +219,7 @@ func TestResGTMProperty(t *testing.T) {
 		},
 		"create property with retry on Property Validation Failure - no datacenter is assigned to map target": {
 			property: getBasicProperty(),
-			init: func(t *testing.T, m *gtm.Mock) {
+			init: func(m *gtm.Mock) {
 				mockGetProperty(m, testPropertyName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
 				// Simulate a retry scenario
 				mockCreateProperty(m, getBasicProperty(), nil, &gtm.Error{
@@ -257,7 +257,7 @@ func TestResGTMProperty(t *testing.T) {
 		},
 		"create property with retry on Property Validation Failure - other errors": {
 			property: getBasicProperty(),
-			init: func(t *testing.T, m *gtm.Mock) {
+			init: func(m *gtm.Mock) {
 				mockGetProperty(m, testPropertyName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
 				// Simulate a retry scenario
 				mockCreateProperty(m, getBasicProperty(), nil, &gtm.Error{
@@ -276,7 +276,7 @@ func TestResGTMProperty(t *testing.T) {
 		},
 		"create property with retry - context canceled": {
 			property: getBasicProperty(),
-			init: func(t *testing.T, m *gtm.Mock) {
+			init: func(m *gtm.Mock) {
 				mockGetProperty(m, testPropertyName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
 				// Simulate a retry scenario
 				mockCreateProperty(m, getBasicProperty(), nil, &gtm.Error{
@@ -298,7 +298,7 @@ func TestResGTMProperty(t *testing.T) {
 		},
 		"create property denied": {
 			property: nil,
-			init: func(t *testing.T, m *gtm.Mock) {
+			init: func(m *gtm.Mock) {
 				mockGetProperty(m, testPropertyName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
 				// create
 				// denied response status returned
@@ -317,7 +317,7 @@ func TestResGTMProperty(t *testing.T) {
 		},
 		"create property and update name - force new": {
 			property: getBasicProperty(),
-			init: func(t *testing.T, m *gtm.Mock) {
+			init: func(m *gtm.Mock) {
 				mockGetProperty(m, testPropertyName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
 				// create 1st property
 				mockCreateProperty(m, getBasicProperty(), &gtm.CreatePropertyResponse{
@@ -375,7 +375,7 @@ func TestResGTMProperty(t *testing.T) {
 		},
 		"test_object_protocol different than HTTP, HTTPS or FTP": {
 			property: getBasicProperty(),
-			init: func(t *testing.T, m *gtm.Mock) {
+			init: func(m *gtm.Mock) {
 				mockGetProperty(m, testPropertyName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
 				// create property with test_object_protocol in first liveness test different from HTTP, HTTPS, FTP
 				// alter mocked property
@@ -431,7 +431,7 @@ func TestResGTMProperty(t *testing.T) {
 		},
 		"create property with 'ranked-failover' type and allow single empty precedence value": {
 			property: getRankedFailoverPropertyWithPrecedence(),
-			init: func(t *testing.T, m *gtm.Mock) {
+			init: func(m *gtm.Mock) {
 				mockGetProperty(m, testPropertyName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
 				mockCreateProperty(m, getRankedFailoverPropertyWithPrecedence(), &gtm.CreatePropertyResponse{
 					Resource: getRankedFailoverPropertyWithPrecedence(),
@@ -462,7 +462,7 @@ func TestResGTMProperty(t *testing.T) {
 		},
 		"create property with 'ranked-failover' type and 0 set as precedence value": {
 			property: getRankedFailoverPropertyWithPrecedence(),
-			init: func(t *testing.T, m *gtm.Mock) {
+			init: func(m *gtm.Mock) {
 				mockGetProperty(m, testPropertyName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
 				mockCreateProperty(m, getRankedFailoverPropertyWithPrecedence(), &gtm.CreatePropertyResponse{
 					Resource: getRankedFailoverPropertyWithPrecedence(),
@@ -520,7 +520,7 @@ func TestResGTMProperty(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			client := new(gtm.Mock)
 			if test.init != nil {
-				test.init(t, client)
+				test.init(client)
 			}
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{

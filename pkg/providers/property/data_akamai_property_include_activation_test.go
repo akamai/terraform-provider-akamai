@@ -15,7 +15,7 @@ import (
 func TestDataPropertyIncludeActivation(t *testing.T) {
 	tests := map[string]struct {
 		attrs      includeActivationTestAttributes
-		init       func(*testing.T, *papi.Mock, includeActivationTestAttributes)
+		init       func(*papi.Mock, includeActivationTestAttributes)
 		configPath string
 		error      *regexp.Regexp
 	}{
@@ -27,7 +27,7 @@ func TestDataPropertyIncludeActivation(t *testing.T) {
 				network:             stagingNetwork,
 				activationsResponse: *createIncludeActivationsResponse(accountForTests, contractForTests, groupForTests, includeActivationsForTests),
 			},
-			init: func(_ *testing.T, m *papi.Mock, attrs includeActivationTestAttributes) {
+			init: func(m *papi.Mock, attrs includeActivationTestAttributes) {
 				mockListIncludeActivation(m, attrs, 3)
 			},
 			configPath: "testdata/TestDataPropertyIncludeActivation/valid_staging.tf",
@@ -40,7 +40,7 @@ func TestDataPropertyIncludeActivation(t *testing.T) {
 				network:             productionNetwork,
 				activationsResponse: *createIncludeActivationsResponse(accountForTests, contractForTests, groupForTests, includeActivationsForTests),
 			},
-			init: func(t *testing.T, m *papi.Mock, attrs includeActivationTestAttributes) {
+			init: func(m *papi.Mock, attrs includeActivationTestAttributes) {
 				mockListIncludeActivation(m, attrs, 3)
 			},
 			configPath: "testdata/TestDataPropertyIncludeActivation/valid_production.tf",
@@ -53,7 +53,7 @@ func TestDataPropertyIncludeActivation(t *testing.T) {
 				network:             productionNetwork,
 				activationsResponse: *createIncludeActivationsResponse(accountForTests, contractForTests, groupForTests, includeActivationsForTests[:2]),
 			},
-			init: func(t *testing.T, m *papi.Mock, attrs includeActivationTestAttributes) {
+			init: func(m *papi.Mock, attrs includeActivationTestAttributes) {
 				mockListIncludeActivation(m, attrs, 3)
 			},
 			configPath: "testdata/TestDataPropertyIncludeActivation/no_activation_for_given_network.tf",
@@ -66,7 +66,7 @@ func TestDataPropertyIncludeActivation(t *testing.T) {
 				network:             stagingNetwork,
 				activationsResponse: *createIncludeActivationsResponse(accountForTests, contractForTests, groupForTests, includeActivationsWithLatestDeactivate),
 			},
-			init: func(t *testing.T, m *papi.Mock, attrs includeActivationTestAttributes) {
+			init: func(m *papi.Mock, attrs includeActivationTestAttributes) {
 				mockListIncludeActivation(m, attrs, 3)
 			},
 			configPath: "testdata/TestDataPropertyIncludeActivation/valid_staging.tf",
@@ -79,7 +79,7 @@ func TestDataPropertyIncludeActivation(t *testing.T) {
 				network:             productionNetwork,
 				activationsResponse: *createIncludeActivationsResponse(accountForTests, contractForTests, groupForTests, includeActivationsForTests[:2]),
 			},
-			init: func(t *testing.T, m *papi.Mock, attrs includeActivationTestAttributes) {
+			init: func(m *papi.Mock, attrs includeActivationTestAttributes) {
 				mockListIncludeActivation(m, attrs, 3)
 			},
 			configPath: "testdata/TestDataPropertyIncludeActivation/valid_production.tf",
@@ -107,32 +107,32 @@ func TestDataPropertyIncludeActivation(t *testing.T) {
 					}),
 				}),
 			},
-			init: func(_ *testing.T, m *papi.Mock, attrs includeActivationTestAttributes) {
+			init: func(m *papi.Mock, attrs includeActivationTestAttributes) {
 				mockListIncludeActivation(m, attrs, 3)
 			},
 			configPath: "testdata/TestDataPropertyIncludeActivation/valid_staging.tf",
 		},
 		"required attribute missing - contract_id": {
 			attrs:      includeActivationTestAttributes{},
-			init:       func(t *testing.T, m *papi.Mock, attrs includeActivationTestAttributes) {},
+			init:       func(m *papi.Mock, attrs includeActivationTestAttributes) {},
 			configPath: "testdata/TestDataPropertyIncludeActivation/no_contract_id.tf",
 			error:      regexp.MustCompile("Error: Missing required argument"),
 		},
 		"required attribute missing - group_id": {
 			attrs:      includeActivationTestAttributes{},
-			init:       func(t *testing.T, m *papi.Mock, attrs includeActivationTestAttributes) {},
+			init:       func(m *papi.Mock, attrs includeActivationTestAttributes) {},
 			configPath: "testdata/TestDataPropertyIncludeActivation/no_group_id.tf",
 			error:      regexp.MustCompile("Error: Missing required argument"),
 		},
 		"required attribute missing - include_id": {
 			attrs:      includeActivationTestAttributes{},
-			init:       func(t *testing.T, m *papi.Mock, attrs includeActivationTestAttributes) {},
+			init:       func(m *papi.Mock, attrs includeActivationTestAttributes) {},
 			configPath: "testdata/TestDataPropertyIncludeActivation/no_include_id.tf",
 			error:      regexp.MustCompile("Error: Missing required argument"),
 		},
 		"required attribute missing - network": {
 			attrs:      includeActivationTestAttributes{},
-			init:       func(t *testing.T, m *papi.Mock, attrs includeActivationTestAttributes) {},
+			init:       func(m *papi.Mock, attrs includeActivationTestAttributes) {},
 			configPath: "testdata/TestDataPropertyIncludeActivation/no_network.tf",
 			error:      regexp.MustCompile("Error: Missing required argument"),
 		},
@@ -144,7 +144,7 @@ func TestDataPropertyIncludeActivation(t *testing.T) {
 				network:             stagingNetwork,
 				activationsResponse: *createIncludeActivationsResponse(accountForTests, contractForTests, groupForTests, includeActivationsForTests),
 			},
-			init: func(t *testing.T, m *papi.Mock, attrs includeActivationTestAttributes) {
+			init: func(m *papi.Mock, attrs includeActivationTestAttributes) {
 				m.On("ListIncludeActivations", testutils.MockContext, papi.ListIncludeActivationsRequest{
 					IncludeID:  attrs.includeID,
 					ContractID: attrs.contractID,
@@ -159,7 +159,7 @@ func TestDataPropertyIncludeActivation(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			client := &papi.Mock{}
-			test.init(t, client, test.attrs)
+			test.init(client, test.attrs)
 			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),

@@ -127,27 +127,27 @@ func TestConfigurationDataSource(t *testing.T) {
 
 	tests := map[string]struct {
 		configPath string
-		init       func(*testing.T, *cloudwrapper.Mock, testDataForCWConfiguration)
+		init       func(*cloudwrapper.Mock, testDataForCWConfiguration)
 		mockData   testDataForCWConfiguration
 		error      *regexp.Regexp
 	}{
 		"happy path - minimal data returned": {
 			configPath: "testdata/TestDataConfiguration/default.tf",
-			init: func(_ *testing.T, m *cloudwrapper.Mock, testData testDataForCWConfiguration) {
+			init: func(m *cloudwrapper.Mock, testData testDataForCWConfiguration) {
 				expectGetConfiguration(m, testData, 3)
 			},
 			mockData: minimalConfiguration,
 		},
 		"happy path - all fields": {
 			configPath: "testdata/TestDataConfiguration/default.tf",
-			init: func(_ *testing.T, m *cloudwrapper.Mock, testData testDataForCWConfiguration) {
+			init: func(m *cloudwrapper.Mock, testData testDataForCWConfiguration) {
 				expectGetConfiguration(m, testData, 3)
 			},
 			mockData: configuration,
 		},
 		"error getting configuration": {
 			configPath: "testdata/TestDataConfiguration/default.tf",
-			init: func(t *testing.T, m *cloudwrapper.Mock, testData testDataForCWConfiguration) {
+			init: func(m *cloudwrapper.Mock, testData testDataForCWConfiguration) {
 				expectGetConfigurationWithError(m, testData, 1)
 			},
 			mockData: testDataForCWConfiguration{
@@ -167,7 +167,7 @@ func TestConfigurationDataSource(t *testing.T) {
 
 			client := &cloudwrapper.Mock{}
 			if test.init != nil {
-				test.init(t, client, test.mockData)
+				test.init(client, test.mockData)
 			}
 
 			resource.UnitTest(t, resource.TestCase{

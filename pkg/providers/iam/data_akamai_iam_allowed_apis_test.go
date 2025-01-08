@@ -91,27 +91,27 @@ var (
 func TestDataAllowedAPIs(t *testing.T) {
 	tests := map[string]struct {
 		configPath string
-		init       func(*testing.T, *iam.Mock, testDataForAllowedAPIs)
+		init       func(*iam.Mock, testDataForAllowedAPIs)
 		mockData   testDataForAllowedAPIs
 		error      *regexp.Regexp
 	}{
 		"happy path": {
 			configPath: "testdata/TestDataAllowedAPIs/default.tf",
-			init: func(t *testing.T, m *iam.Mock, testData testDataForAllowedAPIs) {
-				expectFullListAllowedAPIs(t, m, testData, 3)
+			init: func(m *iam.Mock, testData testDataForAllowedAPIs) {
+				expectFullListAllowedAPIs(m, testData, 3)
 			},
 			mockData: basicTestDataForAllowedAPIs,
 		},
 		"happy path no optional values": {
 			configPath: "testdata/TestDataAllowedAPIs/default_no_optional.tf",
-			init: func(t *testing.T, m *iam.Mock, testData testDataForAllowedAPIs) {
-				expectFullListAllowedAPIs(t, m, testData, 3)
+			init: func(m *iam.Mock, testData testDataForAllowedAPIs) {
+				expectFullListAllowedAPIs(m, testData, 3)
 			},
 			mockData: basicTestDataForAllowedAPIsNoOptional,
 		},
 		"error - ListAllowedAPIs call failed": {
 			configPath: "testdata/TestDataAllowedAPIs/default_no_optional.tf",
-			init: func(t *testing.T, m *iam.Mock, testData testDataForAllowedAPIs) {
+			init: func(m *iam.Mock, testData testDataForAllowedAPIs) {
 				listAllowedAPIsReq := iam.ListAllowedAPIsRequest{UserName: testData.username}
 
 				m.On("ListAllowedAPIs", testutils.MockContext, listAllowedAPIsReq).Return(nil, errors.New("test error"))
@@ -124,7 +124,7 @@ func TestDataAllowedAPIs(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			client := &iam.Mock{}
 			if tc.init != nil {
-				tc.init(t, client, tc.mockData)
+				tc.init(client, tc.mockData)
 			}
 
 			useClient(client, func() {
@@ -145,7 +145,7 @@ func TestDataAllowedAPIs(t *testing.T) {
 	}
 }
 
-func expectFullListAllowedAPIs(_ *testing.T, client *iam.Mock, data testDataForAllowedAPIs, timesToRun int) {
+func expectFullListAllowedAPIs(client *iam.Mock, data testDataForAllowedAPIs, timesToRun int) {
 	listAllowedAPIsReq := iam.ListAllowedAPIsRequest{
 		UserName: data.username,
 	}
