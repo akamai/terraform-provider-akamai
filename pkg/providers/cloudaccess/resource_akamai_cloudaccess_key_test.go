@@ -12,6 +12,7 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
@@ -367,26 +368,7 @@ func TestAccessKeyResource(t *testing.T) {
 				mockReadAccessKeyWith1Version(m, resourceData)
 				mockReadAccessKeyWith1Version(m, resourceData)
 				mockUpdateAccessKey(m, resourceData.accessKeyData[0], "updated_key_name").Once()
-				m.On("GetAccessKey", mock.Anything, cloudaccess.AccessKeyRequest{AccessKeyUID: resourceData.accessKeyData[0].accessKeyUID}).
-					Return(&cloudaccess.GetAccessKeyResponse{
-						AccessKeyName:        "updated_key_name",
-						AccessKeyUID:         resourceData.accessKeyData[0].accessKeyUID,
-						AuthenticationMethod: resourceData.accessKeyData[0].authenticationMethod,
-						NetworkConfiguration: &cloudaccess.SecureNetwork{
-							SecurityNetwork: cloudaccess.NetworkType(resourceData.accessKeyData[0].networkConfig.securityNetwork),
-							AdditionalCDN:   ptr.To(cloudaccess.CDNType(resourceData.accessKeyData[0].networkConfig.additionalCDN)),
-						},
-						LatestVersion: firstAccessKeyVersion,
-						Groups: []cloudaccess.Group{
-							{
-								GroupID:     resourceData.accessKeyData[0].groupID,
-								GroupName:   ptr.To("random group name"),
-								ContractIDs: []string{resourceData.accessKeyData[0].contractID},
-							},
-						},
-						CreatedBy:   "dev-user",
-						CreatedTime: time.Date(2024, 1, 10, 11, 9, 10, 67708, time.UTC),
-					}, nil).Once()
+				mockGetAccessKeyWithSpecificNameAndVersion(m, resourceData.accessKeyData[0], "updated_key_name", firstAccessKeyVersion).Once()
 				mockListAccessKeyVersionsOnly1Version(m, resourceData.accessKeyData[0]).Twice()
 				mockListAccessKeyVersionsOnly1Version(m, resourceData.accessKeyData[0]).Twice()
 				mockDeletionAccessKeyWith1Version(m, resourceData)
@@ -629,26 +611,7 @@ func TestAccessKeyResource(t *testing.T) {
 				mockGetAccessKeyVersion(m, resourceData.accessKeyData[0], cloudaccess.Active, thirdAccessKeyVersion).Once()
 
 				//read
-				m.On("GetAccessKey", mock.Anything, cloudaccess.AccessKeyRequest{AccessKeyUID: resourceData.accessKeyData[0].accessKeyUID}).
-					Return(&cloudaccess.GetAccessKeyResponse{
-						AccessKeyName:        resourceData.accessKeyData[0].accessKeyName,
-						AccessKeyUID:         resourceData.accessKeyData[0].accessKeyUID,
-						AuthenticationMethod: resourceData.accessKeyData[0].authenticationMethod,
-						NetworkConfiguration: &cloudaccess.SecureNetwork{
-							SecurityNetwork: cloudaccess.NetworkType(resourceData.accessKeyData[0].networkConfig.securityNetwork),
-							AdditionalCDN:   ptr.To(cloudaccess.CDNType(resourceData.accessKeyData[0].networkConfig.additionalCDN)),
-						},
-						LatestVersion: thirdAccessKeyVersion,
-						Groups: []cloudaccess.Group{
-							{
-								GroupID:     resourceData.accessKeyData[0].groupID,
-								GroupName:   ptr.To("random group name"),
-								ContractIDs: []string{resourceData.accessKeyData[0].contractID},
-							},
-						},
-						CreatedBy:   "dev-user",
-						CreatedTime: time.Date(2024, 1, 10, 11, 9, 10, 67708, time.UTC),
-					}, nil)
+				mockGetAccessKeyWithSpecificNameAndVersion(m, resourceData.accessKeyData[0], resourceData.accessKeyData[0].accessKeyName, thirdAccessKeyVersion).Once()
 				m.On("ListAccessKeyVersions", mock.Anything, cloudaccess.ListAccessKeyVersionsRequest{
 					AccessKeyUID: resourceData.accessKeyData[0].accessKeyUID,
 				}).Return(&cloudaccess.ListAccessKeyVersionsResponse{AccessKeyVersions: []cloudaccess.AccessKeyVersion{
@@ -1356,6 +1319,50 @@ func TestAccessKeyResource(t *testing.T) {
 				},
 			},
 		},
+		"check whether access_key_uid is known on plan level during update": {
+			init: func(t *testing.T, m *cloudaccess.Mock, resourceData commonDataForResource) {
+				mockCreationAccessKeyWith1Version(m, resourceData)
+				mockReadAccessKeyWith1Version(m, resourceData)
+				mockReadAccessKeyWith1Version(m, resourceData)
+				mockUpdateAccessKey(m, resourceData.accessKeyData[0], "updated_key_name").Once()
+				mockGetAccessKeyWithSpecificNameAndVersion(m, resourceData.accessKeyData[0], "updated_key_name", firstAccessKeyVersion).Once()
+				mockListAccessKeyVersionsOnly1Version(m, resourceData.accessKeyData[0]).Twice()
+				mockListAccessKeyVersionsOnly1Version(m, resourceData.accessKeyData[0]).Twice()
+				mockDeletionAccessKeyWith1Version(m, resourceData)
+			},
+			mockData: resourceMock,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
+						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_name", "test_key_name"),
+						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "authentication_method", "AWS4_HMAC_SHA256"),
+						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "contract_id", "1-CTRACT"),
+						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "group_id", "12345"),
+						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "primary_guid", "asde-efdr-reded"),
+						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_access_key_id", "test_key_id"),
+						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_secret_access_key", "test_secret"),
+						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.primary_key", "true"),
+						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version", "1"),
+						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version_guid", "asde-efdr-reded"),
+						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.additional_cdn", "CHINA_CDN"),
+						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.security_network", "ENHANCED_TLS"),
+					),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/updated_name.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
+					),
+					ConfigPlanChecks: resource.ConfigPlanChecks{
+						PreApply: []plancheck.PlanCheck{
+							plancheck.ExpectKnownValue("akamai_cloudaccess_key.test", tfjsonpath.New("access_key_uid"), knownvalue.Int64Exact(12345)),
+						},
+					},
+				},
+			},
+		},
 		"missing contract id": {
 			steps: []resource.TestStep{{
 				Config:      testutils.LoadFixtureString(t, "testdata/TestResAccessKey/missing_contract.tf"),
@@ -1757,7 +1764,6 @@ func TestAccessKeyResource(t *testing.T) {
 		})
 	}
 }
-
 func mockDeletionAccessKeyWith2Versions(m *cloudaccess.Mock, resourceData commonDataForResource) {
 	mockListAccessKeyVersions(m, resourceData.accessKeyData[0], twoElementsVersionList).Once()
 	mockLookupsPropertiesNoProperties(m, resourceData.propertyData, firstAccessKeyVersion).Once()
@@ -1835,6 +1841,28 @@ func mockGetAccessKey(client *cloudaccess.Mock, testData commonDataForAccessKey)
 				AdditionalCDN:   ptr.To(cloudaccess.CDNType(testData.networkConfig.additionalCDN)),
 			},
 			LatestVersion: firstAccessKeyVersion,
+			Groups: []cloudaccess.Group{
+				{
+					GroupID:     testData.groupID,
+					GroupName:   ptr.To("random group name"),
+					ContractIDs: []string{testData.contractID},
+				},
+			},
+			CreatedBy:   "dev-user",
+			CreatedTime: time.Date(2024, 1, 10, 11, 9, 10, 67708, time.UTC),
+		}, nil)
+}
+func mockGetAccessKeyWithSpecificNameAndVersion(m *cloudaccess.Mock, testData commonDataForAccessKey, name string, version int64) *mock.Call {
+	return m.On("GetAccessKey", mock.Anything, cloudaccess.AccessKeyRequest{AccessKeyUID: testData.accessKeyUID}).
+		Return(&cloudaccess.GetAccessKeyResponse{
+			AccessKeyName:        name,
+			AccessKeyUID:         testData.accessKeyUID,
+			AuthenticationMethod: testData.authenticationMethod,
+			NetworkConfiguration: &cloudaccess.SecureNetwork{
+				SecurityNetwork: cloudaccess.NetworkType(testData.networkConfig.securityNetwork),
+				AdditionalCDN:   ptr.To(cloudaccess.CDNType(testData.networkConfig.additionalCDN)),
+			},
+			LatestVersion: version,
 			Groups: []cloudaccess.Group{
 				{
 					GroupID:     testData.groupID,

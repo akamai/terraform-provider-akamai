@@ -84,7 +84,8 @@
 
 
 
-
+* Cloud Access
+  * Populated `access_key_uid` in the `akamai_cloudaccess_key` resource from state, if value was known on plan level for update.
 
 
 
