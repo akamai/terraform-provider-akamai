@@ -1,11 +1,13 @@
 package gtm
 
 import (
+	"fmt"
 	"net/http"
 	"regexp"
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/gtm"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/test"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
@@ -211,6 +213,129 @@ func TestResGTMDatacenter(t *testing.T) {
 
 		client.AssertExpectations(t)
 	})
+}
+
+func TestResGTMDatacenterImport(t *testing.T) {
+	tests := map[string]struct {
+		domainName   string
+		datacenterID string
+		init         func(*gtm.Mock)
+		expectError  *regexp.Regexp
+		stateCheck   resource.ImportStateCheckFunc
+	}{
+		"happy path - import": {
+			domainName:   "test_domain",
+			datacenterID: "3132",
+			init: func(m *gtm.Mock) {
+				// Read
+				mockGetDatacenterImport(m, getImportedDatacenter(), nil).Times(2)
+			},
+			stateCheck: test.NewImportChecker().
+				CheckEqual("domain", "test_domain").
+				CheckEqual("datacenter_id", "3132").
+				CheckEqual("nickname", "testNickname").
+				CheckEqual("city", "city").
+				CheckEqual("wait_on_complete", "true").
+				CheckEqual("clone_of", "5").
+				CheckEqual("cloud_server_host_header_override", "true").
+				CheckEqual("cloud_server_targeting", "true").
+				CheckEqual("default_load_object.0.load_object", "loadObject").
+				CheckEqual("default_load_object.0.load_object_port", "80").
+				CheckEqual("default_load_object.0.load_servers.0", "1.1.1.1").
+				CheckEqual("default_load_object.0.load_servers.1", "2.2.2.2").
+				CheckEqual("continent", "continent").
+				CheckEqual("country", "country").
+				CheckEqual("latitude", "3.3").
+				CheckEqual("longitude", "4.4").
+				CheckEqual("score_penalty", "2").
+				CheckEqual("servermonitor_pool", "serverMonitorPool").
+				CheckEqual("servermonitor_liveness_count", "1").
+				CheckEqual("servermonitor_load_count", "123").
+				CheckEqual("ping_interval", "1").
+				CheckEqual("ping_packet_size", "123").
+				CheckEqual("state_or_province", "state").
+				CheckEqual("virtual", "true").Build(),
+		},
+		"expect error - no domain name, invalid import ID": {
+			domainName:   "",
+			datacenterID: "3132",
+			expectError:  regexp.MustCompile(`Error: Invalid Datacenter resource ID`),
+		},
+		"expect error - wrong datacenterID, invalid import ID": {
+			domainName:   "",
+			datacenterID: "wrong id",
+			expectError:  regexp.MustCompile(`Error: Invalid Datacenter resource ID`),
+		},
+		"expect error - read": {
+			domainName:   "test_domain",
+			datacenterID: "3132",
+			init: func(m *gtm.Mock) {
+				// Read - error
+				mockGetDatacenterImport(m, nil, fmt.Errorf("get failed")).Once()
+			},
+			expectError: regexp.MustCompile(`get failed`),
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			client := &gtm.Mock{}
+			if tc.init != nil {
+				tc.init(client)
+			}
+			useClient(client, func() {
+				resource.UnitTest(t, resource.TestCase{
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+					Steps: []resource.TestStep{
+						{
+							ImportStateCheck: tc.stateCheck,
+							ImportStateId:    fmt.Sprintf("%s:%s", tc.domainName, tc.datacenterID),
+							ImportState:      true,
+							ResourceName:     "akamai_gtm_datacenter.test",
+							Config:           testutils.LoadFixtureString(t, "testdata/TestResGtmDatacenter/import_basic.tf"),
+							ExpectError:      tc.expectError,
+						},
+					},
+				})
+			})
+			client.AssertExpectations(t)
+		})
+	}
+}
+
+func mockGetDatacenterImport(m *gtm.Mock, resp *gtm.Datacenter, err error) *mock.Call {
+	return m.On("GetDatacenter", mock.Anything, gtm.GetDatacenterRequest{
+		DatacenterID: 3132,
+		DomainName:   "test_domain",
+	}).Return(resp, err)
+}
+
+func getImportedDatacenter() *gtm.Datacenter {
+	return &gtm.Datacenter{
+		DatacenterID:    3132,
+		Nickname:        "testNickname",
+		ScorePenalty:    2,
+		City:            "city",
+		StateOrProvince: "state",
+		Country:         "country",
+		Latitude:        3.3,
+		Longitude:       4.4,
+		CloneOf:         5,
+		Virtual:         true,
+		DefaultLoadObject: &gtm.LoadObject{
+			LoadObject:     "loadObject",
+			LoadObjectPort: 80,
+			LoadServers:    []string{"1.1.1.1", "2.2.2.2"},
+		},
+		Continent:                     "continent",
+		ServermonitorPool:             "serverMonitorPool",
+		ServermonitorLivenessCount:    1,
+		ServermonitorLoadCount:        123,
+		CloudServerTargeting:          true,
+		CloudServerHostHeaderOverride: true,
+		PingPacketSize:                123,
+		PingInterval:                  1,
+	}
 }
 
 var (

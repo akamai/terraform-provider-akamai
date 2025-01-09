@@ -1,11 +1,13 @@
 package gtm
 
 import (
+	"fmt"
 	"net/http"
 	"regexp"
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/gtm"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/test"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
@@ -318,6 +320,92 @@ func TestGTMResourceOrder(t *testing.T) {
 	}
 }
 
+func TestResGTMResourceImport(t *testing.T) {
+	tests := map[string]struct {
+		domainName   string
+		resourceName string
+		init         func(*gtm.Mock)
+		expectError  *regexp.Regexp
+		stateCheck   resource.ImportStateCheckFunc
+	}{
+		"happy path - import": {
+			domainName:   "test_domain",
+			resourceName: "tfexample_resource_1",
+			init: func(m *gtm.Mock) {
+				// Read
+				importedResource := gtm.GetResourceResponse(*getImportedResource())
+				mockGetResource(m, &importedResource, nil).Times(2)
+			},
+			stateCheck: test.NewImportChecker().
+				CheckEqual("domain", "test_domain").
+				CheckEqual("name", "tfexample_resource_1").
+				CheckEqual("type", "XML load object via HTTP").
+				CheckEqual("host_header", "test host").
+				CheckEqual("least_squares_decay", "1").
+				CheckEqual("description", "test description").
+				CheckEqual("leader_string", "test string").
+				CheckEqual("constrained_property", "test property").
+				CheckEqual("aggregation_type", "latest").
+				CheckEqual("load_imbalance_percentage", "1").
+				CheckEqual("upper_bound", "5").
+				CheckEqual("max_u_multiplicative_increment", "10").
+				CheckEqual("decay_rate", "1").
+				CheckEqual("resource_instance.0.datacenter_id", "3131").
+				CheckEqual("resource_instance.0.use_default_load_object", "false").
+				CheckEqual("resource_instance.0.load_object", "/test1").
+				CheckEqual("resource_instance.0.load_object_port", "80").
+				CheckEqual("resource_instance.0.load_servers.0", "1.2.3.4").
+				CheckEqual("resource_instance.0.load_servers.1", "1.2.3.5").
+				CheckEqual("resource_instance.0.load_servers.2", "1.2.3.6").
+				CheckEqual("wait_on_complete", "true").Build(),
+		},
+		"expect error - no domain name, invalid import ID": {
+			domainName:   "",
+			resourceName: "tfexample_resource_1",
+			expectError:  regexp.MustCompile(`Error: invalid resource ID: :tfexample_resource_1`),
+		},
+		"expect error - no map name, invalid import ID": {
+			domainName:   "test_domain",
+			resourceName: "",
+			expectError:  regexp.MustCompile(`Error: invalid resource ID: test_domain:`),
+		},
+		"expect error - read": {
+			domainName:   "test_domain",
+			resourceName: "tfexample_resource_1",
+			init: func(m *gtm.Mock) {
+				// Read - error
+				mockGetResource(m, nil, fmt.Errorf("get failed")).Times(1)
+			},
+			expectError: regexp.MustCompile(`get failed`),
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			client := &gtm.Mock{}
+			if tc.init != nil {
+				tc.init(client)
+			}
+			useClient(client, func() {
+				resource.UnitTest(t, resource.TestCase{
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+					Steps: []resource.TestStep{
+						{
+							ImportStateCheck: tc.stateCheck,
+							ImportStateId:    fmt.Sprintf("%s:%s", tc.domainName, tc.resourceName),
+							ImportState:      true,
+							ResourceName:     "akamai_gtm_resource.test",
+							Config:           testutils.LoadFixtureString(t, "testdata/TestResGtmResource/import_basic.tf"),
+							ExpectError:      tc.expectError,
+						},
+					},
+				})
+			})
+			client.AssertExpectations(t)
+		})
+	}
+}
+
 // getGTMResourceMocks mocks creation and deletion calls for the gtm_resource
 func getGTMResourceMocks() *gtm.Mock {
 	client := &gtm.Mock{}
@@ -346,6 +434,41 @@ func getGTMResourceMocks() *gtm.Mock {
 	).Return(deleteResourceResponseStatus, nil)
 
 	return client
+}
+
+func mockGetResource(m *gtm.Mock, resp *gtm.GetResourceResponse, err error) *mock.Call {
+	return m.On("GetResource", mock.Anything, gtm.GetResourceRequest{
+		DomainName:   "test_domain",
+		ResourceName: "tfexample_resource_1",
+	}).Return(resp, err)
+}
+
+func getImportedResource() *gtm.Resource {
+	return &gtm.Resource{
+		Type:                "XML load object via HTTP",
+		HostHeader:          "test host",
+		LeastSquaresDecay:   1,
+		Description:         "test description",
+		LeaderString:        "test string",
+		ConstrainedProperty: "test property",
+		ResourceInstances: []gtm.ResourceInstance{
+			{
+				DatacenterID:         3131,
+				UseDefaultLoadObject: false,
+				LoadObject: gtm.LoadObject{
+					LoadObject:     "/test1",
+					LoadServers:    []string{"1.2.3.4", "1.2.3.5", "1.2.3.6"},
+					LoadObjectPort: 80,
+				},
+			},
+		},
+		AggregationType:             "latest",
+		LoadImbalancePercentage:     1,
+		UpperBound:                  5,
+		Name:                        "tfexample_resource_1",
+		MaxUMultiplicativeIncrement: 10,
+		DecayRate:                   1,
+	}
 }
 
 var (

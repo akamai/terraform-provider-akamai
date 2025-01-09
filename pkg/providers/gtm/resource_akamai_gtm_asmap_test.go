@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/gtm"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/test"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
@@ -265,72 +266,6 @@ func TestResGTMASMap(t *testing.T) {
 
 		client.AssertExpectations(t)
 	})
-
-	t.Run("import asmap", func(t *testing.T) {
-		client := &gtm.Mock{}
-
-		client.On("GetASMap",
-			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("gtm.GetASMapRequest"),
-		).Return(nil, &gtm.Error{
-			StatusCode: http.StatusNotFound,
-		}).Once()
-
-		asmap, dc := getASMapTestData()
-
-		client.On("GetDatacenter",
-			mock.Anything,
-			mock.AnythingOfType("gtm.GetDatacenterRequest"),
-		).Return(&dc, nil)
-
-		client.On("CreateASMap",
-			mock.Anything,
-			mock.AnythingOfType("gtm.CreateASMapRequest"),
-		).Return(&gtm.CreateASMapResponse{
-			Resource: asMapCreate.Resource,
-			Status:   asMapCreate.Status,
-		}, nil)
-
-		client.On("GetDomainStatus",
-			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("gtm.GetDomainStatusRequest"),
-		).Return(getDomainStatusResponseStatus, nil)
-
-		client.On("GetASMap",
-			mock.Anything,
-			mock.AnythingOfType("gtm.GetASMapRequest"),
-		).Return(&asmap, nil)
-
-		client.On("DeleteASMap",
-			mock.Anything,
-			mock.AnythingOfType("gtm.DeleteASMapRequest"),
-		).Return(deleteASMapResponseStatus, nil)
-
-		dataSourceName := "akamai_gtm_asmap.tfexample_as_1"
-
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmAsmap/import_basic.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(dataSourceName, "name", "tfexample_as_1"),
-						),
-					},
-					{
-						Config:            testutils.LoadFixtureString(t, "testdata/TestResGtmAsmap/create_basic.tf"),
-						ImportState:       true,
-						ImportStateVerify: true,
-						ImportStateId:     fmt.Sprintf("%s:%s", gtmTestDomain, "tfexample_as_1"),
-						ResourceName:      dataSourceName,
-					},
-				},
-			})
-		})
-
-		client.AssertExpectations(t)
-	})
 }
 
 func TestGTMASMapOrder(t *testing.T) {
@@ -429,6 +364,81 @@ func TestGTMASMapOrder(t *testing.T) {
 	}
 }
 
+func TestResGTMASMapImport(t *testing.T) {
+	tests := map[string]struct {
+		domainName  string
+		mapName     string
+		init        func(*gtm.Mock)
+		expectError *regexp.Regexp
+		stateCheck  resource.ImportStateCheckFunc
+	}{
+		"happy path - import": {
+			domainName: "test_domain",
+			mapName:    "tfexample_as_1",
+			init: func(m *gtm.Mock) {
+				// Read
+				importedAsMap := gtm.GetASMapResponse(*getImportedASMap())
+				mockGetASMap(m, &importedAsMap, nil).Times(2)
+			},
+			stateCheck: test.NewImportChecker().
+				CheckEqual("domain", "test_domain").
+				CheckEqual("name", "tfexample_as_1").
+				CheckEqual("default_datacenter.0.datacenter_id", "5400").
+				CheckEqual("default_datacenter.0.nickname", "default datacenter").
+				CheckEqual("assignment.0.datacenter_id", "3131").
+				CheckEqual("assignment.0.nickname", "tfexample_dc_1").
+				CheckEqual("assignment.0.as_numbers.0", "12222").
+				CheckEqual("assignment.0.as_numbers.1", "16702").
+				CheckEqual("assignment.0.as_numbers.2", "17334").
+				CheckEqual("wait_on_complete", "true").Build(),
+		},
+		"expect error - no domain name, invalid import ID": {
+			domainName:  "",
+			mapName:     "tfexample_as_1",
+			expectError: regexp.MustCompile(`Error: invalid resource ID: :tfexample_as_1`),
+		},
+		"expect error - no map name, invalid import ID": {
+			domainName:  "test_domain",
+			mapName:     "",
+			expectError: regexp.MustCompile(`Error: invalid resource ID: test_domain:`),
+		},
+		"expect error - read": {
+			domainName: "test_domain",
+			mapName:    "tfexample_as_1",
+			init: func(m *gtm.Mock) {
+				// Read - error
+				mockGetASMap(m, nil, fmt.Errorf("get failed")).Once()
+			},
+			expectError: regexp.MustCompile(`get failed`),
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			client := &gtm.Mock{}
+			if tc.init != nil {
+				tc.init(client)
+			}
+			useClient(client, func() {
+				resource.UnitTest(t, resource.TestCase{
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+					Steps: []resource.TestStep{
+						{
+							ImportStateCheck: tc.stateCheck,
+							ImportStateId:    fmt.Sprintf("%s:%s", tc.domainName, tc.mapName),
+							ImportState:      true,
+							ResourceName:     "akamai_gtm_asmap.test",
+							Config:           testutils.LoadFixtureString(t, "testdata/TestResGtmAsmap/import_basic.tf"),
+							ExpectError:      tc.expectError,
+						},
+					},
+				})
+			})
+			client.AssertExpectations(t)
+		})
+	}
+}
+
 // getASMapMocks mocks creation and deletion of a resource
 func getASMapMocks() *gtm.Mock {
 	client := &gtm.Mock{}
@@ -467,6 +477,32 @@ func getASMapMocks() *gtm.Mock {
 	).Return(deleteASMapResponseStatus, nil)
 
 	return client
+}
+
+func mockGetASMap(m *gtm.Mock, resp *gtm.GetASMapResponse, err error) *mock.Call {
+	return m.On("GetASMap", mock.Anything, gtm.GetASMapRequest{
+		ASMapName:  "tfexample_as_1",
+		DomainName: "test_domain",
+	}).Return(resp, err)
+}
+
+func getImportedASMap() *gtm.ASMap {
+	return &gtm.ASMap{
+		DefaultDatacenter: &gtm.DatacenterBase{
+			DatacenterID: 5400,
+			Nickname:     "default datacenter",
+		},
+		Assignments: []gtm.ASAssignment{
+			{
+				DatacenterBase: gtm.DatacenterBase{
+					DatacenterID: 3131,
+					Nickname:     "tfexample_dc_1",
+				},
+				ASNumbers: []int64{12222, 16702, 17334},
+			},
+		},
+		Name: "tfexample_as_1",
+	}
 }
 
 var (

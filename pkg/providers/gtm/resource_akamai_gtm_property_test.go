@@ -2,12 +2,14 @@ package gtm
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"regexp"
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/gtm"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/test"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
@@ -927,6 +929,126 @@ func TestResourceGTMLivenessTestOrder(t *testing.T) {
 	}
 }
 
+func TestResGTMPropertyImport(t *testing.T) {
+	tests := map[string]struct {
+		domainName  string
+		mapName     string
+		init        func(*gtm.Mock)
+		expectError *regexp.Regexp
+		stateCheck  resource.ImportStateCheckFunc
+	}{
+		"happy path - import": {
+			domainName: "test_domain",
+			mapName:    "tfexample_prop_1",
+			init: func(m *gtm.Mock) {
+				// Read
+				importedProperty := gtm.GetPropertyResponse(*getImportedProperty())
+				mockGetPropertyImport(m, &importedProperty, nil).Times(2)
+			},
+			stateCheck: test.NewImportChecker().
+				CheckEqual("domain", "test_domain").
+				CheckEqual("name", "tfexample_prop_1").
+				CheckEqual("ipv6", "true").
+				CheckEqual("score_aggregation_type", "median").
+				CheckEqual("stickiness_bonus_percentage", "10").
+				CheckEqual("stickiness_bonus_constant", "10").
+				CheckEqual("health_threshold", "123").
+				CheckEqual("use_computed_targets", "true").
+				CheckEqual("backup_ip", "test ip").
+				CheckEqual("balance_by_download_score", "true").
+				CheckEqual("unreachable_threshold", "1234").
+				CheckEqual("min_live_fraction", "1").
+				CheckEqual("health_multiplier", "5").
+				CheckEqual("dynamic_ttl", "300").
+				CheckEqual("max_unreachable_penalty", "123").
+				CheckEqual("map_name", "test map").
+				CheckEqual("handout_limit", "5").
+				CheckEqual("handout_mode", "normal").
+				CheckEqual("load_imbalance_percentage", "10").
+				CheckEqual("failover_delay", "5").
+				CheckEqual("backup_cname", "test cname").
+				CheckEqual("failback_delay", "5").
+				CheckEqual("health_max", "123").
+				CheckEqual("ghost_demand_reporting", "false").
+				CheckEqual("weighted_hash_bits_for_ipv4", "4").
+				CheckEqual("weighted_hash_bits_for_ipv6", "6").
+				CheckEqual("cname", "test cName").
+				CheckEqual("comments", "test comment").
+				CheckEqual("type", "failover").
+				CheckEqual("traffic_target.0.datacenter_id", "3131").
+				CheckEqual("traffic_target.0.enabled", "true").
+				CheckEqual("traffic_target.0.weight", "200").
+				CheckEqual("traffic_target.0.servers.0", "1.2.3.9").
+				CheckEqual("traffic_target.0.handout_cname", "test").
+				CheckEqual("traffic_target.0.precedence", "10").
+				CheckEqual("static_rr_set.0.type", "MX").
+				CheckEqual("static_rr_set.0.ttl", "300").
+				CheckEqual("static_rr_set.0.rdata.0", "100 test_e").
+				CheckEqual("liveness_test.0.disable_nonstandard_port_warning", "false").
+				CheckEqual("liveness_test.0.name", "lt5").
+				CheckEqual("liveness_test.0.test_interval", "40").
+				CheckEqual("liveness_test.0.test_object", "/junk").
+				CheckEqual("liveness_test.0.test_object_port", "1").
+				CheckEqual("liveness_test.0.test_object_protocol", "HTTP").
+				CheckEqual("liveness_test.0.test_timeout", "30").
+				CheckEqual("liveness_test.0.http_header.0.name", "test_name").
+				CheckEqual("liveness_test.0.http_header.0.value", "test_value").
+				CheckEqual("wait_on_complete", "true").Build(),
+		},
+		"expect error - no domain name, invalid import ID": {
+			domainName:  "",
+			mapName:     "tfexample_prop_1",
+			expectError: regexp.MustCompile(`Error: invalid resource ID: :tfexample_prop_1`),
+		},
+		"expect error - no map name, invalid import ID": {
+			domainName:  "test_domain",
+			mapName:     "",
+			expectError: regexp.MustCompile(`Error: invalid resource ID: test_domain:`),
+		},
+		"expect error - read": {
+			domainName: "test_domain",
+			mapName:    "tfexample_prop_1",
+			init: func(m *gtm.Mock) {
+				// Read - error
+				mockGetPropertyImport(m, nil, fmt.Errorf("get failed")).Once()
+			},
+			expectError: regexp.MustCompile(`get failed`),
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			client := &gtm.Mock{}
+			if tc.init != nil {
+				tc.init(client)
+			}
+			useClient(client, func() {
+				resource.UnitTest(t, resource.TestCase{
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+					Steps: []resource.TestStep{
+						{
+							ImportStateCheck: tc.stateCheck,
+							ImportStateId:    fmt.Sprintf("%s:%s", tc.domainName, tc.mapName),
+							ImportState:      true,
+							ResourceName:     "akamai_gtm_property.test",
+							Config:           testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/import_basic.tf"),
+							ExpectError:      tc.expectError,
+						},
+					},
+				})
+			})
+			client.AssertExpectations(t)
+		})
+	}
+}
+
+func mockGetPropertyImport(m *gtm.Mock, resp *gtm.GetPropertyResponse, err error) *mock.Call {
+	return m.On("GetProperty", mock.Anything, gtm.GetPropertyRequest{
+		PropertyName: "tfexample_prop_1",
+		DomainName:   "test_domain",
+	}).Return(resp, err)
+}
+
 // getUpdatedProperty gets the property with updated values taken from `update_basic.tf`
 func getUpdatedProperty() *gtm.Property {
 	return &gtm.Property{
@@ -1638,6 +1760,75 @@ func getBasicPropertyResponseWithLivenessTests() *gtm.GetPropertyResponse {
 			},
 		},
 		Type: "weighted-round-robin",
+	}
+}
+
+func getImportedProperty() *gtm.Property {
+	return &gtm.Property{
+		Name:                      "tfexample_prop_1",
+		Type:                      "failover",
+		IPv6:                      true,
+		ScoreAggregationType:      "median",
+		StickinessBonusPercentage: 10.0,
+		StickinessBonusConstant:   10,
+		HealthThreshold:           123.0,
+		UseComputedTargets:        true,
+		BackupIP:                  "test ip",
+		BalanceByDownloadScore:    true,
+		StaticRRSets: []gtm.StaticRRSet{
+			{
+				Type:  "MX",
+				TTL:   300,
+				Rdata: []string{"100 test_e"},
+			},
+		},
+		UnreachableThreshold:    1234.0,
+		MinLiveFraction:         1.0,
+		HealthMultiplier:        5.0,
+		DynamicTTL:              300,
+		MaxUnreachablePenalty:   123,
+		MapName:                 "test map",
+		HandoutLimit:            5,
+		HandoutMode:             "normal",
+		FailoverDelay:           5,
+		BackupCName:             "test cname",
+		FailbackDelay:           5,
+		LoadImbalancePercentage: 10.0,
+		HealthMax:               123.0,
+		GhostDemandReporting:    false,
+		Comments:                "test comment",
+		CName:                   "test cName",
+		WeightedHashBitsForIPv4: 4,
+		WeightedHashBitsForIPv6: 6,
+		TrafficTargets: []gtm.TrafficTarget{
+			{
+				DatacenterID: 3131,
+				Enabled:      true,
+				HandoutCName: "test",
+				Servers: []string{
+					"1.2.3.9",
+				},
+				Weight:     200,
+				Precedence: ptr.To(10),
+			},
+		},
+		LivenessTests: []gtm.LivenessTest{
+			{
+				DisableNonstandardPortWarning: false,
+				Name:                          "lt5",
+				TestInterval:                  40,
+				TestObject:                    "/junk",
+				TestObjectPort:                1,
+				TestObjectProtocol:            "HTTP",
+				TestTimeout:                   30.0,
+				HTTPHeaders: []gtm.HTTPHeader{
+					{
+						Name:  "test_name",
+						Value: "test_value",
+					},
+				},
+			},
+		},
 	}
 }
 

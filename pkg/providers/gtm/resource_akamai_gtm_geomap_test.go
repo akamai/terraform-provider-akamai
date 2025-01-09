@@ -1,11 +1,13 @@
 package gtm
 
 import (
+	"fmt"
 	"net/http"
 	"regexp"
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/gtm"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/test"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
@@ -355,6 +357,79 @@ func TestGTMGeoMapOrder(t *testing.T) {
 	}
 }
 
+func TestResGTMGeoMapImport(t *testing.T) {
+	tests := map[string]struct {
+		domainName  string
+		mapName     string
+		init        func(*gtm.Mock)
+		expectError *regexp.Regexp
+		stateCheck  resource.ImportStateCheckFunc
+	}{
+		"happy path - import": {
+			domainName: "test_domain",
+			mapName:    "tfexample_geomap_1",
+			init: func(m *gtm.Mock) {
+				// Read
+				importedGeomap := gtm.GetGeoMapResponse(*getImportedGeoMap())
+				mockGetGeoMap(m, &importedGeomap, nil).Times(2)
+			},
+			stateCheck: test.NewImportChecker().
+				CheckEqual("domain", "test_domain").
+				CheckEqual("name", "tfexample_geomap_1").
+				CheckEqual("default_datacenter.0.datacenter_id", "5400").
+				CheckEqual("default_datacenter.0.nickname", "default datacenter").
+				CheckEqual("assignment.0.datacenter_id", "3131").
+				CheckEqual("assignment.0.nickname", "tfexample_dc_1").
+				CheckEqual("assignment.0.countries.0", "GB").
+				CheckEqual("wait_on_complete", "true").Build(),
+		},
+		"expect error - no domain name, invalid import ID": {
+			domainName:  "",
+			mapName:     "tfexample_geomap_1",
+			expectError: regexp.MustCompile(`Error: invalid resource ID: :tfexample_geomap_1`),
+		},
+		"expect error - no map name, invalid import ID": {
+			domainName:  "test_domain",
+			mapName:     "",
+			expectError: regexp.MustCompile(`Error: invalid resource ID: test_domain:`),
+		},
+		"expect error - read": {
+			domainName: "test_domain",
+			mapName:    "tfexample_geomap_1",
+			init: func(m *gtm.Mock) {
+				// Read - error
+				mockGetGeoMap(m, nil, fmt.Errorf("get failed")).Once()
+			},
+			expectError: regexp.MustCompile(`get failed`),
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			client := &gtm.Mock{}
+			if tc.init != nil {
+				tc.init(client)
+			}
+			useClient(client, func() {
+				resource.UnitTest(t, resource.TestCase{
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+					Steps: []resource.TestStep{
+						{
+							ImportStateCheck: tc.stateCheck,
+							ImportStateId:    fmt.Sprintf("%s:%s", tc.domainName, tc.mapName),
+							ImportState:      true,
+							ResourceName:     "akamai_gtm_geomap.test",
+							Config:           testutils.LoadFixtureString(t, "testdata/TestResGtmGeomap/import_basic.tf"),
+							ExpectError:      tc.expectError,
+						},
+					},
+				})
+			})
+			client.AssertExpectations(t)
+		})
+	}
+}
+
 // getGeoMapMocks mock creation and deletion calls for gtm_geomap resource
 func getGeoMapMocks() *gtm.Mock {
 	client := &gtm.Mock{}
@@ -393,6 +468,32 @@ func getGeoMapMocks() *gtm.Mock {
 	).Return(deleteGeoMapResponseStatus, nil)
 
 	return client
+}
+
+func mockGetGeoMap(m *gtm.Mock, resp *gtm.GetGeoMapResponse, err error) *mock.Call {
+	return m.On("GetGeoMap", mock.Anything, gtm.GetGeoMapRequest{
+		MapName:    "tfexample_geomap_1",
+		DomainName: "test_domain",
+	}).Return(resp, err)
+}
+
+func getImportedGeoMap() *gtm.GeoMap {
+	return &gtm.GeoMap{
+		DefaultDatacenter: &gtm.DatacenterBase{
+			DatacenterID: 5400,
+			Nickname:     "default datacenter",
+		},
+		Assignments: []gtm.GeoAssignment{
+			{
+				DatacenterBase: gtm.DatacenterBase{
+					DatacenterID: 3131,
+					Nickname:     "tfexample_dc_1",
+				},
+				Countries: []string{"GB"},
+			},
+		},
+		Name: "tfexample_geomap_1",
+	}
 }
 
 var (

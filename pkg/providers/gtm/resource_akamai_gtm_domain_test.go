@@ -1,12 +1,14 @@
 package gtm
 
 import (
+	"fmt"
 	"net/http"
 	"regexp"
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/gtm"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/test"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
@@ -366,66 +368,6 @@ func TestResGTMDomain(t *testing.T) {
 
 		client.AssertExpectations(t)
 	})
-
-	t.Run("import domain", func(t *testing.T) {
-		client := &gtm.Mock{}
-
-		getCall := client.On("GetDomain",
-			mock.Anything,
-			mock.AnythingOfType("gtm.GetDomainRequest"),
-		).Return(nil, &gtm.Error{
-			StatusCode: http.StatusNotFound,
-		})
-
-		dr := testGetDomain
-		client.On("CreateDomain",
-			mock.Anything,
-			mock.AnythingOfType("gtm.CreateDomainRequest"),
-		).Return(&gtm.CreateDomainResponse{
-			Resource: testDomain,
-			Status:   testGetDomain.Status,
-		}, nil).Run(func(args mock.Arguments) {
-			getCall.ReturnArguments = mock.Arguments{&dr, nil}
-		})
-
-		client.On("GetDomainStatus",
-			mock.Anything,
-			mock.AnythingOfType("gtm.GetDomainStatusRequest"),
-		).Return(getDomainStatusResponseStatus, nil).Times(2)
-
-		client.On("DeleteDomain",
-			mock.Anything,
-			mock.AnythingOfType("gtm.DeleteDomainRequest"),
-		).Return(&deleteDomainResponseStatus, nil)
-
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmDomain/create_basic.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(resourceName, "name", gtmTestDomain),
-							resource.TestCheckResourceAttr(resourceName, "type", "weighted"),
-							resource.TestCheckResourceAttr(resourceName, "load_imbalance_percentage", "10"),
-							resource.TestCheckResourceAttr(resourceName, "sign_and_serve", "false"),
-							resource.TestCheckNoResourceAttr(resourceName, "sign_and_serve_algorithm"),
-						),
-					},
-					{
-						Config:                  testutils.LoadFixtureString(t, "testdata/TestResGtmDomain/create_basic.tf"),
-						ImportState:             true,
-						ImportStateId:           gtmTestDomain,
-						ResourceName:            resourceName,
-						ImportStateVerify:       true,
-						ImportStateVerifyIgnore: []string{"contract", "group"},
-					},
-				},
-			})
-		})
-
-		client.AssertExpectations(t)
-	})
 }
 
 func TestGTMDomainOrder(t *testing.T) {
@@ -475,6 +417,90 @@ func TestGTMDomainOrder(t *testing.T) {
 	}
 }
 
+func TestResGTMDomainImport(t *testing.T) {
+	tests := map[string]struct {
+		domainName  string
+		init        func(*gtm.Mock)
+		expectError *regexp.Regexp
+		stateCheck  resource.ImportStateCheckFunc
+	}{
+		"happy path - import": {
+			domainName: "test_domain",
+			init: func(m *gtm.Mock) {
+				// Read
+				importedDomain := gtm.GetDomainResponse(*getImportedDomain())
+				mockGetDomain(m, &importedDomain, nil).Once()
+			},
+			stateCheck: test.NewImportChecker().
+				CheckEqual("name", "test_domain").
+				CheckEqual("type", "weighted").
+				CheckEqual("default_unreachable_threshold", "5").
+				CheckEqual("email_notification_list.0", "email1@nomail.com").
+				CheckEqual("email_notification_list.1", "email2@nomail.com").
+				CheckEqual("min_pingable_region_fraction", "1").
+				CheckEqual("default_timeout_penalty", "25").
+				CheckEqual("servermonitor_liveness_count", "1").
+				CheckEqual("round_robin_prefix", "test prefix").
+				CheckEqual("servermonitor_load_count", "1").
+				CheckEqual("ping_interval", "10").
+				CheckEqual("max_ttl", "10").
+				CheckEqual("load_imbalance_percentage", "10").
+				CheckEqual("default_health_max", "100").
+				CheckEqual("map_update_interval", "123").
+				CheckEqual("max_properties", "123").
+				CheckEqual("max_resources", "123").
+				CheckEqual("default_ssl_client_private_key", "test key").
+				CheckEqual("default_error_penalty", "75").
+				CheckEqual("max_test_timeout", "123").
+				CheckEqual("cname_coalescing_enabled", "true").
+				CheckEqual("default_health_multiplier", "10").
+				CheckEqual("servermonitor_pool", "test pool").
+				CheckEqual("load_feedback", "false").
+				CheckEqual("min_ttl", "5").
+				CheckEqual("default_max_unreachable_penalty", "123").
+				CheckEqual("default_health_threshold", "5").
+				CheckEqual("comment", "test comment").
+				CheckEqual("min_test_interval", "10").
+				CheckEqual("ping_packet_size", "5").
+				CheckEqual("default_ssl_client_certificate", "test ssl").
+				CheckEqual("sign_and_serve", "true").
+				CheckEqual("sign_and_serve_algorithm", "RSA-SHA1").
+				CheckEqual("end_user_mapping_enabled", "false").Build(),
+		},
+		"expect error - read": {
+			domainName: "test_domain",
+			init: func(m *gtm.Mock) {
+				// Read - error
+				mockGetDomain(m, nil, fmt.Errorf("get failed")).Once()
+			},
+			expectError: regexp.MustCompile(`get failed`),
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			client := &gtm.Mock{}
+			tc.init(client)
+			useClient(client, func() {
+				resource.UnitTest(t, resource.TestCase{
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+					Steps: []resource.TestStep{
+						{
+							ImportStateCheck: tc.stateCheck,
+							ImportStateId:    fmt.Sprintf("%s", tc.domainName),
+							ImportState:      true,
+							ResourceName:     "akamai_gtm_domain.test",
+							Config:           testutils.LoadFixtureString(t, "testdata/TestResGtmDomain/import_basic.tf"),
+							ExpectError:      tc.expectError,
+						},
+					},
+				})
+			})
+			client.AssertExpectations(t)
+		})
+	}
+}
+
 // getGTMDomainMocks mocks creation and deletion calls for gtm_domain resource
 func getGTMDomainMocks() *gtm.Mock {
 	client := &gtm.Mock{}
@@ -508,6 +534,50 @@ func getGTMDomainMocks() *gtm.Mock {
 	).Return(&deleteDomainResponseStatus, nil)
 
 	return client
+}
+
+func mockGetDomain(m *gtm.Mock, resp *gtm.GetDomainResponse, err error) *mock.Call {
+	return m.On("GetDomain", mock.Anything, gtm.GetDomainRequest{
+		DomainName: "test_domain",
+	}).Return(resp, err)
+}
+
+func getImportedDomain() *gtm.Domain {
+	return &gtm.Domain{
+		Name:                         "test_domain",
+		Type:                         "weighted",
+		DefaultUnreachableThreshold:  5.0,
+		EmailNotificationList:        []string{"email1@nomail.com", "email2@nomail.com"},
+		MinPingableRegionFraction:    1,
+		DefaultTimeoutPenalty:        25,
+		ServermonitorLivenessCount:   1,
+		RoundRobinPrefix:             "test prefix",
+		ServermonitorLoadCount:       1,
+		PingInterval:                 10,
+		MaxTTL:                       10,
+		LoadImbalancePercentage:      10.0,
+		DefaultHealthMax:             100,
+		MapUpdateInterval:            123,
+		MaxProperties:                123,
+		MaxResources:                 123,
+		DefaultSSLClientPrivateKey:   "test key",
+		DefaultErrorPenalty:          75,
+		MaxTestTimeout:               123,
+		CNameCoalescingEnabled:       true,
+		DefaultHealthMultiplier:      10,
+		ServermonitorPool:            "test pool",
+		LoadFeedback:                 false,
+		MinTTL:                       5,
+		DefaultMaxUnreachablePenalty: 123,
+		DefaultHealthThreshold:       5,
+		ModificationComments:         "test comment",
+		MinTestInterval:              10,
+		PingPacketSize:               5,
+		DefaultSSLClientCertificate:  "test ssl",
+		EndUserMappingEnabled:        false,
+		SignAndServe:                 true,
+		SignAndServeAlgorithm:        ptr.To("RSA-SHA1"),
+	}
 }
 
 var (

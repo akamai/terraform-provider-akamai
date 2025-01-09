@@ -1,11 +1,13 @@
 package gtm
 
 import (
+	"fmt"
 	"net/http"
 	"regexp"
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/gtm"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/test"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
@@ -357,6 +359,79 @@ func TestGTMCIDRMapOrder(t *testing.T) {
 	}
 }
 
+func TestResGTMCIDRMapImport(t *testing.T) {
+	tests := map[string]struct {
+		domainName  string
+		mapName     string
+		init        func(*gtm.Mock)
+		expectError *regexp.Regexp
+		stateCheck  resource.ImportStateCheckFunc
+	}{
+		"happy path - import": {
+			domainName: "test_domain",
+			mapName:    "tfexample_cidrmap_1",
+			init: func(m *gtm.Mock) {
+				// Read
+				importedCidrMap := gtm.GetCIDRMapResponse(*getImportedCIDRMap())
+				mockGetCIDRMap(m, &importedCidrMap, nil).Times(2)
+			},
+			stateCheck: test.NewImportChecker().
+				CheckEqual("domain", "test_domain").
+				CheckEqual("name", "tfexample_cidrmap_1").
+				CheckEqual("default_datacenter.0.datacenter_id", "5400").
+				CheckEqual("default_datacenter.0.nickname", "default datacenter").
+				CheckEqual("assignment.0.datacenter_id", "3131").
+				CheckEqual("assignment.0.nickname", "tfexample_dc_1").
+				CheckEqual("assignment.0.blocks.0", "1.2.3.9/24").
+				CheckEqual("wait_on_complete", "true").Build(),
+		},
+		"expect error - no domain name, invalid import ID": {
+			domainName:  "",
+			mapName:     "tfexample_cidrmap_1",
+			expectError: regexp.MustCompile(`Error: invalid resource ID: :tfexample_cidrmap_1`),
+		},
+		"expect error - no map name, invalid import ID": {
+			domainName:  "test_domain",
+			mapName:     "",
+			expectError: regexp.MustCompile(`Error: invalid resource ID: test_domain:`),
+		},
+		"expect error - read": {
+			domainName: "test_domain",
+			mapName:    "tfexample_cidrmap_1",
+			init: func(m *gtm.Mock) {
+				// Read - error
+				mockGetCIDRMap(m, nil, fmt.Errorf("get failed")).Once()
+			},
+			expectError: regexp.MustCompile(`get failed`),
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			client := &gtm.Mock{}
+			if tc.init != nil {
+				tc.init(client)
+			}
+			useClient(client, func() {
+				resource.UnitTest(t, resource.TestCase{
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+					Steps: []resource.TestStep{
+						{
+							ImportStateCheck: tc.stateCheck,
+							ImportStateId:    fmt.Sprintf("%s:%s", tc.domainName, tc.mapName),
+							ImportState:      true,
+							ResourceName:     "akamai_gtm_cidrmap.test",
+							Config:           testutils.LoadFixtureString(t, "testdata/TestResGtmCidrmap/import_basic.tf"),
+							ExpectError:      tc.expectError,
+						},
+					},
+				})
+			})
+			client.AssertExpectations(t)
+		})
+	}
+}
+
 // getCIDRMapMocks mocks creation and deletion of a resource
 func getCIDRMapMocks() *gtm.Mock {
 	client := &gtm.Mock{}
@@ -395,6 +470,32 @@ func getCIDRMapMocks() *gtm.Mock {
 	).Return(deleteCIDRMapResponseStatus, nil)
 
 	return client
+}
+
+func mockGetCIDRMap(m *gtm.Mock, resp *gtm.GetCIDRMapResponse, err error) *mock.Call {
+	return m.On("GetCIDRMap", mock.Anything, gtm.GetCIDRMapRequest{
+		MapName:    "tfexample_cidrmap_1",
+		DomainName: "test_domain",
+	}).Return(resp, err)
+}
+
+func getImportedCIDRMap() *gtm.CIDRMap {
+	return &gtm.CIDRMap{
+		DefaultDatacenter: &gtm.DatacenterBase{
+			DatacenterID: 5400,
+			Nickname:     "default datacenter",
+		},
+		Assignments: []gtm.CIDRAssignment{
+			{
+				DatacenterBase: gtm.DatacenterBase{
+					Nickname:     "tfexample_dc_1",
+					DatacenterID: 3131,
+				},
+				Blocks: []string{"1.2.3.9/24"},
+			},
+		},
+		Name: "tfexample_cidrmap_1",
+	}
 }
 
 var (
