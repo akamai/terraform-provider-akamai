@@ -247,27 +247,22 @@ func TestDataPropertyIncludes(t *testing.T) {
 			error:      regexp.MustCompile("Error: sendListIncludesRequest error: could not get an include with ID: 0, could not get include"),
 		},
 		"missing required argument - contractID": {
-			attrs:      attributes{},
 			configPath: "testdata/TestDataPropertyIncludes/no_contract_id.tf",
 			error:      regexp.MustCompile("Error: Missing required argument"),
 		},
 		"missing required argument - groupID": {
-			attrs:      attributes{},
 			configPath: "testdata/TestDataPropertyIncludes/no_group_id.tf",
 			error:      regexp.MustCompile("Error: Missing required argument"),
 		},
 		"missing required argument - property ID": {
-			attrs:      attributes{},
 			configPath: "testdata/TestDataPropertyIncludes/no_property_id.tf",
 			error:      regexp.MustCompile("Error: Missing required argument"),
 		},
 		"missing required argument - property version": {
-			attrs:      attributes{},
 			configPath: "testdata/TestDataPropertyIncludes/no_property_version.tf",
 			error:      regexp.MustCompile("Error: Missing required argument"),
 		},
 		"invalid include type": {
-			attrs:      attributes{},
 			configPath: "testdata/TestDataPropertyIncludes/invalid_include_type.tf",
 			error:      regexp.MustCompile(`Error: expected type to be one of \['MICROSERVICES', 'COMMON_SETTINGS'], got WRONG TYPE`),
 		},
@@ -345,8 +340,8 @@ var (
 		}
 
 		var productionVersion *int
-		if !nilStagVer {
-			productionVersion = ptr.To(10)
+		if !nilProdVer {
+			productionVersion = ptr.To(11)
 		}
 
 		for i := 0; i < includesNumber; i++ {

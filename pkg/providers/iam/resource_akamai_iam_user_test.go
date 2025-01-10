@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -201,7 +202,7 @@ func TestResourceUser(t *testing.T) {
 	checkDefaultUserNotificationsAttributes := func(user iam.User) resource.TestCheckFunc {
 		return resource.ComposeAggregateTestCheckFunc(
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_notifications.#", "1"),
-			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_notifications.0.new_user_notification", "true"),
+			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_notifications.0.new_user_notification", strconv.FormatBool(user.Notifications.EnableEmail)),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_notifications.0.password_expiry", "true"),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_notifications.0.proactive.#", "0"),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_notifications.0.upgrade.#", "0"),
@@ -216,7 +217,9 @@ func TestResourceUser(t *testing.T) {
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_notifications.0.new_user_notification", "true"),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_notifications.0.password_expiry", "true"),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_notifications.0.proactive.#", "1"),
+			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_notifications.0.proactive.0", user.Notifications.Options.Proactive[0]),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_notifications.0.upgrade.#", "1"),
+			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_notifications.0.upgrade.0", user.Notifications.Options.Upgrade[0]),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_notifications.0.api_client_credential_expiry_notification", "true"),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_notifications.0.enable_email_notifications", "true"))
 	}

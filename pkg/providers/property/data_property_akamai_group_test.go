@@ -18,7 +18,7 @@ func Test_DSReadGroup(t *testing.T) {
 	}{
 		"read group with group_name and contract_id provided": {
 			init: func(m *papi.Mock, testData testDataForPAPIGroups) {
-				expectGetGroups(m, testData, 5)
+				expectGetGroups(m, testData, 3)
 			},
 			mockData: testDataForPAPIGroups{
 				accountID:   "testAccountID",
@@ -38,7 +38,7 @@ func Test_DSReadGroup(t *testing.T) {
 		},
 		"multiple groups distinguished by contract_id": {
 			init: func(m *papi.Mock, testData testDataForPAPIGroups) {
-				expectGetGroups(m, testData, 5)
+				expectGetGroups(m, testData, 3)
 			},
 			mockData: testDataForPAPIGroups{
 				accountID:   "testAccountID",
@@ -64,7 +64,7 @@ func Test_DSReadGroup(t *testing.T) {
 		},
 		"multiple groups with the same group names and multiple distinguishable contracts": {
 			init: func(m *papi.Mock, testData testDataForPAPIGroups) {
-				expectGetGroups(m, testData, 5)
+				expectGetGroups(m, testData, 3)
 			},
 			mockData: testDataForPAPIGroups{
 				accountID:   "testAccountID",
@@ -90,7 +90,7 @@ func Test_DSReadGroup(t *testing.T) {
 		},
 		"multiple groups with the same group_name and contract - expect an error": {
 			init: func(m *papi.Mock, testData testDataForPAPIGroups) {
-				expectGetGroups(m, testData, 5)
+				expectGetGroups(m, testData, 1)
 			},
 			mockData: testDataForPAPIGroups{
 				accountID:   "testAccountID",
@@ -117,7 +117,7 @@ func Test_DSReadGroup(t *testing.T) {
 		},
 		"multiple groups with the same multiple contracts and the same group names - expect an error": {
 			init: func(m *papi.Mock, testData testDataForPAPIGroups) {
-				expectGetGroups(m, testData, 5)
+				expectGetGroups(m, testData, 1)
 			},
 			mockData: testDataForPAPIGroups{
 				accountID:   "testAccountID",
@@ -181,5 +181,5 @@ var expectGetGroups = func(client *papi.Mock, data testDataForPAPIGroups, timesT
 		AccountID:   data.accountID,
 		AccountName: data.accountName,
 		Groups:      data.groups,
-	}, nil)
+	}, nil).Times(timesToRun)
 }
