@@ -14,19 +14,19 @@ func TestResourceContentProtectionRuleSequence(t *testing.T) {
 	t.Run("ResourceContentProtectionRuleSequence", func(t *testing.T) {
 
 		mockedBotmanClient := &botman.Mock{}
-		createContentProtectionRuleIds := botman.ContentProtectionRuleUUIDSequence{ContentProtectionRuleSequence: []string{"fake3f89-e179-4892-89cf-d5e623ba9dc7", "fake85df-e399-43e8-bb0f-c0d980a88e4f", "fake09b8-4fd5-430e-a061-1c61df1d2ac2"}}
-		updateContentProtectionRuleIds := botman.ContentProtectionRuleUUIDSequence{ContentProtectionRuleSequence: []string{"fake85df-e399-43e8-bb0f-c0d980a88e4f", "fake3f89-e179-4892-89cf-d5e623ba9dc7", "fake09b8-4fd5-430e-a061-1c61df1d2ac2"}}
-		createResponse := botman.UpdateContentProtectionRuleSequenceResponse{ContentProtectionRuleSequence: createContentProtectionRuleIds.ContentProtectionRuleSequence}
-		readResponse := botman.GetContentProtectionRuleSequenceResponse{ContentProtectionRuleSequence: createContentProtectionRuleIds.ContentProtectionRuleSequence}
-		updateResponse := botman.UpdateContentProtectionRuleSequenceResponse{ContentProtectionRuleSequence: updateContentProtectionRuleIds.ContentProtectionRuleSequence}
-		readResponseAfterUpdate := botman.GetContentProtectionRuleSequenceResponse{ContentProtectionRuleSequence: updateContentProtectionRuleIds.ContentProtectionRuleSequence}
+		createContentProtectionRuleIDs := botman.ContentProtectionRuleUUIDSequence{ContentProtectionRuleSequence: []string{"fake3f89-e179-4892-89cf-d5e623ba9dc7", "fake85df-e399-43e8-bb0f-c0d980a88e4f", "fake09b8-4fd5-430e-a061-1c61df1d2ac2"}}
+		updateContentProtectionRuleIDs := botman.ContentProtectionRuleUUIDSequence{ContentProtectionRuleSequence: []string{"fake85df-e399-43e8-bb0f-c0d980a88e4f", "fake3f89-e179-4892-89cf-d5e623ba9dc7", "fake09b8-4fd5-430e-a061-1c61df1d2ac2"}}
+		createResponse := botman.UpdateContentProtectionRuleSequenceResponse{ContentProtectionRuleSequence: createContentProtectionRuleIDs.ContentProtectionRuleSequence}
+		readResponse := botman.GetContentProtectionRuleSequenceResponse{ContentProtectionRuleSequence: createContentProtectionRuleIDs.ContentProtectionRuleSequence}
+		updateResponse := botman.UpdateContentProtectionRuleSequenceResponse{ContentProtectionRuleSequence: updateContentProtectionRuleIDs.ContentProtectionRuleSequence}
+		readResponseAfterUpdate := botman.GetContentProtectionRuleSequenceResponse{ContentProtectionRuleSequence: updateContentProtectionRuleIDs.ContentProtectionRuleSequence}
 		mockedBotmanClient.On("UpdateContentProtectionRuleSequence",
 			testutils.MockContext,
 			botman.UpdateContentProtectionRuleSequenceRequest{
 				ConfigID:                      43253,
 				Version:                       15,
 				SecurityPolicyID:              "AAAA_81230",
-				ContentProtectionRuleSequence: createContentProtectionRuleIds,
+				ContentProtectionRuleSequence: createContentProtectionRuleIDs,
 			},
 		).Return(&createResponse, nil).Once()
 
@@ -45,7 +45,7 @@ func TestResourceContentProtectionRuleSequence(t *testing.T) {
 				ConfigID:                      43253,
 				Version:                       15,
 				SecurityPolicyID:              "AAAA_81230",
-				ContentProtectionRuleSequence: updateContentProtectionRuleIds,
+				ContentProtectionRuleSequence: updateContentProtectionRuleIDs,
 			},
 		).Return(&updateResponse, nil).Once()
 
@@ -114,14 +114,14 @@ func TestResourceContentProtectionRuleSequence(t *testing.T) {
 
 	t.Run("ResourceContentProtectionRuleSequence error", func(t *testing.T) {
 		mockedBotmanClient := &botman.Mock{}
-		createContentProtectionRuleIds := botman.ContentProtectionRuleUUIDSequence{ContentProtectionRuleSequence: []string{"fake3f89-e179-4892-89cf-d5e623ba9dc7", "fake85df-e399-43e8-bb0f-c0d980a88e4f", "fake09b8-4fd5-430e-a061-1c61df1d2ac2"}}
+		createContentProtectionRuleIDs := botman.ContentProtectionRuleUUIDSequence{ContentProtectionRuleSequence: []string{"fake3f89-e179-4892-89cf-d5e623ba9dc7", "fake85df-e399-43e8-bb0f-c0d980a88e4f", "fake09b8-4fd5-430e-a061-1c61df1d2ac2"}}
 		mockedBotmanClient.On("UpdateContentProtectionRuleSequence",
 			testutils.MockContext,
 			botman.UpdateContentProtectionRuleSequenceRequest{
 				ConfigID:                      43253,
 				Version:                       15,
 				SecurityPolicyID:              "AAAA_81230",
-				ContentProtectionRuleSequence: createContentProtectionRuleIds,
+				ContentProtectionRuleSequence: createContentProtectionRuleIDs,
 			},
 		).Return(nil, &botman.Error{
 			Type:       "internal_error",

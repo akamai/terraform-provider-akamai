@@ -13,14 +13,14 @@ func TestResourceCustomBotCategorySequence(t *testing.T) {
 	t.Run("ResourceCustomBotCategorySequence", func(t *testing.T) {
 
 		mockedBotmanClient := &botman.Mock{}
-		createCategoryIds := []string{"cc9c3f89-e179-4892-89cf-d5e623ba9dc7", "d79285df-e399-43e8-bb0f-c0d980a88e4f", "afa309b8-4fd5-430e-a061-1c61df1d2ac2"}
-		createResponse := botman.CustomBotCategorySequenceResponse{Sequence: createCategoryIds}
+		createCategoryIDs := []string{"cc9c3f89-e179-4892-89cf-d5e623ba9dc7", "d79285df-e399-43e8-bb0f-c0d980a88e4f", "afa309b8-4fd5-430e-a061-1c61df1d2ac2"}
+		createResponse := botman.CustomBotCategorySequenceResponse{Sequence: createCategoryIDs}
 		mockedBotmanClient.On("UpdateCustomBotCategorySequence",
 			testutils.MockContext,
 			botman.UpdateCustomBotCategorySequenceRequest{
 				ConfigID: 43253,
 				Version:  15,
-				Sequence: createCategoryIds,
+				Sequence: createCategoryIDs,
 			},
 		).Return(&createResponse, nil).Once()
 
@@ -32,14 +32,14 @@ func TestResourceCustomBotCategorySequence(t *testing.T) {
 			},
 		).Return(&createResponse, nil).Times(3)
 
-		updateCategoryIds := []string{createCategoryIds[1], createCategoryIds[2], createCategoryIds[0]}
-		updateResponse := botman.CustomBotCategorySequenceResponse{Sequence: updateCategoryIds}
+		updateCategoryIDs := []string{createCategoryIDs[1], createCategoryIDs[2], createCategoryIDs[0]}
+		updateResponse := botman.CustomBotCategorySequenceResponse{Sequence: updateCategoryIDs}
 		mockedBotmanClient.On("UpdateCustomBotCategorySequence",
 			testutils.MockContext,
 			botman.UpdateCustomBotCategorySequenceRequest{
 				ConfigID: 43253,
 				Version:  15,
-				Sequence: updateCategoryIds,
+				Sequence: updateCategoryIDs,
 			},
 		).Return(&updateResponse, nil).Once()
 
@@ -61,19 +61,19 @@ func TestResourceCustomBotCategorySequence(t *testing.T) {
 						Config: testutils.LoadFixtureString(t, "testdata/TestResourceCustomBotCategorySequence/create.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_botman_custom_bot_category_sequence.test", "id", "43253"),
-							resource.TestCheckResourceAttr("akamai_botman_custom_bot_category_sequence.test", "category_ids.#", str.From(len(createCategoryIds))),
-							resource.TestCheckResourceAttr("akamai_botman_custom_bot_category_sequence.test", "category_ids.0", createCategoryIds[0]),
-							resource.TestCheckResourceAttr("akamai_botman_custom_bot_category_sequence.test", "category_ids.1", createCategoryIds[1]),
-							resource.TestCheckResourceAttr("akamai_botman_custom_bot_category_sequence.test", "category_ids.2", createCategoryIds[2])),
+							resource.TestCheckResourceAttr("akamai_botman_custom_bot_category_sequence.test", "category_ids.#", str.From(len(createCategoryIDs))),
+							resource.TestCheckResourceAttr("akamai_botman_custom_bot_category_sequence.test", "category_ids.0", createCategoryIDs[0]),
+							resource.TestCheckResourceAttr("akamai_botman_custom_bot_category_sequence.test", "category_ids.1", createCategoryIDs[1]),
+							resource.TestCheckResourceAttr("akamai_botman_custom_bot_category_sequence.test", "category_ids.2", createCategoryIDs[2])),
 					},
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestResourceCustomBotCategorySequence/update.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_botman_custom_bot_category_sequence.test", "id", "43253"),
-							resource.TestCheckResourceAttr("akamai_botman_custom_bot_category_sequence.test", "category_ids.#", str.From(len(updateCategoryIds))),
-							resource.TestCheckResourceAttr("akamai_botman_custom_bot_category_sequence.test", "category_ids.0", updateCategoryIds[0]),
-							resource.TestCheckResourceAttr("akamai_botman_custom_bot_category_sequence.test", "category_ids.1", updateCategoryIds[1]),
-							resource.TestCheckResourceAttr("akamai_botman_custom_bot_category_sequence.test", "category_ids.2", updateCategoryIds[2])),
+							resource.TestCheckResourceAttr("akamai_botman_custom_bot_category_sequence.test", "category_ids.#", str.From(len(updateCategoryIDs))),
+							resource.TestCheckResourceAttr("akamai_botman_custom_bot_category_sequence.test", "category_ids.0", updateCategoryIDs[0]),
+							resource.TestCheckResourceAttr("akamai_botman_custom_bot_category_sequence.test", "category_ids.1", updateCategoryIDs[1]),
+							resource.TestCheckResourceAttr("akamai_botman_custom_bot_category_sequence.test", "category_ids.2", updateCategoryIDs[2])),
 					},
 				},
 			})

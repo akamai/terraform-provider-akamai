@@ -1018,86 +1018,86 @@ func TestEmailIDs(t *testing.T) {
 func TestDatasetIDsDiff(t *testing.T) {
 	tests := map[string]struct {
 		preConfig             string
-		fileDatasetIdsOrder   []datastream.DatasetFieldID
-		serverDatasetIdsOrder []int
+		fileDatasetIDsOrder   []datastream.DatasetFieldID
+		serverDatasetIDsOrder []int
 		format                datastream.FormatType
 		expectNonEmptyPlan    bool
 	}{
 		"no order mixed in json config": {
 			preConfig: "testdata/TestResourceStream/dataset_ids_diff/json_config.tf",
-			fileDatasetIdsOrder: []datastream.DatasetFieldID{
+			fileDatasetIDsOrder: []datastream.DatasetFieldID{
 				{
 					DatasetFieldID: 1001,
 				}, {
 					DatasetFieldID: 1002,
 				},
 			},
-			serverDatasetIdsOrder: []int{1002, 1001},
+			serverDatasetIDsOrder: []int{1002, 1001},
 			format:                datastream.FormatTypeJson,
 			expectNonEmptyPlan:    false,
 		},
 		"id change in json config": {
 			preConfig: "testdata/TestResourceStream/dataset_ids_diff/json_config.tf",
-			fileDatasetIdsOrder: []datastream.DatasetFieldID{
+			fileDatasetIDsOrder: []datastream.DatasetFieldID{
 				{
 					DatasetFieldID: 1001,
 				}, {
 					DatasetFieldID: 1002,
 				},
 			},
-			serverDatasetIdsOrder: []int{1002, 1003},
+			serverDatasetIDsOrder: []int{1002, 1003},
 			format:                datastream.FormatTypeJson,
 			expectNonEmptyPlan:    true,
 		},
 		"duplicates in server side json config": {
 			preConfig: "testdata/TestResourceStream/dataset_ids_diff/json_config.tf",
-			fileDatasetIdsOrder: []datastream.DatasetFieldID{
+			fileDatasetIDsOrder: []datastream.DatasetFieldID{
 				{
 					DatasetFieldID: 1001,
 				}, {
 					DatasetFieldID: 1002,
 				},
 			},
-			serverDatasetIdsOrder: []int{1002, 1002},
+			serverDatasetIDsOrder: []int{1002, 1002},
 			format:                datastream.FormatTypeJson,
 			expectNonEmptyPlan:    true,
 		},
 		"duplicates in incoming json config": {
 			preConfig: "testdata/TestResourceStream/dataset_ids_diff/json_config_duplicates.tf",
-			fileDatasetIdsOrder: []datastream.DatasetFieldID{
+			fileDatasetIDsOrder: []datastream.DatasetFieldID{
 				{
 					DatasetFieldID: 1002,
 				}, {
 					DatasetFieldID: 1002,
 				},
 			},
-			serverDatasetIdsOrder: []int{1001, 1002},
+			serverDatasetIDsOrder: []int{1001, 1002},
 			format:                datastream.FormatTypeJson,
 			expectNonEmptyPlan:    true,
 		},
 		"no order mixed in structured config": {
 			preConfig: "testdata/TestResourceStream/dataset_ids_diff/structured_config.tf",
-			fileDatasetIdsOrder: []datastream.DatasetFieldID{
+			fileDatasetIDsOrder: []datastream.DatasetFieldID{
 				{
 					DatasetFieldID: 1001,
 				}, {
 					DatasetFieldID: 1002,
 				},
 			},
-			serverDatasetIdsOrder: []int{1002, 1001},
+			serverDatasetIDsOrder: []int{1002, 1001},
 			format:                datastream.FormatTypeStructured,
 			expectNonEmptyPlan:    true,
 		},
 		"id change in structured config": {
 			preConfig: "testdata/TestResourceStream/dataset_ids_diff/structured_config.tf",
-			fileDatasetIdsOrder: []datastream.DatasetFieldID{
+			fileDatasetIDsOrder: []datastream.DatasetFieldID{
 				{
 					DatasetFieldID: 1001,
 				}, {
 					DatasetFieldID: 1002,
 				},
 			},
-			serverDatasetIdsOrder: []int{1002, 1003},
+			serverDatasetIDsOrder: []int{1002, 1003},
 			format:                datastream.FormatTypeStructured,
 			expectNonEmptyPlan:    true,
 		},
@@ -1122,7 +1122,7 @@ func TestDatasetIDsDiff(t *testing.T) {
 				},
 			),
 			ContractID:    "test_contract",
-			DatasetFields: test.fileDatasetIdsOrder,
+			DatasetFields: test.fileDatasetIDsOrder,
 			GroupID:       1337,
 			Properties: []datastream.PropertyID{
 				{
@@ -1162,10 +1162,10 @@ func TestDatasetIDsDiff(t *testing.T) {
 			ContractID: streamConfiguration.ContractID,
 			DatasetFields: []datastream.DataSetField{
 				{
-					DatasetFieldID: test.serverDatasetIdsOrder[0],
+					DatasetFieldID: test.serverDatasetIDsOrder[0],
 				},
 				{
-					DatasetFieldID: test.serverDatasetIdsOrder[1],
+					DatasetFieldID: test.serverDatasetIDsOrder[1],
 				},
 			},
 			GroupID: streamConfiguration.GroupID,
@@ -1205,8 +1205,8 @@ func TestDatasetIDsDiff(t *testing.T) {
 							ExpectNonEmptyPlan: test.expectNonEmptyPlan,
 							Check: resource.ComposeTestCheckFunc(
 								resource.TestCheckResourceAttr("akamai_datastream.splunk_stream", "dataset_fields.#", "2"),
-								resource.TestCheckResourceAttr("akamai_datastream.splunk_stream", "dataset_fields.0", strconv.Itoa(test.serverDatasetIdsOrder[0])),
-								resource.TestCheckResourceAttr("akamai_datastream.splunk_stream", "dataset_fields.1", strconv.Itoa(test.serverDatasetIdsOrder[1])),
+								resource.TestCheckResourceAttr("akamai_datastream.splunk_stream", "dataset_fields.0", strconv.Itoa(test.serverDatasetIDsOrder[0])),
+								resource.TestCheckResourceAttr("akamai_datastream.splunk_stream", "dataset_fields.1", strconv.Itoa(test.serverDatasetIDsOrder[1])),
 							),
 						},
 					},

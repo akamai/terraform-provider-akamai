@@ -261,9 +261,9 @@ func TestGetPropertiesList(t *testing.T) {
 	result, err := GetPropertiesList(properties)
 	require.NoError(t, err)
 
-	propertyIds := make([]int, len(result))
+	propertyIDs := make([]int, len(result))
 	for i := 0; i < len(result); i++ {
-		propertyIds[i] = result[i].PropertyID
+		propertyIDs[i] = result[i].PropertyID
 	}
-	assert.Equal(t, []int{1, 2, 3, 4, 5}, propertyIds)
+	assert.Equal(t, []int{1, 2, 3, 4, 5}, propertyIDs)
 }
