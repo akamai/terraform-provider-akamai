@@ -425,7 +425,6 @@ func TestCreateCPSUploadCertificate(t *testing.T) {
 			error:        nil,
 		},
 		"required attribute not provided": {
-			init:       func(m *cps.Mock, enrollment *cps.GetEnrollmentResponse, _, _ int) {},
 			enrollment: nil,
 			configPath: "testdata/TestResCPSUploadCertificate/certificates/no_certificates.tf",
 			checkFunc:  nil,
@@ -650,7 +649,9 @@ func TestCreateCPSUploadCertificate(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			client := &cps.Mock{}
-			test.init(client, test.enrollment, test.enrollmentID, test.changeID)
+			if test.init != nil {
+				test.init(client, test.enrollment, test.enrollmentID, test.changeID)
+			}
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),

@@ -1680,7 +1680,6 @@ func TestResourceEdgeHostname(t *testing.T) {
 			},
 		},
 		"error on empty product id for creation": {
-			init: func(_ *papi.Mock, _ *hapi.Mock) {},
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/%s", testDir, "new_akamaized_net_without_product_id.tf")),
@@ -2011,7 +2010,9 @@ func TestResourceEdgeHostname(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			client := &papi.Mock{}
 			clientHapi := &hapi.Mock{}
-			test.init(client, clientHapi)
+			if test.init != nil {
+				test.init(client, clientHapi)
+			}
 			useClient(client, clientHapi, func() {
 				resource.UnitTest(t, resource.TestCase{
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),

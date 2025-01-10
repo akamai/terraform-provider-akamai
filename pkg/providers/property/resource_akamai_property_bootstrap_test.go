@@ -334,7 +334,6 @@ func TestBootstrapResourceImport(t *testing.T) {
 			importStateID: "123",
 		},
 		"import with only property_id and contract_id - error": {
-			init:          func(p *mockProperty) {},
 			importStateID: "123,2",
 			error:         regexp.MustCompile("Error: missing group id or contract id"),
 		},

@@ -248,7 +248,6 @@ func TestSharedPolicyDataSource(t *testing.T) {
 		"expect error - missing required attribute": {
 			config:      "no_policy_id.tf",
 			data:        testDataForSharedPolicy{},
-			init:        func(m *v3.Mock, data testDataForSharedPolicy) {},
 			expectError: regexp.MustCompile(`The argument "policy_id" is required, but no definition was found.`),
 		},
 	}

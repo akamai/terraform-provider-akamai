@@ -940,7 +940,6 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			},
 		},
 		"error on create - missing required arguments": {
-			init: func(m *edgeworkers.Mock) {},
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworkers_activation_missing_required_args.tf", workdir)),
@@ -1353,7 +1352,9 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			if !test.omitDefaultMock {
 				expectListEdgeWorkersID(client, nil, edgeworkerID)
 			}
-			test.init(client)
+			if test.init != nil {
+				test.init(client)
+			}
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),

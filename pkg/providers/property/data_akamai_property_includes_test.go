@@ -260,31 +260,26 @@ func TestDataPropertyIncludes(t *testing.T) {
 		},
 		"missing required argument - contractID": {
 			attrs:      attributes{},
-			init:       func(m *papi.Mock, a attributes) {},
 			configPath: "testdata/TestDataPropertyIncludes/no_contract_id.tf",
 			error:      regexp.MustCompile("Error: Missing required argument"),
 		},
 		"missing required argument - groupID": {
 			attrs:      attributes{},
-			init:       func(m *papi.Mock, a attributes) {},
 			configPath: "testdata/TestDataPropertyIncludes/no_group_id.tf",
 			error:      regexp.MustCompile("Error: Missing required argument"),
 		},
 		"missing required argument - property ID": {
 			attrs:      attributes{},
-			init:       func(m *papi.Mock, a attributes) {},
 			configPath: "testdata/TestDataPropertyIncludes/no_property_id.tf",
 			error:      regexp.MustCompile("Error: Missing required argument"),
 		},
 		"missing required argument - property version": {
 			attrs:      attributes{},
-			init:       func(m *papi.Mock, a attributes) {},
 			configPath: "testdata/TestDataPropertyIncludes/no_property_version.tf",
 			error:      regexp.MustCompile("Error: Missing required argument"),
 		},
 		"invalid include type": {
 			attrs:      attributes{},
-			init:       func(m *papi.Mock, a attributes) {},
 			configPath: "testdata/TestDataPropertyIncludes/invalid_include_type.tf",
 			error:      regexp.MustCompile(`Error: expected type to be one of \['MICROSERVICES', 'COMMON_SETTINGS'], got WRONG TYPE`),
 		},
@@ -293,7 +288,9 @@ func TestDataPropertyIncludes(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			client := &papi.Mock{}
-			test.init(client, test.attrs)
+			if test.init != nil {
+				test.init(client, test.attrs)
+			}
 			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),

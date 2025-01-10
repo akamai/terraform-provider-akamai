@@ -423,7 +423,6 @@ func TestResourceUser(t *testing.T) {
 			},
 		},
 		"basic - custom notification - password_expiry field missing": {
-			init: func(m *iam.Mock) {},
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic_notification_password_expiry_field_missing.tf"),
@@ -432,7 +431,6 @@ func TestResourceUser(t *testing.T) {
 			},
 		},
 		"basic - custom notification - multiple user_notification blocks": {
-			init: func(m *iam.Mock) {},
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic_notification_multiple_notification_blocks.tf"),
@@ -441,7 +439,6 @@ func TestResourceUser(t *testing.T) {
 			},
 		},
 		"basic - custom notification - enable_email_notifications missing": {
-			init: func(m *iam.Mock) {},
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic_notification_enable_email_notifications_field_missing.tf"),
@@ -500,7 +497,6 @@ func TestResourceUser(t *testing.T) {
 			},
 		},
 		"basic invalid phone": {
-			init: func(m *iam.Mock) {},
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic_invalid_phone.tf"),
@@ -521,7 +517,6 @@ func TestResourceUser(t *testing.T) {
 			},
 		},
 		"enable_tfa and enable_mfa set to true - error": {
-			init: func(m *iam.Mock) {},
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_with_invalid_auth_method.tf"),
@@ -774,7 +769,6 @@ func TestResourceUser(t *testing.T) {
 			},
 		},
 		"auth_grants_json should not panic when supplied interpolated string with unknown value": {
-			init: func(m *iam.Mock) {},
 			steps: []resource.TestStep{
 				{
 					Config:             testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/auth_grants_interpolated.tf"),
@@ -807,7 +801,6 @@ func TestResourceUser(t *testing.T) {
 			},
 		},
 		"error creating user: invalid auth grants": {
-			init: func(m *iam.Mock) {},
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/invalid_auth_grants.tf"),
@@ -943,7 +936,9 @@ func TestResourceUser(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			client := &iam.Mock{}
-			tc.init(client)
+			if tc.init != nil {
+				tc.init(client)
+			}
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),

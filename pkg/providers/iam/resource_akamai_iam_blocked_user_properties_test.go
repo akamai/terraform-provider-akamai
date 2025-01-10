@@ -130,7 +130,6 @@ func TestResourceIAMBlockedUserProperties(t *testing.T) {
 			},
 		},
 		"empty properties": {
-			init: func(m *iam.Mock) {},
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "./testdata/TestResourceIAMBlockedUserProperties/create-empty-properties.tf"),
@@ -168,7 +167,9 @@ func TestResourceIAMBlockedUserProperties(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			client := &iam.Mock{}
-			tc.init(client)
+			if tc.init != nil {
+				tc.init(client)
+			}
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),

@@ -314,7 +314,6 @@ func TestDataEdgeWorkersEdgeWorker(t *testing.T) {
 			error:      regexp.MustCompile("could not list edgeworker versions"),
 		},
 		"edgeworker_id not provided": {
-			init:       func(_ *testing.T, m *edgeworkers.Mock, worker testDataForEdgeWorker) {},
 			mockData:   testDataForEdgeWorker{},
 			configPath: "testdata/TestDataEdgeWorkersEdgeWorker/edgeworker_no_edgeworker_id.tf",
 			error:      regexp.MustCompile("Missing required argument"),
@@ -324,7 +323,9 @@ func TestDataEdgeWorkersEdgeWorker(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			client := &edgeworkers.Mock{}
-			test.init(t, client, test.mockData)
+			if test.init != nil {
+				test.init(t, client, test.mockData)
+			}
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),

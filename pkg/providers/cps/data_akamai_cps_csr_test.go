@@ -401,7 +401,6 @@ func TestDataCPSCSR(t *testing.T) {
 			error:      nil,
 		},
 		"enrollment_id not provided": {
-			init:       func(_ *cps.Mock, _ testDataForCPSCSR) {},
 			mockData:   testDataForCPSCSR{},
 			configPath: "testdata/TestDataCPSCSR/no_enrollment_id.tf",
 			error:      regexp.MustCompile("Missing required argument"),

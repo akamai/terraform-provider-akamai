@@ -52,12 +52,10 @@ func TestDataGTMDatacenter(t *testing.T) {
 			error:      regexp.MustCompile("GetDatacenter error"),
 		},
 		"error - no domain attribute": {
-			init:       func(_ *gtm.Mock, _ testDataForGTMDatacenter) {},
 			configPath: "testdata/TestDataGTMDatacenter/no_domain.tf",
 			error:      regexp.MustCompile(`The argument "domain" is required, but no definition was found.`),
 		},
 		"error - no datacenter_id attribute": {
-			init:       func(_ *gtm.Mock, _ testDataForGTMDatacenter) {},
 			configPath: "testdata/TestDataGTMDatacenter/no_datacenter_id.tf",
 			error:      regexp.MustCompile(`The argument "datacenter_id" is required, but no definition was found.`),
 		},
@@ -66,7 +64,9 @@ func TestDataGTMDatacenter(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			client := &gtm.Mock{}
-			test.init(client, test.mockData)
+			if test.init != nil {
+				test.init(client, test.mockData)
+			}
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),

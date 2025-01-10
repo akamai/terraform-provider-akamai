@@ -92,7 +92,6 @@ func TestDataKeyProperties(t *testing.T) {
 		},
 		"invalid configuration - missing access key name": {
 			configPath: "testdata/TestDataKeyProperties/invalid.tf",
-			init:       func(_ *cloudaccess.Mock, _ testDataForKeyProperties) {},
 			error:      regexp.MustCompile(`The argument "access_key_name" is required, but no definition was found.`),
 		},
 		"no match on access key name - expect an error": {

@@ -313,7 +313,6 @@ func TestImportCIDRBlockResource(t *testing.T) {
 		},
 		"expect error - wrong import ID": {
 			importID:    "wrong format",
-			init:        func(_ *testing.T, _ *iam.Mock, _ commonDataForResource) {},
 			expectError: regexp.MustCompile(`Error: could not convert import ID to int`),
 		},
 		"expect error - read": {
@@ -332,7 +331,9 @@ func TestImportCIDRBlockResource(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			client := &iam.Mock{}
-			tc.init(t, client, tc.mockData)
+			if tc.init != nil {
+				tc.init(t, client, tc.mockData)
+			}
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),

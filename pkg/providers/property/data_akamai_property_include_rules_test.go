@@ -126,22 +126,18 @@ func TestDataPropertyIncludeRules(t *testing.T) {
 			configPath: "./testdata/TestDSPropertyIncludeRules/property_include_rules.tf",
 		},
 		"groupID not provided": {
-			init:       func(_ *testing.T, m *papi.Mock, testData testDataPropertyIncludeRules) {},
 			configPath: "./testdata/TestDSPropertyIncludeRules/property_include_rules_no_group_id.tf",
 			error:      regexp.MustCompile("Missing required argument"),
 		},
 		"contractID not provided": {
-			init:       func(t *testing.T, m *papi.Mock, testData testDataPropertyIncludeRules) {},
 			configPath: "./testdata/TestDSPropertyIncludeRules/property_include_rules_no_contract_id.tf",
 			error:      regexp.MustCompile("Missing required argument"),
 		},
 		"includeID not provided": {
-			init:       func(t *testing.T, m *papi.Mock, testData testDataPropertyIncludeRules) {},
 			configPath: "./testdata/TestDSPropertyIncludeRules/property_include_rules_no_include_id.tf",
 			error:      regexp.MustCompile("Missing required argument"),
 		},
 		"version not provided": {
-			init:       func(t *testing.T, m *papi.Mock, testData testDataPropertyIncludeRules) {},
 			configPath: "./testdata/TestDSPropertyIncludeRules/property_include_rules_no_version.tf",
 			error:      regexp.MustCompile("Missing required argument"),
 		},
@@ -158,7 +154,9 @@ func TestDataPropertyIncludeRules(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			client := &papi.Mock{}
-			test.init(t, client, test.mockData)
+			if test.init != nil {
+				test.init(t, client, test.mockData)
+			}
 			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),

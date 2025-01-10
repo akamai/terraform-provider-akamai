@@ -185,7 +185,6 @@ func TestAccessibleGroups(t *testing.T) {
 			expectedError: regexp.MustCompile("api failed"),
 		},
 		"error - missing username": {
-			init:          func(client *iam.Mock) {},
 			config:        "testdata/TestDataAccessibleGroups/no-username.tf",
 			expectedError: regexp.MustCompile("Missing required argument"),
 		},
@@ -194,7 +193,9 @@ func TestAccessibleGroups(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			client := &iam.Mock{}
-			tc.init(client)
+			if tc.init != nil {
+				tc.init(client)
+			}
 
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{

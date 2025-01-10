@@ -159,27 +159,22 @@ func TestCreateEdgeKVGroupItems(t *testing.T) {
 		},
 		"create with no group items - error": {
 			configPath: "testdata/TestResourceEdgeKVGroupItems/create/empty_items.tf",
-			init:       func(m *edgeworkers.Mock, attrs edgeKVConfigurationForTests) {},
 			withError:  regexp.MustCompile("Error: map must contain at least 1 element\\(s\\), but has 0"),
 		},
 		"no namespace_name - error": {
 			configPath: "testdata/TestResourceEdgeKVGroupItems/create/no_namespace.tf",
-			init:       func(m *edgeworkers.Mock, attrs edgeKVConfigurationForTests) {},
 			withError:  regexp.MustCompile("Error: Missing required argument"),
 		},
 		"no group_name - error": {
 			configPath: "testdata/TestResourceEdgeKVGroupItems/create/no_group.tf",
-			init:       func(m *edgeworkers.Mock, attrs edgeKVConfigurationForTests) {},
 			withError:  regexp.MustCompile("Error: Missing required argument"),
 		},
 		"no network - error": {
 			configPath: "testdata/TestResourceEdgeKVGroupItems/create/no_network.tf",
-			init:       func(m *edgeworkers.Mock, attrs edgeKVConfigurationForTests) {},
 			withError:  regexp.MustCompile("Error: Missing required argument"),
 		},
 		"no items attribute - error": {
 			configPath: "testdata/TestResourceEdgeKVGroupItems/create/no_items.tf",
-			init:       func(m *edgeworkers.Mock, attrs edgeKVConfigurationForTests) {},
 			withError:  regexp.MustCompile("Error: Missing required argument"),
 		},
 	}
@@ -187,7 +182,9 @@ func TestCreateEdgeKVGroupItems(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			client := &edgeworkers.Mock{}
-			test.init(client, test.attrs)
+			if test.init != nil {
+				test.init(client, test.attrs)
+			}
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
@@ -828,7 +825,6 @@ func TestUpdateEdgeKVGroupItems(t *testing.T) {
 		"update - remove 2 out of 2 items - error": {
 			configPathForCreate: "testdata/TestResourceEdgeKVGroupItems/create/basic_2_items.tf",
 			configPathForUpdate: "testdata/TestResourceEdgeKVGroupItems/update/remove_2_items.tf",
-			init:                func(_ *edgeworkers.Mock, _, _ edgeKVConfigurationForTests) {},
 			planOnly:            true,
 			expectNonEmptyPlan:  true,
 			errorForUpdate:      regexp.MustCompile("Error: map must contain at least 1 element\\(s\\), but has 0"),
@@ -838,7 +834,9 @@ func TestUpdateEdgeKVGroupItems(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			client := &edgeworkers.Mock{}
-			test.init(client, test.attrsForCreate, test.attrsForUpdate)
+			if test.init != nil {
+				test.init(client, test.attrsForCreate, test.attrsForUpdate)
+			}
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),

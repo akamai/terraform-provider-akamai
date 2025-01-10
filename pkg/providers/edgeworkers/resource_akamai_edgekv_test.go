@@ -29,9 +29,7 @@ func Test_populateEKV(t *testing.T) {
 		init      func(*edgeworkers.Mock)
 		withError error
 	}{
-		"no insert": {
-			init: func(m *edgeworkers.Mock) {},
-		},
+		"no insert": {},
 		"one upsert": {
 			network: staging,
 			data: []interface{}{
@@ -133,7 +131,9 @@ func Test_populateEKV(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			client := &edgeworkers.Mock{}
-			test.init(client)
+			if test.init != nil {
+				test.init(client)
+			}
 			err := populateEKV(context.Background(), client, test.data, &edgeworkers.Namespace{Name: namespaceName}, staging)
 			client.AssertExpectations(t)
 			if test.withError != nil {

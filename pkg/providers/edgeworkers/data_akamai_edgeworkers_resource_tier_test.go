@@ -138,7 +138,6 @@ func TestDataEdgeworkersResourceTier(t *testing.T) {
 			},
 		},
 		"missing constract id": {
-			init: func(m *edgeworkers.Mock) {},
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "./testdata/TestDataEdgeWorkersResourceTier/missing_contract_id.tf"),
@@ -147,7 +146,6 @@ func TestDataEdgeworkersResourceTier(t *testing.T) {
 			},
 		},
 		"missing resource tier name": {
-			init: func(m *edgeworkers.Mock) {},
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "./testdata/TestDataEdgeWorkersResourceTier/missing_resource_tier_name.tf"),
@@ -160,7 +158,9 @@ func TestDataEdgeworkersResourceTier(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			client := &edgeworkers.Mock{}
-			test.init(client)
+			if test.init != nil {
+				test.init(client)
+			}
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),

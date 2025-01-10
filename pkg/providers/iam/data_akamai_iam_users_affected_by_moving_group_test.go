@@ -115,17 +115,14 @@ func TestUsersAffectedByMovingGroup(t *testing.T) {
 			),
 		},
 		"validation - missing source": {
-			init:          func(client *iam.Mock) {},
 			config:        "testdata/TestDataUsersAffected/missing-source.tf",
 			expectedError: regexp.MustCompile("Missing required argument(.|\n)*The argument \"source_group_id\" is required, but no definition was found."),
 		},
 		"validation - missing destination": {
-			init:          func(client *iam.Mock) {},
 			config:        "testdata/TestDataUsersAffected/missing-destination.tf",
 			expectedError: regexp.MustCompile("Missing required argument(.|\n)*The argument \"destination_group_id\" is required, but no definition was found."),
 		},
 		"validation - incorrect user_type": {
-			init:          func(client *iam.Mock) {},
 			config:        "testdata/TestDataUsersAffected/incorrect-usertype.tf",
 			expectedError: regexp.MustCompile("Invalid Attribute Value Match(.|\n)*Attribute user_type value must be one of: \\[\"lostAccess\" \"gainAccess\" \"\"]"),
 		},
@@ -142,8 +139,9 @@ func TestUsersAffectedByMovingGroup(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			client := &iam.Mock{}
-			tc.init(client)
-
+			if tc.init != nil {
+				tc.init(client)
+			}
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),

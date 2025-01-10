@@ -114,25 +114,21 @@ func TestDataPropertyIncludeActivation(t *testing.T) {
 		},
 		"required attribute missing - contract_id": {
 			attrs:      includeActivationTestAttributes{},
-			init:       func(m *papi.Mock, attrs includeActivationTestAttributes) {},
 			configPath: "testdata/TestDataPropertyIncludeActivation/no_contract_id.tf",
 			error:      regexp.MustCompile("Error: Missing required argument"),
 		},
 		"required attribute missing - group_id": {
 			attrs:      includeActivationTestAttributes{},
-			init:       func(m *papi.Mock, attrs includeActivationTestAttributes) {},
 			configPath: "testdata/TestDataPropertyIncludeActivation/no_group_id.tf",
 			error:      regexp.MustCompile("Error: Missing required argument"),
 		},
 		"required attribute missing - include_id": {
 			attrs:      includeActivationTestAttributes{},
-			init:       func(m *papi.Mock, attrs includeActivationTestAttributes) {},
 			configPath: "testdata/TestDataPropertyIncludeActivation/no_include_id.tf",
 			error:      regexp.MustCompile("Error: Missing required argument"),
 		},
 		"required attribute missing - network": {
 			attrs:      includeActivationTestAttributes{},
-			init:       func(m *papi.Mock, attrs includeActivationTestAttributes) {},
 			configPath: "testdata/TestDataPropertyIncludeActivation/no_network.tf",
 			error:      regexp.MustCompile("Error: Missing required argument"),
 		},
@@ -159,7 +155,9 @@ func TestDataPropertyIncludeActivation(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			client := &papi.Mock{}
-			test.init(client, test.attrs)
+			if test.init != nil {
+				test.init(client, test.attrs)
+			}
 			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),

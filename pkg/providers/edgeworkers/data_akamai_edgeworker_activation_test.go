@@ -174,13 +174,11 @@ func TestDataEdgeWorkersActivation(t *testing.T) {
 			error:      regexp.MustCompile("could not fetch activations"),
 		},
 		"edgeworker_id not provided": {
-			init:       func(m *edgeworkers.Mock, testData testDataForEdgeWorkersActivation) {},
 			mockData:   testDataForEdgeWorkersActivation{},
 			configPath: "testdata/TestDataEdgeWorkersActivation/no_edgeworker_id.tf",
 			error:      regexp.MustCompile("Missing required argument"),
 		},
 		"network not provided": {
-			init:       func(m *edgeworkers.Mock, testData testDataForEdgeWorkersActivation) {},
 			mockData:   testDataForEdgeWorkersActivation{},
 			configPath: "testdata/TestDataEdgeWorkersActivation/no_network.tf",
 			error:      regexp.MustCompile("Missing required argument"),
@@ -190,7 +188,9 @@ func TestDataEdgeWorkersActivation(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			client := &edgeworkers.Mock{}
-			test.init(client, test.mockData)
+			if test.init != nil {
+				test.init(client, test.mockData)
+			}
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),

@@ -359,7 +359,6 @@ func TestDataProperty(t *testing.T) {
 		},
 		"error name not provided": {
 			givenTF:   "no_name.tf",
-			init:      func(m *papi.Mock) {},
 			withError: regexp.MustCompile("Missing required argument"),
 		},
 		"error property version not found": {
@@ -430,7 +429,9 @@ func TestDataProperty(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			client := &papi.Mock{}
-			test.init(client)
+			if test.init != nil {
+				test.init(client)
+			}
 			var checkFuncs []resource.TestCheckFunc
 			for k, v := range test.expectedAttributes {
 				checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("data.akamai_property.prop", k, v))

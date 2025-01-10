@@ -115,7 +115,6 @@ func TestGroupDataSource(t *testing.T) {
 			givenTF:       "valid.tf",
 		},
 		"missing group_id": {
-			init:          func(client *iam.Mock) {},
 			expectedError: regexp.MustCompile("The argument \"group_id\" is required, but no definition was found."),
 			givenTF:       "missing_group_id.tf",
 		},
@@ -124,7 +123,9 @@ func TestGroupDataSource(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			client := &iam.Mock{}
-			tc.init(client)
+			if tc.init != nil {
+				tc.init(client)
+			}
 
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{

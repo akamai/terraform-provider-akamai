@@ -52,7 +52,6 @@ func TestResolveVersion(t *testing.T) {
 			network:           papi.ActivationNetworkStaging,
 			versionData:       3,
 			versionDataExists: true,
-			init:              func(m *papi.Mock) {},
 		},
 		"version not present but fetched from API": {
 			propertyID: "prp_id",
