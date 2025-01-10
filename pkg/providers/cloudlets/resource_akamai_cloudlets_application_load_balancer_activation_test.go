@@ -531,7 +531,7 @@ func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
 				// import
 				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Times(2)
-				expectListLoadBalancerActivationsEmpty(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Times(1)
+				expectListLoadBalancerActivationsEmpty(m, "org_1", nil).Times(1)
 			},
 			steps: []resource.TestStep{
 				{
@@ -597,7 +597,7 @@ var (
 			}, nil)
 	}
 
-	expectListLoadBalancerActivationsEmpty = func(m *cloudlets.Mock, originID string, version int64, network cloudlets.LoadBalancerActivationNetwork, status cloudlets.LoadBalancerActivationStatus, err error) *mock.Call {
+	expectListLoadBalancerActivationsEmpty = func(m *cloudlets.Mock, originID string, err error) *mock.Call {
 		if err != nil {
 			return m.On(
 				"ListLoadBalancerActivations",

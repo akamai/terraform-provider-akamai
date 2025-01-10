@@ -184,12 +184,12 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 			return state
 		}
 
-		expectActivateIncludeWithNonrecoverableFail = func(client *papi.Mock, state State, req papi.ActivateIncludeRequest) {
+		expectActivateIncludeWithNonrecoverableFail = func(client *papi.Mock, req papi.ActivateIncludeRequest) {
 			client.On("ActivateInclude", testutils.MockContext, req).
 				Return(nil, &papi.Error{StatusCode: 404}).Once()
 		}
 
-		expectActivateIncludeWithRecoverableFail = func(client *papi.Mock, state State, req papi.ActivateIncludeRequest) {
+		expectActivateIncludeWithRecoverableFail = func(client *papi.Mock, req papi.ActivateIncludeRequest) {
 			client.On("ActivateInclude", testutils.MockContext, req).
 				Return(nil, &papi.Error{StatusCode: 500}).Once()
 		}
@@ -209,7 +209,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 		expectCreateWithNonrecoverableFail = func(client *papi.Mock, state State, req papi.ActivateIncludeRequest) State {
 			state = expectWaitPending(client, state, req.Network, 2)
 			expectAssertState(client, state)
-			expectActivateIncludeWithNonrecoverableFail(client, state, req)
+			expectActivateIncludeWithNonrecoverableFail(client, req)
 			return state
 		}
 
@@ -553,7 +553,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 		// create -> fail
 		state = expectWaitPending(client, state, actReq.Network, 2)
 		expectAssertState(client, state)
-		expectActivateIncludeWithRecoverableFail(client, state, actReq)
+		expectActivateIncludeWithRecoverableFail(client, actReq)
 
 		newIncludeActivation := getExpectedActivationBasedOnRequest(actReq)
 		state.activations = append([]papi.IncludeActivation{newIncludeActivation}, state.activations...)
@@ -609,7 +609,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 		state = expectWaitPending(client, state, actReq.Network, 2)
 		expectAssertState(client, state)
 		state = expectWaitPending(client, state, actReq.Network, 0)
-		expectActivateIncludeWithRecoverableFail(client, state, actReq)
+		expectActivateIncludeWithRecoverableFail(client, actReq)
 		state = expectActivateInclude(client, state, actReq, 2)
 		state = expectWaitPending(client, state, actReq.Network, 2)
 

@@ -39,7 +39,7 @@ func TestAkamaiIPGeo_res_block(t *testing.T) {
 			return getIPGeoResponse
 		}
 
-		updateIPGeoResponse = func(configId int, version int, policyId string, path string, request appsec.UpdateIPGeoRequest, client *appsec.Mock) appsec.UpdateIPGeoResponse {
+		updateIPGeoResponse = func(path string, request appsec.UpdateIPGeoRequest, client *appsec.Mock) appsec.UpdateIPGeoResponse {
 			updateIPGeoResponse := appsec.UpdateIPGeoResponse{}
 			err := json.Unmarshal(testutils.LoadFixtureBytes(t, path), &updateIPGeoResponse)
 			require.NoError(t, err)
@@ -104,7 +104,7 @@ func TestAkamaiIPGeo_res_block(t *testing.T) {
 			},
 		}
 		getIPGeoResponse(43253, 7, "AAAA_81230", "testdata/TestResIPGeo/IPGeo.json", client)
-		updateIPGeoResponse(43253, 7, "AAAA_81230", "testdata/TestResIPGeo/IPGeo.json", updateRequest, client)
+		updateIPGeoResponse("testdata/TestResIPGeo/IPGeo.json", updateRequest, client)
 		updateIPGeoProtectionResponseAllProtectionsFalse(43253, 7, "AAAA_81230", "testdata/TestResIPGeoProtection/PolicyProtections.json", client)
 
 		useClient(client, func() {
@@ -169,7 +169,7 @@ func TestAkamaiIPGeo_res_block(t *testing.T) {
 			},
 		}
 		getIPGeoResponse(43253, 7, "AAAA_81230", "testdata/TestResIPGeo/IPGeo.json", client)
-		updateIPGeoResponse(43253, 7, "AAAA_81230", "testdata/TestResIPGeo/IPGeo.json", updateRequest, client)
+		updateIPGeoResponse("testdata/TestResIPGeo/IPGeo.json", updateRequest, client)
 		updateIPGeoProtectionResponseAllProtectionsFalse(43253, 7, "AAAA_81230", "testdata/TestResIPGeoProtection/PolicyProtections.json", client)
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
@@ -231,7 +231,7 @@ func TestAkamaiIPGeo_res_block(t *testing.T) {
 			},
 		}
 		getIPGeoResponse(43253, 7, "AAAA_81230", "testdata/TestResIPGeo/UkraineGeo.json", client)
-		updateIPGeoResponse(43253, 7, "AAAA_81230", "testdata/TestResIPGeo/IPGeo.json", updateRequest, client)
+		updateIPGeoResponse("testdata/TestResIPGeo/IPGeo.json", updateRequest, client)
 		updateIPGeoProtectionResponseAllProtectionsFalse(43253, 7, "AAAA_81230", "testdata/TestResIPGeoProtection/PolicyProtections.json", client)
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
@@ -302,7 +302,7 @@ func TestAkamaiIPGeo_res_block(t *testing.T) {
 			},
 		}
 		getIPGeoResponse(43253, 7, "AAAA_81230", "testdata/TestResIPGeo/UkraineGeo.json", client)
-		updateIPGeoResponse(43253, 7, "AAAA_81230", "testdata/TestResIPGeo/IPGeo.json", updateRequest, client)
+		updateIPGeoResponse("testdata/TestResIPGeo/IPGeo.json", updateRequest, client)
 		updateIPGeoProtectionResponseAllProtectionsFalse(43253, 7, "AAAA_81230", "testdata/TestResIPGeoProtection/PolicyProtections.json", client)
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
@@ -349,7 +349,7 @@ func TestAkamaiIPGeo_res_block(t *testing.T) {
 			},
 		}
 		getIPGeoResponse(43253, 7, "AAAA_81230", "testdata/TestResIPGeo/IPGeoAllow.json", client)
-		updateIPGeoResponse(43253, 7, "AAAA_81230", "testdata/TestResIPGeo/IPGeoAllow.json", updateRequest, client)
+		updateIPGeoResponse("testdata/TestResIPGeo/IPGeoAllow.json", updateRequest, client)
 		updateIPGeoProtectionResponseAllProtectionsFalse(43253, 7, "AAAA_81230", "testdata/TestResIPGeoProtection/PolicyProtections.json", client)
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
@@ -382,7 +382,7 @@ func TestAkamaiIPGeo_res_block(t *testing.T) {
 			Block:    "blockSpecificIPGeo",
 		}
 		getIPGeoResponse(43253, 7, "AAAA_81230", "testdata/TestResIPGeo/IPGeoBlockOnly.json", client)
-		updateIPGeoResponse(43253, 7, "AAAA_81230", "testdata/TestResIPGeo/IPGeoBlockOnly.json", updateRequest, client)
+		updateIPGeoResponse("testdata/TestResIPGeo/IPGeoBlockOnly.json", updateRequest, client)
 		updateIPGeoProtectionResponseAllProtectionsFalse(43253, 7, "AAAA_81230", "testdata/TestResIPGeoProtection/PolicyProtections.json", client)
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
@@ -416,7 +416,7 @@ func TestAkamaiIPGeo_res_block(t *testing.T) {
 		}
 
 		getIPGeoResponse(43253, 7, "AAAA_81230", "testdata/TestResIPGeo/IPGeoAllowOnly.json", client)
-		updateIPGeoResponse(43253, 7, "AAAA_81230", "testdata/TestResIPGeo/IPGeoAllowOnly.json", updateRequest, client)
+		updateIPGeoResponse("testdata/TestResIPGeo/IPGeoAllowOnly.json", updateRequest, client)
 		updateIPGeoProtectionResponseAllProtectionsFalse(43253, 7, "AAAA_81230", "testdata/TestResIPGeoProtection/PolicyProtections.json", client)
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
