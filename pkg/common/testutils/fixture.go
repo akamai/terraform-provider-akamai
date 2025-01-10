@@ -2,7 +2,7 @@ package testutils
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -11,7 +11,7 @@ import (
 // LoadFixtureBytes returns the entire contents of the given file as a byte slice
 func LoadFixtureBytes(t *testing.T, path string) []byte {
 	t.Helper()
-	contents, err := ioutil.ReadFile(path)
+	contents, err := os.ReadFile(path)
 	require.NoError(t, err)
 	return contents
 }

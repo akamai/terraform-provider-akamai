@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -164,7 +163,7 @@ func dataPropertyRulesTemplateRead(_ context.Context, d *schema.ResourceData, m 
 		if _, err = os.Stat(file); err != nil {
 			return diag.FromErr(err)
 		}
-		fileData, err := ioutil.ReadFile(file)
+		fileData, err := os.ReadFile(file)
 		if err != nil {
 			return diag.FromErr(fmt.Errorf("%w: %s", ErrReadFile, err))
 		}
@@ -221,7 +220,7 @@ func dataPropertyRulesTemplateRead(_ context.Context, d *schema.ResourceData, m 
 
 			pathDiff := strings.TrimPrefix(path, dir)
 			if !info.IsDir() && path != file && !strings.Contains(pathDiff, ".terraform") {
-				pathData, err := ioutil.ReadFile(path)
+				pathData, err := os.ReadFile(path)
 				if err != nil {
 					return fmt.Errorf("%w: %s", ErrReadFile, err)
 				}
@@ -439,7 +438,7 @@ func evaluateVariables(template string, varsMap map[string]interface{}, template
 
 // convertToTemplate passes the string data to stringToTemplate after reading it from given path.
 func convertToTemplate(path string, varsMap map[string]interface{}) (string, error) {
-	b, err := ioutil.ReadFile(path)
+	b, err := os.ReadFile(path)
 	if err != nil {
 		return "", fmt.Errorf("%w: %s", ErrReadFile, err)
 	}
@@ -520,7 +519,7 @@ func getVarsFromFile(definitionsPath, valuesPath string) (map[string]interface{}
 			Default interface{} `json:"default"`
 		} `json:"definitions"`
 	}
-	definitionsFile, err := ioutil.ReadFile(definitionsPath)
+	definitionsFile, err := os.ReadFile(definitionsPath)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %s", ErrReadFile, err)
 	}
@@ -538,7 +537,7 @@ func getVarsFromFile(definitionsPath, valuesPath string) (map[string]interface{}
 	}
 	if valuesPath != "" {
 		var values map[string]interface{}
-		valuesFile, err := ioutil.ReadFile(valuesPath)
+		valuesFile, err := os.ReadFile(valuesPath)
 		if err != nil {
 			return nil, fmt.Errorf("%w: %s", ErrReadFile, err)
 		}

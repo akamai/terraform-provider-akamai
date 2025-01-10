@@ -11,7 +11,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -208,7 +207,7 @@ func testClientDo(t *testing.T, body interface{}) {
 		}
 
 		// Check the payload
-		body, err := ioutil.ReadAll(r.Body)
+		body, err := io.ReadAll(r.Body)
 		if err != nil {
 			t.Fatalf("err: %s", err)
 		}
@@ -724,7 +723,7 @@ func testClientResponseLogHook(t *testing.T, l interface{}, buf *bytes.Buffer) {
 			}
 		} else {
 			// Log the response body when we get a 500
-			body, err := ioutil.ReadAll(resp.Body)
+			body, err := io.ReadAll(resp.Body)
 			if err != nil {
 				t.Fatalf("err: %v", err)
 			}
@@ -745,7 +744,7 @@ func testClientResponseLogHook(t *testing.T, l interface{}, buf *bytes.Buffer) {
 
 	// Make sure we can read the response body still, since we did not
 	// read or close it from the response log hook.
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		t.Fatalf("err: %v", err)
 	}
@@ -1009,7 +1008,7 @@ func TestClient_Post(t *testing.T) {
 		}
 
 		// Check the payload
-		body, err := ioutil.ReadAll(r.Body)
+		body, err := io.ReadAll(r.Body)
 		if err != nil {
 			t.Fatalf("err: %s", err)
 		}
@@ -1047,7 +1046,7 @@ func TestClient_PostForm(t *testing.T) {
 		}
 
 		// Check the payload
-		body, err := ioutil.ReadAll(r.Body)
+		body, err := io.ReadAll(r.Body)
 		if err != nil {
 			t.Fatalf("err: %s", err)
 		}

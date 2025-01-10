@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -438,7 +437,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 	})
 
 	mockBundleServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		bundle, err := ioutil.ReadFile("./testdata/TestResEdgeWorkersEdgeWorker/bundles/defaultBundle.tgz")
+		bundle, err := os.ReadFile("./testdata/TestResEdgeWorkersEdgeWorker/bundles/defaultBundle.tgz")
 		require.NoError(t, err)
 		_, err = w.Write(bundle)
 		require.NoError(t, err)

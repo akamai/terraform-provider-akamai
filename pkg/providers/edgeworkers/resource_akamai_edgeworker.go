@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -462,7 +461,7 @@ func convertLocalBundleFileIntoBytes(localBundlePath string) ([]byte, error) {
 	} else {
 		filePath = localBundlePath
 	}
-	return ioutil.ReadFile(filePath)
+	return os.ReadFile(filePath)
 }
 
 func convertWarningsToListOfStrings(res *edgeworkers.ValidateBundleResponse) ([]string, error) {

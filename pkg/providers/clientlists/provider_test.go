@@ -1,7 +1,7 @@
 package clientlists
 
 import (
-	"io/ioutil"
+	"os"
 	"sync"
 	"testing"
 
@@ -32,7 +32,7 @@ func useClient(client clientlists.ClientLists, f func()) {
 
 // loadFixtureBytes returns the entire contents of the given file as a byte slice
 func loadFixtureBytes(path string) []byte {
-	contents, err := ioutil.ReadFile(path)
+	contents, err := os.ReadFile(path)
 	if err != nil {
 		panic(err)
 	}
