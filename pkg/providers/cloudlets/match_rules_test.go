@@ -11,7 +11,7 @@ import (
 )
 
 func TestParseObjectMatchValue(t *testing.T) {
-	dummySchemaSetFunc := func(v interface{}) int {
+	dummySchemaSetFunc := func(_ interface{}) int {
 		return 1
 	}
 

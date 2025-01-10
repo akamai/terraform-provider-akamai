@@ -1441,7 +1441,7 @@ func TestResourcePolicyV2(t *testing.T) {
 					},
 					{
 						ImportState: true,
-						ImportStateIdFunc: func(state *terraform.State) (string, error) {
+						ImportStateIdFunc: func(_ *terraform.State) (string, error) {
 							return "", nil
 						},
 						ResourceName: "akamai_cloudlets_policy.policy",

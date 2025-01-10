@@ -129,7 +129,7 @@ type attributes struct {
 var (
 	defaultTimeout = time.Hour * 2
 
-	trimWhitespaces = func(k, oldValue, newValue string, d *schema.ResourceData) bool {
+	trimWhitespaces = func(_, oldValue, newValue string, _ *schema.ResourceData) bool {
 		return strings.TrimSpace(oldValue) == strings.TrimSpace(newValue)
 	}
 )

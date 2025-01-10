@@ -25,10 +25,10 @@ func useClient(client *botman.Mock, f func()) {
 	inst.client = client
 	origGetLatestConfigVersion := getLatestConfigVersion
 	origGetModifiableConfigVersion := getModifiableConfigVersion
-	getLatestConfigVersion = func(ctx context.Context, configID int, m interface{}) (int, error) {
+	getLatestConfigVersion = func(_ context.Context, _ int, _ interface{}) (int, error) {
 		return 15, nil
 	}
-	getModifiableConfigVersion = func(ctx context.Context, configID int, resource string, m interface{}) (int, error) {
+	getModifiableConfigVersion = func(_ context.Context, _ int, _ string, _ interface{}) (int, error) {
 		return 15, nil
 	}
 	defer func() {

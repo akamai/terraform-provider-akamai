@@ -58,7 +58,7 @@ func resourceEdgeKV() *schema.Resource {
 					displayGroupIDWarning(),
 				),
 				// In the current API release, the value of group_id does not matter, so we suppress all but the first diff
-				DiffSuppressFunc: func(_, old, _ string, d *schema.ResourceData) bool {
+				DiffSuppressFunc: func(_, old, _ string, _ *schema.ResourceData) bool {
 					return old != ""
 				},
 				ForceNew: true,
@@ -366,7 +366,7 @@ func getStringValue(itemMap map[string]interface{}, name string) string {
 }
 
 func displayGroupIDWarning() schema.SchemaValidateDiagFunc {
-	return func(i interface{}, path cty.Path) diag.Diagnostics {
+	return func(_ interface{}, path cty.Path) diag.Diagnostics {
 		return diag.Diagnostics{
 			diag.Diagnostic{
 				Severity:      diag.Warning,

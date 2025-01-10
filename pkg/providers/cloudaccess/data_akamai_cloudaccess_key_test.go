@@ -101,7 +101,7 @@ func TestDataKey(t *testing.T) {
 		},
 		"error listing keys": {
 			configPath: "testdata/TestDataKey/default.tf",
-			init: func(_ *testing.T, m *cloudaccess.Mock, testData []cloudaccess.AccessKeyResponse) {
+			init: func(_ *testing.T, m *cloudaccess.Mock, _ []cloudaccess.AccessKeyResponse) {
 				expectListAccessKeysWithError(m, 1)
 			},
 			error: regexp.MustCompile("list keys failed"),

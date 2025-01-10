@@ -125,7 +125,7 @@ func TestDataUsers(t *testing.T) {
 		},
 		"error - list user fails": {
 			configPath: "testdata/TestDataUsers/default.tf",
-			init: func(m *iam.Mock, mockData []iam.UserListItem, groupID *int64) {
+			init: func(m *iam.Mock, _ []iam.UserListItem, groupID *int64) {
 				listUsersReq := iam.ListUsersRequest{GroupID: groupID, AuthGrants: true, Actions: true}
 				m.On("ListUsers", testutils.MockContext, listUsersReq).Return(nil, errors.New("test error"))
 			},

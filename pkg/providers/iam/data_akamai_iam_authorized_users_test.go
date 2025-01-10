@@ -63,7 +63,7 @@ func TestAuthorizedUsers(t *testing.T) {
 		},
 		"fail path": {
 			configPath: "testdata/TestAuthorizedUsers/default.tf",
-			init: func(m *iam.Mock, testData testDataForAuthorizedUsers) {
+			init: func(m *iam.Mock, _ testDataForAuthorizedUsers) {
 				m.On("ListAuthorizedUsers", testutils.MockContext).Return(iam.ListAuthorizedUsersResponse{}, errors.New("could not get authorized users"))
 			},
 			error:    regexp.MustCompile(`could not get authorized users`),

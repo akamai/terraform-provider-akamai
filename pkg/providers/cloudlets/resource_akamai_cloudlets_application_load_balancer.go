@@ -91,7 +91,7 @@ func resourceCloudletsApplicationLoadBalancer() *schema.Resource {
 							Type:        schema.TypeString,
 							Required:    true,
 							Description: "The country in which the data center is located",
-							ValidateDiagFunc: func(i interface{}, path cty.Path) diag.Diagnostics {
+							ValidateDiagFunc: func(i interface{}, _ cty.Path) diag.Diagnostics {
 								if err := ozzo.Validate(strings.ToUpper(i.(string)), is.CountryCode2); err != nil {
 									return diag.FromErr(err)
 								}

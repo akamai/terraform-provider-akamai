@@ -290,7 +290,7 @@ func TestDataEdgeWorkersEdgeWorker(t *testing.T) {
 			error:      nil,
 		},
 		"no versions": {
-			init: func(_ *testing.T, m *edgeworkers.Mock, testData testDataForEdgeWorker) {
+			init: func(_ *testing.T, m *edgeworkers.Mock, _ testDataForEdgeWorker) {
 				expectReadEdgeWorkerNoVersions(m, noVersionsData, 3)
 			},
 			mockData:   noVersionsData,
@@ -298,7 +298,7 @@ func TestDataEdgeWorkersEdgeWorker(t *testing.T) {
 			error:      nil,
 		},
 		"could not get an edgeworker_id": {
-			init: func(_ *testing.T, m *edgeworkers.Mock, testData testDataForEdgeWorker) {
+			init: func(_ *testing.T, m *edgeworkers.Mock, _ testDataForEdgeWorker) {
 				expectGetEdgeWorkerError(m, "could not get an edgeworker")
 			},
 			mockData:   oneVersionData,
@@ -306,7 +306,7 @@ func TestDataEdgeWorkersEdgeWorker(t *testing.T) {
 			error:      regexp.MustCompile("could not get an edgeworker"),
 		},
 		"could not list versions": {
-			init: func(_ *testing.T, m *edgeworkers.Mock, testData testDataForEdgeWorker) {
+			init: func(_ *testing.T, m *edgeworkers.Mock, _ testDataForEdgeWorker) {
 				expectListEdgeWorkerVersionsError(m, "could not list edgeworker versions")
 			},
 			mockData:   oneVersionData,

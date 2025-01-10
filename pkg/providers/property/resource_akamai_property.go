@@ -131,7 +131,7 @@ func resourceProperty() *schema.Resource {
 						"cname_from": {
 							Type:     schema.TypeString,
 							Required: true,
-							ValidateDiagFunc: func(i interface{}, path cty.Path) diag.Diagnostics {
+							ValidateDiagFunc: func(i interface{}, _ cty.Path) diag.Diagnostics {
 								if len(i.(string)) == 0 {
 									return diag.Errorf("'cname_from' cannot be empty when hostnames block is defined - See new hostnames schema")
 								}
@@ -141,7 +141,7 @@ func resourceProperty() *schema.Resource {
 						"cname_to": {
 							Type:     schema.TypeString,
 							Required: true,
-							ValidateDiagFunc: func(i interface{}, path cty.Path) diag.Diagnostics {
+							ValidateDiagFunc: func(i interface{}, _ cty.Path) diag.Diagnostics {
 								if len(i.(string)) == 0 {
 									return diag.Errorf("'cname_to' cannot be empty when hostnames block is defined - See new hostnames schema")
 								}
@@ -151,7 +151,7 @@ func resourceProperty() *schema.Resource {
 						"cert_provisioning_type": {
 							Type:     schema.TypeString,
 							Required: true,
-							ValidateDiagFunc: func(i interface{}, path cty.Path) diag.Diagnostics {
+							ValidateDiagFunc: func(i interface{}, _ cty.Path) diag.Diagnostics {
 								if len(i.(string)) == 0 {
 									return diag.Errorf("'cert_provisioning_type' cannot be empty when hostnames block is defined - See new hostnames schema")
 								}

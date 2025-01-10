@@ -436,7 +436,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 
-	mockBundleServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	mockBundleServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		bundle, err := os.ReadFile("./testdata/TestResEdgeWorkersEdgeWorker/bundles/defaultBundle.tgz")
 		require.NoError(t, err)
 		_, err = w.Write(bundle)

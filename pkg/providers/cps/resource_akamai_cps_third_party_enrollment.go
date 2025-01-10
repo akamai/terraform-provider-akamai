@@ -162,7 +162,7 @@ func resourceCPSThirdPartyEnrollment() *schema.Resource {
 			},
 		},
 		CustomizeDiff: customdiff.Sequence(
-			func(ctx context.Context, diff *schema.ResourceDiff, i interface{}) error {
+			func(_ context.Context, diff *schema.ResourceDiff, _ interface{}) error {
 				if !diff.HasChange("sans") {
 					return nil
 				}
@@ -214,7 +214,7 @@ func resourceCPSThirdPartyEnrollmentCreate(ctx context.Context, d *schema.Resour
 	}
 
 	// save ClientMutualAuthentication and unset it in enrollment request struct
-	// create request must not have it set; in case its not nil, we will run update later to add it
+	// create request must not have it set; in case it's not nil, we will run update later to add it
 	clientMutualAuthentication := enrollmentReqBody.NetworkConfiguration.ClientMutualAuthentication
 	enrollmentReqBody.NetworkConfiguration.ClientMutualAuthentication = nil
 

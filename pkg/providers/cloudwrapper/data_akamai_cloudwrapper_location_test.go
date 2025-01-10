@@ -87,7 +87,7 @@ func TestDataLocation(t *testing.T) {
 		},
 		"error listing locations": {
 			configPath: "testdata/TestDataLocation/location.tf",
-			init: func(m *cloudwrapper.Mock, testData testDataForCWLocation) {
+			init: func(m *cloudwrapper.Mock, _ testDataForCWLocation) {
 				expectListLocationsWithError(m, 1)
 			},
 			error: regexp.MustCompile("list locations failed"),

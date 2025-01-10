@@ -179,7 +179,7 @@ func sessionWithRetry(cfg contextConfig, opts []session.Option) (session.Session
 		return sess.Sign(r)
 	}
 
-	retryClient.HTTPClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+	retryClient.HTTPClient.CheckRedirect = func(req *http.Request, _ []*http.Request) error {
 		return sess.Sign(req)
 	}
 

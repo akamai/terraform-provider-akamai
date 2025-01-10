@@ -211,7 +211,7 @@ func resourceCPSDVEnrollment() *schema.Resource {
 			},
 		},
 		CustomizeDiff: customdiff.Sequence(
-			func(ctx context.Context, diff *schema.ResourceDiff, i interface{}) error {
+			func(_ context.Context, diff *schema.ResourceDiff, _ interface{}) error {
 				if !diff.HasChange("sans") {
 					return nil
 				}

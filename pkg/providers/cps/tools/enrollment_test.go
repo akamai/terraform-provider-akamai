@@ -10,7 +10,7 @@ import (
 )
 
 func TestGetContactInfo(t *testing.T) {
-	hashFunc := func(i interface{}) int { return 0 }
+	hashFunc := func(_ interface{}) int { return 0 }
 	tests := map[string]struct {
 		given     *schema.Set
 		expected  *cps.Contact

@@ -123,7 +123,7 @@ func newRequest(t *testing.T, method, url string) *http.Request {
 }
 
 func TestOverrideRetryPolicy(t *testing.T) {
-	basePolicy := func(ctx context.Context, resp *http.Response, err error) (bool, error) {
+	basePolicy := func(_ context.Context, _ *http.Response, _ error) (bool, error) {
 		return false, errors.New("base policy: dummy, not implemented")
 	}
 	policy := overrideRetryPolicy(basePolicy)
@@ -238,7 +238,7 @@ func stat429ResponseWaiting(wait time.Duration) *http.Response {
 
 func Test_overrideBackoff(t *testing.T) {
 	baseWait := time.Duration(24) * time.Hour
-	baseBackoff := func(min, max time.Duration, attemptNum int, resp *http.Response) time.Duration {
+	baseBackoff := func(_, _ time.Duration, _ int, _ *http.Response) time.Duration {
 		return baseWait
 	}
 	backoff := overrideBackoff(baseBackoff, nil)

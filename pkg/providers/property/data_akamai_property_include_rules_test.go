@@ -142,7 +142,7 @@ func TestDataPropertyIncludeRules(t *testing.T) {
 			error:      regexp.MustCompile("Missing required argument"),
 		},
 		"GetIncludeRuleTree response error": {
-			init: func(t *testing.T, m *papi.Mock, testData testDataPropertyIncludeRules) {
+			init: func(_ *testing.T, m *papi.Mock, testData testDataPropertyIncludeRules) {
 				expectGetIncludeRuleTreeError(m, testData)
 			},
 			mockData:   propertyIncludeRulesWithRuleErrors(testDataIncludeRules(t), testutils.LoadFixtureString(t, "%s/property-snippets/rule_errors.json", workdir)),

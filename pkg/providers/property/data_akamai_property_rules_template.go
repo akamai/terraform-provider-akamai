@@ -66,7 +66,7 @@ func dataSourcePropertyRulesTemplate() *schema.Resource {
 							Type:     schema.TypeString,
 							Default:  "string",
 							Optional: true,
-							ValidateDiagFunc: func(i interface{}, path cty.Path) diag.Diagnostics {
+							ValidateDiagFunc: func(i interface{}, _ cty.Path) diag.Diagnostics {
 								val, ok := i.(string)
 								if !ok {
 									return diag.Errorf("value is not a string: %v", i)

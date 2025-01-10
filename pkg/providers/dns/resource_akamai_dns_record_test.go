@@ -654,7 +654,7 @@ func TestMXRecord(t *testing.T) {
 		Name:       name,
 		RecordType: mx}
 
-	mockCreate := func(d *dns.Mock, realClient dns.DNS, createdRecord *dns.RecordBody) {
+	mockCreate := func(d *dns.Mock, _ dns.DNS, createdRecord *dns.RecordBody) {
 		d.On("GetRecord", testutils.MockContext, getRecordRequest).
 			Return(nil, notFound).Twice()
 		d.On("CreateRecord", testutils.MockContext, dns.CreateRecordRequest{

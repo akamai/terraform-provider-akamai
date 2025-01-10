@@ -61,7 +61,7 @@ func TestBlockedPropertiesDataSource(t *testing.T) {
 		},
 		"happy path - no blocked properties are returned": {
 			givenTF: "valid.tf",
-			init: func(im *iam.Mock, pm *papi.Mock) {
+			init: func(im *iam.Mock, _ *papi.Mock) {
 				im.On("ListBlockedProperties", testutils.MockContext, iam.ListBlockedPropertiesRequest{
 					IdentityID: "user123",
 					GroupID:    1,
