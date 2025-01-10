@@ -12,7 +12,7 @@ import (
 
 func TestAkamaiAdvancedSettingsAttackPayloadLoggingConfig(t *testing.T) {
 	var (
-		configVersion = func(t *testing.T, configId int, client *appsec.Mock) appsec.GetConfigurationResponse {
+		configVersion = func(configId int, client *appsec.Mock) appsec.GetConfigurationResponse {
 			configResponse := appsec.GetConfigurationResponse{}
 			err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/LatestConfiguration.json"), &configResponse)
 			require.NoError(t, err)
@@ -25,7 +25,7 @@ func TestAkamaiAdvancedSettingsAttackPayloadLoggingConfig(t *testing.T) {
 			return configResponse
 		}
 
-		attackPayloadLoggingRead = func(t *testing.T, configId int, version int, policyId string, client *appsec.Mock, payloadPath string, numberOfTimes int) {
+		attackPayloadLoggingRead = func(configId int, version int, policyId string, client *appsec.Mock, payloadPath string, numberOfTimes int) {
 			attackPayloadLoggingResponse := appsec.GetAdvancedSettingsAttackPayloadLoggingResponse{}
 			err := json.Unmarshal(testutils.LoadFixtureBytes(t, payloadPath), &attackPayloadLoggingResponse)
 			require.NoError(t, err)
@@ -37,7 +37,7 @@ func TestAkamaiAdvancedSettingsAttackPayloadLoggingConfig(t *testing.T) {
 
 		}
 
-		updateAttackPayloadLogging = func(t *testing.T, updateAttackPayloadLogging appsec.UpdateAdvancedSettingsAttackPayloadLoggingRequest, client *appsec.Mock, payloadPath string, numberOfTimes int) {
+		updateAttackPayloadLogging = func(updateAttackPayloadLogging appsec.UpdateAdvancedSettingsAttackPayloadLoggingRequest, client *appsec.Mock, payloadPath string, numberOfTimes int) {
 			updateAttackPayloadLoggingResponse := appsec.UpdateAdvancedSettingsAttackPayloadLoggingResponse{}
 			err := json.Unmarshal(testutils.LoadFixtureBytes(t, payloadPath), &updateAttackPayloadLoggingResponse)
 			require.NoError(t, err)
@@ -48,7 +48,7 @@ func TestAkamaiAdvancedSettingsAttackPayloadLoggingConfig(t *testing.T) {
 
 		}
 
-		removeAttackPayloadLogging = func(t *testing.T, removeAttackPayloadLogging appsec.RemoveAdvancedSettingsAttackPayloadLoggingRequest, client *appsec.Mock, payloadPath string, numberOfTimes int) {
+		removeAttackPayloadLogging = func(removeAttackPayloadLogging appsec.RemoveAdvancedSettingsAttackPayloadLoggingRequest, client *appsec.Mock, payloadPath string, numberOfTimes int) {
 			removeAttackPayloadLoggingResponse := appsec.RemoveAdvancedSettingsAttackPayloadLoggingResponse{}
 			err := json.Unmarshal(testutils.LoadFixtureBytes(t, payloadPath), &removeAttackPayloadLoggingResponse)
 			require.NoError(t, err)
@@ -60,14 +60,14 @@ func TestAkamaiAdvancedSettingsAttackPayloadLoggingConfig(t *testing.T) {
 
 	t.Run("match by AdvancedSettingsAttackPayloadLogging ID", func(t *testing.T) {
 		client := &appsec.Mock{}
-		configResponse := configVersion(t, 43253, client)
+		configResponse := configVersion(43253, client)
 		payloadPath := "testdata/TestResAdvancedSettingsAttackPayloadLogging/AdvancedSettingsAttackPayloadLogging.json"
-		attackPayloadLoggingRead(t, 43253, 7, "", client, payloadPath, 2)
+		attackPayloadLoggingRead(43253, 7, "", client, payloadPath, 2)
 		updateAdvancedSettingsAttackPayloadLoggingJSON := testutils.LoadFixtureBytes(t, "testdata/TestResAdvancedSettingsAttackPayloadLogging/UpdateAdvancedSettingsAttackPayloadLogging.json")
 		updateAttackPayloadLoggingRequest := appsec.UpdateAdvancedSettingsAttackPayloadLoggingRequest{ConfigID: configResponse.ID, Version: configResponse.LatestVersion, PolicyID: "", JSONPayloadRaw: updateAdvancedSettingsAttackPayloadLoggingJSON}
 
 		updatePayloadPath := "testdata/TestResAdvancedSettingsAttackPayloadLogging/UpdateAdvancedSettingsAttackPayloadLogging.json"
-		updateAttackPayloadLogging(t, updateAttackPayloadLoggingRequest, client, updatePayloadPath, 1)
+		updateAttackPayloadLogging(updateAttackPayloadLoggingRequest, client, updatePayloadPath, 1)
 
 		removeAttackPayloadLoggingRequest := appsec.RemoveAdvancedSettingsAttackPayloadLoggingRequest{
 			ConfigID:     43253,
@@ -79,7 +79,7 @@ func TestAkamaiAdvancedSettingsAttackPayloadLoggingConfig(t *testing.T) {
 		}
 
 		removePayloadPath := "testdata/TestResAdvancedSettingsAttackPayloadLogging/UpdateAdvancedSettingsAttackPayloadLogging.json"
-		removeAttackPayloadLogging(t, removeAttackPayloadLoggingRequest, client, removePayloadPath, 1)
+		removeAttackPayloadLogging(removeAttackPayloadLoggingRequest, client, removePayloadPath, 1)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
@@ -101,14 +101,14 @@ func TestAkamaiAdvancedSettingsAttackPayloadLoggingConfig(t *testing.T) {
 
 	t.Run("match by AdvancedSettingsAttackPayloadLogging disabled ID", func(t *testing.T) {
 		client := &appsec.Mock{}
-		configResponse := configVersion(t, 43253, client)
+		configResponse := configVersion(43253, client)
 		payloadPath := "testdata/TestResAdvancedSettingsAttackPayloadLogging/AdvancedSettingsAttackPayloadLoggingDisabled.json"
-		attackPayloadLoggingRead(t, 43253, 7, "", client, payloadPath, 2)
+		attackPayloadLoggingRead(43253, 7, "", client, payloadPath, 2)
 		updateAdvancedSettingsAttackPayloadLoggingJSON := testutils.LoadFixtureBytes(t, "testdata/TestResAdvancedSettingsAttackPayloadLogging/UpdateAdvancedSettingsAttackPayloadLoggingDisabled.json")
 		updateAttackPayloadLoggingRequest := appsec.UpdateAdvancedSettingsAttackPayloadLoggingRequest{ConfigID: configResponse.ID, Version: configResponse.LatestVersion, PolicyID: "", JSONPayloadRaw: updateAdvancedSettingsAttackPayloadLoggingJSON}
 
 		updatePayloadPath := "testdata/TestResAdvancedSettingsAttackPayloadLogging/UpdateAdvancedSettingsAttackPayloadLoggingDisabledResponse.json"
-		updateAttackPayloadLogging(t, updateAttackPayloadLoggingRequest, client, updatePayloadPath, 1)
+		updateAttackPayloadLogging(updateAttackPayloadLoggingRequest, client, updatePayloadPath, 1)
 
 		removeAttackPayloadLoggingRequest := appsec.RemoveAdvancedSettingsAttackPayloadLoggingRequest{
 			ConfigID:     43253,
@@ -120,7 +120,7 @@ func TestAkamaiAdvancedSettingsAttackPayloadLoggingConfig(t *testing.T) {
 		}
 
 		removePayloadPath := "testdata/TestResAdvancedSettingsAttackPayloadLogging/UpdateAdvancedSettingsAttackPayloadLogging.json"
-		removeAttackPayloadLogging(t, removeAttackPayloadLoggingRequest, client, removePayloadPath, 1)
+		removeAttackPayloadLogging(removeAttackPayloadLoggingRequest, client, removePayloadPath, 1)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
@@ -143,14 +143,14 @@ func TestAkamaiAdvancedSettingsAttackPayloadLoggingConfig(t *testing.T) {
 	t.Run("import", func(t *testing.T) {
 		client := &appsec.Mock{}
 
-		configResponse := configVersion(t, 43253, client)
+		configResponse := configVersion(43253, client)
 		payloadPath := "testdata/TestResAdvancedSettingsAttackPayloadLogging/AdvancedSettingsAttackPayloadLogging.json"
-		attackPayloadLoggingRead(t, configResponse.ID, configResponse.LatestVersion, "", client, payloadPath, 4)
+		attackPayloadLoggingRead(configResponse.ID, configResponse.LatestVersion, "", client, payloadPath, 4)
 		updateAdvancedSettingsAttackPayloadLoggingJSON := testutils.LoadFixtureBytes(t, "testdata/TestResAdvancedSettingsAttackPayloadLogging/UpdateAdvancedSettingsAttackPayloadLogging.json")
 		updateAttackPayloadLoggingRequest := appsec.UpdateAdvancedSettingsAttackPayloadLoggingRequest{ConfigID: configResponse.ID, Version: configResponse.LatestVersion, PolicyID: "", JSONPayloadRaw: updateAdvancedSettingsAttackPayloadLoggingJSON}
 
 		updatePayloadPath := "testdata/TestResAdvancedSettingsAttackPayloadLogging/UpdateAdvancedSettingsAttackPayloadLogging.json"
-		updateAttackPayloadLogging(t, updateAttackPayloadLoggingRequest, client, updatePayloadPath, 1)
+		updateAttackPayloadLogging(updateAttackPayloadLoggingRequest, client, updatePayloadPath, 1)
 
 		removeAttackPayloadLoggingRequest := appsec.RemoveAdvancedSettingsAttackPayloadLoggingRequest{
 			ConfigID:     configResponse.ID,
@@ -162,7 +162,7 @@ func TestAkamaiAdvancedSettingsAttackPayloadLoggingConfig(t *testing.T) {
 		}
 
 		removePayloadPath := "testdata/TestResAdvancedSettingsAttackPayloadLogging/UpdateAdvancedSettingsAttackPayloadLogging.json"
-		removeAttackPayloadLogging(t, removeAttackPayloadLoggingRequest, client, removePayloadPath, 1)
+		removeAttackPayloadLogging(removeAttackPayloadLoggingRequest, client, removePayloadPath, 1)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -185,14 +185,14 @@ func TestAkamaiAdvancedSettingsAttackPayloadLoggingConfig(t *testing.T) {
 	t.Run("import policy", func(t *testing.T) {
 		client := &appsec.Mock{}
 
-		configResponse := configVersion(t, 43253, client)
+		configResponse := configVersion(43253, client)
 		payloadPath := "testdata/TestResAdvancedSettingsAttackPayloadLogging/AdvancedSettingsAttackPayloadLoggingPolicy.json"
-		attackPayloadLoggingRead(t, 43253, 7, "test_policy", client, payloadPath, 4)
+		attackPayloadLoggingRead(43253, 7, "test_policy", client, payloadPath, 4)
 		updateAdvancedSettingsAttackPayloadLoggingJSON := testutils.LoadFixtureBytes(t, "testdata/TestResAdvancedSettingsAttackPayloadLogging/UpdateAdvancedSettingsAttackPayloadLoggingPolicy.json")
 		updateAttackPayloadLoggingRequest := appsec.UpdateAdvancedSettingsAttackPayloadLoggingRequest{ConfigID: configResponse.ID, Version: configResponse.LatestVersion, PolicyID: "test_policy", JSONPayloadRaw: updateAdvancedSettingsAttackPayloadLoggingJSON}
 
 		updatePayloadPath := "testdata/TestResAdvancedSettingsAttackPayloadLogging/UpdateAdvancedSettingsAttackPayloadLoggingPolicy.json"
-		updateAttackPayloadLogging(t, updateAttackPayloadLoggingRequest, client, updatePayloadPath, 1)
+		updateAttackPayloadLogging(updateAttackPayloadLoggingRequest, client, updatePayloadPath, 1)
 
 		removeAttackPayloadLoggingRequest := appsec.RemoveAdvancedSettingsAttackPayloadLoggingRequest{
 			ConfigID:     43253,
@@ -204,7 +204,7 @@ func TestAkamaiAdvancedSettingsAttackPayloadLoggingConfig(t *testing.T) {
 		}
 
 		removePayloadPath := "testdata/TestResAdvancedSettingsAttackPayloadLogging/UpdateAdvancedSettingsAttackPayloadLogging.json"
-		removeAttackPayloadLogging(t, removeAttackPayloadLoggingRequest, client, removePayloadPath, 1)
+		removeAttackPayloadLogging(removeAttackPayloadLoggingRequest, client, removePayloadPath, 1)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -227,15 +227,15 @@ func TestAkamaiAdvancedSettingsAttackPayloadLoggingConfig(t *testing.T) {
 	t.Run("match by AdvancedSettingsAttackPayloadPolicy ID", func(t *testing.T) {
 		client := &appsec.Mock{}
 
-		configResponse := configVersion(t, 43253, client)
+		configResponse := configVersion(43253, client)
 		payloadPath := "testdata/TestResAdvancedSettingsAttackPayloadLogging/AdvancedSettingsAttackPayloadLoggingPolicy.json"
 
-		attackPayloadLoggingRead(t, 43253, 7, "test_policy", client, payloadPath, 2)
+		attackPayloadLoggingRead(43253, 7, "test_policy", client, payloadPath, 2)
 		updateAdvancedSettingsAttackPayloadLoggingJSON := testutils.LoadFixtureBytes(t, "testdata/TestResAdvancedSettingsAttackPayloadLogging/UpdateAdvancedSettingsAttackPayloadLoggingPolicy.json")
 		updateAttackPayloadLoggingRequest := appsec.UpdateAdvancedSettingsAttackPayloadLoggingRequest{ConfigID: configResponse.ID, Version: configResponse.LatestVersion, PolicyID: "test_policy", JSONPayloadRaw: updateAdvancedSettingsAttackPayloadLoggingJSON}
 
 		updatePayloadPath := "testdata/TestResAdvancedSettingsAttackPayloadLogging/UpdateAdvancedSettingsAttackPayloadLoggingPolicy.json"
-		updateAttackPayloadLogging(t, updateAttackPayloadLoggingRequest, client, updatePayloadPath, 1)
+		updateAttackPayloadLogging(updateAttackPayloadLoggingRequest, client, updatePayloadPath, 1)
 
 		removeAttackPayloadLoggingRequest := appsec.RemoveAdvancedSettingsAttackPayloadLoggingRequest{
 			ConfigID:     43253,
@@ -247,7 +247,7 @@ func TestAkamaiAdvancedSettingsAttackPayloadLoggingConfig(t *testing.T) {
 		}
 
 		removePayloadPath := "testdata/TestResAdvancedSettingsAttackPayloadLogging/UpdateAdvancedSettingsAttackPayloadLoggingPolicy.json"
-		removeAttackPayloadLogging(t, removeAttackPayloadLoggingRequest, client, removePayloadPath, 1)
+		removeAttackPayloadLogging(removeAttackPayloadLoggingRequest, client, removePayloadPath, 1)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
@@ -270,15 +270,15 @@ func TestAkamaiAdvancedSettingsAttackPayloadLoggingConfig(t *testing.T) {
 	t.Run("match by AdvancedSettingsAttackPayloadPolicy ID drift", func(t *testing.T) {
 		client := &appsec.Mock{}
 
-		configResponse := configVersion(t, 43253, client)
+		configResponse := configVersion(43253, client)
 		payloadPath := "testdata/TestResAdvancedSettingsAttackPayloadLogging/AdvancedSettingsAttackPayloadLoggingPolicy.json"
 
-		attackPayloadLoggingRead(t, 43253, 7, "test_policy", client, payloadPath, 2)
+		attackPayloadLoggingRead(43253, 7, "test_policy", client, payloadPath, 2)
 		updateAdvancedSettingsAttackPayloadLoggingJSON := testutils.LoadFixtureBytes(t, "testdata/TestResAdvancedSettingsAttackPayloadLogging/UpdateAdvancedSettingsAttackPayloadLoggingPolicy.json")
 		updateAttackPayloadLoggingRequest := appsec.UpdateAdvancedSettingsAttackPayloadLoggingRequest{ConfigID: configResponse.ID, Version: configResponse.LatestVersion, PolicyID: "test_policy", JSONPayloadRaw: updateAdvancedSettingsAttackPayloadLoggingJSON}
 
 		updatePayloadPath := "testdata/TestResAdvancedSettingsAttackPayloadLogging/UpdateAdvancedSettingsAttackPayloadLoggingPolicy.json"
-		updateAttackPayloadLogging(t, updateAttackPayloadLoggingRequest, client, updatePayloadPath, 1)
+		updateAttackPayloadLogging(updateAttackPayloadLoggingRequest, client, updatePayloadPath, 1)
 
 		removeAttackPayloadLoggingRequest := appsec.RemoveAdvancedSettingsAttackPayloadLoggingRequest{
 			ConfigID:     43253,
@@ -290,7 +290,7 @@ func TestAkamaiAdvancedSettingsAttackPayloadLoggingConfig(t *testing.T) {
 		}
 
 		removePayloadPath := "testdata/TestResAdvancedSettingsAttackPayloadLogging/UpdateAdvancedSettingsAttackPayloadLoggingPolicy.json"
-		removeAttackPayloadLogging(t, removeAttackPayloadLoggingRequest, client, removePayloadPath, 1)
+		removeAttackPayloadLogging(removeAttackPayloadLoggingRequest, client, removePayloadPath, 1)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{

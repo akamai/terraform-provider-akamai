@@ -16,7 +16,7 @@ func TestResourceImagingPolicySet(t *testing.T) {
 	var (
 		anError = errors.New("oops")
 
-		expectPolicySetCreation = func(t *testing.T, client *imaging.Mock, contractID, name, region, mediaType string, policySet *imaging.PolicySet, createError error) {
+		expectPolicySetCreation = func(client *imaging.Mock, contractID, name, region, mediaType string, policySet *imaging.PolicySet, createError error) {
 			client.On("CreatePolicySet", testutils.MockContext, imaging.CreatePolicySetRequest{
 				ContractID: contractID,
 				CreatePolicySet: imaging.CreatePolicySet{
@@ -27,13 +27,13 @@ func TestResourceImagingPolicySet(t *testing.T) {
 			}).Return(policySet, createError).Once()
 		}
 
-		expectPolicySetRead = func(t *testing.T, client *imaging.Mock, contractID, policySetID string, policySet *imaging.PolicySet, getPolicyError error, times int) {
+		expectPolicySetRead = func(client *imaging.Mock, contractID, policySetID string, policySet *imaging.PolicySet, getPolicyError error, times int) {
 			client.On("GetPolicySet", testutils.MockContext, imaging.GetPolicySetRequest{
 				PolicySetID: policySetID, ContractID: contractID,
 			}).Return(policySet, getPolicyError).Times(times)
 		}
 
-		expectPolicySetUpdate = func(t *testing.T, client *imaging.Mock, contractID, policySetID, name, region string, updatePolicySetError error) {
+		expectPolicySetUpdate = func(client *imaging.Mock, contractID, policySetID, name, region string, updatePolicySetError error) {
 			client.On("UpdatePolicySet", testutils.MockContext, imaging.UpdatePolicySetRequest{
 				PolicySetID: policySetID,
 				ContractID:  contractID,
@@ -43,7 +43,7 @@ func TestResourceImagingPolicySet(t *testing.T) {
 				},
 			}).Return(nil, updatePolicySetError).Once()
 		}
-		expectPolicySetDelete = func(t *testing.T, client *imaging.Mock, contractID, policySetID, network string, listPolicyResponse *imaging.ListPoliciesResponse, listPolicyError, deletePolicySetError error) {
+		expectPolicySetDelete = func(client *imaging.Mock, contractID, policySetID, network string, listPolicyResponse *imaging.ListPoliciesResponse, listPolicyError, deletePolicySetError error) {
 			client.On("ListPolicies", testutils.MockContext, imaging.ListPoliciesRequest{
 				Network:     imaging.PolicyNetworkProduction,
 				ContractID:  contractID,
@@ -81,12 +81,12 @@ func TestResourceImagingPolicySet(t *testing.T) {
 				createdPolicySet := &imaging.PolicySet{Name: policySetName, ID: policySetID, Region: imaging.Region(EMEA), Type: mediaType}
 
 				// create
-				expectPolicySetCreation(t, m, contractID, policySetName, EMEA, mediaType, createdPolicySet, nil)
+				expectPolicySetCreation(m, contractID, policySetName, EMEA, mediaType, createdPolicySet, nil)
 
-				expectPolicySetRead(t, m, contractID, policySetID, createdPolicySet, nil, 2)
+				expectPolicySetRead(m, contractID, policySetID, createdPolicySet, nil, 2)
 
 				// delete
-				expectPolicySetDelete(t, m, contractID, policySetID, "", &imaging.ListPoliciesResponse{
+				expectPolicySetDelete(m, contractID, policySetID, "", &imaging.ListPoliciesResponse{
 					ItemKind: "POLICY",
 					Items: []imaging.PolicyOutput{
 						&imaging.PolicyOutputImage{ID: ".auto"},
@@ -112,13 +112,13 @@ func TestResourceImagingPolicySet(t *testing.T) {
 				createdPolicySet := &imaging.PolicySet{Name: policySetName, ID: policySetID, Region: imaging.Region(EMEA), Type: mediaType}
 
 				// create
-				expectPolicySetCreation(t, m, contractID, policySetName, EMEA, mediaType, createdPolicySet, nil)
+				expectPolicySetCreation(m, contractID, policySetName, EMEA, mediaType, createdPolicySet, nil)
 
 				// read
-				expectPolicySetRead(t, m, contractID, policySetID, createdPolicySet, nil, 2)
+				expectPolicySetRead(m, contractID, policySetID, createdPolicySet, nil, 2)
 
 				// delete
-				expectPolicySetDelete(t, m, contractID, policySetID, "", &imaging.ListPoliciesResponse{
+				expectPolicySetDelete(m, contractID, policySetID, "", &imaging.ListPoliciesResponse{
 					ItemKind: "POLICY",
 					Items: []imaging.PolicyOutput{
 						&imaging.PolicyOutputImage{ID: ".auto"},
@@ -144,7 +144,7 @@ func TestResourceImagingPolicySet(t *testing.T) {
 				createdPolicySet := &imaging.PolicySet{Name: policySetName, ID: policySetID, Region: imaging.Region(EMEA), Type: mediaType}
 
 				// create
-				expectPolicySetCreation(t, m, contractID, policySetName, EMEA, mediaType, createdPolicySet, anError)
+				expectPolicySetCreation(m, contractID, policySetName, EMEA, mediaType, createdPolicySet, anError)
 			},
 			steps: []resource.TestStep{
 				{
@@ -158,13 +158,13 @@ func TestResourceImagingPolicySet(t *testing.T) {
 				createdPolicySet := &imaging.PolicySet{Name: policySetName, ID: policySetID, Region: imaging.Region(EMEA), Type: mediaType}
 
 				// create
-				expectPolicySetCreation(t, m, contractID, policySetName, EMEA, mediaType, createdPolicySet, nil)
+				expectPolicySetCreation(m, contractID, policySetName, EMEA, mediaType, createdPolicySet, nil)
 
 				// create -> read
-				expectPolicySetRead(t, m, contractID, policySetID, nil, anError, 1)
+				expectPolicySetRead(m, contractID, policySetID, nil, anError, 1)
 
 				// delete
-				expectPolicySetDelete(t, m, contractID, policySetID, "", &imaging.ListPoliciesResponse{
+				expectPolicySetDelete(m, contractID, policySetID, "", &imaging.ListPoliciesResponse{
 					ItemKind: "POLICY",
 					Items: []imaging.PolicyOutput{
 						&imaging.PolicyOutputImage{ID: ".auto"},
@@ -185,19 +185,19 @@ func TestResourceImagingPolicySet(t *testing.T) {
 				updatedPolicySet := &imaging.PolicySet{Name: policySetName, ID: policySetID, Region: imaging.Region(US), Type: mediaType}
 
 				// create
-				expectPolicySetCreation(t, m, contractID, policySetName, EMEA, mediaType, createdPolicySet, nil)
+				expectPolicySetCreation(m, contractID, policySetName, EMEA, mediaType, createdPolicySet, nil)
 
 				// create -> read, test -> read, refresh
-				expectPolicySetRead(t, m, contractID, policySetID, createdPolicySet, nil, 3)
+				expectPolicySetRead(m, contractID, policySetID, createdPolicySet, nil, 3)
 
 				// update
-				expectPolicySetUpdate(t, m, contractID, policySetID, policySetName, US, nil)
+				expectPolicySetUpdate(m, contractID, policySetID, policySetName, US, nil)
 
 				// update -> read
-				expectPolicySetRead(t, m, contractID, policySetID, updatedPolicySet, nil, 2)
+				expectPolicySetRead(m, contractID, policySetID, updatedPolicySet, nil, 2)
 
 				// delete
-				expectPolicySetDelete(t, m, contractID, policySetID, "", &imaging.ListPoliciesResponse{
+				expectPolicySetDelete(m, contractID, policySetID, "", &imaging.ListPoliciesResponse{
 					ItemKind: "POLICY",
 					Items: []imaging.PolicyOutput{
 						&imaging.PolicyOutputImage{ID: ".auto"},
@@ -234,16 +234,16 @@ func TestResourceImagingPolicySet(t *testing.T) {
 				//updatedPolicySet := &imaging.PolicySet{Name: policySetName, ID: policySetID, Region: imaging.Region(US), Type: mediaType}
 
 				// create
-				expectPolicySetCreation(t, m, contractID, policySetName, EMEA, mediaType, createdPolicySet, nil)
+				expectPolicySetCreation(m, contractID, policySetName, EMEA, mediaType, createdPolicySet, nil)
 
 				// create -> read, test -> read, refresh
-				expectPolicySetRead(t, m, contractID, policySetID, createdPolicySet, nil, 3)
+				expectPolicySetRead(m, contractID, policySetID, createdPolicySet, nil, 3)
 
 				// read after diff suppress
-				expectPolicySetRead(t, m, contractID, policySetID, createdPolicySet, nil, 1)
+				expectPolicySetRead(m, contractID, policySetID, createdPolicySet, nil, 1)
 
 				// delete
-				expectPolicySetDelete(t, m, contractID, policySetID, "", &imaging.ListPoliciesResponse{
+				expectPolicySetDelete(m, contractID, policySetID, "", &imaging.ListPoliciesResponse{
 					ItemKind: "POLICY",
 					Items: []imaging.PolicyOutput{
 						&imaging.PolicyOutputImage{ID: ".auto"},
@@ -279,12 +279,12 @@ func TestResourceImagingPolicySet(t *testing.T) {
 				createdPolicySet := &imaging.PolicySet{Name: policySetName, ID: policySetID, Region: imaging.Region(EMEA), Type: mediaType}
 
 				// create
-				expectPolicySetCreation(t, m, contractID, policySetName, EMEA, mediaType, createdPolicySet, nil)
+				expectPolicySetCreation(m, contractID, policySetName, EMEA, mediaType, createdPolicySet, nil)
 
-				expectPolicySetRead(t, m, contractID, policySetID, createdPolicySet, nil, 3)
+				expectPolicySetRead(m, contractID, policySetID, createdPolicySet, nil, 3)
 
 				// delete
-				expectPolicySetDelete(t, m, contractID, policySetID, "", &imaging.ListPoliciesResponse{
+				expectPolicySetDelete(m, contractID, policySetID, "", &imaging.ListPoliciesResponse{
 					ItemKind: "POLICY",
 					Items: []imaging.PolicyOutput{
 						&imaging.PolicyOutputImage{ID: ".auto"},
@@ -309,12 +309,12 @@ func TestResourceImagingPolicySet(t *testing.T) {
 				createdPolicySet := &imaging.PolicySet{Name: policySetName, ID: policySetID, Region: imaging.Region(EMEA), Type: mediaType}
 
 				// create
-				expectPolicySetCreation(t, m, contractID, policySetName, EMEA, mediaType, createdPolicySet, nil)
+				expectPolicySetCreation(m, contractID, policySetName, EMEA, mediaType, createdPolicySet, nil)
 
-				expectPolicySetRead(t, m, contractID, policySetID, createdPolicySet, nil, 2)
+				expectPolicySetRead(m, contractID, policySetID, createdPolicySet, nil, 2)
 
 				// delete
-				expectPolicySetDelete(t, m, contractID, policySetID, "", &imaging.ListPoliciesResponse{
+				expectPolicySetDelete(m, contractID, policySetID, "", &imaging.ListPoliciesResponse{
 					ItemKind: "POLICY",
 					Items: []imaging.PolicyOutput{
 						&imaging.PolicyOutputImage{ID: ".auto"},

@@ -12,7 +12,7 @@ import (
 
 func TestAkamaiEvalPenaltyBoxConditions_res_basic(t *testing.T) {
 	var (
-		configVersion = func(t *testing.T, configId int, client *appsec.Mock) appsec.GetConfigurationResponse {
+		configVersion = func(configId int, client *appsec.Mock) appsec.GetConfigurationResponse {
 			configResponse := appsec.GetConfigurationResponse{}
 			err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/LatestConfiguration.json"), &configResponse)
 			require.NoError(t, err)
@@ -25,7 +25,7 @@ func TestAkamaiEvalPenaltyBoxConditions_res_basic(t *testing.T) {
 			return configResponse
 		}
 
-		evalPenaltyBoxConditionsRead = func(t *testing.T, configId int, version int, policyId string, client *appsec.Mock, path string) {
+		evalPenaltyBoxConditionsRead = func(configId int, version int, policyId string, client *appsec.Mock, path string) {
 			evalPenaltyBoxConditionsResponse := appsec.GetPenaltyBoxConditionsResponse{}
 			err := json.Unmarshal(testutils.LoadFixtureBytes(t, path), &evalPenaltyBoxConditionsResponse)
 			require.NoError(t, err)
@@ -36,7 +36,7 @@ func TestAkamaiEvalPenaltyBoxConditions_res_basic(t *testing.T) {
 			).Return(&evalPenaltyBoxConditionsResponse, nil)
 		}
 
-		evalPenaltyBoxConditionsUpdate = func(t *testing.T, evalPenaltyBoxConditionsUpdateReq appsec.UpdatePenaltyBoxConditionsRequest, client *appsec.Mock) {
+		evalPenaltyBoxConditionsUpdate = func(evalPenaltyBoxConditionsUpdateReq appsec.UpdatePenaltyBoxConditionsRequest, client *appsec.Mock) {
 			evalPenaltyBoxConditionsResponse := appsec.UpdatePenaltyBoxConditionsResponse{}
 
 			err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResEvalPenaltyBoxConditions/PenaltyBoxConditions.json"), &evalPenaltyBoxConditionsResponse)
@@ -48,7 +48,7 @@ func TestAkamaiEvalPenaltyBoxConditions_res_basic(t *testing.T) {
 			).Return(&evalPenaltyBoxConditionsResponse, nil).Once()
 		}
 
-		evalPenaltyBoxConditionsDelete = func(t *testing.T, evalPenaltyBoxConditionsUpdateReq appsec.UpdatePenaltyBoxConditionsRequest, client *appsec.Mock) {
+		evalPenaltyBoxConditionsDelete = func(evalPenaltyBoxConditionsUpdateReq appsec.UpdatePenaltyBoxConditionsRequest, client *appsec.Mock) {
 			evalPenaltyBoxConditionsDeleteResponse := appsec.UpdatePenaltyBoxConditionsResponse{}
 
 			err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResEvalPenaltyBoxConditions/PenaltyBoxConditionsEmpty.json"), &evalPenaltyBoxConditionsDeleteResponse)
@@ -63,10 +63,10 @@ func TestAkamaiEvalPenaltyBoxConditions_res_basic(t *testing.T) {
 
 	t.Run("match by EvalPenaltyBoxConditions ID", func(t *testing.T) {
 		client := &appsec.Mock{}
-		configResponse := configVersion(t, 43253, client)
+		configResponse := configVersion(43253, client)
 
 		// eval penalty box condition read test
-		evalPenaltyBoxConditionsRead(t, 43253, 7, "AAAA_81230", client, "testdata/TestResEvalPenaltyBoxConditions/PenaltyBoxConditions.json")
+		evalPenaltyBoxConditionsRead(43253, 7, "AAAA_81230", client, "testdata/TestResEvalPenaltyBoxConditions/PenaltyBoxConditions.json")
 
 		// eval Penalty Box conditions update test
 		evalPenaltyBoxConditionsUpdateReq := appsec.PenaltyBoxConditionsPayload{}
@@ -74,7 +74,7 @@ func TestAkamaiEvalPenaltyBoxConditions_res_basic(t *testing.T) {
 		require.NoError(t, err)
 
 		updatePenaltyBoxConditionsReq := appsec.UpdatePenaltyBoxConditionsRequest{ConfigID: configResponse.ID, Version: configResponse.LatestVersion, PolicyID: "AAAA_81230", ConditionsPayload: evalPenaltyBoxConditionsUpdateReq}
-		evalPenaltyBoxConditionsUpdate(t, updatePenaltyBoxConditionsReq, client)
+		evalPenaltyBoxConditionsUpdate(updatePenaltyBoxConditionsReq, client)
 
 		// eval Penalty box conditions delete test
 		evalPenaltyBoxConditionsDeleteReq := appsec.PenaltyBoxConditionsPayload{}
@@ -82,7 +82,7 @@ func TestAkamaiEvalPenaltyBoxConditions_res_basic(t *testing.T) {
 		require.NoError(t, err)
 
 		removeEvalPenaltyBoxConditionsReq := appsec.UpdatePenaltyBoxConditionsRequest{ConfigID: configResponse.ID, Version: configResponse.LatestVersion, PolicyID: "AAAA_81230", ConditionsPayload: evalPenaltyBoxConditionsDeleteReq}
-		evalPenaltyBoxConditionsDelete(t, removeEvalPenaltyBoxConditionsReq, client)
+		evalPenaltyBoxConditionsDelete(removeEvalPenaltyBoxConditionsReq, client)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
@@ -104,10 +104,10 @@ func TestAkamaiEvalPenaltyBoxConditions_res_basic(t *testing.T) {
 
 	t.Run("match by EvalPenaltyBoxConditions ID for Delete case", func(t *testing.T) {
 		client := &appsec.Mock{}
-		configResponse := configVersion(t, 43253, client)
+		configResponse := configVersion(43253, client)
 
 		// eval penalty box condition read test
-		evalPenaltyBoxConditionsRead(t, 43253, 7, "AAAA", client, "testdata/TestResEvalPenaltyBoxConditions/PenaltyBoxConditionsEmpty.json")
+		evalPenaltyBoxConditionsRead(43253, 7, "AAAA", client, "testdata/TestResEvalPenaltyBoxConditions/PenaltyBoxConditionsEmpty.json")
 
 		// eval Penalty box conditions delete test
 		evalPenaltyBoxConditionsDeleteReq := appsec.PenaltyBoxConditionsPayload{}
@@ -115,7 +115,7 @@ func TestAkamaiEvalPenaltyBoxConditions_res_basic(t *testing.T) {
 		require.NoError(t, err)
 
 		removeEvalPenaltyBoxConditionsReq := appsec.UpdatePenaltyBoxConditionsRequest{ConfigID: configResponse.ID, Version: configResponse.LatestVersion, PolicyID: "AAAA", ConditionsPayload: evalPenaltyBoxConditionsDeleteReq}
-		evalPenaltyBoxConditionsDelete(t, removeEvalPenaltyBoxConditionsReq, client)
+		evalPenaltyBoxConditionsDelete(removeEvalPenaltyBoxConditionsReq, client)
 
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{

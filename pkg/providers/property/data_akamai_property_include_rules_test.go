@@ -76,7 +76,7 @@ var (
 		client.On("GetIncludeRuleTree", testutils.MockContext, getIncludeRuleTreeRequest).Return(&getIncludeRuleTreeResponse, nil).Times(timesToRun)
 	}
 
-	expectGetIncludeRuleTreeError = func(t *testing.T, client *papi.Mock, data testDataPropertyIncludeRules) {
+	expectGetIncludeRuleTreeError = func(client *papi.Mock, data testDataPropertyIncludeRules) {
 		getIncludeRuleTreeRequest := papi.GetIncludeRuleTreeRequest{
 			ContractID:     data.ContractID,
 			GroupID:        data.GroupID,
@@ -143,7 +143,7 @@ func TestDataPropertyIncludeRules(t *testing.T) {
 		},
 		"GetIncludeRuleTree response error": {
 			init: func(t *testing.T, m *papi.Mock, testData testDataPropertyIncludeRules) {
-				expectGetIncludeRuleTreeError(t, m, testData)
+				expectGetIncludeRuleTreeError(m, testData)
 			},
 			mockData:   propertyIncludeRulesWithRuleErrors(testDataIncludeRules(t), testutils.LoadFixtureString(t, "%s/property-snippets/rule_errors.json", workdir)),
 			configPath: "./testdata/TestDSPropertyIncludeRules/property_include_rules_api_error.tf",

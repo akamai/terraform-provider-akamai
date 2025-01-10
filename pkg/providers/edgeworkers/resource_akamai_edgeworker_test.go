@@ -35,7 +35,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 	}
 
 	var (
-		expectReadEdgeWorkerWithOneVersion = func(t *testing.T, client *edgeworkers.Mock, name, localBundlePath, version, timeForCreation string, groupID, resourceTierID, edgeWorkerID, numberOfTimes int) {
+		expectReadEdgeWorkerWithOneVersion = func(client *edgeworkers.Mock, name, localBundlePath, version, timeForCreation string, groupID, resourceTierID, edgeWorkerID, numberOfTimes int) {
 			edgeWorkerGetReq := edgeworkers.GetEdgeWorkerIDRequest{
 				EdgeWorkerID: edgeWorkerID,
 			}
@@ -74,7 +74,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 			}
 		}
 
-		expectReadEdgeWorkerWithTwoVersions = func(t *testing.T, client *edgeworkers.Mock, name, localBundlePath, version, timeForCreation, timeForUpdate string, groupID, resourceTierID, edgeWorkerID, numberOfTimes int) {
+		expectReadEdgeWorkerWithTwoVersions = func(client *edgeworkers.Mock, name, localBundlePath, version, timeForCreation, timeForUpdate string, groupID, resourceTierID, edgeWorkerID, numberOfTimes int) {
 			edgeWorkerGetReq := edgeworkers.GetEdgeWorkerIDRequest{
 				EdgeWorkerID: edgeWorkerID,
 			}
@@ -119,7 +119,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 			}
 		}
 
-		expectCreateEdgeWorkerWithVersion = func(t *testing.T, client *edgeworkers.Mock, name, localBundlePath, timeForCreation string, groupID, resourceTierID, edgeWorkerID int) (*edgeworkers.EdgeWorkerID, *edgeworkers.EdgeWorkerVersion) {
+		expectCreateEdgeWorkerWithVersion = func(client *edgeworkers.Mock, name, localBundlePath, timeForCreation string, groupID, resourceTierID, edgeWorkerID int) (*edgeworkers.EdgeWorkerID, *edgeworkers.EdgeWorkerVersion) {
 			edgeWorkerReq := edgeworkers.CreateEdgeWorkerIDRequest{
 				Name:           name,
 				GroupID:        groupID,
@@ -162,7 +162,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 			return &createdEdgeWorker, &createdEdgeWorkerVersion
 		}
 
-		expectUpdateEdgeWorker = func(_ *testing.T, client *edgeworkers.Mock, name, localBundlePath, timeForUpdate string, groupID, resourceTierID, edgeWorkerID int) (*edgeworkers.EdgeWorkerID, *edgeworkers.EdgeWorkerVersion) {
+		expectUpdateEdgeWorker = func(client *edgeworkers.Mock, name, localBundlePath, timeForUpdate string, groupID, resourceTierID, edgeWorkerID int) (*edgeworkers.EdgeWorkerID, *edgeworkers.EdgeWorkerVersion) {
 			updatedEdgeWorker := edgeworkers.EdgeWorkerID{
 				Name:           name,
 				ResourceTierID: resourceTierID,
@@ -186,7 +186,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 			return &updatedEdgeWorker, &edgeWorkerVersion
 		}
 
-		expectUpdateEdgeWorkerVersion = func(t *testing.T, client *edgeworkers.Mock, name, localBundlePath, timeForUpdate string, groupID, resourceTierID, edgeWorkerID int) (*edgeworkers.EdgeWorkerID, *edgeworkers.EdgeWorkerVersion) {
+		expectUpdateEdgeWorkerVersion = func(client *edgeworkers.Mock, name, localBundlePath, timeForUpdate string, groupID, resourceTierID, edgeWorkerID int) (*edgeworkers.EdgeWorkerID, *edgeworkers.EdgeWorkerVersion) {
 			bytesArray, err := convertLocalBundleFileIntoBytes(localBundlePath)
 			require.NoError(t, err)
 			validateBundleReq := edgeworkers.ValidateBundleRequest{
@@ -231,7 +231,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 			return &updatedEdgeWorker, &edgeWorkerVersion
 		}
 
-		expectDeleteEdgeWorkerWithOneVersion = func(_ *testing.T, client *edgeworkers.Mock, resourceTierID, edgeWorkerID int, timeForCreation string) {
+		expectDeleteEdgeWorkerWithOneVersion = func(client *edgeworkers.Mock, resourceTierID, edgeWorkerID int, timeForCreation string) {
 			edgeWorkerVersion := edgeworkers.EdgeWorkerVersion{
 				EdgeWorkerID: edgeWorkerID,
 				Version:      "1.0",
@@ -264,7 +264,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 			client.On("DeleteEdgeWorkerID", testutils.MockContext, edgeWorkerDeleteReq).Return(nil).Once()
 		}
 
-		expectDeleteEdgeWorkerWithTwoVersions = func(_ *testing.T, client *edgeworkers.Mock, resourceTierID, edgeWorkerID int, timeForCreation, timeForUpdate string) {
+		expectDeleteEdgeWorkerWithTwoVersions = func(client *edgeworkers.Mock, resourceTierID, edgeWorkerID int, timeForCreation, timeForUpdate string) {
 			firstEdgeWorkerVersion := edgeworkers.EdgeWorkerVersion{
 				EdgeWorkerID: edgeWorkerID,
 				Version:      "1.0",
@@ -308,7 +308,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 			client.On("DeleteEdgeWorkerID", testutils.MockContext, edgeWorkerDeleteReq).Return(nil).Once()
 		}
 
-		expectImportEdgeWorkerWithOneVersion = func(t *testing.T, client *edgeworkers.Mock, localBundlePath, version string, timeForCreation string, edgeWorkerID int) {
+		expectImportEdgeWorkerWithOneVersion = func(client *edgeworkers.Mock, localBundlePath, version string, timeForCreation string, edgeWorkerID int) {
 			edgeWorkerVersion := edgeworkers.EdgeWorkerVersion{
 				EdgeWorkerID: edgeWorkerID,
 				Version:      version,
@@ -377,10 +377,10 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 
 		timeForCreation := time.Now().Format(time.RFC3339)
 
-		edgeWorker, edgeWorkerVersion := expectCreateEdgeWorkerWithVersion(t, client, "example", bundlePathForCreate, timeForCreation, 12345, 54321, 123)
-		expectReadEdgeWorkerWithOneVersion(t, client, edgeWorker.Name, bundlePathForCreate, edgeWorkerVersion.Version, timeForCreation, int(edgeWorker.GroupID), edgeWorker.ResourceTierID, edgeWorkerVersion.EdgeWorkerID, 2)
+		edgeWorker, edgeWorkerVersion := expectCreateEdgeWorkerWithVersion(client, "example", bundlePathForCreate, timeForCreation, 12345, 54321, 123)
+		expectReadEdgeWorkerWithOneVersion(client, edgeWorker.Name, bundlePathForCreate, edgeWorkerVersion.Version, timeForCreation, int(edgeWorker.GroupID), edgeWorker.ResourceTierID, edgeWorkerVersion.EdgeWorkerID, 2)
 
-		expectDeleteEdgeWorkerWithOneVersion(t, client, edgeWorker.ResourceTierID, edgeWorkerVersion.EdgeWorkerID, timeForCreation)
+		expectDeleteEdgeWorkerWithOneVersion(client, edgeWorker.ResourceTierID, edgeWorkerVersion.EdgeWorkerID, timeForCreation)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -409,10 +409,10 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 
 		timeForCreation := time.Now().Format(time.RFC3339)
 
-		edgeWorker, edgeWorkerVersion := expectCreateEdgeWorkerWithVersion(t, client, "example", bundlePathForCreate, timeForCreation, 12345, 54321, 123)
-		expectReadEdgeWorkerWithOneVersion(t, client, edgeWorker.Name, bundlePathForCreate, edgeWorkerVersion.Version, timeForCreation, int(edgeWorker.GroupID), edgeWorker.ResourceTierID, edgeWorkerVersion.EdgeWorkerID, 2)
+		edgeWorker, edgeWorkerVersion := expectCreateEdgeWorkerWithVersion(client, "example", bundlePathForCreate, timeForCreation, 12345, 54321, 123)
+		expectReadEdgeWorkerWithOneVersion(client, edgeWorker.Name, bundlePathForCreate, edgeWorkerVersion.Version, timeForCreation, int(edgeWorker.GroupID), edgeWorker.ResourceTierID, edgeWorkerVersion.EdgeWorkerID, 2)
 
-		expectDeleteEdgeWorkerWithOneVersion(t, client, edgeWorker.ResourceTierID, edgeWorkerVersion.EdgeWorkerID, timeForCreation)
+		expectDeleteEdgeWorkerWithOneVersion(client, edgeWorker.ResourceTierID, edgeWorkerVersion.EdgeWorkerID, timeForCreation)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -456,10 +456,10 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 
 		timeForCreation := time.Now().Format(time.RFC3339)
 
-		edgeWorker, edgeWorkerVersion := expectCreateEdgeWorkerWithVersion(t, client, "example", defaultBundleURL, timeForCreation, 12345, 54321, 123)
-		expectReadEdgeWorkerWithOneVersion(t, client, edgeWorker.Name, defaultBundleURL, edgeWorkerVersion.Version, timeForCreation, int(edgeWorker.GroupID), edgeWorker.ResourceTierID, edgeWorkerVersion.EdgeWorkerID, 2)
+		edgeWorker, edgeWorkerVersion := expectCreateEdgeWorkerWithVersion(client, "example", defaultBundleURL, timeForCreation, 12345, 54321, 123)
+		expectReadEdgeWorkerWithOneVersion(client, edgeWorker.Name, defaultBundleURL, edgeWorkerVersion.Version, timeForCreation, int(edgeWorker.GroupID), edgeWorker.ResourceTierID, edgeWorkerVersion.EdgeWorkerID, 2)
 
-		expectDeleteEdgeWorkerWithOneVersion(t, client, edgeWorker.ResourceTierID, edgeWorkerVersion.EdgeWorkerID, timeForCreation)
+		expectDeleteEdgeWorkerWithOneVersion(client, edgeWorker.ResourceTierID, edgeWorkerVersion.EdgeWorkerID, timeForCreation)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -489,13 +489,13 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 		timeForCreation := time.Now().Format(time.RFC3339)
 		timeForUpdate := time.Now().Add(time.Hour * 24).Format(time.RFC3339)
 
-		edgeWorker, edgeWorkerVersion := expectCreateEdgeWorkerWithVersion(t, client, "example", bundlePathForCreate, timeForCreation, 12345, 54321, 123)
-		expectReadEdgeWorkerWithOneVersion(t, client, edgeWorker.Name, bundlePathForCreate, edgeWorkerVersion.Version, timeForCreation, int(edgeWorker.GroupID), edgeWorker.ResourceTierID, edgeWorkerVersion.EdgeWorkerID, 3)
+		edgeWorker, edgeWorkerVersion := expectCreateEdgeWorkerWithVersion(client, "example", bundlePathForCreate, timeForCreation, 12345, 54321, 123)
+		expectReadEdgeWorkerWithOneVersion(client, edgeWorker.Name, bundlePathForCreate, edgeWorkerVersion.Version, timeForCreation, int(edgeWorker.GroupID), edgeWorker.ResourceTierID, edgeWorkerVersion.EdgeWorkerID, 3)
 
-		updatedEdgeWorker, updatedEdgeWorkerVersion := expectUpdateEdgeWorkerVersion(t, client, "example", bundlePathForUpdate, timeForUpdate, int(edgeWorker.GroupID), edgeWorker.ResourceTierID, edgeWorkerVersion.EdgeWorkerID)
-		expectReadEdgeWorkerWithTwoVersions(t, client, updatedEdgeWorker.Name, bundlePathForUpdate, updatedEdgeWorkerVersion.Version, timeForCreation, timeForUpdate, int(updatedEdgeWorker.GroupID), updatedEdgeWorker.ResourceTierID, updatedEdgeWorker.EdgeWorkerID, 2)
+		updatedEdgeWorker, updatedEdgeWorkerVersion := expectUpdateEdgeWorkerVersion(client, "example", bundlePathForUpdate, timeForUpdate, int(edgeWorker.GroupID), edgeWorker.ResourceTierID, edgeWorkerVersion.EdgeWorkerID)
+		expectReadEdgeWorkerWithTwoVersions(client, updatedEdgeWorker.Name, bundlePathForUpdate, updatedEdgeWorkerVersion.Version, timeForCreation, timeForUpdate, int(updatedEdgeWorker.GroupID), updatedEdgeWorker.ResourceTierID, updatedEdgeWorker.EdgeWorkerID, 2)
 
-		expectDeleteEdgeWorkerWithTwoVersions(t, client, edgeWorker.ResourceTierID, edgeWorkerVersion.EdgeWorkerID, timeForCreation, timeForUpdate)
+		expectDeleteEdgeWorkerWithTwoVersions(client, edgeWorker.ResourceTierID, edgeWorkerVersion.EdgeWorkerID, timeForCreation, timeForUpdate)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -538,15 +538,15 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 		timeForCreation := time.Now().Format(time.RFC3339)
 		timeForUpdate := time.Now().Add(time.Hour * 24).Format(time.RFC3339)
 
-		edgeWorker, edgeWorkerVersion := expectCreateEdgeWorkerWithVersion(t, client, "example", bundlePathForCreate, timeForCreation, 12345, 54321, 123)
-		expectReadEdgeWorkerWithOneVersion(t, client, edgeWorker.Name, bundlePathForCreate, edgeWorkerVersion.Version, timeForCreation, int(edgeWorker.GroupID), edgeWorker.ResourceTierID, edgeWorkerVersion.EdgeWorkerID, 3)
+		edgeWorker, edgeWorkerVersion := expectCreateEdgeWorkerWithVersion(client, "example", bundlePathForCreate, timeForCreation, 12345, 54321, 123)
+		expectReadEdgeWorkerWithOneVersion(client, edgeWorker.Name, bundlePathForCreate, edgeWorkerVersion.Version, timeForCreation, int(edgeWorker.GroupID), edgeWorker.ResourceTierID, edgeWorkerVersion.EdgeWorkerID, 3)
 
-		updatedEdgeWorker, updatedEdgeWorkerVersion := expectUpdateEdgeWorkerVersion(t, client, "example", bundlePathForUpdate, timeForUpdate, int(edgeWorker.GroupID), edgeWorker.ResourceTierID, edgeWorkerVersion.EdgeWorkerID)
-		expectReadEdgeWorkerWithTwoVersions(t, client, updatedEdgeWorker.Name, bundlePathForUpdate, updatedEdgeWorkerVersion.Version, timeForCreation, timeForUpdate, int(updatedEdgeWorker.GroupID), updatedEdgeWorker.ResourceTierID, updatedEdgeWorker.EdgeWorkerID, 2)
+		updatedEdgeWorker, updatedEdgeWorkerVersion := expectUpdateEdgeWorkerVersion(client, "example", bundlePathForUpdate, timeForUpdate, int(edgeWorker.GroupID), edgeWorker.ResourceTierID, edgeWorkerVersion.EdgeWorkerID)
+		expectReadEdgeWorkerWithTwoVersions(client, updatedEdgeWorker.Name, bundlePathForUpdate, updatedEdgeWorkerVersion.Version, timeForCreation, timeForUpdate, int(updatedEdgeWorker.GroupID), updatedEdgeWorker.ResourceTierID, updatedEdgeWorker.EdgeWorkerID, 2)
 
-		expectDeleteEdgeWorkerWithTwoVersions(t, client, edgeWorker.ResourceTierID, edgeWorkerVersion.EdgeWorkerID, timeForCreation, timeForUpdate)
+		expectDeleteEdgeWorkerWithTwoVersions(client, edgeWorker.ResourceTierID, edgeWorkerVersion.EdgeWorkerID, timeForCreation, timeForUpdate)
 
-		prepareTempBundleLink := func(t *testing.T, existingPath, tempPath string) func() {
+		prepareTempBundleLink := func(existingPath, tempPath string) func() {
 			return func() {
 				err := os.Remove(tempPath)
 				if err != nil && !errors.Is(err, fs.ErrNotExist) {
@@ -572,7 +572,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						PreConfig: prepareTempBundleLink(t, bundlePathForCreate, tempBundlePath),
+						PreConfig: prepareTempBundleLink(bundlePathForCreate, tempBundlePath),
 						Config:    testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworker_temp_bundle.tf", testDir)),
 						Check: checkAttributes(edgeWorkerAttributes{
 							name:            "example",
@@ -584,7 +584,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 						}),
 					},
 					{
-						PreConfig: prepareTempBundleLink(t, bundlePathForUpdate, tempBundlePath),
+						PreConfig: prepareTempBundleLink(bundlePathForUpdate, tempBundlePath),
 						Config:    testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworker_temp_bundle.tf", testDir)),
 						Check: checkAttributes(edgeWorkerAttributes{
 							name:            "example",
@@ -608,13 +608,13 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 		timeForCreation := time.Now().Format(time.RFC3339)
 		timeForUpdate := time.Now().Add(time.Hour * 24).Format(time.RFC3339)
 
-		edgeWorker, edgeWorkerVersion := expectCreateEdgeWorkerWithVersion(t, client, "example", bundlePathForCreate, timeForCreation, 12345, 54321, 123)
-		expectReadEdgeWorkerWithOneVersion(t, client, edgeWorker.Name, bundlePathForCreate, edgeWorkerVersion.Version, timeForCreation, int(edgeWorker.GroupID), edgeWorker.ResourceTierID, edgeWorkerVersion.EdgeWorkerID, 3)
+		edgeWorker, edgeWorkerVersion := expectCreateEdgeWorkerWithVersion(client, "example", bundlePathForCreate, timeForCreation, 12345, 54321, 123)
+		expectReadEdgeWorkerWithOneVersion(client, edgeWorker.Name, bundlePathForCreate, edgeWorkerVersion.Version, timeForCreation, int(edgeWorker.GroupID), edgeWorker.ResourceTierID, edgeWorkerVersion.EdgeWorkerID, 3)
 
-		updatedEdgeWorker, updatedEdgeWorkerVersion := expectUpdateEdgeWorker(t, client, "example", bundlePathForCreate, timeForUpdate, 12346, edgeWorker.ResourceTierID, edgeWorkerVersion.EdgeWorkerID)
-		expectReadEdgeWorkerWithOneVersion(t, client, updatedEdgeWorker.Name, bundlePathForCreate, updatedEdgeWorkerVersion.Version, timeForUpdate, int(updatedEdgeWorker.GroupID), updatedEdgeWorker.ResourceTierID, updatedEdgeWorker.EdgeWorkerID, 2)
+		updatedEdgeWorker, updatedEdgeWorkerVersion := expectUpdateEdgeWorker(client, "example", bundlePathForCreate, timeForUpdate, 12346, edgeWorker.ResourceTierID, edgeWorkerVersion.EdgeWorkerID)
+		expectReadEdgeWorkerWithOneVersion(client, updatedEdgeWorker.Name, bundlePathForCreate, updatedEdgeWorkerVersion.Version, timeForUpdate, int(updatedEdgeWorker.GroupID), updatedEdgeWorker.ResourceTierID, updatedEdgeWorker.EdgeWorkerID, 2)
 
-		expectDeleteEdgeWorkerWithOneVersion(t, client, updatedEdgeWorker.ResourceTierID, updatedEdgeWorker.EdgeWorkerID, timeForCreation)
+		expectDeleteEdgeWorkerWithOneVersion(client, updatedEdgeWorker.ResourceTierID, updatedEdgeWorker.EdgeWorkerID, timeForCreation)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -654,10 +654,10 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 
 		timeForCreation := time.Now().Format(time.RFC3339)
 
-		edgeWorker, edgeWorkerVersion := expectCreateEdgeWorkerWithVersion(t, client, "example", bundlePathForCreate, timeForCreation, 12345, 54321, 123)
-		expectReadEdgeWorkerWithOneVersion(t, client, edgeWorker.Name, bundlePathForCreate, edgeWorkerVersion.Version, timeForCreation, int(edgeWorker.GroupID), edgeWorker.ResourceTierID, edgeWorkerVersion.EdgeWorkerID, 4)
+		edgeWorker, edgeWorkerVersion := expectCreateEdgeWorkerWithVersion(client, "example", bundlePathForCreate, timeForCreation, 12345, 54321, 123)
+		expectReadEdgeWorkerWithOneVersion(client, edgeWorker.Name, bundlePathForCreate, edgeWorkerVersion.Version, timeForCreation, int(edgeWorker.GroupID), edgeWorker.ResourceTierID, edgeWorkerVersion.EdgeWorkerID, 4)
 
-		expectDeleteEdgeWorkerWithOneVersion(t, client, edgeWorker.ResourceTierID, edgeWorker.EdgeWorkerID, timeForCreation)
+		expectDeleteEdgeWorkerWithOneVersion(client, edgeWorker.ResourceTierID, edgeWorker.EdgeWorkerID, timeForCreation)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -698,13 +698,13 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 		createdTime := time.Now().Format(time.RFC3339)
 		updatedTime := time.Now().Add(time.Hour * 24).Format(time.RFC3339)
 
-		edgeWorker, edgeWorkerVersion := expectCreateEdgeWorkerWithVersion(t, client, "example", bundlePathForCreate, createdTime, 12345, 54321, 123)
-		expectReadEdgeWorkerWithOneVersion(t, client, "example", bundlePathForCreate, edgeWorkerVersion.Version, createdTime, int(edgeWorker.GroupID), edgeWorker.ResourceTierID, edgeWorkerVersion.EdgeWorkerID, 3)
+		edgeWorker, edgeWorkerVersion := expectCreateEdgeWorkerWithVersion(client, "example", bundlePathForCreate, createdTime, 12345, 54321, 123)
+		expectReadEdgeWorkerWithOneVersion(client, "example", bundlePathForCreate, edgeWorkerVersion.Version, createdTime, int(edgeWorker.GroupID), edgeWorker.ResourceTierID, edgeWorkerVersion.EdgeWorkerID, 3)
 
-		updatedEdgeWorker, updatedEdgeWorkerVersion := expectUpdateEdgeWorker(t, client, "example update", bundleHashForCreate, updatedTime, 12345, edgeWorker.ResourceTierID, edgeWorkerVersion.EdgeWorkerID)
-		expectReadEdgeWorkerWithOneVersion(t, client, updatedEdgeWorker.Name, bundlePathForCreate, updatedEdgeWorkerVersion.Version, updatedTime, int(updatedEdgeWorker.GroupID), updatedEdgeWorker.ResourceTierID, updatedEdgeWorker.EdgeWorkerID, 2)
+		updatedEdgeWorker, updatedEdgeWorkerVersion := expectUpdateEdgeWorker(client, "example update", bundleHashForCreate, updatedTime, 12345, edgeWorker.ResourceTierID, edgeWorkerVersion.EdgeWorkerID)
+		expectReadEdgeWorkerWithOneVersion(client, updatedEdgeWorker.Name, bundlePathForCreate, updatedEdgeWorkerVersion.Version, updatedTime, int(updatedEdgeWorker.GroupID), updatedEdgeWorker.ResourceTierID, updatedEdgeWorker.EdgeWorkerID, 2)
 
-		expectDeleteEdgeWorkerWithOneVersion(t, client, updatedEdgeWorker.ResourceTierID, updatedEdgeWorker.EdgeWorkerID, createdTime)
+		expectDeleteEdgeWorkerWithOneVersion(client, updatedEdgeWorker.ResourceTierID, updatedEdgeWorker.EdgeWorkerID, createdTime)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -744,8 +744,8 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 
 		timeForCreation := time.Now().Format(time.RFC3339)
 
-		edgeWorker, edgeWorkerVersion := expectCreateEdgeWorkerWithVersion(t, client, "example", bundlePathForCreate, timeForCreation, 12345, 54321, 123)
-		expectReadEdgeWorkerWithOneVersion(t, client, edgeWorker.Name, bundlePathForCreate, edgeWorkerVersion.Version, timeForCreation, int(edgeWorker.GroupID), edgeWorker.ResourceTierID, edgeWorkerVersion.EdgeWorkerID, 2)
+		edgeWorker, edgeWorkerVersion := expectCreateEdgeWorkerWithVersion(client, "example", bundlePathForCreate, timeForCreation, 12345, 54321, 123)
+		expectReadEdgeWorkerWithOneVersion(client, edgeWorker.Name, bundlePathForCreate, edgeWorkerVersion.Version, timeForCreation, int(edgeWorker.GroupID), edgeWorker.ResourceTierID, edgeWorkerVersion.EdgeWorkerID, 2)
 
 		// mock two activations for edgeworker version - on staging and production
 		actStaging := expectActivation(123, edgeWorker.EdgeWorkerID, "123", "", "", "", stagingNetwork, activationStatusComplete, edgeWorkerVersion.Version)
@@ -817,8 +817,8 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 
 		timeForCreation := time.Now().Format(time.RFC3339)
 
-		edgeWorker, edgeWorkerVersion := expectCreateEdgeWorkerWithVersion(t, client, "example", bundlePathForCreate, timeForCreation, 12345, 54321, 123)
-		expectReadEdgeWorkerWithOneVersion(t, client, edgeWorker.Name, bundlePathForCreate, edgeWorkerVersion.Version, timeForCreation, int(edgeWorker.GroupID), edgeWorker.ResourceTierID, edgeWorkerVersion.EdgeWorkerID, 2)
+		edgeWorker, edgeWorkerVersion := expectCreateEdgeWorkerWithVersion(client, "example", bundlePathForCreate, timeForCreation, 12345, 54321, 123)
+		expectReadEdgeWorkerWithOneVersion(client, edgeWorker.Name, bundlePathForCreate, edgeWorkerVersion.Version, timeForCreation, int(edgeWorker.GroupID), edgeWorker.ResourceTierID, edgeWorkerVersion.EdgeWorkerID, 2)
 
 		// mock one activation for edgeworker version - on staging
 		actStaging := expectActivation(123, edgeWorker.EdgeWorkerID, "123", "", "", "", stagingNetwork, activationStatusComplete, edgeWorkerVersion.Version)
@@ -880,12 +880,12 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 		client := new(edgeworkers.Mock)
 		createdTime := time.Now().Format(time.RFC3339)
 
-		edgeWorker, edgeWorkerVersion := expectCreateEdgeWorkerWithVersion(t, client, "example", bundlePathForCreate, createdTime, 12345, 54321, 123)
-		expectReadEdgeWorkerWithOneVersion(t, client, "example", bundlePathForCreate, edgeWorkerVersion.Version, createdTime, int(edgeWorker.GroupID), edgeWorker.ResourceTierID, edgeWorkerVersion.EdgeWorkerID, 3)
+		edgeWorker, edgeWorkerVersion := expectCreateEdgeWorkerWithVersion(client, "example", bundlePathForCreate, createdTime, 12345, 54321, 123)
+		expectReadEdgeWorkerWithOneVersion(client, "example", bundlePathForCreate, edgeWorkerVersion.Version, createdTime, int(edgeWorker.GroupID), edgeWorker.ResourceTierID, edgeWorkerVersion.EdgeWorkerID, 3)
 
-		expectImportEdgeWorkerWithOneVersion(t, client, bundlePathForCreate, edgeWorkerVersion.Version, createdTime, edgeWorkerVersion.EdgeWorkerID)
+		expectImportEdgeWorkerWithOneVersion(client, bundlePathForCreate, edgeWorkerVersion.Version, createdTime, edgeWorkerVersion.EdgeWorkerID)
 
-		expectDeleteEdgeWorkerWithOneVersion(t, client, edgeWorker.ResourceTierID, edgeWorker.EdgeWorkerID, createdTime)
+		expectDeleteEdgeWorkerWithOneVersion(client, edgeWorker.ResourceTierID, edgeWorker.EdgeWorkerID, createdTime)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{

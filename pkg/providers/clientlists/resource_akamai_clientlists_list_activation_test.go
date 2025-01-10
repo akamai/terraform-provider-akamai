@@ -27,7 +27,7 @@ func TestClientListActivationResource(t *testing.T) {
 	var (
 		createActivationAPIError = "{\n      \"type\": \"https://problems.luna.akamaiapis.net/client-list-api/error-types/INVALID-INPUT-ERROR\",\n       \"status\": 400,\n       \"title\": \"Invalid Input Error\",\n       \"detail\": \"Validation failed: Invalid network\",\n       \"instance\": \"https://problems.luna.akamaiapis.net/client-list-api/error-instances/9ff3649993cb002b\",\n       \"\n }\n"
 
-		expectCreateActivation = func(t *testing.T, client *clientlists.Mock, req clientlists.CreateActivationRequest, version int64, activationID int64) *clientlists.CreateActivationResponse {
+		expectCreateActivation = func(client *clientlists.Mock, req clientlists.CreateActivationRequest, version int64, activationID int64) *clientlists.CreateActivationResponse {
 			res := clientlists.CreateActivationResponse{
 				ActivationID:           activationID,
 				ListID:                 req.ListID,
@@ -44,7 +44,7 @@ func TestClientListActivationResource(t *testing.T) {
 			return &res
 		}
 
-		expectReadActivation = func(t *testing.T, client *clientlists.Mock, req clientlists.GetActivationRequest, attrs ActivationAttrs, times int) *clientlists.GetActivationResponse {
+		expectReadActivation = func(client *clientlists.Mock, req clientlists.GetActivationRequest, attrs ActivationAttrs, times int) *clientlists.GetActivationResponse {
 			res := clientlists.GetActivationResponse{
 				ActivationID: int64(attrs.ActivationID),
 				ListID:       attrs.ListID,
@@ -66,7 +66,7 @@ func TestClientListActivationResource(t *testing.T) {
 			return &res
 		}
 
-		expectGetActivationStatus = func(t *testing.T, client *clientlists.Mock, req clientlists.GetActivationStatusRequest, attrs ActivationAttrs, times int) *clientlists.GetActivationStatusResponse {
+		expectGetActivationStatus = func(client *clientlists.Mock, req clientlists.GetActivationStatusRequest, attrs ActivationAttrs, times int) *clientlists.GetActivationStatusResponse {
 			res := clientlists.GetActivationStatusResponse{
 				Action:                 clientlists.Activate,
 				ActivationID:           int64(attrs.ActivationID),
@@ -84,7 +84,7 @@ func TestClientListActivationResource(t *testing.T) {
 			return &res
 		}
 
-		expectGetClientlist = func(t *testing.T, client *clientlists.Mock, listID string, version int64, callTimes int) {
+		expectGetClientlist = func(client *clientlists.Mock, listID string, version int64, callTimes int) {
 			clientListGetReq := clientlists.GetClientListRequest{
 				ListID:       listID,
 				IncludeItems: false,
@@ -94,7 +94,7 @@ func TestClientListActivationResource(t *testing.T) {
 			client.On("GetClientList", testutils.MockContext, clientListGetReq).Return(&clientList, nil).Times(callTimes)
 		}
 
-		expectAPIErrorWithCreateActivation = func(t *testing.T, client *clientlists.Mock, req clientlists.CreateActivationRequest) {
+		expectAPIErrorWithCreateActivation = func(client *clientlists.Mock, req clientlists.CreateActivationRequest) {
 			err := fmt.Errorf(createActivationAPIError)
 			client.On("CreateActivation", testutils.MockContext, req).Return(nil, err).Once()
 		}
@@ -141,17 +141,17 @@ func TestClientListActivationResource(t *testing.T) {
 	t.Run("create activation", func(t *testing.T) {
 		client := new(clientlists.Mock)
 
-		activationRes := expectCreateActivation(t, client, activationReq, 2, 33)
+		activationRes := expectCreateActivation(client, activationReq, 2, 33)
 
-		expectReadActivation(t, client,
+		expectReadActivation(client,
 			clientlists.GetActivationRequest{ActivationID: activationRes.ActivationID},
 			getActivationAttrs(activationRes, clientlists.PendingActivation), 2)
 
-		expectReadActivation(t, client,
+		expectReadActivation(client,
 			clientlists.GetActivationRequest{ActivationID: activationRes.ActivationID},
 			getActivationAttrs(activationRes, clientlists.Active), 3)
 
-		expectGetClientlist(t, client, "12_AB", 2, 2)
+		expectGetClientlist(client, "12_AB", 2, 2)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -177,7 +177,7 @@ func TestClientListActivationResource(t *testing.T) {
 	t.Run("update activation - version and other fields update", func(t *testing.T) {
 		client := new(clientlists.Mock)
 
-		activationRes := expectCreateActivation(t, client, clientlists.CreateActivationRequest{
+		activationRes := expectCreateActivation(client, clientlists.CreateActivationRequest{
 			ListID: "12_AB",
 			ActivationParams: clientlists.ActivationParams{
 				Action:                 clientlists.Activate,
@@ -187,7 +187,7 @@ func TestClientListActivationResource(t *testing.T) {
 				Comments:               "Activation Comments",
 			},
 		}, 2, 33)
-		updatedActivationRes := expectCreateActivation(t, client, clientlists.CreateActivationRequest{
+		updatedActivationRes := expectCreateActivation(client, clientlists.CreateActivationRequest{
 			ListID: "12_AB",
 			ActivationParams: clientlists.ActivationParams{
 				Action:                 clientlists.Activate,
@@ -198,25 +198,25 @@ func TestClientListActivationResource(t *testing.T) {
 			},
 		}, 3, 34)
 
-		expectReadActivation(t, client,
+		expectReadActivation(client,
 			clientlists.GetActivationRequest{ActivationID: activationRes.ActivationID},
 			getActivationAttrs(activationRes, clientlists.PendingActivation), 1)
 
-		expectReadActivation(t, client,
+		expectReadActivation(client,
 			clientlists.GetActivationRequest{ActivationID: activationRes.ActivationID},
 			getActivationAttrs(activationRes, clientlists.Active), 4)
 
-		expectReadActivation(t, client,
+		expectReadActivation(client,
 			clientlists.GetActivationRequest{ActivationID: updatedActivationRes.ActivationID},
 			getActivationAttrs(updatedActivationRes, clientlists.PendingActivation), 2)
 
-		expectReadActivation(t, client,
+		expectReadActivation(client,
 			clientlists.GetActivationRequest{ActivationID: updatedActivationRes.ActivationID},
 			getActivationAttrs(updatedActivationRes, clientlists.Active), 3)
 
-		expectGetClientlist(t, client, "12_AB", 2, 3)
+		expectGetClientlist(client, "12_AB", 2, 3)
 
-		expectGetClientlist(t, client, "12_AB", 3, 2)
+		expectGetClientlist(client, "12_AB", 3, 2)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -253,7 +253,7 @@ func TestClientListActivationResource(t *testing.T) {
 	t.Run("update activation - version only update", func(t *testing.T) {
 		client := new(clientlists.Mock)
 
-		activationRes := expectCreateActivation(t, client, clientlists.CreateActivationRequest{
+		activationRes := expectCreateActivation(client, clientlists.CreateActivationRequest{
 			ListID: "12_AB",
 			ActivationParams: clientlists.ActivationParams{
 				Action:                 clientlists.Activate,
@@ -263,7 +263,7 @@ func TestClientListActivationResource(t *testing.T) {
 				Comments:               "Activation Comments",
 			},
 		}, 2, 33)
-		updatedActivationRes := expectCreateActivation(t, client, clientlists.CreateActivationRequest{
+		updatedActivationRes := expectCreateActivation(client, clientlists.CreateActivationRequest{
 			ListID: "12_AB",
 			ActivationParams: clientlists.ActivationParams{
 				Action:                 clientlists.Activate,
@@ -274,25 +274,25 @@ func TestClientListActivationResource(t *testing.T) {
 			},
 		}, 3, 34)
 
-		expectReadActivation(t, client,
+		expectReadActivation(client,
 			clientlists.GetActivationRequest{ActivationID: activationRes.ActivationID},
 			getActivationAttrs(activationRes, clientlists.PendingActivation), 1)
 
-		expectReadActivation(t, client,
+		expectReadActivation(client,
 			clientlists.GetActivationRequest{ActivationID: activationRes.ActivationID},
 			getActivationAttrs(activationRes, clientlists.Active), 4)
 
-		expectReadActivation(t, client,
+		expectReadActivation(client,
 			clientlists.GetActivationRequest{ActivationID: updatedActivationRes.ActivationID},
 			getActivationAttrs(updatedActivationRes, clientlists.PendingActivation), 2)
 
-		expectReadActivation(t, client,
+		expectReadActivation(client,
 			clientlists.GetActivationRequest{ActivationID: updatedActivationRes.ActivationID},
 			getActivationAttrs(updatedActivationRes, clientlists.Active), 3)
 
-		expectGetClientlist(t, client, "12_AB", 2, 3)
+		expectGetClientlist(client, "12_AB", 2, 3)
 
-		expectGetClientlist(t, client, "12_AB", 3, 2)
+		expectGetClientlist(client, "12_AB", 3, 2)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -329,7 +329,7 @@ func TestClientListActivationResource(t *testing.T) {
 	t.Run("update activation - notification_recipients, siebel_ticket_id and comments updates suppressed", func(t *testing.T) {
 		client := new(clientlists.Mock)
 
-		activationRes := expectCreateActivation(t, client, clientlists.CreateActivationRequest{
+		activationRes := expectCreateActivation(client, clientlists.CreateActivationRequest{
 			ListID: "12_AB",
 			ActivationParams: clientlists.ActivationParams{
 				Action:                 clientlists.Activate,
@@ -340,15 +340,15 @@ func TestClientListActivationResource(t *testing.T) {
 			},
 		}, 2, 33)
 
-		expectReadActivation(t, client,
+		expectReadActivation(client,
 			clientlists.GetActivationRequest{ActivationID: activationRes.ActivationID},
 			getActivationAttrs(activationRes, clientlists.PendingActivation), 2)
 
-		expectReadActivation(t, client,
+		expectReadActivation(client,
 			clientlists.GetActivationRequest{ActivationID: activationRes.ActivationID},
 			getActivationAttrs(activationRes, clientlists.Active), 5)
 
-		expectGetClientlist(t, client, "12_AB", 2, 4)
+		expectGetClientlist(client, "12_AB", 2, 4)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -402,7 +402,7 @@ func TestClientListActivationResource(t *testing.T) {
 	t.Run("Create activation api fails", func(t *testing.T) {
 		client := new(clientlists.Mock)
 
-		expectAPIErrorWithCreateActivation(t, client, clientlists.CreateActivationRequest{
+		expectAPIErrorWithCreateActivation(client, clientlists.CreateActivationRequest{
 			ListID: "12_AB",
 			ActivationParams: clientlists.ActivationParams{
 				Action:                 clientlists.Activate,
@@ -430,19 +430,19 @@ func TestClientListActivationResource(t *testing.T) {
 	t.Run("Import activation resource", func(t *testing.T) {
 		client := new(clientlists.Mock)
 
-		activationRes := expectCreateActivation(t, client, activationReq, 2, 33)
+		activationRes := expectCreateActivation(client, activationReq, 2, 33)
 
-		expectReadActivation(t, client,
+		expectReadActivation(client,
 			clientlists.GetActivationRequest{ActivationID: activationRes.ActivationID},
 			getActivationAttrs(activationRes, clientlists.PendingActivation), 3)
 
-		expectReadActivation(t, client,
+		expectReadActivation(client,
 			clientlists.GetActivationRequest{ActivationID: activationRes.ActivationID},
 			getActivationAttrs(activationRes, clientlists.Active), 4)
 
-		expectGetClientlist(t, client, "12_AB", 2, 3)
+		expectGetClientlist(client, "12_AB", 2, 3)
 
-		expectGetActivationStatus(t, client, clientlists.GetActivationStatusRequest{
+		expectGetActivationStatus(client, clientlists.GetActivationStatusRequest{
 			Network: clientlists.Staging,
 			ListID:  activationReq.ListID,
 		}, getActivationAttrs(activationRes, clientlists.Active), 1)

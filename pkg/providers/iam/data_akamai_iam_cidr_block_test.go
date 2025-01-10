@@ -50,13 +50,13 @@ var (
 func TestDataCIDRBlock(t *testing.T) {
 	tests := map[string]struct {
 		configPath string
-		init       func(*testing.T, *iam.Mock, testDataForCIDRBlock)
+		init       func(*iam.Mock, testDataForCIDRBlock)
 		mockData   testDataForCIDRBlock
 		error      *regexp.Regexp
 	}{
 		"happy path": {
 			configPath: "testdata/TestDataCIDRBlock/default.tf",
-			init: func(t *testing.T, m *iam.Mock, mockData testDataForCIDRBlock) {
+			init: func(m *iam.Mock, mockData testDataForCIDRBlock) {
 				expectGetCIDRBlock(t, m, mockData, 3)
 			},
 			mockData: basicTestDataForCIDRBlock,
@@ -68,7 +68,7 @@ func TestDataCIDRBlock(t *testing.T) {
 		},
 		"error - GetCIDRBlock call failed ": {
 			configPath: "testdata/TestDataCIDRBlock/default.tf",
-			init: func(t *testing.T, m *iam.Mock, mockData testDataForCIDRBlock) {
+			init: func(m *iam.Mock, mockData testDataForCIDRBlock) {
 				getCIDRBlockReq := iam.GetCIDRBlockRequest{CIDRBlockID: mockData.cidrBlockID, Actions: true}
 				m.On("GetCIDRBlock", testutils.MockContext, getCIDRBlockReq).Return(nil, errors.New("test error"))
 			},
@@ -81,7 +81,7 @@ func TestDataCIDRBlock(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			client := &iam.Mock{}
 			if tc.init != nil {
-				tc.init(t, client, tc.mockData)
+				tc.init(client, tc.mockData)
 			}
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{

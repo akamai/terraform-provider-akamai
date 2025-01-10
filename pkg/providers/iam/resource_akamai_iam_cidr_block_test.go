@@ -86,14 +86,14 @@ func TestCIDRBlockResource(t *testing.T) {
 	t.Parallel()
 	tests := map[string]struct {
 		configPath string
-		init       func(*testing.T, *iam.Mock, commonDataForResource, commonDataForResource)
+		init       func(*iam.Mock, commonDataForResource, commonDataForResource)
 		createData commonDataForResource
 		updateData commonDataForResource
 		steps      []resource.TestStep
 		error      *regexp.Regexp
 	}{
 		"happy path - create with comment": {
-			init: func(t *testing.T, m *iam.Mock, createData, _ commonDataForResource) {
+			init: func(m *iam.Mock, createData, _ commonDataForResource) {
 				// Create
 				mockCreateCIDRBlock(t, m, createData)
 				// Read
@@ -121,7 +121,7 @@ func TestCIDRBlockResource(t *testing.T) {
 			},
 		},
 		"happy path - create without comment": {
-			init: func(t *testing.T, m *iam.Mock, createData, _ commonDataForResource) {
+			init: func(m *iam.Mock, createData, _ commonDataForResource) {
 				// Create
 				mockCreateCIDRBlock(t, m, createData)
 				// Read
@@ -149,7 +149,7 @@ func TestCIDRBlockResource(t *testing.T) {
 			},
 		},
 		"happy path - update all fields": {
-			init: func(t *testing.T, m *iam.Mock, createData, updateData commonDataForResource) {
+			init: func(m *iam.Mock, createData, updateData commonDataForResource) {
 				// Create
 				mockCreateCIDRBlock(t, m, createData)
 				mockGetCIDRBlock(t, m, createData)
@@ -214,7 +214,7 @@ func TestCIDRBlockResource(t *testing.T) {
 			},
 		},
 		"expect error - create": {
-			init: func(t *testing.T, m *iam.Mock, createData, _ commonDataForResource) {
+			init: func(m *iam.Mock, createData, _ commonDataForResource) {
 				m.On("CreateCIDRBlock", testutils.MockContext, iam.CreateCIDRBlockRequest{
 					CIDRBlock: createData.cidrBlock,
 					Comments:  createData.comments,
@@ -230,7 +230,7 @@ func TestCIDRBlockResource(t *testing.T) {
 			},
 		},
 		"expect error - delete": {
-			init: func(t *testing.T, m *iam.Mock, createData, _ commonDataForResource) {
+			init: func(m *iam.Mock, createData, _ commonDataForResource) {
 				// Create
 				mockCreateCIDRBlock(t, m, createData)
 				// Read
@@ -274,7 +274,7 @@ func TestCIDRBlockResource(t *testing.T) {
 			t.Parallel()
 			client := &iam.Mock{}
 			if tc.init != nil {
-				tc.init(t, client, tc.createData, tc.updateData)
+				tc.init(client, tc.createData, tc.updateData)
 			}
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
@@ -291,14 +291,14 @@ func TestCIDRBlockResource(t *testing.T) {
 func TestImportCIDRBlockResource(t *testing.T) {
 	tests := map[string]struct {
 		importID    string
-		init        func(*testing.T, *iam.Mock, commonDataForResource)
+		init        func(*iam.Mock, commonDataForResource)
 		mockData    commonDataForResource
 		expectError *regexp.Regexp
 	}{
 		"happy path - import with comments": {
 			importID: "1111",
 			mockData: testCIDR,
-			init: func(t *testing.T, m *iam.Mock, data commonDataForResource) {
+			init: func(m *iam.Mock, data commonDataForResource) {
 				// Read
 				mockGetCIDRBlock(t, m, data)
 			},
@@ -306,7 +306,7 @@ func TestImportCIDRBlockResource(t *testing.T) {
 		"happy path - import without comments": {
 			importID: "1111",
 			mockData: testCIDRNoComments,
-			init: func(t *testing.T, m *iam.Mock, data commonDataForResource) {
+			init: func(m *iam.Mock, data commonDataForResource) {
 				// Read
 				mockGetCIDRBlock(t, m, data)
 			},
@@ -317,7 +317,7 @@ func TestImportCIDRBlockResource(t *testing.T) {
 		},
 		"expect error - read": {
 			importID: "1111",
-			init: func(t *testing.T, m *iam.Mock, data commonDataForResource) {
+			init: func(m *iam.Mock, data commonDataForResource) {
 				m.On("GetCIDRBlock", testutils.MockContext, iam.GetCIDRBlockRequest{
 					CIDRBlockID: data.cidrBlockID,
 					Actions:     true,
@@ -332,7 +332,7 @@ func TestImportCIDRBlockResource(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			client := &iam.Mock{}
 			if tc.init != nil {
-				tc.init(t, client, tc.mockData)
+				tc.init(client, tc.mockData)
 			}
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{

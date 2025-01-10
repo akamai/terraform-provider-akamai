@@ -2166,7 +2166,7 @@ func TestPropertyErrors(t *testing.T) {
 
 // TestSchemaConfiguration tests errors when invalid HCL configuration is provided
 func TestSchemaConfiguration(t *testing.T) {
-	assertConfigError := func(t *testing.T, flaw, rx string) func(t *testing.T) {
+	assertConfigError := func(flaw, rx string) func(t *testing.T) {
 		fixtureName := strings.ReplaceAll(flaw, " ", "_")
 
 		return func(t *testing.T) {
@@ -2180,13 +2180,13 @@ func TestSchemaConfiguration(t *testing.T) {
 		}
 	}
 
-	t.Run("Schema Configuration Error: name not given", assertConfigError(t, "name not given", `"name" is required`))
-	t.Run("Schema Configuration Error: contract_id not given", assertConfigError(t, "contract_id not given", `Missing required argument`))
-	t.Run("Schema Configuration Error: group_id not given", assertConfigError(t, "group_id not given", `Missing required argument`))
-	t.Run("Schema Configuration Error: product_id not given", assertConfigError(t, "product_id not given", `Missing required argument`))
-	t.Run("Schema Configuration Error: invalid json rules", assertConfigError(t, "invalid json rules", `rules are not valid JSON`))
-	t.Run("Schema Configuration Error: invalid name given", assertConfigError(t, "invalid name given", `a name must only contain letters, numbers, and these characters: . _ -`))
-	t.Run("Schema Configuration Error: name given too long", assertConfigError(t, "name given too long", `a name must be longer than 0 characters and shorter than 86 characters`))
+	t.Run("Schema Configuration Error: name not given", assertConfigError("name not given", `"name" is required`))
+	t.Run("Schema Configuration Error: contract_id not given", assertConfigError("contract_id not given", `Missing required argument`))
+	t.Run("Schema Configuration Error: group_id not given", assertConfigError("group_id not given", `Missing required argument`))
+	t.Run("Schema Configuration Error: product_id not given", assertConfigError("product_id not given", `Missing required argument`))
+	t.Run("Schema Configuration Error: invalid json rules", assertConfigError("invalid json rules", `rules are not valid JSON`))
+	t.Run("Schema Configuration Error: invalid name given", assertConfigError("invalid name given", `a name must only contain letters, numbers, and these characters: . _ -`))
+	t.Run("Schema Configuration Error: name given too long", assertConfigError("name given too long", `a name must be longer than 0 characters and shorter than 86 characters`))
 }
 
 func TestPropertyResource_VersionNotesLifecycle(t *testing.T) {
