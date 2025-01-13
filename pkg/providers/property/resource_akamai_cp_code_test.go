@@ -1,7 +1,6 @@
 package property
 
 import (
-	"context"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -17,60 +16,33 @@ import (
 )
 
 func TestResCPCode(t *testing.T) {
-	// Helper to set up an expected call to mock papi.GetCPCode
-	expectGetCPCode := func(m *papi.Mock, contractID, groupID string, CPCodeID int, CPCodes *[]papi.CPCode, err error) *mock.Call {
-		var call *mock.Call
+	expectGetCPCode := func(m *papi.Mock, contractID, groupID string, CPCodeID int, CPCodeName string, CPCodeProductIDs []string, err error) *mock.Call {
 		req := papi.GetCPCodeRequest{CPCodeID: strconv.Itoa(CPCodeID), ContractID: contractID, GroupID: groupID}
-
-		call = m.On("GetCPCode", testutils.MockContext, req).Run(func(args mock.Arguments) {
-			if err != nil {
-				call.Return(nil, err)
-			} else {
-				CPCode := (*CPCodes)[CPCodeID]
-				res := &papi.GetCPCodesResponse{
-					CPCode: papi.CPCode{
-						ID:         CPCode.ID,
-						Name:       CPCode.Name,
-						ProductIDs: CPCode.ProductIDs,
-					},
-				}
-				call.Return(res, nil)
+		var res *papi.GetCPCodesResponse
+		if err == nil {
+			res = &papi.GetCPCodesResponse{
+				CPCode: papi.CPCode{
+					ID:         fmt.Sprintf("%d", CPCodeID),
+					Name:       CPCodeName,
+					ProductIDs: CPCodeProductIDs,
+				},
 			}
-		})
-		return call
+		}
+		return m.On("GetCPCode", testutils.MockContext, req).Return(res, nil)
 	}
 
-	// Helper to set up an expected call to mock papi.GetCPCodes with mock impl backed by the given slice
-	expectGetCPCodes := func(m *papi.Mock, ContractID, GroupID string, CPCodes *[]papi.CPCode) *mock.Call {
-		mockImpl := func(_ context.Context, req papi.GetCPCodesRequest) (*papi.GetCPCodesResponse, error) {
-			res := &papi.GetCPCodesResponse{
-				ContractID: req.ContractID,
-				GroupID:    req.GroupID,
-				CPCodes:    papi.CPCodeItems{Items: *CPCodes},
-			}
-			return res, nil
-		}
-
+	expectGetCPCodes := func(m *papi.Mock, ContractID, GroupID string, CPCodes []papi.CPCode) *mock.Call {
 		req := papi.GetCPCodesRequest{ContractID: ContractID, GroupID: GroupID}
-
-		return m.OnGetCPCodes(mockImpl, testutils.MockContext, req)
-	}
-
-	// Helper to set up an expected call to mock papi.CreateCPCode with mock impl backed by the given slice
-	expectCreateCPCode := func(m *papi.Mock, CPCName, Product, Contract, Group string, CPCodes *[]papi.CPCode) *mock.Call {
-		mockImpl := func(_ context.Context, req papi.CreateCPCodeRequest) (*papi.CreateCPCodeResponse, error) {
-			cpc := papi.CPCode{
-				ID:         fmt.Sprintf("cpc_%d", len(*CPCodes)),
-				Name:       req.CPCode.CPCodeName,
-				ProductIDs: []string{req.CPCode.ProductID},
-			}
-
-			*CPCodes = append(*CPCodes, cpc)
-			res := &papi.CreateCPCodeResponse{CPCodeID: cpc.ID}
-
-			return res, nil
+		res := &papi.GetCPCodesResponse{
+			ContractID: req.ContractID,
+			GroupID:    req.GroupID,
+			CPCodes:    papi.CPCodeItems{Items: CPCodes},
 		}
 
+		return m.On("GetCPCodes", testutils.MockContext, req).Return(res, nil)
+	}
+
+	expectCreateCPCode := func(m *papi.Mock, CPCName, Product, Contract, Group string) *mock.Call {
 		req := papi.CreateCPCodeRequest{
 			ContractID: Contract,
 			GroupID:    Group,
@@ -79,26 +51,19 @@ func TestResCPCode(t *testing.T) {
 				CPCodeName: CPCName,
 			},
 		}
+		cpc := papi.CPCode{
+			ID:         "cpc_0",
+			Name:       req.CPCode.CPCodeName,
+			ProductIDs: []string{req.CPCode.ProductID},
+		}
 
-		return m.OnCreateCPCode(mockImpl, testutils.MockContext, req)
+		res := &papi.CreateCPCodeResponse{CPCodeID: cpc.ID}
+
+		return m.On("CreateCPCode", testutils.MockContext, req).Return(res, nil)
 	}
 
-	// Helper to set up an expected call to mock papi.UpdateCPCode with mock impl backed by the given slice
-	expectUpdateCPCode := func(m *papi.Mock, CPCodeID int, name string, CPCodes, CPCodesCopy *[]papi.CPCode, err error) *mock.Call {
-		mockImpl := func(_ context.Context, req papi.UpdateCPCodeRequest) (*papi.CPCodeDetailResponse, error) {
-			if err != nil {
-				return nil, err
-			}
-			copy(*CPCodesCopy, *CPCodes)
-			(*CPCodes)[CPCodeID].Name = name
-
-			res := &papi.CPCodeDetailResponse{
-				ID:   req.ID,
-				Name: req.Name,
-			}
-
-			return res, nil
-		}
+	expectUpdateCPCode := func(m *papi.Mock, CPCodeID int, name string, err error) *mock.Call {
+		var res *papi.CPCodeDetailResponse
 
 		f := false
 		req := papi.UpdateCPCodeRequest{
@@ -108,26 +73,26 @@ func TestResCPCode(t *testing.T) {
 			OverrideTimeZone: &papi.CPCodeTimeZone{},
 		}
 
-		return m.OnUpdateCPCode(mockImpl, testutils.MockContext, req)
+		if err == nil {
+			res = &papi.CPCodeDetailResponse{
+				ID:   req.ID,
+				Name: req.Name,
+			}
+
+		}
+
+		return m.On("UpdateCPCode", testutils.MockContext, req).Return(res, err)
 	}
 
-	// // Helper to set up an expected call to mock papi.GetCPCodeDetail
-	expectGetCPCodeDetail := func(m *papi.Mock, CPCodeID int, CPCodes *[]papi.CPCode, err error) *mock.Call {
-		var call *mock.Call
-
-		call = m.On("GetCPCodeDetail", testutils.MockContext, CPCodeID).Run(func(args mock.Arguments) {
-			if err != nil {
-				call.Return(nil, err)
-			} else {
-				CPCode := (*CPCodes)[CPCodeID]
-				res := &papi.CPCodeDetailResponse{
-					ID:   CPCodeID,
-					Name: CPCode.Name,
-				}
-				call.Return(res, nil)
+	expectGetCPCodeDetail := func(m *papi.Mock, CPCodeID int, CPCodeName string, err error) *mock.Call {
+		var res *papi.CPCodeDetailResponse
+		if err == nil {
+			res = &papi.CPCodeDetailResponse{
+				ID:   CPCodeID,
+				Name: CPCodeName,
 			}
-		})
-		return call
+		}
+		return m.On("GetCPCodeDetail", testutils.MockContext, CPCodeID).Return(res, err)
 	}
 
 	// redefining times to accelerate tests
@@ -138,13 +103,9 @@ func TestResCPCode(t *testing.T) {
 		client := &papi.Mock{}
 		defer client.AssertExpectations(t)
 
-		// Contains CP Codes known to mock PAPI
-		CPCodes := []papi.CPCode{}
-
-		// Values are from fixture:
-		expectGetCPCodes(client, "ctr_1", "grp_1", &CPCodes).Once()
-		expectCreateCPCode(client, "test cpcode", "prd_1", "ctr_1", "grp_1", &CPCodes)
-		expectGetCPCode(client, "ctr_1", "grp_1", 0, &CPCodes, nil).Times(2)
+		expectGetCPCodes(client, "ctr_1", "grp_1", nil).Once()
+		expectCreateCPCode(client, "test cpcode", "prd_1", "ctr_1", "grp_1")
+		expectGetCPCode(client, "ctr_1", "grp_1", 0, "test cpcode", []string{"prd_1"}, nil).Times(2)
 
 		// No mock behavior for delete because there is no delete operation for CP Codes
 
@@ -171,17 +132,15 @@ func TestResCPCode(t *testing.T) {
 		client := &papi.Mock{}
 		defer client.AssertExpectations(t)
 
-		// Contains CP Codes known to mock PAPI
 		CPCodes := []papi.CPCode{
-			{ID: "0", Name: "test cpcode", ProductIDs: []string{"prd_test", "prd_wrong", "another_wrong"}}, // Matches name from fixture
+			{ID: "0", Name: "test cpcode", ProductIDs: []string{"prd_test", "prd_wrong", "another_wrong"}},
 		}
 
-		// Values are from fixture:
-		expectGetCPCodes(client, "ctr_test", "grp_test", &CPCodes).Once()
+		expectGetCPCodes(client, "ctr_test", "grp_test", CPCodes).Once()
 		// No mock behavior for create because we're using an existing CP code
 
 		// Read and plan
-		expectGetCPCode(client, "ctr_test", "grp_test", 0, &CPCodes, nil).Times(2)
+		expectGetCPCode(client, "ctr_test", "grp_test", 0, "test cpcode", []string{"prd_test", "prd_wrong", "another_wrong"}, nil).Times(2)
 
 		// No mock behavior for delete because there is no delete operation for CP Codes
 
@@ -207,18 +166,16 @@ func TestResCPCode(t *testing.T) {
 		client := &papi.Mock{}
 		defer client.AssertExpectations(t)
 
-		// Contains CP Codes known to mock PAPI
 		CPCodes := []papi.CPCode{
 			{ID: "0", Name: "wrong CP code", ProductIDs: []string{"prd_test"}},
-			{ID: "cpc_1", Name: "test cpcode", ProductIDs: []string{"prd_test"}}, // Matches name from fixture
+			{ID: "cpc_1", Name: "test cpcode", ProductIDs: []string{"prd_test"}},
 		}
 
-		// Values are from fixture:
-		expectGetCPCodes(client, "ctr_test", "grp_test", &CPCodes).Once()
+		expectGetCPCodes(client, "ctr_test", "grp_test", CPCodes).Once()
 		// No mock behavior for create because we're using an existing CP code
 
 		// Read and plan
-		expectGetCPCode(client, "ctr_test", "grp_test", 1, &CPCodes, nil).Times(2)
+		expectGetCPCode(client, "ctr_test", "grp_test", 1, "test cpcode", []string{"prd_test"}, nil).Times(2)
 
 		// No mock behavior for delete because there is no delete operation for CP Codes
 
@@ -250,11 +207,11 @@ func TestResCPCode(t *testing.T) {
 		}
 
 		// Values are from fixture:
-		expectGetCPCodes(client, "ctr_test", "grp_test", &CPCodes).Once()
+		expectGetCPCodes(client, "ctr_test", "grp_test", CPCodes).Once()
 		// No mock behavior for create because we're using an existing CP code
 
 		// Read and plan
-		expectGetCPCode(client, "ctr_test", "grp_test", 1, &CPCodes, nil).Times(1)
+		expectGetCPCode(client, "ctr_test", "grp_test", 1, "test cpcode", nil, nil).Times(1)
 
 		// No mock behavior for delete because there is no delete operation for CP Codes
 
@@ -273,19 +230,14 @@ func TestResCPCode(t *testing.T) {
 		client := &papi.Mock{}
 		defer client.AssertExpectations(t)
 
-		// Contains CP Codes known to mock PAPI
-		CPCodes := []papi.CPCode{}
-		CPCodesCopy := make([]papi.CPCode, 1)
+		expectGetCPCodes(client, "ctr_1", "grp_1", nil).Once()
+		expectCreateCPCode(client, "test cpcode", "prd_1", "ctr_1", "grp_1").Once()
+		expectGetCPCode(client, "ctr_1", "grp_1", 0, "test cpcode", []string{"prd_1"}, nil).Times(3)
 
-		// Values are from fixture:
-		expectGetCPCodes(client, "ctr_1", "grp_1", &CPCodes).Once()
-		expectCreateCPCode(client, "test cpcode", "prd_1", "ctr_1", "grp_1", &CPCodes).Once()
-		expectGetCPCode(client, "ctr_1", "grp_1", 0, &CPCodes, nil).Times(3)
-
-		expectGetCPCodeDetail(client, 0, &CPCodes, nil).Once()
-		expectUpdateCPCode(client, 0, "renamed cpcode", &CPCodes, &CPCodesCopy, nil).Once()
-		expectGetCPCode(client, "ctr_1", "grp_1", 0, &CPCodesCopy, nil).Once()
-		expectGetCPCode(client, "ctr_1", "grp_1", 0, &CPCodes, nil).Times(3)
+		expectGetCPCodeDetail(client, 0, "test cpcode", nil).Once()
+		expectUpdateCPCode(client, 0, "renamed cpcode", nil).Once()
+		expectGetCPCode(client, "ctr_1", "grp_1", 0, "test cpcode", []string{"prd_1"}, nil).Once()
+		expectGetCPCode(client, "ctr_1", "grp_1", 0, "renamed cpcode", []string{"prd_1"}, nil).Times(3)
 
 		// No mock behavior for delete because there is no delete operation for CP Codes
 
@@ -317,8 +269,8 @@ func TestResCPCode(t *testing.T) {
 		id := "0,1,2"
 
 		CPCodes := []papi.CPCode{{ID: "0", Name: "test cpcode", ProductIDs: []string{"prd_Web_Accel"}}}
-		expectGetCPCodes(client, "ctr_1", "grp_2", &CPCodes)
-		expectGetCPCode(client, "ctr_1", "grp_2", 0, &CPCodes, nil).Times(4)
+		expectGetCPCodes(client, "ctr_1", "grp_2", CPCodes)
+		expectGetCPCode(client, "ctr_1", "grp_2", 0, "test cpcode", []string{"prd_Web_Accel"}, nil).Times(4)
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
@@ -394,13 +346,9 @@ func TestResCPCode(t *testing.T) {
 		client := &papi.Mock{}
 		defer client.AssertExpectations(t)
 
-		// Contains CP Codes known to mock PAPI
-		CPCodes := []papi.CPCode{}
-
-		// Values are from fixture:
-		expectGetCPCodes(client, "ctr_1", "grp_1", &CPCodes).Once()
-		expectCreateCPCode(client, "test cpcode", "prd_1", "ctr_1", "grp_1", &CPCodes).Once()
-		expectGetCPCode(client, "ctr_1", "grp_1", 0, &CPCodes, nil).Times(5)
+		expectGetCPCodes(client, "ctr_1", "grp_1", nil).Once()
+		expectCreateCPCode(client, "test cpcode", "prd_1", "ctr_1", "grp_1").Once()
+		expectGetCPCode(client, "ctr_1", "grp_1", 0, "test cpcode", []string{"prd_1"}, nil).Times(5)
 
 		// No mock behavior for delete because there is no delete operation for CP Codes
 
@@ -460,15 +408,11 @@ func TestResCPCode(t *testing.T) {
 		client := &papi.Mock{}
 		defer client.AssertExpectations(t)
 
-		// Contains CP Codes known to mock PAPI
-		CPCodes := []papi.CPCode{}
+		expectGetCPCodes(client, "ctr_1", "grp_1", nil).Once()
+		expectCreateCPCode(client, "test cpcode", "prd_1", "ctr_1", "grp_1").Once()
+		expectGetCPCode(client, "ctr_1", "grp_1", 0, "test cpcode", []string{"prd_1"}, nil).Times(3)
 
-		// Values are from fixture:
-		expectGetCPCodes(client, "ctr_1", "grp_1", &CPCodes).Once()
-		expectCreateCPCode(client, "test cpcode", "prd_1", "ctr_1", "grp_1", &CPCodes).Once()
-		expectGetCPCode(client, "ctr_1", "grp_1", 0, &CPCodes, nil).Times(3)
-
-		expectGetCPCodeDetail(client, 0, &CPCodes, fmt.Errorf("oops")).Once()
+		expectGetCPCodeDetail(client, 0, "test cpcode", fmt.Errorf("oops")).Once()
 
 		// No mock behavior for delete because there is no delete operation for CP Codes
 
@@ -496,16 +440,12 @@ func TestResCPCode(t *testing.T) {
 		client := &papi.Mock{}
 		defer client.AssertExpectations(t)
 
-		// Contains CP Codes known to mock PAPI
-		CPCodes := []papi.CPCode{}
+		expectGetCPCodes(client, "ctr_1", "grp_1", nil).Once()
+		expectCreateCPCode(client, "test cpcode", "prd_1", "ctr_1", "grp_1").Once()
+		expectGetCPCode(client, "ctr_1", "grp_1", 0, "test cpcode", []string{"prd_1"}, nil).Times(3)
 
-		// Values are from fixture:
-		expectGetCPCodes(client, "ctr_1", "grp_1", &CPCodes).Once()
-		expectCreateCPCode(client, "test cpcode", "prd_1", "ctr_1", "grp_1", &CPCodes).Once()
-		expectGetCPCode(client, "ctr_1", "grp_1", 0, &CPCodes, nil).Times(3)
-
-		expectGetCPCodeDetail(client, 0, &CPCodes, nil).Once()
-		expectUpdateCPCode(client, 0, "renamed cpcode", &CPCodes, &[]papi.CPCode{}, fmt.Errorf("oops")).Once()
+		expectGetCPCodeDetail(client, 0, "test cpcode", nil).Once()
+		expectUpdateCPCode(client, 0, "renamed cpcode", fmt.Errorf("oops")).Once()
 
 		// No mock behavior for delete because there is no delete operation for CP Codes
 
@@ -544,18 +484,13 @@ func TestResCPCode(t *testing.T) {
 			client.AssertExpectations(t)
 		}()
 
-		// Contains CP Codes known to mock PAPI
-		CPCodes := []papi.CPCode{}
-		CPCodesCopy := make([]papi.CPCode, 1)
+		expectGetCPCodes(client, "ctr_1", "grp_1", nil).Once()
+		expectCreateCPCode(client, "test cpcode", "prd_1", "ctr_1", "grp_1").Once()
+		expectGetCPCode(client, "ctr_1", "grp_1", 0, "test cpcode", []string{"prd_1"}, nil).Times(3)
 
-		// Values are from fixture:
-		expectGetCPCodes(client, "ctr_1", "grp_1", &CPCodes).Once()
-		expectCreateCPCode(client, "test cpcode", "prd_1", "ctr_1", "grp_1", &CPCodes).Once()
-		expectGetCPCode(client, "ctr_1", "grp_1", 0, &CPCodes, nil).Times(3)
-
-		expectGetCPCodeDetail(client, 0, &CPCodes, nil).Once()
-		expectUpdateCPCode(client, 0, "renamed cpcode", &CPCodes, &CPCodesCopy, nil).Once()
-		expectGetCPCode(client, "ctr_1", "grp_1", 0, &CPCodesCopy, nil).Times(3)
+		expectGetCPCodeDetail(client, 0, "test cpcode", nil).Once()
+		expectUpdateCPCode(client, 0, "renamed cpcode", nil).Once()
+		expectGetCPCode(client, "ctr_1", "grp_1", 0, "test cpcode", []string{"prd_1"}, nil).Times(3)
 
 		// No mock behavior for delete because there is no delete operation for CP Codes
 
