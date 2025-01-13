@@ -56,7 +56,7 @@ func TestResGTMDatacenter(t *testing.T) {
 		).Return(&gtm.CreateDatacenterResponse{
 			Resource: &dc,
 			Status:   &pendingResponseStatus,
-		}, nil).Run(func(args mock.Arguments) {
+		}, nil).Run(func(_ mock.Arguments) {
 			getCall.ReturnArguments = mock.Arguments{&resp, nil}
 		})
 

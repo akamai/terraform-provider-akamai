@@ -38,7 +38,7 @@ func TestResGTMASMap(t *testing.T) {
 		).Return(&gtm.CreateASMapResponse{
 			Resource: asMapCreate.Resource,
 			Status:   asMapCreate.Status,
-		}, nil).Run(func(args mock.Arguments) {
+		}, nil).Run(func(_ mock.Arguments) {
 			getCall.ReturnArguments = mock.Arguments{&resp, nil}
 		})
 
@@ -116,7 +116,7 @@ func TestResGTMASMap(t *testing.T) {
 		).Return(&gtm.CreateASMapResponse{
 			Resource: asMapCreate.Resource,
 			Status:   asMapCreate.Status,
-		}, nil).Run(func(args mock.Arguments) {
+		}, nil).Run(func(_ mock.Arguments) {
 			getCall.ReturnArguments = mock.Arguments{&resp, nil}
 		}).Once()
 
@@ -461,7 +461,7 @@ func getASMapMocks() *gtm.Mock {
 	).Return(&gtm.CreateASMapResponse{
 		Resource: asMapCreate.Resource,
 		Status:   asMapCreate.Status,
-	}, nil).Run(func(args mock.Arguments) {
+	}, nil).Run(func(_ mock.Arguments) {
 		mockGetAsMap.ReturnArguments = mock.Arguments{&resp, nil}
 	})
 

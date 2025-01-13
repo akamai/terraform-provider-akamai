@@ -33,7 +33,7 @@ func TestResGTMDomain(t *testing.T) {
 		).Return(&gtm.CreateDomainResponse{
 			Resource: testDomain,
 			Status:   testCreateDomain.Status,
-		}, nil).Run(func(args mock.Arguments) {
+		}, nil).Run(func(_ mock.Arguments) {
 			getCall.ReturnArguments = mock.Arguments{&dr, nil}
 		})
 
@@ -116,7 +116,7 @@ func TestResGTMDomain(t *testing.T) {
 		).Return(&gtm.CreateDomainResponse{
 			Resource: testDomain,
 			Status:   testCreateDomain.Status,
-		}, nil).Run(func(args mock.Arguments) {
+		}, nil).Run(func(_ mock.Arguments) {
 			getCall.ReturnArguments = mock.Arguments{&dr, nil}
 		}).Once()
 
@@ -190,7 +190,7 @@ func TestResGTMDomain(t *testing.T) {
 		).Return(&gtm.CreateDomainResponse{
 			Resource: testDomain,
 			Status:   testGetDomain.Status,
-		}, nil).Run(func(args mock.Arguments) {
+		}, nil).Run(func(_ mock.Arguments) {
 			getCall.ReturnArguments = mock.Arguments{&dr, nil}
 		})
 
@@ -242,7 +242,7 @@ func TestResGTMDomain(t *testing.T) {
 		).Return(&gtm.CreateDomainResponse{
 			Resource: testDomain,
 			Status:   testGetDomain.Status,
-		}, nil).Run(func(args mock.Arguments) {
+		}, nil).Run(func(_ mock.Arguments) {
 			getCall.ReturnArguments = mock.Arguments{&dr, nil}
 		})
 
@@ -519,7 +519,7 @@ func getGTMDomainMocks() *gtm.Mock {
 	).Return(&gtm.CreateDomainResponse{
 		Resource: domainWithOrderedEmailsDomain,
 		Status:   domainWithOrderedEmails.Status,
-	}, nil).Run(func(args mock.Arguments) {
+	}, nil).Run(func(_ mock.Arguments) {
 		mockGetDomain.ReturnArguments = mock.Arguments{&dr, nil}
 	})
 
@@ -581,7 +581,7 @@ func getImportedDomain() *gtm.Domain {
 }
 
 var (
-	// datacenters is gtm.Datacenter structure used in tests
+	// datacenters is a gtm.Datacenter structure used in tests
 	datacenters = []gtm.Datacenter{
 		{
 			City:                 "Snæfellsjökull",
@@ -636,7 +636,7 @@ var (
 		},
 	}
 
-	// properties is gtm.Property structure used in tests
+	// properties is a gtm.Property structure used in tests
 	properties = []gtm.Property{
 		{
 			BackupCName:            "",

@@ -33,7 +33,7 @@ func TestResGTMCIDRMap(t *testing.T) {
 		).Return(&gtm.CreateCIDRMapResponse{
 			Resource: cidrCreate.Resource,
 			Status:   cidrCreate.Status,
-		}, nil).Run(func(args mock.Arguments) {
+		}, nil).Run(func(_ mock.Arguments) {
 			getCall.ReturnArguments = mock.Arguments{&resp, nil}
 		})
 
@@ -109,7 +109,7 @@ func TestResGTMCIDRMap(t *testing.T) {
 		).Return(&gtm.CreateCIDRMapResponse{
 			Resource: cidrCreate.Resource,
 			Status:   cidrCreate.Status,
-		}, nil).Run(func(args mock.Arguments) {
+		}, nil).Run(func(_ mock.Arguments) {
 			getCall.ReturnArguments = mock.Arguments{&resp, nil}
 		}).Once()
 
@@ -450,7 +450,7 @@ func getCIDRMapMocks() *gtm.Mock {
 	).Return(&gtm.CreateCIDRMapResponse{
 		Resource: cidrCreate.Resource,
 		Status:   cidrCreate.Status,
-	}, nil).Run(func(args mock.Arguments) {
+	}, nil).Run(func(_ mock.Arguments) {
 		mockGetCIDRMap.ReturnArguments = mock.Arguments{&resp, nil}
 	})
 
