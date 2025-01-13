@@ -113,7 +113,7 @@ func TestResDNSZone(t *testing.T) {
 		client.On("CreateZone",
 			testutils.MockContext,
 			mock.AnythingOfType("dns.CreateZoneRequest"),
-		).Return(nil).Run(func(args mock.Arguments) {
+		).Return(nil).Run(func(_ mock.Arguments) {
 			getCall.ReturnArguments = mock.Arguments{zone, nil}
 		})
 
@@ -227,14 +227,14 @@ func TestResDNSZone(t *testing.T) {
 		client.On("CreateZone",
 			testutils.MockContext,
 			mock.AnythingOfType("dns.CreateZoneRequest"),
-		).Return(nil).Run(func(args mock.Arguments) {
+		).Return(nil).Run(func(_ mock.Arguments) {
 			getCall.ReturnArguments = mock.Arguments{zone, nil}
 		})
 
 		client.On("UpdateZone",
 			testutils.MockContext,
 			mock.AnythingOfType("dns.UpdateZoneRequest"),
-		).Return(nil).Run(func(args mock.Arguments) {
+		).Return(nil).Run(func(_ mock.Arguments) {
 			zone.Comment = "This is an updated test primary zone"
 		})
 
@@ -329,7 +329,7 @@ func TestResDNSZone(t *testing.T) {
 				},
 				ClearConn: []bool{true},
 			},
-		).Return(nil).Run(func(args mock.Arguments) {
+		).Return(nil).Run(func(_ mock.Arguments) {
 			getCall.ReturnArguments = mock.Arguments{secondaryZone, nil}
 		})
 
@@ -341,7 +341,7 @@ func TestResDNSZone(t *testing.T) {
 		client.On("UpdateZone",
 			testutils.MockContext,
 			mock.AnythingOfType("dns.UpdateZoneRequest"),
-		).Return(nil).Run(func(args mock.Arguments) {
+		).Return(nil).Run(func(_ mock.Arguments) {
 			secondaryZone.Comment = "This is an updated test secondary zone"
 		})
 
