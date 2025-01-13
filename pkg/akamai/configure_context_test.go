@@ -298,6 +298,7 @@ func mockSession(t *testing.T, mockServer *httptest.Server) session.Session {
 	config := edgegrid.Config{Host: serverURL.Host}
 
 	meta, err := configureContext(contextConfig{
+		userAgent:      "terraform-provider-akamai",
 		edgegridConfig: &config,
 		ctx:            context.Background(),
 	})
