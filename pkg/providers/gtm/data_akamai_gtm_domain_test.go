@@ -22,10 +22,8 @@ func TestDataGtmDomain(t *testing.T) {
 		"success - response is ok": {
 			givenTF: "valid.tf",
 			init: func(m *gtm.Mock) {
-				m.On("GetDomain", testutils.MockContext, gtm.GetDomainRequest{
-					DomainName: "test.cli.devexp-terraform.akadns.net",
-				}).Return(&gtm.GetDomainResponse{
-					Name:                         "test.cli.devexp-terraform.akadns.net",
+				mockGetDomain(m, &gtm.Domain{
+					Name:                         testDomainName,
 					CNameCoalescingEnabled:       false,
 					DefaultErrorPenalty:          75,
 					DefaultHealthMax:             0,
@@ -57,13 +55,13 @@ func TestDataGtmDomain(t *testing.T) {
 					},
 					ASMaps: []gtm.ASMap{{
 						DefaultDatacenter: &gtm.DatacenterBase{
-							DatacenterID: 3133,
+							DatacenterID: datacenterID3133,
 							Nickname:     "Default (all others)",
 						},
 						Assignments: []gtm.ASAssignment{{
 							DatacenterBase: gtm.DatacenterBase{
 								Nickname:     "New Zone 1",
-								DatacenterID: 3133,
+								DatacenterID: datacenterID3133,
 							},
 							ASNumbers: []int64{
 								12222,
@@ -80,13 +78,13 @@ func TestDataGtmDomain(t *testing.T) {
 					},
 					CIDRMaps: []gtm.CIDRMap{{
 						DefaultDatacenter: &gtm.DatacenterBase{
-							DatacenterID: 3133,
+							DatacenterID: datacenterID3133,
 							Nickname:     "All Other CIDR Blocks",
 						},
 						Assignments: []gtm.CIDRAssignment{{
 							DatacenterBase: gtm.DatacenterBase{
 								Nickname:     "New Zone 1",
-								DatacenterID: 3133,
+								DatacenterID: datacenterID3133,
 							},
 							Blocks: []string{
 								"1.2.3.4/22",
@@ -101,13 +99,13 @@ func TestDataGtmDomain(t *testing.T) {
 					},
 					GeographicMaps: []gtm.GeoMap{{
 						DefaultDatacenter: &gtm.DatacenterBase{
-							DatacenterID: 3131,
+							DatacenterID: datacenterID3131,
 							Nickname:     "terraform_datacenter_test",
 						},
 						Assignments: []gtm.GeoAssignment{{
 							DatacenterBase: gtm.DatacenterBase{
 								Nickname:     "terraform_datacenter_test_1",
-								DatacenterID: 3133,
+								DatacenterID: datacenterID3133,
 							},
 							Countries: []string{
 								"GB",
@@ -157,7 +155,7 @@ func TestDataGtmDomain(t *testing.T) {
 							},
 						},
 						TrafficTargets: []gtm.TrafficTarget{{
-							DatacenterID: 3131,
+							DatacenterID: datacenterID3131,
 							Enabled:      true,
 							Servers: []string{
 								"1.2.3.4",
@@ -167,10 +165,10 @@ func TestDataGtmDomain(t *testing.T) {
 							Precedence: ptr.To(10),
 						}},
 					}},
-				}, nil)
+				}, nil, 3)
 			},
 			expectedAttributes: map[string]string{
-				"name":                                                           "test.cli.devexp-terraform.akadns.net",
+				"name":                                                           "gtm_terra_testdomain.akadns.net",
 				"cname_coalescing_enabled":                                       "false",
 				"default_timeout_penalty":                                        "25",
 				"default_error_penalty":                                          "75",
@@ -257,9 +255,7 @@ func TestDataGtmDomain(t *testing.T) {
 		"error response from api": {
 			givenTF: "valid.tf",
 			init: func(m *gtm.Mock) {
-				m.On("GetDomain", testutils.MockContext, gtm.GetDomainRequest{
-					DomainName: "test.cli.devexp-terraform.akadns.net",
-				}).Return(nil, fmt.Errorf("oops"))
+				mockGetDomain(m, nil, fmt.Errorf("oops"), 1)
 			},
 			expectError: regexp.MustCompile("oops"),
 		},
@@ -272,11 +268,12 @@ func TestDataGtmDomain(t *testing.T) {
 				test.init(client)
 			}
 			var checkFuncs []resource.TestCheckFunc
+			const datasourceName = "data.akamai_gtm_domain.domain"
 			for k, v := range test.expectedAttributes {
-				checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("data.akamai_gtm_domain.domain", k, v))
+				checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr(datasourceName, k, v))
 			}
 			for _, v := range test.expectedMissingAttributes {
-				checkFuncs = append(checkFuncs, resource.TestCheckNoResourceAttr("data.akamai_gtm_domain.domain", v))
+				checkFuncs = append(checkFuncs, resource.TestCheckNoResourceAttr(datasourceName, v))
 			}
 			useClient(client, func() {
 				resource.Test(t, resource.TestCase{

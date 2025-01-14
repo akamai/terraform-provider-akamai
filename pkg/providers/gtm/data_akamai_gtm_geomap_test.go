@@ -8,15 +8,9 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/gtm"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestDataGTMGeoMap(t *testing.T) {
-	getGeoMapRequest := gtm.GetGeoMapRequest{
-		MapName:    "mapTest",
-		DomainName: "test.geomap.domain.net"}
-	anyContext := mock.AnythingOfType("*context.valueCtx")
-
 	tests := map[string]struct {
 		givenTF            string
 		init               func(mock *gtm.Mock)
@@ -26,32 +20,30 @@ func TestDataGTMGeoMap(t *testing.T) {
 		"happy path": {
 			givenTF: "valid.tf",
 			init: func(m *gtm.Mock) {
-				m.On("GetGeoMap", anyContext, getGeoMapRequest).Return(
-					&gtm.GetGeoMapResponse{
-						Name: "TestName",
-						DefaultDatacenter: &gtm.DatacenterBase{
-							Nickname:     "TestNickname",
-							DatacenterID: 1,
+				mockGetGeoMap(m, &gtm.GeoMap{
+					Name: "TestName",
+					DefaultDatacenter: &gtm.DatacenterBase{
+						Nickname:     "TestNickname",
+						DatacenterID: 1,
+					},
+					Assignments: []gtm.GeoAssignment{{
+						DatacenterBase: gtm.DatacenterBase{
+							Nickname:     "TestNicknameAssignments",
+							DatacenterID: 2,
 						},
-						Assignments: []gtm.GeoAssignment{{
-							DatacenterBase: gtm.DatacenterBase{
-								Nickname:     "TestNicknameAssignments",
-								DatacenterID: 2,
-							},
-							Countries: []string{
-								"PL",
-								"US",
-							},
-						}},
-						Links: []gtm.Link{{
-							Rel:  "TestRel",
-							Href: "TestHref",
-						}},
-					}, nil)
-
+						Countries: []string{
+							"PL",
+							"US",
+						},
+					}},
+					Links: []gtm.Link{{
+						Rel:  "TestRel",
+						Href: "TestHref",
+					}},
+				}, nil, 3)
 			},
 			expectedAttributes: map[string]string{
-				"domain":                           "test.geomap.domain.net",
+				"domain":                           "gtm_terra_testdomain.akadns.net",
 				"map_name":                         "TestName",
 				"default_datacenter.datacenter_id": "1",
 				"default_datacenter.nickname":      "TestNickname",
@@ -75,30 +67,28 @@ func TestDataGTMGeoMap(t *testing.T) {
 		"error response from api": {
 			givenTF: "valid.tf",
 			init: func(m *gtm.Mock) {
-				m.On("GetGeoMap", anyContext, getGeoMapRequest).Return(
-					nil, fmt.Errorf("API error"))
+				mockGetGeoMap(m, nil, fmt.Errorf("API error"), 1)
 			},
 			expectError: regexp.MustCompile("API error"),
 		},
 		"no assignments": {
 			givenTF: "valid.tf",
 			init: func(m *gtm.Mock) {
-				m.On("GetGeoMap", anyContext, getGeoMapRequest).Return(
-					&gtm.GetGeoMapResponse{
-						Name: "TestName",
-						DefaultDatacenter: &gtm.DatacenterBase{
-							Nickname:     "TestNickname",
-							DatacenterID: 1,
-						},
-						Assignments: []gtm.GeoAssignment{},
-						Links: []gtm.Link{{
-							Rel:  "TestRel",
-							Href: "TestHref",
-						}},
-					}, nil)
+				mockGetGeoMap(m, &gtm.GeoMap{
+					Name: "TestName",
+					DefaultDatacenter: &gtm.DatacenterBase{
+						Nickname:     "TestNickname",
+						DatacenterID: 1,
+					},
+					Assignments: []gtm.GeoAssignment{},
+					Links: []gtm.Link{{
+						Rel:  "TestRel",
+						Href: "TestHref",
+					}},
+				}, nil, 3)
 			},
 			expectedAttributes: map[string]string{
-				"domain":                           "test.geomap.domain.net",
+				"domain":                           "gtm_terra_testdomain.akadns.net",
 				"map_name":                         "TestName",
 				"default_datacenter.datacenter_id": "1",
 				"default_datacenter.nickname":      "TestNickname",

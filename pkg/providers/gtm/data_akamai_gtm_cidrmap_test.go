@@ -20,10 +20,7 @@ func TestDataGTMCIDRmap(t *testing.T) {
 		"happy path": {
 			givenTF: "valid.tf",
 			init: func(m *gtm.Mock) {
-				m.On("GetCIDRMap", testutils.MockContext, gtm.GetCIDRMapRequest{
-					MapName:    "mapTest",
-					DomainName: "test.cidrmap.domain.net",
-				}).Return(&gtm.GetCIDRMapResponse{
+				mockGetCIDRMap(m, &gtm.CIDRMap{
 					Name: "TestName",
 					DefaultDatacenter: &gtm.DatacenterBase{
 						Nickname:     "TestNickname",
@@ -43,11 +40,10 @@ func TestDataGTMCIDRmap(t *testing.T) {
 						Rel:  "TestRel",
 						Href: "TestHref",
 					}},
-				}, nil)
-
+				}, nil, 3)
 			},
 			expectedAttributes: map[string]string{
-				"domain":                           "test.cidrmap.domain.net",
+				"domain":                           "gtm_terra_testdomain.akadns.net",
 				"map_name":                         "TestName",
 				"default_datacenter.datacenter_id": "1",
 				"default_datacenter.nickname":      "TestNickname",
@@ -71,21 +67,14 @@ func TestDataGTMCIDRmap(t *testing.T) {
 		"error response from api": {
 			givenTF: "valid.tf",
 			init: func(m *gtm.Mock) {
-				m.On("GetCIDRMap", testutils.MockContext, gtm.GetCIDRMapRequest{
-					MapName:    "mapTest",
-					DomainName: "test.cidrmap.domain.net",
-				}).Return(
-					nil, fmt.Errorf("error"))
+				mockGetCIDRMap(m, nil, fmt.Errorf("error"), 1)
 			},
 			expectError: regexp.MustCompile("error"),
 		},
 		"no assignments": {
 			givenTF: "valid.tf",
 			init: func(m *gtm.Mock) {
-				m.On("GetCIDRMap", testutils.MockContext, gtm.GetCIDRMapRequest{
-					MapName:    "mapTest",
-					DomainName: "test.cidrmap.domain.net",
-				}).Return(&gtm.GetCIDRMapResponse{
+				mockGetCIDRMap(m, &gtm.CIDRMap{
 					Name: "TestName",
 					DefaultDatacenter: &gtm.DatacenterBase{
 						Nickname:     "TestNickname",
@@ -96,10 +85,10 @@ func TestDataGTMCIDRmap(t *testing.T) {
 						Rel:  "TestRel",
 						Href: "TestHref",
 					}},
-				}, nil)
+				}, nil, 3)
 			},
 			expectedAttributes: map[string]string{
-				"domain":                           "test.cidrmap.domain.net",
+				"domain":                           "gtm_terra_testdomain.akadns.net",
 				"map_name":                         "TestName",
 				"default_datacenter.datacenter_id": "1",
 				"default_datacenter.nickname":      "TestNickname",

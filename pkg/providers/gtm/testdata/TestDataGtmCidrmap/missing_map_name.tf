@@ -3,5 +3,5 @@ provider "akamai" {
 }
 
 data "akamai_gtm_cidrmap" "gtm_cidrmap" {
-  domain = "test.cidrmap.domain.net"
+  domain = "gtm_terra_testdomain.akadns.net"
 }

@@ -13,69 +13,34 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-var dc = gtm.Datacenter{
-	City:                 "Snæfellsjökull",
-	CloudServerTargeting: false,
-	Continent:            "EU",
-	Country:              "IS",
-	DatacenterID:         3132,
-	DefaultLoadObject: &gtm.LoadObject{
-		LoadObject:     "/test",
-		LoadObjectPort: 80,
-		LoadServers:    []string{"1.2.3.4", "1.2.3.9"},
-	},
-	Latitude: 64.808,
-	Links: []gtm.Link{
-		{
-			Href: "https://akab-ymtebc45gco3ypzj-apz4yxpek55y7fyv.luna.akamaiapis.net/config-gtm/v1/domains/gtmdomtest.akadns.net/datacenters/3132",
-			Rel:  "self",
-		},
-	},
-	Longitude:       -23.776,
-	Nickname:        "tfexample_dc_1",
-	StateOrProvince: "",
-	Virtual:         true,
-}
+const (
+	datacenterID5400 = 5400
+	datacenterID3131 = 3131
+	datacenterID3132 = 3132
+	datacenterID3133 = 3133
+)
 
 func TestResGTMDatacenter(t *testing.T) {
 
 	t.Run("create datacenter", func(t *testing.T) {
 		client := &gtm.Mock{}
 
-		getCall := client.On("GetDatacenter",
-			testutils.MockContext,
-			mock.AnythingOfType("gtm.GetDatacenterRequest"),
-		).Return(nil, &gtm.Error{
-			StatusCode: http.StatusNotFound,
-		})
+		mockCreateDatacenter(client, &gtm.CreateDatacenterResponse{
+			Resource: getTestDatacenterResp(),
+			Status:   getPendingResponseStatus(),
+		}, nil)
 
-		resp := dc
-		client.On("CreateDatacenter",
-			testutils.MockContext,
-			mock.AnythingOfType("gtm.CreateDatacenterRequest"),
-		).Return(&gtm.CreateDatacenterResponse{
-			Resource: &dc,
-			Status:   &pendingResponseStatus,
-		}, nil).Run(func(_ mock.Arguments) {
-			getCall.ReturnArguments = mock.Arguments{&resp, nil}
-		})
+		mockGetDatacenter(client, datacenterID3132, getTestDatacenterResp(), nil, 4)
 
-		client.On("GetDomainStatus",
-			testutils.MockContext,
-			mock.AnythingOfType("gtm.GetDomainStatusRequest"),
-		).Return(getDomainStatusResponseStatus, nil)
+		mockGetDomainStatus(client, 2)
 
-		client.On("UpdateDatacenter",
-			testutils.MockContext,
-			mock.AnythingOfType("gtm.UpdateDatacenterRequest"),
-		).Return(updateDatacenterResponseStatus, nil)
+		mockUpdateDatacenter(client)
 
-		client.On("DeleteDatacenter",
-			testutils.MockContext,
-			mock.AnythingOfType("gtm.DeleteDatacenterRequest"),
-		).Return(deleteDatacenterResponseStatus, nil)
+		mockGetDatacenter(client, datacenterID3132, getTestDatacenterUpdate(), nil, 3)
 
-		dataSourceName := "akamai_gtm_datacenter.tfexample_dc_1"
+		mockDeleteDatacenter(client)
+
+		resourceName := "akamai_gtm_datacenter.tfexample_dc_1"
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -84,15 +49,15 @@ func TestResGTMDatacenter(t *testing.T) {
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmDatacenter/create_basic.tf"),
 						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(dataSourceName, "nickname", "tfexample_dc_1"),
-							resource.TestCheckResourceAttr(dataSourceName, "continent", "EU"),
+							resource.TestCheckResourceAttr(resourceName, "nickname", "tfexample_dc_1"),
+							resource.TestCheckResourceAttr(resourceName, "continent", "EU"),
 						),
 					},
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmDatacenter/update_basic.tf"),
 						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(dataSourceName, "nickname", "tfexample_dc_1"),
-							resource.TestCheckResourceAttr(dataSourceName, "continent", "NA"),
+							resource.TestCheckResourceAttr(resourceName, "nickname", "tfexample_dc_1"),
+							resource.TestCheckResourceAttr(resourceName, "continent", "NA"),
 						),
 					},
 				},
@@ -105,40 +70,22 @@ func TestResGTMDatacenter(t *testing.T) {
 	t.Run("create datacenter, remove outside of terraform, expect non-empty plan", func(t *testing.T) {
 		client := &gtm.Mock{}
 
-		resp := dc
-		client.On("CreateDatacenter",
-			testutils.MockContext,
-			mock.AnythingOfType("gtm.CreateDatacenterRequest"),
-		).Return(&gtm.CreateDatacenterResponse{
-			Resource: &dc,
-			Status:   &pendingResponseStatus,
-		}, nil).Once()
+		mockCreateDatacenter(client, &gtm.CreateDatacenterResponse{
+			Resource: getTestDatacenterResp(),
+			Status:   getPendingResponseStatus(),
+		}, nil)
 
-		client.On("GetDatacenter",
-			testutils.MockContext,
-			mock.AnythingOfType("gtm.GetDatacenterRequest"),
-		).Return(&resp, nil).Twice()
+		mockGetDatacenter(client, datacenterID3132, getTestDatacenterResp(), nil, 2)
 
 		// Mock that the datacenter was deleted outside terraform
-		client.On("GetDatacenter",
-			testutils.MockContext,
-			mock.AnythingOfType("gtm.GetDatacenterRequest"),
-		).Return(nil, &gtm.Error{
-			StatusCode: http.StatusNotFound,
-		}).Once()
+		mockGetDatacenter(client, datacenterID3132, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
 
 		// For terraform test framework, we need to mock GetDatacenter as it would actually exist before deletion
-		client.On("GetDatacenter",
-			testutils.MockContext,
-			mock.AnythingOfType("gtm.GetDatacenterRequest"),
-		).Return(&resp, nil).Once()
+		mockGetDatacenter(client, datacenterID3132, getTestDatacenterResp(), nil, 1)
 
-		client.On("DeleteDatacenter",
-			testutils.MockContext,
-			mock.AnythingOfType("gtm.DeleteDatacenterRequest"),
-		).Return(deleteDatacenterResponseStatus, nil).Once()
+		mockDeleteDatacenter(client)
 
-		dataSourceName := "akamai_gtm_datacenter.tfexample_dc_1"
+		resourceName := "akamai_gtm_datacenter.tfexample_dc_1"
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -147,8 +94,8 @@ func TestResGTMDatacenter(t *testing.T) {
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmDatacenter/create_basic.tf"),
 						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(dataSourceName, "nickname", "tfexample_dc_1"),
-							resource.TestCheckResourceAttr(dataSourceName, "continent", "EU"),
+							resource.TestCheckResourceAttr(resourceName, "nickname", "tfexample_dc_1"),
+							resource.TestCheckResourceAttr(resourceName, "continent", "EU"),
 						),
 					},
 					{
@@ -166,12 +113,7 @@ func TestResGTMDatacenter(t *testing.T) {
 	t.Run("create datacenter failed", func(t *testing.T) {
 		client := &gtm.Mock{}
 
-		client.On("CreateDatacenter",
-			testutils.MockContext,
-			mock.AnythingOfType("gtm.CreateDatacenterRequest"),
-		).Return(nil, &gtm.Error{
-			StatusCode: http.StatusBadRequest,
-		})
+		mockCreateDatacenter(client, nil, &gtm.Error{StatusCode: http.StatusBadRequest})
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -191,13 +133,10 @@ func TestResGTMDatacenter(t *testing.T) {
 	t.Run("create datacenter denied", func(t *testing.T) {
 		client := &gtm.Mock{}
 
-		dr := gtm.CreateDatacenterResponse{}
-		dr.Resource = &dc
-		dr.Status = &deniedResponseStatus
-		client.On("CreateDatacenter",
-			testutils.MockContext,
-			mock.AnythingOfType("gtm.CreateDatacenterRequest"),
-		).Return(&dr, nil)
+		mockCreateDatacenter(client, &gtm.CreateDatacenterResponse{
+			Resource: getTestDatacenterResp(),
+			Status:   getDeniedResponseStatus(),
+		}, nil)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -224,11 +163,11 @@ func TestResGTMDatacenterImport(t *testing.T) {
 		stateCheck   resource.ImportStateCheckFunc
 	}{
 		"happy path - import": {
-			domainName:   "gtm_terra_testdomain.akadns.net",
+			domainName:   testDomainName,
 			datacenterID: "3132",
 			init: func(m *gtm.Mock) {
 				// Read
-				mockGetDatacenterImport(m, getImportedDatacenter(), nil).Times(2)
+				mockGetDatacenter(m, datacenterID3132, getImportedDatacenter(), nil, 2)
 			},
 			stateCheck: test.NewImportChecker().
 				CheckEqual("domain", "gtm_terra_testdomain.akadns.net").
@@ -267,11 +206,11 @@ func TestResGTMDatacenterImport(t *testing.T) {
 			expectError:  regexp.MustCompile(`Error: Invalid Datacenter resource ID`),
 		},
 		"expect error - read": {
-			domainName:   "gtm_terra_testdomain.akadns.net",
+			domainName:   testDomainName,
 			datacenterID: "3132",
 			init: func(m *gtm.Mock) {
 				// Read - error
-				mockGetDatacenterImport(m, nil, fmt.Errorf("get failed")).Once()
+				mockGetDatacenter(m, datacenterID3132, nil, fmt.Errorf("get failed"), 1)
 			},
 			expectError: regexp.MustCompile(`get failed`),
 		},
@@ -303,16 +242,50 @@ func TestResGTMDatacenterImport(t *testing.T) {
 	}
 }
 
-func mockGetDatacenterImport(m *gtm.Mock, resp *gtm.Datacenter, err error) *mock.Call {
+func mockGetDatacenter(m *gtm.Mock, datacenterID int, resp *gtm.Datacenter, err error, times int) *mock.Call {
 	return m.On("GetDatacenter", testutils.MockContext, gtm.GetDatacenterRequest{
-		DatacenterID: 3132,
-		DomainName:   "gtm_terra_testdomain.akadns.net",
-	}).Return(resp, err)
+		DatacenterID: datacenterID,
+		DomainName:   testDomainName,
+	}).Return(resp, err).Times(times)
+}
+
+func mockUpdateDatacenter(client *gtm.Mock) *mock.Call {
+	return client.On("UpdateDatacenter",
+		testutils.MockContext,
+		gtm.UpdateDatacenterRequest{
+			Datacenter: getTestDatacenterUpdate(),
+			DomainName: testDomainName,
+		},
+	).Return(&gtm.UpdateDatacenterResponse{
+		Status: getDefaultResponseStatus(),
+	}, nil).Once()
+}
+
+func mockCreateDatacenter(client *gtm.Mock, resp *gtm.CreateDatacenterResponse, err error) *mock.Call {
+	return client.On("CreateDatacenter",
+		testutils.MockContext,
+		gtm.CreateDatacenterRequest{
+			Datacenter: getTestDatacenter(),
+			DomainName: testDomainName,
+		},
+	).Return(resp, err).Once()
+}
+
+func mockDeleteDatacenter(client *gtm.Mock) *mock.Call {
+	return client.On("DeleteDatacenter",
+		testutils.MockContext,
+		gtm.DeleteDatacenterRequest{
+			DatacenterID: datacenterID3132,
+			DomainName:   testDomainName,
+		},
+	).Return(&gtm.DeleteDatacenterResponse{
+		Status: getDefaultResponseStatus(),
+	}, nil).Once()
 }
 
 func getImportedDatacenter() *gtm.Datacenter {
 	return &gtm.Datacenter{
-		DatacenterID:    3132,
+		DatacenterID:    datacenterID3132,
 		Nickname:        "testNickname",
 		ScorePenalty:    2,
 		City:            "city",
@@ -338,36 +311,68 @@ func getImportedDatacenter() *gtm.Datacenter {
 	}
 }
 
-var (
-	updateDatacenterResponseStatus = &gtm.UpdateDatacenterResponse{
-		Status: &gtm.ResponseStatus{
-			ChangeID: "40e36abd-bfb2-4635-9fca-62175cf17007",
-			Links: []gtm.Link{
-				{
-					Href: "https://akab-ymtebc45gco3ypzj-apz4yxpek55y7fyv.luna.akamaiapis.net/config-gtm/v1/domains/gtmdomtest.akadns.net/status/current",
-					Rel:  "self",
-				},
-			},
-			Message:               "Current configuration has been propagated to all GTM nameservers",
-			PassingValidation:     true,
-			PropagationStatus:     "COMPLETE",
-			PropagationStatusDate: "2019-04-25T14:54:00.000+00:00",
+func getTestDatacenter() *gtm.Datacenter {
+	return &gtm.Datacenter{
+		City:                 "Snæfellsjökull",
+		CloudServerTargeting: false,
+		Continent:            "EU",
+		Country:              "IS",
+		DefaultLoadObject: &gtm.LoadObject{
+			LoadObject:     "/test",
+			LoadObjectPort: 80,
+			LoadServers:    []string{"1.2.3.4", "1.2.3.9"},
 		},
+		Latitude:        64.808,
+		Longitude:       -23.776,
+		Nickname:        "tfexample_dc_1",
+		StateOrProvince: "",
 	}
+}
 
-	deleteDatacenterResponseStatus = &gtm.DeleteDatacenterResponse{
-		Status: &gtm.ResponseStatus{
-			ChangeID: "40e36abd-bfb2-4635-9fca-62175cf17007",
-			Links: []gtm.Link{
-				{
-					Href: "https://akab-ymtebc45gco3ypzj-apz4yxpek55y7fyv.luna.akamaiapis.net/config-gtm/v1/domains/gtmdomtest.akadns.net/status/current",
-					Rel:  "self",
-				},
-			},
-			Message:               "Current configuration has been propagated to all GTM nameservers",
-			PassingValidation:     true,
-			PropagationStatus:     "COMPLETE",
-			PropagationStatusDate: "2019-04-25T14:54:00.000+00:00",
+func getTestDatacenterResp() *gtm.Datacenter {
+	return &gtm.Datacenter{
+		City:                 "Snæfellsjökull",
+		CloudServerTargeting: false,
+		Continent:            "EU",
+		Country:              "IS",
+		DatacenterID:         datacenterID3132,
+		DefaultLoadObject: &gtm.LoadObject{
+			LoadObject:     "/test",
+			LoadObjectPort: 80,
+			LoadServers:    []string{"1.2.3.4", "1.2.3.9"},
 		},
+		Latitude: 64.808,
+		Links: []gtm.Link{
+			{
+				Href: "https://akab-ymtebc45gco3ypzj-apz4yxpek55y7fyv.luna.akamaiapis.net/config-gtm/v1/domains/gtmdomtest.akadns.net/datacenters/3132",
+				Rel:  "self",
+			},
+		},
+		Longitude:       -23.776,
+		Nickname:        "tfexample_dc_1",
+		StateOrProvince: "",
+		Virtual:         true,
 	}
-)
+}
+
+func getTestDatacenterUpdate() *gtm.Datacenter {
+	return &gtm.Datacenter{
+		CloudServerTargeting: false,
+		Continent:            "NA",
+		DatacenterID:         datacenterID3132,
+		DefaultLoadObject: &gtm.LoadObject{
+			LoadObject:     "/test",
+			LoadObjectPort: 80,
+			LoadServers:    []string{"1.2.3.5", "1.2.3.6"},
+		},
+		Links: []gtm.Link{
+			{
+				Href: "https://akab-ymtebc45gco3ypzj-apz4yxpek55y7fyv.luna.akamaiapis.net/config-gtm/v1/domains/gtmdomtest.akadns.net/datacenters/3132",
+				Rel:  "self",
+			},
+		},
+		Nickname:        "tfexample_dc_1",
+		StateOrProvince: "",
+		Virtual:         true,
+	}
+}

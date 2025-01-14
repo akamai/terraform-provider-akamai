@@ -8,6 +8,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/gtm"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestDataGTMDomains(t *testing.T) {
@@ -21,7 +22,7 @@ func TestDataGTMDomains(t *testing.T) {
 		"success - response is ok": {
 			givenTF: "valid.tf",
 			init: func(m *gtm.Mock) {
-				m.On("ListDomains", testutils.MockContext).Return([]gtm.DomainItem{
+				mockListDomains(m, []gtm.DomainItem{
 					{
 						Name:                 "test1.terraformtesting.net",
 						LastModified:         "2023-02-01T09:36:28.000+00:00",
@@ -70,7 +71,7 @@ func TestDataGTMDomains(t *testing.T) {
 						},
 						},
 					},
-				}, nil)
+				}, nil, 3)
 			},
 			expectedAttributes: map[string]string{
 				"domains.0.name":           "test3.terraformtesting.net",
@@ -84,13 +85,13 @@ func TestDataGTMDomains(t *testing.T) {
 		"no domains found": {
 			givenTF: "valid.tf",
 			init: func(m *gtm.Mock) {
-				m.On("ListDomains", testutils.MockContext).Return([]gtm.DomainItem{}, nil)
+				mockListDomains(m, []gtm.DomainItem{}, nil, 3)
 			},
 		},
 		"error response from api": {
 			givenTF: "valid.tf",
 			init: func(m *gtm.Mock) {
-				m.On("ListDomains", testutils.MockContext).Return(nil, fmt.Errorf("oops"))
+				mockListDomains(m, nil, fmt.Errorf("oops"), 1)
 			},
 			expectError: regexp.MustCompile("oops"),
 		},
@@ -103,11 +104,12 @@ func TestDataGTMDomains(t *testing.T) {
 				test.init(client)
 			}
 			var checkFuncs []resource.TestCheckFunc
+			const datasourceName = "data.akamai_gtm_domains.domains"
 			for k, v := range test.expectedAttributes {
-				checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("data.akamai_gtm_domains.domains", k, v))
+				checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr(datasourceName, k, v))
 			}
 			for _, v := range test.expectedMissingAttributes {
-				checkFuncs = append(checkFuncs, resource.TestCheckNoResourceAttr("data.akamai_gtm_domains.domains", v))
+				checkFuncs = append(checkFuncs, resource.TestCheckNoResourceAttr(datasourceName, v))
 			}
 			useClient(client, func() {
 				resource.Test(t, resource.TestCase{
@@ -123,4 +125,8 @@ func TestDataGTMDomains(t *testing.T) {
 			client.AssertExpectations(t)
 		})
 	}
+}
+
+func mockListDomains(client *gtm.Mock, resp []gtm.DomainItem, err error, times int) *mock.Call {
+	return client.On("ListDomains", testutils.MockContext).Return(resp, err).Times(times)
 }

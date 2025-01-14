@@ -3,5 +3,5 @@ provider "akamai" {
 }
 
 data "akamai_gtm_geomaps" "testmaps" {
-  domain = "test.geomaps.domain.net"
+  domain = "gtm_terra_testdomain.akadns.net"
 }

@@ -20,10 +20,7 @@ func TestDataGTMASMap(t *testing.T) {
 		"happy path": {
 			givenTF: "valid.tf",
 			init: func(m *gtm.Mock) {
-				m.On("GetASMap", testutils.MockContext, gtm.GetASMapRequest{
-					ASMapName:  "map1",
-					DomainName: "test.domain.net",
-				}).Return(&gtm.GetASMapResponse{
+				mockGetASMap(m, &gtm.ASMap{
 					Name: "TestName",
 					DefaultDatacenter: &gtm.DatacenterBase{
 						Nickname:     "TestDefaultDatacenterNickname",
@@ -44,11 +41,10 @@ func TestDataGTMASMap(t *testing.T) {
 						Href: "href.test",
 						Rel:  "TestRel",
 					}},
-				}, nil)
-
+				}, nil, 3)
 			},
 			expectedAttributes: map[string]string{
-				"domain":                           "test.domain.net",
+				"domain":                           "gtm_terra_testdomain.akadns.net",
 				"map_name":                         "TestName",
 				"default_datacenter.datacenter_id": "1",
 				"default_datacenter.nickname":      "TestDefaultDatacenterNickname",
@@ -73,21 +69,14 @@ func TestDataGTMASMap(t *testing.T) {
 		"error response from api": {
 			givenTF: "valid.tf",
 			init: func(m *gtm.Mock) {
-				m.On("GetASMap", testutils.MockContext, gtm.GetASMapRequest{
-					ASMapName:  "map1",
-					DomainName: "test.domain.net",
-				}).Return(
-					nil, fmt.Errorf("test error"))
+				mockGetASMap(m, nil, fmt.Errorf("test error"), 1)
 			},
 			expectError: regexp.MustCompile("test error"),
 		},
 		"no assignments": {
 			givenTF: "valid.tf",
 			init: func(m *gtm.Mock) {
-				m.On("GetASMap", testutils.MockContext, gtm.GetASMapRequest{
-					ASMapName:  "map1",
-					DomainName: "test.domain.net",
-				}).Return(&gtm.GetASMapResponse{
+				mockGetASMap(m, &gtm.ASMap{
 					Name: "TestName",
 					DefaultDatacenter: &gtm.DatacenterBase{
 						Nickname:     "TestDefaultDatacenterNickname",
@@ -99,8 +88,7 @@ func TestDataGTMASMap(t *testing.T) {
 						Rel:  "TestRel",
 					},
 					},
-				}, nil)
-
+				}, nil, 3)
 			},
 			expectedAttributes: map[string]string{
 				"map_name":                         "TestName",

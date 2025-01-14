@@ -13,38 +13,34 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
+const testGeomapName = "tfexample_geomap_1"
+
 func TestResGTMGeoMap(t *testing.T) {
 	t.Run("create geomap", func(t *testing.T) {
 		client := &gtm.Mock{}
 
-		mockGetGeoMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}).Once()
+		mockGetGeoMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
 
-		mockCreateGeoMap(client, gtm.CreateGeoMapRequest{
-			GeoMap:     getDefaultGeomap(),
-			DomainName: testDomainName,
-		}, &gtm.CreateGeoMapResponse{
+		mockCreateGeoMap(client, getDefaultGeomap(), &gtm.CreateGeoMapResponse{
 			Resource: getDefaultGeomap(),
 			Status:   getDefaultResponseStatus(),
 		}, nil)
 
-		resp := gtm.GetGeoMapResponse(*getDefaultGeomap())
-		mockGetGeoMap(client, &resp, nil).Times(4)
+		mockGetGeoMap(client, getDefaultGeomap(), nil, 4)
 
-		mockGetDatacenterForGeomap(client).Once()
+		mockGetDatacenter(client, datacenterID5400, getTestDatacenterResp(), nil, 1)
 
-		updateGeoMap := getDefaultUpdatedGeomap()
-		mockUpdateGeoMap(client, updateGeoMap)
+		mockUpdateGeoMap(client, getDefaultUpdatedGeomap())
 
 		mockGetDomainStatus(client, 1)
 
-		geomapUpdate := gtm.GetGeoMapResponse(getDefaultUpdatedGeomap())
-		mockGetGeoMap(client, &geomapUpdate, nil).Times(3)
+		mockGetGeoMap(client, getDefaultUpdatedGeomap(), nil, 3)
 
 		mockDeleteGeoMap(client)
 
 		mockGetDomainStatus(client, 1)
 
-		dataSourceName := "akamai_gtm_geomap.tfexample_geomap_1"
+		resourceName := "akamai_gtm_geomap.tfexample_geomap_1"
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -53,13 +49,13 @@ func TestResGTMGeoMap(t *testing.T) {
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmGeomap/create_basic.tf"),
 						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(dataSourceName, "name", "tfexample_geomap_1"),
+							resource.TestCheckResourceAttr(resourceName, "name", "tfexample_geomap_1"),
 						),
 					},
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmGeomap/update_basic.tf"),
 						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(dataSourceName, "name", "tfexample_geomap_1"),
+							resource.TestCheckResourceAttr(resourceName, "name", "tfexample_geomap_1"),
 						),
 					},
 				},
@@ -72,30 +68,26 @@ func TestResGTMGeoMap(t *testing.T) {
 	t.Run("create GEO map, remove outside of terraform, expect non-empty plan", func(t *testing.T) {
 		client := &gtm.Mock{}
 
-		mockGetGeoMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}).Once()
+		mockGetGeoMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
 
-		mockCreateGeoMap(client, gtm.CreateGeoMapRequest{
-			GeoMap:     getDefaultGeomap(),
-			DomainName: testDomainName,
-		}, &gtm.CreateGeoMapResponse{
+		mockCreateGeoMap(client, getDefaultGeomap(), &gtm.CreateGeoMapResponse{
 			Resource: getDefaultGeomap(),
 			Status:   getDefaultResponseStatus(),
 		}, nil)
 
-		resp := gtm.GetGeoMapResponse(*getDefaultGeomap())
-		mockGetGeoMap(client, &resp, nil).Twice()
+		mockGetGeoMap(client, getDefaultGeomap(), nil, 2)
 
-		mockGetDatacenterForGeomap(client)
+		mockGetDatacenter(client, datacenterID5400, getTestDatacenterResp(), nil, 1)
 
 		// Mock that the GEOMap was deleted outside terraform
-		mockGetGeoMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}).Once()
+		mockGetGeoMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
 
 		// For terraform test framework, we need to mock GetGEOMap as it would actually exist before deletion
-		mockGetGeoMap(client, &resp, nil).Once()
+		mockGetGeoMap(client, getDefaultGeomap(), nil, 1)
 
 		mockDeleteGeoMap(client)
 
-		dataSourceName := "akamai_gtm_geomap.tfexample_geomap_1"
+		resourceName := "akamai_gtm_geomap.tfexample_geomap_1"
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -104,7 +96,7 @@ func TestResGTMGeoMap(t *testing.T) {
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmGeomap/create_basic.tf"),
 						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(dataSourceName, "name", "tfexample_geomap_1"),
+							resource.TestCheckResourceAttr(resourceName, "name", "tfexample_geomap_1"),
 						),
 					},
 					{
@@ -122,14 +114,11 @@ func TestResGTMGeoMap(t *testing.T) {
 	t.Run("create geomap failed", func(t *testing.T) {
 		client := &gtm.Mock{}
 
-		mockGetGeoMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}).Once()
+		mockGetGeoMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
 
-		mockCreateGeoMap(client, gtm.CreateGeoMapRequest{
-			GeoMap:     getDefaultGeomap(),
-			DomainName: testDomainName,
-		}, nil, &gtm.Error{StatusCode: http.StatusBadRequest})
+		mockCreateGeoMap(client, getDefaultGeomap(), nil, &gtm.Error{StatusCode: http.StatusBadRequest})
 
-		mockGetDatacenterForGeomap(client).Once()
+		mockGetDatacenter(client, datacenterID5400, getTestDatacenterResp(), nil, 1)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -149,8 +138,7 @@ func TestResGTMGeoMap(t *testing.T) {
 	t.Run("create geomap failed - geomap already exists", func(t *testing.T) {
 		client := &gtm.Mock{}
 
-		geomap := gtm.GetGeoMapResponse(*getDefaultGeomap())
-		mockGetGeoMap(client, &geomap, nil).Once()
+		mockGetGeoMap(client, getDefaultGeomap(), nil, 1)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -170,18 +158,14 @@ func TestResGTMGeoMap(t *testing.T) {
 	t.Run("create geomap denied", func(t *testing.T) {
 		client := &gtm.Mock{}
 
-		mockGetGeoMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}).Once()
+		mockGetGeoMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
 
-		responseStatus := deniedResponseStatus
-		mockCreateGeoMap(client, gtm.CreateGeoMapRequest{
-			GeoMap:     getDefaultGeomap(),
-			DomainName: testDomainName,
-		}, &gtm.CreateGeoMapResponse{
+		mockCreateGeoMap(client, getDefaultGeomap(), &gtm.CreateGeoMapResponse{
 			Resource: getDefaultGeomap(),
-			Status:   &responseStatus,
+			Status:   getDeniedResponseStatus(),
 		}, nil)
 
-		mockGetDatacenterForGeomap(client).Once()
+		mockGetDatacenter(client, datacenterID5400, getTestDatacenterResp(), nil, 1)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -197,18 +181,6 @@ func TestResGTMGeoMap(t *testing.T) {
 
 		client.AssertExpectations(t)
 	})
-}
-
-func mockUpdateGeoMap(client *gtm.Mock, updateGeoMap gtm.GeoMap) *mock.Call {
-	return client.On("UpdateGeoMap",
-		testutils.MockContext,
-		gtm.UpdateGeoMapRequest{
-			GeoMap:     &updateGeoMap,
-			DomainName: testDomainName,
-		},
-	).Return(&gtm.UpdateGeoMapResponse{
-		Status: getDefaultResponseStatus(),
-	}, nil).Once()
 }
 
 func TestGTMGeoMapOrder(t *testing.T) {
@@ -234,27 +206,27 @@ func TestGTMGeoMapOrder(t *testing.T) {
 		},
 		"assignments and countries different order with updated `name` - diff only for `name`": {
 			pathForUpdate: "testdata/TestResGtmGeomap/order/update_name.tf",
-			nonEmptyPlan:  true, // change to false to see diff
+			nonEmptyPlan:  true,
 			planOnly:      true,
 		},
 		"assignments and countries different order with updated `domain` - diff only for `domain`": {
 			pathForUpdate: "testdata/TestResGtmGeomap/order/update_domain.tf",
-			nonEmptyPlan:  true, // change to false to see diff
+			nonEmptyPlan:  true,
 			planOnly:      true,
 		},
 		"assignments and countries different order with updated `wait_on_complete` - diff only for `wait_on_complete`": {
 			pathForUpdate: "testdata/TestResGtmGeomap/order/update_wait_on_complete.tf",
-			nonEmptyPlan:  true, // change to false to see diff
+			nonEmptyPlan:  true,
 			planOnly:      true,
 		},
 		"reordered assignments and updated countries - messy diff": {
 			pathForUpdate: "testdata/TestResGtmGeomap/order/assignments/reorder_and_update_countries.tf",
-			nonEmptyPlan:  true, // change to false to see diff
+			nonEmptyPlan:  true,
 			planOnly:      true,
 		},
 		"reordered assignments and updated nickname - messy diff": {
 			pathForUpdate: "testdata/TestResGtmGeomap/order/assignments/reorder_and_update_nickname.tf",
-			nonEmptyPlan:  true, // change to false to see diff
+			nonEmptyPlan:  true,
 			planOnly:      true,
 		},
 	}
@@ -292,12 +264,11 @@ func TestResGTMGeoMapImport(t *testing.T) {
 		stateCheck  resource.ImportStateCheckFunc
 	}{
 		"happy path - import": {
-			domainName: "gtm_terra_testdomain.akadns.net",
-			mapName:    "tfexample_geomap_1",
+			domainName: testDomainName,
+			mapName:    testGeomapName,
 			init: func(m *gtm.Mock) {
 				// Read
-				importedGeomap := gtm.GetGeoMapResponse(*getImportedGeoMap())
-				mockGetGeoMap(m, &importedGeomap, nil).Times(2)
+				mockGetGeoMap(m, getImportedGeoMap(), nil, 2)
 			},
 			stateCheck: test.NewImportChecker().
 				CheckEqual("domain", "gtm_terra_testdomain.akadns.net").
@@ -311,20 +282,20 @@ func TestResGTMGeoMapImport(t *testing.T) {
 		},
 		"expect error - no domain name, invalid import ID": {
 			domainName:  "",
-			mapName:     "tfexample_geomap_1",
+			mapName:     testGeomapName,
 			expectError: regexp.MustCompile(`Error: invalid resource ID: :tfexample_geomap_1`),
 		},
 		"expect error - no map name, invalid import ID": {
-			domainName:  "gtm_terra_testdomain.akadns.net",
+			domainName:  testDomainName,
 			mapName:     "",
 			expectError: regexp.MustCompile(`Error: invalid resource ID: gtm_terra_testdomain.akadns.net:`),
 		},
 		"expect error - read": {
-			domainName: "gtm_terra_testdomain.akadns.net",
-			mapName:    "tfexample_geomap_1",
+			domainName: testDomainName,
+			mapName:    testGeomapName,
 			init: func(m *gtm.Mock) {
 				// Read - error
-				mockGetGeoMap(m, nil, fmt.Errorf("get failed")).Once()
+				mockGetGeoMap(m, nil, fmt.Errorf("get failed"), 1)
 			},
 			expectError: regexp.MustCompile(`get failed`),
 		},
@@ -360,22 +331,18 @@ func TestResGTMGeoMapImport(t *testing.T) {
 func getGeoMapOrderingTestMock() *gtm.Mock {
 	client := &gtm.Mock{}
 
-	mockGetGeoMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}).Once()
+	mockGetGeoMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
 
-	mockCreateGeoMap(client, gtm.CreateGeoMapRequest{
-		GeoMap:     getDiffOrderGeoMap(),
-		DomainName: testDomainName,
-	}, &gtm.CreateGeoMapResponse{
+	mockCreateGeoMap(client, getDiffOrderGeoMap(), &gtm.CreateGeoMapResponse{
 		Resource: getDiffOrderGeoMapForResponse(),
 		Status:   getDefaultResponseStatus(),
 	}, nil)
 
 	mockGetDomainStatus(client, 1)
 
-	resp := gtm.GetGeoMapResponse(*getDiffOrderGeoMapForResponse())
-	mockGetGeoMap(client, &resp, nil).Times(4)
+	mockGetGeoMap(client, getDiffOrderGeoMapForResponse(), nil, 4)
 
-	mockGetDatacenterForGeomap(client).Once()
+	mockGetDatacenter(client, datacenterID5400, getTestDatacenterResp(), nil, 1)
 
 	mockGetDomainStatus(client, 1)
 
@@ -384,48 +351,61 @@ func getGeoMapOrderingTestMock() *gtm.Mock {
 	return client
 }
 
-func mockGetGeoMap(client *gtm.Mock, ret *gtm.GetGeoMapResponse, err error) *mock.Call {
+func mockGetGeoMap(client *gtm.Mock, geoMap *gtm.GeoMap, err error, times int) *mock.Call {
+	var resp *gtm.GetGeoMapResponse
+	if geoMap != nil {
+		r := gtm.GetGeoMapResponse(*geoMap)
+		resp = &r
+	}
 	return client.On("GetGeoMap",
 		testutils.MockContext,
-		gtm.GetGeoMapRequest{MapName: "tfexample_geomap_1", DomainName: testDomainName},
-	).Return(ret, err)
+		gtm.GetGeoMapRequest{MapName: testGeomapName, DomainName: testDomainName},
+	).Return(resp, err).Times(times)
 }
 
-func mockCreateGeoMap(client *gtm.Mock, request gtm.CreateGeoMapRequest, response *gtm.CreateGeoMapResponse, err error) *mock.Call {
-	return client.On("CreateGeoMap", testutils.MockContext, request).Return(response, err).Once()
+func mockCreateGeoMap(client *gtm.Mock, reqGeomap *gtm.GeoMap, response *gtm.CreateGeoMapResponse, err error) *mock.Call {
+	return client.On("CreateGeoMap", testutils.MockContext, gtm.CreateGeoMapRequest{
+		GeoMap:     reqGeomap,
+		DomainName: testDomainName,
+	}).Return(response, err).Once()
 }
 
-func mockGetDatacenterForGeomap(client *gtm.Mock) *mock.Call {
-	return client.On("GetDatacenter",
+func mockUpdateGeoMap(client *gtm.Mock, updateGeoMap *gtm.GeoMap) *mock.Call {
+	return client.On("UpdateGeoMap",
 		testutils.MockContext,
-		gtm.GetDatacenterRequest{DatacenterID: 5400, DomainName: testDomainName},
-	).Return(&dc, nil)
+		gtm.UpdateGeoMapRequest{
+			GeoMap:     updateGeoMap,
+			DomainName: testDomainName,
+		},
+	).Return(&gtm.UpdateGeoMapResponse{
+		Status: getDefaultResponseStatus(),
+	}, nil).Once()
 }
 
 func mockDeleteGeoMap(client *gtm.Mock) *mock.Call {
 	return client.On("DeleteGeoMap",
 		testutils.MockContext,
-		gtm.DeleteGeoMapRequest{MapName: "tfexample_geomap_1", DomainName: testDomainName},
+		gtm.DeleteGeoMapRequest{MapName: testGeomapName, DomainName: testDomainName},
 	).Return(&gtm.DeleteGeoMapResponse{
 		Status: getDefaultResponseStatus(),
 	}, nil).Once()
 }
 
-func getDefaultDatacenter() *gtm.DatacenterBase {
+func getDefaultDatacenterBase() *gtm.DatacenterBase {
 	return &gtm.DatacenterBase{
-		DatacenterID: 5400,
+		DatacenterID: datacenterID5400,
 		Nickname:     "default datacenter",
 	}
 }
 
 func getDefaultGeomap() *gtm.GeoMap {
 	return &gtm.GeoMap{
-		Name:              "tfexample_geomap_1",
-		DefaultDatacenter: getDefaultDatacenter(),
+		Name:              testGeomapName,
+		DefaultDatacenter: getDefaultDatacenterBase(),
 		Assignments: []gtm.GeoAssignment{
 			{
 				DatacenterBase: gtm.DatacenterBase{
-					DatacenterID: 3131,
+					DatacenterID: datacenterID3131,
 					Nickname:     "tfexample_dc_1",
 				},
 				Countries: []string{"GB"},
@@ -437,55 +417,55 @@ func getDefaultGeomap() *gtm.GeoMap {
 func getImportedGeoMap() *gtm.GeoMap {
 	return &gtm.GeoMap{
 		DefaultDatacenter: &gtm.DatacenterBase{
-			DatacenterID: 5400,
+			DatacenterID: datacenterID5400,
 			Nickname:     "default datacenter",
 		},
 		Assignments: []gtm.GeoAssignment{
 			{
 				DatacenterBase: gtm.DatacenterBase{
-					DatacenterID: 3131,
+					DatacenterID: datacenterID3131,
 					Nickname:     "tfexample_dc_1",
 				},
 				Countries: []string{"GB"},
 			},
 		},
-		Name: "tfexample_geomap_1",
+		Name: testGeomapName,
 	}
 }
 
-func getDefaultUpdatedGeomap() gtm.GeoMap {
+func getDefaultUpdatedGeomap() *gtm.GeoMap {
 	geomap := *getDefaultGeomap()
-	geomap.Assignments[0].DatacenterBase.DatacenterID = 3132
+	geomap.Assignments[0].DatacenterBase.DatacenterID = datacenterID3132
 	geomap.Assignments[0].DatacenterBase.Nickname = "tfexample_dc_2"
 	geomap.Assignments[0].Countries = []string{"US"}
-	return geomap
+	return &geomap
 }
 
 func getDiffOrderGeoMap() *gtm.GeoMap {
 	return &gtm.GeoMap{
-		Name: "tfexample_geomap_1",
+		Name: testGeomapName,
 		DefaultDatacenter: &gtm.DatacenterBase{
-			DatacenterID: 5400,
+			DatacenterID: datacenterID5400,
 			Nickname:     "default datacenter",
 		},
 		Assignments: []gtm.GeoAssignment{
 			{
 				DatacenterBase: gtm.DatacenterBase{
-					DatacenterID: 3131,
+					DatacenterID: datacenterID3131,
 					Nickname:     "tfexample_dc_1",
 				},
 				Countries: []string{"PL", "FR", "US", "GB"},
 			},
 			{
 				DatacenterBase: gtm.DatacenterBase{
-					DatacenterID: 3132,
+					DatacenterID: datacenterID3132,
 					Nickname:     "tfexample_dc_2",
 				},
 				Countries: []string{"AU", "GB"},
 			},
 			{
 				DatacenterBase: gtm.DatacenterBase{
-					DatacenterID: 3133,
+					DatacenterID: datacenterID3133,
 					Nickname:     "tfexample_dc_3",
 				},
 				Countries: []string{"CN", "BG", "TR", "MC", "GB"},
@@ -496,29 +476,29 @@ func getDiffOrderGeoMap() *gtm.GeoMap {
 
 func getDiffOrderGeoMapForResponse() *gtm.GeoMap {
 	return &gtm.GeoMap{
-		Name: "tfexample_geomap_1",
+		Name: testGeomapName,
 		DefaultDatacenter: &gtm.DatacenterBase{
-			DatacenterID: 5400,
+			DatacenterID: datacenterID5400,
 			Nickname:     "default datacenter",
 		},
 		Assignments: []gtm.GeoAssignment{
 			{
 				DatacenterBase: gtm.DatacenterBase{
-					DatacenterID: 3131,
+					DatacenterID: datacenterID3131,
 					Nickname:     "tfexample_dc_1",
 				},
 				Countries: []string{"GB", "PL", "US", "FR"},
 			},
 			{
 				DatacenterBase: gtm.DatacenterBase{
-					DatacenterID: 3132,
+					DatacenterID: datacenterID3132,
 					Nickname:     "tfexample_dc_2",
 				},
 				Countries: []string{"GB", "AU"},
 			},
 			{
 				DatacenterBase: gtm.DatacenterBase{
-					DatacenterID: 3133,
+					DatacenterID: datacenterID3133,
 					Nickname:     "tfexample_dc_3",
 				},
 				Countries: []string{"GB", "BG", "CN", "MC", "TR"},

@@ -21,10 +21,7 @@ func TestDataGTMResource(t *testing.T) {
 		"happy path - GTM data resource should be returned": {
 			givenTF: "valid.tf",
 			init: func(m *gtm.Mock) {
-				m.On("GetResource", testutils.MockContext, gtm.GetResourceRequest{
-					ResourceName: "resource1",
-					DomainName:   "test.domain.net",
-				}).Return(&gtm.GetResourceResponse{
+				mockGetResource(m, &gtm.Resource{
 					Type:                        "XML load object via HTTP",
 					LeastSquaresDecay:           0,
 					Description:                 "terraform test resource",
@@ -41,7 +38,7 @@ func TestDataGTMResource(t *testing.T) {
 					},
 					},
 					ResourceInstances: []gtm.ResourceInstance{{
-						DatacenterID:         3131,
+						DatacenterID:         datacenterID3131,
 						UseDefaultLoadObject: false,
 						LoadObject: gtm.LoadObject{
 							LoadObject:     "/test2",
@@ -49,7 +46,7 @@ func TestDataGTMResource(t *testing.T) {
 							LoadServers:    []string{"2.3.4.5"},
 						},
 					}},
-				}, nil)
+				}, nil, 3)
 			},
 			expectedAttributes: map[string]string{
 				"aggregation_type":                   "latest",
@@ -73,11 +70,7 @@ func TestDataGTMResource(t *testing.T) {
 		"error response from api": {
 			givenTF: "valid.tf",
 			init: func(m *gtm.Mock) {
-				m.On("GetResource", testutils.MockContext, gtm.GetResourceRequest{
-					ResourceName: "resource1",
-					DomainName:   "test.domain.net",
-				}).Return(
-					nil, fmt.Errorf("oops"))
+				mockGetResource(m, nil, fmt.Errorf("oops"), 1)
 			},
 			expectError: regexp.MustCompile("oops"),
 		},
@@ -90,11 +83,12 @@ func TestDataGTMResource(t *testing.T) {
 				test.init(client)
 			}
 			var checkFuncs []resource.TestCheckFunc
+			const datasourceName = "data.akamai_gtm_resource.my_gtm_resource"
 			for k, v := range test.expectedAttributes {
-				checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("data.akamai_gtm_resource.my_gtm_resource", k, v))
+				checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr(datasourceName, k, v))
 			}
 			for _, v := range test.expectedMissingAttributes {
-				checkFuncs = append(checkFuncs, resource.TestCheckNoResourceAttr("data.akamai_gtm_resource.my_gtm_resource", v))
+				checkFuncs = append(checkFuncs, resource.TestCheckNoResourceAttr(datasourceName, v))
 			}
 
 			useClient(client, func() {

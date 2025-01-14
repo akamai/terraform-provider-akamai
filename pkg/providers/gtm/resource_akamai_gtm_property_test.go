@@ -16,46 +16,12 @@ import (
 )
 
 const (
-	testPropertyName     = "tfexample_prop_1"
-	propertyResourceName = "akamai_gtm_property.tfexample_prop_1"
-	updatedPropertyName  = "tfexample_prop_1-updated"
-)
-
-var (
-	updatePropertyResponseStatus = &gtm.UpdatePropertyResponse{
-		Status: &gtm.ResponseStatus{
-			ChangeID: "40e36abd-bfb2-4635-9fca-62175cf17007",
-			Links: []gtm.Link{
-				{
-					Href: "https://akab-ymtebc45gco3ypzj-apz4yxpek55y7fyv.luna.akamaiapis.net/config-gtm/v1/domains/gtmdomtest.akadns.net/status/current",
-					Rel:  "self",
-				},
-			},
-			Message:               "Current configuration has been propagated to all GTM nameservers",
-			PassingValidation:     true,
-			PropagationStatus:     "COMPLETE",
-			PropagationStatusDate: "2019-04-25T14:54:00.000+00:00",
-		},
-	}
-
-	deletePropertyResponseStatus = &gtm.DeletePropertyResponse{
-		Status: &gtm.ResponseStatus{
-			ChangeID: "40e36abd-bfb2-4635-9fca-62175cf17007",
-			Links: []gtm.Link{
-				{
-					Href: "https://akab-ymtebc45gco3ypzj-apz4yxpek55y7fyv.luna.akamaiapis.net/config-gtm/v1/domains/gtmdomtest.akadns.net/status/current",
-					Rel:  "self",
-				},
-			},
-			Message:               "Current configuration has been propagated to all GTM nameservers",
-			PassingValidation:     true,
-			PropagationStatus:     "COMPLETE",
-			PropagationStatusDate: "2019-04-25T14:54:00.000+00:00",
-		},
-	}
+	testPropertyName        = "tfexample_prop_1"
+	testUpdatedPropertyName = "tfexample_prop_1-updated"
 )
 
 func TestResGTMProperty(t *testing.T) {
+	const propertyResourceName = "akamai_gtm_property.tfexample_prop_1"
 	tests := map[string]struct {
 		property *gtm.Property
 		init     func(*gtm.Mock)
@@ -67,19 +33,15 @@ func TestResGTMProperty(t *testing.T) {
 				mockGetProperty(m, testPropertyName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
 				mockCreateProperty(m, getBasicProperty(), &gtm.CreatePropertyResponse{
 					Resource: getBasicProperty(),
-					Status:   &pendingResponseStatus,
+					Status:   getPendingResponseStatus(),
 				}, nil)
 				// read
-				mockGetProperty(m, testPropertyName, getBasicPropertyResponse(), nil, 4)
+				mockGetProperty(m, testPropertyName, getBasicProperty(), nil, 4)
 				// update
-				var updateProperty = *getBasicProperty()
-				updateProperty.TrafficTargets[0].DatacenterID = 3132
-				updateProperty.TrafficTargets[0].Servers = []string{"1.2.3.5"}
-				updateProperty.LivenessTests[0].TestInterval = 50
-				mockUpdateProperty(m, &updateProperty)
+				mockUpdateProperty(m, getPropertyForUpdate())
 				// read
 				mockGetDomainStatus(m, 2)
-				mockGetProperty(m, testPropertyName, getBasicPropertyResponseUpdate(), nil, 3)
+				mockGetProperty(m, testPropertyName, getPropertyForUpdate(), nil, 3)
 				// delete
 				mockDeleteProperty(m, testPropertyName)
 			},
@@ -122,16 +84,16 @@ func TestResGTMProperty(t *testing.T) {
 				mockGetProperty(m, testPropertyName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
 				mockCreateProperty(m, getBasicProperty(), &gtm.CreatePropertyResponse{
 					Resource: getBasicProperty(),
-					Status:   &pendingResponseStatus,
+					Status:   getPendingResponseStatus(),
 				}, nil)
 				// read
-				mockGetProperty(m, testPropertyName, getBasicPropertyResponse(), nil, 2)
+				mockGetProperty(m, testPropertyName, getBasicProperty(), nil, 2)
 
 				// Mock that the property was deleted outside terraform
 				mockGetProperty(m, testPropertyName, nil, gtm.ErrNotFound, 1)
 
 				// For terraform test framework, we need to mock GetProperty as it would actually exist before deletion
-				mockGetProperty(m, testPropertyName, getBasicPropertyResponse(), nil, 1)
+				mockGetProperty(m, testPropertyName, getBasicProperty(), nil, 1)
 				// delete
 				mockDeleteProperty(m, testPropertyName)
 			},
@@ -164,10 +126,10 @@ func TestResGTMProperty(t *testing.T) {
 				mockGetProperty(m, testPropertyName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
 				mockCreateProperty(m, getBasicPropertyWithLivenessTests(), &gtm.CreatePropertyResponse{
 					Resource: getBasicPropertyWithLivenessTests(),
-					Status:   &pendingResponseStatus,
+					Status:   getPendingResponseStatus(),
 				}, nil)
 				// read
-				mockGetProperty(m, testPropertyName, getBasicPropertyResponseWithLivenessTests(), nil, 3)
+				mockGetProperty(m, testPropertyName, getBasicPropertyWithLivenessTests(), nil, 3)
 				// delete
 				mockDeleteProperty(m, testPropertyName)
 			},
@@ -194,9 +156,7 @@ func TestResGTMProperty(t *testing.T) {
 			init: func(m *gtm.Mock) {
 				mockGetProperty(m, testPropertyName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
 				// bad request status code returned
-				mockCreateProperty(m, getBasicProperty(), nil, &gtm.Error{
-					StatusCode: http.StatusBadRequest,
-				})
+				mockCreateProperty(m, getBasicProperty(), nil, &gtm.Error{StatusCode: http.StatusBadRequest})
 			},
 			steps: []resource.TestStep{
 				{
@@ -208,7 +168,7 @@ func TestResGTMProperty(t *testing.T) {
 		"create property failed - property already exists": {
 			property: getBasicProperty(),
 			init: func(m *gtm.Mock) {
-				mockGetProperty(m, testPropertyName, getBasicPropertyResponse(), nil, 1)
+				mockGetProperty(m, testPropertyName, getBasicProperty(), nil, 1)
 			},
 			steps: []resource.TestStep{
 				{
@@ -232,9 +192,9 @@ func TestResGTMProperty(t *testing.T) {
 				// Simulate successful property creation on the second attempt
 				mockCreateProperty(m, getBasicProperty(), &gtm.CreatePropertyResponse{
 					Resource: getBasicProperty(),
-					Status:   &pendingResponseStatus,
+					Status:   getPendingResponseStatus(),
 				}, nil)
-				mockGetProperty(m, testPropertyName, getBasicPropertyResponse(), nil, 3)
+				mockGetProperty(m, testPropertyName, getBasicProperty(), nil, 3)
 				mockDeleteProperty(m, testPropertyName)
 			},
 			steps: []resource.TestStep{
@@ -302,11 +262,10 @@ func TestResGTMProperty(t *testing.T) {
 				mockGetProperty(m, testPropertyName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
 				// create
 				// denied response status returned
-				deniedResponse := gtm.CreatePropertyResponse{
+				mockCreateProperty(m, getBasicProperty(), &gtm.CreatePropertyResponse{
 					Resource: getBasicProperty(),
-					Status:   &deniedResponseStatus,
-				}
-				mockCreateProperty(m, getBasicProperty(), &deniedResponse, nil)
+					Status:   getDeniedResponseStatus(),
+				}, nil)
 			},
 			steps: []resource.TestStep{
 				{
@@ -322,25 +281,22 @@ func TestResGTMProperty(t *testing.T) {
 				// create 1st property
 				mockCreateProperty(m, getBasicProperty(), &gtm.CreatePropertyResponse{
 					Resource: getBasicProperty(),
-					Status:   &pendingResponseStatus,
+					Status:   getPendingResponseStatus(),
 				}, nil)
 				// read
-				mockGetProperty(m, testPropertyName, getBasicPropertyResponse(), nil, 4)
+				mockGetProperty(m, testPropertyName, getBasicProperty(), nil, 4)
 				// force new -> delete 1st property and recreate 2nd with updated name
+
 				mockDeleteProperty(m, testPropertyName)
-				propertyWithUpdatedName := getBasicProperty()
-				propertyWithUpdatedName.Name = updatedPropertyName
-				propertyResponseWithUpdatedName := getBasicPropertyResponse()
-				propertyResponseWithUpdatedName.Name = updatedPropertyName
-				mockGetProperty(m, updatedPropertyName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
-				mockCreateProperty(m, propertyWithUpdatedName, &gtm.CreatePropertyResponse{
-					Resource: propertyWithUpdatedName,
-					Status:   &pendingResponseStatus,
+				mockGetProperty(m, testUpdatedPropertyName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
+				mockCreateProperty(m, getPropertyWithUpdatedName(), &gtm.CreatePropertyResponse{
+					Resource: getPropertyWithUpdatedName(),
+					Status:   getPendingResponseStatus(),
 				}, nil)
 				// read
-				mockGetProperty(m, updatedPropertyName, propertyResponseWithUpdatedName, nil, 3)
+				mockGetProperty(m, testUpdatedPropertyName, getPropertyWithUpdatedName(), nil, 3)
 				// delete
-				mockDeleteProperty(m, updatedPropertyName)
+				mockDeleteProperty(m, testUpdatedPropertyName)
 			},
 			steps: []resource.TestStep{
 				{
@@ -378,19 +334,12 @@ func TestResGTMProperty(t *testing.T) {
 			init: func(m *gtm.Mock) {
 				mockGetProperty(m, testPropertyName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
 				// create property with test_object_protocol in first liveness test different from HTTP, HTTPS, FTP
-				// alter mocked property
-				propertyWithLivenessTest := getBasicProperty()
-				propertyWithLivenessTest.LivenessTests[0].TestObject = ""
-				propertyWithLivenessTest.LivenessTests[0].TestObjectProtocol = "SNMP"
-				propertyResponseWithLivenessTest := getBasicPropertyResponse()
-				propertyResponseWithLivenessTest.LivenessTests[0].TestObject = ""
-				propertyResponseWithLivenessTest.LivenessTests[0].TestObjectProtocol = "SNMP"
-				mockCreateProperty(m, propertyWithLivenessTest, &gtm.CreatePropertyResponse{
-					Resource: propertyWithLivenessTest,
-					Status:   &pendingResponseStatus,
+				mockCreateProperty(m, getPropertyWithTestObjectProtocol(), &gtm.CreatePropertyResponse{
+					Resource: getPropertyWithTestObjectProtocol(),
+					Status:   getPendingResponseStatus(),
 				}, nil)
 				// read
-				mockGetProperty(m, testPropertyName, propertyResponseWithLivenessTest, nil, 3)
+				mockGetProperty(m, testPropertyName, getPropertyWithTestObjectProtocol(), nil, 3)
 				// delete
 				mockDeleteProperty(m, testPropertyName)
 			},
@@ -435,10 +384,10 @@ func TestResGTMProperty(t *testing.T) {
 				mockGetProperty(m, testPropertyName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
 				mockCreateProperty(m, getRankedFailoverPropertyWithPrecedence(), &gtm.CreatePropertyResponse{
 					Resource: getRankedFailoverPropertyWithPrecedence(),
-					Status:   &pendingResponseStatus,
+					Status:   getPendingResponseStatus(),
 				}, nil)
 				// read
-				mockGetProperty(m, testPropertyName, getRankedFailoverPropertyResponseWithPrecedence(), nil, 3)
+				mockGetProperty(m, testPropertyName, getRankedFailoverPropertyWithPrecedence(), nil, 3)
 				// delete
 				mockDeleteProperty(m, testPropertyName)
 			},
@@ -466,10 +415,10 @@ func TestResGTMProperty(t *testing.T) {
 				mockGetProperty(m, testPropertyName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
 				mockCreateProperty(m, getRankedFailoverPropertyWithPrecedence(), &gtm.CreatePropertyResponse{
 					Resource: getRankedFailoverPropertyWithPrecedence(),
-					Status:   &pendingResponseStatus,
+					Status:   getPendingResponseStatus(),
 				}, nil)
 				// read
-				mockGetProperty(m, testPropertyName, getRankedFailoverPropertyResponseWithPrecedence(), nil, 3)
+				mockGetProperty(m, testPropertyName, getRankedFailoverPropertyWithPrecedence(), nil, 3)
 				// delete
 				mockDeleteProperty(m, testPropertyName)
 			},
@@ -696,7 +645,7 @@ func getRankedFailoverPropertyWithPrecedence() *gtm.Property {
 		},
 		TrafficTargets: []gtm.TrafficTarget{
 			{
-				DatacenterID: 3131,
+				DatacenterID: datacenterID3131,
 				Enabled:      true,
 				HandoutCName: "test",
 				Servers: []string{
@@ -706,75 +655,7 @@ func getRankedFailoverPropertyWithPrecedence() *gtm.Property {
 				Precedence: ptr.To(10),
 			},
 			{
-				DatacenterID: 3132,
-				Enabled:      true,
-				HandoutCName: "test",
-				Servers: []string{
-					"1.2.3.9",
-				},
-				Weight:     200.0,
-				Precedence: ptr.To(0),
-			},
-		},
-		Type: "ranked-failover",
-	}
-}
-
-// getRankedFailoverPropertyResponseWithPrecedence gets the property values taken from `create_ranked_failover_precedence.tf`
-func getRankedFailoverPropertyResponseWithPrecedence() *gtm.GetPropertyResponse {
-	return &gtm.GetPropertyResponse{
-		DynamicTTL:   300,
-		HandoutMode:  "normal",
-		HandoutLimit: 5,
-		LivenessTests: []gtm.LivenessTest{
-			{
-				DisableNonstandardPortWarning: false,
-				Name:                          "lt5",
-				TestInterval:                  40,
-				TestObject:                    "/junk",
-				TestObjectPort:                1,
-				TestObjectProtocol:            "HTTP",
-				TestTimeout:                   30.0,
-				HTTPHeaders: []gtm.HTTPHeader{
-					{
-						Name:  "test_name",
-						Value: "test_value",
-					},
-				},
-			},
-			{
-				Name:                        "lt2",
-				TestInterval:                30,
-				TestObjectProtocol:          "HTTP",
-				TestTimeout:                 20,
-				TestObject:                  "/junk",
-				TestObjectPort:              80,
-				PeerCertificateVerification: true,
-				HTTPHeaders:                 []gtm.HTTPHeader{},
-			},
-		},
-		Name:                 testPropertyName,
-		ScoreAggregationType: "median",
-		StaticRRSets: []gtm.StaticRRSet{
-			{
-				Type:  "MX",
-				TTL:   300,
-				Rdata: []string{"100 test_e"},
-			},
-		},
-		TrafficTargets: []gtm.TrafficTarget{
-			{
-				DatacenterID: 3131,
-				Enabled:      true,
-				HandoutCName: "test",
-				Servers: []string{
-					"1.2.3.9",
-				},
-				Weight:     200.0,
-				Precedence: ptr.To(10),
-			},
-			{
-				DatacenterID: 3132,
+				DatacenterID: datacenterID3132,
 				Enabled:      true,
 				HandoutCName: "test",
 				Servers: []string{
@@ -805,7 +686,7 @@ func getRankedFailoverPropertyNoPrecedence() *gtm.Property {
 		},
 		TrafficTargets: []gtm.TrafficTarget{
 			{
-				DatacenterID: 3131,
+				DatacenterID: datacenterID3131,
 				Enabled:      true,
 				HandoutCName: "test",
 				Servers: []string{
@@ -814,7 +695,7 @@ func getRankedFailoverPropertyNoPrecedence() *gtm.Property {
 				Weight: 200.0,
 			},
 			{
-				DatacenterID: 3132,
+				DatacenterID: datacenterID3132,
 				Enabled:      true,
 				HandoutCName: "test",
 				Servers: []string{
@@ -828,6 +709,7 @@ func getRankedFailoverPropertyNoPrecedence() *gtm.Property {
 }
 
 func TestResourceGTMLivenessTestOrder(t *testing.T) {
+	const propertyResourceName = "akamai_gtm_property.tfexample_prop_1"
 	// To see actual plan when diff is expected, change 'nonEmptyPlan' to false in test case
 	tests := map[string]struct {
 		client        *gtm.Mock
@@ -950,12 +832,11 @@ func TestResGTMPropertyImport(t *testing.T) {
 		stateCheck  resource.ImportStateCheckFunc
 	}{
 		"happy path - import": {
-			domainName: "gtm_terra_testdomain.akadns.net",
+			domainName: testDomainName,
 			mapName:    "tfexample_prop_1",
 			init: func(m *gtm.Mock) {
 				// Read
-				importedProperty := gtm.GetPropertyResponse(*getImportedProperty())
-				mockGetPropertyImport(m, &importedProperty, nil).Times(2)
+				mockGetProperty(m, testPropertyName, getImportedProperty(), nil, 2)
 			},
 			stateCheck: test.NewImportChecker().
 				CheckEqual("domain", "gtm_terra_testdomain.akadns.net").
@@ -1013,16 +894,16 @@ func TestResGTMPropertyImport(t *testing.T) {
 			expectError: regexp.MustCompile(`Error: invalid resource ID: :tfexample_prop_1`),
 		},
 		"expect error - no map name, invalid import ID": {
-			domainName:  "gtm_terra_testdomain.akadns.net",
+			domainName:  testDomainName,
 			mapName:     "",
 			expectError: regexp.MustCompile(`Error: invalid resource ID: gtm_terra_testdomain.akadns.net:`),
 		},
 		"expect error - read": {
-			domainName: "gtm_terra_testdomain.akadns.net",
+			domainName: testDomainName,
 			mapName:    "tfexample_prop_1",
 			init: func(m *gtm.Mock) {
 				// Read - error
-				mockGetPropertyImport(m, nil, fmt.Errorf("get failed")).Once()
+				mockGetProperty(m, testPropertyName, nil, fmt.Errorf("get failed"), 1)
 			},
 			expectError: regexp.MustCompile(`get failed`),
 		},
@@ -1052,13 +933,6 @@ func TestResGTMPropertyImport(t *testing.T) {
 			client.AssertExpectations(t)
 		})
 	}
-}
-
-func mockGetPropertyImport(m *gtm.Mock, resp *gtm.GetPropertyResponse, err error) *mock.Call {
-	return m.On("GetProperty", testutils.MockContext, gtm.GetPropertyRequest{
-		PropertyName: "tfexample_prop_1",
-		DomainName:   "gtm_terra_testdomain.akadns.net",
-	}).Return(resp, err)
 }
 
 // getBasicProperty gets the property values taken from `create_basic.tf`
@@ -1104,7 +978,7 @@ func getBasicProperty() *gtm.Property {
 		},
 		TrafficTargets: []gtm.TrafficTarget{
 			{
-				DatacenterID: 3131,
+				DatacenterID: datacenterID3131,
 				Enabled:      true,
 				HandoutCName: "test",
 				Servers: []string{
@@ -1116,6 +990,27 @@ func getBasicProperty() *gtm.Property {
 		},
 		Type: "weighted-round-robin",
 	}
+}
+
+func getPropertyForUpdate() *gtm.Property {
+	var updateProperty = *getBasicProperty()
+	updateProperty.TrafficTargets[0].DatacenterID = datacenterID3132
+	updateProperty.TrafficTargets[0].Servers = []string{"1.2.3.5"}
+	updateProperty.LivenessTests[0].TestInterval = 50
+	return &updateProperty
+}
+
+func getPropertyWithUpdatedName() *gtm.Property {
+	propertyWithUpdatedName := getBasicProperty()
+	propertyWithUpdatedName.Name = testUpdatedPropertyName
+	return propertyWithUpdatedName
+}
+
+func getPropertyWithTestObjectProtocol() *gtm.Property {
+	propertyWithLivenessTest := getBasicProperty()
+	propertyWithLivenessTest.LivenessTests[0].TestObject = ""
+	propertyWithLivenessTest.LivenessTests[0].TestObjectProtocol = "SNMP"
+	return propertyWithLivenessTest
 }
 
 // getBasicPropertySecondApply gets the property values taken from `create_multiple_traffic_targets.tf`
@@ -1144,7 +1039,7 @@ func getBasicPropertySecondApply() gtm.Property {
 		ScoreAggregationType: "median",
 		TrafficTargets: []gtm.TrafficTarget{
 			{
-				DatacenterID: 3131,
+				DatacenterID: datacenterID3131,
 				Enabled:      true,
 				HandoutCName: "test",
 				Servers: []string{
@@ -1154,7 +1049,7 @@ func getBasicPropertySecondApply() gtm.Property {
 				Precedence: ptr.To(0),
 			},
 			{
-				DatacenterID: 3132,
+				DatacenterID: datacenterID3132,
 				Enabled:      true,
 				HandoutCName: "test",
 				Servers: []string{
@@ -1164,127 +1059,13 @@ func getBasicPropertySecondApply() gtm.Property {
 				Precedence: ptr.To(0),
 			},
 			{
-				DatacenterID: 3133,
+				DatacenterID: datacenterID3133,
 				Enabled:      true,
 				HandoutCName: "test",
 				Servers: []string{
 					"1.2.3.6",
 				},
 				Weight:     200,
-				Precedence: ptr.To(0),
-			},
-		},
-		Type: "weighted-round-robin",
-	}
-}
-
-// getBasicPropertyResponse gets the property values taken from `create_basic.tf`
-func getBasicPropertyResponse() *gtm.GetPropertyResponse {
-	return &gtm.GetPropertyResponse{
-		DynamicTTL:   300,
-		HandoutMode:  "normal",
-		HandoutLimit: 5,
-		LivenessTests: []gtm.LivenessTest{
-			{
-				Name:               "lt5",
-				TestInterval:       40,
-				TestObject:         "/junk",
-				TestObjectPort:     1,
-				TestObjectProtocol: "HTTP",
-				TestTimeout:        30.0,
-				HTTPHeaders: []gtm.HTTPHeader{
-					{
-						Name:  "test_name",
-						Value: "test_value",
-					},
-				},
-			},
-			{
-				Name:                        "lt2",
-				TestInterval:                30,
-				TestObjectProtocol:          "HTTP",
-				TestTimeout:                 20,
-				TestObject:                  "/junk",
-				TestObjectPort:              80,
-				PeerCertificateVerification: true,
-				HTTPHeaders:                 []gtm.HTTPHeader{},
-			},
-		},
-		Name:                 testPropertyName,
-		ScoreAggregationType: "median",
-		StaticRRSets: []gtm.StaticRRSet{
-			{
-				Type:  "MX",
-				TTL:   300,
-				Rdata: []string{"100 test_e"},
-			},
-		},
-		TrafficTargets: []gtm.TrafficTarget{
-			{
-				DatacenterID: 3131,
-				Enabled:      true,
-				HandoutCName: "test",
-				Servers: []string{
-					"1.2.3.9",
-				},
-				Weight:     200.0,
-				Precedence: ptr.To(0),
-			},
-		},
-		Type: "weighted-round-robin",
-	}
-}
-
-// getBasicPropertyResponseUpdate gets the property values taken from `update_basic.tf`
-func getBasicPropertyResponseUpdate() *gtm.GetPropertyResponse {
-	return &gtm.GetPropertyResponse{
-		DynamicTTL:   300,
-		HandoutMode:  "normal",
-		HandoutLimit: 5,
-		LivenessTests: []gtm.LivenessTest{
-			{
-				Name:               "lt5",
-				TestInterval:       50,
-				TestObject:         "/junk",
-				TestObjectPort:     1,
-				TestObjectProtocol: "HTTP",
-				TestTimeout:        30.0,
-				HTTPHeaders: []gtm.HTTPHeader{
-					{
-						Name:  "test_name",
-						Value: "test_value",
-					},
-				},
-			},
-			{
-				Name:                        "lt2",
-				TestInterval:                30,
-				TestObjectProtocol:          "HTTP",
-				TestTimeout:                 20,
-				TestObject:                  "/junk",
-				TestObjectPort:              80,
-				PeerCertificateVerification: true,
-				HTTPHeaders:                 []gtm.HTTPHeader{},
-			},
-		},
-		Name:                 testPropertyName,
-		ScoreAggregationType: "median",
-		StaticRRSets: []gtm.StaticRRSet{
-			{
-				Type:  "MX",
-				TTL:   300,
-				Rdata: []string{"100 test_e"},
-			},
-		},
-		TrafficTargets: []gtm.TrafficTarget{
-			{
-				DatacenterID: 3132,
-				Enabled:      true,
-				HandoutCName: "test",
-				Servers: []string{
-					"1.2.3.5",
-				},
-				Weight:     200.0,
 				Precedence: ptr.To(0),
 			},
 		},
@@ -1318,7 +1099,7 @@ func getBasicPropertyWithoutDatacenterID() gtm.Property {
 		ScoreAggregationType: "median",
 		TrafficTargets: []gtm.TrafficTarget{
 			{
-				DatacenterID: 3131,
+				DatacenterID: datacenterID3131,
 				Enabled:      true,
 				HandoutCName: "test",
 				Servers: []string{
@@ -1329,7 +1110,7 @@ func getBasicPropertyWithoutDatacenterID() gtm.Property {
 				Precedence: ptr.To(0),
 			},
 			{
-				DatacenterID: 3132,
+				DatacenterID: datacenterID3132,
 				Enabled:      true,
 				HandoutCName: "test",
 				Servers: []string{
@@ -1400,68 +1181,7 @@ func getBasicPropertyWithLivenessTests() *gtm.Property {
 		},
 		TrafficTargets: []gtm.TrafficTarget{
 			{
-				DatacenterID: 3131,
-				Enabled:      true,
-				HandoutCName: "test",
-				Servers: []string{
-					"1.2.3.9",
-				},
-				Weight:     200.0,
-				Precedence: ptr.To(0),
-			},
-		},
-		Type: "weighted-round-robin",
-	}
-}
-
-// getBasicPropertyResponseWithLivenessTests gets the property values taken from `create_basic_additional_liveness_tests.tf`
-func getBasicPropertyResponseWithLivenessTests() *gtm.GetPropertyResponse {
-	return &gtm.GetPropertyResponse{
-		DynamicTTL:   300,
-		HandoutMode:  "normal",
-		HandoutLimit: 5,
-		LivenessTests: []gtm.LivenessTest{
-			{
-				Name:               "lt5",
-				TestInterval:       40,
-				TestObject:         "/junk",
-				TestObjectPort:     1,
-				TestObjectProtocol: "HTTP",
-				TestTimeout:        30.0,
-				HTTPHeaders: []gtm.HTTPHeader{
-					{
-						Name:  "test_name",
-						Value: "test_value",
-					},
-				},
-				HTTPMethod:              ptr.To("GET"),
-				HTTPRequestBody:         ptr.To("Body"),
-				Pre2023SecurityPosture:  true,
-				AlternateCACertificates: []string{"test1"},
-			},
-			{
-				Name:                        "lt2",
-				TestInterval:                30,
-				TestObjectProtocol:          "HTTP",
-				TestTimeout:                 20,
-				TestObject:                  "/junk",
-				TestObjectPort:              80,
-				PeerCertificateVerification: true,
-				HTTPHeaders:                 []gtm.HTTPHeader{},
-			},
-		},
-		Name:                 testPropertyName,
-		ScoreAggregationType: "median",
-		StaticRRSets: []gtm.StaticRRSet{
-			{
-				Type:  "MX",
-				TTL:   300,
-				Rdata: []string{"100 test_e"},
-			},
-		},
-		TrafficTargets: []gtm.TrafficTarget{
-			{
-				DatacenterID: 3131,
+				DatacenterID: datacenterID3131,
 				Enabled:      true,
 				HandoutCName: "test",
 				Servers: []string{
@@ -1531,7 +1251,7 @@ func getImportedProperty() *gtm.Property {
 		WeightedHashBitsForIPv6: 6,
 		TrafficTargets: []gtm.TrafficTarget{
 			{
-				DatacenterID: 3131,
+				DatacenterID: datacenterID3131,
 				Enabled:      true,
 				HandoutCName: "test",
 				Servers: []string{
@@ -1581,11 +1301,10 @@ func mockPropertyFlow(gtmProperty gtm.Property) *gtm.Mock {
 	// create
 	mockCreateProperty(client, &gtmProperty, &gtm.CreatePropertyResponse{
 		Resource: &gtmProperty,
-		Status:   &pendingResponseStatus,
+		Status:   getPendingResponseStatus(),
 	}, nil)
 
-	var getPropertyResponse = gtm.GetPropertyResponse(gtmProperty)
-	mockGetProperty(client, testPropertyName, &getPropertyResponse, nil, 4)
+	mockGetProperty(client, testPropertyName, &gtmProperty, nil, 4)
 
 	// delete
 	mockDeleteProperty(client, testPropertyName)
@@ -1595,7 +1314,7 @@ func mockPropertyFlow(gtmProperty gtm.Property) *gtm.Mock {
 
 func getBasicPropertyForTrafficTargetOrder() gtm.Property {
 	prp := getBasicPropertyWithoutDatacenterID()
-	prp.TrafficTargets[2].DatacenterID = 3133
+	prp.TrafficTargets[2].DatacenterID = datacenterID3133
 	return prp
 }
 
@@ -1609,14 +1328,19 @@ func mockCreateProperty(client *gtm.Mock, property *gtm.Property, resp *gtm.Crea
 	).Return(resp, err).Once()
 }
 
-func mockGetProperty(client *gtm.Mock, propertyName string, property *gtm.GetPropertyResponse, err error, times int) {
+func mockGetProperty(client *gtm.Mock, propertyName string, property *gtm.Property, err error, times int) {
+	var resp *gtm.GetPropertyResponse
+	if property != nil {
+		r := gtm.GetPropertyResponse(*property)
+		resp = &r
+	}
 	client.On("GetProperty",
 		testutils.MockContext,
 		gtm.GetPropertyRequest{
 			DomainName:   testDomainName,
 			PropertyName: propertyName,
 		},
-	).Return(property, err).Times(times)
+	).Return(resp, err).Times(times)
 }
 
 func mockUpdateProperty(client *gtm.Mock, updatedProperty *gtm.Property) {
@@ -1626,16 +1350,19 @@ func mockUpdateProperty(client *gtm.Mock, updatedProperty *gtm.Property) {
 			Property:   updatedProperty,
 			DomainName: testDomainName,
 		},
-	).Return(updatePropertyResponseStatus, nil).Once()
+	).Return(&gtm.UpdatePropertyResponse{
+		Status: getDefaultResponseStatus(),
+	}, nil).Once()
 }
 
 func mockGetDomainStatus(client *gtm.Mock, times int) {
+	domainStatus := gtm.GetDomainStatusResponse(*getDefaultResponseStatus())
 	client.On("GetDomainStatus",
 		testutils.MockContext,
 		gtm.GetDomainStatusRequest{
 			DomainName: testDomainName,
 		},
-	).Return(getDomainStatusResponseStatus, nil).Times(times)
+	).Return(&domainStatus, nil).Times(times)
 }
 
 func mockDeleteProperty(client *gtm.Mock, propertyName string) {
@@ -1645,5 +1372,7 @@ func mockDeleteProperty(client *gtm.Mock, propertyName string) {
 			DomainName:   testDomainName,
 			PropertyName: propertyName,
 		},
-	).Return(deletePropertyResponseStatus, nil).Once()
+	).Return(&gtm.DeletePropertyResponse{
+		Status: getDefaultResponseStatus(),
+	}, nil).Once()
 }
