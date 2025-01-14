@@ -28,17 +28,17 @@ func TestAccAkamaiNetworkListSubscription_res_basic(t *testing.T) {
 
 		client.On("GetNetworkListSubscription",
 			testutils.MockContext,
-			networklists.GetNetworkListSubscriptionRequest{Recipients: []string{"test@email.com"}, UniqueIds: []string{"79536_MARTINNETWORKLIST"}},
+			networklists.GetNetworkListSubscriptionRequest{Recipients: []string{"test@email.com"}, UniqueIDs: []string{"79536_MARTINNETWORKLIST"}},
 		).Return(&cr, nil)
 
 		client.On("UpdateNetworkListSubscription",
 			testutils.MockContext,
-			networklists.UpdateNetworkListSubscriptionRequest{Recipients: []string{"test@email.com"}, UniqueIds: []string{"79536_MARTINNETWORKLIST"}},
+			networklists.UpdateNetworkListSubscriptionRequest{Recipients: []string{"test@email.com"}, UniqueIDs: []string{"79536_MARTINNETWORKLIST"}},
 		).Return(&cu, nil)
 
 		client.On("RemoveNetworkListSubscription",
 			testutils.MockContext,
-			networklists.RemoveNetworkListSubscriptionRequest{Recipients: []string{"test@email.com"}, UniqueIds: []string{"79536_MARTINNETWORKLIST"}},
+			networklists.RemoveNetworkListSubscriptionRequest{Recipients: []string{"test@email.com"}, UniqueIDs: []string{"79536_MARTINNETWORKLIST"}},
 		).Return(&cd, nil)
 
 		useClient(client, func() {

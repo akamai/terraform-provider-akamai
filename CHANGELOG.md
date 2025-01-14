@@ -45,7 +45,7 @@
 
 
 * Migrated to go `1.22`.
-
+* Improved code by resolving issues reported by linter.
 
 
 * Added CPS configuration examples. ([I#467](https://github.com/akamai/terraform-provider-akamai/issues/467))

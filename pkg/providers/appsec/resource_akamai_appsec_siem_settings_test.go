@@ -44,12 +44,12 @@ func TestAkamaiSiemSettings_res_basic(t *testing.T) {
 
 		client.On("UpdateSiemSettings",
 			testutils.MockContext,
-			appsec.UpdateSiemSettingsRequest{ConfigID: 43253, Version: 7, EnableForAllPolicies: false, EnableSiem: true, EnabledBotmanSiemEvents: ptr.To(true), SiemDefinitionID: 1, FirewallPolicyIds: []string{"12345"}, Exceptions: []appsec.Exception{}},
+			appsec.UpdateSiemSettingsRequest{ConfigID: 43253, Version: 7, EnableForAllPolicies: false, EnableSiem: true, EnabledBotmanSiemEvents: ptr.To(true), SiemDefinitionID: 1, FirewallPolicyIDs: []string{"12345"}, Exceptions: []appsec.Exception{}},
 		).Return(&updateSiemSettingsResponse, nil)
 
 		client.On("RemoveSiemSettings",
 			testutils.MockContext,
-			appsec.RemoveSiemSettingsRequest{ConfigID: 43253, Version: 7, EnableForAllPolicies: false, FirewallPolicyIds: []string(nil)},
+			appsec.RemoveSiemSettingsRequest{ConfigID: 43253, Version: 7, EnableForAllPolicies: false, FirewallPolicyIDs: []string(nil)},
 		).Return(&removeSiemSettingsResponse, nil)
 
 		useClient(client, func() {
@@ -101,7 +101,7 @@ func TestAkamaiSiemSettings_res_basic(t *testing.T) {
 
 		client.On("UpdateSiemSettings",
 			testutils.MockContext,
-			appsec.UpdateSiemSettingsRequest{ConfigID: 43253, Version: 7, EnableForAllPolicies: false, EnableSiem: true, SiemDefinitionID: 1, FirewallPolicyIds: []string{"12345"},
+			appsec.UpdateSiemSettingsRequest{ConfigID: 43253, Version: 7, EnableForAllPolicies: false, EnableSiem: true, SiemDefinitionID: 1, FirewallPolicyIDs: []string{"12345"},
 				Exceptions: []appsec.Exception{
 					{
 						Protection:  "rate",
@@ -112,7 +112,7 @@ func TestAkamaiSiemSettings_res_basic(t *testing.T) {
 
 		client.On("RemoveSiemSettings",
 			testutils.MockContext,
-			appsec.RemoveSiemSettingsRequest{ConfigID: 43253, Version: 7, EnableForAllPolicies: false, EnableSiem: false, FirewallPolicyIds: []string(nil)},
+			appsec.RemoveSiemSettingsRequest{ConfigID: 43253, Version: 7, EnableForAllPolicies: false, EnableSiem: false, FirewallPolicyIDs: []string(nil)},
 		).Return(&removeSiemSettingsResponse, nil)
 
 		useClient(client, func() {
@@ -194,7 +194,7 @@ func TestAkamaiSiemSettings_res_basic(t *testing.T) {
 
 		client.On("UpdateSiemSettings",
 			testutils.MockContext,
-			appsec.UpdateSiemSettingsRequest{ConfigID: 43253, Version: 7, EnableForAllPolicies: false, EnableSiem: true, SiemDefinitionID: 1, FirewallPolicyIds: []string{"12345"},
+			appsec.UpdateSiemSettingsRequest{ConfigID: 43253, Version: 7, EnableForAllPolicies: false, EnableSiem: true, SiemDefinitionID: 1, FirewallPolicyIDs: []string{"12345"},
 				Exceptions: []appsec.Exception{
 					{
 						Protection:  "rate",
@@ -210,7 +210,7 @@ func TestAkamaiSiemSettings_res_basic(t *testing.T) {
 
 		client.On("UpdateSiemSettings",
 			testutils.MockContext,
-			appsec.UpdateSiemSettingsRequest{ConfigID: 43253, Version: 7, EnableForAllPolicies: false, EnableSiem: true, EnabledBotmanSiemEvents: ptr.To(true), SiemDefinitionID: 1, FirewallPolicyIds: []string{"12345"}, Exceptions: []appsec.Exception{}},
+			appsec.UpdateSiemSettingsRequest{ConfigID: 43253, Version: 7, EnableForAllPolicies: false, EnableSiem: true, EnabledBotmanSiemEvents: ptr.To(true), SiemDefinitionID: 1, FirewallPolicyIDs: []string{"12345"}, Exceptions: []appsec.Exception{}},
 		).Return(&updateSiemSettingsResponseNoExceptions, nil).Times(1)
 
 		client.On("GetSiemSettings",
@@ -220,7 +220,7 @@ func TestAkamaiSiemSettings_res_basic(t *testing.T) {
 
 		client.On("RemoveSiemSettings",
 			testutils.MockContext,
-			appsec.RemoveSiemSettingsRequest{ConfigID: 43253, Version: 7, EnableForAllPolicies: false, EnableSiem: false, FirewallPolicyIds: []string(nil)},
+			appsec.RemoveSiemSettingsRequest{ConfigID: 43253, Version: 7, EnableForAllPolicies: false, EnableSiem: false, FirewallPolicyIDs: []string(nil)},
 		).Return(&removeSiemSettingsResponse, nil)
 
 		useClient(client, func() {
