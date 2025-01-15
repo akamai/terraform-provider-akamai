@@ -911,7 +911,7 @@ func resourceDNSRecordUpdate(ctx context.Context, d *schema.ResourceData, m inte
 		"zone":       zone,
 		"host":       host,
 		"recordtype": recordType,
-	}.Get())
+	})
 
 	if err := validateRecord(d); err != nil {
 		return append(diags, diag.Diagnostic{
@@ -1058,7 +1058,7 @@ func resourceDNSRecordRead(ctx context.Context, d *schema.ResourceData, m interf
 		"zone":       zone,
 		"host":       host,
 		"recordtype": recordType,
-	}.Get())
+	})
 
 	recordCreate, err := bindRecord(ctx, meta, d, log)
 	if err != nil {
@@ -1078,7 +1078,7 @@ func resourceDNSRecordRead(ctx context.Context, d *schema.ResourceData, m interf
 		"zone":       zone,
 		"host":       host,
 		"recordtype": recordType,
-	}.Get())
+	})
 
 	extractString := strings.Join(recordCreate.Target, " ")
 	sha1hash := hash.GetSHAString(extractString)
@@ -1090,7 +1090,7 @@ func resourceDNSRecordRead(ctx context.Context, d *schema.ResourceData, m interf
 		"zone":       zone,
 		"host":       host,
 		"recordtype": recordType,
-	}.Get())
+	})
 
 	record, e := inst.Client(meta).GetRecord(ctx, dns.GetRecordRequest{
 		Zone:       zone,

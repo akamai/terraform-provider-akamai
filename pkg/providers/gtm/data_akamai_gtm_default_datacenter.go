@@ -72,7 +72,7 @@ func dataSourceGTMDefaultDatacenterRead(ctx context.Context, d *schema.ResourceD
 	logger.Debug("Start Default Datacenter Retrieval", log.Fields{
 		"domain": domain,
 		"dcid":   dcID,
-	}.Get())
+	})
 
 	var defaultDC *gtm.Datacenter
 	switch dcID {

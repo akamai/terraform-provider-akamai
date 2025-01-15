@@ -67,7 +67,7 @@ func dataSourceDNSRecordSetRead(ctx context.Context, d *schema.ResourceData, m i
 	logger.Debug("Start Searching for records", log.Fields{
 		"zone":       zone,
 		"host":       host,
-		"recordtype": recordType}.Get())
+		"recordtype": recordType})
 
 	// Warning or Errors can be collected in a slice type
 	var diags diag.Diagnostics
